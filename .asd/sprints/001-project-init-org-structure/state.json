@@ -85,6 +85,12 @@
       "tier": "critical",
       "reason": "risk:concurrent tree moves, recursive FromSql queries, russian FTS/pg_trgm, migration",
       "resolved_model": "sonnet"
+    },
+    "Task 6": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:authentication, passwords, lockout, sessions, last-admin rule, CSRF, Identity schema migration",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],

@@ -85,11 +85,11 @@ Tech reference: efcore-10.0.12, npgsql-entityframeworkcore-postgresql-10.0.3, po
 
 ### Task 5: Подсистема org-structure — backend
 Material risk: change: конкурентные переносы дерева, рекурсивные запросы через `FromSql`, FTS/`pg_trgm` на русском, миграция
-- [ ] AC-9: сущность `OrgUnit` (название, `parent_id`, `head_employee_id`, `is_active`, `valid_from`/`valid_to`, `Version`); CRUD `/api/v1/org-units` (создание, чтение, правка с `If-Match`, перенос, деактивация/активация — без удаления); перенос и деактивация под `pg_advisory_xact_lock`, запрет циклов, отказ деактивации при активных потомках и активных сотрудниках с понятной причиной; `parent_id` допускает `NULL` (несколько корней допустимы)
-- [ ] AC-10: сущность `Employee` (ФИО, табельный номер уникален, рабочий e-mail уникален без учёта регистра, `is_active`, `org_unit_id`, должность текстом, `Version`); `/api/v1/employees` (создание, чтение, правка, перевод в подразделение, смена статуса с `If-Match`); перевод руководителя активного подразделения в «не работает» отклоняется; интерфейс `IEmployeeDirectory` (получить сотрудника и его статус по `Id`) для `UserManagement`
-- [ ] AC-11: `GET /api/v1/org-units/tree`, `/{id}/subtree`, `/{id}/path`, `/{id}/summary` (число сотрудников с учётом потомков), поиск и фильтрация подразделений и сотрудников (`q`, статус): FTS `russian` + `pg_trgm` GIN, миграция создаёт `pg_trgm`; список — постраничный
-- [ ] AC-12,10: две проекции чтения сотрудника — полная (`GlobalAdmin`: табельный номер, статус) и урезанная (`User`: ФИО, e-mail, подразделение, должность); мутации только `GlobalAdmin`; все сущности помечены `[Audited]`
-- [ ] AC-11: регенерировать `web/src/api/schema.d.ts` и закоммитить
+- [x] AC-9: сущность `OrgUnit` (название, `parent_id`, `head_employee_id`, `is_active`, `valid_from`/`valid_to`, `Version`); CRUD `/api/v1/org-units` (создание, чтение, правка с `If-Match`, перенос, деактивация/активация — без удаления); перенос и деактивация под `pg_advisory_xact_lock`, запрет циклов, отказ деактивации при активных потомках и активных сотрудниках с понятной причиной; `parent_id` допускает `NULL` (несколько корней допустимы)
+- [x] AC-10: сущность `Employee` (ФИО, табельный номер уникален, рабочий e-mail уникален без учёта регистра, `is_active`, `org_unit_id`, должность текстом, `Version`); `/api/v1/employees` (создание, чтение, правка, перевод в подразделение, смена статуса с `If-Match`); перевод руководителя активного подразделения в «не работает» отклоняется; интерфейс `IEmployeeDirectory` (получить сотрудника и его статус по `Id`) для `UserManagement`
+- [x] AC-11: `GET /api/v1/org-units/tree`, `/{id}/subtree`, `/{id}/path`, `/{id}/summary` (число сотрудников с учётом потомков), поиск и фильтрация подразделений и сотрудников (`q`, статус): FTS `russian` + `pg_trgm` GIN, миграция создаёт `pg_trgm`; список — постраничный
+- [x] AC-12,10: две проекции чтения сотрудника — полная (`GlobalAdmin`: табельный номер, статус) и урезанная (`User`: ФИО, e-mail, подразделение, должность); мутации только `GlobalAdmin`; все сущности помечены `[Audited]`
+- [x] AC-11: регенерировать `web/src/api/schema.d.ts` и закоммитить
 Tech reference: efcore-10.0.12, npgsql-entityframeworkcore-postgresql-10.0.3, postgresql-18.6.
 
 ### Task 6: Подсистема user-management — backend

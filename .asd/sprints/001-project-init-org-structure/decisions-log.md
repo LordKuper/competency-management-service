@@ -90,3 +90,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Решения в пределах plan и AC-5/AC-15; `InternalsVisibleTo` нужен impl-test как реальному вызывающему. Поведение триггера, jsonb и применение миграции на реальном PostgreSQL не проверены (нет Docker) — Task 10 и impl-test прогоняют их первыми.
 - **Affected docs**: `src/Competency.Audit/`, `src/Competency.Platform/Migrations/`
 - 2026-10-05 — route Task 5: critical, dispatch HEAD 451f39a
+
+## 2026-10-05 — Волна 4: flagged choices Task 5 (org-structure)
+
+- **Decision**: Приняты: одна схема `EmployeeResponse` с необязательными `personnelNumber`/`isActive`/`version` (для роли User их нет); роль User видит только активные подразделения и работающих сотрудников; один глобальный `pg_advisory_xact_lock(5001001)` на все мутации дерева (апгрейд — блокировка по поддереву); размещение только в активное подразделение; 400 для недопустимых ссылок, 409 problem+json для конфликтов правил; отдельные POST `/move`, `/activate`, `/deactivate`; `normalized_email` для уникальности; `pg_trgm` и `tsvector russian` через миграцию; `JsonNumberHandling.Strict` и `InternalsVisibleTo` сделаны.
+- **Rationale**: В пределах AC-9…AC-12 и plan Overview, без новых зависимостей. Не проверено без PostgreSQL: advisory lock, рекурсивные CTE, `pg_trgm`/`russian` FTS, уникальные индексы, генерируемые колонки — Task 10 и impl-test прогоняют миграцию первой.
+- **Affected docs**: `src/Competency.OrgStructure/`, `src/Competency.Platform/Migrations/`
+- 2026-10-05 — route Task 6: critical, dispatch HEAD 4dac05e
