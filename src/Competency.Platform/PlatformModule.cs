@@ -1,6 +1,10 @@
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -20,14 +24,23 @@ public static class PlatformModule
     /// </summary>
     public const string ConnectionStringName = "Default";
 
+    /// <summary>
+    /// Name of the rate-limiting policy for the sign-in endpoint, for <c>RequireRateLimiting</c>.
+    /// </summary>
+    public const string LoginRateLimitPolicy = "login";
+
+    private const string LoginRateLimitSection = "RateLimiting:Login";
+    private const string UnknownClient = "unknown";
     private const string KeysPathSetting = "DataProtection:KeysPath";
     private const string DataProtectionApplicationName = "competency-management-service";
     private const string ReadyTag = "ready";
     private const int PostgresMajorVersion = 18;
 
     /// <summary>
-    /// Registers the database context and the readiness check.
+    /// Registers the database context, the readiness check, error handling, the current actor, the authorization policies and the sign-in rate limiter.
     /// Every <see cref="IInterceptor"/> registered in the container, by the platform or by a module, is attached to the context.
+    /// Every endpoint requires an authenticated user unless it carries anonymous metadata; only the health probes,
+    /// the SPA fallback and the sign-in endpoint do, and a module exposing another anonymous endpoint must say so explicitly.
     /// Nothing here connects to the database or reads the connection string until the context is first resolved.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
@@ -48,18 +61,27 @@ public static class PlatformModule
         services.AddProblemDetails();
         services.AddExceptionHandler<ProblemExceptionHandler>();
 
+        services.AddHttpContextAccessor();
+        services.AddSingleton<ICurrentActor, HttpContextCurrentActor>();
+        AddAuthorizationPolicies(services);
+        AddLoginRateLimiter(services, configuration);
+
         return services;
     }
 
     /// <summary>
-    /// Adds the platform request pipeline: request id, ProblemDetails error responses for unhandled exceptions and bodyless error statuses.
+    /// Adds the platform request pipeline: request id, ProblemDetails error responses for unhandled exceptions and bodyless error statuses,
+    /// the cross-site check on state-changing requests and rate limiting.
+    /// The host adds authentication, when it has a scheme, and then authorization after this call.
     /// </summary>
     /// <param name="app">The application pipeline to extend.</param>
     /// <returns>The same pipeline, for chaining.</returns>
     public static IApplicationBuilder UsePlatform(this IApplicationBuilder app) => app
         .UseMiddleware<RequestIdMiddleware>()
         .UseExceptionHandler()
-        .UseStatusCodePages();
+        .UseStatusCodePages()
+        .UseMiddleware<CrossSiteRequestMiddleware>()
+        .UseRateLimiter();
 
     /// <summary>
     /// Persists data-protection keys to the configured directory; creates keys at host start,
@@ -102,6 +124,32 @@ public static class PlatformModule
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await context.Database.MigrateAsync(cancellationToken);
     }
+
+    private static void AddAuthorizationPolicies(IServiceCollection services)
+    {
+        var authenticated = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+        services.AddAuthorizationBuilder()
+            .AddPolicy(AuthorizationPolicies.Authenticated, authenticated)
+            .AddPolicy(
+                AuthorizationPolicies.GlobalAdmin,
+                policy => policy.RequireAuthenticatedUser().RequireClaim(PlatformClaims.Role, PlatformClaims.GlobalAdminRole))
+            .SetFallbackPolicy(authenticated);
+        services.AddSingleton<IAuthorizationMiddlewareResultHandler, StatusAuthorizationResultHandler>();
+    }
+
+    private static void AddLoginRateLimiter(IServiceCollection services, IConfiguration configuration) =>
+        services.AddRateLimiter(options =>
+        {
+            var login = configuration.GetRequiredSection(LoginRateLimitSection).Get<LoginRateLimitOptions>()!;
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.AddPolicy(LoginRateLimitPolicy, httpContext => RateLimitPartition.GetFixedWindowLimiter(
+                httpContext.Connection.RemoteIpAddress?.ToString() ?? UnknownClient,
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = login.PermitLimit,
+                    Window = TimeSpan.FromSeconds(login.WindowSeconds),
+                }));
+        });
 
     private static string GetConnectionString(IConfiguration configuration) =>
         configuration.GetConnectionString(ConnectionStringName)

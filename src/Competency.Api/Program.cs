@@ -32,11 +32,12 @@ if (!isToolingRun)
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UsePlatform();
+app.UseAuthorization();
 
 app.MapPlatformEndpoints();
 app.MapAuditEndpoints();
 app.MapOrgStructureEndpoints();
 app.MapUserManagementEndpoints();
-app.MapFallbackToFile(SpaFallbackPattern, "index.html");
+app.MapFallbackToFile(SpaFallbackPattern, "index.html").AllowAnonymous();
 
 await app.RunAsync();
