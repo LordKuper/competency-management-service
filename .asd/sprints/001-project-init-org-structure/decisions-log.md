@@ -83,3 +83,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Каждый выбор в пределах plan и persistent docs, без новых зависимостей. Открыто до impl assessment: лицензия MPL-2.0 у `lightningcss` (жёсткая build-time зависимость Vite 8.3.2, не входит в допустимый список stack.html) — решение за пользователем; бэкенд-lint отсутствует (TreatWarningsAsErrors), `npm test` падает до появления тестов (не входит в impl gate).
 - **Affected docs**: `.asd/project/commands.yaml`, `docs/architecture/tech-reference/openapi-typescript-7.13.0.md`
 - 2026-10-05 — route Task 4: critical, dispatch HEAD 3f92a44
+
+## 2026-10-05 — Волна 3: flagged choices Task 4 (audit)
+
+- **Decision**: Приняты: таблица `audit_events` (snake_case), действия `<EntityType>.Created|Updated|Deleted`, `IAuditWriter` в собственном scope/контексте (события входа переживают откат вызывающего), allow-list только атрибутами, лимиты страниц 50/200 в коде. Для Task 5 добавлены: `JsonNumberHandling.Strict` в Platform (чтобы int в клиенте был `number`) и `InternalsVisibleTo Competency.Tests` в Platform, Audit, OrgStructure (Task 6 — для UserManagement и Api); Task 6 ограничивает длину пользовательского `AuditEntry.Actor`.
+- **Rationale**: Решения в пределах plan и AC-5/AC-15; `InternalsVisibleTo` нужен impl-test как реальному вызывающему. Поведение триггера, jsonb и применение миграции на реальном PostgreSQL не проверены (нет Docker) — Task 10 и impl-test прогоняют их первыми.
+- **Affected docs**: `src/Competency.Audit/`, `src/Competency.Platform/Migrations/`
+- 2026-10-05 — route Task 5: critical, dispatch HEAD 451f39a

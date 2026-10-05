@@ -77,10 +77,10 @@ Tech reference: react-19.3.0, react-router-8.4.0, tanstack-react-query-5.104.1, 
 
 ### Task 4: Подсистема audit — журнал
 Material risk: change: журнал с ПДн и секретами (хэши, stamp), триггер неизменяемости, EF-interceptor, миграция PostgreSQL-расширений
-- [ ] AC-15: сущность `AuditEvent` (timestamp, actor, role, action, entity_type, entity_id, old_value, new_value, reason, request_id) и миграция `AuditEvents`; DB-триггер, запрещающий UPDATE/DELETE таблицы; индексы по времени, актору, типу и идентификатору сущности
-- [ ] AC-15,5: реализация `IAuditWriter`; `SaveChangesInterceptor`, пишущий изменения сущностей с `[Audited]` по allow-list (старое/новое значение в одной транзакции с изменением), актор/роль/`request_id` из контекста, для bootstrap/фоновых операций актор `system`
-- [ ] AC-15: `GET /api/v1/audit` только `GlobalAdmin`, фильтры (период, актор, действие, тип и идентификатор сущности, `request_id`), постраничность; пользовательского изменения журнала нет
-- [ ] AC-15: регенерировать `web/src/api/schema.d.ts` (`gen:api`) и закоммитить
+- [x] AC-15: сущность `AuditEvent` (timestamp, actor, role, action, entity_type, entity_id, old_value, new_value, reason, request_id) и миграция `AuditEvents`; DB-триггер, запрещающий UPDATE/DELETE таблицы; индексы по времени, актору, типу и идентификатору сущности
+- [x] AC-15,5: реализация `IAuditWriter`; `SaveChangesInterceptor`, пишущий изменения сущностей с `[Audited]` по allow-list (старое/новое значение в одной транзакции с изменением), актор/роль/`request_id` из контекста, для bootstrap/фоновых операций актор `system`
+- [x] AC-15: `GET /api/v1/audit` только `GlobalAdmin`, фильтры (период, актор, действие, тип и идентификатор сущности, `request_id`), постраничность; пользовательского изменения журнала нет
+- [x] AC-15: регенерировать `web/src/api/schema.d.ts` (`gen:api`) и закоммитить
 Tech reference: efcore-10.0.12, npgsql-entityframeworkcore-postgresql-10.0.3, postgresql-18.6.
 
 ### Task 5: Подсистема org-structure — backend
