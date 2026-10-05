@@ -25,19 +25,17 @@ public sealed class AppDbContext(
 
     private static void ApplyEntityBaseConventions(ModelBuilder modelBuilder)
     {
-        var rootTypes = modelBuilder.Model.GetEntityTypes()
-            .Where(entityType => entityType.BaseType is null)
+        var versionedRoots = modelBuilder.Model.GetEntityTypes()
+            .Where(entityType => entityType.BaseType is null
+                && !entityType.IsOwned()
+                && typeof(IVersioned).IsAssignableFrom(entityType.ClrType))
             .Select(entityType => entityType.ClrType)
             .ToList();
 
-        foreach (var clrType in rootTypes)
+        foreach (var clrType in versionedRoots)
         {
             var entity = modelBuilder.Entity(clrType);
-            if (typeof(IVersioned).IsAssignableFrom(clrType))
-            {
-                entity.Property(nameof(IVersioned.Version)).IsConcurrencyToken();
-            }
-
+            entity.Property(nameof(IVersioned.Version)).IsConcurrencyToken();
             if (typeof(EntityBase).IsAssignableFrom(clrType))
             {
                 entity.Property(nameof(EntityBase.Id)).HasValueGenerator<GuidValueGenerator>();
