@@ -3,3 +3,9 @@ node_modules/
 .vs/
 .asd/tmp/
 .claude/settings.local.json
+bin/
+obj/
+dist/
+TestResults/
+.env
+appsettings.*.local.json
