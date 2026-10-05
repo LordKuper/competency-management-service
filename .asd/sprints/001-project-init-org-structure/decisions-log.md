@@ -66,3 +66,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: `.asd/sprints/001-project-init-org-structure/audit.md`, `.asd/sprints/001-project-init-org-structure/sprint.md`
 
 - 2026-10-05 — settings: `project.diagram_tool` none → mermaid via /asd-init (user request); sprint `documents.c4` stays frozen `false`, diagram from next sprint
+
+## 2026-10-05 — plan.md принят
+
+- **Decision**: `plan.md` (Task 1–10, 7 волн) принят. Архитектурные решения (дерево — adjacency list + рекурсивные запросы под advisory-lock; Identity-core + cookie, роль — колонка; Guid v4; Version + ETag/If-Match; CSRF через SameSite=Strict + Origin; журнал с триггером неизменяемости; plain YAML манифесты) приняты на plan gate; `global.json` на SDK 10.0.400.
+- **Rationale**: В workflow `lite` нет design, поэтому решения принимаются на plan gate. По просьбе пользователя ручной шаг (Docker Desktop) отложен до Task 10 — Task 1–9 выполняются без Docker и PostgreSQL.
+- **Affected docs**: `.asd/sprints/001-project-init-org-structure/plan.md`
+
+- 2026-10-05 — stubs: no open stubs in scope

@@ -1,7 +1,7 @@
 {
   "sprint_id": "001-project-init-org-structure",
   "branch": "sprint/001-project-init-org-structure",
-  "phase": "audit",
+  "phase": "plan",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -46,6 +46,13 @@
       "decision": "accept",
       "reason": "audit.md + amended sprint.md accepted with assumptions",
       "evidence": "audit.md"
+    },
+    {
+      "gate": "plan",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "plan.md 10 tasks 7 waves; Docker deferred to Task 10",
+      "evidence": "plan.md"
     }
   ],
   "task_routing": {},
