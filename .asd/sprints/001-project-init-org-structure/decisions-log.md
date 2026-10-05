@@ -50,3 +50,17 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Спринт включает каркас проекта, подсистему `user-management` и подсистему `org-structure` (AC-1..14). User→Employee 1:1 необязательно; две роли — глобальный админ (без привязки) и пользователь; штатная единица хранит должность текстом (Career Framework вне спринта).
 - **Rationale**: Пользователи привязываются к оргштатке, поэтому подсистемы поставляются вместе (решение пользователя на scope gate); предложение выделить каркас в отдельный спринт отклонено.
 - **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`
+
+## 2026-10-05 — Audit: ответы по C-1…C-4, Q-1, Q-2 и поправка scope
+
+- **Decision**: Схема БД применяется приложением при старте. Ставок, штатных единиц, назначений и типов подразделений нет; у сотрудника поля «подразделение» и «должность» (текст); иерархия подразделений — строгое дерево. Роль «пользователь» видит дерево и ФИО, e-mail, подразделение, должность. События входа журналируются, журнал выделен в подсистему `audit` (AC-15). Это поправка scope: изменены AC-5, 8, 9, 10, 11, 12, 13, 14, добавлен AC-15.
+- **Rationale**: Явные ответы пользователя на вопросы audit; упрощение модели оргштатки. Допущения вне ответов: статусы сотрудника «работает / не работает» блокируют вход; UI покрывает все мутации подразделений и сотрудников; журнал читает администратор через API и экран.
+- **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/audit.md`
+
+- 2026-10-05 — subsystem boundary: `audit` added to sprint scope by user ("Журналирование"); registry write deferred to design-promote
+
+## 2026-10-05 — Audit gate принят
+
+- **Decision**: `audit.md` и поправленный `sprint.md` (AC-1…AC-15) приняты вместе с допущениями: статус сотрудника «работает / не работает», UI всех мутаций, журнал читает администратор через API и экран, `audit` — третья подсистема.
+- **Rationale**: Явное согласие пользователя на audit gate; переход к plan (workflow `lite`, фаза design отсутствует).
+- **Affected docs**: `.asd/sprints/001-project-init-org-structure/audit.md`, `.asd/sprints/001-project-init-org-structure/sprint.md`

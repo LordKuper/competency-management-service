@@ -1,7 +1,7 @@
 {
   "sprint_id": "001-project-init-org-structure",
   "branch": "sprint/001-project-init-org-structure",
-  "phase": "scope",
+  "phase": "audit",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -25,6 +25,27 @@
       "decision": "accept",
       "reason": "sprint.md AC-1..14; 3 strands kept in one sprint",
       "evidence": "sprint.md"
+    },
+    {
+      "gate": "audit contradictions C-1..C-4",
+      "decision_actor": "user",
+      "decision": "resolved",
+      "reason": "decisions-log.md 2026-10-05 audit answers",
+      "evidence": "audit.md Contradictions"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "amend sprint.md",
+      "reason": "AC-5,8,9,10,11,12,13,14 changed; AC-15 added",
+      "evidence": "decisions-log.md 2026-10-05 scope amendment"
+    },
+    {
+      "gate": "audit",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "audit.md + amended sprint.md accepted with assumptions",
+      "evidence": "audit.md"
     }
   ],
   "task_routing": {},
