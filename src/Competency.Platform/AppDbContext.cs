@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ValueGeneration;
 
 namespace Competency.Platform;
 
@@ -17,6 +18,30 @@ public sealed class AppDbContext(
         foreach (var contributor in contributors)
         {
             contributor.Configure(modelBuilder);
+        }
+
+        ApplyEntityBaseConventions(modelBuilder);
+    }
+
+    private static void ApplyEntityBaseConventions(ModelBuilder modelBuilder)
+    {
+        var rootTypes = modelBuilder.Model.GetEntityTypes()
+            .Where(entityType => entityType.BaseType is null)
+            .Select(entityType => entityType.ClrType)
+            .ToList();
+
+        foreach (var clrType in rootTypes)
+        {
+            var entity = modelBuilder.Entity(clrType);
+            if (typeof(IVersioned).IsAssignableFrom(clrType))
+            {
+                entity.Property(nameof(IVersioned.Version)).IsConcurrencyToken();
+            }
+
+            if (typeof(EntityBase).IsAssignableFrom(clrType))
+            {
+                entity.Property(nameof(EntityBase.Id)).HasValueGenerator<GuidValueGenerator>();
+            }
         }
     }
 }

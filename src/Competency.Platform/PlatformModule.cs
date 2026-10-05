@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Competency.Platform;
 
@@ -25,6 +27,7 @@ public static class PlatformModule
 
     /// <summary>
     /// Registers the database context and the readiness check.
+    /// Every <see cref="IInterceptor"/> registered in the container, by the platform or by a module, is attached to the context.
     /// Nothing here connects to the database or reads the connection string until the context is first resolved.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
@@ -32,9 +35,13 @@ public static class PlatformModule
     /// <returns>The same collection, for chaining.</returns>
     public static IServiceCollection AddPlatform(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options => options.UseNpgsql(
-            GetConnectionString(configuration),
-            npgsql => npgsql.SetPostgresVersion(PostgresMajorVersion, 0)));
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton<IInterceptor, EntityStampingInterceptor>();
+        services.AddDbContext<AppDbContext>((provider, options) => options
+            .UseNpgsql(
+                GetConnectionString(configuration),
+                npgsql => npgsql.SetPostgresVersion(PostgresMajorVersion, 0))
+            .AddInterceptors(provider.GetServices<IInterceptor>()));
 
         services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database", tags: [ReadyTag]);
 
