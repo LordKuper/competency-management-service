@@ -1,0 +1,56 @@
+{
+  "sprint_id": "001-project-init-org-structure",
+  "branch": "sprint/001-project-init-org-structure",
+  "phase": "scope",
+  "workflow": "lite",
+  "documents": {
+    "audit": true,
+    "prd": true,
+    "ux_spec": true,
+    "adr": true,
+    "c4": false
+  },
+  "user_gates": "adaptive",
+  "gate_decisions": [
+    {
+      "gate": "workflow choice",
+      "decision_actor": "user",
+      "decision": "lite",
+      "reason": "decisions-log.md 2026-10-05 workflow",
+      "evidence": "chat answer at scope step 1"
+    },
+    {
+      "gate": "scope",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "sprint.md AC-1..14; 3 strands kept in one sprint",
+      "evidence": "sprint.md"
+    }
+  ],
+  "task_routing": {},
+  "skipped_phases": [],
+  "reviews": {
+    "design": {
+      "iteration": 0,
+      "verdicts": {},
+      "latched": {}
+    },
+    "impl": {
+      "wave": 1,
+      "waves": [
+        {
+          "iteration": 0,
+          "verdicts": {},
+          "iteration_heads": {},
+          "latched": {}
+        }
+      ]
+    }
+  },
+  "created_at": "2026-10-05T00:00:00Z",
+  "updated_at": "2026-10-05T00:00:00Z",
+  "review_fixes_pending": null,
+  "test_defects_pending": null,
+  "pr": null,
+  "archived_at": null
+}
