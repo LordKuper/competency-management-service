@@ -25,5 +25,9 @@ public static class OrgStructureModule
     /// </summary>
     /// <param name="endpoints">The endpoint route builder to extend.</param>
     /// <returns>The same builder, for chaining.</returns>
-    public static IEndpointRouteBuilder MapOrgStructureEndpoints(this IEndpointRouteBuilder endpoints) => endpoints;
+    public static IEndpointRouteBuilder MapOrgStructureEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        OrgUnitEndpoints.Map(endpoints);
+        return endpoints;
+    }
 }
