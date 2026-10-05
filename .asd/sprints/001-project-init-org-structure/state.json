@@ -61,6 +61,18 @@
       "tier": "critical",
       "reason": "risk:build-time OpenAPI entry-point, EF/Npgsql/Identity new versions",
       "resolved_model": "sonnet"
+    },
+    "Task 2": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security CSRF/authorization, ETag/If-Match and error contract, public API",
+      "resolved_model": "sonnet"
+    },
+    "Task 3": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:openapi-typescript peer conflict with TypeScript 6 (ERESOLVE spike), generated types from OpenAPI 3.1",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
