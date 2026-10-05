@@ -1,0 +1,23 @@
+{
+  "name": "lite",
+  "phases": ["scope", "audit", "plan", "impl", "impl-test", "impl-review", "design-promote", "retro", "pr"],
+  "next": {
+    "scope": ["audit"],
+    "audit": ["plan"],
+    "plan": ["impl"],
+    "impl": ["impl-test"],
+    "impl-test": ["impl-review", "impl"],
+    "impl-review": ["design-promote", "impl"],
+    "design-promote": ["retro"],
+    "retro": ["pr"],
+    "pr": ["await-merge", "done"]
+  },
+  "reviewers": {
+    "design": [],
+    "impl": ["combined", "external"]
+  },
+  "rollback_reset": {
+    "design": [],
+    "impl": ["scope", "audit", "plan"]
+  }
+}

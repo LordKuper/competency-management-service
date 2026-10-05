@@ -1,0 +1,21 @@
+{
+  "sprint_id": "{{SPRINT_ID}}",
+  "branch": "{{BRANCH}}",
+  "phase": "scope",
+  "workflow": "{{WORKFLOW}}",
+  "documents": { "audit": "{{DOC_AUDIT}}", "prd": "{{DOC_PRD}}", "ux_spec": "{{DOC_UX_SPEC}}", "adr": "{{DOC_ADR}}", "c4": "{{DOC_C4}}" },
+  "user_gates": "{{USER_GATES}}",
+  "gate_decisions": [],
+  "task_routing": {},
+  "skipped_phases": [],
+  "reviews": {
+    "design": { "iteration": 0, "verdicts": {}, "latched": {} },
+    "impl": { "wave": 1, "waves": [ { "iteration": 0, "verdicts": {}, "iteration_heads": {}, "latched": {} } ] }
+  },
+  "created_at": "{{ISO8601}}",
+  "updated_at": "{{ISO8601}}",
+  "review_fixes_pending": null,
+  "test_defects_pending": null,
+  "pr": null,
+  "archived_at": null
+}

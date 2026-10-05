@@ -1,0 +1,22 @@
+{
+  "$comment": "ASD sync engine local state (Stage 0). Committed. Holds last-written content digests for ownership classes that have no inline marker slot: managed-block targets (AGENTS.md, CLAUDE.md) and structural JSON-merge targets (.claude/settings.json, .codex/hooks.json). Keyed by repo-relative target path. Full-file generated targets need no entry here - their digest lives inline in the marker line.",
+  "schema_version": 1,
+  "entries": {
+    "AGENTS.md": {
+      "kind": "managed-block",
+      "content_digest": "sha256:60264d776662369991b7fcd7242704b5cda6c7bf1ffc83cfc06f2c5389acd368"
+    },
+    "CLAUDE.md": {
+      "kind": "managed-block",
+      "content_digest": "sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+    },
+    ".claude/settings.json": {
+      "kind": "json-merge",
+      "content_digest": "sha256:b5f75c794f94d58d0c1115e2ac1e932633fda56a574b2ea9f0b34fd1517e7a20"
+    },
+    ".codex/hooks.json": {
+      "kind": "json-merge",
+      "content_digest": "sha256:d91486d520402a62d8c93631462d7a41d60c461f97fcaf6ee8cbba4caa9a1c92"
+    }
+  }
+}

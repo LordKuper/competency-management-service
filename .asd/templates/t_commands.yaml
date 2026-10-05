@@ -1,0 +1,37 @@
+# commands.yaml — machine-only SSoT for project build/test/run commands
+# read by Dev, Tester, and review agents
+
+test: "{{command to run all tests}}"
+lint: "{{command to run linters}}"
+build: "{{command to build artifacts}}"
+run: "{{command to start application locally}}"
+
+# optional: native affected/changed-test selector (sprint-lifecycle.md "Impacted test set").
+# When present, its result REPLACES the search-derived impacted set; absent -> impacted set falls
+# back to the search-derived definition. Runtime token <BASE_REF> stands for the base git ref/sha
+# the tester diffs against — substituted textually before the command runs. Populated by /asd-init
+# when the detected runner supports one (jest --changedSince, vitest --changed, pytest via a
+# picked/testmon-style plugin); omit entirely for a runner with no such flag — never invent one.
+# test_affected: "{{command to run only tests affected since <BASE_REF>, e.g. jest --changedSince=<BASE_REF>}}"
+
+custom:
+  # optional named commands beyond the required four
+  # examples: format, typecheck, migrate, seed, e2e, coverage, docker-build, deploy-staging
+  {{name}}: "{{command}}"
+
+  # design.md tooling (set by /asd-init per OS).
+  # Convention: linter is always invoked as `designmd-lint`. On Windows, run
+  # `designmd-install` once per session before first `designmd-lint`/`-diff`/`-export`.
+  # On Linux/macOS `designmd-install` is a no-op (npx fetches on demand).
+  #
+  # Windows (run from project root):
+  # designmd-install: "npm install @google/design.md"
+  # designmd-lint:    "node_modules\\.bin\\design.md.cmd lint docs\\ux\\DESIGN.md"
+  # designmd-diff:    "node_modules\\.bin\\design.md.cmd diff"            # path args supplied at call time
+  # designmd-export:  "node_modules\\.bin\\design.md.cmd export --format json-tailwind docs\\ux\\DESIGN.md"
+  #
+  # Linux/macOS:
+  # designmd-install: ""
+  # designmd-lint:    "npx @google/design.md lint docs/ux/DESIGN.md"
+  # designmd-diff:    "npx @google/design.md diff"
+  # designmd-export:  "npx @google/design.md export --format json-tailwind docs/ux/DESIGN.md"

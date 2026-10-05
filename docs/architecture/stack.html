@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<!--
+responsibility:
+  owns: html shell wrap for all asd user-facing html docs
+  excludes: doc content, doc-specific structure
+  delegates_to: fragment templates (t_prd, t_adr, t_ux-spec, t_concept, t_stack, t_design-system, t_accessibility, t_retrospective)
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="ASD workflow">
+  <meta name="doc-type" content="Stack">
+  <meta name="subsystem" content="project">
+  <meta name="sprint-id" content="">
+  <meta name="status" content="approved">
+  <meta name="updated" content="2026-10-05">
+  <meta name="responsibility" content="current tech stack reference (languages, frameworks, runtime, infra); stack/tooling ADRs folded here per sprint-lifecycle.md &quot;Design-promote phase&quot; fold rule when this doc's owns matches the decision's subject">
+  <meta name="provenance" content="original">
+  <meta name="source" content="">
+  <title>Технологический стек — Сервис управления матрицами компетенций и повышением сотрудников</title>
+  <style>
+    :root {
+      --fg: #1a1c1e; --bg: #fff; --muted: #5b6770; --accent: #0066cc;
+      --code-bg: #f4f6f8; --border: #d0d7de; --max: 1040px;
+      --card-bg: #fafbfc;
+      --ok: #1a7f37; --warn: #b35900; --danger: #cf222e; --info: #0969da; --neutral: #5b6770;
+      --ok-tint: rgba(31,136,61,0.07); --danger-tint: rgba(207,34,46,0.06);
+      --chip-must-bg: #ffebe9; --chip-must-fg: #cf222e;
+      --chip-should-bg: #fff5e1; --chip-should-fg: #9a6700;
+      --chip-may-bg: #ddf4ff; --chip-may-fg: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e6e6e6; --bg: #0e1116; --muted: #9aa4ad; --code-bg: #161b22; --border: #30363d;
+        --card-bg: #161b22;
+        --accent: #58a6ff; --ok: #3fb950; --warn: #d29922; --danger: #f85149; --info: #79c0ff; --neutral: #8b949e;
+        --ok-tint: rgba(63,185,80,0.12); --danger-tint: rgba(248,81,73,0.10);
+        --chip-must-bg: #3b1416; --chip-must-fg: #ff7b72;
+        --chip-should-bg: #2d2410; --chip-should-fg: #e3b341;
+        --chip-may-bg: #0d2538; --chip-may-fg: #58a6ff;
+      }
+    }
+    html, body { margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100vh; }
+    .layout:has(> nav.toc) { grid-template-columns: 260px minmax(0, 1fr); }
+    nav.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 12px; border-right: 1px solid var(--border); font-size: 0.85rem; }
+    nav.toc .toc-title { font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
+    nav.toc ol { list-style: none; margin: 0; padding: 0; }
+    nav.toc li { margin: 2px 0; }
+    nav.toc a { color: var(--fg); text-decoration: none; display: block; padding: 3px 6px; border-radius: 4px; }
+    nav.toc a:hover { background: var(--code-bg); color: var(--accent); }
+    @media (max-width: 880px) { nav.toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } }
+    @media print { nav.toc { display: none; } }
+    .content { min-width: 0; }
+    header, main, footer { max-width: var(--max); margin: 0 auto; padding: 16px 24px; }
+    header { border-bottom: 1px solid var(--border); }
+    header h1 { margin: 4px 0 8px; font-size: 1.9rem; }
+    .badges span { display: inline-block; padding: 2px 8px; margin-right: 6px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--bg); }
+    .badges .provenance-reverse-engineered, .badges .provenance-migrated { color: var(--warn); border-color: var(--warn); }
+    .badges .status-draft       { color: var(--neutral); border-color: var(--neutral); }
+    .badges .status-in-review   { color: var(--warn);    border-color: var(--warn); }
+    .badges .status-approved    { color: var(--ok);      border-color: var(--ok); }
+    .badges .status-locked      { color: var(--info);    border-color: var(--info); }
+    .stats { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+    .stats .chip { display: inline-block; padding: 1px 8px; margin-right: 6px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); }
+    @media (max-width: 880px) {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+    }
+    h2, h3, h4 { line-height: 1.25; margin-top: 1.6em; }
+    h2 { border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    a { color: var(--accent); }
+    code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: var(--code-bg); padding: 12px; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--code-bg); position: sticky; top: 0; z-index: 1; }
+    tbody tr:nth-child(even) td { background: var(--card-bg); }
+    blockquote { border-left: 3px solid var(--accent); margin: 0; padding: 4px 14px; color: var(--muted); }
+    .mermaid { background: var(--bg); text-align: center; margin: 16px 0; }
+    footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+    /* fragment-shared utilities */
+    .lede { font-size: 1.08rem; color: var(--fg); }
+    section.hero { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+    section.callout { border-left: 4px solid var(--border); padding: 8px 14px; background: var(--card-bg); border-radius: 4px; }
+    section.callout.warn { border-left-color: var(--warn); }
+    section.callout.warn h2::before { content: "⊘ "; color: var(--warn); }
+
+    ol.goal-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    ol.goal-grid li { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; display: flex; gap: 10px; }
+    ol.goal-grid .num { flex: 0 0 auto; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    ol.goal-grid p { margin: 0; }
+
+    details.role-group { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; background: var(--card-bg); }
+    details.role-group > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+    details.role-group > summary .count { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+    details.role-group ul.stories { margin: 0; padding: 4px 16px 12px 28px; }
+    ul.stories li { margin: 4px 0; }
+    ul.stories b { color: var(--accent); font-weight: 600; }
+
+    table.ac-table td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .chip.area { background: var(--code-bg); color: var(--muted); }
+    .chip.prio-must   { background: var(--chip-must-bg);   color: var(--chip-must-fg); border-color: var(--chip-must-fg); }
+    .chip.prio-should { background: var(--chip-should-bg); color: var(--chip-should-fg); border-color: var(--chip-should-fg); }
+    .chip.prio-may    { background: var(--chip-may-bg);    color: var(--chip-may-fg); border-color: var(--chip-may-fg); }
+
+    ul.non-goals { margin: 0; padding-left: 22px; }
+    ul.non-goals li::marker { content: "⊘  "; color: var(--warn); }
+
+    /* definition-list pattern: Purpose / Entry / Exit / Notes */
+    dl.def-list { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0; }
+    dl.def-list dt { font-weight: 600; color: var(--muted); }
+    dl.def-list dd { margin: 0; }
+
+    /* ADR */
+    .adr { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    .adr > .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+    .adr h2 { margin-top: 0.4em; border-bottom: none; font-size: 1.3rem; }
+    .adr h3 { margin-top: 1.1em; border-bottom: none; font-size: 1.15rem; }
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .status-proposed   { color: var(--warn);    border-color: var(--warn); }
+    .status-accepted   { color: var(--ok);      border-color: var(--ok); }
+    .consequences { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .consequences .pros, .consequences .cons { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+    .consequences .pros { background: var(--ok-tint); border-left: 3px solid var(--ok); }
+    .consequences .cons { background: var(--danger-tint); border-left: 3px solid var(--danger); }
+    .consequences h4 { margin: 0 0 4px; font-size: 1rem; color: var(--muted); }
+    .consequences ul { margin: 0; padding-left: 20px; }
+    @media (max-width: 720px) { .consequences { grid-template-columns: 1fr; } }
+    ul.alt-list li { margin: 4px 0; }
+    ul.alt-list li strong { color: var(--fg); }
+
+    /* UX-spec mockup */
+    article.mockup { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    article.mockup > h3 { margin-top: 0; }
+    .mockup-preview { background: var(--bg); border: 1px dashed var(--border); border-radius: 6px; padding: 16px; margin: 10px 0; min-height: 80px; }
+    .screen-meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 6px 0 10px; font-size: 0.92rem; }
+    .screen-meta b { color: var(--muted); font-weight: 600; }
+
+    /* Concept */
+    .pillar-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .pillar-grid li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; }
+    .pillar-grid li strong { display: block; margin-bottom: 4px; color: var(--accent); }
+    .anti-pillar-grid li { border-left-color: var(--danger); }
+    .anti-pillar-grid li strong { color: var(--danger); }
+    ul.user-segments { list-style: none; padding: 0; }
+    ul.user-segments li { padding: 8px 12px; margin: 6px 0; border-left: 3px solid var(--accent); background: var(--card-bg); border-radius: 4px; }
+    ul.user-segments li b { color: var(--accent); }
+    ul.metrics li { margin: 4px 0; }
+    ul.metrics li .target { float: right; color: var(--ok); font-variant-numeric: tabular-nums; }
+
+    /* Stack */
+    table.tech-table .ver { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .principle-list { list-style: none; padding: 0; }
+    .principle-list li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    .principle-list li strong { color: var(--info); }
+
+    /* Accessibility */
+    section.a11y-domain { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; margin: 14px 0; }
+    section.a11y-domain h2 { border-bottom: 1px dashed var(--border); }
+    .limitation { background: var(--chip-should-bg); border-left: 3px solid var(--warn); padding: 8px 12px; margin: 6px 0; border-radius: 4px; }
+    .limitation b { color: var(--warn); }
+
+    /* Design system */
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .swatch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+    .swatch .chip-color { height: 80px; border-radius: 4px; border: 1px solid var(--border); }
+    .swatch code { font-size: 0.78rem; }
+    .swatch small { color: var(--muted); }
+    .spacing-scale { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); }
+    .spacing-scale > div { background: var(--accent); width: 24px; border-radius: 2px 2px 0 0; }
+    article.component-preview { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 14px 0; background: var(--card-bg); }
+    .preview { padding: 16px; border: 1px dashed var(--border); border-radius: 6px; background: var(--bg); }
+
+    @media print {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+      a { color: inherit; text-decoration: none; }
+      footer { page-break-before: always; }
+      details.role-group[open] > summary { list-style: none; }
+      details.role-group { break-inside: avoid; }
+      tr, li { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Содержание</div>
+      <ol>
+        <li><a href="#languages">Языки</a></li>
+        <li><a href="#frameworks">Фреймворки / библиотеки</a></li>
+        <li><a href="#runtime-infrastructure">Рантайм / инфраструктура</a></li>
+        <li><a href="#tooling">Инструменты</a></li>
+        <li><a href="#constraints">Ограничения и открытые вопросы</a></li>
+        <li><a href="#architecture-principles">Архитектурные принципы</a></li>
+        <li><a href="#considered">Рассмотрено / не принято</a></li>
+      </ol>
+    </nav>
+    <div class="content">
+      <header>
+        <div class="badges">
+          <span>Stack</span>
+          <span>project</span>
+          <span class="status-approved">approved</span>
+        </div>
+        <h1>Технологический стек — Сервис управления матрицами компетенций и повышением сотрудников</h1>
+        <div class="stats">3 языка · 26 фреймворков/библиотек · 9 компонентов · updated 2026-10-05</div>
+      </header>
+      <main>
+<!--
+responsibility:
+  owns: current tech stack reference (languages, frameworks, runtime, infra); stack/tooling ADRs folded here per sprint-lifecycle.md "Design-promote phase" fold rule when this doc's owns matches the decision's subject
+  excludes: build commands, ADR rationale/process for decisions owned elsewhere, deployment ops
+  delegates_to: commands.yaml (commands), runbooks (ops)
+provenance: original
+source: ""
+-->
+
+<blockquote>Версии верифицированы 2026-10-05 по первичным реестрам (npm, NuGet, Docker Hub, MCR, GitHub releases, dotnet release metadata). Подробности API и конвенции каждой технологии — в <code>docs/architecture/tech-reference/</code> (по одному версионному документу на технологию; у внешних/организационных компонентов — Kubernetes, PersistentVolumeClaim, SMTP relay — документа нет). Версии зафиксированы точно; обновление — только через спринт.</blockquote>
+
+<section id="languages">
+  <h2>Языки</h2>
+  <table class="tech-table">
+    <thead><tr><th>Язык</th><th>Версия</th><th>Где используется</th></tr></thead>
+    <tbody>
+      <tr><td><strong>C#</strong></td><td class="ver">14 (SDK 10.0.401)</td><td><span class="chip area">backend</span> API, фоновые задачи, экспорт, миграции, тесты. Единый язык для API и воркера; платформа .NET 10 — LTS до 2028-11-14.</td></tr>
+      <tr><td><strong>TypeScript</strong></td><td class="ver">6.0.2</td><td><span class="chip area">frontend</span> React SPA, режим <code>strict</code>. Закреплён на 6.0.x: у 7.0.x (native) нет программного API, на который опираются кодогенераторы и линтеры (см. «Рассмотрено»). Устанавливать строго с точной версией: <code>npm i -D -E typescript@6.0.2</code> — dist-tag <code>latest</code> в npm сейчас указывает на 7.x (7.0.2), и <code>npm i typescript</code> без версии поставит его.</td></tr>
+      <tr><td><strong>SQL</strong></td><td class="ver">PostgreSQL 18.6</td><td><span class="chip area">data</span> миграции EF Core, полнотекстовый поиск (<code>russian</code>) и <code>pg_trgm</code>, очереди на <code>SKIP LOCKED</code>; сырой SQL — точечно, остальное через EF Core.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="frameworks">
+  <h2>Фреймворки / библиотеки</h2>
+
+  <h3>Backend</h3>
+  <table class="tech-table">
+    <thead><tr><th>Название</th><th>Версия</th><th>Назначение</th></tr></thead>
+    <tbody>
+      <tr><td><strong>ASP.NET Core (Minimal API, Kestrel)</strong></td><td class="ver">10.0.12</td><td>REST <code>/api/v1</code>; раздаёт статику SPA. Встроенное вместо библиотек: валидация (<code>AddValidation()</code>, DataAnnotations), health checks (<code>AddHealthChecks()</code>, пробы Kubernetes; проверка доступности БД — собственный <code>IHealthCheck</code> на <code>Database.CanConnectAsync</code>: готовая <code>AddDbContextCheck</code> живёт в отдельном пакете <code>Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore</code>, который не добавляется), JSON-логи в stdout, DI/Options, <code>BackgroundService</code>. В .NET 10 неаутентифицированные запросы к API-эндпойнтам с cookie-аутентификацией получают 401/403, а не redirect — SPA обрабатывает 401 сама. Без Mediator/AutoMapper: прямые обработчики и явный маппинг.</td></tr>
+      <tr><td><strong>Microsoft.AspNetCore.OpenApi</strong></td><td class="ver">10.0.12</td><td>OpenAPI 3.1 (умолчание .NET 10); документ по умолчанию — JSON. YAML доступен только runtime-эндпойнтом (<code>MapOpenApi("/openapi/{documentName}.yaml")</code>); при сборке .NET 10 генерирует только JSON (YAML при сборке не поддерживается). Генерацию при сборке выполняет отдельный пакет Microsoft.Extensions.ApiDescription.Server (следующая строка); результат — <code>openapi.json</code> как контракт, из которого openapi-typescript строит TS-типы. Тянет Microsoft.OpenApi [2.12.0, 3.0.0).</td></tr>
+      <tr><td><strong>Microsoft.Extensions.ApiDescription.Server</strong></td><td class="ver">10.0.12</td><td>Генерация документа OpenAPI при <code>dotnet build</code> (MSBuild-задачи; dev-зависимость, <code>PrivateAssets=all</code>; MIT; NuGet-зависимостей нет). Формат результата — только JSON (<code>{ProjectName}.json</code>); каталог — свойство <code>OpenApiDocumentsDirectory</code>. Генерация запускает entry point приложения с заглушкой сервера, поэтому выполняется весь код старта (DI, конфигурация): старт не должен обращаться к БД, строкам подключения и миграциям (обход — проверка entry assembly <code>GetDocument.Insider</code>); сборка не должна требовать доступа к PostgreSQL.</td></tr>
+      <tr><td><strong>Microsoft.AspNetCore.Identity.EntityFrameworkCore</strong></td><td class="ver">10.0.12</td><td>Локальная аутентификация: учётные записи ведёт сам сервис, корпоративный IdP не используется (Q2 решён). ASP.NET Core Identity — <code>UserManager</code>/<code>SignInManager</code>, встроенный <code>PasswordHasher</code> (PBKDF2, HMAC-SHA512), блокировка при переборе пароля (lockout), cookie-сессия; хранилище на EF Core в PostgreSQL (MIT; зависимости по nuspec — только Microsoft.Extensions.Identity.Stores 10.0.12 и Microsoft.EntityFrameworkCore.Relational 10.0.12). Базовый пакет Microsoft.AspNetCore.Identity входит в shared framework ASP.NET Core. Razor-UI Identity не используется (экран входа — в SPA); способ подключения (<code>AddIdentityCore</code> / Identity API endpoints) и схема таблиц — в design. Сторонних auth-библиотек и библиотек OIDC/SAML/Kerberos не добавляется (см. «Рассмотрено / не принято»).</td></tr>
+      <tr><td><strong>Entity Framework Core</strong></td><td class="ver">10.0.12</td><td>ORM и миграции (LTS до 2028-11-10). <code>SaveChangesInterceptor</code> — append-only аудит; явный <code>int Version</code> + ETag/<code>If-Match</code> — оптимистичная блокировка. Логирование значений параметров выключено (PII).</td></tr>
+      <tr><td><strong>Microsoft.EntityFrameworkCore.Design</strong></td><td class="ver">10.0.12</td><td>Design-time пакет для <code>dotnet-ef</code> (dev-зависимость, <code>PrivateAssets=all</code>; MIT); версия строго равна версии EF Core. Нужен проекту запуска (startup project) миграций. Его design-time зависимости (Roslyn 5.0.0, Humanizer.Core, Mono.TextTemplating, Newtonsoft.Json) — только для инструмента миграций.</td></tr>
+      <tr><td><strong>Npgsql.EntityFrameworkCore.PostgreSQL</strong></td><td class="ver">10.0.3</td><td>Провайдер EF Core для PostgreSQL (транзитивно Npgsql 10.0.3, лицензия PostgreSQL); маппинг FTS <code>russian</code> и <code>pg_trgm</code>.</td></tr>
+      <tr><td><strong>ClosedXML</strong></td><td class="ver">0.105.1</td><td>Экспорт XLSX (MIT). Транзитивно: DocumentFormat.OpenXml и SixLabors.Fonts [1.0.0, 3.0.0) — ожидаемо резолвится в 1.x (Apache-2.0); проверять в lock-файле, прямых ссылок на SixLabors.* не добавлять.</td></tr>
+      <tr><td><strong>PDFsharp-MigraDoc</strong></td><td class="ver">6.2.4</td><td>Экспорт PDF (PDFsharp + MigraDoc, MIT). В контейнере обязателен собственный <code>IFontResolver</code> и кириллические шрифты, поставляемые в образе <code>app</code>.</td></tr>
+      <tr><td><strong>CsvHelper</strong></td><td class="ver">33.1.0</td><td>Экспорт CSV (лицензия MS-PL OR Apache-2.0); на net8+ без зависимостей.</td></tr>
+      <tr><td><strong>MailKit</strong></td><td class="ver">4.18.1</td><td>SMTP-клиент для уведомлений через корпоративный relay (MIT; MimeKit 4.18.1 транзитивно).</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Frontend</h3>
+  <table class="tech-table">
+    <thead><tr><th>Название</th><th>Версия</th><th>Назначение</th></tr></thead>
+    <tbody>
+      <tr><td><strong>React + react-dom</strong></td><td class="ver">19.3.0</td><td>UI SPA (MIT). Раздаётся статикой тем же Kestrel; Node нужен только на этапе сборки.</td></tr>
+      <tr><td><strong>react-router</strong></td><td class="ver">8.4.0</td><td>Клиентская маршрутизация, Data mode (<code>createBrowserRouter</code>) без SSR (MIT). Требует React ≥19.2.7; для сборки — Node ≥22.22.0.</td></tr>
+      <tr><td><strong>@tanstack/react-query</strong></td><td class="ver">5.104.1</td><td>Server-state: кэш, инвалидация после мутаций, повторы; передача ETag/<code>If-Match</code> (MIT).</td></tr>
+      <tr><td><strong>antd (Ant Design)</strong></td><td class="ver">6.6.5</td><td>UI-kit (MIT): Table, Form (правила — только UX, истина — сервер), DatePicker, Tree/TreeSelect, Upload; локаль <code>antd/locale/ru_RU</code>; иконки <code>@ant-design/icons</code> — встроенные SVG, шрифты системные, CDN не требуется. Один пакет закрывает таблицы, формы, даты и i18n — без react-hook-form/zod и отдельного data-grid. Только современные браузеры (CSS variables). Не использовать <code>createFromIconfontCN</code> (внешний scriptUrl).</td></tr>
+      <tr><td><strong>openapi-fetch</strong></td><td class="ver">0.17.0</td><td>Типизированный fetch-клиент поверх сгенерированных типов (MIT; единственная рантайм-зависимость — openapi-typescript-helpers).</td></tr>
+      <tr><td><strong>@types/react</strong></td><td class="ver">19.3.0</td><td>Типы React для TypeScript (MIT; dev-зависимость): React 19 собственных типов не поставляет. Версия — линия React 19.3 (dist-tag <code>latest</code> = 19.3.0); ставить точной версией.</td></tr>
+      <tr><td><strong>@types/react-dom</strong></td><td class="ver">19.3.0</td><td>Типы react-dom (MIT; dev-зависимость); peer <code>@types/react ^19.3.0</code> — версии ставятся парой.</td></tr>
+      <tr><td><strong>@types/node</strong></td><td class="ver">24.19.1</td><td>Типы Node для <code>vite.config.ts</code>, Vitest и скриптов сборки (MIT; dev-зависимость). Берётся линия 24.x (Node 24 LTS), а не <code>latest</code> (сейчас 26.x); 24.19.1 — последняя на линии 24. В TypeScript 6 глобальные типы (<code>node</code>, <code>vite/client</code>) перечисляются в <code>tsconfig</code> (<code>types</code>) явно.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Тестирование</h3>
+  <table class="tech-table">
+    <thead><tr><th>Название</th><th>Версия</th><th>Назначение</th></tr></thead>
+    <tbody>
+      <tr><td><strong>xunit.v3</strong></td><td class="ver">4.0.1</td><td>Тест-фреймворк backend (Apache-2.0), Microsoft Testing Platform v2: тест-проекты — исполняемые (<code>OutputType Exe</code>); запуск через <code>dotnet test</code> на .NET 10 SDK включается в <code>global.json</code>.</td></tr>
+      <tr><td><strong>NSubstitute</strong></td><td class="ver">6.2.0</td><td>Моки (BSD-3-Clause; Castle.Core 5.1.1 транзитивно).</td></tr>
+      <tr><td><strong>AwesomeAssertions</strong></td><td class="ver">9.6.0</td><td>Assertions (Apache-2.0), форк FluentAssertions 7 — без лицензионных ограничений FluentAssertions ≥8.</td></tr>
+      <tr><td><strong>Testcontainers.PostgreSql</strong></td><td class="ver">4.15.0</td><td>Интеграционные тесты на реальном PostgreSQL 18.6 (MIT). Нужен Docker daemon на CI; CI/сборочный хост находится вне контура (с интернетом), образ postgres берётся оттуда.</td></tr>
+      <tr><td><strong>Vitest</strong></td><td class="ver">5.0.3</td><td>Unit/component-тесты frontend (MIT); совместим с Vite ^6.4 || ^7 || ^8, Node ^22.12 || ^24 || ≥26.</td></tr>
+      <tr><td><strong>@testing-library/react</strong></td><td class="ver">16.3.3</td><td>Component-тесты React (MIT) вместе с @testing-library/dom 10.4.2, @testing-library/user-event 14.6.7, @testing-library/jest-dom 7.0.1.</td></tr>
+      <tr><td><strong>jsdom</strong></td><td class="ver">30.1.2</td><td>DOM-окружение для Vitest (MIT); Node ^22.22.2 || ^24.15.0 || ≥26.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="runtime-infrastructure">
+  <h2>Рантайм / инфраструктура</h2>
+  <p>Топология: платформа — <strong>Kubernetes</strong> (решение пользователя, Q9); два workload'а — <code>app</code> (ASP.NET Core 10, раздаёт статику React SPA; один экземпляр на старте) и <code>db</code> (официальный образ PostgreSQL без доработок; stateful-нагрузка с одной репликой и PersistentVolumeClaim). Тип ресурса для <code>db</code> (StatefulSet или Deployment), Service и Ingress — в design. Состояние и перезапуск обеспечивает Kubernetes: проверки готовности и живости — пробы (readiness/liveness/startup) вместо Docker healthcheck; конфигурация и секреты — ConfigMap и Secret; перезапуск при сбое — политика контроллера. Порядок запуска <code>app</code>/<code>db</code> Kubernetes не гарантирует — <code>app</code> ждёт готовности БД (повторы подключения/проба), детали — в design. Строка подключения <code>app → db</code> настраивается (внешняя БД — позже, без пересборки). Процесс-супервизор внутри контейнера не нужен (см. «Рассмотрено / не принято»).</p>
+  <p><strong>Доставка и патчи (процесс, не технология).</strong> Образы собираются вне контура на машине с интернетом и переносятся в контур готовыми; манифесты Kubernetes доставляются вместе с образами (формат — plain YAML, Kustomize или Helm — выбирается в design и в стек не входит). Образы попадают на узлы кластера двумя возможными путями: через внутренний container registry (push → pull с узлов) либо импортом tar-архивов на узлы (<code>docker save</code>/<code>podman save</code> → перенос → импорт средствами container runtime узла; для containerd — <code>ctr -n k8s.io images import</code>); выбор зависит от наличия registry в контуре (открытый вопрос Q11; подробности — в «Ограничениях»). Регламент обновления: пересборка → сканирование (уязвимости + SBOM) → перенос → развёртывание (применение манифестов с новыми digest). Он привязан к циклу патчей: .NET — ежемесячно, PostgreSQL — минорные релизы не реже раза в квартал; каждый цикл даёт новые digest образов, которые фиксируются в манифестах. Версии меняются только через спринт.</p>
+  <table class="tech-table">
+    <thead><tr><th>Компонент</th><th>Версия</th><th>Роль</th></tr></thead>
+    <tbody>
+      <tr><td><strong>ASP.NET Core runtime — образ <code>app</code></strong></td><td class="ver">10.0.12 (<code>mcr.microsoft.com/dotnet/aspnet:10.0.12-noble</code>)</td><td><span class="chip area">runtime</span> Framework-dependent publish поверх официального образа (Ubuntu 24.04; ICU 74, OpenSSL 3, tzdata; непривилегированный пользователь <code>app</code>, UID 1654, включается <code>USER $APP_UID</code>; порт 8080 по умолчанию). Выбран вместо self-contained: патчи рантайма приходят с базовым образом (пересборка вне контура и доставка — см. «Доставка и патчи»), runtime pack не нужен. LTS до 2028-11-14, патчи обязательны; закрепление по digest.</td></tr>
+      <tr><td><strong>Kestrel</strong></td><td class="ver">10.0.12 (в составе ASP.NET Core)</td><td><span class="chip area">web-сервер</span> API + статика SPA (порт 8080 внутри контейнера); TLS-терминация — открытый вопрос Q8.</td></tr>
+      <tr><td><strong>PostgreSQL</strong></td><td class="ver">18.6</td><td><span class="chip area">СУБД</span> Отдельная stateful-нагрузка <code>db</code> (одна реплика, PersistentVolumeClaim); <code>app</code> подключается по настраиваемой строке подключения (путь к внешней БД позже). Поддержка 18.x до 2030-11-14. FTS <code>russian</code>, <code>pg_trgm</code>, очереди <code>SKIP LOCKED</code>.</td></tr>
+      <tr><td><strong>Образ <code>db</code> — postgres:18.6-trixie</strong></td><td class="ver">18.6 / Debian 13</td><td><span class="chip area">образ</span> Официальный образ без изменений (тег <code>18.6</code> — синоним <code>18.6-trixie</code>; закрепление по digest). У образов PG 18 <code>PGDATA=/var/lib/postgresql/18/docker</code>, объявленный VOLUME — <code>/var/lib/postgresql</code> (изменено относительно ≤17): PersistentVolumeClaim монтируется <strong>только</strong> в <code>/var/lib/postgresql</code> (данные кластера — в подкаталоге PGDATA, а не в корне тома); <code>PGDATA</code> не переопределять. При монтировании тома в любой другой путь (в том числе в прежний <code>/var/lib/postgresql/data</code> или в <code>/data</code>) <code>PGDATA</code> остаётся <code>/var/lib/postgresql/18/docker</code>, и данные кластера окажутся вне PVC — в записываемом слое контейнера, то есть пропадут при пересоздании pod'а. Владелец тома и <code>securityContext</code>/<code>fsGroup</code> — в design. Образ задаёт <code>STOPSIGNAL SIGINT</code>, локаль только <code>en_US.utf8</code> — проверки в design (см. «Ограничения и открытые вопросы»).</td></tr>
+      <tr><td><strong>Node.js (только build-стадия)</strong></td><td class="ver">24.21.0</td><td><span class="chip area">build</span> Сборка SPA (образ <code>node:24.21.0-trixie-slim</code>); в образе <code>app</code> Node нет. LTS-линия 24: поддержка до 2028-04-30 (Maintenance с 2026-10-20); Node 26 станет LTS 2026-10-28 — возможный переход позже.</td></tr>
+      <tr><td><strong>.NET SDK (только build-стадия)</strong></td><td class="ver">10.0.401</td><td><span class="chip area">build</span> Сборка и publish backend (образ <code>mcr.microsoft.com/dotnet/sdk:10.0.401</code>).</td></tr>
+      <tr><td><strong>Постоянные тома (PersistentVolumeClaim)</strong></td><td class="ver">—</td><td><span class="chip area">storage</span> PVC у stateful-нагрузок: данные PostgreSQL у <code>db</code> (монтаж только в <code>/var/lib/postgresql</code>); вложения на файловой системе за <code>IBlobStore</code> (абстракция — на Complication Approval в design) и резервные копии — отдельные PVC. StorageClass, режим доступа (RWO/RWX) и ёмкость определяет кластер организации (Q5). Шифрование данных в покое — на уровне инфраструктуры (шифрование диска/тома/СХД кластера, Q4 решён); приложение данные в БД не шифрует. HA не задана. Раскладка — в design (Q5).</td></tr>
+      <tr><td><strong>Kubernetes (платформа запуска, внешняя)</strong></td><td class="ver">определяет организация</td><td><span class="chip area">платформа</span> Запуск <code>app</code> и <code>db</code> как workload'ов; Secrets/ConfigMaps, пробы, перезапуск, PVC (решение пользователя, Q9). Версия кластера, container runtime, StorageClass и Ingress в контуре не заданы (доставка образов — Q11; TLS — Q8); манифесты поставляются вместе с образами.</td></tr>
+      <tr><td><strong>Корпоративный SMTP relay (внешний)</strong></td><td class="ver">определяет организация</td><td><span class="chip area">внешняя зависимость</span> Отправка e-mail через MailKit (открытый вопрос Q8).</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="tooling">
+  <h2>Инструменты</h2>
+  <table class="tech-table">
+    <thead><tr><th>Инструмент</th><th>Назначение</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Vite 8.3.2 + @vitejs/plugin-react 6.1.2</strong></td><td>Сборка SPA (Rolldown) и dev-server с прокси на Kestrel (MIT). Vite требует Node ^20.19 || ≥22.12. Целевые браузеры по умолчанию (<code>build.target</code> = <code>baseline-widely-available</code>): Chrome/Edge 111+, Firefox 114+, Safari 16.4+ — соответствие браузеров контура подтверждается (см. «Ограничения и открытые вопросы»).</td></tr>
+      <tr><td><strong>TypeScript compiler (tsc) 6.0.2</strong></td><td>Проверка типов frontend (Apache-2.0). Тот же пакет <code>typescript</code>, что в «Языках»: ставится только с точной версией (<code>npm i -D -E typescript@6.0.2</code>), иначе npm возьмёт <code>latest</code> — 7.x. Типы окружения — <code>@types/react</code>, <code>@types/react-dom</code>, <code>@types/node</code> (раздел «Frontend»).</td></tr>
+      <tr><td><strong>openapi-typescript 7.13.0</strong></td><td>Генерация TS-типов из JSON-документа OpenAPI, который строит backend при сборке (Microsoft.Extensions.ApiDescription.Server; MIT; OpenAPI 3.0/3.1). <strong>Известный риск:</strong> peer-зависимость объявлена как <code>typescript ^5.x</code>, с TypeScript 6.0.2 <code>npm install</code> завершается конфликтом ERESOLVE. Предпочтительный обход — точечный <code>overrides</code> в корневом <code>package.json</code> (проверяется spike в реализации), а не <code>legacy-peer-deps</code> (отключает peer-контроль всего дерева зависимостей); запасной вариант — @hey-api/openapi-ts 0.99.0 (см. «Рассмотрено»).</td></tr>
+      <tr><td><strong>Biome 2.5.15</strong></td><td>Lint и форматирование frontend (MIT OR Apache-2.0); один нативный бинарник, не зависит от TypeScript API.</td></tr>
+      <tr><td><strong>npm (из поставки Node 24.21.0) + package-lock.json</strong></td><td>Установка зависимостей строго по lock-файлу (<code>npm ci</code>, <code>ignore-scripts=true</code>) на сборочном хосте вне контура — с доступом к публичному реестру; внутреннее зеркало не нужно (Q6 решён).</td></tr>
+      <tr><td><strong>dotnet-ef 10.0.12</strong></td><td>Миграции EF Core (генерация и применение). Требует в проекте запуска пакет Microsoft.EntityFrameworkCore.Design 10.0.12 (раздел «Backend»).</td></tr>
+      <tr><td><strong>Docker / OCI multi-stage сборка</strong></td><td>Две сборочные стадии (Node → SPA, .NET SDK → publish) и итоговый образ <code>app</code> на <code>aspnet:10.0.12-noble</code>; образ <code>db</code> — официальный postgres:18.6-trixie, не пересобирается (только закрепляется по digest, сканируется и доставляется). Сборка выполняется вне контура на машине с интернетом, в контур доставляются готовые образы (см. «Ограничения»); целевая архитектура — linux/amd64 (подтверждено, Q10); версия и ОС сборочного хоста определяются командой/организацией.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="constraints" class="callout warn">
+  <h2>Ограничения и открытые вопросы</h2>
+  <ul>
+    <li>Нет интернета, CDN и SaaS внутри контура: запущенный сервис ничего не скачивает и не обращается во внешние сети; шрифты, иконки, образы и документация доставляются в контур готовыми. Сборка выполняется вне контура (см. следующий пункт). Источник ограничения — решение пользователя.</li>
+    <li>Только OSS и нулевая стоимость. Допустимые лицензии: MIT, Apache-2.0, BSD, ISC, PostgreSQL, MS-PL. Запрещены AGPL/GPL/LGPL, коммерческие и source-available лицензии, а также лицензии с регистрацией ключа (см. «Рассмотрено / не принято»).</li>
+    <li>Кадровая и оценочная информация (PII/HR): минимум зависимостей (supply chain); значения параметров SQL и персональные данные не попадают в логи; секреты (учётные данные SMTP, строка подключения, ключи DataProtection) — только из Kubernetes Secrets (переменные окружения или смонтированные файлы), несекретная конфигурация — из ConfigMap; не в образе и не в репозитории. Пароли пользователей хранятся только в виде хэшей (PasswordHasher) и в логи не попадают. Шифрование данных в покое обеспечивается на уровне инфраструктуры (шифрование диска/тома/СХД кластера); приложение чувствительные данные в БД не шифрует; DataProtection используется только для ключей cookie-сессии и antiforgery; сертифицированная криптография (ГОСТ) не заявлена (Q4 решён).</li>
+    <li>Аутентификация — локальная: корпоративный IdP не используется (решение пользователя, окончательное; Q2). Учётные записи и пароли ведёт сам сервис (ASP.NET Core Identity, хранилище — PostgreSQL); OIDC/SAML/Kerberos не подключаются; политика паролей и сопутствующие вопросы — в design (см. открытые вопросы).</li>
+    <li>Платформа запуска — Kubernetes (решение пользователя, окончательное; Q9). Топология: два workload'а (<code>app</code> + <code>db</code>); <code>db</code> — stateful-нагрузка с PersistentVolumeClaim (данные PostgreSQL), вложения и резервные копии — отдельные PVC; конфигурация — ConfigMap/Secret; перезапуск и пробы состояния обеспечивает Kubernetes. Решение о двух контейнерах заменило исходное пожелание «один контейнер на весь сервис». Масштабирование и HA не заданы (см. открытые вопросы).</li>
+    <li>Платформа: .NET 10 LTS (до 2028-11-14); версии закреплены точно, обновления патчей — через спринт.</li>
+    <li>Frontend: Node используется только при сборке (multi-stage); SPA — статические файлы Kestrel. TypeScript закреплён на 6.0.x до появления программного API у 7.x (по анонсу — в 7.1; сроки не гарантированы); установка — только точной версией (<code>npm i -D -E typescript@6.0.2</code>), так как dist-tag <code>latest</code> указывает на 7.x. Контракт API — JSON-документ OpenAPI, строящийся при сборке backend (YAML при сборке .NET 10 не поддерживается); типы SPA генерируются из него.</li>
+    <li><strong>Сборка вне контура, в контур доставляются готовые образы</strong> (решение пользователя, окончательное). Образы собираются на машине с интернетом вне изолированной сети; в контур переносятся только готовые артефакты:
+      <ul>
+        <li>доставка на узлы Kubernetes — через внутренний container registry, если он есть, либо импортом tar-архивов (<code>docker save</code>/<code>podman save</code> → перенос → импорт на узлах; для containerd — <code>ctr -n k8s.io images import</code>); наличие registry — открытый вопрос Q11; манифесты Kubernetes доставляются вместе с образами;</li>
+        <li>целевая архитектура образов — linux/amd64 (подтверждено пользователем, Q10); multi-arch сборка не требуется;</li>
+        <li>образы (<code>app</code>, <code>db</code>) и базовые образы закрепляются по digest (<code>@sha256:…</code>), а не по тегу;</li>
+        <li>до переноса — сканирование уязвимостей и SBOM для каждого образа (по желанию — подпись образов); результаты прикладываются к поставке;</li>
+        <li>в рантайме ничего не скачивается: без CDN — шрифты и иконки antd, кириллические шрифты для PDF внутри образа <code>app</code>; интерактивный UI документации API (Scalar) — только если бандлится офлайн, иначе UI не предоставляется (остаётся сам JSON-документ OpenAPI);</li>
+        <li>регламент обновления (пересборка → сканирование → перенос → развёртывание, привязка к патчам .NET и PostgreSQL) — в разделе «Рантайм / инфраструктура».</li>
+      </ul>
+    </li>
+    <li>Гигиена цепочки поставок на сборочном хосте (у него есть интернет): <code>package-lock.json</code> и NuGet lock-файлы в репозитории; npm — только <code>npm ci</code> с <code>ignore-scripts=true</code>; версии NuGet-пакетов закреплены точно, restore — по lock-файлам; lock-файл npm должен содержать нативные optional-бинарники (Vite/Rolldown, lightningcss, Biome) для платформы разработки и для linux-x64 сборки; framework-dependent publish: runtime pack не нужен. Внутренние зеркала npm, NuGet и apt в контуре не нужны (понадобятся, только если сборку когда-либо перенесут в контур).</li>
+    <li>Лицензионная гигиена: прямых ссылок на SixLabors.* не добавлять (Split License: коммерческая лицензия при прямой зависимости у коммерческих организаций с выручкой от $1 млн); транзитивный SixLabors.Fonts от ClosedXML остаётся в диапазоне 1.x (Apache-2.0).</li>
+    <li>Кириллические шрифты для PDF/XLSX/UI поставляются внутри образа <code>app</code> (лицензии OFL/Apache; выбор — в design); никаких CDN-шрифтов и CDN-иконок.</li>
+  </ul>
+
+  <h3>Открытые вопросы (не решения — закрываются на design или у пользователя)</h3>
+  <ul>
+    <li><strong>Масштабирование и HA не заданы.</strong> Требований к масштабированию, отказоустойчивости и целевой нагрузке нет. Старт — один экземпляр <code>app</code> + отдельная нагрузка <code>db</code>. Нужны ли масштабирование и HA и при какой нагрузке — определяется на design, если потребность появится; обязательного ADR не требуется.</li>
+    <li><strong>Q2. Аутентификация — РЕШЕНО.</strong> Решение пользователя: без корпоративного IdP; локальные учётные записи (ASP.NET Core Identity, cookie-сессия). OIDC, SAML и Kerberos не используются; отдельного аварийного входа (break-glass) не требуется. Сопутствующие вопросы политики аутентификации — ниже, в пункте для design.</li>
+    <li><strong>Q4. ПДн и криптография — РЕШЕНО (для стека).</strong> Решение пользователя: шифрование данных в покое — на уровне инфраструктуры (шифрование диска/тома/СХД кластера); приложение чувствительные данные в БД не шифрует (шифрования полей нет); DataProtection остаётся только для ключей cookie-сессии и antiforgery; сертифицированная криптография/ГОСТ не заявлена. Значения параметров SQL и персональные данные не попадают в логи (см. «Ограничения»). Разделение технического администрирования и HR-доступа и ограничение доступа к зарплатным данным на уровне ролей приложения — вопросы design, не стека (см. ниже).</li>
+    <li><strong>Q5. RPO/RTO и резервное копирование — ОТКРЫТ.</strong> Решение пользователя: определим на design. Способ (дамп / снимки тома / архив WAL), расписание, хранение копий вне контейнеров, раскладка PVC.</li>
+    <li><strong>Q6. Место сборки и зеркала — РЕШЕНО.</strong> Решение пользователя: сборка вне контура на машине с интернетом, в контур доставляются готовые образы. Зеркала npm, NuGet и apt внутри контура не нужны (понадобятся, только если сборку когда-либо перенесут в контур). Наличие внутреннего registry (альтернатива tar-доставке) уточняется в Q11.</li>
+    <li><strong>Q7. Антивирусная проверка вложений — РЕШЕНО.</strong> Решение пользователя: в MVP не нужна. Ограничения типов и размера загружаемых файлов — на design; вернуться, если появится требование (см. «Рассмотрено / не принято»).</li>
+    <li><strong>Q8. SMTP и TLS.</strong> Параметры корпоративного SMTP relay (аутентификация, TLS); где терминируется TLS — Kestrel, Ingress-контроллер кластера (есть ли он) или reverse-proxy. От параметров SMTP relay зависит и сброс пароля по e-mail (см. пункт для design по аутентификации).</li>
+    <li><strong>Q9. Платформа запуска — РЕШЕНО.</strong> Решение пользователя: Kubernetes. <code>app</code> и <code>db</code> — Kubernetes-нагрузки (<code>db</code> — stateful с PersistentVolumeClaim); пробы состояния вместо Docker healthcheck; конфигурация — Secrets/ConfigMaps; перезапуск обеспечивает Kubernetes; доставка — манифесты Kubernetes вместе с образами. Docker Compose и Podman не используются.</li>
+    <li><strong>Q10. Целевая архитектура образов — РЕШЕНО.</strong> Решение пользователя: linux/amd64; multi-arch сборка не требуется.</li>
+    <li><strong>Q11. Внутренний container registry.</strong> Есть ли в контуре внутренний container registry; если нет — образы доставляются импортом tar-архивов на узлы кластера (на каждый узел, где может запускаться pod, либо с привязкой pod к узлам; <code>imagePullPolicy</code> не должен требовать pull). Влияет на порядок обновлений и закрепление по digest: при tar-доставке соответствие digest после save/load проверяется spike в design. Инструмент манифестов (plain YAML / Kustomize / Helm) выбирается в design и в список стека не добавляется.</li>
+    <li><strong>Для design — локальная аутентификация (не решения).</strong> Политика паролей (длина, сложность, срок действия); начальный администратор (bootstrap первого пользователя); сброс пароля — по e-mail через SMTP relay (связано с Q8) либо вручную администратором; блокировка при переборе (порог и время); нужен ли второй фактор (2FA); как заводятся пользователи — ручной ввод или импорт; хранение ключей DataProtection (используются только для cookie-сессии и antiforgery; том/PVC, Secret или БД), чтобы cookie-сессии переживали рестарт и обновление pod'а (смонтированный Secret, как правило, доступен только для чтения — автоматическая ротация ключей не сможет записать новые; хранение в БД потребует отдельный пакет — Complication Approval); защита cookie-сессии от CSRF (SameSite/antiforgery).</li>
+    <li><strong>Для design — доступ к ПДн и вложениям (не стек; Q4, Q7 решены).</strong> Разделение технического администрирования и HR-доступа; ограничение доступа к зарплатным данным на уровне ролей приложения; ограничения типов и размера загружаемых файлов (антивирусная проверка вложений в MVP не нужна).</li>
+    <li><strong>Для design (Complication Approval).</strong> Абстракция <code>IBlobStore</code> для вложений на томе; раскладка PVC (данные PG — монтаж только в <code>/var/lib/postgresql</code> у <code>db</code> при объявленном VOLUME образа PG 18; иначе данные окажутся вне PVC; вложения и резервные копии — отдельные PVC), StorageClass и <code>securityContext</code>/<code>fsGroup</code> томов; Scalar.AspNetCore — только если UI полностью бандлится офлайн (spike), иначе UI не предоставляется.</li>
+    <li><strong>Для design и spike — технические проверки (не решения стека; новых Q не заводится).</strong>
+      <ul>
+        <li><strong>Порядок сборки и кодогенерация.</strong> JSON-документ OpenAPI производит сборка backend (<code>Microsoft.Extensions.ApiDescription.Server</code>), а TS-типы SPA генерируются из него: стадия SPA зависит от результата сборки .NET. Варианты: сгенерированные типы лежат в репозитории и проверяются в CI режимом проверки <code>openapi-typescript</code> (<code>--check</code>) либо стадии multi-stage сборки упорядочиваются (backend → JSON → SPA); порядок «Node → SPA, .NET SDK → publish» из раздела «Инструменты» этой зависимости пока не отражает. Выбор — решение design, влияет на параллельность стадий. Генерация запускает entry point приложения — старт не должен обращаться к БД.</li>
+        <li><strong>openapi-typescript и TypeScript 6.</strong> Spike: точечный <code>overrides</code> (предпочтительно) против <code>legacy-peer-deps</code>; критерии — генерация из реального JSON, <code>tsc --noEmit</code> по результату, стабильность режима проверки; запасной вариант — @hey-api/openapi-ts.</li>
+        <li><strong>Остановка <code>db</code>.</strong> Образ PostgreSQL задаёт <code>STOPSIGNAL SIGINT</code> (fast shutdown), а Kubernetes по умолчанию шлёт <code>SIGTERM</code> (для PostgreSQL — smart shutdown, ждёт отключения клиентов); учитывается ли образный <code>STOPSIGNAL</code>, зависит от container runtime кластера. Проверить фактическое поведение остановки и подобрать <code>terminationGracePeriodSeconds</code> (иначе — <code>SIGKILL</code> и crash recovery).</li>
+        <li><strong><code>pg_trgm</code> в неизменённом образе.</strong> Spike: <code>CREATE EXTENSION pg_trgm</code> в <code>postgres:18.6-trixie</code> (первым интеграционным тестом). Если расширения нет — принцип «образ без доработок» пересматривается через Complication Approval.</li>
+        <li><strong>Русская collation / ICU.</strong> В образе сгенерирована только локаль <code>en_US.utf8</code>; русская сортировка и поиск (FTS <code>russian</code>) требуют проверки ICU-collation (<code>--locale-provider=icu</code> через <code>POSTGRES_INITDB_ARGS</code>) без доработки образа; локаль фиксируется при <code>initdb</code> и меняется только пересозданием кластера.</li>
+        <li><strong>CSP для antd.</strong> Выбор политики Content-Security-Policy: nonce (<code>ConfigProvider csp</code>; для статического <code>index.html</code> от Kestrel nonce на запрос недоступен без шаблонизации ответа), <code>style-src 'unsafe-inline'</code> либо zero-runtime режим antd (<code>zeroRuntime</code> + <code>antd/dist/antd.css</code>).</li>
+        <li><strong>Минимальные браузеры.</strong> Vite 8 по умолчанию собирает под Chrome/Edge 111+, Firefox 114+, Safari 16.4+, antd 6 — только современные браузеры. Подтвердить, какие браузеры стоят в контуре; при расхождении — менять <code>build.target</code> (открытый пункт).</li>
+      </ul>
+    </li>
+  </ul>
+</section>
+
+<section id="architecture-principles">
+  <h2>Архитектурные принципы</h2>
+  <ul class="principle-list">
+    <li><strong>Модульный монолит</strong> — достаточен на старте; один процесс API + <code>BackgroundService</code>; доменные границы задаются реестром подсистем в design, а не сетевыми границами. Это предпочтение дизайна, не требование.</li>
+    <li><strong>Встроенное вместо сторонних библиотек</strong> — локальная аутентификация (ASP.NET Core Identity + cookie), валидация, OpenAPI, health checks (проверка БД — собственный <code>IHealthCheck</code>, без отдельного пакета), JSON-логи, фоновые задачи берутся из ASP.NET Core 10; без Mediator/AutoMapper. Исключение из «встроенного» — dev-пакеты сборки: Microsoft.Extensions.ApiDescription.Server (генерация OpenAPI при сборке) и Microsoft.EntityFrameworkCore.Design (миграции). Меньше supply-chain и лицензионных рисков в изолированном PII/HR-контуре.</li>
+    <li><strong>Сервер — единственный источник истины</strong> — права, организационный scope и валидация проверяются на backend; правила antd Form служат только удобству пользователя.</li>
+    <li><strong>Контракт из кода</strong> — JSON-документ OpenAPI генерируется при сборке backend из Minimal API (Microsoft.Extensions.ApiDescription.Server), TS-типы генерируются из него (openapi-typescript); DTO на frontend руками не пишутся.</li>
+    <li><strong>Целостность на уровне данных</strong> — аудит append-only через <code>SaveChangesInterceptor</code>; оптимистичная блокировка явным <code>int Version</code> + ETag/<code>If-Match</code>; очереди и outbox в той же транзакционной БД (<code>SKIP LOCKED</code>).</li>
+    <li><strong>Выносимые границы</strong> — предпочтение дизайна, не требование: настраиваемая строка подключения, <code>IBlobStore</code> и воркер на outbox оставляют возможность заменить workload <code>db</code> внешней БД (смена строки подключения) или вынести хранилище и фоновые задачи позже, без переписывания домена. Один процесс — один контейнер: независимые перезапуски, без супервизора внутри контейнера.</li>
+    <li><strong>Сборка вне контура, доставка готовых образов</strong> — зависимости тянутся только на сборочном хосте под контролем цепочки поставок (lock-файлы, <code>ignore-scripts</code>, точные версии, сканирование и SBOM до переноса); в контур поставляются неизменяемые артефакты, закреплённые по digest; запуск не требует интернета и ничего не скачивает.</li>
+  </ul>
+</section>
+
+<section id="considered">
+  <h2>Рассмотрено / не принято</h2>
+
+  <h3>Лицензионные и доверительные риски</h3>
+  <table class="tech-table">
+    <thead><tr><th>Название</th><th>Назначение</th><th>Почему не принято</th></tr></thead>
+    <tbody>
+      <tr><td><strong>MediatR 13+ (актуальная 14.2.0)</strong></td><td>Mediator/CQRS</td><td>Двойная лицензия (Lucky Penny): бесплатная Community-редакция только при выручке &lt; $5 млн и с регистрацией ключа. Не нужен для Minimal API — прямые обработчики.</td></tr>
+      <tr><td><strong>AutoMapper 15+</strong></td><td>Маппинг DTO</td><td>Та же двойная лицензия и ключ. Явный маппинг; при необходимости — Riok.Mapperly (см. ниже).</td></tr>
+      <tr><td><strong>MassTransit v9</strong></td><td>Шина сообщений</td><td>Коммерческая лицензия (v8 — Apache-2.0, патчи заявлены до конца 2026). Не нужна: outbox и задачи в PostgreSQL.</td></tr>
+      <tr><td><strong>FluentAssertions ≥8</strong></td><td>Assertions</td><td>Коммерческая лицензия Xceed для коммерческого использования. Заменён AwesomeAssertions 9.6.0 (Apache-2.0).</td></tr>
+      <tr><td><strong>Moq</strong></td><td>Моки</td><td>SponsorLink в 4.20.0–4.20.1 (при сборке считывался git-email и отправлялся хэш на внешний сервер; убрано в 4.20.2) — потеря доверия для PII-контура. Заменён NSubstitute 6.2.0 (BSD-3-Clause).</td></tr>
+      <tr><td><strong>SixLabors.ImageSharp</strong></td><td>Обработка изображений</td><td>Six Labors Split License: прямая зависимость требует коммерческой лицензии у коммерческих организаций с выручкой от $1 млн. Обработка изображений не требуется.</td></tr>
+      <tr><td><strong>EPPlus 8</strong></td><td>XLSX</td><td>PolyForm Noncommercial 1.0.0; для коммерческого использования нужна платная лицензия с ключом. Заменён ClosedXML 0.105.1 (MIT).</td></tr>
+      <tr><td><strong>QuestPDF</strong></td><td>PDF</td><td>Community-лицензия только при выручке &lt; $1 млн, иначе платная. Отклонён решением; заменён PDFsharp + MigraDoc 6.2.4 (MIT).</td></tr>
+      <tr><td><strong>Hangfire</strong></td><td>Фоновые задачи</td><td>Hangfire.Core — LGPL-3.0 (копилефт вне допустимых лицензий), расширения Pro — проприетарные. Заменён <code>BackgroundService</code> + outbox/job-таблицы в PostgreSQL.</td></tr>
+      <tr><td><strong>Sustainsys.Saml2 2.11.0</strong></td><td>SAML</td><td>Лицензия MIT (проверено по nuspec), то есть не лицензионная ловушка. Отложено: IdP не используется (Q2 решён — локальные учётные записи); в nuspec для net8.0 заявлены устаревшие зависимости (Microsoft.IdentityModel 5.2.4, System.Security.Cryptography.Xml 4.7.1); развитие — через платную поддержку. Вернуться, если появится IdP с SAML.</td></tr>
+      <tr><td><strong>MinIO</strong></td><td>Объектное хранилище</td><td>AGPL-3.0; по публичным сообщениям, репозиторий архивирован 2026-02-12 (no longer maintained), бинарные дистрибутивы прекращены в 2025. Вложения — на томе за <code>IBlobStore</code>.</td></tr>
+      <tr><td><strong>SQL Server Express</strong></td><td>СУБД</td><td>Проприетарная (не OSS), жёсткие лимиты редакции. Выбран PostgreSQL.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Технологические альтернативы</h3>
+  <table class="tech-table">
+    <thead><tr><th>Название</th><th>Назначение</th><th>Почему не принято</th></tr></thead>
+    <tbody>
+      <tr><td><strong>OIDC / SAML / Kerberos (Negotiate) — вход через корпоративный IdP</strong></td><td>Внешняя аутентификация, SSO</td><td>Отложено: IdP не используется (Q2 решён — локальные учётные записи). Вернуться, если появится корпоративный IdP: OIDC — встроенный Microsoft.AspNetCore.Authentication.OpenIdConnect (10.0.12, верифицирован ранее), SAML — см. Sustainsys.Saml2 выше, Kerberos — Microsoft.AspNetCore.Authentication.Negotiate (версия не проверялась). Без IdP отпадают зависимость от его доступности и аварийный вход (break-glass).</td></tr>
+      <tr><td><strong>Самописная cookie-аутентификация + PasswordHasher (без Identity)</strong></td><td>Локальная аутентификация</td><td>Не принято: PasswordHasher и cookie те же, но хранилище пользователей, lockout, security stamp, токены сброса пароля и (при необходимости) 2FA пришлось бы писать и сопровождать самим — риск ошибок в чувствительном PII/HR-контуре. Identity — MIT, зависимости только Microsoft.Extensions.Identity.Stores и EF Core Relational; лицензионных и офлайн-проблем не найдено. Минусы Identity: собственная схема таблиц и привязка к EF Core. Вернуться, если Identity окажется избыточным.</td></tr>
+      <tr><td><strong>Blazor WebAssembly / Blazor Server</strong></td><td>UI на C#</td><td>Выбран React по решению команды.</td></tr>
+      <tr><td><strong>SQLite</strong></td><td>Встроенная СУБД</td><td>PostgreSQL выбран ради FTS (<code>russian</code> + <code>pg_trgm</code>), конкурентной записи и <code>SKIP LOCKED</code>, а также пути к внешней БД.</td></tr>
+      <tr><td><strong>TypeScript 7.0.2 (native)</strong></td><td>Компилятор</td><td>Актуальная latest, но без программного API до 7.1 (по анонсу): ломает кодогенераторы и линтеры. Пересмотреть после выхода 7.1.</td></tr>
+      <tr><td><strong>Mantine 9.7.0</strong></td><td>UI-kit</td><td>Меньше прямых зависимостей у core (5), но data-grid и иконки потребовали бы дополнительных пакетов. Выбран antd; вернуться, если приоритет — минимум транзитивных зависимостей.</td></tr>
+      <tr><td><strong>@hey-api/openapi-ts 0.99.0</strong></td><td>Генерация клиента из OpenAPI</td><td>Версия до 1.0 (документация требует закрепления точной версии), 10 зависимостей. Запасной вариант, если openapi-typescript окажется несовместим с TypeScript 6 (конфликт peer ERESOLVE не снимается точечным <code>overrides</code> либо генерация на 6.0.2 неверна — по результату spike).</td></tr>
+      <tr><td><strong>Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore</strong></td><td>Готовая проверка БД (<code>AddDbContextCheck</code>)</td><td>Отдельный пакет ради одного вызова. Достаточно собственного <code>IHealthCheck</code> на <code>Database.CanConnectAsync</code> (меньше зависимостей в PII/HR-контуре). Вернуться, если проверок БД станет много.</td></tr>
+      <tr><td><strong>Антивирус вложений (ClamAV)</strong></td><td>Проверка загружаемых файлов</td><td>Не нужен в MVP (Q7 решён — решение пользователя). Ограничения типов и размера файлов — на design. Вернуться, если появится требование.</td></tr>
+      <tr><td><strong>react-hook-form, zod</strong></td><td>Формы и схемы валидации</td><td>antd Form + серверная валидация достаточно; второй слой клиентской валидации не нужен. Добавить только при доказанной нехватке (например, редактор матрицы).</td></tr>
+      <tr><td><strong>Redis, брокер сообщений (RabbitMQ, Kafka)</strong></td><td>Кэш и очередь</td><td>Старт с двумя контейнерами (<code>app</code> + <code>db</code>): задачи — в PostgreSQL (outbox, <code>SKIP LOCKED</code>), кэш — встроенный. Вернуться, если появится потребность по нагрузке.</td></tr>
+      <tr><td><strong>Playwright 1.63.0</strong></td><td>E2E-тесты</td><td>Исключён из стека: пока нет e2e-критерия; браузеры по умолчанию скачиваются из интернета (CDN Microsoft) (Apache-2.0). Пересмотреть, когда появится первый e2e-критерий: при сборке вне контура загрузка на сборочном хосте возможна (в образы, доставляемые в контур, Playwright не попадает), либо образ с предустановленными браузерами или системный Chrome/Edge (<code>channel</code>).</td></tr>
+      <tr><td><strong>s6-overlay 3.2.3.2</strong></td><td>Супервизор процессов (PID 1)</td><td>Нужен только для запуска postgres и приложения в одном контейнере (ISC). Не принят: пользователь выбрал два контейнера — проще, независимые перезапуски, официальный образ postgres без доработок; не нужны сторонние тарболлы.</td></tr>
+      <tr><td><strong>Один контейнер (tini / shell-супервизор)</strong></td><td>PostgreSQL и приложение в одном контейнере</td><td>Не принят по тем же причинам. tini лишь пересылает сигналы и подбирает зомби-процессы, перезапуск не делает; shell-супервизор — самописная логика перезапуска и остановки двух процессов; образ postgres пришлось бы дорабатывать. Выбраны два контейнера (<code>app</code> + <code>db</code>): простота, независимые перезапуски, официальный образ postgres без доработок.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Условные (включаются при выполнении условия)</h3>
+  <table class="tech-table">
+    <thead><tr><th>Название</th><th>Назначение</th><th>Условие включения</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Scalar.AspNetCore 2.17.13</strong></td><td>Интерактивная документация API</td><td>Только если UI полностью бандлится офлайн (spike), иначе UI не предоставляется (остаётся только JSON-документ OpenAPI).</td></tr>
+      <tr><td><strong>Riok.Mapperly 4.3.1</strong></td><td>Генерация маппинга (source generator)</td><td>Только если явный маппинг станет заметным бойлерплейтом.</td></tr>
+      <tr><td><strong>OpenTelemetry.Extensions.Hosting 1.19.1</strong></td><td>Метрики и трассировка</td><td>Только при наличии корпоративного OTLP-коллектора; по умолчанию — JSON-логи в stdout и health checks. Версии экспортёра и инструментации — проверить при включении.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!--
+verification log (2026-10-05): npm registry (registry.npmjs.org: react, react-dom, vite, typescript + dist-tags + 6.0.2, @typescript/typescript6, react-router, @tanstack/react-query, antd + 6.6.5, @mantine/core, vitest, @testing-library/*, @playwright/test, openapi-typescript, openapi-fetch, @hey-api/openapi-ts, @vitejs/plugin-react, jsdom, @biomejs/biome, dayjs); NuGet (azuresearch-usnc.nuget.org query + api.nuget.org/v3-flatcontainer nuspec: ClosedXML, PDFsharp-MigraDoc, CsvHelper, MailKit, Npgsql.EntityFrameworkCore.PostgreSQL, Microsoft.EntityFrameworkCore, Microsoft.AspNetCore.OpenApi, Microsoft.AspNetCore.Authentication.OpenIdConnect, xunit.v3, NSubstitute, AwesomeAssertions, Testcontainers.PostgreSql, OpenTelemetry.Extensions.Hosting, Scalar.AspNetCore, Riok.Mapperly, dotnet-ef, SixLabors.Fonts, Sustainsys.Saml2, MediatR); builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json; dotnet.microsoft.com/platform/support/policy/dotnet-core; learn.microsoft.com (aspnetcore-10.0 release notes, csharp-14, ef-core-10.0 whatsnew); hub.docker.com/v2/repositories/library/{postgres,node}/tags; github.com/dotnet/dotnet-docker README.sdk.md; api.github.com/repos/just-containers/s6-overlay/releases/latest + COPYING (ISC); github.com/docker-library/docs postgres README; postgresql.org/support/versioning; endoflife.date/api/nodejs.json + nodejs.org/en/about/previous-releases; devblogs.microsoft.com/typescript (TypeScript 7.0 announcement, 2026-07-08); react.dev/versions; reactrouter.com/start/modes; playwright.dev/docs/browsers; heyapi.dev; xunit.net MTP docs; github.com/SixLabors/Fonts LICENSE; jimmybogard.com commercial editions; milanjovanovic.tech (MassTransit); web search: EPPlus 8, Hangfire, FluentAssertions 8, QuestPDF, MinIO, Moq SponsorLink.
+revision 2 2026-10-05 (build outside contour): no external sources; user decision (final) — images built outside the isolated contour, ready-made images delivered inside; Q6 resolved, Q10 (target arch) added.
+revision 2026-10-05 (topology: 2 containers):mcr.microsoft.com/v2/dotnet/aspnet/tags/list and dotnet/sdk/tags/list (10.0.12-noble, 10.0.401 exist; no Debian/trixie tag for .NET 10); github.com/dotnet/dotnet-docker README.aspnet.md, src/runtime-deps/10.0/noble/amd64/Dockerfile (Ubuntu 24.04, libicu74, libssl3t64, tzdata, user app UID 1654, ASPNETCORE_HTTP_PORTS=8080), src/aspnet/10.0/noble/amd64/Dockerfile (ASPNET_VERSION=10.0.12); hub.docker.com/v2/repositories/library/postgres/tags (18.6, 18.6-trixie, 2026-09-24); github.com/docker-library/postgres 18/trixie/Dockerfile (PG_VERSION 18.6, PGDATA /var/lib/postgresql/18/docker, VOLUME /var/lib/postgresql) and docker-library/docs postgres README.
+revision 4 2026-10-05 (scaling/HA wording): no external sources; user decision (final) — the "stateless nodes / horizontal scaling" claim came only from a rough draft and is not a confirmed requirement; scaling and HA are not specified, start = one app instance + separate db container, defined at design if needed.
+revision 5 2026-10-05 (local auth, Kubernetes, amd64): user decisions (final) — Q2: no corporate IdP, local accounts (ASP.NET Core Identity replaces Authentication.OpenIdConnect), Q9: platform = Kubernetes, Q10: linux/amd64 confirmed; Q8/Q4/Q5/Q7 stay open; Q11 (internal container registry vs tar import on nodes) added. Sources: api.nuget.org/v3-flatcontainer microsoft.aspnetcore.identity.entityframeworkcore (index + 10.0.12 nuspec: MIT, deps Microsoft.Extensions.Identity.Stores 10.0.12 + Microsoft.EntityFrameworkCore.Relational 10.0.12) and authentication.openidconnect index; learn.microsoft.com aspnetcore-10.0 security/authentication/identity (Identity.EntityFrameworkCore, lockout, Microsoft.AspNetCore.Identity in shared framework) and security/data-protection/configuration/overview (keys in a container must live on a persistent volume or external provider; PersistKeysToDbContext); raw.githubusercontent.com/dotnet/aspnetcore src/Identity/Extensions.Core PasswordHasher.cs (V3 = PBKDF2 HMAC-SHA512); github.com/docker-library/docs postgres README (PG 18 PGDATA /var/lib/postgresql/18/docker, VOLUME /var/lib/postgresql) + docker-library/postgres issue 1370 (mount at /var/lib/postgresql/data fails on 18, /var/lib/postgresql works); web search: ctr -n k8s.io images import for tar import on containerd nodes (crictl has no tar import). Not verified against primary source: Kubernetes Secret volumes always read-only; digest stability after docker save/load; Microsoft.AspNetCore.Authentication.Negotiate version.
+revision 6 2026-10-05 (Q7, Q4 resolved; Q5 deferred to design): no external sources; user decisions (final) — Q7: antivirus scanning of attachments not needed in MVP (ClamAV recorded as not adopted; file type/size limits at design); Q4 resolved for the stack: encryption at rest at infrastructure level (disk/volume/storage of the cluster), the application does not encrypt sensitive data in the DB, DataProtection only for cookie/antiforgery keys, no certified cryptography/GOST claimed; admin/HR access separation and salary-data role restriction moved to design items; Q5: to be defined at design; Q8, Q11 unchanged (open); scaling/HA still not specified. No tech choices or versions changed.
+revision 7 2026-10-05 (factual corrections after the Phase 5-6 tech-reference pass; user locked all 7 sections, technology direction unchanged): (1) OpenAPI: build-time generation in .NET 10 is JSON only, YAML only via runtime MapOpenApi with a .yaml suffix; generation is done by Microsoft.Extensions.ApiDescription.Server (added to Backend) and launches the app entry point; every "openapi.yaml at build" claim replaced by build-time JSON; Scalar rule kept (offline bundle only, otherwise no UI). (2) Rows added: Microsoft.Extensions.ApiDescription.Server 10.0.12, Microsoft.EntityFrameworkCore.Design 10.0.12 (Backend), @types/react 19.3.0, @types/react-dom 19.3.0, @types/node 24.19.1 (Frontend); header counter 21 to 26. (3) DB health check = custom IHealthCheck, Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore recorded as not adopted. (4) TypeScript installed with an exact version only (npm latest is 7.0.2); openapi-typescript 7.13.0 peer typescript ^5.x conflicts with 6.0.2 (ERESOLVE) recorded as a known risk, spike with targeted overrides preferred over legacy-peer-deps, fallback Hey API unchanged. (5) PVC wording: mount only at /var/lib/postgresql (PGDATA /var/lib/postgresql/18/docker); other paths leave data outside the PVC; the "mount breaks start" claim removed as the Kubernetes failure mode. (6) Design items added: STOPSIGNAL SIGINT vs Kubernetes SIGTERM, pg_trgm in the unmodified image, Russian collation/ICU (image has only en_US.utf8), build order of OpenAPI JSON vs SPA codegen, CSP for antd (nonce / zeroRuntime), minimal browsers for the Vite 8 target (Chrome/Edge 111+, Firefox 114+, Safari 16.4+; open item, no new Q). Sources: learn.microsoft.com aspnetcore-openapi (aspnetcore-10.0 monikers; page date 2026-09-04) and ef/core/cli/dotnet (Design package required in the project); api.nuget.org v3-flatcontainer microsoft.extensions.apidescription.server (index + 10.0.12 nuspec: MIT, developmentDependency, no dependency groups, no 10.0.13+) and microsoft.entityframeworkcore.design (index + 10.0.12 nuspec: MIT, developmentDependency, net10.0, Relational 10.0.12, Roslyn 5.0.0, Humanizer.Core 2.14.1, Mono.TextTemplating 3.0.0, Newtonsoft.Json 13.0.4, no 10.0.13+); registry.npmjs.org dist-tags for @types/react (latest 19.3.0), @types/react-dom (19.3.0), @types/node (latest 26.6.4) and typescript (latest 7.0.2, next 7.1.0-dev.20261005.1), manifests @types/react 19.3.0 (dependency csstype ^3.2.2), @types/react-dom 19.3.0 (peer @types/react ^19.3.0), @types/node 24.19.1 (24.19.2 and 24.20.0 return 404; the 24.x line resolved via data.jsdelivr.com), openapi-typescript 7.13.0 (peer typescript ^5.x), vite 8.3.2, vitest 5.0.3 (optional peer @types/node), typescript 6.0.3 (exists; the pinned 6.0.2 is not the last patch, a bump goes through a sprint). Items 3 and 5 and the design items rest on the already verified tech-reference docs (aspnetcore, postgres-image, postgresql, vite, antd). Not verified against primary source: whether Microsoft.EntityFrameworkCore.Design and its design-time dependencies reach the publish output with PrivateAssets=all alone; actual STOPSIGNAL handling by the cluster container runtime; pg_trgm availability and ICU collations in the unmodified image; openapi-typescript on TypeScript 6.0.2 (no spike yet).
+-->
+      </main>
+      <footer>by ASD workflow | 2026-10-05</footer>
+    </div>
+  </div>
+</body>
+</html>

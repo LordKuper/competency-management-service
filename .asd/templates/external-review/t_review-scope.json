@@ -1,0 +1,7 @@
+{
+  "phase": "{{PHASE}}",
+  "iteration": "{{ITERATION}}",
+  "wave": "{{WAVE}}",
+  "files": ["{{PATH}}"],
+  "diff": "{{DIFF}}"
+}
