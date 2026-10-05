@@ -109,6 +109,12 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "Task 10": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:non-root user and PVC paths, build stage order, verification needs Docker",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],

@@ -111,3 +111,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: В пределах AC-6/7/8/13 и существующих токенов DESIGN.md; новых зависимостей нет. Tablet-раскладка визуально не проверена (нет браузера).
 - **Affected docs**: `web/src/app/`, `web/src/features/auth/`, `web/src/features/users/`
 - 2026-10-05 — route Task 8: critical; Task 9: standard; dispatch HEAD 740f17d
+
+## 2026-10-05 — Волна 7: flagged choices Task 8 и 9 (UI оргструктуры, журнал)
+
+- **Decision**: Приняты: маршруты `/org-structure`, `/org-structure/employees[/new|/:id]` (только `/new` за `AdminOnly`), `/audit` (за `AdminOnly`); карточка сотрудника — форма при наличии `version` в ответе, иначе факты; поиск дерева на клиенте; `EmployeePicker` и `ifMatchOf` импортируются из `features/users` (кандидат на вынос в `web/src/api`); даты — нативный `Input type="date"`, время журнала — `Intl.DateTimeFormat`; отказ деактивации — постоянный `modal.error`. Кандидаты в `design-md-delta`: Tree, TreeSelect, Checkbox, карточка подразделения, теги активности.
+- **Rationale**: В пределах AC-9…AC-13, AC-15 и существующих токенов; новых зависимостей нет.
+- **Affected docs**: `web/src/features/org-structure/`, `web/src/features/audit/`
+- 2026-10-05 — route Task 10: critical, dispatch HEAD 7d7a0b3

@@ -19,3 +19,4 @@
 - [Scratch host without PostgreSQL](project_scratch-host-without-postgres.md) — InMemory logic host with stubbed raw SQL; Npgsql SQL-capture host with a fake DbCommand and transaction
 - [Identity on a plain DbContext](project_identity-efcore-store-gotchas.md) — stock user store marks all columns modified; users table suffices; HasOne(string) is a nav name
 - [Web UI test and form gotchas](project_web-ui-test-and-form-gotchas.md) — jsdom has no ResizeObserver, router singleton vs resetModules, Form.Item id, biome diff trick
+- [Web org-structure UI facts](project_web-org-structure-ui-facts.md) — antd Tree/TreeSelect/Table in jsdom, Escape closes Modal, form reset via key, throwaway test lint in shared worktree
