@@ -31,6 +31,7 @@ if (!isToolingRun)
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.UsePlatform();
 
 app.MapPlatformEndpoints();
 app.MapAuditEndpoints();

@@ -45,8 +45,21 @@ public static class PlatformModule
 
         services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database", tags: [ReadyTag]);
 
+        services.AddProblemDetails();
+        services.AddExceptionHandler<ProblemExceptionHandler>();
+
         return services;
     }
+
+    /// <summary>
+    /// Adds the platform request pipeline: request id, ProblemDetails error responses for unhandled exceptions and bodyless error statuses.
+    /// </summary>
+    /// <param name="app">The application pipeline to extend.</param>
+    /// <returns>The same pipeline, for chaining.</returns>
+    public static IApplicationBuilder UsePlatform(this IApplicationBuilder app) => app
+        .UseMiddleware<RequestIdMiddleware>()
+        .UseExceptionHandler()
+        .UseStatusCodePages();
 
     /// <summary>
     /// Persists data-protection keys to the configured directory; creates keys at host start,
