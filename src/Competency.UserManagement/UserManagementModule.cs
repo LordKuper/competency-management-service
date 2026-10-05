@@ -44,6 +44,7 @@ public static class UserManagementModule
     /// <returns>The same builder, for chaining.</returns>
     public static IEndpointRouteBuilder MapUserManagementEndpoints(this IEndpointRouteBuilder endpoints)
     {
+        AuthEndpoints.Map(endpoints);
         UserEndpoints.Map(endpoints);
         return endpoints;
     }
