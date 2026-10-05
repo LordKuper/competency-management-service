@@ -64,3 +64,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: `audit.md` и поправленный `sprint.md` (AC-1…AC-15) приняты вместе с допущениями: статус сотрудника «работает / не работает», UI всех мутаций, журнал читает администратор через API и экран, `audit` — третья подсистема.
 - **Rationale**: Явное согласие пользователя на audit gate; переход к plan (workflow `lite`, фаза design отсутствует).
 - **Affected docs**: `.asd/sprints/001-project-init-org-structure/audit.md`, `.asd/sprints/001-project-init-org-structure/sprint.md`
+
+- 2026-10-05 — settings: `project.diagram_tool` none → mermaid via /asd-init (user request); sprint `documents.c4` stays frozen `false`, diagram from next sprint
