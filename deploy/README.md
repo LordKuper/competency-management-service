@@ -54,7 +54,8 @@ cp deploy/secret.template.yaml <путь вне репозитория>/competen
 # заполнить плейсхолдеры, затем:
 kubectl -n competency apply -f <путь вне репозитория>/competency-secret.yaml
 kubectl -n competency apply -f deploy/k8s/
-kubectl -n competency rollout status statefulset/db deployment/app
+kubectl -n competency rollout status statefulset/db
+kubectl -n competency rollout status deployment/app
 ```
 
 Поля Secret `competency-secret`:
