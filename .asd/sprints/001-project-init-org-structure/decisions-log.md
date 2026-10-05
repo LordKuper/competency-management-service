@@ -76,3 +76,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-05 — stubs: no open stubs in scope
 - 2026-10-05 — route Task 1: critical, dispatch HEAD c8a5aad
 - 2026-10-05 — route Task 2, Task 3: critical, dispatch HEAD 9425a2c
+
+## 2026-10-05 — Волны 1–2: flagged choices devs и commands.yaml
+
+- **Decision**: Заполнен `.asd/project/commands.yaml` (build = dotnet + npm build, lint = `npm --prefix web run lint`, test = `dotnet test --solution` + `npm test`, run, custom gen-api/check-api/ef-*). Flagged choices Task 1–3 приняты как не противоречащие plan: openapi в `openapi/openapi.json`, миграции в `src/Competency.Platform/Migrations`, `IEntityConfigurationContributor`, guard только на `GetDocument.Insider`, `[Audited]` одним атрибутом (класс — opt-in, свойство — allow-list), `Version` через `EntityStampingInterceptor`, `IfMatch` как handler-параметр, CSRF без сравнения схемы Origin, `withIfMatch` не реализован (ETag возвращает `unwrap`), `standaloneRoutes` для экрана входа, `skipLibCheck: true`.
+- **Rationale**: Каждый выбор в пределах plan и persistent docs, без новых зависимостей. Открыто до impl assessment: лицензия MPL-2.0 у `lightningcss` (жёсткая build-time зависимость Vite 8.3.2, не входит в допустимый список stack.html) — решение за пользователем; бэкенд-lint отсутствует (TreatWarningsAsErrors), `npm test` падает до появления тестов (не входит в impl gate).
+- **Affected docs**: `.asd/project/commands.yaml`, `docs/architecture/tech-reference/openapi-typescript-7.13.0.md`

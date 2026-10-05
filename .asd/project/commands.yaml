@@ -1,14 +1,19 @@
 # commands.yaml — machine-only SSoT for project build/test/run commands
 # read by Dev, Tester, and review agents
-# Stack not chosen yet (greenfield): fill after /asd-stack.
+# Run from the repository root. Backend lint is the compiler: Directory.Build.props sets TreatWarningsAsErrors.
 
-test: ""
-lint: ""
-build: ""
-run: ""
+test: "dotnet test --solution Competency.slnx && npm --prefix web test"
+lint: "npm --prefix web run lint"
+build: "dotnet build Competency.slnx --tl:off && npm --prefix web run build"
+run: "dotnet run --project src/Competency.Api"
 
 custom:
+  gen-api: "npm --prefix web run gen:api"
+  check-api: "npm --prefix web run check:api"
+  ef-restore: "dotnet tool restore"
+  ef-migration-add: "dotnet ef migrations add --project src/Competency.Platform --startup-project src/Competency.Api"
+  ef-pending-changes: "dotnet ef migrations has-pending-model-changes --project src/Competency.Platform --startup-project src/Competency.Api"
   designmd-install: "npm install @google/design.md"
-  designmd-lint: "node_modules\.bin\design.md.cmd lint docs\ux\DESIGN.md"
-  designmd-diff: "node_modules\.bin\design.md.cmd diff"
-  designmd-export: "node_modules\.bin\design.md.cmd export --format json-tailwind docs\ux\DESIGN.md"
+  designmd-lint: "node_modules\\.bin\\design.md.cmd lint docs\\ux\\DESIGN.md"
+  designmd-diff: "node_modules\\.bin\\design.md.cmd diff"
+  designmd-export: "node_modules\\.bin\\design.md.cmd export --format json-tailwind docs\\ux\\DESIGN.md"
