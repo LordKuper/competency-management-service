@@ -46,7 +46,7 @@ export function LoginPage() {
     >
       <Col xs={22} sm={16} md={12} lg={8} xl={6}>
         <Card>
-          <Typography.Title level={2}>Вход в систему</Typography.Title>
+          <Typography.Title level={1}>Вход в систему</Typography.Title>
           <Typography.Paragraph type="secondary">
             {PRODUCT_NAME}
           </Typography.Paragraph>
