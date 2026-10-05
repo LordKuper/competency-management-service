@@ -1,5 +1,6 @@
 using Competency.Platform;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Competency.Audit;
@@ -17,6 +18,9 @@ public static class AuditModule
     public static IServiceCollection AddAuditModule(this IServiceCollection services)
     {
         services.AddSingleton<IEntityConfigurationContributor, AuditEntityConfiguration>();
+        services.AddSingleton<AuditEventFactory>();
+        services.AddSingleton<IInterceptor, AuditSaveChangesInterceptor>();
+        services.AddSingleton<IAuditWriter, AuditWriter>();
         return services;
     }
 
