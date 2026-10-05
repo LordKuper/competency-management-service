@@ -1,7 +1,7 @@
 {
   "sprint_id": "001-project-init-org-structure",
   "branch": "sprint/001-project-init-org-structure",
-  "phase": "plan",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -55,7 +55,14 @@
       "evidence": "plan.md"
     }
   ],
-  "task_routing": {},
+  "task_routing": {
+    "Task 1": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:build-time OpenAPI entry-point, EF/Npgsql/Identity new versions",
+      "resolved_model": "sonnet"
+    }
+  },
   "skipped_phases": [],
   "reviews": {
     "design": {

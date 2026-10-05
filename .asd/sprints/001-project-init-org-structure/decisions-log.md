@@ -74,3 +74,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: `.asd/sprints/001-project-init-org-structure/plan.md`
 
 - 2026-10-05 — stubs: no open stubs in scope
+- 2026-10-05 — route Task 1: critical, dispatch HEAD c8a5aad
