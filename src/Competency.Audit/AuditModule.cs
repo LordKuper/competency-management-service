@@ -29,5 +29,9 @@ public static class AuditModule
     /// </summary>
     /// <param name="endpoints">The endpoint route builder to extend.</param>
     /// <returns>The same builder, for chaining.</returns>
-    public static IEndpointRouteBuilder MapAuditEndpoints(this IEndpointRouteBuilder endpoints) => endpoints;
+    public static IEndpointRouteBuilder MapAuditEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        AuditEndpoints.Map(endpoints);
+        return endpoints;
+    }
 }
