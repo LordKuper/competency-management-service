@@ -10,13 +10,14 @@ namespace Competency.OrgStructure;
 public static class OrgStructureModule
 {
     /// <summary>
-    /// Registers the OrgStructure module services.
+    /// Registers the OrgStructure module services, including the <see cref="IEmployeeDirectory"/> other modules read employees through.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
     /// <returns>The same collection, for chaining.</returns>
     public static IServiceCollection AddOrgStructureModule(this IServiceCollection services)
     {
         services.AddSingleton<IEntityConfigurationContributor, OrgStructureEntityConfiguration>();
+        services.AddScoped<IEmployeeDirectory, EmployeeDirectory>();
         return services;
     }
 
