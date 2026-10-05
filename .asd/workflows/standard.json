@@ -1,0 +1,25 @@
+{
+  "name": "standard",
+  "phases": ["scope", "audit", "design", "design-review", "design-promote", "plan", "impl", "impl-test", "impl-review", "retro", "pr"],
+  "next": {
+    "scope": ["audit"],
+    "audit": ["design", "plan"],
+    "design": ["design-review", "plan"],
+    "design-review": ["design-promote"],
+    "design-promote": ["plan"],
+    "plan": ["impl"],
+    "impl": ["impl-test"],
+    "impl-test": ["impl-review", "impl"],
+    "impl-review": ["retro", "impl"],
+    "retro": ["pr"],
+    "pr": ["await-merge", "done"]
+  },
+  "reviewers": {
+    "design": ["correctness", "efficiency", "documentation", "external"],
+    "impl": ["correctness", "efficiency", "testing", "documentation", "external"]
+  },
+  "rollback_reset": {
+    "design": ["scope", "audit"],
+    "impl": ["scope", "audit", "design", "design-review", "design-promote", "plan"]
+  }
+}

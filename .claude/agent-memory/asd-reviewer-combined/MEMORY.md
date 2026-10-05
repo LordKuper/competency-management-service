@@ -1,0 +1,5 @@
+- [Live subagent transcripts](reference_live-subagent-transcripts.md) — check transcript-shape claims against this session's own subagents/*.jsonl; final line stop_reason end_turn, others null
+- [Large-diff read budget](feedback_large-diff-read-budget.md) — read a 200 KB+ diff in ~330-line chunks, probe with Grep -o -n, scope Grep to canon subdirs, write the return file before the final message
+- [Re-review mirror pointers](feedback_re-review-mirror-pointers.md) — after a rule-order fix, resolve the mirrors' "same placement" pointer chains and read the tester's recorded ceilings
+- [Pinned clauses vs economy](feedback_doc-economy-pinned-clauses.md) — read the suite pin and plan decision before flagging a pointer-plus-outcome clause; prefer pointer-coverage gaps
+- [Re-review without a shell](feedback_rereview-no-shell-checks.md) — back hash, suite and pin claims from canon text and the tester's record; say what was not recomputed

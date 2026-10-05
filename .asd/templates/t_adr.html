@@ -1,0 +1,52 @@
+<!--
+responsibility:
+  owns: architecture decisions for this sprint only (sprint-scoped; never a standalone persistent document — folded at design-promote per sprint-lifecycle.md "Design-promote phase")
+  excludes: requirements, ux, code
+  delegates_to: prd.html (requirements), ux-spec.html (ux), code (implementation)
+provenance: original          # original | reverse-engineered | migrated
+source: ""                    # optional path/URL when provenance != original
+-->
+
+<!-- repeat this <article> per decision, each with a unique {{N}} within this sprint (adr-{{N}}-* ids are the anchor targets for the shell's per-article TOC entries); ADR numbering is sprint-local (ADR-1, ADR-2, ...) — unique only within the sprint, may repeat across sprints -->
+
+<article class="adr" id="adr-{{N}}">
+  <div class="meta">
+    <span class="status-chip status-{{proposed | accepted}}">{{proposed | accepted}}</span>
+    <span class="chip area">subsystem: {{subsystem id, or "N/A"}}</span>
+    <span class="chip">{{ADR-N}}</span>
+  </div>
+
+  <h2 id="adr-{{N}}-title">{{ADR-N}}: {{decision title}}</h2>
+
+  <h3 id="adr-{{N}}-context">Context</h3>
+  <p>{{why decision needed, forces in play, constraints}}</p>
+
+  <h3 id="adr-{{N}}-decision">Decision</h3>
+  <p class="lede">{{what we decided to do}}</p>
+
+  <h3 id="adr-{{N}}-consequences">Consequences</h3>
+  <div class="consequences">
+    <div class="pros">
+      <h4>Positive</h4>
+      <ul><li>{{benefit}}</li></ul>
+    </div>
+    <div class="cons">
+      <h4>Negative</h4>
+      <ul><li>{{cost or tradeoff}}</li></ul>
+    </div>
+  </div>
+
+  <h3 id="adr-{{N}}-alternatives">Alternatives considered (optional)</h3>
+  <ul class="alt-list">
+    <li><strong>{{alternative}}</strong> — rejected because {{reason}}{{ | binding — folds into the fold target's Constraints-equivalent section at design-promote, if this ADR has one}}</li>
+  </ul>
+
+  <h3 id="adr-{{N}}-related">Related ADRs (optional)</h3>
+  <ul>
+    <!-- {{target N}} is a DIFFERENT ADR's number than this article's {{N}} -->
+    <li><a href="#adr-{{target N}}">ADR-{{target N}}</a>: {{relation}}</li>
+  </ul>
+
+  <h3 id="adr-{{N}}-fold-target">Fold target (optional)</h3>
+  <p>{{name of the existing persistent doc this decision folds into at design-promote}} — justified by its <code>responsibility.owns</code> clause: "{{quoted owns text matched}}"</p>
+</article>

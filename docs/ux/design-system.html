@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<!--
+responsibility:
+  owns: html shell wrap for all asd user-facing html docs
+  excludes: doc content, doc-specific structure
+  delegates_to: fragment templates (t_prd, t_adr, t_ux-spec, t_concept, t_stack, t_design-system, t_accessibility, t_retrospective)
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="ASD workflow">
+  <meta name="doc-type" content="Design-system">
+  <meta name="subsystem" content="project">
+  <meta name="sprint-id" content="">
+  <meta name="status" content="draft">
+  <meta name="updated" content="2026-10-05">
+  <meta name="responsibility" content="interactive visual reference of DESIGN.md tokens and components with live previews">
+  <meta name="provenance" content="original">
+  <title>Дизайн-система — Сервис управления матрицами компетенций и повышением сотрудников</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PT+Mono&family=PT+Sans+Narrow:wght@400;700&family=PT+Sans:wght@400;700&display=swap">
+  <style>
+    :root {
+      --fg: #1a1c1e; --bg: #fff; --muted: #5b6770; --accent: #0066cc;
+      --code-bg: #f4f6f8; --border: #d0d7de; --max: 1040px;
+      --card-bg: #fafbfc;
+      --ok: #1a7f37; --warn: #b35900; --danger: #cf222e; --info: #0969da; --neutral: #5b6770;
+      --ok-tint: rgba(31,136,61,0.07); --danger-tint: rgba(207,34,46,0.06);
+      --chip-must-bg: #ffebe9; --chip-must-fg: #cf222e;
+      --chip-should-bg: #fff5e1; --chip-should-fg: #9a6700;
+      --chip-may-bg: #ddf4ff; --chip-may-fg: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e6e6e6; --bg: #0e1116; --muted: #9aa4ad; --code-bg: #161b22; --border: #30363d;
+        --card-bg: #161b22;
+        --accent: #58a6ff; --ok: #3fb950; --warn: #d29922; --danger: #f85149; --info: #79c0ff; --neutral: #8b949e;
+        --ok-tint: rgba(63,185,80,0.12); --danger-tint: rgba(248,81,73,0.10);
+        --chip-must-bg: #3b1416; --chip-must-fg: #ff7b72;
+        --chip-should-bg: #2d2410; --chip-should-fg: #e3b341;
+        --chip-may-bg: #0d2538; --chip-may-fg: #58a6ff;
+      }
+    }
+    html, body { margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100vh; }
+    .layout:has(> nav.toc) { grid-template-columns: 260px minmax(0, 1fr); }
+    nav.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 12px; border-right: 1px solid var(--border); font-size: 0.85rem; }
+    nav.toc .toc-title { font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
+    nav.toc ol { list-style: none; margin: 0; padding: 0; }
+    nav.toc li { margin: 2px 0; }
+    nav.toc a { color: var(--fg); text-decoration: none; display: block; padding: 3px 6px; border-radius: 4px; }
+    nav.toc a:hover { background: var(--code-bg); color: var(--accent); }
+    @media (max-width: 880px) { nav.toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } }
+    @media print { nav.toc { display: none; } }
+    .content { min-width: 0; }
+    header, main, footer { max-width: var(--max); margin: 0 auto; padding: 16px 24px; }
+    header { border-bottom: 1px solid var(--border); }
+    header h1 { margin: 4px 0 8px; font-size: 1.9rem; }
+    .badges span { display: inline-block; padding: 2px 8px; margin-right: 6px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--bg); }
+    .badges .provenance-reverse-engineered, .badges .provenance-migrated { color: var(--warn); border-color: var(--warn); }
+    .badges .status-draft       { color: var(--neutral); border-color: var(--neutral); }
+    .badges .status-in-review   { color: var(--warn);    border-color: var(--warn); }
+    .badges .status-approved    { color: var(--ok);      border-color: var(--ok); }
+    .badges .status-locked      { color: var(--info);    border-color: var(--info); }
+    .stats { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+    .stats .chip { display: inline-block; padding: 1px 8px; margin-right: 6px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); }
+    @media (max-width: 880px) {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+    }
+    h2, h3, h4 { line-height: 1.25; margin-top: 1.6em; }
+    h2 { border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    a { color: var(--accent); }
+    code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: var(--code-bg); padding: 12px; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--code-bg); position: sticky; top: 0; z-index: 1; }
+    tbody tr:nth-child(even) td { background: var(--card-bg); }
+    blockquote { border-left: 3px solid var(--accent); margin: 0; padding: 4px 14px; color: var(--muted); }
+    .mermaid { background: var(--bg); text-align: center; margin: 16px 0; }
+    footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+    /* fragment-shared utilities */
+    .lede { font-size: 1.08rem; color: var(--fg); }
+    section.hero { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+    section.callout { border-left: 4px solid var(--border); padding: 8px 14px; background: var(--card-bg); border-radius: 4px; }
+    section.callout.warn { border-left-color: var(--warn); }
+    section.callout.warn h2::before { content: "⊘ "; color: var(--warn); }
+
+    ol.goal-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    ol.goal-grid li { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; display: flex; gap: 10px; }
+    ol.goal-grid .num { flex: 0 0 auto; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    ol.goal-grid p { margin: 0; }
+
+    details.role-group { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; background: var(--card-bg); }
+    details.role-group > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+    details.role-group > summary .count { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+    details.role-group ul.stories { margin: 0; padding: 4px 16px 12px 28px; }
+    ul.stories li { margin: 4px 0; }
+    ul.stories b { color: var(--accent); font-weight: 600; }
+
+    table.ac-table td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .chip.area { background: var(--code-bg); color: var(--muted); }
+    .chip.prio-must   { background: var(--chip-must-bg);   color: var(--chip-must-fg); border-color: var(--chip-must-fg); }
+    .chip.prio-should { background: var(--chip-should-bg); color: var(--chip-should-fg); border-color: var(--chip-should-fg); }
+    .chip.prio-may    { background: var(--chip-may-bg);    color: var(--chip-may-fg); border-color: var(--chip-may-fg); }
+
+    ul.non-goals { margin: 0; padding-left: 22px; }
+    ul.non-goals li::marker { content: "⊘  "; color: var(--warn); }
+
+    /* definition-list pattern: Purpose / Entry / Exit / Notes */
+    dl.def-list { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0; }
+    dl.def-list dt { font-weight: 600; color: var(--muted); }
+    dl.def-list dd { margin: 0; }
+
+    /* ADR */
+    .adr { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    .adr > .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+    .adr h2 { margin-top: 0.4em; border-bottom: none; font-size: 1.3rem; }
+    .adr h3 { margin-top: 1.1em; border-bottom: none; font-size: 1.15rem; }
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .status-proposed   { color: var(--warn);    border-color: var(--warn); }
+    .status-accepted   { color: var(--ok);      border-color: var(--ok); }
+    .consequences { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .consequences .pros, .consequences .cons { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+    .consequences .pros { background: var(--ok-tint); border-left: 3px solid var(--ok); }
+    .consequences .cons { background: var(--danger-tint); border-left: 3px solid var(--danger); }
+    .consequences h4 { margin: 0 0 4px; font-size: 1rem; color: var(--muted); }
+    .consequences ul { margin: 0; padding-left: 20px; }
+    @media (max-width: 720px) { .consequences { grid-template-columns: 1fr; } }
+    ul.alt-list li { margin: 4px 0; }
+    ul.alt-list li strong { color: var(--fg); }
+
+    /* UX-spec mockup */
+    article.mockup { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    article.mockup > h3 { margin-top: 0; }
+    .mockup-preview { background: var(--bg); border: 1px dashed var(--border); border-radius: 6px; padding: 16px; margin: 10px 0; min-height: 80px; }
+    .screen-meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 6px 0 10px; font-size: 0.92rem; }
+    .screen-meta b { color: var(--muted); font-weight: 600; }
+
+    /* Concept */
+    .pillar-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .pillar-grid li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; }
+    .pillar-grid li strong { display: block; margin-bottom: 4px; color: var(--accent); }
+    .anti-pillar-grid li { border-left-color: var(--danger); }
+    .anti-pillar-grid li strong { color: var(--danger); }
+    ul.user-segments { list-style: none; padding: 0; }
+    ul.user-segments li { padding: 8px 12px; margin: 6px 0; border-left: 3px solid var(--accent); background: var(--card-bg); border-radius: 4px; }
+    ul.user-segments li b { color: var(--accent); }
+    ul.metrics li { margin: 4px 0; }
+    ul.metrics li .target { float: right; color: var(--ok); font-variant-numeric: tabular-nums; }
+
+    /* Stack */
+    table.tech-table .ver { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .principle-list { list-style: none; padding: 0; }
+    .principle-list li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    .principle-list li strong { color: var(--info); }
+
+    /* Accessibility */
+    section.a11y-domain { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; margin: 14px 0; }
+    section.a11y-domain h2 { border-bottom: 1px dashed var(--border); }
+    .limitation { background: var(--chip-should-bg); border-left: 3px solid var(--warn); padding: 8px 12px; margin: 6px 0; border-radius: 4px; }
+    .limitation b { color: var(--warn); }
+
+    /* Design system */
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .swatch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+    .swatch .chip-color { height: 80px; border-radius: 4px; border: 1px solid var(--border); }
+    .swatch code { font-size: 0.78rem; }
+    .swatch small { color: var(--muted); }
+    .spacing-scale { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); }
+    .spacing-scale > div { background: var(--accent); width: 24px; border-radius: 2px 2px 0 0; }
+    article.component-preview { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 14px 0; background: var(--card-bg); }
+    .preview { padding: 16px; border: 1px dashed var(--border); border-radius: 6px; background: var(--bg); }
+
+    @media print {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+      a { color: inherit; text-decoration: none; }
+      footer { page-break-before: always; }
+      details.role-group[open] > summary { list-style: none; }
+      details.role-group { break-inside: avoid; }
+      tr, li { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Содержание</div>
+      <ol>
+        <li><a href="#about">О документе</a></li>
+        <li><a href="#colors">Цвета</a></li>
+        <li><a href="#contrast">Контраст</a></li>
+        <li><a href="#typography">Типографика</a></li>
+        <li><a href="#spacing">Отступы</a></li>
+        <li><a href="#shapes">Формы и границы</a></li>
+        <li><a href="#elevation">Возвышение</a></li>
+        <li><a href="#motion">Движение</a></li>
+        <li><a href="#components">Компоненты</a></li>
+        <li><a href="#ui-composition-preview">Композиция интерфейса</a></li>
+        <li><a href="#token-reference">Справочник токенов</a></li>
+        <li><a href="#dos-and-donts">Do и Don't</a></li>
+      </ol>
+    </nav>
+    <div class="content">
+      <header>
+        <div class="badges">
+          <span>Design-system</span>
+          <span>project</span>
+          <span class="status-draft">draft</span>
+        </div>
+        <h1>Дизайн-система — Сервис управления матрицами компетенций и повышением сотрудников</h1>
+        <div class="stats">32 цвета · 12 типографических стилей · 7 радиусов и границ · 26 spacing · 75 компонентов · updated 2026-10-05</div>
+      </header>
+      <main>
+<!--
+responsibility:
+  owns: interactive visual reference of DESIGN.md tokens and components with live previews
+  excludes: source of truth for tokens (lives in DESIGN.md), a11y rules, ux flows
+  delegates_to: DESIGN.md (token source), accessibility.html (a11y)
+provenance: original
+-->
+
+<div class="ds" style="--ds-primary:#2B42E5;--ds-primary-hover:#2338C2;--ds-primary-active:#182CC2;--ds-primary-subtle:#EBF2FD;--ds-accent:#FBAE40;--ds-text-primary:#292929;--ds-text-secondary:#4B4B4C;--ds-text-muted:#5F6670;--ds-text-disabled:#A3A9B1;--ds-text-inverse:#FFFFFF;--ds-text-inverse-muted:#9BA8F9;--ds-surface-page:#F5F6F8;--ds-surface-panel:#FFFFFF;--ds-surface-muted:#EEEEEE;--ds-surface-inverse:#081240;--ds-border-subtle:#DDE1E6;--ds-border-control:#7D8590;--ds-overlay-scrim:#08124073;--ds-success:#197A4A;--ds-success-bg:#E6F4EC;--ds-warning:#A85800;--ds-warning-bg:#FFF4DF;--ds-danger:#C62832;--ds-danger-hover:#B3202A;--ds-danger-bg:#FDECEC;--ds-info:#1B64C8;--ds-info-bg:#EBF2FD;--ds-rating-0:#EEEEEE;--ds-rating-1:#C7D0FB;--ds-rating-2:#9BA8F9;--ds-rating-3:#2B42E5;--ds-rating-4:#081240;--ds-xxs:4px;--ds-xs:8px;--ds-sm:12px;--ds-md:16px;--ds-lg:20px;--ds-xl:24px;--ds-xxl:32px;--ds-xxxl:48px;--ds-header-h:56px;--ds-sider-w:240px;--ds-h-sm:24px;--ds-h-md:32px;--ds-h-lg:40px;--ds-matrix-row:48px;--ds-matrix-cell:72px;--ds-matrix-name:280px;--ds-r-xs:2px;--ds-r-md:4px;--ds-r-lg:8px;--ds-r-full:9999px;--ds-bw:1px;--ds-ring-w:2px;--ds-ring-o:2px;--ds-el-sticky:0 1px 2px rgba(8,18,64,0.08);--ds-el-popup:0 4px 12px rgba(8,18,64,0.12);--ds-el-modal:0 8px 24px rgba(8,18,64,0.16);--ds-font-ui:'PT Sans','Segoe UI',Roboto,Arial,sans-serif;--ds-font-narrow:'PT Sans Narrow','Arial Narrow','Segoe UI',Arial,sans-serif;--ds-font-mono:'PT Mono',Consolas,'Courier New',monospace;--ds-t-h1:700 30px/38px var(--ds-font-ui);--ds-t-h2:700 24px/32px var(--ds-font-ui);--ds-t-h3:700 20px/28px var(--ds-font-ui);--ds-t-h4:700 16px/24px var(--ds-font-ui);--ds-t-h5:700 14px/22px var(--ds-font-ui);--ds-t-body-lg:400 16px/24px var(--ds-font-ui);--ds-t-body-md:400 14px/22px var(--ds-font-ui);--ds-t-body-strong:700 14px/22px var(--ds-font-ui);--ds-t-body-sm:400 12px/20px var(--ds-font-ui);--ds-t-data-col:700 14px/20px var(--ds-font-narrow);--ds-t-code:400 13px/20px var(--ds-font-mono);">
+
+<section id="about" class="hero">
+  <h2>О документе</h2>
+  <p class="lede">Визуальный справочник токенов и компонентов из <code>docs/ux/DESIGN.md</code>. Источник истины — DESIGN.md; этот файл генерируется из него и не содержит собственных решений. Тема только светлая, тёмная тема не определена (открытый вопрос).</p>
+  <ul>
+    <li><b>Платформа:</b> web SPA, desktop-first, comfortable density, React + antd 6, управляется из токенов через <code>ConfigProvider</code>.</li>
+    <li><b>Шрифты:</b> семейство PT (PT Sans, PT Sans Narrow, PT Mono) поставляется в образе приложения; эта страница подгружает PT Sans (400/700), PT Sans Narrow (400/700) и PT Mono (400) с Google Fonts, поэтому превью показывает реальные начертания без установки шрифтов на машине.</li>
+    <li><b>Превью:</b> статические; состояния hover, pressed и focus нарисованы отдельными образцами. Все значения в превью берутся из токенов DESIGN.md через переменные <code>--ds-*</code>, заданные один раз на корневом элементе.</li>
+  </ul>
+</section>
+
+<section id="colors">
+  <h2>Цвета</h2>
+  <p class="lede">32 цветовых токена: по одному образцу на токен, с hex и ролью. Палитра извлечена из корпоративного шаблона РЭЦ/ЭКСАР; цвета Office по умолчанию не использованы.</p>
+
+  <h3>Бренд и действие</h3>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-primary);"></div><code>colors.primary</code><br><small>#2B42E5 · основное действие, ссылки, фокус</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-primary-hover);"></div><code>colors.primary-hover</code><br><small>#2338C2 · hover</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-primary-active);"></div><code>colors.primary-active</code><br><small>#182CC2 · pressed</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-primary-subtle);"></div><code>colors.primary-subtle</code><br><small>#EBF2FD · выбранная строка, подсветка</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-accent);"></div><code>colors.accent</code><br><small>#FBAE40 · только заливка; не текст (1.9:1)</small></div>
+  </div>
+
+  <h3>Текст</h3>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-text-primary);"></div><code>colors.text-primary</code><br><small>#292929 · основной текст</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-text-secondary);"></div><code>colors.text-secondary</code><br><small>#4B4B4C · вторичный текст</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-text-muted);"></div><code>colors.text-muted</code><br><small>#5F6670 · подсказки, placeholder</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-text-disabled);"></div><code>colors.text-disabled</code><br><small>#A3A9B1 · только disabled (исключение WCAG 1.4.3)</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-text-inverse);"></div><code>colors.text-inverse</code><br><small>#FFFFFF · текст на заливках и navy</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-text-inverse-muted);"></div><code>colors.text-inverse-muted</code><br><small>#9BA8F9 · вторичный текст на navy</small></div>
+  </div>
+
+  <h3>Поверхности и границы</h3>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-surface-page);"></div><code>colors.surface-page</code><br><small>#F5F6F8 · фон приложения</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-surface-panel);"></div><code>colors.surface-panel</code><br><small>#FFFFFF · карточки, таблицы, формы</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-surface-muted);"></div><code>colors.surface-muted</code><br><small>#EEEEEE · шапка таблицы, disabled, скелетон</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-surface-inverse);"></div><code>colors.surface-inverse</code><br><small>#081240 · шапка и навигация (navy)</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-border-subtle);"></div><code>colors.border-subtle</code><br><small>#DDE1E6 · разделители</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-border-control);"></div><code>colors.border-control</code><br><small>#7D8590 · рамки контролов (3.7:1)</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-overlay-scrim);"></div><code>colors.overlay-scrim</code><br><small>#08124073 · подложка модалки и drawer</small></div>
+  </div>
+
+  <h3>Статусы</h3>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-success);"></div><code>colors.success</code><br><small>#197A4A · выполнено, утверждено</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-success-bg);"></div><code>colors.success-bg</code><br><small>#E6F4EC</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-warning);"></div><code>colors.warning</code><br><small>#A85800 · внимание, ниже цели</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-warning-bg);"></div><code>colors.warning-bg</code><br><small>#FFF4DF</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-danger);"></div><code>colors.danger</code><br><small>#C62832 · удаление, ошибка, критичный пробел</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-danger-hover);"></div><code>colors.danger-hover</code><br><small>#B3202A · hover и pressed danger</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-danger-bg);"></div><code>colors.danger-bg</code><br><small>#FDECEC</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-info);"></div><code>colors.info</code><br><small>#1B64C8 · информация, в процессе</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-info-bg);"></div><code>colors.info-bg</code><br><small>#EBF2FD</small></div>
+  </div>
+
+  <h3>Уровни рейтинга компетенции (шкала 0–4)</h3>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-rating-0);"></div><code>colors.rating-level-0</code><br><small>#EEEEEE · не подтверждена; текст navy</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-rating-1);"></div><code>colors.rating-level-1</code><br><small>#C7D0FB · с поддержкой; текст navy</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-rating-2);"></div><code>colors.rating-level-2</code><br><small>#9BA8F9 · типовые задачи; текст navy</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-rating-3);"></div><code>colors.rating-level-3</code><br><small>#2B42E5 · сложные задачи; текст белый</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-rating-4);"></div><code>colors.rating-level-4</code><br><small>#081240 · формирует стандарты; текст белый</small></div>
+  </div>
+</section>
+
+<section id="contrast">
+  <h2>Контраст</h2>
+  <p class="lede">Расчёт по формуле WCAG 2.x от hex-значений (точность около ±0,05). Пороги AA: 4.5:1 обычный текст, 3:1 крупный текст и нетекстовые элементы.</p>
+  <table>
+    <thead><tr><th>Пара (текст на фоне)</th><th>Образец</th><th>Контраст</th><th>Результат</th></tr></thead>
+    <tbody>
+      <tr><td><code>text-primary</code> на <code>surface-panel</code> / <code>surface-page</code> / <code>surface-muted</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-surface-panel);color:var(--ds-text-primary);font:var(--ds-t-body-md)">Аа 123</span></td><td>14.6 / 13.4 / 12.6</td><td>AA, AAA</td></tr>
+      <tr><td><code>text-secondary</code> на <code>surface-panel</code> / <code>surface-muted</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-surface-panel);color:var(--ds-text-secondary);font:var(--ds-t-body-md)">Аа 123</span></td><td>8.7 / 7.5</td><td>AA, AAA</td></tr>
+      <tr><td><code>text-muted</code> на <code>surface-panel</code> / <code>surface-page</code> / <code>surface-muted</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-surface-panel);color:var(--ds-text-muted);font:var(--ds-t-body-md)">Аа 123</span></td><td>5.8 / 5.4 / 5.0</td><td>AA</td></tr>
+      <tr><td><code>text-inverse</code> на <code>primary</code> / <code>primary-hover</code> / <code>primary-active</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-primary);color:var(--ds-text-inverse);font:var(--ds-t-body-md)">Аа 123</span></td><td>7.0 / 8.7 / 9.6</td><td>AA, AAA</td></tr>
+      <tr><td><code>primary</code> (ссылка) на <code>surface-panel</code> / <code>primary-subtle</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-surface-panel);color:var(--ds-primary);font:var(--ds-t-body-md)">Аа 123</span></td><td>7.0 / 6.2</td><td>AA</td></tr>
+      <tr><td><code>text-inverse</code> / <code>text-inverse-muted</code> на <code>surface-inverse</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-surface-inverse);color:var(--ds-text-inverse-muted);font:var(--ds-t-body-md)">Аа 123</span></td><td>17.9 / 8.0</td><td>AAA</td></tr>
+      <tr><td><code>text-inverse</code> на <code>success</code> / <code>warning</code> / <code>danger</code> / <code>info</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-danger);color:var(--ds-text-inverse);font:var(--ds-t-body-md)">Аа 123</span></td><td>5.4 / 5.2 / 5.6 / 5.7</td><td>AA</td></tr>
+      <tr><td>Статусный цвет на своём <code>-bg</code>: success / warning / danger / info</td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-success-bg);color:var(--ds-success);font:var(--ds-t-body-md)">Аа 123</span></td><td>4.7 / 4.7 / 4.9 / 5.0</td><td>AA</td></tr>
+      <tr><td><code>surface-inverse</code> на <code>rating-level-0</code> / <code>-1</code> / <code>-2</code>; <code>text-inverse</code> на <code>-3</code> / <code>-4</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-rating-2);color:var(--ds-surface-inverse);font:var(--ds-t-body-md)">2</span></td><td>15.5 / 11.8 / 8.0; 7.0 / 17.9</td><td>AA, AAA</td></tr>
+      <tr><td><code>surface-inverse</code> / <code>text-primary</code> на <code>accent</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-accent);color:var(--ds-surface-inverse);font:var(--ds-t-body-md)">Аа 123</span></td><td>9.6 / 7.8</td><td>AA, AAA</td></tr>
+      <tr><td><code>border-control</code> на <code>surface-panel</code> / <code>surface-page</code> (нетекстовый)</td><td><span style="display:inline-block;width:64px;height:20px;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control)"></span></td><td>3.7 / 3.5</td><td>AA (нетекстовый, ≥3:1)</td></tr>
+      <tr><td>Кольцо фокуса: <code>primary</code> на <code>surface-panel</code>; <code>accent</code> на <code>surface-inverse</code></td><td><span style="display:inline-block;width:64px;height:20px;background:var(--ds-surface-panel);outline:var(--ds-ring-w) solid var(--ds-primary);outline-offset:var(--ds-ring-o)"></span></td><td>7.0 / 9.6</td><td>AA (нетекстовый)</td></tr>
+      <tr><td><code>accent</code> как текст или иконка на <code>surface-panel</code>; <code>text-inverse</code> на <code>accent</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-surface-panel);color:var(--ds-accent);font:var(--ds-t-body-md)">Аа 123</span></td><td>1.9</td><td>НЕ проходит: запрещено</td></tr>
+      <tr><td><code>text-inverse-muted</code> на <code>primary</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-primary);color:var(--ds-text-inverse-muted);font:var(--ds-t-body-md)">Аа 123</span></td><td>3.1</td><td>НЕ проходит для текста</td></tr>
+      <tr><td><code>text-disabled</code> на <code>surface-muted</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-surface-muted);color:var(--ds-text-disabled);font:var(--ds-t-body-md)">Аа 123</span></td><td>2.0</td><td>ниже AA; допустимо только для неактивных контролов (WCAG 1.4.3), исключение записано в DESIGN.md</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="typography">
+  <h2>Типографика</h2>
+  <p class="lede">Семейство PT (PT Sans, PT Sans Narrow, PT Mono) — лицензионно подходящая замена шрифтам шаблона Circe/Akrobat; только веса 400 и 700, курсив не используется. Базовый размер 14px. Образцы ниже показаны токенами из DESIGN.md.</p>
+  <div class="preview" style="background:var(--ds-surface-panel);color:var(--ds-text-primary);">
+    <div style="font:var(--ds-t-h1);">Волна повышения 2026-1 <span style="font:var(--ds-t-code);color:var(--ds-text-muted);">typography.heading-1 · 30/38 · 700</span></div>
+    <div style="font:var(--ds-t-h2);margin-top:var(--ds-md);">Матрица компетенций <span style="font:var(--ds-t-code);color:var(--ds-text-muted);">heading-2 · 24/32 · 700</span></div>
+    <div style="font:var(--ds-t-h3);margin-top:var(--ds-md);">Карточка кандидата <span style="font:var(--ds-t-code);color:var(--ds-text-muted);">heading-3 · 20/28 · 700</span></div>
+    <div style="font:var(--ds-t-h4);margin-top:var(--ds-md);">Профильные компетенции <span style="font:var(--ds-t-code);color:var(--ds-text-muted);">heading-4 · 16/24 · 700</span></div>
+    <div style="font:var(--ds-t-h5);margin-top:var(--ds-md);">Группа полей формы <span style="font:var(--ds-t-code);color:var(--ds-text-muted);">heading-5 · 14/22 · 700</span></div>
+    <div style="font:var(--ds-t-body-lg);margin-top:var(--ds-md);max-width:720px;">Самостоятельно решает сложные и неопределённые задачи, способен помогать другим. <span style="font:var(--ds-t-code);color:var(--ds-text-muted);">body-lg · 16/24 · 400</span></div>
+    <div style="font:var(--ds-t-body-md);margin-top:var(--ds-md);">Основной текст интерфейса: формы, таблицы, меню. <span style="font:var(--ds-t-code);color:var(--ds-text-muted);">body-md · 14/22 · 400</span></div>
+    <div style="font:var(--ds-t-body-strong);margin-top:var(--ds-md);">Акцент в тексте, заголовок таблицы, метка поля <span style="font:var(--ds-t-code);color:var(--ds-text-muted);">body-strong · 14/22 · 700</span></div>
+    <div style="font:var(--ds-t-body-sm);margin-top:var(--ds-md);">Подпись, подсказка, метаданные (минимум 12px) <span style="font:var(--ds-t-code);color:var(--ds-text-muted);">body-sm · 12/20 · 400</span></div>
+    <div style="font:var(--ds-t-body-md);font-feature-settings:'tnum' 1;margin-top:var(--ds-md);">Табличные цифры: 1 234,50 · 3,75 · 88% <span style="font:var(--ds-t-code);color:var(--ds-text-muted);">data-numeric · 14/22 · 400 · tnum</span></div>
+    <div style="font:var(--ds-t-data-col);margin-top:var(--ds-md);">Проектирование архитектуры решений <span style="font:var(--ds-t-code);color:var(--ds-text-muted);">data-column-header · PT Sans Narrow · 14/20 · 700</span></div>
+    <div style="font:var(--ds-t-code);margin-top:var(--ds-md);">MATRIX-2026-1 · L3 · v12 <span style="color:var(--ds-text-muted);">code · PT Mono · 13/20 · 400</span></div>
+  </div>
+  <p>Fallback-стеки: <code>PT Sans, Segoe UI, Roboto, Arial, sans-serif</code>; <code>PT Sans Narrow, Arial Narrow, Segoe UI, Arial, sans-serif</code>; <code>PT Mono, Consolas, Courier New, monospace</code>. В образе приложения самохостятся четыре WOFF2-файла: PT Sans Regular и Bold, PT Sans Narrow Bold, PT Mono Regular, вместе с текстом лицензии (PT Free Font License v1.3 / SIL OFL 1.1). Лицензия разрешает встраивание и поставку с коммерческим продуктом; глифы не подмножествуются.</p>
+</section>
+
+<section id="spacing">
+  <h2>Отступы</h2>
+  <p class="lede">Сетка 4px, шкала из 8 шагов. Высота столбика равна значению токена.</p>
+  <div class="spacing-scale" style="align-items:flex-end;">
+    <div title="spacing.space-xxs" style="height:var(--ds-xxs);width:48px;background:var(--ds-primary);"></div>
+    <div title="spacing.space-xs" style="height:var(--ds-xs);width:48px;background:var(--ds-primary);"></div>
+    <div title="spacing.space-sm" style="height:var(--ds-sm);width:48px;background:var(--ds-primary);"></div>
+    <div title="spacing.space-md" style="height:var(--ds-md);width:48px;background:var(--ds-primary);"></div>
+    <div title="spacing.space-lg" style="height:var(--ds-lg);width:48px;background:var(--ds-primary);"></div>
+    <div title="spacing.space-xl" style="height:var(--ds-xl);width:48px;background:var(--ds-primary);"></div>
+    <div title="spacing.space-xxl" style="height:var(--ds-xxl);width:48px;background:var(--ds-primary);"></div>
+    <div title="spacing.space-xxxl" style="height:var(--ds-xxxl);width:48px;background:var(--ds-primary);"></div>
+  </div>
+  <table>
+    <thead><tr><th>Токен</th><th>Значение</th><th>Применение</th></tr></thead>
+    <tbody>
+      <tr><td><code>space-xxs</code></td><td>4px</td><td>микро-зазор иконка–текст</td></tr>
+      <tr><td><code>space-xs</code></td><td>8px</td><td>связанные контролы, метка–поле, отступ плотной ячейки</td></tr>
+      <tr><td><code>space-sm</code></td><td>12px</td><td>вертикальный отступ ячейки таблицы, малая карточка</td></tr>
+      <tr><td><code>space-md</code></td><td>16px</td><td>внутри карточки и формы, gutter сетки, горизонтальный отступ ячейки</td></tr>
+      <tr><td><code>space-lg</code></td><td>20px</td><td>заголовок секции – её содержимое</td></tr>
+      <tr><td><code>space-xl</code></td><td>24px</td><td>отступы карточки и модалки, между полями формы, поля страницы</td></tr>
+      <tr><td><code>space-xxl</code></td><td>32px</td><td>между секциями страницы</td></tr>
+      <tr><td><code>space-xxxl</code></td><td>48px</td><td>воздух сверху и снизу страницы</td></tr>
+    </tbody>
+  </table>
+  <p>Каркас страницы, высоты контролов, брейкпоинты и размеры матрицы (<code>page-gutter</code> 24, <code>header-height</code> 56, <code>sider-width</code> 240, <code>control-height-sm/md/lg</code> 24/32/40, <code>target-min</code> 24, <code>matrix-row-height</code> 48, <code>matrix-cell-min-width</code> 72, <code>matrix-name-column-width</code> 280, брейкпоинты 768/992/1200/1600) приведены в справочнике токенов ниже.</p>
+</section>
+
+<section id="shapes">
+  <h2>Формы и границы</h2>
+  <p class="lede">Сдержанные слегка скруглённые углы: 4px для контролов, 8px для контейнеров, 2px для мелких элементов.</p>
+  <div class="preview" style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">
+    <figure style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+      <div style="width:96px;height:64px;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-xs);"></div>
+      <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);">rounded-xs · 2px<br>малые контролы, теги</figcaption>
+    </figure>
+    <figure style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+      <div style="width:96px;height:64px;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);"></div>
+      <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);">rounded-md · 4px<br>кнопки, поля, чипы</figcaption>
+    </figure>
+    <figure style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+      <div style="width:96px;height:64px;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);"></div>
+      <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);">rounded-lg · 8px<br>карточки, модалки</figcaption>
+    </figure>
+    <figure style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+      <div style="width:64px;height:64px;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-full);"></div>
+      <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);">rounded-full<br>аватары, radio</figcaption>
+    </figure>
+    <figure style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+      <div style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);color:var(--ds-text-primary);font:var(--ds-t-body-strong);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);outline:var(--ds-ring-w) solid var(--ds-primary);outline-offset:var(--ds-ring-o);margin:var(--ds-xs);">Кольцо фокуса</div>
+      <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);">border-width 1px · focus-ring-width 2px · focus-ring-offset 2px<br>кольцо primary (7.0:1 на белом)</figcaption>
+    </figure>
+  </div>
+  <p>Границы всегда 1px. Контролы обводятся <code>border-control</code> (3.7:1), контейнеры и разделители — <code>border-subtle</code>. Состояния меняют цвет, а не ширину; ошибка поля — граница <code>danger</code> вместе с иконкой и сообщением.</p>
+</section>
+
+<section id="elevation">
+  <h2>Возвышение</h2>
+  <p class="lede">Плоский корпоративный стиль: иерархия за счёт слоёв поверхностей и границ, тени — только у парящих элементов, цвет тени — navy. Три уровня над плоским.</p>
+  <div class="preview" style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);padding:var(--ds-xl);">
+    <figure style="margin:0 var(--ds-xl) var(--ds-xl) 0;display:inline-flex;flex-direction:column;gap:var(--ds-xs);vertical-align:top;">
+      <div style="width:160px;height:80px;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);"></div>
+      <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);">elevation-none<br>карточки, таблицы, панели</figcaption>
+    </figure>
+    <figure style="margin:0 var(--ds-xl) var(--ds-xl) 0;display:inline-flex;flex-direction:column;gap:var(--ds-xs);vertical-align:top;">
+      <div style="width:160px;height:80px;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-sticky);"></div>
+      <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);">elevation-sticky<br>край липкого заголовка матрицы</figcaption>
+    </figure>
+    <figure style="margin:0 var(--ds-xl) var(--ds-xl) 0;display:inline-flex;flex-direction:column;gap:var(--ds-xs);vertical-align:top;">
+      <div style="width:160px;height:80px;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);"></div>
+      <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);">elevation-popup<br>dropdown, popover, tooltip</figcaption>
+    </figure>
+    <figure style="margin:0 var(--ds-xl) var(--ds-xl) 0;display:inline-flex;flex-direction:column;gap:var(--ds-xs);vertical-align:top;">
+      <div style="width:160px;height:80px;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);"></div>
+      <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);">elevation-modal<br>модалка, drawer, уведомления</figcaption>
+    </figure>
+  </div>
+  <table>
+    <thead><tr><th>Токен</th><th>Значение</th></tr></thead>
+    <tbody>
+      <tr><td><code>elevation-none</code></td><td>none</td></tr>
+      <tr><td><code>elevation-sticky</code></td><td><code>0 1px 2px rgba(8, 18, 64, 0.08)</code></td></tr>
+      <tr><td><code>elevation-popup</code></td><td><code>0 4px 12px rgba(8, 18, 64, 0.12)</code></td></tr>
+      <tr><td><code>elevation-modal</code></td><td><code>0 8px 24px rgba(8, 18, 64, 0.16)</code></td></tr>
+    </tbody>
+  </table>
+  <p>Тень никогда не единственный признак границы; у парящих поверхностей остаётся рамка <code>border-subtle</code>. Hover не поднимает карточку.</p>
+</section>
+
+<section id="motion">
+  <h2>Движение</h2>
+  <p class="lede">Движение объясняет смену состояния или источник появления элемента, но не украшает. Здесь нет анимации: значения приведены таблицей. При <code>prefers-reduced-motion: reduce</code> все переходы отключаются.</p>
+  <table>
+    <thead><tr><th>Токен</th><th>Значение</th><th>Применение</th></tr></thead>
+    <tbody>
+      <tr><td><code>motion-fast</code></td><td>100ms</td><td>hover и focus, переключатели, нажатие кнопки</td></tr>
+      <tr><td><code>motion-mid</code></td><td>200ms</td><td>dropdown, popover, tooltip, collapse, индикатор вкладок</td></tr>
+      <tr><td><code>motion-slow</code></td><td>300ms</td><td>модалка и drawer; максимум для интерфейса</td></tr>
+      <tr><td><code>motion-ease-out</code></td><td><code>cubic-bezier(0.215, 0.61, 0.355, 1)</code></td><td>появление</td></tr>
+      <tr><td><code>motion-ease-in</code></td><td><code>cubic-bezier(0.55, 0.055, 0.675, 0.19)</code></td><td>уход</td></tr>
+      <tr><td><code>motion-ease-standard</code></td><td><code>cubic-bezier(0.645, 0.045, 0.355, 1)</code></td><td>изменения на месте</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>Нет переходов дольше 300ms, bounce, parallax, анимации смены маршрутов и зацикленного декора; единственная непрерывная анимация — индикатор загрузки.</li>
+    <li>Данные не анимируются: ячейки матрицы, рейтинги и ранжирование обновляются на месте; значимое изменение отмечается иконкой или текстом.</li>
+    <li>Click-ripple antd отключён всегда; при reduce приложение выставляет токен antd <code>motion=false</code>, shimmer скелетона становится статичным.</li>
+  </ul>
+</section>
+
+<section id="components">
+  <h2>Компоненты</h2>
+  <p class="lede">Живое превью каждого из 75 компонентов DESIGN.md, сгруппированное по назначению. Подпись к образцу называет компонент и его токены. Состояния hover, pressed и focus показаны отдельными образцами; disabled всегда сопровождается причиной.</p>
+
+  <article class="component-preview">
+    <h3>Обводки и примитивы</h3>
+    <div class="preview" style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">
+      <figure data-component="control-border" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:180px;height:var(--ds-h-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);"></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">control-border</b> · цвет border-control, толщина border-width</figcaption>
+      </figure>
+      <figure data-component="divider" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:180px;padding:var(--ds-md) 0;"><div style="height:var(--ds-bw);background:var(--ds-border-subtle);"></div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">divider</b> · цвет border-subtle</figcaption>
+      </figure>
+      <figure data-component="focus-ring" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="padding:var(--ds-xs);"><div style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);color:var(--ds-text-primary);font:var(--ds-t-body-strong);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);outline:var(--ds-ring-w) solid var(--ds-primary);outline-offset:var(--ds-ring-o);">Фокус</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">focus-ring</b> · цвет primary, 2px, отступ 2px</figcaption>
+      </figure>
+      <figure data-component="focus-ring-inverse" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="padding:var(--ds-md);background:var(--ds-surface-inverse);"><div style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-surface-inverse);color:var(--ds-text-inverse-muted);font:var(--ds-t-body-md);border-radius:var(--ds-r-md);outline:var(--ds-ring-w) solid var(--ds-accent);outline-offset:var(--ds-ring-o);">Пункт меню</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">focus-ring-inverse</b> · цвет accent на navy (9.6:1)</figcaption>
+      </figure>
+      <figure data-component="scrim" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="position:relative;width:200px;height:96px;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);overflow:hidden;"><div style="padding:var(--ds-sm);">Страница под подложкой</div><div style="position:absolute;top:0;right:0;bottom:0;left:0;background:var(--ds-overlay-scrim);"></div><div style="position:absolute;top:var(--ds-md);left:var(--ds-xl);right:var(--ds-xl);height:var(--ds-xxl);background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);"></div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">scrim</b> · фон overlay-scrim (navy 45%)</figcaption>
+      </figure>
+      <figure data-component="skeleton" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:200px;"><div style="height:var(--ds-md);background:var(--ds-surface-muted);border-radius:var(--ds-r-md);"></div><div style="height:var(--ds-md);width:60%;margin-top:var(--ds-xs);background:var(--ds-surface-muted);border-radius:var(--ds-r-md);"></div><div style="height:var(--ds-md);width:80%;margin-top:var(--ds-xs);background:var(--ds-surface-muted);border-radius:var(--ds-r-md);"></div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">skeleton</b> · фон surface-muted, rounded-md; без shimmer при reduced motion</figcaption>
+      </figure>
+    </div>
+  </article>
+
+  <article class="component-preview">
+    <h3>Оболочка и навигация приложения</h3>
+    <div class="preview" style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">
+      <figure data-component="app-content" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:240px;padding:var(--ds-xl);background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);border:var(--ds-bw) dashed var(--ds-border-control);">Область содержимого страницы</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">app-content</b> · фон surface-page, текст text-primary (13.4:1), поля page-gutter</figcaption>
+      </figure>
+      <figure data-component="app-header" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:420px;max-width:100%;height:var(--ds-header-h);padding:0 var(--ds-xl);display:flex;align-items:center;justify-content:space-between;background:var(--ds-surface-inverse);color:var(--ds-text-inverse);font:var(--ds-t-body-md);"><span style="font:var(--ds-t-body-strong);">Матрицы компетенций</span><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);">А. Соколова <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АС</span></span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">app-header</b> · фон surface-inverse, текст text-inverse (17.9:1), высота header-height</figcaption>
+      </figure>
+      <figure data-component="nav-item" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:232px;padding:var(--ds-xs);background:var(--ds-surface-inverse);"><div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-md);position:relative;background:var(--ds-surface-inverse);color:var(--ds-text-inverse-muted);"><span>▤</span>Волны повышения</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">nav-item</b> · navy / text-inverse-muted (8.0:1), высота control-height-lg</figcaption>
+      </figure>
+      <figure data-component="nav-item-hover" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:232px;padding:var(--ds-xs);background:var(--ds-surface-inverse);"><div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-md);position:relative;background:var(--ds-primary-active);color:var(--ds-text-inverse);"><span>▤</span>Волны повышения</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">nav-item-hover</b> · primary-active / text-inverse (9.6:1)</figcaption>
+      </figure>
+      <figure data-component="nav-item-active" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:232px;padding:var(--ds-xs);background:var(--ds-surface-inverse);"><div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-md);position:relative;background:var(--ds-primary);color:var(--ds-text-inverse);"><span>▤</span>Волны повышения</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">nav-item-active</b> · primary / text-inverse (7.0:1)</figcaption>
+      </figure>
+      <figure data-component="nav-item-active-marker" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:232px;padding:var(--ds-xs);background:var(--ds-surface-inverse);"><div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-md);position:relative;background:var(--ds-primary);color:var(--ds-text-inverse);"><span style="position:absolute;left:0;top:var(--ds-xs);bottom:var(--ds-xs);width:var(--ds-xxs);background:var(--ds-accent);"></span><span>▤</span>Волны повышения</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">nav-item-active-marker</b> · метка accent шириной space-xxs (вторая подсказка помимо заливки)</figcaption>
+      </figure>
+    </div>
+  </article>
+
+  <article class="component-preview">
+    <h3>Кнопки</h3>
+    <div class="preview" style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">
+      <figure data-component="button-primary" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);border:var(--ds-bw) solid transparent;background:var(--ds-primary);color:var(--ds-text-inverse);">Опубликовать</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">button-primary</b> · primary / text-inverse (7.0:1)</figcaption>
+      </figure>
+      <figure data-component="button-primary-hover" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);border:var(--ds-bw) solid transparent;background:var(--ds-primary-hover);color:var(--ds-text-inverse);">Опубликовать</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">button-primary-hover</b> · primary-hover (8.7:1)</figcaption>
+      </figure>
+      <figure data-component="button-primary-pressed" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);border:var(--ds-bw) solid transparent;background:var(--ds-primary-active);color:var(--ds-text-inverse);">Опубликовать</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">button-primary-pressed</b> · primary-active (9.6:1)</figcaption>
+      </figure>
+      <figure data-component="button-default" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);border:var(--ds-bw) solid var(--ds-border-control);background:var(--ds-surface-panel);color:var(--ds-text-primary);">Отмена</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">button-default</b> · surface-panel / text-primary (14.6:1), рамка control-border</figcaption>
+      </figure>
+      <figure data-component="button-default-hover" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);border:var(--ds-bw) solid var(--ds-primary);background:var(--ds-primary-subtle);color:var(--ds-primary);">Отмена</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">button-default-hover</b> · primary-subtle / primary (6.2:1)</figcaption>
+      </figure>
+      <figure data-component="button-default-pressed" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);border:var(--ds-bw) solid var(--ds-primary-active);background:var(--ds-primary-subtle);color:var(--ds-primary-active);">Отмена</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">button-default-pressed</b> · primary-subtle / primary-active (8.6:1)</figcaption>
+      </figure>
+      <figure data-component="button-danger" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);border:var(--ds-bw) solid transparent;background:var(--ds-danger);color:var(--ds-text-inverse);">Удалить матрицу</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">button-danger</b> · danger / text-inverse (5.6:1)</figcaption>
+      </figure>
+      <figure data-component="button-danger-hover" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);border:var(--ds-bw) solid transparent;background:var(--ds-danger-hover);color:var(--ds-text-inverse);">Удалить матрицу</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">button-danger-hover</b> · danger-hover (6.7:1); тот же вид для pressed</figcaption>
+      </figure>
+      <figure data-component="button-link" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;height:var(--ds-h-sm);padding:0 var(--ds-xxs);font:var(--ds-t-body-md);background:var(--ds-surface-panel);color:var(--ds-primary);">Открыть</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">button-link</b> · primary на surface-panel (7.0:1), высота control-height-sm</figcaption>
+      </figure>
+      <figure data-component="button-link-hover" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;height:var(--ds-h-sm);padding:0 var(--ds-xxs);font:var(--ds-t-body-md);background:var(--ds-surface-panel);color:var(--ds-primary-hover);text-decoration:underline;">Открыть</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">button-link-hover</b> · primary-hover (8.7:1)</figcaption>
+      </figure>
+      <figure data-component="button-disabled" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="display:flex;align-items:center;gap:var(--ds-sm);"><span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);background:var(--ds-surface-muted);color:var(--ds-text-disabled);">Отправить на комиссию</span><span style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);">Нужно 5 оценок, есть 2</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">button-disabled</b> · surface-muted / text-disabled (2.0:1, исключение WCAG 1.4.3); причина рядом текстом text-muted</figcaption>
+      </figure>
+    </div>
+  </article>
+
+  <article class="component-preview">
+    <h3>Поля формы</h3>
+    <div class="preview" style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">
+      <figure data-component="input" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:240px;height:var(--ds-h-md);padding:0 var(--ds-sm);display:flex;align-items:center;background:var(--ds-surface-panel);color:var(--ds-text-primary);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-md);">Иван Петров</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">input</b> · surface-panel / text-primary (14.6:1), рамка control-border; то же для select и date picker</figcaption>
+      </figure>
+      <figure data-component="input-placeholder" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:240px;height:var(--ds-h-md);padding:0 var(--ds-sm);display:flex;align-items:center;background:var(--ds-surface-panel);color:var(--ds-text-muted);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-md);">Введите ФИО сотрудника</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">input-placeholder</b> · text-muted на surface-panel (5.8:1)</figcaption>
+      </figure>
+      <figure data-component="input-disabled" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:240px;"><div style="height:var(--ds-h-md);padding:0 var(--ds-sm);display:flex;align-items:center;background:var(--ds-surface-muted);color:var(--ds-text-disabled);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-md);font:var(--ds-t-body-md);">Версия 12</div><div style="margin-top:var(--ds-xxs);font:var(--ds-t-body-sm);color:var(--ds-text-muted);">Недоступно: матрица опубликована</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">input-disabled</b> · surface-muted / text-disabled (2.0:1, исключение WCAG 1.4.3); причина в field-help</figcaption>
+      </figure>
+      <figure data-component="field-label" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="padding:var(--ds-xs) var(--ds-md);background:var(--ds-surface-panel);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);">Должность (обязательное поле)</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">field-label</b> · text-secondary (8.7:1), body-strong</figcaption>
+      </figure>
+      <figure data-component="field-help" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="padding:var(--ds-xs) var(--ds-md);background:var(--ds-surface-panel);color:var(--ds-text-muted);font:var(--ds-t-body-sm);">Формат: ДД.ММ.ГГГГ</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">field-help</b> · text-muted (5.8:1), body-sm</figcaption>
+      </figure>
+      <figure data-component="field-error" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="padding:var(--ds-xs) var(--ds-md);background:var(--ds-surface-panel);color:var(--ds-danger);font:var(--ds-t-body-sm);"><span>✕</span> Дата окончания раньше даты начала. Укажите дату не раньше начала.</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">field-error</b> · danger (5.6:1) с иконкой и пояснением</figcaption>
+      </figure>
+      <figure data-component="selection-control-checked" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="display:flex;align-items:center;gap:var(--ds-md);"><label style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-md);height:var(--ds-md);border-radius:var(--ds-r-xs);background:var(--ds-primary);color:var(--ds-text-inverse);font:var(--ds-t-body-sm);">✓</span>Выбрано</label><label style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-block;width:var(--ds-md);height:var(--ds-md);border-radius:var(--ds-r-xs);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);"></span>Не выбрано</label></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">selection-control-checked</b> · primary / text-inverse (7.0:1), размер space-md; без выбора — control-border</figcaption>
+      </figure>
+    </div>
+  </article>
+
+  <article class="component-preview">
+    <h3>Таблица и пагинация</h3>
+    <div class="preview" style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">
+      <figure data-component="table-header" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="display:flex;width:420px;max-width:100%;"><div style="flex:1;padding:var(--ds-sm) var(--ds-md);background:var(--ds-surface-muted);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);">Кандидат</div><div style="flex:1;padding:var(--ds-sm) var(--ds-md);background:var(--ds-surface-muted);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);">Должность</div><div style="flex:1;padding:var(--ds-sm) var(--ds-md);background:var(--ds-surface-muted);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);">Статус</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">table-header</b> · surface-muted / text-secondary (7.5:1)</figcaption>
+      </figure>
+      <figure data-component="table-row" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="display:flex;width:420px;max-width:100%;border-bottom:var(--ds-bw) solid var(--ds-border-subtle);background:var(--ds-surface-panel);"><div style="flex:1;padding:var(--ds-sm) var(--ds-md);color:var(--ds-text-primary);font:var(--ds-t-body-md);">Анна Соколова</div><div style="flex:1;padding:var(--ds-sm) var(--ds-md);color:var(--ds-text-primary);font:var(--ds-t-body-md);">Старший разработчик</div><div style="flex:1;padding:var(--ds-sm) var(--ds-md);color:var(--ds-text-primary);font:var(--ds-t-body-md);">На рассмотрении</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">table-row</b> · surface-panel / text-primary (14.6:1), разделитель divider</figcaption>
+      </figure>
+      <figure data-component="table-row-hover" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="display:flex;width:420px;max-width:100%;background:var(--ds-surface-page);border:var(--ds-bw) solid var(--ds-border-subtle);"><div style="flex:1;padding:var(--ds-sm) var(--ds-md);color:var(--ds-text-primary);font:var(--ds-t-body-md);">Анна Соколова</div><div style="flex:1;padding:var(--ds-sm) var(--ds-md);color:var(--ds-text-primary);font:var(--ds-t-body-md);">Старший разработчик</div><div style="flex:1;padding:var(--ds-sm) var(--ds-md);color:var(--ds-text-primary);font:var(--ds-t-body-md);">На рассмотрении</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">table-row-hover</b> · surface-page / text-primary (13.4:1)</figcaption>
+      </figure>
+      <figure data-component="table-row-selected" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="display:flex;width:420px;max-width:100%;background:var(--ds-primary-subtle);"><div style="flex:1;padding:var(--ds-sm) var(--ds-md);color:var(--ds-text-primary);font:var(--ds-t-body-md);">Анна Соколова</div><div style="flex:1;padding:var(--ds-sm) var(--ds-md);color:var(--ds-text-primary);font:var(--ds-t-body-md);">Старший разработчик</div><div style="flex:1;padding:var(--ds-sm) var(--ds-md);color:var(--ds-text-primary);font:var(--ds-t-body-md);">На рассмотрении</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">table-row-selected</b> · primary-subtle / text-primary (12.9:1)</figcaption>
+      </figure>
+      <figure data-component="table-cell-numeric" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:160px;background:var(--ds-surface-panel);"><div style="padding:var(--ds-sm) var(--ds-md);text-align:right;color:var(--ds-text-primary);font:var(--ds-t-body-md);font-feature-settings:'tnum' 1;">3,75</div><div style="padding:var(--ds-sm) var(--ds-md);text-align:right;color:var(--ds-text-primary);font:var(--ds-t-body-md);font-feature-settings:'tnum' 1;">12,50</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">table-cell-numeric</b> · data-numeric, по правому краю, surface-panel / text-primary</figcaption>
+      </figure>
+      <figure data-component="pagination-item" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-md);height:var(--ds-h-md);padding:0 var(--ds-xs);border-radius:var(--ds-r-md);font:var(--ds-t-body-md);border:var(--ds-bw) solid transparent;background:var(--ds-surface-panel);color:var(--ds-text-primary);">2</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">pagination-item</b> · surface-panel / text-primary (14.6:1)</figcaption>
+      </figure>
+      <figure data-component="pagination-item-hover" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-md);height:var(--ds-h-md);padding:0 var(--ds-xs);border-radius:var(--ds-r-md);font:var(--ds-t-body-md);border:var(--ds-bw) solid transparent;background:var(--ds-primary-subtle);color:var(--ds-primary);">2</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">pagination-item-hover</b> · primary-subtle / primary (6.2:1)</figcaption>
+      </figure>
+      <figure data-component="pagination-item-active" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-md);height:var(--ds-h-md);padding:0 var(--ds-xs);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);border:var(--ds-bw) solid var(--ds-primary);background:var(--ds-surface-panel);color:var(--ds-primary);">1</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">pagination-item-active</b> · текущая страница: рамка и текст primary (7.0:1)</figcaption>
+      </figure>
+    </div>
+  </article>
+
+  <article class="component-preview">
+    <h3>Матрица компетенций и рейтинг</h3>
+    <div class="preview" style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">
+      <figure data-component="matrix-header" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="display:flex;"><div style="width:var(--ds-matrix-cell);padding:var(--ds-xs);background:var(--ds-surface-muted);color:var(--ds-text-primary);font:var(--ds-t-data-col);text-align:center;">Тимлид</div><div style="width:var(--ds-matrix-cell);padding:var(--ds-xs);background:var(--ds-surface-muted);color:var(--ds-text-primary);font:var(--ds-t-data-col);text-align:center;">Коллега</div><div style="width:var(--ds-matrix-cell);padding:var(--ds-xs);background:var(--ds-surface-muted);color:var(--ds-text-primary);font:var(--ds-t-data-col);text-align:center;">Цель</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">matrix-header</b> · surface-muted / text-primary (12.6:1), PT Sans Narrow bold, ширина matrix-cell-min-width</figcaption>
+      </figure>
+      <figure data-component="matrix-name-cell" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:var(--ds-matrix-name);height:var(--ds-matrix-row);padding:var(--ds-sm);display:flex;align-items:center;gap:var(--ds-xs);background:var(--ds-surface-panel);color:var(--ds-text-primary);font:var(--ds-t-body-md);border-bottom:var(--ds-bw) solid var(--ds-border-subtle);"><span>Проектирование архитектуры решений</span><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);padding:0 var(--ds-xs);border-radius:var(--ds-r-xs);background:var(--ds-danger-bg);color:var(--ds-danger);font:var(--ds-t-body-sm);white-space:nowrap;"><span>⚑</span>критичная</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">matrix-name-cell</b> · surface-panel / text-primary (14.6:1), ширина matrix-name-column-width, высота matrix-row-height; маркер критичной компетенции — иконка и слово</figcaption>
+      </figure>
+      <figure data-component="matrix-cell" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:var(--ds-matrix-cell);height:var(--ds-matrix-row);padding:var(--ds-xs);display:flex;align-items:center;justify-content:center;background:var(--ds-surface-panel);color:var(--ds-text-primary);font:var(--ds-t-body-md);border-bottom:var(--ds-bw) solid var(--ds-border-subtle);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-3);color:var(--ds-text-inverse);font:var(--ds-t-body-strong);">3</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">matrix-cell</b> · surface-panel, 72×48; чип по центру</figcaption>
+      </figure>
+      <figure data-component="rating-chip-0" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-0);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">0</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">rating-chip-0</b> · не подтверждена; navy на rating-level-0 (15.5:1)</figcaption>
+      </figure>
+      <figure data-component="rating-chip-1" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-1);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">1</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">rating-chip-1</b> · с поддержкой; navy (11.8:1)</figcaption>
+      </figure>
+      <figure data-component="rating-chip-2" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-2);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">2</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">rating-chip-2</b> · типовые задачи; navy (8.0:1)</figcaption>
+      </figure>
+      <figure data-component="rating-chip-3" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-3);color:var(--ds-text-inverse);font:var(--ds-t-body-strong);">3</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">rating-chip-3</b> · сложные задачи; белый (7.0:1)</figcaption>
+      </figure>
+      <figure data-component="rating-chip-4" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-4);color:var(--ds-text-inverse);font:var(--ds-t-body-strong);">4</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">rating-chip-4</b> · формирует стандарты; белый (17.9:1)</figcaption>
+      </figure>
+    </div>
+    <p>Цифра уровня показана всегда; сравнение с целевым уровнем отображается соседним тегом, а не перекраской чипа. Полный пример матрицы с липким заголовком и липкой первой колонкой — в разделе «Композиция интерфейса».</p>
+  </article>
+
+  <article class="component-preview">
+    <h3>Карточка кандидата и статусные теги</h3>
+    <div class="preview" style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">
+      <figure data-component="candidate-card" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:300px;padding:var(--ds-xl);background:var(--ds-surface-panel);color:var(--ds-text-primary);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);"><div style="font:var(--ds-t-h2);">Анна Соколова</div><div style="margin-top:var(--ds-xs);font:var(--ds-t-body-md);color:var(--ds-text-secondary);">Старший разработчик → ведущий · Блок разработки</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">candidate-card</b> · surface-panel / text-primary, имя heading-2, rounded-lg, отступ space-xl</figcaption>
+      </figure>
+      <figure data-component="candidate-card-selected" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:300px;padding:var(--ds-xl);background:var(--ds-primary-subtle);color:var(--ds-text-primary);border:var(--ds-bw) solid var(--ds-primary);border-radius:var(--ds-r-lg);"><div style="font:var(--ds-t-h2);">Анна Соколова</div><div style="margin-top:var(--ds-xs);font:var(--ds-t-body-md);color:var(--ds-text-secondary);">Выбрана для сравнения</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">candidate-card-selected</b> · primary-subtle / text-primary (12.9:1)</figcaption>
+      </figure>
+      <figure data-component="candidate-card-meta" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="padding:var(--ds-md);background:var(--ds-surface-panel);color:var(--ds-text-secondary);font:var(--ds-t-body-md);">Волна 2026-1 · подана 12.03.2026</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">candidate-card-meta</b> · text-secondary на surface-panel (8.7:1)</figcaption>
+      </figure>
+      <figure data-component="tag-success" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);padding:0 var(--ds-xs);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);background:var(--ds-success-bg);color:var(--ds-success);"><span>✓</span>Утверждена</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">tag-success</b> · success на success-bg (4.7:1)</figcaption>
+      </figure>
+      <figure data-component="tag-warning" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);padding:0 var(--ds-xs);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);background:var(--ds-warning-bg);color:var(--ds-warning);"><span>!</span>Запрошены подтверждения</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">tag-warning</b> · warning на warning-bg (4.7:1)</figcaption>
+      </figure>
+      <figure data-component="tag-danger" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);padding:0 var(--ds-xs);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);background:var(--ds-danger-bg);color:var(--ds-danger);"><span>✕</span>Критичный пробел</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">tag-danger</b> · danger на danger-bg (4.9:1)</figcaption>
+      </figure>
+      <figure data-component="tag-info" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);padding:0 var(--ds-xs);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);background:var(--ds-info-bg);color:var(--ds-info);"><span>i</span>На рассмотрении</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">tag-info</b> · info на info-bg (5.0:1)</figcaption>
+      </figure>
+      <figure data-component="tag-neutral" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);padding:0 var(--ds-xs);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);background:var(--ds-surface-muted);color:var(--ds-text-secondary);">Черновик</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">tag-neutral</b> · text-secondary на surface-muted (7.5:1)</figcaption>
+      </figure>
+    </div>
+    <p>Статус: success — утверждено, готово, обратная связь доставлена; info — в процессе (оценка, сбор подтверждений, комиссия, ранжирование); warning — запрошены подтверждения, ниже цели; danger — отклонено, отменено, критичный пробел; neutral — черновик, закрыто, архив.</p>
+  </article>
+
+  <article class="component-preview">
+    <h3>Навигация внутри страницы</h3>
+    <div class="preview" style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">
+      <figure data-component="tab" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-surface-panel);color:var(--ds-text-secondary);font:var(--ds-t-body-md);">Оценки</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">tab</b> · text-secondary на surface-panel (8.7:1)</figcaption>
+      </figure>
+      <figure data-component="tab-hover" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-surface-panel);color:var(--ds-text-primary);font:var(--ds-t-body-md);">Оценки</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">tab-hover</b> · text-primary (14.6:1)</figcaption>
+      </figure>
+      <figure data-component="tab-active" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-surface-panel);color:var(--ds-primary);font:var(--ds-t-body-md);border-bottom:var(--ds-ring-w) solid var(--ds-primary);">Оценки</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">tab-active</b> · primary (7.0:1) и линия 2px primary</figcaption>
+      </figure>
+      <figure data-component="step-current" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="display:flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary);color:var(--ds-text-inverse);font:var(--ds-t-body-strong);">4</span><span style="font:var(--ds-t-body-strong);">Сбор подтверждений</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">step-current</b> · primary / text-inverse (7.0:1)</figcaption>
+      </figure>
+      <figure data-component="step-done" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="display:flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">✓</span><span style="font:var(--ds-t-body-md);">Приём заявок</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">step-done</b> · primary-subtle / primary (6.2:1), галочка</figcaption>
+      </figure>
+      <figure data-component="step-upcoming" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="display:flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-surface-muted);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);">5</span><span style="font:var(--ds-t-body-md);color:var(--ds-text-secondary);">Комиссия</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">step-upcoming</b> · surface-muted / text-secondary (7.5:1)</figcaption>
+      </figure>
+      <figure data-component="breadcrumb" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="background:var(--ds-surface-page);color:var(--ds-text-secondary);font:var(--ds-t-body-md);">Волны / Волна 2026-1 /</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">breadcrumb</b> · text-secondary на surface-page (8.1:1)</figcaption>
+      </figure>
+      <figure data-component="breadcrumb-current" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">Кандидаты</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">breadcrumb-current</b> · text-primary (13.4:1), не ссылка</figcaption>
+      </figure>
+    </div>
+  </article>
+
+  <article class="component-preview">
+    <h3>Оверлеи и всплывающие элементы</h3>
+    <div class="preview" style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">
+      <figure data-component="modal" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:360px;max-width:100%;padding:var(--ds-xl);background:var(--ds-surface-panel);color:var(--ds-text-primary);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);"><div style="font:var(--ds-t-h2);">Удалить матрицу?</div><p style="margin:var(--ds-sm) 0 var(--ds-md);font:var(--ds-t-body-md);">Версия 12 будет удалена безвозвратно. Волны, уже использующие её, не затронуты. Отменить действие нельзя.</p><div style="display:flex;justify-content:flex-end;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);border:var(--ds-bw) solid var(--ds-border-control);background:var(--ds-surface-panel);color:var(--ds-text-primary);">Отмена</span><span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);background:var(--ds-danger);color:var(--ds-text-inverse);">Удалить матрицу</span></div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">modal</b> · surface-panel / text-primary, заголовок heading-2, rounded-lg, elevation-modal; пример подтверждения деструктивного действия</figcaption>
+      </figure>
+      <figure data-component="drawer" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:300px;max-width:100%;padding:var(--ds-xl);background:var(--ds-surface-panel);color:var(--ds-text-primary);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);"><div style="font:var(--ds-t-h3);">Подтверждения</div><p style="margin:var(--ds-sm) 0 0;font:var(--ds-t-body-md);">Артефакты, привязанные к компетенции «Проектирование архитектуры».</p></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">drawer</b> · surface-panel / text-primary, заголовок heading-3</figcaption>
+      </figure>
+      <figure data-component="dropdown-item" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:200px;background:var(--ds-surface-panel);"><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-surface-panel);color:var(--ds-text-primary);font:var(--ds-t-body-md);">Все волны</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">dropdown-item</b> · surface-panel / text-primary (14.6:1)</figcaption>
+      </figure>
+      <figure data-component="dropdown-item-hover" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:200px;background:var(--ds-surface-panel);"><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">Открытые волны</div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">dropdown-item-hover</b> · surface-page / text-primary (13.4:1)</figcaption>
+      </figure>
+      <figure data-component="dropdown-item-selected" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:200px;background:var(--ds-surface-panel);"><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-primary-subtle);color:var(--ds-text-primary);font:var(--ds-t-body-strong);">Закрытые волны <span>✓</span></div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">dropdown-item-selected</b> · primary-subtle / text-primary (12.9:1), галочка</figcaption>
+      </figure>
+      <figure data-component="tooltip" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-block;max-width:220px;padding:var(--ds-xs);border-radius:var(--ds-r-md);background:var(--ds-surface-inverse);color:var(--ds-text-inverse);font:var(--ds-t-body-sm);box-shadow:var(--ds-el-popup);">Уровень 3: самостоятельно решает сложные задачи</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">tooltip</b> · surface-inverse / text-inverse (17.9:1)</figcaption>
+      </figure>
+      <figure data-component="toast" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="display:flex;align-items:center;gap:var(--ds-xs);width:300px;max-width:100%;padding:var(--ds-md);border-radius:var(--ds-r-lg);background:var(--ds-surface-panel);color:var(--ds-text-primary);font:var(--ds-t-body-md);box-shadow:var(--ds-el-modal);"><span style="color:var(--ds-success);font:var(--ds-t-body-strong);">✓</span>Оценки сохранены</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">toast</b> · surface-panel / text-primary (14.6:1), elevation-modal</figcaption>
+      </figure>
+    </div>
+  </article>
+
+  <article class="component-preview">
+    <h3>Встроенные сообщения, пустое состояние, аватар</h3>
+    <div class="preview" style="background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);">
+      <figure data-component="alert-info" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:340px;max-width:100%;padding:var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-info-bg);color:var(--ds-text-primary);font:var(--ds-t-body-md);"><span style="color:var(--ds-info);font:var(--ds-t-body-strong);">i</span> Приём заявок открыт до 31 марта. Подать заявку может любой сотрудник.</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">alert-info</b> · info-bg / text-primary (12.9:1), значок info</figcaption>
+      </figure>
+      <figure data-component="alert-success" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:340px;max-width:100%;padding:var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-success-bg);color:var(--ds-text-primary);font:var(--ds-t-body-md);"><span style="color:var(--ds-success);font:var(--ds-t-body-strong);">✓</span> Решение записано. Кандидат получит обратную связь после закрытия волны.</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">alert-success</b> · success-bg / text-primary (12.8:1)</figcaption>
+      </figure>
+      <figure data-component="alert-warning" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:340px;max-width:100%;padding:var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-warning-bg);color:var(--ds-text-primary);font:var(--ds-t-body-md);"><span style="color:var(--ds-warning);font:var(--ds-t-body-strong);">!</span> Заполнено 3 из 5 оценок. Заполните оставшиеся, чтобы отправить кандидата на комиссию.</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">alert-warning</b> · warning-bg / text-primary (13.3:1)</figcaption>
+      </figure>
+      <figure data-component="alert-danger" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:340px;max-width:100%;padding:var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-danger-bg);color:var(--ds-text-primary);font:var(--ds-t-body-md);"><span style="color:var(--ds-danger);font:var(--ds-t-body-strong);">✕</span> Не удалось сохранить: матрица изменилась. Обновите страницу и повторите правки.</div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">alert-danger</b> · danger-bg / text-primary (12.7:1)</figcaption>
+      </figure>
+      <figure data-component="empty-state" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="width:340px;max-width:100%;padding:var(--ds-xxl);text-align:center;background:var(--ds-surface-panel);color:var(--ds-text-secondary);font:var(--ds-t-body-md);"><div style="font:var(--ds-t-h3);color:var(--ds-text-primary);">В волне пока нет кандидатов</div><p style="margin:var(--ds-xs) 0 var(--ds-md);">Приём заявок ещё не открыт. Откройте приём, чтобы сотрудники могли подать заявки.</p><span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);background:var(--ds-primary);color:var(--ds-text-inverse);">Открыть приём заявок</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">empty-state</b> · surface-panel / text-secondary (8.7:1): что, почему, что дальше</figcaption>
+      </figure>
+      <figure data-component="avatar" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АС</span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">avatar</b> · primary на primary-subtle (6.2:1), только инициалы</figcaption>
+      </figure>
+    </div>
+  </article>
+</section>
+
+<section id="ui-composition-preview">
+  <h2>Композиция интерфейса</h2>
+  <p class="lede">Типовой экран, собранный только из токенов: шапка, навигация, хлебные крошки, вкладки, предупреждение, таблица со статусами и фрагмент матрицы компетенций с липким заголовком и липкой первой колонкой (прокрутите матрицу по горизонтали).</p>
+  <article class="component-preview">
+    <div class="preview" style="padding:0;background:var(--ds-surface-page);color:var(--ds-text-primary);font:var(--ds-t-body-md);overflow:hidden;">
+      <div style="height:var(--ds-header-h);padding:0 var(--ds-xl);display:flex;align-items:center;justify-content:space-between;background:var(--ds-surface-inverse);color:var(--ds-text-inverse);">
+        <span style="font:var(--ds-t-body-strong);">Матрицы компетенций</span>
+        <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);">А. Соколова <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АС</span></span>
+      </div>
+      <div style="display:flex;align-items:stretch;">
+        <div style="flex:0 0 200px;padding:var(--ds-xs);background:var(--ds-surface-inverse);">
+          <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);position:relative;background:var(--ds-primary);color:var(--ds-text-inverse);font:var(--ds-t-body-md);"><span style="position:absolute;left:0;top:var(--ds-xs);bottom:var(--ds-xs);width:var(--ds-xxs);background:var(--ds-accent);"></span>Волны</div>
+          <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);color:var(--ds-text-inverse-muted);font:var(--ds-t-body-md);">Матрицы</div>
+          <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);color:var(--ds-text-inverse-muted);font:var(--ds-t-body-md);">Отчёты</div>
+        </div>
+        <div style="flex:1;min-width:0;padding:var(--ds-xl);">
+          <div style="color:var(--ds-text-secondary);font:var(--ds-t-body-md);">Волны / <span style="color:var(--ds-text-primary);">Волна 2026-1</span></div>
+          <div style="margin-top:var(--ds-xs);font:var(--ds-t-h1);">Волна повышения 2026-1</div>
+          <div style="display:flex;gap:var(--ds-xs);margin-top:var(--ds-md);background:var(--ds-surface-panel);border-bottom:var(--ds-bw) solid var(--ds-border-subtle);">
+            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-primary);font:var(--ds-t-body-md);border-bottom:var(--ds-ring-w) solid var(--ds-primary);">Кандидаты</span>
+            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-secondary);font:var(--ds-t-body-md);">Оценки</span>
+            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-secondary);font:var(--ds-t-body-md);">Комиссия</span>
+          </div>
+          <div style="margin-top:var(--ds-md);padding:var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-warning-bg);color:var(--ds-text-primary);font:var(--ds-t-body-md);"><span style="color:var(--ds-warning);font:var(--ds-t-body-strong);">!</span> Для 2 кандидатов не хватает оценок. Запросите оценки у оценивающих до 20 марта.</div>
+
+          <div style="margin-top:var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);overflow:hidden;">
+            <div style="display:flex;background:var(--ds-surface-muted);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);"><div style="flex:2;padding:var(--ds-sm) var(--ds-md);">Кандидат</div><div style="flex:2;padding:var(--ds-sm) var(--ds-md);">Должность</div><div style="flex:1;padding:var(--ds-sm) var(--ds-md);text-align:right;">Рейтинг</div><div style="flex:2;padding:var(--ds-sm) var(--ds-md);">Статус</div></div>
+            <div style="display:flex;align-items:center;border-top:var(--ds-bw) solid var(--ds-border-subtle);background:var(--ds-primary-subtle);color:var(--ds-text-primary);font:var(--ds-t-body-md);"><div style="flex:2;padding:var(--ds-sm) var(--ds-md);">Анна Соколова</div><div style="flex:2;padding:var(--ds-sm) var(--ds-md);">Ведущий разработчик</div><div style="flex:1;padding:var(--ds-sm) var(--ds-md);text-align:right;font-feature-settings:'tnum' 1;">3,75</div><div style="flex:2;padding:var(--ds-sm) var(--ds-md);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);padding:0 var(--ds-xs);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);background:var(--ds-info-bg);color:var(--ds-info);"><span>i</span>На рассмотрении</span></div></div>
+            <div style="display:flex;align-items:center;border-top:var(--ds-bw) solid var(--ds-border-subtle);background:var(--ds-surface-panel);color:var(--ds-text-primary);font:var(--ds-t-body-md);"><div style="flex:2;padding:var(--ds-sm) var(--ds-md);">Павел Орлов</div><div style="flex:2;padding:var(--ds-sm) var(--ds-md);">Старший аналитик</div><div style="flex:1;padding:var(--ds-sm) var(--ds-md);text-align:right;font-feature-settings:'tnum' 1;">3,10</div><div style="flex:2;padding:var(--ds-sm) var(--ds-md);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);padding:0 var(--ds-xs);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);background:var(--ds-warning-bg);color:var(--ds-warning);"><span>!</span>Запрошены подтверждения</span></div></div>
+            <div style="display:flex;align-items:center;border-top:var(--ds-bw) solid var(--ds-border-subtle);background:var(--ds-surface-panel);color:var(--ds-text-primary);font:var(--ds-t-body-md);"><div style="flex:2;padding:var(--ds-sm) var(--ds-md);">Мария Лебедева</div><div style="flex:2;padding:var(--ds-sm) var(--ds-md);">Руководитель группы</div><div style="flex:1;padding:var(--ds-sm) var(--ds-md);text-align:right;font-feature-settings:'tnum' 1;">2,40</div><div style="flex:2;padding:var(--ds-sm) var(--ds-md);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);padding:0 var(--ds-xs);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);background:var(--ds-danger-bg);color:var(--ds-danger);"><span>✕</span>Критичный пробел</span></div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--ds-sm) var(--ds-md);border-top:var(--ds-bw) solid var(--ds-border-subtle);background:var(--ds-surface-panel);">
+              <span style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);">Показано 1–3 из 24</span>
+              <span style="display:inline-flex;gap:var(--ds-xxs);"><span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);border:var(--ds-bw) solid var(--ds-primary);background:var(--ds-surface-panel);color:var(--ds-primary);font:var(--ds-t-body-strong);">1</span><span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);color:var(--ds-text-primary);font:var(--ds-t-body-md);">2</span><span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);color:var(--ds-text-primary);font:var(--ds-t-body-md);">3</span></span>
+            </div>
+          </div>
+
+          <div style="margin-top:var(--ds-xl);font:var(--ds-t-h3);">Матрица: Анна Соколова</div>
+          <div style="margin-top:var(--ds-xs);font:var(--ds-t-body-sm);color:var(--ds-text-muted);">Уровни: 0 не подтверждена · 1 с поддержкой · 2 типовые задачи · 3 сложные задачи · 4 формирует стандарты. Цель — требуемый уровень должности.</div>
+          <div style="margin-top:var(--ds-sm);overflow:auto;max-width:100%;max-height:calc(var(--ds-matrix-row) * 5);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);">
+            <div style="display:grid;grid-template-columns:var(--ds-matrix-name) repeat(5,var(--ds-matrix-cell));width:max-content;">
+              <div style="position:sticky;top:0;left:0;z-index:3;padding:var(--ds-xs) var(--ds-sm);background:var(--ds-surface-muted);color:var(--ds-text-primary);font:var(--ds-t-data-col);box-shadow:var(--ds-el-sticky);">Компетенция</div>
+              <div style="position:sticky;top:0;z-index:2;padding:var(--ds-xs);background:var(--ds-surface-muted);color:var(--ds-text-primary);font:var(--ds-t-data-col);text-align:center;box-shadow:var(--ds-el-sticky);">Самооценка</div>
+              <div style="position:sticky;top:0;z-index:2;padding:var(--ds-xs);background:var(--ds-surface-muted);color:var(--ds-text-primary);font:var(--ds-t-data-col);text-align:center;box-shadow:var(--ds-el-sticky);">Тимлид</div>
+              <div style="position:sticky;top:0;z-index:2;padding:var(--ds-xs);background:var(--ds-surface-muted);color:var(--ds-text-primary);font:var(--ds-t-data-col);text-align:center;box-shadow:var(--ds-el-sticky);">Коллега 1</div>
+              <div style="position:sticky;top:0;z-index:2;padding:var(--ds-xs);background:var(--ds-surface-muted);color:var(--ds-text-primary);font:var(--ds-t-data-col);text-align:center;box-shadow:var(--ds-el-sticky);">Коллега 2</div>
+              <div style="position:sticky;top:0;z-index:2;padding:var(--ds-xs);background:var(--ds-surface-muted);color:var(--ds-text-primary);font:var(--ds-t-data-col);text-align:center;box-shadow:var(--ds-el-sticky);">Цель</div>
+
+              <div style="position:sticky;left:0;z-index:1;height:var(--ds-matrix-row);padding:var(--ds-sm);display:flex;align-items:center;gap:var(--ds-xs);background:var(--ds-surface-panel);color:var(--ds-text-primary);font:var(--ds-t-body-md);border-bottom:var(--ds-bw) solid var(--ds-border-subtle);box-shadow:var(--ds-el-sticky);"><span>Проектирование архитектуры решений</span><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);padding:0 var(--ds-xs);border-radius:var(--ds-r-xs);background:var(--ds-danger-bg);color:var(--ds-danger);font:var(--ds-t-body-sm);white-space:nowrap;"><span>⚑</span>критичная</span></div>
+              <div style="height:var(--ds-matrix-row);padding:var(--ds-xs);display:flex;align-items:center;justify-content:center;border-bottom:var(--ds-bw) solid var(--ds-border-subtle);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-3);color:var(--ds-text-inverse);font:var(--ds-t-body-strong);">3</span></div>
+              <div style="height:var(--ds-matrix-row);padding:var(--ds-xs);display:flex;align-items:center;justify-content:center;border-bottom:var(--ds-bw) solid var(--ds-border-subtle);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-2);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">2</span></div>
+              <div style="height:var(--ds-matrix-row);padding:var(--ds-xs);display:flex;align-items:center;justify-content:center;border-bottom:var(--ds-bw) solid var(--ds-border-subtle);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-2);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">2</span></div>
+              <div style="height:var(--ds-matrix-row);padding:var(--ds-xs);display:flex;align-items:center;justify-content:center;border-bottom:var(--ds-bw) solid var(--ds-border-subtle);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-3);color:var(--ds-text-inverse);font:var(--ds-t-body-strong);">3</span></div>
+              <div style="height:var(--ds-matrix-row);padding:var(--ds-xs);display:flex;align-items:center;justify-content:center;gap:var(--ds-xxs);border-bottom:var(--ds-bw) solid var(--ds-border-subtle);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-4);color:var(--ds-text-inverse);font:var(--ds-t-body-strong);">4</span></div>
+
+              <div style="position:sticky;left:0;z-index:1;height:var(--ds-matrix-row);padding:var(--ds-sm);display:flex;align-items:center;background:var(--ds-surface-panel);color:var(--ds-text-primary);font:var(--ds-t-body-md);border-bottom:var(--ds-bw) solid var(--ds-border-subtle);box-shadow:var(--ds-el-sticky);">Командная работа</div>
+              <div style="height:var(--ds-matrix-row);padding:var(--ds-xs);display:flex;align-items:center;justify-content:center;border-bottom:var(--ds-bw) solid var(--ds-border-subtle);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-3);color:var(--ds-text-inverse);font:var(--ds-t-body-strong);">3</span></div>
+              <div style="height:var(--ds-matrix-row);padding:var(--ds-xs);display:flex;align-items:center;justify-content:center;border-bottom:var(--ds-bw) solid var(--ds-border-subtle);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-3);color:var(--ds-text-inverse);font:var(--ds-t-body-strong);">3</span></div>
+              <div style="height:var(--ds-matrix-row);padding:var(--ds-xs);display:flex;align-items:center;justify-content:center;border-bottom:var(--ds-bw) solid var(--ds-border-subtle);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-1);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">1</span></div>
+              <div style="height:var(--ds-matrix-row);padding:var(--ds-xs);display:flex;align-items:center;justify-content:center;border-bottom:var(--ds-bw) solid var(--ds-border-subtle);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-0);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">0</span></div>
+              <div style="height:var(--ds-matrix-row);padding:var(--ds-xs);display:flex;align-items:center;justify-content:center;border-bottom:var(--ds-bw) solid var(--ds-border-subtle);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-rating-3);color:var(--ds-text-inverse);font:var(--ds-t-body-strong);">3</span></div>
+            </div>
+          </div>
+
+          <div style="margin-top:var(--ds-xl);display:flex;flex-wrap:wrap;align-items:center;gap:var(--ds-xs);">
+            <span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);background:var(--ds-primary);color:var(--ds-text-inverse);">Отправить на комиссию</span>
+            <span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);border:var(--ds-bw) solid var(--ds-border-control);background:var(--ds-surface-panel);color:var(--ds-text-primary);">Экспорт</span>
+            <span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);background:var(--ds-danger);color:var(--ds-text-inverse);">Отозвать заявку</span>
+            <span style="display:inline-flex;align-items:center;justify-content:center;height:var(--ds-h-md);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);background:var(--ds-surface-muted);color:var(--ds-text-disabled);">Утвердить</span>
+            <span style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);">Утвердить нельзя: комиссия ещё не завершена</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+</section>
+
+<section id="token-reference">
+  <h2>Справочник токенов</h2>
+  <p class="lede">Полный перечень токенов DESIGN.md: 32 цвета, 12 типографических стилей, 7 радиусов и геометрии границ, 26 токенов spacing, 75 компонентов.</p>
+
+  <h3>colors (32)</h3>
+  <table>
+    <thead><tr><th>Путь</th><th>Значение</th><th>Тип</th></tr></thead>
+    <tbody>
+      <tr><td><code>colors.primary</code></td><td>#2B42E5</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.primary-hover</code></td><td>#2338C2</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.primary-active</code></td><td>#182CC2</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.primary-subtle</code></td><td>#EBF2FD</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.accent</code></td><td>#FBAE40</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.text-primary</code></td><td>#292929</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.text-secondary</code></td><td>#4B4B4C</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.text-muted</code></td><td>#5F6670</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.text-disabled</code></td><td>#A3A9B1</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.text-inverse</code></td><td>#FFFFFF</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.text-inverse-muted</code></td><td>#9BA8F9</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.surface-page</code></td><td>#F5F6F8</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.surface-panel</code></td><td>#FFFFFF</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.surface-muted</code></td><td>#EEEEEE</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.surface-inverse</code></td><td>#081240</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.border-subtle</code></td><td>#DDE1E6</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.border-control</code></td><td>#7D8590</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.overlay-scrim</code></td><td>#08124073</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.success</code></td><td>#197A4A</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.success-bg</code></td><td>#E6F4EC</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.warning</code></td><td>#A85800</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.warning-bg</code></td><td>#FFF4DF</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.danger</code></td><td>#C62832</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.danger-hover</code></td><td>#B3202A</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.danger-bg</code></td><td>#FDECEC</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.info</code></td><td>#1B64C8</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.info-bg</code></td><td>#EBF2FD</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.rating-level-0</code></td><td>#EEEEEE</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.rating-level-1</code></td><td>#C7D0FB</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.rating-level-2</code></td><td>#9BA8F9</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.rating-level-3</code></td><td>#2B42E5</td><td><span class="chip area">color</span></td></tr>
+      <tr><td><code>colors.rating-level-4</code></td><td>#081240</td><td><span class="chip area">color</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>typography (12)</h3>
+  <table>
+    <thead><tr><th>Путь</th><th>Значение</th><th>Тип</th></tr></thead>
+    <tbody>
+      <tr><td><code>typography.heading-1</code></td><td>PT Sans · 30px / 38px · 700</td><td><span class="chip area">typography</span></td></tr>
+      <tr><td><code>typography.heading-2</code></td><td>PT Sans · 24px / 32px · 700</td><td><span class="chip area">typography</span></td></tr>
+      <tr><td><code>typography.heading-3</code></td><td>PT Sans · 20px / 28px · 700</td><td><span class="chip area">typography</span></td></tr>
+      <tr><td><code>typography.heading-4</code></td><td>PT Sans · 16px / 24px · 700</td><td><span class="chip area">typography</span></td></tr>
+      <tr><td><code>typography.heading-5</code></td><td>PT Sans · 14px / 22px · 700</td><td><span class="chip area">typography</span></td></tr>
+      <tr><td><code>typography.body-lg</code></td><td>PT Sans · 16px / 24px · 400</td><td><span class="chip area">typography</span></td></tr>
+      <tr><td><code>typography.body-md</code></td><td>PT Sans · 14px / 22px · 400</td><td><span class="chip area">typography</span></td></tr>
+      <tr><td><code>typography.body-strong</code></td><td>PT Sans · 14px / 22px · 700</td><td><span class="chip area">typography</span></td></tr>
+      <tr><td><code>typography.body-sm</code></td><td>PT Sans · 12px / 20px · 400</td><td><span class="chip area">typography</span></td></tr>
+      <tr><td><code>typography.data-numeric</code></td><td>PT Sans · 14px / 22px · 400 · tnum</td><td><span class="chip area">typography</span></td></tr>
+      <tr><td><code>typography.data-column-header</code></td><td>PT Sans Narrow · 14px / 20px · 700</td><td><span class="chip area">typography</span></td></tr>
+      <tr><td><code>typography.code</code></td><td>PT Mono · 13px / 20px · 400</td><td><span class="chip area">typography</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>rounded (7)</h3>
+  <table>
+    <thead><tr><th>Путь</th><th>Значение</th><th>Тип</th></tr></thead>
+    <tbody>
+      <tr><td><code>rounded.rounded-xs</code></td><td>2px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>rounded.rounded-md</code></td><td>4px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>rounded.rounded-lg</code></td><td>8px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>rounded.rounded-full</code></td><td>9999px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>rounded.border-width</code></td><td>1px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>rounded.focus-ring-width</code></td><td>2px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>rounded.focus-ring-offset</code></td><td>2px</td><td><span class="chip area">dimension</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>spacing (26)</h3>
+  <table>
+    <thead><tr><th>Путь</th><th>Значение</th><th>Тип</th></tr></thead>
+    <tbody>
+      <tr><td><code>spacing.space-xxs</code></td><td>4px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.space-xs</code></td><td>8px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.space-sm</code></td><td>12px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.space-md</code></td><td>16px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.space-lg</code></td><td>20px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.space-xl</code></td><td>24px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.space-xxl</code></td><td>32px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.space-xxxl</code></td><td>48px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.page-gutter</code></td><td>24px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.page-gutter-narrow</code></td><td>16px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.content-max-width</code></td><td>1440px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.reading-max-width</code></td><td>720px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.header-height</code></td><td>56px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.sider-width</code></td><td>240px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.sider-width-collapsed</code></td><td>80px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.control-height-sm</code></td><td>24px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.control-height-md</code></td><td>32px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.control-height-lg</code></td><td>40px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.target-min</code></td><td>24px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.matrix-row-height</code></td><td>48px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.matrix-cell-min-width</code></td><td>72px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.matrix-name-column-width</code></td><td>280px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.breakpoint-md</code></td><td>768px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.breakpoint-lg</code></td><td>992px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.breakpoint-xl</code></td><td>1200px</td><td><span class="chip area">dimension</span></td></tr>
+      <tr><td><code>spacing.breakpoint-xxl</code></td><td>1600px</td><td><span class="chip area">dimension</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>components (75)</h3>
+  <table>
+    <thead><tr><th>Путь</th><th>Токены (ссылки на colors / typography / rounded / spacing)</th><th>Тип</th></tr></thead>
+    <tbody>
+      <tr><td><code>components.control-border</code></td><td>bg border-control · height border-width</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.divider</code></td><td>bg border-subtle · height border-width</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.focus-ring</code></td><td>bg primary · height focus-ring-width</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.focus-ring-inverse</code></td><td>bg accent · height focus-ring-width</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.scrim</code></td><td>bg overlay-scrim</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.skeleton</code></td><td>bg surface-muted · rounded rounded-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.app-content</code></td><td>bg surface-page · text text-primary · body-md · padding page-gutter</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.app-header</code></td><td>bg surface-inverse · text text-inverse · body-md · height header-height · padding space-xl</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.nav-item</code></td><td>bg surface-inverse · text text-inverse-muted · body-md · height control-height-lg · rounded-md · padding space-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.nav-item-hover</code></td><td>bg primary-active · text text-inverse</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.nav-item-active</code></td><td>bg primary · text text-inverse</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.nav-item-active-marker</code></td><td>bg accent · width space-xxs</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.button-primary</code></td><td>bg primary · text text-inverse · body-strong · rounded-md · height control-height-md · padding space-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.button-primary-hover</code></td><td>bg primary-hover · text text-inverse</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.button-primary-pressed</code></td><td>bg primary-active · text text-inverse</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.button-default</code></td><td>bg surface-panel · text text-primary · body-strong · rounded-md · height control-height-md · padding space-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.button-default-hover</code></td><td>bg primary-subtle · text primary</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.button-default-pressed</code></td><td>bg primary-subtle · text primary-active</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.button-danger</code></td><td>bg danger · text text-inverse · body-strong · rounded-md · height control-height-md · padding space-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.button-danger-hover</code></td><td>bg danger-hover · text text-inverse</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.button-link</code></td><td>bg surface-panel · text primary · body-md · height control-height-sm</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.button-link-hover</code></td><td>bg surface-panel · text primary-hover</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.button-disabled</code></td><td>bg surface-muted · text text-disabled · body-strong · rounded-md · height control-height-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.input</code></td><td>bg surface-panel · text text-primary · body-md · rounded-md · height control-height-md · padding space-sm</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.input-placeholder</code></td><td>bg surface-panel · text text-muted · body-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.input-disabled</code></td><td>bg surface-muted · text text-disabled · body-md · rounded-md · height control-height-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.field-label</code></td><td>bg surface-panel · text text-secondary · body-strong</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.field-help</code></td><td>bg surface-panel · text text-muted · body-sm</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.field-error</code></td><td>bg surface-panel · text danger · body-sm</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.selection-control-checked</code></td><td>bg primary · text text-inverse · rounded-xs · size space-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.table-header</code></td><td>bg surface-muted · text text-secondary · body-strong · padding space-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.table-row</code></td><td>bg surface-panel · text text-primary · body-md · padding space-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.table-row-hover</code></td><td>bg surface-page · text text-primary</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.table-row-selected</code></td><td>bg primary-subtle · text text-primary</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.table-cell-numeric</code></td><td>bg surface-panel · text text-primary · data-numeric</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.pagination-item</code></td><td>bg surface-panel · text text-primary · body-md · rounded-md · height control-height-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.pagination-item-hover</code></td><td>bg primary-subtle · text primary</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.pagination-item-active</code></td><td>bg surface-panel · text primary · body-strong</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.matrix-header</code></td><td>bg surface-muted · text text-primary · data-column-header · width matrix-cell-min-width · padding space-xs</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.matrix-name-cell</code></td><td>bg surface-panel · text text-primary · body-md · width matrix-name-column-width · height matrix-row-height · padding space-sm</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.matrix-cell</code></td><td>bg surface-panel · text text-primary · body-md · width matrix-cell-min-width · height matrix-row-height · padding space-xs</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.rating-chip-0</code></td><td>bg rating-level-0 · text surface-inverse · body-strong · rounded-md · size control-height-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.rating-chip-1</code></td><td>bg rating-level-1 · text surface-inverse · body-strong · rounded-md · size control-height-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.rating-chip-2</code></td><td>bg rating-level-2 · text surface-inverse · body-strong · rounded-md · size control-height-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.rating-chip-3</code></td><td>bg rating-level-3 · text text-inverse · body-strong · rounded-md · size control-height-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.rating-chip-4</code></td><td>bg rating-level-4 · text text-inverse · body-strong · rounded-md · size control-height-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.candidate-card</code></td><td>bg surface-panel · text text-primary · heading-2 · rounded-lg · padding space-xl</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.candidate-card-selected</code></td><td>bg primary-subtle · text text-primary</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.candidate-card-meta</code></td><td>bg surface-panel · text text-secondary · body-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.tag-success</code></td><td>bg success-bg · text success · body-sm · rounded-xs · padding space-xs</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.tag-warning</code></td><td>bg warning-bg · text warning · body-sm · rounded-xs · padding space-xs</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.tag-danger</code></td><td>bg danger-bg · text danger · body-sm · rounded-xs · padding space-xs</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.tag-info</code></td><td>bg info-bg · text info · body-sm · rounded-xs · padding space-xs</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.tag-neutral</code></td><td>bg surface-muted · text text-secondary · body-sm · rounded-xs · padding space-xs</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.tab</code></td><td>bg surface-panel · text text-secondary · body-md · height control-height-lg · padding space-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.tab-hover</code></td><td>bg surface-panel · text text-primary</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.tab-active</code></td><td>bg surface-panel · text primary</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.step-current</code></td><td>bg primary · text text-inverse · body-strong · rounded-full · size control-height-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.step-done</code></td><td>bg primary-subtle · text primary · body-strong · rounded-full · size control-height-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.step-upcoming</code></td><td>bg surface-muted · text text-secondary · body-strong · rounded-full · size control-height-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.breadcrumb</code></td><td>bg surface-page · text text-secondary · body-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.breadcrumb-current</code></td><td>bg surface-page · text text-primary · body-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.modal</code></td><td>bg surface-panel · text text-primary · heading-2 · rounded-lg · padding space-xl</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.drawer</code></td><td>bg surface-panel · text text-primary · heading-3 · rounded-lg · padding space-xl</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.dropdown-item</code></td><td>bg surface-panel · text text-primary · body-md · rounded-md · height control-height-md · padding space-sm</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.dropdown-item-hover</code></td><td>bg surface-page · text text-primary</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.dropdown-item-selected</code></td><td>bg primary-subtle · text text-primary · body-strong</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.tooltip</code></td><td>bg surface-inverse · text text-inverse · body-sm · rounded-md · padding space-xs</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.toast</code></td><td>bg surface-panel · text text-primary · body-md · rounded-lg · padding space-md</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.alert-info</code></td><td>bg info-bg · text text-primary · body-md · rounded-md · padding space-sm</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.alert-success</code></td><td>bg success-bg · text text-primary · body-md · rounded-md · padding space-sm</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.alert-warning</code></td><td>bg warning-bg · text text-primary · body-md · rounded-md · padding space-sm</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.alert-danger</code></td><td>bg danger-bg · text text-primary · body-md · rounded-md · padding space-sm</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.empty-state</code></td><td>bg surface-panel · text text-secondary · body-md · padding space-xxl</td><td><span class="chip area">reference</span></td></tr>
+      <tr><td><code>components.avatar</code></td><td>bg primary-subtle · text primary · body-strong · rounded-full · size control-height-md</td><td><span class="chip area">reference</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="dos-and-donts">
+  <h2>Do и Don't</h2>
+  <p class="lede">Правила повторяют уже принятые решения DESIGN.md; новых решений здесь нет.</p>
+  <div class="consequences">
+    <div class="pros"><h3>Do</h3><ul>
+      <li>Собирать интерфейс только из токенов (через <code>ConfigProvider</code> из DESIGN.md): сначала компонентные токены, затем семантические цвета.</li>
+      <li><code>primary</code> — одно главное действие страницы или диалога; <code>button-danger</code> — только для деструктивных и необратимых действий, с подписью «глагол + объект».</li>
+      <li>Сопровождать статусный цвет иконкой или словом и всегда показывать цифру уровня в чипе рейтинга (WCAG 1.4.1).</li>
+      <li>Показывать причину рядом с недоступным элементом видимым текстом («Нужно 5 оценок, есть 2»).</li>
+      <li><code>accent</code> — только заливка с текстом <code>surface-inverse</code> или <code>text-primary</code>, либо метка на <code>surface-inverse</code>.</li>
+      <li>Явно задавать все токены текста antd (secondary, tertiary, quaternary, placeholder) и <code>colorPrimaryBorder</code> = <code>primary</code>.</li>
+      <li>Веса только 400 и 700; <code>data-numeric</code> и выравнивание вправо для сравниваемых чисел.</li>
+      <li>Сетка 4px и размер antd по умолчанию (comfortable); на планшете — <code>control-height-lg</code>.</li>
+      <li>Сохранять кольцо фокуса (<code>focus-ring</code>, на тёмной оболочке <code>focus-ring-inverse</code>).</li>
+      <li>Отмечать текущее состояние словами, а не только цветом: теги, шаги, вкладка, пункт навигации.</li>
+      <li>Держать критические алерты редкими: <code>danger</code> только для блокирующих и необратимых событий.</li>
+      <li>Поставлять шрифты PT в образе приложения самохостом вместе с текстом лицензии.</li>
+    </ul></div>
+    <div class="cons"><h3>Don't</h3><ul>
+      <li>Не использовать «сырые» hex, px и font-family в UI-коде и макетах; не вводить токен-дубликат.</li>
+      <li>Не ставить <code>accent</code> (1.9:1) или белый текст на <code>accent</code>; не использовать <code>accent</code> для предупреждения или любого статуса.</li>
+      <li>Не использовать веса 500 и 600, курсив, верхний регистр и letter-spacing для кириллицы, <code>compactAlgorithm</code>.</li>
+      <li>Не полагаться только на цвет, только на tooltip или только на тень для смысла и границ.</li>
+      <li>Не показывать disabled-элемент без причины; не убирать кольцо фокуса без равноценной замены.</li>
+      <li>Не добавлять тени статичным панелям, таблицам, карточкам; не поднимать карточку при hover.</li>
+      <li>Не анимировать данные (ячейки матрицы, рейтинги, ранжирование), не делать переходы дольше 300ms, bounce, click-ripple и зацикленный декор; учитывать <code>prefers-reduced-motion</code>.</li>
+      <li>Не перекрашивать чип рейтинга ради сравнения с целью; использовать статусный тег или иконку рядом.</li>
+      <li>Не загружать шрифты, иконки и скрипты из CDN или внешних хостов; не использовать <code>createFromIconfontCN</code>.</li>
+      <li>Не создавать тёмную тему из этих токенов; тема не меняет цвета статусов, цели нажатия и отступы.</li>
+      <li>Не обрезать название компетенции без доступа к полному тексту и не скрывать маркер критичной компетенции.</li>
+    </ul></div>
+  </div>
+</section>
+
+</div>
+      </main>
+      <footer>by ASD workflow | 2026-10-05</footer>
+    </div>
+  </div>
+</body>
+</html>

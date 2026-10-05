@@ -1,0 +1,13 @@
+- [sync --apply ledger gotcha](project_sync-apply-ledger-gotcha.md) — orchestrator wave sync rewrites hashes repo-wide; measure staleness normalized, a raw read fakes 94
+- [No python scripted edits](project_no-python-scripted-edits.md) — `python - <<EOF` hangs the shell here; use `node -e` or Edit
+- [CRLF canon edits](project_crlf-canon-edits.md) — read a canon file's bytes before a scripted edit; a CRLF checkout orphans a CR under an LF-only anchor
+- [Parallel-agent commit sweep](project_parallel-agent-commit-sweep.md) — shared worktree: a sibling’s broad `git add` can swallow your edits; never stage-then-wait (new files: `git add && git commit --only` in one command), never `git stash`
+- [Tests pin literal prose and output shapes](project_tests-pin-literal-prose.md) — older tests pin prose (pre-§17) and runtime field sets; reword around, flag prose pins, never edit
+- [Stale context snapshots](project_stale-context-snapshots.md) — injected file bodies predate earlier waves' commits; re-read canon from disk before claiming what it says
+- [Sequential fix rounds](feedback_sequential-fix-rounds.md) — cross-file review fixes go to one dev, in order; re-read every mirror before reporting done
+- [Fix the class, not the instance](feedback_fix-the-class.md) — recurring finding in one section? strip the blanket header qualifier, state reach per branch
+- [False SSoT declarations](feedback_false-ssot-declarations.md) — "not restated here" above surviving text: narrow the denial, keep what acts at its site
+- [JSON frontmatter quotes](project_json-frontmatter-quotes.md) — a `"Section"` citation in an agent `description` breaks sync.js JSON parsing
+- [Codex agent TOML probe](reference_codex-agent-toml-probe.md) — local no-auth check of agent TOML keys via `codex exec --strict-config` (prompt-input skips agents)
+- [Heredoc backslash collapse](project_heredoc-backslash-collapse.md) — quoted heredoc still halves double backslashes here; write backslash scripts via the write tool
+- [git commit --only option order](project_git-commit-only-option-order.md) — options incl. `-F -` go before `--`; after it they are read as pathspecs

@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "_asd": true,
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.asd/hooks/session-start.js\" --provider codex"
+          }
+        ]
+      }
+    ]
+  }
+}

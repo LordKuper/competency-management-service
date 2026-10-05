@@ -1,0 +1,14 @@
+# commands.yaml — machine-only SSoT for project build/test/run commands
+# read by Dev, Tester, and review agents
+# Stack not chosen yet (greenfield): fill after /asd-stack.
+
+test: ""
+lint: ""
+build: ""
+run: ""
+
+custom:
+  designmd-install: "npm install @google/design.md"
+  designmd-lint: "node_modules\.bin\design.md.cmd lint docs\ux\DESIGN.md"
+  designmd-diff: "node_modules\.bin\design.md.cmd diff"
+  designmd-export: "node_modules\.bin\design.md.cmd export --format json-tailwind docs\ux\DESIGN.md"
