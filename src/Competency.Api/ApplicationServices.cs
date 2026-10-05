@@ -14,5 +14,5 @@ internal static class ApplicationServices
         .AddPlatform(configuration)
         .AddAuditModule()
         .AddOrgStructureModule()
-        .AddUserManagementModule();
+        .AddUserManagementModule(configuration);
 }

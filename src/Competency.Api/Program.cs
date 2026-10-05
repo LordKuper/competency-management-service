@@ -4,6 +4,7 @@ using Competency.Audit;
 using Competency.OrgStructure;
 using Competency.Platform;
 using Competency.UserManagement;
+using Microsoft.AspNetCore.DataProtection;
 
 const string SpaFallbackPattern = "{*path:nonfile:regex(^(?!api/).*$)}";
 
@@ -17,7 +18,11 @@ builder.Logging.AddJsonConsole();
 builder.Services.AddOpenApi(options => options.AddOperationTransformer<VersionHeadersOperationTransformer>());
 builder.Services.AddApplication(builder.Configuration);
 
-if (!isToolingRun)
+if (isToolingRun)
+{
+    builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
+}
+else
 {
     builder.Services.AddDataProtectionKeyStorage(builder.Configuration);
 }
@@ -32,6 +37,7 @@ if (!isToolingRun)
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UsePlatform();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapPlatformEndpoints();
