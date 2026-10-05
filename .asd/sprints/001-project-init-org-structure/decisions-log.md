@@ -104,3 +104,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Отклонение от «схема Identity по умолчанию» обосновано (Platform не может ссылаться на модули, остальные таблицы не используются); не проверено без PostgreSQL: `FOR UPDATE`, CHECK и уникальные индексы, DDL `users`. Task 8 и 9 зависят от хука текущего пользователя и контракта навигации Task 7, поэтому не могут идти параллельно с ним; это не изменение scope.
 - **Affected docs**: `src/Competency.UserManagement/`, `.asd/sprints/001-project-init-org-structure/plan.md`
 - 2026-10-05 — route Task 7: critical, dispatch HEAD 2935e40
+
+## 2026-10-05 — Волна 6: flagged choices Task 7 (вход, оболочка, пользователи)
+
+- **Decision**: Приняты: навигация в Header (горизонтальное меню) вместо Sider; контракт фич `routes`/`standaloneRoutes`/`navItems` и `AdminOnly`; хуки `useCurrentUser`/`useIsAdmin`; `If-Match` строится из `version` как `"N"`; тексты ошибок по статусу на русском; подсказка пароля из `passwordPolicy.ts`. Кандидаты в `design-md-delta` для design-promote (hard gate): экран входа, карточка пользователя, employee picker, Avatar/inverse-кнопка в header, `reading-max-width`, `focus-ring-inverse`.
+- **Rationale**: В пределах AC-6/7/8/13 и существующих токенов DESIGN.md; новых зависимостей нет. Tablet-раскладка визуально не проверена (нет браузера).
+- **Affected docs**: `web/src/app/`, `web/src/features/auth/`, `web/src/features/users/`
+- 2026-10-05 — route Task 8: critical; Task 9: standard; dispatch HEAD 740f17d
