@@ -94,13 +94,13 @@ Tech reference: efcore-10.0.12, npgsql-entityframeworkcore-postgresql-10.0.3, po
 
 ### Task 6: Подсистема user-management — backend
 Material risk: change: аутентификация, пароли, lockout, сессии, правило последнего администратора, CSRF, миграция схемы Identity
-- [ ] AC-6: `AppUser : IdentityUser<Guid>` (`Role`, `IsBlocked`, `EmployeeId?`, `Version`), `AddIdentityCore` + cookie-аутентификация (`HttpOnly`, `SameSite=Strict`, `Secure` по конфигурации, sliding-срок из конфигурации), хэши только `PasswordHasher`; миграция схемы Identity; CHECK по роли и `employee_id` (администратор — без привязки, пользователь — с привязкой), unique partial index на `employee_id`
-- [ ] AC-6,15: `/api/v1/auth` — `POST login` (lockout, rate limiter `login`, единое сообщение об ошибке; блокировка пользователя и «не работает» сотрудника → отказ), `POST logout`, `GET me`, `POST change-password`; события входа успешного/неуспешного, lockout и выхода пишутся через `IAuditWriter` без паролей и ПДн
-- [ ] AC-6: bootstrap — при пустой таблице администраторов создаёт глобального администратора из секрета окружения (`Bootstrap:AdminUserName`, `Bootstrap:AdminPassword`), существующего не перезаписывает; под guard'ом build-time OpenAPI; запуск без секрета при отсутствии администратора — понятная ошибка старта
-- [ ] AC-7: `/api/v1/users` (список с поиском/фильтрацией, создание, просмотр, правка с `If-Match`, блокировка/разблокировка, сброс пароля администратором); инвариант последнего активного администратора (блокировка, смена роли, снятие) в транзакции с блокировкой набора администраторов; сессии блокированного пользователя обрываются (`UpdateSecurityStampAsync`, `ValidationInterval = 0`, проверка `IsBlocked` и статуса сотрудника через `IEmployeeDirectory` в `OnValidatePrincipal`); все мутации `[Audited]` с allow-list (без `PasswordHash`, `SecurityStamp`, `ConcurrencyStamp`, `AccessFailedCount`)
-- [ ] AC-8: привязка и отвязка пользователя к сотруднику: роль «пользователь» обязана иметь существующего сотрудника, один сотрудник — одна учётная запись; привязка журналируется
-- [ ] AC-12: пользовательские эндпойнты — только `GlobalAdmin`; `GET /api/v1/auth/me` — любой аутентифицированный; прямой доступ по ID без прав — 403/404 по матрице прав в `<id>.md`
-- [ ] AC-6,7: регенерировать `web/src/api/schema.d.ts` и закоммитить
+- [x] AC-6: `AppUser : IdentityUser<Guid>` (`Role`, `IsBlocked`, `EmployeeId?`, `Version`), `AddIdentityCore` + cookie-аутентификация (`HttpOnly`, `SameSite=Strict`, `Secure` по конфигурации, sliding-срок из конфигурации), хэши только `PasswordHasher`; миграция схемы Identity; CHECK по роли и `employee_id` (администратор — без привязки, пользователь — с привязкой), unique partial index на `employee_id`
+- [x] AC-6,15: `/api/v1/auth` — `POST login` (lockout, rate limiter `login`, единое сообщение об ошибке; блокировка пользователя и «не работает» сотрудника → отказ), `POST logout`, `GET me`, `POST change-password`; события входа успешного/неуспешного, lockout и выхода пишутся через `IAuditWriter` без паролей и ПДн
+- [x] AC-6: bootstrap — при пустой таблице администраторов создаёт глобального администратора из секрета окружения (`Bootstrap:AdminUserName`, `Bootstrap:AdminPassword`), существующего не перезаписывает; под guard'ом build-time OpenAPI; запуск без секрета при отсутствии администратора — понятная ошибка старта
+- [x] AC-7: `/api/v1/users` (список с поиском/фильтрацией, создание, просмотр, правка с `If-Match`, блокировка/разблокировка, сброс пароля администратором); инвариант последнего активного администратора (блокировка, смена роли, снятие) в транзакции с блокировкой набора администраторов; сессии блокированного пользователя обрываются (`UpdateSecurityStampAsync`, `ValidationInterval = 0`, проверка `IsBlocked` и статуса сотрудника через `IEmployeeDirectory` в `OnValidatePrincipal`); все мутации `[Audited]` с allow-list (без `PasswordHash`, `SecurityStamp`, `ConcurrencyStamp`, `AccessFailedCount`)
+- [x] AC-8: привязка и отвязка пользователя к сотруднику: роль «пользователь» обязана иметь существующего сотрудника, один сотрудник — одна учётная запись; привязка журналируется
+- [x] AC-12: пользовательские эндпойнты — только `GlobalAdmin`; `GET /api/v1/auth/me` — любой аутентифицированный; прямой доступ по ID без прав — 403/404 по матрице прав в `<id>.md`
+- [x] AC-6,7: регенерировать `web/src/api/schema.d.ts` и закоммитить
 Tech reference: microsoft-aspnetcore-identity-entityframeworkcore-10.0.12, aspnetcore-10.0.12, efcore-10.0.12.
 
 ### Task 7: Frontend — вход, оболочка и управление пользователями
@@ -144,14 +144,15 @@ Tech reference: docker-multi-stage-dockerfile-1, dotnet-sdk-image-10.0.401, dotn
 | 3 | 4 |
 | 4 | 5 |
 | 5 | 6 |
-| 6 | 7, 8, 9 |
-| 7 | 10 |
+| 6 | 7 |
+| 7 | 8, 9 |
+| 8 | 10 |
 
 - Task 2 и Task 3 зависят от Task 1 (проекты, `openapi.json`).
 - Task 4, 5, 6 идут последовательно: общий `AppDbContext` и единая линия миграций (конфликт model snapshot при параллельной генерации); Task 4 первым, чтобы сущности Task 5–6 аудировались с начала.
 - Task 6 зависит от Task 5 (`IEmployeeDirectory`, статус сотрудника) и Task 4 (`IAuditWriter`).
-- Task 7, 8, 9 зависят от Task 3 (оболочка, автообнаружение маршрутов) и от backend-Task своей фичи; не правят общие файлы.
-- Task 10 зависит от Task 1 и Task 3 (структура репозитория, SPA-статика); находится в последней волне, чтобы собирать итоговое приложение.
+- Task 7 зависит от Task 3 и Task 6 (оболочка, backend пользователей); Task 7 владеет оболочкой (`web/src/app/**`), хуком текущего пользователя и контрактом навигации фич. Task 8 и 9 зависят от Task 7 (хук роли, навигация), идут параллельно в своих каталогах `web/src/features/<feature>/` и общих файлов не правят (волны переразбиты при impl: исходная волна 6 с Task 7, 8, 9 порождала зависимость от ещё не созданного хука).
+- Task 10 зависит от Task 1 и Task 3 (волна 8) (структура репозитория, SPA-статика); находится в последней волне, чтобы собирать итоговое приложение.
 
 ## Out of scope
 - Тесты (пишутся в impl-test), документы `docs/` (design-promote), диаграмма (mermaid включён в config, но для спринта 001 `documents.c4` заморожен `false`).

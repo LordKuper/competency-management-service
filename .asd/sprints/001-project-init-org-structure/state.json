@@ -91,6 +91,12 @@
       "tier": "critical",
       "reason": "risk:authentication, passwords, lockout, sessions, last-admin rule, CSRF, Identity schema migration",
       "resolved_model": "sonnet"
+    },
+    "Task 7": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:SPA authentication flow (401, cookie, CSRF headers), components outside DESIGN.md",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],

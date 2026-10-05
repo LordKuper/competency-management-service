@@ -97,3 +97,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: В пределах AC-9…AC-12 и plan Overview, без новых зависимостей. Не проверено без PostgreSQL: advisory lock, рекурсивные CTE, `pg_trgm`/`russian` FTS, уникальные индексы, генерируемые колонки — Task 10 и impl-test прогоняют миграцию первой.
 - **Affected docs**: `src/Competency.OrgStructure/`, `src/Competency.Platform/Migrations/`
 - 2026-10-05 — route Task 6: critical, dispatch HEAD 4dac05e
+
+## 2026-10-05 — Волна 5: flagged choices Task 6 (user-management) и пересмотр волн frontend
+
+- **Decision**: Приняты: `AppDbContext` остаётся `DbContext`, Identity отображён одной таблицей `users` (`AddUserStore<AppUserStore>`, без таблиц ролей/claims/логинов/токенов/passkey); собственный `OnValidatePrincipal` вместо `SecurityStampValidator`; актор неуспешного входа — id известного пользователя либо `unknown`, введённый текст в журнал не попадает; привязка журналируется через `[Audited] EmployeeId`, пароль — явными событиями `Auth.PasswordChanged`/`AppUser.PasswordReset`; bootstrap срабатывает при отсутствии АКТИВНОГО администратора; FK `users.employee_id` по имени сущности. Волны plan переразбиты: Task 7 — волна 6, Task 8 и 9 — волна 7, Task 10 — волна 8.
+- **Rationale**: Отклонение от «схема Identity по умолчанию» обосновано (Platform не может ссылаться на модули, остальные таблицы не используются); не проверено без PostgreSQL: `FOR UPDATE`, CHECK и уникальные индексы, DDL `users`. Task 8 и 9 зависят от хука текущего пользователя и контракта навигации Task 7, поэтому не могут идти параллельно с ним; это не изменение scope.
+- **Affected docs**: `src/Competency.UserManagement/`, `.asd/sprints/001-project-init-org-structure/plan.md`
+- 2026-10-05 — route Task 7: critical, dispatch HEAD 2935e40
