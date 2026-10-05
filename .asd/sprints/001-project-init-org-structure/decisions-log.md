@@ -118,3 +118,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: В пределах AC-9…AC-13, AC-15 и существующих токенов; новых зависимостей нет.
 - **Affected docs**: `web/src/features/org-structure/`, `web/src/features/audit/`
 - 2026-10-05 — route Task 10: critical, dispatch HEAD 7d7a0b3
+
+## 2026-10-05 — Волна 8: Task 10 (упаковка), manual step MS-1
+
+- **Decision**: Подзадачи 1–3 Task 10 приняты; подзадача 4 (проверка на Docker) отложена как `BLOCKED: MS-1` (установка Docker Desktop, действие пользователя, автономно невозможно). Приняты flagged choices: Secret-шаблон в `deploy/secret.template.yaml` (вне `deploy/k8s/`), ARG-теги вместо digest-заглушек в Dockerfile, `OpenApiGenerateDocumentsOnBuild=false` при publish, pod hardening (seccomp, drop ALL), startupProbe, `app` подключается под `POSTGRES_USER` (открытый пункт). Лицензия MPL-2.0 `lightningcss` (build-time, не в образе) остаётся на решение пользователя при impl assessment.
+- **Rationale**: MS-1 валидирован как необходимый: установка Docker Desktop требует прав и участия пользователя. Офлайн проверены: locked-restore + publish без Design/Roslyn/ApiDescription.Server, `npm ci` + build, linux-записи в lock, парсинг и перекрёстная проверка 8 YAML-документов.
+- **Affected docs**: `Dockerfile`, `deploy/`, `.asd/sprints/001-project-init-org-structure/manual-steps.md`
