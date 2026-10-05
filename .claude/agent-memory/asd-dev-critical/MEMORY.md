@@ -17,3 +17,4 @@
 - [EF raw SQL and OpenAPI contract gotchas](project_ef-raw-sql-and-openapi-contract-gotchas.md) — Sql() needs its own `;`, `$$` vs node replace, int `number|string`, AsParameters names, UTC offsets
 - [Npgsql search and result-type gotchas](project_npgsql-search-and-result-type-gotchas.md) — 2-arg ILike has no escape, SqlQuery CTE composes, Conflict<T> is not problem+json, required init props
 - [Scratch host without PostgreSQL](project_scratch-host-without-postgres.md) — InMemory logic host with stubbed raw SQL; Npgsql SQL-capture host with a fake DbCommand and transaction
+- [Identity on a plain DbContext](project_identity-efcore-store-gotchas.md) — stock user store marks all columns modified; users table suffices; HasOne(string) is a nav name
