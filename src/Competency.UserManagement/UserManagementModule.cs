@@ -15,8 +15,8 @@ public static class UserManagementModule
 
     /// <summary>
     /// Registers the UserManagement module services: the account table, Identity with the password and lockout policy read from
-    /// the <c>Identity</c> configuration section and the account id read from the platform subject claim, and the cookie session read from
-    /// <c>Authentication:Cookie</c>. The host adds <c>UseAuthentication</c> to its pipeline.
+    /// the <c>Identity</c> configuration section and the account id read from the platform subject claim, the cookie session read from
+    /// <c>Authentication:Cookie</c>, and the bootstrap of the first administrator. The host adds <c>UseAuthentication</c> to its pipeline.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
     /// <param name="configuration">The application configuration holding the Identity and cookie settings.</param>
@@ -34,6 +34,7 @@ public static class UserManagementModule
         services.AddAuthentication(SessionAuthentication.Scheme)
             .AddCookie(SessionAuthentication.Scheme, options => SessionAuthentication.Configure(options, configuration));
 
+        services.AddScoped<AdminBootstrapper>();
         return services;
     }
 
@@ -47,5 +48,17 @@ public static class UserManagementModule
         AuthEndpoints.Map(endpoints);
         UserEndpoints.Map(endpoints);
         return endpoints;
+    }
+
+    /// <summary>
+    /// Creates the first global administrator from <c>Bootstrap:AdminUserName</c> and <c>Bootstrap:AdminPassword</c> when no active one exists.
+    /// Call it explicitly after the schema is migrated, never from a tooling host; it fails with a clear message when an administrator is needed but not configured.
+    /// </summary>
+    /// <param name="services">The root service provider.</param>
+    /// <param name="cancellationToken">Cancels the bootstrap.</param>
+    public static async Task EnsureBootstrapAdminAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
+    {
+        await using var scope = services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<AdminBootstrapper>().EnsureAdminAsync(cancellationToken);
     }
 }
