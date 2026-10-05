@@ -20,3 +20,4 @@
 - [Identity on a plain DbContext](project_identity-efcore-store-gotchas.md) — stock user store marks all columns modified; users table suffices; HasOne(string) is a nav name
 - [Web UI test and form gotchas](project_web-ui-test-and-form-gotchas.md) — jsdom has no ResizeObserver, router singleton vs resetModules, Form.Item id, biome diff trick
 - [Web org-structure UI facts](project_web-org-structure-ui-facts.md) — antd Tree/TreeSelect/Table in jsdom, Escape closes Modal, form reset via key, throwaway test lint in shared worktree
+- [Packaging offline verification](project_packaging-offline-verification.md) — fresh-clone publish, npm linux dry-run, yaml parse, Secret template kept out of deploy/k8s
