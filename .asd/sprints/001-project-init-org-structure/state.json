@@ -73,6 +73,12 @@
       "tier": "critical",
       "reason": "risk:openapi-typescript peer conflict with TypeScript 6 (ERESOLVE spike), generated types from OpenAPI 3.1",
       "resolved_model": "sonnet"
+    },
+    "Task 4": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:audit log with PII/secrets, immutability trigger, EF interceptor, migration",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
