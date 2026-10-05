@@ -1,0 +1,14 @@
+**/node_modules
+**/bin
+**/obj
+**/dist
+.git
+.asd
+.claude
+.vs
+TestResults
+tests
+docs
+deploy
+**/.env
+**/appsettings.*.local.json
