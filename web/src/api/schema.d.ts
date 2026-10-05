@@ -42,17 +42,17 @@ export interface components {
         AuditPageResponse: {
             items: components["schemas"]["AuditEventResponse"][];
             /** Format: int32 */
-            total: number | string;
+            total: number;
             /** Format: int32 */
-            page: number | string;
+            page: number;
             /** Format: int32 */
-            pageSize: number | string;
+            pageSize: number;
         };
         HttpValidationProblemDetails: {
             type?: null | string;
             title?: null | string;
             /** Format: int32 */
-            status?: null | number | string;
+            status?: null | number;
             detail?: null | string;
             instance?: null | string;
             errors?: {
@@ -64,7 +64,7 @@ export interface components {
             type?: null | string;
             title?: null | string;
             /** Format: int32 */
-            status?: null | number | string;
+            status?: null | number;
             detail?: null | string;
             instance?: null | string;
         };
@@ -87,8 +87,8 @@ export interface operations {
                 entityType?: string;
                 entityId?: string;
                 requestId?: string;
-                page?: number | string;
-                pageSize?: number | string;
+                page?: number;
+                pageSize?: number;
             };
             header?: never;
             path?: never;

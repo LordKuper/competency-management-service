@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -38,6 +39,7 @@ public static class PlatformModule
 
     /// <summary>
     /// Registers the database context, the readiness check, error handling, the current actor, the authorization policies and the sign-in rate limiter.
+    /// JSON numbers are read and written as numbers only, so the API description types integers as numbers rather than numbers or strings.
     /// Every <see cref="IInterceptor"/> registered in the container, by the platform or by a module, is attached to the context.
     /// Every endpoint requires an authenticated user unless it carries anonymous metadata; only the health probes,
     /// the SPA fallback and the sign-in endpoint do, and a module exposing another anonymous endpoint must say so explicitly.
@@ -49,6 +51,7 @@ public static class PlatformModule
     public static IServiceCollection AddPlatform(this IServiceCollection services, IConfiguration configuration)
     {
         services.TryAddSingleton(TimeProvider.System);
+        services.ConfigureHttpJsonOptions(options => options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
         services.AddSingleton<IInterceptor, EntityStampingInterceptor>();
         services.AddDbContext<AppDbContext>((provider, options) => options
             .UseNpgsql(
