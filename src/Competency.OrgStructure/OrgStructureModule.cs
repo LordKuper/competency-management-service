@@ -1,3 +1,4 @@
+using Competency.Platform;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,7 +14,11 @@ public static class OrgStructureModule
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
     /// <returns>The same collection, for chaining.</returns>
-    public static IServiceCollection AddOrgStructureModule(this IServiceCollection services) => services;
+    public static IServiceCollection AddOrgStructureModule(this IServiceCollection services)
+    {
+        services.AddSingleton<IEntityConfigurationContributor, OrgStructureEntityConfiguration>();
+        return services;
+    }
 
     /// <summary>
     /// Maps the OrgStructure module HTTP endpoints.
