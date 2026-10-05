@@ -28,6 +28,7 @@ public static class OrgStructureModule
     public static IEndpointRouteBuilder MapOrgStructureEndpoints(this IEndpointRouteBuilder endpoints)
     {
         OrgUnitEndpoints.Map(endpoints);
+        EmployeeEndpoints.Map(endpoints);
         return endpoints;
     }
 }
