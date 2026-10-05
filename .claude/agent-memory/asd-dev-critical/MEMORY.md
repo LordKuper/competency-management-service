@@ -14,3 +14,4 @@
 - [.NET build-time host gotchas](project_dotnet-build-time-host-gotchas.md) — GetDocument.Insider runs hosted services; ef skips Program.cs; pin EF Relational; PrivateAssets keeps Design out of publish
 - [ASP.NET platform pipeline gotchas](project_aspnet-platform-pipeline-gotchas.md) — fallback-policy reach, EF categories that log exception text, OriginalValue semantics, no-DB test tricks
 - [Web toolchain Windows notes](project_web-toolchain-windows-notes.md) — slow first vitest run, NO_COLOR not --colors, --check LF vs autocrlf, staged-on-failed-check
+- [EF raw SQL and OpenAPI contract gotchas](project_ef-raw-sql-and-openapi-contract-gotchas.md) — Sql() needs its own `;`, `$$` vs node replace, int `number|string`, AsParameters names, UTC offsets
