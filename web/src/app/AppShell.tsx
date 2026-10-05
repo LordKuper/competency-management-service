@@ -72,17 +72,21 @@ function ShellFrame({ user }: { user: CurrentUser }) {
           <strong title={PRODUCT_NAME} style={productNameStyle}>
             {PRODUCT_NAME}
           </strong>
-          <Menu
-            theme="dark"
-            mode="horizontal"
-            selectedKeys={current ? [current.key] : []}
-            items={navItems.map((item) => ({
-              key: item.key,
-              label: <Link to={item.path}>{item.label}</Link>,
-            }))}
-            style={{ flex: "1 0 auto" }}
-          />
-          <UserMenu user={user} />
+          {navItems.length > 0 && (
+            <Menu
+              theme="dark"
+              mode="horizontal"
+              selectedKeys={current ? [current.key] : []}
+              items={navItems.map((item) => ({
+                key: item.key,
+                label: <Link to={item.path}>{item.label}</Link>,
+              }))}
+              style={{ flex: "none" }}
+            />
+          )}
+          <div style={{ marginInlineStart: "auto" }}>
+            <UserMenu user={user} />
+          </div>
         </Layout.Header>
         <Layout.Content
           style={{ padding: screens.lg ? token.paddingLG : token.padding }}
