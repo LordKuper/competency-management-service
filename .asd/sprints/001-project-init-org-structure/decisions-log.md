@@ -131,3 +131,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Явные ответы пользователя на manual-steps gate; исключение узкое (build-time, слабый file-level copyleft).
 - **Affected docs**: `.asd/sprints/001-project-init-org-structure/manual-steps.md`, `docs/architecture/stack.html` (design-promote)
 - 2026-10-06 — route Task 10 (deferred Docker verification): critical, dispatch HEAD d0662ea
+
+## 2026-10-06 — Impl assessment: ручная проверка пользователем, дефект dev-прокси
+
+- **Decision**: При ручном запуске вход давал 403: dev-прокси Vite 8 подменяет `Host` на адрес backend, и CSRF-проверка Origin/Host отклоняет запрос. Исправлено в `web/vite.config.ts` (`configure` передаёт исходный `Host` браузера, коммит 0e10628); backend и CSRF-проверка не менялись. Flagged choice 11 Task 3 («Host остаётся хостом Vite») признан ошибочным и заменён этим исправлением.
+- **Rationale**: Дефект dev-окружения, найден до принятия impl assessment; проверено на отдельном Vite (вход 200, cross-origin 403, `/auth/me` 200). Порт 5432 на машине пользователя зарезервирован Windows (диапазон 5335–5434) — для локальной БД использовать 15432.
+- **Affected docs**: `web/vite.config.ts`
