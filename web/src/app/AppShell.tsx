@@ -76,7 +76,6 @@ function ShellFrame({ user }: { user: CurrentUser }) {
               justify="center"
               style={{
                 flex: "none",
-                padding: token.paddingXXS,
                 background: token.colorBgContainer,
                 borderRadius: "50%",
               }}
