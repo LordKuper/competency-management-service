@@ -9,3 +9,4 @@ dist/
 TestResults/
 .env
 appsettings.*.local.json
+*.user

@@ -9,4 +9,13 @@
   <Folder Name="/tests/">
     <Project Path="tests/Competency.Tests/Competency.Tests.csproj" />
   </Folder>
+  <Folder Name="/dev/">
+    <Project Path="deploy/dev/docker-compose.dcproj">
+      <Build />
+    </Project>
+    <Project Path="web/web.esproj">
+      <Build />
+      <Deploy />
+    </Project>
+  </Folder>
 </Solution>
