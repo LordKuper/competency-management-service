@@ -144,3 +144,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Явный запрос пользователя; первоначальное предложение (скрипты) отвергнуто после проверки документации Microsoft: VS 17.11+/2026 умеет многопроектный запуск штатно. Поправка — `new or changed scope` (hard gate), подтверждена пользователем.
 - **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
 - 2026-10-06 — route Task 11: critical, dispatch HEAD d3466b4
+
+## 2026-10-06 — Волна 9: flagged choices Task 11 (запуск из Visual Studio, AC-16)
+
+- **Decision**: Приняты: `web/web.esproj` (JavaScript SDK 1.0.5984942, закреплён, npm install/build из MSBuild отключены), compose-проект БД (`competency-dev`, том `competency-dev-pgdata`, порт 15432), `Competency.slnLaunch` с профилями «Все сервисы» и «Только API» (оба включают БД), профиль `Competency.Api` в `launchSettings.json` (dev-only значения), ожидание БД до 60 с только в Development (`MigrateDatabaseAsync(waitForDatabase)`), `DependencyAwareStart` не используется, Edge как браузер профиля. `commands.yaml` не меняется: `dotnet build/test Competency.slnx` остаются чистыми (0 предупреждений), `.dcproj`/`.esproj` для CLI — no-op; Docker-образ не затронут.
+- **Rationale**: В пределах AC-16; новые dev-only MSBuild-SDK приняты пользователем. Не проверено без IDE: появление профиля в списке запуска, привязка `DebugTarget`, открытие браузера, поведение контейнера после остановки отладки — проверит пользователь по F5. Компоненты VS (Docker Tools, JavaScript/TypeScript, Node.js) установлены (ранее ошибочно сообщалось об их отсутствии).
+- **Affected docs**: `web/web.esproj`, `deploy/dev/`, `Competency.slnx`, `Competency.slnLaunch`, `src/Competency.Api/Properties/launchSettings.json`
