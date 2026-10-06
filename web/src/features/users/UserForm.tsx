@@ -9,14 +9,14 @@ import { ROLE_OPTIONS } from "./roles";
 
 /** What the account form submits; `password` is present only on the create form. */
 export interface UserInput {
-  userName: string;
+  email: string;
   role: UserRole;
   employeeId: string | null;
   password?: string;
 }
 
 interface UserFormValues {
-  userName: string;
+  email: string;
   role: UserRole;
   employeeId?: string;
   password?: string;
@@ -34,7 +34,7 @@ interface UserFormProps {
   onSubmit: (input: UserInput) => Promise<unknown>;
 }
 
-const NEW_ACCOUNT_VALUES: UserFormValues = { userName: "", role: "User" };
+const NEW_ACCOUNT_VALUES: UserFormValues = { email: "", role: "User" };
 
 /**
  * Account fields shared by creation and editing. A role that needs no employee hides the picker and submits none,
@@ -75,15 +75,10 @@ export function UserForm({
       onFinish={submit}
     >
       <Form.Item
-        name="userName"
-        label="Имя пользователя"
-        extra="Латинские буквы, цифры и символы - . _ @ +"
+        name="email"
+        label="E-mail"
         rules={[
-          {
-            required: true,
-            whitespace: true,
-            message: "Введите имя пользователя",
-          },
+          { required: true, whitespace: true, message: "Введите e-mail" },
         ]}
       >
         <Input autoComplete="off" />

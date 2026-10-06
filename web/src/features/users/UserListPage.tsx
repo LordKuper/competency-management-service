@@ -46,10 +46,10 @@ export function UserListPage() {
 
   const columns: TableColumnsType<UserResponse> = [
     {
-      title: "Имя пользователя",
-      dataIndex: "userName",
-      render: (userName: string, user) => (
-        <Link to={`/users/${user.id}`}>{userName}</Link>
+      title: "E-mail",
+      dataIndex: "email",
+      render: (email: string, user) => (
+        <Link to={`/users/${user.id}`}>{email}</Link>
       ),
     },
     {
@@ -75,7 +75,7 @@ export function UserListPage() {
         return (
           <Button
             type="link"
-            aria-label={`${action} ${user.userName}`}
+            aria-label={`${action} ${user.email}`}
             onClick={() => confirmBlockChange(user)}
           >
             {action}
@@ -99,8 +99,8 @@ export function UserListPage() {
         <Col xs={24} md={8} lg={10}>
           <Input.Search
             allowClear
-            aria-label="Поиск по имени пользователя"
-            placeholder="Поиск по имени пользователя"
+            aria-label="Поиск по e-mail"
+            placeholder="Поиск по e-mail"
             onSearch={(text) =>
               setParams((previous) => ({
                 ...previous,

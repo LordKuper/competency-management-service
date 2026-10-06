@@ -19,8 +19,8 @@ export function UserMenu({ user }: { user: CurrentUser }) {
   const signOut = useSignOut();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const displayName = user.employeeName
-    ? `${user.employeeName} (${user.userName})`
-    : user.userName;
+    ? `${user.employeeName} (${user.email})`
+    : user.email;
 
   return (
     <>

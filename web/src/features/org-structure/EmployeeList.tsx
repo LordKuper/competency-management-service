@@ -59,7 +59,6 @@ export function EmployeeList() {
     { title: "Должность", dataIndex: "position" },
     ...(isAdmin
       ? [
-          { title: "Табельный номер", dataIndex: "personnelNumber" },
           {
             title: "Статус",
             dataIndex: "isActive",
@@ -77,9 +76,7 @@ export function EmployeeList() {
           <Input.Search
             allowClear
             aria-label="Поиск сотрудников"
-            placeholder={
-              isAdmin ? "ФИО, e-mail или табельный номер" : "ФИО или e-mail"
-            }
+            placeholder="ФИО или должность"
             onSearch={(text) =>
               setFilters((previous) => ({
                 ...previous,

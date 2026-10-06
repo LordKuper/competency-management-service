@@ -380,7 +380,7 @@ export interface components {
             headEmployeeId?: null | string;
         };
         CreateUserRequest: {
-            userName: string;
+            email: string;
             password: string;
             role: components["schemas"]["UserRole"];
             /** Format: uuid */
@@ -389,7 +389,7 @@ export interface components {
         CurrentUserResponse: {
             /** Format: uuid */
             id: string;
-            userName: string;
+            email: string;
             role: components["schemas"]["UserRole"];
             /** Format: uuid */
             employeeId: null | string;
@@ -397,8 +397,6 @@ export interface components {
         };
         EmployeeRequest: {
             fullName: string;
-            personnelNumber: string;
-            email: string;
             position: string;
             /** Format: uuid */
             orgUnitId: string;
@@ -408,12 +406,11 @@ export interface components {
             /** Format: uuid */
             id: string;
             fullName: string;
-            email: string;
+            email: null | string;
             /** Format: uuid */
             orgUnitId: string;
             orgUnitName: string;
             position: string;
-            personnelNumber?: null | string;
             isActive?: null | boolean;
             /** Format: int32 */
             version?: null | number;
@@ -431,7 +428,7 @@ export interface components {
         };
         JsonElement: unknown;
         LoginRequest: {
-            userName: string;
+            email: string;
             password: string;
         };
         MoveOrgUnitRequest: {
@@ -517,7 +514,7 @@ export interface components {
             headEmployeeId: null | string;
         };
         UpdateUserRequest: {
-            userName: string;
+            email: string;
             role: components["schemas"]["UserRole"];
             /** Format: uuid */
             employeeId: null | string;
@@ -525,7 +522,7 @@ export interface components {
         UserResponse: {
             /** Format: uuid */
             id: string;
-            userName: string;
+            email: string;
             role: components["schemas"]["UserRole"];
             isBlocked: boolean;
             /** Format: uuid */
@@ -1338,15 +1335,6 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
                 headers: {
                     [name: string]: unknown;
                 };

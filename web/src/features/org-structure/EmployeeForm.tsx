@@ -55,28 +55,6 @@ export function EmployeeForm({
         <Input autoComplete="off" />
       </Form.Item>
       <Form.Item
-        name="personnelNumber"
-        label="Табельный номер"
-        rules={[
-          {
-            required: true,
-            whitespace: true,
-            message: "Введите табельный номер",
-          },
-        ]}
-      >
-        <Input autoComplete="off" />
-      </Form.Item>
-      <Form.Item
-        name="email"
-        label="Рабочий e-mail"
-        rules={[
-          { required: true, whitespace: true, message: "Введите e-mail" },
-        ]}
-      >
-        <Input autoComplete="off" />
-      </Form.Item>
-      <Form.Item
         name="orgUnitId"
         label="Подразделение"
         extra="Сотрудника можно перевести, выбрав другое подразделение."

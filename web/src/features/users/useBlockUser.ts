@@ -30,8 +30,8 @@ export function useBlockUser() {
   return (user: UserResponse) =>
     modal.confirm({
       title: user.isBlocked
-        ? `Разблокировать пользователя «${user.userName}»?`
-        : `Заблокировать пользователя «${user.userName}»?`,
+        ? `Разблокировать пользователя «${user.email}»?`
+        : `Заблокировать пользователя «${user.email}»?`,
       content: user.isBlocked
         ? "Пользователь снова сможет войти в систему."
         : "Пользователь не сможет войти в систему, его действующие сессии будут завершены. Блокировку можно снять в любой момент.",

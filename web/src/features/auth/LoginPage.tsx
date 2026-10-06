@@ -19,7 +19,7 @@ import { PRODUCT_NAME, PRODUCT_TAGLINE } from "../../app/productName";
 import { currentUserQueryKey } from "./useCurrentUser";
 
 interface LoginValues {
-  userName: string;
+  email: string;
   password: string;
 }
 
@@ -72,13 +72,13 @@ export function LoginPage() {
               </Form.Item>
             )}
             <Form.Item
-              name="userName"
-              label="Имя пользователя"
+              name="email"
+              label="E-mail"
               rules={[
                 {
                   required: true,
                   whitespace: true,
-                  message: "Введите имя пользователя",
+                  message: "Введите e-mail",
                 },
               ]}
             >

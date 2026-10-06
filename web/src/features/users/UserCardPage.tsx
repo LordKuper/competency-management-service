@@ -49,14 +49,14 @@ function UserCard({ user }: { user: UserResponse }) {
   const confirmBlockChange = useBlockUser();
   const [isResetOpen, setIsResetOpen] = useState(false);
   const update = useMutation({
-    mutationFn: async ({ userName, role, employeeId }: UserInput) =>
+    mutationFn: async ({ email, role, employeeId }: UserInput) =>
       unwrap(
         await api.PUT("/api/v1/users/{id}", {
           params: {
             path: { id: user.id },
             header: { "If-Match": ifMatchOf(user.version) },
           },
-          body: { userName, role, employeeId },
+          body: { email, role, employeeId },
         }),
       ).data,
     onSuccess: () => message.success("Изменения сохранены"),
@@ -68,12 +68,12 @@ function UserCard({ user }: { user: UserResponse }) {
       <Breadcrumb
         items={[
           { title: <Link to="/users">Пользователи</Link> },
-          { title: user.userName },
+          { title: user.email },
         ]}
       />
       <Flex align="center" gap="middle" wrap>
         <Typography.Title level={1} style={{ margin: 0 }}>
-          {user.userName}
+          {user.email}
         </Typography.Title>
         <UserStatusTag isBlocked={user.isBlocked} />
       </Flex>
@@ -87,7 +87,7 @@ function UserCard({ user }: { user: UserResponse }) {
         <UserForm
           key={user.version}
           initialValues={{
-            userName: user.userName,
+            email: user.email,
             role: user.role,
             employeeId: user.employeeId ?? undefined,
           }}

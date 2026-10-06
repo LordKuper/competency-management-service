@@ -18,8 +18,8 @@ interface EmployeeCardProps {
 }
 
 /**
- * Compact card of an employee inside the unit hierarchy. Administrators also see the personnel number, the status of
- * a person who no longer works and the way to edit; the restricted projection of an ordinary user has none of those.
+ * Compact card of an employee inside the unit hierarchy. Administrators also see the status of
+ * a person who no longer works and the way to edit; the restricted projection of an ordinary user has neither.
  * A unit may hold thousands of employees, so the card is plain markup styled from the theme variables: antd's own
  * card, avatar and text components cost several times more to render.
  */
@@ -27,13 +27,7 @@ export const EmployeeCard = memo(function EmployeeCard({
   employee,
   isAdmin,
 }: EmployeeCardProps) {
-  const details = [
-    employee.position,
-    employee.email,
-    isAdmin && employee.personnelNumber
-      ? `Табельный номер ${employee.personnelNumber}`
-      : null,
-  ].filter(Boolean);
+  const details = [employee.position, employee.email].filter(Boolean);
 
   return (
     <div className="org-tree__item org-employee">

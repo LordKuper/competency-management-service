@@ -1130,16 +1130,6 @@
               }
             }
           },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "201": {
             "description": "Created",
             "headers": {
@@ -1285,16 +1275,6 @@
               }
             }
           },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "200": {
             "description": "OK",
             "headers": {
@@ -1329,6 +1309,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2368,14 +2358,14 @@
       },
       "CreateUserRequest": {
         "required": [
-          "userName",
+          "email",
           "password",
           "role",
           "employeeId"
         ],
         "type": "object",
         "properties": {
-          "userName": {
+          "email": {
             "type": "string"
           },
           "password": {
@@ -2396,7 +2386,7 @@
       "CurrentUserResponse": {
         "required": [
           "id",
-          "userName",
+          "email",
           "role",
           "employeeId",
           "employeeName"
@@ -2407,7 +2397,7 @@
             "type": "string",
             "format": "uuid"
           },
-          "userName": {
+          "email": {
             "type": "string"
           },
           "role": {
@@ -2431,8 +2421,6 @@
       "EmployeeRequest": {
         "required": [
           "fullName",
-          "personnelNumber",
-          "email",
           "position",
           "orgUnitId",
           "isActive"
@@ -2440,12 +2428,6 @@
         "type": "object",
         "properties": {
           "fullName": {
-            "type": "string"
-          },
-          "personnelNumber": {
-            "type": "string"
-          },
-          "email": {
             "type": "string"
           },
           "position": {
@@ -2479,7 +2461,10 @@
             "type": "string"
           },
           "email": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "orgUnitId": {
             "type": "string",
@@ -2490,12 +2475,6 @@
           },
           "position": {
             "type": "string"
-          },
-          "personnelNumber": {
-            "type": [
-              "null",
-              "string"
-            ]
           },
           "isActive": {
             "type": [
@@ -2560,12 +2539,12 @@
       "JsonElement": { },
       "LoginRequest": {
         "required": [
-          "userName",
+          "email",
           "password"
         ],
         "type": "object",
         "properties": {
-          "userName": {
+          "email": {
             "type": "string"
           },
           "password": {
@@ -2859,13 +2838,13 @@
       },
       "UpdateUserRequest": {
         "required": [
-          "userName",
+          "email",
           "role",
           "employeeId"
         ],
         "type": "object",
         "properties": {
-          "userName": {
+          "email": {
             "type": "string"
           },
           "role": {
@@ -2883,7 +2862,7 @@
       "UserResponse": {
         "required": [
           "id",
-          "userName",
+          "email",
           "role",
           "isBlocked",
           "employeeId",
@@ -2896,7 +2875,7 @@
             "type": "string",
             "format": "uuid"
           },
-          "userName": {
+          "email": {
             "type": "string"
           },
           "role": {

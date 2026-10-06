@@ -133,8 +133,6 @@ function EditableEmployee({
           key={version}
           initialValues={{
             fullName: employee.fullName,
-            personnelNumber: employee.personnelNumber ?? undefined,
-            email: employee.email,
             orgUnitId: employee.orgUnitId,
             position: employee.position,
             isActive: employee.isActive ?? undefined,

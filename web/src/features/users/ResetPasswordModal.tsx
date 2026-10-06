@@ -73,7 +73,7 @@ function ResetPasswordForm({
       onFinish={(values) => reset.mutate(values)}
     >
       <Typography.Paragraph>
-        Задайте новый пароль для «{user.userName}». Все действующие сессии
+        Задайте новый пароль для «{user.email}». Все действующие сессии
         пользователя будут завершены; передайте пароль пользователю безопасным
         способом.
       </Typography.Paragraph>
