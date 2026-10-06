@@ -5,7 +5,7 @@
 - Dockerfile и entrypoint: https://github.com/docker-library/postgres/blob/master/18/trixie/Dockerfile , https://github.com/docker-library/postgres/blob/master/18/trixie/docker-entrypoint.sh
 - Смена PGDATA/VOLUME в 18: https://github.com/docker-library/postgres/issues/1370
 - Docker Hub API (тег и платформы): https://hub.docker.com/v2/repositories/library/postgres/tags/18.6-trixie — тег пересобран 2026-09-24, linux/amd64 присутствует
-- Last verified: 2026-10-05
+- Last verified: 2026-10-06 (разделы вне «Проверено на Docker» — 2026-10-05, по документации; «Проверено на Docker» — запуском образа, MS-1)
 
 ## API surface used in project
 - Образ `postgres:18.6-trixie` (теги `18.6`, `18`, `latest`, `18.6-trixie`, `18-trixie`, `trixie` — один и тот же образ, README); в манифестах закрепляется по digest (`@sha256:…`); образ не пересобирается и не дорабатывается.
@@ -23,7 +23,7 @@
 - Entrypoint (при запуске от root): создаёт `PGDATA` (`chmod 00700`), делает `chown postgres`, затем перезапускает себя через `gosu postgres`. При запуске **не от root** (`runAsUser: 999`) `chown` пропускается — каталог тома должен быть доступен на запись пользователю 999 (`fsGroup`/владелец тома — решение design).
 - `initdb` и «arbitrary --user»: пользователь должен существовать в `/etc/passwd` (README) — для Kubernetes использовать uid 999 (`postgres`).
 - `/dev/shm` в контейнере по умолчанию 64 МБ; при исчерпании — `No space left on device` (README: `--shm-size`). В Kubernetes типовой приём — `emptyDir` с `medium: Memory`, смонтированный в `/dev/shm` (приём Kubernetes, в README образа не описан).
-- Локаль: `LANG=en_US.utf8`; других локалей в образе нет (в Dockerfile сгенерирована только `en_US.UTF-8`). README для Debian-вариантов предлагает собственный Dockerfile с `localedef`; для ICU — `POSTGRES_INITDB_ARGS` вида `--locale-provider=icu --icu-locale=de-DE` (пример README приведён для Alpine-вариантов). Русская collation при неизменённом образе — открытый вопрос design (см. `postgresql-18.6.md`).
+- Локаль: `LANG=en_US.utf8`; других локалей в образе нет (в Dockerfile сгенерирована только `en_US.UTF-8`). README для Debian-вариантов предлагает собственный Dockerfile с `localedef`; для ICU — `POSTGRES_INITDB_ARGS` вида `--locale-provider=icu --icu-locale=de-DE` (пример README приведён для Alpine-вариантов). Русская collation при неизменённом образе — вопрос design (см. `postgresql-18.6.md`); запуском проверено, что отдельная collation не нужна (раздел «Проверено на Docker», «Локаль и поиск»).
 - Тег `18.6-trixie` пересобирается при обновлении базового слоя, не меняя версию PostgreSQL — поэтому закрепление по digest и ежемесячный цикл пересборки (stack.html).
 
 ## Deprecations and breaking changes from prior version
@@ -34,7 +34,7 @@
 
 ## Project conventions
 - Workload `db` — одна реплика, PVC; `app` подключается по настраиваемой строке подключения (путь к внешней БД позже). Тип ресурса (StatefulSet/Deployment), Service, `fsGroup` — в design.
-- PVC монтируется **только** в `/var/lib/postgresql`; `PGDATA` не переопределять. Монтирование в `/var/lib/postgresql/data` на образе 18 недопустимо: `PGDATA` остаётся `/var/lib/postgresql/18/docker`, и данные оказываются вне тома (следствие из ENV; на Docker — ошибка из issue #1370).
+- PVC монтируется **только** в `/var/lib/postgresql`; `PGDATA` не переопределять. Монтирование в `/var/lib/postgresql/data` на образе 18 недопустимо: проверено запуском — entrypoint завершается с кодом 1 и сообщением «there appears to be PostgreSQL data in /var/lib/postgresql/data (unused mount/volume)» (контейнер не стартует; данные не пишутся ни в том, ни в слой контейнера). Прежнее предположение «данные окажутся вне тома» этим опровергнуто.
 - Образ собирается/забирается на сборочном хосте вне контура (с интернетом), в контур доставляется готовым (registry либо tar-импорт на узлы, Q11); целевая платформа linux/amd64 (Q10); перед переносом — сканирование и SBOM; версии меняются только через спринт.
 - Образ тестов Testcontainers — тот же тег (`testcontainers-postgresql-4.15.0.md`).
 - Секреты — только из Kubernetes Secrets, не в образе и не в репозитории (stack.html).
@@ -43,4 +43,54 @@
 - `STOPSIGNAL SIGINT` (быстрое выключение PostgreSQL): образ-`STOPSIGNAL` учитывают containerd и CRI-O (Kubernetes blog, v1.33); при runtime без поддержки Kubernetes пошлёт `SIGTERM` (smart shutdown — ждёт отключения клиентов) → возможен `SIGKILL` по `terminationGracePeriodSeconds` и crash recovery. Проверить при развёртывании; для явного сигнала в Kubernetes есть `lifecycle.stopSignal` (feature `ContainerStopSignals`, v1.33+).
 - Запуск не от root без права записи в том (`fsGroup`) → `initdb` не создаст `PGDATA`; запуск от root — entrypoint сам делает `chown` и сбрасывает привилегии.
 - Порядок запуска `app`/`db` Kubernetes не гарантирует: `app` ждёт готовности БД (повторы/проба) — детали в design.
-- Образ не содержит дополнительных расширений кроме поставляемых пакетом PostgreSQL; расширения Debian-вариантов — установкой пакетов в собственном образе (README), что противоречит «образ без доработок» — см. `postgresql-18.6.md` про `pg_trgm`.
+- Образ не содержит дополнительных расширений кроме поставляемых пакетом PostgreSQL; расширения Debian-вариантов — установкой пакетов в собственном образе (README), что противоречит «образ без доработок» — см. `postgresql-18.6.md` про `pg_trgm`. Проверено: `pg_trgm` 1.6 (как и `unaccent`, `btree_gin`) в образе есть, пересборка не нужна (см. ниже).
+
+## Проверено на Docker (spike Task 10, 2026-10-06, MS-1)
+
+Среда: Windows 11, Docker Desktop 4.94.0 (Docker 29.8.2, WSL2, ядро 6.6.87.2, 24 CPU и 15,5 ГиБ в VM Docker, образы в containerd image store), linux/amd64. Образ получен как `postgres:18.6-trixie`, 650 МБ; digest на 2026-10-06 — `sha256:fc973eb97c9fd04bfa1840e0f510719a584ccb3be8debfe6a4144637a9dfe8cf` (`docker buildx imagetools inspect`; манифест — OCI index, платформа linux/amd64). Приложение — собранный образ `app` (`docker-multi-stage-dockerfile-1.md`) на том же docker-сети. Контейнеры — аналог securityContext манифестов: `--user 999:999 --cap-drop ALL --security-opt no-new-privileges`, `--shm-size=256m`, именованный том **только** в `/var/lib/postgresql`, `PGDATA` не задавался.
+
+**Запуск и хранение**
+- Инициализация без ошибок; кластер — в `/var/lib/postgresql/18/docker` (`drwx------ postgres`), `/dev/shm` — tmpfs 256 МБ. Именованный том Docker наследует права каталога из образа (`/var/lib/postgresql` в образе — `drwxrwxrwt postgres:postgres`), поэтому в Docker `fsGroup` не нужен; в Kubernetes PVC этого не наследует — `fsGroup: 999` из манифеста **не проверялось** (нет кластера).
+- `POSTGRES_USER` (`competency`) — суперпользователь кластера (`rolsuper = t`); `shared_buffers = 128MB`, `max_connections = 100`, `dynamic_shared_memory_type = posix`.
+- `docker stop` → `STOPSIGNAL SIGINT` → «received fast shutdown request», выход с кодом 0; следующий старт без crash recovery («database system was shut down at …»); данные на месте (10 057 сотрудников до и после).
+- Монтирование тома в `/var/lib/postgresql/data` (и от root, и от uid 999): контейнер завершается с кодом 1 и сообщением entrypoint (см. «Project conventions»).
+
+**Локаль и поиск (`en_US.utf8`, провайдер libc)**
+- Кластер и БД: `datcollate = datctype = en_US.utf8`, `datlocprovider = c`, `server_encoding = UTF8`; `lc_collate`/`lc_ctype` как параметры (`SHOW`) в 18 недоступны («unrecognized configuration parameter»), читать из `pg_database`. `default_text_search_config = pg_catalog.english`: конфигурацию `'russian'` нужно передавать явно (приложение так и делает).
+- ICU в образе есть: 871 ICU-collation из 880; `ru%` — 7 штук: `ru-RU-x-icu`, `ru-x-icu`, `ru-BY-x-icu`, `ru-KG-x-icu`, `ru-KZ-x-icu`, `ru-MD-x-icu`, `ru-UA-x-icu` (все deterministic), плюс `und-x-icu`. Колоночная collation возможна без доработки образа.
+- Сортировка кириллицы под `en_US.utf8` корректна (проверена выборкой): а < А < Абрикос < е < ё < Еж < Ёж < Ель < ж < Жук < Эхо < Юла < Я < Яблоко; `ё` стоит сразу за `е`. От `ru-RU-x-icu` отличается только порядком латиницы и кириллицы (под `en_US.utf8` латиница раньше, под ICU `ru` — позже). Вывод: для оргструктуры отдельная ICU-collation не нужна.
+- `pg_trgm` 1.6: `trusted = t`, `superuser = t` в `pg_available_extension_versions` — расширение доступно без доработки образа, и роль-владелец БД без прав суперпользователя создаёт его сама (проверено).
+- `ILIKE` по кириллице регистронезависим (`'Привет' ILIKE 'при%'`, `'ПРИВЕТ' ILIKE '%ивет%'`, `'ЁЖ' ILIKE '%ёж%'` — истина); `ё` и `е` в `ILIKE` **различаются** (`'Пётр' ILIKE '%петр%'` — ложь). `'_'` и `'%'` — подстановки, `\_` — литерал; `ILIKE … ESCAPE '\'` использует GIN-индекс `gin_trgm_ops` (Bitmap Index Scan, в том числе внутри `BitmapOr` из четырёх условий).
+- `to_tsvector('russian', …)`: `ё` приводится к `е` (`'Пётр Семёнов'` → `'петр':1 'семен':2`), окончания отсекаются стеммером (`Петров` → `петр`, `Семёнов` → `семен`, `Инженеры` → `инженер`; составное `инженеры-программисты` индексируется и целиком, и частями), `plainto_tsquery` стеммирует запрос так же. Следствие для поиска: FTS находит `Петр`, `Пётр` и `Петров` одним запросом, а `ILIKE` — только точную подстроку; запрос `семен` ничего не найдёт (стем запроса не совпадает), `семенов` — найдёт `Семёнов`. `to_tsvector(regconfig, text)` — `IMMUTABLE`, сгенерированная колонка `search_vector` с `'russian'::regconfig` создаётся.
+- `similarity('Семёнов', 'Семенов') = 0.4545`, оператор `%` истинен.
+
+**Миграции приложения (`MigrateAsync` из образа `app` на пустой БД)**
+- Все четыре (`InitialCreate`, `AuditEvents`, `OrgStructure`, `UserManagement`) применились с первого раза, `__EFMigrationsHistory.ProductVersion = 10.0.12`; дефектов DDL нет. Созданы: 4 таблицы + история; идентификаторы `timestamp`, `role`, `action`, `position` EF квотирует; 3 генерируемые колонки (`employees.normalized_email = lower(email)`, `employees.search_vector`, `org_units.search_vector`); GIN-индексы `gin_trgm_ops` (4) и GIN по `tsvector` (2); уникальные индексы (включая частичный `IX_users_employee_id … WHERE employee_id IS NOT NULL`); CHECK `ck_org_units_valid_period`, `ck_users_role_employee`; FK `ON DELETE RESTRICT`; функция и два триггера `audit_events`. Обёртки `DO $EF$` в этих миграциях нет (`CREATE EXTENSION` и `CREATE FUNCTION` идут отдельными командами).
+- Поведение, проверенное SQL: `DELETE` подразделения с дочерними, сотрудника-руководителя — FK `ON DELETE RESTRICT` (SQLSTATE `23001`, тот же код, что и у триггера журнала; `23503` даёт только проверка со стороны дочерней строки, и только его обработчик ошибок приложения переводит в 409 — удаления через API нет, так что на практике недостижимо); `valid_to < valid_from` и роль без сотрудника / администратор с сотрудником — CHECK (23514); повтор e-mail с другим регистром, табельного номера, привязки одного сотрудника к двум учёткам — 23505; запись в генерируемые колонки — «can only be updated to DEFAULT». БД допускает `parent_id = id` (CHECK на самоссылку нет): ацикличность держит только приложение под advisory-блокировкой.
+- Триггер журнала: `UPDATE`/`DELETE` строки и `TRUNCATE` (в том числе `CASCADE`) отклоняются с SQLSTATE `23001` (`restrict_violation`) и сообщением `audit_events is append-only: UPDATE|DELETE|TRUNCATE is rejected` — значения строк в сообщении и CONTEXT нет; `DELETE … WHERE false` проходит (строк нет). Суперпользователь обходит триггер без DDL: `SET LOCAL session_replication_role = replica` (проверено в откатываемой транзакции); обычная роль получает «permission denied to set parameter».
+- Запуск `app` при недоступной БД: процесс завершается с необработанным исключением (код выхода 139 на Docker Desktop/WSL2), пароль в лог не попадает; при остановленной БД `/healthz/ready` — 503, `/healthz/live` — 200, API — 500; после старта БД readiness восстанавливается без перезапуска `app`.
+
+**Поведение API на реальной БД (curl, cookie jar, `Sec-Fetch-Site: same-origin`)**
+- Проверено и сошлось с ожиданиями: bootstrap-администратор создаётся один раз (после перезапуска `app` — по-прежнему один; сессия переживает перезапуск благодаря ключам на томе); `If-Match` — 428 без заголовка, 400 на слабый ETag, 412 на устаревший, 200 на совпавший, ETag растёт; перенос в потомка и в себя — 409; деактивация подразделения с активными дочерними/сотрудниками и перевод руководителя в «не работает» — 409 с причиной; сводка по поддереву; поиск `q` (FTS + триграммы, кириллица, `ё`, литералы `%` и `_`, обратная косая черта, SQL-текст); проекция роли «пользователь» (нет `personnelNumber`, `isActive`, `version`, поиск по табельному номеру недоступен, неактивные скрыты); блокировка, сброс пароля, смена пароля и деактивация сотрудника обрывают живую сессию; смена собственного пароля оставляет текущую сессию и обрывает остальные; lockout после 5 неудач, снимается разблокировкой; вход — 10 попыток в минуту, дальше 429 `problem+json`; cookie `.competency.auth` — `HttpOnly; SameSite=Strict; path=/` (`Secure` нет при `SameAsRequest` по HTTP); `Sec-Fetch-Site: cross-site` и чужой `Origin` на мутации — 403; журнал `/api/v1/audit` — 74 события на момент проверки, ключи `old_value`/`new_value` только из allow-list (`AppUser`: `employeeId`, `isBlocked`, `role`, `userName`), слов password/hash/stamp/lockout в значениях нет, `jsonb` ↔ JSON ответа совпадают, кириллица сохраняется.
+- Конкурентные проверки (параллельные curl): противоположные переносы `A под B` и `B под A` — 25 раундов, в каждом ровно один 200 и один 409; кольцо `A→B, B→C, C→A` — 15 раундов, каждый раз два 200 и один 409; циклов в `org_units` нет; два `PUT` с одним ETag — 15 раундов, 200 + 412; деактивация подразделения против создания в нём сотрудника — 15 раундов (13: деактивация 200 / создание 400, 2: создание 201 / деактивация 409), активных сотрудников в неактивных подразделениях нет; взаимные блокировки двух последних администраторов — 15 раундов, в каждом остаётся ровно один активный (проигравший получает 409 в 9 раундах и 401 в 6 — его сессия уже оборвана); гонка создания одного имени пользователя, одного сотрудника в двух учётках и одного табельного номера — по 12 раундов, всегда 201 + 409, дубликатов в БД нет (500 ни разу).
+
+**Нагрузка (AC-11, грубая оценка)**
+- Набор: 10 009 сотрудников (9 008 активных) и 1 133 подразделения (из них 1 000 нагрузочных: случайное дерево глубиной до 50), сид raw SQL в обход журнала, затем `ANALYZE`; fsync включён, `shared_buffers` 128 МБ. Замер: `curl` с хоста до `localhost:18080` → Docker (WSL2) → `app` → `postgres`, всё на одной машине; по 30 запросов на операцию после 3 прогревочных, время — `time_total`. Нагрузки одновременными клиентами не было.
+
+| Операция | p50, мс | p95, мс | max, мс |
+|---|---|---|---|
+| `GET org-units/tree` (1 133 подразделения, 255 КБ) | 10 | 28 | 32 |
+| `GET org-units/{id}/subtree` (1 000 / 667 подразделений) | 12 / 11 | 26 / 28 | 33 / 41 |
+| `GET org-units/{id}/path` (глубина 50) | 12 | 21 | 30 |
+| `GET org-units/{id}/summary` (корень, 10 тыс. сотрудников) | 17 | 30 | 30 |
+| `GET org-units?q=…` (поиск подразделений) | 12 | 23 | 31 |
+| `GET employees?pageSize=50` / последняя страница (200) | 16 / 71 | 24 / 98 | 26 / 98 |
+| `GET employees?orgUnitId=…&includeDescendants=true` (667 / 1 000 подразделений) | 28 / 32 | 43 / 53 | 43 / 54 |
+| `GET employees?q=Петров` / `Фёдоров` / `федоров` | 18 / 63 / 12 | 38 / 86 / 21 | 41 / 87 / 28 |
+| `GET employees?q=инженер` (должность, FTS) | 66 | 97 | 97 |
+| `GET employees?q=user777@` / `P-0123` / `ив` / `Zzzz` | 9 / 10 / 64 / 9 | 13 / 15 / 92 / 21 | 17 / 15 / 95 / 28 |
+| `GET employees?q=Петров` (роль «пользователь») | 19 | 26 | 29 |
+
+  Наибольший p95 — 98 мс при пороге AC-11 в 2 с. На стороне БД запрос поиска (`ILIKE` по ФИО, e-mail и табельному номеру `OR` FTS) — 2,6 мс на 10 тыс. строк (BitmapOr по четырём GIN-индексам), рекурсивный подсчёт сотрудников поддерева из 1 000 подразделений — 5,7 мс; остальное — приложение, сериализация и сеть Docker. Оценка грубая: одна машина, один клиент, без конкурентной нагрузки и без сетевой задержки кластера. Рабочий процесс `app` после замеров — около 138 МиБ RSS.
+
+**Что не проверялось**: Kubernetes (`fsGroup`, `startupProbe`, реакция runtime на `STOPSIGNAL`, `kubectl apply --dry-run`), поведение PVC с `lost+found` в корне, нагрузка свыше 10 тыс. сотрудников и параллельными клиентами, `docker save`/импорт и сохранение digest (Q11).

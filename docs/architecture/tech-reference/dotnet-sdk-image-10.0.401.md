@@ -6,7 +6,7 @@
 - Official docs (образ): https://github.com/dotnet/dotnet-docker/blob/main/README.sdk.md ; Dockerfile: https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/10.0/noble/amd64/Dockerfile
 - Release 10.0.12 (SDK 10.0.401 и 10.0.112): https://github.com/dotnet/core/blob/main/release-notes/10.0/10.0.12/10.0.12.md ; метаданные: https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json
 - Breaking changes .NET 10 (SDK, контейнеры): https://learn.microsoft.com/en-us/dotnet/core/compatibility/10.0
-- Last verified: 2026-10-05
+- Last verified: 2026-10-06 (раздел «Проверено на Docker» — запуском, MS-1; остальное — 2026-10-05, по документации)
 
 ## API surface used in project
 - Образ: `mcr.microsoft.com/dotnet/sdk:10.0.401` (теги `10.0.401`, `10.0.401-noble`, `10.0.401-noble-amd64`, `10.0`, `10.0-noble`); закрепляется по digest. Назначение (README): «development process (developing, building and testing applications)» — в проекте только build-стадия, в итоговый образ не попадает.
@@ -34,3 +34,8 @@
 ## Known issues and workarounds
 - Образ SDK работает от root (в Dockerfile `USER` не задан); непривилегированный пользователь включается только в итоговой стадии (`dotnet-aspnet-image-10.0.12.md`).
 - `DOTNET_GENERATE_ASPNET_CERTIFICATE=false` — dev-сертификат в образе не создаётся; для сборки HTTPS не требуется.
+
+## Проверено на Docker (Task 10, 2026-10-06, MS-1)
+- Образ `mcr.microsoft.com/dotnet/sdk:10.0.401`: digest на 2026-10-06 — `sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317` (manifest list, linux/amd64), 1,30 ГБ; внутри Ubuntu 24.04.5 LTS, `dotnet --version` = `10.0.401`, SDK `10.0.401`, рантаймы `Microsoft.NETCore.App 10.0.12` и `Microsoft.AspNetCore.App 10.0.12` (пара с `aspnet:10.0.12-noble` подтверждена).
+- Build-стадия `Dockerfile` (копирование `*.csproj` и `packages.lock.json` → `dotnet restore` → `COPY src/` → `dotnet publish -c Release --no-restore -p:UseAppHost=false -p:OpenApiGenerateDocumentsOnBuild=false`) отработала в образе без БД и без доступа к чему-либо, кроме NuGet: restore ≈ 22 с, publish ≈ 7 с. `ContinuousIntegrationBuild=true` (ENV стадии) включает locked-режим restore из `Directory.Build.props`: lock-файлы в контейнере совпали с проектами (ошибок `NU1004` нет). `-p:OpenApiGenerateDocumentsOnBuild=false` выключает генерацию `openapi.json` во время сборки (она запускает приложение); в стадии каталога `openapi/` нет, контракт берётся из репозитория.
+- В publish-выводе нет `Microsoft.EntityFrameworkCore.Design`, Roslyn и `ApiDescription.Server` (`PrivateAssets="all"` работает), `Competency.Api.deps.json` их не упоминает.

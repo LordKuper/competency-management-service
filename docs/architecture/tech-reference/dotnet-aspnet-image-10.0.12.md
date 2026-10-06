@@ -7,7 +7,7 @@
 - Release 10.0.12 (2026-09-08): https://github.com/dotnet/core/blob/main/release-notes/10.0/10.0.12/10.0.12.md ; метаданные канала: https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json (LTS, EOL 2028-11-14)
 - Breaking changes (контейнеры): https://learn.microsoft.com/en-us/dotnet/core/compatibility/containers/10.0/default-images-use-ubuntu ; SIGTERM: https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/10.0/sigterm-signal-handler
 - Хостинг в Docker (Microsoft): https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/docker/building-net-docker-images?view=aspnetcore-10.0
-- Last verified: 2026-10-05
+- Last verified: 2026-10-06 (раздел «Проверено на Docker» — запуском, MS-1; остальное — 2026-10-05, по документации)
 
 ## API surface used in project
 - Образ: `mcr.microsoft.com/dotnet/aspnet:10.0.12-noble` (общий тег; платформенный — `10.0.12-noble-amd64`); в манифестах закрепляется по digest; целевая платформа — linux/amd64.
@@ -41,3 +41,10 @@
 - `System.IO.IOException: The configured user limit (128) on the number of inotify instances has been reached` (Microsoft, хостинг в Docker): уменьшить число наблюдателей конфигурации — `DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false`.
 - Порядок запуска `app`/`db` Kubernetes не гарантирует: `app` ждёт готовности БД (повторы/проба) — детали в design.
 - Debian-образ .NET 10 невозможен без собственной сборки образа (Microsoft: «may need to create and maintain custom container images») — стек принимает Ubuntu `noble`.
+
+## Проверено на Docker (Task 10, 2026-10-06, MS-1)
+- Образ `mcr.microsoft.com/dotnet/aspnet:10.0.12-noble`: digest на 2026-10-06 — `sha256:222759b391a1aaf241166672c8f99b2d4ada452e7b5319f3c6e8f265a37b5ad4` (manifest list, linux/amd64); Ubuntu 24.04.5 LTS, `Microsoft.NETCore.App` и `Microsoft.AspNetCore.App` 10.0.12; пользователь `app` (1654:1654, `/home/app`, `/bin/sh`); в образе есть `/bin/sh` и `tzdata`, нет `curl`/`wget` (пробы — `httpGet`, как в манифестах); `libicu*` присутствует (12 файлов), `libgssapi*` нет.
+- Итоговый образ `app` под uid 1654 с `--cap-drop ALL --security-opt no-new-privileges` стартует, слушает 8080, пишет ключи DataProtection в `/var/lib/competency/keys` (том наследует владельца 1654 из образа; в Kubernetes — `fsGroup` манифеста, не проверялось), останавливается по SIGTERM за 1 с с кодом 0 (хост обработал сигнал, в логе «Application is shutting down...»). RSS после прогона нагрузочной проверки — около 138 МиБ.
+- Каждый старт печатает в stderr `Cannot load library libgssapi_krb5.so.2` / `Error: libgssapi_krb5.so.2: cannot open shared object file` (не JSON): Npgsql пробует GSS-шифрование, а библиотеки Kerberos в образе нет. Безвредно; убирается ключом `GSS Encryption Mode=Disable` в строке подключения (проверено: приложение подключается и мигрирует) — ключ внесён в шаблон Secret.
+- Предупреждение хоста при старте: «No XML encryptor configured. Key … may be persisted to storage in unencrypted form» — ключи DataProtection лежат на PVC в открытом виде (защита — доступом к тому; шифрование ключей сертификатом в спринте не задано).
+- Необработанное исключение при старте (БД недоступна для `MigrateAsync`): процесс завершается с кодом 139 на Docker Desktop/WSL2; пароль в лог не попадает (строка подключения в сообщениях не выводится). Для Kubernetes важен сам ненулевой код — под перезапускается.
