@@ -23,3 +23,5 @@
 - [Packaging offline verification](project_packaging-offline-verification.md) — fresh-clone publish, npm linux dry-run, yaml parse, Secret template kept out of deploy/k8s
 - [Docker spike recipe](project_docker-spike-recipe.md) — Git Bash docker path mangling, 10/min login limit, parallel curl pitfalls, scratch runner flags
 - [PostgreSQL behaviour facts](project_pg-behaviour-facts.md) — RESTRICT is 23001, ё vs е in ILIKE/FTS, superuser trigger bypass, no CHECK on parent_id
+- [VS F5 launch facts](project_vs-f5-launch-facts.md) — slnLaunch name/format, esproj dev server starts only via Deploy, dcproj stub in CLI, from VS binaries
+- [Scratch process control](project_scratch-process-control.md) — kill by PID never by pattern, dotnet dll content root, Windows closed-port timing, background runs
