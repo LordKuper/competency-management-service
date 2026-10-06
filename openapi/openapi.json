@@ -298,7 +298,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/OrgUnitResponse"
+                    "$ref": "#/components/schemas/OrgUnitTreeNodeResponse"
                   }
                 }
               }
@@ -2646,6 +2646,59 @@
             "format": "int32"
           },
           "directEmployeeCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "OrgUnitTreeNodeResponse": {
+        "required": [
+          "id",
+          "name",
+          "parentId",
+          "headEmployeeId",
+          "isActive",
+          "version",
+          "headName",
+          "employeeCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "headEmployeeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "headName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "employeeCount": {
             "type": "integer",
             "format": "int32"
           }

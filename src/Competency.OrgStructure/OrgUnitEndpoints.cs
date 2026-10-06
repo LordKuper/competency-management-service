@@ -84,19 +84,33 @@ internal static class OrgUnitEndpoints
     }
 
     /// <summary>
-    /// Every visible unit as a flat list; clients assemble the tree from the parent links.
+    /// Every visible unit as a flat list, each with its head's name and employee count in the same query; clients assemble the tree from the parent links.
     /// </summary>
-    private static async Task<Ok<List<OrgUnitResponse>>> TreeAsync(
+    private static async Task<Ok<List<OrgUnitTreeNodeResponse>>> TreeAsync(
         AppDbContext context,
         ICurrentActor actor,
         CancellationToken cancellationToken)
     {
-        var units = await context.Set<OrgUnit>()
-            .AsNoTracking()
-            .VisibleTo(actor)
-            .OrderBy(unit => unit.Name)
-            .ThenBy(unit => unit.Id)
-            .Select(OrgUnitResponse.Projection)
+        var employees = context.Set<Employee>().VisibleTo(actor);
+        var employeeCounts = employees
+            .GroupBy(employee => employee.OrgUnitId)
+            .Select(group => new { OrgUnitId = group.Key, Count = group.Count() });
+        var units = await (
+            from unit in context.Set<OrgUnit>().AsNoTracking().VisibleTo(actor)
+            join employeeCount in employeeCounts on unit.Id equals employeeCount.OrgUnitId into unitCounts
+            from employeeCount in unitCounts.DefaultIfEmpty()
+            join head in employees on unit.HeadEmployeeId equals head.Id into unitHeads
+            from head in unitHeads.DefaultIfEmpty()
+            orderby unit.Name, unit.Id
+            select new OrgUnitTreeNodeResponse(
+                unit.Id,
+                unit.Name,
+                unit.ParentId,
+                unit.HeadEmployeeId,
+                unit.IsActive,
+                unit.Version,
+                head.FullName,
+                (int?)employeeCount.Count ?? 0))
             .ToListAsync(cancellationToken);
 
         return TypedResults.Ok(units);

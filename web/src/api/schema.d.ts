@@ -458,6 +458,21 @@ export interface components {
             /** Format: int32 */
             directEmployeeCount: number;
         };
+        OrgUnitTreeNodeResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: uuid */
+            parentId: null | string;
+            /** Format: uuid */
+            headEmployeeId: null | string;
+            isActive: boolean;
+            /** Format: int32 */
+            version: number;
+            headName: null | string;
+            /** Format: int32 */
+            employeeCount: number;
+        };
         PageResponseOfEmployeeResponse: {
             items: components["schemas"]["EmployeeResponse"][];
             /** Format: int32 */
@@ -699,7 +714,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OrgUnitResponse"][];
+                    "application/json": components["schemas"]["OrgUnitTreeNodeResponse"][];
                 };
             };
             /** @description Unauthorized */
