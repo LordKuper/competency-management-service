@@ -34,22 +34,19 @@ body {
   margin: 0;
 }
 
-.header-user-button.ant-btn {
-  color: var(--ant-color-text-light-solid);
-}
-
-.header-user-button.ant-btn:hover {
-  color: var(--ant-color-text-light-solid);
-  background: color-mix(
+/* antd 6 paints button states from --ant-btn-* variables set on
+   .ant-btn-color-default.ant-btn-variant-text (0,3,0 + :where); matching that
+   selector plus the class (0,4,0) lets us override the variables, not the states. */
+.header-user-button.ant-btn.ant-btn-color-default.ant-btn-variant-text {
+  --ant-btn-text-color: var(--ant-color-text-light-solid);
+  --ant-btn-text-color-hover: var(--ant-color-text-light-solid);
+  --ant-btn-text-color-active: var(--ant-color-text-light-solid);
+  --ant-btn-bg-color-hover: color-mix(
     in srgb,
     var(--ant-color-text-light-solid) 12%,
     transparent
   );
-}
-
-.header-user-button.ant-btn:active {
-  color: var(--ant-color-text-light-solid);
-  background: color-mix(
+  --ant-btn-bg-color-active: color-mix(
     in srgb,
     var(--ant-color-text-light-solid) 20%,
     transparent
