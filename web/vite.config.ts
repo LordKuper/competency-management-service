@@ -6,7 +6,18 @@ const apiProxyTarget = process.env.API_PROXY_TARGET ?? "http://localhost:5000";
 export default defineConfig({
   plugins: [react()],
   server: {
-    proxy: { "/api": apiProxyTarget },
+    proxy: {
+      "/api": {
+        target: apiProxyTarget,
+        // The backend CSRF check compares Origin with Host; Vite rewrites Host
+        // to the target, so restore the browser's original Host.
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq, req) => {
+            if (req.headers.host) proxyReq.setHeader("Host", req.headers.host);
+          });
+        },
+      },
+    },
   },
   build: {
     chunkSizeWarningLimit: 1500,
