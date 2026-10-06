@@ -180,6 +180,12 @@
       "tier": "critical",
       "reason": "risk:authentication identifier change, email uniqueness, deployment secrets, DB schema and public contract change, backfill",
       "resolved_model": "sonnet"
+    },
+    "Task 16": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:SPA login flow by e-mail, mutation modals, removal of pages and routes",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],

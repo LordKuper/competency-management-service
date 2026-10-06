@@ -203,3 +203,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: `src/Competency.OrgStructure/`, `web/src/features/org-structure/`
 
 - 2026-10-06 — route Task 15: critical
+
+## 2026-10-06 — Волна 13: Task 15 принят (e-mail у учётной записи, вход по e-mail, без табельного номера)
+
+- **Decision**: Принято: одна корректирующая миграция `EmailOnUserAccount` (backfill существующих учётных записей `<user_name>@local.invalid`, `Bootstrap__AdminEmail` существующему администратору не применяется — без скрытых правок; Down возвращает колонки сотрудников с placeholder-значениями, табельные номера и e-mail не восстанавливаются); `UserName` = `Email` через `AppUser.SetEmail` (поля Identity остаются внутренними); e-mail сотрудника в ответах — e-mail привязанной учётной записи (заблокированная учётка не скрывается, без учётной записи `null`), чтение через keyless-сущность `EmployeeAccount` (`ToSqlQuery` по таблице `users`) и коррелированный подзапрос; формат e-mail проверяется на логине (старое имя `admin` → 400); `q` по сотрудникам ищет по ФИО и должности; `Bootstrap__AdminUserName` удалён из кода и манифестов. Известное ограничение: при гонке дублей e-mail 409 от уникального индекса приходит без русского текста и `errors.email` (проверка до сохранения даёт русский текст); можно добавить `catch (DbUpdateException)` позже.
+- **Rationale**: В пределах AC-6, 7, 8, 10, 11, 12 после поправки; проверено на scratch-PostgreSQL (миграция Up/Down/Up на данных, уникальность без учёта регистра, смоук API, 10 000 сотрудников без регрессии производительности). Frontend минимально обновлён механически в пределах коммитов для зелёного lint; полноценный UI — Task 16.
+- **Affected docs**: `src/Competency.UserManagement/`, `src/Competency.OrgStructure/`, `src/Competency.Platform/Migrations/`, `deploy/`
+
+- 2026-10-06 — route Task 16: critical
