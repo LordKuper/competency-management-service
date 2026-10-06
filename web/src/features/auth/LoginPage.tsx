@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   Col,
+  Flex,
   Form,
   Input,
   Row,
@@ -14,7 +15,7 @@ import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
 import { showFieldErrors } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { PRODUCT_NAME } from "../../app/productName";
+import { PRODUCT_NAME, PRODUCT_TAGLINE } from "../../app/productName";
 import { currentUserQueryKey } from "./useCurrentUser";
 
 interface LoginValues {
@@ -46,9 +47,17 @@ export function LoginPage() {
     >
       <Col xs={22} sm={16} md={12} lg={8} xl={6}>
         <Card>
+          <Flex justify="center">
+            <img
+              src="/brand/logo-256.png"
+              alt={PRODUCT_NAME}
+              width={80}
+              height={80}
+            />
+          </Flex>
           <Typography.Title level={1}>Вход в систему</Typography.Title>
           <Typography.Paragraph type="secondary">
-            {PRODUCT_NAME}
+            {PRODUCT_TAGLINE}
           </Typography.Paragraph>
           <Form
             form={form}

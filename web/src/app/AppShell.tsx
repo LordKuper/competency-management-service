@@ -19,8 +19,9 @@ import { navItemsFor } from "./features";
 import { PRODUCT_NAME } from "./productName";
 import { UserMenu } from "./UserMenu";
 
+const brandStyle: CSSProperties = { flex: "0 1 auto", minWidth: 0 };
+
 const productNameStyle: CSSProperties = {
-  flex: "0 1 auto",
   minWidth: 0,
   overflow: "hidden",
   textOverflow: "ellipsis",
@@ -69,9 +70,23 @@ function ShellFrame({ user }: { user: CurrentUser }) {
             gap: token.marginLG,
           }}
         >
-          <strong title={PRODUCT_NAME} style={productNameStyle}>
-            {PRODUCT_NAME}
-          </strong>
+          <Flex align="center" gap={token.marginXS} style={brandStyle}>
+            <Flex
+              align="center"
+              justify="center"
+              style={{
+                flex: "none",
+                padding: token.paddingXXS,
+                background: token.colorBgContainer,
+                borderRadius: token.borderRadiusLG,
+              }}
+            >
+              <img src="/brand/logo-64.png" alt="" width={32} height={32} />
+            </Flex>
+            <strong title={PRODUCT_NAME} style={productNameStyle}>
+              {PRODUCT_NAME}
+            </strong>
+          </Flex>
           {navItems.length > 0 && (
             <Menu
               theme="dark"
