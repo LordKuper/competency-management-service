@@ -74,11 +74,11 @@ spec:
                   name: competency-secret
                   key: ConnectionStrings__Default
             # Read only while no active administrator exists; optional so the keys can be dropped from the Secret later.
-            - name: Bootstrap__AdminUserName
+            - name: Bootstrap__AdminEmail
               valueFrom:
                 secretKeyRef:
                   name: competency-secret
-                  key: Bootstrap__AdminUserName
+                  key: Bootstrap__AdminEmail
                   optional: true
             - name: Bootstrap__AdminPassword
               valueFrom:

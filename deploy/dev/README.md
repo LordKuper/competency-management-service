@@ -10,7 +10,7 @@
 
 Профили лежат в `Competency.slnLaunch` (корень репозитория):
 
-- «Все сервисы» — БД, API под отладчиком, Vite; Edge открывается на http://localhost:5173, запросы `/api` Vite проксирует на :5000. Войти: `admin` / `Admin-Dev-12345!`.
+- «Все сервисы» — БД, API под отладчиком, Vite; Edge открывается на http://localhost:5173, запросы `/api` Vite проксирует на :5000. Войти: `admin@kalibr.local` / `Admin-Dev-12345!`.
 - «Только API» — БД и API под отладчиком, без Vite и браузера. БД входит в оба профиля: API применяет миграции при старте и без БД не работает.
 
 ## Требования
@@ -44,7 +44,11 @@ JSON не допускает комментариев, поэтому огово
 | Где | Значение |
 |---|---|
 | `deploy/dev/docker-compose.yml` | пользователь и БД `competency`, пароль `dev_pass_123` |
-| `src/Competency.Api/Properties/launchSettings.json` | `ConnectionStrings__Default` с тем же паролем (`GSS Encryption Mode=Disable` — как в `deploy/secret.template.yaml`); `Bootstrap__AdminUserName` = `admin`, `Bootstrap__AdminPassword` = `Admin-Dev-12345!` |
+| `src/Competency.Api/Properties/launchSettings.json` | `ConnectionStrings__Default` с тем же паролем (`GSS Encryption Mode=Disable` — как в `deploy/secret.template.yaml`); `Bootstrap__AdminEmail` = `admin@kalibr.local`, `Bootstrap__AdminPassword` = `Admin-Dev-12345!` |
+
+## База, созданная до входа по e-mail
+
+Администратор, созданный из `Bootstrap__AdminUserName`, после миграции `EmailOnUserAccount` получает e-mail `<имя>@local.invalid` (для `admin` — `admin@local.invalid`) и прежний пароль; `Bootstrap__AdminEmail` на существующего администратора не действует. Войти этим адресом и заменить e-mail в карточке пользователя (раздел «Пользователи»), либо начать с чистой БД: `docker compose -f deploy/dev/docker-compose.yml down -v`. Табельные номера и e-mail сотрудников миграция удаляет.
 
 ## Остановка БД
 
