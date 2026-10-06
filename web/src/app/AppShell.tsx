@@ -78,10 +78,10 @@ function ShellFrame({ user }: { user: CurrentUser }) {
                 flex: "none",
                 padding: token.paddingXXS,
                 background: token.colorBgContainer,
-                borderRadius: token.borderRadiusLG,
+                borderRadius: "50%",
               }}
             >
-              <img src="/brand/logo-64.png" alt="" width={32} height={32} />
+              <img src="/brand/logo-256.png" alt="" width={32} height={32} />
             </Flex>
             <strong title={PRODUCT_NAME} style={productNameStyle}>
               {PRODUCT_NAME}
