@@ -81,7 +81,7 @@ export function OrgStructurePage() {
               type="primary"
               onClick={() => setDialog({ kind: "addUnit", parentId: null })}
             >
-              Добавить корневое подразделение
+              Добавить подразделение
             </Button>
           </Space>
         )}
@@ -114,7 +114,7 @@ export function OrgStructurePage() {
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
                 "Подразделений пока нет." +
-                (isAdmin ? " Добавьте корневое подразделение." : "")
+                (isAdmin ? " Добавьте подразделение." : "")
               }
             />
           ) : (

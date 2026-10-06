@@ -7,6 +7,7 @@ import { showFieldErrors } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { EmployeePicker } from "../users/EmployeePicker";
 import { ifMatchOf } from "../users/usersApi";
+import { OrgUnitSelect } from "./OrgUnitSelect";
 import {
   employeeQuery,
   invalidateOrgStructure,
@@ -15,13 +16,14 @@ import {
 
 interface UnitFormValues {
   name: string;
+  parentId?: string;
   headEmployeeId?: string;
 }
 
 interface UnitFormModalProps {
   /** Unit being edited; omitted when a unit is created. */
   unit?: OrgUnit;
-  /** Parent of the unit being created, or null for a root; ignored when editing. */
+  /** Parent the unit being created starts under, or null for a root; ignored when editing. */
   parentId?: string | null;
   onClose: () => void;
   /** Receives the saved unit once the server has accepted it. */
@@ -29,8 +31,8 @@ interface UnitFormModalProps {
 }
 
 /**
- * Dialog that creates a unit or edits the unit's own fields. Mount it only while it is shown, so every opening starts clean.
- * The parent and the status change through their own operations, not here.
+ * Dialog that creates a unit, under a parent or as a root, or edits the unit's own fields. Mount it only while it is
+ * shown, so every opening starts clean. Once a unit exists, its parent and status change through their own operations.
  */
 export function UnitFormModal({
   unit,
@@ -56,7 +58,7 @@ export function UnitFormModal({
               body: fields,
             })
           : await api.POST("/api/v1/org-units", {
-              body: { ...fields, parentId },
+              body: { ...fields, parentId: values.parentId ?? null },
             }),
       ).data;
     },
@@ -85,6 +87,7 @@ export function UnitFormModal({
         <UnitForm
           key={unit?.version}
           unit={unit}
+          parentId={parentId}
           submitLabel={unit ? "Сохранить" : "Создать"}
           onSubmit={(values) => save.mutateAsync(values)}
           onCancel={onClose}
@@ -96,12 +99,19 @@ export function UnitFormModal({
 
 interface UnitFormProps {
   unit?: OrgUnit;
+  parentId: string | null;
   submitLabel: string;
   onSubmit: (values: UnitFormValues) => Promise<unknown>;
   onCancel: () => void;
 }
 
-function UnitForm({ unit, submitLabel, onSubmit, onCancel }: UnitFormProps) {
+function UnitForm({
+  unit,
+  parentId,
+  submitLabel,
+  onSubmit,
+  onCancel,
+}: UnitFormProps) {
   const [form] = Form.useForm<UnitFormValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const headId = unit?.headEmployeeId ?? null;
@@ -128,6 +138,7 @@ function UnitForm({ unit, submitLabel, onSubmit, onCancel }: UnitFormProps) {
       layout="vertical"
       initialValues={{
         name: unit?.name ?? "",
+        parentId: parentId ?? undefined,
         headEmployeeId: unit?.headEmployeeId ?? undefined,
       }}
       onFinish={submit}
@@ -141,6 +152,19 @@ function UnitForm({ unit, submitLabel, onSubmit, onCancel }: UnitFormProps) {
       >
         <Input autoComplete="off" />
       </Form.Item>
+      {!unit && (
+        <Form.Item
+          name="parentId"
+          label="Родительское подразделение"
+          extra="Оставьте поле пустым, чтобы создать корневое подразделение."
+        >
+          <OrgUnitSelect
+            allowClear
+            isActiveRequired
+            placeholder="Без родителя: корневое подразделение"
+          />
+        </Form.Item>
+      )}
       <Form.Item
         name="headEmployeeId"
         label="Руководитель"
