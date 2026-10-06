@@ -1,3 +1,5 @@
+using System.Data.Common;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
@@ -36,6 +38,8 @@ public static class PlatformModule
     private const string DataProtectionApplicationName = "competency-management-service";
     private const string ReadyTag = "ready";
     private const int PostgresMajorVersion = 18;
+    private static readonly TimeSpan DatabaseWaitTimeout = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan DatabaseWaitDelay = TimeSpan.FromSeconds(1);
 
     /// <summary>
     /// Registers the database context, the readiness check, error handling, the current actor, the authorization policies and the sign-in rate limiter.
@@ -120,12 +124,43 @@ public static class PlatformModule
     /// Applies pending schema migrations; the application owns its schema.
     /// </summary>
     /// <param name="services">The root service provider.</param>
-    /// <param name="cancellationToken">Cancels the migration run.</param>
-    public static async Task MigrateDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
+    /// <param name="waitForDatabase">
+    /// Retries the connection for about a minute before migrating, for a host started alongside its database;
+    /// when the database stays unreachable the connection error surfaces as it would without the wait.
+    /// </param>
+    /// <param name="cancellationToken">Cancels the wait and the migration run.</param>
+    public static async Task MigrateDatabaseAsync(
+        this IServiceProvider services,
+        bool waitForDatabase = false,
+        CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        if (waitForDatabase)
+        {
+            await WaitForDatabaseAsync(context, cancellationToken);
+        }
+
         await context.Database.MigrateAsync(cancellationToken);
+    }
+
+    private static async Task WaitForDatabaseAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        var connection = context.Database.GetDbConnection();
+        var waited = Stopwatch.StartNew();
+        while (true)
+        {
+            try
+            {
+                await connection.OpenAsync(cancellationToken);
+                await connection.CloseAsync();
+                return;
+            }
+            catch (DbException) when (waited.Elapsed < DatabaseWaitTimeout)
+            {
+                await Task.Delay(DatabaseWaitDelay, cancellationToken);
+            }
+        }
     }
 
     private static void AddAuthorizationPolicies(IServiceCollection services)

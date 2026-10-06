@@ -31,7 +31,7 @@ var app = builder.Build();
 
 if (!isToolingRun)
 {
-    await app.Services.MigrateDatabaseAsync();
+    await app.Services.MigrateDatabaseAsync(waitForDatabase: app.Environment.IsDevelopment());
     await app.Services.EnsureBootstrapAdminAsync();
 }
 
