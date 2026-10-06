@@ -14,6 +14,7 @@ Sprint 001 Task 10 deferred portion (MS-1 done) was run 2026-10-06; results are 
 - **Parallel curl rounds**: send with `-b jar` only (no `-c`) so concurrent requests do not write one cookie jar; `curl -w '%{http_code}'` prints no newline, so `cat a b | sort` glues statuses ("200409") - compare against the glued string or add `\n`.
 - **Shell `$(call ...)` is a subshell**: variables assigned inside a helper are lost, only fixed file paths survive; get the ETag with a plain (non-subshell) call and read it after, never inside the argument of the call that needs it (it is evaluated before the call runs).
 - Docker named volumes copy mode/owner of the image directory on first mount (the postgres image's `/var/lib/postgresql` is 1777), so Docker never shows the `fsGroup` problem Kubernetes would.
+- The postgres image declares `VOLUME /var/lib/postgresql`: a `docker run` without a mount there (or with a mount elsewhere, e.g. the wrong-path test) leaves an anonymous volume behind after `docker rm -f`; use `docker rm -fv` or `--rm`, and check `docker volume ls` at cleanup.
 - BuildKit with the containerd image store keeps base images by digest after a digest-pinned build: `docker image inspect <tag>` can say "No such image" although the build worked.
 
 **Why:** the spike is expensive to redo blind; these were the stalls.
