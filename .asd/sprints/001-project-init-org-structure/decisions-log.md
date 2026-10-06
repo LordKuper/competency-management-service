@@ -124,3 +124,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Подзадачи 1–3 Task 10 приняты; подзадача 4 (проверка на Docker) отложена как `BLOCKED: MS-1` (установка Docker Desktop, действие пользователя, автономно невозможно). Приняты flagged choices: Secret-шаблон в `deploy/secret.template.yaml` (вне `deploy/k8s/`), ARG-теги вместо digest-заглушек в Dockerfile, `OpenApiGenerateDocumentsOnBuild=false` при publish, pod hardening (seccomp, drop ALL), startupProbe, `app` подключается под `POSTGRES_USER` (открытый пункт). Лицензия MPL-2.0 `lightningcss` (build-time, не в образе) остаётся на решение пользователя при impl assessment.
 - **Rationale**: MS-1 валидирован как необходимый: установка Docker Desktop требует прав и участия пользователя. Офлайн проверены: locked-restore + publish без Design/Roslyn/ApiDescription.Server, `npm ci` + build, linux-записи в lock, парсинг и перекрёстная проверка 8 YAML-документов.
 - **Affected docs**: `Dockerfile`, `deploy/`, `.asd/sprints/001-project-init-org-structure/manual-steps.md`
+
+## 2026-10-06 — MS-1 подтверждён, лицензия MPL-2.0 принята как исключение
+
+- **Decision**: MS-1 выполнен пользователем (Docker Desktop 4.94.0, Server linux/amd64); оркестратор проверил `docker version` и `docker run --rm hello-world` (`Hello from Docker!`); docker.exe лежит в `C:\Users\Michieru\AppData\Local\Programs\DockerDesktop\resources\bin` и не в PATH сеанса — команды выполняются с этим каталогом в PATH. Пользователь принял MPL-2.0 у `lightningcss` (build-time зависимость Vite 8.3.2, не в образе и бандле) как исключение из списка лицензий `stack.html`; запись в `stack.html` — на design-promote.
+- **Rationale**: Явные ответы пользователя на manual-steps gate; исключение узкое (build-time, слабый file-level copyleft).
+- **Affected docs**: `.asd/sprints/001-project-init-org-structure/manual-steps.md`, `docs/architecture/stack.html` (design-promote)
+- 2026-10-06 — route Task 10 (deferred Docker verification): critical, dispatch HEAD d0662ea
