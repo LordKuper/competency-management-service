@@ -137,3 +137,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: При ручном запуске вход давал 403: dev-прокси Vite 8 подменяет `Host` на адрес backend, и CSRF-проверка Origin/Host отклоняет запрос. Исправлено в `web/vite.config.ts` (`configure` передаёт исходный `Host` браузера, коммит 0e10628); backend и CSRF-проверка не менялись. Flagged choice 11 Task 3 («Host остаётся хостом Vite») признан ошибочным и заменён этим исправлением.
 - **Rationale**: Дефект dev-окружения, найден до принятия impl assessment; проверено на отдельном Vite (вход 200, cross-origin 403, `/auth/me` 200). Порт 5432 на машине пользователя зарезервирован Windows (диапазон 5335–5434) — для локальной БД использовать 15432.
 - **Affected docs**: `web/vite.config.ts`
+
+## 2026-10-06 — Поправка scope: AC-16 запуск из Visual Studio по F5, Task 11 (волна 9)
+
+- **Decision**: Добавлен AC-16: профиль многопроектного запуска Visual Studio («Все сервисы») поднимает БД PostgreSQL (Docker Compose-проект), Vite (JavaScript-проект `.esproj`) и `Competency.Api` под отладчиком. Новые dev-only MSBuild-SDK (`Microsoft.VisualStudio.JavaScript.Sdk`, Docker Compose SDK) принимаются как исключение из «минимум зависимостей»; в образ не попадают; запись в `stack.html` — на design-promote. `dotnet build`/`dotnet test` и Docker-образ не должны зависеть от VS-проектов.
+- **Rationale**: Явный запрос пользователя; первоначальное предложение (скрипты) отвергнуто после проверки документации Microsoft: VS 17.11+/2026 умеет многопроектный запуск штатно. Поправка — `new or changed scope` (hard gate), подтверждена пользователем.
+- **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
+- 2026-10-06 — route Task 11: critical, dispatch HEAD d3466b4

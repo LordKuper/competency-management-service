@@ -9,7 +9,7 @@ responsibility:
 
 ## Overview
 
-План покрывает AC-1…AC-13 и AC-15 из [sprint.md](./sprint.md) (workflow `lite`, acceptance-criteria source — `sprint.md`). AC-14 (регистрация подсистем `org-structure`, `user-management`, `audit` в `docs/architecture/subsystems.md` и их `<id>.md`, требования и UX в `docs/`) выполняет фаза design-promote после impl-review; отдельной Task у неё нет. Входной материал для dev: [audit.md](./audit.md) (риски и spike-пункты), `docs/architecture/stack.html` и `docs/architecture/tech-reference/` (точные версии, конвенции технологий), `docs/ux/DESIGN.md`, `docs/Постановка.md` (§4, §29, §39–§46).
+План покрывает AC-1…AC-13, AC-15 и AC-16 (AC-16 добавлен поправкой scope по запросу пользователя при impl assessment, Task 11) из [sprint.md](./sprint.md) (workflow `lite`, acceptance-criteria source — `sprint.md`). AC-14 (регистрация подсистем `org-structure`, `user-management`, `audit` в `docs/architecture/subsystems.md` и их `<id>.md`, требования и UX в `docs/`) выполняет фаза design-promote после impl-review; отдельной Task у неё нет. Входной материал для dev: [audit.md](./audit.md) (риски и spike-пункты), `docs/architecture/stack.html` и `docs/architecture/tech-reference/` (точные версии, конвенции технологий), `docs/ux/DESIGN.md`, `docs/Постановка.md` (§4, §29, §39–§46).
 
 Раскладка репозитория:
 - backend — `src/Competency.Api` (хост: `Program.cs`, сборка модулей, SPA-статика), `src/Competency.Platform` (общее ядро), модули `src/Competency.Audit`, `src/Competency.OrgStructure`, `src/Competency.UserManagement`; корень — `Competency.slnx`, `global.json`, `Directory.Build.props`, `.config/dotnet-tools.json`;
@@ -130,6 +130,13 @@ Material risk: change: непривилегированный пользоват
 - [x] AC-4,3: проверка на Docker (первый момент, когда он нужен; регистрирует MS-N «установить Docker Desktop»): `docker build` образа `app`; проверка linux-x64 записей в `web/package-lock.json` и регенерация lock в linux-контейнере при их отсутствии; spike на неизменённом `postgres:18.6-trixie` — `CREATE EXTENSION pg_trgm`, ICU-коллации `ru-*`, схема Identity на `InitialCreate`; результаты записать в `docs/architecture/tech-reference/postgres-image-18.6-trixie.md`
 Tech reference: docker-multi-stage-dockerfile-1, dotnet-sdk-image-10.0.401, dotnet-aspnet-image-10.0.12, postgres-image-18.6-trixie, node-24.21.0.
 
+### Task 11: Запуск из Visual Studio по F5
+Material risk: change: проекты `.esproj`/`.dcproj` в решении могут сломать CLI-сборку и CI, dev-only MSBuild-SDK вне stack.html, расширение сборочных команд
+- [ ] AC-16: `web/web.esproj` (JavaScript SDK `Microsoft.VisualStudio.JavaScript.Sdk`, версия закреплена точно, `StartupCommand` = `npm run dev`; сборка и `npm install` из MSBuild отключены, `dotnet build` его не запускает/не ломается), `deploy/dev/docker-compose.yml` и compose-проект `deploy/dev/docker-compose.dcproj` с единственным сервисом БД (`postgres:18.6-trixie`, порт `127.0.0.1:15432:5432`, именованный том строго в `/var/lib/postgresql`, `POSTGRES_USER/DB=competency`, пароль только для локальной разработки, healthcheck `pg_isready`)
+- [ ] AC-16: `src/Competency.Api/Properties/launchSettings.json` — профиль под отладчиком (`applicationUrl` `http://localhost:5000`, `ASPNETCORE_ENVIRONMENT=Development`, `ConnectionStrings__Default` на `localhost:15432` с `GSS Encryption Mode=Disable`, `Bootstrap__AdminUserName`/`Bootstrap__AdminPassword` для локальной разработки; значения помечены как dev-only); `Competency.slnx` дополняется `web.esproj` и compose-проектом; `Competency.slnLaunch` (JSON-профиль многопроектного запуска) — «Все сервисы» (БД + Vite + Api под отладчиком, браузер открывается на `http://localhost:5173`) и «Только API»
+- [ ] AC-16,2: отвязать CLI от VS-проектов: проверить, что `dotnet build tests/Competency.Tests` и `dotnet test --project tests/Competency.Tests` собирают и запускают весь backend без `.dcproj`/`.esproj`; зафиксировать результат `dotnet build Competency.slnx` с новыми проектами и, если он ломается, вынести VS-проекты так, чтобы CLI-сборка backend оставалась чистой (0 предупреждений); Docker-образ собирается как раньше; `deploy/dev/README.md` (русский): требования к компонентам VS («Container development tools», JavaScript/Node), как включить профиль запуска, как остановить БД
+Tech reference: aspnetcore-10.0.12, vite-8.3.2, postgres-image-18.6-trixie, docker-multi-stage-dockerfile-1.
+
 ## Risks
 - Docker не установлен на dev-машине: ручной шаг отложен до Task 10 (последняя волна); до этого момента миграции Task 4–6 (расширение `pg_trgm`, схема Identity, триггер журнала) не исполнялись против реального PostgreSQL, ошибки в них обнаруживаются поздно — Task 10 и impl-test обязаны прогнать их первыми.
 - Учётка БД приложения имеет DDL-права (решение пользователя): триггер неизменяемости журнала не защищает от DDL.
@@ -147,11 +154,13 @@ Tech reference: docker-multi-stage-dockerfile-1, dotnet-sdk-image-10.0.401, dotn
 | 6 | 7 |
 | 7 | 8, 9 |
 | 8 | 10 |
+| 9 | 11 |
 
 - Task 2 и Task 3 зависят от Task 1 (проекты, `openapi.json`).
 - Task 4, 5, 6 идут последовательно: общий `AppDbContext` и единая линия миграций (конфликт model snapshot при параллельной генерации); Task 4 первым, чтобы сущности Task 5–6 аудировались с начала.
 - Task 6 зависит от Task 5 (`IEmployeeDirectory`, статус сотрудника) и Task 4 (`IAuditWriter`).
 - Task 7 зависит от Task 3 и Task 6 (оболочка, backend пользователей); Task 7 владеет оболочкой (`web/src/app/**`), хуком текущего пользователя и контрактом навигации фич. Task 8 и 9 зависят от Task 7 (хук роли, навигация), идут параллельно в своих каталогах `web/src/features/<feature>/` и общих файлов не правят (волны переразбиты при impl: исходная волна 6 с Task 7, 8, 9 порождала зависимость от ещё не созданного хука).
+- Task 11 (AC-16, поправка scope) зависит от Task 1 и Task 3 и идёт последней, после Task 10 (волна 9); не меняет код подсистем.
 - Task 10 зависит от Task 1 и Task 3 (волна 8) (структура репозитория, SPA-статика); находится в последней волне, чтобы собирать итоговое приложение.
 
 ## Out of scope

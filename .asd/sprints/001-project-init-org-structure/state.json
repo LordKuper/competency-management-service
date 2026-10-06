@@ -53,6 +53,13 @@
       "decision": "accept",
       "reason": "plan.md 10 tasks 7 waves; Docker deferred to Task 10",
       "evidence": "plan.md"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "add AC-16, Task 11 wave 9",
+      "reason": "F5 launch from Visual Studio",
+      "evidence": "decisions-log.md 2026-10-06 scope amendment"
     }
   ],
   "task_routing": {
@@ -114,6 +121,12 @@
       "execution": "agent",
       "tier": "critical",
       "reason": "risk:non-root user and PVC paths, build stage order, verification needs Docker",
+      "resolved_model": "sonnet"
+    },
+    "Task 11": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:VS-only esproj/dcproj in solution may break CLI build and CI, dev-only MSBuild SDKs outside stack, build command change",
       "resolved_model": "sonnet"
     }
   },
