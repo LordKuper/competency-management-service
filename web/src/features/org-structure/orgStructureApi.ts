@@ -26,7 +26,7 @@ export interface EmployeeListParams {
   pageSize: number;
 }
 
-/** Cache key prefix of every unit query, so one invalidation rereads the tree, the open card and its counts together. */
+/** Cache key prefix of every unit query, so one invalidation rereads the tree. */
 export const orgUnitsQueryKey = ["org-units"] as const;
 
 /** Cache key prefix of every employee query, the employee picker of the account screens included. */
@@ -37,32 +37,6 @@ export const orgUnitTreeQuery = queryOptions({
   queryKey: [...orgUnitsQueryKey, "tree"],
   queryFn: async () => unwrap(await api.GET("/api/v1/org-units/tree")).data,
 });
-
-/** The units from the root down to the given unit, which comes last. */
-export function orgUnitPathQuery(id: string) {
-  return queryOptions({
-    queryKey: [...orgUnitsQueryKey, "path", id],
-    queryFn: async () =>
-      unwrap(
-        await api.GET("/api/v1/org-units/{id}/path", {
-          params: { path: { id } },
-        }),
-      ).data,
-  });
-}
-
-/** Working employees of a unit, directly and with all units below it. */
-export function orgUnitSummaryQuery(id: string) {
-  return queryOptions({
-    queryKey: [...orgUnitsQueryKey, "summary", id],
-    queryFn: async () =>
-      unwrap(
-        await api.GET("/api/v1/org-units/{id}/summary", {
-          params: { path: { id } },
-        }),
-      ).data,
-  });
-}
 
 /** Largest page the employee list accepts. */
 const EMPLOYEE_PAGE_SIZE_MAX = 200;

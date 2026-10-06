@@ -2363,20 +2363,6 @@
               "string"
             ],
             "format": "uuid"
-          },
-          "validFrom": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "validTo": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
           }
         }
       },
@@ -2609,8 +2595,6 @@
           "parentId",
           "headEmployeeId",
           "isActive",
-          "validFrom",
-          "validTo",
           "version"
         ],
         "type": "object",
@@ -2638,20 +2622,6 @@
           },
           "isActive": {
             "type": "boolean"
-          },
-          "validFrom": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "validTo": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
           },
           "version": {
             "type": "integer",
@@ -2818,9 +2788,7 @@
       "UpdateOrgUnitRequest": {
         "required": [
           "name",
-          "headEmployeeId",
-          "validFrom",
-          "validTo"
+          "headEmployeeId"
         ],
         "type": "object",
         "properties": {
@@ -2833,20 +2801,6 @@
               "string"
             ],
             "format": "uuid"
-          },
-          "validFrom": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "validTo": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
           }
         }
       },

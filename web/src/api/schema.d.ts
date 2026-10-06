@@ -378,10 +378,6 @@ export interface components {
             parentId?: null | string;
             /** Format: uuid */
             headEmployeeId?: null | string;
-            /** Format: date */
-            validFrom?: null | string;
-            /** Format: date */
-            validTo?: null | string;
         };
         CreateUserRequest: {
             userName: string;
@@ -451,10 +447,6 @@ export interface components {
             /** Format: uuid */
             headEmployeeId: null | string;
             isActive: boolean;
-            /** Format: date */
-            validFrom: null | string;
-            /** Format: date */
-            validTo: null | string;
             /** Format: int32 */
             version: number;
         };
@@ -508,10 +500,6 @@ export interface components {
             name: string;
             /** Format: uuid */
             headEmployeeId: null | string;
-            /** Format: date */
-            validFrom: null | string;
-            /** Format: date */
-            validTo: null | string;
         };
         UpdateUserRequest: {
             userName: string;

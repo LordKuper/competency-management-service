@@ -16,8 +16,6 @@ import {
 interface UnitFormValues {
   name: string;
   headEmployeeId?: string;
-  validFrom?: string;
-  validTo?: string;
 }
 
 interface UnitFormModalProps {
@@ -47,8 +45,6 @@ export function UnitFormModal({
       const fields = {
         name: values.name,
         headEmployeeId: values.headEmployeeId ?? null,
-        validFrom: values.validFrom || null,
-        validTo: values.validTo || null,
       };
       return unwrap(
         unit
@@ -133,8 +129,6 @@ function UnitForm({ unit, submitLabel, onSubmit, onCancel }: UnitFormProps) {
       initialValues={{
         name: unit?.name ?? "",
         headEmployeeId: unit?.headEmployeeId ?? undefined,
-        validFrom: unit?.validFrom ?? undefined,
-        validTo: unit?.validTo ?? undefined,
       }}
       onFinish={submit}
     >
@@ -155,12 +149,6 @@ function UnitForm({ unit, submitLabel, onSubmit, onCancel }: UnitFormProps) {
         <EmployeePicker
           current={head ? { id: head.id, name: head.fullName } : undefined}
         />
-      </Form.Item>
-      <Form.Item name="validFrom" label="Действует с">
-        <Input type="date" />
-      </Form.Item>
-      <Form.Item name="validTo" label="Действует по">
-        <Input type="date" />
       </Form.Item>
       <Space>
         <Button type="primary" htmlType="submit" loading={isSubmitting}>

@@ -3,7 +3,6 @@ import {
   CheckCircleOutlined,
   DownOutlined,
   EditOutlined,
-  InfoCircleOutlined,
   MoreOutlined,
   PlusOutlined,
   RightOutlined,
@@ -19,7 +18,7 @@ import {
   Flex,
   Skeleton,
 } from "antd";
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import {
   employeeQuery,
@@ -28,7 +27,6 @@ import {
 } from "./orgStructureApi";
 import { paths } from "./paths";
 import { UnitStatusTag } from "./StatusTags";
-import { UnitDetails } from "./UnitDetails";
 
 /** Whether a unit lists its contents; "path" is a unit a name search opened only to show the matches below it. */
 export type UnitOpenness = "closed" | "path" | "open";
@@ -91,8 +89,8 @@ interface UnitCardProps {
 }
 
 /**
- * Card of a unit in the hierarchy: its name, status and counts, the control that opens it, a block with its path
- * and headcount, and for administrators the menu of actions. Opened, it also names the head and counts the employees.
+ * Card of a unit in the hierarchy: its name, status and counts, the control that opens it, and for administrators
+ * the menu of actions. Opened, it also names the head and counts the employees.
  */
 export const UnitCard = memo(function UnitCard({
   unit,
@@ -105,7 +103,6 @@ export const UnitCard = memo(function UnitCard({
   onAction,
 }: UnitCardProps) {
   const { token } = antdTheme.useToken();
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const isOpen = openness !== "closed";
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -141,13 +138,6 @@ export const UnitCard = memo(function UnitCard({
           <Highlighted text={unit.name} needle={needle} />
         </Button>
         {!unit.isActive && <UnitStatusTag isActive={false} />}
-        <Button
-          type="text"
-          icon={<InfoCircleOutlined />}
-          aria-label={`Путь и сводка: ${unit.name}`}
-          aria-expanded={isDetailsOpen}
-          onClick={() => setIsDetailsOpen((previous) => !previous)}
-        />
         {isAdmin && (
           <Dropdown
             trigger={["click"]}
@@ -201,7 +191,6 @@ export const UnitCard = memo(function UnitCard({
         <span>Подразделений: {childCount}</span>
         {openness === "open" && <OpenedFacts unit={unit} />}
       </div>
-      {isDetailsOpen && <UnitDetails unit={unit} />}
     </Card>
   );
 });
