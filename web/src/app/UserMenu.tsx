@@ -45,8 +45,8 @@ export function UserMenu({ user }: { user: CurrentUser }) {
       >
         <Button
           type="text"
+          className="header-user-button"
           aria-label={displayName}
-          style={{ color: token.colorTextLightSolid }}
         >
           <Space>
             <Avatar

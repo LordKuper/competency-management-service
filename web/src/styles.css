@@ -33,3 +33,29 @@
 body {
   margin: 0;
 }
+
+.header-user-button.ant-btn {
+  color: var(--ant-color-text-light-solid);
+}
+
+.header-user-button.ant-btn:hover {
+  color: var(--ant-color-text-light-solid);
+  background: color-mix(
+    in srgb,
+    var(--ant-color-text-light-solid) 12%,
+    transparent
+  );
+}
+
+.header-user-button.ant-btn:active {
+  color: var(--ant-color-text-light-solid);
+  background: color-mix(
+    in srgb,
+    var(--ant-color-text-light-solid) 20%,
+    transparent
+  );
+}
+
+.header-user-button.ant-btn:focus-visible {
+  outline-color: var(--ant-color-text-light-solid);
+}
