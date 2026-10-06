@@ -14,7 +14,7 @@ interface UnitOption {
 
 type OrgUnitSelectProps = Pick<
   TreeSelectProps<string | undefined>,
-  "id" | "value" | "onChange" | "allowClear" | "placeholder" | "aria-label"
+  "id" | "value" | "onChange" | "allowClear" | "placeholder"
 > & {
   /** Unit to leave out together with everything below it, so a unit cannot be offered as its own parent. */
   excludedSubtreeRoot?: string;

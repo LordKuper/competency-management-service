@@ -13,6 +13,7 @@ export interface UnitTreeView {
   isAdmin: boolean;
   onToggle: (unitId: string) => void;
   onAction: (action: UnitAction, unit: OrgUnit) => void;
+  onOpenEmployee: (employeeId: string) => void;
 }
 
 function visibleNodes(nodes: readonly UnitNode[], view: UnitTreeView) {
@@ -47,6 +48,7 @@ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
         isAdmin={view.isAdmin}
         onToggle={view.onToggle}
         onAction={view.onAction}
+        onOpenEmployee={view.onOpenEmployee}
       />
       {openness !== "closed" && (
         <ul className="org-tree__children">
@@ -58,6 +60,7 @@ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
               unitId={unit.id}
               hasChildUnits={children.length > 0}
               isAdmin={view.isAdmin}
+              onOpenEmployee={view.onOpenEmployee}
             />
           )}
         </ul>

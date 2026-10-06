@@ -9,6 +9,7 @@ interface UnitEmployeesProps {
   unitId: string;
   hasChildUnits: boolean;
   isAdmin: boolean;
+  onOpenEmployee: (employeeId: string) => void;
 }
 
 /**
@@ -20,6 +21,7 @@ export const UnitEmployees = memo(function UnitEmployees({
   unitId,
   hasChildUnits,
   isAdmin,
+  onOpenEmployee,
 }: UnitEmployeesProps) {
   const { data, error, refetch } = useQuery(unitEmployeesQuery(unitId));
 
@@ -57,7 +59,11 @@ export const UnitEmployees = memo(function UnitEmployees({
   }
   return data.map((employee) => (
     <li key={employee.id} className="org-tree__node">
-      <EmployeeCard employee={employee} isAdmin={isAdmin} />
+      <EmployeeCard
+        employee={employee}
+        isAdmin={isAdmin}
+        onOpen={onOpenEmployee}
+      />
     </li>
   ));
 });

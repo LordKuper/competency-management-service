@@ -1,7 +1,5 @@
 import { memo } from "react";
-import { Link } from "react-router";
 import type { Employee } from "./orgStructureApi";
-import { paths } from "./paths";
 import { EmployeeStatusTag } from "./StatusTags";
 
 function initialsOf(fullName: string): string {
@@ -15,20 +13,21 @@ function initialsOf(fullName: string): string {
 interface EmployeeCardProps {
   employee: Employee;
   isAdmin: boolean;
+  /** Opens the employee in the dialog; the callback must be stable, or every card renders again with the page. */
+  onOpen: (employeeId: string) => void;
 }
 
 /**
- * Compact card of an employee inside the unit hierarchy. Administrators also see the status of
- * a person who no longer works and the way to edit; the restricted projection of an ordinary user has neither.
+ * Compact card of an employee inside the unit hierarchy; the name opens the employee. Administrators also see the
+ * status of a person who no longer works; the restricted projection of an ordinary user has none.
  * A unit may hold thousands of employees, so the card is plain markup styled from the theme variables: antd's own
  * card, avatar and text components cost several times more to render.
  */
 export const EmployeeCard = memo(function EmployeeCard({
   employee,
   isAdmin,
+  onOpen,
 }: EmployeeCardProps) {
-  const details = [employee.position, employee.email].filter(Boolean);
-
   return (
     <div className="org-tree__item org-employee">
       <span className="org-employee__avatar">
@@ -36,23 +35,19 @@ export const EmployeeCard = memo(function EmployeeCard({
       </span>
       <div className="org-employee__text">
         <div className="org-employee__title">
-          <Link to={paths.employee(employee.id)}>
+          <button
+            type="button"
+            className="org-link"
+            onClick={() => onOpen(employee.id)}
+          >
             <strong>{employee.fullName}</strong>
-          </Link>
+          </button>
           {isAdmin && employee.isActive === false && (
             <EmployeeStatusTag isActive={false} />
           )}
         </div>
-        <span className="org-employee__details">{details.join(" · ")}</span>
+        <span className="org-employee__details">{employee.position}</span>
       </div>
-      {isAdmin && (
-        <Link
-          to={paths.employee(employee.id)}
-          aria-label={`Править сотрудника ${employee.fullName}`}
-        >
-          Править
-        </Link>
-      )}
     </div>
   );
 });

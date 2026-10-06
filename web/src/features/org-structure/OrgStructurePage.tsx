@@ -2,37 +2,39 @@ import { SearchOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Empty, Flex, Input, Skeleton, Space, Typography } from "antd";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useIsAdmin } from "../auth/useCurrentUser";
+import { EmployeeModal } from "./EmployeeModal";
 import { MoveUnitModal } from "./MoveUnitModal";
 import { type OrgUnit, orgUnitTreeQuery } from "./orgStructureApi";
 import { ancestorIds, buildUnitTree } from "./orgTree";
-import { paths } from "./paths";
 import type { UnitAction } from "./UnitCard";
 import { UnitFormModal } from "./UnitFormModal";
 import { UnitTree } from "./UnitTree";
 import { useUnitActivation } from "./useUnitActivation";
 import { useUnitExpansion } from "./useUnitExpansion";
 
-type UnitDialog =
-  | { kind: "create"; parentId: string | null }
+type PageDialog =
+  | { kind: "addUnit"; parentId: string | null }
+  | { kind: "addEmployee"; orgUnitId?: string }
+  | { kind: "employee"; employeeId: string }
   | { kind: "edit" | "move"; unitId: string };
 
 /**
  * The structure screen: a searchable hierarchy of unit and employee cards. The `unit` address parameter opens the
- * path to that unit and scrolls to it, so a shared link or the unit link of an employee lands on the same card.
- * Administrators change units from the cards; the dialogs and the activation prompt live here, once for all cards.
+ * path to that unit and scrolls to it, so a shared link or a new unit or employee lands on the same card.
+ * Employees open in a dialog from their cards; administrators change units and employees from the cards. The dialogs
+ * and the activation prompt live here, once for all cards.
  */
 export function OrgStructurePage() {
   const isAdmin = useIsAdmin();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: units, error, isPending, refetch } = useQuery(orgUnitTreeQuery);
   const roots = useMemo(() => buildUnitTree(units ?? []), [units]);
   const { text, search, openIds, setText, toggle, open } =
     useUnitExpansion(roots);
-  const [dialog, setDialog] = useState<UnitDialog | null>(null);
+  const [dialog, setDialog] = useState<PageDialog | null>(null);
   const confirmActivation = useUnitActivation();
   const selectedId = searchParams.get("unit");
 
@@ -47,14 +49,20 @@ export function OrgStructurePage() {
     (action: UnitAction, unit: OrgUnit) => {
       if (action === "toggleActive") confirmActivation(unit);
       else if (action === "addChild")
-        setDialog({ kind: "create", parentId: unit.id });
+        setDialog({ kind: "addUnit", parentId: unit.id });
+      else if (action === "addEmployee")
+        setDialog({ kind: "addEmployee", orgUnitId: unit.id });
       else setDialog({ kind: action, unitId: unit.id });
     },
     [confirmActivation],
   );
+  const openEmployee = useCallback(
+    (employeeId: string) => setDialog({ kind: "employee", employeeId }),
+    [],
+  );
 
   const dialogUnit =
-    dialog && dialog.kind !== "create"
+    dialog?.kind === "edit" || dialog?.kind === "move"
       ? units?.find((unit) => unit.id === dialog.unitId)
       : undefined;
 
@@ -64,17 +72,19 @@ export function OrgStructurePage() {
         <Typography.Title level={1} style={{ margin: 0 }}>
           Оргструктура
         </Typography.Title>
-        <Space wrap>
-          <Button onClick={() => navigate(paths.employees)}>Сотрудники</Button>
-          {isAdmin && (
+        {isAdmin && (
+          <Space wrap>
+            <Button onClick={() => setDialog({ kind: "addEmployee" })}>
+              Добавить сотрудника
+            </Button>
             <Button
               type="primary"
-              onClick={() => setDialog({ kind: "create", parentId: null })}
+              onClick={() => setDialog({ kind: "addUnit", parentId: null })}
             >
               Добавить корневое подразделение
             </Button>
-          )}
-        </Space>
+          </Space>
+        )}
       </Flex>
       {isPending && <Skeleton active />}
       {error && (
@@ -117,12 +127,13 @@ export function OrgStructurePage() {
                 isAdmin,
                 onToggle: toggle,
                 onAction: handleAction,
+                onOpenEmployee: openEmployee,
               }}
             />
           )}
         </>
       )}
-      {dialog?.kind === "create" && (
+      {dialog?.kind === "addUnit" && (
         <UnitFormModal
           parentId={dialog.parentId}
           onClose={closeDialog}
@@ -131,6 +142,24 @@ export function OrgStructurePage() {
             setText("");
             setSearchParams({ unit: created.id });
           }}
+        />
+      )}
+      {dialog?.kind === "addEmployee" && (
+        <EmployeeModal
+          orgUnitId={dialog.orgUnitId}
+          onClose={closeDialog}
+          onSaved={(created) => {
+            closeDialog();
+            setText("");
+            setSearchParams({ unit: created.orgUnitId });
+          }}
+        />
+      )}
+      {dialog?.kind === "employee" && (
+        <EmployeeModal
+          employeeId={dialog.employeeId}
+          onClose={closeDialog}
+          onSaved={closeDialog}
         />
       )}
       {dialog?.kind === "edit" && dialogUnit && (

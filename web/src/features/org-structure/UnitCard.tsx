@@ -8,19 +8,23 @@ import {
   RightOutlined,
   StopOutlined,
   SwapOutlined,
+  UserAddOutlined,
 } from "@ant-design/icons";
 import { theme as antdTheme, Button, Card, Dropdown, Flex } from "antd";
 import { memo, useEffect, useRef } from "react";
-import { Link } from "react-router";
 import type { OrgUnit, OrgUnitTreeNode } from "./orgStructureApi";
-import { paths } from "./paths";
 import { UnitStatusTag } from "./StatusTags";
 
 /** Whether a unit lists its contents; "path" is a unit a name search opened only to show the matches below it. */
 export type UnitOpenness = "closed" | "path" | "open";
 
 /** What an administrator can do with a unit from its card. */
-export type UnitAction = "addChild" | "edit" | "move" | "toggleActive";
+export type UnitAction =
+  | "addChild"
+  | "addEmployee"
+  | "edit"
+  | "move"
+  | "toggleActive";
 
 function Highlighted({ text, needle }: { text: string; needle: string }) {
   const start = needle ? text.toLocaleLowerCase("ru").indexOf(needle) : -1;
@@ -47,11 +51,14 @@ interface UnitCardProps {
   isAdmin: boolean;
   onToggle: (unitId: string) => void;
   onAction: (action: UnitAction, unit: OrgUnit) => void;
+  /** Opens an employee, the head of the unit; the callback must be stable, or every card renders again with the page. */
+  onOpenEmployee: (employeeId: string) => void;
 }
 
 /**
  * Card of a unit in the hierarchy: its name, status, counts of child units and employees and its head, all of which
- * read the same open or closed, the control that opens it, and for administrators the menu of actions.
+ * read the same open or closed, the control that opens it, and for administrators the menu of actions. The head's name
+ * opens the head in the employee dialog.
  */
 export const UnitCard = memo(function UnitCard({
   unit,
@@ -62,8 +69,11 @@ export const UnitCard = memo(function UnitCard({
   isAdmin,
   onToggle,
   onAction,
+  onOpenEmployee,
 }: UnitCardProps) {
   const { token } = antdTheme.useToken();
+  const { headEmployeeId, headName } = unit;
+  const inactiveNote = unit.isActive ? "" : " (подразделение неактивно)";
   const isOpen = openness !== "closed";
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -107,11 +117,16 @@ export const UnitCard = memo(function UnitCard({
                 {
                   key: "addChild",
                   icon: <PlusOutlined />,
-                  label: unit.isActive
-                    ? "Добавить подразделение"
-                    : "Добавить подразделение (подразделение неактивно)",
+                  label: `Добавить подразделение${inactiveNote}`,
                   disabled: !unit.isActive,
                   onClick: () => onAction("addChild", unit),
+                },
+                {
+                  key: "addEmployee",
+                  icon: <UserAddOutlined />,
+                  label: `Добавить сотрудника${inactiveNote}`,
+                  disabled: !unit.isActive,
+                  onClick: () => onAction("addEmployee", unit),
                 },
                 {
                   key: "edit",
@@ -153,10 +168,14 @@ export const UnitCard = memo(function UnitCard({
         <span>Сотрудников: {unit.employeeCount}</span>
         <span>
           Руководитель:{" "}
-          {unit.headEmployeeId && unit.headName ? (
-            <Link to={paths.employee(unit.headEmployeeId)}>
-              {unit.headName}
-            </Link>
+          {headEmployeeId && headName ? (
+            <button
+              type="button"
+              className="org-link"
+              onClick={() => onOpenEmployee(headEmployeeId)}
+            >
+              {headName}
+            </button>
           ) : (
             "не назначен"
           )}

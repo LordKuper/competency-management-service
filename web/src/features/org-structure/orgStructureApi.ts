@@ -1,8 +1,4 @@
-import {
-  keepPreviousData,
-  type QueryClient,
-  queryOptions,
-} from "@tanstack/react-query";
+import { type QueryClient, queryOptions } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import type { components } from "../../api/schema";
 import { unwrap } from "../../api/unwrap";
@@ -13,21 +9,11 @@ export type OrgUnit = components["schemas"]["OrgUnitResponse"];
 /** A unit of the tree with the head's name and the number of employees directly in it, as the signed-in user may see them. */
 export type OrgUnitTreeNode = components["schemas"]["OrgUnitTreeNodeResponse"];
 
-/** An employee; the projection for ordinary users leaves out the personnel number, the status and the version. */
+/** An employee; the projection for ordinary users leaves out the status and the version. */
 export type Employee = components["schemas"]["EmployeeResponse"];
 
 /** The fields an employee is created or replaced with. */
 export type EmployeeInput = components["schemas"]["EmployeeRequest"];
-
-/** Filters and paging of the employee list; pages count from 1. */
-export interface EmployeeListParams {
-  q?: string;
-  isActive?: boolean;
-  orgUnitId?: string;
-  includeDescendants?: boolean;
-  page: number;
-  pageSize: number;
-}
 
 /** Cache key prefix of every unit query, so one invalidation rereads the tree. */
 export const orgUnitsQueryKey = ["org-units"] as const;
@@ -44,28 +30,19 @@ export const orgUnitTreeQuery = queryOptions({
 /** Largest page the employee list accepts. */
 const EMPLOYEE_PAGE_SIZE_MAX = 200;
 
-async function listEmployees(params: EmployeeListParams) {
-  return unwrap(
-    await api.GET("/api/v1/employees", { params: { query: params } }),
-  ).data;
-}
-
-/** One page of employees; the previous page stays on screen while the next loads. */
-export function employeeListQuery(params: EmployeeListParams) {
-  return queryOptions({
-    queryKey: [...employeesQueryKey, "list", params],
-    queryFn: () => listEmployees(params),
-    placeholderData: keepPreviousData,
-  });
-}
-
 /** Every employee directly in a unit, in list order: the first page, then the remaining pages at once. */
 export function unitEmployeesQuery(orgUnitId: string) {
   return queryOptions({
     queryKey: [...employeesQueryKey, "unit", orgUnitId],
     queryFn: async () => {
-      const readPage = (page: number) =>
-        listEmployees({ orgUnitId, page, pageSize: EMPLOYEE_PAGE_SIZE_MAX });
+      const readPage = async (page: number) =>
+        unwrap(
+          await api.GET("/api/v1/employees", {
+            params: {
+              query: { orgUnitId, page, pageSize: EMPLOYEE_PAGE_SIZE_MAX },
+            },
+          }),
+        ).data;
       const first = await readPage(1);
       const lastPage = Math.ceil(first.total / first.pageSize);
       const rest = await Promise.all(

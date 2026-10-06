@@ -1,31 +1,30 @@
-import { Button, Form, Input, Space, Switch } from "antd";
+import { Button, Form, Input, Space, Switch, Typography } from "antd";
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import { showFieldErrors } from "../../app/apiErrors";
 import { OrgUnitSelect } from "./OrgUnitSelect";
 import type { EmployeeInput } from "./orgStructureApi";
-import { paths } from "./paths";
 
 type EmployeeFormValues = Partial<EmployeeInput>;
 
 interface EmployeeFormProps {
-  /** Values to start from; a new employee starts empty and working. */
-  initialValues?: EmployeeFormValues;
+  initialValues: EmployeeFormValues;
+  /** E-mail of the employee's account, shown without a way to change it; null means no account, omitted hides the row. */
+  email?: string | null;
   submitLabel: string;
   /** Saves the input; a rejection is shown on the fields it names and by the caller. */
   onSubmit: (input: EmployeeInput) => Promise<unknown>;
+  onCancel: () => void;
 }
-
-const NEW_EMPLOYEE_VALUES: EmployeeFormValues = { isActive: true };
 
 /** Fields of an employee, shared by creation and editing; a transfer is a change of the unit, and leaving is switching off the status. */
 export function EmployeeForm({
-  initialValues = NEW_EMPLOYEE_VALUES,
+  initialValues,
+  email,
   submitLabel,
   onSubmit,
+  onCancel,
 }: EmployeeFormProps) {
   const [form] = Form.useForm<EmployeeInput>();
-  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function submit(values: EmployeeInput) {
@@ -71,6 +70,14 @@ export function EmployeeForm({
       >
         <Input autoComplete="off" />
       </Form.Item>
+      {email !== undefined && (
+        <Form.Item
+          label="E-mail"
+          extra="E-mail берётся из учётной записи сотрудника и меняется в разделе «Пользователи»."
+        >
+          <Typography.Text>{email ?? "Нет учётной записи"}</Typography.Text>
+        </Form.Item>
+      )}
       <Form.Item
         name="isActive"
         label="Работает"
@@ -83,7 +90,7 @@ export function EmployeeForm({
         <Button type="primary" htmlType="submit" loading={isSubmitting}>
           {submitLabel}
         </Button>
-        <Button onClick={() => navigate(paths.employees)}>Отмена</Button>
+        <Button onClick={onCancel}>Отмена</Button>
       </Space>
     </Form>
   );

@@ -176,3 +176,27 @@ body {
   align-items: center;
   gap: var(--ant-margin-xs);
 }
+
+/* A button that reads as a link: it opens a dialog rather than navigating. */
+.org-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ant-color-link);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.org-link:hover {
+  color: var(--ant-color-link-hover);
+}
+
+.org-link:active {
+  color: var(--ant-color-link-active);
+}
+
+.org-link:focus-visible {
+  outline: var(--ant-line-width-focus) solid var(--ant-color-primary-border);
+  outline-offset: var(--ant-line-width);
+}
