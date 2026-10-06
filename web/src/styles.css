@@ -56,3 +56,130 @@ body {
 .header-user-button.ant-btn:focus-visible {
   outline-color: var(--ant-color-text-light-solid);
 }
+
+/* Hierarchy of unit and employee cards: each nested list is indented under its
+   parent and joined to it by a line that runs down the left of the siblings and
+   turns into each card at its middle. Colors and gaps come from antd tokens. */
+.org-tree,
+.org-tree__children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.org-tree {
+  --org-gap: var(--ant-margin-xs);
+  --org-indent: var(--ant-margin-lg);
+  --org-line: var(--ant-line-width) solid var(--ant-color-border-secondary);
+}
+
+.org-tree--narrow {
+  --org-indent: var(--ant-margin-sm);
+}
+
+.org-tree__children {
+  padding-inline-start: var(--org-indent);
+}
+
+.org-tree__node {
+  position: relative;
+  margin-block-start: var(--org-gap);
+}
+
+.org-tree > .org-tree__node:first-child {
+  margin-block-start: 0;
+}
+
+.org-tree__children > .org-tree__node:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  inset-block: calc(var(--org-gap) * -1) 0;
+  inset-inline-start: calc(var(--org-indent) / -2);
+  border-inline-start: var(--org-line);
+}
+
+.org-tree__children > .org-tree__node > .org-tree__item {
+  position: relative;
+}
+
+.org-tree__children > .org-tree__node > .org-tree__item::before {
+  content: "";
+  position: absolute;
+  inset-block-start: calc((var(--org-gap) + var(--ant-line-width)) * -1);
+  inset-inline-start: calc(var(--org-indent) / -2 - var(--ant-line-width));
+  width: calc(var(--org-indent) / 2 + var(--ant-line-width));
+  height: calc(50% + var(--org-gap) + var(--ant-line-width));
+  border-inline-start: var(--org-line);
+  border-block-end: var(--org-line);
+}
+
+.org-tree__note {
+  padding-block: var(--ant-padding-xs);
+}
+
+.org-card__name.ant-btn {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  min-height: var(--ant-control-height);
+  justify-content: flex-start;
+  text-align: start;
+  white-space: normal;
+}
+
+.org-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--ant-margin);
+  color: var(--ant-color-text-secondary);
+}
+
+.org-card__details {
+  margin-block-start: var(--ant-margin-xs);
+  padding-block-start: var(--ant-padding-sm);
+  border-block-start: var(--ant-line-width) solid
+    var(--ant-color-border-secondary);
+}
+
+.org-tree mark {
+  background: var(--ant-color-warning-bg);
+  color: inherit;
+}
+
+.org-employee {
+  display: flex;
+  align-items: center;
+  gap: var(--ant-margin-sm);
+  padding: var(--ant-padding-sm);
+  background: var(--ant-color-bg-container);
+  border: var(--ant-line-width) solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+}
+
+.org-employee__avatar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ant-control-height);
+  height: var(--ant-control-height);
+  border-radius: 50%;
+  background: var(--ant-color-primary-bg);
+  color: var(--ant-color-primary);
+}
+
+.org-employee__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.org-employee__details {
+  color: var(--ant-color-text-secondary);
+}
+
+.org-employee__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ant-margin-xs);
+}

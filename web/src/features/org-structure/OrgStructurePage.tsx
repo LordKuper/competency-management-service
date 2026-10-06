@@ -1,39 +1,62 @@
+import { SearchOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import {
-  theme as antdTheme,
-  Button,
-  Col,
-  Empty,
-  Flex,
-  Row,
-  Skeleton,
-  Space,
-  Typography,
-} from "antd";
-import { useState } from "react";
+import { Button, Empty, Flex, Input, Skeleton, Space, Typography } from "antd";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useIsAdmin } from "../auth/useCurrentUser";
-import { orgUnitTreeQuery } from "./orgStructureApi";
+import { MoveUnitModal } from "./MoveUnitModal";
+import { type OrgUnit, orgUnitTreeQuery } from "./orgStructureApi";
+import { ancestorIds, buildUnitTree } from "./orgTree";
 import { paths } from "./paths";
-import { UnitCard } from "./UnitCard";
+import type { UnitAction } from "./UnitCard";
 import { UnitFormModal } from "./UnitFormModal";
-import { UnitTreePanel } from "./UnitTreePanel";
+import { UnitTree } from "./UnitTree";
+import { useUnitActivation } from "./useUnitActivation";
+import { useUnitExpansion } from "./useUnitExpansion";
+
+type UnitDialog =
+  | { kind: "create"; parentId: string | null }
+  | { kind: "edit" | "move"; unitId: string };
 
 /**
- * The structure screen: the unit tree beside the card of the selected unit, which the `unit` address parameter names so
- * a reload or a shared link opens the same unit. On a tablet the card stacks under the tree.
+ * The structure screen: a searchable hierarchy of unit and employee cards. The `unit` address parameter opens the
+ * path to that unit and scrolls to it, so a shared link or the unit link of an employee lands on the same card.
+ * Administrators change units from the cards; the dialogs and the activation prompt live here, once for all cards.
  */
 export function OrgStructurePage() {
-  const { token } = antdTheme.useToken();
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [isRootFormOpen, setIsRootFormOpen] = useState(false);
   const { data: units, error, isPending, refetch } = useQuery(orgUnitTreeQuery);
+  const roots = useMemo(() => buildUnitTree(units ?? []), [units]);
+  const { text, search, openIds, setText, toggle, open } =
+    useUnitExpansion(roots);
+  const [dialog, setDialog] = useState<UnitDialog | null>(null);
+  const confirmActivation = useUnitActivation();
   const selectedId = searchParams.get("unit");
-  const selected = units?.find((unit) => unit.id === selectedId);
-  const selectUnit = (unitId: string) => setSearchParams({ unit: unitId });
+
+  useEffect(() => {
+    if (units && selectedId !== null) {
+      open([...ancestorIds(units, selectedId), selectedId]);
+    }
+  }, [units, selectedId, open]);
+
+  const closeDialog = useCallback(() => setDialog(null), []);
+  const handleAction = useCallback(
+    (action: UnitAction, unit: OrgUnit) => {
+      if (action === "toggleActive") confirmActivation(unit);
+      else if (action === "addChild")
+        setDialog({ kind: "create", parentId: unit.id });
+      else setDialog({ kind: action, unitId: unit.id });
+    },
+    [confirmActivation],
+  );
+
+  const dialogUnit =
+    dialog && dialog.kind !== "create"
+      ? units?.find((unit) => unit.id === dialog.unitId)
+      : undefined;
 
   return (
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>
@@ -44,7 +67,10 @@ export function OrgStructurePage() {
         <Space wrap>
           <Button onClick={() => navigate(paths.employees)}>Сотрудники</Button>
           {isAdmin && (
-            <Button type="primary" onClick={() => setIsRootFormOpen(true)}>
+            <Button
+              type="primary"
+              onClick={() => setDialog({ kind: "create", parentId: null })}
+            >
               Добавить корневое подразделение
             </Button>
           )}
@@ -59,40 +85,63 @@ export function OrgStructurePage() {
         />
       )}
       {units && (
-        <Row gutter={[token.marginLG, token.marginLG]}>
-          <Col xs={24} lg={9}>
-            <UnitTreePanel
-              units={units}
-              selectedId={selectedId}
-              onSelect={selectUnit}
+        <>
+          <Input
+            allowClear
+            prefix={<SearchOutlined />}
+            aria-label="Поиск подразделения по названию"
+            placeholder="Название подразделения"
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+          />
+          {search && search.visibleIds.size === 0 ? (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="Подразделения не найдены. Измените запрос."
             />
-          </Col>
-          <Col xs={24} lg={15}>
-            {selected ? (
-              <UnitCard unit={selected} onSelect={selectUnit} />
-            ) : (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={
-                  units.length > 0
-                    ? "Выберите подразделение в дереве, чтобы увидеть его карточку."
-                    : "Подразделений пока нет." +
-                      (isAdmin ? " Добавьте корневое подразделение." : "")
-                }
-              />
-            )}
-          </Col>
-        </Row>
+          ) : units.length === 0 ? (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={
+                "Подразделений пока нет." +
+                (isAdmin ? " Добавьте корневое подразделение." : "")
+              }
+            />
+          ) : (
+            <UnitTree
+              roots={roots}
+              view={{
+                openIds,
+                search,
+                selectedId,
+                isAdmin,
+                onToggle: toggle,
+                onAction: handleAction,
+              }}
+            />
+          )}
+        </>
       )}
-      {isRootFormOpen && (
+      {dialog?.kind === "create" && (
         <UnitFormModal
-          parentId={null}
-          onClose={() => setIsRootFormOpen(false)}
+          parentId={dialog.parentId}
+          onClose={closeDialog}
           onSaved={(created) => {
-            setIsRootFormOpen(false);
-            selectUnit(created.id);
+            closeDialog();
+            setText("");
+            setSearchParams({ unit: created.id });
           }}
         />
+      )}
+      {dialog?.kind === "edit" && dialogUnit && (
+        <UnitFormModal
+          unit={dialogUnit}
+          onClose={closeDialog}
+          onSaved={closeDialog}
+        />
+      )}
+      {dialog?.kind === "move" && dialogUnit && (
+        <MoveUnitModal unit={dialogUnit} onClose={closeDialog} />
       )}
     </Space>
   );

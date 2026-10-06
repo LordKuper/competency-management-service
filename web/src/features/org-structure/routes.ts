@@ -12,7 +12,7 @@ export const navItems: NavItem[] = [
   { key: "org-structure", label: "Оргструктура", path: paths.tree, order: 20 },
 ];
 
-/** The tree with the unit card, the employee list and card, and the creation page, which only administrators open. */
+/** The card hierarchy, the employee list and card, and the creation page, which only administrators open. */
 export const routes: RouteObject[] = [
   { path: paths.tree, Component: OrgStructurePage },
   { path: paths.employees, Component: EmployeeListPage },

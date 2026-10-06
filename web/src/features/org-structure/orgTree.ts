@@ -6,10 +6,13 @@ export interface UnitNode {
   children: UnitNode[];
 }
 
-/** Units found by a name search, with the ancestors that must be open to show them. */
-export interface UnitSearchResult {
-  visible: OrgUnit[];
-  expandedIds: string[];
+/** What a name search shows: the matching units, the units above them and everything below a match. */
+export interface UnitSearch {
+  /** The search text, trimmed and lower-cased. */
+  needle: string;
+  visibleIds: ReadonlySet<string>;
+  /** Units above a match; opened so that every match is in view. */
+  pathIds: ReadonlySet<string>;
 }
 
 /** Arranges units by their parent links, siblings in the given order; a unit whose parent is absent from the list becomes a root. */
@@ -33,27 +36,28 @@ export function ancestorIds(units: readonly OrgUnit[], id: string): string[] {
   return unit ? ancestorsIn(byId, unit) : [];
 }
 
-/** The units whose name contains the text, ignoring letter case, together with their ancestors. */
-export function searchUnits(
-  units: readonly OrgUnit[],
+/** Finds the units whose name contains the text, ignoring letter case. */
+export function searchUnitTree(
+  roots: readonly UnitNode[],
   text: string,
-): UnitSearchResult {
+): UnitSearch {
   const needle = text.trim().toLocaleLowerCase("ru");
-  const byId = indexById(units);
-  const shown = new Set<string>();
-  const expanded = new Set<string>();
-  for (const unit of units) {
-    if (!unit.name.toLocaleLowerCase("ru").includes(needle)) continue;
-    shown.add(unit.id);
-    for (const id of ancestorsIn(byId, unit)) {
-      shown.add(id);
-      expanded.add(id);
+  const visibleIds = new Set<string>();
+  const pathIds = new Set<string>();
+
+  function visit({ unit, children }: UnitNode, isBelowMatch: boolean): boolean {
+    const isMatch = unit.name.toLocaleLowerCase("ru").includes(needle);
+    let hasMatchBelow = false;
+    for (const child of children) {
+      hasMatchBelow = visit(child, isBelowMatch || isMatch) || hasMatchBelow;
     }
+    if (isBelowMatch || isMatch || hasMatchBelow) visibleIds.add(unit.id);
+    if (hasMatchBelow) pathIds.add(unit.id);
+    return isMatch || hasMatchBelow;
   }
-  return {
-    visible: units.filter((unit) => shown.has(unit.id)),
-    expandedIds: [...expanded],
-  };
+
+  for (const root of roots) visit(root, false);
+  return { needle, visibleIds, pathIds };
 }
 
 function indexById(units: readonly OrgUnit[]): Map<string, OrgUnit> {
