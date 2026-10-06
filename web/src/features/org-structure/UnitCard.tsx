@@ -9,22 +9,10 @@ import {
   StopOutlined,
   SwapOutlined,
 } from "@ant-design/icons";
-import { useQuery } from "@tanstack/react-query";
-import {
-  theme as antdTheme,
-  Button,
-  Card,
-  Dropdown,
-  Flex,
-  Skeleton,
-} from "antd";
+import { theme as antdTheme, Button, Card, Dropdown, Flex } from "antd";
 import { memo, useEffect, useRef } from "react";
 import { Link } from "react-router";
-import {
-  employeeQuery,
-  type OrgUnit,
-  unitEmployeesQuery,
-} from "./orgStructureApi";
+import type { OrgUnit, OrgUnitTreeNode } from "./orgStructureApi";
 import { paths } from "./paths";
 import { UnitStatusTag } from "./StatusTags";
 
@@ -47,35 +35,8 @@ function Highlighted({ text, needle }: { text: string; needle: string }) {
   );
 }
 
-function UnitHead({ employeeId }: { employeeId: string }) {
-  const { data, error } = useQuery(employeeQuery(employeeId));
-  if (data) return <Link to={paths.employee(data.id)}>{data.fullName}</Link>;
-  return error ? (
-    "не удалось загрузить"
-  ) : (
-    <Skeleton.Input active size="small" />
-  );
-}
-
-function OpenedFacts({ unit }: { unit: OrgUnit }) {
-  const { data: employees } = useQuery(unitEmployeesQuery(unit.id));
-  return (
-    <>
-      <span>Сотрудников: {employees?.length ?? "—"}</span>
-      <span>
-        Руководитель:{" "}
-        {unit.headEmployeeId ? (
-          <UnitHead employeeId={unit.headEmployeeId} />
-        ) : (
-          "не назначен"
-        )}
-      </span>
-    </>
-  );
-}
-
 interface UnitCardProps {
-  unit: OrgUnit;
+  unit: OrgUnitTreeNode;
   /** Units listed under this one, which a name search may have narrowed. */
   childCount: number;
   openness: UnitOpenness;
@@ -89,8 +50,8 @@ interface UnitCardProps {
 }
 
 /**
- * Card of a unit in the hierarchy: its name, status and counts, the control that opens it, and for administrators
- * the menu of actions. Opened, it also names the head and counts the employees.
+ * Card of a unit in the hierarchy: its name, status, counts of child units and employees and its head, all of which
+ * read the same open or closed, the control that opens it, and for administrators the menu of actions.
  */
 export const UnitCard = memo(function UnitCard({
   unit,
@@ -189,7 +150,17 @@ export const UnitCard = memo(function UnitCard({
       </Flex>
       <div className="org-card__meta">
         <span>Подразделений: {childCount}</span>
-        {openness === "open" && <OpenedFacts unit={unit} />}
+        <span>Сотрудников: {unit.employeeCount}</span>
+        <span>
+          Руководитель:{" "}
+          {unit.headEmployeeId && unit.headName ? (
+            <Link to={paths.employee(unit.headEmployeeId)}>
+              {unit.headName}
+            </Link>
+          ) : (
+            "не назначен"
+          )}
+        </span>
       </div>
     </Card>
   );

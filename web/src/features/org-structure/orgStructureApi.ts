@@ -7,8 +7,11 @@ import { api } from "../../api/client";
 import type { components } from "../../api/schema";
 import { unwrap } from "../../api/unwrap";
 
-/** A unit as the API returns it, in the tree, in lists and on its own. */
+/** A unit as the API returns it in lists and on its own, and from the operations that change it. */
 export type OrgUnit = components["schemas"]["OrgUnitResponse"];
+
+/** A unit of the tree with the head's name and the number of employees directly in it, as the signed-in user may see them. */
+export type OrgUnitTreeNode = components["schemas"]["OrgUnitTreeNodeResponse"];
 
 /** An employee; the projection for ordinary users leaves out the personnel number, the status and the version. */
 export type Employee = components["schemas"]["EmployeeResponse"];

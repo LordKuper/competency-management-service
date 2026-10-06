@@ -1,8 +1,8 @@
-import type { OrgUnit } from "./orgStructureApi";
+import type { OrgUnit, OrgUnitTreeNode } from "./orgStructureApi";
 
 /** A unit together with the units directly below it. */
 export interface UnitNode {
-  unit: OrgUnit;
+  unit: OrgUnitTreeNode;
   children: UnitNode[];
 }
 
@@ -16,7 +16,7 @@ export interface UnitSearch {
 }
 
 /** Arranges units by their parent links, siblings in the given order; a unit whose parent is absent from the list becomes a root. */
-export function buildUnitTree(units: readonly OrgUnit[]): UnitNode[] {
+export function buildUnitTree(units: readonly OrgUnitTreeNode[]): UnitNode[] {
   const nodes = new Map<string, UnitNode>(
     units.map((unit) => [unit.id, { unit, children: [] }]),
   );
