@@ -31,26 +31,19 @@ const STATUS_OPTIONS = [
   { value: false, label: "Не работают" },
 ];
 
-interface EmployeeListProps {
-  /** Unit whose employees are listed; omitted to list everyone, with a unit filter offered instead. */
-  unitId?: string;
-}
-
 /**
  * Employees with search, paging and, for administrators, the status filter and the hidden columns.
  * Ordinary users are given only the restricted projection, so the controls for what it lacks are not shown.
- * Mount it with a `key` per unit, so the filters start over for another unit.
  */
-export function EmployeeList({ unitId }: EmployeeListProps) {
+export function EmployeeList() {
   const { token } = antdTheme.useToken();
   const isAdmin = useIsAdmin();
   const [filters, setFilters] = useState<EmployeeListParams>({
     page: 1,
     pageSize: DEFAULT_PAGE_SIZE,
   });
-  const params = { ...filters, orgUnitId: unitId ?? filters.orgUnitId };
   const { data, error, isFetching, refetch } = useQuery(
-    employeeListQuery(params),
+    employeeListQuery(filters),
   );
 
   const columns: TableColumnsType<Employee> = [
@@ -110,19 +103,17 @@ export function EmployeeList({ unitId }: EmployeeListProps) {
             />
           </Col>
         )}
-        {unitId === undefined && (
-          <Col xs={12} md={12} lg={8}>
-            <OrgUnitSelect
-              allowClear
-              aria-label="Фильтр по подразделению"
-              placeholder="Подразделение"
-              onChange={(orgUnitId) =>
-                setFilters((previous) => ({ ...previous, orgUnitId, page: 1 }))
-              }
-            />
-          </Col>
-        )}
-        {params.orgUnitId && (
+        <Col xs={12} md={12} lg={8}>
+          <OrgUnitSelect
+            allowClear
+            aria-label="Фильтр по подразделению"
+            placeholder="Подразделение"
+            onChange={(orgUnitId) =>
+              setFilters((previous) => ({ ...previous, orgUnitId, page: 1 }))
+            }
+          />
+        </Col>
+        {filters.orgUnitId && (
           <Col xs={24} lg={8}>
             <Checkbox
               checked={filters.includeDescendants ?? false}
@@ -161,8 +152,8 @@ export function EmployeeList({ unitId }: EmployeeListProps) {
           ),
         }}
         pagination={{
-          current: params.page,
-          pageSize: params.pageSize,
+          current: filters.page,
+          pageSize: filters.pageSize,
           total: data?.total ?? 0,
           showSizeChanger: true,
           onChange: (page, pageSize) =>
