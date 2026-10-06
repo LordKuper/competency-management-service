@@ -9,7 +9,7 @@ responsibility:
 
 ## Overview
 
-План покрывает AC-1…AC-13, AC-15, AC-16 и AC-17 (AC-16 и AC-17 добавлены поправками scope по запросам пользователя при impl assessment, Task 11 и Task 12) из [sprint.md](./sprint.md) (workflow `lite`, acceptance-criteria source — `sprint.md`). AC-14 (регистрация подсистем `org-structure`, `user-management`, `audit` в `docs/architecture/subsystems.md` и их `<id>.md`, требования и UX в `docs/`) выполняет фаза design-promote после impl-review; отдельной Task у неё нет. Входной материал для dev: [audit.md](./audit.md) (риски и spike-пункты), `docs/architecture/stack.html` и `docs/architecture/tech-reference/` (точные версии, конвенции технологий), `docs/ux/DESIGN.md`, `docs/Постановка.md` (§4, §29, §39–§46).
+План покрывает AC-1…AC-13, AC-15, AC-16 и AC-17 (AC-16 и AC-17 добавлены, AC-9 изменён поправками scope по запросам пользователя при impl assessment: Task 11, Task 12, Task 13) из [sprint.md](./sprint.md) (workflow `lite`, acceptance-criteria source — `sprint.md`). AC-14 (регистрация подсистем `org-structure`, `user-management`, `audit` в `docs/architecture/subsystems.md` и их `<id>.md`, требования и UX в `docs/`) выполняет фаза design-promote после impl-review; отдельной Task у неё нет. Входной материал для dev: [audit.md](./audit.md) (риски и spike-пункты), `docs/architecture/stack.html` и `docs/architecture/tech-reference/` (точные версии, конвенции технологий), `docs/ux/DESIGN.md`, `docs/Постановка.md` (§4, §29, §39–§46).
 
 Раскладка репозитория:
 - backend — `src/Competency.Api` (хост: `Program.cs`, сборка модулей, SPA-статика), `src/Competency.Platform` (общее ядро), модули `src/Competency.Audit`, `src/Competency.OrgStructure`, `src/Competency.UserManagement`; корень — `Competency.slnx`, `global.json`, `Directory.Build.props`, `.config/dotnet-tools.json`;
@@ -144,6 +144,12 @@ Material risk: change: новый UI-паттерн без спецификац�
 - [x] AC-17,13: убрать правую панель деталей, `antd Tree` и компоненты, ставшие ненужными (без мёртвого кода: удалить файлы фичи, на которые не осталось ссылок); сохранить страницы списка и карточки сотрудника; адаптивность desktop/tablet (на узком экране вложенность сжимается отступом, не горизонтальной прокруткой); только существующие токены DESIGN.md, новые компоненты фиксируются как кандидаты в `design-md-delta`
 Tech reference: antd-6.6.5, react-router-8.4.0, tanstack-react-query-5.104.1.
 
+### Task 13: Убрать даты действия подразделений и раскрывающуюся информацию о подразделении
+Material risk: change: изменение публичного контракта API и схемы БД (миграция), удаление полей из аудируемой сущности
+- [ ] AC-9: убрать даты действия подразделения из backend: поля `ValidFrom`/`ValidTo` сущности `OrgUnit`, её конфигурации (колонки, CHECK `valid_period`), запросов создания/правки и ответа, валидации и аудируемых свойств; корректирующая миграция (например `RemoveOrgUnitValidity`: удалить CHECK и колонки `valid_from`/`valid_to`; уже применённая миграция `OrgStructure` не переписывается — схема может быть применена на dev-БД), `Down` возвращает колонки и CHECK; регенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts`
+- [ ] AC-9,17: убрать из UI поля дат в форме подразделения и вывод дат; убрать с карточки подразделения кнопку «i» и раскрывающийся блок «Путь и сводка» (`UnitDetails.tsx`) вместе с ставшими ненужными клиентскими запросами/ключами/типами (без мёртвого кода); эндпойнты `/path` и `/summary` в backend остаются (AC-11)
+Tech reference: efcore-10.0.12, npgsql-entityframeworkcore-postgresql-10.0.3, antd-6.6.5.
+
 ## Risks
 - Docker не установлен на dev-машине: ручной шаг отложен до Task 10 (последняя волна); до этого момента миграции Task 4–6 (расширение `pg_trgm`, схема Identity, триггер журнала) не исполнялись против реального PostgreSQL, ошибки в них обнаруживаются поздно — Task 10 и impl-test обязаны прогнать их первыми.
 - Учётка БД приложения имеет DDL-права (решение пользователя): триггер неизменяемости журнала не защищает от DDL.
@@ -163,11 +169,13 @@ Tech reference: antd-6.6.5, react-router-8.4.0, tanstack-react-query-5.104.1.
 | 8 | 10 |
 | 9 | 11 |
 | 10 | 12 |
+| 11 | 13 |
 
 - Task 2 и Task 3 зависят от Task 1 (проекты, `openapi.json`).
 - Task 4, 5, 6 идут последовательно: общий `AppDbContext` и единая линия миграций (конфликт model snapshot при параллельной генерации); Task 4 первым, чтобы сущности Task 5–6 аудировались с начала.
 - Task 6 зависит от Task 5 (`IEmployeeDirectory`, статус сотрудника) и Task 4 (`IAuditWriter`).
 - Task 7 зависит от Task 3 и Task 6 (оболочка, backend пользователей); Task 7 владеет оболочкой (`web/src/app/**`), хуком текущего пользователя и контрактом навигации фич. Task 8 и 9 зависят от Task 7 (хук роли, навигация), идут параллельно в своих каталогах `web/src/features/<feature>/` и общих файлов не правят (волны переразбиты при impl: исходная волна 6 с Task 7, 8, 9 порождала зависимость от ещё не созданного хука).
+- Task 13 (поправка AC-9) зависит от Task 5 (backend подразделений), Task 8/12 (UI) и идёт последней (волна 11).
 - Task 12 (AC-17, поправка scope) зависит от Task 8 (заменяет его раздел «Оргструктура») и идёт после Task 11 (волна 10); backend не меняет.
 - Task 11 (AC-16, поправка scope) зависит от Task 1 и Task 3 и идёт последней, после Task 10 (волна 9); не меняет код подсистем.
 - Task 10 зависит от Task 1 и Task 3 (волна 8) (структура репозитория, SPA-статика); находится в последней волне, чтобы собирать итоговое приложение.
