@@ -96,7 +96,7 @@ export function UserListPage() {
         </Button>
       </Flex>
       <Row gutter={[token.margin, token.margin]}>
-        <Col xs={24} md={12} lg={10}>
+        <Col xs={24} md={8} lg={10}>
           <Input.Search
             allowClear
             aria-label="Поиск по имени пользователя"
@@ -110,7 +110,7 @@ export function UserListPage() {
             }
           />
         </Col>
-        <Col xs={12} md={6} lg={4}>
+        <Col xs={24} sm={12} md={8} lg={6}>
           <Select
             allowClear
             aria-label="Фильтр по роли"
@@ -122,7 +122,7 @@ export function UserListPage() {
             }
           />
         </Col>
-        <Col xs={12} md={6} lg={4}>
+        <Col xs={24} sm={12} md={8} lg={5}>
           <Select
             allowClear
             aria-label="Фильтр по состоянию"
