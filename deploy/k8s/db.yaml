@@ -84,8 +84,8 @@ spec:
             failureThreshold: 6
           volumeMounts:
             # PostgreSQL 18 images declare VOLUME /var/lib/postgresql and keep the cluster in the 18/docker subdirectory of it.
-            # Mounting anywhere else, /var/lib/postgresql/data included, leaves the data in the container layer.
-            # The data directory variable is left at the image default for the same reason.
+            # A mount at /var/lib/postgresql/data makes the entrypoint refuse to start (checked on the image); a mount elsewhere
+            # leaves the cluster in the container layer. The data directory variable is left at the image default for the same reason.
             - name: data
               mountPath: /var/lib/postgresql
             - name: dshm
