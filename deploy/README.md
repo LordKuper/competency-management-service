@@ -60,7 +60,7 @@ kubectl -n competency rollout status deployment/app
 
 Поля Secret `competency-secret`:
 
-- `POSTGRES_PASSWORD` — пароль пользователя БД; `ConnectionStrings__Default` — строка подключения `app` с тем же паролем (без `;` и кавычек в пароле); `Database` и `Username` совпадают с `db-config`. Пароль применяется при первой инициализации тома: позже Secret его не меняет.
+- `POSTGRES_PASSWORD` — пароль пользователя БД; `ConnectionStrings__Default` — строка подключения `app` с тем же паролем (без `;` и кавычек в пароле); `Database` и `Username` совпадают с `db-config`; `GSS Encryption Mode=Disable` из шаблона оставить (в образе нет библиотеки Kerberos, без ключа при каждом старте в stderr попадает строка `Cannot load library libgssapi_krb5.so.2`). Пароль применяется при первой инициализации тома: позже Secret его не меняет.
 - `Bootstrap__AdminUserName`, `Bootstrap__AdminPassword` — первый глобальный администратор. Пароль подчиняется политике Identity: не короче 10 символов, цифра, строчная и заглавная буква, неалфавитно-цифровой символ.
 
 Доступ без Ingress, для проверки: `kubectl -n competency port-forward svc/app 8080:8080` и `curl http://localhost:8080/healthz/ready`.
