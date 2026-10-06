@@ -25,3 +25,4 @@
 - [PostgreSQL behaviour facts](project_pg-behaviour-facts.md) — RESTRICT is 23001, ё vs е in ILIKE/FTS, superuser trigger bypass, no CHECK on parent_id
 - [VS F5 launch facts](project_vs-f5-launch-facts.md) — slnLaunch name/format, esproj dev server starts only via Deploy, dcproj stub in CLI, from VS binaries
 - [Scratch process control](project_scratch-process-control.md) — kill by PID never by pattern, dotnet dll content root, Windows closed-port timing, background runs
+- [Org card hierarchy facts](project_web-org-card-hierarchy-facts.md) — antd render cost vs plain markup, stable callbacks for memo, connector offsets, CDP harness pitfalls
