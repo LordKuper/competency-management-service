@@ -16,7 +16,7 @@ internal sealed class AdminBootstrapper(
     IConfiguration configuration,
     ILogger<AdminBootstrapper> logger)
 {
-    private const string UserNameSetting = "Bootstrap:AdminUserName";
+    private const string EmailSetting = "Bootstrap:AdminEmail";
     private const string PasswordSetting = "Bootstrap:AdminPassword";
 
     /// <summary>
@@ -31,15 +31,20 @@ internal sealed class AdminBootstrapper(
             return;
         }
 
-        var userName = configuration[UserNameSetting];
+        var email = configuration[EmailSetting]?.Trim();
         var password = configuration[PasswordSetting];
-        if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrEmpty(password))
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
         {
-            throw new InvalidOperationException(
-                $"No active global administrator exists. Set '{UserNameSetting}' and '{PasswordSetting}' in the environment to create the first one.");
+            throw new InvalidOperationException(MissingSettingsMessage(email, password));
         }
 
-        var administrator = new AppUser { UserName = userName.Trim(), Role = UserRole.GlobalAdmin };
+        if (email.Length > AppUser.EmailMaxLength || !CredentialChecks.IsEmailAddress(email))
+        {
+            throw new InvalidOperationException($"'{EmailSetting}' is not a valid e-mail address of at most {AppUser.EmailMaxLength} characters.");
+        }
+
+        var administrator = new AppUser { Role = UserRole.GlobalAdmin };
+        administrator.SetEmail(email);
         var result = await users.CreateAsync(administrator, password);
         if (!result.Succeeded)
         {
@@ -48,5 +53,21 @@ internal sealed class AdminBootstrapper(
         }
 
         logger.LogInformation("Bootstrap administrator {UserId} created", administrator.Id);
+    }
+
+    private static string MissingSettingsMessage(string? email, string? password)
+    {
+        var missing = new List<string>();
+        if (string.IsNullOrEmpty(email))
+        {
+            missing.Add(EmailSetting);
+        }
+
+        if (string.IsNullOrEmpty(password))
+        {
+            missing.Add(PasswordSetting);
+        }
+
+        return $"No active global administrator exists. Set {string.Join(" and ", missing.Select(setting => $"'{setting}'"))} in the environment to create the first one.";
     }
 }

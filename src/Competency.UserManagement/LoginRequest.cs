@@ -5,7 +5,7 @@ namespace Competency.UserManagement;
 /// </summary>
 internal sealed record LoginRequest
 {
-    public required string UserName { get; init; }
+    public required string Email { get; init; }
 
     public required string Password { get; init; }
 
@@ -16,7 +16,7 @@ internal sealed record LoginRequest
     public Dictionary<string, string[]> Validate()
     {
         var errors = new Dictionary<string, string[]>();
-        CredentialChecks.CheckUserName(errors, "userName", UserName);
+        CredentialChecks.CheckEmail(errors, "email", Email);
         CredentialChecks.CheckPassword(errors, "password", Password);
         return errors;
     }

@@ -12,7 +12,7 @@ internal static class Rejections
     private const string ConflictTitle = "Операция отклонена";
     private const string InvalidTitle = "Проверьте введённые данные";
     private const string CurrentPasswordField = "currentPassword";
-    private const string UserNameField = "userName";
+    private const string EmailField = "email";
     private const string GeneralField = "";
     private const string DefaultPasswordField = "newPassword";
 
@@ -23,11 +23,11 @@ internal static class Rejections
         TypedResults.ValidationProblem(new Dictionary<string, string[]> { [field] = [message] });
 
     /// <summary>
-    /// Turns a failed Identity operation into the response that fits it: a stale version, a taken name, or the problems with the input.
+    /// Turns a failed Identity operation into the response that fits it: a stale version, a taken e-mail, or the problems with the input.
     /// </summary>
     /// <param name="failure">The failed result.</param>
     /// <param name="passwordField">The request field that carries the password, which password rule violations are reported against.</param>
-    /// <returns>412 for a concurrent change, 409 for a taken name, otherwise 400 listing the problems by field.</returns>
+    /// <returns>412 for a concurrent change, 409 naming the <c>email</c> field for a taken e-mail, otherwise 400 listing the problems by field.</returns>
     public static ProblemHttpResult From(IdentityResult failure, string passwordField = DefaultPasswordField)
     {
         if (failure.Errors.Any(error => error.Code == nameof(IdentityErrorDescriber.ConcurrencyFailure)))
@@ -37,7 +37,12 @@ internal static class Rejections
 
         if (failure.Errors.FirstOrDefault(error => error.Code == nameof(IdentityErrorDescriber.DuplicateUserName)) is { } taken)
         {
-            return Conflict(taken.Description);
+            return TypedResults.Problem(new HttpValidationProblemDetails(new Dictionary<string, string[]> { [EmailField] = [taken.Description] })
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = ConflictTitle,
+                Detail = taken.Description,
+            });
         }
 
         var problems = failure.Errors
@@ -53,7 +58,7 @@ internal static class Rejections
     private static string FieldOf(string code, string passwordField) => code switch
     {
         nameof(IdentityErrorDescriber.PasswordMismatch) => CurrentPasswordField,
-        nameof(IdentityErrorDescriber.InvalidUserName) => UserNameField,
+        nameof(IdentityErrorDescriber.InvalidUserName) => EmailField,
         _ when code.StartsWith("Password", StringComparison.Ordinal) => passwordField,
         _ => GeneralField,
     };

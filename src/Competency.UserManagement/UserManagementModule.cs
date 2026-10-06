@@ -15,7 +15,7 @@ public static class UserManagementModule
 
     /// <summary>
     /// Registers the UserManagement module services: the account table, Identity with the password and lockout policy read from
-    /// the <c>Identity</c> configuration section and the account id read from the platform subject claim, the cookie session read from
+    /// the <c>Identity</c> configuration section, no restriction on user-name characters (the user name is the e-mail, checked by the requests) and the account id read from the platform subject claim, the cookie session read from
     /// <c>Authentication:Cookie</c>, and the bootstrap of the first administrator. The host adds <c>UseAuthentication</c> to its pipeline.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
@@ -25,7 +25,11 @@ public static class UserManagementModule
     {
         services.AddSingleton<IEntityConfigurationContributor, UserManagementEntityConfiguration>();
 
-        services.Configure<IdentityOptions>(options => options.ClaimsIdentity.UserIdClaimType = PlatformClaims.Subject);
+        services.Configure<IdentityOptions>(options =>
+        {
+            options.ClaimsIdentity.UserIdClaimType = PlatformClaims.Subject;
+            options.User.AllowedUserNameCharacters = string.Empty;
+        });
         services.Configure<IdentityOptions>(configuration.GetSection(IdentitySection));
         services.AddIdentityCore<AppUser>()
             .AddUserStore<AppUserStore>()
@@ -51,7 +55,7 @@ public static class UserManagementModule
     }
 
     /// <summary>
-    /// Creates the first global administrator from <c>Bootstrap:AdminUserName</c> and <c>Bootstrap:AdminPassword</c> when no active one exists.
+    /// Creates the first global administrator from <c>Bootstrap:AdminEmail</c> and <c>Bootstrap:AdminPassword</c> when no active one exists.
     /// Call it explicitly after the schema is migrated, never from a tooling host; it fails with a clear message when an administrator is needed but not configured.
     /// </summary>
     /// <param name="services">The root service provider.</param>

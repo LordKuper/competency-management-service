@@ -6,11 +6,13 @@ namespace Competency.OrgStructure;
 
 /// <summary>
 /// Contributes the <see cref="OrgUnit"/> and <see cref="Employee"/> tables to the shared model: snake_case names,
-/// foreign keys that never cascade, case-insensitive unique e-mail, and the Russian full-text and trigram indexes that serve search.
+/// foreign keys that never cascade, and the Russian full-text and trigram indexes that serve search.
+/// It also maps the keyless <see cref="EmployeeAccount"/> query over the accounts table, which has no table of its own.
 /// </summary>
 internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationContributor
 {
     private const string TrigramExtension = "pg_trgm";
+    private const string EmployeeAccountsSql = "SELECT employee_id, email FROM users WHERE employee_id IS NOT NULL";
 
     public void Configure(ModelBuilder modelBuilder)
     {
@@ -39,26 +41,24 @@ internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationCont
             ConfigureBase(entity);
             entity.ToTable("employees");
             entity.Property(e => e.FullName).HasColumnName("full_name").HasMaxLength(Employee.FullNameMaxLength);
-            entity.Property(e => e.PersonnelNumber).HasColumnName("personnel_number").HasMaxLength(Employee.PersonnelNumberMaxLength);
-            entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(Employee.EmailMaxLength);
             entity.Property(e => e.Position).HasColumnName("position").HasMaxLength(Employee.PositionMaxLength);
             entity.Property(e => e.IsActive).HasColumnName("is_active");
             entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
-            entity.Property(e => e.NormalizedEmail)
-                .HasColumnName("normalized_email")
-                .HasComputedColumnSql("lower(email)", stored: true);
 
             entity.HasOne(e => e.OrgUnit).WithMany().HasForeignKey(e => e.OrgUnitId).OnDelete(DeleteBehavior.Restrict);
-
-            entity.HasIndex(e => e.PersonnelNumber).IsUnique();
-            entity.HasIndex(e => e.NormalizedEmail).IsUnique();
 
             entity.HasGeneratedTsVectorColumn(e => e.SearchVector, TextSearch.FullTextConfig, e => new { e.FullName, e.Position });
             entity.Property(e => e.SearchVector).HasColumnName("search_vector");
             entity.HasIndex(e => e.SearchVector).HasMethod("GIN");
             entity.HasIndex(e => e.FullName, "IX_employees_full_name_trgm").HasMethod("gin").HasOperators(TextSearch.TrigramOperators);
-            entity.HasIndex(e => e.Email, "IX_employees_email_trgm").HasMethod("gin").HasOperators(TextSearch.TrigramOperators);
-            entity.HasIndex(e => e.PersonnelNumber, "IX_employees_personnel_number_trgm").HasMethod("gin").HasOperators(TextSearch.TrigramOperators);
+        });
+
+        modelBuilder.Entity<EmployeeAccount>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToSqlQuery(EmployeeAccountsSql);
+            entity.Property(e => e.EmployeeId).HasColumnName("employee_id");
+            entity.Property(e => e.Email).HasColumnName("email");
         });
     }
 

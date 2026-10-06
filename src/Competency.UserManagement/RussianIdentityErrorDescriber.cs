@@ -18,10 +18,10 @@ internal sealed class RussianIdentityErrorDescriber : IdentityErrorDescriber
         Describe(nameof(PasswordMismatch), "Текущий пароль указан неверно.");
 
     public override IdentityError InvalidUserName(string? userName) =>
-        Describe(nameof(InvalidUserName), "Имя пользователя может содержать только латинские буквы, цифры и символы - . _ @ +");
+        Describe(nameof(InvalidUserName), "E-mail: укажите корректный адрес.");
 
     public override IdentityError DuplicateUserName(string userName) =>
-        Describe(nameof(DuplicateUserName), $"Имя пользователя «{userName}» уже занято.");
+        Describe(nameof(DuplicateUserName), $"Учётная запись с e-mail «{userName}» уже существует.");
 
     public override IdentityError PasswordTooShort(int length) =>
         Describe(nameof(PasswordTooShort), $"Пароль должен содержать не менее {length} символов.");

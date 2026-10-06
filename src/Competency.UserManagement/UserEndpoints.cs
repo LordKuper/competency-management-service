@@ -74,12 +74,12 @@ internal static class UserEndpoints
 
         if (query.SearchPattern() is { } pattern)
         {
-            users = users.Where(user => EF.Functions.ILike(user.UserName!, pattern, UserListQuery.LikeEscape));
+            users = users.Where(user => EF.Functions.ILike(user.Email!, pattern, UserListQuery.LikeEscape));
         }
 
         var total = await users.CountAsync(cancellationToken);
         var rows = await users
-            .OrderBy(user => user.NormalizedUserName)
+            .OrderBy(user => user.NormalizedEmail)
             .ThenBy(user => user.Id)
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
@@ -144,7 +144,8 @@ internal static class UserEndpoints
             }
         }
 
-        var user = new AppUser { UserName = request.UserName.Trim(), Role = request.Role, EmployeeId = request.EmployeeId };
+        var user = new AppUser { Role = request.Role, EmployeeId = request.EmployeeId };
+        user.SetEmail(request.Email.Trim());
         var result = await users.CreateAsync(user, request.Password);
         if (!result.Succeeded)
         {
@@ -200,7 +201,7 @@ internal static class UserEndpoints
 
         ifMatch.ApplyTo(context, user);
         var endsSessions = user.Role != request.Role || user.EmployeeId != request.EmployeeId;
-        user.UserName = request.UserName.Trim();
+        user.SetEmail(request.Email.Trim());
         user.Role = request.Role;
         user.EmployeeId = request.EmployeeId;
 

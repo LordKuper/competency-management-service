@@ -20,7 +20,7 @@ internal static class AuthEndpoints
     private const string Route = "/api/v1/auth";
     private const string Tag = "Auth";
     private const string LoginFailedTitle = "Не удалось войти";
-    private const string LoginFailedDetail = "Проверьте имя пользователя и пароль. Если вход не удаётся, обратитесь к администратору.";
+    private const string LoginFailedDetail = "Проверьте e-mail и пароль. Если вход не удаётся, обратитесь к администратору.";
     private const string UnknownActor = "unknown";
     private const string AnonymousRole = "anonymous";
     private const string LoginSucceededAction = "Auth.LoginSucceeded";
@@ -73,7 +73,7 @@ internal static class AuthEndpoints
             return TypedResults.ValidationProblem(errors);
         }
 
-        var user = await users.FindByNameAsync(request.UserName.Trim());
+        var user = await users.FindByEmailAsync(request.Email.Trim());
         if (user is null)
         {
             SpendHashingTime(users, request.Password);

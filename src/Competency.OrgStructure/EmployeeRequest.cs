@@ -1,5 +1,3 @@
-using System.Net.Mail;
-
 namespace Competency.OrgStructure;
 
 /// <summary>
@@ -9,10 +7,6 @@ namespace Competency.OrgStructure;
 internal sealed record EmployeeRequest
 {
     public required string FullName { get; init; }
-
-    public required string PersonnelNumber { get; init; }
-
-    public required string Email { get; init; }
 
     public required string Position { get; init; }
 
@@ -28,13 +22,7 @@ internal sealed record EmployeeRequest
     {
         var errors = new Dictionary<string, string[]>();
         CheckText(errors, "fullName", "ФИО", FullName, Employee.FullNameMaxLength);
-        CheckText(errors, "personnelNumber", "Табельный номер", PersonnelNumber, Employee.PersonnelNumberMaxLength);
         CheckText(errors, "position", "Должность", Position, Employee.PositionMaxLength);
-        if (CheckText(errors, "email", "E-mail", Email, Employee.EmailMaxLength) && !IsEmailAddress(Email.Trim()))
-        {
-            errors["email"] = ["Укажите корректный адрес e-mail."];
-        }
-
         return errors;
     }
 
@@ -45,28 +33,18 @@ internal sealed record EmployeeRequest
     public EmployeeRequest Trimmed() => this with
     {
         FullName = FullName.Trim(),
-        PersonnelNumber = PersonnelNumber.Trim(),
-        Email = Email.Trim(),
         Position = Position.Trim(),
     };
 
-    private static bool CheckText(Dictionary<string, string[]> errors, string field, string label, string? value, int maxLength)
+    private static void CheckText(Dictionary<string, string[]> errors, string field, string label, string? value, int maxLength)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
             errors[field] = [$"{label}: укажите значение."];
-            return false;
         }
-
-        if (value.Trim().Length > maxLength)
+        else if (value.Trim().Length > maxLength)
         {
             errors[field] = [$"{label}: не длиннее {maxLength} символов."];
-            return false;
         }
-
-        return true;
     }
-
-    private static bool IsEmailAddress(string value) =>
-        MailAddress.TryCreate(value, out var address) && address.Address == value;
 }

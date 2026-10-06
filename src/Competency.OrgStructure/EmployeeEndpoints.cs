@@ -31,12 +31,12 @@ internal static class EmployeeEndpoints
 
         var administrators = readers.MapGroup(string.Empty)
             .RequireAuthorization(AuthorizationPolicies.GlobalAdmin)
-            .ProducesProblem(StatusCodes.Status403Forbidden)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status403Forbidden);
 
         administrators.MapPost(string.Empty, CreateAsync).WithName("CreateEmployee").ProducesETag();
         administrators.MapPut("/{id:guid}", UpdateAsync).WithName("UpdateEmployee").ProducesETag()
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
     }
 
     private static async Task<Results<Ok<PageResponse<EmployeeResponse>>, ValidationProblem>> ListAsync(
@@ -65,13 +65,13 @@ internal static class EmployeeEndpoints
 
         if (TextSearch.Normalize(query.Q) is { } text)
         {
-            employees = employees.Matching(text, actor.IsGlobalAdmin());
+            employees = employees.Matching(text);
         }
 
         var page = await employees
             .OrderBy(employee => employee.FullName)
             .ThenBy(employee => employee.Id)
-            .Select(EmployeeResponse.ProjectionFor(actor))
+            .Select(EmployeeResponse.ProjectionFor(context, actor))
             .ToPageAsync(query.Page, query.PageSize, cancellationToken);
 
         return TypedResults.Ok(page);
@@ -91,7 +91,7 @@ internal static class EmployeeEndpoints
             .AsNoTracking()
             .VisibleTo(actor)
             .Where(candidate => candidate.Id == id)
-            .Select(EmployeeResponse.ProjectionFor(actor))
+            .Select(EmployeeResponse.ProjectionFor(context, actor))
             .FirstOrDefaultAsync(cancellationToken);
         if (employee is null)
         {
@@ -106,7 +106,7 @@ internal static class EmployeeEndpoints
         return TypedResults.Ok(employee);
     }
 
-    private static async Task<Results<Created<EmployeeResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
+    private static async Task<Results<Created<EmployeeResponse>, ValidationProblem>> CreateAsync(
         EmployeeRequest request,
         AppDbContext context,
         HttpResponse response,
@@ -131,16 +131,9 @@ internal static class EmployeeEndpoints
             return Rejections.Invalid("orgUnitId", "Подразделение неактивно.");
         }
 
-        if (await FindDuplicateAsync(context, input, Guid.Empty, cancellationToken) is { } duplicate)
-        {
-            return Rejections.Conflict(duplicate);
-        }
-
         var employee = new Employee
         {
             FullName = input.FullName,
-            PersonnelNumber = input.PersonnelNumber,
-            Email = input.Email,
             Position = input.Position,
             IsActive = input.IsActive,
             OrgUnit = unit,
@@ -196,15 +189,8 @@ internal static class EmployeeEndpoints
             }
         }
 
-        if (await FindDuplicateAsync(context, input, id, cancellationToken) is { } duplicate)
-        {
-            return Rejections.Conflict(duplicate);
-        }
-
         ifMatch.ApplyTo(context, employee);
         employee.FullName = input.FullName;
-        employee.PersonnelNumber = input.PersonnelNumber;
-        employee.Email = input.Email;
         employee.Position = input.Position;
         employee.IsActive = input.IsActive;
         employee.OrgUnit = unit;
@@ -212,45 +198,12 @@ internal static class EmployeeEndpoints
         return TypedResults.Ok(await SaveAsync(employee, context, transaction, response, cancellationToken));
     }
 
-    /// <summary>
-    /// Says why the personnel number or e-mail of a request belongs to another employee, ignoring letter case in the e-mail.
-    /// </summary>
-    /// <param name="context">The context to query through.</param>
-    /// <param name="input">The trimmed request.</param>
-    /// <param name="excludedId">The employee being updated, or <see cref="Guid.Empty"/> when creating one.</param>
-    /// <param name="cancellationToken">Cancels the lookups.</param>
-    /// <returns>The reason, or <see langword="null"/> when both values are free.</returns>
-    private static async Task<string?> FindDuplicateAsync(
-        AppDbContext context,
-        EmployeeRequest input,
-        Guid excludedId,
-        CancellationToken cancellationToken)
-    {
-        var others = context.Set<Employee>().AsNoTracking().Where(employee => employee.Id != excludedId);
-        if (await others.AnyAsync(employee => employee.PersonnelNumber == input.PersonnelNumber, cancellationToken))
-        {
-            return "Сотрудник с таким табельным номером уже существует.";
-        }
-
-        var normalizedEmail = input.Email.ToLowerInvariant();
-        return await others.AnyAsync(employee => employee.NormalizedEmail == normalizedEmail, cancellationToken)
-            ? "Сотрудник с таким e-mail уже существует."
-            : null;
-    }
-
-    private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, string text, bool includePersonnelNumber)
+    private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, string text)
     {
         var pattern = TextSearch.ContainsPattern(text);
-        return includePersonnelNumber
-            ? employees.Where(employee =>
-                EF.Functions.ILike(employee.FullName, pattern, TextSearch.LikeEscape)
-                || EF.Functions.ILike(employee.Email, pattern, TextSearch.LikeEscape)
-                || EF.Functions.ILike(employee.PersonnelNumber, pattern, TextSearch.LikeEscape)
-                || employee.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)))
-            : employees.Where(employee =>
-                EF.Functions.ILike(employee.FullName, pattern, TextSearch.LikeEscape)
-                || EF.Functions.ILike(employee.Email, pattern, TextSearch.LikeEscape)
-                || employee.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)));
+        return employees.Where(employee =>
+            EF.Functions.ILike(employee.FullName, pattern, TextSearch.LikeEscape)
+            || employee.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)));
     }
 
     private static async Task<EmployeeResponse> SaveAsync(
@@ -263,6 +216,10 @@ internal static class EmployeeEndpoints
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         response.SetETag(employee.Version);
-        return EmployeeResponse.Full(employee);
+        return await context.Set<Employee>()
+            .AsNoTracking()
+            .Where(saved => saved.Id == employee.Id)
+            .Select(EmployeeResponse.FullProjection(context))
+            .SingleAsync(cancellationToken);
     }
 }

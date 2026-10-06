@@ -4,7 +4,7 @@ namespace Competency.UserManagement;
 
 /// <summary>
 /// The filters and paging of the account list request. Every filter is optional; pages count from 1.
-/// The search text matches the user name anywhere in it, regardless of letter case.
+/// The search text matches the e-mail anywhere in it, regardless of letter case.
 /// </summary>
 internal sealed record UserListQuery(
     [FromQuery(Name = "q")] string? Q = null,

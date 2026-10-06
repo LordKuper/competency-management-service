@@ -7,7 +7,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ConnectionStrings__Default": "Host=localhost;Port=15432;Database=competency;Username=competency;Password=dev_pass_123;GSS Encryption Mode=Disable",
-        "Bootstrap__AdminUserName": "admin",
+        "Bootstrap__AdminEmail": "admin@kalibr.local",
         "Bootstrap__AdminPassword": "Admin-Dev-12345!"
       }
     }

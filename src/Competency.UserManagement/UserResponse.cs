@@ -7,7 +7,7 @@ namespace Competency.UserManagement;
 /// </summary>
 internal sealed record UserResponse(
     Guid Id,
-    string UserName,
+    string Email,
     UserRole Role,
     bool IsBlocked,
     Guid? EmployeeId,
@@ -16,7 +16,7 @@ internal sealed record UserResponse(
 {
     public static readonly Expression<Func<AppUser, UserResponse>> Projection = user => new UserResponse(
         user.Id,
-        user.UserName!,
+        user.Email!,
         user.Role,
         user.IsBlocked,
         user.EmployeeId,
