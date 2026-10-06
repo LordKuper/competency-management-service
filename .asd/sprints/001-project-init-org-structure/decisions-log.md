@@ -176,3 +176,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Явный запрос пользователя при ручной проверке; изменение критерия и публичного контракта — `new or changed scope` и `public contract change` (hard gates), подтверждено пользователем.
 - **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
 - 2026-10-06 — route Task 13: critical, dispatch HEAD 9b7fef4
+
+## 2026-10-06 — Волна 11: Task 13 (без дат действия подразделений, AC-9)
+
+- **Decision**: Приняты: контракт и UI в одном коммите (`d39efba`), так как `schema.d.ts` без UI и UI без `schema.d.ts` не проходят `tsc` (`code-style.md` §19); корректирующая миграция `RemoveOrgUnitValidity` (Down возвращает колонки пустыми и CHECK `valid_to >= valid_from`, данные Down теряет); запросы, всё ещё присылающие `validFrom`/`validTo`, молча игнорируются (поведение `System.Text.Json`); `docs/Постановка.md:150` и spike-заметки `postgres-image-18.6-trixie.md` упоминают даты — обновить на design-promote.
+- **Rationale**: В пределах AC-9 после поправки; миграция проверена на scratch-PostgreSQL (данные сохраняются, Up/Down/Up чисто, CHECK восстанавливается), API smoke и аудит без полей дат.
+- **Affected docs**: `src/Competency.OrgStructure/`, `src/Competency.Platform/Migrations/20261006153445_RemoveOrgUnitValidity.cs`, `openapi/openapi.json`, `web/src/features/org-structure/`
