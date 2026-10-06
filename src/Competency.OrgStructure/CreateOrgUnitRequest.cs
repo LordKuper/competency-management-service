@@ -11,9 +11,5 @@ internal sealed record CreateOrgUnitRequest
 
     public Guid? HeadEmployeeId { get; init; }
 
-    public DateOnly? ValidFrom { get; init; }
-
-    public DateOnly? ValidTo { get; init; }
-
-    public Dictionary<string, string[]> Validate() => OrgUnitInput.Validate(Name, ValidFrom, ValidTo);
+    public Dictionary<string, string[]> Validate() => OrgUnitInput.Validate(Name);
 }

@@ -6,13 +6,11 @@ namespace Competency.OrgStructure;
 internal static class OrgUnitInput
 {
     /// <summary>
-    /// Checks the name and the validity period.
+    /// Checks the name.
     /// </summary>
     /// <param name="name">The requested name.</param>
-    /// <param name="validFrom">The first day of validity, if any.</param>
-    /// <param name="validTo">The last day of validity, if any.</param>
     /// <returns>The problems found by field name; empty when the input is valid.</returns>
-    public static Dictionary<string, string[]> Validate(string? name, DateOnly? validFrom, DateOnly? validTo)
+    public static Dictionary<string, string[]> Validate(string? name)
     {
         var errors = new Dictionary<string, string[]>();
         if (string.IsNullOrWhiteSpace(name))
@@ -22,11 +20,6 @@ internal static class OrgUnitInput
         else if (name.Trim().Length > OrgUnit.NameMaxLength)
         {
             errors["name"] = [$"Название не должно быть длиннее {OrgUnit.NameMaxLength} символов."];
-        }
-
-        if (validFrom > validTo)
-        {
-            errors["validTo"] = ["Дата окончания не может быть раньше даты начала."];
         }
 
         return errors;

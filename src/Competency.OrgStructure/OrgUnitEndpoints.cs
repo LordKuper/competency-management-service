@@ -227,8 +227,6 @@ internal static class OrgUnitEndpoints
             Name = request.Name.Trim(),
             ParentId = request.ParentId,
             HeadEmployeeId = request.HeadEmployeeId,
-            ValidFrom = request.ValidFrom,
-            ValidTo = request.ValidTo,
         };
         context.Add(unit);
 
@@ -267,8 +265,6 @@ internal static class OrgUnitEndpoints
         ifMatch.ApplyTo(context, unit);
         unit.Name = request.Name.Trim();
         unit.HeadEmployeeId = request.HeadEmployeeId;
-        unit.ValidFrom = request.ValidFrom;
-        unit.ValidTo = request.ValidTo;
 
         return TypedResults.Ok(await SaveAsync(unit, context, transaction, response, cancellationToken));
     }

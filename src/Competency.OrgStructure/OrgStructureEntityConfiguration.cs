@@ -19,15 +19,11 @@ internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationCont
         modelBuilder.Entity<OrgUnit>(entity =>
         {
             ConfigureBase(entity);
-            entity.ToTable("org_units", table => table.HasCheckConstraint(
-                "ck_org_units_valid_period",
-                "valid_from IS NULL OR valid_to IS NULL OR valid_to >= valid_from"));
+            entity.ToTable("org_units");
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(OrgUnit.NameMaxLength);
             entity.Property(e => e.ParentId).HasColumnName("parent_id");
             entity.Property(e => e.HeadEmployeeId).HasColumnName("head_employee_id");
             entity.Property(e => e.IsActive).HasColumnName("is_active");
-            entity.Property(e => e.ValidFrom).HasColumnName("valid_from");
-            entity.Property(e => e.ValidTo).HasColumnName("valid_to");
 
             entity.HasOne<OrgUnit>().WithMany().HasForeignKey(e => e.ParentId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Employee>().WithMany().HasForeignKey(e => e.HeadEmployeeId).OnDelete(DeleteBehavior.Restrict);

@@ -31,18 +31,6 @@ internal sealed class OrgUnit : EntityBase
     public bool IsActive { get; set; } = true;
 
     /// <summary>
-    /// The first day the unit exists; absent when unbounded.
-    /// </summary>
-    [Audited]
-    public DateOnly? ValidFrom { get; set; }
-
-    /// <summary>
-    /// The last day the unit exists; absent when unbounded.
-    /// </summary>
-    [Audited]
-    public DateOnly? ValidTo { get; set; }
-
-    /// <summary>
     /// The Russian full-text index of <see cref="Name"/>, maintained by the database.
     /// </summary>
     public NpgsqlTsVector SearchVector { get; private set; } = null!;
