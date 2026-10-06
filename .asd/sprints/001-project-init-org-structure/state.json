@@ -60,6 +60,13 @@
       "decision": "add AC-16, Task 11 wave 9",
       "reason": "F5 launch from Visual Studio",
       "evidence": "decisions-log.md 2026-10-06 scope amendment"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "add AC-17, Task 12 wave 10; AC-13 narrowed",
+      "reason": "org-structure as card hierarchy",
+      "evidence": "decisions-log.md 2026-10-06 scope amendment AC-17"
     }
   ],
   "task_routing": {
@@ -127,6 +134,12 @@
       "execution": "agent",
       "tier": "critical",
       "reason": "risk:VS-only esproj/dcproj in solution may break CLI build and CI, dev-only MSBuild SDKs outside stack, build command change",
+      "resolved_model": "sonnet"
+    },
+    "Task 12": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:new UI pattern absent in DESIGN.md, lazy loading and performance at 10000+ employees, tree mutation UI on cards",
       "resolved_model": "sonnet"
     }
   },
