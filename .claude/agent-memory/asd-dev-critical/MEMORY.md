@@ -21,3 +21,5 @@
 - [Web UI test and form gotchas](project_web-ui-test-and-form-gotchas.md) — jsdom has no ResizeObserver, router singleton vs resetModules, Form.Item id, biome diff trick
 - [Web org-structure UI facts](project_web-org-structure-ui-facts.md) — antd Tree/TreeSelect/Table in jsdom, Escape closes Modal, form reset via key, throwaway test lint in shared worktree
 - [Packaging offline verification](project_packaging-offline-verification.md) — fresh-clone publish, npm linux dry-run, yaml parse, Secret template kept out of deploy/k8s
+- [Docker spike recipe](project_docker-spike-recipe.md) — Git Bash docker path mangling, 10/min login limit, parallel curl pitfalls, scratch runner flags
+- [PostgreSQL behaviour facts](project_pg-behaviour-facts.md) — RESTRICT is 23001, ё vs е in ILIKE/FTS, superuser trigger bypass, no CHECK on parent_id

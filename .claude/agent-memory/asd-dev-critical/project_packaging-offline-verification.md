@@ -14,5 +14,5 @@ Sprint 001 Task 10 (packaging) was verified offline on a machine with no Docker,
 - **Manifest checks**: root `node_modules` holds the `yaml` package (design.md tooling); `createRequire("<repo>/package.json")("yaml")` parses every document and a short script cross-checks selectors, named ports, mounts, ConfigMap and Secret keys. kubectl `--dry-run=client` needs an API server, so it stays a Manual verification line.
 - **Secret template placement**: `deploy/secret.template.yaml` sits above `deploy/k8s/` on purpose. `kubectl apply -f deploy/k8s/` applies every yaml in the directory, and a Secret with placeholders would put a placeholder password into the PostgreSQL data directory on first init, where a later Secret change cannot reach it.
 
-**Why:** each of these answered "how do we know the packaging works with no Docker"; the Docker run itself is deferred to MS-1.
-**How to apply:** re-verifying or changing the Dockerfile, `deploy/**` or the publish flags; a re-dispatch after MS-1 starts from the deferred list, not from scratch.
+**Why:** each of these answered "how do we know the packaging works with no Docker"; the Docker run itself was deferred to MS-1 and is now done (see [[docker-spike-recipe]]; npm linux install needed no lock regeneration, tag and digest builds give byte-identical /app).
+**How to apply:** re-verifying or changing the Dockerfile, `deploy/**` or the publish flags; the offline checks are still the quick pre-Docker pass.
