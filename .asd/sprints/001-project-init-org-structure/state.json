@@ -74,6 +74,13 @@
       "decision": "AC-9 narrowed (no validity dates), Task 13 wave 11",
       "reason": "org unit validity dates removed; info expansion removed from UI",
       "evidence": "decisions-log.md 2026-10-06 scope amendment AC-9"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-17 extended, Task 14 wave 12",
+      "reason": "unit card shows the same info collapsed or expanded",
+      "evidence": "decisions-log.md 2026-10-06 scope amendment Task 14"
     }
   ],
   "task_routing": {
@@ -153,6 +160,12 @@
       "execution": "agent",
       "tier": "critical",
       "reason": "risk:public API contract and DB schema migration, removal of fields from an audited entity",
+      "resolved_model": "sonnet"
+    },
+    "Task 14": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public API contract extension, role-dependent aggregate queries, performance at 10000+ employees",
       "resolved_model": "sonnet"
     }
   },

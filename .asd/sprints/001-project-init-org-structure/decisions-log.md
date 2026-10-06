@@ -182,3 +182,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Приняты: контракт и UI в одном коммите (`d39efba`), так как `schema.d.ts` без UI и UI без `schema.d.ts` не проходят `tsc` (`code-style.md` §19); корректирующая миграция `RemoveOrgUnitValidity` (Down возвращает колонки пустыми и CHECK `valid_to >= valid_from`, данные Down теряет); запросы, всё ещё присылающие `validFrom`/`validTo`, молча игнорируются (поведение `System.Text.Json`); `docs/Постановка.md:150` и spike-заметки `postgres-image-18.6-trixie.md` упоминают даты — обновить на design-promote.
 - **Rationale**: В пределах AC-9 после поправки; миграция проверена на scratch-PostgreSQL (данные сохраняются, Up/Down/Up чисто, CHECK восстанавливается), API smoke и аудит без полей дат.
 - **Affected docs**: `src/Competency.OrgStructure/`, `src/Competency.Platform/Migrations/20261006153445_RemoveOrgUnitValidity.cs`, `openapi/openapi.json`, `web/src/features/org-structure/`
+
+## 2026-10-06 — Поправка scope: одинаковая информация на карточке подразделения (AC-17), Task 14 (волна 12)
+
+- **Decision**: Карточка подразделения показывает одну и ту же информацию (название, статус, число дочерних подразделений, число сотрудников, руководитель) в свёрнутом и раскрытом виде. Данные приходят в узлах `GET /api/v1/org-units/tree` (имя руководителя и число прямых сотрудников, зависящее от роли: пользователь — только работающие, администратор — все), без запросов на каждую карточку. Это расширение публичного контракта (добавляются поля).
+- **Rationale**: Явный запрос пользователя при ручной проверке (`new or changed scope`, `public contract change`). Раньше число сотрудников и руководитель были только у раскрытых карточек (ленивая загрузка).
+- **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
+- 2026-10-06 — route Task 14: critical, dispatch HEAD 510a8c6
