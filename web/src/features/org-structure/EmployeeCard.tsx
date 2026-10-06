@@ -18,8 +18,9 @@ interface EmployeeCardProps {
 }
 
 /**
- * Compact card of an employee inside the unit hierarchy; the name opens the employee. Administrators also see the
- * status of a person who no longer works; the restricted projection of an ordinary user has none.
+ * Compact card of an employee inside the unit hierarchy; the name opens the employee. Next to the position it shows the
+ * e-mail of the employee's account, when there is one. Administrators also see the status of a person who no longer
+ * works; the restricted projection of an ordinary user has none.
  * A unit may hold thousands of employees, so the card is plain markup styled from the theme variables: antd's own
  * card, avatar and text components cost several times more to render.
  */
@@ -28,6 +29,8 @@ export const EmployeeCard = memo(function EmployeeCard({
   isAdmin,
   onOpen,
 }: EmployeeCardProps) {
+  const details = [employee.position, employee.email].filter(Boolean);
+
   return (
     <div className="org-tree__item org-employee">
       <span className="org-employee__avatar">
@@ -46,7 +49,7 @@ export const EmployeeCard = memo(function EmployeeCard({
             <EmployeeStatusTag isActive={false} />
           )}
         </div>
-        <span className="org-employee__details">{employee.position}</span>
+        <span className="org-employee__details">{details.join(" · ")}</span>
       </div>
     </div>
   );
