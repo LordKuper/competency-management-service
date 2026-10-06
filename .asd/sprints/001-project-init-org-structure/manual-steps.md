@@ -13,7 +13,7 @@ Definition, boundary against `stubs.md` and manual verification, validation duty
 
 | ID | Title | Blocks | Performed by | Status |
 |---|---|---|---|---|
-| MS-1 | Установить Docker Desktop (WSL2) на dev-машину и проверить, что `docker version` отвечает | Task 10 — подзадача проверки на Docker (`docker build`, linux-x64 записи в `web/package-lock.json`, spike на `postgres:18.6-trixie`); impl-test (Testcontainers) | user | pending |
+| MS-1 | Установить Docker Desktop (WSL2) на dev-машину и проверить, что `docker version` отвечает | Task 10 — подзадача проверки на Docker (`docker build`, linux-x64 записи в `web/package-lock.json`, spike на `postgres:18.6-trixie`); impl-test (Testcontainers) | user | done |
 
 ## MS-1 — Установить Docker Desktop (WSL2) на dev-машину и проверить, что `docker version` отвечает
 
@@ -22,7 +22,7 @@ Definition, boundary against `stubs.md` and manual verification, validation duty
 - **When**: до последней подзадачи Task 10 (волна 8) и до impl-test.
 - **Prerequisites**: Windows 11 с включённой виртуализацией (BIOS/UEFI), права администратора, доступ в интернет (образы тянутся с Docker Hub и `mcr.microsoft.com`).
 - **Performed by**: user
-- **Status**: pending
+- **Status**: done
 
 ### Steps
 
