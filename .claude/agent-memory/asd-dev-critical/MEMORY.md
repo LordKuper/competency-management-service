@@ -30,3 +30,4 @@
 - [VS debug build lock](project_vs-debug-build-lock-and-release-config.md) — user's F5 API locks Api bin/Debug; build -c Release, kill scratch API by PID, git-archive baseline for timings
 - [EF left join count facts](project_ef-left-join-count-and-visibility-facts.md) — group-count join needs `(int?)x.Count ?? 0` (else 500), join vs subquery plans, role visibility rule, parity-check method
 - [E-mail on the account](project_email-on-account-facts.md) — keyless ToSqlQuery cross-module read, UserName=Email, backfill and Down strip, Git Bash curl Cyrillic, race 409
+- [CDP real-backend smoke](project_web-cdp-real-backend-smoke-facts.md) — antd DOM ids, popup animation waits, real mouse for selects, sign-in landing, node -e quote trap
