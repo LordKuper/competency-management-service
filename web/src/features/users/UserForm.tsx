@@ -71,6 +71,7 @@ export function UserForm({
       form={form}
       name="user"
       layout="vertical"
+      noValidate
       initialValues={initialValues}
       onFinish={submit}
     >
@@ -81,7 +82,7 @@ export function UserForm({
           { required: true, whitespace: true, message: "Введите e-mail" },
         ]}
       >
-        <Input autoComplete="off" />
+        <Input type="email" autoComplete="off" placeholder="name@example.com" />
       </Form.Item>
       {isNew && (
         <Form.Item

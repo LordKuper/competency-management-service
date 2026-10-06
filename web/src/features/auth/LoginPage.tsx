@@ -64,6 +64,7 @@ export function LoginPage() {
             name="login"
             layout="vertical"
             autoComplete="on"
+            noValidate
             onFinish={(values) => signIn.mutate(values)}
           >
             {signIn.isError && (
@@ -82,7 +83,7 @@ export function LoginPage() {
                 },
               ]}
             >
-              <Input autoComplete="username" autoFocus />
+              <Input type="email" autoComplete="username" autoFocus />
             </Form.Item>
             <Form.Item
               name="password"
