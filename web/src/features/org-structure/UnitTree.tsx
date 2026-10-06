@@ -1,4 +1,4 @@
-import { Grid, Typography } from "antd";
+import { Grid } from "antd";
 import type { OrgUnit } from "./orgStructureApi";
 import type { UnitNode, UnitSearch } from "./orgTree";
 import { type UnitAction, UnitCard, type UnitOpenness } from "./UnitCard";
@@ -53,17 +53,12 @@ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
           {children.map((child) => (
             <UnitNodeView key={child.unit.id} node={child} view={view} />
           ))}
-          {openness === "open" && children.length === 0 && (
-            <li className="org-tree__node">
-              <div className="org-tree__item org-tree__note">
-                <Typography.Text type="secondary">
-                  Нет дочерних подразделений
-                </Typography.Text>
-              </div>
-            </li>
-          )}
           {openness === "open" && (
-            <UnitEmployees unitId={unit.id} isAdmin={view.isAdmin} />
+            <UnitEmployees
+              unitId={unit.id}
+              hasChildUnits={children.length > 0}
+              isAdmin={view.isAdmin}
+            />
           )}
         </ul>
       )}
