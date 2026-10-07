@@ -363,3 +363,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — route impl-test entry 6: critical, dispatch HEAD 69b73b0
 - 2026-10-07 — impl-test entry 6: impacted set green (backend 102/102, web 23/23, lint/build clean), 5 rows in 3 tests added (concurrent wrong passwords, unsaved count → 500); no defects
 - 2026-10-07 — impl-review wave 2 iteration 4 (floor high): combined latched (iter 2), external only
+- 2026-10-07 — impl-review wave-2/iter-04: external APPROVE (latched), combined inherited APPROVE; wave 2 roster met → wave 3 iteration 1 (floor low)

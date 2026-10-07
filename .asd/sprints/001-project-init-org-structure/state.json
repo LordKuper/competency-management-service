@@ -434,7 +434,7 @@
       "latched": {}
     },
     "impl": {
-      "wave": 2,
+      "wave": 3,
       "waves": [
         {
           "iteration": 3,
@@ -476,6 +476,10 @@
             "iter-03": {
               "combined": "APPROVE",
               "external": "CONCERNS"
+            },
+            "iter-04": {
+              "combined": "APPROVE",
+              "external": "APPROVE"
             }
           },
           "iteration_heads": {
@@ -485,20 +489,23 @@
             "iter-04": "7366455d6e0d2f2001ee1808e5dcae3d5c36021d"
           },
           "latched": {
-            "combined": 2
+            "combined": 2,
+            "external": 4
           }
         },
         {
-          "iteration": 0,
+          "iteration": 1,
           "verdicts": {},
-          "iteration_heads": {},
+          "iteration_heads": {
+            "iter-01": "f7019ef479310d80f919ecbd1350e0d31548a8ef"
+          },
           "latched": {}
         }
       ]
     }
   },
   "created_at": "2026-10-05T00:00:00Z",
-  "updated_at": "2026-10-07T17:19:26.307Z",
+  "updated_at": "2026-10-07T17:22:51.274Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
