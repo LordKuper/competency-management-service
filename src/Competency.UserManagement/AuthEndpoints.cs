@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 
 namespace Competency.UserManagement;
 
@@ -62,6 +63,7 @@ internal static class AuthEndpoints
     private static async Task<Results<Ok<CurrentUserResponse>, ValidationProblem, ProblemHttpResult>> LoginAsync(
         LoginRequest request,
         UserManager<AppUser> users,
+        AppDbContext context,
         IEmployeeDirectory employees,
         IAuditWriter audit,
         HttpContext httpContext,
@@ -80,7 +82,7 @@ internal static class AuthEndpoints
             return await DenyAsync(audit, null, LoginDenial.UnknownUser, cancellationToken);
         }
 
-        var denial = await VerifyPasswordAsync(users, user, request.Password);
+        var denial = await VerifyPasswordAsync(users, context, user, request.Password, cancellationToken);
         var employee = denial is null && user.EmployeeId is { } employeeId
             ? await employees.FindAsync(employeeId, cancellationToken)
             : null;
@@ -90,7 +92,6 @@ internal static class AuthEndpoints
             return await DenyAsync(audit, user, reason, cancellationToken);
         }
 
-        await users.ResetAccessFailedCountAsync(user);
         await httpContext.SignInAsync(SessionAuthentication.Scheme, SessionAuthentication.CreatePrincipal(user));
         await audit.WriteAsync(
             new AuditEntry(LoginSucceededAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString()),
@@ -146,7 +147,7 @@ internal static class AuthEndpoints
             return TypedResults.Unauthorized();
         }
 
-        if (await VerifyPasswordAsync(users, user, request.CurrentPassword) is { } denial)
+        if (await VerifyPasswordAsync(users, context, user, request.CurrentPassword, cancellationToken) is { } denial)
         {
             if (denial == LoginDenial.LockoutStarted)
             {
@@ -176,10 +177,32 @@ internal static class AuthEndpoints
     }
 
     /// <summary>
-    /// Verifies the password with lockout accounting: a locked account is refused without checking, a wrong password counts
-    /// as a failed attempt, and the failed attempt that reaches the limit starts the lockout.
+    /// Verifies the password with lockout accounting, one attempt at a time per account: the account row is locked and re-read first,
+    /// so concurrent attempts are counted one after another against the committed state and only the attempt that reaches the limit
+    /// starts the lockout. A locked account is refused without checking, a wrong password counts as a failed attempt and a correct one
+    /// clears the count. The row lock is the only lock this method takes: nothing is held while waiting for it and nothing else is requested
+    /// while holding it, so it cannot deadlock with the employee tree and administrator locks; it ends before the method returns.
     /// </summary>
-    private static async Task<LoginDenial?> VerifyPasswordAsync(UserManager<AppUser> users, AppUser user, string password)
+    private static async Task<LoginDenial?> VerifyPasswordAsync(
+        UserManager<AppUser> users,
+        AppDbContext context,
+        AppUser user,
+        string password,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        await context.Database.ExecuteSqlAsync($"SELECT id FROM users WHERE id = {user.Id} FOR UPDATE", cancellationToken);
+        await context.Entry(user).ReloadAsync(cancellationToken);
+        var denial = await CountAttemptAsync(users, user, password);
+        await transaction.CommitAsync(cancellationToken);
+        return denial;
+    }
+
+    /// <summary>
+    /// Counts one attempt on the account as it is under the row lock of <see cref="VerifyPasswordAsync"/>.
+    /// A count that cannot be saved fails the request instead of being taken for counted.
+    /// </summary>
+    private static async Task<LoginDenial?> CountAttemptAsync(UserManager<AppUser> users, AppUser user, string password)
     {
         if (await users.IsLockedOutAsync(user))
         {
@@ -189,11 +212,21 @@ internal static class AuthEndpoints
 
         if (await users.CheckPasswordAsync(user, password))
         {
+            EnsureSaved(await users.ResetAccessFailedCountAsync(user), user);
             return null;
         }
 
-        await users.AccessFailedAsync(user);
+        EnsureSaved(await users.AccessFailedAsync(user), user);
         return await users.IsLockedOutAsync(user) ? LoginDenial.LockoutStarted : LoginDenial.WrongPassword;
+    }
+
+    private static void EnsureSaved(IdentityResult result, AppUser user)
+    {
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException(
+                $"Saving the sign-in attempt count of account {user.Id} failed: {string.Join(", ", result.Errors.Select(error => error.Code))}.");
+        }
     }
 
     private static LoginDenial? CheckAccount(AppUser user, EmployeeStatus? employee)
