@@ -376,3 +376,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — impl-review wave 3 iteration 3 (floor high): external latched (iter 2), combined only
 - 2026-10-07 — impl-review wave-3/iter-03: combined APPROVE (latched), external inherited APPROVE; wave 3 = last wave, reviewer DoD met → terminal full-suite gate; route impl-review wave-3/iter-03 suite: critical, dispatch HEAD fc730dc
 - 2026-10-07 — impl-review DoD met: terminal full suite green at 376e9d3 (backend 102/102, web 60/60, lint/build clean; f09657a); green handoff passed adaptively (routine gate, no waiver); NEXT: design-promote
+- 2026-10-07 — design-promote (lite): scope = prd, ux_spec, adr (fold), audit context; c4 disabled. Decomposition org-structure/user-management/audit executed adaptively (authorized by AC-14); design-system gate passes (all three docs exist); DESIGN.md token changes, if any, wait for the user
