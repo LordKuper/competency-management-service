@@ -297,3 +297,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: В `.asd/project/custom-coding-rules.md` добавлен раздел «Verification depth in impl»: impl выполняется максимально быстро с минимальными проверками (Release build 0/0, ef pending-changes, web lint/build/check:api); полный цикл проверок (scratch PostgreSQL, реальные API- и UI-smoke, производительность AC-11) — один раз, при первом одобрении перехода impl → impl-test; fix-режимы impl полный цикл не повторяют; гейты impl-test и impl-review не меняются.
 - **Rationale**: Явное требование пользователя; закрепляет решение о скорости итераций для всех следующих спринтов.
 - **Affected docs**: `.asd/project/custom-coding-rules.md`
+
+## 2026-10-07 — Волна 18: Task 20 принят (руководитель из своего подразделения, порядок сотрудников)
+
+- **Decision**: Принято: `headEmployeeId` убран из запроса создания подразделения (старый клиент получает 201, поле игнорируется); правило «работающий сотрудник этого подразделения» проверяется только при смене руководителя (несогласованные старые данные не блокируют другие правки и молча не исправляются); перевод снимает руководителя только с покидаемого подразделения; предупреждение о переводе считается на клиенте по загруженному дереву (то же условие, что на сервере); сортировка `Intl.Collator("ru")` (Ё рядом с Е, Семенов перед Семёнов); выбор руководителя — `EmployeePicker` с фильтром `orgUnitId`, текущий руководитель всегда в списке.
+- **Rationale**: В пределах AC-9, 10, 17, 19. Проверки: Release build, ef, web lint/build/check:api (облегчённый режим); scratch-smoke успел пройти до смены режима (41 API- и 46 UI-проверок).
+- **Affected docs**: `src/Competency.OrgStructure/`, `web/src/features/org-structure/`, `web/src/features/users/EmployeePicker.tsx`
+
+- 2026-10-07 — dispatch Task 21, Task 22 (wave 19, light verification per custom-coding-rules.md)
