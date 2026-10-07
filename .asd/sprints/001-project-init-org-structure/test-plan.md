@@ -20,7 +20,7 @@ were scoped through; the next re-entry's delta is `git diff <this sha>...HEAD`.
 | 4 | 08d21ccc83fa5cacc398b0fb94e75540dd18b50a | delta since entry 3 (3ae1630d0671e0ae021b7308610c13fb5b367f8d) |
 | 5 | a460cdd91cb096209e06ba868f90574e1b8633e7 | delta since entry 4 (08d21ccc83fa5cacc398b0fb94e75540dd18b50a) |
 | 6 | 7366455d6e0d2f2001ee1808e5dcae3d5c36021d | delta since entry 5 (a460cdd91cb096209e06ba868f90574e1b8633e7) |
-| 7 |  | delta since entry 6 (7366455d6e0d2f2001ee1808e5dcae3d5c36021d) |
+| 7 | 5bcf82e348f1d475468254f29efdbf93f512bcff | delta since entry 6 (7366455d6e0d2f2001ee1808e5dcae3d5c36021d) |
 
 ## Risk → check decisions
 
