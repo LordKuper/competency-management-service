@@ -31,7 +31,7 @@ export type UnitAction =
 
 interface UnitCardProps {
   unit: OrgUnitTreeNode;
-  /** Units listed under this one, which a name search may have narrowed. */
+  /** All child units, not only those a search lists, so the card reads the same open, closed or searched. */
   childCount: number;
   openness: UnitOpenness;
   /** Whether the address names this unit, so it is marked and scrolled into view. */

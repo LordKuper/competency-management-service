@@ -48,7 +48,7 @@ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
     <li className="org-tree__node">
       <UnitCard
         unit={unit}
-        childCount={children.length}
+        childCount={node.children.length}
         openness={openness}
         isSelected={view.selectedId === unit.id}
         needle={view.search?.needle ?? ""}
