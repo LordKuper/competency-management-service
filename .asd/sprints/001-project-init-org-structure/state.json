@@ -1,7 +1,7 @@
 {
   "sprint_id": "001-project-init-org-structure",
   "branch": "sprint/001-project-init-org-structure",
-  "phase": "impl-review",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -443,6 +443,18 @@
       "execution": "agent",
       "reason": "risk:authentication",
       "resolved_model": "sonnet"
+    },
+    "review-fix wave-3/iter-02": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-3/iter-02 tests": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -518,20 +530,26 @@
             "iter-01": {
               "combined": "CONCERNS",
               "external": "FAIL"
+            },
+            "iter-02": {
+              "combined": "CONCERNS",
+              "external": "APPROVE"
             }
           },
           "iteration_heads": {
             "iter-01": "f7019ef479310d80f919ecbd1350e0d31548a8ef",
             "iter-02": "5bcf82e348f1d475468254f29efdbf93f512bcff"
           },
-          "latched": {}
+          "latched": {
+            "external": 2
+          }
         }
       ]
     }
   },
   "created_at": "2026-10-05T00:00:00Z",
-  "updated_at": "2026-10-07T19:08:15.350Z",
-  "review_fixes_pending": null,
+  "updated_at": "2026-10-07T19:23:32.165Z",
+  "review_fixes_pending": "wave-3/iter-02",
   "test_defects_pending": null,
   "pr": null,
   "archived_at": null

@@ -369,3 +369,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — route impl-test entry 7: critical, dispatch HEAD 10f9165
 - 2026-10-07 — impl-test entry 7: impacted set green (full via safety valve; backend 102/102, web 60/60, lint/build/check:api clean), 37 web tests added (SPA auth flow, edit drafts, search expansion, keyboard menu) with shared test-only fakeApi.ts (no new dependency); CSS/focus ring/reduced motion recorded as none (visual); no defects
 - 2026-10-07 — impl-review wave 3 iteration 2 (floor medium)
+- 2026-10-07 — impl-review wave-3/iter-02: external APPROVE (latched), combined CONCERNS (F1: unused delayMs param in useDebouncedValue; json() alias in test fakeApi) → impl review-fix (review_fixes_pending = wave-3/iter-02): (a) dev, (b) tester, standard, dispatch HEAD d717faf
