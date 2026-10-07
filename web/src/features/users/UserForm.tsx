@@ -38,7 +38,7 @@ const NEW_ACCOUNT_VALUES: UserFormValues = { email: "", role: "User" };
 
 /**
  * Account fields shared by creation and editing. The employee is optional for a user and not allowed for an administrator,
- * so that role hides the picker and submits none, mirroring the server rules so the administrator is told early; the server still decides.
+ * so that role shows the picker disabled and submits none, mirroring the server rules so the administrator is told early; the server still decides.
  */
 export function UserForm({
   initialValues = NEW_ACCOUNT_VALUES,
@@ -97,11 +97,6 @@ export function UserForm({
       <Form.Item
         name="role"
         label="Роль"
-        extra={
-          role === "GlobalAdmin"
-            ? "Глобальный администратор не привязывается к сотруднику."
-            : undefined
-        }
         rules={[{ required: true, message: "Выберите роль" }]}
       >
         <Select
@@ -111,15 +106,21 @@ export function UserForm({
           }}
         />
       </Form.Item>
-      {role === "User" && (
-        <Form.Item
-          name="employeeId"
-          label="Сотрудник"
-          extra="Необязательно: пользователь может быть привязан к одному работающему сотруднику или не привязан ни к кому."
-        >
+      <Form.Item
+        name="employeeId"
+        label="Сотрудник"
+        extra={
+          role === "User"
+            ? "Необязательно: пользователь может быть привязан к одному работающему сотруднику или не привязан ни к кому."
+            : "Глобальный администратор не привязывается к сотруднику"
+        }
+      >
+        {role === "User" ? (
           <EmployeePicker current={employee} />
-        </Form.Item>
-      )}
+        ) : (
+          <Select disabled />
+        )}
+      </Form.Item>
       <Space>
         <Button type="primary" htmlType="submit" loading={isSubmitting}>
           {submitLabel}
