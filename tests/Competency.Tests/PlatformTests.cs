@@ -51,9 +51,15 @@ public sealed class PlatformTests(TestEnvironment environment)
     {
         var settings = new Dictionary<string, string> { ["Bootstrap__AdminEmail"] = string.Empty, ["Bootstrap__AdminPassword"] = string.Empty };
 
-        var failure = await FluentActions.Awaiting(() => environment.StartHostAsync(settings)).Should().ThrowAsync<InvalidOperationException>();
+        ApiHost? started = null;
+        var failure = await Record.ExceptionAsync(async () => started = await environment.StartHostAsync(settings));
+        if (started is not null)
+        {
+            await started.DisposeAsync();
+        }
 
-        failure.Which.Message.Should().Contain("Bootstrap:AdminEmail").And.Contain("Bootstrap:AdminPassword");
+        failure.Should().BeOfType<InvalidOperationException>("a host without any administrator must refuse to start");
+        failure!.Message.Should().Contain("Bootstrap:AdminEmail").And.Contain("Bootstrap:AdminPassword");
     }
 
     [Fact]

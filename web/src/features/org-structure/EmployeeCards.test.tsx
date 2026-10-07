@@ -41,18 +41,18 @@ describe("EmployeeCards order (AC-19)", () => {
   it("lists the head first and the others alphabetically in Russian, with «ё» sorted as «е» rather than after «я»", () => {
     const employees = [
       employee("1", "Яшин Пётр"),
-      employee("2", "Елмин Олег"),
-      employee("3", "Ёлкин Иван"),
-      employee("4", "Елкин Сергей"),
+      employee("2", "Фролов Олег"),
+      employee("3", "Федотов Иван"),
+      employee("4", "Фёдоров Сергей"),
       employee("5", "Жуков Андрей"),
     ];
 
     expect(namesInOrder(employees, "1")).toEqual([
       "Яшин Пётр",
-      "Ёлкин Иван",
-      "Елкин Сергей",
-      "Елмин Олег",
       "Жуков Андрей",
+      "Фёдоров Сергей",
+      "Федотов Иван",
+      "Фролов Олег",
     ]);
   });
 
