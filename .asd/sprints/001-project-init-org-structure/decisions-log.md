@@ -358,3 +358,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — route impl-test entry 5: critical, dispatch HEAD 4d0d9eb
 - 2026-10-07 — impl-test entry 5: impacted set green (backend 97/97, web 23/23, lint/build clean), 1 test extended (Auth.LockedOut on change-password); no defects
 - 2026-10-07 — impl-review wave 2 iteration 3 (floor high): combined latched (iter 2), external only
+- 2026-10-07 — impl-review wave-2/iter-03: combined inherited APPROVE, external CONCERNS (#1 high: wrong-password attempt accounting race in VerifyPasswordAsync). User: fix → impl review-fix (review_fixes_pending = wave-2/iter-03); route: critical, dispatch HEAD 67926dd

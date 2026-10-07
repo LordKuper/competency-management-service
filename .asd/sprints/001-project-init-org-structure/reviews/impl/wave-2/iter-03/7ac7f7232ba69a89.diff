@@ -1,0 +1,144 @@
+diff --git a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+index 1286ec0..2e58e19 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+@@ -6,3 +6,4 @@
+ - [Ledger finding mapping](feedback_ledger-finding-mapping.md) — one f per rule row, none on file/section rows, Findings table first, no pipes in cells
+ - [Delta re-review: decisions-log first](feedback_delta-review-decisions-log.md) — read decisions-log for design-promote routing before flagging doc drift; shared-host log waits are vacuous
+ - [Wave-review probes](feedback_wave-review-probes.md) — decisions-log "Open:" lines, unused test helpers, per-row lookup loops, body comments, AC ids in class docs: one Grep each
++- [Doc entries on a code delta](feedback_doc-entries-on-code-delta.md) — memory md files un-gate the Documentation rows; read the doc-comment entry literally, keep English, no Edit tool
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_doc-entries-on-code-delta.md b/.claude/agent-memory/asd-reviewer-combined/feedback_doc-entries-on-code-delta.md
+new file mode 100644
+index 0000000..67a48ea
+--- /dev/null
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_doc-entries-on-code-delta.md
+@@ -0,0 +1,22 @@
++---
++name: doc-entries-on-code-delta
++description: when a re-review manifest un-gates the Documentation entries only because agent-memory md files are in scope, how to apply the in-code doc comment entry to a code delta
++metadata:
++  type: feedback
++---
++
++A wave re-review manifest (sprint 001 wave-2/iter-02) did not n/a SSoT, In-code doc comments, Documentation economy and the
++rest because `.claude/agent-memory/**/*.md` files were in the scope list; iter-01 had them n/a.
++
++**How to apply:**
++- Read the home entry literally: "type-level doc duplicates or summarizes its members' docs" fires only when the members carry
++  docs; an internal class with undocumented members and a descriptive class doc is not a finding. A class doc that merely
++  restates the interface contract is a below-floor observation.
++- Run the body-comment and `AC-N` Greps over `src` and `tests` (zero hits is the pass), then grep `TODO(sprint` for the
++  stub-resolution row.
++- Agent-memory files: check only for stale names (a deleted class still cited) and claims the diff contradicts.
++- `language.docs` is `ru` and the language policy lists reviews as user-facing, yet every earlier review of this sprint is in
++  English and persisted; keep English unless the caller says otherwise, and say so if asked.
++- Tools in a combined-review subagent may lack `Edit`; rewrite the return file with `Write` and keep one source of text.
++
++**Why:** avoids a medium-floor false positive on style that the project uses everywhere, and a second review-fix cycle for a doc nit.
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index 821918c..fd9f2ef 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -19,7 +19,9 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Real fail-first for a review fix: `git archive <prior HEAD sha> src` plus the current `tests/` in a scratch copy, run the whole suite, list the reds. It showed the reviewer's "update-binding races dismissal" path was not reachable before the fix (both take the admin row lock, and one active administrator always exists); that row stays green pre-fix and is proven only by removing every lock from the endpoint. State that in the plan rather than claiming a regression proof.
+ - The `AdministratorsHost` class fixture is shared state: a test that fails after blocking the sole administrator makes every later test of the class red ("active ... is empty"). Read the first red only.
+ - `ApiResponse` once printed its computed `Id` in assertion failures, which turned any failed assertion over responses into a `NullReferenceException` (it hid the deadlock 500 of a lock-order mutation); `PrintMembers` now prints status and body only.
+-- Python or heredoc edits of the production `.cs` files in a `git archive` copy: those blobs are CRLF, so multi-line anchors need `\r\n`, and a bash heredoc turns `\r\n` inside a Python string into real line breaks; build the separators with `chr(13) + chr(10)`.
++- Python or heredoc edits of the production `.cs` files in a `git archive` copy: the index is LF but `core.autocrlf=true` makes the archive CRLF, so multi-line anchors need `\r\n`, and a bash heredoc (or `sed`) turns `\r\n` inside a Python string into real line breaks; build the separators with `chr(13) + chr(10)` in a script written with the Write tool.
++- `dotnet test --tl:off` hands `--tl:off` to the test runner (zero tests, exit 5); `--tl:off` belongs to `dotnet build` only. The scratchpad is shared with the main session: name scratch copies with an entry prefix (`t5-mut`) so a cleanup never removes the caller's files.
++- Audit rows of one account are read through `GET /api/v1/audit?action=<Action>&entityId=<id>`; a test that needs "exactly one" reads it after every step of the scenario, so a stray extra write at any step fails it.
+ - Mutation copies: run `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj` there, not the `.slnx` (it pulls the web project and `node_modules`). Mutating a migration away means deleting its `.cs` and `.Designer.cs`; the model snapshot stays consistent, so the host still starts.
+ - Web tests: jsdom has no `ResizeObserver` (stubbed in `web/src/test/setup.ts`); Testing Library's accessible name collapses a non-breaking space, so assert the `aria-label` attribute for it; `Intl.Collator("ru")` sorts ё as е, so an ordering fixture must tell ICU order, code-point order and "ё right after е" apart.
+ - `docs/architecture/tech-reference/` gates test libraries too: Playwright and `Microsoft.AspNetCore.Mvc.Testing` have no reference, so the Tester may not implement with them until the Architect adds one. Check the directory before planning e2e.
+diff --git a/src/Competency.UserManagement/AuthEndpoints.cs b/src/Competency.UserManagement/AuthEndpoints.cs
+index f9252c7..58bd4b7 100644
+--- a/src/Competency.UserManagement/AuthEndpoints.cs
++++ b/src/Competency.UserManagement/AuthEndpoints.cs
+@@ -124,7 +124,7 @@ internal static class AuthEndpoints
+     /// <summary>
+     /// Replaces the signed-in user's password. Every other session of the user ends; the current one continues under the new security stamp.
+     /// The current password is checked with the sign-in lockout accounting, so that a stolen session cannot guess it without limit:
+-    /// a wrong one counts as a failed attempt and a locked account is refused without checking. The new password and its audit event are saved together.
++    /// a wrong one counts as a failed attempt, a lockout it starts is audited as at sign-in, and a locked account is refused without checking. The new password and its audit event are saved together.
+     /// </summary>
+     private static async Task<Results<NoContent, ValidationProblem, ProblemHttpResult, UnauthorizedHttpResult>> ChangePasswordAsync(
+         ChangePasswordRequest request,
+@@ -146,8 +146,13 @@ internal static class AuthEndpoints
+             return TypedResults.Unauthorized();
+         }
+ 
+-        if (await VerifyPasswordAsync(users, user, request.CurrentPassword) is not null)
++        if (await VerifyPasswordAsync(users, user, request.CurrentPassword) is { } denial)
+         {
++            if (denial == LoginDenial.LockoutStarted)
++            {
++                await AuditLockoutAsync(audit, user, cancellationToken);
++            }
++
+             return Rejections.From(IdentityResult.Failed(users.ErrorDescriber.PasswordMismatch()));
+         }
+ 
+@@ -220,13 +225,19 @@ internal static class AuthEndpoints
+         await audit.WriteAsync(
+             new AuditEntry(LoginFailedAction, nameof(AppUser), user?.Id.ToString(), Reason: reason.ToString(), Actor: actor, Role: role),
+             cancellationToken);
+-        if (denial == LoginDenial.LockoutStarted)
++        if (denial == LoginDenial.LockoutStarted && user is not null)
+         {
+-            await audit.WriteAsync(
+-                new AuditEntry(LockedOutAction, nameof(AppUser), user?.Id.ToString(), Actor: actor, Role: role),
+-                cancellationToken);
++            await AuditLockoutAsync(audit, user, cancellationToken);
+         }
+ 
+         return TypedResults.Problem(detail: LoginFailedDetail, statusCode: StatusCodes.Status401Unauthorized, title: LoginFailedTitle);
+     }
++
++    /// <summary>
++    /// Journals the lockout that the account's failed attempt just started, from a sign-in or from a password change.
++    /// </summary>
++    private static Task AuditLockoutAsync(IAuditWriter audit, AppUser user, CancellationToken cancellationToken) =>
++        audit.WriteAsync(
++            new AuditEntry(LockedOutAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString()),
++            cancellationToken);
+ }
+diff --git a/tests/Competency.Tests/SessionTests.cs b/tests/Competency.Tests/SessionTests.cs
+index b878cad..21f829f 100644
+--- a/tests/Competency.Tests/SessionTests.cs
++++ b/tests/Competency.Tests/SessionTests.cs
+@@ -1,4 +1,5 @@
+ using System.Net;
++using System.Text.Json.Nodes;
+ using AwesomeAssertions;
+ using Competency.Tests.Infrastructure;
+ using Xunit;
+@@ -122,20 +123,27 @@ public sealed class SessionTests(TestEnvironment environment)
+         var session = await account.SignInAsync(host);
+         const string NewPassword = "Guessed-Pass-12345!";
+ 
++        var attempts = new List<ApiResponse>();
+         for (var attempt = 0; attempt < AttemptsBeforeLockout; attempt++)
+         {
+-            (await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = WrongPassword, newPassword = NewPassword }))
+-                .Status.Should().Be(HttpStatusCode.BadRequest);
++            var wrong = await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = WrongPassword, newPassword = NewPassword });
++            wrong.Status.Should().Be(HttpStatusCode.BadRequest);
++            attempts.Add(wrong);
+         }
+ 
+         var signIn = await SignInAsync(host, account.Email, account.Password);
+         var rightCurrent = await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = account.Password, newPassword = NewPassword });
++        var lockouts = (await admin.GetAsync($"/api/v1/audit?action=Auth.LockedOut&entityId={account.Id}")).Expect(HttpStatusCode.OK).Json!["items"]!.AsArray();
+         var current = await admin.GetUserAsync(account.Id);
+         (await admin.PostAsync($"/api/v1/users/{account.Id}/unblock", ifMatch: current.ETag)).Expect(HttpStatusCode.OK);
+ 
+         signIn.Status.Should().Be(HttpStatusCode.Unauthorized, "the wrong current passwords counted as failed sign-ins");
+         rightCurrent.Status.Should().Be(HttpStatusCode.BadRequest, "a locked account is refused even with the right current password");
+         rightCurrent.FieldErrors("currentPassword").Should().NotBeEmpty();
++        lockouts.Should().ContainSingle("the lockout that change-password started is journaled once, as at sign-in");
++        lockouts[0]!["actor"]!.GetValue<string>().Should().Be(account.Id.ToString());
++        lockouts[0]!["role"]!.GetValue<string>().Should().Be(Scenarios.User);
++        (await admin.AuditOfRequestAsync(attempts[^1].RequestId!)).Actions().Should().Equal(["Auth.LockedOut"], "the attempt that reached the limit wrote the event");
+         (await SignInAsync(host, account.Email, account.Password)).Status.Should().Be(HttpStatusCode.OK, "the refused change left the password as it was");
+         (await SignInAsync(host, account.Email, NewPassword)).Status.Should().Be(HttpStatusCode.Unauthorized);
+     }
