@@ -342,3 +342,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — impl-test entry 2: impacted set green (full via safety valve; backend 87/87, web 23/23, lint/build/check:api clean), 5/0 tests (replica-mode audit triggers, ck_users_role, 5xx stack log); no defects
 - 2026-10-07 — impl-review wave 1 iteration 2 (floor medium)
 - 2026-10-07 — impl-review wave-1/iter-02: combined APPROVE (latched), external CONCERNS (#1 medium, test-only: shared-host log wait in Ac5_Logs test) → impl review-fix (review_fixes_pending = wave-1/iter-02); test-file finding goes to a fresh tester
+- 2026-10-07 — route review-fix wave-1/iter-02: standard (test-only), dispatch HEAD 9d688f5

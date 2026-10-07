@@ -356,6 +356,12 @@
       "execution": "agent",
       "reason": "risk:migration",
       "resolved_model": "sonnet"
+    },
+    "review-fix wave-1/iter-02": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -385,7 +391,7 @@
             "iter-02": "133c58c37107b0d4528f9fee2ee765d1e88e5e01"
           },
           "latched": {
-            "combined": "iter-02"
+            "combined": 2
           }
         },
         {
