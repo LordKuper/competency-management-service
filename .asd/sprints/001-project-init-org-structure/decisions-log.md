@@ -343,3 +343,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — impl-review wave 1 iteration 2 (floor medium)
 - 2026-10-07 — impl-review wave-1/iter-02: combined APPROVE (latched), external CONCERNS (#1 medium, test-only: shared-host log wait in Ac5_Logs test) → impl review-fix (review_fixes_pending = wave-1/iter-02); test-file finding goes to a fresh tester
 - 2026-10-07 — route review-fix wave-1/iter-02: standard (test-only), dispatch HEAD 9d688f5
+- 2026-10-07 — review-fix wave-1/iter-02 done (bfc19fc, tester): Ac5 log-content test on its own host; impl COMPLETED (NEXT: impl-test)
+- 2026-10-07 — route impl-test entry 3: standard, dispatch HEAD bfc19fc
