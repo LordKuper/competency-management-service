@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Xunit;
 
 namespace Competency.Tests.Infrastructure;
 
@@ -16,6 +17,7 @@ public sealed class ApiHost : IAsyncDisposable
     public const string AdminPassword = "Admin-Test-12345!";
 
     private static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan LogTimeout = TimeSpan.FromSeconds(10);
 
     private readonly Process process;
     private readonly StringBuilder logs = new();
@@ -50,6 +52,28 @@ public sealed class ApiHost : IAsyncDisposable
                 return logs.ToString();
             }
         }
+    }
+
+    /// <summary>
+    /// Waits until the host has logged the fragment and returns everything it has logged by then. The console logger writes
+    /// asynchronously, so a record can reach the output after the response of the request that caused it.
+    /// </summary>
+    /// <param name="fragment">The text a record must contain.</param>
+    /// <returns>Everything the host wrote to its standard output and error.</returns>
+    public async Task<string> LogsAfterAsync(string fragment)
+    {
+        var waited = Stopwatch.StartNew();
+        while (!Logs.Contains(fragment, StringComparison.Ordinal))
+        {
+            if (waited.Elapsed > LogTimeout)
+            {
+                throw new TimeoutException($"The API host did not log '{fragment}' in {LogTimeout.TotalSeconds} s.{Environment.NewLine}{Logs}");
+            }
+
+            await Task.Delay(25, TestContext.Current.CancellationToken);
+        }
+
+        return Logs;
     }
 
     /// <summary>

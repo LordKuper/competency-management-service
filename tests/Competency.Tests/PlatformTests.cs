@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using Competency.Tests.Infrastructure;
 using Npgsql;
@@ -7,11 +8,15 @@ using Xunit;
 namespace Competency.Tests;
 
 /// <summary>
-/// The platform on a real database: AC-3 (schema applied from an empty database, probes) and AC-15 (the journal is append-only in the database itself).
+/// The platform on a real database: AC-3 (schema applied from an empty database, probes), AC-5 (what the logs carry), AC-7 (the account role is limited
+/// in the database itself) and AC-15 (the journal is append-only in the database itself, for the application account too).
 /// </summary>
 public sealed class PlatformTests(TestEnvironment environment)
 {
     private const string RestrictViolation = "23001";
+    private const string CheckViolation = "23514";
+    private const string UnknownRole = "Auditor";
+    private const string FailureLogCategory = "Competency.Platform.ProblemExceptionHandler";
 
     [Fact]
     public async Task Ac3_EmptyDatabase_GetsSchemaExtensionsAndBootstrapAdministrator()
@@ -94,8 +99,7 @@ public sealed class PlatformTests(TestEnvironment environment)
         var stale = await admin.PutAsync($"/api/v1/org-units/{unit.Id}", new { name = "Чужое имя", headEmployeeId = (Guid?)null }, "\"999\"");
 
         stale.Status.Should().Be(HttpStatusCode.PreconditionFailed);
-        var logs = host.Logs;
-        logs.Should().Contain("Request failed with status 412", "the failure above must have been logged, or the checks below prove nothing");
+        var logs = await host.LogsAfterAsync("\"Status\":412");
         logs.Split('\n').Where(line => line.Trim().Length > 0).Should().OnlyContain(line => line.TrimStart().StartsWith('{'), "every log line is a JSON document");
         foreach (var personalValue in new[] { email, password, wrongPassword, unit.Json!["name"]!.GetValue<string>(), employee.Json!["lastName"]!.GetValue<string>() })
         {
@@ -121,6 +125,78 @@ public sealed class PlatformTests(TestEnvironment environment)
 
         rejection.Which.SqlState.Should().Be(RestrictViolation);
         (await ScalarAsync<long>(host, "SELECT count(*) FROM audit_events")).Should().BeGreaterThanOrEqualTo(before);
+    }
+
+    [Theory]
+    [InlineData("UPDATE audit_events SET reason = 'edited'")]
+    [InlineData("DELETE FROM audit_events")]
+    [InlineData("TRUNCATE audit_events")]
+    public async Task Ac15_Journal_RejectsUpdateDeleteAndTruncate_EvenWhenOrdinaryTriggersAreSilencedByTheReplicaRole(string statement)
+    {
+        var host = await environment.SharedHostAsync();
+        await (await host.AdminAsync()).CreateUnitAsync();
+
+        await using var connection = new NpgsqlConnection(host.ConnectionString);
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(TestContext.Current.CancellationToken);
+        await ExecuteAsync(connection, "SET LOCAL session_replication_role = replica");
+        var rejection = await FluentActions.Awaiting(() => ExecuteAsync(connection, statement)).Should().ThrowAsync<PostgresException>(
+            "the application account may switch to the replica role, which silences every trigger not enabled always");
+
+        rejection.Which.SqlState.Should().Be(RestrictViolation);
+    }
+
+    [Fact]
+    public async Task Ac7_UserRole_IsLimitedToTheKnownValuesInTheDatabaseItself()
+    {
+        var host = await environment.SharedHostAsync();
+        var admin = await host.AdminAsync();
+        var account = await admin.CreateUserAsync();
+
+        var rejection = await FluentActions.Awaiting(() => ScalarAsync<long>(host, $"UPDATE users SET role = '{UnknownRole}' WHERE id = '{account.Id}'"))
+            .Should().ThrowAsync<PostgresException>();
+
+        rejection.Which.SqlState.Should().Be(CheckViolation);
+        rejection.Which.ConstraintName.Should().Be("ck_users_role");
+        (await admin.GetUserAsync(account.Id)).Json!["role"]!.GetValue<string>().Should().Be(Scenarios.User);
+    }
+
+    [Fact]
+    public async Task Ac5_ServerErrorLog_CarriesTheStackTraceButNotTheExceptionMessage_AndOtherFailuresCarryNoStack()
+    {
+        await using var host = await environment.StartHostAsync();
+        var admin = await host.AdminAsync();
+        var unit = await admin.CreateUnitAsync();
+        var stale = await admin.PutAsync($"/api/v1/org-units/{unit.Id}", new { name = "Чужое имя", headEmployeeId = (Guid?)null }, "\"999\"");
+        stale.Status.Should().Be(HttpStatusCode.PreconditionFailed);
+        var forbiddenName = Scenarios.Unique("Запрещено");
+        var constraint = $"ck_unit_name_marker_{Guid.NewGuid():N}";
+        await ScalarAsync<long>(host, $"ALTER TABLE org_units ADD CONSTRAINT {constraint} CHECK (name <> '{forbiddenName}')");
+
+        var failed = await admin.PostAsync("/api/v1/org-units", new { name = forbiddenName, parentId = (Guid?)null });
+
+        failed.Status.Should().Be(HttpStatusCode.InternalServerError, "a check the application does not know fails in the database and surfaces as a server error");
+        var records = FailureRecords(await host.LogsAfterAsync("\"Status\":500")).ToList();
+        var serverError = records.Should().ContainSingle(record => record.Status == 500).Subject;
+        var clientError = records.Should().ContainSingle(record => record.Status == 412).Subject;
+        var stack = serverError.State["StackTrace"]?.GetValue<string>();
+        stack.Should().Contain(" at ", "a server error is logged with the place it happened");
+        serverError.Line.Should().NotContain(constraint, "the exception message names the violated constraint and is never logged");
+        clientError.State["StackTrace"].Should().BeNull("only a server error is logged with its stack trace");
+    }
+
+    private static IEnumerable<(string Line, int Status, JsonNode State)> FailureRecords(string logs) =>
+        logs.Split('\n')
+            .Select(line => line.Trim())
+            .Where(line => line.StartsWith('{'))
+            .Select(line => (Line: line, Json: JsonNode.Parse(line)!))
+            .Where(record => record.Json["Category"]?.GetValue<string>() == FailureLogCategory)
+            .Select(record => (record.Line, record.Json["State"]!["Status"]!.GetValue<int>(), record.Json["State"]!));
+
+    private static async Task ExecuteAsync(NpgsqlConnection connection, string sql)
+    {
+        await using var command = new NpgsqlCommand(sql, connection);
+        await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
     }
 
     private static async Task<T> ScalarAsync<T>(ApiHost host, string sql)
