@@ -58,10 +58,10 @@ analysed, not any tree produced later
 (`.asd/rules/sprint-lifecycle.md` "Impacted test set").
 
 - Command: `dotnet test --solution Competency.slnx && npm --prefix web test` (`test` из `commands.yaml`, без изменений)
-- Scope: impacted — дельта только в web (`useDebouncedValue`, `fakeApi`, три файла тестов); backend не затронут, общих модулей сборки и конфигурации в дельте нет; web прогнан целиком
-- Result: pass — web (vitest): 9 файлов, 60 тестов пройдено, 0 сбоев, exit 0; backend не запускался; e2e: не выполнялся (Playwright исключён решением пользователя)
-- Lint / build: pass — `npm --prefix web run lint` (biome ci и typecheck) exit 0; `npm --prefix web run build` exit 0
-- HEAD: a817235 — рабочее дерево равно дереву коммита
+- Scope: full suite, unscoped — терминальный прогон `impl-review` (`impl-review wave-3/iter-03 suite`) после APPROVE/latched всех трёх волн ревью; перезаписывает запись impacted-прогона entry 8
+- Result: pass — backend (`dotnet test --solution Competency.slnx`, xunit v3, общий Testcontainers PostgreSQL `postgres:18.6-trixie`): 102 теста, 102 пройдено, 0 сбоев, 0 пропущено, exit 0, тесты 21 s 361 ms, команда целиком 29 s; web (`npm --prefix web test`, vitest): 9 файлов, 60 тестов пройдено, 0 сбоев, exit 0, 9.32 s, команда целиком 10 s; e2e: не выполнялся (Playwright исключён решением пользователя)
+- Lint / build: pass — `npm --prefix web run lint` (biome ci `--error-on-warnings`, 84 файла, и typecheck) exit 0, 3 s; `dotnet build Competency.slnx --tl:off && npm --prefix web run build` (0 предупреждений, 0 ошибок; `tsc`, `vite build`, 3281 модуль) exit 0, 6 s
+- HEAD: 376e9d3040f4aeb091823423ccac8580156c6efc — `git status --porcelain` пуст до и после прогона; контейнеры Testcontainers и build-серверы dotnet после прогона не остались
 
 ## Defects
 
