@@ -1,7 +1,7 @@
 {
   "sprint_id": "001-project-init-org-structure",
   "branch": "sprint/001-project-init-org-structure",
-  "phase": "impl-test",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -177,6 +177,13 @@
       "gate": "tester QUESTION e2e tech-reference",
       "decision_actor": "user",
       "decision": "exclude Playwright, no e2e",
+      "reason": "user choice",
+      "evidence": "decisions-log.md 2026-10-07"
+    },
+    {
+      "gate": "impl-review FAIL escalation wave-1/iter-01",
+      "decision_actor": "user",
+      "decision": "external #1 accepted for fix (ENABLE ALWAYS TRIGGER); combined F2 answered: follow VS profiles Everything/API, Chrome",
       "reason": "user choice",
       "evidence": "decisions-log.md 2026-10-07"
     }
@@ -356,6 +363,25 @@
       "wave": 1,
       "waves": [
         {
+          "iteration": 1,
+          "verdicts": {
+            "iter-01": {
+              "combined": "CONCERNS",
+              "external": "FAIL"
+            }
+          },
+          "iteration_heads": {
+            "iter-01": "f0ca28ce1fbbb16713a7e46b46b6aea44f1c2609"
+          },
+          "latched": {}
+        },
+        {
+          "iteration": 0,
+          "verdicts": {},
+          "iteration_heads": {},
+          "latched": {}
+        },
+        {
           "iteration": 0,
           "verdicts": {},
           "iteration_heads": {},
@@ -365,8 +391,8 @@
     }
   },
   "created_at": "2026-10-05T00:00:00Z",
-  "updated_at": "2026-10-07T13:49:42.024Z",
-  "review_fixes_pending": null,
+  "updated_at": "2026-10-07T14:14:38.095Z",
+  "review_fixes_pending": "wave-1/iter-01",
   "test_defects_pending": null,
   "pr": null,
   "archived_at": null
