@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Net;
 using AwesomeAssertions;
 using Competency.Tests.Infrastructure;
@@ -16,7 +15,6 @@ namespace Competency.Tests;
 public sealed class DismissalRaceTests(TestEnvironment environment)
 {
     private const long GateKey = 7;
-    private static readonly TimeSpan WaitTimeout = TimeSpan.FromSeconds(30);
 
     [Theory]
     [InlineData("create", HttpStatusCode.BadRequest)]
@@ -46,7 +44,7 @@ public sealed class DismissalRaceTests(TestEnvironment environment)
         await host.ExecuteAsync("CREATE TRIGGER wait_for_gate BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION wait_for_gate()");
         await using var gate = await Gate.CloseAsync(host);
         var dismissal = admin.PostAsync($"/api/v1/employees/{employee.Id}/dismiss", ifMatch: employee.ETag);
-        await WaitUntilAsync(async () => await WaitersAsync(host, $"l.locktype = 'advisory' AND l.objid = {GateKey}") > 0, "the dismissal waits at the gate");
+        await Waiting.UntilAsync(async () => await WaitersAsync(host, $"l.locktype = 'advisory' AND l.objid = {GateKey}") > 0, "the dismissal waits at the gate");
 
         var late = change switch
         {
@@ -59,7 +57,7 @@ public sealed class DismissalRaceTests(TestEnvironment environment)
                 version),
             _ => admin.PostAsync($"/api/v1/users/{account!.Id}/unblock", ifMatch: version),
         };
-        await WaitUntilAsync(
+        await Waiting.UntilAsync(
             async () => late.IsCompleted || await WaitersAsync(host, $"NOT (l.locktype = 'advisory' AND l.objid = {GateKey})") > 0,
             "the change has either finished or waits for the dismissal");
         await gate.OpenAsync();
@@ -75,20 +73,6 @@ public sealed class DismissalRaceTests(TestEnvironment environment)
         SELECT count(*) FROM pg_locks AS l JOIN pg_stat_activity AS a ON a.pid = l.pid
         WHERE NOT l.granted AND a.datname = current_database() AND {lockFilter}
         """);
-
-    private static async Task WaitUntilAsync(Func<Task<bool>> condition, string what)
-    {
-        var waited = Stopwatch.StartNew();
-        while (!await condition())
-        {
-            if (waited.Elapsed > WaitTimeout)
-            {
-                throw new TimeoutException($"Gave up after {WaitTimeout.TotalSeconds} s waiting until {what}.");
-            }
-
-            await Task.Delay(25, TestContext.Current.CancellationToken);
-        }
-    }
 
     /// <summary>
     /// An advisory lock held on a connection of its own, which the trigger the test installs on employee updates waits for,

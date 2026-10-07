@@ -60,6 +60,20 @@ public sealed class SessionTests(TestEnvironment environment)
     }
 
     [Fact]
+    public async Task Ac6_AttemptWhoseCountCannotBeSaved_FailsTheRequestInsteadOfBeingTakenForCounted()
+    {
+        var host = await environment.SharedHostAsync();
+        var account = await (await host.AdminAsync()).CreateUserAsync();
+        await host.ExecuteAsync($"UPDATE users SET access_failed_count = 2, user_name = '' WHERE id = '{account.Id}'");
+
+        var wrong = await SignInAsync(host, account.Email, WrongPassword);
+        var right = await SignInAsync(host, account.Email, account.Password);
+
+        wrong.Status.Should().Be(HttpStatusCode.InternalServerError, "a wrong password that cannot be counted is not answered as a counted one");
+        right.Status.Should().Be(HttpStatusCode.InternalServerError, "a right password that cannot clear the count is not answered as a success");
+    }
+
+    [Fact]
     public async Task Ac8_Block_EndsTheLiveSession_AndUnblockLetsTheUserSignInAgain()
     {
         var host = await environment.SharedHostAsync();
