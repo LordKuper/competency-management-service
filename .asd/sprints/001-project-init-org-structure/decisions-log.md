@@ -354,3 +354,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — impl-test entry 4: impacted set green (full via safety valve; backend 97/97, web 23/23, lint/build/check:api clean), 10 rows in 6 tests added, 0 removed; no defects
 - 2026-10-07 — impl-review wave 2 iteration 2 (floor medium)
 - 2026-10-07 — impl-review wave-2/iter-02: combined APPROVE (latched), external CONCERNS (#1 high: lockout started by change-password not journaled as Auth.LockedOut) → impl review-fix (review_fixes_pending = wave-2/iter-02); route: critical, dispatch HEAD 3199eca
+- 2026-10-07 — review-fix wave-2/iter-02 done (4d0d9eb): lockout started by change-password journaled as Auth.LockedOut via shared helper; impl COMPLETED (NEXT: impl-test)
+- 2026-10-07 — route impl-test entry 5: critical, dispatch HEAD 4d0d9eb
