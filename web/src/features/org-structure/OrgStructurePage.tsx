@@ -5,27 +5,32 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useIsAdmin } from "../auth/useCurrentUser";
+import type { EmployeeAction } from "./EmployeeCard";
 import { EmployeeModal } from "./EmployeeModal";
 import { MoveUnitModal } from "./MoveUnitModal";
-import { type OrgUnit, orgUnitTreeQuery } from "./orgStructureApi";
+import {
+  type Employee,
+  type OrgUnit,
+  orgUnitTreeQuery,
+} from "./orgStructureApi";
 import { ancestorIds, buildUnitTree } from "./orgTree";
 import type { UnitAction } from "./UnitCard";
 import { UnitFormModal } from "./UnitFormModal";
 import { UnitTree } from "./UnitTree";
+import { useEmployeeLifecycle } from "./useEmployeeLifecycle";
 import { useUnitActivation } from "./useUnitActivation";
 import { useUnitExpansion } from "./useUnitExpansion";
 
 type PageDialog =
   | { kind: "addUnit"; parentId: string | null }
   | { kind: "addEmployee"; orgUnitId?: string }
-  | { kind: "employee"; employeeId: string }
+  | { kind: "editEmployee"; employeeId: string }
   | { kind: "edit" | "move"; unitId: string };
 
 /**
  * The structure screen: a searchable hierarchy of unit and employee cards. The `unit` address parameter opens the
  * path to that unit and scrolls to it, so a shared link or a new unit or employee lands on the same card.
- * Employees open in a dialog from their cards; administrators change units and employees from the cards. The dialogs
- * and the activation prompt live here, once for all cards.
+ * Administrators change units and employees from the cards. The dialogs and the confirmations live here, once for all cards.
  */
 export function OrgStructurePage() {
   const isAdmin = useIsAdmin();
@@ -36,6 +41,7 @@ export function OrgStructurePage() {
     useUnitExpansion(roots);
   const [dialog, setDialog] = useState<PageDialog | null>(null);
   const confirmActivation = useUnitActivation();
+  const confirmLifecycle = useEmployeeLifecycle();
   const selectedId = searchParams.get("unit");
 
   useEffect(() => {
@@ -56,9 +62,13 @@ export function OrgStructurePage() {
     },
     [confirmActivation],
   );
-  const openEmployee = useCallback(
-    (employeeId: string) => setDialog({ kind: "employee", employeeId }),
-    [],
+  const handleEmployeeAction = useCallback(
+    (action: EmployeeAction, employee: Employee) => {
+      if (action === "edit")
+        setDialog({ kind: "editEmployee", employeeId: employee.id });
+      else void confirmLifecycle(action, employee);
+    },
+    [confirmLifecycle],
   );
 
   const dialogUnit =
@@ -127,7 +137,7 @@ export function OrgStructurePage() {
                 isAdmin,
                 onToggle: toggle,
                 onAction: handleAction,
-                onOpenEmployee: openEmployee,
+                onEmployeeAction: handleEmployeeAction,
               }}
             />
           )}
@@ -155,7 +165,7 @@ export function OrgStructurePage() {
           }}
         />
       )}
-      {dialog?.kind === "employee" && (
+      {dialog?.kind === "editEmployee" && (
         <EmployeeModal
           employeeId={dialog.employeeId}
           onClose={closeDialog}

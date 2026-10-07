@@ -1,5 +1,6 @@
 import { Grid } from "antd";
-import type { OrgUnit } from "./orgStructureApi";
+import type { EmployeeAction } from "./EmployeeCard";
+import type { Employee, OrgUnit } from "./orgStructureApi";
 import type { UnitNode, UnitSearch } from "./orgTree";
 import { type UnitAction, UnitCard, type UnitOpenness } from "./UnitCard";
 import { UnitEmployees } from "./UnitEmployees";
@@ -13,7 +14,7 @@ export interface UnitTreeView {
   isAdmin: boolean;
   onToggle: (unitId: string) => void;
   onAction: (action: UnitAction, unit: OrgUnit) => void;
-  onOpenEmployee: (employeeId: string) => void;
+  onEmployeeAction: (action: EmployeeAction, employee: Employee) => void;
 }
 
 function visibleNodes(nodes: readonly UnitNode[], view: UnitTreeView) {
@@ -48,7 +49,6 @@ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
         isAdmin={view.isAdmin}
         onToggle={view.onToggle}
         onAction={view.onAction}
-        onOpenEmployee={view.onOpenEmployee}
       />
       {openness !== "closed" && (
         <ul className="org-tree__children">
@@ -60,7 +60,7 @@ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
               unitId={unit.id}
               hasChildUnits={children.length > 0}
               isAdmin={view.isAdmin}
-              onOpenEmployee={view.onOpenEmployee}
+              onAction={view.onEmployeeAction}
             />
           )}
         </ul>

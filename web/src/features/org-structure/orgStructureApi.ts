@@ -12,6 +12,9 @@ export type OrgUnitTreeNode = components["schemas"]["OrgUnitTreeNodeResponse"];
 /** An employee; the projection for ordinary users leaves out the status and the version. */
 export type Employee = components["schemas"]["EmployeeResponse"];
 
+/** What dismissing or deleting an employee changes elsewhere: the units that lose their head and the account that is blocked. */
+export type EmployeeImpact = components["schemas"]["EmployeeImpactResponse"];
+
 /** The fields an employee is created or replaced with. */
 export type EmployeeInput = components["schemas"]["EmployeeRequest"];
 
@@ -64,6 +67,15 @@ export function employeeQuery(id: string) {
         await api.GET("/api/v1/employees/{id}", { params: { path: { id } } }),
       ).data,
   });
+}
+
+/** Reads what dismissing or deleting the employee would change elsewhere; never cached, because the confirmation must show the state now. */
+export async function fetchEmployeeImpact(id: string) {
+  return unwrap(
+    await api.GET("/api/v1/employees/{id}/impact", {
+      params: { path: { id } },
+    }),
+  ).data;
 }
 
 /** Rereads every unit and employee query: a change to one reshapes the other's lists, names and counts. */

@@ -2,14 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, Typography } from "antd";
 import { memo } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { EmployeeCard } from "./EmployeeCard";
-import { unitEmployeesQuery } from "./orgStructureApi";
+import { type EmployeeAction, EmployeeCard } from "./EmployeeCard";
+import { type Employee, unitEmployeesQuery } from "./orgStructureApi";
 
 interface UnitEmployeesProps {
   unitId: string;
   hasChildUnits: boolean;
   isAdmin: boolean;
-  onOpenEmployee: (employeeId: string) => void;
+  onAction: (action: EmployeeAction, employee: Employee) => void;
 }
 
 /**
@@ -21,7 +21,7 @@ export const UnitEmployees = memo(function UnitEmployees({
   unitId,
   hasChildUnits,
   isAdmin,
-  onOpenEmployee,
+  onAction,
 }: UnitEmployeesProps) {
   const { data, error, refetch } = useQuery(unitEmployeesQuery(unitId));
 
@@ -59,11 +59,7 @@ export const UnitEmployees = memo(function UnitEmployees({
   }
   return data.map((employee) => (
     <li key={employee.id} className="org-tree__node">
-      <EmployeeCard
-        employee={employee}
-        isAdmin={isAdmin}
-        onOpen={onOpenEmployee}
-      />
+      <EmployeeCard employee={employee} isAdmin={isAdmin} onAction={onAction} />
     </li>
   ));
 });

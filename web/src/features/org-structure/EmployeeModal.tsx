@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { App, Descriptions, Modal, Skeleton, Space } from "antd";
+import { App, Modal, Skeleton, Space } from "antd";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
 import { ErrorAlert } from "../../app/ErrorAlert";
@@ -13,9 +13,9 @@ import {
 } from "./orgStructureApi";
 
 interface EmployeeModalProps {
-  /** Employee to open; omitted when a new employee is created. */
+  /** Employee to change; omitted when a new employee is created. */
   employeeId?: string;
-  /** Unit a new employee starts in; ignored when an employee is opened. */
+  /** Unit a new employee starts in; ignored when an employee is changed. */
   orgUnitId?: string;
   onClose: () => void;
   /** Receives the saved employee once the server has accepted it. */
@@ -23,9 +23,8 @@ interface EmployeeModalProps {
 }
 
 /**
- * Dialog that shows one employee or creates one. The full projection, which carries the version, opens as an editable
- * form; the restricted projection of an ordinary user opens as plain facts. Mount it only while it is shown, so every
- * opening starts clean and an employee is read only when the dialog opens.
+ * Dialog that changes one employee or creates one. Only administrators reach it. An existing employee is read when the
+ * dialog opens, so the change is based on the current version. Mount it only while it is shown, so every opening starts clean.
  */
 export function EmployeeModal({
   employeeId,
@@ -36,7 +35,9 @@ export function EmployeeModal({
   return (
     <Modal
       open
-      title={employeeId === undefined ? "Новый сотрудник" : "Сотрудник"}
+      title={
+        employeeId === undefined ? "Новый сотрудник" : "Изменение сотрудника"
+      }
       onCancel={onClose}
       footer={null}
     >
@@ -47,7 +48,7 @@ export function EmployeeModal({
           onSaved={onSaved}
         />
       ) : (
-        <OpenedEmployee
+        <ChangedEmployee
           employeeId={employeeId}
           onClose={onClose}
           onSaved={onSaved}
@@ -57,7 +58,7 @@ export function EmployeeModal({
   );
 }
 
-function OpenedEmployee({
+function ChangedEmployee({
   employeeId,
   onClose,
   onSaved,
@@ -70,7 +71,7 @@ function OpenedEmployee({
   } = useQuery(employeeQuery(employeeId));
 
   if (isPending) return <Skeleton active />;
-  if (!employee) {
+  if (employee?.version == null) {
     return (
       <ErrorAlert
         title="Не удалось загрузить сотрудника"
@@ -79,34 +80,11 @@ function OpenedEmployee({
       />
     );
   }
-  if (employee.version == null) return <EmployeeFacts employee={employee} />;
   return (
     <EmployeeEditor
       existing={{ employee, version: employee.version }}
       onClose={onClose}
       onSaved={onSaved}
-    />
-  );
-}
-
-function EmployeeFacts({ employee }: { employee: Employee }) {
-  return (
-    <Descriptions
-      column={1}
-      items={[
-        { key: "name", label: "ФИО", children: employee.fullName },
-        { key: "position", label: "Должность", children: employee.position },
-        {
-          key: "unit",
-          label: "Подразделение",
-          children: employee.orgUnitName,
-        },
-        {
-          key: "email",
-          label: "E-mail",
-          children: employee.email ?? "Нет учётной записи",
-        },
-      ]}
     />
   );
 }

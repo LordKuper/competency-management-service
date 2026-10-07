@@ -1,5 +1,4 @@
 import {
-  ApartmentOutlined,
   CheckCircleOutlined,
   DownOutlined,
   EditOutlined,
@@ -51,14 +50,11 @@ interface UnitCardProps {
   isAdmin: boolean;
   onToggle: (unitId: string) => void;
   onAction: (action: UnitAction, unit: OrgUnit) => void;
-  /** Opens an employee, the head of the unit; the callback must be stable, or every card renders again with the page. */
-  onOpenEmployee: (employeeId: string) => void;
 }
 
 /**
  * Card of a unit in the hierarchy: its name, status, counts of child units and employees and its head, all of which
- * read the same open or closed, the control that opens it, and for administrators the menu of actions. The head's name
- * opens the head in the employee dialog.
+ * read the same open or closed, the control that opens it, and for administrators the menu of actions.
  */
 export const UnitCard = memo(function UnitCard({
   unit,
@@ -69,10 +65,8 @@ export const UnitCard = memo(function UnitCard({
   isAdmin,
   onToggle,
   onAction,
-  onOpenEmployee,
 }: UnitCardProps) {
   const { token } = antdTheme.useToken();
-  const { headEmployeeId, headName } = unit;
   const inactiveNote = unit.isActive ? "" : " (подразделение неактивно)";
   const isOpen = openness !== "closed";
   const cardRef = useRef<HTMLDivElement>(null);
@@ -105,7 +99,6 @@ export const UnitCard = memo(function UnitCard({
           icon={isOpen ? <DownOutlined /> : <RightOutlined />}
           onClick={() => onToggle(unit.id)}
         >
-          <ApartmentOutlined />
           <Highlighted text={unit.name} needle={needle} />
         </Button>
         {!unit.isActive && <UnitStatusTag isActive={false} />}
@@ -166,20 +159,7 @@ export const UnitCard = memo(function UnitCard({
       <div className="org-card__meta">
         <span>Подразделений: {childCount}</span>
         <span>Сотрудников: {unit.employeeCount}</span>
-        <span>
-          Руководитель:{" "}
-          {headEmployeeId && headName ? (
-            <button
-              type="button"
-              className="org-link"
-              onClick={() => onOpenEmployee(headEmployeeId)}
-            >
-              {headName}
-            </button>
-          ) : (
-            "не назначен"
-          )}
-        </span>
+        <span>Руководитель: {unit.headName ?? "не назначен"}</span>
       </div>
     </Card>
   );

@@ -166,6 +166,35 @@ body {
   min-width: 0;
 }
 
+/* The actions button of an employee card: plain markup that looks like antd's text button, because a thousand antd buttons are slow to render. */
+.org-employee__menu {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ant-control-height);
+  height: var(--ant-control-height);
+  padding: 0;
+  border: 0;
+  border-radius: var(--ant-border-radius);
+  background: transparent;
+  color: var(--ant-color-text);
+  cursor: pointer;
+}
+
+.org-employee__menu:hover {
+  background: var(--ant-color-bg-text-hover);
+}
+
+.org-employee__menu:active {
+  background: var(--ant-color-bg-text-active);
+}
+
+.org-employee__menu:focus-visible {
+  outline: var(--ant-line-width-focus) solid var(--ant-color-primary-border);
+  outline-offset: var(--ant-line-width);
+}
+
 .org-employee__details {
   color: var(--ant-color-text-secondary);
 }
@@ -177,26 +206,8 @@ body {
   gap: var(--ant-margin-xs);
 }
 
-/* A button that reads as a link: it opens a dialog rather than navigating. */
-.org-link {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--ant-color-link);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.org-link:hover {
-  color: var(--ant-color-link-hover);
-}
-
-.org-link:active {
-  color: var(--ant-color-link-active);
-}
-
-.org-link:focus-visible {
-  outline: var(--ant-line-width-focus) solid var(--ant-color-primary-border);
-  outline-offset: var(--ant-line-width);
+/* The related changes listed in the confirmation of a dismissal or deletion. */
+.org-impact {
+  margin-block: 0;
+  padding-inline-start: var(--ant-margin-lg);
 }
