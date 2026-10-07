@@ -116,6 +116,13 @@
       "decision": "AC-13 users UI: row actions menu and modals, Task 19 wave 17",
       "reason": "user editing must be obvious",
       "evidence": "decisions-log.md 2026-10-07 Task 19"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-19 added, AC-10 head rule; Task 20 wave 18",
+      "reason": "employee order in units; head only from own unit; transfer clears head with warning",
+      "evidence": "decisions-log.md 2026-10-07 Task 20"
     }
   ],
   "task_routing": {
@@ -231,6 +238,12 @@
       "execution": "agent",
       "tier": "critical",
       "reason": "risk:account mutation UI moved to modals, removal of pages and routes",
+      "resolved_model": "sonnet"
+    },
+    "Task 20": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:new server-side head rule, cascade on head transfer in one transaction, public error contract",
       "resolved_model": "sonnet"
     }
   },

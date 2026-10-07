@@ -257,3 +257,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
 
 - 2026-10-07 — route Task 19: critical
+
+## 2026-10-07 — Поправка scope: порядок сотрудников и руководитель только из своего подразделения (AC-19), Task 20 (волна 18)
+
+- **Decision**: Сотрудники раскрытого подразделения сортируются: руководитель первым, затем по ФИО. Руководителем может быть только работающий сотрудник этого же подразделения: выбор ограничен им, сервер отклоняет другого (400). При переводе руководителя в другое подразделение он снимается с руководства с предупреждением перед сохранением (выбор пользователя; единообразно с каскадом увольнения). Существующие несоответствия данных не исправляются молча — правило проверяется при изменении. Task 20 идёт после Task 19 (общий `EmployeePicker`).
+- **Rationale**: Явные требования пользователя при ручной проверке (`new or changed scope`, новое бизнес-правило).
+- **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
+
+- 2026-10-07 — route Task 20: critical (dispatch after Task 19)
