@@ -6,13 +6,8 @@ namespace Competency.Platform.Migrations
 {
     /// <summary>
     /// Moves the e-mail from the employee to the account and removes the personnel number.
-    /// Up drops the personnel number and e-mail columns of employees with their indexes (their values are not kept),
-    /// and adds the mandatory unique case-insensitive e-mail to users. Existing accounts are backfilled with
-    /// <c>user_name || '@local.invalid'</c> (and the Identity user name with the same value, so the two stay equal),
-    /// which cannot collide because user names are unique; an administrator replaces the placeholder in the interface.
-    /// Down restores the dropped employee columns and indexes with unique placeholders derived from the employee id, since the values are gone,
-    /// removes the <c>@local.invalid</c> placeholder from the user names it was added to, drops the account e-mail columns
-    /// and narrows the user name columns back, which fails if a user name is longer than 64 characters.
+    /// Up does not keep the dropped personnel numbers and employee e-mails; Down restores those columns with placeholder values,
+    /// does not keep the account e-mails, and fails if a user name is longer than 64 characters.
     /// </summary>
     public partial class EmailOnUserAccount : Migration
     {

@@ -7,14 +7,7 @@ namespace Competency.Platform.Migrations
 {
     /// <summary>
     /// Splits the employee's full name into last, first and middle name, and makes <c>full_name</c> derived from them.
-    /// Up adds the three columns and fills them from the old <c>full_name</c> by splitting on whitespace: the first word is the last name,
-    /// the second the first name, and the remaining words, joined by single spaces, the middle name. A record of one word keeps it as the last name
-    /// with <c>-</c> as the first name, and a blank one gets <c>-</c> for both; such records need fixing by hand. A name part longer than
-    /// 100 characters fails the migration and changes nothing, so shorten such names first.
-    /// Then <c>full_name</c> is recreated as the stored generated column <c>last || ' ' || first || ' ' || middle</c>, and the full-text vector
-    /// is rebuilt from the three parts, because a generated column cannot be based on another one; both indexes are recreated.
-    /// Down turns <c>full_name</c> back into a plain column that keeps the derived values (it fails when one is longer than 200 characters),
-    /// drops the three columns and rebuilds the vector from <c>full_name</c>.
+    /// Up fails, changing nothing, when a name part is longer than 100 characters; Down fails when a full name is longer than 200 characters.
     /// </summary>
     public partial class EmployeeNameInThreeFields : Migration
     {

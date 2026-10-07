@@ -9,11 +9,9 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 namespace Competency.Audit;
 
 /// <summary>
-/// Adds one journal row, named <c>&lt;EntityType&gt;.Created</c>, <c>.Updated</c> or <c>.Deleted</c>, for every entity carrying
-/// <see cref="AuditedAttribute"/> that the current save creates, changes or deletes, so the row commits or fails with the change.
-/// Values hold only properties marked <see cref="AuditedAttribute"/>, and only the changed ones for an update; an update that
-/// changes none of them adds no row. Keys must be known before the save, and bulk <c>ExecuteUpdate</c> or <c>ExecuteDelete</c>
-/// bypass the change tracker and so the journal: they must not be used on audited entities.
+/// Journals every create, update and delete of an <see cref="AuditedAttribute"/> entity in the same save,
+/// so the journal row commits or fails with the change. Keys must be assigned before the save, and bulk <c>ExecuteUpdate</c>
+/// or <c>ExecuteDelete</c> bypass the change tracker and so the journal: they must not be used on audited entities.
 /// </summary>
 internal sealed class AuditSaveChangesInterceptor(AuditEventFactory factory) : SaveChangesInterceptor
 {

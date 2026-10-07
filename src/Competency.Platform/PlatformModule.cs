@@ -42,11 +42,10 @@ public static class PlatformModule
     private static readonly TimeSpan DatabaseWaitDelay = TimeSpan.FromSeconds(1);
 
     /// <summary>
-    /// Registers the database context, the readiness check, error handling, the current actor, the authorization policies and the sign-in rate limiter.
-    /// JSON numbers are read and written as numbers only, so the API description types integers as numbers rather than numbers or strings.
-    /// Every <see cref="IInterceptor"/> registered in the container, by the platform or by a module, is attached to the context.
-    /// Every endpoint requires an authenticated user unless it carries anonymous metadata; only the health probes,
-    /// the SPA fallback and the sign-in endpoint do, and a module exposing another anonymous endpoint must say so explicitly.
+    /// Registers the cross-cutting services every module relies on.
+    /// JSON numbers are numbers only, never strings, so the API description types integers as numbers.
+    /// Every <see cref="IInterceptor"/> in the container, from the platform or a module, is attached to the context.
+    /// Every endpoint requires an authenticated user unless it carries anonymous metadata, which a module exposing an anonymous endpoint must add itself.
     /// Nothing here connects to the database or reads the connection string until the context is first resolved.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
