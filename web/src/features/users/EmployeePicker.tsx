@@ -60,7 +60,7 @@ export function EmployeePicker({
             },
           },
         }),
-      ).data,
+      ),
     placeholderData: keepPreviousData,
   });
   const found: EmployeeOption[] = (data?.items ?? []).map((employee) => ({

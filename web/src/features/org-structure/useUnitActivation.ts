@@ -25,7 +25,7 @@ export function useUnitActivation() {
         unit.isActive
           ? await api.POST("/api/v1/org-units/{id}/deactivate", { params })
           : await api.POST("/api/v1/org-units/{id}/activate", { params }),
-      ).data;
+      );
     },
     onSettled: () => invalidateOrgStructure(queryClient),
   });

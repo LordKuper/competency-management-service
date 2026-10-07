@@ -96,7 +96,7 @@ function UserEditor({ existing, onClose }: UserEditorProps) {
           : await api.POST("/api/v1/users", {
               body: { ...account, password: password ?? "" },
             }),
-      ).data,
+      ),
     onSuccess: () => {
       message.success(existing ? "Изменения сохранены" : "Пользователь создан");
       onClose();

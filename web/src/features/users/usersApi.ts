@@ -24,8 +24,7 @@ export function userListQuery(params: UserListParams) {
   return queryOptions({
     queryKey: [...usersQueryKey, "list", params],
     queryFn: async () =>
-      unwrap(await api.GET("/api/v1/users", { params: { query: params } }))
-        .data,
+      unwrap(await api.GET("/api/v1/users", { params: { query: params } })),
     placeholderData: keepPreviousData,
   });
 }
@@ -35,8 +34,7 @@ export function userQuery(id: string) {
   return queryOptions({
     queryKey: [...usersQueryKey, "detail", id],
     queryFn: async () =>
-      unwrap(await api.GET("/api/v1/users/{id}", { params: { path: { id } } }))
-        .data,
+      unwrap(await api.GET("/api/v1/users/{id}", { params: { path: { id } } })),
     gcTime: 0,
   });
 }

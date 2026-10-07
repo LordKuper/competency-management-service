@@ -29,11 +29,6 @@ const color = {
   infoBg: "#EBF2FD",
 } as const;
 
-/** Page-frame widths that have a design token but no antd counterpart. */
-export const layout = {
-  readingMaxWidth: 720,
-} as const;
-
 const fontFamily = "PT Sans, Segoe UI, Roboto, Arial, sans-serif";
 const fontFamilyCode = "PT Mono, Consolas, Courier New, monospace";
 

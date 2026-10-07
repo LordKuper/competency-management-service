@@ -116,9 +116,7 @@ export const EmployeeCard = memo(function EmployeeCard({
           <strong>
             <Highlighted text={employee.fullName} needle={needle} />
           </strong>
-          {isAdmin && employee.isActive === false && (
-            <EmployeeStatusTag isActive={false} />
-          )}
+          {isAdmin && employee.isActive === false && <EmployeeStatusTag />}
         </div>
         <span className="org-employee__details">
           <Highlighted text={details.join(" · ")} needle={needle} />

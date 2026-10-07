@@ -59,7 +59,7 @@ export function UnitFormModal({
           : await api.POST("/api/v1/org-units", {
               body: { name: values.name, parentId: values.parentId ?? null },
             }),
-      ).data,
+      ),
     onSuccess: async (saved) => {
       await invalidateOrgStructure(queryClient);
       message.success(unit ? "Изменения сохранены" : "Подразделение создано");

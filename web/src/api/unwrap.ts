@@ -1,11 +1,5 @@
 import { ApiError } from "./ApiError";
 
-/** Successful payload with the `ETag` that must accompany the next write to the same resource. */
-export interface Versioned<TData> {
-  data: TData;
-  etag: string | null;
-}
-
 interface ClientResult {
   data?: unknown;
   error?: unknown;
@@ -18,12 +12,9 @@ interface ClientResult {
  */
 export function unwrap<TResult extends ClientResult>(
   result: TResult,
-): Versioned<Exclude<TResult["data"], undefined>> {
+): Exclude<TResult["data"], undefined> {
   if (result.error !== undefined) {
     throw new ApiError(result.response.status, result.error);
   }
-  return {
-    data: result.data as Exclude<TResult["data"], undefined>,
-    etag: result.response.headers.get("ETag"),
-  };
+  return result.data as Exclude<TResult["data"], undefined>;
 }

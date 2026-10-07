@@ -31,7 +31,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const signIn = useMutation({
     mutationFn: async (values: LoginValues) =>
-      unwrap(await api.POST("/api/v1/auth/login", { body: values })).data,
+      unwrap(await api.POST("/api/v1/auth/login", { body: values })),
     onSuccess: (user) => {
       queryClient.setQueryData(currentUserQueryKey, user);
       void navigate("/", { replace: true });

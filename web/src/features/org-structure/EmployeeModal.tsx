@@ -128,7 +128,7 @@ function EmployeeEditor({
               body: input,
             })
           : await api.POST("/api/v1/employees", { body: input }),
-      ).data,
+      ),
     onSuccess: async (saved) => {
       await invalidateOrgStructure(queryClient);
       message.success(existing ? "Изменения сохранены" : "Сотрудник создан");

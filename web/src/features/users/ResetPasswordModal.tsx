@@ -45,7 +45,7 @@ function ResetPasswordForm({
           },
           body: { newPassword },
         }),
-      ).data,
+      ),
     onSuccess: () => {
       message.success("Пароль сброшен");
       onDone();

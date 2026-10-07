@@ -92,7 +92,7 @@ export const UnitCard = memo(function UnitCard({
         >
           <Highlighted text={unit.name} needle={needle} />
         </Button>
-        {!unit.isActive && <UnitStatusTag isActive={false} />}
+        {!unit.isActive && <UnitStatusTag />}
         {isAdmin && (
           <Dropdown
             trigger={["click"]}

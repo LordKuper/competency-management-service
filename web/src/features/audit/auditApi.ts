@@ -30,7 +30,7 @@ export function auditListQuery(
         await api.GET("/api/v1/audit", {
           params: { query: { ...filters, page, pageSize } },
         }),
-      ).data,
+      ),
     placeholderData: keepPreviousData,
   });
 }

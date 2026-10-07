@@ -22,7 +22,7 @@ export function useBlockUser() {
         user.isBlocked
           ? await api.POST("/api/v1/users/{id}/unblock", { params })
           : await api.POST("/api/v1/users/{id}/block", { params }),
-      ).data;
+      );
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: usersQueryKey }),
   });

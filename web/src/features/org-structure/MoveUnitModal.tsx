@@ -35,7 +35,7 @@ export function MoveUnitModal({ unit, onClose }: MoveUnitModalProps) {
           },
           body: { parentId },
         }),
-      ).data,
+      ),
     onSuccess: () => {
       message.success("Подразделение перенесено");
       onClose();

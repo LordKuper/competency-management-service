@@ -27,7 +27,7 @@ export const employeesQueryKey = ["employees"] as const;
 /** Every unit visible to the signed-in user as a flat list; the tree is assembled from the parent links. */
 export const orgUnitTreeQuery = queryOptions({
   queryKey: [...orgUnitsQueryKey, "tree"],
-  queryFn: async () => unwrap(await api.GET("/api/v1/org-units/tree")).data,
+  queryFn: async () => unwrap(await api.GET("/api/v1/org-units/tree")),
 });
 
 /** Largest page the employee list accepts. */
@@ -45,7 +45,7 @@ export function employeeSearchQuery(text: string) {
         await api.GET("/api/v1/employees", {
           params: { query: { q: text, pageSize: EMPLOYEE_PAGE_SIZE_MAX } },
         }),
-      ).data,
+      ),
   });
 }
 
@@ -61,7 +61,7 @@ export function unitEmployeesQuery(orgUnitId: string) {
               query: { orgUnitId, page, pageSize: EMPLOYEE_PAGE_SIZE_MAX },
             },
           }),
-        ).data;
+        );
       const first = await readPage(1);
       const lastPage = Math.ceil(first.total / first.pageSize);
       const rest = await Promise.all(
@@ -81,7 +81,7 @@ export function employeeQuery(id: string) {
     queryFn: async () =>
       unwrap(
         await api.GET("/api/v1/employees/{id}", { params: { path: { id } } }),
-      ).data,
+      ),
   });
 }
 
@@ -91,7 +91,7 @@ export async function fetchEmployeeImpact(id: string) {
     await api.GET("/api/v1/employees/{id}/impact", {
       params: { path: { id } },
     }),
-  ).data;
+  );
 }
 
 /** Rereads every unit and employee query: a change to one reshapes the other's lists, names and counts. */

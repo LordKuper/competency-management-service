@@ -13,7 +13,7 @@ export const currentUserQueryKey = ["auth", "me"] as const;
 export function useCurrentUser() {
   return useQuery({
     queryKey: currentUserQueryKey,
-    queryFn: async () => unwrap(await api.GET("/api/v1/auth/me")).data,
+    queryFn: async () => unwrap(await api.GET("/api/v1/auth/me")),
   });
 }
 
