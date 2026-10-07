@@ -1,17 +1,17 @@
 # Локальная разработка в Visual Studio
 
-Профиль запуска «Все сервисы» по F5 поднимает всё для работы над приложением, без самописных скриптов:
+Профиль запуска `Everything` по F5 поднимает всё для работы над приложением, без самописных скриптов:
 
 | Что | Чем запускается | Адрес |
 |---|---|---|
 | PostgreSQL 18.6 | compose-проект `deploy/dev/docker-compose.dcproj` (единственный сервис `db`) | `127.0.0.1:15432` |
 | API | `src/Competency.Api` под отладчиком, профиль `Competency.Api` из `Properties/launchSettings.json` | http://localhost:5000 |
-| Vite и браузер | `web/web.esproj` (`npm run dev`), конфигурация `localhost (Edge)` из `web/.vscode/launch.json` | http://localhost:5173 |
+| Vite и браузер | `web/web.esproj` (`npm run dev`), конфигурация `localhost (Chrome)` из `web/.vscode/launch.json` | http://localhost:5173 |
 
 Профили лежат в `Competency.slnLaunch` (корень репозитория):
 
-- «Все сервисы» — БД, API под отладчиком, Vite; Edge открывается на http://localhost:5173, запросы `/api` Vite проксирует на :5000. Войти: `admin@kalibr.local` / `Admin-Dev-12345!`.
-- «Только API» — БД и API под отладчиком, без Vite и браузера. БД входит в оба профиля: API применяет миграции при старте и без БД не работает.
+- `Everything` — БД, API под отладчиком, Vite; Chrome открывается на http://localhost:5173, запросы `/api` Vite проксирует на :5000. Войти: e-mail и пароль администратора из `Bootstrap__AdminEmail` и `Bootstrap__AdminPassword` в `launchSettings.json`.
+- `API` — БД и API под отладчиком, без Vite и браузера. БД входит в оба профиля: API применяет миграции при старте и без БД не работает.
 
 ## Требования
 
@@ -27,9 +27,9 @@
 ## Как включить профиль запуска
 
 1. Открыть `Competency.slnx`.
-2. В списке рядом с кнопкой запуска выбрать «Все сервисы» (или «Только API»), нажать F5.
+2. В списке рядом с кнопкой запуска выбрать `Everything` (или `API`), нажать F5.
 
-Chrome вместо Edge: в `Competency.slnLaunch` заменить `DebugTarget` проекта `web\web.esproj` на `localhost (Chrome)`.
+Edge вместо Chrome: в `Competency.slnLaunch` заменить `DebugTarget` проекта `web\web.esproj` на `localhost (Edge)`.
 
 Если профилей в списке нет, включить Tools → Options → All Settings → Preview Features → «Enable Multi-Project Launch Profiles» (в Visual Studio 2022: Environment → Preview Features) и открыть решение заново. Профиль можно проверить и изменить через контекстное меню решения → «Configure Startup Projects…».
 
@@ -39,16 +39,16 @@ Visual Studio запускает проекты в порядке профиля
 
 ## Значения только для локальной разработки
 
-JSON не допускает комментариев, поэтому оговорка здесь: пароли ниже — тестовые, годятся только для рабочей станции. Порт БД слушает один `127.0.0.1`. `launchSettings.json` в образ и в `dotnet publish` не попадает.
+JSON не допускает комментариев, поэтому оговорка здесь: пароли в этих файлах — тестовые, годятся только для рабочей станции. Порт БД слушает один `127.0.0.1`. `launchSettings.json` в образ и в `dotnet publish` не попадает.
 
-| Где | Значение |
+| Где | Что задано |
 |---|---|
-| `deploy/dev/docker-compose.yml` | пользователь и БД `competency`, пароль `dev_pass_123` |
-| `src/Competency.Api/Properties/launchSettings.json` | `ConnectionStrings__Default` с тем же паролем (`GSS Encryption Mode=Disable` — как в `deploy/secret.template.yaml`); `Bootstrap__AdminEmail` = `admin@kalibr.local`, `Bootstrap__AdminPassword` = `Admin-Dev-12345!` |
+| `deploy/dev/docker-compose.yml` | пользователь, пароль и имя БД (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`) |
+| `src/Competency.Api/Properties/launchSettings.json` | `ConnectionStrings__Default` с тем же паролем (`GSS Encryption Mode=Disable` — причина в `deploy/secret.template.yaml`); `Bootstrap__AdminEmail`, `Bootstrap__AdminPassword` |
 
 ## База, созданная до входа по e-mail
 
-Администратор, созданный из `Bootstrap__AdminUserName`, после миграции `EmailOnUserAccount` получает e-mail `<имя>@local.invalid` (для `admin` — `admin@local.invalid`) и прежний пароль; `Bootstrap__AdminEmail` на существующего администратора не действует. Войти этим адресом и заменить e-mail в карточке пользователя (раздел «Пользователи»), либо начать с чистой БД: `docker compose -f deploy/dev/docker-compose.yml down -v`. Табельные номера и e-mail сотрудников миграция удаляет.
+Как войти в такую базу — в «Поведение при старте» `deploy/README.md` (обновление существующего развёртывания). Локально проще начать с чистой БД: `docker compose -f deploy/dev/docker-compose.yml down -v`.
 
 ## Остановка БД
 
