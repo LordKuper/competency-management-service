@@ -12,15 +12,30 @@ import { ChangePasswordModal } from "../features/auth/ChangePasswordModal";
 import type { CurrentUser } from "../features/auth/useCurrentUser";
 import { useSignOut } from "../features/auth/useSignOut";
 
-/** Header control that names the signed-in user and offers changing their password and signing out. */
+const NON_BREAKING_SPACE = " ";
+
+/** The employee's initials and last name ("А. Б. Иванов"), or the e-mail when the account has no employee. */
+function formatDisplayName(user: CurrentUser): string {
+  const { employeeLastName, employeeFirstName, employeeMiddleName } = user;
+  if (!employeeLastName || !employeeFirstName) {
+    return user.email;
+  }
+  const givenNames = employeeMiddleName
+    ? [employeeFirstName, employeeMiddleName]
+    : [employeeFirstName];
+  return [
+    ...givenNames.map((name) => `${name.charAt(0).toUpperCase()}.`),
+    employeeLastName,
+  ].join(NON_BREAKING_SPACE);
+}
+
+/** Header control that names the signed-in user and offers changing their password and signing out; its menu shows the e-mail. */
 export function UserMenu({ user }: { user: CurrentUser }) {
   const { token } = antdTheme.useToken();
   const screens = Grid.useBreakpoint();
   const signOut = useSignOut();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
-  const displayName = user.employeeName
-    ? `${user.employeeName} (${user.email})`
-    : user.email;
+  const displayName = formatDisplayName(user);
 
   return (
     <>
@@ -29,16 +44,22 @@ export function UserMenu({ user }: { user: CurrentUser }) {
         menu={{
           items: [
             {
-              key: "change-password",
-              icon: <KeyOutlined />,
-              label: "Сменить пароль",
-              onClick: () => setIsChangePasswordOpen(true),
-            },
-            {
-              key: "sign-out",
-              icon: <LogoutOutlined />,
-              label: "Выйти",
-              onClick: () => signOut.mutate(),
+              type: "group",
+              label: user.email,
+              children: [
+                {
+                  key: "change-password",
+                  icon: <KeyOutlined />,
+                  label: "Сменить пароль",
+                  onClick: () => setIsChangePasswordOpen(true),
+                },
+                {
+                  key: "sign-out",
+                  icon: <LogoutOutlined />,
+                  label: "Выйти",
+                  onClick: () => signOut.mutate(),
+                },
+              ],
             },
           ],
         }}
