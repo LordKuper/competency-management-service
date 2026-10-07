@@ -11,6 +11,9 @@ namespace Competency.Tests;
 /// </summary>
 public sealed class SessionTests(TestEnvironment environment)
 {
+    private const int AttemptsBeforeLockout = 5;
+    private const string WrongPassword = "Wrong-Pass-12345!";
+
     [Fact]
     public async Task Ac6_EveryFailedSignIn_LooksTheSame()
     {
@@ -108,6 +111,60 @@ public sealed class SessionTests(TestEnvironment environment)
         (await current.GetAsync("/api/v1/auth/me")).Status.Should().Be(HttpStatusCode.OK);
         (await another.GetAsync("/api/v1/auth/me")).Status.Should().Be(HttpStatusCode.Unauthorized);
         (await SignInAsync(host, account.Email, NewPassword)).Status.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Ac6_WrongCurrentPasswordInChangePassword_LocksTheAccountLikeWrongSignIns()
+    {
+        var host = await environment.SharedHostAsync();
+        var admin = await host.AdminAsync();
+        var account = await admin.CreateUserAsync();
+        var session = await account.SignInAsync(host);
+        const string NewPassword = "Guessed-Pass-12345!";
+
+        for (var attempt = 0; attempt < AttemptsBeforeLockout; attempt++)
+        {
+            (await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = WrongPassword, newPassword = NewPassword }))
+                .Status.Should().Be(HttpStatusCode.BadRequest);
+        }
+
+        var signIn = await SignInAsync(host, account.Email, account.Password);
+        var rightCurrent = await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = account.Password, newPassword = NewPassword });
+        var current = await admin.GetUserAsync(account.Id);
+        (await admin.PostAsync($"/api/v1/users/{account.Id}/unblock", ifMatch: current.ETag)).Expect(HttpStatusCode.OK);
+
+        signIn.Status.Should().Be(HttpStatusCode.Unauthorized, "the wrong current passwords counted as failed sign-ins");
+        rightCurrent.Status.Should().Be(HttpStatusCode.BadRequest, "a locked account is refused even with the right current password");
+        rightCurrent.FieldErrors("currentPassword").Should().NotBeEmpty();
+        (await SignInAsync(host, account.Email, account.Password)).Status.Should().Be(HttpStatusCode.OK, "the refused change left the password as it was");
+        (await SignInAsync(host, account.Email, NewPassword)).Status.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Ac6_SuccessfulPasswordChange_ClearsTheCountOfWrongCurrentPasswords()
+    {
+        var host = await environment.SharedHostAsync();
+        var account = await (await host.AdminAsync()).CreateUserAsync();
+        var session = await account.SignInAsync(host);
+        const string NewPassword = "Cleared-Pass-12345!";
+        const string AnotherPassword = "Another-Pass-12345!";
+
+        for (var attempt = 0; attempt < AttemptsBeforeLockout - 1; attempt++)
+        {
+            (await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = WrongPassword, newPassword = NewPassword }))
+                .Status.Should().Be(HttpStatusCode.BadRequest);
+        }
+
+        (await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = account.Password, newPassword = NewPassword })).Expect(HttpStatusCode.NoContent);
+        for (var attempt = 0; attempt < AttemptsBeforeLockout - 1; attempt++)
+        {
+            (await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = WrongPassword, newPassword = AnotherPassword }))
+                .Status.Should().Be(HttpStatusCode.BadRequest);
+        }
+
+        (await SignInAsync(host, account.Email, NewPassword)).Status.Should().Be(
+            HttpStatusCode.OK,
+            "the wrong attempts before the change no longer count, so the account is not locked");
     }
 
     [Fact]

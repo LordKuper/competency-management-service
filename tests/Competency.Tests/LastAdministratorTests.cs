@@ -27,7 +27,8 @@ public sealed class AdministratorsHost(TestEnvironment environment) : HostFixtur
 
     /// <summary>
     /// Signs in as the active administrator and checks that there is exactly one, which is the invariant every test leaves behind.
-    /// An account that is blocked or demoted never becomes active again in these tests, so it is dropped from the candidates for good.
+    /// An account that is blocked or demoted at the time of the call is dropped from the candidates for good,
+    /// so a test that activates such an account again must block it once more before the next call.
     /// </summary>
     /// <returns>The session and the account id of the active administrator.</returns>
     public async Task<(ApiClient Client, Guid Id)> ActiveAdministratorAsync()
@@ -65,6 +66,7 @@ public sealed class AdministratorsHost(TestEnvironment environment) : HostFixtur
 public sealed class LastAdministratorTests(AdministratorsHost fixture) : IClassFixture<AdministratorsHost>
 {
     private const string LastAdministratorWording = "последн";
+    private const string EmployeeWording = "сотрудник";
 
     [Fact]
     public async Task Ac7_BlockingTheLastActiveAdministrator_IsRefused()
@@ -156,6 +158,35 @@ public sealed class LastAdministratorTests(AdministratorsHost fixture) : IClassF
         impact.Json!["account"]!["isLastActiveAdministrator"]!.GetValue<bool>().Should().BeFalse();
         dismissed.Status.Should().Be(HttpStatusCode.OK, dismissed.Body);
         (await sole.GetUserAsync(other.Id)).Json!["isBlocked"]!.GetValue<bool>().Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Ac8_UnblockingAnAdministratorWhoseEmployeeWasDismissed_IsRefusedUntilTheEmployeeWorksAgain()
+    {
+        var (sole, soleId) = await fixture.ActiveAdministratorAsync();
+        var unit = await sole.CreateUnitAsync();
+        var employee = await sole.CreateEmployeeAsync(unit.Id);
+        var bound = await fixture.NewAdministratorAsync(sole, employee.Id);
+        var dismissed = (await sole.PostAsync($"/api/v1/employees/{employee.Id}/dismiss", ifMatch: employee.ETag)).Expect(HttpStatusCode.OK);
+        var blocked = await sole.GetUserAsync(bound.Id);
+
+        var unblock = await sole.PostAsync($"/api/v1/users/{bound.Id}/unblock", ifMatch: blocked.ETag);
+        var blockSole = await sole.PostAsync($"/api/v1/users/{soleId}/block", ifMatch: (await sole.GetUserAsync(soleId)).ETag);
+
+        blocked.Json!["isBlocked"]!.GetValue<bool>().Should().BeTrue("dismissing the employee blocked the account");
+        unblock.Status.Should().Be(HttpStatusCode.Conflict, unblock.Body);
+        unblock.Json!["detail"]!.GetValue<string>().Should().Contain(EmployeeWording);
+        blockSole.Status.Should().Be(HttpStatusCode.Conflict, "an administrator who cannot sign in is not another active one");
+        blockSole.Json!["detail"]!.GetValue<string>().Should().Contain(LastAdministratorWording);
+        var refused = await sole.GetUserAsync(bound.Id);
+        refused.Json!["isBlocked"]!.GetValue<bool>().Should().BeTrue();
+        refused.ETag.Should().Be(blocked.ETag, "a refused unblock changes nothing");
+
+        (await sole.PostAsync($"/api/v1/employees/{employee.Id}/rehire", ifMatch: dismissed.ETag)).Expect(HttpStatusCode.OK);
+        var unblocked = (await sole.PostAsync($"/api/v1/users/{bound.Id}/unblock", ifMatch: blocked.ETag)).Expect(HttpStatusCode.OK);
+        await bound.SignInAsync(fixture.Host);
+        (await sole.PostAsync($"/api/v1/users/{bound.Id}/block", ifMatch: unblocked.ETag)).Expect(HttpStatusCode.OK);
+        (await fixture.ActiveAdministratorAsync()).Id.Should().Be(soleId);
     }
 
     [Theory]

@@ -132,6 +132,35 @@ public sealed class UserBindingTests(TestEnvironment environment)
     }
 
     [Fact]
+    public async Task Ac8_UserList_NamesTheEmployeeOfEachBoundAccount_AlsoOfADismissedOne_AndNoOneForAnUnboundAccount()
+    {
+        var admin = await (await environment.SharedHostAsync()).AdminAsync();
+        var token = Scenarios.Unique("names")[6..];
+        var unit = await admin.CreateUnitAsync();
+        var first = await admin.CreateEmployeeAsync(unit.Id, lastName: Scenarios.Unique("Орлов"), firstName: "Пётр", middleName: "Иванович");
+        var second = await admin.CreateEmployeeAsync(unit.Id, lastName: Scenarios.Unique("Седов"), firstName: "Анна");
+        var leaver = await admin.CreateEmployeeAsync(unit.Id, lastName: Scenarios.Unique("Волков"), firstName: "Олег");
+        var onFirst = await admin.CreateUserAsync(employeeId: first.Id, email: $"first{token}@test.local");
+        var onSecond = await admin.CreateUserAsync(employeeId: second.Id, email: $"second{token}@test.local");
+        var onLeaver = await admin.CreateUserAsync(employeeId: leaver.Id, email: $"leaver{token}@test.local");
+        var unbound = await admin.CreateUserAsync(email: $"unbound{token}@test.local");
+        (await admin.PostAsync($"/api/v1/employees/{leaver.Id}/dismiss", ifMatch: leaver.ETag)).Expect(HttpStatusCode.OK);
+
+        var page = (await admin.GetAsync($"/api/v1/users?q={token}&pageSize=200")).Expect(HttpStatusCode.OK);
+
+        var names = page.Json!["items"]!.AsArray().ToDictionary(
+            user => user!["email"]!.GetValue<string>(),
+            user => user!["employeeName"]?.GetValue<string>());
+        names.Should().BeEquivalentTo(new Dictionary<string, string?>
+        {
+            [onFirst.Email] = first.Json!["fullName"]!.GetValue<string>(),
+            [onSecond.Email] = second.Json!["fullName"]!.GetValue<string>(),
+            [onLeaver.Email] = leaver.Json!["fullName"]!.GetValue<string>(),
+            [unbound.Email] = null,
+        });
+    }
+
+    [Fact]
     public async Task Ac7_UserSearch_TreatsPercentAndUnderscoreLiterally_AndFiltersByRoleAndBlock()
     {
         var admin = await (await environment.SharedHostAsync()).AdminAsync();

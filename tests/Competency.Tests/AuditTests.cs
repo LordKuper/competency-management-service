@@ -102,6 +102,44 @@ public sealed class AuditTests(TestEnvironment environment)
             .Should().Be(0, "only allow-listed properties are journaled");
     }
 
+    [Theory]
+    [InlineData("reset-password", "AppUser.PasswordReset", HttpStatusCode.OK)]
+    [InlineData("change-password", "Auth.PasswordChanged", HttpStatusCode.NoContent)]
+    public async Task Ac15_CredentialChangeAndItsJournalRow_AreSavedTogetherOrNotAtAll(string operation, string action, HttpStatusCode success)
+    {
+        await using var host = await environment.StartHostAsync();
+        var admin = await host.AdminAsync();
+        var account = await admin.CreateUserAsync();
+        var session = await account.SignInAsync(host);
+        const string NewPassword = "Atomic-Pass-12345!";
+        var constraint = $"ck_audit_action_marker_{Guid.NewGuid():N}";
+        await host.ExecuteAsync($"ALTER TABLE audit_events ADD CONSTRAINT {constraint} CHECK (action <> '{action}')");
+
+        var failed = await ChangePassword(account.ETag);
+        var unchanged = await admin.GetUserAsync(account.Id);
+        var oldPassword = await host.Anonymous().PostAsync("/api/v1/auth/login", new { email = account.Email, password = account.Password });
+        var newPassword = await host.Anonymous().PostAsync("/api/v1/auth/login", new { email = account.Email, password = NewPassword });
+        var sessionAfterFailure = await session.GetAsync("/api/v1/auth/me");
+        await host.ExecuteAsync($"ALTER TABLE audit_events DROP CONSTRAINT {constraint}");
+        var changed = await ChangePassword((await admin.GetUserAsync(account.Id)).ETag!);
+
+        failed.Status.Should().Be(HttpStatusCode.InternalServerError, "the journal row cannot be written");
+        unchanged.ETag.Should().Be(account.ETag, "the account version moves only with a saved change");
+        oldPassword.Status.Should().Be(HttpStatusCode.OK, "the password is changed only when its journal row is saved with it");
+        newPassword.Status.Should().Be(HttpStatusCode.Unauthorized);
+        sessionAfterFailure.Status.Should().Be(HttpStatusCode.OK, "a change that was not saved ends no session");
+        changed.Status.Should().Be(success, changed.Body);
+        (await admin.AuditOfRequestAsync(changed.RequestId!)).Actions().Should().Equal(action);
+        (await host.Anonymous().PostAsync("/api/v1/auth/login", new { email = account.Email, password = NewPassword })).Status.Should().Be(HttpStatusCode.OK);
+        (await session.GetAsync("/api/v1/auth/me")).Status.Should().Be(
+            operation == "reset-password" ? HttpStatusCode.Unauthorized : HttpStatusCode.OK,
+            "a reset ends the sessions of the account, a password change keeps the current one");
+
+        Task<ApiResponse> ChangePassword(string version) => operation == "reset-password"
+            ? admin.PostAsync($"/api/v1/users/{account.Id}/reset-password", new { newPassword = NewPassword }, version)
+            : session.PostAsync("/api/v1/auth/change-password", new { currentPassword = account.Password, newPassword = NewPassword });
+    }
+
     [Fact]
     public async Task Ac15_SignInEvents_AreJournaledWithTheAccountIdentityAndNothingTyped()
     {

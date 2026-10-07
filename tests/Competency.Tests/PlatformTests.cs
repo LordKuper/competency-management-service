@@ -26,10 +26,9 @@ public sealed class PlatformTests(TestEnvironment environment)
         (await host.Anonymous().GetAsync("/healthz/live")).Status.Should().Be(HttpStatusCode.OK);
         (await host.Anonymous().GetAsync("/healthz/ready")).Status.Should().Be(HttpStatusCode.OK);
 
-        var tables = await ScalarAsync<long>(
-            host,
+        var tables = await host.ScalarAsync<long>(
             "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('users', 'org_units', 'employees', 'audit_events')");
-        var trigram = await ScalarAsync<long>(host, "SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'");
+        var trigram = await host.ScalarAsync<long>("SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'");
         tables.Should().Be(4);
         trigram.Should().Be(1);
 
@@ -121,13 +120,13 @@ public sealed class PlatformTests(TestEnvironment environment)
         var host = await environment.SharedHostAsync();
         var admin = await host.AdminAsync();
         await admin.CreateUnitAsync();
-        var before = await ScalarAsync<long>(host, "SELECT count(*) FROM audit_events");
+        var before = await host.ScalarAsync<long>("SELECT count(*) FROM audit_events");
         before.Should().BePositive("a mutation was just journaled");
 
-        var rejection = await FluentActions.Awaiting(() => ScalarAsync<long>(host, statement)).Should().ThrowAsync<PostgresException>();
+        var rejection = await FluentActions.Awaiting(() => host.ScalarAsync<long>(statement)).Should().ThrowAsync<PostgresException>();
 
         rejection.Which.SqlState.Should().Be(RestrictViolation);
-        (await ScalarAsync<long>(host, "SELECT count(*) FROM audit_events")).Should().BeGreaterThanOrEqualTo(before);
+        (await host.ScalarAsync<long>("SELECT count(*) FROM audit_events")).Should().BeGreaterThanOrEqualTo(before);
     }
 
     [Theory]
@@ -156,7 +155,7 @@ public sealed class PlatformTests(TestEnvironment environment)
         var admin = await host.AdminAsync();
         var account = await admin.CreateUserAsync();
 
-        var rejection = await FluentActions.Awaiting(() => ScalarAsync<long>(host, $"UPDATE users SET role = '{UnknownRole}' WHERE id = '{account.Id}'"))
+        var rejection = await FluentActions.Awaiting(() => host.ScalarAsync<long>($"UPDATE users SET role = '{UnknownRole}' WHERE id = '{account.Id}'"))
             .Should().ThrowAsync<PostgresException>();
 
         rejection.Which.SqlState.Should().Be(CheckViolation);
@@ -174,7 +173,7 @@ public sealed class PlatformTests(TestEnvironment environment)
         stale.Status.Should().Be(HttpStatusCode.PreconditionFailed);
         var forbiddenName = Scenarios.Unique("Запрещено");
         var constraint = $"ck_unit_name_marker_{Guid.NewGuid():N}";
-        await ScalarAsync<long>(host, $"ALTER TABLE org_units ADD CONSTRAINT {constraint} CHECK (name <> '{forbiddenName}')");
+        await host.ScalarAsync<long>($"ALTER TABLE org_units ADD CONSTRAINT {constraint} CHECK (name <> '{forbiddenName}')");
 
         var failed = await admin.PostAsync("/api/v1/org-units", new { name = forbiddenName, parentId = (Guid?)null });
 
@@ -200,14 +199,5 @@ public sealed class PlatformTests(TestEnvironment environment)
     {
         await using var command = new NpgsqlCommand(sql, connection);
         await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
-    }
-
-    private static async Task<T> ScalarAsync<T>(ApiHost host, string sql)
-    {
-        await using var connection = new NpgsqlConnection(host.ConnectionString);
-        await connection.OpenAsync(TestContext.Current.CancellationToken);
-        await using var command = new NpgsqlCommand(sql, connection);
-        var value = await command.ExecuteScalarAsync(TestContext.Current.CancellationToken);
-        return value is T typed ? typed : default!;
     }
 }

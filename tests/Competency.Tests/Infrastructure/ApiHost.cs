@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Npgsql;
 using Xunit;
 
 namespace Competency.Tests.Infrastructure;
@@ -74,6 +75,33 @@ public sealed class ApiHost : IAsyncDisposable
         }
 
         return Logs;
+    }
+
+    /// <summary>
+    /// Runs one statement directly against the host's database, on a connection of its own.
+    /// </summary>
+    /// <param name="sql">The statement.</param>
+    public async Task ExecuteAsync(string sql)
+    {
+        await using var connection = new NpgsqlConnection(ConnectionString);
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
+        await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+    }
+
+    /// <summary>
+    /// Runs one query directly against the host's database, on a connection of its own.
+    /// </summary>
+    /// <typeparam name="T">The type the first column of the first row is expected to have.</typeparam>
+    /// <param name="sql">The query.</param>
+    /// <returns>The first column of the first row, or the default of the type when there is none or it has another type.</returns>
+    public async Task<T> ScalarAsync<T>(string sql)
+    {
+        await using var connection = new NpgsqlConnection(ConnectionString);
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
+        var value = await command.ExecuteScalarAsync(TestContext.Current.CancellationToken);
+        return value is T typed ? typed : default!;
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Xunit;
@@ -80,6 +81,16 @@ public sealed record ApiResponse(HttpStatusCode Status, string Body, string? ETa
     public int Code => (int)Status;
 
     public Guid Id => Guid.Parse(Json!["id"]!.GetValue<string>());
+
+    /// <summary>
+    /// Prints only the status and the body, because <see cref="Id"/> throws for a response without one, which would replace
+    /// the report of a failed assertion over responses by a <see cref="NullReferenceException"/>.
+    /// </summary>
+    private bool PrintMembers(StringBuilder builder)
+    {
+        builder.Append($"Status = {Status}, Body = {Body}");
+        return true;
+    }
 
     /// <summary>
     /// Fails with the whole response when the status differs, so a wrong status shows the server's reason.
