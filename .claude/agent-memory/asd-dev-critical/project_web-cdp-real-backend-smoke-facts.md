@@ -12,7 +12,7 @@ Method for a UI smoke of the whole stack (scratch `postgres:18.6-trixie` contain
 - **Sign-in lands on the first navigation item**, not the page asked for: an administrator ends on `/users`, so navigate to the target afterwards.
 - **Proxy and CSRF**: through the Vite proxy the browser origin equals the Host the API sees (the proxy restores it), so mutations pass; a direct `curl -X POST` to the API needs `-H 'Origin: http://127.0.0.1:35080'`, and Cyrillic JSON goes through `--data-binary @file`.
 - **Shell quoting trap**: a JS single quote inside a `node -e '...'` argument ends the shell string silently (`'"'` became `' + x + '`); build such text with `String.fromCharCode(34)` or write the script with the write tool. A `sed -i` or string `replace` that renames a port or id touches only the first match unless it is global.
-- **Harmless dev noise**: the `rc-virtual-list` "scrollTo reach the max limitation" console error appears when a TreeSelect opens with a nested value selected (the shared `OrgUnitSelect`); each mounted `OrgUnitSelect` refetches the whole unit tree once (default stale time 0), so an admin dialog with a unit field costs one extra tree request.
+- **Harmless dev noise**: the `rc-virtual-list` "scrollTo reach the max limitation" console error appears when a TreeSelect opens with a nested value selected (the shared `OrgUnitSelect`); each mounted `OrgUnitSelect` rereads the whole unit tree only when it is older than the 60 s list stale time, so a dialog opened right after the page load costs no extra tree request.
 - `docker rm -fv <container>` frees the scratch container's anonymous volume; an anonymous volume that predates the run belongs to someone else, leave it.
 
 **Why:** each was found by a failed or misleading scripted run.

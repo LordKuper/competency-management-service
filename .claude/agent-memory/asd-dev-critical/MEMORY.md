@@ -18,13 +18,13 @@
 - [Npgsql search and result-type gotchas](project_npgsql-search-and-result-type-gotchas.md) — 2-arg ILike has no escape, SqlQuery CTE composes, Conflict<T> is not problem+json, required init props
 - [Scratch host without PostgreSQL](project_scratch-host-without-postgres.md) — InMemory logic host with stubbed raw SQL; Npgsql SQL-capture host with a fake DbCommand and transaction
 - [Identity on a plain DbContext](project_identity-efcore-store-gotchas.md) — stock user store marks all columns modified; users table suffices; HasOne(string) is a nav name
-- [Web UI test and form gotchas](project_web-ui-test-and-form-gotchas.md) — jsdom has no ResizeObserver, router singleton vs resetModules, Form.Item id, biome diff trick
-- [Web org-structure UI facts](project_web-org-structure-ui-facts.md) — antd Tree/TreeSelect/Table in jsdom, Escape closes Modal, form reset via key, throwaway test lint in shared worktree
+- [Web UI test and form gotchas](project_web-ui-test-and-form-gotchas.md) — jsdom ResizeObserver stubbed in setup.ts, router singleton vs resetModules, Form.Item id, biome diff trick
+- [Web org-structure UI facts](project_web-org-structure-ui-facts.md) — antd Tree/TreeSelect/Table in jsdom, Escape closes Modal, edit draft vs refetch, form reset after 412, throwaway test lint
 - [Packaging offline verification](project_packaging-offline-verification.md) — fresh-clone publish, npm linux dry-run, yaml parse, Secret template kept out of deploy/k8s
 - [Docker spike recipe](project_docker-spike-recipe.md) — Git Bash docker path mangling, 10/min login limit, parallel curl pitfalls, scratch runner flags
 - [PostgreSQL behaviour facts](project_pg-behaviour-facts.md) — RESTRICT is 23001, ё vs е in ILIKE/FTS, superuser trigger bypass, no CHECK on parent_id
 - [VS F5 launch facts](project_vs-f5-launch-facts.md) — slnLaunch name/format, esproj dev server starts only via Deploy, dcproj stub in CLI, from VS binaries
-- [Scratch process control](project_scratch-process-control.md) — kill by PID never by pattern, dotnet dll content root, Windows closed-port timing, background runs
+- [Scratch process control](project_scratch-process-control.md) — never `down -v` on the dev compose (fixed volume name), scratch-only volume, kill by PID, dotnet content root, background runs
 - [Migration scratch verification](project_migration-scratch-verification-recipe.md) — ef --connection to a scratch DB, API off the launch profile, unknown JSON members ignored, field removal = one commit
 - [Org card hierarchy facts](project_web-org-card-hierarchy-facts.md) — antd render cost vs plain markup, stable callbacks for memo, connector offsets, CDP harness pitfalls, request counts
 - [VS debug build lock](project_vs-debug-build-lock-and-release-config.md) — user's F5 API locks Api bin/Debug; build -c Release, kill scratch API by PID, git-archive baseline for timings
@@ -35,5 +35,6 @@
 - [Employee dismissal cascade](project_employee-dismissal-cascade-facts.md) — IEmployeeAccounts port, direct stamp change, forced-failure/race checks, antd Dropdown cost per card
 - [Users row menu + modal](project_users-modal-menu-facts.md) — 409 alert suppressed for field conflicts, reset target by id from live list, gcTime 0 on account query, smoke facts
 - [Org head rule + order](project_org-head-rule-facts.md) — create field dropped silently, check-on-change, picker current quirk, Collator ru yo, antd 6 select DOM/click
-- [Org employee search](project_org-employee-search-facts.md) — server q is ILIKE+FTS not substring, q>200 is 400, matches-mode precedence, debounce masking, duplicated useDebouncedValue
+- [Org employee search](project_org-employee-search-facts.md) — server q is ILIKE+FTS not substring, q>200 is 400, searched units open as path only, absolute open/close choices, debounce masking
 - [Full verification cycle](project_full-verification-cycle-facts.md) — toast thenable keeps confirm open 3 s, real-change stale test, lockout trap, 10 500-employee numbers
+- [Web focus ring and antd CSS](project_web-focus-ring-and-antd-css-facts.md) — antd focus specificity vs !important and Biome, custom tokens as CSS vars, rc-dropdown keys, CDP keyboard check
