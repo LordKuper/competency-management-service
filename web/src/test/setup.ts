@@ -1,7 +1,10 @@
 import * as matchers from "@testing-library/jest-dom/matchers";
-import { expect, vi } from "vitest";
+import { afterEach, expect, vi } from "vitest";
+import { fakeApi } from "./fakeApi";
 
 expect.extend(matchers);
+
+afterEach(() => fakeApi.reset());
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,

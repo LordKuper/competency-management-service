@@ -1,4 +1,5 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { EmployeeCards } from "./EmployeeCards";
 import type { Employee } from "./orgStructureApi";
@@ -63,5 +64,30 @@ describe("EmployeeCards order (AC-19)", () => {
         null,
       ),
     ).toEqual(["Агафонов Олег", "Борисов Иван"]);
+  });
+});
+
+describe("EmployeeCard actions menu (AC-18)", () => {
+  it("opens the menu on the first press and leaves keyboard focus on the card's actions button", async () => {
+    const actions = "Действия с сотрудником Яшин Пётр";
+    render(
+      <ul>
+        <EmployeeCards
+          employees={[employee("1", "Яшин Пётр")]}
+          headEmployeeId={null}
+          isAdmin
+          onAction={vi.fn()}
+        />
+      </ul>,
+    );
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: actions }));
+
+    expect(
+      await screen.findByRole("menuitem", { name: /Править/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: actions })).toHaveFocus();
   });
 });

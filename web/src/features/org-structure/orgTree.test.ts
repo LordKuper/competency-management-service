@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Employee, OrgUnit, OrgUnitTreeNode } from "./orgStructureApi";
-import { ancestorIds, buildUnitTree, searchUnitTree } from "./orgTree";
+import {
+  ancestorIds,
+  buildUnitTree,
+  opennessByUnit,
+  searchUnitTree,
+} from "./orgTree";
 
 function unit(
   id: string,
@@ -102,5 +107,52 @@ describe("searchUnitTree (AC-17)", () => {
 
   it("shows nothing when neither a unit nor an employee matches", () => {
     expect(searchUnitTree(roots, "ничего", []).visibleIds.size).toBe(0);
+  });
+});
+
+describe("opennessByUnit (AC-17)", () => {
+  const roots = buildUnitTree([company, sales, north, support]);
+  const search = searchUnitTree(roots, "иванов", [employeeIn("north")]);
+
+  it("lists the units the user opened outside a search and ignores choices made during an earlier one", () => {
+    const openness = opennessByUnit(
+      null,
+      new Set(["sales"]),
+      new Map([["support", true]]),
+    );
+
+    expect(openness).toEqual(new Map([["sales", "open"]]));
+  });
+
+  it("marks only the path to the matches during a search, so what the user opened before it stays closed", () => {
+    const openness = opennessByUnit(search, new Set(["support"]), new Map());
+
+    expect(openness).toEqual(
+      new Map([
+        ["company", "path"],
+        ["sales", "path"],
+        ["north", "path"],
+      ]),
+    );
+  });
+
+  it("lets the user's choice win over the path, both ways, and opens a unit that is off the path", () => {
+    const openness = opennessByUnit(
+      search,
+      new Set(),
+      new Map([
+        ["sales", false],
+        ["north", true],
+        ["support", true],
+      ]),
+    );
+
+    expect(openness).toEqual(
+      new Map([
+        ["company", "path"],
+        ["north", "open"],
+        ["support", "open"],
+      ]),
+    );
   });
 });
