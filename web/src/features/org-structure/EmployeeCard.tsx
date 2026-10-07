@@ -14,14 +14,6 @@ import { EmployeeStatusTag } from "./StatusTags";
 /** What an administrator can do with an employee from the card. */
 export type EmployeeAction = "edit" | "dismiss" | "rehire" | "delete";
 
-function initialsOf(fullName: string): string {
-  return fullName
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word.charAt(0).toUpperCase())
-    .join("");
-}
-
 interface EmployeeCardProps {
   employee: Employee;
   /** Lower-cased search text whose first occurrence in the name and in the position and e-mail is highlighted; blank when not searching. */
@@ -115,7 +107,9 @@ export const EmployeeCard = memo(function EmployeeCard({
   return (
     <div className="org-tree__item org-employee">
       <span className="org-employee__avatar">
-        {initialsOf(employee.fullName)}
+        {(
+          employee.firstName.charAt(0) + employee.lastName.charAt(0)
+        ).toUpperCase()}
       </span>
       <div className="org-employee__text">
         <div className="org-employee__title">
