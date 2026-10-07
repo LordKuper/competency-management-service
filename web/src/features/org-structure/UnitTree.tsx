@@ -58,6 +58,7 @@ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
           {openness === "open" && (
             <UnitEmployees
               unitId={unit.id}
+              headEmployeeId={unit.headEmployeeId}
               hasChildUnits={children.length > 0}
               isAdmin={view.isAdmin}
               onAction={view.onEmployeeAction}

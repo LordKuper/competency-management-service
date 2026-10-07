@@ -10,6 +10,7 @@ import {
   type EmployeeInput,
   employeeQuery,
   invalidateOrgStructure,
+  orgUnitTreeQuery,
 } from "./orgStructureApi";
 
 interface EmployeeModalProps {
@@ -97,7 +98,10 @@ interface EmployeeEditorProps
   orgUnitId?: string;
 }
 
-/** The form with its save: a change is refused when the version is stale, and the employee is reread whatever the outcome. */
+/**
+ * The form with its save: a change is refused when the version is stale, and the employee is reread whatever the outcome.
+ * Moving the head of a unit to another unit is confirmed first, because the server then leaves the unit without a head.
+ */
 function EmployeeEditor({
   existing,
   orgUnitId,
@@ -105,7 +109,13 @@ function EmployeeEditor({
   onSaved,
 }: EmployeeEditorProps) {
   const queryClient = useQueryClient();
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
+  const { data: units } = useQuery(orgUnitTreeQuery);
+  const headedUnit = units?.find(
+    (unit) =>
+      unit.id === existing?.employee.orgUnitId &&
+      unit.headEmployeeId === existing.employee.id,
+  );
   const save = useMutation({
     mutationFn: async (input: EmployeeInput) =>
       unwrap(
@@ -126,6 +136,29 @@ function EmployeeEditor({
     },
     onError: () => invalidateOrgStructure(queryClient),
   });
+
+  const confirmUnitLosesHead = (unitName: string) =>
+    new Promise<boolean>((resolve) =>
+      modal.confirm({
+        title: "Перевести руководителя?",
+        content: `Подразделение «${unitName}» останется без руководителя. Продолжить?`,
+        okText: "Перевести",
+        cancelText: "Отмена",
+        onOk: () => resolve(true),
+        onCancel: () => resolve(false),
+      }),
+    );
+
+  async function submit(input: EmployeeInput) {
+    if (
+      headedUnit &&
+      input.orgUnitId !== headedUnit.id &&
+      !(await confirmUnitLosesHead(headedUnit.name))
+    ) {
+      return;
+    }
+    await save.mutateAsync(input);
+  }
 
   return (
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>
@@ -150,7 +183,7 @@ function EmployeeEditor({
         }
         email={existing?.employee.email}
         submitLabel={existing ? "Сохранить" : "Создать"}
-        onSubmit={(input) => save.mutateAsync(input)}
+        onSubmit={submit}
         onCancel={onClose}
       />
     </Space>
