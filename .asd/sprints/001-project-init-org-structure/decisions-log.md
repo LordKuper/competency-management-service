@@ -313,3 +313,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: `src/Competency.UserManagement/`, `src/Competency.OrgStructure/EmployeeStatus.cs`, `web/src/app/UserMenu.tsx`
 
 - 2026-10-07 — route Task 23: standard
+
+## 2026-10-07 — Волна 19: Task 21 и Task 23 приняты
+
+- **Decision**: Task 21: поиск раздела ищет сотрудников через `GET /employees?q=&pageSize=200` (от 2 символов, задержка 300 мс) и подразделения по названию на клиенте; подразделение с найденными сотрудниками показывает только их (даже если совпало и название — чтобы не открывать полные списки), подсветка только для непрерывного совпадения (сервер ищет ILIKE + FTS со стеммингом), `maxLength` 200, ошибка поиска не скрывает найденные подразделения; `useDebouncedValue` продублирован из `EmployeePicker` (кандидат на вынос). Task 23: аватарка — первые буквы имени и фамилии, иначе первая буква e-mail.
+- **Rationale**: В пределах AC-17, AC-11, AC-13; облегчённые проверки (lint, build, check:api) по `custom-coding-rules.md`; отображение в браузере не проверялось.
+- **Affected docs**: `web/src/features/org-structure/`, `web/src/app/UserMenu.tsx`
