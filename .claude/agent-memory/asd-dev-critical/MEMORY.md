@@ -32,3 +32,4 @@
 - [E-mail on the account](project_email-on-account-facts.md) — keyless ToSqlQuery cross-module read, UserName=Email, backfill and Down strip, Git Bash curl Cyrillic, race 409
 - [CDP real-backend smoke](project_web-cdp-real-backend-smoke-facts.md) — antd DOM ids, popup animation waits, real mouse for selects, sign-in landing, node -e quote trap
 - [Employee name split](project_employee-name-split-facts.md) — EF scaffold is wrong for column -> generated, Up/Down SQL, heap cost, old-client 400, TEMPLATE-copy verification
+- [Employee dismissal cascade](project_employee-dismissal-cascade-facts.md) — IEmployeeAccounts port, direct stamp change, forced-failure/race checks, antd Dropdown cost per card
