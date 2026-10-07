@@ -1,0 +1,22 @@
+name: competency-dev
+
+services:
+  db:
+    image: postgres:18.6-trixie
+    environment:
+      POSTGRES_USER: competency
+      POSTGRES_PASSWORD: dev_pass_123
+      POSTGRES_DB: competency
+    ports:
+      - "127.0.0.1:${DEV_DB_PORT:-15432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U competency -d competency"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
+    name: competency-dev-pgdata

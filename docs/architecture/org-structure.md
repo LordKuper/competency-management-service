@@ -1,0 +1,26 @@
+---
+responsibility:
+  owns: one subsystem's purpose and the paths holding its key parts
+  excludes: registry membership and ids, requirements, decisions, stack
+  delegates_to: subsystems.md (registry), requirements/<id>.html (requirements), stack.html
+---
+
+# Оргструктура (`org-structure`)
+
+## Purpose
+
+Строгое дерево подразделений (один родитель, без типов, физического удаления нет — только деактивация) и справочник сотрудников (ФИО тремя полями, подразделение, должность текстом, статус «работает / не работает»); администратор изменяет, остальные читают урезанную проекцию. Модуль зависит только от `Competency.Platform`: журнал подключается через `[Audited]` и `IAuditWriter` из Platform, а учётные записи — через порт `IEmployeeAccounts`, который объявляет здесь и реализует `user-management`.
+
+## Key paths
+
+- `src/Competency.OrgStructure/`: корень модуля; типы `internal`, наружу выходят `AddOrgStructureModule`, `MapOrgStructureEndpoints` и два порта ниже.
+- `src/Competency.OrgStructure/IEmployeeDirectory.cs`, `EmployeeDirectory.cs`, `EmployeeStatus.cs`: порт чтения сотрудника для других модулей (`FindAsync`, `FindManyAsync` — id, ФИО по частям, работает ли; `BeginExclusiveAsync` — транзакция под блокировкой дерева); реализация scoped, на том же `AppDbContext`, что и запрос. Читает его `user-management`.
+- `src/Competency.OrgStructure/IEmployeeAccounts.cs`: порт, который объявляет модуль и реализует `user-management` (`EmployeeAccounts`): `BlockAsync(employeeId, unbind)`, `LockAdministratorsAsync`, `IsLastActiveAdministratorAsync`. Реализация только помечает изменения на общем контексте; сохраняет вызывающий, в своей транзакции.
+- `src/Competency.OrgStructure/EmployeeAccount.cs`, `OrgStructureEntityConfiguration.cs`: keyless-запрос (`ToSqlQuery`) по таблице `users` — e-mail и признак блокировки привязанной учётной записи для ответов о сотруднике и для `impact`; единственное обращение к данным другого модуля, только чтение.
+- `src/Competency.OrgStructure/OrgTree.cs`: дерево хранится списком смежности (`parent_id`); поддерево и путь — `WITH RECURSIVE … UNION` через `FromSql`. **Блокировка дерева** — `pg_advisory_xact_lock(5001001)`, одна на все изменения подразделений и сотрудников и на изменения учётных записей, зависящие от сотрудника; берётся первой (порядок блокировок — `user-management.md`, `ActiveAdministrators.cs`). Одна блокировка на всё дерево рассчитана на редкие правки администратора; при конкуренции — блокировка по поддереву. Нужна изоляция read committed по умолчанию.
+- `src/Competency.OrgStructure/OrgUnitEndpoints.cs`: `/api/v1/org-units`. Чтение (дерево, список, поддерево, путь, сводка) — любой аутентифицированный; изменение (создание, правка, перенос, деактивация, активация) — `GlobalAdmin`, с `If-Match`, под блокировкой дерева. Перенос в себя или потомка — 409; деактивация при активных дочерних подразделениях или работающих сотрудниках — 409; руководителем может быть только работающий сотрудник этого же подразделения (400, проверяется при смене руководителя, прежние несоответствия данных молча не исправляются). `GET /org-units/tree` отдаёт плоский список узлов с именем руководителя и числом сотрудников одним запросом (без N+1); клиент собирает дерево по `parentId`.
+- `src/Competency.OrgStructure/EmployeeEndpoints.cs`, `EmployeeImpact.cs`: `/api/v1/employees`. Чтение — любой аутентифицированный (работающие сотрудники, ФИО, подразделение, должность, e-mail учётной записи; полная проекция со статусом и версией — только администратор); остальное — `GlobalAdmin`, с `If-Match`, под блокировкой дерева. «Уволить» и «Удалить» каскадны в одной транзакции: сотрудник снимается с руководства всех подразделений, привязанная учётная запись блокируется (при удалении ещё и отвязывается), сессии обрываются; `GET /employees/{id}/impact` считает и применяет изменения одним кодом (`EmployeeImpact`), поэтому показанное подтверждение совпадает с выполненным. Увольнение и удаление сотрудника, к которому привязан последний активный администратор, — 409 под блокировкой администраторов. «Вернуть на работу» учётную запись не разблокирует. Перевод руководителя в другое подразделение снимает его с руководства прежнего в той же транзакции. Физически удаляется только сотрудник.
+- `src/Competency.OrgStructure/OrgAccess.cs`: видимость по роли — администратор видит всё, остальные только активные подразделения и работающих сотрудников; недоступная запись для них — 404, мутация — 403, без сессии — 401 (прямой доступ по идентификатору проверяется на сервере, IDOR закрыт).
+- `src/Competency.OrgStructure/TextSearch.cs`, `ListQueries.cs`: поиск `q` — `ILIKE` по подстроке (GIN `gin_trgm_ops`) или полнотекстовый `russian` по названию подразделения и по ФИО и должности сотрудника; страницы 50 (по умолчанию) до 200, `q` не длиннее 200.
+- `src/Competency.Platform/Migrations/` (общая линия миграций, схема приложения): таблицы `org_units`, `employees`; `full_name` — stored generated колонка из трёх частей имени (в журнал попадают только части); `search_vector` — generated `tsvector`; внешние ключи без каскадов (`ON DELETE RESTRICT`); расширение `pg_trgm` создаёт миграция.
+- `docs/product/requirements/org-structure.html`: требования; `docs/ux/org-structure.html`: UX-спецификация.

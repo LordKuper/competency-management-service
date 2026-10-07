@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<!--
+responsibility:
+  owns: html shell wrap for all asd user-facing html docs
+  excludes: doc content, doc-specific structure
+  delegates_to: fragment templates (t_prd, t_adr, t_ux-spec, t_concept, t_stack, t_design-system, t_accessibility, t_retrospective)
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="ASD workflow">
+  <meta name="doc-type" content="UX-spec">
+  <meta name="subsystem" content="org-structure">
+  <meta name="sprint-id" content="">
+  <meta name="status" content="approved">
+  <meta name="updated" content="2026-10-07">
+  <meta name="responsibility" content="ux flows and ui mockups of org-structure: the card hierarchy of units and employees, search, unit and employee actions and their dialogs">
+  <meta name="provenance" content="original">
+  <title>UX-спецификация — Оргструктура (org-structure)</title>
+  <style>
+    :root {
+      --fg: #1a1c1e; --bg: #fff; --muted: #5b6770; --accent: #0066cc;
+      --code-bg: #f4f6f8; --border: #d0d7de; --max: 1040px;
+      --card-bg: #fafbfc;
+      --ok: #1a7f37; --warn: #b35900; --danger: #cf222e; --info: #0969da; --neutral: #5b6770;
+      --ok-tint: rgba(31,136,61,0.07); --danger-tint: rgba(207,34,46,0.06);
+      --chip-must-bg: #ffebe9; --chip-must-fg: #cf222e;
+      --chip-should-bg: #fff5e1; --chip-should-fg: #9a6700;
+      --chip-may-bg: #ddf4ff; --chip-may-fg: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e6e6e6; --bg: #0e1116; --muted: #9aa4ad; --code-bg: #161b22; --border: #30363d;
+        --card-bg: #161b22;
+        --accent: #58a6ff; --ok: #3fb950; --warn: #d29922; --danger: #f85149; --info: #79c0ff; --neutral: #8b949e;
+        --ok-tint: rgba(63,185,80,0.12); --danger-tint: rgba(248,81,73,0.10);
+        --chip-must-bg: #3b1416; --chip-must-fg: #ff7b72;
+        --chip-should-bg: #2d2410; --chip-should-fg: #e3b341;
+        --chip-may-bg: #0d2538; --chip-may-fg: #58a6ff;
+      }
+    }
+    html, body { margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100vh; }
+    .layout:has(> nav.toc) { grid-template-columns: 260px minmax(0, 1fr); }
+    nav.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 12px; border-right: 1px solid var(--border); font-size: 0.85rem; }
+    nav.toc .toc-title { font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
+    nav.toc ol { list-style: none; margin: 0; padding: 0; }
+    nav.toc li { margin: 2px 0; }
+    nav.toc a { color: var(--fg); text-decoration: none; display: block; padding: 3px 6px; border-radius: 4px; }
+    nav.toc a:hover { background: var(--code-bg); color: var(--accent); }
+    @media (max-width: 880px) { nav.toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } }
+    @media print { nav.toc { display: none; } }
+    .content { min-width: 0; }
+    header, main, footer { max-width: var(--max); margin: 0 auto; padding: 16px 24px; }
+    header { border-bottom: 1px solid var(--border); }
+    header h1 { margin: 4px 0 8px; font-size: 1.9rem; }
+    .badges span { display: inline-block; padding: 2px 8px; margin-right: 6px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--bg); }
+    .badges .provenance-reverse-engineered, .badges .provenance-migrated { color: var(--warn); border-color: var(--warn); }
+    .badges .status-draft       { color: var(--neutral); border-color: var(--neutral); }
+    .badges .status-in-review   { color: var(--warn);    border-color: var(--warn); }
+    .badges .status-approved    { color: var(--ok);      border-color: var(--ok); }
+    .badges .status-locked      { color: var(--info);    border-color: var(--info); }
+    .stats { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+    .stats .chip { display: inline-block; padding: 1px 8px; margin-right: 6px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); }
+    @media (max-width: 880px) {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+    }
+    h2, h3, h4 { line-height: 1.25; margin-top: 1.6em; }
+    h2 { border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    a { color: var(--accent); }
+    code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: var(--code-bg); padding: 12px; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--code-bg); position: sticky; top: 0; z-index: 1; }
+    tbody tr:nth-child(even) td { background: var(--card-bg); }
+    blockquote { border-left: 3px solid var(--accent); margin: 0; padding: 4px 14px; color: var(--muted); }
+    .mermaid { background: var(--bg); text-align: center; margin: 16px 0; }
+    footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+    /* fragment-shared utilities */
+    .lede { font-size: 1.08rem; color: var(--fg); }
+    section.hero { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+    section.callout { border-left: 4px solid var(--border); padding: 8px 14px; background: var(--card-bg); border-radius: 4px; }
+    section.callout.warn { border-left-color: var(--warn); }
+    section.callout.warn h2::before { content: "⊘ "; color: var(--warn); }
+
+    ol.goal-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    ol.goal-grid li { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; display: flex; gap: 10px; }
+    ol.goal-grid .num { flex: 0 0 auto; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    ol.goal-grid p { margin: 0; }
+
+    details.role-group { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; background: var(--card-bg); }
+    details.role-group > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+    details.role-group > summary .count { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+    details.role-group ul.stories { margin: 0; padding: 4px 16px 12px 28px; }
+    ul.stories li { margin: 4px 0; }
+    ul.stories b { color: var(--accent); font-weight: 600; }
+
+    table.ac-table td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .chip.area { background: var(--code-bg); color: var(--muted); }
+    .chip.prio-must   { background: var(--chip-must-bg);   color: var(--chip-must-fg); border-color: var(--chip-must-fg); }
+    .chip.prio-should { background: var(--chip-should-bg); color: var(--chip-should-fg); border-color: var(--chip-should-fg); }
+    .chip.prio-may    { background: var(--chip-may-bg);    color: var(--chip-may-fg); border-color: var(--chip-may-fg); }
+
+    ul.non-goals { margin: 0; padding-left: 22px; }
+    ul.non-goals li::marker { content: "⊘  "; color: var(--warn); }
+
+    /* definition-list pattern: Purpose / Entry / Exit / Notes */
+    dl.def-list { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0; }
+    dl.def-list dt { font-weight: 600; color: var(--muted); }
+    dl.def-list dd { margin: 0; }
+
+    /* ADR */
+    .adr { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    .adr > .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+    .adr h2 { margin-top: 0.4em; border-bottom: none; font-size: 1.3rem; }
+    .adr h3 { margin-top: 1.1em; border-bottom: none; font-size: 1.15rem; }
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .status-proposed   { color: var(--warn);    border-color: var(--warn); }
+    .status-accepted   { color: var(--ok);      border-color: var(--ok); }
+    .consequences { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .consequences .pros, .consequences .cons { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+    .consequences .pros { background: var(--ok-tint); border-left: 3px solid var(--ok); }
+    .consequences .cons { background: var(--danger-tint); border-left: 3px solid var(--danger); }
+    .consequences h4 { margin: 0 0 4px; font-size: 1rem; color: var(--muted); }
+    .consequences ul { margin: 0; padding-left: 20px; }
+    @media (max-width: 720px) { .consequences { grid-template-columns: 1fr; } }
+    ul.alt-list li { margin: 4px 0; }
+    ul.alt-list li strong { color: var(--fg); }
+
+    /* UX-spec mockup */
+    article.mockup { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    article.mockup > h3 { margin-top: 0; }
+    .mockup-preview { background: var(--bg); border: 1px dashed var(--border); border-radius: 6px; padding: 16px; margin: 10px 0; min-height: 80px; }
+    .screen-meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 6px 0 10px; font-size: 0.92rem; }
+    .screen-meta b { color: var(--muted); font-weight: 600; }
+
+    /* Concept */
+    .pillar-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .pillar-grid li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; }
+    .pillar-grid li strong { display: block; margin-bottom: 4px; color: var(--accent); }
+    .anti-pillar-grid li { border-left-color: var(--danger); }
+    .anti-pillar-grid li strong { color: var(--danger); }
+    ul.user-segments { list-style: none; padding: 0; }
+    ul.user-segments li { padding: 8px 12px; margin: 6px 0; border-left: 3px solid var(--accent); background: var(--card-bg); border-radius: 4px; }
+    ul.user-segments li b { color: var(--accent); }
+    ul.metrics li { margin: 4px 0; }
+    ul.metrics li .target { float: right; color: var(--ok); font-variant-numeric: tabular-nums; }
+
+    /* Stack */
+    table.tech-table .ver { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .principle-list { list-style: none; padding: 0; }
+    .principle-list li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    .principle-list li strong { color: var(--info); }
+
+    /* Accessibility */
+    section.a11y-domain { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; margin: 14px 0; }
+    section.a11y-domain h2 { border-bottom: 1px dashed var(--border); }
+    .limitation { background: var(--chip-should-bg); border-left: 3px solid var(--warn); padding: 8px 12px; margin: 6px 0; border-radius: 4px; }
+    .limitation b { color: var(--warn); }
+
+    /* Design system */
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .swatch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+    .swatch .chip-color { height: 80px; border-radius: 4px; border: 1px solid var(--border); }
+    .swatch code { font-size: 0.78rem; }
+    .swatch small { color: var(--muted); }
+    .spacing-scale { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); }
+    .spacing-scale > div { background: var(--accent); width: 24px; border-radius: 2px 2px 0 0; }
+    article.component-preview { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 14px 0; background: var(--card-bg); }
+    .preview { padding: 16px; border: 1px dashed var(--border); border-radius: 6px; background: var(--bg); }
+
+    @media print {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+      a { color: inherit; text-decoration: none; }
+      footer { page-break-before: always; }
+      details.role-group[open] > summary { list-style: none; }
+      details.role-group { break-inside: avoid; }
+      tr, li { break-inside: avoid; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true });</script>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Содержание</div>
+      <ol>
+        <li><a href="#flows">Сценарии</a></li>
+        <li><a href="#ui-mockups">Макеты</a></li>
+        <li><a href="#interaction-patterns">Паттерны взаимодействия</a></li>
+        <li><a href="#component-usage">Использование компонентов</a></li>
+      </ol>
+    </nav>
+    <div class="content">
+      <header>
+        <div class="badges">
+          <span>UX-spec</span>
+          <span>org-structure</span>
+          <span class="status-approved">approved</span>
+        </div>
+        <h1>UX-спецификация — Оргструктура (org-structure)</h1>
+        <div class="stats">3 flows · 7 mockups · updated 2026-10-07</div>
+      </header>
+      <main>
+<!--
+responsibility:
+  owns: ux flows and ui mockups of org-structure (card hierarchy, search, unit and employee actions, dialogs)
+  excludes: requirements, accessibility (project-wide), design-system components and tokens, new component proposals
+  delegates_to: docs/product/requirements/org-structure.html (requirements), accessibility.html (a11y), DESIGN.md (components and tokens)
+provenance: original
+-->
+
+<div class="ds" style="--ds-primary:#2B42E5;--ds-primary-hover:#2338C2;--ds-primary-active:#182CC2;--ds-primary-subtle:#EBF2FD;--ds-accent:#FBAE40;--ds-text-primary:#292929;--ds-text-secondary:#4B4B4C;--ds-text-muted:#5F6670;--ds-text-disabled:#A3A9B1;--ds-text-inverse:#FFFFFF;--ds-text-inverse-muted:#9BA8F9;--ds-surface-page:#F5F6F8;--ds-surface-panel:#FFFFFF;--ds-surface-muted:#EEEEEE;--ds-surface-inverse:#081240;--ds-border-subtle:#DDE1E6;--ds-border-control:#7D8590;--ds-overlay-scrim:#08124073;--ds-success:#197A4A;--ds-success-bg:#E6F4EC;--ds-warning:#A85800;--ds-warning-bg:#FFF4DF;--ds-danger:#C62832;--ds-danger-bg:#FDECEC;--ds-info:#1B64C8;--ds-info-bg:#EBF2FD;--ds-xxs:4px;--ds-xs:8px;--ds-sm:12px;--ds-md:16px;--ds-lg:20px;--ds-xl:24px;--ds-xxl:32px;--ds-xxxl:48px;--ds-header-h:56px;--ds-h-sm:24px;--ds-h-md:32px;--ds-h-lg:40px;--ds-r-xs:2px;--ds-r-md:4px;--ds-r-lg:8px;--ds-r-full:9999px;--ds-bw:1px;--ds-el-popup:0 4px 12px rgba(8,18,64,0.12);--ds-el-modal:0 8px 24px rgba(8,18,64,0.16);--ds-font-ui:'PT Sans','Segoe UI',Roboto,Arial,sans-serif;--ds-font-mono:'PT Mono',Consolas,'Courier New',monospace;--ds-t-h1:700 30px/38px var(--ds-font-ui);--ds-t-h2:700 24px/32px var(--ds-font-ui);--ds-t-h3:700 20px/28px var(--ds-font-ui);--ds-t-body-md:400 14px/22px var(--ds-font-ui);--ds-t-body-strong:700 14px/22px var(--ds-font-ui);--ds-t-body-sm:400 12px/20px var(--ds-font-ui);--ds-t-code:400 13px/20px var(--ds-font-mono);">
+
+<section id="flows" class="hero">
+  <h2>Сценарии</h2>
+  <p class="lede">Раздел «Оргструктура» — одна страница с иерархией карточек двух видов: подразделение и сотрудник (AC-17). Отдельной страницы сотрудников, правой панели деталей и компонента-дерева нет. Все видят иерархию; создание, правку, перенос, деактивацию, увольнение и удаление выполняет только глобальный администратор, прямо с карточек (AC-9, AC-10, AC-18, AC-19). Роль «пользователь» видит только активные подразделения и работающих сотрудников — ФИО, e-mail учётной записи, подразделение, должность (AC-12); статус и меню действий ему недоступны.</p>
+
+  <h3>Просмотр и поиск (все роли)</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Раздел Оргструктура"] --> B["Одним запросом загружены все подразделения; иерархия свёрнута"]
+  B --> C["Раскрыть подразделение шевроном"]
+  C --> D["Дочерние подразделения и все сотрудники подразделения: руководитель первым, затем по ФИО"]
+  B --> E["Ввод в поиск"]
+  E --> F{"Длина текста"}
+  F -- "1 символ" --> G["Совпадение по названиям подразделений; подсказка про минимум 2 символа для сотрудников"]
+  F -- "2 и больше" --> H["После паузы запрос сотрудников по ФИО и должности"]
+  H --> I["Раскрыт только путь до совпадений: найденные сотрудники в своих подразделениях, совпадения подсвечены"]
+  I -- "Шеврон подразделения" --> D
+  E -- "Очистка поиска" --> B
+  H -- "нет совпадений" --> J["Пусто: Ничего не найдено"]
+  </pre>
+
+  <h3>Подразделение (администратор)</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Кнопка Добавить подразделение или пункт меню карточки"] --> B["Окно Новое подразделение, родитель подставлен или не выбран"]
+  M["Меню карточки подразделения"] --> E["Править: название и руководитель"]
+  M --> V["Перенести: новый родитель или корень"]
+  M --> W["Добавить сотрудника: подразделение подставлено"]
+  M --> T["Деактивировать или Активировать: подтверждение"]
+  B --> S{"Сохранение"}
+  E --> S
+  V --> S
+  S -- "успех" --> R["Окно закрыто, карточка выделена и показана; при создании поиск очищен"]
+  S -- "отказ" --> X["Предупреждение в окне, причина от сервера"]
+  T --> Q{"Подтверждено"}
+  Q -- "успех" --> R2["Сообщение, дерево перечитано"]
+  Q -- "отказ, например есть активные дочерние или сотрудники" --> Y["Окно с причиной, остаётся до нажатия Понятно"]
+  </pre>
+
+  <h3>Сотрудник (администратор)</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Меню карточки сотрудника"] --> B["Править: окно сотрудника"]
+  A --> C["Уволить"]
+  A --> D["Вернуть на работу, для уволенного"]
+  A --> E["Удалить"]
+  C --> F["Запрос связанных изменений"]
+  E --> F
+  F --> G{"Ответ"}
+  G -- "последний активный администратор" --> H["Подтверждение с запретом, кнопка недоступна"]
+  G -- "есть или нет изменений" --> I["Подтверждение со списком каждого связанного изменения"]
+  I -- "Подтверждено" --> J["Одна транзакция: снят с руководства, учётная запись заблокирована, при удалении отвязана"]
+  D --> K["Подтверждение: учётная запись останется заблокированной"]
+  B --> L{"Переводит руководителя в другое подразделение"}
+  L -- "да" --> N["Подтверждение: подразделение останется без руководителя"]
+  </pre>
+</section>
+
+<section id="ui-mockups">
+  <h2>Макеты</h2>
+  <p class="lede">Превью собраны только из токенов <a href="DESIGN.md">DESIGN.md</a>; значения токенов заданы один раз на корне блока (<code>--ds-*</code>), как в <a href="design-system.html">design-system.html</a>. Связи иерархии на макетах упрощены до вертикальной линии; в реализации линия поворачивает в каждую карточку на её середине.</p>
+
+  <article class="mockup">
+    <h3>Раздел «Оргструктура»: свёрнутая иерархия</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Увидеть структуру целиком и дойти до нужного подразделения или сотрудника.</dd>
+      <dt><b>Entry from</b></dt><dd>Пункт «Оргструктура» в шапке; адрес с параметром <code>unit</code> (после создания записи или по ссылке).</dd>
+      <dt><b>Exit to</b></dt><dd>Раскрытые подразделения; окна и подтверждения администратора.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="background:var(--ds-surface-page);padding:var(--ds-xl);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--ds-md);flex-wrap:wrap;">
+          <div style="font:var(--ds-t-h1);">Оргструктура</div>
+          <span style="display:inline-flex;gap:var(--ds-xs);">
+            <span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Добавить сотрудника</span>
+            <span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Добавить подразделение</span>
+          </span>
+        </div>
+        <div style="margin-top:var(--ds-xl);display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);"><span aria-hidden="true">🔍</span>Подразделение, ФИО или должность сотрудника</div>
+        <div style="margin-top:var(--ds-md);display:grid;gap:var(--ds-xs);">
+          <div style="background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-sm);">
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);"><span style="flex:1;display:flex;align-items:center;gap:var(--ds-xs);min-height:var(--ds-h-md);font:var(--ds-t-body-strong);"><span aria-hidden="true">▸</span>Генеральная дирекция</span><span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);">⋮</span></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:var(--ds-md);color:var(--ds-text-secondary);"><span>Подразделений: 3</span><span>Сотрудников: 4</span><span>Руководитель: Орлов Пётр Сергеевич</span></div>
+          </div>
+          <div style="background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-sm);">
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);"><span style="flex:1;display:flex;align-items:center;gap:var(--ds-xs);min-height:var(--ds-h-md);font:var(--ds-t-body-strong);"><span aria-hidden="true">▸</span>Архивный отдел</span><span style="display:inline-block;padding:0 var(--ds-xs);background:var(--ds-surface-muted);color:var(--ds-text-secondary);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);">Неактивно</span><span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);">⋮</span></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:var(--ds-md);color:var(--ds-text-secondary);"><span>Подразделений: 0</span><span>Сотрудников: 0</span><span>Руководитель: не назначен</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Карточка подразделения показывает одно и то же в свёрнутом и раскрытом виде</b> (AC-17): название, число дочерних подразделений, число сотрудников, руководитель — всё это приходит в самом узле дерева, без запроса на каждую карточку. Метка «Неактивно» стоит только у неактивного подразделения: у активного статуса на карточке нет.</li>
+      <li><b>Шеврон — управляющий элемент, не декоративная иконка.</b> Название на карточке — кнопка раскрытия (признак раскрытия доступен вспомогательным технологиям). Иконки перед названием нет (AC-18). Имя руководителя на карточке не интерактивно.</li>
+      <li>Иерархия свёрнута по умолчанию. Загруженные узлы — все подразделения сразу, сотрудники подгружаются только при раскрытии подразделения.</li>
+      <li><b>Кнопки страницы</b> (только администратору): «Добавить подразделение» — главное действие (<code>primary</code>), «Добавить сотрудника» — вторичное. Родитель и подразделение в этих окнах выбирает пользователь; из меню карточки подставляются сами.</li>
+      <li><b>Роль «пользователь»</b>: без кнопок и без меню «⋮»; видит только активные подразделения и работающих сотрудников; метки статуса сотрудников у него нет.</li>
+      <li><b>Адрес с параметром <code>unit</code></b> раскрывает путь до подразделения и прокручивает к нему; его карточка выделена рамкой <code>primary</code> и заливкой <code>primary-subtle</code> и помечена как текущая для вспомогательных технологий. Так показываются новая запись после создания и общая ссылка.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Раскрытое подразделение: дочерние подразделения, затем сотрудники</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Прочитать состав подразделения и перейти к действиям над сотрудником.</dd>
+      <dt><b>Entry from</b></dt><dd>Шеврон карточки; адрес с параметром <code>unit</code>.</dd>
+      <dt><b>Exit to</b></dt><dd>Меню карточки сотрудника или подразделения; окна.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="background:var(--ds-surface-page);padding:var(--ds-xl);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div style="background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-sm);">
+          <div style="display:flex;align-items:center;gap:var(--ds-xs);"><span style="flex:1;display:flex;align-items:center;gap:var(--ds-xs);min-height:var(--ds-h-md);font:var(--ds-t-body-strong);"><span aria-hidden="true">▾</span>Департамент разработки</span><span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);">⋮</span></div>
+          <div style="display:flex;flex-wrap:wrap;column-gap:var(--ds-md);color:var(--ds-text-secondary);"><span>Подразделений: 1</span><span>Сотрудников: 3</span><span>Руководитель: Иванов Иван Петрович</span></div>
+        </div>
+        <div style="margin:var(--ds-xs) 0 0 var(--ds-md);padding-left:var(--ds-md);border-left:var(--ds-bw) solid var(--ds-border-subtle);display:grid;gap:var(--ds-xs);">
+          <div style="background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-sm);">
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);"><span style="flex:1;display:flex;align-items:center;gap:var(--ds-xs);min-height:var(--ds-h-md);font:var(--ds-t-body-strong);"><span aria-hidden="true">▸</span>Группа тестирования</span><span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);">⋮</span></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:var(--ds-md);color:var(--ds-text-secondary);"><span>Подразделений: 0</span><span>Сотрудников: 2</span><span>Руководитель: не назначен</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:var(--ds-sm);padding:var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">ИИ</span>
+            <span style="flex:1;"><b style="font:var(--ds-t-body-strong);">Иванов Иван Петрович</b><br><span style="color:var(--ds-text-secondary);">Руководитель департамента · i.ivanov@example.com</span></span>
+            <span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);">⋮</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:var(--ds-sm);padding:var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АС</span>
+            <span style="flex:1;"><b style="font:var(--ds-t-body-strong);">Смирнов Алексей Викторович</b><br><span style="color:var(--ds-text-secondary);">Ведущий разработчик</span></span>
+            <span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);">⋮</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:var(--ds-sm);padding:var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">МТ</span>
+            <span style="flex:1;"><b style="font:var(--ds-t-body-strong);">Тихонова Мария</b> <span style="display:inline-block;padding:0 var(--ds-xs);background:var(--ds-surface-muted);color:var(--ds-text-secondary);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);">Не работает</span><br><span style="color:var(--ds-text-secondary);">Аналитик · m.tikhonova@example.com</span></span>
+            <span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);">⋮</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Порядок</b> внутри раскрытого подразделения (AC-17, AC-19): сначала карточки дочерних подразделений, затем карточки сотрудников; среди сотрудников первым стоит руководитель подразделения, остальные — по ФИО в русском алфавитном порядке («ё» рядом с «е»). Отдельного знака руководителя на карточке сотрудника нет — его роль видна из строки «Руководитель» на карточке подразделения и из позиции первым.</li>
+      <li><b>Карточка сотрудника</b> — компактная: аватарка с первыми буквами имени и фамилии, ФИО (не интерактивно), вторая строка «Должность · e-mail учётной записи» (e-mail только если учётная запись есть), меню «⋮» (администратору). Метка «Не работает» показывается только администратору и только у уволенного.</li>
+      <li><b>Все сотрудники подразделения загружаются сразу</b>, без «Показать ещё» (решение пользователя). Известный предел, принятый пользователем: подразделение с 5000 и более сотрудников раскрывается дольше 2 секунд.</li>
+      <li><b>Нет содержимого.</b> У раскрытого подразделения без дочерних подразделений и сотрудников один раз выводится «Нет сотрудников или дочерних подразделений»; если есть хотя бы дочерние подразделения, сообщения нет.</li>
+      <li><b>Планшет.</b> Отступ вложенности уменьшается, контролы укрупняются до <code>control-height-lg</code>; карточки остаются в одной колонке.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Поиск: открыт только путь до совпадений</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Найти подразделение по названию или сотрудника по ФИО и должности и увидеть его место в структуре.</dd>
+      <dt><b>Entry from</b></dt><dd>Поле поиска над иерархией.</dd>
+      <dt><b>Exit to</b></dt><dd>Карточки совпадений; меню и окна администратора; очистка поиска возвращает прежнее состояние раскрытия.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="background:var(--ds-surface-page);padding:var(--ds-xl);font:var(--ds-t-body-md);color:var(--ds-text-primary);display:grid;gap:var(--ds-md);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-primary);border-radius:var(--ds-r-md);"><span><span aria-hidden="true">🔍</span> иванов</span><span aria-hidden="true">⊗</span></div>
+        <div>
+          <div style="background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-sm);">
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);"><span style="flex:1;display:flex;align-items:center;gap:var(--ds-xs);min-height:var(--ds-h-md);font:var(--ds-t-body-strong);"><span aria-hidden="true">▾</span>Департамент разработки</span></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:var(--ds-md);color:var(--ds-text-secondary);"><span>Подразделений: 4</span><span>Сотрудников: 120</span><span>Руководитель: Орлов Пётр Сергеевич</span></div>
+          </div>
+          <div style="margin:var(--ds-xs) 0 0 var(--ds-md);padding-left:var(--ds-md);border-left:var(--ds-bw) solid var(--ds-border-subtle);display:grid;gap:var(--ds-xs);">
+            <div style="display:flex;align-items:center;gap:var(--ds-sm);padding:var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">ИИ</span>
+              <span style="flex:1;"><b style="font:var(--ds-t-body-strong);"><mark style="background:var(--ds-warning-bg);color:inherit;">Иванов</mark> Иван Петрович</b><br><span style="color:var(--ds-text-secondary);">Ведущий разработчик · i.ivanov@example.com</span></span>
+            </div>
+          </div>
+        </div>
+        <div style="color:var(--ds-text-secondary);" role="status">Показаны первые 200 сотрудников — уточните запрос</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(45%,1fr));gap:var(--ds-md);">
+          <div style="padding:var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) dashed var(--ds-border-subtle);border-radius:var(--ds-r-lg);text-align:center;color:var(--ds-text-secondary);"><b style="display:block;font:var(--ds-t-body-strong);margin-bottom:var(--ds-xxs);">Запрос из одного символа</b>Подразделений с таким названием нет. Чтобы найти сотрудника, введите не менее 2 символов.</div>
+          <div style="padding:var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) dashed var(--ds-border-subtle);border-radius:var(--ds-r-lg);text-align:center;color:var(--ds-text-secondary);"><b style="display:block;font:var(--ds-t-body-strong);margin-bottom:var(--ds-xxs);">Нет совпадений</b>Ничего не найдено. Измените запрос.</div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Раскрывается только путь</b> до совпадений: подразделение на пути показывает свои совпавшие дочерние подразделения и найденных в нём сотрудников, а не полный список своих сотрудников (решение пользователя). Полный список раскрывается вручную шевроном подразделения; выбор пользователя сильнее автоматического раскрытия, и поздний ответ сервера его не отменяет.</li>
+      <li><b>Подразделения ищутся по названию</b> с первого символа (на клиенте); подразделение, названием совпавшее с запросом, показывается вместе со всей веткой под ним. <b>Сотрудники ищутся по ФИО и должности с 2 символов</b> (на сервере, после паузы около 300 мс, не более 200 совпадений); при обрезке выводится подсказка «Показаны первые 200 сотрудников — уточните запрос». Для запроса из одного символа сотрудники не ищутся, и об этом сказано словами.</li>
+      <li><b>Подсветка.</b> Совпавший фрагмент в названии, ФИО, должности и e-mail выделяется только когда запрос совпал непрерывно (сервер ищет ещё и по основам слов, и такое совпадение без подсветки). Подсветка — не носитель статуса: она дополняет, а не заменяет текст.</li>
+      <li>Число дочерних подразделений на карточке при поиске не уменьшается. Подразделение, где найдены сотрудники, показывает только их, даже если совпало и его название — чтобы не открывать полные списки. Ошибка поиска сотрудников показывается предупреждением и не скрывает найденные подразделения; поле поиска ограничено 200 символами.</li>
+      <li>При создании записи поиск очищается, чтобы выделенная карточка не пропала из видимой части.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Меню действий карточек</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Дать администратору все операции над подразделением и сотрудником, не загромождая карточки.</dd>
+      <dt><b>Entry from</b></dt><dd>Кнопка «⋮» на карточке (подпись для вспомогательных технологий: «Действия с подразделением …», «Действия с сотрудником …»).</dd>
+      <dt><b>Exit to</b></dt><dd>Окна и подтверждения.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="background:var(--ds-surface-page);padding:var(--ds-xl);font:var(--ds-t-body-md);color:var(--ds-text-primary);display:grid;grid-template-columns:repeat(auto-fit,minmax(30%,1fr));gap:var(--ds-md);">
+        <div>
+          <div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Подразделение, активное</div>
+          <div style="display:inline-block;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);">
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">＋ Добавить подразделение</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">👤 Добавить сотрудника</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">✎ Править</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">⇄ Перенести</div>
+            <div style="border-top:var(--ds-bw) solid var(--ds-border-subtle);margin:var(--ds-xxs) 0;"></div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);color:var(--ds-danger);">⊘ Деактивировать</div>
+          </div>
+        </div>
+        <div>
+          <div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Подразделение, неактивное</div>
+          <div style="display:inline-block;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);">
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);color:var(--ds-text-disabled);">＋ Добавить подразделение <span style="color:var(--ds-text-muted);">(подразделение неактивно)</span></div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);color:var(--ds-text-disabled);">👤 Добавить сотрудника <span style="color:var(--ds-text-muted);">(подразделение неактивно)</span></div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">✎ Править</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">⇄ Перенести</div>
+            <div style="border-top:var(--ds-bw) solid var(--ds-border-subtle);margin:var(--ds-xxs) 0;"></div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">✓ Активировать</div>
+          </div>
+        </div>
+        <div>
+          <div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Сотрудник</div>
+          <div style="display:inline-block;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);">
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">✎ Править</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">🚪 Уволить <span style="color:var(--ds-text-muted);">(для уволенного: «Вернуть на работу»)</span></div>
+            <div style="border-top:var(--ds-bw) solid var(--ds-border-subtle);margin:var(--ds-xxs) 0;"></div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);color:var(--ds-danger);">🗑 Удалить</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Разрушающее действие</b> («Деактивировать», «Удалить») — красный пункт после разделителя. «Уволить» разрушающим не окрашен: оно обратимо («Вернуть на работу»).</li>
+      <li><b>Недоступный пункт объясняет причину текстом в самой подписи</b> — «(подразделение неактивно)»; цвет и состояние «недоступно» не единственный носитель смысла (DESIGN.md → Cross-component rules).</li>
+      <li><b>Меню сотрудника</b> не создаётся, пока не нужно: до первого нажатия «⋮» — обычная кнопка, после нажатия меню открывается сразу, а фокус остаётся на кнопке. Так тысячи карточек отрисовываются быстро; пользователь разницы не видит.</li>
+      <li>Роль «пользователь» меню не получает.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Окна: подразделение, перенос, сотрудник</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Создать и изменить подразделение и сотрудника, перенести подразделение.</dd>
+      <dt><b>Entry from</b></dt><dd>Кнопки страницы и пункты меню карточек.</dd>
+      <dt><b>Exit to</b></dt><dd>Иерархия: окно закрывается при успехе, карточки обновляются.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(30%,1fr));gap:var(--ds-md);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h2);margin-bottom:var(--ds-md);">Изменение подразделения</div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Название</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-primary);border-radius:var(--ds-r-md);">Департамент разработки</div></div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Руководитель</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Иванов Иван Петрович<span aria-hidden="true">⊗ ▾</span></div><div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">Руководителем может быть только работающий сотрудник этого подразделения.</div></div>
+            <div style="display:flex;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Сохранить</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span></div>
+          </div>
+        </div>
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h2);margin-bottom:var(--ds-md);">Новое подразделение</div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Название</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);"></div></div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Родительское подразделение</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">Без родителя: корневое подразделение<span aria-hidden="true">▾</span></div><div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">Оставьте поле пустым, чтобы создать корневое подразделение.</div></div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Руководитель</div><span style="color:var(--ds-text-secondary);">Руководителя можно назначить после добавления сотрудников.</span></div>
+            <div style="display:flex;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Создать</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span></div>
+          </div>
+        </div>
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h2);margin-bottom:var(--ds-md);">Перенос подразделения</div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Новое родительское подразделение</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">Без родителя: корневое подразделение<span aria-hidden="true">▾</span></div><div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">Подразделение переносится вместе со всеми дочерними. Очистите поле, чтобы сделать его корневым.</div></div>
+            <div style="display:flex;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Перенести</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span></div>
+          </div>
+        </div>
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h2);margin-bottom:var(--ds-md);">Изменение сотрудника</div>
+            <div style="margin-bottom:var(--ds-sm);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Фамилия</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Смирнов</div></div>
+            <div style="margin-bottom:var(--ds-sm);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Имя</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Алексей</div></div>
+            <div style="margin-bottom:var(--ds-sm);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Отчество</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Викторович</div></div>
+            <div style="margin-bottom:var(--ds-sm);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Подразделение</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Департамент разработки<span aria-hidden="true">▾</span></div><div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">Сотрудника можно перевести, выбрав другое подразделение.</div></div>
+            <div style="margin-bottom:var(--ds-sm);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Должность</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Ведущий разработчик</div></div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">E-mail</div>Нет учётной записи<div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">E-mail берётся из учётной записи сотрудника и меняется в разделе «Пользователи».</div></div>
+            <div style="display:flex;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Сохранить</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Подразделение.</b> Создание: название и необязательный родитель (поиск по дереву; неактивные подразделения видны, но не выбираются и помечены «(неактивно)»). Правка: название и руководитель; родитель и статус меняются отдельными операциями («Перенести», «Деактивировать»). Руководитель — поиск среди <b>работающих сотрудников именно этого подразделения</b> (AC-19), текущий руководитель всегда в списке; у нового подразделения руководителя выбрать нельзя — об этом сказано текстом. В окне переноса само подразделение и все его потомки в списке родителей не предлагаются; сервер всё равно отклоняет цикл.</li>
+      <li><b>Сотрудник.</b> Фамилия, имя (обязательные), отчество (необязательное), подразделение (только активное), должность (обязательная); e-mail учётной записи показан без возможности правки (при отсутствии — «Нет учётной записи»). Переключателя статуса в форме нет: статус меняют «Уволить» и «Вернуть на работу». Создание открывается с подставленным подразделением (из меню карточки) или пустым (с кнопки страницы). Правка читает сотрудника при открытии, чтобы работать с актуальной версией; во время загрузки — заглушка, при ошибке — предупреждение с «Повторить».</li>
+      <li>Автозаполнение браузера в формах выключено: формы правят данные других людей. Пробелы внутри фамилии, имени, отчества не схлопываются; пустое отчество очищает поле.</li>
+      <li><b>Успех</b>: сообщение («Подразделение создано», «Изменения сохранены», «Подразделение перенесено», «Сотрудник создан»), окно закрывается, иерархия перечитывается; после создания открывается путь до новой записи (подразделения сотрудника) и карточка выделяется. Если запись изменена другим пользователем (412), показывается сообщение и актуальные данные; ввод пользователя до такого отказа фоновым обновлением не затирается.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Подтверждения и отказы</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Перед необратимыми и каскадными действиями показать последствия до выполнения; после отказа объяснить причину.</dd>
+      <dt><b>Entry from</b></dt><dd>Пункты «Деактивировать», «Активировать», «Уволить», «Вернуть на работу», «Удалить»; сохранение сотрудника с переводом руководителя.</dd>
+      <dt><b>Exit to</b></dt><dd>Иерархия; окно с причиной отказа.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(30%,1fr));gap:var(--ds-md);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h3);margin-bottom:var(--ds-xs);">Уволить сотрудника «Смирнов Алексей Викторович»?</div>
+            <p style="margin:0 0 var(--ds-xs);font:var(--ds-t-body-strong);">Сотрудник получит статус «не работает».</p>
+            <p style="margin:0 0 var(--ds-xxs);">Связанные изменения:</p>
+            <ul style="margin:0 0 var(--ds-md);padding-left:var(--ds-lg);"><li>Подразделение «Департамент разработки» останется без руководителя</li><li>Будет заблокирована учётная запись a.smirnov@example.com, её действующие сессии завершатся</li></ul>
+            <div style="display:flex;justify-content:flex-end;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Уволить</span></div>
+          </div>
+        </div>
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h3);margin-bottom:var(--ds-xs);">Удалить сотрудника «Смирнов Алексей Викторович»?</div>
+            <p style="margin:0 0 var(--ds-xs);font:var(--ds-t-body-strong);">Сотрудник будет удалён без возможности восстановления.</p>
+            <p style="margin:0 0 var(--ds-xxs);">Связанные изменения:</p>
+            <ul style="margin:0 0 var(--ds-md);padding-left:var(--ds-lg);"><li>Подразделение «Департамент разработки» останется без руководителя</li><li>Будет заблокирована учётная запись a.smirnov@example.com, её действующие сессии завершатся</li><li>Учётная запись a.smirnov@example.com будет отвязана от сотрудника</li></ul>
+            <div style="display:flex;justify-content:flex-end;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-danger);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Удалить</span></div>
+          </div>
+        </div>
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h3);margin-bottom:var(--ds-xs);">Уволить сотрудника «Иванов Иван Петрович»?</div>
+            <p style="margin:0 0 var(--ds-md);color:var(--ds-danger);">Нельзя уволить или удалить сотрудника: к нему привязан последний активный глобальный администратор (admin@example.com).</p>
+            <div style="display:flex;justify-content:flex-end;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-muted);color:var(--ds-text-disabled);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Уволить</span></div>
+          </div>
+        </div>
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h3);margin-bottom:var(--ds-xs);">Деактивировать подразделение «Архивный отдел»?</div>
+            <p style="margin:0 0 var(--ds-md);">Подразделение исчезнет из дерева у обычных пользователей. Деактивировать можно только подразделение без активных дочерних подразделений и работающих сотрудников. Активация вернёт всё как было.</p>
+            <div style="display:flex;justify-content:flex-end;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-danger);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Деактивировать</span></div>
+          </div>
+        </div>
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h3);margin-bottom:var(--ds-xs);">Перевести руководителя?</div>
+            <p style="margin:0 0 var(--ds-md);">Подразделение «Департамент разработки» останется без руководителя. Продолжить?</p>
+            <div style="display:flex;justify-content:flex-end;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Перевести</span></div>
+          </div>
+        </div>
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h3);margin-bottom:var(--ds-xs);">Не удалось деактивировать подразделение</div>
+            <p style="margin:0 0 var(--ds-md);">Причина приходит с сервера на русском: что мешает и что сделать сначала.</p>
+            <div style="display:flex;justify-content:flex-end;"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Понятно</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>«Уволить» и «Удалить» каскадны</b> и выполняются в одной транзакции (AC-18). Перед подтверждением окно запрашивает у сервера список связанных изменений и показывает каждое: подразделения, теряющие руководителя; блокируемая учётная запись и завершение её сессий; для удаления — ещё отвязка учётной записи. Пока идёт запрос, виден индикатор «Проверяем связанные изменения…». Если связанных изменений нет, об этом сказано словами.</li>
+      <li><b>Запрет сказан сразу.</b> Если к сотруднику привязан последний активный глобальный администратор, окно содержит только причину (красный текст), а кнопка подтверждения недоступна; причина видна текстом рядом (DESIGN.md → Cross-component rules). Сервер отклоняет такое действие кодом 409.</li>
+      <li><b>«Вернуть на работу»</b> — подтверждение с текстом: учётная запись остаётся заблокированной и разблокируется в разделе «Пользователи», подразделения, которые сотрудник возглавлял, остаются без руководителя. Возврат в неактивное подразделение сервер отклоняет.</li>
+      <li><b>Красная кнопка</b> только у необратимого: «Удалить» и «Деактивировать» (деактивируемое подразделение исчезает из дерева у обычных пользователей); «Уволить», «Активировать» и «Перевести» — обычные синие кнопки.</li>
+      <li><b>Отказ сервера</b> показывается окном с кнопкой «Понятно», которое остаётся, пока его не закроют: причина длинная и говорит, что сделать сначала. Подтверждающая кнопка реагирует сразу и не ждёт закрытия всплывающего сообщения об успехе.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Состояния раздела: загрузка, ошибка, пусто</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Каждое нештатное состояние говорит, что произошло и что делать.</dd>
+      <dt><b>Entry from</b></dt><dd>Первый вход в раздел; раскрытие подразделения; пустая структура.</dd>
+      <dt><b>Exit to</b></dt><dd>Повтор запроса; добавление подразделения (администратор).</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(30%,1fr));gap:var(--ds-md);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div style="background:var(--ds-surface-page);padding:var(--ds-md);">
+          <div style="font:var(--ds-t-body-strong);margin-bottom:var(--ds-xs);">Загрузка подразделений</div>
+          <div style="height:var(--ds-h-md);background:var(--ds-surface-muted);border-radius:var(--ds-r-md);margin-bottom:var(--ds-xs);"></div>
+          <div style="height:var(--ds-h-md);background:var(--ds-surface-muted);border-radius:var(--ds-r-md);margin-bottom:var(--ds-xs);"></div>
+          <div style="height:var(--ds-h-md);background:var(--ds-surface-muted);border-radius:var(--ds-r-md);"></div>
+        </div>
+        <div style="background:var(--ds-surface-page);padding:var(--ds-md);">
+          <div style="font:var(--ds-t-body-strong);margin-bottom:var(--ds-xs);">Ошибка загрузки</div>
+          <div style="display:flex;align-items:flex-start;gap:var(--ds-xs);padding:var(--ds-sm);background:var(--ds-danger-bg);border-radius:var(--ds-r-md);"><span style="color:var(--ds-danger);" aria-hidden="true">⊗</span><span style="flex:1;"><b style="font:var(--ds-t-body-strong);">Не удалось загрузить подразделения</b><br>Нет связи с сервером. Проверьте подключение к сети и повторите попытку.</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Повторить</span></div>
+        </div>
+        <div style="background:var(--ds-surface-page);padding:var(--ds-md);text-align:center;color:var(--ds-text-secondary);">
+          <div style="font:var(--ds-t-body-strong);margin-bottom:var(--ds-xs);text-align:left;color:var(--ds-text-primary);">Структура пуста</div>
+          Подразделений пока нет. Добавьте подразделение.
+          <div style="margin-top:var(--ds-xs);font:var(--ds-t-body-sm);">Роль «пользователь» видит только первое предложение.</div>
+        </div>
+        <div style="background:var(--ds-surface-page);padding:var(--ds-md);">
+          <div style="font:var(--ds-t-body-strong);margin-bottom:var(--ds-xs);">Сотрудники подразделения загружаются</div>
+          <div style="background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-sm);"><div style="height:var(--ds-md);background:var(--ds-surface-muted);border-radius:var(--ds-r-md);margin-bottom:var(--ds-xs);"></div><div style="height:var(--ds-md);background:var(--ds-surface-muted);border-radius:var(--ds-r-md);"></div></div>
+        </div>
+        <div style="background:var(--ds-surface-page);padding:var(--ds-md);">
+          <div style="font:var(--ds-t-body-strong);margin-bottom:var(--ds-xs);">Ошибка загрузки сотрудников</div>
+          <div style="display:flex;align-items:flex-start;gap:var(--ds-xs);padding:var(--ds-sm);background:var(--ds-danger-bg);border-radius:var(--ds-r-md);"><span style="color:var(--ds-danger);" aria-hidden="true">⊗</span><span style="flex:1;"><b style="font:var(--ds-t-body-strong);">Не удалось загрузить сотрудников</b><br>Причина и кнопка «Повторить».</span></div>
+        </div>
+        <div style="background:var(--ds-surface-page);padding:var(--ds-md);">
+          <div style="font:var(--ds-t-body-strong);margin-bottom:var(--ds-xs);">Раскрытое подразделение без состава</div>
+          <div style="padding:var(--ds-xs) 0;color:var(--ds-text-secondary);">Нет сотрудников или дочерних подразделений</div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>: пока подразделения загружаются, выводится заглушка, повторяющая форму списка; при ошибке — предупреждение с причиной и кнопкой «Повторить». Загрузка и ошибка сотрудников касаются только раскрытого подразделения и не мешают остальной иерархии. Под reduced-motion заглушка загрузки не мерцает (DESIGN.md → Motion).</p>
+  </article>
+</section>
+
+<section id="interaction-patterns">
+  <h2>Паттерны взаимодействия</h2>
+  <ul>
+    <li><b>Иерархия вместо дерева-контрола.</b> Вертикальная вложенность карточек со связями; шеврон названия — единственный способ раскрыть; раскрытие подгружает сотрудников подразделения только для него.</li>
+    <li><b>Действия на самих карточках.</b> Меню «⋮» у администратора; диалоги и подтверждения создаются один раз на странице и переиспользуются всеми карточками.</li>
+    <li><b>Поиск показывает путь, а не списки.</b> Автораскрытие ограничено путём до совпадений; полный состав подразделения — по явному раскрытию. Подсказка про минимум в 2 символа показывается словами, а не молчаливым отсутствием результата.</li>
+    <li><b>Последствия видны до действия.</b> Каскадные операции (увольнение, удаление) показывают список каждого связанного изменения; перевод руководителя и деактивация предупреждают заранее.</li>
+    <li><b>Состояние сказано словами</b>: «Неактивно» (подразделение), «Не работает» (сотрудник, только администратору), «(подразделение неактивно)» в недоступных пунктах меню.</li>
+    <li><b>Адрес как состояние.</b> Параметр <code>unit</code> позволяет поделиться ссылкой на карточку и возвращает пользователя к только что созданной записи.</li>
+    <li><b>Конфликты версий</b> (412): сообщение «Данные изменены другим пользователем…», данные перечитываются, форма пересобирается; фоновое обновление до отказа ввод не затирает.</li>
+  </ul>
+</section>
+
+<section id="component-usage">
+  <h2>Использование компонентов</h2>
+  <p class="lede">Карточки иерархии составлены из существующих токенов; собственных компонентных токенов у них нет (решение пользователя на design-promote спринта 001: составные токены не добавляются).</p>
+  <table>
+    <thead><tr><th>Компонент</th><th>Где используется</th></tr></thead>
+    <tbody>
+      <tr><td>Карточка подразделения (antd <code>Card</code> small: <code>surface-panel</code>, <code>border-subtle</code>, <code>rounded-lg</code>, отступ <code>space-sm</code>)</td><td>Узел иерархии; выделенная — рамка <code>primary</code> и заливка <code>primary-subtle</code>.</td></tr>
+      <tr><td>Карточка сотрудника (разметка без antd: те же токены) и <code>avatar</code> (<code>primary</code> на <code>primary-subtle</code>, <code>rounded-full</code>)</td><td>Листья иерархии; разметка упрощена, потому что подразделение может содержать тысячи карточек.</td></tr>
+      <tr><td>Связи иерархии (линия <code>border-subtle</code>, <code>border-width</code>)</td><td>Вертикальные и боковые линии между карточкой и вложенными.</td></tr>
+      <tr><td><code>tag-neutral</code> (antd <code>Tag</code>)</td><td>«Неактивно» у подразделения, «Не работает» у сотрудника.</td></tr>
+      <tr><td><code>dropdown-item</code> (antd <code>Dropdown</code>)</td><td>Меню «⋮»; красный пункт для разрушающих действий.</td></tr>
+      <tr><td><code>modal</code>, <code>scrim</code>, <code>button-primary</code>, <code>button-danger</code>, <code>button-default</code></td><td>Формы и подтверждения; <code>Modal.confirm</code> для деструктивных подтверждений.</td></tr>
+      <tr><td>Подсветка совпадения (<code>mark</code>, <code>warning-bg</code>, текст не меняется)</td><td>Результаты поиска; не статус, а выделение фрагмента.</td></tr>
+      <tr><td><code>empty-state</code>, <code>skeleton</code>, <code>alert-danger</code></td><td>Пустая структура, загрузка, ошибки.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</div>
+      </main>
+      <footer>by ASD workflow | 2026-10-07</footer>
+    </div>
+  </div>
+</body>
+</html>

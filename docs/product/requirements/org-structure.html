@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<!--
+responsibility:
+  owns: html shell wrap for all asd user-facing html docs
+  excludes: doc content, doc-specific structure
+  delegates_to: fragment templates (t_prd, t_adr, t_ux-spec, t_concept, t_stack, t_design-system, t_accessibility, t_retrospective)
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="ASD workflow">
+  <meta name="doc-type" content="PRD">
+  <meta name="subsystem" content="org-structure">
+  <meta name="sprint-id" content="">
+  <meta name="status" content="approved">
+  <meta name="updated" content="2026-10-07">
+  <meta name="responsibility" content="product requirements of the org-structure subsystem: unit tree, employees, dismissal and deletion cascade, structure reading and search, the Org structure section">
+  <meta name="provenance" content="original">
+  <meta name="source" content="">
+  <title>Требования — Оргструктура</title>
+  <style>
+    :root {
+      --fg: #1a1c1e; --bg: #fff; --muted: #5b6770; --accent: #0066cc;
+      --code-bg: #f4f6f8; --border: #d0d7de; --max: 1040px;
+      --card-bg: #fafbfc;
+      --ok: #1a7f37; --warn: #b35900; --danger: #cf222e; --info: #0969da; --neutral: #5b6770;
+      --ok-tint: rgba(31,136,61,0.07); --danger-tint: rgba(207,34,46,0.06);
+      --chip-must-bg: #ffebe9; --chip-must-fg: #cf222e;
+      --chip-should-bg: #fff5e1; --chip-should-fg: #9a6700;
+      --chip-may-bg: #ddf4ff; --chip-may-fg: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e6e6e6; --bg: #0e1116; --muted: #9aa4ad; --code-bg: #161b22; --border: #30363d;
+        --card-bg: #161b22;
+        --accent: #58a6ff; --ok: #3fb950; --warn: #d29922; --danger: #f85149; --info: #79c0ff; --neutral: #8b949e;
+        --ok-tint: rgba(63,185,80,0.12); --danger-tint: rgba(248,81,73,0.10);
+        --chip-must-bg: #3b1416; --chip-must-fg: #ff7b72;
+        --chip-should-bg: #2d2410; --chip-should-fg: #e3b341;
+        --chip-may-bg: #0d2538; --chip-may-fg: #58a6ff;
+      }
+    }
+    html, body { margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100vh; }
+    .layout:has(> nav.toc) { grid-template-columns: 260px minmax(0, 1fr); }
+    nav.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 12px; border-right: 1px solid var(--border); font-size: 0.85rem; }
+    nav.toc .toc-title { font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
+    nav.toc ol { list-style: none; margin: 0; padding: 0; }
+    nav.toc li { margin: 2px 0; }
+    nav.toc a { color: var(--fg); text-decoration: none; display: block; padding: 3px 6px; border-radius: 4px; }
+    nav.toc a:hover { background: var(--code-bg); color: var(--accent); }
+    @media (max-width: 880px) { nav.toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } }
+    @media print { nav.toc { display: none; } }
+    .content { min-width: 0; }
+    header, main, footer { max-width: var(--max); margin: 0 auto; padding: 16px 24px; }
+    header { border-bottom: 1px solid var(--border); }
+    header h1 { margin: 4px 0 8px; font-size: 1.9rem; }
+    .badges span { display: inline-block; padding: 2px 8px; margin-right: 6px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--bg); }
+    .badges .provenance-reverse-engineered, .badges .provenance-migrated { color: var(--warn); border-color: var(--warn); }
+    .badges .status-draft       { color: var(--neutral); border-color: var(--neutral); }
+    .badges .status-in-review   { color: var(--warn);    border-color: var(--warn); }
+    .badges .status-approved    { color: var(--ok);      border-color: var(--ok); }
+    .badges .status-locked      { color: var(--info);    border-color: var(--info); }
+    .stats { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+    .stats .chip { display: inline-block; padding: 1px 8px; margin-right: 6px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); }
+    @media (max-width: 880px) {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+    }
+    h2, h3, h4 { line-height: 1.25; margin-top: 1.6em; }
+    h2 { border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    a { color: var(--accent); }
+    code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: var(--code-bg); padding: 12px; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--code-bg); position: sticky; top: 0; z-index: 1; }
+    tbody tr:nth-child(even) td { background: var(--card-bg); }
+    blockquote { border-left: 3px solid var(--accent); margin: 0; padding: 4px 14px; color: var(--muted); }
+    .mermaid { background: var(--bg); text-align: center; margin: 16px 0; }
+    footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+    /* fragment-shared utilities */
+    .lede { font-size: 1.08rem; color: var(--fg); }
+    section.hero { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+    section.callout { border-left: 4px solid var(--border); padding: 8px 14px; background: var(--card-bg); border-radius: 4px; }
+    section.callout.warn { border-left-color: var(--warn); }
+    section.callout.warn h2::before { content: "⊘ "; color: var(--warn); }
+
+    ol.goal-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    ol.goal-grid li { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; display: flex; gap: 10px; }
+    ol.goal-grid .num { flex: 0 0 auto; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    ol.goal-grid p { margin: 0; }
+
+    details.role-group { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; background: var(--card-bg); }
+    details.role-group > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+    details.role-group > summary .count { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+    details.role-group ul.stories { margin: 0; padding: 4px 16px 12px 28px; }
+    ul.stories li { margin: 4px 0; }
+    ul.stories b { color: var(--accent); font-weight: 600; }
+
+    table.ac-table td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .chip.area { background: var(--code-bg); color: var(--muted); }
+    .chip.prio-must   { background: var(--chip-must-bg);   color: var(--chip-must-fg); border-color: var(--chip-must-fg); }
+    .chip.prio-should { background: var(--chip-should-bg); color: var(--chip-should-fg); border-color: var(--chip-should-fg); }
+    .chip.prio-may    { background: var(--chip-may-bg);    color: var(--chip-may-fg); border-color: var(--chip-may-fg); }
+
+    ul.non-goals { margin: 0; padding-left: 22px; }
+    ul.non-goals li::marker { content: "⊘  "; color: var(--warn); }
+
+    /* definition-list pattern: Purpose / Entry / Exit / Notes */
+    dl.def-list { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0; }
+    dl.def-list dt { font-weight: 600; color: var(--muted); }
+    dl.def-list dd { margin: 0; }
+
+    /* ADR */
+    .adr { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    .adr > .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+    .adr h2 { margin-top: 0.4em; border-bottom: none; font-size: 1.3rem; }
+    .adr h3 { margin-top: 1.1em; border-bottom: none; font-size: 1.15rem; }
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .status-proposed   { color: var(--warn);    border-color: var(--warn); }
+    .status-accepted   { color: var(--ok);      border-color: var(--ok); }
+    .consequences { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .consequences .pros, .consequences .cons { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+    .consequences .pros { background: var(--ok-tint); border-left: 3px solid var(--ok); }
+    .consequences .cons { background: var(--danger-tint); border-left: 3px solid var(--danger); }
+    .consequences h4 { margin: 0 0 4px; font-size: 1rem; color: var(--muted); }
+    .consequences ul { margin: 0; padding-left: 20px; }
+    @media (max-width: 720px) { .consequences { grid-template-columns: 1fr; } }
+    ul.alt-list li { margin: 4px 0; }
+    ul.alt-list li strong { color: var(--fg); }
+
+    /* UX-spec mockup */
+    article.mockup { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    article.mockup > h3 { margin-top: 0; }
+    .mockup-preview { background: var(--bg); border: 1px dashed var(--border); border-radius: 6px; padding: 16px; margin: 10px 0; min-height: 80px; }
+    .screen-meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 6px 0 10px; font-size: 0.92rem; }
+    .screen-meta b { color: var(--muted); font-weight: 600; }
+
+    /* Concept */
+    .pillar-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .pillar-grid li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; }
+    .pillar-grid li strong { display: block; margin-bottom: 4px; color: var(--accent); }
+    .anti-pillar-grid li { border-left-color: var(--danger); }
+    .anti-pillar-grid li strong { color: var(--danger); }
+    ul.user-segments { list-style: none; padding: 0; }
+    ul.user-segments li { padding: 8px 12px; margin: 6px 0; border-left: 3px solid var(--accent); background: var(--card-bg); border-radius: 4px; }
+    ul.user-segments li b { color: var(--accent); }
+    ul.metrics li { margin: 4px 0; }
+    ul.metrics li .target { float: right; color: var(--ok); font-variant-numeric: tabular-nums; }
+
+    /* Stack */
+    table.tech-table .ver { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .principle-list { list-style: none; padding: 0; }
+    .principle-list li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    .principle-list li strong { color: var(--info); }
+
+    /* Accessibility */
+    section.a11y-domain { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; margin: 14px 0; }
+    section.a11y-domain h2 { border-bottom: 1px dashed var(--border); }
+    .limitation { background: var(--chip-should-bg); border-left: 3px solid var(--warn); padding: 8px 12px; margin: 6px 0; border-radius: 4px; }
+    .limitation b { color: var(--warn); }
+
+    /* Design system */
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .swatch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+    .swatch .chip-color { height: 80px; border-radius: 4px; border: 1px solid var(--border); }
+    .swatch code { font-size: 0.78rem; }
+    .swatch small { color: var(--muted); }
+    .spacing-scale { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); }
+    .spacing-scale > div { background: var(--accent); width: 24px; border-radius: 2px 2px 0 0; }
+    article.component-preview { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 14px 0; background: var(--card-bg); }
+    .preview { padding: 16px; border: 1px dashed var(--border); border-radius: 6px; background: var(--bg); }
+
+    @media print {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+      a { color: inherit; text-decoration: none; }
+      footer { page-break-before: always; }
+      details.role-group[open] > summary { list-style: none; }
+      details.role-group { break-inside: avoid; }
+      tr, li { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Содержание</div>
+      <ol>
+        <li><a href="#problem">Проблема</a></li>
+        <li><a href="#goals">Цели</a></li>
+        <li><a href="#user-stories">Пользовательские истории</a></li>
+        <li><a href="#acceptance-criteria">Критерии приёмки</a></li>
+        <li><a href="#non-goals">Вне рамок</a></li>
+      </ol>
+    </nav>
+    <div class="content">
+      <header>
+        <div class="badges">
+          <span>PRD</span>
+          <span>org-structure</span>
+          <span class="status-approved">approved</span>
+        </div>
+        <h1>Требования — Оргструктура</h1>
+        <div class="stats">5 goals · 8 stories · 34 AC · 8 non-goals · updated 2026-10-07</div>
+      </header>
+      <main>
+<!--
+responsibility:
+  owns: product requirements of the org-structure subsystem: unit tree, employees, dismissal and deletion cascade, structure reading and search, the Org structure section
+  excludes: ui mockups, design decisions, code, ux flows, accounts and roles (user-management.html), the journal (audit.html)
+  delegates_to: user-management.html (accounts bound to employees), audit.html (journaling), ux-spec.html (ui + flows), adr.html (decisions)
+provenance: original
+-->
+
+<section id="problem" class="hero">
+  <h2>Проблема</h2>
+  <p class="lede">У организации нет единого, актуального и доступного всем сотрудникам описания собственной структуры: какие подразделения есть, как они вложены друг в друга, кто их возглавляет, кто в них работает и на какой должности. Без этого к структуре нельзя привязать учётные записи и дальнейшие процессы платформы, а увольнение или перевод сотрудника оставляет «висящих» руководителей и действующие учётные записи.</p>
+</section>
+
+<section id="goals">
+  <h2>Цели</h2>
+  <ol class="goal-grid">
+    <li><span class="num">G1</span><p>Вести организационную структуру как строгое дерево подразделений произвольной глубины.</p></li>
+    <li><span class="num">G2</span><p>Хранить сотрудников с подразделением и должностью (текстом), в том числе уволенных.</p></li>
+    <li><span class="num">G3</span><p>Дать любому вошедшему пользователю просмотр и поиск по структуре, а управление — только глобальному администратору.</p></li>
+    <li><span class="num">G4</span><p>Увольнение, возврат и удаление сотрудника не оставляют несогласованных данных: руководство и учётная запись обрабатываются вместе с сотрудником, а администратор видит последствия до подтверждения.</p></li>
+    <li><span class="num">G5</span><p>Работать на организации в 10 000+ сотрудников в пределах P95 &lt; 2 с для обычных операций.</p></li>
+  </ol>
+</section>
+
+<section id="user-stories">
+  <h2>Пользовательские истории</h2>
+  <details class="role-group" open>
+    <summary>Глобальный администратор <span class="count">5</span></summary>
+    <ul class="stories">
+      <li><b>as</b> глобальный администратор, <b>I want</b> создавать подразделения, переносить их по дереву и деактивировать, <b>so that</b> структура отражает реальную организацию (AC-1…AC-7).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> назначать руководителем подразделения работающего сотрудника этого подразделения, <b>so that</b> у каждого подразделения был ответственный из его состава (AC-8, AC-9).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> заводить и править сотрудников — фамилию, имя, отчество, должность и подразделение, <b>so that</b> данные о людях и их месте в структуре были актуальны (AC-10…AC-13).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> уволить сотрудника, вернуть его на работу или удалить, увидев перед этим список связанных изменений, <b>so that</b> руководство подразделений и учётные записи не оставались в несогласованном состоянии (AC-14…AC-18).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> видеть неактивные подразделения и не работающих сотрудников и управлять ими с карточек раздела «Оргструктура», <b>so that</b> вся история структуры была под рукой (AC-7, AC-22, AC-29, AC-30).</li>
+    </ul>
+  </details>
+  <details class="role-group" open>
+    <summary>Пользователь <span class="count">3</span></summary>
+    <ul class="stories">
+      <li><b>as</b> пользователь, <b>I want</b> просматривать иерархию подразделений и раскрывать нужные, <b>so that</b> понимать устройство организации (AC-19, AC-22, AC-25…AC-27).</li>
+      <li><b>as</b> пользователь, <b>I want</b> искать подразделение по названию, а сотрудника — по ФИО или должности, <b>so that</b> быстро найти коллегу и его подразделение (AC-20, AC-33).</li>
+      <li><b>as</b> пользователь, <b>I want</b> видеть у сотрудника ФИО, e-mail, подразделение и должность, <b>so that</b> знать, к кому и как обратиться (AC-13, AC-22).</li>
+    </ul>
+  </details>
+</section>
+
+<section id="acceptance-criteria">
+  <h2>Критерии приёмки</h2>
+  <table class="ac-table">
+    <thead>
+      <tr><th>ID</th><th>Критерий</th><th>Область</th><th>Приоритет</th></tr>
+    </thead>
+    <tbody>
+      <tr id="AC-1"><td><a href="#AC-1">AC-1</a></td><td>Подразделение имеет название (обязательное, не длиннее 200 символов), необязательного родителя, необязательного руководителя и статус активности (активно / неактивно). Типов подразделений и дат действия нет.</td><td><span class="chip area">подразделения</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-2"><td><a href="#AC-2">AC-2</a></td><td>Подразделения образуют строгое дерево произвольной глубины: у подразделения не более одного родителя, циклов нет; корневых подразделений (без родителя) может быть несколько.</td><td><span class="chip area">подразделения</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-3"><td><a href="#AC-3">AC-3</a></td><td>Подразделение создаётся и переносится только под существующее активное родительское подразделение или в корень; иначе операция отклоняется с указанием причины.</td><td><span class="chip area">подразделения</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-4"><td><a href="#AC-4">AC-4</a></td><td>Перенос подразделения в себя или в своё дочернее подразделение отклоняется (409) с понятной причиной; цикл не возникает и при одновременных переносах разными администраторами.</td><td><span class="chip area">подразделения</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-5"><td><a href="#AC-5">AC-5</a></td><td>Деактивация подразделения, в котором есть активные дочерние подразделения или работающие сотрудники, отклоняется (409); причина называет, чего и сколько мешает.</td><td><span class="chip area">подразделения</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-6"><td><a href="#AC-6">AC-6</a></td><td>Активация подразделения отклоняется (409), если его родитель неактивен или назначенный руководитель не работает.</td><td><span class="chip area">подразделения</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-7"><td><a href="#AC-7">AC-7</a></td><td>Подразделения не удаляются, а только деактивируются; неактивное подразделение остаётся видимым администратору.</td><td><span class="chip area">подразделения</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-8"><td><a href="#AC-8">AC-8</a></td><td>Руководителем подразделения может быть только работающий сотрудник этого же подразделения; иначе назначение отклоняется (400) с причиной. У только что созданного подразделения руководителя нет. Правило проверяется при смене руководителя; ранее сохранённые данные молча не исправляются.</td><td><span class="chip area">руководитель</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-9"><td><a href="#AC-9">AC-9</a></td><td>Перевод руководителя в другое подразделение снимает его с руководства покидаемого подразделения в той же операции; администратор получает предупреждение до сохранения, изменение журналируется.</td><td><span class="chip area">руководитель</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-10"><td><a href="#AC-10">AC-10</a></td><td>Сотрудник имеет фамилию и имя (обязательные, каждое не длиннее 100 символов), отчество (необязательное, не длиннее 100), должность (текст, обязательная, не длиннее 200), подразделение и статус «работает» / «не работает». Табельного номера и собственного e-mail у сотрудника нет.</td><td><span class="chip area">сотрудники</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-11"><td><a href="#AC-11">AC-11</a></td><td>Отображаемое ФИО («Фамилия Имя Отчество», без отчества — «Фамилия Имя») собирается автоматически из частей и доступно только для чтения.</td><td><span class="chip area">сотрудники</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-12"><td><a href="#AC-12">AC-12</a></td><td>Новый сотрудник работает. Сотрудника можно создать или перевести только в активное подразделение. Правка полей сотрудника статус не меняет: статус меняют только увольнение и возврат на работу.</td><td><span class="chip area">сотрудники</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-13"><td><a href="#AC-13">AC-13</a></td><td>В данных сотрудника отдаётся e-mail его учётной записи (<a href="user-management.html#AC-1">user-management AC-1</a>); у сотрудника без учётной записи e-mail пуст.</td><td><span class="chip area">сотрудники</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-14"><td><a href="#AC-14">AC-14</a></td><td>«Уволить» переводит сотрудника в «не работает» и в одной транзакции снимает его с руководства всех подразделений и блокирует привязанную учётную запись (её действующие сессии обрываются); повторное увольнение уже уволенного отклоняется (409).</td><td><span class="chip area">увольнение и удаление</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-15"><td><a href="#AC-15">AC-15</a></td><td>«Вернуть на работу» переводит сотрудника в «работает», не разблокирует учётную запись и не возвращает руководство; операция отклоняется (409), если сотрудник уже работает или его подразделение неактивно.</td><td><span class="chip area">увольнение и удаление</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-16"><td><a href="#AC-16">AC-16</a></td><td>«Удалить» физически удаляет запись сотрудника и в той же транзакции снимает его с руководства, блокирует и отвязывает привязанную учётную запись (сама запись остаётся, уже без сотрудника); записи журнала о сотруднике сохраняются.</td><td><span class="chip area">увольнение и удаление</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-17"><td><a href="#AC-17">AC-17</a></td><td>Перед увольнением и удалением администратор видит подтверждение со списком каждого связанного изменения (подразделения, теряющие руководителя; блокируемая или отвязываемая учётная запись); список и выполнение вычисляются одним правилом, поэтому показанное совпадает с выполненным.</td><td><span class="chip area">увольнение и удаление</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-18"><td><a href="#AC-18">AC-18</a></td><td>Увольнение и удаление сотрудника, к которому привязан последний активный глобальный администратор, отклоняются (409) с понятным текстом (<a href="user-management.html#AC-22">user-management AC-22</a>); подтверждение сообщает о запрете заранее и не позволяет выполнить действие.</td><td><span class="chip area">увольнение и удаление</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-19"><td><a href="#AC-19">AC-19</a></td><td>Доступны: дерево подразделений целиком, поддерево, путь до корня и сводка по подразделению с учётом потомков (число работающих сотрудников — всего и непосредственно в подразделении).</td><td><span class="chip area">чтение и поиск</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-20"><td><a href="#AC-20">AC-20</a></td><td>Подразделения и сотрудники выдаются постранично с фильтрами по статусу и подразделению (по запросу — с учётом потомков) и текстовым поиском: подразделения — по названию, сотрудники — по ФИО и должности, по подстроке без учёта регистра и полнотекстово по-русски.</td><td><span class="chip area">чтение и поиск</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-21"><td><a href="#AC-21">AC-21</a></td><td>Узлы дерева подразделений содержат всё нужное карточке подразделения — имя руководителя и число сотрудников, — так что отдельного запроса на каждое подразделение не требуется.</td><td><span class="chip area">чтение и поиск</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-22"><td><a href="#AC-22">AC-22</a></td><td>Администратор видит все подразделения и всех сотрудников со статусом. Пользователь видит только активные подразделения и работающих сотрудников и у каждого — ФИО, e-mail учётной записи, подразделение и должность; статус и служебные данные ему не передаются. Любое изменение доступно только администратору (пользователю — 403).</td><td><span class="chip area">доступ</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-23"><td><a href="#AC-23">AC-23</a></td><td>Параллельная правка одной записи (подразделения или сотрудника) не перезаписывается молча: устаревшее изменение отклоняется явной ошибкой, пользователь видит понятное сообщение и может перечитать данные.</td><td><span class="chip area">конкурентность</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-24"><td><a href="#AC-24">AC-24</a></td><td>На наборе из 10 000 сотрудников обычные операции чтения и изменения укладываются в P95 &lt; 2 с. Исключение — раскрытие одного подразделения с 5000+ сотрудников (AC-27).</td><td><span class="chip area">производительность</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-25"><td><a href="#AC-25">AC-25</a></td><td>Раздел «Оргструктура» показывает иерархию карточек двух видов — подразделение и сотрудник — с вертикальной вложенностью и связями; внутри карточки подразделения сначала карточки дочерних подразделений, затем карточки сотрудников этого подразделения.</td><td><span class="chip area">раздел «Оргструктура»</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-26"><td><a href="#AC-26">AC-26</a></td><td>Карточка подразделения показывает одно и то же в свёрнутом и раскрытом виде: название, метку «Неактивно» (только у неактивного подразделения), число дочерних подразделений, число сотрудников подразделения и руководителя. Число сотрудников у администратора — все сотрудники подразделения, у пользователя — работающие.</td><td><span class="chip area">раздел «Оргструктура»</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-27"><td><a href="#AC-27">AC-27</a></td><td>Иерархия по умолчанию свёрнута; дочерние подразделения и сотрудники подгружаются при раскрытии, сотрудники подразделения — все сразу, без «Показать ещё». Известное ограничение (принято пользователем 2026-10-07): раскрытие подразделения с 5000+ сотрудников занимает более 2 с.</td><td><span class="chip area">раздел «Оргструктура»</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-28"><td><a href="#AC-28">AC-28</a></td><td>В раскрытом подразделении сотрудники отсортированы: сначала руководитель, затем по ФИО в алфавитном порядке русской коллации («ё» стоит рядом с «е»).</td><td><span class="chip area">раздел «Оргструктура»</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-29"><td><a href="#AC-29">AC-29</a></td><td>Администратор действует с карточек. Подразделение: добавить подразделение, добавить сотрудника, править (название, руководитель), перенести, деактивировать / активировать. Сотрудник: меню «Править», «Уволить» (для уволенного — «Вернуть на работу»), «Удалить». Пользователю доступен только просмотр, меню действий ему не показывается.</td><td><span class="chip area">раздел «Оргструктура»</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-30"><td><a href="#AC-30">AC-30</a></td><td>Кнопки «Добавить подразделение» (родитель необязателен: без родителя — корневое) и «Добавить сотрудника» есть на странице раздела; при добавлении из карточки подразделения родитель или подразделение подставляется. Отдельной страницы «Сотрудники» нет: сотрудник создаётся и правится в модальном окне, правка идёт без переключателя статуса.</td><td><span class="chip area">раздел «Оргструктура»</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-31"><td><a href="#AC-31">AC-31</a></td><td>При выборе руководителя предлагаются только работающие сотрудники этого подразделения; у нового подразделения руководителя выбрать нельзя.</td><td><span class="chip area">раздел «Оргструктура»</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-32"><td><a href="#AC-32">AC-32</a></td><td>Деактивация и активация подразделения, увольнение, возврат на работу и удаление сотрудника выполняются после подтверждения; при отказе сервера (409) пользователь видит его причину.</td><td><span class="chip area">раздел «Оргструктура»</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-33"><td><a href="#AC-33">AC-33</a></td><td>Поиск в разделе ищет по названиям подразделений и по ФИО и должностям сотрудников (сотрудников — от 2 символов, после паузы в наборе). Найденные сотрудники показываются в своих подразделениях, путь к найденному раскрывается, в подразделении на пути показываются только найденные сотрудники (весь список — раскрытием вручную), совпадения подсвечиваются. Показываются первые 200 совпадений с подсказкой уточнить запрос; пустой результат даёт сообщение; очистка поиска возвращает прежнее раскрытие.</td><td><span class="chip area">раздел «Оргструктура»</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-34"><td><a href="#AC-34">AC-34</a></td><td>Имена сотрудника и руководителя на карточках не интерактивны; аватарка карточки сотрудника — первые буквы имени и фамилии («АИ»).</td><td><span class="chip area">раздел «Оргструктура»</span></td><td><span class="chip prio-should">should</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="non-goals" class="callout warn">
+  <h2>Вне рамок</h2>
+  <ul class="non-goals">
+    <li>Типы подразделений, даты действия подразделений, штатные единицы, ставки, назначения сотрудников с историей и датами, вакансии.</li>
+    <li>Справочник должностей, профессиональные направления и карьерные треки (Career Framework): должность сотрудника — свободный текст.</li>
+    <li>Набор профессиональных направлений и настройки процесса на уровне подразделения.</li>
+    <li>Табельный номер и собственный e-mail сотрудника.</li>
+    <li>Физическое удаление подразделений.</li>
+    <li>Роли с областью действия, row-level и field-level безопасность: видимость определяется только ролью.</li>
+    <li>Импорт и экспорт структуры, массовые операции, интеграция с HRIS и корпоративным каталогом.</li>
+    <li>Постраничная подгрузка сотрудников в карточке подразделения и виртуализация списка (см. известное ограничение AC-27).</li>
+  </ul>
+</section>
+      </main>
+      <footer>by ASD workflow | 2026-10-07</footer>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1254 @@
+diff --git a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+index adc2181..1286ec0 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+@@ -5,3 +5,4 @@
+ - [Re-review without a shell](feedback_rereview-no-shell-checks.md) — back hash, suite and pin claims from canon text and the tester's record; say what was not recomputed
+ - [Ledger finding mapping](feedback_ledger-finding-mapping.md) — one f per rule row, none on file/section rows, Findings table first, no pipes in cells
+ - [Delta re-review: decisions-log first](feedback_delta-review-decisions-log.md) — read decisions-log for design-promote routing before flagging doc drift; shared-host log waits are vacuous
++- [Wave-review probes](feedback_wave-review-probes.md) — decisions-log "Open:" lines, unused test helpers, per-row lookup loops, body comments, AC ids in class docs: one Grep each
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_wave-review-probes.md b/.claude/agent-memory/asd-reviewer-combined/feedback_wave-review-probes.md
+new file mode 100644
+index 0000000..886d3ef
+--- /dev/null
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_wave-review-probes.md
+@@ -0,0 +1,22 @@
++---
++name: wave-review-probes
++description: cheap probes that found real defects in a many-file domain-backend plus tests wave - decisions-log Open lines, unused test helpers, per-row lookup loops, in-body comments
++metadata:
++  type: feedback
++---
++
++On a domain-backend plus API-test wave, these probes paid off and cost one Grep each:
++
++- Grep `decisions-log.md` for `Open:` / the task's acceptance line before judging an invariant. An "Open:" note there is an
++  unresolved item the orchestrator parked for review, not a user decision: raise it as a finding with a `question:` escalation
++  (the last-administrator rule vs an unblocked admin bound to a dismissed employee was one).
++- For every helper, fixture class and extension in `tests/**/Infrastructure`, Grep the name over `tests`; a declaration with no
++  other hit is dead code, which the over-engineering checklist makes critical.
++- In a list endpoint, look for `foreach ... await directory.Find...` over page rows: a per-row lookup through a cross-module
++  interface is the n+1 to flag (the org side joins, the user side looped).
++- Scan for body comments with `^\s+// |[;{}]\s+//[^/]` per source folder (code-style §7 bans them); a review-fix commit can add one.
++- code-style §8 lets an AC id live only in a test's name or path, so `/// AC-N:` in class summaries counts once the floor is low.
++
++**Why:** the wave diff was ~9.6k lines; the whole-diff read found the logic, these greps found the rule violations in minutes.
++
++**How to apply:** run them after the diff read, before building the ledger.
+diff --git a/.claude/agent-memory/asd-tester-critical/MEMORY.md b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+index 6ce0d5a..77a8501 100644
+--- a/.claude/agent-memory/asd-tester-critical/MEMORY.md
++++ b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+@@ -1,4 +1,4 @@
+ - [Fail-first and `none` honesty](feedback_fail-first-and-none-honesty.md) — transcribe the first-failing assertion, never justify `none` with "it's prose", never assert a qualifier where the substance is assertable
+ - [Mutation runs trip the hash ledger](project_mutation-runs-trip-the-hash-ledger.md) — editing a managed_paths file to prove a mutation also fails upstream_hashes; expected noise
+ - [Testability envelope](project_testability-envelope.md) — what is testable here, honest `none` decisions, mutation and fixture traps, and the §7 in-body-comment ban.
+-- [Competency test harness](project_competency-test-harness.md) — child-process API host on shared Testcontainers, race, async-log and jsdom traps, forcing a 5xx, scratch-copy mutations, tech-reference gate
++- [Competency test harness](project_competency-test-harness.md) — child-process API host on shared Testcontainers, deterministic race gate, async-log and jsdom traps, forcing a 5xx, pre-fix-sha runs, tech-reference gate
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index 4a01c60..821918c 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -1,6 +1,6 @@
+ ---
+ name: competency-test-harness
+-description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, race tests, scratch-copy mutations, jsdom and Testing Library quirks, the tech-reference gate
++description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, race tests and the trigger-gate pause, scratch-copy and pre-fix-sha mutations, jsdom and Testing Library quirks, the tech-reference gate
+ metadata:
+   type: project
+ ---
+@@ -15,6 +15,11 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Host logs: the console logger writes asynchronously, so a record can reach `host.Logs` after the response that caused it; a test that reads it right away flakes (seen once in five runs). Read through `ApiHost.LogsAfterAsync(fragment)` and find records by structured fields (`State.Status`, `State.StackTrace`), not by message text, so a reword stays green.
+ - A real 5xx without a test hook: on a dedicated host add a CHECK constraint whose name is a unique marker (raw SQL), then send the value it forbids. The error is an unmapped check violation, and Npgsql redacts the row detail, so the constraint name is the one string of the exception message that can prove a log record never carries it.
+ - A guard that a role cannot bypass (triggers enabled always) is tested inside a transaction: `SET LOCAL session_replication_role = replica`, run the statement, expect the rejection; disposing the transaction rolls back, so a regression cannot damage the shared host's journal.
++- A deterministic race needs a pause point inside the first request's transaction, after its reads: on its own host add `BEFORE UPDATE ON employees` calling `pg_advisory_lock(k)` then `pg_advisory_unlock(k)`, hold `k` on an unpooled `NpgsqlConnection`, start the dismissal, wait until `pg_locks` shows it ungranted, fire the second request, wait for `late.IsCompleted || another ungranted lock`, then release. Count waiters through `pg_locks JOIN pg_stat_activity ON pid WHERE datname = current_database()`: `pg_locks` is cluster-wide and parallel classes share the container. A gate-start `TaskCompletionSource` race with a narrow window (an update-binding request is milliseconds) cannot give a fail-first proof; a held transaction can.
++- Real fail-first for a review fix: `git archive <prior HEAD sha> src` plus the current `tests/` in a scratch copy, run the whole suite, list the reds. It showed the reviewer's "update-binding races dismissal" path was not reachable before the fix (both take the admin row lock, and one active administrator always exists); that row stays green pre-fix and is proven only by removing every lock from the endpoint. State that in the plan rather than claiming a regression proof.
++- The `AdministratorsHost` class fixture is shared state: a test that fails after blocking the sole administrator makes every later test of the class red ("active ... is empty"). Read the first red only.
++- `ApiResponse` once printed its computed `Id` in assertion failures, which turned any failed assertion over responses into a `NullReferenceException` (it hid the deadlock 500 of a lock-order mutation); `PrintMembers` now prints status and body only.
++- Python or heredoc edits of the production `.cs` files in a `git archive` copy: those blobs are CRLF, so multi-line anchors need `\r\n`, and a bash heredoc turns `\r\n` inside a Python string into real line breaks; build the separators with `chr(13) + chr(10)`.
+ - Mutation copies: run `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj` there, not the `.slnx` (it pulls the web project and `node_modules`). Mutating a migration away means deleting its `.cs` and `.Designer.cs`; the model snapshot stays consistent, so the host still starts.
+ - Web tests: jsdom has no `ResizeObserver` (stubbed in `web/src/test/setup.ts`); Testing Library's accessible name collapses a non-breaking space, so assert the `aria-label` attribute for it; `Intl.Collator("ru")` sorts ё as е, so an ordering fixture must tell ICU order, code-point order and "ё right after е" apart.
+ - `docs/architecture/tech-reference/` gates test libraries too: Playwright and `Microsoft.AspNetCore.Mvc.Testing` have no reference, so the Tester may not implement with them until the Architect adds one. Check the directory before planning e2e.
+diff --git a/openapi/openapi.json b/openapi/openapi.json
+index cedc3c1..6a315b9 100644
+--- a/openapi/openapi.json
++++ b/openapi/openapi.json
+@@ -2445,6 +2445,16 @@
+               }
+             }
+           },
++          "409": {
++            "description": "Conflict",
++            "content": {
++              "application/problem+json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ProblemDetails"
++                }
++              }
++            }
++          },
+           "400": {
+             "description": "Bad Request",
+             "content": {
+diff --git a/src/Competency.Audit/AuditWriter.cs b/src/Competency.Audit/AuditWriter.cs
+index 36f2040..7d98467 100644
+--- a/src/Competency.Audit/AuditWriter.cs
++++ b/src/Competency.Audit/AuditWriter.cs
+@@ -1,11 +1,13 @@
+ using Competency.Platform;
++using Microsoft.EntityFrameworkCore;
+ using Microsoft.Extensions.DependencyInjection;
+ 
+ namespace Competency.Audit;
+ 
+ /// <summary>
+ /// Saves each explicit event through its own context, connection and transaction, so it neither flushes
+-/// the caller's pending changes nor rolls back with them. Never logs the event.
++/// the caller's pending changes nor rolls back with them, or stages it on the caller's context, so it is saved
++/// and rolled back with the caller's changes. Never logs the event.
+ /// </summary>
+ internal sealed class AuditWriter(IServiceScopeFactory scopeFactory, AuditEventFactory factory) : IAuditWriter
+ {
+@@ -16,4 +18,6 @@ internal sealed class AuditWriter(IServiceScopeFactory scopeFactory, AuditEventF
+         context.Set<AuditEvent>().Add(factory.Create(entry));
+         await context.SaveChangesAsync(cancellationToken);
+     }
++
++    public void Stage(AuditEntry entry, DbContext context) => context.Set<AuditEvent>().Add(factory.Create(entry));
+ }
+diff --git a/src/Competency.OrgStructure/EmployeeDirectory.cs b/src/Competency.OrgStructure/EmployeeDirectory.cs
+index ef01def..2cad185 100644
+--- a/src/Competency.OrgStructure/EmployeeDirectory.cs
++++ b/src/Competency.OrgStructure/EmployeeDirectory.cs
+@@ -1,5 +1,7 @@
++using System.Linq.Expressions;
+ using Competency.Platform;
+ using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.Storage;
+ 
+ namespace Competency.OrgStructure;
+ 
+@@ -8,11 +10,29 @@ namespace Competency.OrgStructure;
+ /// </summary>
+ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirectory
+ {
++    private static readonly Expression<Func<Employee, EmployeeStatus>> StatusProjection = employee => new EmployeeStatus(
++        employee.Id, employee.FullName, employee.LastName, employee.FirstName, employee.MiddleName, employee.IsActive);
++
+     public Task<EmployeeStatus?> FindAsync(Guid employeeId, CancellationToken cancellationToken = default) => context
+         .Set<Employee>()
+         .AsNoTracking()
+         .Where(employee => employee.Id == employeeId)
+-        .Select(employee => new EmployeeStatus(
+-            employee.Id, employee.FullName, employee.LastName, employee.FirstName, employee.MiddleName, employee.IsActive))
++        .Select(StatusProjection)
+         .FirstOrDefaultAsync(cancellationToken);
++
++    public async Task<IReadOnlyDictionary<Guid, EmployeeStatus>> FindManyAsync(
++        IReadOnlyCollection<Guid> employeeIds,
++        CancellationToken cancellationToken = default)
++    {
++        var ids = employeeIds.ToArray();
++        return await context
++            .Set<Employee>()
++            .AsNoTracking()
++            .Where(employee => ids.Contains(employee.Id))
++            .Select(StatusProjection)
++            .ToDictionaryAsync(status => status.Id, cancellationToken);
++    }
++
++    public Task<IDbContextTransaction> BeginExclusiveAsync(CancellationToken cancellationToken = default) =>
++        context.BeginExclusiveAsync(cancellationToken);
+ }
+diff --git a/src/Competency.OrgStructure/EmployeeEndpoints.cs b/src/Competency.OrgStructure/EmployeeEndpoints.cs
+index 9cdc934..17157f4 100644
+--- a/src/Competency.OrgStructure/EmployeeEndpoints.cs
++++ b/src/Competency.OrgStructure/EmployeeEndpoints.cs
+@@ -348,6 +348,10 @@ internal static class EmployeeEndpoints
+             || employee.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)));
+     }
+ 
++    /// <summary>
++    /// Saves the employee and reads the response back while the tree lock is still held, so that the body and its <c>ETag</c> come
++    /// from one snapshot that no concurrent change or deletion can alter before the commit.
++    /// </summary>
+     private static async Task<EmployeeResponse> SaveAsync(
+         Employee employee,
+         AppDbContext context,
+@@ -356,12 +360,13 @@ internal static class EmployeeEndpoints
+         CancellationToken cancellationToken)
+     {
+         await context.SaveChangesAsync(cancellationToken);
+-        await transaction.CommitAsync(cancellationToken);
+-        response.SetETag(employee.Version);
+-        return await context.Set<Employee>()
++        var saved = await context.Set<Employee>()
+             .AsNoTracking()
+-            .Where(saved => saved.Id == employee.Id)
++            .Where(candidate => candidate.Id == employee.Id)
+             .Select(EmployeeResponse.FullProjection(context))
+             .SingleAsync(cancellationToken);
++        await transaction.CommitAsync(cancellationToken);
++        response.SetETag(saved.Version!.Value);
++        return saved;
+     }
+ }
+diff --git a/src/Competency.OrgStructure/IEmployeeDirectory.cs b/src/Competency.OrgStructure/IEmployeeDirectory.cs
+index 499fde4..3f0baa1 100644
+--- a/src/Competency.OrgStructure/IEmployeeDirectory.cs
++++ b/src/Competency.OrgStructure/IEmployeeDirectory.cs
+@@ -1,7 +1,9 @@
++using Microsoft.EntityFrameworkCore.Storage;
++
+ namespace Competency.OrgStructure;
+ 
+ /// <summary>
+-/// Read access to the employee directory for other modules, which never see the module's entities.
++/// Access to the employee directory for other modules, which never see the module's entities.
+ /// Implementations are scoped to a request, because they share its database context.
+ /// </summary>
+ public interface IEmployeeDirectory
+@@ -13,4 +15,21 @@ public interface IEmployeeDirectory
+     /// <param name="cancellationToken">Cancels the lookup.</param>
+     /// <returns>The employee's status, or <see langword="null"/> when no such employee exists.</returns>
+     Task<EmployeeStatus?> FindAsync(Guid employeeId, CancellationToken cancellationToken = default);
++
++    /// <summary>
++    /// Finds many employees in one query.
++    /// </summary>
++    /// <param name="employeeIds">The employee identifiers.</param>
++    /// <param name="cancellationToken">Cancels the lookup.</param>
++    /// <returns>The status of each employee that exists, by identifier; identifiers of employees that do not exist are absent.</returns>
++    Task<IReadOnlyDictionary<Guid, EmployeeStatus>> FindManyAsync(IReadOnlyCollection<Guid> employeeIds, CancellationToken cancellationToken = default);
++
++    /// <summary>
++    /// Starts a transaction and takes the lock every employee and unit change holds, until the transaction ends, so that what the caller
++    /// then reads about employees, such as whether one works, cannot change before the caller commits. A caller that also locks the
++    /// active administrators must take this lock first, as dismissing an employee does, or the two could wait for each other.
++    /// </summary>
++    /// <param name="cancellationToken">Cancels the wait for the lock.</param>
++    /// <returns>The open transaction; the caller commits it, and disposing it releases the lock.</returns>
++    Task<IDbContextTransaction> BeginExclusiveAsync(CancellationToken cancellationToken = default);
+ }
+diff --git a/src/Competency.Platform/IAuditWriter.cs b/src/Competency.Platform/IAuditWriter.cs
+index 3ce8539..a1a9d80 100644
+--- a/src/Competency.Platform/IAuditWriter.cs
++++ b/src/Competency.Platform/IAuditWriter.cs
+@@ -1,3 +1,5 @@
++using Microsoft.EntityFrameworkCore;
++
+ namespace Competency.Platform;
+ 
+ /// <summary>
+@@ -6,9 +8,19 @@ namespace Competency.Platform;
+ public interface IAuditWriter
+ {
+     /// <summary>
+-    /// Records one audit event.
++    /// Records one audit event, saved at once through a context and transaction of its own, so that it stays
++    /// even when the caller's own changes are rolled back; for events about refused or failed actions.
+     /// </summary>
+     /// <param name="entry">The event to record.</param>
+     /// <param name="cancellationToken">Cancels the write.</param>
+     Task WriteAsync(AuditEntry entry, CancellationToken cancellationToken = default);
++
++    /// <summary>
++    /// Adds one audit event to the caller's context without saving it, so that the caller's next save writes it in the same
++    /// transaction as the caller's other changes and the event exists exactly when those changes do; for events about a change that succeeded.
++    /// Add it right before the save that stores the change, because any save of the context stores it.
++    /// </summary>
++    /// <param name="entry">The event to record.</param>
++    /// <param name="context">The context whose next save stores the event.</param>
++    void Stage(AuditEntry entry, DbContext context);
+ }
+diff --git a/src/Competency.UserManagement/ActiveAdministrators.cs b/src/Competency.UserManagement/ActiveAdministrators.cs
+index 9d08dbd..a2ed852 100644
+--- a/src/Competency.UserManagement/ActiveAdministrators.cs
++++ b/src/Competency.UserManagement/ActiveAdministrators.cs
+@@ -1,3 +1,4 @@
++using Competency.OrgStructure;
+ using Competency.Platform;
+ using Microsoft.EntityFrameworkCore;
+ using Microsoft.EntityFrameworkCore.Storage;
+@@ -13,15 +14,21 @@ internal static class ActiveAdministrators
+     public const string LastOneMessage = "Нельзя заблокировать, понизить или иначе лишить роли последнего активного глобального администратора.";
+ 
+     /// <summary>
+-    /// Starts a transaction and locks every active administrator row, in key order so that concurrent callers cannot deadlock,
+-    /// until the transaction ends; the lock needs the default read committed isolation, under which later queries see what the previous holder committed.
++    /// Starts a transaction, takes the employee tree lock and then locks every active administrator row, in key order, until the transaction ends.
++    /// The tree lock always comes first, the order in which dismissing an employee takes the same two, so concurrent callers cannot deadlock;
++    /// it also keeps a change of the account's employee from racing a dismissal of that employee. The locks need the default read committed
++    /// isolation, under which later queries see what the previous holder committed.
+     /// </summary>
+     /// <param name="context">The context the changes will be saved through.</param>
+-    /// <param name="cancellationToken">Cancels the wait for the lock.</param>
+-    /// <returns>The open transaction; the caller commits it, and disposing it releases the lock.</returns>
+-    public static async Task<IDbContextTransaction> BeginExclusiveAsync(this AppDbContext context, CancellationToken cancellationToken)
++    /// <param name="employees">The employee directory, which owns the tree lock.</param>
++    /// <param name="cancellationToken">Cancels the wait for the locks.</param>
++    /// <returns>The open transaction; the caller commits it, and disposing it releases the locks.</returns>
++    public static async Task<IDbContextTransaction> BeginExclusiveAsync(
++        this AppDbContext context,
++        IEmployeeDirectory employees,
++        CancellationToken cancellationToken)
+     {
+-        var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
++        var transaction = await employees.BeginExclusiveAsync(cancellationToken);
+         await context.LockAsync(cancellationToken);
+         return transaction;
+     }
+diff --git a/src/Competency.UserManagement/AuthEndpoints.cs b/src/Competency.UserManagement/AuthEndpoints.cs
+index e02259a..f9252c7 100644
+--- a/src/Competency.UserManagement/AuthEndpoints.cs
++++ b/src/Competency.UserManagement/AuthEndpoints.cs
+@@ -123,10 +123,13 @@ internal static class AuthEndpoints
+ 
+     /// <summary>
+     /// Replaces the signed-in user's password. Every other session of the user ends; the current one continues under the new security stamp.
++    /// The current password is checked with the sign-in lockout accounting, so that a stolen session cannot guess it without limit:
++    /// a wrong one counts as a failed attempt and a locked account is refused without checking. The new password and its audit event are saved together.
+     /// </summary>
+     private static async Task<Results<NoContent, ValidationProblem, ProblemHttpResult, UnauthorizedHttpResult>> ChangePasswordAsync(
+         ChangePasswordRequest request,
+         UserManager<AppUser> users,
++        AppDbContext context,
+         IAuditWriter audit,
+         HttpContext httpContext,
+         CancellationToken cancellationToken)
+@@ -143,14 +146,27 @@ internal static class AuthEndpoints
+             return TypedResults.Unauthorized();
+         }
+ 
+-        var result = await users.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
++        if (await VerifyPasswordAsync(users, user, request.CurrentPassword) is not null)
++        {
++            return Rejections.From(IdentityResult.Failed(users.ErrorDescriber.PasswordMismatch()));
++        }
++
++        var policy = await users.ValidatePasswordAsync(user, request.NewPassword);
++        if (!policy.Succeeded)
++        {
++            return Rejections.From(policy);
++        }
++
++        user.PasswordHash = users.PasswordHasher.HashPassword(user, request.NewPassword);
++        user.ClearLockout();
++        audit.Stage(new AuditEntry(PasswordChangedAction, nameof(AppUser), user.Id.ToString()), context);
++        var result = await users.UpdateSecurityStampAsync(user);
+         if (!result.Succeeded)
+         {
+             return Rejections.From(result);
+         }
+ 
+         await httpContext.SignInAsync(SessionAuthentication.Scheme, SessionAuthentication.CreatePrincipal(user));
+-        await audit.WriteAsync(new AuditEntry(PasswordChangedAction, nameof(AppUser), user.Id.ToString()), cancellationToken);
+         return TypedResults.NoContent();
+     }
+ 
+diff --git a/src/Competency.UserManagement/CredentialChecks.cs b/src/Competency.UserManagement/CredentialChecks.cs
+index ed1ff7e..247a72a 100644
+--- a/src/Competency.UserManagement/CredentialChecks.cs
++++ b/src/Competency.UserManagement/CredentialChecks.cs
+@@ -1,9 +1,10 @@
+ using System.Net.Mail;
++using Microsoft.AspNetCore.Identity;
+ 
+ namespace Competency.UserManagement;
+ 
+ /// <summary>
+-/// The shape checks of e-mail addresses and passwords that every request carrying them shares; the password policy itself is Identity's.
++/// The shape checks of e-mail addresses and passwords that every request carrying them shares; the password policy itself is Identity's, applied through its validators.
+ /// </summary>
+ internal static class CredentialChecks
+ {
+@@ -42,4 +43,24 @@ internal static class CredentialChecks
+             errors[field] = [$"Пароль: не длиннее {AppUser.PasswordMaxLength} символов."];
+         }
+     }
++
++    /// <summary>
++    /// Applies every password rule to a password that is set without going through the password-changing operations of the user manager,
++    /// which would save the account twice and leave it without a password in between, and could not save an audit event with it.
++    /// </summary>
++    /// <param name="users">The user manager that holds the password rules.</param>
++    /// <param name="user">The account the password is for.</param>
++    /// <param name="password">The new password.</param>
++    /// <returns>Success, or every rule the password breaks.</returns>
++    public static async Task<IdentityResult> ValidatePasswordAsync(this UserManager<AppUser> users, AppUser user, string password)
++    {
++        var problems = new List<IdentityError>();
++        foreach (var validator in users.PasswordValidators)
++        {
++            var result = await validator.ValidateAsync(users, user, password);
++            problems.AddRange(result.Errors);
++        }
++
++        return problems.Count == 0 ? IdentityResult.Success : IdentityResult.Failed([.. problems]);
++    }
+ }
+diff --git a/src/Competency.UserManagement/UserEndpoints.cs b/src/Competency.UserManagement/UserEndpoints.cs
+index d1b1d32..d896046 100644
+--- a/src/Competency.UserManagement/UserEndpoints.cs
++++ b/src/Competency.UserManagement/UserEndpoints.cs
+@@ -12,7 +12,9 @@ namespace Competency.UserManagement;
+ /// <summary>
+ /// The account API. Permission matrix: every operation needs a global administrator, so a signed-in user without the role is refused
+ /// with 403 whichever account the request names, and an unknown account answers 404 only to an administrator.
+-/// Changes carry <c>If-Match</c>; those that could remove an administrator run under the lock of the active administrators.
++/// Changes carry <c>If-Match</c>. Creating, changing, blocking and unblocking an account run under the employee tree lock, taken first,
++/// so that no account is ever bound to or unblocked with an employee who is being dismissed; those that could remove an administrator
++/// also lock the active administrators, after it. A password reset and its audit event are saved together.
+ /// Accounts are never deleted: blocking ends them. Blocking, a password reset, and a change of role or employee end the account's sessions.
+ /// </summary>
+ internal static class UserEndpoints
+@@ -20,6 +22,8 @@ internal static class UserEndpoints
+     private const string Route = "/api/v1/users";
+     private const string Tag = "Users";
+     private const string PasswordResetAction = "AppUser.PasswordReset";
++    private const string UnblockNeedsWorkingEmployee =
++        "Нельзя разблокировать учётную запись, пока привязанный сотрудник не работает. Сначала верните сотрудника на работу или отвяжите от него учётную запись.";
+ 
+     public static void Map(IEndpointRouteBuilder endpoints)
+     {
+@@ -41,7 +45,8 @@ internal static class UserEndpoints
+             .ProducesProblem(StatusCodes.Status404NotFound)
+             .ProducesProblem(StatusCodes.Status409Conflict);
+         administrators.MapPost("/{id:guid}/unblock", UnblockAsync).WithName("UnblockUser").ProducesETag()
+-            .ProducesProblem(StatusCodes.Status404NotFound);
++            .ProducesProblem(StatusCodes.Status404NotFound)
++            .ProducesProblem(StatusCodes.Status409Conflict);
+         administrators.MapPost("/{id:guid}/reset-password", ResetPasswordAsync).WithName("ResetUserPassword").ProducesETag()
+             .ProducesProblem(StatusCodes.Status404NotFound);
+     }
+@@ -86,13 +91,11 @@ internal static class UserEndpoints
+             .Select(UserResponse.Projection)
+             .ToListAsync(cancellationToken);
+ 
+-        var names = new Dictionary<Guid, string?>();
+-        foreach (var employeeId in rows.Select(row => row.EmployeeId).OfType<Guid>().Distinct())
++        var statuses = await employees.FindManyAsync([.. rows.Select(row => row.EmployeeId).OfType<Guid>().Distinct()], cancellationToken);
++        var items = rows.ConvertAll(row => row with
+         {
+-            names[employeeId] = await employees.NameAsync(employeeId, cancellationToken);
+-        }
+-
+-        var items = rows.ConvertAll(row => row with { EmployeeName = row.EmployeeId is { } id ? names[id] : null });
++            EmployeeName = row.EmployeeId is { } id && statuses.TryGetValue(id, out var status) ? status.FullName : null,
++        });
+         return TypedResults.Ok(new PageResponse<UserResponse>(items, total, query.Page, query.PageSize));
+     }
+ 
+@@ -131,6 +134,7 @@ internal static class UserEndpoints
+             return TypedResults.ValidationProblem(errors);
+         }
+ 
++        await using var transaction = await employees.BeginExclusiveAsync(cancellationToken);
+         if (request.EmployeeId is { } employeeId)
+         {
+             if (await employees.ProblemAsync(employeeId, cancellationToken) is { } problem)
+@@ -152,6 +156,7 @@ internal static class UserEndpoints
+             return Rejections.From(result, "password");
+         }
+ 
++        await transaction.CommitAsync(cancellationToken);
+         response.SetETag(user.Version);
+         var created = UserResponse.From(user, await employees.NameAsync(user.EmployeeId, cancellationToken));
+         return TypedResults.Created($"{Route}/{created.Id}", created);
+@@ -173,7 +178,7 @@ internal static class UserEndpoints
+             return TypedResults.ValidationProblem(errors);
+         }
+ 
+-        await using var transaction = await context.BeginExclusiveAsync(cancellationToken);
++        await using var transaction = await context.BeginExclusiveAsync(employees, cancellationToken);
+         var user = await users.FindByIdAsync(id.ToString());
+         if (user is null)
+         {
+@@ -224,7 +229,7 @@ internal static class UserEndpoints
+         HttpResponse response,
+         CancellationToken cancellationToken)
+     {
+-        await using var transaction = await context.BeginExclusiveAsync(cancellationToken);
++        await using var transaction = await context.BeginExclusiveAsync(employees, cancellationToken);
+         var user = await users.FindByIdAsync(id.ToString());
+         if (user is null)
+         {
+@@ -257,12 +262,18 @@ internal static class UserEndpoints
+         HttpResponse response,
+         CancellationToken cancellationToken)
+     {
++        await using var transaction = await employees.BeginExclusiveAsync(cancellationToken);
+         var user = await users.FindByIdAsync(id.ToString());
+         if (user is null)
+         {
+             return TypedResults.NotFound();
+         }
+ 
++        if (user.EmployeeId is { } employeeId && await employees.ProblemAsync(employeeId, cancellationToken) is not null)
++        {
++            return Rejections.Conflict(UnblockNeedsWorkingEmployee);
++        }
++
+         ifMatch.ApplyTo(context, user);
+         user.IsBlocked = false;
+         user.ClearLockout();
+@@ -272,6 +283,7 @@ internal static class UserEndpoints
+             return Rejections.From(result);
+         }
+ 
++        await transaction.CommitAsync(cancellationToken);
+         return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken));
+     }
+ 
+@@ -298,7 +310,7 @@ internal static class UserEndpoints
+             return TypedResults.NotFound();
+         }
+ 
+-        var policy = await ValidatePasswordAsync(users, user, request.NewPassword);
++        var policy = await users.ValidatePasswordAsync(user, request.NewPassword);
+         if (!policy.Succeeded)
+         {
+             return Rejections.From(policy);
+@@ -307,32 +319,16 @@ internal static class UserEndpoints
+         ifMatch.ApplyTo(context, user);
+         user.PasswordHash = users.PasswordHasher.HashPassword(user, request.NewPassword);
+         user.ClearLockout();
++        audit.Stage(new AuditEntry(PasswordResetAction, nameof(AppUser), user.Id.ToString()), context);
+         var result = await users.UpdateSecurityStampAsync(user);
+         if (!result.Succeeded)
+         {
+             return Rejections.From(result);
+         }
+ 
+-        await audit.WriteAsync(new AuditEntry(PasswordResetAction, nameof(AppUser), user.Id.ToString()), cancellationToken);
+         return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken));
+     }
+ 
+-    /// <summary>
+-    /// Applies every password rule to a password that is set without going through the password-changing operations of the user manager,
+-    /// which would save the account twice and leave it without a password in between.
+-    /// </summary>
+-    private static async Task<IdentityResult> ValidatePasswordAsync(UserManager<AppUser> users, AppUser user, string password)
+-    {
+-        var problems = new List<IdentityError>();
+-        foreach (var validator in users.PasswordValidators)
+-        {
+-            var result = await validator.ValidateAsync(users, user, password);
+-            problems.AddRange(result.Errors);
+-        }
+-
+-        return problems.Count == 0 ? IdentityResult.Success : IdentityResult.Failed([.. problems]);
+-    }
+-
+     private static async Task<UserResponse> RespondAsync(
+         AppUser user,
+         IEmployeeDirectory employees,
+diff --git a/tests/Competency.Tests/AuditTests.cs b/tests/Competency.Tests/AuditTests.cs
+index 6adffa7..6da7ca7 100644
+--- a/tests/Competency.Tests/AuditTests.cs
++++ b/tests/Competency.Tests/AuditTests.cs
+@@ -8,7 +8,7 @@ using Xunit;
+ namespace Competency.Tests;
+ 
+ /// <summary>
+-/// AC-15: every mutation and every sign-in event is journaled with actor, role and request id, a refused change leaves no row,
++/// Every mutation and every sign-in event is journaled with actor, role and request id, a refused change leaves no row,
+ /// only allow-listed properties are recorded so no secret reaches the journal, and the journal API is read-only and filterable.
+ /// </summary>
+ public sealed class AuditTests(TestEnvironment environment)
+@@ -102,6 +102,44 @@ public sealed class AuditTests(TestEnvironment environment)
+             .Should().Be(0, "only allow-listed properties are journaled");
+     }
+ 
++    [Theory]
++    [InlineData("reset-password", "AppUser.PasswordReset", HttpStatusCode.OK)]
++    [InlineData("change-password", "Auth.PasswordChanged", HttpStatusCode.NoContent)]
++    public async Task Ac15_CredentialChangeAndItsJournalRow_AreSavedTogetherOrNotAtAll(string operation, string action, HttpStatusCode success)
++    {
++        await using var host = await environment.StartHostAsync();
++        var admin = await host.AdminAsync();
++        var account = await admin.CreateUserAsync();
++        var session = await account.SignInAsync(host);
++        const string NewPassword = "Atomic-Pass-12345!";
++        var constraint = $"ck_audit_action_marker_{Guid.NewGuid():N}";
++        await host.ExecuteAsync($"ALTER TABLE audit_events ADD CONSTRAINT {constraint} CHECK (action <> '{action}')");
++
++        var failed = await ChangePassword(account.ETag);
++        var unchanged = await admin.GetUserAsync(account.Id);
++        var oldPassword = await host.Anonymous().PostAsync("/api/v1/auth/login", new { email = account.Email, password = account.Password });
++        var newPassword = await host.Anonymous().PostAsync("/api/v1/auth/login", new { email = account.Email, password = NewPassword });
++        var sessionAfterFailure = await session.GetAsync("/api/v1/auth/me");
++        await host.ExecuteAsync($"ALTER TABLE audit_events DROP CONSTRAINT {constraint}");
++        var changed = await ChangePassword((await admin.GetUserAsync(account.Id)).ETag!);
++
++        failed.Status.Should().Be(HttpStatusCode.InternalServerError, "the journal row cannot be written");
++        unchanged.ETag.Should().Be(account.ETag, "the account version moves only with a saved change");
++        oldPassword.Status.Should().Be(HttpStatusCode.OK, "the password is changed only when its journal row is saved with it");
++        newPassword.Status.Should().Be(HttpStatusCode.Unauthorized);
++        sessionAfterFailure.Status.Should().Be(HttpStatusCode.OK, "a change that was not saved ends no session");
++        changed.Status.Should().Be(success, changed.Body);
++        (await admin.AuditOfRequestAsync(changed.RequestId!)).Actions().Should().Equal(action);
++        (await host.Anonymous().PostAsync("/api/v1/auth/login", new { email = account.Email, password = NewPassword })).Status.Should().Be(HttpStatusCode.OK);
++        (await session.GetAsync("/api/v1/auth/me")).Status.Should().Be(
++            operation == "reset-password" ? HttpStatusCode.Unauthorized : HttpStatusCode.OK,
++            "a reset ends the sessions of the account, a password change keeps the current one");
++
++        Task<ApiResponse> ChangePassword(string version) => operation == "reset-password"
++            ? admin.PostAsync($"/api/v1/users/{account.Id}/reset-password", new { newPassword = NewPassword }, version)
++            : session.PostAsync("/api/v1/auth/change-password", new { currentPassword = account.Password, newPassword = NewPassword });
++    }
++
+     [Fact]
+     public async Task Ac15_SignInEvents_AreJournaledWithTheAccountIdentityAndNothingTyped()
+     {
+diff --git a/tests/Competency.Tests/AuthorizationTests.cs b/tests/Competency.Tests/AuthorizationTests.cs
+index 479e41e..d76ad7b 100644
+--- a/tests/Competency.Tests/AuthorizationTests.cs
++++ b/tests/Competency.Tests/AuthorizationTests.cs
+@@ -6,7 +6,7 @@ using Xunit;
+ namespace Competency.Tests;
+ 
+ /// <summary>
+-/// AC-6 and AC-12: every protected endpoint answers 401 without a session and 403 to a signed-in user without the administrator role,
++/// Every protected endpoint answers 401 without a session and 403 to a signed-in user without the administrator role,
+ /// whichever resource the request names, and the user role reads only the restricted projection of active data.
+ /// </summary>
+ public sealed class AuthorizationTests(TestEnvironment environment)
+diff --git a/tests/Competency.Tests/CsrfTests.cs b/tests/Competency.Tests/CsrfTests.cs
+index 1cfff24..e0cf2c1 100644
+--- a/tests/Competency.Tests/CsrfTests.cs
++++ b/tests/Competency.Tests/CsrfTests.cs
+@@ -6,7 +6,7 @@ using Xunit;
+ namespace Competency.Tests;
+ 
+ /// <summary>
+-/// AC-6: a state-changing request a browser reports as cross-site is refused before it reaches any endpoint, even with a valid session.
++/// A state-changing request a browser reports as cross-site is refused before it reaches any endpoint, even with a valid session.
+ /// </summary>
+ public sealed class CsrfTests(TestEnvironment environment)
+ {
+diff --git a/tests/Competency.Tests/DismissalRaceTests.cs b/tests/Competency.Tests/DismissalRaceTests.cs
+new file mode 100644
+index 0000000..2b49481
+--- /dev/null
++++ b/tests/Competency.Tests/DismissalRaceTests.cs
+@@ -0,0 +1,121 @@
++using System.Diagnostics;
++using System.Net;
++using AwesomeAssertions;
++using Competency.Tests.Infrastructure;
++using Npgsql;
++using Xunit;
++
++namespace Competency.Tests;
++
++/// <summary>
++/// An account is never created for, bound to or unblocked with an employee whose dismissal is in progress: the change waits for the
++/// dismissal, finds the employee not working and is refused, so a dismissed employee never ends with an unblocked account.
++/// The dismissal is held inside its transaction, after it has read which accounts it must block, because that is the window in which
++/// a change that does not wait for it is missed by the dismissal and commits an unblocked account on the dismissed employee.
++/// </summary>
++public sealed class DismissalRaceTests(TestEnvironment environment)
++{
++    private const long GateKey = 7;
++    private static readonly TimeSpan WaitTimeout = TimeSpan.FromSeconds(30);
++
++    [Theory]
++    [InlineData("create", HttpStatusCode.BadRequest)]
++    [InlineData("bind", HttpStatusCode.BadRequest)]
++    [InlineData("unblock", HttpStatusCode.Conflict)]
++    public async Task Ac8_AccountChangeArrivingDuringADismissal_WaitsForItAndIsRefused(string change, HttpStatusCode refusal)
++    {
++        await using var host = await environment.StartHostAsync();
++        var admin = await host.AdminAsync();
++        var unit = await admin.CreateUnitAsync();
++        var employee = await admin.CreateEmployeeAsync(unit.Id);
++        var account = change == "create" ? null : await admin.CreateUserAsync(employeeId: change == "unblock" ? employee.Id : null);
++        var version = account?.ETag;
++        if (change == "unblock")
++        {
++            version = (await admin.PostAsync($"/api/v1/users/{account!.Id}/block", ifMatch: version)).Expect(HttpStatusCode.OK).ETag;
++        }
++
++        await host.ExecuteAsync($"""
++            CREATE FUNCTION wait_for_gate() RETURNS trigger LANGUAGE plpgsql AS $$
++            BEGIN
++                PERFORM pg_advisory_lock({GateKey});
++                PERFORM pg_advisory_unlock({GateKey});
++                RETURN NEW;
++            END $$
++            """);
++        await host.ExecuteAsync("CREATE TRIGGER wait_for_gate BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION wait_for_gate()");
++        await using var gate = await Gate.CloseAsync(host);
++        var dismissal = admin.PostAsync($"/api/v1/employees/{employee.Id}/dismiss", ifMatch: employee.ETag);
++        await WaitUntilAsync(async () => await WaitersAsync(host, $"l.locktype = 'advisory' AND l.objid = {GateKey}") > 0, "the dismissal waits at the gate");
++
++        var late = change switch
++        {
++            "create" => admin.PostAsync(
++                "/api/v1/users",
++                new { email = $"{Scenarios.Unique("late")}@test.local", password = Scenarios.UserPassword, role = Scenarios.User, employeeId = employee.Id }),
++            "bind" => admin.PutAsync(
++                $"/api/v1/users/{account!.Id}",
++                new { email = account.Email, role = Scenarios.User, employeeId = employee.Id },
++                version),
++            _ => admin.PostAsync($"/api/v1/users/{account!.Id}/unblock", ifMatch: version),
++        };
++        await WaitUntilAsync(
++            async () => late.IsCompleted || await WaitersAsync(host, $"NOT (l.locktype = 'advisory' AND l.objid = {GateKey})") > 0,
++            "the change has either finished or waits for the dismissal");
++        await gate.OpenAsync();
++        var (dismissed, changed) = (await dismissal, await late);
++
++        dismissed.Status.Should().Be(HttpStatusCode.OK, dismissed.Body);
++        changed.Status.Should().Be(refusal, changed.Body);
++        (await host.ScalarAsync<long>($"SELECT count(*) FROM users WHERE employee_id = '{employee.Id}' AND NOT is_blocked"))
++            .Should().Be(0, "a dismissed employee never keeps an unblocked account");
++    }
++
++    private static Task<long> WaitersAsync(ApiHost host, string lockFilter) => host.ScalarAsync<long>($"""
++        SELECT count(*) FROM pg_locks AS l JOIN pg_stat_activity AS a ON a.pid = l.pid
++        WHERE NOT l.granted AND a.datname = current_database() AND {lockFilter}
++        """);
++
++    private static async Task WaitUntilAsync(Func<Task<bool>> condition, string what)
++    {
++        var waited = Stopwatch.StartNew();
++        while (!await condition())
++        {
++            if (waited.Elapsed > WaitTimeout)
++            {
++                throw new TimeoutException($"Gave up after {WaitTimeout.TotalSeconds} s waiting until {what}.");
++            }
++
++            await Task.Delay(25, TestContext.Current.CancellationToken);
++        }
++    }
++
++    /// <summary>
++    /// An advisory lock held on a connection of its own, which the trigger the test installs on employee updates waits for,
++    /// so that a request that updates an employee stops inside its transaction until the gate is opened.
++    /// </summary>
++    private sealed class Gate : IAsyncDisposable
++    {
++        private readonly NpgsqlConnection connection;
++
++        private Gate(NpgsqlConnection connection) => this.connection = connection;
++
++        public static async Task<Gate> CloseAsync(ApiHost host)
++        {
++            var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(host.ConnectionString) { Pooling = false }.ConnectionString);
++            await connection.OpenAsync(TestContext.Current.CancellationToken);
++            await Run(connection, $"SELECT pg_advisory_lock({GateKey})");
++            return new Gate(connection);
++        }
++
++        public Task OpenAsync() => Run(connection, $"SELECT pg_advisory_unlock({GateKey})");
++
++        public ValueTask DisposeAsync() => connection.DisposeAsync();
++
++        private static async Task Run(NpgsqlConnection connection, string sql)
++        {
++            await using var command = new NpgsqlCommand(sql, connection);
++            await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
++        }
++    }
++}
+diff --git a/tests/Competency.Tests/EmployeeDepartureTests.cs b/tests/Competency.Tests/EmployeeDepartureTests.cs
+index 01dfaa0..3c7a184 100644
+--- a/tests/Competency.Tests/EmployeeDepartureTests.cs
++++ b/tests/Competency.Tests/EmployeeDepartureTests.cs
+@@ -6,7 +6,7 @@ using Xunit;
+ namespace Competency.Tests;
+ 
+ /// <summary>
+-/// AC-18 and AC-8: dismissing or deleting an employee applies, in one transaction, exactly the changes its preview announced:
++/// Dismissing or deleting an employee applies, in one transaction, exactly the changes its preview announced:
+ /// the headed unit loses its head, the bound account is blocked (and unbound on deletion), its live session ends, and every change is journaled.
+ /// </summary>
+ public sealed class EmployeeDepartureTests(TestEnvironment environment)
+diff --git a/tests/Competency.Tests/EmployeeSearchTests.cs b/tests/Competency.Tests/EmployeeSearchTests.cs
+index 230292b..f90312d 100644
+--- a/tests/Competency.Tests/EmployeeSearchTests.cs
++++ b/tests/Competency.Tests/EmployeeSearchTests.cs
+@@ -6,7 +6,7 @@ using Xunit;
+ namespace Competency.Tests;
+ 
+ /// <summary>
+-/// AC-11 and AC-17: employee search combines case-insensitive substring and Russian full-text matching (stems, «ё» as «е», positions),
++/// Employee search combines case-insensitive substring and Russian full-text matching (stems, «ё» as «е», positions),
+ /// treats <c>%</c> and <c>_</c> as characters, and validates its paging and text limits.
+ /// </summary>
+ public sealed class EmployeeSearchTests(TestEnvironment environment)
+diff --git a/tests/Competency.Tests/Infrastructure/ApiClient.cs b/tests/Competency.Tests/Infrastructure/ApiClient.cs
+index 4e240de..5d7bcea 100644
+--- a/tests/Competency.Tests/Infrastructure/ApiClient.cs
++++ b/tests/Competency.Tests/Infrastructure/ApiClient.cs
+@@ -1,5 +1,6 @@
+ using System.Net;
+ using System.Net.Http.Json;
++using System.Text;
+ using System.Text.Json;
+ using System.Text.Json.Nodes;
+ using Xunit;
+@@ -81,6 +82,16 @@ public sealed record ApiResponse(HttpStatusCode Status, string Body, string? ETa
+ 
+     public Guid Id => Guid.Parse(Json!["id"]!.GetValue<string>());
+ 
++    /// <summary>
++    /// Prints only the status and the body, because <see cref="Id"/> throws for a response without one, which would replace
++    /// the report of a failed assertion over responses by a <see cref="NullReferenceException"/>.
++    /// </summary>
++    private bool PrintMembers(StringBuilder builder)
++    {
++        builder.Append($"Status = {Status}, Body = {Body}");
++        return true;
++    }
++
+     /// <summary>
+     /// Fails with the whole response when the status differs, so a wrong status shows the server's reason.
+     /// </summary>
+diff --git a/tests/Competency.Tests/Infrastructure/ApiHost.cs b/tests/Competency.Tests/Infrastructure/ApiHost.cs
+index aa82ab9..bbbcf67 100644
+--- a/tests/Competency.Tests/Infrastructure/ApiHost.cs
++++ b/tests/Competency.Tests/Infrastructure/ApiHost.cs
+@@ -2,6 +2,7 @@ using System.Diagnostics;
+ using System.Net;
+ using System.Net.Sockets;
+ using System.Text;
++using Npgsql;
+ using Xunit;
+ 
+ namespace Competency.Tests.Infrastructure;
+@@ -76,6 +77,33 @@ public sealed class ApiHost : IAsyncDisposable
+         return Logs;
+     }
+ 
++    /// <summary>
++    /// Runs one statement directly against the host's database, on a connection of its own.
++    /// </summary>
++    /// <param name="sql">The statement.</param>
++    public async Task ExecuteAsync(string sql)
++    {
++        await using var connection = new NpgsqlConnection(ConnectionString);
++        await connection.OpenAsync(TestContext.Current.CancellationToken);
++        await using var command = new NpgsqlCommand(sql, connection);
++        await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
++    }
++
++    /// <summary>
++    /// Runs one query directly against the host's database, on a connection of its own.
++    /// </summary>
++    /// <typeparam name="T">The type the first column of the first row is expected to have.</typeparam>
++    /// <param name="sql">The query.</param>
++    /// <returns>The first column of the first row, or the default of the type when there is none or it has another type.</returns>
++    public async Task<T> ScalarAsync<T>(string sql)
++    {
++        await using var connection = new NpgsqlConnection(ConnectionString);
++        await connection.OpenAsync(TestContext.Current.CancellationToken);
++        await using var command = new NpgsqlCommand(sql, connection);
++        var value = await command.ExecuteScalarAsync(TestContext.Current.CancellationToken);
++        return value is T typed ? typed : default!;
++    }
++
+     /// <summary>
+     /// Starts the host and waits until its readiness probe answers.
+     /// </summary>
+diff --git a/tests/Competency.Tests/Infrastructure/DedicatedHost.cs b/tests/Competency.Tests/Infrastructure/HostFixture.cs
+similarity index 78%
+rename from tests/Competency.Tests/Infrastructure/DedicatedHost.cs
+rename to tests/Competency.Tests/Infrastructure/HostFixture.cs
+index dcc05f1..ad57e6f 100644
+--- a/tests/Competency.Tests/Infrastructure/DedicatedHost.cs
++++ b/tests/Competency.Tests/Infrastructure/HostFixture.cs
+@@ -16,12 +16,6 @@ public abstract class HostFixture(TestEnvironment environment, IReadOnlyDictiona
+     public async ValueTask DisposeAsync() => await Host.DisposeAsync();
+ }
+ 
+-/// <summary>
+-/// A host whose database holds nothing but what the tests of one class put there, for tests that depend on the whole set of accounts.
+-/// </summary>
+-/// <param name="environment">The shared environment that supplies the database.</param>
+-public sealed class DedicatedHost(TestEnvironment environment) : HostFixture(environment, null);
+-
+ /// <summary>
+ /// A host with the production sign-in rate limit reduced to a few attempts, so that the limit can be reached in a test.
+ /// </summary>
+diff --git a/tests/Competency.Tests/Infrastructure/Scenarios.cs b/tests/Competency.Tests/Infrastructure/Scenarios.cs
+index 24307ac..36b41c0 100644
+--- a/tests/Competency.Tests/Infrastructure/Scenarios.cs
++++ b/tests/Competency.Tests/Infrastructure/Scenarios.cs
+@@ -69,15 +69,6 @@ public static class Scenarios
+             current.ETag);
+     }
+ 
+-    /// <summary>
+-    /// Every journal row about one entity, newest first.
+-    /// </summary>
+-    public static async Task<JsonArray> AuditOfAsync(this ApiClient admin, string entityType, Guid entityId)
+-    {
+-        var page = (await admin.GetAsync($"/api/v1/audit?entityType={entityType}&entityId={entityId}&pageSize=200")).Expect(HttpStatusCode.OK);
+-        return page.Json!["items"]!.AsArray();
+-    }
+-
+     /// <summary>
+     /// Every journal row written by one request.
+     /// </summary>
+diff --git a/tests/Competency.Tests/LastAdministratorTests.cs b/tests/Competency.Tests/LastAdministratorTests.cs
+index b384e09..2285f73 100644
+--- a/tests/Competency.Tests/LastAdministratorTests.cs
++++ b/tests/Competency.Tests/LastAdministratorTests.cs
+@@ -27,7 +27,8 @@ public sealed class AdministratorsHost(TestEnvironment environment) : HostFixtur
+ 
+     /// <summary>
+     /// Signs in as the active administrator and checks that there is exactly one, which is the invariant every test leaves behind.
+-    /// An account that is blocked or demoted never becomes active again in these tests, so it is dropped from the candidates for good.
++    /// An account that is blocked or demoted at the time of the call is dropped from the candidates for good,
++    /// so a test that activates such an account again must block it once more before the next call.
+     /// </summary>
+     /// <returns>The session and the account id of the active administrator.</returns>
+     public async Task<(ApiClient Client, Guid Id)> ActiveAdministratorAsync()
+@@ -60,11 +61,12 @@ public sealed class AdministratorsHost(TestEnvironment environment) : HostFixtur
+ }
+ 
+ /// <summary>
+-/// AC-7 and AC-18: the last active global administrator can be neither blocked, demoted, dismissed nor deleted, also when changes race.
++/// The last active global administrator can be neither blocked, demoted, dismissed nor deleted, also when changes race.
+ /// </summary>
+ public sealed class LastAdministratorTests(AdministratorsHost fixture) : IClassFixture<AdministratorsHost>
+ {
+     private const string LastAdministratorWording = "последн";
++    private const string EmployeeWording = "сотрудник";
+ 
+     [Fact]
+     public async Task Ac7_BlockingTheLastActiveAdministrator_IsRefused()
+@@ -158,6 +160,35 @@ public sealed class LastAdministratorTests(AdministratorsHost fixture) : IClassF
+         (await sole.GetUserAsync(other.Id)).Json!["isBlocked"]!.GetValue<bool>().Should().BeTrue();
+     }
+ 
++    [Fact]
++    public async Task Ac8_UnblockingAnAdministratorWhoseEmployeeWasDismissed_IsRefusedUntilTheEmployeeWorksAgain()
++    {
++        var (sole, soleId) = await fixture.ActiveAdministratorAsync();
++        var unit = await sole.CreateUnitAsync();
++        var employee = await sole.CreateEmployeeAsync(unit.Id);
++        var bound = await fixture.NewAdministratorAsync(sole, employee.Id);
++        var dismissed = (await sole.PostAsync($"/api/v1/employees/{employee.Id}/dismiss", ifMatch: employee.ETag)).Expect(HttpStatusCode.OK);
++        var blocked = await sole.GetUserAsync(bound.Id);
++
++        var unblock = await sole.PostAsync($"/api/v1/users/{bound.Id}/unblock", ifMatch: blocked.ETag);
++        var blockSole = await sole.PostAsync($"/api/v1/users/{soleId}/block", ifMatch: (await sole.GetUserAsync(soleId)).ETag);
++
++        blocked.Json!["isBlocked"]!.GetValue<bool>().Should().BeTrue("dismissing the employee blocked the account");
++        unblock.Status.Should().Be(HttpStatusCode.Conflict, unblock.Body);
++        unblock.Json!["detail"]!.GetValue<string>().Should().Contain(EmployeeWording);
++        blockSole.Status.Should().Be(HttpStatusCode.Conflict, "an administrator who cannot sign in is not another active one");
++        blockSole.Json!["detail"]!.GetValue<string>().Should().Contain(LastAdministratorWording);
++        var refused = await sole.GetUserAsync(bound.Id);
++        refused.Json!["isBlocked"]!.GetValue<bool>().Should().BeTrue();
++        refused.ETag.Should().Be(blocked.ETag, "a refused unblock changes nothing");
++
++        (await sole.PostAsync($"/api/v1/employees/{employee.Id}/rehire", ifMatch: dismissed.ETag)).Expect(HttpStatusCode.OK);
++        var unblocked = (await sole.PostAsync($"/api/v1/users/{bound.Id}/unblock", ifMatch: blocked.ETag)).Expect(HttpStatusCode.OK);
++        await bound.SignInAsync(fixture.Host);
++        (await sole.PostAsync($"/api/v1/users/{bound.Id}/block", ifMatch: unblocked.ETag)).Expect(HttpStatusCode.OK);
++        (await fixture.ActiveAdministratorAsync()).Id.Should().Be(soleId);
++    }
++
+     [Theory]
+     [InlineData("block", "block")]
+     [InlineData("dismiss", "dismiss")]
+diff --git a/tests/Competency.Tests/OptimisticConcurrencyTests.cs b/tests/Competency.Tests/OptimisticConcurrencyTests.cs
+index f92c429..96d0e87 100644
+--- a/tests/Competency.Tests/OptimisticConcurrencyTests.cs
++++ b/tests/Competency.Tests/OptimisticConcurrencyTests.cs
+@@ -6,7 +6,7 @@ using Xunit;
+ namespace Competency.Tests;
+ 
+ /// <summary>
+-/// AC-5: a change needs <c>If-Match</c> (428 without it, 400 when malformed) and a stale version is refused with 412 instead of overwriting;
++/// A change needs <c>If-Match</c> (428 without it, 400 when malformed) and a stale version is refused with 412 instead of overwriting;
+ /// each mutating endpoint is checked on its own because each applies the version itself.
+ /// </summary>
+ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
+diff --git a/tests/Competency.Tests/OrgTreeTests.cs b/tests/Competency.Tests/OrgTreeTests.cs
+index 4204794..bb4da4b 100644
+--- a/tests/Competency.Tests/OrgTreeTests.cs
++++ b/tests/Competency.Tests/OrgTreeTests.cs
+@@ -6,7 +6,7 @@ using Xunit;
+ namespace Competency.Tests;
+ 
+ /// <summary>
+-/// AC-9, AC-10 and AC-19: the unit hierarchy stays a forest even when moves race, a unit is deactivated only when empty,
++/// The unit hierarchy stays a forest even when moves race, a unit is deactivated only when empty,
+ /// and a head is always a working employee of the unit they head.
+ /// </summary>
+ public sealed class OrgTreeTests(TestEnvironment environment)
+diff --git a/tests/Competency.Tests/PlatformTests.cs b/tests/Competency.Tests/PlatformTests.cs
+index 4022800..8fe4bfc 100644
+--- a/tests/Competency.Tests/PlatformTests.cs
++++ b/tests/Competency.Tests/PlatformTests.cs
+@@ -8,8 +8,8 @@ using Xunit;
+ namespace Competency.Tests;
+ 
+ /// <summary>
+-/// The platform on a real database: AC-3 (schema applied from an empty database, probes), AC-5 (what the logs carry), AC-7 (the account role is limited
+-/// in the database itself) and AC-15 (the journal is append-only in the database itself, for the application account too).
++/// The platform on a real database: schema applied from an empty database, probes, what the logs carry, the account role limited
++/// in the database itself, and the journal append-only in the database itself, for the application account too.
+ /// </summary>
+ public sealed class PlatformTests(TestEnvironment environment)
+ {
+@@ -26,10 +26,9 @@ public sealed class PlatformTests(TestEnvironment environment)
+         (await host.Anonymous().GetAsync("/healthz/live")).Status.Should().Be(HttpStatusCode.OK);
+         (await host.Anonymous().GetAsync("/healthz/ready")).Status.Should().Be(HttpStatusCode.OK);
+ 
+-        var tables = await ScalarAsync<long>(
+-            host,
++        var tables = await host.ScalarAsync<long>(
+             "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('users', 'org_units', 'employees', 'audit_events')");
+-        var trigram = await ScalarAsync<long>(host, "SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'");
++        var trigram = await host.ScalarAsync<long>("SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'");
+         tables.Should().Be(4);
+         trigram.Should().Be(1);
+ 
+@@ -83,10 +82,13 @@ public sealed class PlatformTests(TestEnvironment environment)
+             .Should().Be(HttpStatusCode.Unauthorized);
+     }
+ 
++    /// <summary>
++    /// Runs on a host of its own, so that only this test's records can satisfy the wait for the 412 log line.
++    /// </summary>
+     [Fact]
+     public async Task Ac5_Logs_AreJsonAndCarryNoPasswordsEmailsNamesOrSqlValues()
+     {
+-        await using var host = await environment.StartHostAsync(); // own host: only this test's records can satisfy the 412 wait below
++        await using var host = await environment.StartHostAsync();
+         var admin = await host.AdminAsync();
+         var email = $"{Scenarios.Unique("logged")}@test.local";
+         var password = $"Logged-{Guid.NewGuid():N}-1!";
+@@ -118,13 +120,13 @@ public sealed class PlatformTests(TestEnvironment environment)
+         var host = await environment.SharedHostAsync();
+         var admin = await host.AdminAsync();
+         await admin.CreateUnitAsync();
+-        var before = await ScalarAsync<long>(host, "SELECT count(*) FROM audit_events");
++        var before = await host.ScalarAsync<long>("SELECT count(*) FROM audit_events");
+         before.Should().BePositive("a mutation was just journaled");
+ 
+-        var rejection = await FluentActions.Awaiting(() => ScalarAsync<long>(host, statement)).Should().ThrowAsync<PostgresException>();
++        var rejection = await FluentActions.Awaiting(() => host.ScalarAsync<long>(statement)).Should().ThrowAsync<PostgresException>();
+ 
+         rejection.Which.SqlState.Should().Be(RestrictViolation);
+-        (await ScalarAsync<long>(host, "SELECT count(*) FROM audit_events")).Should().BeGreaterThanOrEqualTo(before);
++        (await host.ScalarAsync<long>("SELECT count(*) FROM audit_events")).Should().BeGreaterThanOrEqualTo(before);
+     }
+ 
+     [Theory]
+@@ -153,7 +155,7 @@ public sealed class PlatformTests(TestEnvironment environment)
+         var admin = await host.AdminAsync();
+         var account = await admin.CreateUserAsync();
+ 
+-        var rejection = await FluentActions.Awaiting(() => ScalarAsync<long>(host, $"UPDATE users SET role = '{UnknownRole}' WHERE id = '{account.Id}'"))
++        var rejection = await FluentActions.Awaiting(() => host.ScalarAsync<long>($"UPDATE users SET role = '{UnknownRole}' WHERE id = '{account.Id}'"))
+             .Should().ThrowAsync<PostgresException>();
+ 
+         rejection.Which.SqlState.Should().Be(CheckViolation);
+@@ -171,7 +173,7 @@ public sealed class PlatformTests(TestEnvironment environment)
+         stale.Status.Should().Be(HttpStatusCode.PreconditionFailed);
+         var forbiddenName = Scenarios.Unique("Запрещено");
+         var constraint = $"ck_unit_name_marker_{Guid.NewGuid():N}";
+-        await ScalarAsync<long>(host, $"ALTER TABLE org_units ADD CONSTRAINT {constraint} CHECK (name <> '{forbiddenName}')");
++        await host.ScalarAsync<long>($"ALTER TABLE org_units ADD CONSTRAINT {constraint} CHECK (name <> '{forbiddenName}')");
+ 
+         var failed = await admin.PostAsync("/api/v1/org-units", new { name = forbiddenName, parentId = (Guid?)null });
+ 
+@@ -198,13 +200,4 @@ public sealed class PlatformTests(TestEnvironment environment)
+         await using var command = new NpgsqlCommand(sql, connection);
+         await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+     }
+-
+-    private static async Task<T> ScalarAsync<T>(ApiHost host, string sql)
+-    {
+-        await using var connection = new NpgsqlConnection(host.ConnectionString);
+-        await connection.OpenAsync(TestContext.Current.CancellationToken);
+-        await using var command = new NpgsqlCommand(sql, connection);
+-        var value = await command.ExecuteScalarAsync(TestContext.Current.CancellationToken);
+-        return value is T typed ? typed : default!;
+-    }
+ }
+diff --git a/tests/Competency.Tests/SessionTests.cs b/tests/Competency.Tests/SessionTests.cs
+index b2c10c8..b878cad 100644
+--- a/tests/Competency.Tests/SessionTests.cs
++++ b/tests/Competency.Tests/SessionTests.cs
+@@ -6,11 +6,14 @@ using Xunit;
+ namespace Competency.Tests;
+ 
+ /// <summary>
+-/// AC-6, AC-7 and AC-8: sign-in reveals nothing about accounts, lockout holds even against the right password, and blocking,
++/// Sign-in reveals nothing about accounts, lockout holds even against the right password, and blocking,
+ /// a password reset, a password change or sign-out end sessions as specified.
+ /// </summary>
+ public sealed class SessionTests(TestEnvironment environment)
+ {
++    private const int AttemptsBeforeLockout = 5;
++    private const string WrongPassword = "Wrong-Pass-12345!";
++
+     [Fact]
+     public async Task Ac6_EveryFailedSignIn_LooksTheSame()
+     {
+@@ -110,6 +113,77 @@ public sealed class SessionTests(TestEnvironment environment)
+         (await SignInAsync(host, account.Email, NewPassword)).Status.Should().Be(HttpStatusCode.OK);
+     }
+ 
++    [Fact]
++    public async Task Ac6_WrongCurrentPasswordInChangePassword_LocksTheAccountLikeWrongSignIns()
++    {
++        var host = await environment.SharedHostAsync();
++        var admin = await host.AdminAsync();
++        var account = await admin.CreateUserAsync();
++        var session = await account.SignInAsync(host);
++        const string NewPassword = "Guessed-Pass-12345!";
++
++        for (var attempt = 0; attempt < AttemptsBeforeLockout; attempt++)
++        {
++            (await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = WrongPassword, newPassword = NewPassword }))
++                .Status.Should().Be(HttpStatusCode.BadRequest);
++        }
++
++        var signIn = await SignInAsync(host, account.Email, account.Password);
++        var rightCurrent = await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = account.Password, newPassword = NewPassword });
++        var current = await admin.GetUserAsync(account.Id);
++        (await admin.PostAsync($"/api/v1/users/{account.Id}/unblock", ifMatch: current.ETag)).Expect(HttpStatusCode.OK);
++
++        signIn.Status.Should().Be(HttpStatusCode.Unauthorized, "the wrong current passwords counted as failed sign-ins");
++        rightCurrent.Status.Should().Be(HttpStatusCode.BadRequest, "a locked account is refused even with the right current password");
++        rightCurrent.FieldErrors("currentPassword").Should().NotBeEmpty();
++        (await SignInAsync(host, account.Email, account.Password)).Status.Should().Be(HttpStatusCode.OK, "the refused change left the password as it was");
++        (await SignInAsync(host, account.Email, NewPassword)).Status.Should().Be(HttpStatusCode.Unauthorized);
++    }
++
++    [Fact]
++    public async Task Ac6_SuccessfulPasswordChange_ClearsTheCountOfWrongCurrentPasswords()
++    {
++        var host = await environment.SharedHostAsync();
++        var account = await (await host.AdminAsync()).CreateUserAsync();
++        var session = await account.SignInAsync(host);
++        const string NewPassword = "Cleared-Pass-12345!";
++        const string AnotherPassword = "Another-Pass-12345!";
++
++        for (var attempt = 0; attempt < AttemptsBeforeLockout - 1; attempt++)
++        {
++            (await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = WrongPassword, newPassword = NewPassword }))
++                .Status.Should().Be(HttpStatusCode.BadRequest);
++        }
++
++        (await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = account.Password, newPassword = NewPassword })).Expect(HttpStatusCode.NoContent);
++        for (var attempt = 0; attempt < AttemptsBeforeLockout - 1; attempt++)
++        {
++            (await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = WrongPassword, newPassword = AnotherPassword }))
++                .Status.Should().Be(HttpStatusCode.BadRequest);
++        }
++
++        (await SignInAsync(host, account.Email, NewPassword)).Status.Should().Be(
++            HttpStatusCode.OK,
++            "the wrong attempts before the change no longer count, so the account is not locked");
++    }
++
++    [Fact]
++    public async Task Ac6_ChangePassword_RefusesANewPasswordThatBreaksThePolicy_AndChangesNothing()
++    {
++        var host = await environment.SharedHostAsync();
++        var account = await (await host.AdminAsync()).CreateUserAsync();
++        var session = await account.SignInAsync(host);
++        const string WeakPassword = "short";
++
++        var weak = await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = account.Password, newPassword = WeakPassword });
++
++        weak.Status.Should().Be(HttpStatusCode.BadRequest, weak.Body);
++        weak.FieldErrors("newPassword").Should().NotBeEmpty();
++        (await SignInAsync(host, account.Email, account.Password)).Status.Should().Be(HttpStatusCode.OK, "a refused change leaves the password as it was");
++        (await SignInAsync(host, account.Email, WeakPassword)).Status.Should().Be(HttpStatusCode.Unauthorized);
++        (await session.GetAsync("/api/v1/auth/me")).Status.Should().Be(HttpStatusCode.OK);
++    }
++
+     [Fact]
+     public async Task Ac6_SignOut_EndsTheSession()
+     {
+@@ -127,7 +201,7 @@ public sealed class SessionTests(TestEnvironment environment)
+ }
+ 
+ /// <summary>
+-/// AC-6: the sign-in endpoint is rate limited with the configured limit, on a host where the limit is low enough to reach.
++/// The sign-in endpoint is rate limited with the configured limit, on a host where the limit is low enough to reach.
+ /// </summary>
+ public sealed class LoginRateLimitTests(StrictRateLimitHost fixture) : IClassFixture<StrictRateLimitHost>
+ {
+diff --git a/tests/Competency.Tests/UserBindingTests.cs b/tests/Competency.Tests/UserBindingTests.cs
+index ef165bf..7e1f87f 100644
+--- a/tests/Competency.Tests/UserBindingTests.cs
++++ b/tests/Competency.Tests/UserBindingTests.cs
+@@ -6,7 +6,7 @@ using Xunit;
+ namespace Competency.Tests;
+ 
+ /// <summary>
+-/// AC-7 and AC-8: an account of any role is bound to at most one working employee and an employee has at most one account;
++/// An account of any role is bound to at most one working employee and an employee has at most one account;
+ /// binding changes end the account's sessions and are journaled; the e-mail is unique regardless of letter case.
+ /// </summary>
+ public sealed class UserBindingTests(TestEnvironment environment)
+@@ -131,6 +131,35 @@ public sealed class UserBindingTests(TestEnvironment environment)
+         (await host.LoginAsync(first.Email.ToLowerInvariant(), first.Password)).Should().NotBeNull();
+     }
+ 
++    [Fact]
++    public async Task Ac8_UserList_NamesTheEmployeeOfEachBoundAccount_AlsoOfADismissedOne_AndNoOneForAnUnboundAccount()
++    {
++        var admin = await (await environment.SharedHostAsync()).AdminAsync();
++        var token = Scenarios.Unique("names")[6..];
++        var unit = await admin.CreateUnitAsync();
++        var first = await admin.CreateEmployeeAsync(unit.Id, lastName: Scenarios.Unique("Орлов"), firstName: "Пётр", middleName: "Иванович");
++        var second = await admin.CreateEmployeeAsync(unit.Id, lastName: Scenarios.Unique("Седов"), firstName: "Анна");
++        var leaver = await admin.CreateEmployeeAsync(unit.Id, lastName: Scenarios.Unique("Волков"), firstName: "Олег");
++        var onFirst = await admin.CreateUserAsync(employeeId: first.Id, email: $"first{token}@test.local");
++        var onSecond = await admin.CreateUserAsync(employeeId: second.Id, email: $"second{token}@test.local");
++        var onLeaver = await admin.CreateUserAsync(employeeId: leaver.Id, email: $"leaver{token}@test.local");
++        var unbound = await admin.CreateUserAsync(email: $"unbound{token}@test.local");
++        (await admin.PostAsync($"/api/v1/employees/{leaver.Id}/dismiss", ifMatch: leaver.ETag)).Expect(HttpStatusCode.OK);
++
++        var page = (await admin.GetAsync($"/api/v1/users?q={token}&pageSize=200")).Expect(HttpStatusCode.OK);
++
++        var names = page.Json!["items"]!.AsArray().ToDictionary(
++            user => user!["email"]!.GetValue<string>(),
++            user => user!["employeeName"]?.GetValue<string>());
++        names.Should().BeEquivalentTo(new Dictionary<string, string?>
++        {
++            [onFirst.Email] = first.Json!["fullName"]!.GetValue<string>(),
++            [onSecond.Email] = second.Json!["fullName"]!.GetValue<string>(),
++            [onLeaver.Email] = leaver.Json!["fullName"]!.GetValue<string>(),
++            [unbound.Email] = null,
++        });
++    }
++
+     [Fact]
+     public async Task Ac7_UserSearch_TreatsPercentAndUnderscoreLiterally_AndFiltersByRoleAndBlock()
+     {
+diff --git a/web/src/api/schema.d.ts b/web/src/api/schema.d.ts
+index ba221da..754cb2e 100644
+--- a/web/src/api/schema.d.ts
++++ b/web/src/api/schema.d.ts
+@@ -2406,6 +2406,15 @@ export interface operations {
+                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                 };
+             };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
+             /** @description Precondition Failed */
+             412: {
+                 headers: {

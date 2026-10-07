@@ -56,7 +56,7 @@ project:
   # likec4 — text DSL in docs/architecture/c4/model/*.c4 + likec4 CLI builds dist/
   # mermaid — Mermaid block inline in docs/architecture/subsystems.md; no c4/ folder
   # Values: none | likec4 | mermaid
-  diagram_tool: none
+  diagram_tool: mermaid
 
 system:
   tools:

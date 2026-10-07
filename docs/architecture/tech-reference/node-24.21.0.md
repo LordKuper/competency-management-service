@@ -10,7 +10,7 @@ responsibility:
 ## Canonical source
 - Official docs: https://nodejs.org/docs/latest-v24.x/api/ ; релиз: https://nodejs.org/en/blog/release/v24.21.0 ; график: https://nodejs.org/en/about/previous-releases , https://endoflife.date/api/nodejs.json
 - Образ: https://hub.docker.com/_/node (тег `24.21.0-trixie-slim`) ; README образов: https://github.com/nodejs/docker-node
-- Last verified: 2026-10-05
+- Last verified: 2026-10-06 (раздел «Проверено на Docker» — запуском, MS-1; остальное — 2026-10-05, по документации)
 
 ## API surface used in project
 Node не входит в образ `app` и в рантайм: используется только в build-стадии для `npm ci`, `tsc --noEmit`, `biome ci`, `openapi-typescript`, `vite build`, Vitest.
@@ -33,3 +33,8 @@ Node не входит в образ `app` и в рантайм: использ�
 
 ## Known issues and workarounds
 - Не выявлено. Хостовый `node_modules` (другая ОС) исключать из контекста сборки (`docker-multi-stage-dockerfile-1.md`).
+
+## Проверено на Docker (Task 10, 2026-10-06, MS-1)
+- `node:24.21.0-trixie-slim` на 2026-10-06 разрешается (`docker buildx imagetools inspect`) в OCI index `sha256:173f125896c3b47ddf056734c7ea789d04595a6a08769a8f78e0df642781fb66`, платформа linux/amd64; это не тот digest, что записан выше на 2026-10-05 (`8ec5d755…`): тег сдвинулся либо Hub отдал другое представление индекса — выяснять не стали, закрепление по digest обязательно и при каждой сборке digest нужно определять заново. Внутри — node v24.21.0 и npm 11.19.0 (совпадает с `npm-11.19.0.md`).
+- `npm ci` по существующему `web/package-lock.json` с `.npmrc` (`ignore-scripts=true`, `save-exact=true`, `engine-strict=true`) в этом образе: 205 пакетов за 11–22 с, 0 уязвимостей; нативные бинарные пакеты linux-x64 (`@biomejs/cli-linux-x64`, `@rolldown/binding-linux-x64-gnu`, `lightningcss-linux-x64-gnu`) ставятся из готовых пакетов без компиляции, регенерация lock-файла не потребовалась.
+- В том же контейнере проходят `npm run build` (`tsc --noEmit` ×3, затем `vite build`: 3 273 модуля, `index-*.js` 1 358,74 кБ / gzip 429,46 кБ) и `npm run lint` (`biome ci --error-on-warnings` и typecheck).

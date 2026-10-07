@@ -1,0 +1,238 @@
+@font-face {
+  font-family: "PT Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/PTSans-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "PT Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/PTSans-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "PT Sans Narrow";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/PTSansNarrow-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "PT Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/PTMono-Regular.woff2") format("woff2");
+}
+
+body {
+  margin: 0;
+}
+
+/* biome-ignore-start lint/complexity/noImportantStyles: antd draws its own focus ring, with a smaller offset or none
+   on fields, and its loading shimmer from selectors of higher specificity; a theme token cannot reach them. */
+
+/* Keyboard focus ring: primary on light surfaces, accent on the dark header. */
+:focus-visible {
+  outline: var(--ant-line-width-focus) solid var(--ant-color-primary-border) !important;
+  outline-offset: var(--ant-focus-ring-offset) !important;
+}
+
+.ant-layout-header :focus-visible {
+  outline-color: var(--ant-color-accent) !important;
+}
+
+/* The focused part of a compound field is its inner input; the ring goes around the whole field instead. */
+.ant-input-affix-wrapper input:focus-visible,
+.ant-select input:focus-visible {
+  outline: none !important;
+}
+
+.ant-input-affix-wrapper:has(input:focus-visible),
+.ant-select:has(input:focus-visible) {
+  outline: var(--ant-line-width-focus) solid var(--ant-color-primary-border);
+  outline-offset: var(--ant-focus-ring-offset);
+}
+
+/* A loading placeholder stays still when the user asks for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  .ant-skeleton-active * {
+    animation: none !important;
+  }
+}
+
+/* biome-ignore-end lint/complexity/noImportantStyles: end of the antd overrides */
+
+/* antd 6 paints button states from --ant-btn-* variables set on
+   .ant-btn-color-default.ant-btn-variant-text (0,3,0 + :where); matching that
+   selector plus the class (0,4,0) lets us override the variables, not the states. */
+.header-user-button.ant-btn.ant-btn-color-default.ant-btn-variant-text {
+  --ant-btn-text-color: var(--ant-color-text-light-solid);
+  --ant-btn-text-color-hover: var(--ant-color-text-light-solid);
+  --ant-btn-text-color-active: var(--ant-color-text-light-solid);
+  --ant-btn-bg-color-hover: color-mix(
+    in srgb,
+    var(--ant-color-text-light-solid) 12%,
+    transparent
+  );
+  --ant-btn-bg-color-active: color-mix(
+    in srgb,
+    var(--ant-color-text-light-solid) 20%,
+    transparent
+  );
+}
+
+/* Hierarchy of unit and employee cards: each nested list is indented under its
+   parent and joined to it by a line that runs down the left of the siblings and
+   turns into each card at its middle. Colors and gaps come from antd tokens. */
+.org-tree,
+.org-tree__children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.org-tree {
+  --org-gap: var(--ant-margin-xs);
+  --org-indent: var(--ant-margin-lg);
+  --org-line: var(--ant-line-width) solid var(--ant-color-border-secondary);
+}
+
+.org-tree--narrow {
+  --org-indent: var(--ant-margin-sm);
+}
+
+.org-tree__children {
+  padding-inline-start: var(--org-indent);
+}
+
+.org-tree__node {
+  position: relative;
+  margin-block-start: var(--org-gap);
+}
+
+.org-tree > .org-tree__node:first-child {
+  margin-block-start: 0;
+}
+
+.org-tree__children > .org-tree__node:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  inset-block: calc(var(--org-gap) * -1) 0;
+  inset-inline-start: calc(var(--org-indent) / -2);
+  border-inline-start: var(--org-line);
+}
+
+.org-tree__children > .org-tree__node > .org-tree__item {
+  position: relative;
+}
+
+.org-tree__children > .org-tree__node > .org-tree__item::before {
+  content: "";
+  position: absolute;
+  inset-block-start: calc((var(--org-gap) + var(--ant-line-width)) * -1);
+  inset-inline-start: calc(var(--org-indent) / -2 - var(--ant-line-width));
+  width: calc(var(--org-indent) / 2 + var(--ant-line-width));
+  height: calc(50% + var(--org-gap) + var(--ant-line-width));
+  border-inline-start: var(--org-line);
+  border-block-end: var(--org-line);
+}
+
+.org-tree__note {
+  padding-block: var(--ant-padding-xs);
+}
+
+.org-card__name.ant-btn {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  min-height: var(--ant-control-height);
+  justify-content: flex-start;
+  text-align: start;
+  white-space: normal;
+}
+
+.org-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--ant-margin);
+  color: var(--ant-color-text-secondary);
+}
+
+.org-tree mark {
+  background: var(--ant-color-warning-bg);
+  color: inherit;
+}
+
+.org-employee {
+  display: flex;
+  align-items: center;
+  gap: var(--ant-margin-sm);
+  padding: var(--ant-padding-sm);
+  background: var(--ant-color-bg-container);
+  border: var(--ant-line-width) solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+}
+
+.org-employee__avatar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ant-control-height);
+  height: var(--ant-control-height);
+  border-radius: 50%;
+  background: var(--ant-color-primary-bg);
+  color: var(--ant-color-primary);
+}
+
+.org-employee__text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The actions button of an employee card: plain markup that looks like antd's text button, because a thousand antd buttons are slow to render. */
+.org-employee__menu {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ant-control-height);
+  height: var(--ant-control-height);
+  padding: 0;
+  border: 0;
+  border-radius: var(--ant-border-radius);
+  background: transparent;
+  color: var(--ant-color-text);
+  cursor: pointer;
+}
+
+.org-employee__menu:hover {
+  background: var(--ant-color-bg-text-hover);
+}
+
+.org-employee__menu:active {
+  background: var(--ant-color-bg-text-active);
+}
+
+.org-employee__details {
+  color: var(--ant-color-text-secondary);
+}
+
+.org-employee__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ant-margin-xs);
+}
+
+/* The related changes listed in the confirmation of a dismissal or deletion. */
+.org-impact {
+  margin-block: 0;
+  padding-inline-start: var(--ant-margin-lg);
+}

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
+    <PackageReference Include="NSubstitute" Version="6.2.0" />
+    <PackageReference Include="AwesomeAssertions" Version="9.6.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.15.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Competency.Api\Competency.Api.csproj" />
+    <ProjectReference Include="..\..\src\Competency.Platform\Competency.Platform.csproj" />
+    <ProjectReference Include="..\..\src\Competency.Audit\Competency.Audit.csproj" />
+    <ProjectReference Include="..\..\src\Competency.OrgStructure\Competency.OrgStructure.csproj" />
+    <ProjectReference Include="..\..\src\Competency.UserManagement\Competency.UserManagement.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,37 @@
+[
+  {
+    "Name": "Everything",
+    "Projects": [
+      {
+        "Path": "deploy\\dev\\docker-compose.dcproj",
+        "Action": "StartWithoutDebugging",
+        "DebugTarget": "Docker Compose"
+      },
+      {
+        "Path": "src\\Competency.Api\\Competency.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "Competency.Api"
+      },
+      {
+        "Path": "web\\web.esproj",
+        "Action": "Start",
+        "DebugTarget": "localhost (Chrome)"
+      }
+    ]
+  },
+  {
+    "Name": "API",
+    "Projects": [
+      {
+        "Path": "deploy\\dev\\docker-compose.dcproj",
+        "Action": "StartWithoutDebugging",
+        "DebugTarget": "Docker Compose"
+      },
+      {
+        "Path": "src\\Competency.Api\\Competency.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "Competency.Api"
+      }
+    ]
+  }
+]

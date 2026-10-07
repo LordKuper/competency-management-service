@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Competency.Api/Competency.Api.csproj" />
+    <Project Path="src/Competency.Audit/Competency.Audit.csproj" />
+    <Project Path="src/Competency.OrgStructure/Competency.OrgStructure.csproj" />
+    <Project Path="src/Competency.Platform/Competency.Platform.csproj" />
+    <Project Path="src/Competency.UserManagement/Competency.UserManagement.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Competency.Tests/Competency.Tests.csproj" />
+  </Folder>
+  <Folder Name="/dev/">
+    <Project Path="deploy/dev/docker-compose.dcproj">
+      <Build />
+    </Project>
+    <Project Path="web/web.esproj">
+      <Build />
+      <Deploy />
+    </Project>
+  </Folder>
+</Solution>

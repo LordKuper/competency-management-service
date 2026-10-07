@@ -33,6 +33,7 @@
 - Образ тестов совпадает с боевым: `postgres:18.6-trixie` (`postgres-image-18.6-trixie.md`); версия тега берётся из одного места и обновляется вместе с образом `db`.
 - Контейнер поднимается на сборочном/CI-хосте **вне контура** (Docker daemon + доступ в интернет для pull образа, stack.html); в контуре тесты не запускаются.
 - Контейнер — один на коллекцию/сборку через fixture xunit (`xunit.v3-4.0.1.md`, `AssemblyFixture` / `ICollectionFixture`), строка подключения из `GetConnectionString()` подставляется в конфигурацию приложения/DbContext.
+- Как сделано в `tests/Competency.Tests`: один `PostgreSqlContainer` на прогон (`TestEnvironment`, `AssemblyFixture`); каждому запускаемому хосту API — своя пустая база (`CREATE DATABASE`), миграции и первого администратора применяет сам хост при старте. API стартует дочерним процессом из сборки `Competency.Api` (настоящие Kestrel и middleware), а не через `WebApplicationFactory`; строка подключения передаётся переменной `ConnectionStrings__Default` с `GSS Encryption Mode=Disable`.
 - Не мокать БД: доступ к данным (FTS `russian`, `pg_trgm`, `SKIP LOCKED`, миграции) проверяется на реальном PostgreSQL 18.6.
 
 ## Known issues and workarounds

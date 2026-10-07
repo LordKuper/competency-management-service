@@ -1,0 +1,2573 @@
+diff --git a/.claude/agent-memory/asd-dev-critical/MEMORY.md b/.claude/agent-memory/asd-dev-critical/MEMORY.md
+index 62d03ac..f1cd1d6 100644
+--- a/.claude/agent-memory/asd-dev-critical/MEMORY.md
++++ b/.claude/agent-memory/asd-dev-critical/MEMORY.md
+@@ -18,13 +18,13 @@
+ - [Npgsql search and result-type gotchas](project_npgsql-search-and-result-type-gotchas.md) — 2-arg ILike has no escape, SqlQuery CTE composes, Conflict<T> is not problem+json, required init props
+ - [Scratch host without PostgreSQL](project_scratch-host-without-postgres.md) — InMemory logic host with stubbed raw SQL; Npgsql SQL-capture host with a fake DbCommand and transaction
+ - [Identity on a plain DbContext](project_identity-efcore-store-gotchas.md) — stock user store marks all columns modified; users table suffices; HasOne(string) is a nav name
+-- [Web UI test and form gotchas](project_web-ui-test-and-form-gotchas.md) — jsdom has no ResizeObserver, router singleton vs resetModules, Form.Item id, biome diff trick
+-- [Web org-structure UI facts](project_web-org-structure-ui-facts.md) — antd Tree/TreeSelect/Table in jsdom, Escape closes Modal, form reset via key, throwaway test lint in shared worktree
++- [Web UI test and form gotchas](project_web-ui-test-and-form-gotchas.md) — jsdom ResizeObserver stubbed in setup.ts, router singleton vs resetModules, Form.Item id, biome diff trick
++- [Web org-structure UI facts](project_web-org-structure-ui-facts.md) — antd Tree/TreeSelect/Table in jsdom, Escape closes Modal, edit draft vs refetch, form reset after 412, throwaway test lint
+ - [Packaging offline verification](project_packaging-offline-verification.md) — fresh-clone publish, npm linux dry-run, yaml parse, Secret template kept out of deploy/k8s
+ - [Docker spike recipe](project_docker-spike-recipe.md) — Git Bash docker path mangling, 10/min login limit, parallel curl pitfalls, scratch runner flags
+ - [PostgreSQL behaviour facts](project_pg-behaviour-facts.md) — RESTRICT is 23001, ё vs е in ILIKE/FTS, superuser trigger bypass, no CHECK on parent_id
+ - [VS F5 launch facts](project_vs-f5-launch-facts.md) — slnLaunch name/format, esproj dev server starts only via Deploy, dcproj stub in CLI, from VS binaries
+-- [Scratch process control](project_scratch-process-control.md) — kill by PID never by pattern, dotnet dll content root, Windows closed-port timing, background runs
++- [Scratch process control](project_scratch-process-control.md) — never `down -v` on the dev compose (fixed volume name), scratch-only volume, kill by PID, dotnet content root, background runs
+ - [Migration scratch verification](project_migration-scratch-verification-recipe.md) — ef --connection to a scratch DB, API off the launch profile, unknown JSON members ignored, field removal = one commit
+ - [Org card hierarchy facts](project_web-org-card-hierarchy-facts.md) — antd render cost vs plain markup, stable callbacks for memo, connector offsets, CDP harness pitfalls, request counts
+ - [VS debug build lock](project_vs-debug-build-lock-and-release-config.md) — user's F5 API locks Api bin/Debug; build -c Release, kill scratch API by PID, git-archive baseline for timings
+@@ -35,5 +35,6 @@
+ - [Employee dismissal cascade](project_employee-dismissal-cascade-facts.md) — IEmployeeAccounts port, direct stamp change, forced-failure/race checks, antd Dropdown cost per card
+ - [Users row menu + modal](project_users-modal-menu-facts.md) — 409 alert suppressed for field conflicts, reset target by id from live list, gcTime 0 on account query, smoke facts
+ - [Org head rule + order](project_org-head-rule-facts.md) — create field dropped silently, check-on-change, picker current quirk, Collator ru yo, antd 6 select DOM/click
+-- [Org employee search](project_org-employee-search-facts.md) — server q is ILIKE+FTS not substring, q>200 is 400, matches-mode precedence, debounce masking, duplicated useDebouncedValue
++- [Org employee search](project_org-employee-search-facts.md) — server q is ILIKE+FTS not substring, q>200 is 400, searched units open as path only, absolute open/close choices, debounce masking
+ - [Full verification cycle](project_full-verification-cycle-facts.md) — toast thenable keeps confirm open 3 s, real-change stale test, lockout trap, 10 500-employee numbers
++- [Web focus ring and antd CSS](project_web-focus-ring-and-antd-css-facts.md) — antd focus specificity vs !important and Biome, custom tokens as CSS vars, rc-dropdown keys, CDP keyboard check
+diff --git a/.claude/agent-memory/asd-dev-critical/project_org-employee-search-facts.md b/.claude/agent-memory/asd-dev-critical/project_org-employee-search-facts.md
+index b108bcf..da0c6a5 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_org-employee-search-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_org-employee-search-facts.md
+@@ -1,18 +1,18 @@
+ ---
+ name: org-employee-search-facts
+-description: Task 21 (org-structure search by employee) - server q semantics vs highlight, q length 400, matches-mode precedence over name match, debounce/keepPreviousData masking, duplicated useDebouncedValue
++description: Org-structure search by employee - server q semantics vs highlight, q length 200, path-only opening of searched units, absolute open/close choices, debounce/keepPreviousData masking, the one shared useDebouncedValue
+ metadata:
+   type: project
+ ---
+ 
+-Task 21 (2026-10-07), frontend only, minimal checks (lint, build, check:api); no browser run was done:
++Frontend only; facts from building and then fixing the search, not derivable from the code:
+ 
+ - **Server `q` is not a plain substring**: `EmployeeEndpoints.Matching` is `ILIKE %q%` on `FullName` OR Russian full-text on `SearchVector` (`plainto_tsquery`, stemmed, words ANDed). A matched employee may not contain the typed text contiguously ("Иванова" finds "Иванов"), so the client `<mark>` only appears when the lower-cased needle is a literal substring of the name or of "position · e-mail"; no highlight otherwise is expected, not a bug.
+ - **`q` longer than 200 characters is a 400** (`ListQueries.Validate`, `TextSearch.MaxLength`); the search `Input` has `maxLength={SEARCH_TEXT_MAX_LENGTH}` instead of handling the error.
+-- **A unit with matched employees lists only them ("matches" openness) even when its own name also matches**: otherwise every name-matched unit with a hit would auto-open and fire a full per-unit employee query (hundreds of cards each). Full lists load only for units the user opens by hand, as before. `UnitOpenness` is `closed | path | matches | open`.
+-- **Debounce masking**: `useEmployeeSearch` queries the debounced trimmed text with `keepPreviousData`, but returns data only while the live trimmed text is still >= 2 characters; otherwise shrinking to one character would show the old matches against the new needle for 300 ms. `isWaiting` (debounce pending or fetching) gates the "Ничего не найдено" message so it never flashes before the answer.
+-- **`useDebouncedValue` is private in `features/users/EmployeePicker.tsx` and copied into `useEmployeeSearch.ts`** because the task confined edits to `features/org-structure`; hoisting one shared hook is the follow-up.
+-- A `flipped` toggle made while the employee answer is still in flight is inverted when the answer adds that unit to `pathIds` (flip is relative to the search's own openings); left as is, a window of ~300 ms plus the request.
++- **A search opens a unit only as a path** (`UnitOpenness` is `closed | path | open`): a unit on the way to a match, or holding matched employees, lists its child units and only the employees the search found in it, whether or not its own name also matches. The full per-unit employee query (every page) runs only for units the user opened by hand: a name-matched unit that opened fully fired a set of requests per matching unit on a search for a common word.
++- **The user's open/close choice during a search is absolute, per unit** (`chosen` in `useUnitExpansion`), never a flip against the search's own openings: a flip is inverted when a late employee answer adds that unit to the path.
++- **Debounce masking**: `useEmployeeSearch` queries the debounced trimmed text with `keepPreviousData`, but returns data only while the live trimmed text is still >= 2 characters; otherwise shrinking to one character would show the old matches against the new needle for 300 ms. `isWaiting` (debounce pending or fetching) gates the "Ничего не найдено" message so it never flashes before the answer; a one-character text is never sent (`isTooShort`), and with no unit match the page says the minimum length instead of "nothing found".
++- `useDebouncedValue` and `SEARCH_DEBOUNCE_MS` live once in `web/src/app/useDebouncedValue.ts`; the search hook and the employee picker both import it.
+ 
+ **Why:** each decided the design or would surprise the next change to the search.
+-**How to apply:** any later change to org search, `searchUnitTree`, `EmployeeCard` highlighting or the employee list endpoint's `q` (see also [[web-org-card-hierarchy-facts]], [[org-head-rule-facts]]).
++**How to apply:** any later change to org search, `searchUnitTree`, `opennessByUnit`, `EmployeeCard` highlighting or the employee list endpoint's `q` (see also [[web-org-card-hierarchy-facts]], [[org-head-rule-facts]]).
+diff --git a/.claude/agent-memory/asd-dev-critical/project_pg-behaviour-facts.md b/.claude/agent-memory/asd-dev-critical/project_pg-behaviour-facts.md
+index 73a1a98..670268c 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_pg-behaviour-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_pg-behaviour-facts.md
+@@ -5,13 +5,13 @@ metadata:
+   type: project
+ ---
+ 
+-Confirmed on `postgres:18.6-trixie` (en_US.utf8, libc provider) during the Task 10 spike; full detail in the postgres-image tech-reference note.
++Confirmed on `postgres:18.6-trixie` (en_US.utf8, libc provider) in a Docker spike; full detail in the postgres-image tech-reference note.
+ 
+ - `FOREIGN KEY ... ON DELETE RESTRICT` raises SQLSTATE **23001** (restrict_violation), the same code as the audit append-only trigger. Only the child-side check raises 23503. `ProblemExceptionHandler` maps 23505 and 23503 to 409 and nothing else, so a future delete/update-of-key endpoint would surface RESTRICT as 500 until 23001 is mapped; today there is no such endpoint.
+ - `ILIKE` folds Cyrillic case but treats `ё` and `е` as different letters; the `russian` FTS config maps `ё` to `е` and strips endings (`Петров`->`петр`, `Семёнов`->`семен`), and stems the query too. So `q=семенов` finds Семёнов only through FTS and `q=семен` finds nothing; any "search must find X" expectation has to be checked against both paths. `plainto_tsquery` is safe for arbitrary text.
+ - `ILIKE ... ESCAPE '\'` still uses the `gin_trgm_ops` index, also inside a BitmapOr with the tsvector index.
+ - The default cluster collation sorts Cyrillic correctly (`е` < `ё` < `ж`); no ICU column collation is needed. `SHOW lc_collate` is not available in 18 (use `pg_database`). `default_text_search_config` is `english`, so `'russian'` must always be passed.
+-- The cluster superuser (`POSTGRES_USER`, which the app uses in the manifests) bypasses an ordinary trigger with `SET session_replication_role = replica`; migration `AuditTriggersEnableAlways` (review-fix wave-1/iter-01) makes both audit triggers `ENABLE ALWAYS` to close that, written from the PG docs and NOT yet run against the image (impl-test adds the replica-mode test). A non-superuser database owner could not bypass either way, and `pg_trgm` is trusted so such an owner can run the migrations. DDL (`DROP TRIGGER`) still removes the triggers.
++- The cluster superuser (`POSTGRES_USER`, which the app uses in the manifests) bypasses an ordinary trigger with `SET session_replication_role = replica`; migration `AuditTriggersEnableAlways` makes both audit triggers `ENABLE ALWAYS` to close that; the replica-mode test in `tests/Competency.Tests/PlatformTests.cs` covers it. A non-superuser database owner could not bypass either way, and `pg_trgm` is trusted so such an owner can run the migrations. DDL (`DROP TRIGGER`) still removes the triggers.
+ - The DB accepts `org_units.parent_id = id` (no CHECK); acyclicity is enforced only by the app under `pg_advisory_xact_lock`.
+ - Unhandled startup exception exits the container with 139 on Docker Desktop/WSL2, not 134.
+ 
+diff --git a/.claude/agent-memory/asd-dev-critical/project_scratch-process-control.md b/.claude/agent-memory/asd-dev-critical/project_scratch-process-control.md
+index 09245cd..f83f42d 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_scratch-process-control.md
++++ b/.claude/agent-memory/asd-dev-critical/project_scratch-process-control.md
+@@ -1,16 +1,18 @@
+ ---
+ name: scratch-process-control
+-description: Running and stopping scratch API/Vite processes on this Windows box without hitting the user's stack - kill by PID, content root of dotnet dll, closed-port timing, background pattern
++description: Running and stopping scratch API/Vite/compose processes on this Windows box without hitting the user's stack - kill by PID, never `down -v` on the dev compose, scratch-only volume, content root of dotnet dll, closed-port timing, background pattern
+ metadata:
+   type: project
+ ---
+ 
+-- **Never kill by command-line pattern.** A PowerShell `Get-CimInstance ... CommandLine -match 'Competency.Api.dll'` also matched the shell running the command (exit 255) and could match the user's own API. Find the listener with `netstat -ano | grep ":<port> .*LISTENING"` and `taskkill //PID <pid> //F`; for a Vite chain add `//T`. Check `netstat` for 5000/5173/15432 before starting scratch processes: the user's stack (`cmp-dev-db` on 15432) may or may not be up.
++- **Never run `docker compose ... down -v` (or `docker volume rm`/`prune`) against `deploy/dev/docker-compose.yml` or `deploy/`.** The dev compose pins its data volume by a fixed name (`competency-dev-pgdata`), so `-p <other project>` does NOT isolate it: `up` attaches to the user's real dev database and `down -v` deletes it. Remove only volumes this run created, by their exact scratch name.
++- **Scratch database from the dev compose file**: write a scratch-only override in the scratchpad (never in the repo) that renames the volume, and pass both files:
++  `volumes: {pgdata: {name: cmp-scratch-pgdata}}`, then `DEV_DB_PORT=28543 docker compose -p cmp-scratch -f deploy/dev/docker-compose.yml -f <scratchpad>/compose.scratch.yml config` first (offline, no daemon change) and check that it prints `name: cmp-scratch-pgdata` and the scratch port, never `competency-dev-pgdata` or 15432; only then `up -d --wait`. Clean up with plain `down` (no `-v`), then `docker volume rm cmp-scratch-pgdata`. Or skip compose: a separate `docker run` with its own named volume (see [[docker-spike-recipe]]).
++- **Never kill by command-line pattern.** A PowerShell `Get-CimInstance ... CommandLine -match 'Competency.Api.dll'` also matched the shell running the command (exit 255) and could match the user's own API. Find the listener with `netstat -ano | grep ":<port> .*LISTENING"` and `taskkill //PID <pid> //F`; for a Vite chain add `//T`. Check `netstat` for 5000/5173/15432 before starting scratch processes: the user's stack (`competency-dev-db-1` on 15432) may or may not be up.
+ - **`dotnet <dll>` takes the working directory as content root**, so from the repo root `appsettings.json` is not found and the host dies with `Section 'RateLimiting:Login' not found`. Run from `src/Competency.Api` (as VS and `dotnet run` do) or use `dotnet run --no-build --launch-profile Competency.Api`; profile env vars apply.
+ - **A refused connect to a closed local port costs about 2 s on Windows**, so a wait loop bounded by attempt count overshoots its time budget by 3x; bound it by `Stopwatch` elapsed time (measured: 61 s for a 60 s budget).
+ - Long-running scratch processes: `run_in_background: true` on the Bash call with `exec bash <script>`; a plain `( ... ) &` died silently after 34 s. Write the scratch script with the write tool (backslashes and quoting), log to the scratchpad, poll with `until curl ...; do sleep 1; done` (a bare `sleep N; cat` is blocked by the tool).
+ - `-e`/heredoc node snippets with `\\` lose a backslash; put such checks in a `.cjs` file via the write tool.
+-- Compose in a scratch run: `DEV_DB_PORT=28543 docker compose -p cmp-scratch -f deploy/dev/docker-compose.yml up -d --wait`, remove with `down -v` (the data volume has the fixed name `competency-dev-pgdata`, so `-v` is what frees it).
+ 
+-**Why:** each cost a failed run or risked the user's processes during Task 11.
+-**How to apply:** any scratch run of the API, Vite or the dev compose stack.
++**Why:** a `-p` project name looked like isolation but the compose file hard-codes the volume name, so a documented cleanup step would have wiped the user's dev data; the other facts each cost a failed run or risked the user's processes.
++**How to apply:** any scratch run of the API, Vite or the dev compose stack; read the first two bullets before touching docker.
+diff --git a/.claude/agent-memory/asd-dev-critical/project_web-cdp-real-backend-smoke-facts.md b/.claude/agent-memory/asd-dev-critical/project_web-cdp-real-backend-smoke-facts.md
+index cf44f39..f878076 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_web-cdp-real-backend-smoke-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_web-cdp-real-backend-smoke-facts.md
+@@ -12,7 +12,7 @@ Method for a UI smoke of the whole stack (scratch `postgres:18.6-trixie` contain
+ - **Sign-in lands on the first navigation item**, not the page asked for: an administrator ends on `/users`, so navigate to the target afterwards.
+ - **Proxy and CSRF**: through the Vite proxy the browser origin equals the Host the API sees (the proxy restores it), so mutations pass; a direct `curl -X POST` to the API needs `-H 'Origin: http://127.0.0.1:35080'`, and Cyrillic JSON goes through `--data-binary @file`.
+ - **Shell quoting trap**: a JS single quote inside a `node -e '...'` argument ends the shell string silently (`'"'` became `' + x + '`); build such text with `String.fromCharCode(34)` or write the script with the write tool. A `sed -i` or string `replace` that renames a port or id touches only the first match unless it is global.
+-- **Harmless dev noise**: the `rc-virtual-list` "scrollTo reach the max limitation" console error appears when a TreeSelect opens with a nested value selected (the shared `OrgUnitSelect`); each mounted `OrgUnitSelect` refetches the whole unit tree once (default stale time 0), so an admin dialog with a unit field costs one extra tree request.
++- **Harmless dev noise**: the `rc-virtual-list` "scrollTo reach the max limitation" console error appears when a TreeSelect opens with a nested value selected (the shared `OrgUnitSelect`); each mounted `OrgUnitSelect` rereads the whole unit tree only when it is older than the 60 s list stale time, so a dialog opened right after the page load costs no extra tree request.
+ - `docker rm -fv <container>` frees the scratch container's anonymous volume; an anonymous volume that predates the run belongs to someone else, leave it.
+ 
+ **Why:** each was found by a failed or misleading scripted run.
+diff --git a/.claude/agent-memory/asd-dev-critical/project_web-focus-ring-and-antd-css-facts.md b/.claude/agent-memory/asd-dev-critical/project_web-focus-ring-and-antd-css-facts.md
+new file mode 100644
+index 0000000..b044e36
+--- /dev/null
++++ b/.claude/agent-memory/asd-dev-critical/project_web-focus-ring-and-antd-css-facts.md
+@@ -0,0 +1,20 @@
++---
++name: web-focus-ring-and-antd-css-facts
++description: Overriding antd focus and shimmer styles from the stylesheet - specificity vs !important and Biome, custom theme tokens as CSS variables, rc-dropdown keyboard model, focus loss on an element swap, keyboard checks in headless Chrome without a backend
++metadata:
++  type: project
++---
++
++Facts that decided the focus-ring work in `web/`, checked in headless Chrome, not derivable from the code:
++
++- **antd's own focus rules beat any plain global rule**: Button is `.ant-btn:not(:disabled):focus-visible` (0,3,0, offset 1px), Menu items and Dropdown items (0,4,0), fields draw a glow and set `outline: 0`, the Skeleton shimmer is `.ant-skeleton-active .ant-skeleton-*` (0,3,0). A `:focus-visible` rule overrides them only with `!important`; Biome (`--error-on-warnings`) flags `!important` (`lint/complexity/noImportantStyles`), so wrap the block in `/* biome-ignore-start lint/complexity/noImportantStyles: <reason> */` ... `/* biome-ignore-end lint/complexity/noImportantStyles: <reason> */` (both comments need `: reason`).
++- **A field's focused element is its inner `<input>`**: put the ring on the wrapper with `.ant-input-affix-wrapper:has(input:focus-visible)` and `.ant-select:has(input:focus-visible)` (TreeSelect is an `.ant-select`) and set `outline: none !important` on the inner input.
++- **Every key of the theme `token` becomes a `--ant-<kebab-name>` CSS variable** (cssinjs `transformToken`; numbers get `px`), custom keys included, so a token antd has no counterpart for (`colorAccent`, `focusRingOffset`, `motionEaseIn`) is published by spreading a plain object into `token` (an explicit unknown key fails the `Partial<AliasToken>` type check; antd 6.6.5 has no `motionEaseIn`). The variables are defined on the `.ant-app` root and antd roots, not on `body`/`:root`.
++- **rc-dropdown keyboard model**: with `trigger=["click"]` and the default `autoFocus: false`, Enter/Space on the trigger opens the menu with focus kept on the trigger; Tab moves into the menu (first item active), arrows move, Enter chooses, Esc closes and returns focus to the trigger. The arrows do nothing while focus is still on the trigger.
++- **Swapping the root element type of a component remounts it and drops focus to `body`** (a lazy plain `<button>` replaced by `<Dropdown><button/></Dropdown>`). Biome `a11y/noAutofocus` flags `autoFocus` on a DOM element; use a stable module-level ref callback (`ref={isNow ? focusWhenMounted : undefined}`).
++- **A confirm or dialog opened from a menu item returns focus to `body` when it closes** (antd restores focus to the menu item, which is gone); not fixed, only seen.
++- **Skeleton shimmer ignores the `motion: false` token**; it needs a stylesheet rule under `@media (prefers-reduced-motion: reduce)`. `getComputedStyle(el).animationName` of every `.ant-skeleton-active *` shows it (`ant-skeleton-loading` vs `none`).
++- **Keyboard check with no backend**: Node 24's global `WebSocket` talks CDP directly (no `ws` package); `Fetch.enable` on `<base>/api/*` plus `Fetch.fulfillRequest` serves mock JSON; `Input.dispatchKeyEvent` (`rawKeyDown`, `char` with `text` for Enter/Space, `keyUp`) gives real Tab/Enter/arrow/Esc, and `:focus-visible` matches after such keys; `Emulation.setEmulatedMedia` with `prefers-reduced-motion` must be set before the navigation because the theme reads the media query at module load. Wait ~450 ms before reading outlines (antd transitions them).
++
++**Why:** each cost a failed run or a wrong first fix while making keyboard focus match the design system.
++**How to apply:** any change to global focus, ring or motion CSS, antd Dropdown/Menu keyboard behaviour, or a browser check of `web/` without the API (see also [[web-cdp-real-backend-smoke-facts]], [[web-org-card-hierarchy-facts]]).
+diff --git a/.claude/agent-memory/asd-dev-critical/project_web-org-structure-ui-facts.md b/.claude/agent-memory/asd-dev-critical/project_web-org-structure-ui-facts.md
+index 2cfa258..25bc0d4 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_web-org-structure-ui-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_web-org-structure-ui-facts.md
+@@ -1,6 +1,6 @@
+ ---
+ name: web-org-structure-ui-facts
+-description: antd Tree/TreeSelect/Table behaviours in jsdom and shared-worktree lint for throwaway tests, from the org-structure screens (sprint 001, Task 8)
++description: antd Tree/TreeSelect/Table behaviours in jsdom, edit-dialog drafts vs refetch, form reset after a 412, shared-worktree lint for throwaway tests, from the org-structure screens
+ metadata:
+   type: project
+ ---
+@@ -11,7 +11,8 @@ Facts that cost a round while building `web/src/features/org-structure`, not der
+ - An antd `Table` renders its header text twice in jsdom (a hidden measure row), so `getByText("<column title>")` throws "multiple elements"; use `getAllByText`.
+ - In a test, pressing Escape with a `TreeSelect` dropdown open inside a `Modal` made the later submit click a no-op (the Modal evidently closed with the dropdown); close the dropdown by clicking the modal title instead.
+ - The `openapi-fetch` client calls the stubbed `fetch` with one `Request`, so a stub reads `request.method`, `new URL(request.url)`, `request.headers.get("If-Match")` and `await request.clone().text()`.
+-- A rc-field-form `Form` remounted with `key` but the same `useForm` instance keeps the user's typed values (store beats `initialValues`); to reset a form to server data after a 412 refetch, key the component that owns `Form.useForm()`, as `UserCard` does, not just the `<Form>`.
++- A rc-field-form `Form` remounted with `key` but the same `useForm` instance keeps the user's typed values (store beats `initialValues`); to reset a form to server data after a 412, key the component that owns `Form.useForm()` (`UserForm`, `EmployeeForm`, `UnitForm`), not just the `<Form>`.
++- **A refetch must not rebuild an edit form**: keyed on the live query's version, any background refetch with a new version (focus, invalidation, another administrator's save) remounts the form and silently drops the typed values, and the next save sends the live version, not the one the draft came from. The dialogs keep the record they opened with (`useEditBase` in `web/src/app/`) and take the latest one only after a 412 and the arrival of a newer version; their detail queries use `gcTime: 0` so an opening never starts from a cached older version.
+ - Biome lints any `*.test.tsx` under `web/`, so a throwaway scenario file in the shared worktree must be biome-clean or it fails a sibling's `npm run lint` while it exists.
+ - `modal.confirm({ onOk })` must resolve to void/boolean: `.then(ok, (e) => modal.error(...))` fails `tsc` because `modal.error(...)` returns a modal handle; wrap the handler body in braces.
+ 
+diff --git a/.claude/agent-memory/asd-dev-critical/project_web-ui-test-and-form-gotchas.md b/.claude/agent-memory/asd-dev-critical/project_web-ui-test-and-form-gotchas.md
+index 05b2732..7d5ce50 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_web-ui-test-and-form-gotchas.md
++++ b/.claude/agent-memory/asd-dev-critical/project_web-ui-test-and-form-gotchas.md
+@@ -1,13 +1,13 @@
+ ---
+ name: web-ui-test-and-form-gotchas
+-description: web/ UI facts from Task 7 - jsdom has no ResizeObserver, router singleton vs vi.resetModules, openapi-fetch captures fetch early, antd Form.Item injects id, biome ci diff trick
++description: web/ UI test and form facts - jsdom has no ResizeObserver (setup.ts stubs it), router singleton vs vi.resetModules, openapi-fetch captures fetch early, antd Form.Item injects id, biome ci diff trick
+ metadata:
+   type: project
+ ---
+ 
+-Facts that cost a round while building the SPA shell and users screens (sprint 001, Task 7), not derivable from the code:
++Facts that cost a round while building the SPA shell and the account screens, not derivable from the code:
+ 
+-- A throwaway Vitest run of the whole app needs `globalThis.ResizeObserver` stubbed (jsdom has none; antd Menu/Table throw inside `SingleObserver`, which React Router reports as the generic RouteErrorPage). `src/test/setup.ts` does not provide it.
++- jsdom has no `ResizeObserver`, and antd Menu/Table throw inside `SingleObserver` without one (React Router reports the generic RouteErrorPage). `src/test/setup.ts` already installs a stub, so a throwaway run of the whole app needs nothing extra.
+ - `vi.resetModules()` + dynamic import of the router gives the app a second copy of React while `@testing-library/react` keeps the first, so every test after the first fails with the error page. Import `router`/`Providers`/`queryClient` statically once, call `queryClient.clear()` and `await router.navigate(path)` per test.
+ - `openapi-fetch` binds `globalThis.fetch` when `createClient` runs (module load of `api/client.ts`), so a fetch stub must be installed in `vi.hoisted(...)`, with a mutable handler map behind it.
+ - antd `Form.Item` injects `id`, `value`, `onChange` into its single child. A custom control (here `EmployeePicker`) must forward `id` to the real input, otherwise the label has no associated control (testing-library: "no form control was found associated to that label").
+diff --git a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+index 2e58e19..be77c01 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+@@ -6,4 +6,5 @@
+ - [Ledger finding mapping](feedback_ledger-finding-mapping.md) — one f per rule row, none on file/section rows, Findings table first, no pipes in cells
+ - [Delta re-review: decisions-log first](feedback_delta-review-decisions-log.md) — read decisions-log for design-promote routing before flagging doc drift; shared-host log waits are vacuous
+ - [Wave-review probes](feedback_wave-review-probes.md) — decisions-log "Open:" lines, unused test helpers, per-row lookup loops, body comments, AC ids in class docs: one Grep each
+-- [Doc entries on a code delta](feedback_doc-entries-on-code-delta.md) — memory md files un-gate the Documentation rows; read the doc-comment entry literally, keep English, no Edit tool
++- [Doc entries on a code delta](feedback_doc-entries-on-code-delta.md) — memory md files un-gate the Documentation rows; read the doc-comment entry literally, report language follows language.docs, no Edit tool
++- [Frontend wave probes](feedback_frontend-wave-probes.md) — web/ plus agent-memory wave: unused exports, always-constant props, cross-feature helpers, antd d.ts deprecations, stale memory claims, diff-to-file line arithmetic
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_doc-entries-on-code-delta.md b/.claude/agent-memory/asd-reviewer-combined/feedback_doc-entries-on-code-delta.md
+index 67a48ea..cc52256 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/feedback_doc-entries-on-code-delta.md
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_doc-entries-on-code-delta.md
+@@ -6,17 +6,19 @@ metadata:
+ ---
+ 
+ A wave re-review manifest (sprint 001 wave-2/iter-02) did not n/a SSoT, In-code doc comments, Documentation economy and the
+-rest because `.claude/agent-memory/**/*.md` files were in the scope list; iter-01 had them n/a.
++rest because `.claude/agent-memory/**/*.md` files were in the scope list; iter-01 had them n/a. Wave-3/iter-01 did the same.
+ 
+ **How to apply:**
+ - Read the home entry literally: "type-level doc duplicates or summarizes its members' docs" fires only when the members carry
+   docs; an internal class with undocumented members and a descriptive class doc is not a finding. A class doc that merely
+   restates the interface contract is a below-floor observation.
+-- Run the body-comment and `AC-N` Greps over `src` and `tests` (zero hits is the pass), then grep `TODO(sprint` for the
+-  stub-resolution row.
+-- Agent-memory files: check only for stale names (a deleted class still cited) and claims the diff contradicts.
+-- `language.docs` is `ru` and the language policy lists reviews as user-facing, yet every earlier review of this sprint is in
+-  English and persisted; keep English unless the caller says otherwise, and say so if asked.
+-- Tools in a combined-review subagent may lack `Edit`; rewrite the return file with `Write` and keep one source of text.
++- Run the body-comment and `AC-N` Greps over `src`, `tests` and `web/src` (zero hits is the pass; `AC-N` in a test's
++  `describe` or `it` name is allowed), then grep `TODO(sprint` for the stub-resolution row.
++- Agent-memory files: check only for stale names (a deleted class still cited) and claims the diff contradicts; a memory
++  finding is located in `.claude/agent-memory/<owner>/` and routes to a memory-fix dispatch for that owner.
++- Language: when the dispatch header lists `language.docs`, write the report prose in that language (language-policy lists
++  reviews as user-facing) and keep template headings and tokens in English; with no language line, keep English like the
++  earlier persisted reviews of the sprint.
++- Tools in a combined-review subagent may lack `Edit` and `Bash`; rewrite a file with `Write` and keep one source of text.
+ 
+ **Why:** avoids a medium-floor false positive on style that the project uses everywhere, and a second review-fix cycle for a doc nit.
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md b/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
+new file mode 100644
+index 0000000..0590f0f
+--- /dev/null
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
+@@ -0,0 +1,33 @@
++---
++name: frontend-wave-probes
++description: how a 120-file web/ plus agent-memory impl-review wave was finished in about 45 turns - read ranges, one-Grep probes that found real defects, diff-to-file line arithmetic, antd d.ts deprecation check
++metadata:
++  type: feedback
++---
++
++A wave of `web/**` (React 19, antd 6, TanStack Query) plus `.claude/agent-memory/**/*.md` read fine in 450-580 line chunks of
++the diff (TSX tolerates the larger size); skip `package-lock.json`, `schema.d.ts`, OFL texts and binaries (type and size only).
++
++**Probes that paid off, one Grep each:**
++- `^\s+// ` over `web/src`: in-body comments hide inside object-literal arguments (`modal.confirm({ // note` ...) of arrow
++  functions; code-style §7 counts them, a config-object comment in `vite.config.ts` is not in a function body.
++- `export (const|function|type|interface|class) \w+` with `-o` over `web/src`, then one Grep per suspicious name: a theme
++  `layout` constant with no importer, an `etag` field nobody reads, status-tag components called only with `isActive={false}`.
++- `from "\.\./users/|from "\.\./org-structure/"` plus the helper name (`ifMatchOf`): generic helpers parked in one feature make
++  features depend on each other both ways.
++- `staleTime|refetchOnWindowFocus|gcTime` over `web/src`: no hit means the TanStack defaults (stale 0, refetch on focus)
++  apply to lists of thousands of rows.
++- `web/node_modules/antd/es/<component>/<Component>.d.ts` exists in this repo: grep it for `@deprecated` instead of trusting
++  memory (antd 6 `Alert.message` is deprecated for `title`).
++- A component that returns a bare element first and a wrapper (`Dropdown`) around the same element later remounts it:
++  keyboard focus is lost; the CDP smokes in memory were mouse-only.
++- Agent-memory files: grep each cited component or constant (`UserCard`, `SEARCH_TEXT_MAX_LENGTH`) in `web/src`, `src` and
++  `tests`, and every "does not provide" / "NOT yet run" claim against the code; four stale claims turned up in one wave.
++
++**Line arithmetic without a shell:** for a new-file hunk, file line = diff line minus the line number of its `@@` header.
++
++**Language:** the dispatch header listed `language.docs: ru` and the policy puts reviews under `language.docs`, so the report
++prose was Russian with the template headings and tokens in English; earlier waves of this sprint were English.
++
++**Why:** the Read tool refuses over 25k tokens; these probes found the defects the diff read could not show.
++**How to apply:** run them right after the diff read, before building the ledger; keep one finding per rule row.
+diff --git a/.claude/agent-memory/asd-tester-critical/MEMORY.md b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+index 77a8501..726f62f 100644
+--- a/.claude/agent-memory/asd-tester-critical/MEMORY.md
++++ b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+@@ -1,4 +1,4 @@
+ - [Fail-first and `none` honesty](feedback_fail-first-and-none-honesty.md) — transcribe the first-failing assertion, never justify `none` with "it's prose", never assert a qualifier where the substance is assertable
+ - [Mutation runs trip the hash ledger](project_mutation-runs-trip-the-hash-ledger.md) — editing a managed_paths file to prove a mutation also fails upstream_hashes; expected noise
+ - [Testability envelope](project_testability-envelope.md) — what is testable here, honest `none` decisions, mutation and fixture traps, and the §7 in-body-comment ban.
+-- [Competency test harness](project_competency-test-harness.md) — child-process API host on shared Testcontainers, deterministic race gate, async-log and jsdom traps, forcing a 5xx, pre-fix-sha runs, tech-reference gate
++- [Competency test harness](project_competency-test-harness.md) — child-process API host on shared Testcontainers, deterministic race gate, async-log and jsdom traps, web fake fetch and waiting traps, forcing a 5xx, pre-fix-sha runs, tech-reference gate
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index d6898d3..d5b1b02 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -25,4 +25,8 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Audit rows of one account are read through `GET /api/v1/audit?action=<Action>&entityId=<id>`; a test that needs "exactly one" reads it after every step of the scenario, so a stray extra write at any step fails it.
+ - Mutation copies: run `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj` there, not the `.slnx` (it pulls the web project and `node_modules`). Mutating a migration away means deleting its `.cs` and `.Designer.cs`; the model snapshot stays consistent, so the host still starts.
+ - Web tests: jsdom has no `ResizeObserver` (stubbed in `web/src/test/setup.ts`); Testing Library's accessible name collapses a non-breaking space, so assert the `aria-label` attribute for it; `Intl.Collator("ru")` sorts ё as е, so an ordering fixture must tell ICU order, code-point order and "ё right after е" apart.
++- Web screens are tested against a fake network, `web/src/test/fakeApi.ts`, installed by `setup.ts` before the typed client loads (openapi-fetch takes `fetch` once, at `createClient`, and calls it with one `Request`): `fakeApi.on("METHOD /path", handler)`, `fakeApi.calls(route)`, `deferred()` to hold an answer. A request without a handler answers 599. Vitest filters are relative to `web/`; a `web/src/...` filter finds no tests and exits 1 with zero tests, so treat `total === 0` as an error in a mutation runner. `git apply -R` of a fix commit's diff works as a pre-fix copy unless a later commit touched the adjacent lines.
++- Waiting traps in those tests: a form that remounts leaves the old input detached, so re-query the field on every step and flush a refetch with one more `user.type` (checking the draft right after `invalidateQueries` passes vacuously on the pre-fix code); an "is not requested" assertion on a debounced query is vacuous until the debounce has run, so use `vi.useFakeTimers()` after render, `fireEvent.change` and `act(() => vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS))` (a survivor, S8, found this); the focus-return refetch is async, so sync on a positive control (`/auth/me` refetches on focus) before asserting the other routes were not reread. Raising RTL `asyncUtilTimeout` turns a failing `waitFor` into the 5 s test timeout and hides the assertion message; leave the default.
++- antd in jsdom: a Dropdown menu item's accessible name includes its icon label ("logout Выйти"), so match `{ name: /Выйти/ }`; a loading Button also carries the icon label, so `getByRole("button", { name: "Сохранить" })` failing means the button is stuck loading; antd Modal prints the harmless "getComputedStyle with pseudo-elements" notice. A search fixture letter can occur in a unit name ("я" is in "Компания"): pick one the fixture lacks.
++- `AppShell` returns null on a 401, but the unauthorized handler navigates first, so replacing that branch is unobservable in jsdom (recorded as a ceiling, not pinned).
+ - `docs/architecture/tech-reference/` gates test libraries too: Playwright and `Microsoft.AspNetCore.Mvc.Testing` have no reference, so the Tester may not implement with them until the Architect adds one. Check the directory before planning e2e.
+diff --git a/web/src/api/ifMatch.ts b/web/src/api/ifMatch.ts
+new file mode 100644
+index 0000000..9ec64e2
+--- /dev/null
++++ b/web/src/api/ifMatch.ts
+@@ -0,0 +1,4 @@
++/** The `If-Match` value for a version: the server issues the entity tag of a resource as its quoted version, and list rows carry only the version. */
++export function ifMatchOf(version: number): string {
++  return `"${version}"`;
++}
+diff --git a/web/src/api/unwrap.ts b/web/src/api/unwrap.ts
+index 578789f..c3a8481 100644
+--- a/web/src/api/unwrap.ts
++++ b/web/src/api/unwrap.ts
+@@ -1,11 +1,5 @@
+ import { ApiError } from "./ApiError";
+ 
+-/** Successful payload with the `ETag` that must accompany the next write to the same resource. */
+-export interface Versioned<TData> {
+-  data: TData;
+-  etag: string | null;
+-}
+-
+ interface ClientResult {
+   data?: unknown;
+   error?: unknown;
+@@ -18,12 +12,9 @@ interface ClientResult {
+  */
+ export function unwrap<TResult extends ClientResult>(
+   result: TResult,
+-): Versioned<Exclude<TResult["data"], undefined>> {
++): Exclude<TResult["data"], undefined> {
+   if (result.error !== undefined) {
+     throw new ApiError(result.response.status, result.error);
+   }
+-  return {
+-    data: result.data as Exclude<TResult["data"], undefined>,
+-    etag: result.response.headers.get("ETag"),
+-  };
++  return result.data as Exclude<TResult["data"], undefined>;
+ }
+diff --git a/web/src/app/RouteErrorPage.tsx b/web/src/app/RouteErrorPage.tsx
+index 50c9cad..b68b1fe 100644
+--- a/web/src/app/RouteErrorPage.tsx
++++ b/web/src/app/RouteErrorPage.tsx
+@@ -12,7 +12,7 @@ export function RouteErrorPage() {
+     <Alert
+       type="error"
+       showIcon
+-      message="Не удалось открыть страницу"
++      title="Не удалось открыть страницу"
+       description="Произошла непредвиденная ошибка. Обновите страницу; если ошибка повторяется, обратитесь к администратору."
+     />
+   );
+diff --git a/web/src/app/authFlow.test.tsx b/web/src/app/authFlow.test.tsx
+new file mode 100644
+index 0000000..8b2101e
+--- /dev/null
++++ b/web/src/app/authFlow.test.tsx
+@@ -0,0 +1,183 @@
++import { render, screen } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { api } from "../api/client";
++import { queryClient } from "../api/queryClient";
++import { currentUserQueryKey } from "../features/auth/useCurrentUser";
++import { paths } from "../features/org-structure/paths";
++import { deferred, fakeApi, json, problem } from "../test/fakeApi";
++import { LOGIN_PATH } from "./featureContract";
++import { Providers } from "./Providers";
++import { router } from "./router";
++
++const ACCOUNT = {
++  id: "account",
++  email: "user@test.local",
++  role: "User",
++  employeeId: null,
++  employeeName: null,
++  employeeLastName: null,
++  employeeFirstName: null,
++  employeeMiddleName: null,
++};
++const MARKER_KEY = ["marker"];
++const SIGN_IN_HEADING = "Вход в систему";
++const REFUSAL = "Проверьте e-mail и пароль.";
++
++function answerAsSignedIn() {
++  fakeApi.on("GET /api/v1/auth/me", () => json(ACCOUNT));
++  fakeApi.on("GET /api/v1/org-units/tree", () => json([]));
++}
++
++async function openApp(path: string) {
++  await router.navigate(path);
++  render(
++    <Providers>
++      <RouterProvider router={router} />
++    </Providers>,
++  );
++}
++
++async function openUserMenu() {
++  const user = userEvent.setup();
++  await user.click(await screen.findByRole("button", { name: ACCOUNT.email }));
++  return user;
++}
++
++async function submitCredentials() {
++  const user = userEvent.setup();
++  await user.type(await screen.findByLabelText("E-mail"), ACCOUNT.email);
++  await user.type(screen.getByLabelText("Пароль"), "Correct-horse-1!");
++  await user.click(screen.getByRole("button", { name: "Войти" }));
++}
++
++const currentPath = () => router.state.location.pathname;
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("route guard (AC-6, AC-13)", () => {
++  it("sends a visitor without a session to the sign-in screen and renders no section before that", async () => {
++    fakeApi.on("GET /api/v1/auth/me", () => problem(401));
++
++    await openApp(paths.tree);
++
++    expect(
++      await screen.findByRole("heading", { name: SIGN_IN_HEADING }),
++    ).toBeInTheDocument();
++    expect(currentPath()).toBe(LOGIN_PATH);
++    expect(fakeApi.calls("GET /api/v1/org-units/tree")).toHaveLength(0);
++  });
++
++  it("shows the section to a signed-in user and leaves the address alone", async () => {
++    answerAsSignedIn();
++
++    await openApp(paths.tree);
++
++    expect(
++      await screen.findByRole("button", { name: ACCOUNT.email }),
++    ).toBeInTheDocument();
++    expect(currentPath()).toBe(paths.tree);
++  });
++});
++
++describe("sign-in (AC-6, AC-13)", () => {
++  it("caches the account the server returned and opens the application without waiting for /auth/me", async () => {
++    const meAnswer = deferred<Response>();
++    fakeApi.on("GET /api/v1/auth/me", () => meAnswer.promise);
++    fakeApi.on("GET /api/v1/org-units/tree", () => json([]));
++    fakeApi.on("POST /api/v1/auth/login", () => json(ACCOUNT));
++
++    await openApp(LOGIN_PATH);
++    await submitCredentials();
++
++    expect(
++      await screen.findByRole("button", { name: ACCOUNT.email }),
++    ).toBeInTheDocument();
++    expect(queryClient.getQueryData(currentUserQueryKey)).toEqual(ACCOUNT);
++    expect(currentPath()).toBe(paths.tree);
++    expect(await fakeApi.calls("POST /api/v1/auth/login")[0]?.json()).toEqual({
++      email: ACCOUNT.email,
++      password: "Correct-horse-1!",
++    });
++    meAnswer.resolve(json(ACCOUNT));
++  });
++
++  it("stays on the sign-in screen when the credentials are refused: the unauthorized handler does not clear the cache or navigate on /login", async () => {
++    fakeApi.on("POST /api/v1/auth/login", () =>
++      problem(401, { detail: REFUSAL }),
++    );
++    queryClient.setQueryData(MARKER_KEY, "kept");
++
++    await openApp(LOGIN_PATH);
++    await submitCredentials();
++
++    expect(await screen.findByText(REFUSAL)).toBeInTheDocument();
++    expect(currentPath()).toBe(LOGIN_PATH);
++    expect(queryClient.getQueryData(MARKER_KEY)).toBe("kept");
++  });
++});
++
++describe("sign-out (AC-6, AC-13)", () => {
++  it("ends the session, empties the cache and replaces the page with the sign-in screen", async () => {
++    answerAsSignedIn();
++    fakeApi.on(
++      "POST /api/v1/auth/logout",
++      () => new Response(null, { status: 204 }),
++    );
++    await openApp(paths.tree);
++    const user = await openUserMenu();
++    queryClient.setQueryData(MARKER_KEY, "stale");
++    const entriesBefore = window.history.length;
++
++    await user.click(await screen.findByRole("menuitem", { name: /Выйти/ }));
++
++    expect(
++      await screen.findByRole("heading", { name: SIGN_IN_HEADING }),
++    ).toBeInTheDocument();
++    expect(currentPath()).toBe(LOGIN_PATH);
++    expect(queryClient.getQueryData(MARKER_KEY)).toBeUndefined();
++    expect(window.history.length).toBe(entriesBefore);
++  });
++
++  it("keeps the user where they are, with the cache intact, when the server fails to end the session", async () => {
++    answerAsSignedIn();
++    fakeApi.on("POST /api/v1/auth/logout", () => problem(500));
++    await openApp(paths.tree);
++    const user = await openUserMenu();
++    queryClient.setQueryData(MARKER_KEY, "kept");
++
++    await user.click(await screen.findByRole("menuitem", { name: /Выйти/ }));
++
++    expect(await screen.findByText(/ошибки сервиса/)).toBeInTheDocument();
++    expect(currentPath()).toBe(paths.tree);
++    expect(queryClient.getQueryData(MARKER_KEY)).toBe("kept");
++    expect(
++      screen.getByRole("button", { name: ACCOUNT.email }),
++    ).toBeInTheDocument();
++  });
++});
++
++describe("session ended mid-session (AC-6, AC-13)", () => {
++  it("clears the cache and replaces the page with the sign-in screen when any call is answered 401", async () => {
++    answerAsSignedIn();
++    fakeApi.on("GET /api/v1/users", () => problem(401));
++    await openApp(paths.tree);
++    await screen.findByRole("button", { name: ACCOUNT.email });
++    queryClient.setQueryData(MARKER_KEY, "stale");
++    const entriesBefore = window.history.length;
++
++    await api.GET("/api/v1/users", {
++      params: { query: { page: 1, pageSize: 1 } },
++    });
++
++    expect(
++      await screen.findByRole("heading", { name: SIGN_IN_HEADING }),
++    ).toBeInTheDocument();
++    expect(currentPath()).toBe(LOGIN_PATH);
++    expect(queryClient.getQueryData(MARKER_KEY)).toBeUndefined();
++    expect(window.history.length).toBe(entriesBefore);
++  });
++});
+diff --git a/web/src/app/editDialogs.test.tsx b/web/src/app/editDialogs.test.tsx
+new file mode 100644
+index 0000000..ec9357b
+--- /dev/null
++++ b/web/src/app/editDialogs.test.tsx
+@@ -0,0 +1,256 @@
++import { useQuery } from "@tanstack/react-query";
++import { act, render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import type { ReactElement } from "react";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../api/queryClient";
++import { EmployeeModal } from "../features/org-structure/EmployeeModal";
++import { orgUnitTreeQuery } from "../features/org-structure/orgStructureApi";
++import { UnitFormModal } from "../features/org-structure/UnitFormModal";
++import { UserModal } from "../features/users/UserModal";
++import { fakeApi, json, problem } from "../test/fakeApi";
++import { Providers } from "./Providers";
++
++const OPENED = "Исходное значение";
++const OTHERS = "Правка другого пользователя";
++const MINE = "Моя правка";
++const SAVE = "Сохранить";
++const EMPLOYEE_PAGE = { items: [], total: 0, page: 1, pageSize: 20 };
++
++const noop = () => undefined;
++
++function UnitDialog() {
++  const { data } = useQuery(orgUnitTreeQuery);
++  const unit = data?.find((candidate) => candidate.id === "unit-1");
++  return unit ? (
++    <UnitFormModal unit={unit} onClose={noop} onSaved={noop} />
++  ) : null;
++}
++
++interface Dialog {
++  name: string;
++  readRoute: string;
++  saveRoute: string;
++  field: string;
++  bodyField: string;
++  detailKey?: readonly string[];
++  answer: (version: number, text: string) => unknown;
++  serveOthers: () => void;
++  element: () => ReactElement;
++}
++
++type ReadingDialog = Dialog & { detailKey: readonly string[] };
++
++function readsItsRecord(dialog: Dialog): dialog is ReadingDialog {
++  return dialog.detailKey !== undefined;
++}
++
++const dialogs: Dialog[] = [
++  {
++    name: "account dialog",
++    readRoute: "GET /api/v1/users/user-1",
++    saveRoute: "PUT /api/v1/users/user-1",
++    field: "E-mail",
++    bodyField: "email",
++    detailKey: ["users", "detail", "user-1"],
++    answer: (version, text) => ({
++      id: "user-1",
++      email: text,
++      role: "User",
++      isBlocked: false,
++      employeeId: null,
++      employeeName: null,
++      version,
++    }),
++    serveOthers: () =>
++      fakeApi.on("GET /api/v1/employees", () => json(EMPLOYEE_PAGE)),
++    element: () => <UserModal userId="user-1" onClose={noop} />,
++  },
++  {
++    name: "employee dialog",
++    readRoute: "GET /api/v1/employees/employee-1",
++    saveRoute: "PUT /api/v1/employees/employee-1",
++    field: "Фамилия",
++    bodyField: "lastName",
++    detailKey: ["employees", "detail", "employee-1"],
++    answer: (version, text) => ({
++      id: "employee-1",
++      lastName: text,
++      firstName: "Иван",
++      middleName: null,
++      fullName: `${text} Иван`,
++      email: null,
++      orgUnitId: "unit-1",
++      orgUnitName: "Отдел",
++      position: "Инженер",
++      isActive: true,
++      version,
++    }),
++    serveOthers: () => fakeApi.on("GET /api/v1/org-units/tree", () => json([])),
++    element: () => (
++      <EmployeeModal employeeId="employee-1" onClose={noop} onSaved={noop} />
++    ),
++  },
++  {
++    name: "unit dialog",
++    readRoute: "GET /api/v1/org-units/tree",
++    saveRoute: "PUT /api/v1/org-units/unit-1",
++    field: "Название",
++    bodyField: "name",
++    answer: (version, text) => [
++      {
++        id: "unit-1",
++        name: text,
++        parentId: null,
++        headEmployeeId: null,
++        isActive: true,
++        version,
++        headName: null,
++        employeeCount: 0,
++      },
++    ],
++    serveOthers: () =>
++      fakeApi.on("GET /api/v1/employees", () => json(EMPLOYEE_PAGE)),
++    element: () => <UnitDialog />,
++  },
++];
++
++async function openDialog(dialog: Dialog, answerSave: () => Response) {
++  const server = { version: 1, text: OPENED };
++  fakeApi.on(dialog.readRoute, () =>
++    json(dialog.answer(server.version, server.text)),
++  );
++  fakeApi.on(dialog.saveRoute, answerSave);
++  dialog.serveOthers();
++  render(<Providers>{dialog.element()}</Providers>);
++  const field = () => screen.getByLabelText(dialog.field);
++  await waitFor(() => expect(field()).toHaveValue(OPENED));
++  const user = userEvent.setup();
++  await user.clear(field());
++  await user.type(field(), MINE);
++
++  async function otherUserSavesInTheMeantime() {
++    server.version = 2;
++    server.text = OTHERS;
++    await act(() => queryClient.invalidateQueries());
++    await user.type(field(), "!");
++  }
++
++  async function save() {
++    await user.click(screen.getByRole("button", { name: SAVE }));
++  }
++
++  return { field, user, server, otherUserSavesInTheMeantime, save };
++}
++
++const saveBody = async (dialog: Dialog, index: number) =>
++  (await fakeApi.calls(dialog.saveRoute)[index]?.json()) as Record<
++    string,
++    unknown
++  >;
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe.each(dialogs)("$name (AC-13, AC-17)", (dialog) => {
++  it("keeps the unsaved input and saves against the opening version when a background refetch brings a newer one; after a stale refusal it takes the fresh record", async () => {
++    const opened = await openDialog(dialog, () => problem(412));
++
++    await opened.otherUserSavesInTheMeantime();
++    expect(opened.field()).toHaveValue(`${MINE}!`);
++    await opened.save();
++
++    await waitFor(() =>
++      expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(1),
++    );
++    expect(fakeApi.calls(dialog.saveRoute)[0]?.headers.get("If-Match")).toBe(
++      '"1"',
++    );
++    expect((await saveBody(dialog, 0))[dialog.bodyField]).toBe(`${MINE}!`);
++    await waitFor(() => expect(opened.field()).toHaveValue(OTHERS));
++    fakeApi.on(dialog.saveRoute, () =>
++      json(dialog.answer(opened.server.version, opened.server.text)),
++    );
++    await opened.save();
++
++    await waitFor(() =>
++      expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(2),
++    );
++    expect(fakeApi.calls(dialog.saveRoute)[1]?.headers.get("If-Match")).toBe(
++      '"2"',
++    );
++    expect((await saveBody(dialog, 1))[dialog.bodyField]).toBe(OTHERS);
++  });
++
++  it("keeps the opening record and its version after a conflict, which is not a stale refusal", async () => {
++    const opened = await openDialog(dialog, () =>
++      problem(409, { title: "Конфликт" }),
++    );
++    await opened.otherUserSavesInTheMeantime();
++    await opened.save();
++    await waitFor(() =>
++      expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(1),
++    );
++    await waitFor(() =>
++      expect(fakeApi.calls(dialog.readRoute)).toHaveLength(3),
++    );
++
++    await opened.user.type(opened.field(), "?");
++    expect(opened.field()).toHaveValue(`${MINE}!?`);
++    await opened.save();
++
++    await waitFor(() =>
++      expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(2),
++    );
++    expect(fakeApi.calls(dialog.saveRoute)[1]?.headers.get("If-Match")).toBe(
++      '"1"',
++    );
++  });
++
++  it("shows the server's message under the field it names and lets the user save again", async () => {
++    const message = "Сервер не принял значение.";
++    const opened = await openDialog(dialog, () =>
++      problem(400, { errors: { [dialog.bodyField]: [message] } }),
++    );
++
++    await opened.save();
++
++    expect(await screen.findByText(message)).toBeInTheDocument();
++    await opened.save();
++    await waitFor(() =>
++      expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(2),
++    );
++  });
++});
++
++describe.each(dialogs.filter(readsItsRecord))(
++  "$name opened again (AC-13, AC-17)",
++  (dialog) => {
++    it("reads the record afresh instead of starting from the version the previous opening cached", async () => {
++      const server = { version: 1, text: OPENED };
++      fakeApi.on(dialog.readRoute, () =>
++        json(dialog.answer(server.version, server.text)),
++      );
++      dialog.serveOthers();
++      const first = render(<Providers>{dialog.element()}</Providers>);
++      await waitFor(() =>
++        expect(screen.getByLabelText(dialog.field)).toHaveValue(OPENED),
++      );
++      first.unmount();
++      await waitFor(() =>
++        expect(
++          queryClient.getQueryCache().find({ queryKey: dialog.detailKey }),
++        ).toBeUndefined(),
++      );
++      server.version = 2;
++      server.text = OTHERS;
++
++      render(<Providers>{dialog.element()}</Providers>);
++
++      await waitFor(() =>
++        expect(screen.getByLabelText(dialog.field)).toHaveValue(OTHERS),
++      );
++    });
++  },
++);
+diff --git a/web/src/app/theme.ts b/web/src/app/theme.ts
+index 4fc86ff..674b974 100644
+--- a/web/src/app/theme.ts
++++ b/web/src/app/theme.ts
+@@ -5,6 +5,7 @@ const color = {
+   primaryHover: "#2338C2",
+   primaryActive: "#182CC2",
+   primarySubtle: "#EBF2FD",
++  accent: "#FBAE40",
+   textPrimary: "#292929",
+   textSecondary: "#4B4B4C",
+   textMuted: "#5F6670",
+@@ -29,10 +30,12 @@ const color = {
+   infoBg: "#EBF2FD",
+ } as const;
+ 
+-/** Page-frame widths that have a design token but no antd counterpart. */
+-export const layout = {
+-  readingMaxWidth: 720,
+-} as const;
++/** Design tokens antd has no counterpart for: the accent colour, the focus ring offset and the ease-in curve. antd publishes every token key as a `--ant-*` CSS variable, which the stylesheet reads. */
++const customToken = {
++  colorAccent: color.accent,
++  focusRingOffset: 2,
++  motionEaseIn: "cubic-bezier(0.55, 0.055, 0.675, 0.19)",
++};
+ 
+ const fontFamily = "PT Sans, Segoe UI, Roboto, Arial, sans-serif";
+ const fontFamilyCode = "PT Mono, Consolas, Courier New, monospace";
+@@ -127,6 +130,7 @@ export const theme: ThemeConfig = {
+     lineWidth: 1,
+     lineWidthFocus: 2,
+     controlOutlineWidth: 2,
++    ...customToken,
+ 
+     boxShadow: "0 8px 24px rgba(8, 18, 64, 0.16)",
+     boxShadowSecondary: "0 4px 12px rgba(8, 18, 64, 0.12)",
+diff --git a/web/src/app/useDebouncedValue.ts b/web/src/app/useDebouncedValue.ts
+new file mode 100644
+index 0000000..1dde22d
+--- /dev/null
++++ b/web/src/app/useDebouncedValue.ts
+@@ -0,0 +1,17 @@
++import { useEffect, useState } from "react";
++
++/** How long typing must pause before a search text is sent to the server. */
++export const SEARCH_DEBOUNCE_MS = 300;
++
++/** The value once it has stayed unchanged for the delay; the first value is returned at once. */
++export function useDebouncedValue<TValue>(
++  value: TValue,
++  delayMs: number = SEARCH_DEBOUNCE_MS,
++): TValue {
++  const [debounced, setDebounced] = useState(value);
++  useEffect(() => {
++    const timer = setTimeout(() => setDebounced(value), delayMs);
++    return () => clearTimeout(timer);
++  }, [value, delayMs]);
++  return debounced;
++}
+diff --git a/web/src/app/useEditBase.test.tsx b/web/src/app/useEditBase.test.tsx
+new file mode 100644
+index 0000000..d8d58cc
+--- /dev/null
++++ b/web/src/app/useEditBase.test.tsx
+@@ -0,0 +1,71 @@
++import { act, renderHook } from "@testing-library/react";
++import { describe, expect, it } from "vitest";
++import { ApiError } from "../api/ApiError";
++import { useEditBase } from "./useEditBase";
++
++interface Snapshot {
++  version: number;
++}
++
++const OPENED: Snapshot = { version: 1 };
++const REFETCHED: Snapshot = { version: 2 };
++const REFETCHED_AGAIN: Snapshot = { version: 3 };
++
++function openEditor() {
++  return renderHook(({ latest }) => useEditBase(latest), {
++    initialProps: { latest: OPENED as Snapshot | undefined },
++  });
++}
++
++describe("useEditBase (edit dialogs of units, employees and accounts)", () => {
++  it("keeps the record the dialog opened with when a background refetch delivers a newer version", () => {
++    const editor = openEditor();
++
++    editor.rerender({ latest: REFETCHED });
++
++    expect(editor.result.current.base).toBe(OPENED);
++  });
++
++  it("moves to the newer record when a save refused as stale meets one the cache already holds", () => {
++    const editor = openEditor();
++    editor.rerender({ latest: REFETCHED });
++
++    act(() => editor.result.current.noteSaveFailure(new ApiError(412, {})));
++
++    expect(editor.result.current.base).toBe(REFETCHED);
++  });
++
++  it("waits for the newer record when the stale refusal comes before the reread has delivered it", () => {
++    const editor = openEditor();
++
++    act(() => editor.result.current.noteSaveFailure(new ApiError(412, {})));
++    expect(editor.result.current.base).toBe(OPENED);
++    editor.rerender({ latest: REFETCHED });
++
++    expect(editor.result.current.base).toBe(REFETCHED);
++  });
++
++  it("stays on the moved-to record when a later refetch delivers yet another version", () => {
++    const editor = openEditor();
++    editor.rerender({ latest: REFETCHED });
++    act(() => editor.result.current.noteSaveFailure(new ApiError(412, {})));
++
++    editor.rerender({ latest: REFETCHED_AGAIN });
++
++    expect(editor.result.current.base).toBe(REFETCHED);
++  });
++
++  it.each([
++    ["a conflict", new ApiError(409, {})],
++    ["invalid input", new ApiError(400, {})],
++    ["a server failure", new ApiError(500, {})],
++    ["a lost connection", new TypeError("Failed to fetch")],
++  ])("does not move to a newer record after %s", (_, failure) => {
++    const editor = openEditor();
++    editor.rerender({ latest: REFETCHED });
++
++    act(() => editor.result.current.noteSaveFailure(failure));
++
++    expect(editor.result.current.base).toBe(OPENED);
++  });
++});
+diff --git a/web/src/app/useEditBase.ts b/web/src/app/useEditBase.ts
+new file mode 100644
+index 0000000..245b32a
+--- /dev/null
++++ b/web/src/app/useEditBase.ts
+@@ -0,0 +1,30 @@
++import { useState } from "react";
++import { ApiError } from "../api/ApiError";
++
++const STALE_VERSION_STATUS = 412;
++
++/**
++ * The record an edit form is based on. It stays as it was when the dialog opened, whatever the cache refetches in the
++ * background, so unsaved input is never replaced and the version sent with a save is the one the form was built from.
++ * It moves to the latest record only after a save was refused for a stale version and the cache then delivered a
++ * newer one; the caller reports each failed save through `noteSaveFailure`.
++ */
++export function useEditBase<TRecord extends { version: number }>(
++  latest: TRecord | undefined,
++) {
++  const [base, setBase] = useState(latest);
++  const [isRefused, setIsRefused] = useState(false);
++
++  if (isRefused && latest && latest.version !== base?.version) {
++    setBase(latest);
++    setIsRefused(false);
++  }
++
++  function noteSaveFailure(error: unknown) {
++    if (error instanceof ApiError && error.status === STALE_VERSION_STATUS) {
++      setIsRefused(true);
++    }
++  }
++
++  return { base, noteSaveFailure };
++}
+diff --git a/web/src/app/useFormSubmit.ts b/web/src/app/useFormSubmit.ts
+new file mode 100644
+index 0000000..575f4a2
+--- /dev/null
++++ b/web/src/app/useFormSubmit.ts
+@@ -0,0 +1,27 @@
++import type { FormInstance } from "antd";
++import { useState } from "react";
++import { showFieldErrors } from "./apiErrors";
++
++/**
++ * The submit handler of a form whose save is asynchronous: it marks the form as submitting while the save runs and
++ * puts the server's field messages under the fields when the save is rejected. The caller shows any other failure.
++ */
++export function useFormSubmit<TValues>(
++  form: FormInstance<TValues>,
++  onSubmit: (values: TValues) => Promise<unknown>,
++) {
++  const [isSubmitting, setIsSubmitting] = useState(false);
++
++  async function submit(values: TValues) {
++    setIsSubmitting(true);
++    try {
++      await onSubmit(values);
++    } catch (error) {
++      showFieldErrors(form, error);
++    } finally {
++      setIsSubmitting(false);
++    }
++  }
++
++  return { isSubmitting, submit };
++}
+diff --git a/web/src/features/audit/auditApi.ts b/web/src/features/audit/auditApi.ts
+index a3c8d34..83721ae 100644
+--- a/web/src/features/audit/auditApi.ts
++++ b/web/src/features/audit/auditApi.ts
+@@ -30,7 +30,7 @@ export function auditListQuery(
+         await api.GET("/api/v1/audit", {
+           params: { query: { ...filters, page, pageSize } },
+         }),
+-      ).data,
++      ),
+     placeholderData: keepPreviousData,
+   });
+ }
+diff --git a/web/src/features/auth/LoginPage.tsx b/web/src/features/auth/LoginPage.tsx
+index c6cec28..7270079 100644
+--- a/web/src/features/auth/LoginPage.tsx
++++ b/web/src/features/auth/LoginPage.tsx
+@@ -31,7 +31,7 @@ export function LoginPage() {
+   const navigate = useNavigate();
+   const signIn = useMutation({
+     mutationFn: async (values: LoginValues) =>
+-      unwrap(await api.POST("/api/v1/auth/login", { body: values })).data,
++      unwrap(await api.POST("/api/v1/auth/login", { body: values })),
+     onSuccess: (user) => {
+       queryClient.setQueryData(currentUserQueryKey, user);
+       void navigate("/", { replace: true });
+diff --git a/web/src/features/auth/passwordPolicy.ts b/web/src/features/auth/passwordPolicy.ts
+index 7015648..9adfb89 100644
+--- a/web/src/features/auth/passwordPolicy.ts
++++ b/web/src/features/auth/passwordPolicy.ts
+@@ -1,3 +1,3 @@
+-/** Hint under every new-password field; the server applies the rules and reports what a rejected password lacks. */
++/** Hint under every new-password field. It names no length, a deployment setting: the server applies the rules and reports what a rejected password lacks. */
+ export const PASSWORD_HINT =
+-  "Не менее 10 символов, с заглавной и строчной буквой, цифрой и специальным символом.";
++  "Пароль должен быть длинным и содержать заглавные и строчные буквы, цифры и специальные символы. Если пароль не подойдёт, сервис укажет, чего в нём не хватает.";
+diff --git a/web/src/features/auth/useCurrentUser.ts b/web/src/features/auth/useCurrentUser.ts
+index 4e552ae..9cbe39c 100644
+--- a/web/src/features/auth/useCurrentUser.ts
++++ b/web/src/features/auth/useCurrentUser.ts
+@@ -13,7 +13,7 @@ export const currentUserQueryKey = ["auth", "me"] as const;
+ export function useCurrentUser() {
+   return useQuery({
+     queryKey: currentUserQueryKey,
+-    queryFn: async () => unwrap(await api.GET("/api/v1/auth/me")).data,
++    queryFn: async () => unwrap(await api.GET("/api/v1/auth/me")),
+   });
+ }
+ 
+diff --git a/web/src/features/org-structure/EmployeeCard.tsx b/web/src/features/org-structure/EmployeeCard.tsx
+index ffbee87..5d25874 100644
+--- a/web/src/features/org-structure/EmployeeCard.tsx
++++ b/web/src/features/org-structure/EmployeeCard.tsx
+@@ -23,10 +23,15 @@ interface EmployeeCardProps {
+   onAction: (action: EmployeeAction, employee: Employee) => void;
+ }
+ 
++function focusWhenMounted(button: HTMLButtonElement | null) {
++  button?.focus();
++}
++
+ /**
+  * The actions button of a card, which opens the menu of what an administrator can do with the employee.
+  * antd's Dropdown costs about a quarter of a millisecond per instance, which adds up to seconds for the thousands of
+- * cards a unit may hold, so the button is plain markup until it is first used and only then becomes a Dropdown, already open.
++ * cards a unit may hold, so the button is plain markup until it is first used and only then becomes a Dropdown, already open;
++ * the button that replaces the used one takes its focus, so the keyboard stays on the card.
+  */
+ function EmployeeActions({
+   employee,
+@@ -40,6 +45,7 @@ function EmployeeActions({
+       className="org-employee__menu"
+       aria-label={`Действия с сотрудником ${employee.fullName}`}
+       aria-haspopup="menu"
++      ref={isOpen === null ? undefined : focusWhenMounted}
+       onClick={isOpen === null ? () => setIsOpen(true) : undefined}
+     >
+       <MoreOutlined />
+@@ -116,9 +122,7 @@ export const EmployeeCard = memo(function EmployeeCard({
+           <strong>
+             <Highlighted text={employee.fullName} needle={needle} />
+           </strong>
+-          {isAdmin && employee.isActive === false && (
+-            <EmployeeStatusTag isActive={false} />
+-          )}
++          {isAdmin && employee.isActive === false && <EmployeeStatusTag />}
+         </div>
+         <span className="org-employee__details">
+           <Highlighted text={details.join(" · ")} needle={needle} />
+diff --git a/web/src/features/org-structure/EmployeeCards.test.tsx b/web/src/features/org-structure/EmployeeCards.test.tsx
+index 986a859..830915a 100644
+--- a/web/src/features/org-structure/EmployeeCards.test.tsx
++++ b/web/src/features/org-structure/EmployeeCards.test.tsx
+@@ -1,4 +1,5 @@
+-import { render } from "@testing-library/react";
++import { render, screen } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
+ import { describe, expect, it, vi } from "vitest";
+ import { EmployeeCards } from "./EmployeeCards";
+ import type { Employee } from "./orgStructureApi";
+@@ -65,3 +66,28 @@ describe("EmployeeCards order (AC-19)", () => {
+     ).toEqual(["Агафонов Олег", "Борисов Иван"]);
+   });
+ });
++
++describe("EmployeeCard actions menu (AC-18)", () => {
++  it("opens the menu on the first press and leaves keyboard focus on the card's actions button", async () => {
++    const actions = "Действия с сотрудником Яшин Пётр";
++    render(
++      <ul>
++        <EmployeeCards
++          employees={[employee("1", "Яшин Пётр")]}
++          headEmployeeId={null}
++          isAdmin
++          onAction={vi.fn()}
++        />
++      </ul>,
++    );
++
++    await userEvent
++      .setup()
++      .click(screen.getByRole("button", { name: actions }));
++
++    expect(
++      await screen.findByRole("menuitem", { name: /Править/ }),
++    ).toBeInTheDocument();
++    expect(screen.getByRole("button", { name: actions })).toHaveFocus();
++  });
++});
+diff --git a/web/src/features/org-structure/EmployeeForm.tsx b/web/src/features/org-structure/EmployeeForm.tsx
+index 04ac042..2bb70e4 100644
+--- a/web/src/features/org-structure/EmployeeForm.tsx
++++ b/web/src/features/org-structure/EmployeeForm.tsx
+@@ -1,6 +1,5 @@
+ import { Button, Form, Input, Space, Typography } from "antd";
+-import { useState } from "react";
+-import { showFieldErrors } from "../../app/apiErrors";
++import { useFormSubmit } from "../../app/useFormSubmit";
+ import { OrgUnitSelect } from "./OrgUnitSelect";
+ import type { EmployeeInput } from "./orgStructureApi";
+ 
+@@ -25,18 +24,7 @@ export function EmployeeForm({
+   onCancel,
+ }: EmployeeFormProps) {
+   const [form] = Form.useForm<EmployeeInput>();
+-  const [isSubmitting, setIsSubmitting] = useState(false);
+-
+-  async function submit(values: EmployeeInput) {
+-    setIsSubmitting(true);
+-    try {
+-      await onSubmit(values);
+-    } catch (error) {
+-      showFieldErrors(form, error);
+-    } finally {
+-      setIsSubmitting(false);
+-    }
+-  }
++  const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
+ 
+   return (
+     <Form
+diff --git a/web/src/features/org-structure/EmployeeModal.tsx b/web/src/features/org-structure/EmployeeModal.tsx
+index 3e7cf13..16b0495 100644
+--- a/web/src/features/org-structure/EmployeeModal.tsx
++++ b/web/src/features/org-structure/EmployeeModal.tsx
+@@ -1,9 +1,10 @@
+ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+ import { App, Modal, Skeleton, Space } from "antd";
+ import { api } from "../../api/client";
++import { ifMatchOf } from "../../api/ifMatch";
+ import { unwrap } from "../../api/unwrap";
+ import { ErrorAlert } from "../../app/ErrorAlert";
+-import { ifMatchOf } from "../users/usersApi";
++import { useEditBase } from "../../app/useEditBase";
+ import { EmployeeForm } from "./EmployeeForm";
+ import {
+   type Employee,
+@@ -92,7 +93,7 @@ function ChangedEmployee({
+ 
+ interface EmployeeEditorProps
+   extends Pick<EmployeeModalProps, "onClose" | "onSaved"> {
+-  /** The employee being changed and the version the change is based on; omitted when an employee is created. */
++  /** The employee being changed as the cache holds it now, with its version; omitted when an employee is created. */
+   existing?: { employee: Employee; version: number };
+   /** Unit a new employee starts in. */
+   orgUnitId?: string;
+@@ -100,16 +101,18 @@ interface EmployeeEditorProps
+ 
+ /**
+  * The form with its save: a change is refused when the version is stale, and the employee is reread whatever the outcome.
++ * The form keeps the employee it was opened with and takes the reread one only after such a refusal.
+  * Moving the head of a unit to another unit is confirmed first, because the server then leaves the unit without a head.
+  */
+ function EmployeeEditor({
+-  existing,
++  existing: latest,
+   orgUnitId,
+   onClose,
+   onSaved,
+ }: EmployeeEditorProps) {
+   const queryClient = useQueryClient();
+   const { message, modal } = App.useApp();
++  const { base: existing, noteSaveFailure } = useEditBase(latest);
+   const { data: units } = useQuery(orgUnitTreeQuery);
+   const headedUnit = units?.find(
+     (unit) =>
+@@ -128,13 +131,16 @@ function EmployeeEditor({
+               body: input,
+             })
+           : await api.POST("/api/v1/employees", { body: input }),
+-      ).data,
++      ),
+     onSuccess: async (saved) => {
+       await invalidateOrgStructure(queryClient);
+       message.success(existing ? "Изменения сохранены" : "Сотрудник создан");
+       onSaved(saved);
+     },
+-    onError: () => invalidateOrgStructure(queryClient),
++    onError: (error) => {
++      noteSaveFailure(error);
++      return invalidateOrgStructure(queryClient);
++    },
+   });
+ 
+   const confirmUnitLosesHead = (unitName: string) =>
+diff --git a/web/src/features/org-structure/MoveUnitModal.tsx b/web/src/features/org-structure/MoveUnitModal.tsx
+index b1fdaeb..7e8acf2 100644
+--- a/web/src/features/org-structure/MoveUnitModal.tsx
++++ b/web/src/features/org-structure/MoveUnitModal.tsx
+@@ -1,10 +1,10 @@
+ import { useMutation, useQueryClient } from "@tanstack/react-query";
+ import { App, Button, Form, Modal, Space } from "antd";
+ import { api } from "../../api/client";
++import { ifMatchOf } from "../../api/ifMatch";
+ import { unwrap } from "../../api/unwrap";
+ import { showFieldErrors } from "../../app/apiErrors";
+ import { ErrorAlert } from "../../app/ErrorAlert";
+-import { ifMatchOf } from "../users/usersApi";
+ import { OrgUnitSelect } from "./OrgUnitSelect";
+ import { invalidateOrgStructure, type OrgUnit } from "./orgStructureApi";
+ 
+@@ -35,7 +35,7 @@ export function MoveUnitModal({ unit, onClose }: MoveUnitModalProps) {
+           },
+           body: { parentId },
+         }),
+-      ).data,
++      ),
+     onSuccess: () => {
+       message.success("Подразделение перенесено");
+       onClose();
+diff --git a/web/src/features/org-structure/OrgStructurePage.test.tsx b/web/src/features/org-structure/OrgStructurePage.test.tsx
+new file mode 100644
+index 0000000..390e4e6
+--- /dev/null
++++ b/web/src/features/org-structure/OrgStructurePage.test.tsx
+@@ -0,0 +1,213 @@
++import { focusManager } from "@tanstack/react-query";
++import {
++  act,
++  fireEvent,
++  render,
++  screen,
++  waitFor,
++} from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { MemoryRouter } from "react-router";
++import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { SEARCH_DEBOUNCE_MS } from "../../app/useDebouncedValue";
++import { deferred, fakeApi, json } from "../../test/fakeApi";
++import { OrgStructurePage } from "./OrgStructurePage";
++import { employeesQueryKey } from "./orgStructureApi";
++import { SEARCH_MIN_LENGTH } from "./useEmployeeSearch";
++
++const SEARCH_LABEL = "Поиск по подразделениям и сотрудникам";
++const EMPLOYEES_ROUTE = "GET /api/v1/employees";
++
++function unit(id: string, name: string, parentId: string | null) {
++  return {
++    id,
++    name,
++    parentId,
++    headEmployeeId: null,
++    isActive: true,
++    version: 1,
++    headName: null,
++    employeeCount: 0,
++  };
++}
++
++const UNITS = [
++  unit("company", "Компания", null),
++  unit("sales", "Продажи", "company"),
++  unit("north", "Север", "sales"),
++  unit("support", "Поддержка", "company"),
++];
++
++function employee(id: string, fullName: string, orgUnitId: string) {
++  return {
++    id,
++    lastName: fullName,
++    firstName: "Иван",
++    middleName: null,
++    fullName,
++    email: null,
++    orgUnitId,
++    orgUnitName: "",
++    position: "Менеджер по продажам",
++  };
++}
++
++const MATCHED = employee("matched", "Найденов", "north");
++const OF_SUPPORT = employee("of-support", "Помогаев", "support");
++
++const page = (items: unknown[]) =>
++  json({ items, total: items.length, page: 1, pageSize: 200 });
++
++const hasParam = (request: Request, name: string) =>
++  new URL(request.url).searchParams.has(name);
++
++const unitListCalls = () =>
++  fakeApi.calls(EMPLOYEES_ROUTE).filter((call) => hasParam(call, "orgUnitId"));
++
++const searchCalls = () =>
++  fakeApi.calls(EMPLOYEES_ROUTE).filter((call) => hasParam(call, "q"));
++
++function serve(searchAnswer: () => Response | Promise<Response>) {
++  fakeApi.on("GET /api/v1/auth/me", () =>
++    json({ id: "account", email: "user@test.local", role: "User" }),
++  );
++  fakeApi.on("GET /api/v1/org-units/tree", () => json(UNITS));
++  fakeApi.on(EMPLOYEES_ROUTE, (request) =>
++    hasParam(request, "orgUnitId") ? page([OF_SUPPORT]) : searchAnswer(),
++  );
++}
++
++async function openPage() {
++  render(
++    <Providers>
++      <MemoryRouter>
++        <OrgStructurePage />
++      </MemoryRouter>
++    </Providers>,
++  );
++  return screen.findByLabelText(SEARCH_LABEL);
++}
++
++async function searchFor(text: string) {
++  const input = await openPage();
++  const user = userEvent.setup();
++  await user.type(input, text);
++  return user;
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++afterEach(() => {
++  vi.useRealTimers();
++});
++
++describe("search over the hierarchy (AC-17)", () => {
++  it("opens a unit that matches by name and has matched employees below only to its path, without reading all its employees", async () => {
++    serve(() => page([MATCHED]));
++
++    await searchFor("продаж");
++
++    expect(await screen.findByText(MATCHED.fullName)).toBeInTheDocument();
++    expect(searchCalls()).toHaveLength(1);
++    expect(unitListCalls()).toHaveLength(0);
++  });
++
++  it("reads the full employee list of a matched unit only when the user opens its card", async () => {
++    serve(() => page([]));
++    const user = await searchFor("поддерж");
++
++    await user.click(await screen.findByRole("button", { name: "Поддержка" }));
++
++    expect(await screen.findByText(OF_SUPPORT.fullName)).toBeInTheDocument();
++    expect(unitListCalls().map((call) => new URL(call.url).search)).toEqual([
++      expect.stringContaining("orgUnitId=support"),
++    ]);
++  });
++
++  it("keeps a card the user opened while the search was still running open when the late answer turns it into a path unit", async () => {
++    const answer = deferred<Response>();
++    serve(() => answer.promise);
++    const user = await searchFor("продаж");
++    await waitFor(() => expect(searchCalls()).toHaveLength(1));
++    const sales = await screen.findByRole("button", { name: "Продажи" });
++    expect(sales).toHaveAttribute("aria-expanded", "false");
++
++    await user.click(sales);
++    answer.resolve(page([MATCHED]));
++
++    expect(await screen.findByText(MATCHED.fullName)).toBeInTheDocument();
++    expect(screen.getByRole("button", { name: "Продажи" })).toHaveAttribute(
++      "aria-expanded",
++      "true",
++    );
++  });
++
++  it("lets the user close by hand a unit the search opened to its path, and the unit's matches go with it", async () => {
++    serve(() => page([MATCHED]));
++    const user = await searchFor("продаж");
++    await screen.findByText(MATCHED.fullName);
++
++    await user.click(screen.getByRole("button", { name: "Продажи" }));
++
++    await waitFor(() =>
++      expect(screen.queryByText(MATCHED.fullName)).not.toBeInTheDocument(),
++    );
++    expect(screen.getByRole("button", { name: "Продажи" })).toHaveAttribute(
++      "aria-expanded",
++      "false",
++    );
++  });
++
++  it("explains the two-character minimum instead of «nothing found» for a one-character text no unit matches, and sends nothing to the server", async () => {
++    serve(() => page([MATCHED]));
++    const input = await openPage();
++    vi.useFakeTimers();
++
++    fireEvent.change(input, { target: { value: "ф" } });
++    await act(() => vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS));
++
++    expect(
++      screen.getByText(new RegExp(`не менее ${SEARCH_MIN_LENGTH} символов`)),
++    ).toBeInTheDocument();
++    expect(screen.queryByText(/Ничего не найдено/)).not.toBeInTheDocument();
++    expect(searchCalls()).toHaveLength(0);
++    expect(queryClient.isFetching({ queryKey: employeesQueryKey })).toBe(0);
++  });
++
++  it("still says «nothing found» for a text of the minimum length that nothing matches", async () => {
++    serve(() => page([]));
++
++    await searchFor("фф");
++
++    expect(await screen.findByText(/Ничего не найдено/)).toBeInTheDocument();
++    expect(screen.queryByText(/символов/)).not.toBeInTheDocument();
++  });
++
++  it("does not reread the hierarchy, the search or the open units when the user returns to the browser tab", async () => {
++    serve(() => page([]));
++    const user = await searchFor("поддерж");
++    await user.click(await screen.findByRole("button", { name: "Поддержка" }));
++    await screen.findByText(OF_SUPPORT.fullName);
++    await waitFor(() => expect(searchCalls()).toHaveLength(1));
++    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
++
++    await act(async () => {
++      focusManager.setFocused(false);
++      focusManager.setFocused(true);
++    });
++
++    await waitFor(() =>
++      expect(
++        fakeApi.calls("GET /api/v1/auth/me"),
++        "the focus event must reach the cache: the account is reread on return to the tab",
++      ).toHaveLength(2),
++    );
++    expect(fakeApi.calls("GET /api/v1/org-units/tree")).toHaveLength(1);
++    expect(searchCalls()).toHaveLength(1);
++    expect(unitListCalls()).toHaveLength(1);
++  });
++});
+diff --git a/web/src/features/org-structure/OrgStructurePage.tsx b/web/src/features/org-structure/OrgStructurePage.tsx
+index a321d4c..096ba63 100644
+--- a/web/src/features/org-structure/OrgStructurePage.tsx
++++ b/web/src/features/org-structure/OrgStructurePage.tsx
+@@ -19,9 +19,12 @@ import type { UnitAction } from "./UnitCard";
+ import { UnitFormModal } from "./UnitFormModal";
+ import { UnitTree } from "./UnitTree";
+ import { useEmployeeLifecycle } from "./useEmployeeLifecycle";
++import { SEARCH_MIN_LENGTH } from "./useEmployeeSearch";
+ import { useUnitActivation } from "./useUnitActivation";
+ import { useUnitExpansion } from "./useUnitExpansion";
+ 
++const TOO_SHORT_NOTE = `Подразделений с таким названием нет. Чтобы найти сотрудника, введите не менее ${SEARCH_MIN_LENGTH} символов.`;
++
+ type PageDialog =
+   | { kind: "addUnit"; parentId: string | null }
+   | { kind: "addEmployee"; orgUnitId?: string }
+@@ -39,7 +42,7 @@ export function OrgStructurePage() {
+   const [searchParams, setSearchParams] = useSearchParams();
+   const { data: units, error, isPending, refetch } = useQuery(orgUnitTreeQuery);
+   const roots = useMemo(() => buildUnitTree(units ?? []), [units]);
+-  const { text, search, employeeSearch, openIds, setText, toggle, open } =
++  const { text, search, employeeSearch, openness, setText, toggle, open } =
+     useUnitExpansion(roots);
+   const [dialog, setDialog] = useState<PageDialog | null>(null);
+   const confirmActivation = useUnitActivation();
+@@ -135,7 +138,11 @@ export function OrgStructurePage() {
+           !employeeSearch.error ? (
+             <Empty
+               image={Empty.PRESENTED_IMAGE_SIMPLE}
+-              description="Ничего не найдено. Измените запрос."
++              description={
++                employeeSearch.isTooShort
++                  ? TOO_SHORT_NOTE
++                  : "Ничего не найдено. Измените запрос."
++              }
+             />
+           ) : units.length === 0 ? (
+             <Empty
+@@ -149,7 +156,7 @@ export function OrgStructurePage() {
+             <UnitTree
+               roots={roots}
+               view={{
+-                openIds,
++                openness,
+                 search,
+                 selectedId,
+                 isAdmin,
+diff --git a/web/src/features/org-structure/StatusTags.tsx b/web/src/features/org-structure/StatusTags.tsx
+index 8017f7a..38e4909 100644
+--- a/web/src/features/org-structure/StatusTags.tsx
++++ b/web/src/features/org-structure/StatusTags.tsx
+@@ -1,15 +1,11 @@
+ import { Tag } from "antd";
+ 
+-/** Names the unit state in words, since colour alone must not carry it. */
+-export function UnitStatusTag({ isActive }: { isActive: boolean }) {
+-  return isActive ? <Tag color="success">Активно</Tag> : <Tag>Неактивно</Tag>;
++/** Names the state of a deactivated unit in words, since colour alone must not carry it. */
++export function UnitStatusTag() {
++  return <Tag>Неактивно</Tag>;
+ }
+ 
+-/** Names the employment state in words, since colour alone must not carry it. */
+-export function EmployeeStatusTag({ isActive }: { isActive: boolean }) {
+-  return isActive ? (
+-    <Tag color="success">Работает</Tag>
+-  ) : (
+-    <Tag>Не работает</Tag>
+-  );
++/** Names the state of a dismissed employee in words, since colour alone must not carry it. */
++export function EmployeeStatusTag() {
++  return <Tag>Не работает</Tag>;
+ }
+diff --git a/web/src/features/org-structure/UnitCard.tsx b/web/src/features/org-structure/UnitCard.tsx
+index a4d96f3..72c39d4 100644
+--- a/web/src/features/org-structure/UnitCard.tsx
++++ b/web/src/features/org-structure/UnitCard.tsx
+@@ -13,14 +13,9 @@ import { theme as antdTheme, Button, Card, Dropdown, Flex } from "antd";
+ import { memo, useEffect, useRef } from "react";
+ import { Highlighted } from "./Highlighted";
+ import type { OrgUnit, OrgUnitTreeNode } from "./orgStructureApi";
++import type { UnitOpenness } from "./orgTree";
+ import { UnitStatusTag } from "./StatusTags";
+ 
+-/**
+- * Whether a unit lists its contents. "path" is a unit a search opened only to show the matches below it; "matches" is a
+- * unit that lists, besides its child units, only the employees the search found in it.
+- */
+-export type UnitOpenness = "closed" | "path" | "matches" | "open";
+-
+ /** What an administrator can do with a unit from its card. */
+ export type UnitAction =
+   | "addChild"
+@@ -39,7 +34,7 @@ interface UnitCardProps {
+   /** Lower-cased search text whose first occurrence in the name is highlighted; blank when not searching. */
+   needle: string;
+   isAdmin: boolean;
+-  onToggle: (unitId: string) => void;
++  onToggle: (unitId: string, isOpen: boolean) => void;
+   onAction: (action: UnitAction, unit: OrgUnit) => void;
+ }
+ 
+@@ -88,11 +83,11 @@ export const UnitCard = memo(function UnitCard({
+           aria-label={unit.name}
+           aria-expanded={isOpen}
+           icon={isOpen ? <DownOutlined /> : <RightOutlined />}
+-          onClick={() => onToggle(unit.id)}
++          onClick={() => onToggle(unit.id, !isOpen)}
+         >
+           <Highlighted text={unit.name} needle={needle} />
+         </Button>
+-        {!unit.isActive && <UnitStatusTag isActive={false} />}
++        {!unit.isActive && <UnitStatusTag />}
+         {isAdmin && (
+           <Dropdown
+             trigger={["click"]}
+diff --git a/web/src/features/org-structure/UnitFormModal.tsx b/web/src/features/org-structure/UnitFormModal.tsx
+index 2c529dd..69997ce 100644
+--- a/web/src/features/org-structure/UnitFormModal.tsx
++++ b/web/src/features/org-structure/UnitFormModal.tsx
+@@ -1,12 +1,12 @@
+ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+ import { App, Button, Form, Input, Modal, Space, Typography } from "antd";
+-import { useState } from "react";
+ import { api } from "../../api/client";
++import { ifMatchOf } from "../../api/ifMatch";
+ import { unwrap } from "../../api/unwrap";
+-import { showFieldErrors } from "../../app/apiErrors";
+ import { ErrorAlert } from "../../app/ErrorAlert";
++import { useEditBase } from "../../app/useEditBase";
++import { useFormSubmit } from "../../app/useFormSubmit";
+ import { EmployeePicker } from "../users/EmployeePicker";
+-import { ifMatchOf } from "../users/usersApi";
+ import { OrgUnitSelect } from "./OrgUnitSelect";
+ import {
+   employeeQuery,
+@@ -21,7 +21,7 @@ interface UnitFormValues {
+ }
+ 
+ interface UnitFormModalProps {
+-  /** Unit being edited; omitted when a unit is created. */
++  /** Unit being edited as the cache holds it now; omitted when a unit is created. */
+   unit?: OrgUnit;
+   /** Parent the unit being created starts under, or null for a root; ignored when editing. */
+   parentId?: string | null;
+@@ -33,15 +33,17 @@ interface UnitFormModalProps {
+ /**
+  * Dialog that creates a unit, under a parent or as a root, or edits the unit's own fields. Mount it only while it is
+  * shown, so every opening starts clean. Once a unit exists, its parent and status change through their own operations.
++ * The form keeps the unit it was opened with and takes the reread one only after a save is refused for a stale version.
+  */
+ export function UnitFormModal({
+-  unit,
++  unit: latest,
+   parentId = null,
+   onClose,
+   onSaved,
+ }: UnitFormModalProps) {
+   const queryClient = useQueryClient();
+   const { message } = App.useApp();
++  const { base: unit, noteSaveFailure } = useEditBase(latest);
+   const save = useMutation({
+     mutationFn: async (values: UnitFormValues) =>
+       unwrap(
+@@ -59,13 +61,16 @@ export function UnitFormModal({
+           : await api.POST("/api/v1/org-units", {
+               body: { name: values.name, parentId: values.parentId ?? null },
+             }),
+-      ).data,
++      ),
+     onSuccess: async (saved) => {
+       await invalidateOrgStructure(queryClient);
+       message.success(unit ? "Изменения сохранены" : "Подразделение создано");
+       onSaved(saved);
+     },
+-    onError: () => invalidateOrgStructure(queryClient),
++    onError: (error) => {
++      noteSaveFailure(error);
++      return invalidateOrgStructure(queryClient);
++    },
+   });
+ 
+   return (
+@@ -111,23 +116,12 @@ function UnitForm({
+   onCancel,
+ }: UnitFormProps) {
+   const [form] = Form.useForm<UnitFormValues>();
+-  const [isSubmitting, setIsSubmitting] = useState(false);
+   const headId = unit?.headEmployeeId ?? null;
+   const { data: head } = useQuery({
+     ...employeeQuery(headId ?? ""),
+     enabled: headId !== null,
+   });
+-
+-  async function submit(values: UnitFormValues) {
+-    setIsSubmitting(true);
+-    try {
+-      await onSubmit(values);
+-    } catch (error) {
+-      showFieldErrors(form, error);
+-    } finally {
+-      setIsSubmitting(false);
+-    }
+-  }
++  const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
+ 
+   return (
+     <Form
+diff --git a/web/src/features/org-structure/UnitTree.tsx b/web/src/features/org-structure/UnitTree.tsx
+index 4cde0d5..fb472f2 100644
+--- a/web/src/features/org-structure/UnitTree.tsx
++++ b/web/src/features/org-structure/UnitTree.tsx
+@@ -2,18 +2,19 @@ import { Grid } from "antd";
+ import type { EmployeeAction } from "./EmployeeCard";
+ import { EmployeeCards } from "./EmployeeCards";
+ import type { Employee, OrgUnit } from "./orgStructureApi";
+-import type { UnitNode, UnitSearch } from "./orgTree";
+-import { type UnitAction, UnitCard, type UnitOpenness } from "./UnitCard";
++import type { UnitNode, UnitOpenness, UnitSearch } from "./orgTree";
++import { type UnitAction, UnitCard } from "./UnitCard";
+ import { UnitEmployees } from "./UnitEmployees";
+ 
+ /** What every card of the hierarchy needs to know about the screen it is on. */
+ export interface UnitTreeView {
+-  openIds: ReadonlySet<string>;
++  /** How much each open unit lists; a unit absent from the map is closed. */
++  openness: ReadonlyMap<string, UnitOpenness>;
+   /** The search in progress; it narrows the units shown, and null means every unit is shown. */
+   search: UnitSearch | null;
+   selectedId: string | null;
+   isAdmin: boolean;
+-  onToggle: (unitId: string) => void;
++  onToggle: (unitId: string, isOpen: boolean) => void;
+   onAction: (action: UnitAction, unit: OrgUnit) => void;
+   onEmployeeAction: (action: EmployeeAction, employee: Employee) => void;
+ }
+@@ -25,24 +26,12 @@ function visibleNodes(nodes: readonly UnitNode[], view: UnitTreeView) {
+     : nodes;
+ }
+ 
+-function opennessOf(unit: OrgUnit, view: UnitTreeView): UnitOpenness {
+-  if (!view.openIds.has(unit.id)) return "closed";
+-  const { search } = view;
+-  if (search?.employeesByUnit.has(unit.id)) return "matches";
+-  const isOnlyOnPath =
+-    search?.pathIds.has(unit.id) &&
+-    !unit.name.toLocaleLowerCase("ru").includes(search.needle);
+-  return isOnlyOnPath ? "path" : "open";
+-}
+-
+ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
+   const { unit } = node;
+-  const openness = opennessOf(unit, view);
++  const openness = view.openness.get(unit.id) ?? "closed";
+   const children = visibleNodes(node.children, view);
+   const matchedEmployees =
+-    openness === "matches"
+-      ? view.search?.employeesByUnit.get(unit.id)
+-      : undefined;
++    openness === "path" ? view.search?.employeesByUnit.get(unit.id) : undefined;
+ 
+   return (
+     <li className="org-tree__node">
+diff --git a/web/src/features/org-structure/orgStructureApi.ts b/web/src/features/org-structure/orgStructureApi.ts
+index cc68a2b..a2241d3 100644
+--- a/web/src/features/org-structure/orgStructureApi.ts
++++ b/web/src/features/org-structure/orgStructureApi.ts
+@@ -24,16 +24,24 @@ export const orgUnitsQueryKey = ["org-units"] as const;
+ /** Cache key prefix of every employee query, the employee picker of the account screens included. */
+ export const employeesQueryKey = ["employees"] as const;
+ 
++/**
++ * Reread policy of the unit and employee lists: a change made here rereads them explicitly, a list shown again within a
++ * minute is not requested again, and returning to the browser tab does not reread them, which would repeat the request
++ * of every open unit. A save based on an older list is refused by its version.
++ */
++const LIST_REREAD = { staleTime: 60_000, refetchOnWindowFocus: false } as const;
++
+ /** Every unit visible to the signed-in user as a flat list; the tree is assembled from the parent links. */
+ export const orgUnitTreeQuery = queryOptions({
+   queryKey: [...orgUnitsQueryKey, "tree"],
+-  queryFn: async () => unwrap(await api.GET("/api/v1/org-units/tree")).data,
++  queryFn: async () => unwrap(await api.GET("/api/v1/org-units/tree")),
++  ...LIST_REREAD,
+ });
+ 
+-/** Largest page the employee list accepts. */
++/** Largest page the employee list accepts, as `ListQueries.MaxPageSize` in the API; the OpenAPI document does not carry the limit. */
+ const EMPLOYEE_PAGE_SIZE_MAX = 200;
+ 
+-/** Longest search text the employee list accepts. */
++/** Longest search text the employee list accepts, as `TextSearch.MaxLength` in the API; the OpenAPI document does not carry the limit. */
+ export const SEARCH_TEXT_MAX_LENGTH = 200;
+ 
+ /** The first page of the employees whose name or position match the text, in list order, with the number of matches in all. */
+@@ -45,7 +53,8 @@ export function employeeSearchQuery(text: string) {
+         await api.GET("/api/v1/employees", {
+           params: { query: { q: text, pageSize: EMPLOYEE_PAGE_SIZE_MAX } },
+         }),
+-      ).data,
++      ),
++    ...LIST_REREAD,
+   });
+ }
+ 
+@@ -61,7 +70,7 @@ export function unitEmployeesQuery(orgUnitId: string) {
+               query: { orgUnitId, page, pageSize: EMPLOYEE_PAGE_SIZE_MAX },
+             },
+           }),
+-        ).data;
++        );
+       const first = await readPage(1);
+       const lastPage = Math.ceil(first.total / first.pageSize);
+       const rest = await Promise.all(
+@@ -71,17 +80,19 @@ export function unitEmployeesQuery(orgUnitId: string) {
+       );
+       return [first, ...rest].flatMap(({ items }) => items);
+     },
++    ...LIST_REREAD,
+   });
+ }
+ 
+-/** One employee by id, in the projection the signed-in user's role allows. */
++/** One employee by id, in the projection the signed-in user's role allows; dropped once nothing shows it, so an edit dialog never opens on an older version. */
+ export function employeeQuery(id: string) {
+   return queryOptions({
+     queryKey: [...employeesQueryKey, "detail", id],
+     queryFn: async () =>
+       unwrap(
+         await api.GET("/api/v1/employees/{id}", { params: { path: { id } } }),
+-      ).data,
++      ),
++    gcTime: 0,
+   });
+ }
+ 
+@@ -91,7 +102,7 @@ export async function fetchEmployeeImpact(id: string) {
+     await api.GET("/api/v1/employees/{id}/impact", {
+       params: { path: { id } },
+     }),
+-  ).data;
++  );
+ }
+ 
+ /** Rereads every unit and employee query: a change to one reshapes the other's lists, names and counts. */
+diff --git a/web/src/features/org-structure/orgTree.test.ts b/web/src/features/org-structure/orgTree.test.ts
+index 935a0c1..2b73669 100644
+--- a/web/src/features/org-structure/orgTree.test.ts
++++ b/web/src/features/org-structure/orgTree.test.ts
+@@ -1,6 +1,11 @@
+ import { describe, expect, it } from "vitest";
+ import type { Employee, OrgUnit, OrgUnitTreeNode } from "./orgStructureApi";
+-import { ancestorIds, buildUnitTree, searchUnitTree } from "./orgTree";
++import {
++  ancestorIds,
++  buildUnitTree,
++  opennessByUnit,
++  searchUnitTree,
++} from "./orgTree";
+ 
+ function unit(
+   id: string,
+@@ -104,3 +109,50 @@ describe("searchUnitTree (AC-17)", () => {
+     expect(searchUnitTree(roots, "ничего", []).visibleIds.size).toBe(0);
+   });
+ });
++
++describe("opennessByUnit (AC-17)", () => {
++  const roots = buildUnitTree([company, sales, north, support]);
++  const search = searchUnitTree(roots, "иванов", [employeeIn("north")]);
++
++  it("lists the units the user opened outside a search and ignores choices made during an earlier one", () => {
++    const openness = opennessByUnit(
++      null,
++      new Set(["sales"]),
++      new Map([["support", true]]),
++    );
++
++    expect(openness).toEqual(new Map([["sales", "open"]]));
++  });
++
++  it("marks only the path to the matches during a search, so what the user opened before it stays closed", () => {
++    const openness = opennessByUnit(search, new Set(["support"]), new Map());
++
++    expect(openness).toEqual(
++      new Map([
++        ["company", "path"],
++        ["sales", "path"],
++        ["north", "path"],
++      ]),
++    );
++  });
++
++  it("lets the user's choice win over the path, both ways, and opens a unit that is off the path", () => {
++    const openness = opennessByUnit(
++      search,
++      new Set(),
++      new Map([
++        ["sales", false],
++        ["north", true],
++        ["support", true],
++      ]),
++    );
++
++    expect(openness).toEqual(
++      new Map([
++        ["company", "path"],
++        ["north", "open"],
++        ["support", "open"],
++      ]),
++    );
++  });
++});
+diff --git a/web/src/features/org-structure/orgTree.ts b/web/src/features/org-structure/orgTree.ts
+index 9255aa2..180fadd 100644
+--- a/web/src/features/org-structure/orgTree.ts
++++ b/web/src/features/org-structure/orgTree.ts
+@@ -6,6 +6,12 @@ export interface UnitNode {
+   children: UnitNode[];
+ }
+ 
++/**
++ * How much of a unit its card lists. "path" is a unit a search opened only to lead to the matches below it: its child
++ * units and the employees the search found in it. "open" is a unit the user opened, which also lists all its employees.
++ */
++export type UnitOpenness = "closed" | "path" | "open";
++
+ /** What a search shows: the matching units and the units of the matched employees, the units above them and everything below a unit match. */
+ export interface UnitSearch {
+   /** The search text, trimmed and lower-cased. */
+@@ -71,6 +77,28 @@ export function searchUnitTree(
+   return { needle, visibleIds, pathIds, employeesByUnit };
+ }
+ 
++/**
++ * The units that list contents. Outside a search these are the units the user opened; during one, the units on the path
++ * to a match, each overridden by the user's choice to open it (true) or close it (false). Other units are closed.
++ */
++export function opennessByUnit(
++  search: UnitSearch | null,
++  browsedIds: ReadonlySet<string>,
++  choices: ReadonlyMap<string, boolean>,
++): ReadonlyMap<string, UnitOpenness> {
++  const openness = new Map<string, UnitOpenness>();
++  if (!search) {
++    for (const id of browsedIds) openness.set(id, "open");
++    return openness;
++  }
++  for (const id of search.pathIds) openness.set(id, "path");
++  for (const [id, isOpen] of choices) {
++    if (isOpen) openness.set(id, "open");
++    else openness.delete(id);
++  }
++  return openness;
++}
++
+ function indexById(units: readonly OrgUnit[]): Map<string, OrgUnit> {
+   return new Map(units.map((unit) => [unit.id, unit]));
+ }
+diff --git a/web/src/features/org-structure/useEmployeeLifecycle.tsx b/web/src/features/org-structure/useEmployeeLifecycle.tsx
+index 69ea5e2..835a556 100644
+--- a/web/src/features/org-structure/useEmployeeLifecycle.tsx
++++ b/web/src/features/org-structure/useEmployeeLifecycle.tsx
+@@ -2,9 +2,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
+ import { App, Typography } from "antd";
+ import { type ReactNode, useCallback } from "react";
+ import { api } from "../../api/client";
++import { ifMatchOf } from "../../api/ifMatch";
+ import { unwrap } from "../../api/unwrap";
+ import { describeApiError } from "../../app/apiErrors";
+-import { ifMatchOf, usersQueryKey } from "../users/usersApi";
++import { usersQueryKey } from "../users/usersApi";
+ import type { EmployeeAction } from "./EmployeeCard";
+ import { EmployeeImpactList } from "./EmployeeImpactList";
+ import {
+diff --git a/web/src/features/org-structure/useEmployeeSearch.ts b/web/src/features/org-structure/useEmployeeSearch.ts
+index 4df00e5..84828b6 100644
+--- a/web/src/features/org-structure/useEmployeeSearch.ts
++++ b/web/src/features/org-structure/useEmployeeSearch.ts
+@@ -1,9 +1,9 @@
+ import { keepPreviousData, useQuery } from "@tanstack/react-query";
+-import { useEffect, useState } from "react";
++import { useDebouncedValue } from "../../app/useDebouncedValue";
+ import { type Employee, employeeSearchQuery } from "./orgStructureApi";
+ 
+-const SEARCH_DEBOUNCE_MS = 300;
+-const SEARCH_MIN_LENGTH = 2;
++/** Shortest text that is looked up among employees; a unit name is searched from the first character. */
++export const SEARCH_MIN_LENGTH = 2;
+ const NO_EMPLOYEES: readonly Employee[] = [];
+ 
+ /** The employees a search text matches on the server. */
+@@ -14,26 +14,19 @@ export interface EmployeeSearch {
+   total: number;
+   /** Whether the answer for the current text is still to come. */
+   isWaiting: boolean;
++  /** Whether there is a text, but too short to look employees up, so none can be listed for it. */
++  isTooShort: boolean;
+   error: Error | null;
+   retry: () => void;
+ }
+ 
+-function useDebouncedValue<TValue>(value: TValue, delayMs: number): TValue {
+-  const [debounced, setDebounced] = useState(value);
+-  useEffect(() => {
+-    const timer = setTimeout(() => setDebounced(value), delayMs);
+-    return () => clearTimeout(timer);
+-  }, [value, delayMs]);
+-  return debounced;
+-}
+-
+ /**
+  * Looks employees up by the typed text once the typing pauses and the text is long enough to be worth a request; a
+  * shorter text finds nobody. The matches of the previous text stay until the next answer arrives.
+  */
+ export function useEmployeeSearch(text: string): EmployeeSearch {
+   const typed = text.trim();
+-  const settled = useDebouncedValue(typed, SEARCH_DEBOUNCE_MS);
++  const settled = useDebouncedValue(typed);
+   const { data, error, isFetching, refetch } = useQuery({
+     ...employeeSearchQuery(settled),
+     enabled: settled.length >= SEARCH_MIN_LENGTH,
+@@ -46,6 +39,7 @@ export function useEmployeeSearch(text: string): EmployeeSearch {
+     employees: found?.items ?? NO_EMPLOYEES,
+     total: found?.total ?? 0,
+     isWaiting: isSearching && (settled !== typed || isFetching),
++    isTooShort: typed.length > 0 && !isSearching,
+     error: isSearching ? error : null,
+     retry: () => void refetch(),
+   };
+diff --git a/web/src/features/org-structure/useUnitActivation.ts b/web/src/features/org-structure/useUnitActivation.ts
+index 686f3f2..001ac64 100644
+--- a/web/src/features/org-structure/useUnitActivation.ts
++++ b/web/src/features/org-structure/useUnitActivation.ts
+@@ -2,15 +2,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
+ import { App } from "antd";
+ import { useCallback } from "react";
+ import { api } from "../../api/client";
++import { ifMatchOf } from "../../api/ifMatch";
+ import { unwrap } from "../../api/unwrap";
+ import { describeApiError } from "../../app/apiErrors";
+-import { ifMatchOf } from "../users/usersApi";
+ import { invalidateOrgStructure, type OrgUnit } from "./orgStructureApi";
+ 
+ /**
+  * Returns the action that asks for confirmation, then deactivates the given unit or activates it again.
+  * A refusal is explained in a dialog that stays until dismissed, since the reason is long and says what to do first.
+  * The queries are reread whatever the outcome, so a stale version shows the current state.
++ * The confirmation handlers return nothing: a toast is a thenable that settles when it closes, and returning it would
++ * keep the dialog open, with a busy confirm button, for as long as the toast is shown.
+  */
+ export function useUnitActivation() {
+   const { modal, message } = App.useApp();
+@@ -25,7 +27,7 @@ export function useUnitActivation() {
+         unit.isActive
+           ? await api.POST("/api/v1/org-units/{id}/deactivate", { params })
+           : await api.POST("/api/v1/org-units/{id}/activate", { params }),
+-      ).data;
++      );
+     },
+     onSettled: () => invalidateOrgStructure(queryClient),
+   });
+@@ -42,8 +44,6 @@ export function useUnitActivation() {
+         okText: unit.isActive ? "Деактивировать" : "Активировать",
+         okButtonProps: { danger: unit.isActive },
+         cancelText: "Отмена",
+-        // The handlers return nothing: a toast is a thenable that settles when it closes, and returning it
+-        // would keep this dialog open, with a busy confirm button, for as long as the toast is shown.
+         onOk: () =>
+           change(unit).then(
+             () => {
+diff --git a/web/src/features/org-structure/useUnitExpansion.ts b/web/src/features/org-structure/useUnitExpansion.ts
+index 6e4ed98..372689a 100644
+--- a/web/src/features/org-structure/useUnitExpansion.ts
++++ b/web/src/features/org-structure/useUnitExpansion.ts
+@@ -1,13 +1,19 @@
+ import { useCallback, useMemo, useState } from "react";
+-import { searchUnitTree, type UnitNode, type UnitSearch } from "./orgTree";
++import {
++  opennessByUnit,
++  searchUnitTree,
++  type UnitNode,
++  type UnitOpenness,
++  type UnitSearch,
++} from "./orgTree";
+ import { type EmployeeSearch, useEmployeeSearch } from "./useEmployeeSearch";
+ 
+ interface ExpansionState {
+   text: string;
+   /** Units the user opened while not searching. */
+   browsed: ReadonlySet<string>;
+-  /** Units the user flipped, relative to the search's own openings, since the search text last changed. */
+-  flipped: ReadonlySet<string>;
++  /** Units the user opened (true) or closed (false) since the search text last changed, whatever the search opened itself. */
++  chosen: ReadonlyMap<string, boolean>;
+ }
+ 
+ /** Which units are open and what the search shows; clearing the search brings back the units that were open before it. */
+@@ -17,16 +23,23 @@ export interface UnitExpansion {
+   search: UnitSearch | null;
+   /** The server side of the search, whose matches `search` has merged in. */
+   employeeSearch: EmployeeSearch;
+-  openIds: ReadonlySet<string>;
++  /** How much each open unit lists; a unit absent from the map is closed. */
++  openness: ReadonlyMap<string, UnitOpenness>;
+   setText: (text: string) => void;
+-  toggle: (unitId: string) => void;
++  /** Opens or closes a unit; the choice is absolute, so a search answer arriving later cannot reverse it. */
++  toggle: (unitId: string, isOpen: boolean) => void;
+   /** Opens the given units outside of a search. */
+   open: (unitIds: readonly string[]) => void;
+ }
+ 
+-function flip(ids: ReadonlySet<string>, flippedIds: Iterable<string>) {
++function withMembership(
++  ids: ReadonlySet<string>,
++  id: string,
++  isMember: boolean,
++) {
+   const next = new Set(ids);
+-  for (const id of flippedIds) if (!next.delete(id)) next.add(id);
++  if (isMember) next.add(id);
++  else next.delete(id);
+   return next;
+ }
+ 
+@@ -35,7 +48,7 @@ export function useUnitExpansion(roots: readonly UnitNode[]): UnitExpansion {
+   const [state, setState] = useState<ExpansionState>({
+     text: "",
+     browsed: new Set(),
+-    flipped: new Set(),
++    chosen: new Map(),
+   });
+   const { text } = state;
+   const employeeSearch = useEmployeeSearch(text);
+@@ -44,9 +57,9 @@ export function useUnitExpansion(roots: readonly UnitNode[]): UnitExpansion {
+     () => (text.trim() === "" ? null : searchUnitTree(roots, text, employees)),
+     [roots, text, employees],
+   );
+-  const openIds = useMemo(
+-    () => (search ? flip(search.pathIds, state.flipped) : state.browsed),
+-    [search, state.flipped, state.browsed],
++  const openness = useMemo(
++    () => opennessByUnit(search, state.browsed, state.chosen),
++    [search, state.browsed, state.chosen],
+   );
+ 
+   const setText = useCallback(
+@@ -54,16 +67,22 @@ export function useUnitExpansion(roots: readonly UnitNode[]): UnitExpansion {
+       setState((previous) => ({
+         ...previous,
+         text: next,
+-        flipped: new Set(),
++        chosen: new Map(),
+       })),
+     [],
+   );
+   const toggle = useCallback(
+-    (unitId: string) =>
++    (unitId: string, isOpen: boolean) =>
+       setState((previous) =>
+         previous.text.trim() === ""
+-          ? { ...previous, browsed: flip(previous.browsed, [unitId]) }
+-          : { ...previous, flipped: flip(previous.flipped, [unitId]) },
++          ? {
++              ...previous,
++              browsed: withMembership(previous.browsed, unitId, isOpen),
++            }
++          : {
++              ...previous,
++              chosen: new Map(previous.chosen).set(unitId, isOpen),
++            },
+       ),
+     [],
+   );
+@@ -76,5 +95,5 @@ export function useUnitExpansion(roots: readonly UnitNode[]): UnitExpansion {
+     [],
+   );
+ 
+-  return { text, search, employeeSearch, openIds, setText, toggle, open };
++  return { text, search, employeeSearch, openness, setText, toggle, open };
+ }
+diff --git a/web/src/features/users/EmployeePicker.tsx b/web/src/features/users/EmployeePicker.tsx
+index 8c5239c..4a0c2e2 100644
+--- a/web/src/features/users/EmployeePicker.tsx
++++ b/web/src/features/users/EmployeePicker.tsx
+@@ -1,11 +1,12 @@
+ import { keepPreviousData, useQuery } from "@tanstack/react-query";
+ import { Flex, Select, Typography } from "antd";
+-import { useEffect, useState } from "react";
++import { useState } from "react";
+ import { api } from "../../api/client";
+ import { unwrap } from "../../api/unwrap";
+ import { describeApiError } from "../../app/apiErrors";
++import { useDebouncedValue } from "../../app/useDebouncedValue";
++import { employeesQueryKey } from "../org-structure/orgStructureApi";
+ 
+-const SEARCH_DEBOUNCE_MS = 300;
+ const PICKER_PAGE_SIZE = 20;
+ 
+ interface EmployeeOption {
+@@ -27,15 +28,6 @@ interface EmployeePickerProps {
+   orgUnitId?: string;
+ }
+ 
+-function useDebouncedValue<TValue>(value: TValue, delayMs: number): TValue {
+-  const [debounced, setDebounced] = useState(value);
+-  useEffect(() => {
+-    const timer = setTimeout(() => setDebounced(value), delayMs);
+-    return () => clearTimeout(timer);
+-  }, [value, delayMs]);
+-  return debounced;
+-}
+-
+ /** Remote-search select of working employees, all of them or those of one unit, showing each one's unit and position so namesakes can be told apart. */
+ export function EmployeePicker({
+   id,
+@@ -45,9 +37,9 @@ export function EmployeePicker({
+   orgUnitId,
+ }: EmployeePickerProps) {
+   const [search, setSearch] = useState("");
+-  const text = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
++  const text = useDebouncedValue(search.trim());
+   const { data, error, isFetching } = useQuery({
+-    queryKey: ["employees", "picker", orgUnitId ?? null, text],
++    queryKey: [...employeesQueryKey, "picker", orgUnitId ?? null, text],
+     queryFn: async () =>
+       unwrap(
+         await api.GET("/api/v1/employees", {
+@@ -60,7 +52,7 @@ export function EmployeePicker({
+             },
+           },
+         }),
+-      ).data,
++      ),
+     placeholderData: keepPreviousData,
+   });
+   const found: EmployeeOption[] = (data?.items ?? []).map((employee) => ({
+diff --git a/web/src/features/users/ResetPasswordModal.tsx b/web/src/features/users/ResetPasswordModal.tsx
+index 1b54a31..fa6d0a2 100644
+--- a/web/src/features/users/ResetPasswordModal.tsx
++++ b/web/src/features/users/ResetPasswordModal.tsx
+@@ -1,11 +1,12 @@
+ import { useMutation, useQueryClient } from "@tanstack/react-query";
+ import { App, Button, Form, Input, Modal, Space, Typography } from "antd";
+ import { api } from "../../api/client";
++import { ifMatchOf } from "../../api/ifMatch";
+ import { unwrap } from "../../api/unwrap";
+ import { showFieldErrors } from "../../app/apiErrors";
+ import { ErrorAlert } from "../../app/ErrorAlert";
+ import { PASSWORD_HINT } from "../auth/passwordPolicy";
+-import { ifMatchOf, type UserResponse, usersQueryKey } from "./usersApi";
++import { type UserResponse, usersQueryKey } from "./usersApi";
+ 
+ interface ResetPasswordValues {
+   newPassword: string;
+@@ -45,7 +46,7 @@ function ResetPasswordForm({
+           },
+           body: { newPassword },
+         }),
+-      ).data,
++      ),
+     onSuccess: () => {
+       message.success("Пароль сброшен");
+       onDone();
+diff --git a/web/src/features/users/UserForm.tsx b/web/src/features/users/UserForm.tsx
+index dd0ae80..74bbdf1 100644
+--- a/web/src/features/users/UserForm.tsx
++++ b/web/src/features/users/UserForm.tsx
+@@ -1,7 +1,6 @@
+ import { Button, Form, Input, Select, Space } from "antd";
+-import { useState } from "react";
+-import { showFieldErrors } from "../../app/apiErrors";
+ import type { UserRole } from "../../app/featureContract";
++import { useFormSubmit } from "../../app/useFormSubmit";
+ import { PASSWORD_HINT } from "../auth/passwordPolicy";
+ import { EmployeePicker } from "./EmployeePicker";
+ import { ROLE_OPTIONS } from "./roles";
+@@ -48,18 +47,9 @@ export function UserForm({
+   onCancel,
+ }: UserFormProps) {
+   const [form] = Form.useForm<UserFormValues>();
+-  const [isSubmitting, setIsSubmitting] = useState(false);
+-
+-  async function submit(values: UserFormValues) {
+-    setIsSubmitting(true);
+-    try {
+-      await onSubmit({ ...values, employeeId: values.employeeId ?? null });
+-    } catch (error) {
+-      showFieldErrors(form, error);
+-    } finally {
+-      setIsSubmitting(false);
+-    }
+-  }
++  const { isSubmitting, submit } = useFormSubmit(form, (values) =>
++    onSubmit({ ...values, employeeId: values.employeeId ?? null }),
++  );
+ 
+   return (
+     <Form
+diff --git a/web/src/features/users/UserModal.tsx b/web/src/features/users/UserModal.tsx
+index 0ae5366..1047e51 100644
+--- a/web/src/features/users/UserModal.tsx
++++ b/web/src/features/users/UserModal.tsx
+@@ -2,16 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+ import { App, Modal, Skeleton, Space } from "antd";
+ import { ApiError } from "../../api/ApiError";
+ import { api } from "../../api/client";
++import { ifMatchOf } from "../../api/ifMatch";
+ import { unwrap } from "../../api/unwrap";
+ import { ErrorAlert } from "../../app/ErrorAlert";
++import { useEditBase } from "../../app/useEditBase";
+ import { invalidateOrgStructure } from "../org-structure/orgStructureApi";
+ import { UserForm, type UserInput } from "./UserForm";
+-import {
+-  ifMatchOf,
+-  type UserResponse,
+-  userQuery,
+-  usersQueryKey,
+-} from "./usersApi";
++import { type UserResponse, userQuery, usersQueryKey } from "./usersApi";
+ 
+ interface UserModalProps {
+   /** Account to change; omitted when an account is created. */
+@@ -71,17 +68,19 @@ function isShownUnderField(error: unknown): boolean {
+ }
+ 
+ interface UserEditorProps extends Pick<UserModalProps, "onClose"> {
+-  /** The account being changed, with the version the change is based on; omitted when an account is created. */
++  /** The account being changed as the cache holds it now; omitted when an account is created. */
+   existing?: UserResponse;
+ }
+ 
+ /**
+  * The form with its save: a change is refused when the version is stale, and the accounts are reread whatever the outcome.
++ * The form keeps the account it was opened with and takes the reread one only after such a refusal.
+  * The employee cards show the account e-mail, so the org structure is reread too.
+  */
+-function UserEditor({ existing, onClose }: UserEditorProps) {
++function UserEditor({ existing: latest, onClose }: UserEditorProps) {
+   const queryClient = useQueryClient();
+   const { message } = App.useApp();
++  const { base: existing, noteSaveFailure } = useEditBase(latest);
+   const save = useMutation({
+     mutationFn: async ({ password, ...account }: UserInput) =>
+       unwrap(
+@@ -96,11 +95,12 @@ function UserEditor({ existing, onClose }: UserEditorProps) {
+           : await api.POST("/api/v1/users", {
+               body: { ...account, password: password ?? "" },
+             }),
+-      ).data,
++      ),
+     onSuccess: () => {
+       message.success(existing ? "Изменения сохранены" : "Пользователь создан");
+       onClose();
+     },
++    onError: noteSaveFailure,
+     onSettled: () =>
+       Promise.all([
+         queryClient.invalidateQueries({ queryKey: usersQueryKey }),
+diff --git a/web/src/features/users/useBlockUser.ts b/web/src/features/users/useBlockUser.ts
+index cdf0b7d..d747fa8 100644
+--- a/web/src/features/users/useBlockUser.ts
++++ b/web/src/features/users/useBlockUser.ts
+@@ -1,13 +1,16 @@
+ import { useMutation, useQueryClient } from "@tanstack/react-query";
+ import { App } from "antd";
+ import { api } from "../../api/client";
++import { ifMatchOf } from "../../api/ifMatch";
+ import { unwrap } from "../../api/unwrap";
+ import { describeApiError } from "../../app/apiErrors";
+-import { ifMatchOf, type UserResponse, usersQueryKey } from "./usersApi";
++import { type UserResponse, usersQueryKey } from "./usersApi";
+ 
+ /**
+  * Returns the action that asks for confirmation, then blocks the given account or lifts its block.
+  * The accounts are reread whatever the outcome, so a stale version shows the current state.
++ * The confirmation handlers return nothing: a toast is a thenable that settles when it closes, and returning it would
++ * keep the dialog open, with a busy confirm button, for as long as the toast is shown.
+  */
+ export function useBlockUser() {
+   const { modal, message } = App.useApp();
+@@ -22,7 +25,7 @@ export function useBlockUser() {
+         user.isBlocked
+           ? await api.POST("/api/v1/users/{id}/unblock", { params })
+           : await api.POST("/api/v1/users/{id}/block", { params }),
+-      ).data;
++      );
+     },
+     onSettled: () => queryClient.invalidateQueries({ queryKey: usersQueryKey }),
+   });
+@@ -38,8 +41,6 @@ export function useBlockUser() {
+       okText: user.isBlocked ? "Разблокировать" : "Заблокировать",
+       okButtonProps: { danger: !user.isBlocked },
+       cancelText: "Отмена",
+-      // The handlers return nothing: a toast is a thenable that settles when it closes, and returning it
+-      // would keep this dialog open, with a busy confirm button, for as long as the toast is shown.
+       onOk: () =>
+         change.mutateAsync(user).then(
+           () => {
+diff --git a/web/src/features/users/usersApi.ts b/web/src/features/users/usersApi.ts
+index e0b4914..30f6659 100644
+--- a/web/src/features/users/usersApi.ts
++++ b/web/src/features/users/usersApi.ts
+@@ -24,8 +24,7 @@ export function userListQuery(params: UserListParams) {
+   return queryOptions({
+     queryKey: [...usersQueryKey, "list", params],
+     queryFn: async () =>
+-      unwrap(await api.GET("/api/v1/users", { params: { query: params } }))
+-        .data,
++      unwrap(await api.GET("/api/v1/users", { params: { query: params } })),
+     placeholderData: keepPreviousData,
+   });
+ }
+@@ -35,13 +34,7 @@ export function userQuery(id: string) {
+   return queryOptions({
+     queryKey: [...usersQueryKey, "detail", id],
+     queryFn: async () =>
+-      unwrap(await api.GET("/api/v1/users/{id}", { params: { path: { id } } }))
+-        .data,
++      unwrap(await api.GET("/api/v1/users/{id}", { params: { path: { id } } })),
+     gcTime: 0,
+   });
+ }
+-
+-/** The `If-Match` value for a version: the server issues the entity tag of an account as its quoted version, and list rows carry only the version. */
+-export function ifMatchOf(version: number): string {
+-  return `"${version}"`;
+-}
+diff --git a/web/src/styles.css b/web/src/styles.css
+index 17328d1..4561820 100644
+--- a/web/src/styles.css
++++ b/web/src/styles.css
+@@ -34,6 +34,40 @@ body {
+   margin: 0;
+ }
+ 
++/* biome-ignore-start lint/complexity/noImportantStyles: antd draws its own focus ring, with a smaller offset or none
++   on fields, and its loading shimmer from selectors of higher specificity; a theme token cannot reach them. */
++
++/* Keyboard focus ring: primary on light surfaces, accent on the dark header. */
++:focus-visible {
++  outline: var(--ant-line-width-focus) solid var(--ant-color-primary-border) !important;
++  outline-offset: var(--ant-focus-ring-offset) !important;
++}
++
++.ant-layout-header :focus-visible {
++  outline-color: var(--ant-color-accent) !important;
++}
++
++/* The focused part of a compound field is its inner input; the ring goes around the whole field instead. */
++.ant-input-affix-wrapper input:focus-visible,
++.ant-select input:focus-visible {
++  outline: none !important;
++}
++
++.ant-input-affix-wrapper:has(input:focus-visible),
++.ant-select:has(input:focus-visible) {
++  outline: var(--ant-line-width-focus) solid var(--ant-color-primary-border);
++  outline-offset: var(--ant-focus-ring-offset);
++}
++
++/* A loading placeholder stays still when the user asks for less motion. */
++@media (prefers-reduced-motion: reduce) {
++  .ant-skeleton-active * {
++    animation: none !important;
++  }
++}
++
++/* biome-ignore-end lint/complexity/noImportantStyles: end of the antd overrides */
++
+ /* antd 6 paints button states from --ant-btn-* variables set on
+    .ant-btn-color-default.ant-btn-variant-text (0,3,0 + :where); matching that
+    selector plus the class (0,4,0) lets us override the variables, not the states. */
+@@ -53,10 +87,6 @@ body {
+   );
+ }
+ 
+-.header-user-button.ant-btn:focus-visible {
+-  outline-color: var(--ant-color-text-light-solid);
+-}
+-
+ /* Hierarchy of unit and employee cards: each nested list is indented under its
+    parent and joined to it by a line that runs down the left of the siblings and
+    turns into each card at its middle. Colors and gaps come from antd tokens. */
+@@ -190,11 +220,6 @@ body {
+   background: var(--ant-color-bg-text-active);
+ }
+ 
+-.org-employee__menu:focus-visible {
+-  outline: var(--ant-line-width-focus) solid var(--ant-color-primary-border);
+-  outline-offset: var(--ant-line-width);
+-}
+-
+ .org-employee__details {
+   color: var(--ant-color-text-secondary);
+ }
+diff --git a/web/src/test/fakeApi.ts b/web/src/test/fakeApi.ts
+new file mode 100644
+index 0000000..c79c53e
+--- /dev/null
++++ b/web/src/test/fakeApi.ts
+@@ -0,0 +1,66 @@
++/** Handler of one fake route; it receives the request exactly as the typed client sent it. */
++type Handler = (request: Request) => Response | Promise<Response>;
++
++const NO_HANDLER_STATUS = 599;
++
++const handlers = new Map<string, Handler>();
++const received: Request[] = [];
++
++function routeOf(request: Request): string {
++  return `${request.method} ${new URL(request.url).pathname}`;
++}
++
++/**
++ * The network of the web tests. It replaces `fetch` before the typed client is created, because the client takes
++ * `fetch` once, when its module loads; this module is therefore imported by the test setup file.
++ * A request no handler claims is answered 599, so the screen under test reports it as a failed call.
++ */
++globalThis.fetch = async (input, init) => {
++  const request = input instanceof Request ? input : new Request(input, init);
++  received.push(request.clone());
++  const handler = handlers.get(routeOf(request));
++  return (
++    handler?.(request) ??
++    Response.json(
++      { title: `No fake handler for ${routeOf(request)}` },
++      { status: NO_HANDLER_STATUS },
++    )
++  );
++};
++
++export const fakeApi = {
++  /** Answers every request of the route, written `"METHOD /path"` without the query, until the next test. */
++  on(route: string, handler: Handler): void {
++    handlers.set(route, handler);
++  },
++  /** The requests received on the route so far, in the order they arrived; their bodies are unread. */
++  calls(route: string): Request[] {
++    return received.filter((request) => routeOf(request) === route);
++  },
++  reset(): void {
++    handlers.clear();
++    received.length = 0;
++  },
++};
++
++/** A successful answer carrying the body as JSON. */
++export function json(body: unknown, status = 200): Response {
++  return Response.json(body, { status });
++}
++
++/** A failed answer with a problem-details body. */
++export function problem(
++  status: number,
++  fields: Record<string, unknown> = {},
++): Response {
++  return Response.json({ status, ...fields }, { status });
++}
++
++/** A promise settled from outside, to hold an answer until the test releases it. */
++export function deferred<TValue>() {
++  let resolve: (value: TValue) => void = () => undefined;
++  const promise = new Promise<TValue>((settle) => {
++    resolve = settle;
++  });
++  return { promise, resolve };
++}
+diff --git a/web/src/test/setup.ts b/web/src/test/setup.ts
+index 78fc178..2ceb2f2 100644
+--- a/web/src/test/setup.ts
++++ b/web/src/test/setup.ts
+@@ -1,8 +1,11 @@
+ import * as matchers from "@testing-library/jest-dom/matchers";
+-import { expect, vi } from "vitest";
++import { afterEach, expect, vi } from "vitest";
++import { fakeApi } from "./fakeApi";
+ 
+ expect.extend(matchers);
+ 
++afterEach(() => fakeApi.reset());
++
+ Object.defineProperty(window, "matchMedia", {
+   writable: true,
+   value: (query: string) => ({
+diff --git a/web/vite.config.ts b/web/vite.config.ts
+index cccf541..26ea64a 100644
+--- a/web/vite.config.ts
++++ b/web/vite.config.ts
+@@ -20,6 +20,8 @@ export default defineConfig({
+     },
+   },
+   build: {
++    // antd and its components are the bulk of the bundle (about 1.2 of 1.35 MB) and no split brings a chunk under
++    // the default 500 kB, so the limit sits just above the whole bundle to report growth of the application.
+     chunkSizeWarningLimit: 1500,
+   },
+   test: {

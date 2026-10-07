@@ -1,0 +1,18 @@
+---
+name: vs-f5-launch-facts
+description: How Visual Studio 18.9 multi-project F5 really works for this repo (slnLaunch naming and format, esproj dev-server start, dcproj, CLI behaviour), read from the VS binaries and checked with MSBuild
+metadata:
+  type: project
+---
+
+Task 11 (AC-16) wired F5 for `Competency.slnx`. The IDE itself was never run by the agent; these facts come from decompiling the installed VS 18.9 (`ilspycmd` installed with `dotnet tool install ilspycmd --tool-path <scratch>`, then `-p -o <dir> <dll>`) plus VS's own `MSBuild.exe` (found with vswhere).
+
+- **Launch file name**: `Path.ChangeExtension(<solution file>, ".slnLaunch")` (`Microsoft.VisualStudio.CommonIDE.dll`, `MultiProjectLaunchProfilesPersistence`), so `Competency.slnx` -> `Competency.slnLaunch`, unshared profiles -> `Competency.slnLaunch.user` (ignored via `*.user`). A `X.slnx.slnLaunch` seen in the wild is not what VS reads.
+- **Format**: JSON array of `{Name, Projects[{Path, Action, DebugTarget}]}`; `Action` is `None|Start|StartWithoutDebugging`; `Path` is relative to the solution folder; list order is launch order (no waiting for readiness); unlisted projects get `None`. `DebugTarget` is matched case-insensitively against the project's debug targets and silently ignored when unmatched: csproj = `launchSettings.json` profile name, esproj = `.vscode/launch.json` configuration name (`localhost (Edge)`), dcproj = compose launch profile (`Docker Compose`). Comments and trailing commas are tolerated by the reader.
+- **esproj dev server**: started only by the project's Deploy step (`StartupTaskDeployProvider`), only when the esproj is a startup project and a browser configuration is selected from `launch.json` (types `edge`/`chrome`/`msedge`). It skips the command when the launch URL's port is already open, otherwise runs `cmd /c <StartupCommand> || pause` and polls the port. So the slnx entry needs `<Build /><Deploy />` (VS writes exactly that), and the dev server must serve the `url` port of the configuration.
+- **dcproj**: slnx entry `<Build />`. `Microsoft.Docker.Sdk` also ships inside the .NET SDK as a stub, so `dotnet build Competency.slnx` and `dotnet test --solution` run the dcproj as a no-op and the esproj (with `ShouldRunNpmInstall`/`ShouldRunBuildScript` false) without Node. Without `<Build />` entries the CLI just logs "not selected for build" and skips both, with them it loads both; the results are the same, 0 warnings. VS's real targets run `docker compose config` at build (set `DEV_DB_PORT` to move the port) and create nothing. `DependencyAwareStart=true` switches VS to a `--no-start` launch; not needed for a single service and it does not make other projects wait.
+- **JS SDK**: pinned `Microsoft.VisualStudio.JavaScript.Sdk/1.0.5984942`, the version VS 18.9 ships in `C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages`; a machine without VS restores it from nuget.org.
+- The first prompt wrongly said Container Tools and the JavaScript project system were missing: `vswhere -requires Microsoft.VisualStudio.Component.DockerTools` (and `...JavaScript.TypeScript`) both returned the install.
+
+**Why:** the docs do not give the file name for slnx or the esproj start path; guessing either would silently give a profile that never shows or a dev server that never starts.
+**How to apply:** any change to `Competency.slnx`, `Competency.slnLaunch`, `web/web.esproj`, `web/.vscode/launch.json` or `deploy/dev/**`.

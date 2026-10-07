@@ -1,0 +1,49 @@
+diff --git a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+index e8c57a0..adc2181 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+@@ -4,3 +4,4 @@
+ - [Pinned clauses vs economy](feedback_doc-economy-pinned-clauses.md) — read the suite pin and plan decision before flagging a pointer-plus-outcome clause; prefer pointer-coverage gaps
+ - [Re-review without a shell](feedback_rereview-no-shell-checks.md) — back hash, suite and pin claims from canon text and the tester's record; say what was not recomputed
+ - [Ledger finding mapping](feedback_ledger-finding-mapping.md) — one f per rule row, none on file/section rows, Findings table first, no pipes in cells
++- [Delta re-review: decisions-log first](feedback_delta-review-decisions-log.md) — read decisions-log for design-promote routing before flagging doc drift; shared-host log waits are vacuous
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_delta-review-decisions-log.md b/.claude/agent-memory/asd-reviewer-combined/feedback_delta-review-decisions-log.md
+new file mode 100644
+index 0000000..a0fd720
+--- /dev/null
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_delta-review-decisions-log.md
+@@ -0,0 +1,21 @@
++---
++name: delta-review-decisions-log
++description: on a wave re-review (iter-02+) check decisions-log and the shared-host test traps before flagging persistent-doc drift or a log-wait helper
++metadata:
++  type: feedback
++---
++
++On a re-review the diff is only the review-fix and impl-test delta: read `decisions-log.md` (Grep `review-fix|For design-promote`)
++before raising persistent-doc drift. The review-fix entry names the docs it deliberately leaves for design-promote.
++
++**Why:** iter-02 of sprint 001 found `docs/architecture/tech-reference/postgres-image-18.6-trixie.md` still saying the superuser
++bypasses the audit trigger; the log already routed that update to design-promote and the file carries a "Last verified" date, so
++raising it would have been noise.
++
++**How to apply:**
++- A tech-reference file with a "Last verified: <date>" header is a dated record, not live doc: drift against later migrations is
++  not a finding unless the decisions-log leaves it unrouted.
++- `ApiHost.LogsAfterAsync(fragment)` waits for a fragment, which is vacuous on the shared host when another test already logged
++  it (412 records from the optimistic-concurrency tests); only a dedicated host makes the wait real. A pre-existing weak guard
++  that the fix does not worsen is below a medium floor.
++- Agent-memory files in the scope list are checked only for stale claims; a stale "not yet run" line is low.
+diff --git a/tests/Competency.Tests/PlatformTests.cs b/tests/Competency.Tests/PlatformTests.cs
+index af68d2b..4022800 100644
+--- a/tests/Competency.Tests/PlatformTests.cs
++++ b/tests/Competency.Tests/PlatformTests.cs
+@@ -86,7 +86,7 @@ public sealed class PlatformTests(TestEnvironment environment)
+     [Fact]
+     public async Task Ac5_Logs_AreJsonAndCarryNoPasswordsEmailsNamesOrSqlValues()
+     {
+-        var host = await environment.SharedHostAsync();
++        await using var host = await environment.StartHostAsync(); // own host: only this test's records can satisfy the 412 wait below
+         var admin = await host.AdminAsync();
+         var email = $"{Scenarios.Unique("logged")}@test.local";
+         var password = $"Logged-{Guid.NewGuid():N}-1!";

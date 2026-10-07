@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<!--
+responsibility:
+  owns: html shell wrap for all asd user-facing html docs
+  excludes: doc content, doc-specific structure
+  delegates_to: fragment templates (t_prd, t_adr, t_ux-spec, t_concept, t_stack, t_design-system, t_accessibility, t_retrospective)
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="ASD workflow">
+  <meta name="doc-type" content="UX-spec">
+  <meta name="subsystem" content="project">
+  <meta name="sprint-id" content="">
+  <meta name="status" content="approved">
+  <meta name="updated" content="2026-10-07">
+  <meta name="responsibility" content="ux flows and ui mockups of the application frame: sign-in session gate, header (brand, navigation, user menu), service pages">
+  <meta name="provenance" content="original">
+  <title>UX-спецификация — Каркас приложения и шапка</title>
+  <style>
+    :root {
+      --fg: #1a1c1e; --bg: #fff; --muted: #5b6770; --accent: #0066cc;
+      --code-bg: #f4f6f8; --border: #d0d7de; --max: 1040px;
+      --card-bg: #fafbfc;
+      --ok: #1a7f37; --warn: #b35900; --danger: #cf222e; --info: #0969da; --neutral: #5b6770;
+      --ok-tint: rgba(31,136,61,0.07); --danger-tint: rgba(207,34,46,0.06);
+      --chip-must-bg: #ffebe9; --chip-must-fg: #cf222e;
+      --chip-should-bg: #fff5e1; --chip-should-fg: #9a6700;
+      --chip-may-bg: #ddf4ff; --chip-may-fg: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e6e6e6; --bg: #0e1116; --muted: #9aa4ad; --code-bg: #161b22; --border: #30363d;
+        --card-bg: #161b22;
+        --accent: #58a6ff; --ok: #3fb950; --warn: #d29922; --danger: #f85149; --info: #79c0ff; --neutral: #8b949e;
+        --ok-tint: rgba(63,185,80,0.12); --danger-tint: rgba(248,81,73,0.10);
+        --chip-must-bg: #3b1416; --chip-must-fg: #ff7b72;
+        --chip-should-bg: #2d2410; --chip-should-fg: #e3b341;
+        --chip-may-bg: #0d2538; --chip-may-fg: #58a6ff;
+      }
+    }
+    html, body { margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100vh; }
+    .layout:has(> nav.toc) { grid-template-columns: 260px minmax(0, 1fr); }
+    nav.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 12px; border-right: 1px solid var(--border); font-size: 0.85rem; }
+    nav.toc .toc-title { font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
+    nav.toc ol { list-style: none; margin: 0; padding: 0; }
+    nav.toc li { margin: 2px 0; }
+    nav.toc a { color: var(--fg); text-decoration: none; display: block; padding: 3px 6px; border-radius: 4px; }
+    nav.toc a:hover { background: var(--code-bg); color: var(--accent); }
+    @media (max-width: 880px) { nav.toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } }
+    @media print { nav.toc { display: none; } }
+    .content { min-width: 0; }
+    header, main, footer { max-width: var(--max); margin: 0 auto; padding: 16px 24px; }
+    header { border-bottom: 1px solid var(--border); }
+    header h1 { margin: 4px 0 8px; font-size: 1.9rem; }
+    .badges span { display: inline-block; padding: 2px 8px; margin-right: 6px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--bg); }
+    .badges .provenance-reverse-engineered, .badges .provenance-migrated { color: var(--warn); border-color: var(--warn); }
+    .badges .status-draft       { color: var(--neutral); border-color: var(--neutral); }
+    .badges .status-in-review   { color: var(--warn);    border-color: var(--warn); }
+    .badges .status-approved    { color: var(--ok);      border-color: var(--ok); }
+    .badges .status-locked      { color: var(--info);    border-color: var(--info); }
+    .stats { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+    .stats .chip { display: inline-block; padding: 1px 8px; margin-right: 6px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); }
+    @media (max-width: 880px) {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+    }
+    h2, h3, h4 { line-height: 1.25; margin-top: 1.6em; }
+    h2 { border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    a { color: var(--accent); }
+    code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: var(--code-bg); padding: 12px; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--code-bg); position: sticky; top: 0; z-index: 1; }
+    tbody tr:nth-child(even) td { background: var(--card-bg); }
+    blockquote { border-left: 3px solid var(--accent); margin: 0; padding: 4px 14px; color: var(--muted); }
+    .mermaid { background: var(--bg); text-align: center; margin: 16px 0; }
+    footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+    /* fragment-shared utilities */
+    .lede { font-size: 1.08rem; color: var(--fg); }
+    section.hero { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+    section.callout { border-left: 4px solid var(--border); padding: 8px 14px; background: var(--card-bg); border-radius: 4px; }
+    section.callout.warn { border-left-color: var(--warn); }
+    section.callout.warn h2::before { content: "⊘ "; color: var(--warn); }
+
+    ol.goal-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    ol.goal-grid li { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; display: flex; gap: 10px; }
+    ol.goal-grid .num { flex: 0 0 auto; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    ol.goal-grid p { margin: 0; }
+
+    details.role-group { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; background: var(--card-bg); }
+    details.role-group > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+    details.role-group > summary .count { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+    details.role-group ul.stories { margin: 0; padding: 4px 16px 12px 28px; }
+    ul.stories li { margin: 4px 0; }
+    ul.stories b { color: var(--accent); font-weight: 600; }
+
+    table.ac-table td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .chip.area { background: var(--code-bg); color: var(--muted); }
+    .chip.prio-must   { background: var(--chip-must-bg);   color: var(--chip-must-fg); border-color: var(--chip-must-fg); }
+    .chip.prio-should { background: var(--chip-should-bg); color: var(--chip-should-fg); border-color: var(--chip-should-fg); }
+    .chip.prio-may    { background: var(--chip-may-bg);    color: var(--chip-may-fg); border-color: var(--chip-may-fg); }
+
+    ul.non-goals { margin: 0; padding-left: 22px; }
+    ul.non-goals li::marker { content: "⊘  "; color: var(--warn); }
+
+    /* definition-list pattern: Purpose / Entry / Exit / Notes */
+    dl.def-list { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0; }
+    dl.def-list dt { font-weight: 600; color: var(--muted); }
+    dl.def-list dd { margin: 0; }
+
+    /* ADR */
+    .adr { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    .adr > .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+    .adr h2 { margin-top: 0.4em; border-bottom: none; font-size: 1.3rem; }
+    .adr h3 { margin-top: 1.1em; border-bottom: none; font-size: 1.15rem; }
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .status-proposed   { color: var(--warn);    border-color: var(--warn); }
+    .status-accepted   { color: var(--ok);      border-color: var(--ok); }
+    .consequences { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .consequences .pros, .consequences .cons { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+    .consequences .pros { background: var(--ok-tint); border-left: 3px solid var(--ok); }
+    .consequences .cons { background: var(--danger-tint); border-left: 3px solid var(--danger); }
+    .consequences h4 { margin: 0 0 4px; font-size: 1rem; color: var(--muted); }
+    .consequences ul { margin: 0; padding-left: 20px; }
+    @media (max-width: 720px) { .consequences { grid-template-columns: 1fr; } }
+    ul.alt-list li { margin: 4px 0; }
+    ul.alt-list li strong { color: var(--fg); }
+
+    /* UX-spec mockup */
+    article.mockup { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    article.mockup > h3 { margin-top: 0; }
+    .mockup-preview { background: var(--bg); border: 1px dashed var(--border); border-radius: 6px; padding: 16px; margin: 10px 0; min-height: 80px; }
+    .screen-meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 6px 0 10px; font-size: 0.92rem; }
+    .screen-meta b { color: var(--muted); font-weight: 600; }
+
+    /* Concept */
+    .pillar-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .pillar-grid li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; }
+    .pillar-grid li strong { display: block; margin-bottom: 4px; color: var(--accent); }
+    .anti-pillar-grid li { border-left-color: var(--danger); }
+    .anti-pillar-grid li strong { color: var(--danger); }
+    ul.user-segments { list-style: none; padding: 0; }
+    ul.user-segments li { padding: 8px 12px; margin: 6px 0; border-left: 3px solid var(--accent); background: var(--card-bg); border-radius: 4px; }
+    ul.user-segments li b { color: var(--accent); }
+    ul.metrics li { margin: 4px 0; }
+    ul.metrics li .target { float: right; color: var(--ok); font-variant-numeric: tabular-nums; }
+
+    /* Stack */
+    table.tech-table .ver { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .principle-list { list-style: none; padding: 0; }
+    .principle-list li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    .principle-list li strong { color: var(--info); }
+
+    /* Accessibility */
+    section.a11y-domain { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; margin: 14px 0; }
+    section.a11y-domain h2 { border-bottom: 1px dashed var(--border); }
+    .limitation { background: var(--chip-should-bg); border-left: 3px solid var(--warn); padding: 8px 12px; margin: 6px 0; border-radius: 4px; }
+    .limitation b { color: var(--warn); }
+
+    /* Design system */
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .swatch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+    .swatch .chip-color { height: 80px; border-radius: 4px; border: 1px solid var(--border); }
+    .swatch code { font-size: 0.78rem; }
+    .swatch small { color: var(--muted); }
+    .spacing-scale { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); }
+    .spacing-scale > div { background: var(--accent); width: 24px; border-radius: 2px 2px 0 0; }
+    article.component-preview { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 14px 0; background: var(--card-bg); }
+    .preview { padding: 16px; border: 1px dashed var(--border); border-radius: 6px; background: var(--bg); }
+
+    @media print {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+      a { color: inherit; text-decoration: none; }
+      footer { page-break-before: always; }
+      details.role-group[open] > summary { list-style: none; }
+      details.role-group { break-inside: avoid; }
+      tr, li { break-inside: avoid; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true });</script>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Содержание</div>
+      <ol>
+        <li><a href="#flows">Сценарии</a></li>
+        <li><a href="#ui-mockups">Макеты</a></li>
+        <li><a href="#interaction-patterns">Паттерны взаимодействия</a></li>
+        <li><a href="#component-usage">Использование компонентов</a></li>
+      </ol>
+    </nav>
+    <div class="content">
+      <header>
+        <div class="badges">
+          <span>UX-spec</span>
+          <span>project</span>
+          <span class="status-approved">approved</span>
+        </div>
+        <h1>UX-спецификация — Каркас приложения и шапка</h1>
+        <div class="stats">1 flows · 4 mockups · updated 2026-10-07</div>
+      </header>
+      <main>
+<!--
+responsibility:
+  owns: ux flows and ui mockups of the application frame (session gate, header, navigation, user menu, service pages)
+  excludes: requirements, accessibility (project-wide), design-system components and tokens, new component proposals
+  delegates_to: docs/product/requirements (requirements), accessibility.html (a11y), DESIGN.md (components and tokens)
+provenance: original
+-->
+
+<div class="ds" style="--ds-primary:#2B42E5;--ds-primary-hover:#2338C2;--ds-primary-active:#182CC2;--ds-primary-subtle:#EBF2FD;--ds-accent:#FBAE40;--ds-text-primary:#292929;--ds-text-secondary:#4B4B4C;--ds-text-muted:#5F6670;--ds-text-disabled:#A3A9B1;--ds-text-inverse:#FFFFFF;--ds-text-inverse-muted:#9BA8F9;--ds-surface-page:#F5F6F8;--ds-surface-panel:#FFFFFF;--ds-surface-muted:#EEEEEE;--ds-surface-inverse:#081240;--ds-border-subtle:#DDE1E6;--ds-border-control:#7D8590;--ds-overlay-scrim:#08124073;--ds-overlay-inverse-hover:#FFFFFF1F;--ds-overlay-inverse-pressed:#FFFFFF33;--ds-success:#197A4A;--ds-success-bg:#E6F4EC;--ds-warning:#A85800;--ds-warning-bg:#FFF4DF;--ds-danger:#C62832;--ds-danger-bg:#FDECEC;--ds-info:#1B64C8;--ds-info-bg:#EBF2FD;--ds-xxs:4px;--ds-xs:8px;--ds-sm:12px;--ds-md:16px;--ds-lg:20px;--ds-xl:24px;--ds-xxl:32px;--ds-xxxl:48px;--ds-header-h:56px;--ds-h-sm:24px;--ds-h-md:32px;--ds-h-lg:40px;--ds-r-xs:2px;--ds-r-md:4px;--ds-r-lg:8px;--ds-r-full:9999px;--ds-bw:1px;--ds-el-popup:0 4px 12px rgba(8,18,64,0.12);--ds-el-modal:0 8px 24px rgba(8,18,64,0.16);--ds-font-ui:'PT Sans','Segoe UI',Roboto,Arial,sans-serif;--ds-font-mono:'PT Mono',Consolas,'Courier New',monospace;--ds-t-h1:700 30px/38px var(--ds-font-ui);--ds-t-h2:700 24px/32px var(--ds-font-ui);--ds-t-h3:700 20px/28px var(--ds-font-ui);--ds-t-body-md:400 14px/22px var(--ds-font-ui);--ds-t-body-strong:700 14px/22px var(--ds-font-ui);--ds-t-body-sm:400 12px/20px var(--ds-font-ui);--ds-t-code:400 13px/20px var(--ds-font-mono);">
+
+<section id="flows" class="hero">
+  <h2>Сценарии</h2>
+  <p class="lede">Каркас приложения — всё, что окружает разделы: проверка сессии, шапка с брендом, навигацией и меню пользователя, служебные страницы. Охватывает UI-часть AC-13 (шапка: инициалы и фамилия, аватарка), AC-6 (редирект на вход при потере сессии) и AC-12 (раздел, недоступный роли, выглядит как «Страница не найдена»; все проверки прав — на backend). Экран входа и смена пароля описаны в <a href="user-management.html">user-management.html</a>.</p>
+  <pre class="mermaid">
+flowchart TD
+  A["Открытие приложения"] --> C["Полноэкранный индикатор, пока запрашивается текущий пользователь"]
+  C --> D{"Ответ сервера"}
+  D -- "200" --> E["Каркас: шапка и область содержимого"]
+  D -- "401" --> F["Экран входа"]
+  D -- "сеть или 5xx" --> G["Ошибка: Не удалось загрузить данные учётной записи, кнопка Повторить"]
+  G -- "Повторить" --> C
+  E --> H{"Адрес"}
+  H -- "корень" --> I["Переход в первый доступный раздел роли"]
+  I -- "разделов нет" --> L["Заглушка Добро пожаловать"]
+  H -- "раздел роли" --> J["Страница раздела"]
+  H -- "неизвестный адрес или раздел другой роли" --> K["Страница не найдена"]
+  E -- "Меню пользователя: Сменить пароль" --> M["Модальное окно смены пароля"]
+  E -- "Меню пользователя: Выйти" --> N["Сессия завершена на сервере, кэш очищен"]
+  N --> F
+  J -- "401 в любой момент" --> F
+  E -- "Непредвиденная ошибка отрисовки" --> R["Предупреждение: Не удалось открыть страницу"]
+  </pre>
+  <p>Редирект на вход при 401 выполняет единый обработчик: он очищает кэш ответов и ведёт на <code>/login</code> без возможности вернуться назад. Если выход не удался (нет связи), пользователь остаётся на месте, а причина показывается всплывающим сообщением.</p>
+</section>
+
+<section id="ui-mockups">
+  <h2>Макеты</h2>
+  <p class="lede">Превью собраны только из токенов <a href="DESIGN.md">DESIGN.md</a>; значения токенов заданы один раз на корневом элементе блока (переменные <code>--ds-*</code>), как в <a href="design-system.html">design-system.html</a>. Состояния hover, pressed и focus нарисованы там, где они нужны; токены шапки и кнопки пользователя — в разделе «Использование компонентов».</p>
+
+  <article class="mockup">
+    <h3>Каркас и шапка (десктоп, от 992 пикселей)</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Постоянная рамка всех экранов: узнаваемый бренд, переход между разделами, имя текущего пользователя и выход.</dd>
+      <dt><b>Entry from</b></dt><dd>Любой вход в приложение при действующей сессии.</dd>
+      <dt><b>Exit to</b></dt><dd>Разделы «Пользователи», «Оргструктура», «Журнал» (по роли); меню пользователя.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="background:var(--ds-surface-page);font:var(--ds-t-body-md);color:var(--ds-text-primary);border:var(--ds-bw) solid var(--ds-border-subtle);">
+        <div style="display:flex;align-items:center;gap:var(--ds-xl);height:var(--ds-header-h);padding:0 var(--ds-xl);background:var(--ds-surface-inverse);color:var(--ds-text-inverse);">
+          <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-surface-panel);"><img src="../../web/public/brand/logo-64.png" alt="" style="width:var(--ds-h-md);height:var(--ds-h-md);"></span>
+            <b style="font:var(--ds-t-body-strong);">Калибр</b>
+          </span>
+          <span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);">
+            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Пользователи</span>
+            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);">Оргструктура</span>
+            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Журнал</span>
+          </span>
+          <span style="margin-left:auto;display:inline-flex;align-items:center;gap:var(--ds-xs);padding:0 var(--ds-xs);color:var(--ds-text-inverse);">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АИ</span>
+            <span>А.&nbsp;Б.&nbsp;Иванов</span>
+          </span>
+        </div>
+        <div style="padding:var(--ds-xl);">
+          <div style="font:var(--ds-t-h1);color:var(--ds-text-primary);">Оргструктура</div>
+          <div style="margin-top:var(--ds-md);padding:var(--ds-xxl);background:var(--ds-surface-panel);border:var(--ds-bw) dashed var(--ds-border-subtle);border-radius:var(--ds-r-lg);color:var(--ds-text-muted);text-align:center;">Область содержимого раздела</div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Бренд.</b> Название «Калибр» (подзаголовок «Компетенции и карьерный рост» стоит только на экране входа). Логотип стоит на круглой светлой плитке: его тёмная часть на тёмно-синей шапке сливается (контраст 1.44:1). Название сжимается с многоточием, при обрезке полное название — в <code>title</code>.</li>
+      <li><b>Навигация — горизонтальное меню в шапке</b> (тёмная тема меню), боковой панели нет: это решение закреплено в <a href="DESIGN.md">DESIGN.md</a> («Shell and navigation»). Состав по роли: администратор — «Пользователи», «Оргструктура», «Журнал»; пользователь — «Оргструктура». Текущий раздел залит <code>primary</code> с белым текстом (7.0:1, <code>nav-item-active</code>); остальные пункты — <code>text-inverse-muted</code> на <code>surface-inverse</code> (8.0:1, <code>nav-item</code>); при наведении пункт без заливки светлеет до <code>text-inverse</code> (17.9:1, <code>nav-item-hover</code>). Раздел определяется по началу адреса.</li>
+      <li><b>Имя пользователя.</b> Привязанная учётная запись: «И.&nbsp;О.&nbsp;Фамилия» (инициалы имени и отчества и фамилия; пробелы между частями неразрывные), без отчества — «И.&nbsp;Фамилия»; непривязанная: e-mail. Аватарка — первые буквы имени и фамилии («АИ»), у непривязанной — первая буква e-mail. Имя видно от 992 пикселей; на планшете остаётся только аватарка, а доступное имя кнопки совпадает с видимой подписью.</li>
+      <li><b>Область содержимого.</b> Фон <code>surface-page</code>, поля <code>page-gutter</code> (24) на десктопе. Заголовок страницы — <code>heading-1</code>, один на экран.</li>
+      <li><b>Фокус.</b> Клавиатурный фокус всегда виден: кольцо 2 пикселя с отступом 2 пикселя, цвет <code>primary</code> на светлых поверхностях и <code>accent</code> на тёмной шапке (<code>focus-ring-inverse</code>, 9.6:1).</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Шапка на планшете и варианты имени (меньше 992 пикселей)</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Показать, как шапка сжимается и какие формы принимает подпись пользователя.</dd>
+      <dt><b>Entry from</b></dt><dd>Любой экран на ширине меньше <code>breakpoint-lg</code>.</dd>
+      <dt><b>Exit to</b></dt><dd>Те же разделы и меню пользователя.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="display:grid;gap:var(--ds-md);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div style="display:flex;align-items:center;gap:var(--ds-md);height:var(--ds-header-h);padding:0 var(--ds-md);background:var(--ds-surface-inverse);color:var(--ds-text-inverse);">
+          <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-surface-panel);"><img src="../../web/public/brand/logo-64.png" alt="" style="width:var(--ds-h-md);height:var(--ds-h-md);"></span>
+            <b style="font:var(--ds-t-body-strong);">Калибр</b>
+          </span>
+          <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);">Оргструктура</span>
+          <span style="margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-lg);height:var(--ds-h-lg);">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АИ</span>
+          </span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(40%,1fr));gap:var(--ds-md);">
+          <figure style="margin:0;padding:var(--ds-md);background:var(--ds-surface-inverse);color:var(--ds-text-inverse);display:flex;flex-direction:column;gap:var(--ds-xs);">
+            <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АИ</span>А.&nbsp;Б.&nbsp;Иванов</span>
+            <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-inverse-muted);">Привязана к сотруднику с отчеством</figcaption>
+          </figure>
+          <figure style="margin:0;padding:var(--ds-md);background:var(--ds-surface-inverse);color:var(--ds-text-inverse);display:flex;flex-direction:column;gap:var(--ds-xs);">
+            <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">ИП</span>И.&nbsp;Петров</span>
+            <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-inverse-muted);">Без отчества</figcaption>
+          </figure>
+          <figure style="margin:0;padding:var(--ds-md);background:var(--ds-surface-inverse);color:var(--ds-text-inverse);display:flex;flex-direction:column;gap:var(--ds-xs);">
+            <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">A</span>admin@example.com</span>
+            <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-inverse-muted);">Не привязана: e-mail и одна буква</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>: на ширине меньше <code>breakpoint-lg</code> все контролы приложения переходят на размер <code>control-height-lg</code> (40), поля области содержимого сокращаются до <code>page-gutter-narrow</code> (16), имя пользователя скрывается. Аватарка остаётся единственным видимым признаком; кнопка меню пользователя сохраняет подпись для вспомогательных технологий. Если разделов много, название бренда сжимается раньше меню (многоточие).</p>
+  </article>
+
+  <article class="mockup">
+    <h3>Меню пользователя</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Сменить собственный пароль или выйти.</dd>
+      <dt><b>Entry from</b></dt><dd>Клик по кнопке пользователя в шапке.</dd>
+      <dt><b>Exit to</b></dt><dd>Модальное окно «Смена пароля»; экран входа после выхода.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="display:flex;justify-content:flex-end;padding:var(--ds-md);background:var(--ds-surface-inverse);">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:var(--ds-xs);">
+          <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-xs);border-radius:var(--ds-r-md);background:var(--ds-overlay-inverse-hover);color:var(--ds-text-inverse);font:var(--ds-t-body-md);">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АИ</span>А.&nbsp;Б.&nbsp;Иванов
+          </span>
+          <div style="background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+            <div style="padding:var(--ds-xs) var(--ds-sm);font:var(--ds-t-body-sm);color:var(--ds-text-muted);">a.ivanov@example.com</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-surface-page);">🔑 Сменить пароль</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);border-radius:var(--ds-r-md);">⎋ Выйти</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>: заголовок группы — e-mail учётной записи (одинаков для привязанных и непривязанных). Открывается по клику; пункты — <code>dropdown-item</code> (первый показан в состоянии hover, <code>surface-page</code>). Кнопка пользователя на тёмной шапке подсвечивается белой полупрозрачной заливкой при наведении (<code>header-button-hover</code>, <code>overlay-inverse-hover</code> — белый 12%, контраст текста 13.0:1) и нажатии (<code>header-button-pressed</code>, <code>overlay-inverse-pressed</code> — белый 20%, 9.9:1); текст остаётся белым. На макете кнопка показана в состоянии hover.</p>
+  </article>
+
+  <article class="mockup">
+    <h3>Служебные состояния: загрузка, ошибка, пусто, не найдено</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Каждое нештатное состояние рамки отвечает на вопросы «что случилось, почему, что делать».</dd>
+      <dt><b>Entry from</b></dt><dd>Запрос текущего пользователя; неизвестный адрес; раздел, недоступный роли; ошибка маршрута.</dd>
+      <dt><b>Exit to</b></dt><dd>Повтор запроса; главная страница; экран входа.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(45%,1fr));gap:var(--ds-md);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div style="background:var(--ds-surface-page);padding:var(--ds-xl);">
+          <div style="font:var(--ds-t-body-strong);margin-bottom:var(--ds-xs);">Ошибка учётной записи</div>
+          <div style="display:flex;align-items:flex-start;gap:var(--ds-xs);padding:var(--ds-sm);background:var(--ds-danger-bg);border-radius:var(--ds-r-md);">
+            <span style="color:var(--ds-danger);" aria-hidden="true">⊗</span>
+            <span style="flex:1;"><b style="font:var(--ds-t-body-strong);">Не удалось загрузить данные учётной записи</b><br>Нет связи с сервером. Проверьте подключение к сети и повторите попытку.</span>
+            <span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Повторить</span>
+          </div>
+        </div>
+        <div style="background:var(--ds-surface-page);padding:var(--ds-xl);text-align:center;color:var(--ds-text-secondary);">
+          <div style="font:var(--ds-t-body-strong);margin-bottom:var(--ds-xs);text-align:left;">Страница не найдена</div>
+          <div style="font:var(--ds-t-h3);color:var(--ds-text-primary);">Страница не найдена</div>
+          <p style="margin:var(--ds-xs) 0 var(--ds-md);">Адрес указан неверно, либо раздел недоступен для вашей учётной записи.</p>
+          <span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Перейти на главную</span>
+        </div>
+        <div style="background:var(--ds-surface-page);padding:var(--ds-xl);text-align:center;color:var(--ds-text-secondary);">
+          <div style="font:var(--ds-t-body-strong);margin-bottom:var(--ds-xs);text-align:left;">Нет доступных разделов</div>
+          <div style="font:var(--ds-t-h3);color:var(--ds-text-primary);">Добро пожаловать</div>
+          <p style="margin:var(--ds-xs) 0 0;">Для вашей учётной записи пока нет доступных разделов. Обратитесь к администратору.</p>
+        </div>
+        <div style="background:var(--ds-surface-page);padding:var(--ds-xl);">
+          <div style="font:var(--ds-t-body-strong);margin-bottom:var(--ds-xs);">Ошибка маршрута</div>
+          <div style="display:flex;align-items:flex-start;gap:var(--ds-xs);padding:var(--ds-sm);background:var(--ds-danger-bg);border-radius:var(--ds-r-md);">
+            <span style="color:var(--ds-danger);" aria-hidden="true">⊗</span>
+            <span style="flex:1;"><b style="font:var(--ds-t-body-strong);">Не удалось открыть страницу</b><br>Произошла непредвиденная ошибка. Обновите страницу; если ошибка повторяется, обратитесь к администратору.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>: пока сессия неизвестна, вместо рамки показывается индикатор по центру экрана (спиннер <code>primary</code>); раздел до ответа сервера не отрисовывается. «Страница не найдена» служит и ответом на раздел, закрытый для роли (запросы всё равно отклоняет backend, AC-12). Корневой адрес сразу перенаправляет на первый доступный раздел и в историю переходов не попадает. Тексты ошибок — см. паттерны ниже.</p>
+  </article>
+</section>
+
+<section id="interaction-patterns">
+  <h2>Паттерны взаимодействия</h2>
+  <ul>
+    <li><b>Сообщения об ошибках</b> отвечают на три вопроса: что не получилось (заголовок), почему и что делать (текст). Для кодов ответа действуют фиксированные русские тексты: нет связи, сессия завершена, недостаточно прав, запись не найдена, данные изменены другим пользователем (412), слишком много попыток (429), ошибка сервиса. Содержательные тексты бизнес-отказов (400, 409) приходят с сервера на русском.</li>
+    <li><b>Временные сообщения</b> (toast) сообщают о завершённом действии и ошибке выхода; всё, что требует решения или объяснения, показывается в окне или рядом с полем и остаётся, пока пользователь его не закроет.</li>
+    <li><b>Подтверждения</b> деструктивных действий — окно с названием действия и объекта, последствиями и красной кнопкой с глаголом; безопасное действие — «Отмена». Кнопка подтверждения реагирует сразу и не ждёт закрытия временного сообщения.</li>
+    <li><b>Движение.</b> Переходы нужны только для открытия и закрытия всплывающих элементов; при настройке системы «уменьшить движение» переходы отключаются, заполнитель загрузки перестаёт мерцать (<code>DESIGN.md → Motion</code>). Движение данные не оживляет.</li>
+    <li><b>Адаптивность.</b> Десктоп (от 992 пикселей) — полная шапка и обычный размер контролов; планшет (меньше 992) — только аватарка, крупные контролы, узкие поля; мобильный режим только адаптивный (<code>DESIGN.md → Layout</code>).</li>
+    <li><b>Доступность</b> описана на уровне токенов в <a href="accessibility.html">accessibility.html</a>; экранного поведения (порядок фокуса, ARIA) он не обещает, здесь поведение лишь описано.</li>
+  </ul>
+</section>
+
+<section id="component-usage">
+  <h2>Использование компонентов</h2>
+  <p class="lede">Таблица показывает, какие компоненты и токены DESIGN.md использует рамка приложения; отдельного компонентного токена нет только у плитки логотипа.</p>
+  <table>
+    <thead><tr><th>Компонент</th><th>Где используется</th></tr></thead>
+    <tbody>
+      <tr><td><code>app-header</code> (antd <code>Layout.Header</code>)</td><td>Шапка: <code>surface-inverse</code>, <code>text-inverse</code>, высота <code>header-height</code>; внутри бренд, меню, кнопка пользователя.</td></tr>
+      <tr><td><code>nav-item</code>, <code>nav-item-hover</code>, <code>nav-item-active</code> (antd <code>Menu</code>, тема dark, горизонтальный)</td><td>Навигация между разделами; пункт текущего раздела залит <code>primary</code>, при наведении текст светлеет до <code>text-inverse</code> без заливки.</td></tr>
+      <tr><td><code>header-button-hover</code>, <code>header-button-pressed</code> (antd <code>Button type="text"</code>)</td><td>Кнопка пользователя на тёмной шапке: белая заливка 12% при наведении и 20% при нажатии, текст <code>text-inverse</code>.</td></tr>
+      <tr><td><code>avatar</code> (antd <code>Avatar</code>)</td><td>Кнопка пользователя: <code>primary</code> на <code>primary-subtle</code>, две буквы; на тёмной шапке контраст 6.2:1.</td></tr>
+      <tr><td>Плитка логотипа (составная: <code>surface-panel</code>, <code>rounded-full</code>, <code>control-height-md</code>)</td><td>Подложка логотипа на тёмной шапке. Отдельного компонентного токена нет.</td></tr>
+      <tr><td><code>dropdown-item</code> (antd <code>Dropdown</code>)</td><td>Меню пользователя.</td></tr>
+      <tr><td><code>alert-danger</code>, <code>empty-state</code>, <code>button-primary</code></td><td>Служебные состояния: ошибка учётной записи, «Страница не найдена», «Добро пожаловать».</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</div>
+      </main>
+      <footer>by ASD workflow | 2026-10-07</footer>
+    </div>
+  </div>
+</body>
+</html>

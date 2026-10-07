@@ -1,0 +1,215 @@
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md b/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
+index 0590f0f..2ff16c4 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
+@@ -1,6 +1,6 @@
+ ---
+ name: frontend-wave-probes
+-description: how a 120-file web/ plus agent-memory impl-review wave was finished in about 45 turns - read ranges, one-Grep probes that found real defects, diff-to-file line arithmetic, antd d.ts deprecation check
++description: how a 120-file web/ plus agent-memory impl-review wave was finished in about 45 turns - read ranges, one-Grep probes that found real defects, diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers
+ metadata:
+   type: feedback
+ ---
+@@ -24,6 +24,18 @@ the diff (TSX tolerates the larger size); skip `package-lock.json`, `schema.d.ts
+ - Agent-memory files: grep each cited component or constant (`UserCard`, `SEARCH_TEXT_MAX_LENGTH`) in `web/src`, `src` and
+   `tests`, and every "does not provide" / "NOT yet run" claim against the code; four stale claims turned up in one wave.
+ 
++**Re-review of a review-fix delta (wave-3/iter-02, about 40 turns, one finding):**
++- After a duplicated helper is hoisted into one shared module, Grep its call sites: a parameter every caller leaves at the
++  default (`useDebouncedValue(value, delayMs = CONST)`, a test helper `json(body, status = 200)`) is a "premature config flag"
++  and a pure alias of a stdlib call is "helper wrapping one stdlib call"; both are critical under the over-engineering row.
++- Verify an antd/rc-dialog focus claim in `web/node_modules` before raising it: antd 6 has no `[tabindex="-1"]:focus` reset and
++  the modal panel (`tabIndex -1`) is focused by script, so a global `:focus-visible` ring on it replaces the browser's own ring
++  and is not a regression.
++- `docs/ux/accessibility.html` declares focus order and management out of scope; a lost-focus-after-dialog note in memory is
++  not a finding.
++- Check each fix against the iter-01 report and `decisions-log.md` "review-fix" entry first; every iter-01 item was closed, so
++  only the new surface (shared hooks, test infra) needed fresh scanning.
++
+ **Line arithmetic without a shell:** for a new-file hunk, file line = diff line minus the line number of its `@@` header.
+ 
+ **Language:** the dispatch header listed `language.docs: ru` and the policy puts reviews under `language.docs`, so the report
+diff --git a/web/src/app/authFlow.test.tsx b/web/src/app/authFlow.test.tsx
+index 8b2101e..a4e41c0 100644
+--- a/web/src/app/authFlow.test.tsx
++++ b/web/src/app/authFlow.test.tsx
+@@ -6,7 +6,7 @@ import { api } from "../api/client";
+ import { queryClient } from "../api/queryClient";
+ import { currentUserQueryKey } from "../features/auth/useCurrentUser";
+ import { paths } from "../features/org-structure/paths";
+-import { deferred, fakeApi, json, problem } from "../test/fakeApi";
++import { deferred, fakeApi, problem } from "../test/fakeApi";
+ import { LOGIN_PATH } from "./featureContract";
+ import { Providers } from "./Providers";
+ import { router } from "./router";
+@@ -26,8 +26,8 @@ const SIGN_IN_HEADING = "Вход в систему";
+ const REFUSAL = "Проверьте e-mail и пароль.";
+ 
+ function answerAsSignedIn() {
+-  fakeApi.on("GET /api/v1/auth/me", () => json(ACCOUNT));
+-  fakeApi.on("GET /api/v1/org-units/tree", () => json([]));
++  fakeApi.on("GET /api/v1/auth/me", () => Response.json(ACCOUNT));
++  fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([]));
+ }
+ 
+ async function openApp(path: string) {
+@@ -87,8 +87,8 @@ describe("sign-in (AC-6, AC-13)", () => {
+   it("caches the account the server returned and opens the application without waiting for /auth/me", async () => {
+     const meAnswer = deferred<Response>();
+     fakeApi.on("GET /api/v1/auth/me", () => meAnswer.promise);
+-    fakeApi.on("GET /api/v1/org-units/tree", () => json([]));
+-    fakeApi.on("POST /api/v1/auth/login", () => json(ACCOUNT));
++    fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([]));
++    fakeApi.on("POST /api/v1/auth/login", () => Response.json(ACCOUNT));
+ 
+     await openApp(LOGIN_PATH);
+     await submitCredentials();
+@@ -102,7 +102,7 @@ describe("sign-in (AC-6, AC-13)", () => {
+       email: ACCOUNT.email,
+       password: "Correct-horse-1!",
+     });
+-    meAnswer.resolve(json(ACCOUNT));
++    meAnswer.resolve(Response.json(ACCOUNT));
+   });
+ 
+   it("stays on the sign-in screen when the credentials are refused: the unauthorized handler does not clear the cache or navigate on /login", async () => {
+diff --git a/web/src/app/editDialogs.test.tsx b/web/src/app/editDialogs.test.tsx
+index ec9357b..951fcd8 100644
+--- a/web/src/app/editDialogs.test.tsx
++++ b/web/src/app/editDialogs.test.tsx
+@@ -8,7 +8,7 @@ import { EmployeeModal } from "../features/org-structure/EmployeeModal";
+ import { orgUnitTreeQuery } from "../features/org-structure/orgStructureApi";
+ import { UnitFormModal } from "../features/org-structure/UnitFormModal";
+ import { UserModal } from "../features/users/UserModal";
+-import { fakeApi, json, problem } from "../test/fakeApi";
++import { fakeApi, problem } from "../test/fakeApi";
+ import { Providers } from "./Providers";
+ 
+ const OPENED = "Исходное значение";
+@@ -63,7 +63,7 @@ const dialogs: Dialog[] = [
+       version,
+     }),
+     serveOthers: () =>
+-      fakeApi.on("GET /api/v1/employees", () => json(EMPLOYEE_PAGE)),
++      fakeApi.on("GET /api/v1/employees", () => Response.json(EMPLOYEE_PAGE)),
+     element: () => <UserModal userId="user-1" onClose={noop} />,
+   },
+   {
+@@ -86,7 +86,8 @@ const dialogs: Dialog[] = [
+       isActive: true,
+       version,
+     }),
+-    serveOthers: () => fakeApi.on("GET /api/v1/org-units/tree", () => json([])),
++    serveOthers: () =>
++      fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([])),
+     element: () => (
+       <EmployeeModal employeeId="employee-1" onClose={noop} onSaved={noop} />
+     ),
+@@ -110,7 +111,7 @@ const dialogs: Dialog[] = [
+       },
+     ],
+     serveOthers: () =>
+-      fakeApi.on("GET /api/v1/employees", () => json(EMPLOYEE_PAGE)),
++      fakeApi.on("GET /api/v1/employees", () => Response.json(EMPLOYEE_PAGE)),
+     element: () => <UnitDialog />,
+   },
+ ];
+@@ -118,7 +119,7 @@ const dialogs: Dialog[] = [
+ async function openDialog(dialog: Dialog, answerSave: () => Response) {
+   const server = { version: 1, text: OPENED };
+   fakeApi.on(dialog.readRoute, () =>
+-    json(dialog.answer(server.version, server.text)),
++    Response.json(dialog.answer(server.version, server.text)),
+   );
+   fakeApi.on(dialog.saveRoute, answerSave);
+   dialog.serveOthers();
+@@ -170,7 +171,7 @@ describe.each(dialogs)("$name (AC-13, AC-17)", (dialog) => {
+     expect((await saveBody(dialog, 0))[dialog.bodyField]).toBe(`${MINE}!`);
+     await waitFor(() => expect(opened.field()).toHaveValue(OTHERS));
+     fakeApi.on(dialog.saveRoute, () =>
+-      json(dialog.answer(opened.server.version, opened.server.text)),
++      Response.json(dialog.answer(opened.server.version, opened.server.text)),
+     );
+     await opened.save();
+ 
+@@ -230,7 +231,7 @@ describe.each(dialogs.filter(readsItsRecord))(
+     it("reads the record afresh instead of starting from the version the previous opening cached", async () => {
+       const server = { version: 1, text: OPENED };
+       fakeApi.on(dialog.readRoute, () =>
+-        json(dialog.answer(server.version, server.text)),
++        Response.json(dialog.answer(server.version, server.text)),
+       );
+       dialog.serveOthers();
+       const first = render(<Providers>{dialog.element()}</Providers>);
+diff --git a/web/src/app/useDebouncedValue.ts b/web/src/app/useDebouncedValue.ts
+index 1dde22d..d0d2852 100644
+--- a/web/src/app/useDebouncedValue.ts
++++ b/web/src/app/useDebouncedValue.ts
+@@ -4,14 +4,11 @@ import { useEffect, useState } from "react";
+ export const SEARCH_DEBOUNCE_MS = 300;
+ 
+ /** The value once it has stayed unchanged for the delay; the first value is returned at once. */
+-export function useDebouncedValue<TValue>(
+-  value: TValue,
+-  delayMs: number = SEARCH_DEBOUNCE_MS,
+-): TValue {
++export function useDebouncedValue<TValue>(value: TValue): TValue {
+   const [debounced, setDebounced] = useState(value);
+   useEffect(() => {
+-    const timer = setTimeout(() => setDebounced(value), delayMs);
++    const timer = setTimeout(() => setDebounced(value), SEARCH_DEBOUNCE_MS);
+     return () => clearTimeout(timer);
+-  }, [value, delayMs]);
++  }, [value]);
+   return debounced;
+ }
+diff --git a/web/src/features/org-structure/OrgStructurePage.test.tsx b/web/src/features/org-structure/OrgStructurePage.test.tsx
+index 390e4e6..bc5f9d2 100644
+--- a/web/src/features/org-structure/OrgStructurePage.test.tsx
++++ b/web/src/features/org-structure/OrgStructurePage.test.tsx
+@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+ import { SEARCH_DEBOUNCE_MS } from "../../app/useDebouncedValue";
+-import { deferred, fakeApi, json } from "../../test/fakeApi";
++import { deferred, fakeApi } from "../../test/fakeApi";
+ import { OrgStructurePage } from "./OrgStructurePage";
+ import { employeesQueryKey } from "./orgStructureApi";
+ import { SEARCH_MIN_LENGTH } from "./useEmployeeSearch";
+@@ -58,7 +58,7 @@ const MATCHED = employee("matched", "Найденов", "north");
+ const OF_SUPPORT = employee("of-support", "Помогаев", "support");
+ 
+ const page = (items: unknown[]) =>
+-  json({ items, total: items.length, page: 1, pageSize: 200 });
++  Response.json({ items, total: items.length, page: 1, pageSize: 200 });
+ 
+ const hasParam = (request: Request, name: string) =>
+   new URL(request.url).searchParams.has(name);
+@@ -71,9 +71,9 @@ const searchCalls = () =>
+ 
+ function serve(searchAnswer: () => Response | Promise<Response>) {
+   fakeApi.on("GET /api/v1/auth/me", () =>
+-    json({ id: "account", email: "user@test.local", role: "User" }),
++    Response.json({ id: "account", email: "user@test.local", role: "User" }),
+   );
+-  fakeApi.on("GET /api/v1/org-units/tree", () => json(UNITS));
++  fakeApi.on("GET /api/v1/org-units/tree", () => Response.json(UNITS));
+   fakeApi.on(EMPLOYEES_ROUTE, (request) =>
+     hasParam(request, "orgUnitId") ? page([OF_SUPPORT]) : searchAnswer(),
+   );
+diff --git a/web/src/test/fakeApi.ts b/web/src/test/fakeApi.ts
+index c79c53e..95a83a1 100644
+--- a/web/src/test/fakeApi.ts
++++ b/web/src/test/fakeApi.ts
+@@ -43,11 +43,6 @@ export const fakeApi = {
+   },
+ };
+ 
+-/** A successful answer carrying the body as JSON. */
+-export function json(body: unknown, status = 200): Response {
+-  return Response.json(body, { status });
+-}
+-
+ /** A failed answer with a problem-details body. */
+ export function problem(
+   status: number,

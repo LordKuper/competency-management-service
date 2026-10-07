@@ -1,0 +1,99 @@
+import { Grid } from "antd";
+import type { EmployeeAction } from "./EmployeeCard";
+import { EmployeeCards } from "./EmployeeCards";
+import type { Employee, OrgUnit } from "./orgStructureApi";
+import type { UnitNode, UnitOpenness, UnitSearch } from "./orgTree";
+import { type UnitAction, UnitCard } from "./UnitCard";
+import { UnitEmployees } from "./UnitEmployees";
+
+/** What every card of the hierarchy needs to know about the screen it is on. */
+export interface UnitTreeView {
+  /** How much each open unit lists; a unit absent from the map is closed. */
+  openness: ReadonlyMap<string, UnitOpenness>;
+  /** The search in progress; it narrows the units shown, and null means every unit is shown. */
+  search: UnitSearch | null;
+  selectedId: string | null;
+  isAdmin: boolean;
+  onToggle: (unitId: string, isOpen: boolean) => void;
+  onAction: (action: UnitAction, unit: OrgUnit) => void;
+  onEmployeeAction: (action: EmployeeAction, employee: Employee) => void;
+}
+
+function visibleNodes(nodes: readonly UnitNode[], view: UnitTreeView) {
+  const visibleIds = view.search?.visibleIds;
+  return visibleIds
+    ? nodes.filter(({ unit }) => visibleIds.has(unit.id))
+    : nodes;
+}
+
+function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
+  const { unit } = node;
+  const openness = view.openness.get(unit.id) ?? "closed";
+  const children = visibleNodes(node.children, view);
+  const matchedEmployees =
+    openness === "path" ? view.search?.employeesByUnit.get(unit.id) : undefined;
+
+  return (
+    <li className="org-tree__node">
+      <UnitCard
+        unit={unit}
+        childCount={node.children.length}
+        openness={openness}
+        isSelected={view.selectedId === unit.id}
+        needle={view.search?.needle ?? ""}
+        isAdmin={view.isAdmin}
+        onToggle={view.onToggle}
+        onAction={view.onAction}
+      />
+      {openness !== "closed" && (
+        <ul className="org-tree__children">
+          {children.map((child) => (
+            <UnitNodeView key={child.unit.id} node={child} view={view} />
+          ))}
+          {openness === "open" && (
+            <UnitEmployees
+              unitId={unit.id}
+              headEmployeeId={unit.headEmployeeId}
+              hasChildUnits={children.length > 0}
+              isAdmin={view.isAdmin}
+              onAction={view.onEmployeeAction}
+            />
+          )}
+          {matchedEmployees && (
+            <EmployeeCards
+              employees={matchedEmployees}
+              headEmployeeId={unit.headEmployeeId}
+              needle={view.search?.needle}
+              isAdmin={view.isAdmin}
+              onAction={view.onEmployeeAction}
+            />
+          )}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+/**
+ * The hierarchy of unit and employee cards: a unit opens to its child units and then its own employees, each level
+ * indented under its parent with connecting lines. The indent shrinks below the desktop width.
+ */
+export function UnitTree({
+  roots,
+  view,
+}: {
+  roots: readonly UnitNode[];
+  view: UnitTreeView;
+}) {
+  const screens = Grid.useBreakpoint();
+  return (
+    <ul
+      className={screens.lg ? "org-tree" : "org-tree org-tree--narrow"}
+      aria-label="Иерархия подразделений"
+    >
+      {visibleNodes(roots, view).map((root) => (
+        <UnitNodeView key={root.unit.id} node={root} view={view} />
+      ))}
+    </ul>
+  );
+}

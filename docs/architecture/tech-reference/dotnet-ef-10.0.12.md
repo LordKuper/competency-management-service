@@ -28,9 +28,9 @@ responsibility:
 
 ## Project conventions
 - Версия инструмента = версия EF Core 10.0.12; обновление — только через спринт.
-- Образ `app` — `aspnet:10.0.12-noble` без SDK, поэтому «применение» миграций средствами `dotnet ef` внутри `app` невозможно; способ доставки схемы (bundle как одноразовый Kubernetes Job, SQL-скрипт либо `MigrateAsync()` при старте) в stack.html не определён — решение design (EF Core 9+ защищает `MigrateAsync()` блокировкой, но Microsoft всё равно предпочитает отдельный шаг).
+- Образ `app` — `aspnet:10.0.12-noble` без SDK, поэтому `dotnet ef` внутри `app` не применяется: схему применяет само приложение при старте через `MigrateAsync()` (решение пользователя 2026-10-05; EF Core 9+ защищает его блокировкой БД, Microsoft предпочитает отдельный шаг — принятый компромисс, учётка БД приложения имеет DDL-права). Инструмент `dotnet-ef` нужен для генерации миграций (`migrations add`, `has-pending-model-changes`, `script`) на машине разработки и в CI.
 - Миграции — в репозитории, ревью SQL обязательно (`migrations script`) для данных PII/HR; значения параметров SQL в логи не попадают (stack.html).
-- В CI: `has-pending-model-changes` и сборка bundle в стадии .NET SDK образа.
+- В CI: `has-pending-model-changes`; сборка bundle не используется.
 
 ## Known issues and workarounds
 - Bundle не позволяет заранее посмотреть SQL и список миграций (issue dotnet/efcore#25872) — для обзора использовать `migrations script`.

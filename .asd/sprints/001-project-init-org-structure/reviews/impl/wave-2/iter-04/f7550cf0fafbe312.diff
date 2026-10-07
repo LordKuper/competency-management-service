@@ -1,0 +1,370 @@
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index fd9f2ef..d6898d3 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -17,6 +17,7 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - A guard that a role cannot bypass (triggers enabled always) is tested inside a transaction: `SET LOCAL session_replication_role = replica`, run the statement, expect the rejection; disposing the transaction rolls back, so a regression cannot damage the shared host's journal.
+ - A deterministic race needs a pause point inside the first request's transaction, after its reads: on its own host add `BEFORE UPDATE ON employees` calling `pg_advisory_lock(k)` then `pg_advisory_unlock(k)`, hold `k` on an unpooled `NpgsqlConnection`, start the dismissal, wait until `pg_locks` shows it ungranted, fire the second request, wait for `late.IsCompleted || another ungranted lock`, then release. Count waiters through `pg_locks JOIN pg_stat_activity ON pid WHERE datname = current_database()`: `pg_locks` is cluster-wide and parallel classes share the container. A gate-start `TaskCompletionSource` race with a narrow window (an update-binding request is milliseconds) cannot give a fail-first proof; a held transaction can.
+ - Real fail-first for a review fix: `git archive <prior HEAD sha> src` plus the current `tests/` in a scratch copy, run the whole suite, list the reds. It showed the reviewer's "update-binding races dismissal" path was not reachable before the fix (both take the admin row lock, and one active administrator always exists); that row stays green pre-fix and is proven only by removing every lock from the endpoint. State that in the plan rather than claiming a regression proof.
++- A race on one account's rows without a trigger: hold `SELECT id FROM users WHERE id = X FOR UPDATE` in a transaction on an unpooled `NpgsqlConnection`, fire N requests, `Waiting.UntilAsync` until `pg_stat_activity` shows N backends with `wait_event_type = 'Lock'` in `current_database()`, then commit. It also works against the pre-fix code (its UPDATEs queue on the same row), so the test reddens on assertions, not on the 30 s timeout. Use a class-fixture host (`HostFixture`) so no other test waits on locks in that database. `ProblemDetails` bodies carry a per-request `traceId`: compare bodies without it. Identity resets `AccessFailedCount` to 0 when it starts a lockout, so assert the lock by a refused right password, not by the count. An unsavable `IdentityResult.Failed` is reachable with `UPDATE users SET user_name = ''` (the user validator rejects it; sign-in still finds the account by e-mail).
+ - The `AdministratorsHost` class fixture is shared state: a test that fails after blocking the sole administrator makes every later test of the class red ("active ... is empty"). Read the first red only.
+ - `ApiResponse` once printed its computed `Id` in assertion failures, which turned any failed assertion over responses into a `NullReferenceException` (it hid the deadlock 500 of a lock-order mutation); `PrintMembers` now prints status and body only.
+ - Python or heredoc edits of the production `.cs` files in a `git archive` copy: the index is LF but `core.autocrlf=true` makes the archive CRLF, so multi-line anchors need `\r\n`, and a bash heredoc (or `sed`) turns `\r\n` inside a Python string into real line breaks; build the separators with `chr(13) + chr(10)` in a script written with the Write tool.
+diff --git a/src/Competency.UserManagement/AuthEndpoints.cs b/src/Competency.UserManagement/AuthEndpoints.cs
+index 58bd4b7..46c8693 100644
+--- a/src/Competency.UserManagement/AuthEndpoints.cs
++++ b/src/Competency.UserManagement/AuthEndpoints.cs
+@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
+ using Microsoft.AspNetCore.Http.HttpResults;
+ using Microsoft.AspNetCore.Identity;
+ using Microsoft.AspNetCore.Routing;
++using Microsoft.EntityFrameworkCore;
+ 
+ namespace Competency.UserManagement;
+ 
+@@ -62,6 +63,7 @@ internal static class AuthEndpoints
+     private static async Task<Results<Ok<CurrentUserResponse>, ValidationProblem, ProblemHttpResult>> LoginAsync(
+         LoginRequest request,
+         UserManager<AppUser> users,
++        AppDbContext context,
+         IEmployeeDirectory employees,
+         IAuditWriter audit,
+         HttpContext httpContext,
+@@ -80,7 +82,7 @@ internal static class AuthEndpoints
+             return await DenyAsync(audit, null, LoginDenial.UnknownUser, cancellationToken);
+         }
+ 
+-        var denial = await VerifyPasswordAsync(users, user, request.Password);
++        var denial = await VerifyPasswordAsync(users, context, user, request.Password, cancellationToken);
+         var employee = denial is null && user.EmployeeId is { } employeeId
+             ? await employees.FindAsync(employeeId, cancellationToken)
+             : null;
+@@ -90,7 +92,6 @@ internal static class AuthEndpoints
+             return await DenyAsync(audit, user, reason, cancellationToken);
+         }
+ 
+-        await users.ResetAccessFailedCountAsync(user);
+         await httpContext.SignInAsync(SessionAuthentication.Scheme, SessionAuthentication.CreatePrincipal(user));
+         await audit.WriteAsync(
+             new AuditEntry(LoginSucceededAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString()),
+@@ -146,7 +147,7 @@ internal static class AuthEndpoints
+             return TypedResults.Unauthorized();
+         }
+ 
+-        if (await VerifyPasswordAsync(users, user, request.CurrentPassword) is { } denial)
++        if (await VerifyPasswordAsync(users, context, user, request.CurrentPassword, cancellationToken) is { } denial)
+         {
+             if (denial == LoginDenial.LockoutStarted)
+             {
+@@ -176,10 +177,32 @@ internal static class AuthEndpoints
+     }
+ 
+     /// <summary>
+-    /// Verifies the password with lockout accounting: a locked account is refused without checking, a wrong password counts
+-    /// as a failed attempt, and the failed attempt that reaches the limit starts the lockout.
++    /// Verifies the password with lockout accounting, one attempt at a time per account: the account row is locked and re-read first,
++    /// so concurrent attempts are counted one after another against the committed state and only the attempt that reaches the limit
++    /// starts the lockout. A locked account is refused without checking, a wrong password counts as a failed attempt and a correct one
++    /// clears the count. The row lock is the only lock this method takes: nothing is held while waiting for it and nothing else is requested
++    /// while holding it, so it cannot deadlock with the employee tree and administrator locks; it ends before the method returns.
+     /// </summary>
+-    private static async Task<LoginDenial?> VerifyPasswordAsync(UserManager<AppUser> users, AppUser user, string password)
++    private static async Task<LoginDenial?> VerifyPasswordAsync(
++        UserManager<AppUser> users,
++        AppDbContext context,
++        AppUser user,
++        string password,
++        CancellationToken cancellationToken)
++    {
++        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
++        await context.Database.ExecuteSqlAsync($"SELECT id FROM users WHERE id = {user.Id} FOR UPDATE", cancellationToken);
++        await context.Entry(user).ReloadAsync(cancellationToken);
++        var denial = await CountAttemptAsync(users, user, password);
++        await transaction.CommitAsync(cancellationToken);
++        return denial;
++    }
++
++    /// <summary>
++    /// Counts one attempt on the account as it is under the row lock of <see cref="VerifyPasswordAsync"/>.
++    /// A count that cannot be saved fails the request instead of being taken for counted.
++    /// </summary>
++    private static async Task<LoginDenial?> CountAttemptAsync(UserManager<AppUser> users, AppUser user, string password)
+     {
+         if (await users.IsLockedOutAsync(user))
+         {
+@@ -189,13 +212,23 @@ internal static class AuthEndpoints
+ 
+         if (await users.CheckPasswordAsync(user, password))
+         {
++            EnsureSaved(await users.ResetAccessFailedCountAsync(user), user);
+             return null;
+         }
+ 
+-        await users.AccessFailedAsync(user);
++        EnsureSaved(await users.AccessFailedAsync(user), user);
+         return await users.IsLockedOutAsync(user) ? LoginDenial.LockoutStarted : LoginDenial.WrongPassword;
+     }
+ 
++    private static void EnsureSaved(IdentityResult result, AppUser user)
++    {
++        if (!result.Succeeded)
++        {
++            throw new InvalidOperationException(
++                $"Saving the sign-in attempt count of account {user.Id} failed: {string.Join(", ", result.Errors.Select(error => error.Code))}.");
++        }
++    }
++
+     private static LoginDenial? CheckAccount(AppUser user, EmployeeStatus? employee)
+     {
+         if (user.IsBlocked)
+diff --git a/tests/Competency.Tests/DismissalRaceTests.cs b/tests/Competency.Tests/DismissalRaceTests.cs
+index 2b49481..ef3ebd9 100644
+--- a/tests/Competency.Tests/DismissalRaceTests.cs
++++ b/tests/Competency.Tests/DismissalRaceTests.cs
+@@ -1,4 +1,3 @@
+-using System.Diagnostics;
+ using System.Net;
+ using AwesomeAssertions;
+ using Competency.Tests.Infrastructure;
+@@ -16,7 +15,6 @@ namespace Competency.Tests;
+ public sealed class DismissalRaceTests(TestEnvironment environment)
+ {
+     private const long GateKey = 7;
+-    private static readonly TimeSpan WaitTimeout = TimeSpan.FromSeconds(30);
+ 
+     [Theory]
+     [InlineData("create", HttpStatusCode.BadRequest)]
+@@ -46,7 +44,7 @@ public sealed class DismissalRaceTests(TestEnvironment environment)
+         await host.ExecuteAsync("CREATE TRIGGER wait_for_gate BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION wait_for_gate()");
+         await using var gate = await Gate.CloseAsync(host);
+         var dismissal = admin.PostAsync($"/api/v1/employees/{employee.Id}/dismiss", ifMatch: employee.ETag);
+-        await WaitUntilAsync(async () => await WaitersAsync(host, $"l.locktype = 'advisory' AND l.objid = {GateKey}") > 0, "the dismissal waits at the gate");
++        await Waiting.UntilAsync(async () => await WaitersAsync(host, $"l.locktype = 'advisory' AND l.objid = {GateKey}") > 0, "the dismissal waits at the gate");
+ 
+         var late = change switch
+         {
+@@ -59,7 +57,7 @@ public sealed class DismissalRaceTests(TestEnvironment environment)
+                 version),
+             _ => admin.PostAsync($"/api/v1/users/{account!.Id}/unblock", ifMatch: version),
+         };
+-        await WaitUntilAsync(
++        await Waiting.UntilAsync(
+             async () => late.IsCompleted || await WaitersAsync(host, $"NOT (l.locktype = 'advisory' AND l.objid = {GateKey})") > 0,
+             "the change has either finished or waits for the dismissal");
+         await gate.OpenAsync();
+@@ -76,20 +74,6 @@ public sealed class DismissalRaceTests(TestEnvironment environment)
+         WHERE NOT l.granted AND a.datname = current_database() AND {lockFilter}
+         """);
+ 
+-    private static async Task WaitUntilAsync(Func<Task<bool>> condition, string what)
+-    {
+-        var waited = Stopwatch.StartNew();
+-        while (!await condition())
+-        {
+-            if (waited.Elapsed > WaitTimeout)
+-            {
+-                throw new TimeoutException($"Gave up after {WaitTimeout.TotalSeconds} s waiting until {what}.");
+-            }
+-
+-            await Task.Delay(25, TestContext.Current.CancellationToken);
+-        }
+-    }
+-
+     /// <summary>
+     /// An advisory lock held on a connection of its own, which the trigger the test installs on employee updates waits for,
+     /// so that a request that updates an employee stops inside its transaction until the gate is opened.
+diff --git a/tests/Competency.Tests/Infrastructure/Waiting.cs b/tests/Competency.Tests/Infrastructure/Waiting.cs
+new file mode 100644
+index 0000000..186e773
+--- /dev/null
++++ b/tests/Competency.Tests/Infrastructure/Waiting.cs
+@@ -0,0 +1,31 @@
++using System.Diagnostics;
++using Xunit;
++
++namespace Competency.Tests.Infrastructure;
++
++/// <summary>
++/// Waiting for a state of the database or the host without sleeping for a fixed time.
++/// </summary>
++public static class Waiting
++{
++    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
++
++    /// <summary>
++    /// Polls the condition until it holds.
++    /// </summary>
++    /// <param name="condition">The condition to wait for.</param>
++    /// <param name="what">What is waited for, for the message of the timeout.</param>
++    public static async Task UntilAsync(Func<Task<bool>> condition, string what)
++    {
++        var waited = Stopwatch.StartNew();
++        while (!await condition())
++        {
++            if (waited.Elapsed > Timeout)
++            {
++                throw new TimeoutException($"Gave up after {Timeout.TotalSeconds} s waiting until {what}.");
++            }
++
++            await Task.Delay(25, TestContext.Current.CancellationToken);
++        }
++    }
++}
+diff --git a/tests/Competency.Tests/SessionTests.cs b/tests/Competency.Tests/SessionTests.cs
+index 21f829f..d1fb3f1 100644
+--- a/tests/Competency.Tests/SessionTests.cs
++++ b/tests/Competency.Tests/SessionTests.cs
+@@ -59,6 +59,20 @@ public sealed class SessionTests(TestEnvironment environment)
+         (await SignInAsync(host, account.Email, account.Password)).Status.Should().Be(HttpStatusCode.OK);
+     }
+ 
++    [Fact]
++    public async Task Ac6_AttemptWhoseCountCannotBeSaved_FailsTheRequestInsteadOfBeingTakenForCounted()
++    {
++        var host = await environment.SharedHostAsync();
++        var account = await (await host.AdminAsync()).CreateUserAsync();
++        await host.ExecuteAsync($"UPDATE users SET access_failed_count = 2, user_name = '' WHERE id = '{account.Id}'");
++
++        var wrong = await SignInAsync(host, account.Email, WrongPassword);
++        var right = await SignInAsync(host, account.Email, account.Password);
++
++        wrong.Status.Should().Be(HttpStatusCode.InternalServerError, "a wrong password that cannot be counted is not answered as a counted one");
++        right.Status.Should().Be(HttpStatusCode.InternalServerError, "a right password that cannot clear the count is not answered as a success");
++    }
++
+     [Fact]
+     public async Task Ac8_Block_EndsTheLiveSession_AndUnblockLetsTheUserSignInAgain()
+     {
+diff --git a/tests/Competency.Tests/SignInRaceTests.cs b/tests/Competency.Tests/SignInRaceTests.cs
+new file mode 100644
+index 0000000..409e2f3
+--- /dev/null
++++ b/tests/Competency.Tests/SignInRaceTests.cs
+@@ -0,0 +1,127 @@
++using System.Net;
++using AwesomeAssertions;
++using Competency.Tests.Infrastructure;
++using Npgsql;
++using Xunit;
++
++namespace Competency.Tests;
++
++/// <summary>
++/// Wrong passwords tried at the same moment on one account, at sign-in or as the current password of a password change, are counted
++/// one after another: none is lost, and only the attempt that reaches the limit starts the lockout and journals it.
++/// The attempts are held on the account's row lock until all of them wait for it, because that is the window in which attempts
++/// that do not wait for each other count against the same stale copy of the account.
++/// </summary>
++public sealed class SignInRaceTests(SignInRaceHost fixture) : IClassFixture<SignInRaceHost>
++{
++    private const int AttemptsBeforeLockout = 5;
++    private const string WrongPassword = "Wrong-Pass-12345!";
++    private const string NewPassword = "Guessed-Pass-12345!";
++    private const string WaitingForALock = "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'";
++
++    public enum Surface
++    {
++        SignIn,
++        ChangePassword,
++    }
++
++    [Theory]
++    [InlineData(Surface.SignIn)]
++    [InlineData(Surface.ChangePassword)]
++    public async Task Ac6_TwoWrongPasswordsAtTheLimitAtTheSameMoment_AreRefusedAlike_AndStartTheLockoutOnce(Surface surface)
++    {
++        var host = fixture.Host;
++        var admin = await host.AdminAsync();
++        var account = await admin.CreateUserAsync();
++
++        var responses = await AttemptTogetherAsync(host, account, surface, attempts: 2, failedBefore: AttemptsBeforeLockout - 1);
++
++        var refusal = surface == Surface.SignIn ? HttpStatusCode.Unauthorized : HttpStatusCode.BadRequest;
++        responses.Select(response => response.Status).Should().AllBeEquivalentTo(refusal);
++        responses.Select(WithoutTraceId).Distinct().Should().ContainSingle("both attempts are refused with the same response, whichever of them started the lockout");
++        var journaled = (await Task.WhenAll(responses.Select(response => admin.AuditOfRequestAsync(response.RequestId!))))
++            .SelectMany(rows => rows.Actions())
++            .Order();
++        string[] expected = surface == Surface.SignIn ? ["Auth.LockedOut", "Auth.LoginFailed", "Auth.LoginFailed"] : ["Auth.LockedOut"];
++        journaled.Should().Equal(expected);
++        (await SignInAsync(host, account.Email, account.Password)).Status.Should().Be(HttpStatusCode.Unauthorized, "the account is locked");
++        var lockouts = (await admin.GetAsync($"/api/v1/audit?action=Auth.LockedOut&entityId={account.Id}")).Expect(HttpStatusCode.OK).Json!["items"]!.AsArray();
++        lockouts.Should().ContainSingle("two attempts at the limit started one lockout");
++    }
++
++    [Theory]
++    [InlineData(Surface.SignIn)]
++    [InlineData(Surface.ChangePassword)]
++    public async Task Ac6_WrongPasswordsAtTheSameMoment_AreAllCounted(Surface surface)
++    {
++        var host = fixture.Host;
++        var account = await (await host.AdminAsync()).CreateUserAsync();
++        const int Attempts = 3;
++
++        await AttemptTogetherAsync(host, account, surface, Attempts, failedBefore: 0);
++
++        (await host.ScalarAsync<int>($"SELECT access_failed_count FROM users WHERE id = '{account.Id}'")).Should().Be(Attempts, "no attempt is lost");
++    }
++
++    private static string WithoutTraceId(ApiResponse response) =>
++        string.Join(',', response.Json!.AsObject().Where(property => property.Key != "traceId").Select(property => property.Value!.ToJsonString()));
++
++    private static Task<ApiResponse> SignInAsync(ApiHost host, string email, string password) =>
++        host.Anonymous().PostAsync("/api/v1/auth/login", new { email, password });
++
++    private static async Task<ApiResponse[]> AttemptTogetherAsync(ApiHost host, TestUser account, Surface surface, int attempts, int failedBefore)
++    {
++        var session = await account.SignInAsync(host);
++        await host.ExecuteAsync($"UPDATE users SET access_failed_count = {failedBefore} WHERE id = '{account.Id}'");
++        await using var held = await RowLock.HoldAsync(host, account.Id);
++
++        var pending = Enumerable.Range(0, attempts)
++            .Select(_ => surface == Surface.SignIn
++                ? SignInAsync(host, account.Email, WrongPassword)
++                : session.PostAsync("/api/v1/auth/change-password", new { currentPassword = WrongPassword, newPassword = NewPassword }))
++            .ToArray();
++        await Waiting.UntilAsync(async () => await host.ScalarAsync<long>(WaitingForALock) >= attempts, "every attempt waits for a lock");
++        await held.ReleaseAsync();
++        return await Task.WhenAll(pending);
++    }
++
++    /// <summary>
++    /// The row lock of one account, held in a transaction on a connection of its own, so that every request that locks or changes the
++    /// account stops until the lock is released.
++    /// </summary>
++    private sealed class RowLock : IAsyncDisposable
++    {
++        private readonly NpgsqlConnection connection;
++        private readonly NpgsqlTransaction transaction;
++
++        private RowLock(NpgsqlConnection connection, NpgsqlTransaction transaction)
++        {
++            this.connection = connection;
++            this.transaction = transaction;
++        }
++
++        public static async Task<RowLock> HoldAsync(ApiHost host, Guid userId)
++        {
++            var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(host.ConnectionString) { Pooling = false }.ConnectionString);
++            await connection.OpenAsync(TestContext.Current.CancellationToken);
++            var transaction = await connection.BeginTransactionAsync(TestContext.Current.CancellationToken);
++            await using var command = new NpgsqlCommand($"SELECT id FROM users WHERE id = '{userId}' FOR UPDATE", connection, transaction);
++            await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
++            return new RowLock(connection, transaction);
++        }
++
++        public Task ReleaseAsync() => transaction.CommitAsync(TestContext.Current.CancellationToken);
++
++        public async ValueTask DisposeAsync()
++        {
++            await transaction.DisposeAsync();
++            await connection.DisposeAsync();
++        }
++    }
++}
++
++/// <summary>
++/// A host with a database of its own for the sign-in race tests, so that the locks waited for in that database are theirs alone.
++/// </summary>
++/// <param name="environment">The shared environment that supplies the database.</param>
++public sealed class SignInRaceHost(TestEnvironment environment) : HostFixture(environment, null);
