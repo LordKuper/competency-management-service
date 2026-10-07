@@ -7,12 +7,15 @@ namespace Competency.UserManagement;
 /// <summary>
 /// Contributes the <see cref="AppUser"/> table to the shared model: snake_case names, a client-generated Guid v4 key,
 /// a unique case-insensitive e-mail that doubles as the internal Identity user name, one account per employee,
-/// and a foreign key to the employee that never cascades.
+/// a role limited to the known values, and a foreign key to the employee that never cascades.
 /// Only the Identity columns this application uses are mapped; roles, claims, logins, tokens, phone and two-factor are not.
 /// </summary>
 internal sealed class UserManagementEntityConfiguration : IEntityConfigurationContributor
 {
     private const int RoleMaxLength = 32;
+    private const string RoleCheckName = "ck_users_role";
+
+    private static readonly string RoleCheckSql = $"role IN ({string.Join(", ", Enum.GetNames<UserRole>().Select(role => $"'{role}'"))})";
 
     /// <summary>
     /// The employee entity is named rather than typed because OrgStructure keeps it internal; it must be configured before this contributor runs.
@@ -21,7 +24,7 @@ internal sealed class UserManagementEntityConfiguration : IEntityConfigurationCo
 
     public void Configure(ModelBuilder modelBuilder) => modelBuilder.Entity<AppUser>(entity =>
     {
-        entity.ToTable("users");
+        entity.ToTable("users", table => table.HasCheckConstraint(RoleCheckName, RoleCheckSql));
 
         entity.Property(e => e.Id).HasColumnName("id").HasValueGenerator<GuidValueGenerator>();
         entity.Property(e => e.UserName).HasColumnName("user_name").HasMaxLength(AppUser.EmailMaxLength).IsRequired();
