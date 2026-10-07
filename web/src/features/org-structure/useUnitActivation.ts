@@ -42,14 +42,17 @@ export function useUnitActivation() {
         okText: unit.isActive ? "Деактивировать" : "Активировать",
         okButtonProps: { danger: unit.isActive },
         cancelText: "Отмена",
+        // The handlers return nothing: a toast is a thenable that settles when it closes, and returning it
+        // would keep this dialog open, with a busy confirm button, for as long as the toast is shown.
         onOk: () =>
           change(unit).then(
-            () =>
+            () => {
               message.success(
                 unit.isActive
                   ? "Подразделение деактивировано"
                   : "Подразделение активировано",
-              ),
+              );
+            },
             (error) => {
               modal.error({
                 title: unit.isActive
