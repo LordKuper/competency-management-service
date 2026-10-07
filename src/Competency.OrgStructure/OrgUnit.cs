@@ -22,7 +22,7 @@ internal sealed class OrgUnit : EntityBase
     public Guid? ParentId { get; set; }
 
     /// <summary>
-    /// The employee who heads the unit; an active unit is headed only by an active employee.
+    /// The employee who heads the unit: a working employee of this unit, released when they leave the unit or stop working.
     /// </summary>
     [Audited]
     public Guid? HeadEmployeeId { get; set; }

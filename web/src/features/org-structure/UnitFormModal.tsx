@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { App, Button, Form, Input, Modal, Space } from "antd";
+import { App, Button, Form, Input, Modal, Space, Typography } from "antd";
 import { useState } from "react";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
@@ -43,25 +43,23 @@ export function UnitFormModal({
   const queryClient = useQueryClient();
   const { message } = App.useApp();
   const save = useMutation({
-    mutationFn: async (values: UnitFormValues) => {
-      const fields = {
-        name: values.name,
-        headEmployeeId: values.headEmployeeId ?? null,
-      };
-      return unwrap(
+    mutationFn: async (values: UnitFormValues) =>
+      unwrap(
         unit
           ? await api.PUT("/api/v1/org-units/{id}", {
               params: {
                 path: { id: unit.id },
                 header: { "If-Match": ifMatchOf(unit.version) },
               },
-              body: fields,
+              body: {
+                name: values.name,
+                headEmployeeId: values.headEmployeeId ?? null,
+              },
             })
           : await api.POST("/api/v1/org-units", {
-              body: { ...fields, parentId: values.parentId ?? null },
+              body: { name: values.name, parentId: values.parentId ?? null },
             }),
-      ).data;
-    },
+      ).data,
     onSuccess: async (saved) => {
       await invalidateOrgStructure(queryClient);
       message.success(unit ? "Изменения сохранены" : "Подразделение создано");
@@ -165,15 +163,24 @@ function UnitForm({
           />
         </Form.Item>
       )}
-      <Form.Item
-        name="headEmployeeId"
-        label="Руководитель"
-        extra="Руководителем может быть только работающий сотрудник."
-      >
-        <EmployeePicker
-          current={head ? { id: head.id, name: head.fullName } : undefined}
-        />
-      </Form.Item>
+      {unit ? (
+        <Form.Item
+          name="headEmployeeId"
+          label="Руководитель"
+          extra="Руководителем может быть только работающий сотрудник этого подразделения."
+        >
+          <EmployeePicker
+            orgUnitId={unit.id}
+            current={head ? { id: head.id, name: head.fullName } : undefined}
+          />
+        </Form.Item>
+      ) : (
+        <Form.Item label="Руководитель">
+          <Typography.Text type="secondary">
+            Руководителя можно назначить после добавления сотрудников.
+          </Typography.Text>
+        </Form.Item>
+      )}
       <Space>
         <Button type="primary" htmlType="submit" loading={isSubmitting}>
           {submitLabel}

@@ -2724,13 +2724,6 @@
               "string"
             ],
             "format": "uuid"
-          },
-          "headEmployeeId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
           }
         }
       },

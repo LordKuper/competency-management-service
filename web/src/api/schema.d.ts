@@ -424,8 +424,6 @@ export interface components {
             name: string;
             /** Format: uuid */
             parentId?: null | string;
-            /** Format: uuid */
-            headEmployeeId?: null | string;
         };
         CreateUserRequest: {
             email: string;

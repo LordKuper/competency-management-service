@@ -13,7 +13,7 @@ namespace Competency.OrgStructure;
 /// The employee API. Any signed-in user reads the restricted projection of working employees; only global administrators
 /// read the full projection and change employees, under the tree lock and with <c>If-Match</c>.
 /// Dismissal and deletion cascade to the units the employee heads and to the bound account in the same transaction,
-/// and administrators preview exactly those changes first.
+/// and administrators preview exactly those changes first. A transfer likewise takes the employee off the headship of the unit they leave.
 /// </summary>
 internal static class EmployeeEndpoints
 {
@@ -189,6 +189,11 @@ internal static class EmployeeEndpoints
         }
 
         ifMatch.ApplyTo(context, employee);
+        if (unit.Id != employee.OrgUnitId)
+        {
+            await ReleaseHeadOfPreviousUnitAsync(context, employee, cancellationToken);
+        }
+
         employee.LastName = input.LastName;
         employee.FirstName = input.FirstName;
         employee.MiddleName = input.MiddleName;
@@ -303,6 +308,20 @@ internal static class EmployeeEndpoints
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return TypedResults.NoContent();
+    }
+
+    /// <summary>
+    /// Takes the employee off the headship of the unit they work in, if they head it, because a unit is headed only by its own employee.
+    /// The unit is tracked, so its version and audit follow in the same save.
+    /// </summary>
+    private static async Task ReleaseHeadOfPreviousUnitAsync(AppDbContext context, Employee employee, CancellationToken cancellationToken)
+    {
+        var headedUnit = await context.Set<OrgUnit>()
+            .FirstOrDefaultAsync(unit => unit.Id == employee.OrgUnitId && unit.HeadEmployeeId == employee.Id, cancellationToken);
+        if (headedUnit is not null)
+        {
+            headedUnit.HeadEmployeeId = null;
+        }
     }
 
     private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, string text)

@@ -230,17 +230,10 @@ internal static class OrgUnitEndpoints
             return Rejections.Invalid("parentId", parentProblem);
         }
 
-        if (request.HeadEmployeeId is { } headId
-            && await context.EmployeeProblemAsync(headId, HeadSubject, cancellationToken) is { } headProblem)
-        {
-            return Rejections.Invalid("headEmployeeId", headProblem);
-        }
-
         var unit = new OrgUnit
         {
             Name = request.Name.Trim(),
             ParentId = request.ParentId,
-            HeadEmployeeId = request.HeadEmployeeId,
         };
         context.Add(unit);
 
@@ -271,7 +264,7 @@ internal static class OrgUnitEndpoints
 
         if (request.HeadEmployeeId is { } headId
             && headId != unit.HeadEmployeeId
-            && await context.EmployeeProblemAsync(headId, HeadSubject, cancellationToken) is { } headProblem)
+            && await HeadProblemAsync(context, headId, unit.Id, cancellationToken) is { } headProblem)
         {
             return Rejections.Invalid("headEmployeeId", headProblem);
         }
@@ -387,6 +380,20 @@ internal static class OrgUnitEndpoints
         unit.IsActive = true;
 
         return TypedResults.Ok(await SaveAsync(unit, context, transaction, response, cancellationToken));
+    }
+
+    /// <summary>
+    /// Says why an employee cannot head the unit: they do not exist, do not work, or work in another unit.
+    /// </summary>
+    private static async Task<string?> HeadProblemAsync(AppDbContext context, Guid headId, Guid unitId, CancellationToken cancellationToken)
+    {
+        if (await context.EmployeeProblemAsync(headId, HeadSubject, cancellationToken) is { } problem)
+        {
+            return problem;
+        }
+
+        var isInUnit = await context.Set<Employee>().AnyAsync(employee => employee.Id == headId && employee.OrgUnitId == unitId, cancellationToken);
+        return isInUnit ? null : "Сотрудник работает в другом подразделении: руководителем может быть только сотрудник этого подразделения.";
     }
 
     private static async Task<OrgUnitResponse> SaveAsync(

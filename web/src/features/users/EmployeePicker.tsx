@@ -23,6 +23,8 @@ interface EmployeePickerProps {
   onChange?: (value: string | undefined) => void;
   /** The employee already bound, listed by name even when the search does not return them. */
   current?: { id: string; name: string };
+  /** Narrows the choice to the employees working directly in this unit, as for a unit's head; omitted, every working employee is offered. */
+  orgUnitId?: string;
 }
 
 function useDebouncedValue<TValue>(value: TValue, delayMs: number): TValue {
@@ -34,17 +36,18 @@ function useDebouncedValue<TValue>(value: TValue, delayMs: number): TValue {
   return debounced;
 }
 
-/** Remote-search select of working employees, showing each one's unit and position so namesakes can be told apart. */
+/** Remote-search select of working employees, all of them or those of one unit, showing each one's unit and position so namesakes can be told apart. */
 export function EmployeePicker({
   id,
   value,
   onChange,
   current,
+  orgUnitId,
 }: EmployeePickerProps) {
   const [search, setSearch] = useState("");
   const text = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
   const { data, error, isFetching } = useQuery({
-    queryKey: ["employees", "picker", text],
+    queryKey: ["employees", "picker", orgUnitId ?? null, text],
     queryFn: async () =>
       unwrap(
         await api.GET("/api/v1/employees", {
@@ -52,6 +55,7 @@ export function EmployeePicker({
             query: {
               q: text || undefined,
               isActive: true,
+              orgUnitId,
               pageSize: PICKER_PAGE_SIZE,
             },
           },
