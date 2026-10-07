@@ -16,7 +16,7 @@ export interface UserListParams {
   pageSize: number;
 }
 
-/** Cache key prefix of every account query, so one invalidation rereads the list and the open card together. */
+/** Cache key prefix of every account query, so one invalidation rereads the list and the account open for editing together. */
 export const usersQueryKey = ["users"] as const;
 
 /** One page of accounts; the previous page stays on screen while the next loads. */
@@ -30,13 +30,14 @@ export function userListQuery(params: UserListParams) {
   });
 }
 
-/** One account by id. */
+/** One account by id; dropped once nothing shows it, so reopening never starts from an older version. */
 export function userQuery(id: string) {
   return queryOptions({
     queryKey: [...usersQueryKey, "detail", id],
     queryFn: async () =>
       unwrap(await api.GET("/api/v1/users/{id}", { params: { path: { id } } }))
         .data,
+    gcTime: 0,
   });
 }
 

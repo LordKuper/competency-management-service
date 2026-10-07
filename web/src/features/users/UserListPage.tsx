@@ -1,8 +1,16 @@
+import {
+  CheckCircleOutlined,
+  EditOutlined,
+  KeyOutlined,
+  MoreOutlined,
+  StopOutlined,
+} from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import {
   theme as antdTheme,
   Button,
   Col,
+  Dropdown,
   Empty,
   Flex,
   Input,
@@ -14,10 +22,11 @@ import {
   Typography,
 } from "antd";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import type { UserRole } from "../../app/featureContract";
+import { ResetPasswordModal } from "./ResetPasswordModal";
 import { ROLE_LABEL, ROLE_OPTIONS } from "./roles";
+import { UserModal } from "./UserModal";
 import { UserStatusTag } from "./UserStatusTag";
 import { useBlockUser } from "./useBlockUser";
 import {
@@ -33,25 +42,28 @@ const BLOCKED_OPTIONS = [
   { value: true, label: "Заблокированные" },
 ];
 
-/** List of accounts for administrators: search, role and state filters, paging, and block or unblock from a row. */
+type UserDialog =
+  | { kind: "create" }
+  | { kind: "edit" | "resetPassword"; userId: string };
+
+/** List of accounts for administrators: search, role and state filters, paging, and a row menu to edit, block, unblock or reset the password. The dialogs live here, once for all rows. */
 export function UserListPage() {
   const { token } = antdTheme.useToken();
-  const navigate = useNavigate();
   const confirmBlockChange = useBlockUser();
+  const [dialog, setDialog] = useState<UserDialog | null>(null);
   const [params, setParams] = useState<UserListParams>({
     page: 1,
     pageSize: DEFAULT_PAGE_SIZE,
   });
   const { data, error, isFetching, refetch } = useQuery(userListQuery(params));
+  const closeDialog = () => setDialog(null);
+  const resetTarget =
+    dialog?.kind === "resetPassword"
+      ? data?.items.find((user) => user.id === dialog.userId)
+      : undefined;
 
   const columns: TableColumnsType<UserResponse> = [
-    {
-      title: "E-mail",
-      dataIndex: "email",
-      render: (email: string, user) => (
-        <Link to={`/users/${user.id}`}>{email}</Link>
-      ),
-    },
+    { title: "E-mail", dataIndex: "email" },
     {
       title: "Роль",
       dataIndex: "role",
@@ -70,18 +82,45 @@ export function UserListPage() {
     {
       title: "Действия",
       key: "actions",
-      render: (_, user) => {
-        const action = user.isBlocked ? "Разблокировать" : "Заблокировать";
-        return (
+      render: (_, user) => (
+        <Dropdown
+          trigger={["click"]}
+          menu={{
+            items: [
+              {
+                key: "edit",
+                icon: <EditOutlined />,
+                label: "Править",
+                onClick: () => setDialog({ kind: "edit", userId: user.id }),
+              },
+              {
+                key: "toggleBlock",
+                icon: user.isBlocked ? (
+                  <CheckCircleOutlined />
+                ) : (
+                  <StopOutlined />
+                ),
+                danger: !user.isBlocked,
+                label: user.isBlocked ? "Разблокировать" : "Заблокировать",
+                onClick: () => confirmBlockChange(user),
+              },
+              {
+                key: "resetPassword",
+                icon: <KeyOutlined />,
+                label: "Сбросить пароль",
+                onClick: () =>
+                  setDialog({ kind: "resetPassword", userId: user.id }),
+              },
+            ],
+          }}
+        >
           <Button
-            type="link"
-            aria-label={`${action} ${user.email}`}
-            onClick={() => confirmBlockChange(user)}
-          >
-            {action}
-          </Button>
-        );
-      },
+            type="text"
+            icon={<MoreOutlined />}
+            aria-label={`Действия с пользователем ${user.email}`}
+          />
+        </Dropdown>
+      ),
     },
   ];
 
@@ -91,7 +130,7 @@ export function UserListPage() {
         <Typography.Title level={1} style={{ margin: 0 }}>
           Пользователи
         </Typography.Title>
-        <Button type="primary" onClick={() => navigate("/users/new")}>
+        <Button type="primary" onClick={() => setDialog({ kind: "create" })}>
           Создать пользователя
         </Button>
       </Flex>
@@ -165,6 +204,13 @@ export function UserListPage() {
             setParams((previous) => ({ ...previous, page, pageSize })),
         }}
       />
+      {dialog?.kind === "create" && <UserModal onClose={closeDialog} />}
+      {dialog?.kind === "edit" && (
+        <UserModal userId={dialog.userId} onClose={closeDialog} />
+      )}
+      {resetTarget && (
+        <ResetPasswordModal user={resetTarget} onClose={closeDialog} />
+      )}
     </Space>
   );
 }

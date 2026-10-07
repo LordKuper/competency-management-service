@@ -1,6 +1,5 @@
 import { Button, Form, Input, Select, Space } from "antd";
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import { showFieldErrors } from "../../app/apiErrors";
 import type { UserRole } from "../../app/featureContract";
 import { PASSWORD_HINT } from "../auth/passwordPolicy";
@@ -32,6 +31,7 @@ interface UserFormProps {
   submitLabel: string;
   /** Saves the input; a rejection is shown on the fields it names and by the caller. */
   onSubmit: (input: UserInput) => Promise<unknown>;
+  onCancel: () => void;
 }
 
 const NEW_ACCOUNT_VALUES: UserFormValues = { email: "", role: "User" };
@@ -46,10 +46,10 @@ export function UserForm({
   isNew = false,
   submitLabel,
   onSubmit,
+  onCancel,
 }: UserFormProps) {
   const [form] = Form.useForm<UserFormValues>();
   const role = Form.useWatch("role", form);
-  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function submit(values: UserFormValues) {
@@ -124,7 +124,7 @@ export function UserForm({
         <Button type="primary" htmlType="submit" loading={isSubmitting}>
           {submitLabel}
         </Button>
-        <Button onClick={() => navigate("/users")}>Отмена</Button>
+        <Button onClick={onCancel}>Отмена</Button>
       </Space>
     </Form>
   );

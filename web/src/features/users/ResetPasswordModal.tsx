@@ -13,24 +13,13 @@ interface ResetPasswordValues {
 
 interface ResetPasswordModalProps {
   user: UserResponse;
-  open: boolean;
   onClose: () => void;
 }
 
-/** Dialog in which an administrator sets a new password for another account; the form is rebuilt on every opening. */
-export function ResetPasswordModal({
-  user,
-  open,
-  onClose,
-}: ResetPasswordModalProps) {
+/** Dialog in which an administrator sets a new password for another account. Mount it only while it is shown, so every opening starts clean. */
+export function ResetPasswordModal({ user, onClose }: ResetPasswordModalProps) {
   return (
-    <Modal
-      title="Сброс пароля"
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      destroyOnHidden
-    >
+    <Modal title="Сброс пароля" open onCancel={onClose} footer={null}>
       <ResetPasswordForm user={user} onDone={onClose} />
     </Modal>
   );
