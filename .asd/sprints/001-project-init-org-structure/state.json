@@ -95,6 +95,13 @@
       "decision": "AC-10 changed, Task 17 wave 15",
       "reason": "employee full name as last/first/middle name fields",
       "evidence": "decisions-log.md 2026-10-07 scope amendment Task 17"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-18 added (employee menu, dismiss/delete with cascade), Task 18 wave 16",
+      "reason": "employee actions menu, cascading dismiss and delete, no unit icon",
+      "evidence": "decisions-log.md 2026-10-07 scope amendment Task 18"
     }
   ],
   "task_routing": {
@@ -198,6 +205,12 @@
       "execution": "agent",
       "tier": "critical",
       "reason": "risk:DB schema and public contract change with data split migration, search indexes, audited properties",
+      "resolved_model": "sonnet"
+    },
+    "Task 18": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:hard delete with cascade in one transaction, account CHECK relaxation, session revocation, public contract, audit of each change",
       "resolved_model": "sonnet"
     }
   },
