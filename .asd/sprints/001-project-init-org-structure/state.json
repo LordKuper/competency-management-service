@@ -151,6 +151,13 @@
       "decision": "AC-17 employee card avatar initials (first+last name), Task 24 wave 20",
       "reason": "same avatar rule as header",
       "evidence": "decisions-log.md 2026-10-07 Task 24"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-8 GlobalAdmin may be bound to an employee; AC-18 last-admin guard on dismiss/delete; Task 26 wave 22",
+      "reason": "user request: allow admin binding",
+      "evidence": "decisions-log.md 2026-10-07 Task 26"
     }
   ],
   "task_routing": {
@@ -302,6 +309,12 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 26": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:last-admin lockout via employee cascade, DB constraint migration, auth-adjacent rule change",
       "resolved_model": "sonnet"
     }
   },
