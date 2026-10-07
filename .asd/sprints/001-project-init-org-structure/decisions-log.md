@@ -322,3 +322,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 
 - 2026-10-07 — change request at impl assessment: employee card avatars in the org hierarchy use first-name + last-name initials like the header (Task 24, wave 20, standard, light checks)
 - 2026-10-07 — Task 24 accepted (05cd3d9): employee card avatars use first-name + last-name initials
+- 2026-10-07 — user confirmed: GlobalAdmin stays unbound (AC-8); user modal shows a disabled «Сотрудник» field with a hint for admins (Task 25, wave 21, standard, light checks)
