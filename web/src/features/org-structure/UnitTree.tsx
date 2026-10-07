@@ -2,18 +2,19 @@ import { Grid } from "antd";
 import type { EmployeeAction } from "./EmployeeCard";
 import { EmployeeCards } from "./EmployeeCards";
 import type { Employee, OrgUnit } from "./orgStructureApi";
-import type { UnitNode, UnitSearch } from "./orgTree";
-import { type UnitAction, UnitCard, type UnitOpenness } from "./UnitCard";
+import type { UnitNode, UnitOpenness, UnitSearch } from "./orgTree";
+import { type UnitAction, UnitCard } from "./UnitCard";
 import { UnitEmployees } from "./UnitEmployees";
 
 /** What every card of the hierarchy needs to know about the screen it is on. */
 export interface UnitTreeView {
-  openIds: ReadonlySet<string>;
+  /** How much each open unit lists; a unit absent from the map is closed. */
+  openness: ReadonlyMap<string, UnitOpenness>;
   /** The search in progress; it narrows the units shown, and null means every unit is shown. */
   search: UnitSearch | null;
   selectedId: string | null;
   isAdmin: boolean;
-  onToggle: (unitId: string) => void;
+  onToggle: (unitId: string, isOpen: boolean) => void;
   onAction: (action: UnitAction, unit: OrgUnit) => void;
   onEmployeeAction: (action: EmployeeAction, employee: Employee) => void;
 }
@@ -25,24 +26,12 @@ function visibleNodes(nodes: readonly UnitNode[], view: UnitTreeView) {
     : nodes;
 }
 
-function opennessOf(unit: OrgUnit, view: UnitTreeView): UnitOpenness {
-  if (!view.openIds.has(unit.id)) return "closed";
-  const { search } = view;
-  if (search?.employeesByUnit.has(unit.id)) return "matches";
-  const isOnlyOnPath =
-    search?.pathIds.has(unit.id) &&
-    !unit.name.toLocaleLowerCase("ru").includes(search.needle);
-  return isOnlyOnPath ? "path" : "open";
-}
-
 function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
   const { unit } = node;
-  const openness = opennessOf(unit, view);
+  const openness = view.openness.get(unit.id) ?? "closed";
   const children = visibleNodes(node.children, view);
   const matchedEmployees =
-    openness === "matches"
-      ? view.search?.employeesByUnit.get(unit.id)
-      : undefined;
+    openness === "path" ? view.search?.employeesByUnit.get(unit.id) : undefined;
 
   return (
     <li className="org-tree__node">

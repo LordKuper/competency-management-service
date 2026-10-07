@@ -19,8 +19,11 @@ import type { UnitAction } from "./UnitCard";
 import { UnitFormModal } from "./UnitFormModal";
 import { UnitTree } from "./UnitTree";
 import { useEmployeeLifecycle } from "./useEmployeeLifecycle";
+import { SEARCH_MIN_LENGTH } from "./useEmployeeSearch";
 import { useUnitActivation } from "./useUnitActivation";
 import { useUnitExpansion } from "./useUnitExpansion";
+
+const TOO_SHORT_NOTE = `Подразделений с таким названием нет. Чтобы найти сотрудника, введите не менее ${SEARCH_MIN_LENGTH} символов.`;
 
 type PageDialog =
   | { kind: "addUnit"; parentId: string | null }
@@ -39,7 +42,7 @@ export function OrgStructurePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: units, error, isPending, refetch } = useQuery(orgUnitTreeQuery);
   const roots = useMemo(() => buildUnitTree(units ?? []), [units]);
-  const { text, search, employeeSearch, openIds, setText, toggle, open } =
+  const { text, search, employeeSearch, openness, setText, toggle, open } =
     useUnitExpansion(roots);
   const [dialog, setDialog] = useState<PageDialog | null>(null);
   const confirmActivation = useUnitActivation();
@@ -135,7 +138,11 @@ export function OrgStructurePage() {
           !employeeSearch.error ? (
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Ничего не найдено. Измените запрос."
+              description={
+                employeeSearch.isTooShort
+                  ? TOO_SHORT_NOTE
+                  : "Ничего не найдено. Измените запрос."
+              }
             />
           ) : units.length === 0 ? (
             <Empty
@@ -149,7 +156,7 @@ export function OrgStructurePage() {
             <UnitTree
               roots={roots}
               view={{
-                openIds,
+                openness,
                 search,
                 selectedId,
                 isAdmin,

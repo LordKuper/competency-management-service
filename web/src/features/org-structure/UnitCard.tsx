@@ -13,13 +13,8 @@ import { theme as antdTheme, Button, Card, Dropdown, Flex } from "antd";
 import { memo, useEffect, useRef } from "react";
 import { Highlighted } from "./Highlighted";
 import type { OrgUnit, OrgUnitTreeNode } from "./orgStructureApi";
+import type { UnitOpenness } from "./orgTree";
 import { UnitStatusTag } from "./StatusTags";
-
-/**
- * Whether a unit lists its contents. "path" is a unit a search opened only to show the matches below it; "matches" is a
- * unit that lists, besides its child units, only the employees the search found in it.
- */
-export type UnitOpenness = "closed" | "path" | "matches" | "open";
 
 /** What an administrator can do with a unit from its card. */
 export type UnitAction =
@@ -39,7 +34,7 @@ interface UnitCardProps {
   /** Lower-cased search text whose first occurrence in the name is highlighted; blank when not searching. */
   needle: string;
   isAdmin: boolean;
-  onToggle: (unitId: string) => void;
+  onToggle: (unitId: string, isOpen: boolean) => void;
   onAction: (action: UnitAction, unit: OrgUnit) => void;
 }
 
@@ -88,7 +83,7 @@ export const UnitCard = memo(function UnitCard({
           aria-label={unit.name}
           aria-expanded={isOpen}
           icon={isOpen ? <DownOutlined /> : <RightOutlined />}
-          onClick={() => onToggle(unit.id)}
+          onClick={() => onToggle(unit.id, !isOpen)}
         >
           <Highlighted text={unit.name} needle={needle} />
         </Button>

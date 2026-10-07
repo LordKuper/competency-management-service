@@ -2,7 +2,8 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { type Employee, employeeSearchQuery } from "./orgStructureApi";
 
-const SEARCH_MIN_LENGTH = 2;
+/** Shortest text that is looked up among employees; a unit name is searched from the first character. */
+export const SEARCH_MIN_LENGTH = 2;
 const NO_EMPLOYEES: readonly Employee[] = [];
 
 /** The employees a search text matches on the server. */
@@ -13,6 +14,8 @@ export interface EmployeeSearch {
   total: number;
   /** Whether the answer for the current text is still to come. */
   isWaiting: boolean;
+  /** Whether there is a text, but too short to look employees up, so none can be listed for it. */
+  isTooShort: boolean;
   error: Error | null;
   retry: () => void;
 }
@@ -36,6 +39,7 @@ export function useEmployeeSearch(text: string): EmployeeSearch {
     employees: found?.items ?? NO_EMPLOYEES,
     total: found?.total ?? 0,
     isWaiting: isSearching && (settled !== typed || isFetching),
+    isTooShort: typed.length > 0 && !isSearching,
     error: isSearching ? error : null,
     retry: () => void refetch(),
   };

@@ -6,6 +6,12 @@ export interface UnitNode {
   children: UnitNode[];
 }
 
+/**
+ * How much of a unit its card lists. "path" is a unit a search opened only to lead to the matches below it: its child
+ * units and the employees the search found in it. "open" is a unit the user opened, which also lists all its employees.
+ */
+export type UnitOpenness = "closed" | "path" | "open";
+
 /** What a search shows: the matching units and the units of the matched employees, the units above them and everything below a unit match. */
 export interface UnitSearch {
   /** The search text, trimmed and lower-cased. */
@@ -69,6 +75,28 @@ export function searchUnitTree(
 
   for (const root of roots) visit(root, false);
   return { needle, visibleIds, pathIds, employeesByUnit };
+}
+
+/**
+ * The units that list contents. Outside a search these are the units the user opened; during one, the units on the path
+ * to a match, each overridden by the user's choice to open it (true) or close it (false). Other units are closed.
+ */
+export function opennessByUnit(
+  search: UnitSearch | null,
+  browsedIds: ReadonlySet<string>,
+  choices: ReadonlyMap<string, boolean>,
+): ReadonlyMap<string, UnitOpenness> {
+  const openness = new Map<string, UnitOpenness>();
+  if (!search) {
+    for (const id of browsedIds) openness.set(id, "open");
+    return openness;
+  }
+  for (const id of search.pathIds) openness.set(id, "path");
+  for (const [id, isOpen] of choices) {
+    if (isOpen) openness.set(id, "open");
+    else openness.delete(id);
+  }
+  return openness;
 }
 
 function indexById(units: readonly OrgUnit[]): Map<string, OrgUnit> {

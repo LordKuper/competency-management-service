@@ -1,13 +1,19 @@
 import { useCallback, useMemo, useState } from "react";
-import { searchUnitTree, type UnitNode, type UnitSearch } from "./orgTree";
+import {
+  opennessByUnit,
+  searchUnitTree,
+  type UnitNode,
+  type UnitOpenness,
+  type UnitSearch,
+} from "./orgTree";
 import { type EmployeeSearch, useEmployeeSearch } from "./useEmployeeSearch";
 
 interface ExpansionState {
   text: string;
   /** Units the user opened while not searching. */
   browsed: ReadonlySet<string>;
-  /** Units the user flipped, relative to the search's own openings, since the search text last changed. */
-  flipped: ReadonlySet<string>;
+  /** Units the user opened (true) or closed (false) since the search text last changed, whatever the search opened itself. */
+  chosen: ReadonlyMap<string, boolean>;
 }
 
 /** Which units are open and what the search shows; clearing the search brings back the units that were open before it. */
@@ -17,16 +23,23 @@ export interface UnitExpansion {
   search: UnitSearch | null;
   /** The server side of the search, whose matches `search` has merged in. */
   employeeSearch: EmployeeSearch;
-  openIds: ReadonlySet<string>;
+  /** How much each open unit lists; a unit absent from the map is closed. */
+  openness: ReadonlyMap<string, UnitOpenness>;
   setText: (text: string) => void;
-  toggle: (unitId: string) => void;
+  /** Opens or closes a unit; the choice is absolute, so a search answer arriving later cannot reverse it. */
+  toggle: (unitId: string, isOpen: boolean) => void;
   /** Opens the given units outside of a search. */
   open: (unitIds: readonly string[]) => void;
 }
 
-function flip(ids: ReadonlySet<string>, flippedIds: Iterable<string>) {
+function withMembership(
+  ids: ReadonlySet<string>,
+  id: string,
+  isMember: boolean,
+) {
   const next = new Set(ids);
-  for (const id of flippedIds) if (!next.delete(id)) next.add(id);
+  if (isMember) next.add(id);
+  else next.delete(id);
   return next;
 }
 
@@ -35,7 +48,7 @@ export function useUnitExpansion(roots: readonly UnitNode[]): UnitExpansion {
   const [state, setState] = useState<ExpansionState>({
     text: "",
     browsed: new Set(),
-    flipped: new Set(),
+    chosen: new Map(),
   });
   const { text } = state;
   const employeeSearch = useEmployeeSearch(text);
@@ -44,9 +57,9 @@ export function useUnitExpansion(roots: readonly UnitNode[]): UnitExpansion {
     () => (text.trim() === "" ? null : searchUnitTree(roots, text, employees)),
     [roots, text, employees],
   );
-  const openIds = useMemo(
-    () => (search ? flip(search.pathIds, state.flipped) : state.browsed),
-    [search, state.flipped, state.browsed],
+  const openness = useMemo(
+    () => opennessByUnit(search, state.browsed, state.chosen),
+    [search, state.browsed, state.chosen],
   );
 
   const setText = useCallback(
@@ -54,16 +67,22 @@ export function useUnitExpansion(roots: readonly UnitNode[]): UnitExpansion {
       setState((previous) => ({
         ...previous,
         text: next,
-        flipped: new Set(),
+        chosen: new Map(),
       })),
     [],
   );
   const toggle = useCallback(
-    (unitId: string) =>
+    (unitId: string, isOpen: boolean) =>
       setState((previous) =>
         previous.text.trim() === ""
-          ? { ...previous, browsed: flip(previous.browsed, [unitId]) }
-          : { ...previous, flipped: flip(previous.flipped, [unitId]) },
+          ? {
+              ...previous,
+              browsed: withMembership(previous.browsed, unitId, isOpen),
+            }
+          : {
+              ...previous,
+              chosen: new Map(previous.chosen).set(unitId, isOpen),
+            },
       ),
     [],
   );
@@ -76,5 +95,5 @@ export function useUnitExpansion(roots: readonly UnitNode[]): UnitExpansion {
     [],
   );
 
-  return { text, search, employeeSearch, openIds, setText, toggle, open };
+  return { text, search, employeeSearch, openness, setText, toggle, open };
 }
