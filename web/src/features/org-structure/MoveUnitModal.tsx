@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { App, Button, Form, Modal, Space } from "antd";
 import { api } from "../../api/client";
+import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { showFieldErrors } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { ifMatchOf } from "../users/usersApi";
 import { OrgUnitSelect } from "./OrgUnitSelect";
 import { invalidateOrgStructure, type OrgUnit } from "./orgStructureApi";
 

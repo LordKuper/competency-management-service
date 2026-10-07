@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { App, Button, Form, Input, Modal, Space, Typography } from "antd";
 import { api } from "../../api/client";
+import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { showFieldErrors } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { PASSWORD_HINT } from "../auth/passwordPolicy";
-import { ifMatchOf, type UserResponse, usersQueryKey } from "./usersApi";
+import { type UserResponse, usersQueryKey } from "./usersApi";
 
 interface ResetPasswordValues {
   newPassword: string;

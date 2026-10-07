@@ -2,16 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Modal, Skeleton, Space } from "antd";
 import { ApiError } from "../../api/ApiError";
 import { api } from "../../api/client";
+import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { invalidateOrgStructure } from "../org-structure/orgStructureApi";
 import { UserForm, type UserInput } from "./UserForm";
-import {
-  ifMatchOf,
-  type UserResponse,
-  userQuery,
-  usersQueryKey,
-} from "./usersApi";
+import { type UserResponse, userQuery, usersQueryKey } from "./usersApi";
 
 interface UserModalProps {
   /** Account to change; omitted when an account is created. */

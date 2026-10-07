@@ -38,8 +38,3 @@ export function userQuery(id: string) {
     gcTime: 0,
   });
 }
-
-/** The `If-Match` value for a version: the server issues the entity tag of an account as its quoted version, and list rows carry only the version. */
-export function ifMatchOf(version: number): string {
-  return `"${version}"`;
-}

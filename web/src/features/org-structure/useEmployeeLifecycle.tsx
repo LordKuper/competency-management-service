@@ -2,9 +2,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { App, Typography } from "antd";
 import { type ReactNode, useCallback } from "react";
 import { api } from "../../api/client";
+import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { describeApiError } from "../../app/apiErrors";
-import { ifMatchOf, usersQueryKey } from "../users/usersApi";
+import { usersQueryKey } from "../users/usersApi";
 import type { EmployeeAction } from "./EmployeeCard";
 import { EmployeeImpactList } from "./EmployeeImpactList";
 import {

@@ -1,6 +1,5 @@
 import { Button, Form, Input, Space, Typography } from "antd";
-import { useState } from "react";
-import { showFieldErrors } from "../../app/apiErrors";
+import { useFormSubmit } from "../../app/useFormSubmit";
 import { OrgUnitSelect } from "./OrgUnitSelect";
 import type { EmployeeInput } from "./orgStructureApi";
 
@@ -25,18 +24,7 @@ export function EmployeeForm({
   onCancel,
 }: EmployeeFormProps) {
   const [form] = Form.useForm<EmployeeInput>();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  async function submit(values: EmployeeInput) {
-    setIsSubmitting(true);
-    try {
-      await onSubmit(values);
-    } catch (error) {
-      showFieldErrors(form, error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+  const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
 
   return (
     <Form

@@ -1,13 +1,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { App } from "antd";
 import { api } from "../../api/client";
+import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { describeApiError } from "../../app/apiErrors";
-import { ifMatchOf, type UserResponse, usersQueryKey } from "./usersApi";
+import { type UserResponse, usersQueryKey } from "./usersApi";
 
 /**
  * Returns the action that asks for confirmation, then blocks the given account or lifts its block.
  * The accounts are reread whatever the outcome, so a stale version shows the current state.
+ * The confirmation handlers return nothing: a toast is a thenable that settles when it closes, and returning it would
+ * keep the dialog open, with a busy confirm button, for as long as the toast is shown.
  */
 export function useBlockUser() {
   const { modal, message } = App.useApp();
@@ -38,8 +41,6 @@ export function useBlockUser() {
       okText: user.isBlocked ? "Разблокировать" : "Заблокировать",
       okButtonProps: { danger: !user.isBlocked },
       cancelText: "Отмена",
-      // The handlers return nothing: a toast is a thenable that settles when it closes, and returning it
-      // would keep this dialog open, with a busy confirm button, for as long as the toast is shown.
       onOk: () =>
         change.mutateAsync(user).then(
           () => {

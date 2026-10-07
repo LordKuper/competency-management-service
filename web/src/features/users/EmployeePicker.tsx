@@ -1,11 +1,12 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Flex, Select, Typography } from "antd";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
 import { describeApiError } from "../../app/apiErrors";
+import { useDebouncedValue } from "../../app/useDebouncedValue";
+import { employeesQueryKey } from "../org-structure/orgStructureApi";
 
-const SEARCH_DEBOUNCE_MS = 300;
 const PICKER_PAGE_SIZE = 20;
 
 interface EmployeeOption {
@@ -27,15 +28,6 @@ interface EmployeePickerProps {
   orgUnitId?: string;
 }
 
-function useDebouncedValue<TValue>(value: TValue, delayMs: number): TValue {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delayMs);
-    return () => clearTimeout(timer);
-  }, [value, delayMs]);
-  return debounced;
-}
-
 /** Remote-search select of working employees, all of them or those of one unit, showing each one's unit and position so namesakes can be told apart. */
 export function EmployeePicker({
   id,
@@ -45,9 +37,9 @@ export function EmployeePicker({
   orgUnitId,
 }: EmployeePickerProps) {
   const [search, setSearch] = useState("");
-  const text = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
+  const text = useDebouncedValue(search.trim());
   const { data, error, isFetching } = useQuery({
-    queryKey: ["employees", "picker", orgUnitId ?? null, text],
+    queryKey: [...employeesQueryKey, "picker", orgUnitId ?? null, text],
     queryFn: async () =>
       unwrap(
         await api.GET("/api/v1/employees", {

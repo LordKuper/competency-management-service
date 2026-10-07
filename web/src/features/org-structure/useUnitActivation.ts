@@ -2,15 +2,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { App } from "antd";
 import { useCallback } from "react";
 import { api } from "../../api/client";
+import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { describeApiError } from "../../app/apiErrors";
-import { ifMatchOf } from "../users/usersApi";
 import { invalidateOrgStructure, type OrgUnit } from "./orgStructureApi";
 
 /**
  * Returns the action that asks for confirmation, then deactivates the given unit or activates it again.
  * A refusal is explained in a dialog that stays until dismissed, since the reason is long and says what to do first.
  * The queries are reread whatever the outcome, so a stale version shows the current state.
+ * The confirmation handlers return nothing: a toast is a thenable that settles when it closes, and returning it would
+ * keep the dialog open, with a busy confirm button, for as long as the toast is shown.
  */
 export function useUnitActivation() {
   const { modal, message } = App.useApp();
@@ -42,8 +44,6 @@ export function useUnitActivation() {
         okText: unit.isActive ? "Деактивировать" : "Активировать",
         okButtonProps: { danger: unit.isActive },
         cancelText: "Отмена",
-        // The handlers return nothing: a toast is a thenable that settles when it closes, and returning it
-        // would keep this dialog open, with a busy confirm button, for as long as the toast is shown.
         onOk: () =>
           change(unit).then(
             () => {

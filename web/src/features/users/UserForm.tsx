@@ -1,7 +1,6 @@
 import { Button, Form, Input, Select, Space } from "antd";
-import { useState } from "react";
-import { showFieldErrors } from "../../app/apiErrors";
 import type { UserRole } from "../../app/featureContract";
+import { useFormSubmit } from "../../app/useFormSubmit";
 import { PASSWORD_HINT } from "../auth/passwordPolicy";
 import { EmployeePicker } from "./EmployeePicker";
 import { ROLE_OPTIONS } from "./roles";
@@ -48,18 +47,9 @@ export function UserForm({
   onCancel,
 }: UserFormProps) {
   const [form] = Form.useForm<UserFormValues>();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  async function submit(values: UserFormValues) {
-    setIsSubmitting(true);
-    try {
-      await onSubmit({ ...values, employeeId: values.employeeId ?? null });
-    } catch (error) {
-      showFieldErrors(form, error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+  const { isSubmitting, submit } = useFormSubmit(form, (values) =>
+    onSubmit({ ...values, employeeId: values.employeeId ?? null }),
+  );
 
   return (
     <Form

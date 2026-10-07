@@ -1,12 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Button, Form, Input, Modal, Space, Typography } from "antd";
-import { useState } from "react";
 import { api } from "../../api/client";
+import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
-import { showFieldErrors } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { useFormSubmit } from "../../app/useFormSubmit";
 import { EmployeePicker } from "../users/EmployeePicker";
-import { ifMatchOf } from "../users/usersApi";
 import { OrgUnitSelect } from "./OrgUnitSelect";
 import {
   employeeQuery,
@@ -111,23 +110,12 @@ function UnitForm({
   onCancel,
 }: UnitFormProps) {
   const [form] = Form.useForm<UnitFormValues>();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const headId = unit?.headEmployeeId ?? null;
   const { data: head } = useQuery({
     ...employeeQuery(headId ?? ""),
     enabled: headId !== null,
   });
-
-  async function submit(values: UnitFormValues) {
-    setIsSubmitting(true);
-    try {
-      await onSubmit(values);
-    } catch (error) {
-      showFieldErrors(form, error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+  const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
 
   return (
     <Form
