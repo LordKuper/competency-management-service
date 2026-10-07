@@ -4,6 +4,7 @@ import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { EmployeePicker } from "../users/EmployeePicker";
 import { OrgUnitSelect } from "./OrgUnitSelect";
@@ -20,7 +21,7 @@ interface UnitFormValues {
 }
 
 interface UnitFormModalProps {
-  /** Unit being edited; omitted when a unit is created. */
+  /** Unit being edited as the cache holds it now; omitted when a unit is created. */
   unit?: OrgUnit;
   /** Parent the unit being created starts under, or null for a root; ignored when editing. */
   parentId?: string | null;
@@ -32,15 +33,17 @@ interface UnitFormModalProps {
 /**
  * Dialog that creates a unit, under a parent or as a root, or edits the unit's own fields. Mount it only while it is
  * shown, so every opening starts clean. Once a unit exists, its parent and status change through their own operations.
+ * The form keeps the unit it was opened with and takes the reread one only after a save is refused for a stale version.
  */
 export function UnitFormModal({
-  unit,
+  unit: latest,
   parentId = null,
   onClose,
   onSaved,
 }: UnitFormModalProps) {
   const queryClient = useQueryClient();
   const { message } = App.useApp();
+  const { base: unit, noteSaveFailure } = useEditBase(latest);
   const save = useMutation({
     mutationFn: async (values: UnitFormValues) =>
       unwrap(
@@ -64,7 +67,10 @@ export function UnitFormModal({
       message.success(unit ? "Изменения сохранены" : "Подразделение создано");
       onSaved(saved);
     },
-    onError: () => invalidateOrgStructure(queryClient),
+    onError: (error) => {
+      noteSaveFailure(error);
+      return invalidateOrgStructure(queryClient);
+    },
   });
 
   return (

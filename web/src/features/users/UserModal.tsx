@@ -5,6 +5,7 @@ import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { useEditBase } from "../../app/useEditBase";
 import { invalidateOrgStructure } from "../org-structure/orgStructureApi";
 import { UserForm, type UserInput } from "./UserForm";
 import { type UserResponse, userQuery, usersQueryKey } from "./usersApi";
@@ -67,17 +68,19 @@ function isShownUnderField(error: unknown): boolean {
 }
 
 interface UserEditorProps extends Pick<UserModalProps, "onClose"> {
-  /** The account being changed, with the version the change is based on; omitted when an account is created. */
+  /** The account being changed as the cache holds it now; omitted when an account is created. */
   existing?: UserResponse;
 }
 
 /**
  * The form with its save: a change is refused when the version is stale, and the accounts are reread whatever the outcome.
+ * The form keeps the account it was opened with and takes the reread one only after such a refusal.
  * The employee cards show the account e-mail, so the org structure is reread too.
  */
-function UserEditor({ existing, onClose }: UserEditorProps) {
+function UserEditor({ existing: latest, onClose }: UserEditorProps) {
   const queryClient = useQueryClient();
   const { message } = App.useApp();
+  const { base: existing, noteSaveFailure } = useEditBase(latest);
   const save = useMutation({
     mutationFn: async ({ password, ...account }: UserInput) =>
       unwrap(
@@ -97,6 +100,7 @@ function UserEditor({ existing, onClose }: UserEditorProps) {
       message.success(existing ? "Изменения сохранены" : "Пользователь создан");
       onClose();
     },
+    onError: noteSaveFailure,
     onSettled: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: usersQueryKey }),

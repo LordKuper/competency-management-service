@@ -4,6 +4,7 @@ import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { useEditBase } from "../../app/useEditBase";
 import { EmployeeForm } from "./EmployeeForm";
 import {
   type Employee,
@@ -92,7 +93,7 @@ function ChangedEmployee({
 
 interface EmployeeEditorProps
   extends Pick<EmployeeModalProps, "onClose" | "onSaved"> {
-  /** The employee being changed and the version the change is based on; omitted when an employee is created. */
+  /** The employee being changed as the cache holds it now, with its version; omitted when an employee is created. */
   existing?: { employee: Employee; version: number };
   /** Unit a new employee starts in. */
   orgUnitId?: string;
@@ -100,16 +101,18 @@ interface EmployeeEditorProps
 
 /**
  * The form with its save: a change is refused when the version is stale, and the employee is reread whatever the outcome.
+ * The form keeps the employee it was opened with and takes the reread one only after such a refusal.
  * Moving the head of a unit to another unit is confirmed first, because the server then leaves the unit without a head.
  */
 function EmployeeEditor({
-  existing,
+  existing: latest,
   orgUnitId,
   onClose,
   onSaved,
 }: EmployeeEditorProps) {
   const queryClient = useQueryClient();
   const { message, modal } = App.useApp();
+  const { base: existing, noteSaveFailure } = useEditBase(latest);
   const { data: units } = useQuery(orgUnitTreeQuery);
   const headedUnit = units?.find(
     (unit) =>
@@ -134,7 +137,10 @@ function EmployeeEditor({
       message.success(existing ? "Изменения сохранены" : "Сотрудник создан");
       onSaved(saved);
     },
-    onError: () => invalidateOrgStructure(queryClient),
+    onError: (error) => {
+      noteSaveFailure(error);
+      return invalidateOrgStructure(queryClient);
+    },
   });
 
   const confirmUnitLosesHead = (unitName: string) =>
