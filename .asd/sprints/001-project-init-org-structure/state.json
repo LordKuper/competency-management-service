@@ -1,7 +1,7 @@
 {
   "sprint_id": "001-project-init-org-structure",
   "branch": "sprint/001-project-init-org-structure",
-  "phase": "design-promote",
+  "phase": "retro",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -228,6 +228,41 @@
       "decision": "pass",
       "reason": "docs/ux/DESIGN.md, design-system.html, accessibility.html exist",
       "evidence": "repo search"
+    },
+    {
+      "gate": "DESIGN.md token change",
+      "decision_actor": "user",
+      "decision": "add overlay-inverse-hover/pressed + header-button components (option 1)",
+      "reason": "design-promote questions",
+      "evidence": "decisions-log.md 2026-10-07"
+    },
+    {
+      "gate": "DESIGN.md navigation direction",
+      "decision_actor": "user",
+      "decision": "horizontal menu in the dark header is intentional",
+      "reason": "design-promote questions",
+      "evidence": "decisions-log.md 2026-10-07"
+    },
+    {
+      "gate": "Постановка.md edits",
+      "decision_actor": "user",
+      "decision": "fix only the 4 contradictions (unit type/dates removed, unit model not typed, login journal incl. failures/lockout, /api/v1/users group)",
+      "reason": "design-promote questions",
+      "evidence": "decisions-log.md 2026-10-07"
+    },
+    {
+      "gate": "stack license exception",
+      "decision_actor": "user",
+      "decision": "Microsoft.VisualStudio.JavaScript.Sdk accepted as dev-only exception",
+      "reason": "design-promote questions",
+      "evidence": "decisions-log.md 2026-10-07"
+    },
+    {
+      "gate": "DESIGN.md lint exclusions",
+      "decision_actor": "user",
+      "decision": "exclude header-button-hover/pressed contrast-ratio (linter ignores alpha; real 13.0:1 / 9.9:1)",
+      "reason": "design-promote lint",
+      "evidence": "docs/ux/DESIGN.md Lint exclusions"
     }
   ],
   "task_routing": {
@@ -587,7 +622,7 @@
     }
   },
   "created_at": "2026-10-05T00:00:00Z",
-  "updated_at": "2026-10-07T19:31:36.174Z",
+  "updated_at": "2026-10-07T20:19:44.246Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

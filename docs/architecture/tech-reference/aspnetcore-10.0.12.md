@@ -46,7 +46,7 @@ responsibility:
 - Уровня .NET (затрагивают проект): `BackgroundService.ExecuteAsync` — целиком на фоновом потоке; SIGTERM-хендлер runtime не ставится по умолчанию (host регистрирует свой); `System.Text.Json` проверяет конфликты имён свойств.
 
 ## Project conventions
-- REST под `/api/v1`; ошибки — `ProblemDetails`; оптимистичная блокировка — `ETag`/`If-Match` (конфликт → 412/409, решает design); сервер — единственный источник истины по правам, scope и валидации.
+- REST под `/api/v1`; ошибки — `ProblemDetails`; оптимистичная блокировка — `ETag`/`If-Match` (на изменяющих запросах обязателен: заголовка нет — 428, слабый ETag — 400, версия не совпала — 412; конфликт правил и нарушение уникальности — 409); сервер — единственный источник истины по правам, scope и валидации. Встроенный `AddValidation()` (DataAnnotations) не используется: запросы проверяют собственные методы `Validate()` с русскими сообщениями по полям.
 - Без MediatR/AutoMapper; прямые обработчики эндпойнтов, явный маппинг; DI/Options/`BackgroundService`/health checks — только встроенные средства.
 - Секреты — только из Kubernetes Secrets (env или смонтированные файлы), конфигурация — из ConfigMap; не в образе и не в репозитории.
 - Воркер outbox — `BackgroundService` с перехватом исключений внутри цикла (необработанное исключение останавливает хост) и уважением `CancellationToken` при остановке пода.
@@ -54,5 +54,5 @@ responsibility:
 
 ## Known issues and workarounds
 - `AddDbContextCheck<T>()` находится не во встроенных health checks, а в пакете `Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore`; в стеке (stack.html rev. 7) пакет **не принят** — проверка БД реализуется собственным `IHealthCheck` с `Database.CanConnectAsync` (регистрация через `AddHealthChecks().AddCheck<…>("db", tags: ["ready"])`). Встроенное в shared framework — только `AddHealthChecks()`/`MapHealthChecks()`/`IHealthCheck`.
-- Health checks: документация предупреждает о подмене заголовка `Host`; защищать `MapHealthChecks` через `RequireHost("*:порт")`/`RequireAuthorization()` (для kubelet-проб — отдельный порт/путь без авторизации, решает design).
+- Health checks: документация предупреждает о подмене заголовка `Host`; защищать `MapHealthChecks` через `RequireHost("*:порт")`/`RequireAuthorization()` (для kubelet-проб — отдельный порт/путь без авторизации). В проекте пробы `/healthz/live` и `/healthz/ready` анонимны на общем порту 8080 и ничего не раскрывают (без деталей); все остальные эндпойнты закрыты fallback-политикой аутентификации.
 - Документация противоречива по имени признака «известного API-эндпойнта»: release notes (2026-08-31) называют `IApiEndpointMetadata`, страница breaking change (2026-09-16) — `IDisableCookieRedirectMetadata` (+ парный `IAllowCookieRedirectMetadata`). За основу взята страница breaking change как более новая; имя проверить по API reference при реализации.

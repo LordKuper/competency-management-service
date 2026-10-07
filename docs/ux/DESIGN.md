@@ -9,22 +9,24 @@ colors:
   primary-hover: "#2338C2"     # hover of primary button/link
   primary-active: "#182CC2"    # pressed state of primary button/link
   primary-subtle: "#EBF2FD"    # selected table row, hovered menu item, selected-card background, light highlight
-  accent: "#FBAE40"            # brand highlight FILLS only (progress, badge fill, selection marker on dark nav); never text on light surfaces
+  accent: "#FBAE40"            # brand highlight FILLS only (progress, badge fill) and the keyboard focus ring on the dark header; never text on light surfaces
   # --- text ---
   text-primary: "#292929"      # body text, headings, table cell content
   text-secondary: "#4B4B4C"    # supporting text, form labels, table header text
   text-muted: "#5F6670"        # hints, captions, placeholders, metadata (AA on every light surface)
   text-disabled: "#A3A9B1"     # disabled control text only; always paired with a visible reason (WCAG exempt)
-  text-inverse: "#FFFFFF"      # text/icons on primary, danger, success, info, warning fills and on dark navigation
-  text-inverse-muted: "#9BA8F9" # secondary text and icons on the dark navy surface (menu items, captions)
+  text-inverse: "#FFFFFF"      # text/icons on primary, danger, success, info, warning fills and on the dark header
+  text-inverse-muted: "#9BA8F9" # secondary text and icons on the dark navy surface (header menu items, captions)
   # --- surfaces / borders ---
   surface-page: "#F5F6F8"      # application background behind panels and tables
   surface-panel: "#FFFFFF"     # cards, tables, forms, modals, popovers, dropdowns
   surface-muted: "#EEEEEE"     # table header, disabled input fill, skeletons, neutral chips
-  surface-inverse: "#081240"   # application header, sider/navigation, dark banners (brand navy)
+  surface-inverse: "#081240"   # application header with its navigation menu, tooltips, dark banners (brand navy)
   border-subtle: "#DDE1E6"     # dividers, card and table hairlines (decorative, not required to identify controls)
   border-control: "#7D8590"    # input, select, checkbox, radio, default-button outlines (>= 3:1 non-text contrast)
   overlay-scrim: "#08124073"   # modal and drawer backdrop (brand navy at 45% opacity)
+  overlay-inverse-hover: "#FFFFFF1F"    # hover fill of a button on surface-inverse, e.g. the header user button (text-inverse at 12% opacity)
+  overlay-inverse-pressed: "#FFFFFF33"  # pressed fill of a button on surface-inverse (text-inverse at 20% opacity)
   # --- semantic status ---
   success: "#197A4A"           # positive status: requirement met, saved, approved
   success-bg: "#E6F4EC"        # background of success alert, chip, row highlight
@@ -130,8 +132,6 @@ spacing:
   content-max-width: 1440px    # max width of card/form/detail pages; matrix and table pages stay fluid
   reading-max-width: 720px     # max width of forms and long-form text (about 75 characters of body-lg)
   header-height: 56px          # application header (surface-inverse) height
-  sider-width: 240px           # expanded navigation sider (long Russian menu labels)
-  sider-width-collapsed: 80px  # collapsed navigation sider (icons only)
   # --- controls and targets ---
   control-height-sm: 24px      # compact in-table icon actions only; equals the WCAG 2.2 AA minimum target
   control-height-md: 32px      # default height of buttons, inputs, selects, date pickers (desktop)
@@ -142,8 +142,8 @@ spacing:
   matrix-cell-min-width: 72px  # minimum width of a rating/rater column cell
   matrix-name-column-width: 280px  # sticky first column with the competency name (wraps to two lines)
   # --- breakpoints (desktop-first, aligned to antd screen tokens) ---
-  breakpoint-md: 768px         # below: mobile adaptive (single column, navigation in a drawer)
-  breakpoint-lg: 992px         # below: tablet (sider collapses, page-gutter-narrow, control-height-lg)
+  breakpoint-md: 768px         # below: mobile adaptive (single column; the header keeps its horizontal menu)
+  breakpoint-lg: 992px         # below: tablet (user name leaves the header, page-gutter-narrow, control-height-lg)
   breakpoint-xl: 1200px        # from here: full desktop layout
   breakpoint-xxl: 1600px       # from here: wide screens; content-max-width pages center, tables stay fluid
 components:
@@ -158,7 +158,7 @@ components:
   focus-ring:                   # keyboard focus ring on light surfaces (stroke color; width focus-ring-width, offset focus-ring-offset)
     backgroundColor: "{colors.primary}"
     height: "{rounded.focus-ring-width}"
-  focus-ring-inverse:           # keyboard focus ring on the dark header and sider
+  focus-ring-inverse:           # keyboard focus ring on the dark header (menu items, user button)
     backgroundColor: "{colors.accent}"
     height: "{rounded.focus-ring-width}"
   scrim:                        # backdrop behind modal and drawer
@@ -172,28 +172,31 @@ components:
     textColor: "{colors.text-primary}"
     typography: "{typography.body-md}"
     padding: "{spacing.page-gutter}"
-  app-header:                   # top bar: product name, global search/user menu
+  app-header:                   # top bar: brand, horizontal navigation menu, user button
     backgroundColor: "{colors.surface-inverse}"
     textColor: "{colors.text-inverse}"
     typography: "{typography.body-md}"
     height: "{spacing.header-height}"
     padding: "{spacing.space-xl}"
-  nav-item:                     # sider menu item, default
+  nav-item:                     # header menu item, default
     backgroundColor: "{colors.surface-inverse}"
     textColor: "{colors.text-inverse-muted}"
     typography: "{typography.body-md}"
     height: "{spacing.control-height-lg}"
     rounded: "{rounded.rounded-md}"
     padding: "{spacing.space-md}"
-  nav-item-hover:               # sider menu item under pointer
-    backgroundColor: "{colors.primary-active}"
+  nav-item-hover:               # header menu item under pointer: no fill, text brightens to text-inverse
+    backgroundColor: "{colors.surface-inverse}"
     textColor: "{colors.text-inverse}"
-  nav-item-active:              # sider menu item of the current section
+  nav-item-active:              # header menu item of the current section: filled with primary
     backgroundColor: "{colors.primary}"
     textColor: "{colors.text-inverse}"
-  nav-item-active-marker:       # 4px mark at the leading edge of the current sider item (second cue besides fill)
-    backgroundColor: "{colors.accent}"
-    width: "{spacing.space-xxs}"
+  header-button-hover:          # button on the dark header (user button) under pointer: translucent white fill, white text
+    backgroundColor: "{colors.overlay-inverse-hover}"
+    textColor: "{colors.text-inverse}"
+  header-button-pressed:        # the same button while pressed: stronger translucent white fill, white text
+    backgroundColor: "{colors.overlay-inverse-pressed}"
+    textColor: "{colors.text-inverse}"
   # --- buttons ---
   button-primary:               # the single main action of a page or dialog
     backgroundColor: "{colors.primary}"
@@ -561,10 +564,11 @@ Token layers: the hex value itself is the primitive layer; every token above is 
 | `border-control` | control outlines | `colorBorder` |
 | `border-subtle` | dividers | `colorBorderSecondary`, `colorSplit` |
 | `overlay-scrim` | modal mask | `colorBgMask` |
+| `overlay-inverse-hover`, `overlay-inverse-pressed` | hover / pressed fill of the header user button | `.header-user-button` sets `--ant-btn-bg-color-hover` / `--ant-btn-bg-color-active` (`color-mix` of `colorTextLightSolid` at 12% / 20%; the same values) |
 | `success`, `warning`, `danger`, `info` | status | `colorSuccess`, `colorWarning`, `colorError`, `colorInfo` |
 | `*-bg` | status backgrounds | `colorSuccessBg`, `colorWarningBg`, `colorErrorBg`, `colorInfoBg` |
 | `danger-hover` | destructive hover | `colorErrorHover` |
-| `surface-inverse`, `text-inverse-muted` | dark header/sider | `Layout.headerBg`, `Layout.siderBg`, `Menu.darkItemBg`, `Menu.darkItemColor` |
+| `surface-inverse`, `text-inverse-muted` | dark header and its horizontal menu | `Layout.headerBg`, `Menu.darkItemBg`, `Menu.darkItemColor` |
 | `accent`, `rating-level-*` | no antd seed token | custom components via CSS variables |
 
 antd mapping rules:
@@ -586,6 +590,7 @@ AA thresholds: 4.5:1 normal text, 3:1 large text (>= 24px, or >= 18.66px bold) a
 | `primary` (link) on `surface-panel` / `surface-page` / `primary-subtle` | 7.0 / 6.5 / 6.2 | AA |
 | `text-inverse` on `surface-inverse` | 17.9 | AAA |
 | `text-inverse-muted` on `surface-inverse` | 8.0 | AAA |
+| `text-inverse` on `surface-inverse` under `overlay-inverse-hover` / `overlay-inverse-pressed` (composite fill about `#262E57` / `#394166`) | 13.0 / 9.9 | AAA |
 | `text-inverse` on `success` / `warning` / `danger` / `danger-hover` / `info` | 5.4 / 5.2 / 5.6 / 6.7 / 5.7 | AA |
 | `success` on `surface-panel` / `success-bg` | 5.4 / 4.7 | AA |
 | `warning` on `surface-panel` / `warning-bg` | 5.2 / 4.7 | AA |
@@ -695,7 +700,7 @@ Comfortable density (antd default size, not compact). The base grid is 4px; ever
 
 ### Page frame
 
-- Application shell: header `header-height` (`surface-inverse`), sider `sider-width` (collapsed `sider-width-collapsed`), content area on `surface-page` with `page-gutter` padding.
+- Application shell: header `header-height` (`surface-inverse`) holding the brand, the horizontal navigation menu and the user button; there is no sider. Content area on `surface-page` with `page-gutter` padding.
 - Card, form and detail pages are capped at `content-max-width` and centered; forms and long text are capped at `reading-max-width`. Competency matrices, candidate lists and other tables are fluid to the full content width.
 - Grid: antd 24-column Row/Col with a `space-md` gutter in both directions.
 
@@ -703,10 +708,10 @@ Comfortable density (antd default size, not compact). The base grid is 4px; ever
 
 | Range | Layout |
 |---|---|
-| >= `breakpoint-xl` (1200px) | full desktop layout, expanded sider |
+| >= `breakpoint-xl` (1200px) | full desktop layout |
 | `breakpoint-lg` to `breakpoint-xl` (992-1199px) | desktop; content-area columns reflow, no loss of function |
-| `breakpoint-md` to `breakpoint-lg` (768-991px) | tablet: sider collapses to icons, `page-gutter-narrow`, controls at `control-height-lg`, two-column forms become one column |
-| < `breakpoint-md` (768px) | mobile, adaptive only: single column, navigation in a drawer, tables and matrices scroll horizontally with the first column sticky; no function is removed, authoring-heavy screens may be marked desktop-recommended |
+| `breakpoint-md` to `breakpoint-lg` (768-991px) | tablet: the header keeps its horizontal menu but the user name leaves it (avatar only), `page-gutter-narrow`, controls at `control-height-lg`, two-column forms become one column |
+| < `breakpoint-md` (768px) | mobile, adaptive only: single column, the header keeps its horizontal menu (the brand name shrinks first), tables and matrices scroll horizontally with the first column sticky; no function is removed, authoring-heavy screens may be marked desktop-recommended |
 
 ### Controls and touch targets
 
@@ -731,7 +736,6 @@ Comfortable density (antd default size, not compact). The base grid is 4px; ever
 | `control-height-sm` / `-md` / `-lg` | `controlHeightSM` 24 / `controlHeight` 32 / `controlHeightLG` 40 |
 | 4px grid | `sizeUnit` 4, `sizeStep` 4 (antd defaults) |
 | `header-height` | `Layout.headerHeight` 56, `Layout.headerPadding` `0 24px` |
-| `sider-width` / `sider-width-collapsed` | `Layout.Sider` props `width` 240 / `collapsedWidth` 80, `breakpoint="lg"` |
 | `page-gutter` | content-area padding (custom CSS variable, not an antd token) |
 | `breakpoint-md` ... `-xxl` | `screenMD` 768, `screenLG` 992, `screenXL` 1200, `screenXXL` 1600 |
 | table cell | `Table.cellPaddingBlock` 12 (`space-sm`), `Table.cellPaddingInline` 16 (`space-md`); `size="middle"` (`cellPaddingBlockMD` 8, `cellPaddingInlineMD` 12) only for secondary nested tables |
@@ -749,7 +753,7 @@ Flat, restrained enterprise style: hierarchy comes from surface layering (`surfa
 
 | Token | Value | Use |
 |---|---|---|
-| `elevation-none` | none | cards, panels, tables, forms, header, sider: flat, bounded by `border-subtle` |
+| `elevation-none` | none | cards, panels, tables, forms, header: flat, bounded by `border-subtle` |
 | `elevation-sticky` | `0 1px 2px rgba(8, 18, 64, 0.08)` | edge of the sticky matrix header and sticky first column, only while content scrolls under it |
 | `elevation-popup` | `0 4px 12px rgba(8, 18, 64, 0.12)` | dropdown, select and date-picker popups, popover, tooltip, context menu |
 | `elevation-modal` | `0 8px 24px rgba(8, 18, 64, 0.16)` | modal, drawer, notification; always above `overlay-scrim` |
@@ -842,8 +846,9 @@ Components are the ones the concept needs (an internal HR and competency-matrix 
 | Component (tokens) | antd | Variants and states | Notes |
 |---|---|---|---|
 | App content (`app-content`) | `Layout.Content` | one | `page-gutter` padding; page background behind panels |
-| Header (`app-header`) | `Layout.Header` | one | `header-height` 56; product name, user menu with `avatar`; text 17.9:1 |
-| Sider navigation (`nav-item`, `-hover`, `-active`, `-active-marker`) | `Layout.Sider` + `Menu` theme dark | default / hover / active / collapsed / focus | text 8.0:1 default, 9.6:1 hover, 7.0:1 active; active also gets the 4px `accent` marker (second cue); collapses to icons below `breakpoint-lg` |
+| Header (`app-header`) | `Layout.Header` | one | `header-height` 56; brand (logo on a light round plate, product name), horizontal navigation menu, user button with `avatar`; text 17.9:1 |
+| Header navigation (`nav-item`, `-hover`, `-active`) | `Menu` theme dark, `mode="horizontal"`, inside `Layout.Header` | default / hover / active / focus | the only navigation; there is no sider. Text 8.0:1 default (`text-inverse-muted`), hover brightens the text to `text-inverse` (17.9:1) with no fill, current section is filled with `primary` and white text (7.0:1); items are `control-height-lg`; the fill is the cue of the current section. Focus is `focus-ring-inverse` |
+| Header user button (`header-button-hover`, `-pressed`) | `Button type="text"` on the dark header | default / hover / pressed / focus | label and `avatar` in `text-inverse`; hover fill `overlay-inverse-hover` (12% white, 13.0:1), pressed `overlay-inverse-pressed` (20% white, 9.9:1); opens the user menu (`dropdown-item`) |
 | Breadcrumb (`breadcrumb`, `-current`) | `Breadcrumb` | link / current | 8.1:1 and 13.4:1 on `surface-page`; current page is plain text, not a link |
 | Tabs (`tab`, `-hover`, `-active`) | `Tabs` | default / hover / active / focus / disabled | 8.7:1, 14.6:1, 7.0:1; active adds a 2px `primary` indicator line |
 | Steps (`step-current`, `-done`, `-upcoming`) | `Steps` | current / done / upcoming | wave stages (12 statuses): vertical on detail pages, titles always visible, done = check icon, current = filled number; contrast 7.0:1, 6.2:1, 7.5:1 |
@@ -918,14 +923,15 @@ Tags are labels, not buttons. The text of a tag always names the state in words.
 | Token | Consumed by |
 |---|---|
 | `primary` | button-primary, link, focus-ring, nav-item-active, tab-active, pagination-item-active, selection-control-checked, step-current, rating-chip-3 |
-| `primary-hover`, `primary-active` | button-primary-hover/-pressed, nav-item-hover (`primary-active`), button-default-pressed, button-link-hover |
+| `primary-hover`, `primary-active` | button-primary-hover/-pressed, button-default-pressed, button-link-hover |
 | `primary-subtle` | button-default-hover, table-row-selected, candidate-card-selected, dropdown-item-selected, pagination-item-hover, step-done, avatar |
-| `accent` | nav-item-active-marker, focus-ring-inverse only (never text) |
+| `accent` | focus-ring-inverse only (never text) |
 | `overlay-scrim` | scrim (modal, drawer) |
+| `overlay-inverse-hover`, `overlay-inverse-pressed` | header-button-hover, header-button-pressed |
 | `border-control` | control-border |
 | `border-subtle` | divider |
 | `text-disabled` | button-disabled, input-disabled |
-| `surface-inverse` | app-header, nav-item, tooltip, text on rating-chip-0..2 |
+| `surface-inverse` | app-header, nav-item, nav-item-hover, tooltip, text on rating-chip-0..2 |
 | `surface-muted` | table-header, matrix-header, tag-neutral, step-upcoming, skeleton, disabled controls |
 | `surface-page` | app-content, breadcrumb, table-row-hover, dropdown-item-hover |
 | `rating-level-0..4` | rating-chip-0..4 |
@@ -950,7 +956,7 @@ Each rule restates a decision made in the sections above; none is new.
 - Keep weights to 400 and 700; use `data-numeric` and right alignment for compared numbers.
 - Keep the 4px grid and the default (comfortable) antd size; use `control-height-lg` at tablet widths.
 - Keep the focus ring (`focus-ring`, `focus-ring-inverse` on the dark shell).
-- Mark the current state in words, not only by color: tags, steps, active tab and nav item.
+- Mark the current state in words, not only by color: tags, steps, active tab; the current header menu item is a filled item.
 - Let critical alerts stay rare: `danger` for blocking or irreversible events only.
 - Ship PT fonts inside the app image as self-hosted files with their license text.
 
@@ -976,3 +982,5 @@ Warnings accepted by the user, with rationale (design-system rule 11). `designmd
 |---|---|---|---|
 | `contrast-ratio` | `components.button-disabled` | excluded (approved by the user) | `text-disabled` on `surface-muted` is 2.04:1. WCAG 1.4.3 exempts text of inactive user-interface components. The reason a control is disabled is always shown as adjacent text (`text-muted`, at least 5.0:1), never by this text color alone. |
 | `contrast-ratio` | `components.input-disabled` | excluded (approved by the user) | Same exception and same rule: the reason is shown as `field-help` text next to the field. |
+| `contrast-ratio` | `components.header-button-hover` | excluded (approved by the user) | The linter ignores the alpha channel of `overlay-inverse-hover` (reports 1.00:1). Real contrast of `text-inverse` on the composite over `surface-inverse` is 13.0:1. |
+| `contrast-ratio` | `components.header-button-pressed` | excluded (approved by the user) | The linter ignores the alpha channel of `overlay-inverse-pressed` (reports 1.00:1). Real contrast of `text-inverse` on the composite over `surface-inverse` is 9.9:1. |

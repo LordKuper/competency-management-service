@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<!--
+responsibility:
+  owns: html shell wrap for all asd user-facing html docs
+  excludes: doc content, doc-specific structure
+  delegates_to: fragment templates (t_prd, t_adr, t_ux-spec, t_concept, t_stack, t_design-system, t_accessibility, t_retrospective)
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="ASD workflow">
+  <meta name="doc-type" content="UX-spec">
+  <meta name="subsystem" content="audit">
+  <meta name="sprint-id" content="">
+  <meta name="status" content="approved">
+  <meta name="updated" content="2026-10-07">
+  <meta name="responsibility" content="ux flows and ui mockups of audit: the read-only journal screen for global administrators">
+  <meta name="provenance" content="original">
+  <title>UX-спецификация — Журнал аудита (audit)</title>
+  <style>
+    :root {
+      --fg: #1a1c1e; --bg: #fff; --muted: #5b6770; --accent: #0066cc;
+      --code-bg: #f4f6f8; --border: #d0d7de; --max: 1040px;
+      --card-bg: #fafbfc;
+      --ok: #1a7f37; --warn: #b35900; --danger: #cf222e; --info: #0969da; --neutral: #5b6770;
+      --ok-tint: rgba(31,136,61,0.07); --danger-tint: rgba(207,34,46,0.06);
+      --chip-must-bg: #ffebe9; --chip-must-fg: #cf222e;
+      --chip-should-bg: #fff5e1; --chip-should-fg: #9a6700;
+      --chip-may-bg: #ddf4ff; --chip-may-fg: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e6e6e6; --bg: #0e1116; --muted: #9aa4ad; --code-bg: #161b22; --border: #30363d;
+        --card-bg: #161b22;
+        --accent: #58a6ff; --ok: #3fb950; --warn: #d29922; --danger: #f85149; --info: #79c0ff; --neutral: #8b949e;
+        --ok-tint: rgba(63,185,80,0.12); --danger-tint: rgba(248,81,73,0.10);
+        --chip-must-bg: #3b1416; --chip-must-fg: #ff7b72;
+        --chip-should-bg: #2d2410; --chip-should-fg: #e3b341;
+        --chip-may-bg: #0d2538; --chip-may-fg: #58a6ff;
+      }
+    }
+    html, body { margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100vh; }
+    .layout:has(> nav.toc) { grid-template-columns: 260px minmax(0, 1fr); }
+    nav.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 12px; border-right: 1px solid var(--border); font-size: 0.85rem; }
+    nav.toc .toc-title { font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
+    nav.toc ol { list-style: none; margin: 0; padding: 0; }
+    nav.toc li { margin: 2px 0; }
+    nav.toc a { color: var(--fg); text-decoration: none; display: block; padding: 3px 6px; border-radius: 4px; }
+    nav.toc a:hover { background: var(--code-bg); color: var(--accent); }
+    @media (max-width: 880px) { nav.toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } }
+    @media print { nav.toc { display: none; } }
+    .content { min-width: 0; }
+    header, main, footer { max-width: var(--max); margin: 0 auto; padding: 16px 24px; }
+    header { border-bottom: 1px solid var(--border); }
+    header h1 { margin: 4px 0 8px; font-size: 1.9rem; }
+    .badges span { display: inline-block; padding: 2px 8px; margin-right: 6px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--bg); }
+    .badges .provenance-reverse-engineered, .badges .provenance-migrated { color: var(--warn); border-color: var(--warn); }
+    .badges .status-draft       { color: var(--neutral); border-color: var(--neutral); }
+    .badges .status-in-review   { color: var(--warn);    border-color: var(--warn); }
+    .badges .status-approved    { color: var(--ok);      border-color: var(--ok); }
+    .badges .status-locked      { color: var(--info);    border-color: var(--info); }
+    .stats { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+    .stats .chip { display: inline-block; padding: 1px 8px; margin-right: 6px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); }
+    @media (max-width: 880px) {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+    }
+    h2, h3, h4 { line-height: 1.25; margin-top: 1.6em; }
+    h2 { border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    a { color: var(--accent); }
+    code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: var(--code-bg); padding: 12px; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--code-bg); position: sticky; top: 0; z-index: 1; }
+    tbody tr:nth-child(even) td { background: var(--card-bg); }
+    blockquote { border-left: 3px solid var(--accent); margin: 0; padding: 4px 14px; color: var(--muted); }
+    .mermaid { background: var(--bg); text-align: center; margin: 16px 0; }
+    footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+    /* fragment-shared utilities */
+    .lede { font-size: 1.08rem; color: var(--fg); }
+    section.hero { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+    section.callout { border-left: 4px solid var(--border); padding: 8px 14px; background: var(--card-bg); border-radius: 4px; }
+    section.callout.warn { border-left-color: var(--warn); }
+    section.callout.warn h2::before { content: "⊘ "; color: var(--warn); }
+
+    ol.goal-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    ol.goal-grid li { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; display: flex; gap: 10px; }
+    ol.goal-grid .num { flex: 0 0 auto; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    ol.goal-grid p { margin: 0; }
+
+    details.role-group { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; background: var(--card-bg); }
+    details.role-group > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+    details.role-group > summary .count { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+    details.role-group ul.stories { margin: 0; padding: 4px 16px 12px 28px; }
+    ul.stories li { margin: 4px 0; }
+    ul.stories b { color: var(--accent); font-weight: 600; }
+
+    table.ac-table td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .chip.area { background: var(--code-bg); color: var(--muted); }
+    .chip.prio-must   { background: var(--chip-must-bg);   color: var(--chip-must-fg); border-color: var(--chip-must-fg); }
+    .chip.prio-should { background: var(--chip-should-bg); color: var(--chip-should-fg); border-color: var(--chip-should-fg); }
+    .chip.prio-may    { background: var(--chip-may-bg);    color: var(--chip-may-fg); border-color: var(--chip-may-fg); }
+
+    ul.non-goals { margin: 0; padding-left: 22px; }
+    ul.non-goals li::marker { content: "⊘  "; color: var(--warn); }
+
+    /* definition-list pattern: Purpose / Entry / Exit / Notes */
+    dl.def-list { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0; }
+    dl.def-list dt { font-weight: 600; color: var(--muted); }
+    dl.def-list dd { margin: 0; }
+
+    /* ADR */
+    .adr { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    .adr > .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+    .adr h2 { margin-top: 0.4em; border-bottom: none; font-size: 1.3rem; }
+    .adr h3 { margin-top: 1.1em; border-bottom: none; font-size: 1.15rem; }
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .status-proposed   { color: var(--warn);    border-color: var(--warn); }
+    .status-accepted   { color: var(--ok);      border-color: var(--ok); }
+    .consequences { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .consequences .pros, .consequences .cons { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+    .consequences .pros { background: var(--ok-tint); border-left: 3px solid var(--ok); }
+    .consequences .cons { background: var(--danger-tint); border-left: 3px solid var(--danger); }
+    .consequences h4 { margin: 0 0 4px; font-size: 1rem; color: var(--muted); }
+    .consequences ul { margin: 0; padding-left: 20px; }
+    @media (max-width: 720px) { .consequences { grid-template-columns: 1fr; } }
+    ul.alt-list li { margin: 4px 0; }
+    ul.alt-list li strong { color: var(--fg); }
+
+    /* UX-spec mockup */
+    article.mockup { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    article.mockup > h3 { margin-top: 0; }
+    .mockup-preview { background: var(--bg); border: 1px dashed var(--border); border-radius: 6px; padding: 16px; margin: 10px 0; min-height: 80px; }
+    .screen-meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 6px 0 10px; font-size: 0.92rem; }
+    .screen-meta b { color: var(--muted); font-weight: 600; }
+
+    /* Concept */
+    .pillar-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .pillar-grid li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; }
+    .pillar-grid li strong { display: block; margin-bottom: 4px; color: var(--accent); }
+    .anti-pillar-grid li { border-left-color: var(--danger); }
+    .anti-pillar-grid li strong { color: var(--danger); }
+    ul.user-segments { list-style: none; padding: 0; }
+    ul.user-segments li { padding: 8px 12px; margin: 6px 0; border-left: 3px solid var(--accent); background: var(--card-bg); border-radius: 4px; }
+    ul.user-segments li b { color: var(--accent); }
+    ul.metrics li { margin: 4px 0; }
+    ul.metrics li .target { float: right; color: var(--ok); font-variant-numeric: tabular-nums; }
+
+    /* Stack */
+    table.tech-table .ver { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .principle-list { list-style: none; padding: 0; }
+    .principle-list li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    .principle-list li strong { color: var(--info); }
+
+    /* Accessibility */
+    section.a11y-domain { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; margin: 14px 0; }
+    section.a11y-domain h2 { border-bottom: 1px dashed var(--border); }
+    .limitation { background: var(--chip-should-bg); border-left: 3px solid var(--warn); padding: 8px 12px; margin: 6px 0; border-radius: 4px; }
+    .limitation b { color: var(--warn); }
+
+    /* Design system */
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .swatch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+    .swatch .chip-color { height: 80px; border-radius: 4px; border: 1px solid var(--border); }
+    .swatch code { font-size: 0.78rem; }
+    .swatch small { color: var(--muted); }
+    .spacing-scale { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); }
+    .spacing-scale > div { background: var(--accent); width: 24px; border-radius: 2px 2px 0 0; }
+    article.component-preview { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 14px 0; background: var(--card-bg); }
+    .preview { padding: 16px; border: 1px dashed var(--border); border-radius: 6px; background: var(--bg); }
+
+    @media print {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+      a { color: inherit; text-decoration: none; }
+      footer { page-break-before: always; }
+      details.role-group[open] > summary { list-style: none; }
+      details.role-group { break-inside: avoid; }
+      tr, li { break-inside: avoid; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true });</script>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Содержание</div>
+      <ol>
+        <li><a href="#flows">Сценарии</a></li>
+        <li><a href="#ui-mockups">Макеты</a></li>
+        <li><a href="#interaction-patterns">Паттерны взаимодействия</a></li>
+      </ol>
+    </nav>
+    <div class="content">
+      <header>
+        <div class="badges">
+          <span>UX-spec</span>
+          <span>audit</span>
+          <span class="status-approved">approved</span>
+        </div>
+        <h1>UX-спецификация — Журнал аудита (audit)</h1>
+        <div class="stats">1 flows · 1 mockups · updated 2026-10-07</div>
+      </header>
+      <main>
+<!--
+responsibility:
+  owns: ux flows and ui mockups of audit (the read-only journal screen)
+  excludes: requirements, accessibility (project-wide), design-system components and tokens, new component proposals
+  delegates_to: docs/product/requirements/audit.html (requirements), accessibility.html (a11y), DESIGN.md (components and tokens)
+provenance: original
+-->
+
+<div class="ds" style="--ds-primary:#2B42E5;--ds-primary-subtle:#EBF2FD;--ds-text-primary:#292929;--ds-text-secondary:#4B4B4C;--ds-text-muted:#5F6670;--ds-text-inverse:#FFFFFF;--ds-surface-page:#F5F6F8;--ds-surface-panel:#FFFFFF;--ds-surface-muted:#EEEEEE;--ds-border-subtle:#DDE1E6;--ds-border-control:#7D8590;--ds-xxs:4px;--ds-xs:8px;--ds-sm:12px;--ds-md:16px;--ds-xl:24px;--ds-h-sm:24px;--ds-h-md:32px;--ds-r-md:4px;--ds-r-lg:8px;--ds-bw:1px;--ds-font-ui:'PT Sans','Segoe UI',Roboto,Arial,sans-serif;--ds-font-mono:'PT Mono',Consolas,'Courier New',monospace;--ds-t-h1:700 30px/38px var(--ds-font-ui);--ds-t-body-md:400 14px/22px var(--ds-font-ui);--ds-t-body-strong:700 14px/22px var(--ds-font-ui);--ds-t-body-sm:400 12px/20px var(--ds-font-ui);--ds-t-code:400 13px/20px var(--ds-font-mono);">
+
+<section id="flows" class="hero">
+  <h2>Сценарии</h2>
+  <p class="lede">Журнал только читается: правки и удаления событий в интерфейсе нет (AC-15). Раздел «Журнал» виден глобальному администратору; остальным адрес показывает «Страницу не найдена» (<a href="app-shell.html">app-shell.html</a>), а API отклоняет запрос кодом 403. События создаёт сервер при каждой мутации пользователей, подразделений и сотрудников и при входе и выходе; экран их лишь показывает.</p>
+  <pre class="mermaid">
+flowchart TD
+  A["Раздел Журнал"] --> B["Последние события: новые сверху, 50 на странице"]
+  B --> C["Фильтры: период, актор, действие, сущность, идентификаторы"]
+  C -- "Применить" --> D["Запрос с фильтрами, страница 1"]
+  C -- "Сбросить" --> B
+  D --> E{"Ответ"}
+  E -- "есть события" --> F["Таблица событий"]
+  E -- "нет" --> G["Пусто: События не найдены, измените условия фильтра"]
+  E -- "ошибка" --> H["Предупреждение с причиной и кнопкой Повторить"]
+  F -- "раскрыть строку" --> I["Старое и новое значение в формате JSON"]
+  F -- "другая страница или размер" --> D
+  </pre>
+</section>
+
+<section id="ui-mockups">
+  <h2>Макеты</h2>
+  <p class="lede">Превью собраны только из токенов <a href="DESIGN.md">DESIGN.md</a>; значения токенов заданы один раз на корне блока (<code>--ds-*</code>), как в <a href="design-system.html">design-system.html</a>.</p>
+
+  <article class="mockup">
+    <h3>Журнал аудита</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Найти событие по периоду, автору, действию или объекту и увидеть, что изменилось.</dd>
+      <dt><b>Entry from</b></dt><dd>Пункт «Журнал» в шапке (только администратор).</dd>
+      <dt><b>Exit to</b></dt><dd>Терминальный экран: переходов дальше нет, только фильтры, страницы и раскрытие строк.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="background:var(--ds-surface-page);padding:var(--ds-xl);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div style="font:var(--ds-t-h1);">Журнал аудита</div>
+        <div style="display:flex;flex-wrap:wrap;gap:var(--ds-xs) var(--ds-md);align-items:center;margin-top:var(--ds-md);">
+          <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="color:var(--ds-text-secondary);">Период</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">Начало → Конец</span></span>
+          <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="color:var(--ds-text-secondary);">Актор</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);"></span></span>
+          <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="color:var(--ds-text-secondary);">Действие</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">Employee.Updated</span></span>
+          <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="color:var(--ds-text-secondary);">Сущность</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);"></span></span>
+          <span style="color:var(--ds-text-muted);">… Идентификатор сущности, Идентификатор запроса</span>
+          <span style="display:inline-flex;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Применить</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Сбросить</span></span>
+        </div>
+        <div style="margin-top:var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);overflow:hidden;">
+          <div style="display:grid;grid-template-columns:0.4fr 1.4fr 1.4fr 1fr 1.4fr 1fr 1.6fr 1fr;gap:var(--ds-xs);align-items:center;padding:var(--ds-sm) var(--ds-md);background:var(--ds-surface-muted);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);"><span></span><span>Время</span><span>Актор</span><span>Роль</span><span>Действие</span><span>Сущность</span><span>Идентификатор</span><span>Запрос</span></div>
+          <div style="display:grid;grid-template-columns:0.4fr 1.4fr 1.4fr 1fr 1.4fr 1fr 1.6fr 1fr;gap:var(--ds-xs);align-items:center;padding:var(--ds-sm) var(--ds-md);border-top:var(--ds-bw) solid var(--ds-border-subtle);background:var(--ds-surface-page);"><span aria-hidden="true">▾</span><span>07.10.2026, 14:32:08</span><span style="font:var(--ds-t-code);">3f2a…91c0</span><span>GlobalAdmin</span><span>Employee.Updated</span><span>Employee</span><span style="font:var(--ds-t-code);">a81b…44de</span><span style="font:var(--ds-t-code);">7c1e…02aa</span></div>
+          <div style="padding:var(--ds-sm) var(--ds-md);border-top:var(--ds-bw) solid var(--ds-border-subtle);display:grid;gap:var(--ds-xs);">
+            <div><b style="font:var(--ds-t-body-strong);">Старое значение</b><div style="margin-top:var(--ds-xxs);padding:var(--ds-xs);background:var(--ds-surface-muted);border-radius:var(--ds-r-md);font:var(--ds-t-code);white-space:pre;">{ "position": "Разработчик" }</div></div>
+            <div><b style="font:var(--ds-t-body-strong);">Новое значение</b><div style="margin-top:var(--ds-xxs);padding:var(--ds-xs);background:var(--ds-surface-muted);border-radius:var(--ds-r-md);font:var(--ds-t-code);white-space:pre;">{ "position": "Ведущий разработчик" }</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:0.4fr 1.4fr 1.4fr 1fr 1.4fr 1fr 1.6fr 1fr;gap:var(--ds-xs);align-items:center;padding:var(--ds-sm) var(--ds-md);border-top:var(--ds-bw) solid var(--ds-border-subtle);"><span aria-hidden="true">▸</span><span>07.10.2026, 14:30:51</span><span style="font:var(--ds-t-code);">unknown</span><span>—</span><span>Auth.LoginFailed</span><span>AppUser</span><span style="font:var(--ds-t-code);">—</span><span style="font:var(--ds-t-code);">5d90…77b3</span></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:var(--ds-xs);margin-top:var(--ds-md);">
+          <span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-md);height:var(--ds-h-md);border:var(--ds-bw) solid var(--ds-primary);color:var(--ds-primary);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">1</span>
+          <span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">50 на странице ▾</span>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Фильтры</b> — одна строка полей с переносом: «Период» (дата и время), «Актор», «Действие», «Сущность», «Идентификатор сущности», «Идентификатор запроса», затем «Применить» (главное действие) и «Сбросить». Фильтры применяются только по кнопке и возвращают таблицу на первую страницу; пустые поля фильтром не считаются.</li>
+      <li><b>Таблица</b>: «Время» (формат ru-RU: короткая дата и время с секундами), «Актор», «Роль», «Действие», «Сущность», «Идентификатор», «Запрос», «Причина». Идентификаторы и значения — шрифтом <code>code</code>. Новые события сверху. Таблица прокручивается по горизонтали, если не помещается.</li>
+      <li><b>Раскрытие строки</b> показывает «Старое значение» и «Новое значение» как отформатированный JSON; отсутствующее значение — тире. Пароли, хэши и секреты в журнал не попадают (AC-15), поэтому на экране их нет.</li>
+      <li><b>Страницы</b>: размеры 20, 50 (по умолчанию) и 100; предыдущая страница остаётся на экране, пока грузится следующая.</li>
+      <li><b>Состояния.</b> Загрузка — индикатор поверх таблицы; ошибка — предупреждение «Не удалось загрузить журнал» с причиной и кнопкой «Повторить»; пусто — «События не найдены. Измените условия фильтра.».</li>
+      <li><b>Планшет.</b> Контролы укрупняются до <code>control-height-lg</code>; фильтры переносятся по строкам.</li>
+      <li>Экспорта журнала и аналитики по нему нет (вне спринта).</li>
+    </ul>
+  </article>
+</section>
+
+<section id="interaction-patterns">
+  <h2>Паттерны взаимодействия</h2>
+  <ul>
+    <li><b>Только чтение.</b> В строках нет меню действий; единственное действие над событием — раскрыть его старое и новое значения.</li>
+    <li><b>Раскрытие строки</b> вместо перехода на отдельную страницу: подробность показывается по запросу, список остаётся на месте.</li>
+    <li><b>Состояния</b> отвечают на вопросы «что, почему, что делать» (ошибка с кнопкой «Повторить», пустой результат с подсказкой изменить фильтр); общие тексты — в <a href="app-shell.html">app-shell.html</a>.</li>
+  </ul>
+</section>
+
+</div>
+      </main>
+      <footer>by ASD workflow | 2026-10-07</footer>
+    </div>
+  </div>
+</body>
+</html>

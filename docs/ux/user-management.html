@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<!--
+responsibility:
+  owns: html shell wrap for all asd user-facing html docs
+  excludes: doc content, doc-specific structure
+  delegates_to: fragment templates (t_prd, t_adr, t_ux-spec, t_concept, t_stack, t_design-system, t_accessibility, t_retrospective)
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="ASD workflow">
+  <meta name="doc-type" content="UX-spec">
+  <meta name="subsystem" content="user-management">
+  <meta name="sprint-id" content="">
+  <meta name="status" content="approved">
+  <meta name="updated" content="2026-10-07">
+  <meta name="responsibility" content="ux flows and ui mockups of user-management: sign-in, own password change, account list and its create/edit/block/reset dialogs">
+  <meta name="provenance" content="original">
+  <title>UX-спецификация — Управление пользователями (user-management)</title>
+  <style>
+    :root {
+      --fg: #1a1c1e; --bg: #fff; --muted: #5b6770; --accent: #0066cc;
+      --code-bg: #f4f6f8; --border: #d0d7de; --max: 1040px;
+      --card-bg: #fafbfc;
+      --ok: #1a7f37; --warn: #b35900; --danger: #cf222e; --info: #0969da; --neutral: #5b6770;
+      --ok-tint: rgba(31,136,61,0.07); --danger-tint: rgba(207,34,46,0.06);
+      --chip-must-bg: #ffebe9; --chip-must-fg: #cf222e;
+      --chip-should-bg: #fff5e1; --chip-should-fg: #9a6700;
+      --chip-may-bg: #ddf4ff; --chip-may-fg: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e6e6e6; --bg: #0e1116; --muted: #9aa4ad; --code-bg: #161b22; --border: #30363d;
+        --card-bg: #161b22;
+        --accent: #58a6ff; --ok: #3fb950; --warn: #d29922; --danger: #f85149; --info: #79c0ff; --neutral: #8b949e;
+        --ok-tint: rgba(63,185,80,0.12); --danger-tint: rgba(248,81,73,0.10);
+        --chip-must-bg: #3b1416; --chip-must-fg: #ff7b72;
+        --chip-should-bg: #2d2410; --chip-should-fg: #e3b341;
+        --chip-may-bg: #0d2538; --chip-may-fg: #58a6ff;
+      }
+    }
+    html, body { margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100vh; }
+    .layout:has(> nav.toc) { grid-template-columns: 260px minmax(0, 1fr); }
+    nav.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 12px; border-right: 1px solid var(--border); font-size: 0.85rem; }
+    nav.toc .toc-title { font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
+    nav.toc ol { list-style: none; margin: 0; padding: 0; }
+    nav.toc li { margin: 2px 0; }
+    nav.toc a { color: var(--fg); text-decoration: none; display: block; padding: 3px 6px; border-radius: 4px; }
+    nav.toc a:hover { background: var(--code-bg); color: var(--accent); }
+    @media (max-width: 880px) { nav.toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } }
+    @media print { nav.toc { display: none; } }
+    .content { min-width: 0; }
+    header, main, footer { max-width: var(--max); margin: 0 auto; padding: 16px 24px; }
+    header { border-bottom: 1px solid var(--border); }
+    header h1 { margin: 4px 0 8px; font-size: 1.9rem; }
+    .badges span { display: inline-block; padding: 2px 8px; margin-right: 6px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--bg); }
+    .badges .provenance-reverse-engineered, .badges .provenance-migrated { color: var(--warn); border-color: var(--warn); }
+    .badges .status-draft       { color: var(--neutral); border-color: var(--neutral); }
+    .badges .status-in-review   { color: var(--warn);    border-color: var(--warn); }
+    .badges .status-approved    { color: var(--ok);      border-color: var(--ok); }
+    .badges .status-locked      { color: var(--info);    border-color: var(--info); }
+    .stats { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+    .stats .chip { display: inline-block; padding: 1px 8px; margin-right: 6px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); }
+    @media (max-width: 880px) {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+    }
+    h2, h3, h4 { line-height: 1.25; margin-top: 1.6em; }
+    h2 { border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    a { color: var(--accent); }
+    code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: var(--code-bg); padding: 12px; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--code-bg); position: sticky; top: 0; z-index: 1; }
+    tbody tr:nth-child(even) td { background: var(--card-bg); }
+    blockquote { border-left: 3px solid var(--accent); margin: 0; padding: 4px 14px; color: var(--muted); }
+    .mermaid { background: var(--bg); text-align: center; margin: 16px 0; }
+    footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+    /* fragment-shared utilities */
+    .lede { font-size: 1.08rem; color: var(--fg); }
+    section.hero { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+    section.callout { border-left: 4px solid var(--border); padding: 8px 14px; background: var(--card-bg); border-radius: 4px; }
+    section.callout.warn { border-left-color: var(--warn); }
+    section.callout.warn h2::before { content: "⊘ "; color: var(--warn); }
+
+    ol.goal-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    ol.goal-grid li { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; display: flex; gap: 10px; }
+    ol.goal-grid .num { flex: 0 0 auto; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    ol.goal-grid p { margin: 0; }
+
+    details.role-group { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; background: var(--card-bg); }
+    details.role-group > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+    details.role-group > summary .count { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+    details.role-group ul.stories { margin: 0; padding: 4px 16px 12px 28px; }
+    ul.stories li { margin: 4px 0; }
+    ul.stories b { color: var(--accent); font-weight: 600; }
+
+    table.ac-table td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .chip.area { background: var(--code-bg); color: var(--muted); }
+    .chip.prio-must   { background: var(--chip-must-bg);   color: var(--chip-must-fg); border-color: var(--chip-must-fg); }
+    .chip.prio-should { background: var(--chip-should-bg); color: var(--chip-should-fg); border-color: var(--chip-should-fg); }
+    .chip.prio-may    { background: var(--chip-may-bg);    color: var(--chip-may-fg); border-color: var(--chip-may-fg); }
+
+    ul.non-goals { margin: 0; padding-left: 22px; }
+    ul.non-goals li::marker { content: "⊘  "; color: var(--warn); }
+
+    /* definition-list pattern: Purpose / Entry / Exit / Notes */
+    dl.def-list { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0; }
+    dl.def-list dt { font-weight: 600; color: var(--muted); }
+    dl.def-list dd { margin: 0; }
+
+    /* ADR */
+    .adr { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    .adr > .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+    .adr h2 { margin-top: 0.4em; border-bottom: none; font-size: 1.3rem; }
+    .adr h3 { margin-top: 1.1em; border-bottom: none; font-size: 1.15rem; }
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .status-proposed   { color: var(--warn);    border-color: var(--warn); }
+    .status-accepted   { color: var(--ok);      border-color: var(--ok); }
+    .consequences { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .consequences .pros, .consequences .cons { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+    .consequences .pros { background: var(--ok-tint); border-left: 3px solid var(--ok); }
+    .consequences .cons { background: var(--danger-tint); border-left: 3px solid var(--danger); }
+    .consequences h4 { margin: 0 0 4px; font-size: 1rem; color: var(--muted); }
+    .consequences ul { margin: 0; padding-left: 20px; }
+    @media (max-width: 720px) { .consequences { grid-template-columns: 1fr; } }
+    ul.alt-list li { margin: 4px 0; }
+    ul.alt-list li strong { color: var(--fg); }
+
+    /* UX-spec mockup */
+    article.mockup { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    article.mockup > h3 { margin-top: 0; }
+    .mockup-preview { background: var(--bg); border: 1px dashed var(--border); border-radius: 6px; padding: 16px; margin: 10px 0; min-height: 80px; }
+    .screen-meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 6px 0 10px; font-size: 0.92rem; }
+    .screen-meta b { color: var(--muted); font-weight: 600; }
+
+    /* Concept */
+    .pillar-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .pillar-grid li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; }
+    .pillar-grid li strong { display: block; margin-bottom: 4px; color: var(--accent); }
+    .anti-pillar-grid li { border-left-color: var(--danger); }
+    .anti-pillar-grid li strong { color: var(--danger); }
+    ul.user-segments { list-style: none; padding: 0; }
+    ul.user-segments li { padding: 8px 12px; margin: 6px 0; border-left: 3px solid var(--accent); background: var(--card-bg); border-radius: 4px; }
+    ul.user-segments li b { color: var(--accent); }
+    ul.metrics li { margin: 4px 0; }
+    ul.metrics li .target { float: right; color: var(--ok); font-variant-numeric: tabular-nums; }
+
+    /* Stack */
+    table.tech-table .ver { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .principle-list { list-style: none; padding: 0; }
+    .principle-list li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    .principle-list li strong { color: var(--info); }
+
+    /* Accessibility */
+    section.a11y-domain { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; margin: 14px 0; }
+    section.a11y-domain h2 { border-bottom: 1px dashed var(--border); }
+    .limitation { background: var(--chip-should-bg); border-left: 3px solid var(--warn); padding: 8px 12px; margin: 6px 0; border-radius: 4px; }
+    .limitation b { color: var(--warn); }
+
+    /* Design system */
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .swatch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+    .swatch .chip-color { height: 80px; border-radius: 4px; border: 1px solid var(--border); }
+    .swatch code { font-size: 0.78rem; }
+    .swatch small { color: var(--muted); }
+    .spacing-scale { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); }
+    .spacing-scale > div { background: var(--accent); width: 24px; border-radius: 2px 2px 0 0; }
+    article.component-preview { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 14px 0; background: var(--card-bg); }
+    .preview { padding: 16px; border: 1px dashed var(--border); border-radius: 6px; background: var(--bg); }
+
+    @media print {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+      a { color: inherit; text-decoration: none; }
+      footer { page-break-before: always; }
+      details.role-group[open] > summary { list-style: none; }
+      details.role-group { break-inside: avoid; }
+      tr, li { break-inside: avoid; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true });</script>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Содержание</div>
+      <ol>
+        <li><a href="#flows">Сценарии</a></li>
+        <li><a href="#ui-mockups">Макеты</a></li>
+        <li><a href="#interaction-patterns">Паттерны взаимодействия</a></li>
+      </ol>
+    </nav>
+    <div class="content">
+      <header>
+        <div class="badges">
+          <span>UX-spec</span>
+          <span>user-management</span>
+          <span class="status-approved">approved</span>
+        </div>
+        <h1>UX-спецификация — Управление пользователями (user-management)</h1>
+        <div class="stats">3 flows · 4 mockups · updated 2026-10-07</div>
+      </header>
+      <main>
+<!--
+responsibility:
+  owns: ux flows and ui mockups of user-management (sign-in, own password change, accounts list and dialogs)
+  excludes: requirements, accessibility (project-wide), design-system components and tokens, new component proposals
+  delegates_to: docs/product/requirements/user-management.html (requirements), accessibility.html (a11y), DESIGN.md (components and tokens)
+provenance: original
+-->
+
+<div class="ds" style="--ds-primary:#2B42E5;--ds-primary-hover:#2338C2;--ds-primary-active:#182CC2;--ds-primary-subtle:#EBF2FD;--ds-accent:#FBAE40;--ds-text-primary:#292929;--ds-text-secondary:#4B4B4C;--ds-text-muted:#5F6670;--ds-text-disabled:#A3A9B1;--ds-text-inverse:#FFFFFF;--ds-text-inverse-muted:#9BA8F9;--ds-surface-page:#F5F6F8;--ds-surface-panel:#FFFFFF;--ds-surface-muted:#EEEEEE;--ds-surface-inverse:#081240;--ds-border-subtle:#DDE1E6;--ds-border-control:#7D8590;--ds-overlay-scrim:#08124073;--ds-success:#197A4A;--ds-success-bg:#E6F4EC;--ds-warning:#A85800;--ds-warning-bg:#FFF4DF;--ds-danger:#C62832;--ds-danger-bg:#FDECEC;--ds-info:#1B64C8;--ds-info-bg:#EBF2FD;--ds-xxs:4px;--ds-xs:8px;--ds-sm:12px;--ds-md:16px;--ds-lg:20px;--ds-xl:24px;--ds-xxl:32px;--ds-xxxl:48px;--ds-header-h:56px;--ds-h-sm:24px;--ds-h-md:32px;--ds-h-lg:40px;--ds-r-xs:2px;--ds-r-md:4px;--ds-r-lg:8px;--ds-r-full:9999px;--ds-bw:1px;--ds-el-popup:0 4px 12px rgba(8,18,64,0.12);--ds-el-modal:0 8px 24px rgba(8,18,64,0.16);--ds-font-ui:'PT Sans','Segoe UI',Roboto,Arial,sans-serif;--ds-font-mono:'PT Mono',Consolas,'Courier New',monospace;--ds-t-h1:700 30px/38px var(--ds-font-ui);--ds-t-h2:700 24px/32px var(--ds-font-ui);--ds-t-h3:700 20px/28px var(--ds-font-ui);--ds-t-body-md:400 14px/22px var(--ds-font-ui);--ds-t-body-strong:700 14px/22px var(--ds-font-ui);--ds-t-body-sm:400 12px/20px var(--ds-font-ui);--ds-t-code:400 13px/20px var(--ds-font-mono);">
+
+<section id="flows" class="hero">
+  <h2>Сценарии</h2>
+  <p class="lede">UI подсистемы: вход и выход (AC-6), собственный пароль (AC-7) и раздел «Пользователи» для глобального администратора (AC-7, AC-8, AC-13). Раздел и его окна доступны только администратору; остальным адрес раздела показывает «Страницу не найдена» (<a href="app-shell.html">app-shell.html</a>), а API отклоняет запросы кодом 403.</p>
+
+  <h3>Вход</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Экран входа"] --> B["Ввод e-mail и пароля"]
+  B --> C{"Проверка на сервере"}
+  C -- "успех" --> D["Профиль сохранён в кэше, переход на главную"]
+  C -- "отказ" --> E["Предупреждение: Не удалось войти, одинаковое для любой причины отказа"]
+  C -- "слишком много попыток" --> F["Предупреждение с просьбой подождать"]
+  E --> B
+  F --> B
+  </pre>
+
+  <h3>Раздел «Пользователи»</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Раздел Пользователи"] --> B["Поиск по e-mail, фильтры Роль и Состояние, страницы"]
+  A --> C["Кнопка Создать пользователя"]
+  C --> M["Окно: Новый пользователь"]
+  B --> R["Меню в строке"]
+  R --> E["Править: окно Изменение пользователя"]
+  R --> K["Заблокировать или Разблокировать: подтверждение"]
+  R --> P["Сбросить пароль: окно Сброс пароля"]
+  M --> S{"Сохранение"}
+  E --> S
+  S -- "успех" --> T["Сообщение, окно закрыто, список и оргструктура перечитаны"]
+  S -- "409 с полем" --> U["Текст под полем, окно остаётся"]
+  S -- "412 версия устарела" --> V["Предупреждение, форма пересобрана на актуальных данных"]
+  S -- "прочий отказ" --> W["Предупреждение в окне"]
+  K --> X{"Подтверждено"}
+  X -- "успех" --> Y["Сообщение, список перечитан"]
+  X -- "отказ, например последний администратор" --> Z["Сообщение с причиной"]
+  </pre>
+
+  <h3>Смена собственного пароля</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Шапка: меню пользователя"] --> B["Сменить пароль"]
+  B --> C["Окно: текущий, новый, повтор нового"]
+  C --> D{"Отправка"}
+  D -- "успех" --> E["Сообщение Пароль изменён, окно закрыто"]
+  D -- "поле неверно" --> F["Текст сервера под полем"]
+  D -- "прочий отказ" --> G["Предупреждение в окне"]
+  </pre>
+</section>
+
+<section id="ui-mockups">
+  <h2>Макеты</h2>
+  <p class="lede">Превью собраны только из токенов <a href="DESIGN.md">DESIGN.md</a>; значения токенов заданы один раз на корне блока (<code>--ds-*</code>), как в <a href="design-system.html">design-system.html</a>.</p>
+
+  <article class="mockup">
+    <h3>Экран входа</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Войти по e-mail и паролю.</dd>
+      <dt><b>Entry from</b></dt><dd>Адрес <code>/login</code>: первое открытие без сессии, завершение сессии, выход.</dd>
+      <dt><b>Exit to</b></dt><dd>Главная страница (первый доступный раздел).</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(45%,1fr));gap:var(--ds-md);">
+        <div style="background:var(--ds-surface-page);padding:var(--ds-xxl) var(--ds-md);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+          <div style="margin:0 auto;width:80%;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-xl);">
+            <div style="display:flex;justify-content:center;"><img src="../../web/public/brand/logo-256.png" alt="Калибр" style="width:var(--ds-xxxl);height:var(--ds-xxxl);"></div>
+            <div style="font:var(--ds-t-h1);margin-top:var(--ds-md);">Вход в систему</div>
+            <div style="color:var(--ds-text-secondary);margin-bottom:var(--ds-md);">Компетенции и карьерный рост</div>
+            <div style="margin-bottom:var(--ds-xl);">
+              <div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">E-mail</div>
+              <div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-primary);border-radius:var(--ds-r-md);">a.ivanov@example.com</div>
+            </div>
+            <div style="margin-bottom:var(--ds-xl);">
+              <div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Пароль</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">••••••••••<span aria-hidden="true">👁</span></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;height:var(--ds-h-lg);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Войти</div>
+          </div>
+        </div>
+        <div style="background:var(--ds-surface-page);padding:var(--ds-xxl) var(--ds-md);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+          <div style="margin:0 auto;width:80%;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-body-strong);color:var(--ds-text-muted);margin-bottom:var(--ds-md);">Состояние: отказ</div>
+            <div style="display:flex;align-items:flex-start;gap:var(--ds-xs);padding:var(--ds-sm);background:var(--ds-danger-bg);border-radius:var(--ds-r-md);margin-bottom:var(--ds-xl);">
+              <span style="color:var(--ds-danger);" aria-hidden="true">⊗</span>
+              <span><b style="font:var(--ds-t-body-strong);">Не удалось войти</b><br>Текст причины приходит с сервера на русском и не раскрывает, существует ли учётная запись.</span>
+            </div>
+            <div style="margin-bottom:var(--ds-xl);">
+              <div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">E-mail</div>
+              <div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-danger);border-radius:var(--ds-r-md);">a.ivanov@example.com</div>
+              <div style="font:var(--ds-t-body-sm);color:var(--ds-danger);margin-top:var(--ds-xxs);">⊗ Введите e-mail</div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;height:var(--ds-h-lg);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Войти (загрузка: кнопка занята и не нажимается повторно)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>: экран вне рамки приложения, на <code>surface-page</code>, карточка по центру (на десктопе около четверти ширины, на узком экране почти вся ширина). Фокус при открытии — в поле e-mail. Поля e-mail и пароль обязательны; пустое поле даёт сообщение под полем, сервер добавляет собственные сообщения по полям. Проверка формата e-mail браузером отключена, чтобы пользователь видел русский текст сервера. Отказ показывается одним и тем же предупреждением независимо от причины (неверный пароль, нет такой записи, блокировка); при частых ошибках сервер вводит временную блокировку (lockout), и пользователь видит просьбу подождать. Кнопка «Войти» — единственное главное действие, крупная, на всю ширину. Текст-подзаголовок «Компетенции и карьерный рост» — <code>text-secondary</code>.</p>
+  </article>
+
+  <article class="mockup">
+    <h3>Список пользователей</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Найти учётную запись и выполнить действие над ней.</dd>
+      <dt><b>Entry from</b></dt><dd>Пункт «Пользователи» в шапке (только администратор).</dd>
+      <dt><b>Exit to</b></dt><dd>Окна «Новый пользователь», «Изменение пользователя», «Сброс пароля», подтверждение блокировки.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="background:var(--ds-surface-page);padding:var(--ds-xl);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--ds-md);flex-wrap:wrap;">
+          <div style="font:var(--ds-t-h1);">Пользователи</div>
+          <span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Создать пользователя</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1.2fr 1fr;gap:var(--ds-md);margin-top:var(--ds-xl);">
+          <div style="display:flex;align-items:stretch;"><span style="flex:1;display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-right:0;border-radius:var(--ds-r-md) 0 0 var(--ds-r-md);color:var(--ds-text-muted);">Поиск по e-mail</span><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:0 var(--ds-r-md) var(--ds-r-md) 0;" aria-hidden="true">🔍</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">Роль<span aria-hidden="true">▾</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">Состояние<span aria-hidden="true">▾</span></div>
+        </div>
+        <div style="margin-top:var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);overflow:hidden;">
+          <div style="display:grid;grid-template-columns:2fr 1.6fr 2fr 1.2fr 0.6fr;align-items:center;padding:var(--ds-sm) var(--ds-md);background:var(--ds-surface-muted);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);"><span>E-mail</span><span>Роль</span><span>Сотрудник</span><span>Состояние</span><span>Действия</span></div>
+          <div style="display:grid;grid-template-columns:2fr 1.6fr 2fr 1.2fr 0.6fr;align-items:center;padding:var(--ds-sm) var(--ds-md);border-top:var(--ds-bw) solid var(--ds-border-subtle);"><span>admin@example.com</span><span>Глобальный администратор</span><span>Не привязан</span><span><span style="display:inline-block;padding:0 var(--ds-xs);background:var(--ds-success-bg);color:var(--ds-success);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);">Активен</span></span><span aria-hidden="true">⋮</span></div>
+          <div style="display:grid;grid-template-columns:2fr 1.6fr 2fr 1.2fr 0.6fr;align-items:center;padding:var(--ds-sm) var(--ds-md);border-top:var(--ds-bw) solid var(--ds-border-subtle);background:var(--ds-surface-page);"><span>a.ivanov@example.com</span><span>Пользователь</span><span>Иванов Алексей Борисович</span><span><span style="display:inline-block;padding:0 var(--ds-xs);background:var(--ds-success-bg);color:var(--ds-success);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);">Активен</span></span>
+            <span style="position:relative;"><span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);background:var(--ds-surface-muted);">⋮</span></span></div>
+          <div style="display:grid;grid-template-columns:2fr 1.6fr 2fr 1.2fr 0.6fr;align-items:center;padding:var(--ds-sm) var(--ds-md);border-top:var(--ds-bw) solid var(--ds-border-subtle);"><span>p.petrov@example.com</span><span>Пользователь</span><span>Не привязан</span><span><span style="display:inline-block;padding:0 var(--ds-xs);background:var(--ds-danger-bg);color:var(--ds-danger);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);">Заблокирован</span></span><span aria-hidden="true">⋮</span></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:var(--ds-xs);margin-top:var(--ds-md);">
+          <span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-md);height:var(--ds-h-md);border:var(--ds-bw) solid var(--ds-primary);color:var(--ds-primary);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">1</span>
+          <span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">20 на странице ▾</span>
+        </div>
+        <div style="display:inline-block;margin-top:var(--ds-xs);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);">
+          <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">✎ Править</div>
+          <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);color:var(--ds-danger);">⊘ Заблокировать</div>
+          <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">🔑 Сбросить пароль</div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Строка</b>: E-mail, Роль («Глобальный администратор» или «Пользователь»), Сотрудник (ФИО или «Не привязан»), Состояние (метка со словом «Активен» или «Заблокирован» — цвет не единственный носитель смысла), Действия. Заголовок страницы и кнопка «Создать пользователя» (единственное главное действие) стоят в одной строке и переносятся на узких экранах.</li>
+      <li><b>Меню «⋮» в строке</b> (кнопка-иконка с подписью «Действия с пользователем …» для вспомогательных технологий): «Править», «Заблокировать» (красный пункт) или «Разблокировать», «Сбросить пароль». На макете выше открыто меню второй строки. Отдельных страниц создания и правки пользователя нет: оба действия выполняются в окнах.</li>
+      <li><b>Поиск и фильтры.</b> Поиск по e-mail срабатывает по Enter или кнопке; «Роль» и «Состояние» («Активные» / «Заблокированные») можно сбросить крестиком. Любое изменение возвращает таблицу на первую страницу. Размер страницы по умолчанию 20, список размеров доступен.</li>
+      <li><b>Состояния.</b> Загрузка — индикатор поверх таблицы (старые данные остаются на месте); ошибка — предупреждение «Не удалось загрузить пользователей» с причиной и кнопкой «Повторить»; пусто — «Пользователи не найдены. Измените условия поиска или создайте нового пользователя.»; таблица прокручивается по горизонтали, если не помещается.</li>
+      <li><b>Планшет.</b> Контролы укрупняются до <code>control-height-lg</code>, фильтры занимают всю ширину в одну колонку или по две в ряд.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Окна «Новый пользователь» и «Изменение пользователя»</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Создать учётную запись или изменить e-mail, роль и привязку к сотруднику.</dd>
+      <dt><b>Entry from</b></dt><dd>Кнопка «Создать пользователя»; пункт «Править» в меню строки.</dd>
+      <dt><b>Exit to</b></dt><dd>Список с обновлёнными данными (окно закрывается при успехе).</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(45%,1fr));gap:var(--ds-md);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-xl);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h2);margin-bottom:var(--ds-md);">Новый пользователь</div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">E-mail</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">name@example.com</div></div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Пароль</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);"></div><div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">Пароль должен быть длинным и содержать заглавные и строчные буквы, цифры и специальные символы. Если пароль не подойдёт, сервис укажет, чего в нём не хватает.</div></div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Роль</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Пользователь<span aria-hidden="true">▾</span></div></div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Сотрудник</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">Начните вводить ФИО сотрудника</div><div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">Необязательно: учётная запись может быть привязана к одному работающему сотруднику или не привязана ни к кому.</div></div>
+            <div style="display:flex;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Создать</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span></div>
+          </div>
+        </div>
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-xl);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h2);margin-bottom:var(--ds-md);">Изменение пользователя</div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">E-mail</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-danger);border-radius:var(--ds-r-md);">a.ivanov@example.com</div><div style="font:var(--ds-t-body-sm);color:var(--ds-danger);margin-top:var(--ds-xxs);">⊗ Пример: сообщение сервера о занятом e-mail показывается под полем</div></div>
+            <div style="margin-bottom:var(--ds-xs);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Роль</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Пользователь<span aria-hidden="true">▾</span></div></div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Сотрудник</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-primary);border-radius:var(--ds-r-md);">Иван<span aria-hidden="true">⊗ ▾</span></div>
+              <div style="margin-top:var(--ds-xxs);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);">
+                <div style="padding:var(--ds-xs) var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-primary-subtle);"><b style="font:var(--ds-t-body-strong);">Иванов Иван Петрович</b> ✓<br><span style="color:var(--ds-text-secondary);">Департамент разработки, Ведущий разработчик</span></div>
+                <div style="padding:var(--ds-xs) var(--ds-sm);"><span>Иванова Ирина Ивановна</span><br><span style="color:var(--ds-text-secondary);">Отдел кадров, HR-менеджер</span></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Сохранить</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Одно окно для создания и правки.</b> Правка сначала читает актуальную запись (пока идёт запрос — заглушка загрузки; при ошибке — предупреждение «Не удалось загрузить пользователя» с кнопкой «Повторить»), и сохранение отправляет версию именно этой записи. Пароль есть только в окне создания; пароль существующей записи меняется через «Сбросить пароль».</li>
+      <li><b>Поле «Сотрудник» доступно для обеих ролей.</b> Привязка необязательна для любой роли, в том числе для глобального администратора (AC-8; прежнее решение «поле заблокировано для администратора» отменено). Выбор — поиск по ФИО среди работающих сотрудников, в списке видны подразделение и должность (различать однофамильцев); привязка очищается крестиком. Сервер отказывает, если сотрудник уже привязан к другой учётной записи или уволен; причина показывается предупреждением в окне.</li>
+      <li><b>Ошибки.</b> 409 по полю (занятый e-mail) показывается только под полем, второй раз — в предупреждении — нет; прочие отказы показываются предупреждением в верху окна. Если запись изменили другие (412), пользователь видит «Данные изменены другим пользователем…», форма пересобирается на актуальных данных. До такого отказа фоновое обновление кэша введённое пользователем не затирает.</li>
+      <li><b>Успех.</b> Всплывающее сообщение «Пользователь создан» или «Изменения сохранены»; окно закрывается; список пользователей и оргструктура (в карточках сотрудников виден e-mail учётной записи) перечитываются.</li>
+      <li>Поле e-mail — <code>type=email</code> без проверки браузером; формат проверяет сервер и возвращает русское сообщение.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Подтверждение блокировки, сброс пароля, смена собственного пароля</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Безопасно блокировать и разблокировать учётную запись, задавать новый пароль другому и себе.</dd>
+      <dt><b>Entry from</b></dt><dd>Меню строки («Заблокировать», «Разблокировать», «Сбросить пароль»); меню пользователя в шапке («Сменить пароль»).</dd>
+      <dt><b>Exit to</b></dt><dd>Список (для первых двух) или текущий экран (для смены собственного пароля).</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(30%,1fr));gap:var(--ds-md);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h3);margin-bottom:var(--ds-xs);">Заблокировать пользователя «p.petrov@example.com»?</div>
+            <p style="margin:0 0 var(--ds-md);">Пользователь не сможет войти в систему, его действующие сессии будут завершены. Блокировку можно снять в любой момент.</p>
+            <div style="display:flex;justify-content:flex-end;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-danger);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Заблокировать</span></div>
+          </div>
+        </div>
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h2);margin-bottom:var(--ds-md);">Сброс пароля</div>
+            <p style="margin:0 0 var(--ds-md);">Задайте новый пароль для «a.ivanov@example.com». Все действующие сессии пользователя будут завершены; передайте пароль пользователю безопасным способом.</p>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Новый пароль</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-primary);border-radius:var(--ds-r-md);"></div><div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">Подсказка о правилах пароля — та же, что в окне создания.</div></div>
+            <div style="display:flex;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Сбросить пароль</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span></div>
+          </div>
+        </div>
+        <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
+          <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
+            <div style="font:var(--ds-t-h2);margin-bottom:var(--ds-md);">Смена пароля</div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Текущий пароль</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-primary);border-radius:var(--ds-r-md);"></div></div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Новый пароль</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);"></div></div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Повторите новый пароль</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-danger);border-radius:var(--ds-r-md);"></div><div style="font:var(--ds-t-body-sm);color:var(--ds-danger);margin-top:var(--ds-xxs);">⊗ Пароли не совпадают</div></div>
+            <div style="display:flex;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Изменить пароль</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Блокировка</b> — подтверждение с красной кнопкой-глаголом «Заблокировать»; «Разблокировать» — обычная синяя кнопка, текст «Пользователь снова сможет войти в систему.» Результат — всплывающее сообщение. Отказ сервера (например, нельзя заблокировать последнего активного администратора или разблокировать привязанную к уволенному сотруднику запись) показывается всплывающим сообщением с причиной; окно подтверждения к этому моменту закрыто.</li>
+      <li><b>Сброс пароля</b>: после успеха сообщение «Пароль сброшен», все сессии пользователя завершаются. Форма сбрасывается при каждом открытии.</li>
+      <li><b>Смена собственного пароля</b>: три поля; «Повторите новый пароль» сравнивается на клиенте («Пароли не совпадают»); ошибки сервера (например, неверный текущий пароль) показываются под соответствующими полями или предупреждением в окне. Успех — «Пароль изменён».</li>
+      <li>Кнопки в формах: главное действие слева в цвете <code>primary</code>, «Отмена» рядом; в окнах подтверждения «Отмена» слева, подтверждение справа. Во время сохранения кнопка занята и не нажимается повторно.</li>
+    </ul>
+  </article>
+</section>
+
+<section id="interaction-patterns">
+  <h2>Паттерны взаимодействия</h2>
+  <ul>
+    <li><b>Все изменения учётных записей — в модальных окнах из меню строки</b> (решение пользователя, волна 17); отдельных страниц создания и правки нет.</li>
+    <li><b>Меню «⋮»</b> — единый способ строчных действий для пользователей, подразделений и сотрудников; разрушающее действие — красный пункт, отделяемый разделителем, если пунктов больше.</li>
+    <li><b>Подтверждение</b> блокировки называет объект (e-mail), последствие и обратимость; безопасная кнопка — «Отмена». Блокировка завершает действующие сессии.</li>
+    <li><b>Конфликт версий (412)</b>: пользователь видит понятное сообщение и актуальные данные, форма пересобирается на них; фоновое обновление до отказа ввод не затирает.</li>
+    <li><b>Обязательность</b> полей обозначена текстом сообщения под полем («Введите e-mail»), а не только цветом рамки: красная рамка всегда сопровождается значком и текстом.</li>
+    <li><b>Пароли.</b> Подсказка о правилах пароля не называет длину (это настройка развёртывания): сервер сообщает, чего не хватает.</li>
+    <li>Тексты ошибок общие для приложения — в <a href="app-shell.html">app-shell.html</a>.</li>
+  </ul>
+</section>
+
+</div>
+      </main>
+      <footer>by ASD workflow | 2026-10-07</footer>
+    </div>
+  </div>
+</body>
+</html>

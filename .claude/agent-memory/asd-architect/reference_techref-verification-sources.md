@@ -9,6 +9,7 @@ For tech-reference verification (Phase 5-6) the architect has no Bash; use WebFe
 - `https://registry.npmjs.org/<pkg>/<version>` — manifest (engines, peerDependencies, optionalDependencies, scripts, os/cpu/libc); `https://registry.npmjs.org/-/package/<pkg>/dist-tags` — latest/next tags (scoped names work unescaped).
 - NuGet: `https://api.nuget.org/v3-flatcontainer/<id-lowercase>/index.json` and `/<ver>/<id>.nuspec`.
 - Changelogs: prefer `raw.githubusercontent.com/<org>/<repo>/<branch>/.../CHANGELOG.md`; github.com `blob/` pages return only UI chrome.
+- NuGet license when the nuspec says `<license type="file">`: `https://www.nuget.org/packages/<Id>/<ver>/License` returns the license text (summarized by the fetch tool — say so in the doc); the package page itself shows only a link. MSBuild SDK packages (`packageTypes` MSBuildSdk) can be proprietary Microsoft terms, not MIT.
 - Bundled npm version of a Node release: `raw.githubusercontent.com/nodejs/node/v<ver>/deps/npm/package.json` (release blog omits it).
 
 - Highest version on a semver line (e.g. `@types/node` 24.x when `latest` is another major): `registry.npmjs.org/<pkg>/<range>` returns 404; use `https://data.jsdelivr.com/v1/packages/npm/<pkg>/resolved?specifier=24`, then confirm with the exact-version manifest and 404 probes for the next patch/minor.

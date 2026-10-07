@@ -48,11 +48,12 @@ responsibility:
 - Из EF9 (действуют): pending model changes → исключение; запрет внешней транзакции вокруг `Migrate`; `EF.Constant()`/`EF.Parameter()` не работают в compiled queries; ограничения `AsNoTrackingWithIdentityResolution` для JSON-коллекций.
 
 ## Project conventions
-- Образ приложения — без `dotnet ef`/SDK; миграции доставляются bundle (собирается на сборочном хосте вне контура, версия инструмента `dotnet-ef` и `Design` = версии EF) и применяются одноразовым Kubernetes Job; идемпотентный SQL-скрипт — альтернатива при необходимости ревью DBA.
-- CI: `dotnet ef migrations has-pending-model-changes`; при опциях Identity, меняющих модель, — `IDesignTimeDbContextFactory` или запуск tools со startup-проектом приложения.
+- Образ приложения — без `dotnet ef`/SDK; миграции применяет само приложение при старте — `Database.MigrateAsync()` в `Program.cs` (решение пользователя 2026-10-05; под guard'ом build-time OpenAPI `GetDocument.Insider`, с ожиданием БД до минуты только в `Development`). Учётная запись БД приложения поэтому имеет DDL-права. Bundle + Kubernetes Job и SQL-скрипт не используются.
+- Один `AppDbContext` и одна линия миграций (`src/Competency.Platform/Migrations/`) на все модули; конфигурации сущностей поставляет каждый модуль через `IEntityConfigurationContributor`. Применённые миграции не переписываются — изменения схемы идут новой миграцией (`Down` либо возвращает данные пустыми, либо падает при данных, которые вернуть нельзя; поведение описано в комментарии миграции).
+- CI: `dotnet ef migrations has-pending-model-changes`; при опциях Identity, меняющих модель, — `IDesignTimeDbContextFactory` (`AppDbContextFactory`) или запуск tools со startup-проектом приложения.
 - Маппинг DTO ↔ сущности — явный (без AutoMapper); сырой SQL — точечно и параметризованно; значения параметров и PII в логи не пишутся; `EnableDetailedErrors` в production выключен.
 - Время — UTC (`timestamptz`); версионирование сущностей — явный `int Version` вместо `xmin`.
-- Выбор между единым `DbContext` и контекстами по подсистемам — design (реестр подсистем).
+- Единый `DbContext` на все подсистемы (решение плана спринта 001): общая транзакция и одна блокировка нужны каскадам между модулями (увольнение сотрудника блокирует учётную запись в одной транзакции); контексты по подсистемам не используются.
 
 ## Known issues and workarounds
 - `Microsoft.EntityFrameworkCore.Design` (в стеке с rev. 7; подробности — `microsoft-entityframeworkcore-design-10.0.12.md`): пакет нужен в проекте для работы `dotnet ef` (`dotnet add package Microsoft.EntityFrameworkCore.Design`, PrivateAssets=all); его зависимости (Roslyn 5.0.0, Humanizer, Mono.TextTemplating, Newtonsoft.Json) — только design-time. Проблема EF9/SDK 9.0.200 с `.deps.json` (`Could not load … Microsoft.EntityFrameworkCore.Design`; workaround `<Publish>true</Publish>`) по заметке EF9 должна быть исправлена в EF10 — подтвердить при первом запуске `dotnet ef` на SDK 10.0.401.
