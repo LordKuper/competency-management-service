@@ -11,11 +11,15 @@ import {
 } from "@ant-design/icons";
 import { theme as antdTheme, Button, Card, Dropdown, Flex } from "antd";
 import { memo, useEffect, useRef } from "react";
+import { Highlighted } from "./Highlighted";
 import type { OrgUnit, OrgUnitTreeNode } from "./orgStructureApi";
 import { UnitStatusTag } from "./StatusTags";
 
-/** Whether a unit lists its contents; "path" is a unit a name search opened only to show the matches below it. */
-export type UnitOpenness = "closed" | "path" | "open";
+/**
+ * Whether a unit lists its contents. "path" is a unit a search opened only to show the matches below it; "matches" is a
+ * unit that lists, besides its child units, only the employees the search found in it.
+ */
+export type UnitOpenness = "closed" | "path" | "matches" | "open";
 
 /** What an administrator can do with a unit from its card. */
 export type UnitAction =
@@ -24,19 +28,6 @@ export type UnitAction =
   | "edit"
   | "move"
   | "toggleActive";
-
-function Highlighted({ text, needle }: { text: string; needle: string }) {
-  const start = needle ? text.toLocaleLowerCase("ru").indexOf(needle) : -1;
-  if (start < 0) return text;
-  const end = start + needle.length;
-  return (
-    <>
-      {text.slice(0, start)}
-      <mark>{text.slice(start, end)}</mark>
-      {text.slice(end)}
-    </>
-  );
-}
 
 interface UnitCardProps {
   unit: OrgUnitTreeNode;

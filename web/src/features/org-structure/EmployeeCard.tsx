@@ -7,6 +7,7 @@ import {
 } from "@ant-design/icons";
 import { Dropdown } from "antd";
 import { memo, useState } from "react";
+import { Highlighted } from "./Highlighted";
 import type { Employee } from "./orgStructureApi";
 import { EmployeeStatusTag } from "./StatusTags";
 
@@ -23,6 +24,8 @@ function initialsOf(fullName: string): string {
 
 interface EmployeeCardProps {
   employee: Employee;
+  /** Lower-cased search text whose first occurrence in the name and in the position and e-mail is highlighted; blank when not searching. */
+  needle?: string;
   isAdmin: boolean;
   /** Runs an action chosen in the card's menu; the callback must be stable, or every card renders again with the page. */
   onAction: (action: EmployeeAction, employee: Employee) => void;
@@ -103,6 +106,7 @@ function EmployeeActions({
  */
 export const EmployeeCard = memo(function EmployeeCard({
   employee,
+  needle = "",
   isAdmin,
   onAction,
 }: EmployeeCardProps) {
@@ -115,12 +119,16 @@ export const EmployeeCard = memo(function EmployeeCard({
       </span>
       <div className="org-employee__text">
         <div className="org-employee__title">
-          <strong>{employee.fullName}</strong>
+          <strong>
+            <Highlighted text={employee.fullName} needle={needle} />
+          </strong>
           {isAdmin && employee.isActive === false && (
             <EmployeeStatusTag isActive={false} />
           )}
         </div>
-        <span className="org-employee__details">{details.join(" · ")}</span>
+        <span className="org-employee__details">
+          <Highlighted text={details.join(" · ")} needle={needle} />
+        </span>
       </div>
       {isAdmin && <EmployeeActions employee={employee} onAction={onAction} />}
     </div>

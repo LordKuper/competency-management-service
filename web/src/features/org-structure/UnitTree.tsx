@@ -1,5 +1,6 @@
 import { Grid } from "antd";
 import type { EmployeeAction } from "./EmployeeCard";
+import { EmployeeCards } from "./EmployeeCards";
 import type { Employee, OrgUnit } from "./orgStructureApi";
 import type { UnitNode, UnitSearch } from "./orgTree";
 import { type UnitAction, UnitCard, type UnitOpenness } from "./UnitCard";
@@ -8,7 +9,7 @@ import { UnitEmployees } from "./UnitEmployees";
 /** What every card of the hierarchy needs to know about the screen it is on. */
 export interface UnitTreeView {
   openIds: ReadonlySet<string>;
-  /** The name search in progress; it narrows the units shown, and null means every unit is shown. */
+  /** The search in progress; it narrows the units shown, and null means every unit is shown. */
   search: UnitSearch | null;
   selectedId: string | null;
   isAdmin: boolean;
@@ -27,6 +28,7 @@ function visibleNodes(nodes: readonly UnitNode[], view: UnitTreeView) {
 function opennessOf(unit: OrgUnit, view: UnitTreeView): UnitOpenness {
   if (!view.openIds.has(unit.id)) return "closed";
   const { search } = view;
+  if (search?.employeesByUnit.has(unit.id)) return "matches";
   const isOnlyOnPath =
     search?.pathIds.has(unit.id) &&
     !unit.name.toLocaleLowerCase("ru").includes(search.needle);
@@ -37,6 +39,10 @@ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
   const { unit } = node;
   const openness = opennessOf(unit, view);
   const children = visibleNodes(node.children, view);
+  const matchedEmployees =
+    openness === "matches"
+      ? view.search?.employeesByUnit.get(unit.id)
+      : undefined;
 
   return (
     <li className="org-tree__node">
@@ -60,6 +66,15 @@ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
               unitId={unit.id}
               headEmployeeId={unit.headEmployeeId}
               hasChildUnits={children.length > 0}
+              isAdmin={view.isAdmin}
+              onAction={view.onEmployeeAction}
+            />
+          )}
+          {matchedEmployees && (
+            <EmployeeCards
+              employees={matchedEmployees}
+              headEmployeeId={unit.headEmployeeId}
+              needle={view.search?.needle}
               isAdmin={view.isAdmin}
               onAction={view.onEmployeeAction}
             />

@@ -33,6 +33,22 @@ export const orgUnitTreeQuery = queryOptions({
 /** Largest page the employee list accepts. */
 const EMPLOYEE_PAGE_SIZE_MAX = 200;
 
+/** Longest search text the employee list accepts. */
+export const SEARCH_TEXT_MAX_LENGTH = 200;
+
+/** The first page of the employees whose name or position match the text, in list order, with the number of matches in all. */
+export function employeeSearchQuery(text: string) {
+  return queryOptions({
+    queryKey: [...employeesQueryKey, "search", text],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/employees", {
+          params: { query: { q: text, pageSize: EMPLOYEE_PAGE_SIZE_MAX } },
+        }),
+      ).data,
+  });
+}
+
 /** Every employee directly in a unit, in list order: the first page, then the remaining pages at once. */
 export function unitEmployeesQuery(orgUnitId: string) {
   return queryOptions({

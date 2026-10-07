@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { searchUnitTree, type UnitNode, type UnitSearch } from "./orgTree";
+import { type EmployeeSearch, useEmployeeSearch } from "./useEmployeeSearch";
 
 interface ExpansionState {
   text: string;
@@ -9,11 +10,13 @@ interface ExpansionState {
   flipped: ReadonlySet<string>;
 }
 
-/** Which units are open and what the name search shows; clearing the search brings back the units that were open before it. */
+/** Which units are open and what the search shows; clearing the search brings back the units that were open before it. */
 export interface UnitExpansion {
   text: string;
   /** Null when the search text is blank. */
   search: UnitSearch | null;
+  /** The server side of the search, whose matches `search` has merged in. */
+  employeeSearch: EmployeeSearch;
   openIds: ReadonlySet<string>;
   setText: (text: string) => void;
   toggle: (unitId: string) => void;
@@ -27,7 +30,7 @@ function flip(ids: ReadonlySet<string>, flippedIds: Iterable<string>) {
   return next;
 }
 
-/** Keeps the open units of the hierarchy and the name search over it. */
+/** Keeps the open units of the hierarchy and the search over it: by unit name here, by employee on the server. */
 export function useUnitExpansion(roots: readonly UnitNode[]): UnitExpansion {
   const [state, setState] = useState<ExpansionState>({
     text: "",
@@ -35,9 +38,11 @@ export function useUnitExpansion(roots: readonly UnitNode[]): UnitExpansion {
     flipped: new Set(),
   });
   const { text } = state;
+  const employeeSearch = useEmployeeSearch(text);
+  const { employees } = employeeSearch;
   const search = useMemo(
-    () => (text.trim() === "" ? null : searchUnitTree(roots, text)),
-    [roots, text],
+    () => (text.trim() === "" ? null : searchUnitTree(roots, text, employees)),
+    [roots, text, employees],
   );
   const openIds = useMemo(
     () => (search ? flip(search.pathIds, state.flipped) : state.browsed),
@@ -71,5 +76,5 @@ export function useUnitExpansion(roots: readonly UnitNode[]): UnitExpansion {
     [],
   );
 
-  return { text, search, openIds, setText, toggle, open };
+  return { text, search, employeeSearch, openIds, setText, toggle, open };
 }

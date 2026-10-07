@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, Typography } from "antd";
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { type EmployeeAction, EmployeeCard } from "./EmployeeCard";
+import type { EmployeeAction } from "./EmployeeCard";
+import { EmployeeCards } from "./EmployeeCards";
 import { type Employee, unitEmployeesQuery } from "./orgStructureApi";
 
 interface UnitEmployeesProps {
@@ -12,21 +13,6 @@ interface UnitEmployeesProps {
   hasChildUnits: boolean;
   isAdmin: boolean;
   onAction: (action: EmployeeAction, employee: Employee) => void;
-}
-
-const FULL_NAME_ORDER = new Intl.Collator("ru");
-
-/** The unit's employees in listing order: the head first, then by full name in Russian alphabetical order, with «ё» sorted next to «е». */
-function inListingOrder(
-  employees: readonly Employee[],
-  headEmployeeId: string | null,
-): Employee[] {
-  const isHead = (employee: Employee) => employee.id === headEmployeeId;
-  return [...employees].sort(
-    (a, b) =>
-      Number(isHead(b)) - Number(isHead(a)) ||
-      FULL_NAME_ORDER.compare(a.fullName, b.fullName),
-  );
 }
 
 /**
@@ -41,11 +27,11 @@ export const UnitEmployees = memo(function UnitEmployees({
   isAdmin,
   onAction,
 }: UnitEmployeesProps) {
-  const { data, error, refetch } = useQuery(unitEmployeesQuery(unitId));
-  const employees = useMemo(
-    () => data && inListingOrder(data, headEmployeeId),
-    [data, headEmployeeId],
-  );
+  const {
+    data: employees,
+    error,
+    refetch,
+  } = useQuery(unitEmployeesQuery(unitId));
 
   if (error) {
     return (
@@ -79,9 +65,12 @@ export const UnitEmployees = memo(function UnitEmployees({
       </li>
     );
   }
-  return employees.map((employee) => (
-    <li key={employee.id} className="org-tree__node">
-      <EmployeeCard employee={employee} isAdmin={isAdmin} onAction={onAction} />
-    </li>
-  ));
+  return (
+    <EmployeeCards
+      employees={employees}
+      headEmployeeId={headEmployeeId}
+      isAdmin={isAdmin}
+      onAction={onAction}
+    />
+  );
 });

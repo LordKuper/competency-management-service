@@ -12,6 +12,7 @@ import {
   type Employee,
   type OrgUnit,
   orgUnitTreeQuery,
+  SEARCH_TEXT_MAX_LENGTH,
 } from "./orgStructureApi";
 import { ancestorIds, buildUnitTree } from "./orgTree";
 import type { UnitAction } from "./UnitCard";
@@ -28,8 +29,9 @@ type PageDialog =
   | { kind: "edit" | "move"; unitId: string };
 
 /**
- * The structure screen: a searchable hierarchy of unit and employee cards. The `unit` address parameter opens the
- * path to that unit and scrolls to it, so a shared link or a new unit or employee lands on the same card.
+ * The structure screen: a hierarchy of unit and employee cards, searchable by unit name and by employee name and
+ * position. The `unit` address parameter opens the path to that unit and scrolls to it, so a shared link or a new
+ * unit or employee lands on the same card.
  * Administrators change units and employees from the cards. The dialogs and the confirmations live here, once for all cards.
  */
 export function OrgStructurePage() {
@@ -37,7 +39,7 @@ export function OrgStructurePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: units, error, isPending, refetch } = useQuery(orgUnitTreeQuery);
   const roots = useMemo(() => buildUnitTree(units ?? []), [units]);
-  const { text, search, openIds, setText, toggle, open } =
+  const { text, search, employeeSearch, openIds, setText, toggle, open } =
     useUnitExpansion(roots);
   const [dialog, setDialog] = useState<PageDialog | null>(null);
   const confirmActivation = useUnitActivation();
@@ -108,16 +110,32 @@ export function OrgStructurePage() {
         <>
           <Input
             allowClear
+            maxLength={SEARCH_TEXT_MAX_LENGTH}
             prefix={<SearchOutlined />}
-            aria-label="Поиск подразделения по названию"
-            placeholder="Название подразделения"
+            aria-label="Поиск по подразделениям и сотрудникам"
+            placeholder="Подразделение, ФИО или должность сотрудника"
             value={text}
             onChange={(event) => setText(event.target.value)}
           />
-          {search && search.visibleIds.size === 0 ? (
+          {employeeSearch.error && (
+            <ErrorAlert
+              title="Не удалось найти сотрудников"
+              error={employeeSearch.error}
+              onRetry={employeeSearch.retry}
+            />
+          )}
+          {employeeSearch.total > employeeSearch.employees.length && (
+            <Typography.Text type="secondary" role="status">
+              Показаны первые {employeeSearch.employees.length} сотрудников —
+              уточните запрос
+            </Typography.Text>
+          )}
+          {search?.visibleIds.size === 0 &&
+          !employeeSearch.isWaiting &&
+          !employeeSearch.error ? (
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Подразделения не найдены. Измените запрос."
+              description="Ничего не найдено. Измените запрос."
             />
           ) : units.length === 0 ? (
             <Empty
