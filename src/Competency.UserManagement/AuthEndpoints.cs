@@ -123,10 +123,13 @@ internal static class AuthEndpoints
 
     /// <summary>
     /// Replaces the signed-in user's password. Every other session of the user ends; the current one continues under the new security stamp.
+    /// The current password is checked with the sign-in lockout accounting, so that a stolen session cannot guess it without limit:
+    /// a wrong one counts as a failed attempt and a locked account is refused without checking. The new password and its audit event are saved together.
     /// </summary>
     private static async Task<Results<NoContent, ValidationProblem, ProblemHttpResult, UnauthorizedHttpResult>> ChangePasswordAsync(
         ChangePasswordRequest request,
         UserManager<AppUser> users,
+        AppDbContext context,
         IAuditWriter audit,
         HttpContext httpContext,
         CancellationToken cancellationToken)
@@ -143,14 +146,27 @@ internal static class AuthEndpoints
             return TypedResults.Unauthorized();
         }
 
-        var result = await users.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        if (await VerifyPasswordAsync(users, user, request.CurrentPassword) is not null)
+        {
+            return Rejections.From(IdentityResult.Failed(users.ErrorDescriber.PasswordMismatch()));
+        }
+
+        var policy = await users.ValidatePasswordAsync(user, request.NewPassword);
+        if (!policy.Succeeded)
+        {
+            return Rejections.From(policy);
+        }
+
+        user.PasswordHash = users.PasswordHasher.HashPassword(user, request.NewPassword);
+        user.ClearLockout();
+        audit.Stage(new AuditEntry(PasswordChangedAction, nameof(AppUser), user.Id.ToString()), context);
+        var result = await users.UpdateSecurityStampAsync(user);
         if (!result.Succeeded)
         {
             return Rejections.From(result);
         }
 
         await httpContext.SignInAsync(SessionAuthentication.Scheme, SessionAuthentication.CreatePrincipal(user));
-        await audit.WriteAsync(new AuditEntry(PasswordChangedAction, nameof(AppUser), user.Id.ToString()), cancellationToken);
         return TypedResults.NoContent();
     }
 

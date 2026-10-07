@@ -1,9 +1,10 @@
 using System.Net.Mail;
+using Microsoft.AspNetCore.Identity;
 
 namespace Competency.UserManagement;
 
 /// <summary>
-/// The shape checks of e-mail addresses and passwords that every request carrying them shares; the password policy itself is Identity's.
+/// The shape checks of e-mail addresses and passwords that every request carrying them shares; the password policy itself is Identity's, applied through its validators.
 /// </summary>
 internal static class CredentialChecks
 {
@@ -41,5 +42,25 @@ internal static class CredentialChecks
         {
             errors[field] = [$"Пароль: не длиннее {AppUser.PasswordMaxLength} символов."];
         }
+    }
+
+    /// <summary>
+    /// Applies every password rule to a password that is set without going through the password-changing operations of the user manager,
+    /// which would save the account twice and leave it without a password in between, and could not save an audit event with it.
+    /// </summary>
+    /// <param name="users">The user manager that holds the password rules.</param>
+    /// <param name="user">The account the password is for.</param>
+    /// <param name="password">The new password.</param>
+    /// <returns>Success, or every rule the password breaks.</returns>
+    public static async Task<IdentityResult> ValidatePasswordAsync(this UserManager<AppUser> users, AppUser user, string password)
+    {
+        var problems = new List<IdentityError>();
+        foreach (var validator in users.PasswordValidators)
+        {
+            var result = await validator.ValidateAsync(users, user, password);
+            problems.AddRange(result.Errors);
+        }
+
+        return problems.Count == 0 ? IdentityResult.Success : IdentityResult.Failed([.. problems]);
     }
 }

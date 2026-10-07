@@ -298,7 +298,7 @@ internal static class UserEndpoints
             return TypedResults.NotFound();
         }
 
-        var policy = await ValidatePasswordAsync(users, user, request.NewPassword);
+        var policy = await users.ValidatePasswordAsync(user, request.NewPassword);
         if (!policy.Succeeded)
         {
             return Rejections.From(policy);
@@ -307,30 +307,14 @@ internal static class UserEndpoints
         ifMatch.ApplyTo(context, user);
         user.PasswordHash = users.PasswordHasher.HashPassword(user, request.NewPassword);
         user.ClearLockout();
+        audit.Stage(new AuditEntry(PasswordResetAction, nameof(AppUser), user.Id.ToString()), context);
         var result = await users.UpdateSecurityStampAsync(user);
         if (!result.Succeeded)
         {
             return Rejections.From(result);
         }
 
-        await audit.WriteAsync(new AuditEntry(PasswordResetAction, nameof(AppUser), user.Id.ToString()), cancellationToken);
         return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken));
-    }
-
-    /// <summary>
-    /// Applies every password rule to a password that is set without going through the password-changing operations of the user manager,
-    /// which would save the account twice and leave it without a password in between.
-    /// </summary>
-    private static async Task<IdentityResult> ValidatePasswordAsync(UserManager<AppUser> users, AppUser user, string password)
-    {
-        var problems = new List<IdentityError>();
-        foreach (var validator in users.PasswordValidators)
-        {
-            var result = await validator.ValidateAsync(users, user, password);
-            problems.AddRange(result.Errors);
-        }
-
-        return problems.Count == 0 ? IdentityResult.Success : IdentityResult.Failed([.. problems]);
     }
 
     private static async Task<UserResponse> RespondAsync(
