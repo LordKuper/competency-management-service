@@ -324,3 +324,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — Task 24 accepted (05cd3d9): employee card avatars use first-name + last-name initials
 - 2026-10-07 — user confirmed: GlobalAdmin stays unbound (AC-8); user modal shows a disabled «Сотрудник» field with a hint for admins (Task 25, wave 21, standard, light checks)
 - 2026-10-07 — Task 25 accepted (3e3ecd0): disabled «Сотрудник» field with hint for GlobalAdmin; the hint moved from «Роль» to «Сотрудник»
+- 2026-10-07 — user paused at the impl assessment gate (Tasks 1–25 done, gate not yet approved); resume via /asd-sprint: next is the gate, then the one-time full verification cycle per custom-coding-rules.md, then impl-test
