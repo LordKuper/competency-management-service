@@ -440,6 +440,9 @@ export interface components {
             /** Format: uuid */
             employeeId: null | string;
             employeeName: null | string;
+            employeeLastName: null | string;
+            employeeFirstName: null | string;
+            employeeMiddleName: null | string;
         };
         EmployeeImpactAccount: {
             email: string;

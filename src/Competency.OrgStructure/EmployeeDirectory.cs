@@ -12,6 +12,7 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
         .Set<Employee>()
         .AsNoTracking()
         .Where(employee => employee.Id == employeeId)
-        .Select(employee => new EmployeeStatus(employee.Id, employee.FullName, employee.IsActive))
+        .Select(employee => new EmployeeStatus(
+            employee.Id, employee.FullName, employee.LastName, employee.FirstName, employee.MiddleName, employee.IsActive))
         .FirstOrDefaultAsync(cancellationToken);
 }

@@ -95,7 +95,7 @@ internal static class AuthEndpoints
         await audit.WriteAsync(
             new AuditEntry(LoginSucceededAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString()),
             cancellationToken);
-        return TypedResults.Ok(CurrentUserResponse.From(user, employee?.FullName));
+        return TypedResults.Ok(CurrentUserResponse.From(user, employee));
     }
 
     private static async Task<NoContent> LogoutAsync(HttpContext httpContext, ICurrentActor actor, IAuditWriter audit, CancellationToken cancellationToken)
@@ -117,7 +117,8 @@ internal static class AuthEndpoints
             return TypedResults.Unauthorized();
         }
 
-        return TypedResults.Ok(CurrentUserResponse.From(user, await employees.NameAsync(user.EmployeeId, cancellationToken)));
+        var employee = user.EmployeeId is { } employeeId ? await employees.FindAsync(employeeId, cancellationToken) : null;
+        return TypedResults.Ok(CurrentUserResponse.From(user, employee));
     }
 
     /// <summary>

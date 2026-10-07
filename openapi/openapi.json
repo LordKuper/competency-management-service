@@ -2760,7 +2760,10 @@
           "email",
           "role",
           "employeeId",
-          "employeeName"
+          "employeeName",
+          "employeeLastName",
+          "employeeFirstName",
+          "employeeMiddleName"
         ],
         "type": "object",
         "properties": {
@@ -2782,6 +2785,24 @@
             "format": "uuid"
           },
           "employeeName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "employeeLastName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "employeeFirstName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "employeeMiddleName": {
             "type": [
               "null",
               "string"
