@@ -165,6 +165,13 @@
       "decision": "approve",
       "reason": "Tasks 1-26 accepted; full verification cycle once before impl-test per custom-coding-rules.md; commit user Competency.slnLaunch",
       "evidence": "decisions-log.md 2026-10-07 impl assessment approved"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-17 wording aligned: employees load all at once (5000+ per unit >2 s accepted as known limit); unit status label only for inactive units",
+      "reason": "full verification cycle questions",
+      "evidence": "decisions-log.md 2026-10-07 AC-17 clarification"
     }
   ],
   "task_routing": {
