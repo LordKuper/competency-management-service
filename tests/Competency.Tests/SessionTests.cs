@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using Competency.Tests.Infrastructure;
 using Xunit;
@@ -122,20 +123,27 @@ public sealed class SessionTests(TestEnvironment environment)
         var session = await account.SignInAsync(host);
         const string NewPassword = "Guessed-Pass-12345!";
 
+        var attempts = new List<ApiResponse>();
         for (var attempt = 0; attempt < AttemptsBeforeLockout; attempt++)
         {
-            (await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = WrongPassword, newPassword = NewPassword }))
-                .Status.Should().Be(HttpStatusCode.BadRequest);
+            var wrong = await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = WrongPassword, newPassword = NewPassword });
+            wrong.Status.Should().Be(HttpStatusCode.BadRequest);
+            attempts.Add(wrong);
         }
 
         var signIn = await SignInAsync(host, account.Email, account.Password);
         var rightCurrent = await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = account.Password, newPassword = NewPassword });
+        var lockouts = (await admin.GetAsync($"/api/v1/audit?action=Auth.LockedOut&entityId={account.Id}")).Expect(HttpStatusCode.OK).Json!["items"]!.AsArray();
         var current = await admin.GetUserAsync(account.Id);
         (await admin.PostAsync($"/api/v1/users/{account.Id}/unblock", ifMatch: current.ETag)).Expect(HttpStatusCode.OK);
 
         signIn.Status.Should().Be(HttpStatusCode.Unauthorized, "the wrong current passwords counted as failed sign-ins");
         rightCurrent.Status.Should().Be(HttpStatusCode.BadRequest, "a locked account is refused even with the right current password");
         rightCurrent.FieldErrors("currentPassword").Should().NotBeEmpty();
+        lockouts.Should().ContainSingle("the lockout that change-password started is journaled once, as at sign-in");
+        lockouts[0]!["actor"]!.GetValue<string>().Should().Be(account.Id.ToString());
+        lockouts[0]!["role"]!.GetValue<string>().Should().Be(Scenarios.User);
+        (await admin.AuditOfRequestAsync(attempts[^1].RequestId!)).Actions().Should().Equal(["Auth.LockedOut"], "the attempt that reached the limit wrote the event");
         (await SignInAsync(host, account.Email, account.Password)).Status.Should().Be(HttpStatusCode.OK, "the refused change left the password as it was");
         (await SignInAsync(host, account.Email, NewPassword)).Status.Should().Be(HttpStatusCode.Unauthorized);
     }
