@@ -29,6 +29,16 @@ function formatDisplayName(user: CurrentUser): string {
   ].join(NON_BREAKING_SPACE);
 }
 
+/** The first letters of the employee's first and last names ("АИ"), or the first letter of the e-mail when the account has no employee. */
+function formatAvatarInitials(user: CurrentUser): string {
+  const { employeeLastName, employeeFirstName } = user;
+  const initials =
+    employeeLastName && employeeFirstName
+      ? employeeFirstName.charAt(0) + employeeLastName.charAt(0)
+      : user.email.charAt(0);
+  return initials.toUpperCase();
+}
+
 /** Header control that names the signed-in user and offers changing their password and signing out; its menu shows the e-mail. */
 export function UserMenu({ user }: { user: CurrentUser }) {
   const { token } = antdTheme.useToken();
@@ -76,7 +86,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
                 color: token.colorPrimary,
               }}
             >
-              {displayName.charAt(0).toUpperCase()}
+              {formatAvatarInitials(user)}
             </Avatar>
             {screens.lg && displayName}
           </Space>
