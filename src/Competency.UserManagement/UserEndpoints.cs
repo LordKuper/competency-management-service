@@ -12,7 +12,9 @@ namespace Competency.UserManagement;
 /// <summary>
 /// The account API. Permission matrix: every operation needs a global administrator, so a signed-in user without the role is refused
 /// with 403 whichever account the request names, and an unknown account answers 404 only to an administrator.
-/// Changes carry <c>If-Match</c>; those that could remove an administrator run under the lock of the active administrators.
+/// Changes carry <c>If-Match</c>. Creating, changing, blocking and unblocking an account run under the employee tree lock, taken first,
+/// so that no account is ever bound to or unblocked with an employee who is being dismissed; those that could remove an administrator
+/// also lock the active administrators, after it. A password reset and its audit event are saved together.
 /// Accounts are never deleted: blocking ends them. Blocking, a password reset, and a change of role or employee end the account's sessions.
 /// </summary>
 internal static class UserEndpoints
@@ -20,6 +22,8 @@ internal static class UserEndpoints
     private const string Route = "/api/v1/users";
     private const string Tag = "Users";
     private const string PasswordResetAction = "AppUser.PasswordReset";
+    private const string UnblockNeedsWorkingEmployee =
+        "Нельзя разблокировать учётную запись, пока привязанный сотрудник не работает. Сначала верните сотрудника на работу или отвяжите от него учётную запись.";
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -41,7 +45,8 @@ internal static class UserEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
         administrators.MapPost("/{id:guid}/unblock", UnblockAsync).WithName("UnblockUser").ProducesETag()
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
         administrators.MapPost("/{id:guid}/reset-password", ResetPasswordAsync).WithName("ResetUserPassword").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound);
     }
@@ -86,13 +91,11 @@ internal static class UserEndpoints
             .Select(UserResponse.Projection)
             .ToListAsync(cancellationToken);
 
-        var names = new Dictionary<Guid, string?>();
-        foreach (var employeeId in rows.Select(row => row.EmployeeId).OfType<Guid>().Distinct())
+        var statuses = await employees.FindManyAsync([.. rows.Select(row => row.EmployeeId).OfType<Guid>().Distinct()], cancellationToken);
+        var items = rows.ConvertAll(row => row with
         {
-            names[employeeId] = await employees.NameAsync(employeeId, cancellationToken);
-        }
-
-        var items = rows.ConvertAll(row => row with { EmployeeName = row.EmployeeId is { } id ? names[id] : null });
+            EmployeeName = row.EmployeeId is { } id && statuses.TryGetValue(id, out var status) ? status.FullName : null,
+        });
         return TypedResults.Ok(new PageResponse<UserResponse>(items, total, query.Page, query.PageSize));
     }
 
@@ -131,6 +134,7 @@ internal static class UserEndpoints
             return TypedResults.ValidationProblem(errors);
         }
 
+        await using var transaction = await employees.BeginExclusiveAsync(cancellationToken);
         if (request.EmployeeId is { } employeeId)
         {
             if (await employees.ProblemAsync(employeeId, cancellationToken) is { } problem)
@@ -152,6 +156,7 @@ internal static class UserEndpoints
             return Rejections.From(result, "password");
         }
 
+        await transaction.CommitAsync(cancellationToken);
         response.SetETag(user.Version);
         var created = UserResponse.From(user, await employees.NameAsync(user.EmployeeId, cancellationToken));
         return TypedResults.Created($"{Route}/{created.Id}", created);
@@ -173,7 +178,7 @@ internal static class UserEndpoints
             return TypedResults.ValidationProblem(errors);
         }
 
-        await using var transaction = await context.BeginExclusiveAsync(cancellationToken);
+        await using var transaction = await context.BeginExclusiveAsync(employees, cancellationToken);
         var user = await users.FindByIdAsync(id.ToString());
         if (user is null)
         {
@@ -224,7 +229,7 @@ internal static class UserEndpoints
         HttpResponse response,
         CancellationToken cancellationToken)
     {
-        await using var transaction = await context.BeginExclusiveAsync(cancellationToken);
+        await using var transaction = await context.BeginExclusiveAsync(employees, cancellationToken);
         var user = await users.FindByIdAsync(id.ToString());
         if (user is null)
         {
@@ -257,10 +262,16 @@ internal static class UserEndpoints
         HttpResponse response,
         CancellationToken cancellationToken)
     {
+        await using var transaction = await employees.BeginExclusiveAsync(cancellationToken);
         var user = await users.FindByIdAsync(id.ToString());
         if (user is null)
         {
             return TypedResults.NotFound();
+        }
+
+        if (user.EmployeeId is { } employeeId && await employees.ProblemAsync(employeeId, cancellationToken) is not null)
+        {
+            return Rejections.Conflict(UnblockNeedsWorkingEmployee);
         }
 
         ifMatch.ApplyTo(context, user);
@@ -272,6 +283,7 @@ internal static class UserEndpoints
             return Rejections.From(result);
         }
 
+        await transaction.CommitAsync(cancellationToken);
         return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken));
     }
 

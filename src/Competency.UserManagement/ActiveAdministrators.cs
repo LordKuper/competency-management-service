@@ -1,3 +1,4 @@
+using Competency.OrgStructure;
 using Competency.Platform;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -13,15 +14,21 @@ internal static class ActiveAdministrators
     public const string LastOneMessage = "Нельзя заблокировать, понизить или иначе лишить роли последнего активного глобального администратора.";
 
     /// <summary>
-    /// Starts a transaction and locks every active administrator row, in key order so that concurrent callers cannot deadlock,
-    /// until the transaction ends; the lock needs the default read committed isolation, under which later queries see what the previous holder committed.
+    /// Starts a transaction, takes the employee tree lock and then locks every active administrator row, in key order, until the transaction ends.
+    /// The tree lock always comes first, the order in which dismissing an employee takes the same two, so concurrent callers cannot deadlock;
+    /// it also keeps a change of the account's employee from racing a dismissal of that employee. The locks need the default read committed
+    /// isolation, under which later queries see what the previous holder committed.
     /// </summary>
     /// <param name="context">The context the changes will be saved through.</param>
-    /// <param name="cancellationToken">Cancels the wait for the lock.</param>
-    /// <returns>The open transaction; the caller commits it, and disposing it releases the lock.</returns>
-    public static async Task<IDbContextTransaction> BeginExclusiveAsync(this AppDbContext context, CancellationToken cancellationToken)
+    /// <param name="employees">The employee directory, which owns the tree lock.</param>
+    /// <param name="cancellationToken">Cancels the wait for the locks.</param>
+    /// <returns>The open transaction; the caller commits it, and disposing it releases the locks.</returns>
+    public static async Task<IDbContextTransaction> BeginExclusiveAsync(
+        this AppDbContext context,
+        IEmployeeDirectory employees,
+        CancellationToken cancellationToken)
     {
-        var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var transaction = await employees.BeginExclusiveAsync(cancellationToken);
         await context.LockAsync(cancellationToken);
         return transaction;
     }
