@@ -74,7 +74,7 @@ export function unitEmployeesQuery(orgUnitId: string) {
   });
 }
 
-/** One employee by id, in the projection the signed-in user's role allows. */
+/** One employee by id, in the projection the signed-in user's role allows; dropped once nothing shows it, so an edit dialog never opens on an older version. */
 export function employeeQuery(id: string) {
   return queryOptions({
     queryKey: [...employeesQueryKey, "detail", id],
@@ -82,6 +82,7 @@ export function employeeQuery(id: string) {
       unwrap(
         await api.GET("/api/v1/employees/{id}", { params: { path: { id } } }),
       ),
+    gcTime: 0,
   });
 }
 
