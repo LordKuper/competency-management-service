@@ -123,6 +123,13 @@
       "decision": "AC-19 added, AC-10 head rule; Task 20 wave 18",
       "reason": "employee order in units; head only from own unit; transfer clears head with warning",
       "evidence": "decisions-log.md 2026-10-07 Task 20"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-17 search covers employees (name, position), Task 21 wave 19",
+      "reason": "org-structure search must find employees too",
+      "evidence": "decisions-log.md 2026-10-07 Task 21"
     }
   ],
   "task_routing": {
@@ -244,6 +251,12 @@
       "execution": "agent",
       "tier": "critical",
       "reason": "risk:new server-side head rule, cascade on head transfer in one transaction, public error contract",
+      "resolved_model": "sonnet"
+    },
+    "Task 21": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:server-side employee search from UI at 10000+ scale, mixing client unit filter with server employee search",
       "resolved_model": "sonnet"
     }
   },

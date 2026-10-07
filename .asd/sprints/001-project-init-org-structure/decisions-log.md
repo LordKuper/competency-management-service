@@ -273,3 +273,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: `web/src/features/users/`
 
 - 2026-10-07 — dispatch Task 20 (critical)
+
+## 2026-10-07 — Поправка scope: поиск в оргструктуре и по сотрудникам (AC-17), Task 21 (волна 19)
+
+- **Decision**: Поиск раздела «Оргструктура» ищет не только по названиям подразделений, но и по ФИО и должностям сотрудников. Решения оркестратора: сотрудники ищутся сервером (`GET /employees?q=`, от 2 символов, с задержкой, до 200 совпадений с подсказкой уточнить запрос), показываются в своих подразделениях с раскрытым путём и подсветкой; подразделения фильтруются на клиенте как раньше. Task 21 идёт после Task 20 (общие файлы раздела).
+- **Rationale**: Явный запрос пользователя (`new or changed scope`); серверный поиск уже есть (AC-11), клиент получает лишь отображение.
+- **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
+
+- 2026-10-07 — route Task 21: critical (dispatch after Task 20)
