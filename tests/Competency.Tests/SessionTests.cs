@@ -168,6 +168,23 @@ public sealed class SessionTests(TestEnvironment environment)
     }
 
     [Fact]
+    public async Task Ac6_ChangePassword_RefusesANewPasswordThatBreaksThePolicy_AndChangesNothing()
+    {
+        var host = await environment.SharedHostAsync();
+        var account = await (await host.AdminAsync()).CreateUserAsync();
+        var session = await account.SignInAsync(host);
+        const string WeakPassword = "short";
+
+        var weak = await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = account.Password, newPassword = WeakPassword });
+
+        weak.Status.Should().Be(HttpStatusCode.BadRequest, weak.Body);
+        weak.FieldErrors("newPassword").Should().NotBeEmpty();
+        (await SignInAsync(host, account.Email, account.Password)).Status.Should().Be(HttpStatusCode.OK, "a refused change leaves the password as it was");
+        (await SignInAsync(host, account.Email, WeakPassword)).Status.Should().Be(HttpStatusCode.Unauthorized);
+        (await session.GetAsync("/api/v1/auth/me")).Status.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task Ac6_SignOut_EndsTheSession()
     {
         var host = await environment.SharedHostAsync();
