@@ -167,9 +167,8 @@ function EmployeeEditor({
                 middleName: existing.employee.middleName ?? undefined,
                 orgUnitId: existing.employee.orgUnitId,
                 position: existing.employee.position,
-                isActive: existing.employee.isActive ?? undefined,
               }
-            : { isActive: true, orgUnitId }
+            : { orgUnitId }
         }
         email={existing?.employee.email}
         submitLabel={existing ? "Сохранить" : "Создать"}

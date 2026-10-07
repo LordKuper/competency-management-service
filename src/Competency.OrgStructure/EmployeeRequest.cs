@@ -2,7 +2,8 @@ namespace Competency.OrgStructure;
 
 /// <summary>
 /// The fields of an employee, for creating one and for replacing all of an existing one's fields at once,
-/// which covers a transfer to another unit and a change of status. Every field but the middle name is required so that omitting one never changes it by accident;
+/// which covers a transfer to another unit. The status is not among them: a new employee works, and it changes only through dismissal and rehiring.
+/// Every field but the middle name is required so that omitting one never changes it by accident;
 /// an absent or blank middle name means the employee has none.
 /// </summary>
 internal sealed record EmployeeRequest
@@ -16,8 +17,6 @@ internal sealed record EmployeeRequest
     public required string Position { get; init; }
 
     public required Guid OrgUnitId { get; init; }
-
-    public required bool IsActive { get; init; }
 
     /// <summary>
     /// Checks the text fields.

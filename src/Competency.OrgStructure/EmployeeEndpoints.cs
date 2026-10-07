@@ -12,7 +12,8 @@ namespace Competency.OrgStructure;
 /// <summary>
 /// The employee API. Any signed-in user reads the restricted projection of working employees; only global administrators
 /// read the full projection and change employees, under the tree lock and with <c>If-Match</c>.
-/// Employees are never deleted: leaving the organization is the inactive status.
+/// Dismissal and deletion cascade to the units the employee heads and to the bound account in the same transaction,
+/// and administrators preview exactly those changes first.
 /// </summary>
 internal static class EmployeeEndpoints
 {
@@ -35,8 +36,17 @@ internal static class EmployeeEndpoints
 
         administrators.MapPost(string.Empty, CreateAsync).WithName("CreateEmployee").ProducesETag();
         administrators.MapPut("/{id:guid}", UpdateAsync).WithName("UpdateEmployee").ProducesETag()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+        administrators.MapGet("/{id:guid}/impact", ImpactAsync).WithName("GetEmployeeImpact")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+        administrators.MapPost("/{id:guid}/dismiss", DismissAsync).WithName("DismissEmployee").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+        administrators.MapPost("/{id:guid}/rehire", RehireAsync).WithName("RehireEmployee").ProducesETag()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        administrators.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteEmployee")
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     private static async Task<Results<Ok<PageResponse<EmployeeResponse>>, ValidationProblem>> ListAsync(
@@ -137,7 +147,6 @@ internal static class EmployeeEndpoints
             FirstName = input.FirstName,
             MiddleName = input.MiddleName,
             Position = input.Position,
-            IsActive = input.IsActive,
             OrgUnit = unit,
         };
         context.Add(employee);
@@ -174,21 +183,9 @@ internal static class EmployeeEndpoints
             return Rejections.Invalid("orgUnitId", "Подразделение не найдено.");
         }
 
-        if ((input.IsActive || unit.Id != employee.OrgUnitId) && !unit.IsActive)
+        if (unit.Id != employee.OrgUnitId && !unit.IsActive)
         {
             return Rejections.Invalid("orgUnitId", "Подразделение неактивно.");
-        }
-
-        if (employee.IsActive && !input.IsActive)
-        {
-            var headedUnitName = await context.Set<OrgUnit>()
-                .Where(headed => headed.HeadEmployeeId == id && headed.IsActive)
-                .Select(headed => headed.Name)
-                .FirstOrDefaultAsync(cancellationToken);
-            if (headedUnitName is not null)
-            {
-                return Rejections.Conflict($"Нельзя перевести сотрудника «{employee.FullName}» в статус «не работает»: он руководитель активного подразделения «{headedUnitName}». Сначала назначьте другого руководителя.");
-            }
         }
 
         ifMatch.ApplyTo(context, employee);
@@ -196,10 +193,116 @@ internal static class EmployeeEndpoints
         employee.FirstName = input.FirstName;
         employee.MiddleName = input.MiddleName;
         employee.Position = input.Position;
-        employee.IsActive = input.IsActive;
         employee.OrgUnit = unit;
 
         return TypedResults.Ok(await SaveAsync(employee, context, transaction, response, cancellationToken));
+    }
+
+    /// <summary>
+    /// What dismissing or deleting the employee would change elsewhere; read-only, and computed by the same code that applies it.
+    /// </summary>
+    private static async Task<Results<Ok<EmployeeImpactResponse>, NotFound>> ImpactAsync(
+        Guid id,
+        AppDbContext context,
+        CancellationToken cancellationToken)
+    {
+        if (!await context.Set<Employee>().AnyAsync(candidate => candidate.Id == id, cancellationToken))
+        {
+            return TypedResults.NotFound();
+        }
+
+        return TypedResults.Ok((await EmployeeImpact.OfAsync(context, id, cancellationToken)).ToResponse());
+    }
+
+    /// <summary>
+    /// Marks the employee as not working, takes them off every unit they head and blocks their account, all in one transaction.
+    /// </summary>
+    private static async Task<Results<Ok<EmployeeResponse>, NotFound, ProblemHttpResult>> DismissAsync(
+        Guid id,
+        IfMatch ifMatch,
+        AppDbContext context,
+        IEmployeeAccounts accounts,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await context.BeginExclusiveAsync(cancellationToken);
+        var employee = await context.Set<Employee>().FirstOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
+        if (employee is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (!employee.IsActive)
+        {
+            return Rejections.Conflict($"Сотрудник «{employee.FullName}» уже не работает.");
+        }
+
+        var impact = await EmployeeImpact.OfAsync(context, id, cancellationToken);
+        await impact.ApplyAsync(id, accounts, unbindAccount: false, cancellationToken);
+        ifMatch.ApplyTo(context, employee);
+        employee.IsActive = false;
+
+        return TypedResults.Ok(await SaveAsync(employee, context, transaction, response, cancellationToken));
+    }
+
+    /// <summary>
+    /// Marks a dismissed employee as working again; the account stays blocked and the units keep their new heads.
+    /// </summary>
+    private static async Task<Results<Ok<EmployeeResponse>, NotFound, ProblemHttpResult>> RehireAsync(
+        Guid id,
+        IfMatch ifMatch,
+        AppDbContext context,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await context.BeginExclusiveAsync(cancellationToken);
+        var employee = await context.Set<Employee>().FirstOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
+        if (employee is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (employee.IsActive)
+        {
+            return Rejections.Conflict($"Сотрудник «{employee.FullName}» уже работает.");
+        }
+
+        if (await context.UnitProblemAsync(employee.OrgUnitId, "Подразделение", cancellationToken) is { } unitProblem)
+        {
+            return Rejections.Conflict($"Нельзя вернуть сотрудника «{employee.FullName}» на работу. {unitProblem} Сначала активируйте подразделение или переведите сотрудника в другое.");
+        }
+
+        ifMatch.ApplyTo(context, employee);
+        employee.IsActive = true;
+
+        return TypedResults.Ok(await SaveAsync(employee, context, transaction, response, cancellationToken));
+    }
+
+    /// <summary>
+    /// Deletes the employee for good, after taking them off every unit they head and blocking and detaching their account, all in one transaction.
+    /// </summary>
+    private static async Task<Results<NoContent, NotFound>> DeleteAsync(
+        Guid id,
+        IfMatch ifMatch,
+        AppDbContext context,
+        IEmployeeAccounts accounts,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await context.BeginExclusiveAsync(cancellationToken);
+        var employee = await context.Set<Employee>().FirstOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
+        if (employee is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var impact = await EmployeeImpact.OfAsync(context, id, cancellationToken);
+        await impact.ApplyAsync(id, accounts, unbindAccount: true, cancellationToken);
+        ifMatch.ApplyTo(context, employee);
+        context.Remove(employee);
+
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return TypedResults.NoContent();
     }
 
     private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, string text)

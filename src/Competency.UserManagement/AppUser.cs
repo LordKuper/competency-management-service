@@ -5,7 +5,7 @@ namespace Competency.UserManagement;
 
 /// <summary>
 /// A local account that signs in with an e-mail address and password.
-/// A global administrator has no employee; a user is bound to exactly one employee, and one employee has at most one account.
+/// A global administrator has no employee; a user may be bound to one employee, and one employee has at most one account.
 /// Accounts are never deleted: blocking ends them.
 /// The properties Identity maintains (hash, stamps, lockout) are deliberately not audited.
 /// </summary>
@@ -46,6 +46,12 @@ internal sealed class AppUser : IdentityUser<Guid>, IVersioned
         Email = email;
         UserName = email;
     }
+
+    /// <summary>
+    /// Ends every session issued so far, since a session is valid only under the security stamp it was issued with.
+    /// It only changes the tracked account: the caller saves it with its other changes, unlike the user manager's stamp update, which saves at once.
+    /// </summary>
+    public void EndSessions() => SecurityStamp = Guid.NewGuid().ToString();
 
     /// <summary>
     /// Ends a lockout caused by failed sign-ins, so an administrator's block release or password reset lets the user in at once.

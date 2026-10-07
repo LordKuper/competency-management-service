@@ -23,7 +23,7 @@ internal sealed class UserManagementEntityConfiguration : IEntityConfigurationCo
     {
         entity.ToTable("users", table => table.HasCheckConstraint(
             "ck_users_role_employee",
-            $"role = '{nameof(UserRole.GlobalAdmin)}' AND employee_id IS NULL OR role = '{nameof(UserRole.User)}' AND employee_id IS NOT NULL"));
+            $"role = '{nameof(UserRole.GlobalAdmin)}' AND employee_id IS NULL OR role = '{nameof(UserRole.User)}'"));
 
         entity.Property(e => e.Id).HasColumnName("id").HasValueGenerator<GuidValueGenerator>();
         entity.Property(e => e.UserName).HasColumnName("user_name").HasMaxLength(AppUser.EmailMaxLength).IsRequired();

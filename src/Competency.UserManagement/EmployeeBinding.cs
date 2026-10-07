@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.UserManagement;
 
 /// <summary>
-/// The rules that tie an account to an employee: a user has exactly one working employee, an administrator has none,
+/// The rules that tie an account to an employee: a user may have one working employee or none, an administrator has none,
 /// and an employee has at most one account.
 /// </summary>
 internal static class EmployeeBinding
@@ -27,10 +27,6 @@ internal static class EmployeeBinding
         else if (role == UserRole.GlobalAdmin && employeeId is not null)
         {
             errors["employeeId"] = ["Глобальный администратор не привязывается к сотруднику."];
-        }
-        else if (role == UserRole.User && employeeId is null)
-        {
-            errors["employeeId"] = ["Для пользователя укажите сотрудника."];
         }
     }
 

@@ -37,8 +37,8 @@ interface UserFormProps {
 const NEW_ACCOUNT_VALUES: UserFormValues = { email: "", role: "User" };
 
 /**
- * Account fields shared by creation and editing. A role that needs no employee hides the picker and submits none,
- * mirroring the server rules so the administrator is told early; the server still decides.
+ * Account fields shared by creation and editing. The employee is optional for a user and not allowed for an administrator,
+ * so that role hides the picker and submits none, mirroring the server rules so the administrator is told early; the server still decides.
  */
 export function UserForm({
   initialValues = NEW_ACCOUNT_VALUES,
@@ -115,8 +115,7 @@ export function UserForm({
         <Form.Item
           name="employeeId"
           label="Сотрудник"
-          extra="Пользователь привязывается к одному работающему сотруднику."
-          rules={[{ required: true, message: "Выберите сотрудника" }]}
+          extra="Необязательно: пользователь может быть привязан к одному работающему сотруднику или не привязан ни к кому."
         >
           <EmployeePicker current={employee} />
         </Form.Item>

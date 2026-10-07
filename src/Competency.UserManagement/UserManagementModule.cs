@@ -1,3 +1,4 @@
+using Competency.OrgStructure;
 using Competency.Platform;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
@@ -39,6 +40,7 @@ public static class UserManagementModule
             .AddCookie(SessionAuthentication.Scheme, options => SessionAuthentication.Configure(options, configuration));
 
         services.AddScoped<AdminBootstrapper>();
+        services.AddScoped<IEmployeeAccounts, EmployeeAccounts>();
         return services;
     }
 

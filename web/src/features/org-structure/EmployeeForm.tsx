@@ -1,4 +1,4 @@
-import { Button, Form, Input, Space, Switch, Typography } from "antd";
+import { Button, Form, Input, Space, Typography } from "antd";
 import { useState } from "react";
 import { showFieldErrors } from "../../app/apiErrors";
 import { OrgUnitSelect } from "./OrgUnitSelect";
@@ -16,7 +16,7 @@ interface EmployeeFormProps {
   onCancel: () => void;
 }
 
-/** Fields of an employee, shared by creation and editing; a transfer is a change of the unit, and leaving is switching off the status. */
+/** Fields of an employee, shared by creation and editing; a transfer is a change of the unit. The status is not a field: it changes through dismissal and rehiring. */
 export function EmployeeForm({
   initialValues,
   email,
@@ -90,14 +90,6 @@ export function EmployeeForm({
           <Typography.Text>{email ?? "Нет учётной записи"}</Typography.Text>
         </Form.Item>
       )}
-      <Form.Item
-        name="isActive"
-        label="Работает"
-        valuePropName="checked"
-        extra="Если сотрудник не работает, привязанная к нему учётная запись не сможет войти в систему."
-      >
-        <Switch />
-      </Form.Item>
       <Space>
         <Button type="primary" htmlType="submit" loading={isSubmitting}>
           {submitLabel}

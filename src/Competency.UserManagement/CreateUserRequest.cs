@@ -1,7 +1,7 @@
 namespace Competency.UserManagement;
 
 /// <summary>
-/// The fields of a new account. A user needs an employee; an administrator must not have one, so <c>employeeId</c> is sent as null for that role.
+/// The fields of a new account. A user may have an employee; an administrator must not, so <c>employeeId</c> is sent as null for that role.
 /// </summary>
 internal sealed record CreateUserRequest
 {

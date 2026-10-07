@@ -5,7 +5,7 @@ namespace Competency.OrgStructure;
 
 /// <summary>
 /// A person in the organization directory, belonging to exactly one unit.
-/// Employees are never deleted; leaving the organization is the inactive status.
+/// An employee who stops working is kept with the inactive status; an administrator may also delete the employee for good.
 /// An employee has no e-mail of its own: the e-mail belongs to the account bound to the employee, if there is one.
 /// </summary>
 [Audited]
