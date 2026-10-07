@@ -289,3 +289,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
 
 - 2026-10-07 — route Task 22: critical (dispatch with Task 21 after Task 20)
+
+- 2026-10-07 — verification depth: user chose fast checks for impl change requests (build Release, ef pending-changes, web lint/build/check:api; no scratch DB, real-backend or UI smokes); applied to running Task 20 and to Tasks 21–22; depth deferred to impl-test/impl-review
