@@ -34,3 +34,4 @@
 - [Employee name split](project_employee-name-split-facts.md) — EF scaffold is wrong for column -> generated, Up/Down SQL, heap cost, old-client 400, TEMPLATE-copy verification
 - [Employee dismissal cascade](project_employee-dismissal-cascade-facts.md) — IEmployeeAccounts port, direct stamp change, forced-failure/race checks, antd Dropdown cost per card
 - [Users row menu + modal](project_users-modal-menu-facts.md) — 409 alert suppressed for field conflicts, reset target by id from live list, gcTime 0 on account query, smoke facts
+- [Org head rule + order](project_org-head-rule-facts.md) — create field dropped silently, check-on-change, picker current quirk, Collator ru yo, antd 6 select DOM/click
