@@ -144,6 +144,13 @@
       "decision": "AC-13 avatar two letters, Task 23 wave 19",
       "reason": "avatar initials",
       "evidence": "decisions-log.md 2026-10-07 Task 23"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-17 employee card avatar initials (first+last name), Task 24 wave 20",
+      "reason": "same avatar rule as header",
+      "evidence": "decisions-log.md 2026-10-07 Task 24"
     }
   ],
   "task_routing": {
@@ -280,6 +287,12 @@
       "resolved_model": "sonnet"
     },
     "Task 23": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 24": {
       "execution": "agent",
       "tier": "standard",
       "reason": "normal",
