@@ -6,7 +6,7 @@ using Xunit;
 namespace Competency.Tests;
 
 /// <summary>
-/// AC-11 and AC-17: employee search combines case-insensitive substring and Russian full-text matching (stems, «ё» as «е», positions),
+/// Employee search combines case-insensitive substring and Russian full-text matching (stems, «ё» as «е», positions),
 /// treats <c>%</c> and <c>_</c> as characters, and validates its paging and text limits.
 /// </summary>
 public sealed class EmployeeSearchTests(TestEnvironment environment)

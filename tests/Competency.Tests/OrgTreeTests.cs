@@ -6,7 +6,7 @@ using Xunit;
 namespace Competency.Tests;
 
 /// <summary>
-/// AC-9, AC-10 and AC-19: the unit hierarchy stays a forest even when moves race, a unit is deactivated only when empty,
+/// The unit hierarchy stays a forest even when moves race, a unit is deactivated only when empty,
 /// and a head is always a working employee of the unit they head.
 /// </summary>
 public sealed class OrgTreeTests(TestEnvironment environment)

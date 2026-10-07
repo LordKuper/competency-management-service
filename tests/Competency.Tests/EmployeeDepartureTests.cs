@@ -6,7 +6,7 @@ using Xunit;
 namespace Competency.Tests;
 
 /// <summary>
-/// AC-18 and AC-8: dismissing or deleting an employee applies, in one transaction, exactly the changes its preview announced:
+/// Dismissing or deleting an employee applies, in one transaction, exactly the changes its preview announced:
 /// the headed unit loses its head, the bound account is blocked (and unbound on deletion), its live session ends, and every change is journaled.
 /// </summary>
 public sealed class EmployeeDepartureTests(TestEnvironment environment)

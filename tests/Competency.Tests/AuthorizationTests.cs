@@ -6,7 +6,7 @@ using Xunit;
 namespace Competency.Tests;
 
 /// <summary>
-/// AC-6 and AC-12: every protected endpoint answers 401 without a session and 403 to a signed-in user without the administrator role,
+/// Every protected endpoint answers 401 without a session and 403 to a signed-in user without the administrator role,
 /// whichever resource the request names, and the user role reads only the restricted projection of active data.
 /// </summary>
 public sealed class AuthorizationTests(TestEnvironment environment)

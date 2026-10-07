@@ -8,8 +8,8 @@ using Xunit;
 namespace Competency.Tests;
 
 /// <summary>
-/// The platform on a real database: AC-3 (schema applied from an empty database, probes), AC-5 (what the logs carry), AC-7 (the account role is limited
-/// in the database itself) and AC-15 (the journal is append-only in the database itself, for the application account too).
+/// The platform on a real database: schema applied from an empty database, probes, what the logs carry, the account role limited
+/// in the database itself, and the journal append-only in the database itself, for the application account too.
 /// </summary>
 public sealed class PlatformTests(TestEnvironment environment)
 {
@@ -83,10 +83,13 @@ public sealed class PlatformTests(TestEnvironment environment)
             .Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// Runs on a host of its own, so that only this test's records can satisfy the wait for the 412 log line.
+    /// </summary>
     [Fact]
     public async Task Ac5_Logs_AreJsonAndCarryNoPasswordsEmailsNamesOrSqlValues()
     {
-        await using var host = await environment.StartHostAsync(); // own host: only this test's records can satisfy the 412 wait below
+        await using var host = await environment.StartHostAsync();
         var admin = await host.AdminAsync();
         var email = $"{Scenarios.Unique("logged")}@test.local";
         var password = $"Logged-{Guid.NewGuid():N}-1!";

@@ -6,7 +6,7 @@ using Xunit;
 namespace Competency.Tests;
 
 /// <summary>
-/// AC-6, AC-7 and AC-8: sign-in reveals nothing about accounts, lockout holds even against the right password, and blocking,
+/// Sign-in reveals nothing about accounts, lockout holds even against the right password, and blocking,
 /// a password reset, a password change or sign-out end sessions as specified.
 /// </summary>
 public sealed class SessionTests(TestEnvironment environment)
@@ -127,7 +127,7 @@ public sealed class SessionTests(TestEnvironment environment)
 }
 
 /// <summary>
-/// AC-6: the sign-in endpoint is rate limited with the configured limit, on a host where the limit is low enough to reach.
+/// The sign-in endpoint is rate limited with the configured limit, on a host where the limit is low enough to reach.
 /// </summary>
 public sealed class LoginRateLimitTests(StrictRateLimitHost fixture) : IClassFixture<StrictRateLimitHost>
 {

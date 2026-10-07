@@ -6,7 +6,7 @@ using Xunit;
 namespace Competency.Tests;
 
 /// <summary>
-/// AC-5: a change needs <c>If-Match</c> (428 without it, 400 when malformed) and a stale version is refused with 412 instead of overwriting;
+/// A change needs <c>If-Match</c> (428 without it, 400 when malformed) and a stale version is refused with 412 instead of overwriting;
 /// each mutating endpoint is checked on its own because each applies the version itself.
 /// </summary>
 public sealed class OptimisticConcurrencyTests(TestEnvironment environment)

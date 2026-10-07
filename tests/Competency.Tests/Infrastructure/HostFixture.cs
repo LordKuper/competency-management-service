@@ -17,12 +17,6 @@ public abstract class HostFixture(TestEnvironment environment, IReadOnlyDictiona
 }
 
 /// <summary>
-/// A host whose database holds nothing but what the tests of one class put there, for tests that depend on the whole set of accounts.
-/// </summary>
-/// <param name="environment">The shared environment that supplies the database.</param>
-public sealed class DedicatedHost(TestEnvironment environment) : HostFixture(environment, null);
-
-/// <summary>
 /// A host with the production sign-in rate limit reduced to a few attempts, so that the limit can be reached in a test.
 /// </summary>
 /// <param name="environment">The shared environment that supplies the database.</param>

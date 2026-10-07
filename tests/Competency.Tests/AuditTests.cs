@@ -8,7 +8,7 @@ using Xunit;
 namespace Competency.Tests;
 
 /// <summary>
-/// AC-15: every mutation and every sign-in event is journaled with actor, role and request id, a refused change leaves no row,
+/// Every mutation and every sign-in event is journaled with actor, role and request id, a refused change leaves no row,
 /// only allow-listed properties are recorded so no secret reaches the journal, and the journal API is read-only and filterable.
 /// </summary>
 public sealed class AuditTests(TestEnvironment environment)

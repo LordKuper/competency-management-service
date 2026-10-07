@@ -6,7 +6,7 @@ using Xunit;
 namespace Competency.Tests;
 
 /// <summary>
-/// AC-7 and AC-8: an account of any role is bound to at most one working employee and an employee has at most one account;
+/// An account of any role is bound to at most one working employee and an employee has at most one account;
 /// binding changes end the account's sessions and are journaled; the e-mail is unique regardless of letter case.
 /// </summary>
 public sealed class UserBindingTests(TestEnvironment environment)

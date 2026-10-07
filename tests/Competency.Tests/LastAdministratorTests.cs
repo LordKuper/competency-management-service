@@ -60,7 +60,7 @@ public sealed class AdministratorsHost(TestEnvironment environment) : HostFixtur
 }
 
 /// <summary>
-/// AC-7 and AC-18: the last active global administrator can be neither blocked, demoted, dismissed nor deleted, also when changes race.
+/// The last active global administrator can be neither blocked, demoted, dismissed nor deleted, also when changes race.
 /// </summary>
 public sealed class LastAdministratorTests(AdministratorsHost fixture) : IClassFixture<AdministratorsHost>
 {

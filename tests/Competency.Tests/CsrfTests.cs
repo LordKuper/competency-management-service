@@ -6,7 +6,7 @@ using Xunit;
 namespace Competency.Tests;
 
 /// <summary>
-/// AC-6: a state-changing request a browser reports as cross-site is refused before it reaches any endpoint, even with a valid session.
+/// A state-changing request a browser reports as cross-site is refused before it reaches any endpoint, even with a valid session.
 /// </summary>
 public sealed class CsrfTests(TestEnvironment environment)
 {

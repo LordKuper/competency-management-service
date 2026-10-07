@@ -70,15 +70,6 @@ public static class Scenarios
     }
 
     /// <summary>
-    /// Every journal row about one entity, newest first.
-    /// </summary>
-    public static async Task<JsonArray> AuditOfAsync(this ApiClient admin, string entityType, Guid entityId)
-    {
-        var page = (await admin.GetAsync($"/api/v1/audit?entityType={entityType}&entityId={entityId}&pageSize=200")).Expect(HttpStatusCode.OK);
-        return page.Json!["items"]!.AsArray();
-    }
-
-    /// <summary>
     /// Every journal row written by one request.
     /// </summary>
     public static async Task<JsonArray> AuditOfRequestAsync(this ApiClient admin, string requestId)
