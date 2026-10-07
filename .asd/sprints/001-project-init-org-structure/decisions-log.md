@@ -333,3 +333,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — AC-17 clarification (user): keep all-at-once employee loading, a unit with 5000+ employees expanding over 2 s is an accepted known limit; unit status shows only as «Неактивно» on inactive units; the expand chevron is a control, not the icon AC-18 excludes. No code change
 - 2026-10-07 — impl COMPLETED (NEXT: impl-test); phase=impl-test
 - 2026-10-07 — route impl-test entry 1: critical, dispatch HEAD 653f7c1
+- 2026-10-07 — user: Playwright excluded, no e2e tests (stays in stack.html «Исключено»); retro candidate (1) narrows to API integration tests on real PostgreSQL
+- 2026-10-07 — impl-test: impacted set green (full scope via safety valve; backend 82/82, web 23/23, lint/build/check:api clean, ~33 s), 105/0 tests; no defects; no manual verification rows
