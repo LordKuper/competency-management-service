@@ -38,15 +38,20 @@ export function useBlockUser() {
       okText: user.isBlocked ? "Разблокировать" : "Заблокировать",
       okButtonProps: { danger: !user.isBlocked },
       cancelText: "Отмена",
+      // The handlers return nothing: a toast is a thenable that settles when it closes, and returning it
+      // would keep this dialog open, with a busy confirm button, for as long as the toast is shown.
       onOk: () =>
         change.mutateAsync(user).then(
-          () =>
+          () => {
             message.success(
               user.isBlocked
                 ? "Пользователь разблокирован"
                 : "Пользователь заблокирован",
-            ),
-          (error) => message.error(describeApiError(error)),
+            );
+          },
+          (error) => {
+            message.error(describeApiError(error));
+          },
         ),
     });
 }
