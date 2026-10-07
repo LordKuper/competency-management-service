@@ -1,7 +1,7 @@
 {
   "sprint_id": "001-project-init-org-structure",
   "branch": "sprint/001-project-init-org-structure",
-  "phase": "impl-review",
+  "phase": "design-promote",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -207,6 +207,13 @@
       "decision": "all external findings accepted for fix; F6 answer: path only",
       "reason": "user choice (recommended)",
       "evidence": "decisions-log.md 2026-10-07"
+    },
+    {
+      "gate": "impl-review green handoff",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "advance to design-promote",
+      "reason": "all 3 waves APPROVE/latched; every FAIL/question decided by user; terminal full suite green (backend 102/102, web 60/60, lint/build clean) at 376e9d3; no waiver or debt",
+      "evidence": "test-plan.md Suite run f09657a; decisions-log.md 2026-10-07"
     }
   ],
   "task_routing": {
@@ -566,7 +573,7 @@
     }
   },
   "created_at": "2026-10-05T00:00:00Z",
-  "updated_at": "2026-10-07T19:28:25.490Z",
+  "updated_at": "2026-10-07T19:31:08.690Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

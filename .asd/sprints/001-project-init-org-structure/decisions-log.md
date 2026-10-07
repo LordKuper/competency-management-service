@@ -375,3 +375,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — impl-test entry 8: impacted set green (web 60/60, lint/build clean), 0/0 tests; no defects
 - 2026-10-07 — impl-review wave 3 iteration 3 (floor high): external latched (iter 2), combined only
 - 2026-10-07 — impl-review wave-3/iter-03: combined APPROVE (latched), external inherited APPROVE; wave 3 = last wave, reviewer DoD met → terminal full-suite gate; route impl-review wave-3/iter-03 suite: critical, dispatch HEAD fc730dc
+- 2026-10-07 — impl-review DoD met: terminal full suite green at 376e9d3 (backend 102/102, web 60/60, lint/build clean; f09657a); green handoff passed adaptively (routine gate, no waiver); NEXT: design-promote
