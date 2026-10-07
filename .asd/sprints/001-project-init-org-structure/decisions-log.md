@@ -305,3 +305,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: `src/Competency.OrgStructure/`, `web/src/features/org-structure/`, `web/src/features/users/EmployeePicker.tsx`
 
 - 2026-10-07 — dispatch Task 21, Task 22 (wave 19, light verification per custom-coding-rules.md)
+
+## 2026-10-07 — Task 22 принят; аватарка двумя буквами (AC-13), Task 23 (волна 19)
+
+- **Decision**: Task 22 принят: `/auth/me` и ответ входа содержат `employeeLastName`/`employeeFirstName`/`employeeMiddleName` (плоские поля, `employeeName` сохранён), шапка показывает «И. О. Фамилия» или e-mail, e-mail — заголовок группы в меню пользователя, `aria-label` кнопки равен видимой подписи. По запросу пользователя аватарка — две буквы (имя + фамилия), для непривязанной учётной записи — одна буква e-mail (Task 23, параллельно с Task 21, пути не пересекаются).
+- **Rationale**: В пределах AC-13; облегчённые проверки по `custom-coding-rules.md`.
+- **Affected docs**: `src/Competency.UserManagement/`, `src/Competency.OrgStructure/EmployeeStatus.cs`, `web/src/app/UserMenu.tsx`
+
+- 2026-10-07 — route Task 23: standard

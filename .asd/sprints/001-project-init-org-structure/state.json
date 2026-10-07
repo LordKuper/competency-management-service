@@ -137,6 +137,13 @@
       "decision": "AC-13 header shows initials and last name of bound employee, Task 22 wave 19",
       "reason": "header label for bound accounts",
       "evidence": "decisions-log.md 2026-10-07 Task 22"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-13 avatar two letters, Task 23 wave 19",
+      "reason": "avatar initials",
+      "evidence": "decisions-log.md 2026-10-07 Task 23"
     }
   ],
   "task_routing": {
@@ -270,6 +277,12 @@
       "execution": "agent",
       "tier": "critical",
       "reason": "risk:public contract extension of /auth/me",
+      "resolved_model": "sonnet"
+    },
+    "Task 23": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
       "resolved_model": "sonnet"
     }
   },
