@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # check=skip=FromPlatformFlagConstDisallowed
-# The skipped check flags the constant --platform below, which is deliberate (Q10): the delivered image is linux/amd64
+# The skipped check flags the constant --platform below, which is deliberate: the delivered image is linux/amd64
 # whatever the architecture of the build host.
 
 # Base images arrive through build arguments so a digest can be injected without editing this file:

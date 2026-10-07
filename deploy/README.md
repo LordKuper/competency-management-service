@@ -1,6 +1,6 @@
 # Сборка и развёртывание
 
-Образы собираются вне контура, на машине с интернетом, и переносятся в контур готовыми: запущенный сервис ничего не скачивает. Манифесты — plain YAML (без Kustomize и Helm). Ingress и TLS манифесты не задают (открытый вопрос Q8).
+Образы собираются вне контура, на машине с интернетом, и переносятся в контур готовыми: запущенный сервис ничего не скачивает. Манифесты — plain YAML (без Kustomize и Helm). Ingress и TLS манифесты не задают.
 
 | Файл | Назначение |
 |---|---|
@@ -12,7 +12,7 @@
 
 ## 1. Сборка образов (вне контура)
 
-Нужен Docker с BuildKit. Образ платформы `linux/amd64` получается на любом хосте (Q10).
+Нужен Docker с BuildKit. Образ платформы `linux/amd64` получается на любом хосте.
 
 1. Определить digest базовых образов (строка `Digest:` в выводе):
 
@@ -39,10 +39,10 @@
 
 ## 2. Перенос в контур
 
-- Есть внутренний registry (Q11): `docker push`, узлы забирают образы сами.
+- Есть внутренний registry: `docker push`, узлы забирают образы сами.
 - Нет registry: `docker save -o competency-images.tar competency-app:<VERSION> postgres:18.6-trixie`, перенос архива, импорт на каждом узле, где может запуститься под (для containerd — `ctr -n k8s.io images import competency-images.tar`). `imagePullPolicy: IfNotPresent` — pull не требуется.
 
-Digest в манифестах: `postgres:18.6-trixie@sha256:<DIGEST>` в `db.yaml` и `competency-app:<VERSION>@sha256:<DIGEST>` в `app.yaml`. Digest у собранного локально образа появляется после `docker push`; при tar-доставке соответствие digest после импорта не проверено (Q11) — сверить на узле (`crictl images --digests`), а если digest недоступен, оставить ссылку по тегу без `@sha256:<DIGEST>`.
+Digest в манифестах: `postgres:18.6-trixie@sha256:<DIGEST>` в `db.yaml` и `competency-app:<VERSION>@sha256:<DIGEST>` в `app.yaml`. Digest у собранного локально образа появляется после `docker push`; при tar-доставке соответствие digest после импорта не проверено — сверить на узле (`crictl images --digests`), а если digest недоступен, оставить ссылку по тегу без `@sha256:<DIGEST>`.
 
 ## 3. Применение
 
@@ -60,7 +60,7 @@ kubectl -n competency rollout status deployment/app
 
 Поля Secret `competency-secret`:
 
-- `POSTGRES_PASSWORD` — пароль пользователя БД; `ConnectionStrings__Default` — строка подключения `app` с тем же паролем (без `;` и кавычек в пароле); `Database` и `Username` совпадают с `db-config`; `GSS Encryption Mode=Disable` из шаблона оставить (в образе нет библиотеки Kerberos, без ключа при каждом старте в stderr попадает строка `Cannot load library libgssapi_krb5.so.2`). Пароль применяется при первой инициализации тома: позже Secret его не меняет.
+- `POSTGRES_PASSWORD` — пароль пользователя БД; `ConnectionStrings__Default` — строка подключения `app` с тем же паролем (без `;` и кавычек в пароле); `Database` и `Username` совпадают с `db-config`; `GSS Encryption Mode=Disable` из шаблона оставить (причина — в комментарии шаблона). Пароль применяется при первой инициализации тома: позже Secret его не меняет.
 - `Bootstrap__AdminEmail`, `Bootstrap__AdminPassword` — первый глобальный администратор: его e-mail и пароль задаются при развёртывании так же, как пароль БД, и в репозиторий не попадают. E-mail одновременно служит именем для входа (отдельного имени пользователя нет), должен быть корректным адресом не длиннее 254 символов. Пароль подчиняется политике Identity: не короче 10 символов, цифра, строчная и заглавная буква, неалфавитно-цифровой символ.
 
 Доступ без Ingress, для проверки: `kubectl -n competency port-forward svc/app 8080:8080` и `curl http://localhost:8080/healthz/ready`.
@@ -81,10 +81,12 @@ kubectl -n competency rollout status deployment/app
 
 ## Открытые точки
 
-- Q8, TLS: Ingress не задан. `Authentication__Cookie__SecurePolicy` в `app-config` равен `SameAsRequest`; когда TLS заканчивается перед приложением, поставить `Always`. Заголовки `X-Forwarded-*` приложение не разбирает: за прокси лимит входа (`RateLimiting:Login`) считается по адресу прокси, а не клиента.
-- Q5: резервного копирования нет, манифестов бэкапа нет; PVC `data-db-0` и `app-keys` — единственные копии данных.
-- Q11: доставка образов (registry или tar) не выбрана.
-- `app` подключается учётной записью `POSTGRES_USER` — это суперпользователь кластера; отдельной роли с правами только на свою БД нет. Триггер неизменяемости журнала от DDL не защищает (решение спринта), а суперпользователь обходит его и без DDL (`SET session_replication_role = replica`, проверено на образе). Отдельная роль-владелец БД без прав суперпользователя закрыла бы этот обход: расширение `pg_trgm` помечено как trusted, и такая роль создаёт его сама (проверено); триггер при этом по-прежнему снимается через DDL.
+TLS, резервное копирование и доставка образов — открытые вопросы, их ведёт `docs/architecture/stack.html`.
+
+- TLS: Ingress не задан. `Authentication__Cookie__SecurePolicy` в `app-config` равен `SameAsRequest`; когда TLS заканчивается перед приложением, поставить `Always`. Заголовки `X-Forwarded-*` приложение не разбирает: за прокси лимит входа (`RateLimiting:Login`) считается по адресу прокси, а не клиента.
+- Резервного копирования нет, манифестов бэкапа нет; PVC `data-db-0` и `app-keys` — единственные копии данных.
+- Доставка образов (registry или tar) не выбрана.
+- `app` подключается учётной записью `POSTGRES_USER` — это суперпользователь кластера; отдельной роли с правами только на свою БД нет. Триггеры неизменяемости журнала включены как `ENABLE ALWAYS`, поэтому срабатывают и при `SET session_replication_role = replica`, но от DDL (`DROP TRIGGER`, `DISABLE TRIGGER`) не защищают (решение спринта). Расширение `pg_trgm` помечено как trusted, и роль-владелец БД без прав суперпользователя создаёт его сама (проверено).
 - `requests`/`limits`, StorageClass и NetworkPolicy не заданы — их определяет кластер; ёмкости PVC (10Gi у `db`, 1Gi у `app-keys`) — стартовые значения.
 - Остановка `db`: образ задаёт `STOPSIGNAL SIGINT`; проверить, что runtime кластера его учитывает. Иначе PostgreSQL получит SIGTERM, будет ждать клиентов, и по истечении `terminationGracePeriodSeconds: 120` под получит SIGKILL с последующим crash recovery.
 - Обновление: пересборка, сканирование, перенос, `kubectl apply` с новыми digest. Из-за `Recreate` `app` недоступен на время смены пода.

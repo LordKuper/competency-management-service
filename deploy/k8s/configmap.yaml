@@ -8,7 +8,7 @@ metadata:
 data:
   # Must equal the mountPath of the app-keys volume in app.yaml.
   DataProtection__KeysPath: /var/lib/competency/keys
-  # TLS termination is an open question (Q8). Switch to Always once TLS ends in front of the app,
+  # Where TLS ends is not decided yet. Switch to Always once it ends in front of the app,
   # otherwise the session cookie is issued without the Secure flag.
   Authentication__Cookie__SecurePolicy: SameAsRequest
   # Files in the image never change at runtime, and every config watcher spends one instance
