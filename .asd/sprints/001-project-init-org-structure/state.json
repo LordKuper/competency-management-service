@@ -461,6 +461,12 @@
       "execution": "agent",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "impl-review wave-3/iter-03 suite": {
+      "tier": "critical",
+      "execution": "agent",
+      "reason": "risk:migration",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -540,6 +546,10 @@
             "iter-02": {
               "combined": "CONCERNS",
               "external": "APPROVE"
+            },
+            "iter-03": {
+              "combined": "APPROVE",
+              "external": "APPROVE"
             }
           },
           "iteration_heads": {
@@ -548,14 +558,15 @@
             "iter-03": "995b1389880b9eb474be0dda5f1d79bd4d74718f"
           },
           "latched": {
-            "external": 2
+            "external": 2,
+            "combined": 3
           }
         }
       ]
     }
   },
   "created_at": "2026-10-05T00:00:00Z",
-  "updated_at": "2026-10-07T19:26:23.158Z",
+  "updated_at": "2026-10-07T19:28:25.490Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
