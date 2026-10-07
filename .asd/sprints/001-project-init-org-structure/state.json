@@ -102,6 +102,13 @@
       "decision": "AC-18 added (employee menu, dismiss/delete with cascade), Task 18 wave 16",
       "reason": "employee actions menu, cascading dismiss and delete, no unit icon",
       "evidence": "decisions-log.md 2026-10-07 scope amendment Task 18"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-8 relaxed: user accounts may be unbound",
+      "reason": "accounts may exist without an employee",
+      "evidence": "decisions-log.md 2026-10-07 AC-8 relaxed"
     }
   ],
   "task_routing": {

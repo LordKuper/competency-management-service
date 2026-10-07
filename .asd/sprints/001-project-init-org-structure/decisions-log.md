@@ -237,3 +237,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
 
 - 2026-10-07 — route Task 18: critical
+
+## 2026-10-07 — Поправка scope: учётные записи могут быть не привязаны к сотрудникам (AC-8)
+
+- **Decision**: Учётная запись роли «пользователь» может существовать без сотрудника (заблокированная или нет); глобальный администратор по-прежнему без привязки; один сотрудник — не более одной учётной записи. Отменяется запланированное в Task 18 правило «нельзя разблокировать без привязки». Несвязанная учётная запись входит без проверки статуса сотрудника. Увольнение и удаление сотрудника по-прежнему блокируют (а удаление — ещё и отвязывает) его учётную запись. Изменение передано работающему dev Task 18.
+- **Rationale**: Явное требование пользователя (`new or changed scope`); заменяет прежнее правило AC-8 «пользователь обязан быть привязан».
+- **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
