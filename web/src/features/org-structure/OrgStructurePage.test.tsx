@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { SEARCH_DEBOUNCE_MS } from "../../app/useDebouncedValue";
-import { deferred, fakeApi, json } from "../../test/fakeApi";
+import { deferred, fakeApi } from "../../test/fakeApi";
 import { OrgStructurePage } from "./OrgStructurePage";
 import { employeesQueryKey } from "./orgStructureApi";
 import { SEARCH_MIN_LENGTH } from "./useEmployeeSearch";
@@ -58,7 +58,7 @@ const MATCHED = employee("matched", "Найденов", "north");
 const OF_SUPPORT = employee("of-support", "Помогаев", "support");
 
 const page = (items: unknown[]) =>
-  json({ items, total: items.length, page: 1, pageSize: 200 });
+  Response.json({ items, total: items.length, page: 1, pageSize: 200 });
 
 const hasParam = (request: Request, name: string) =>
   new URL(request.url).searchParams.has(name);
@@ -71,9 +71,9 @@ const searchCalls = () =>
 
 function serve(searchAnswer: () => Response | Promise<Response>) {
   fakeApi.on("GET /api/v1/auth/me", () =>
-    json({ id: "account", email: "user@test.local", role: "User" }),
+    Response.json({ id: "account", email: "user@test.local", role: "User" }),
   );
-  fakeApi.on("GET /api/v1/org-units/tree", () => json(UNITS));
+  fakeApi.on("GET /api/v1/org-units/tree", () => Response.json(UNITS));
   fakeApi.on(EMPLOYEES_ROUTE, (request) =>
     hasParam(request, "orgUnitId") ? page([OF_SUPPORT]) : searchAnswer(),
   );

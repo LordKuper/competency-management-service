@@ -8,7 +8,7 @@ import { EmployeeModal } from "../features/org-structure/EmployeeModal";
 import { orgUnitTreeQuery } from "../features/org-structure/orgStructureApi";
 import { UnitFormModal } from "../features/org-structure/UnitFormModal";
 import { UserModal } from "../features/users/UserModal";
-import { fakeApi, json, problem } from "../test/fakeApi";
+import { fakeApi, problem } from "../test/fakeApi";
 import { Providers } from "./Providers";
 
 const OPENED = "Исходное значение";
@@ -63,7 +63,7 @@ const dialogs: Dialog[] = [
       version,
     }),
     serveOthers: () =>
-      fakeApi.on("GET /api/v1/employees", () => json(EMPLOYEE_PAGE)),
+      fakeApi.on("GET /api/v1/employees", () => Response.json(EMPLOYEE_PAGE)),
     element: () => <UserModal userId="user-1" onClose={noop} />,
   },
   {
@@ -86,7 +86,8 @@ const dialogs: Dialog[] = [
       isActive: true,
       version,
     }),
-    serveOthers: () => fakeApi.on("GET /api/v1/org-units/tree", () => json([])),
+    serveOthers: () =>
+      fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([])),
     element: () => (
       <EmployeeModal employeeId="employee-1" onClose={noop} onSaved={noop} />
     ),
@@ -110,7 +111,7 @@ const dialogs: Dialog[] = [
       },
     ],
     serveOthers: () =>
-      fakeApi.on("GET /api/v1/employees", () => json(EMPLOYEE_PAGE)),
+      fakeApi.on("GET /api/v1/employees", () => Response.json(EMPLOYEE_PAGE)),
     element: () => <UnitDialog />,
   },
 ];
@@ -118,7 +119,7 @@ const dialogs: Dialog[] = [
 async function openDialog(dialog: Dialog, answerSave: () => Response) {
   const server = { version: 1, text: OPENED };
   fakeApi.on(dialog.readRoute, () =>
-    json(dialog.answer(server.version, server.text)),
+    Response.json(dialog.answer(server.version, server.text)),
   );
   fakeApi.on(dialog.saveRoute, answerSave);
   dialog.serveOthers();
@@ -170,7 +171,7 @@ describe.each(dialogs)("$name (AC-13, AC-17)", (dialog) => {
     expect((await saveBody(dialog, 0))[dialog.bodyField]).toBe(`${MINE}!`);
     await waitFor(() => expect(opened.field()).toHaveValue(OTHERS));
     fakeApi.on(dialog.saveRoute, () =>
-      json(dialog.answer(opened.server.version, opened.server.text)),
+      Response.json(dialog.answer(opened.server.version, opened.server.text)),
     );
     await opened.save();
 
@@ -230,7 +231,7 @@ describe.each(dialogs.filter(readsItsRecord))(
     it("reads the record afresh instead of starting from the version the previous opening cached", async () => {
       const server = { version: 1, text: OPENED };
       fakeApi.on(dialog.readRoute, () =>
-        json(dialog.answer(server.version, server.text)),
+        Response.json(dialog.answer(server.version, server.text)),
       );
       dialog.serveOthers();
       const first = render(<Providers>{dialog.element()}</Providers>);

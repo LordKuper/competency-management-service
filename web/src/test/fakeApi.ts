@@ -43,11 +43,6 @@ export const fakeApi = {
   },
 };
 
-/** A successful answer carrying the body as JSON. */
-export function json(body: unknown, status = 200): Response {
-  return Response.json(body, { status });
-}
-
 /** A failed answer with a problem-details body. */
 export function problem(
   status: number,

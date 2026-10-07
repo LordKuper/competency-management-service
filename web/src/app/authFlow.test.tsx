@@ -6,7 +6,7 @@ import { api } from "../api/client";
 import { queryClient } from "../api/queryClient";
 import { currentUserQueryKey } from "../features/auth/useCurrentUser";
 import { paths } from "../features/org-structure/paths";
-import { deferred, fakeApi, json, problem } from "../test/fakeApi";
+import { deferred, fakeApi, problem } from "../test/fakeApi";
 import { LOGIN_PATH } from "./featureContract";
 import { Providers } from "./Providers";
 import { router } from "./router";
@@ -26,8 +26,8 @@ const SIGN_IN_HEADING = "Вход в систему";
 const REFUSAL = "Проверьте e-mail и пароль.";
 
 function answerAsSignedIn() {
-  fakeApi.on("GET /api/v1/auth/me", () => json(ACCOUNT));
-  fakeApi.on("GET /api/v1/org-units/tree", () => json([]));
+  fakeApi.on("GET /api/v1/auth/me", () => Response.json(ACCOUNT));
+  fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([]));
 }
 
 async function openApp(path: string) {
@@ -87,8 +87,8 @@ describe("sign-in (AC-6, AC-13)", () => {
   it("caches the account the server returned and opens the application without waiting for /auth/me", async () => {
     const meAnswer = deferred<Response>();
     fakeApi.on("GET /api/v1/auth/me", () => meAnswer.promise);
-    fakeApi.on("GET /api/v1/org-units/tree", () => json([]));
-    fakeApi.on("POST /api/v1/auth/login", () => json(ACCOUNT));
+    fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([]));
+    fakeApi.on("POST /api/v1/auth/login", () => Response.json(ACCOUNT));
 
     await openApp(LOGIN_PATH);
     await submitCredentials();
@@ -102,7 +102,7 @@ describe("sign-in (AC-6, AC-13)", () => {
       email: ACCOUNT.email,
       password: "Correct-horse-1!",
     });
-    meAnswer.resolve(json(ACCOUNT));
+    meAnswer.resolve(Response.json(ACCOUNT));
   });
 
   it("stays on the sign-in screen when the credentials are refused: the unauthorized handler does not clear the cache or navigate on /login", async () => {
