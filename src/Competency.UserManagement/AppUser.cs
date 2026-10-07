@@ -5,7 +5,7 @@ namespace Competency.UserManagement;
 
 /// <summary>
 /// A local account that signs in with an e-mail address and password.
-/// A global administrator has no employee; a user may be bound to one employee, and one employee has at most one account.
+/// An account may be bound to one employee, whatever its role, and one employee has at most one account.
 /// Accounts are never deleted: blocking ends them.
 /// The properties Identity maintains (hash, stamps, lockout) are deliberately not audited.
 /// </summary>

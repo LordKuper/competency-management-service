@@ -25,7 +25,7 @@ function relatedChanges(
   return changes;
 }
 
-/** The confirmation text of a dismissal or deletion: the employee's own change, then every related change the server reports. */
+/** The confirmation text of a dismissal or deletion: the employee's own change, then every related change the server reports; only the refusal when the server would refuse. */
 export function EmployeeImpactList({
   impact,
   action,
@@ -33,6 +33,14 @@ export function EmployeeImpactList({
   impact: EmployeeImpact;
   action: DepartureAction;
 }) {
+  if (impact.account?.isLastActiveAdministrator) {
+    return (
+      <Typography.Paragraph type="danger">
+        Нельзя уволить или удалить сотрудника: к нему привязан последний
+        активный глобальный администратор ({impact.account.email}).
+      </Typography.Paragraph>
+    );
+  }
   const changes = relatedChanges(impact, action);
   return (
     <>

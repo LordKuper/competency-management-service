@@ -1394,6 +1394,16 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -2813,7 +2823,8 @@
       "EmployeeImpactAccount": {
         "required": [
           "email",
-          "isBlocked"
+          "isBlocked",
+          "isLastActiveAdministrator"
         ],
         "type": "object",
         "properties": {
@@ -2821,6 +2832,9 @@
             "type": "string"
           },
           "isBlocked": {
+            "type": "boolean"
+          },
+          "isLastActiveAdministrator": {
             "type": "boolean"
           }
         }

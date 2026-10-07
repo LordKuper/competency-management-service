@@ -22,16 +22,26 @@ internal static class ActiveAdministrators
     public static async Task<IDbContextTransaction> BeginExclusiveAsync(this AppDbContext context, CancellationToken cancellationToken)
     {
         var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        await context.LockAsync(cancellationToken);
+        return transaction;
+    }
+
+    /// <summary>
+    /// Locks every active administrator row, in key order, until the transaction the caller already holds ends; for a caller that
+    /// took another lock first and so cannot start its transaction here, such as an employee change that may block an account.
+    /// </summary>
+    /// <param name="context">The context whose open transaction holds the lock.</param>
+    /// <param name="cancellationToken">Cancels the wait for the lock.</param>
+    /// <returns>A task that completes once the lock is held.</returns>
+    public static async Task LockAsync(this AppDbContext context, CancellationToken cancellationToken) =>
         await context.Database.ExecuteSqlAsync(
             $"SELECT id FROM users WHERE role = {nameof(UserRole.GlobalAdmin)} AND NOT is_blocked ORDER BY id FOR UPDATE",
             cancellationToken);
-        return transaction;
-    }
 
     public static bool IsActiveAdministrator(this AppUser user) => user.Role == UserRole.GlobalAdmin && !user.IsBlocked;
 
     /// <summary>
-    /// Whether another active administrator exists, so the given one may be blocked or demoted; call it under the lock of <see cref="BeginExclusiveAsync"/>.
+    /// Whether another active administrator exists, so the given one may be blocked or demoted; call it under the lock of <see cref="BeginExclusiveAsync"/> or <see cref="LockAsync"/>.
     /// </summary>
     /// <param name="context">The context to query through.</param>
     /// <param name="userId">The administrator about to leave the active set.</param>

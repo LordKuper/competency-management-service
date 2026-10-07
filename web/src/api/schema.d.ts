@@ -447,6 +447,7 @@ export interface components {
         EmployeeImpactAccount: {
             email: string;
             isBlocked: boolean;
+            isLastActiveAdministrator: boolean;
         };
         EmployeeImpactResponse: {
             headOfUnits: components["schemas"]["OrgUnitResponse"][];
@@ -1582,6 +1583,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

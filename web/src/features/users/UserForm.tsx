@@ -37,8 +37,7 @@ interface UserFormProps {
 const NEW_ACCOUNT_VALUES: UserFormValues = { email: "", role: "User" };
 
 /**
- * Account fields shared by creation and editing. The employee is optional for a user and not allowed for an administrator,
- * so that role shows the picker disabled and submits none, mirroring the server rules so the administrator is told early; the server still decides.
+ * Account fields shared by creation and editing. The employee is optional for either role; the server decides whether the binding is allowed.
  */
 export function UserForm({
   initialValues = NEW_ACCOUNT_VALUES,
@@ -49,16 +48,12 @@ export function UserForm({
   onCancel,
 }: UserFormProps) {
   const [form] = Form.useForm<UserFormValues>();
-  const role = Form.useWatch("role", form);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function submit(values: UserFormValues) {
     setIsSubmitting(true);
     try {
-      await onSubmit({
-        ...values,
-        employeeId: values.role === "User" ? (values.employeeId ?? null) : null,
-      });
+      await onSubmit({ ...values, employeeId: values.employeeId ?? null });
     } catch (error) {
       showFieldErrors(form, error);
     } finally {
@@ -99,27 +94,14 @@ export function UserForm({
         label="Роль"
         rules={[{ required: true, message: "Выберите роль" }]}
       >
-        <Select
-          options={ROLE_OPTIONS}
-          onChange={(next: UserRole) => {
-            if (next !== "User") form.setFieldValue("employeeId", undefined);
-          }}
-        />
+        <Select options={ROLE_OPTIONS} />
       </Form.Item>
       <Form.Item
         name="employeeId"
         label="Сотрудник"
-        extra={
-          role === "User"
-            ? "Необязательно: пользователь может быть привязан к одному работающему сотруднику или не привязан ни к кому."
-            : "Глобальный администратор не привязывается к сотруднику"
-        }
+        extra="Необязательно: учётная запись может быть привязана к одному работающему сотруднику или не привязана ни к кому."
       >
-        {role === "User" ? (
-          <EmployeePicker current={employee} />
-        ) : (
-          <Select disabled />
-        )}
+        <EmployeePicker current={employee} />
       </Form.Item>
       <Space>
         <Button type="primary" htmlType="submit" loading={isSubmitting}>

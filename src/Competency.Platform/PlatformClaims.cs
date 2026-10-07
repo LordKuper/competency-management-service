@@ -16,7 +16,7 @@ public static class PlatformClaims
     public const string Role = "role";
 
     /// <summary>
-    /// The claim holding the identifier of the employee the account is linked to; absent for global administrators.
+    /// The claim holding the identifier of the employee the account is linked to; absent for an unbound account.
     /// </summary>
     public const string EmployeeId = "employee_id";
 

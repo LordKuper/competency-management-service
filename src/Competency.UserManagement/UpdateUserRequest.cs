@@ -20,7 +20,7 @@ internal sealed record UpdateUserRequest
     {
         var errors = new Dictionary<string, string[]>();
         CredentialChecks.CheckEmail(errors, "email", Email);
-        EmployeeBinding.CheckShape(errors, Role, EmployeeId);
+        EmployeeBinding.CheckRole(errors, Role);
         return errors;
     }
 }

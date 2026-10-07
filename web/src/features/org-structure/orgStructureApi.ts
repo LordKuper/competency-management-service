@@ -12,7 +12,7 @@ export type OrgUnitTreeNode = components["schemas"]["OrgUnitTreeNodeResponse"];
 /** An employee; the projection for ordinary users leaves out the status and the version. */
 export type Employee = components["schemas"]["EmployeeResponse"];
 
-/** What dismissing or deleting an employee changes elsewhere: the units that lose their head and the account that is blocked. */
+/** What dismissing or deleting an employee changes elsewhere: the units that lose their head and the account that is blocked, or the refusal when that account is the last active administrator. */
 export type EmployeeImpact = components["schemas"]["EmployeeImpactResponse"];
 
 /** The fields an employee is created or replaced with. */

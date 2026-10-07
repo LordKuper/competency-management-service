@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.UserManagement;
 
 /// <summary>
-/// The rules that tie an account to an employee: a user may have one working employee or none, an administrator has none,
+/// The rules that tie an account to an employee: an account of any role may have one working employee or none,
 /// and an employee has at most one account.
 /// </summary>
 internal static class EmployeeBinding
@@ -13,20 +13,15 @@ internal static class EmployeeBinding
     public const string AlreadyBound = "Сотрудник уже привязан к другой учётной записи.";
 
     /// <summary>
-    /// Checks the combination of role and employee in a request, which needs no lookup.
+    /// Checks the role in a request, which needs no lookup.
     /// </summary>
     /// <param name="errors">Collects the problems by field name.</param>
     /// <param name="role">The requested role.</param>
-    /// <param name="employeeId">The requested employee, if any.</param>
-    public static void CheckShape(Dictionary<string, string[]> errors, UserRole role, Guid? employeeId)
+    public static void CheckRole(Dictionary<string, string[]> errors, UserRole role)
     {
         if (!Enum.IsDefined(role))
         {
             errors["role"] = ["Роль: укажите допустимое значение."];
-        }
-        else if (role == UserRole.GlobalAdmin && employeeId is not null)
-        {
-            errors["employeeId"] = ["Глобальный администратор не привязывается к сотруднику."];
         }
     }
 

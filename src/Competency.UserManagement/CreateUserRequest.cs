@@ -1,7 +1,7 @@
 namespace Competency.UserManagement;
 
 /// <summary>
-/// The fields of a new account. A user may have an employee; an administrator must not, so <c>employeeId</c> is sent as null for that role.
+/// The fields of a new account. An account of either role may have an employee; <c>employeeId</c> is null for none.
 /// </summary>
 internal sealed record CreateUserRequest
 {
@@ -22,7 +22,7 @@ internal sealed record CreateUserRequest
         var errors = new Dictionary<string, string[]>();
         CredentialChecks.CheckEmail(errors, "email", Email);
         CredentialChecks.CheckPassword(errors, "password", Password);
-        EmployeeBinding.CheckShape(errors, Role, EmployeeId);
+        EmployeeBinding.CheckRole(errors, Role);
         return errors;
     }
 }

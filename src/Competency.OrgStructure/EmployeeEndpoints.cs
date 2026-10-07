@@ -46,7 +46,8 @@ internal static class EmployeeEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
         administrators.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteEmployee")
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
     }
 
     private static async Task<Results<Ok<PageResponse<EmployeeResponse>>, ValidationProblem>> ListAsync(
@@ -209,6 +210,7 @@ internal static class EmployeeEndpoints
     private static async Task<Results<Ok<EmployeeImpactResponse>, NotFound>> ImpactAsync(
         Guid id,
         AppDbContext context,
+        IEmployeeAccounts accounts,
         CancellationToken cancellationToken)
     {
         if (!await context.Set<Employee>().AnyAsync(candidate => candidate.Id == id, cancellationToken))
@@ -216,11 +218,12 @@ internal static class EmployeeEndpoints
             return TypedResults.NotFound();
         }
 
-        return TypedResults.Ok((await EmployeeImpact.OfAsync(context, id, cancellationToken)).ToResponse());
+        return TypedResults.Ok((await EmployeeImpact.OfAsync(context, accounts, id, cancellationToken)).ToResponse());
     }
 
     /// <summary>
-    /// Marks the employee as not working, takes them off every unit they head and blocks their account, all in one transaction.
+    /// Marks the employee as not working, takes them off every unit they head and blocks their account, all in one transaction;
+    /// refused when the account is the last active administrator.
     /// </summary>
     private static async Task<Results<Ok<EmployeeResponse>, NotFound, ProblemHttpResult>> DismissAsync(
         Guid id,
@@ -242,7 +245,13 @@ internal static class EmployeeEndpoints
             return Rejections.Conflict($"Сотрудник «{employee.FullName}» уже не работает.");
         }
 
-        var impact = await EmployeeImpact.OfAsync(context, id, cancellationToken);
+        await accounts.LockAdministratorsAsync(cancellationToken);
+        var impact = await EmployeeImpact.OfAsync(context, accounts, id, cancellationToken);
+        if (impact.IsRefused)
+        {
+            return Rejections.Conflict(EmployeeImpact.LastAdministratorMessage);
+        }
+
         await impact.ApplyAsync(id, accounts, unbindAccount: false, cancellationToken);
         ifMatch.ApplyTo(context, employee);
         employee.IsActive = false;
@@ -284,9 +293,10 @@ internal static class EmployeeEndpoints
     }
 
     /// <summary>
-    /// Deletes the employee for good, after taking them off every unit they head and blocking and detaching their account, all in one transaction.
+    /// Deletes the employee for good, after taking them off every unit they head and blocking and detaching their account, all in one transaction;
+    /// refused when the account is the last active administrator.
     /// </summary>
-    private static async Task<Results<NoContent, NotFound>> DeleteAsync(
+    private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> DeleteAsync(
         Guid id,
         IfMatch ifMatch,
         AppDbContext context,
@@ -300,7 +310,13 @@ internal static class EmployeeEndpoints
             return TypedResults.NotFound();
         }
 
-        var impact = await EmployeeImpact.OfAsync(context, id, cancellationToken);
+        await accounts.LockAdministratorsAsync(cancellationToken);
+        var impact = await EmployeeImpact.OfAsync(context, accounts, id, cancellationToken);
+        if (impact.IsRefused)
+        {
+            return Rejections.Conflict(EmployeeImpact.LastAdministratorMessage);
+        }
+
         await impact.ApplyAsync(id, accounts, unbindAccount: true, cancellationToken);
         ifMatch.ApplyTo(context, employee);
         context.Remove(employee);

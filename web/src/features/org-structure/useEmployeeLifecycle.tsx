@@ -41,7 +41,8 @@ const REHIRE_NOTE =
 
 /**
  * Returns the action that dismisses, rehires or deletes an employee after a confirmation. Dismissal and deletion first read
- * what they would change elsewhere and list every change in the confirmation, since the server applies exactly those.
+ * what they would change elsewhere and list every change in the confirmation, since the server applies exactly those;
+ * when the server would refuse because the account is the last active administrator, the confirmation says so and cannot be confirmed.
  * A refusal is explained in a dialog that stays until dismissed. The queries are reread whatever the outcome,
  * so a stale version shows the current state; the accounts are reread too, because the cascade blocks and detaches them.
  */
@@ -93,12 +94,12 @@ export function useEmployeeLifecycle() {
           content: describeApiError(error),
           okText: "Понятно",
         });
-      const confirm = (content: ReactNode) =>
+      const confirm = (content: ReactNode, isRefused = false) =>
         modal.confirm({
           title: `${wording.title} «${employee.fullName}»?`,
           content,
           okText: wording.okText,
-          okButtonProps: { danger: action === "delete" },
+          okButtonProps: { danger: action === "delete", disabled: isRefused },
           cancelText: "Отмена",
           onOk: async () => {
             try {
@@ -117,7 +118,10 @@ export function useEmployeeLifecycle() {
       const hideLoading = message.loading("Проверяем связанные изменения…", 0);
       try {
         const impact = await fetchEmployeeImpact(id);
-        confirm(<EmployeeImpactList impact={impact} action={action} />);
+        confirm(
+          <EmployeeImpactList impact={impact} action={action} />,
+          impact.account?.isLastActiveAdministrator,
+        );
       } catch (error) {
         showFailure(error);
       } finally {

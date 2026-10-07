@@ -6,7 +6,7 @@ namespace Competency.UserManagement;
 
 /// <summary>
 /// Contributes the <see cref="AppUser"/> table to the shared model: snake_case names, a client-generated Guid v4 key,
-/// a unique case-insensitive e-mail that doubles as the internal Identity user name, a role/employee consistency check, one account per employee,
+/// a unique case-insensitive e-mail that doubles as the internal Identity user name, one account per employee,
 /// and a foreign key to the employee that never cascades.
 /// Only the Identity columns this application uses are mapped; roles, claims, logins, tokens, phone and two-factor are not.
 /// </summary>
@@ -21,9 +21,7 @@ internal sealed class UserManagementEntityConfiguration : IEntityConfigurationCo
 
     public void Configure(ModelBuilder modelBuilder) => modelBuilder.Entity<AppUser>(entity =>
     {
-        entity.ToTable("users", table => table.HasCheckConstraint(
-            "ck_users_role_employee",
-            $"role = '{nameof(UserRole.GlobalAdmin)}' AND employee_id IS NULL OR role = '{nameof(UserRole.User)}'"));
+        entity.ToTable("users");
 
         entity.Property(e => e.Id).HasColumnName("id").HasValueGenerator<GuidValueGenerator>();
         entity.Property(e => e.UserName).HasColumnName("user_name").HasMaxLength(AppUser.EmailMaxLength).IsRequired();
