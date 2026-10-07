@@ -348,6 +348,10 @@ internal static class EmployeeEndpoints
             || employee.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)));
     }
 
+    /// <summary>
+    /// Saves the employee and reads the response back while the tree lock is still held, so that the body and its <c>ETag</c> come
+    /// from one snapshot that no concurrent change or deletion can alter before the commit.
+    /// </summary>
     private static async Task<EmployeeResponse> SaveAsync(
         Employee employee,
         AppDbContext context,
@@ -356,12 +360,13 @@ internal static class EmployeeEndpoints
         CancellationToken cancellationToken)
     {
         await context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        response.SetETag(employee.Version);
-        return await context.Set<Employee>()
+        var saved = await context.Set<Employee>()
             .AsNoTracking()
-            .Where(saved => saved.Id == employee.Id)
+            .Where(candidate => candidate.Id == employee.Id)
             .Select(EmployeeResponse.FullProjection(context))
             .SingleAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        response.SetETag(saved.Version!.Value);
+        return saved;
     }
 }
