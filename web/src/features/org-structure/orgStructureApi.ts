@@ -38,10 +38,10 @@ export const orgUnitTreeQuery = queryOptions({
   ...LIST_REREAD,
 });
 
-/** Largest page the employee list accepts. */
+/** Largest page the employee list accepts, as `ListQueries.MaxPageSize` in the API; the OpenAPI document does not carry the limit. */
 const EMPLOYEE_PAGE_SIZE_MAX = 200;
 
-/** Longest search text the employee list accepts. */
+/** Longest search text the employee list accepts, as `TextSearch.MaxLength` in the API; the OpenAPI document does not carry the limit. */
 export const SEARCH_TEXT_MAX_LENGTH = 200;
 
 /** The first page of the employees whose name or position match the text, in list order, with the number of matches in all. */

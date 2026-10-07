@@ -1,3 +1,3 @@
-/** Hint under every new-password field; the server applies the rules and reports what a rejected password lacks. */
+/** Hint under every new-password field. It names no length, a deployment setting: the server applies the rules and reports what a rejected password lacks. */
 export const PASSWORD_HINT =
-  "Не менее 10 символов, с заглавной и строчной буквой, цифрой и специальным символом.";
+  "Пароль должен быть длинным и содержать заглавные и строчные буквы, цифры и специальные символы. Если пароль не подойдёт, сервис укажет, чего в нём не хватает.";
