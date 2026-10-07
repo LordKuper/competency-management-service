@@ -1,0 +1,1470 @@
+diff --git a/.claude/agent-memory/asd-dev-critical/project_pg-behaviour-facts.md b/.claude/agent-memory/asd-dev-critical/project_pg-behaviour-facts.md
+index d2498b8..73a1a98 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_pg-behaviour-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_pg-behaviour-facts.md
+@@ -11,7 +11,7 @@ Confirmed on `postgres:18.6-trixie` (en_US.utf8, libc provider) during the Task
+ - `ILIKE` folds Cyrillic case but treats `ё` and `е` as different letters; the `russian` FTS config maps `ё` to `е` and strips endings (`Петров`->`петр`, `Семёнов`->`семен`), and stems the query too. So `q=семенов` finds Семёнов only through FTS and `q=семен` finds nothing; any "search must find X" expectation has to be checked against both paths. `plainto_tsquery` is safe for arbitrary text.
+ - `ILIKE ... ESCAPE '\'` still uses the `gin_trgm_ops` index, also inside a BitmapOr with the tsvector index.
+ - The default cluster collation sorts Cyrillic correctly (`е` < `ё` < `ж`); no ICU column collation is needed. `SHOW lc_collate` is not available in 18 (use `pg_database`). `default_text_search_config` is `english`, so `'russian'` must always be passed.
+-- The cluster superuser (`POSTGRES_USER`, which the app uses in the manifests) bypasses the audit trigger with `SET session_replication_role = replica`; a non-superuser database owner cannot, and `pg_trgm` is trusted so such an owner can run the migrations.
++- The cluster superuser (`POSTGRES_USER`, which the app uses in the manifests) bypasses an ordinary trigger with `SET session_replication_role = replica`; migration `AuditTriggersEnableAlways` (review-fix wave-1/iter-01) makes both audit triggers `ENABLE ALWAYS` to close that, written from the PG docs and NOT yet run against the image (impl-test adds the replica-mode test). A non-superuser database owner could not bypass either way, and `pg_trgm` is trusted so such an owner can run the migrations. DDL (`DROP TRIGGER`) still removes the triggers.
+ - The DB accepts `org_units.parent_id = id` (no CHECK); acyclicity is enforced only by the app under `pg_advisory_xact_lock`.
+ - Unhandled startup exception exits the container with 139 on Docker Desktop/WSL2, not 134.
+ 
+diff --git a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+index ba19f54..e8c57a0 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+@@ -3,3 +3,4 @@
+ - [Re-review mirror pointers](feedback_re-review-mirror-pointers.md) — after a rule-order fix, resolve the mirrors' "same placement" pointer chains and read the tester's recorded ceilings
+ - [Pinned clauses vs economy](feedback_doc-economy-pinned-clauses.md) — read the suite pin and plan decision before flagging a pointer-plus-outcome clause; prefer pointer-coverage gaps
+ - [Re-review without a shell](feedback_rereview-no-shell-checks.md) — back hash, suite and pin claims from canon text and the tester's record; say what was not recomputed
++- [Ledger finding mapping](feedback_ledger-finding-mapping.md) — one f per rule row, none on file/section rows, Findings table first, no pipes in cells
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_ledger-finding-mapping.md b/.claude/agent-memory/asd-reviewer-combined/feedback_ledger-finding-mapping.md
+new file mode 100644
+index 0000000..0df47cb
+--- /dev/null
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_ledger-finding-mapping.md
+@@ -0,0 +1,19 @@
++---
++name: ledger-finding-mapping
++description: how findings attach to ledger rows so persist-review accepts the return - one f per rule row, no f on file or section rows, first table must be the Findings table
++metadata:
++  type: feedback
++---
++
++Plan the finding-to-rubric mapping before writing the return: a rule row carries one `f`, file and section rows cannot
++carry one (their vocabularies have no `finding` status), so give each finding its own rule row (merge themes when rubric
++rows run out, e.g. a code-comment reference to a project doc folds into SSoT).
++
++**Why:** `.asd/runtime.js` `rowsById` and `reviewFindings` reject a malformed return; the findings table is read from the
++first `|` line after the verdict token, so no other table may precede it, and a literal `|` in any cell breaks parsing.
++
++**How to apply:**
++- Findings table first (columns `# | Severity | Location | Description | Suggested fix`), ids as plain strings (`F1`).
++- Put the over-engineering category (`simplify`/`keep-as-is`/`escalate`) in the Description cell; the table has no category column.
++- One fenced JSON ledger block only; ids copied verbatim from the manifest (backticks and em dashes included).
++- Verify "unused member" claims with `Grep -o -n` over both `src` and `tests` for every receiver name before calling dead code.
+diff --git a/.claude/agent-memory/asd-tester-critical/MEMORY.md b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+index 4278124..6ce0d5a 100644
+--- a/.claude/agent-memory/asd-tester-critical/MEMORY.md
++++ b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+@@ -1,4 +1,4 @@
+ - [Fail-first and `none` honesty](feedback_fail-first-and-none-honesty.md) — transcribe the first-failing assertion, never justify `none` with "it's prose", never assert a qualifier where the substance is assertable
+ - [Mutation runs trip the hash ledger](project_mutation-runs-trip-the-hash-ledger.md) — editing a managed_paths file to prove a mutation also fails upstream_hashes; expected noise
+ - [Testability envelope](project_testability-envelope.md) — what is testable here, honest `none` decisions, mutation and fixture traps, and the §7 in-body-comment ban.
+-- [Competency test harness](project_competency-test-harness.md) — child-process API host on shared Testcontainers, race and jsdom traps, scratch-copy mutations, tech-reference gate
++- [Competency test harness](project_competency-test-harness.md) — child-process API host on shared Testcontainers, race, async-log and jsdom traps, forcing a 5xx, scratch-copy mutations, tech-reference gate
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index bc83869..4a01c60 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -12,5 +12,9 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Race tests: start both requests behind a `TaskCompletionSource` created with `RunContinuationsAsynchronously`, fetch every version before the gate, accept {200, 409} or {200, 401} (the loser's session may already be ended), and loop a few rounds with fresh data.
+ - A host that unexpectedly starts inside a "must fail to start" test has to be disposed: a leaked child keeps the runner's stdout pipe open and hangs `dotnet test` (and a `spawnSync` around it) until it is killed by its port.
+ - Mutation proofs for production code run in a `git archive HEAD` copy outside the repository, never in the working tree; a `node_modules` junction in that copy is removed with `rmdir` before `rm -rf`. A fixture that sorts identically under the wrong algorithm survives its mutation: a green mutation is a finding about the test.
++- Host logs: the console logger writes asynchronously, so a record can reach `host.Logs` after the response that caused it; a test that reads it right away flakes (seen once in five runs). Read through `ApiHost.LogsAfterAsync(fragment)` and find records by structured fields (`State.Status`, `State.StackTrace`), not by message text, so a reword stays green.
++- A real 5xx without a test hook: on a dedicated host add a CHECK constraint whose name is a unique marker (raw SQL), then send the value it forbids. The error is an unmapped check violation, and Npgsql redacts the row detail, so the constraint name is the one string of the exception message that can prove a log record never carries it.
++- A guard that a role cannot bypass (triggers enabled always) is tested inside a transaction: `SET LOCAL session_replication_role = replica`, run the statement, expect the rejection; disposing the transaction rolls back, so a regression cannot damage the shared host's journal.
++- Mutation copies: run `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj` there, not the `.slnx` (it pulls the web project and `node_modules`). Mutating a migration away means deleting its `.cs` and `.Designer.cs`; the model snapshot stays consistent, so the host still starts.
+ - Web tests: jsdom has no `ResizeObserver` (stubbed in `web/src/test/setup.ts`); Testing Library's accessible name collapses a non-breaking space, so assert the `aria-label` attribute for it; `Intl.Collator("ru")` sorts ё as е, so an ordering fixture must tell ICU order, code-point order and "ё right after е" apart.
+ - `docs/architecture/tech-reference/` gates test libraries too: Playwright and `Microsoft.AspNetCore.Mvc.Testing` have no reference, so the Tester may not implement with them until the Architect adds one. Check the directory before planning e2e.
+diff --git a/Dockerfile b/Dockerfile
+index 3990b2b..c2d7527 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,6 +1,6 @@
+ # syntax=docker/dockerfile:1
+ # check=skip=FromPlatformFlagConstDisallowed
+-# The skipped check flags the constant --platform below, which is deliberate (Q10): the delivered image is linux/amd64
++# The skipped check flags the constant --platform below, which is deliberate: the delivered image is linux/amd64
+ # whatever the architecture of the build host.
+ 
+ # Base images arrive through build arguments so a digest can be injected without editing this file:
+diff --git a/deploy/README.md b/deploy/README.md
+index d8e46ed..4467fc8 100644
+--- a/deploy/README.md
++++ b/deploy/README.md
+@@ -1,6 +1,6 @@
+ # Сборка и развёртывание
+ 
+-Образы собираются вне контура, на машине с интернетом, и переносятся в контур готовыми: запущенный сервис ничего не скачивает. Манифесты — plain YAML (без Kustomize и Helm). Ingress и TLS манифесты не задают (открытый вопрос Q8).
++Образы собираются вне контура, на машине с интернетом, и переносятся в контур готовыми: запущенный сервис ничего не скачивает. Манифесты — plain YAML (без Kustomize и Helm). Ingress и TLS манифесты не задают.
+ 
+ | Файл | Назначение |
+ |---|---|
+@@ -12,7 +12,7 @@
+ 
+ ## 1. Сборка образов (вне контура)
+ 
+-Нужен Docker с BuildKit. Образ платформы `linux/amd64` получается на любом хосте (Q10).
++Нужен Docker с BuildKit. Образ платформы `linux/amd64` получается на любом хосте.
+ 
+ 1. Определить digest базовых образов (строка `Digest:` в выводе):
+ 
+@@ -39,10 +39,10 @@
+ 
+ ## 2. Перенос в контур
+ 
+-- Есть внутренний registry (Q11): `docker push`, узлы забирают образы сами.
++- Есть внутренний registry: `docker push`, узлы забирают образы сами.
+ - Нет registry: `docker save -o competency-images.tar competency-app:<VERSION> postgres:18.6-trixie`, перенос архива, импорт на каждом узле, где может запуститься под (для containerd — `ctr -n k8s.io images import competency-images.tar`). `imagePullPolicy: IfNotPresent` — pull не требуется.
+ 
+-Digest в манифестах: `postgres:18.6-trixie@sha256:<DIGEST>` в `db.yaml` и `competency-app:<VERSION>@sha256:<DIGEST>` в `app.yaml`. Digest у собранного локально образа появляется после `docker push`; при tar-доставке соответствие digest после импорта не проверено (Q11) — сверить на узле (`crictl images --digests`), а если digest недоступен, оставить ссылку по тегу без `@sha256:<DIGEST>`.
++Digest в манифестах: `postgres:18.6-trixie@sha256:<DIGEST>` в `db.yaml` и `competency-app:<VERSION>@sha256:<DIGEST>` в `app.yaml`. Digest у собранного локально образа появляется после `docker push`; при tar-доставке соответствие digest после импорта не проверено — сверить на узле (`crictl images --digests`), а если digest недоступен, оставить ссылку по тегу без `@sha256:<DIGEST>`.
+ 
+ ## 3. Применение
+ 
+@@ -60,7 +60,7 @@ kubectl -n competency rollout status deployment/app
+ 
+ Поля Secret `competency-secret`:
+ 
+-- `POSTGRES_PASSWORD` — пароль пользователя БД; `ConnectionStrings__Default` — строка подключения `app` с тем же паролем (без `;` и кавычек в пароле); `Database` и `Username` совпадают с `db-config`; `GSS Encryption Mode=Disable` из шаблона оставить (в образе нет библиотеки Kerberos, без ключа при каждом старте в stderr попадает строка `Cannot load library libgssapi_krb5.so.2`). Пароль применяется при первой инициализации тома: позже Secret его не меняет.
++- `POSTGRES_PASSWORD` — пароль пользователя БД; `ConnectionStrings__Default` — строка подключения `app` с тем же паролем (без `;` и кавычек в пароле); `Database` и `Username` совпадают с `db-config`; `GSS Encryption Mode=Disable` из шаблона оставить (причина — в комментарии шаблона). Пароль применяется при первой инициализации тома: позже Secret его не меняет.
+ - `Bootstrap__AdminEmail`, `Bootstrap__AdminPassword` — первый глобальный администратор: его e-mail и пароль задаются при развёртывании так же, как пароль БД, и в репозиторий не попадают. E-mail одновременно служит именем для входа (отдельного имени пользователя нет), должен быть корректным адресом не длиннее 254 символов. Пароль подчиняется политике Identity: не короче 10 символов, цифра, строчная и заглавная буква, неалфавитно-цифровой символ.
+ 
+ Доступ без Ingress, для проверки: `kubectl -n competency port-forward svc/app 8080:8080` и `curl http://localhost:8080/healthz/ready`.
+@@ -81,10 +81,12 @@ kubectl -n competency rollout status deployment/app
+ 
+ ## Открытые точки
+ 
+-- Q8, TLS: Ingress не задан. `Authentication__Cookie__SecurePolicy` в `app-config` равен `SameAsRequest`; когда TLS заканчивается перед приложением, поставить `Always`. Заголовки `X-Forwarded-*` приложение не разбирает: за прокси лимит входа (`RateLimiting:Login`) считается по адресу прокси, а не клиента.
+-- Q5: резервного копирования нет, манифестов бэкапа нет; PVC `data-db-0` и `app-keys` — единственные копии данных.
+-- Q11: доставка образов (registry или tar) не выбрана.
+-- `app` подключается учётной записью `POSTGRES_USER` — это суперпользователь кластера; отдельной роли с правами только на свою БД нет. Триггер неизменяемости журнала от DDL не защищает (решение спринта), а суперпользователь обходит его и без DDL (`SET session_replication_role = replica`, проверено на образе). Отдельная роль-владелец БД без прав суперпользователя закрыла бы этот обход: расширение `pg_trgm` помечено как trusted, и такая роль создаёт его сама (проверено); триггер при этом по-прежнему снимается через DDL.
++TLS, резервное копирование и доставка образов — открытые вопросы, их ведёт `docs/architecture/stack.html`.
++
++- TLS: Ingress не задан. `Authentication__Cookie__SecurePolicy` в `app-config` равен `SameAsRequest`; когда TLS заканчивается перед приложением, поставить `Always`. Заголовки `X-Forwarded-*` приложение не разбирает: за прокси лимит входа (`RateLimiting:Login`) считается по адресу прокси, а не клиента.
++- Резервного копирования нет, манифестов бэкапа нет; PVC `data-db-0` и `app-keys` — единственные копии данных.
++- Доставка образов (registry или tar) не выбрана.
++- `app` подключается учётной записью `POSTGRES_USER` — это суперпользователь кластера; отдельной роли с правами только на свою БД нет. Триггеры неизменяемости журнала включены как `ENABLE ALWAYS`, поэтому срабатывают и при `SET session_replication_role = replica`, но от DDL (`DROP TRIGGER`, `DISABLE TRIGGER`) не защищают (решение спринта). Расширение `pg_trgm` помечено как trusted, и роль-владелец БД без прав суперпользователя создаёт его сама (проверено).
+ - `requests`/`limits`, StorageClass и NetworkPolicy не заданы — их определяет кластер; ёмкости PVC (10Gi у `db`, 1Gi у `app-keys`) — стартовые значения.
+ - Остановка `db`: образ задаёт `STOPSIGNAL SIGINT`; проверить, что runtime кластера его учитывает. Иначе PostgreSQL получит SIGTERM, будет ждать клиентов, и по истечении `terminationGracePeriodSeconds: 120` под получит SIGKILL с последующим crash recovery.
+ - Обновление: пересборка, сканирование, перенос, `kubectl apply` с новыми digest. Из-за `Recreate` `app` недоступен на время смены пода.
+diff --git a/deploy/dev/README.md b/deploy/dev/README.md
+index 958836f..011dd6f 100644
+--- a/deploy/dev/README.md
++++ b/deploy/dev/README.md
+@@ -1,17 +1,17 @@
+ # Локальная разработка в Visual Studio
+ 
+-Профиль запуска «Все сервисы» по F5 поднимает всё для работы над приложением, без самописных скриптов:
++Профиль запуска `Everything` по F5 поднимает всё для работы над приложением, без самописных скриптов:
+ 
+ | Что | Чем запускается | Адрес |
+ |---|---|---|
+ | PostgreSQL 18.6 | compose-проект `deploy/dev/docker-compose.dcproj` (единственный сервис `db`) | `127.0.0.1:15432` |
+ | API | `src/Competency.Api` под отладчиком, профиль `Competency.Api` из `Properties/launchSettings.json` | http://localhost:5000 |
+-| Vite и браузер | `web/web.esproj` (`npm run dev`), конфигурация `localhost (Edge)` из `web/.vscode/launch.json` | http://localhost:5173 |
++| Vite и браузер | `web/web.esproj` (`npm run dev`), конфигурация `localhost (Chrome)` из `web/.vscode/launch.json` | http://localhost:5173 |
+ 
+ Профили лежат в `Competency.slnLaunch` (корень репозитория):
+ 
+-- «Все сервисы» — БД, API под отладчиком, Vite; Edge открывается на http://localhost:5173, запросы `/api` Vite проксирует на :5000. Войти: `admin@kalibr.local` / `Admin-Dev-12345!`.
+-- «Только API» — БД и API под отладчиком, без Vite и браузера. БД входит в оба профиля: API применяет миграции при старте и без БД не работает.
++- `Everything` — БД, API под отладчиком, Vite; Chrome открывается на http://localhost:5173, запросы `/api` Vite проксирует на :5000. Войти: e-mail и пароль администратора из `Bootstrap__AdminEmail` и `Bootstrap__AdminPassword` в `launchSettings.json`.
++- `API` — БД и API под отладчиком, без Vite и браузера. БД входит в оба профиля: API применяет миграции при старте и без БД не работает.
+ 
+ ## Требования
+ 
+@@ -27,9 +27,9 @@
+ ## Как включить профиль запуска
+ 
+ 1. Открыть `Competency.slnx`.
+-2. В списке рядом с кнопкой запуска выбрать «Все сервисы» (или «Только API»), нажать F5.
++2. В списке рядом с кнопкой запуска выбрать `Everything` (или `API`), нажать F5.
+ 
+-Chrome вместо Edge: в `Competency.slnLaunch` заменить `DebugTarget` проекта `web\web.esproj` на `localhost (Chrome)`.
++Edge вместо Chrome: в `Competency.slnLaunch` заменить `DebugTarget` проекта `web\web.esproj` на `localhost (Edge)`.
+ 
+ Если профилей в списке нет, включить Tools → Options → All Settings → Preview Features → «Enable Multi-Project Launch Profiles» (в Visual Studio 2022: Environment → Preview Features) и открыть решение заново. Профиль можно проверить и изменить через контекстное меню решения → «Configure Startup Projects…».
+ 
+@@ -39,16 +39,16 @@ Visual Studio запускает проекты в порядке профиля
+ 
+ ## Значения только для локальной разработки
+ 
+-JSON не допускает комментариев, поэтому оговорка здесь: пароли ниже — тестовые, годятся только для рабочей станции. Порт БД слушает один `127.0.0.1`. `launchSettings.json` в образ и в `dotnet publish` не попадает.
++JSON не допускает комментариев, поэтому оговорка здесь: пароли в этих файлах — тестовые, годятся только для рабочей станции. Порт БД слушает один `127.0.0.1`. `launchSettings.json` в образ и в `dotnet publish` не попадает.
+ 
+-| Где | Значение |
++| Где | Что задано |
+ |---|---|
+-| `deploy/dev/docker-compose.yml` | пользователь и БД `competency`, пароль `dev_pass_123` |
+-| `src/Competency.Api/Properties/launchSettings.json` | `ConnectionStrings__Default` с тем же паролем (`GSS Encryption Mode=Disable` — как в `deploy/secret.template.yaml`); `Bootstrap__AdminEmail` = `admin@kalibr.local`, `Bootstrap__AdminPassword` = `Admin-Dev-12345!` |
++| `deploy/dev/docker-compose.yml` | пользователь, пароль и имя БД (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`) |
++| `src/Competency.Api/Properties/launchSettings.json` | `ConnectionStrings__Default` с тем же паролем (`GSS Encryption Mode=Disable` — причина в `deploy/secret.template.yaml`); `Bootstrap__AdminEmail`, `Bootstrap__AdminPassword` |
+ 
+ ## База, созданная до входа по e-mail
+ 
+-Администратор, созданный из `Bootstrap__AdminUserName`, после миграции `EmailOnUserAccount` получает e-mail `<имя>@local.invalid` (для `admin` — `admin@local.invalid`) и прежний пароль; `Bootstrap__AdminEmail` на существующего администратора не действует. Войти этим адресом и заменить e-mail в карточке пользователя (раздел «Пользователи»), либо начать с чистой БД: `docker compose -f deploy/dev/docker-compose.yml down -v`. Табельные номера и e-mail сотрудников миграция удаляет.
++Как войти в такую базу — в «Поведение при старте» `deploy/README.md` (обновление существующего развёртывания). Локально проще начать с чистой БД: `docker compose -f deploy/dev/docker-compose.yml down -v`.
+ 
+ ## Остановка БД
+ 
+diff --git a/deploy/k8s/configmap.yaml b/deploy/k8s/configmap.yaml
+index d36a484..510e6ed 100644
+--- a/deploy/k8s/configmap.yaml
++++ b/deploy/k8s/configmap.yaml
+@@ -8,7 +8,7 @@ metadata:
+ data:
+   # Must equal the mountPath of the app-keys volume in app.yaml.
+   DataProtection__KeysPath: /var/lib/competency/keys
+-  # TLS termination is an open question (Q8). Switch to Always once TLS ends in front of the app,
++  # Where TLS ends is not decided yet. Switch to Always once it ends in front of the app,
+   # otherwise the session cookie is issued without the Secure flag.
+   Authentication__Cookie__SecurePolicy: SameAsRequest
+   # Files in the image never change at runtime, and every config watcher spends one instance
+diff --git a/src/Competency.Audit/AuditSaveChangesInterceptor.cs b/src/Competency.Audit/AuditSaveChangesInterceptor.cs
+index 738b71b..fc38786 100644
+--- a/src/Competency.Audit/AuditSaveChangesInterceptor.cs
++++ b/src/Competency.Audit/AuditSaveChangesInterceptor.cs
+@@ -9,11 +9,9 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
+ namespace Competency.Audit;
+ 
+ /// <summary>
+-/// Adds one journal row, named <c>&lt;EntityType&gt;.Created</c>, <c>.Updated</c> or <c>.Deleted</c>, for every entity carrying
+-/// <see cref="AuditedAttribute"/> that the current save creates, changes or deletes, so the row commits or fails with the change.
+-/// Values hold only properties marked <see cref="AuditedAttribute"/>, and only the changed ones for an update; an update that
+-/// changes none of them adds no row. Keys must be known before the save, and bulk <c>ExecuteUpdate</c> or <c>ExecuteDelete</c>
+-/// bypass the change tracker and so the journal: they must not be used on audited entities.
++/// Journals every create, update and delete of an <see cref="AuditedAttribute"/> entity in the same save,
++/// so the journal row commits or fails with the change. Keys must be assigned before the save, and bulk <c>ExecuteUpdate</c>
++/// or <c>ExecuteDelete</c> bypass the change tracker and so the journal: they must not be used on audited entities.
+ /// </summary>
+ internal sealed class AuditSaveChangesInterceptor(AuditEventFactory factory) : SaveChangesInterceptor
+ {
+diff --git a/src/Competency.Platform/HttpContextCurrentActor.cs b/src/Competency.Platform/HttpContextCurrentActor.cs
+index 65ae91f..b3b208f 100644
+--- a/src/Competency.Platform/HttpContextCurrentActor.cs
++++ b/src/Competency.Platform/HttpContextCurrentActor.cs
+@@ -11,8 +11,6 @@ internal sealed class HttpContextCurrentActor(IHttpContextAccessor accessor) : I
+ 
+     public string? Role => FindClaim(PlatformClaims.Role);
+ 
+-    public Guid? EmployeeId => ParseGuid(FindClaim(PlatformClaims.EmployeeId));
+-
+     public string? RequestId => accessor.HttpContext?.Items[RequestIdMiddleware.ItemKey] as string;
+ 
+     private string? FindClaim(string claimType) => accessor.HttpContext?.User.FindFirst(claimType)?.Value;
+diff --git a/src/Competency.Platform/ICurrentActor.cs b/src/Competency.Platform/ICurrentActor.cs
+index 26808be..af3eef7 100644
+--- a/src/Competency.Platform/ICurrentActor.cs
++++ b/src/Competency.Platform/ICurrentActor.cs
+@@ -17,11 +17,6 @@ public interface ICurrentActor
+     /// </summary>
+     string? Role { get; }
+ 
+-    /// <summary>
+-    /// The employee the signed-in account is linked to, from the <see cref="PlatformClaims.EmployeeId"/> claim.
+-    /// </summary>
+-    Guid? EmployeeId { get; }
+-
+     /// <summary>
+     /// The identifier of the current request, also sent to the client as <c>X-Request-Id</c>.
+     /// </summary>
+diff --git a/src/Competency.Platform/Migrations/20261006160812_EmailOnUserAccount.cs b/src/Competency.Platform/Migrations/20261006160812_EmailOnUserAccount.cs
+index c396630..96df475 100644
+--- a/src/Competency.Platform/Migrations/20261006160812_EmailOnUserAccount.cs
++++ b/src/Competency.Platform/Migrations/20261006160812_EmailOnUserAccount.cs
+@@ -6,13 +6,8 @@ namespace Competency.Platform.Migrations
+ {
+     /// <summary>
+     /// Moves the e-mail from the employee to the account and removes the personnel number.
+-    /// Up drops the personnel number and e-mail columns of employees with their indexes (their values are not kept),
+-    /// and adds the mandatory unique case-insensitive e-mail to users. Existing accounts are backfilled with
+-    /// <c>user_name || '@local.invalid'</c> (and the Identity user name with the same value, so the two stay equal),
+-    /// which cannot collide because user names are unique; an administrator replaces the placeholder in the interface.
+-    /// Down restores the dropped employee columns and indexes with unique placeholders derived from the employee id, since the values are gone,
+-    /// removes the <c>@local.invalid</c> placeholder from the user names it was added to, drops the account e-mail columns
+-    /// and narrows the user name columns back, which fails if a user name is longer than 64 characters.
++    /// Up does not keep the dropped personnel numbers and employee e-mails; Down restores those columns with placeholder values,
++    /// does not keep the account e-mails, and fails if a user name is longer than 64 characters.
+     /// </summary>
+     public partial class EmailOnUserAccount : Migration
+     {
+diff --git a/src/Competency.Platform/Migrations/20261007064349_EmployeeNameInThreeFields.cs b/src/Competency.Platform/Migrations/20261007064349_EmployeeNameInThreeFields.cs
+index 0108cbc..7124dcd 100644
+--- a/src/Competency.Platform/Migrations/20261007064349_EmployeeNameInThreeFields.cs
++++ b/src/Competency.Platform/Migrations/20261007064349_EmployeeNameInThreeFields.cs
+@@ -7,14 +7,7 @@ namespace Competency.Platform.Migrations
+ {
+     /// <summary>
+     /// Splits the employee's full name into last, first and middle name, and makes <c>full_name</c> derived from them.
+-    /// Up adds the three columns and fills them from the old <c>full_name</c> by splitting on whitespace: the first word is the last name,
+-    /// the second the first name, and the remaining words, joined by single spaces, the middle name. A record of one word keeps it as the last name
+-    /// with <c>-</c> as the first name, and a blank one gets <c>-</c> for both; such records need fixing by hand. A name part longer than
+-    /// 100 characters fails the migration and changes nothing, so shorten such names first.
+-    /// Then <c>full_name</c> is recreated as the stored generated column <c>last || ' ' || first || ' ' || middle</c>, and the full-text vector
+-    /// is rebuilt from the three parts, because a generated column cannot be based on another one; both indexes are recreated.
+-    /// Down turns <c>full_name</c> back into a plain column that keeps the derived values (it fails when one is longer than 200 characters),
+-    /// drops the three columns and rebuilds the vector from <c>full_name</c>.
++    /// Up fails, changing nothing, when a name part is longer than 100 characters; Down fails when a full name is longer than 200 characters.
+     /// </summary>
+     public partial class EmployeeNameInThreeFields : Migration
+     {
+diff --git a/src/Competency.Platform/Migrations/20261007141643_AuditTriggersEnableAlways.Designer.cs b/src/Competency.Platform/Migrations/20261007141643_AuditTriggersEnableAlways.Designer.cs
+new file mode 100644
+index 0000000..c9f505e
+--- /dev/null
++++ b/src/Competency.Platform/Migrations/20261007141643_AuditTriggersEnableAlways.Designer.cs
+@@ -0,0 +1,385 @@
++﻿// <auto-generated />
++using System;
++using Competency.Platform;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using Microsoft.EntityFrameworkCore.Migrations;
++using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
++using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
++using NpgsqlTypes;
++
++#nullable disable
++
++namespace Competency.Platform.Migrations
++{
++    [DbContext(typeof(AppDbContext))]
++    [Migration("20261007141643_AuditTriggersEnableAlways")]
++    partial class AuditTriggersEnableAlways
++    {
++        /// <inheritdoc />
++        protected override void BuildTargetModel(ModelBuilder modelBuilder)
++        {
++#pragma warning disable 612, 618
++            modelBuilder
++                .HasAnnotation("ProductVersion", "10.0.12")
++                .HasAnnotation("Relational:MaxIdentifierLength", 63);
++
++            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
++            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
++
++            modelBuilder.Entity("Competency.Audit.AuditEvent", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<string>("Action")
++                        .IsRequired()
++                        .HasMaxLength(128)
++                        .HasColumnType("character varying(128)")
++                        .HasColumnName("action");
++
++                    b.Property<string>("Actor")
++                        .IsRequired()
++                        .HasMaxLength(256)
++                        .HasColumnType("character varying(256)")
++                        .HasColumnName("actor");
++
++                    b.Property<string>("EntityId")
++                        .HasMaxLength(128)
++                        .HasColumnType("character varying(128)")
++                        .HasColumnName("entity_id");
++
++                    b.Property<string>("EntityType")
++                        .IsRequired()
++                        .HasMaxLength(128)
++                        .HasColumnType("character varying(128)")
++                        .HasColumnName("entity_type");
++
++                    b.Property<string>("NewValue")
++                        .HasColumnType("jsonb")
++                        .HasColumnName("new_value");
++
++                    b.Property<string>("OldValue")
++                        .HasColumnType("jsonb")
++                        .HasColumnName("old_value");
++
++                    b.Property<string>("Reason")
++                        .HasColumnType("text")
++                        .HasColumnName("reason");
++
++                    b.Property<string>("RequestId")
++                        .HasMaxLength(64)
++                        .HasColumnType("character varying(64)")
++                        .HasColumnName("request_id");
++
++                    b.Property<string>("Role")
++                        .IsRequired()
++                        .HasMaxLength(64)
++                        .HasColumnType("character varying(64)")
++                        .HasColumnName("role");
++
++                    b.Property<DateTimeOffset>("Timestamp")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("timestamp");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("RequestId");
++
++                    b.HasIndex("Actor", "Timestamp")
++                        .IsDescending(false, true);
++
++                    b.HasIndex("Timestamp", "Id")
++                        .IsDescending(true, false);
++
++                    b.HasIndex("EntityType", "EntityId", "Timestamp")
++                        .IsDescending(false, false, true);
++
++                    b.ToTable("audit_events", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.Employee", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<string>("FirstName")
++                        .IsRequired()
++                        .HasMaxLength(100)
++                        .HasColumnType("character varying(100)")
++                        .HasColumnName("first_name");
++
++                    b.Property<string>("FullName")
++                        .IsRequired()
++                        .ValueGeneratedOnAddOrUpdate()
++                        .HasColumnType("text")
++                        .HasColumnName("full_name")
++                        .HasComputedColumnSql("last_name || ' ' || first_name || coalesce(' ' || middle_name, '')", true);
++
++                    b.Property<bool>("IsActive")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_active");
++
++                    b.Property<string>("LastName")
++                        .IsRequired()
++                        .HasMaxLength(100)
++                        .HasColumnType("character varying(100)")
++                        .HasColumnName("last_name");
++
++                    b.Property<string>("MiddleName")
++                        .HasMaxLength(100)
++                        .HasColumnType("character varying(100)")
++                        .HasColumnName("middle_name");
++
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<string>("Position")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("position");
++
++                    b.Property<NpgsqlTsVector>("SearchVector")
++                        .IsRequired()
++                        .ValueGeneratedOnAddOrUpdate()
++                        .HasColumnType("tsvector")
++                        .HasColumnName("search_vector")
++                        .HasAnnotation("Npgsql:TsVectorConfig", "russian")
++                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "LastName", "FirstName", "MiddleName", "Position" });
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("OrgUnitId");
++
++                    b.HasIndex("SearchVector");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
++
++                    b.HasIndex(new[] { "FullName" }, "IX_employees_full_name_trgm");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "FullName" }, "IX_employees_full_name_trgm"), "gin");
++                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "FullName" }, "IX_employees_full_name_trgm"), new[] { "gin_trgm_ops" });
++
++                    b.ToTable("employees", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.EmployeeAccount", b =>
++                {
++                    b.Property<string>("Email")
++                        .IsRequired()
++                        .HasColumnType("text")
++                        .HasColumnName("email");
++
++                    b.Property<Guid>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.Property<bool>("IsBlocked")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_blocked");
++
++                    b.ToTable((string)null);
++
++                    b.ToSqlQuery("SELECT employee_id, email, is_blocked FROM users WHERE employee_id IS NOT NULL");
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.OrgUnit", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<Guid?>("HeadEmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("head_employee_id");
++
++                    b.Property<bool>("IsActive")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_active");
++
++                    b.Property<string>("Name")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("name");
++
++                    b.Property<Guid?>("ParentId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("parent_id");
++
++                    b.Property<NpgsqlTsVector>("SearchVector")
++                        .IsRequired()
++                        .ValueGeneratedOnAddOrUpdate()
++                        .HasColumnType("tsvector")
++                        .HasColumnName("search_vector")
++                        .HasAnnotation("Npgsql:TsVectorConfig", "russian")
++                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "Name" });
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("HeadEmployeeId");
++
++                    b.HasIndex("Name");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Name"), "gin");
++                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Name"), new[] { "gin_trgm_ops" });
++
++                    b.HasIndex("ParentId");
++
++                    b.HasIndex("SearchVector");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
++
++                    b.ToTable("org_units", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.UserManagement.AppUser", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<int>("AccessFailedCount")
++                        .HasColumnType("integer")
++                        .HasColumnName("access_failed_count");
++
++                    b.Property<string>("ConcurrencyStamp")
++                        .IsConcurrencyToken()
++                        .HasColumnType("text")
++                        .HasColumnName("concurrency_stamp");
++
++                    b.Property<string>("Email")
++                        .IsRequired()
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("email");
++
++                    b.Property<Guid?>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.Property<bool>("IsBlocked")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_blocked");
++
++                    b.Property<bool>("LockoutEnabled")
++                        .HasColumnType("boolean")
++                        .HasColumnName("lockout_enabled");
++
++                    b.Property<DateTimeOffset?>("LockoutEnd")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("lockout_end");
++
++                    b.Property<string>("NormalizedEmail")
++                        .IsRequired()
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("normalized_email");
++
++                    b.Property<string>("NormalizedUserName")
++                        .IsRequired()
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("normalized_user_name");
++
++                    b.Property<string>("PasswordHash")
++                        .HasColumnType("text")
++                        .HasColumnName("password_hash");
++
++                    b.Property<string>("Role")
++                        .IsRequired()
++                        .HasMaxLength(32)
++                        .HasColumnType("character varying(32)")
++                        .HasColumnName("role");
++
++                    b.Property<string>("SecurityStamp")
++                        .HasColumnType("text")
++                        .HasColumnName("security_stamp");
++
++                    b.Property<string>("UserName")
++                        .IsRequired()
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("user_name");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("EmployeeId")
++                        .IsUnique()
++                        .HasFilter("employee_id IS NOT NULL");
++
++                    b.HasIndex("NormalizedEmail")
++                        .IsUnique();
++
++                    b.HasIndex("NormalizedUserName")
++                        .IsUnique();
++
++                    b.ToTable("users", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.Employee", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.OrgUnit", "OrgUnit")
++                        .WithMany()
++                        .HasForeignKey("OrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("OrgUnit");
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.OrgUnit", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("HeadEmployeeId")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
++                        .WithMany()
++                        .HasForeignKey("ParentId")
++                        .OnDelete(DeleteBehavior.Restrict);
++                });
++
++            modelBuilder.Entity("Competency.UserManagement.AppUser", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("EmployeeId")
++                        .OnDelete(DeleteBehavior.Restrict);
++                });
++#pragma warning restore 612, 618
++        }
++    }
++}
+diff --git a/src/Competency.Platform/Migrations/20261007141643_AuditTriggersEnableAlways.cs b/src/Competency.Platform/Migrations/20261007141643_AuditTriggersEnableAlways.cs
+new file mode 100644
+index 0000000..0f455d3
+--- /dev/null
++++ b/src/Competency.Platform/Migrations/20261007141643_AuditTriggersEnableAlways.cs
+@@ -0,0 +1,33 @@
++﻿using Microsoft.EntityFrameworkCore.Migrations;
++
++#nullable disable
++
++namespace Competency.Platform.Migrations
++{
++    /// <summary>
++    /// Keeps the audit journal append-only for a superuser application account too: ordinary triggers are silenced by
++    /// <c>SET session_replication_role = replica</c>, triggers enabled always are not. Up changes no data.
++    /// </summary>
++    public partial class AuditTriggersEnableAlways : Migration
++    {
++        /// <inheritdoc />
++        protected override void Up(MigrationBuilder migrationBuilder)
++        {
++            migrationBuilder.Sql("""
++                ALTER TABLE audit_events
++                    ENABLE ALWAYS TRIGGER audit_events_reject_update_delete,
++                    ENABLE ALWAYS TRIGGER audit_events_reject_truncate;
++                """);
++        }
++
++        /// <inheritdoc />
++        protected override void Down(MigrationBuilder migrationBuilder)
++        {
++            migrationBuilder.Sql("""
++                ALTER TABLE audit_events
++                    ENABLE TRIGGER audit_events_reject_update_delete,
++                    ENABLE TRIGGER audit_events_reject_truncate;
++                """);
++        }
++    }
++}
+diff --git a/src/Competency.Platform/Migrations/20261007141740_UserRoleCheck.Designer.cs b/src/Competency.Platform/Migrations/20261007141740_UserRoleCheck.Designer.cs
+new file mode 100644
+index 0000000..232fb49
+--- /dev/null
++++ b/src/Competency.Platform/Migrations/20261007141740_UserRoleCheck.Designer.cs
+@@ -0,0 +1,388 @@
++﻿// <auto-generated />
++using System;
++using Competency.Platform;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using Microsoft.EntityFrameworkCore.Migrations;
++using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
++using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
++using NpgsqlTypes;
++
++#nullable disable
++
++namespace Competency.Platform.Migrations
++{
++    [DbContext(typeof(AppDbContext))]
++    [Migration("20261007141740_UserRoleCheck")]
++    partial class UserRoleCheck
++    {
++        /// <inheritdoc />
++        protected override void BuildTargetModel(ModelBuilder modelBuilder)
++        {
++#pragma warning disable 612, 618
++            modelBuilder
++                .HasAnnotation("ProductVersion", "10.0.12")
++                .HasAnnotation("Relational:MaxIdentifierLength", 63);
++
++            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
++            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
++
++            modelBuilder.Entity("Competency.Audit.AuditEvent", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<string>("Action")
++                        .IsRequired()
++                        .HasMaxLength(128)
++                        .HasColumnType("character varying(128)")
++                        .HasColumnName("action");
++
++                    b.Property<string>("Actor")
++                        .IsRequired()
++                        .HasMaxLength(256)
++                        .HasColumnType("character varying(256)")
++                        .HasColumnName("actor");
++
++                    b.Property<string>("EntityId")
++                        .HasMaxLength(128)
++                        .HasColumnType("character varying(128)")
++                        .HasColumnName("entity_id");
++
++                    b.Property<string>("EntityType")
++                        .IsRequired()
++                        .HasMaxLength(128)
++                        .HasColumnType("character varying(128)")
++                        .HasColumnName("entity_type");
++
++                    b.Property<string>("NewValue")
++                        .HasColumnType("jsonb")
++                        .HasColumnName("new_value");
++
++                    b.Property<string>("OldValue")
++                        .HasColumnType("jsonb")
++                        .HasColumnName("old_value");
++
++                    b.Property<string>("Reason")
++                        .HasColumnType("text")
++                        .HasColumnName("reason");
++
++                    b.Property<string>("RequestId")
++                        .HasMaxLength(64)
++                        .HasColumnType("character varying(64)")
++                        .HasColumnName("request_id");
++
++                    b.Property<string>("Role")
++                        .IsRequired()
++                        .HasMaxLength(64)
++                        .HasColumnType("character varying(64)")
++                        .HasColumnName("role");
++
++                    b.Property<DateTimeOffset>("Timestamp")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("timestamp");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("RequestId");
++
++                    b.HasIndex("Actor", "Timestamp")
++                        .IsDescending(false, true);
++
++                    b.HasIndex("Timestamp", "Id")
++                        .IsDescending(true, false);
++
++                    b.HasIndex("EntityType", "EntityId", "Timestamp")
++                        .IsDescending(false, false, true);
++
++                    b.ToTable("audit_events", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.Employee", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<string>("FirstName")
++                        .IsRequired()
++                        .HasMaxLength(100)
++                        .HasColumnType("character varying(100)")
++                        .HasColumnName("first_name");
++
++                    b.Property<string>("FullName")
++                        .IsRequired()
++                        .ValueGeneratedOnAddOrUpdate()
++                        .HasColumnType("text")
++                        .HasColumnName("full_name")
++                        .HasComputedColumnSql("last_name || ' ' || first_name || coalesce(' ' || middle_name, '')", true);
++
++                    b.Property<bool>("IsActive")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_active");
++
++                    b.Property<string>("LastName")
++                        .IsRequired()
++                        .HasMaxLength(100)
++                        .HasColumnType("character varying(100)")
++                        .HasColumnName("last_name");
++
++                    b.Property<string>("MiddleName")
++                        .HasMaxLength(100)
++                        .HasColumnType("character varying(100)")
++                        .HasColumnName("middle_name");
++
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<string>("Position")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("position");
++
++                    b.Property<NpgsqlTsVector>("SearchVector")
++                        .IsRequired()
++                        .ValueGeneratedOnAddOrUpdate()
++                        .HasColumnType("tsvector")
++                        .HasColumnName("search_vector")
++                        .HasAnnotation("Npgsql:TsVectorConfig", "russian")
++                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "LastName", "FirstName", "MiddleName", "Position" });
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("OrgUnitId");
++
++                    b.HasIndex("SearchVector");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
++
++                    b.HasIndex(new[] { "FullName" }, "IX_employees_full_name_trgm");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "FullName" }, "IX_employees_full_name_trgm"), "gin");
++                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "FullName" }, "IX_employees_full_name_trgm"), new[] { "gin_trgm_ops" });
++
++                    b.ToTable("employees", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.EmployeeAccount", b =>
++                {
++                    b.Property<string>("Email")
++                        .IsRequired()
++                        .HasColumnType("text")
++                        .HasColumnName("email");
++
++                    b.Property<Guid>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.Property<bool>("IsBlocked")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_blocked");
++
++                    b.ToTable((string)null);
++
++                    b.ToSqlQuery("SELECT employee_id, email, is_blocked FROM users WHERE employee_id IS NOT NULL");
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.OrgUnit", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<Guid?>("HeadEmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("head_employee_id");
++
++                    b.Property<bool>("IsActive")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_active");
++
++                    b.Property<string>("Name")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("name");
++
++                    b.Property<Guid?>("ParentId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("parent_id");
++
++                    b.Property<NpgsqlTsVector>("SearchVector")
++                        .IsRequired()
++                        .ValueGeneratedOnAddOrUpdate()
++                        .HasColumnType("tsvector")
++                        .HasColumnName("search_vector")
++                        .HasAnnotation("Npgsql:TsVectorConfig", "russian")
++                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "Name" });
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("HeadEmployeeId");
++
++                    b.HasIndex("Name");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Name"), "gin");
++                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Name"), new[] { "gin_trgm_ops" });
++
++                    b.HasIndex("ParentId");
++
++                    b.HasIndex("SearchVector");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
++
++                    b.ToTable("org_units", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.UserManagement.AppUser", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<int>("AccessFailedCount")
++                        .HasColumnType("integer")
++                        .HasColumnName("access_failed_count");
++
++                    b.Property<string>("ConcurrencyStamp")
++                        .IsConcurrencyToken()
++                        .HasColumnType("text")
++                        .HasColumnName("concurrency_stamp");
++
++                    b.Property<string>("Email")
++                        .IsRequired()
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("email");
++
++                    b.Property<Guid?>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.Property<bool>("IsBlocked")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_blocked");
++
++                    b.Property<bool>("LockoutEnabled")
++                        .HasColumnType("boolean")
++                        .HasColumnName("lockout_enabled");
++
++                    b.Property<DateTimeOffset?>("LockoutEnd")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("lockout_end");
++
++                    b.Property<string>("NormalizedEmail")
++                        .IsRequired()
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("normalized_email");
++
++                    b.Property<string>("NormalizedUserName")
++                        .IsRequired()
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("normalized_user_name");
++
++                    b.Property<string>("PasswordHash")
++                        .HasColumnType("text")
++                        .HasColumnName("password_hash");
++
++                    b.Property<string>("Role")
++                        .IsRequired()
++                        .HasMaxLength(32)
++                        .HasColumnType("character varying(32)")
++                        .HasColumnName("role");
++
++                    b.Property<string>("SecurityStamp")
++                        .HasColumnType("text")
++                        .HasColumnName("security_stamp");
++
++                    b.Property<string>("UserName")
++                        .IsRequired()
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("user_name");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("EmployeeId")
++                        .IsUnique()
++                        .HasFilter("employee_id IS NOT NULL");
++
++                    b.HasIndex("NormalizedEmail")
++                        .IsUnique();
++
++                    b.HasIndex("NormalizedUserName")
++                        .IsUnique();
++
++                    b.ToTable("users", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_users_role", "role IN ('User', 'GlobalAdmin')");
++                        });
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.Employee", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.OrgUnit", "OrgUnit")
++                        .WithMany()
++                        .HasForeignKey("OrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("OrgUnit");
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.OrgUnit", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("HeadEmployeeId")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
++                        .WithMany()
++                        .HasForeignKey("ParentId")
++                        .OnDelete(DeleteBehavior.Restrict);
++                });
++
++            modelBuilder.Entity("Competency.UserManagement.AppUser", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("EmployeeId")
++                        .OnDelete(DeleteBehavior.Restrict);
++                });
++#pragma warning restore 612, 618
++        }
++    }
++}
+diff --git a/src/Competency.Platform/Migrations/20261007141740_UserRoleCheck.cs b/src/Competency.Platform/Migrations/20261007141740_UserRoleCheck.cs
+new file mode 100644
+index 0000000..0ad0db3
+--- /dev/null
++++ b/src/Competency.Platform/Migrations/20261007141740_UserRoleCheck.cs
+@@ -0,0 +1,30 @@
++﻿using Microsoft.EntityFrameworkCore.Migrations;
++
++#nullable disable
++
++namespace Competency.Platform.Migrations
++{
++    /// <summary>
++    /// Makes the database reject a user account role other than the known ones, as the last guard behind the application.
++    /// Up fails, changing nothing, while any account holds another value.
++    /// </summary>
++    public partial class UserRoleCheck : Migration
++    {
++        /// <inheritdoc />
++        protected override void Up(MigrationBuilder migrationBuilder)
++        {
++            migrationBuilder.AddCheckConstraint(
++                name: "ck_users_role",
++                table: "users",
++                sql: "role IN ('User', 'GlobalAdmin')");
++        }
++
++        /// <inheritdoc />
++        protected override void Down(MigrationBuilder migrationBuilder)
++        {
++            migrationBuilder.DropCheckConstraint(
++                name: "ck_users_role",
++                table: "users");
++        }
++    }
++}
+diff --git a/src/Competency.Platform/Migrations/AppDbContextModelSnapshot.cs b/src/Competency.Platform/Migrations/AppDbContextModelSnapshot.cs
+index feff699..b670e5b 100644
+--- a/src/Competency.Platform/Migrations/AppDbContextModelSnapshot.cs
++++ b/src/Competency.Platform/Migrations/AppDbContextModelSnapshot.cs
+@@ -342,7 +342,10 @@ namespace Competency.Platform.Migrations
+                     b.HasIndex("NormalizedUserName")
+                         .IsUnique();
+ 
+-                    b.ToTable("users", (string)null);
++                    b.ToTable("users", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_users_role", "role IN ('User', 'GlobalAdmin')");
++                        });
+                 });
+ 
+             modelBuilder.Entity("Competency.OrgStructure.Employee", b =>
+diff --git a/src/Competency.Platform/PlatformClaims.cs b/src/Competency.Platform/PlatformClaims.cs
+index 7a7387e..96227d9 100644
+--- a/src/Competency.Platform/PlatformClaims.cs
++++ b/src/Competency.Platform/PlatformClaims.cs
+@@ -15,11 +15,6 @@ public static class PlatformClaims
+     /// </summary>
+     public const string Role = "role";
+ 
+-    /// <summary>
+-    /// The claim holding the identifier of the employee the account is linked to; absent for an unbound account.
+-    /// </summary>
+-    public const string EmployeeId = "employee_id";
+-
+     /// <summary>
+     /// The value of the <see cref="Role"/> claim that grants the global administrator policy.
+     /// </summary>
+diff --git a/src/Competency.Platform/PlatformModule.cs b/src/Competency.Platform/PlatformModule.cs
+index 7eccf4e..b3ae317 100644
+--- a/src/Competency.Platform/PlatformModule.cs
++++ b/src/Competency.Platform/PlatformModule.cs
+@@ -42,11 +42,10 @@ public static class PlatformModule
+     private static readonly TimeSpan DatabaseWaitDelay = TimeSpan.FromSeconds(1);
+ 
+     /// <summary>
+-    /// Registers the database context, the readiness check, error handling, the current actor, the authorization policies and the sign-in rate limiter.
+-    /// JSON numbers are read and written as numbers only, so the API description types integers as numbers rather than numbers or strings.
+-    /// Every <see cref="IInterceptor"/> registered in the container, by the platform or by a module, is attached to the context.
+-    /// Every endpoint requires an authenticated user unless it carries anonymous metadata; only the health probes,
+-    /// the SPA fallback and the sign-in endpoint do, and a module exposing another anonymous endpoint must say so explicitly.
++    /// Registers the cross-cutting services every module relies on.
++    /// JSON numbers are numbers only, never strings, so the API description types integers as numbers.
++    /// Every <see cref="IInterceptor"/> in the container, from the platform or a module, is attached to the context.
++    /// Every endpoint requires an authenticated user unless it carries anonymous metadata, which a module exposing an anonymous endpoint must add itself.
+     /// Nothing here connects to the database or reads the connection string until the context is first resolved.
+     /// </summary>
+     /// <param name="services">The service collection to extend.</param>
+diff --git a/src/Competency.Platform/ProblemExceptionHandler.cs b/src/Competency.Platform/ProblemExceptionHandler.cs
+index 1008ceb..1bd6b71 100644
+--- a/src/Competency.Platform/ProblemExceptionHandler.cs
++++ b/src/Competency.Platform/ProblemExceptionHandler.cs
+@@ -7,8 +7,8 @@ using Npgsql;
+ namespace Competency.Platform;
+ 
+ /// <summary>
+-/// Turns every unhandled exception into a ProblemDetails response and logs only its type, root type and database error code,
+-/// never its message, which may carry personal data or database values.
++/// Turns every unhandled exception into a ProblemDetails response and logs only its type, root type, database error code
++/// and, for a server error, its stack trace, never its message, which may carry personal data or database values.
+ /// </summary>
+ internal sealed class ProblemExceptionHandler(
+     IProblemDetailsService problemDetailsService,
+@@ -24,14 +24,16 @@ internal sealed class ProblemExceptionHandler(
+     {
+         var sqlState = FindPostgresException(exception)?.SqlState;
+         var status = ResolveStatus(exception, sqlState);
++        var isServerError = status >= StatusCodes.Status500InternalServerError;
+ 
+         logger.Log(
+-            status >= StatusCodes.Status500InternalServerError ? LogLevel.Error : LogLevel.Warning,
+-            "Request failed with status {Status}: {ExceptionType}, root {RootExceptionType}, sqlstate {SqlState}",
++            isServerError ? LogLevel.Error : LogLevel.Warning,
++            "Request failed with status {Status}: {ExceptionType}, root {RootExceptionType}, sqlstate {SqlState}, stack {StackTrace}",
+             status,
+             exception.GetType().FullName,
+             exception.GetBaseException().GetType().FullName,
+-            sqlState);
++            sqlState,
++            isServerError ? exception.StackTrace : null);
+ 
+         httpContext.Response.StatusCode = status;
+         await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
+diff --git a/src/Competency.UserManagement/SessionAuthentication.cs b/src/Competency.UserManagement/SessionAuthentication.cs
+index 57090b4..a67678e 100644
+--- a/src/Competency.UserManagement/SessionAuthentication.cs
++++ b/src/Competency.UserManagement/SessionAuthentication.cs
+@@ -36,7 +36,7 @@ internal static class SessionAuthentication
+     }
+ 
+     /// <summary>
+-    /// Builds the principal a session carries: the account, its role, its employee when bound, and the security stamp the session was issued under.
++    /// Builds the principal a session carries: the account, its role, and the security stamp the session was issued under.
+     /// </summary>
+     /// <param name="user">The account that signed in.</param>
+     /// <returns>The authenticated principal to sign in with.</returns>
+@@ -48,10 +48,6 @@ internal static class SessionAuthentication
+             new(PlatformClaims.Role, user.Role.ToString()),
+             new(SecurityStampClaim, user.SecurityStamp!),
+         };
+-        if (user.EmployeeId is { } employeeId)
+-        {
+-            claims.Add(new Claim(PlatformClaims.EmployeeId, employeeId.ToString()));
+-        }
+ 
+         return new ClaimsPrincipal(new ClaimsIdentity(claims, Scheme, nameType: null, roleType: PlatformClaims.Role));
+     }
+diff --git a/src/Competency.UserManagement/UserManagementEntityConfiguration.cs b/src/Competency.UserManagement/UserManagementEntityConfiguration.cs
+index b1bb743..f5ea287 100644
+--- a/src/Competency.UserManagement/UserManagementEntityConfiguration.cs
++++ b/src/Competency.UserManagement/UserManagementEntityConfiguration.cs
+@@ -7,12 +7,15 @@ namespace Competency.UserManagement;
+ /// <summary>
+ /// Contributes the <see cref="AppUser"/> table to the shared model: snake_case names, a client-generated Guid v4 key,
+ /// a unique case-insensitive e-mail that doubles as the internal Identity user name, one account per employee,
+-/// and a foreign key to the employee that never cascades.
++/// a role limited to the known values, and a foreign key to the employee that never cascades.
+ /// Only the Identity columns this application uses are mapped; roles, claims, logins, tokens, phone and two-factor are not.
+ /// </summary>
+ internal sealed class UserManagementEntityConfiguration : IEntityConfigurationContributor
+ {
+     private const int RoleMaxLength = 32;
++    private const string RoleCheckName = "ck_users_role";
++
++    private static readonly string RoleCheckSql = $"role IN ({string.Join(", ", Enum.GetNames<UserRole>().Select(role => $"'{role}'"))})";
+ 
+     /// <summary>
+     /// The employee entity is named rather than typed because OrgStructure keeps it internal; it must be configured before this contributor runs.
+@@ -21,7 +24,7 @@ internal sealed class UserManagementEntityConfiguration : IEntityConfigurationCo
+ 
+     public void Configure(ModelBuilder modelBuilder) => modelBuilder.Entity<AppUser>(entity =>
+     {
+-        entity.ToTable("users");
++        entity.ToTable("users", table => table.HasCheckConstraint(RoleCheckName, RoleCheckSql));
+ 
+         entity.Property(e => e.Id).HasColumnName("id").HasValueGenerator<GuidValueGenerator>();
+         entity.Property(e => e.UserName).HasColumnName("user_name").HasMaxLength(AppUser.EmailMaxLength).IsRequired();
+diff --git a/tests/Competency.Tests/Infrastructure/ApiHost.cs b/tests/Competency.Tests/Infrastructure/ApiHost.cs
+index de0e81e..aa82ab9 100644
+--- a/tests/Competency.Tests/Infrastructure/ApiHost.cs
++++ b/tests/Competency.Tests/Infrastructure/ApiHost.cs
+@@ -2,6 +2,7 @@ using System.Diagnostics;
+ using System.Net;
+ using System.Net.Sockets;
+ using System.Text;
++using Xunit;
+ 
+ namespace Competency.Tests.Infrastructure;
+ 
+@@ -16,6 +17,7 @@ public sealed class ApiHost : IAsyncDisposable
+     public const string AdminPassword = "Admin-Test-12345!";
+ 
+     private static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(60);
++    private static readonly TimeSpan LogTimeout = TimeSpan.FromSeconds(10);
+ 
+     private readonly Process process;
+     private readonly StringBuilder logs = new();
+@@ -52,6 +54,28 @@ public sealed class ApiHost : IAsyncDisposable
+         }
+     }
+ 
++    /// <summary>
++    /// Waits until the host has logged the fragment and returns everything it has logged by then. The console logger writes
++    /// asynchronously, so a record can reach the output after the response of the request that caused it.
++    /// </summary>
++    /// <param name="fragment">The text a record must contain.</param>
++    /// <returns>Everything the host wrote to its standard output and error.</returns>
++    public async Task<string> LogsAfterAsync(string fragment)
++    {
++        var waited = Stopwatch.StartNew();
++        while (!Logs.Contains(fragment, StringComparison.Ordinal))
++        {
++            if (waited.Elapsed > LogTimeout)
++            {
++                throw new TimeoutException($"The API host did not log '{fragment}' in {LogTimeout.TotalSeconds} s.{Environment.NewLine}{Logs}");
++            }
++
++            await Task.Delay(25, TestContext.Current.CancellationToken);
++        }
++
++        return Logs;
++    }
++
+     /// <summary>
+     /// Starts the host and waits until its readiness probe answers.
+     /// </summary>
+diff --git a/tests/Competency.Tests/PlatformTests.cs b/tests/Competency.Tests/PlatformTests.cs
+index 6c51640..af68d2b 100644
+--- a/tests/Competency.Tests/PlatformTests.cs
++++ b/tests/Competency.Tests/PlatformTests.cs
+@@ -1,4 +1,5 @@
+ using System.Net;
++using System.Text.Json.Nodes;
+ using AwesomeAssertions;
+ using Competency.Tests.Infrastructure;
+ using Npgsql;
+@@ -7,11 +8,15 @@ using Xunit;
+ namespace Competency.Tests;
+ 
+ /// <summary>
+-/// The platform on a real database: AC-3 (schema applied from an empty database, probes) and AC-15 (the journal is append-only in the database itself).
++/// The platform on a real database: AC-3 (schema applied from an empty database, probes), AC-5 (what the logs carry), AC-7 (the account role is limited
++/// in the database itself) and AC-15 (the journal is append-only in the database itself, for the application account too).
+ /// </summary>
+ public sealed class PlatformTests(TestEnvironment environment)
+ {
+     private const string RestrictViolation = "23001";
++    private const string CheckViolation = "23514";
++    private const string UnknownRole = "Auditor";
++    private const string FailureLogCategory = "Competency.Platform.ProblemExceptionHandler";
+ 
+     [Fact]
+     public async Task Ac3_EmptyDatabase_GetsSchemaExtensionsAndBootstrapAdministrator()
+@@ -94,8 +99,7 @@ public sealed class PlatformTests(TestEnvironment environment)
+         var stale = await admin.PutAsync($"/api/v1/org-units/{unit.Id}", new { name = "Чужое имя", headEmployeeId = (Guid?)null }, "\"999\"");
+ 
+         stale.Status.Should().Be(HttpStatusCode.PreconditionFailed);
+-        var logs = host.Logs;
+-        logs.Should().Contain("Request failed with status 412", "the failure above must have been logged, or the checks below prove nothing");
++        var logs = await host.LogsAfterAsync("\"Status\":412");
+         logs.Split('\n').Where(line => line.Trim().Length > 0).Should().OnlyContain(line => line.TrimStart().StartsWith('{'), "every log line is a JSON document");
+         foreach (var personalValue in new[] { email, password, wrongPassword, unit.Json!["name"]!.GetValue<string>(), employee.Json!["lastName"]!.GetValue<string>() })
+         {
+@@ -123,6 +127,78 @@ public sealed class PlatformTests(TestEnvironment environment)
+         (await ScalarAsync<long>(host, "SELECT count(*) FROM audit_events")).Should().BeGreaterThanOrEqualTo(before);
+     }
+ 
++    [Theory]
++    [InlineData("UPDATE audit_events SET reason = 'edited'")]
++    [InlineData("DELETE FROM audit_events")]
++    [InlineData("TRUNCATE audit_events")]
++    public async Task Ac15_Journal_RejectsUpdateDeleteAndTruncate_EvenWhenOrdinaryTriggersAreSilencedByTheReplicaRole(string statement)
++    {
++        var host = await environment.SharedHostAsync();
++        await (await host.AdminAsync()).CreateUnitAsync();
++
++        await using var connection = new NpgsqlConnection(host.ConnectionString);
++        await connection.OpenAsync(TestContext.Current.CancellationToken);
++        await using var transaction = await connection.BeginTransactionAsync(TestContext.Current.CancellationToken);
++        await ExecuteAsync(connection, "SET LOCAL session_replication_role = replica");
++        var rejection = await FluentActions.Awaiting(() => ExecuteAsync(connection, statement)).Should().ThrowAsync<PostgresException>(
++            "the application account may switch to the replica role, which silences every trigger not enabled always");
++
++        rejection.Which.SqlState.Should().Be(RestrictViolation);
++    }
++
++    [Fact]
++    public async Task Ac7_UserRole_IsLimitedToTheKnownValuesInTheDatabaseItself()
++    {
++        var host = await environment.SharedHostAsync();
++        var admin = await host.AdminAsync();
++        var account = await admin.CreateUserAsync();
++
++        var rejection = await FluentActions.Awaiting(() => ScalarAsync<long>(host, $"UPDATE users SET role = '{UnknownRole}' WHERE id = '{account.Id}'"))
++            .Should().ThrowAsync<PostgresException>();
++
++        rejection.Which.SqlState.Should().Be(CheckViolation);
++        rejection.Which.ConstraintName.Should().Be("ck_users_role");
++        (await admin.GetUserAsync(account.Id)).Json!["role"]!.GetValue<string>().Should().Be(Scenarios.User);
++    }
++
++    [Fact]
++    public async Task Ac5_ServerErrorLog_CarriesTheStackTraceButNotTheExceptionMessage_AndOtherFailuresCarryNoStack()
++    {
++        await using var host = await environment.StartHostAsync();
++        var admin = await host.AdminAsync();
++        var unit = await admin.CreateUnitAsync();
++        var stale = await admin.PutAsync($"/api/v1/org-units/{unit.Id}", new { name = "Чужое имя", headEmployeeId = (Guid?)null }, "\"999\"");
++        stale.Status.Should().Be(HttpStatusCode.PreconditionFailed);
++        var forbiddenName = Scenarios.Unique("Запрещено");
++        var constraint = $"ck_unit_name_marker_{Guid.NewGuid():N}";
++        await ScalarAsync<long>(host, $"ALTER TABLE org_units ADD CONSTRAINT {constraint} CHECK (name <> '{forbiddenName}')");
++
++        var failed = await admin.PostAsync("/api/v1/org-units", new { name = forbiddenName, parentId = (Guid?)null });
++
++        failed.Status.Should().Be(HttpStatusCode.InternalServerError, "a check the application does not know fails in the database and surfaces as a server error");
++        var records = FailureRecords(await host.LogsAfterAsync("\"Status\":500")).ToList();
++        var serverError = records.Should().ContainSingle(record => record.Status == 500).Subject;
++        var clientError = records.Should().ContainSingle(record => record.Status == 412).Subject;
++        var stack = serverError.State["StackTrace"]?.GetValue<string>();
++        stack.Should().Contain(" at ", "a server error is logged with the place it happened");
++        serverError.Line.Should().NotContain(constraint, "the exception message names the violated constraint and is never logged");
++        clientError.State["StackTrace"].Should().BeNull("only a server error is logged with its stack trace");
++    }
++
++    private static IEnumerable<(string Line, int Status, JsonNode State)> FailureRecords(string logs) =>
++        logs.Split('\n')
++            .Select(line => line.Trim())
++            .Where(line => line.StartsWith('{'))
++            .Select(line => (Line: line, Json: JsonNode.Parse(line)!))
++            .Where(record => record.Json["Category"]?.GetValue<string>() == FailureLogCategory)
++            .Select(record => (record.Line, record.Json["State"]!["Status"]!.GetValue<int>(), record.Json["State"]!));
++
++    private static async Task ExecuteAsync(NpgsqlConnection connection, string sql)
++    {
++        await using var command = new NpgsqlCommand(sql, connection);
++        await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
++    }
++
+     private static async Task<T> ScalarAsync<T>(ApiHost host, string sql)
+     {
+         await using var connection = new NpgsqlConnection(host.ConnectionString);
