@@ -347,3 +347,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — route impl-test entry 3: standard, dispatch HEAD bfc19fc
 - 2026-10-07 — impl-test entry 3: impacted set green (backend 87/87, web 23/23, lint/build clean), 0/0 tests; no defects
 - 2026-10-07 — impl-review wave 1 iteration 3 (floor high): combined latched (iter 2), external only
+- 2026-10-07 — impl-review wave-1/iter-03: external APPROVE (latched), combined inherited APPROVE; wave 1 roster met → wave 2 iteration 1 (floor low)
