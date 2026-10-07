@@ -24,10 +24,18 @@ export const orgUnitsQueryKey = ["org-units"] as const;
 /** Cache key prefix of every employee query, the employee picker of the account screens included. */
 export const employeesQueryKey = ["employees"] as const;
 
+/**
+ * Reread policy of the unit and employee lists: a change made here rereads them explicitly, a list shown again within a
+ * minute is not requested again, and returning to the browser tab does not reread them, which would repeat the request
+ * of every open unit. A save based on an older list is refused by its version.
+ */
+const LIST_REREAD = { staleTime: 60_000, refetchOnWindowFocus: false } as const;
+
 /** Every unit visible to the signed-in user as a flat list; the tree is assembled from the parent links. */
 export const orgUnitTreeQuery = queryOptions({
   queryKey: [...orgUnitsQueryKey, "tree"],
   queryFn: async () => unwrap(await api.GET("/api/v1/org-units/tree")),
+  ...LIST_REREAD,
 });
 
 /** Largest page the employee list accepts. */
@@ -46,6 +54,7 @@ export function employeeSearchQuery(text: string) {
           params: { query: { q: text, pageSize: EMPLOYEE_PAGE_SIZE_MAX } },
         }),
       ),
+    ...LIST_REREAD,
   });
 }
 
@@ -71,6 +80,7 @@ export function unitEmployeesQuery(orgUnitId: string) {
       );
       return [first, ...rest].flatMap(({ items }) => items);
     },
+    ...LIST_REREAD,
   });
 }
 
