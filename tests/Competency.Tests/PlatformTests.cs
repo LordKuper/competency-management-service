@@ -86,7 +86,7 @@ public sealed class PlatformTests(TestEnvironment environment)
     [Fact]
     public async Task Ac5_Logs_AreJsonAndCarryNoPasswordsEmailsNamesOrSqlValues()
     {
-        var host = await environment.SharedHostAsync();
+        await using var host = await environment.StartHostAsync(); // own host: only this test's records can satisfy the 412 wait below
         var admin = await host.AdminAsync();
         var email = $"{Scenarios.Unique("logged")}@test.local";
         var password = $"Logged-{Guid.NewGuid():N}-1!";
