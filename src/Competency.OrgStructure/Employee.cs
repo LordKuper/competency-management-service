@@ -11,11 +11,25 @@ namespace Competency.OrgStructure;
 [Audited]
 internal sealed class Employee : EntityBase
 {
-    public const int FullNameMaxLength = 200;
+    public const int NameMaxLength = 100;
     public const int PositionMaxLength = 200;
 
     [Audited]
-    public required string FullName { get; set; }
+    public required string LastName { get; set; }
+
+    [Audited]
+    public required string FirstName { get; set; }
+
+    /// <summary>
+    /// The patronymic; null when the person has none or it is not known.
+    /// </summary>
+    [Audited]
+    public string? MiddleName { get; set; }
+
+    /// <summary>
+    /// The display name, last name first, derived by the database from the three name parts; it is never written, so the journal records the parts only.
+    /// </summary>
+    public string FullName { get; private set; } = null!;
 
     /// <summary>
     /// The position as free text.
@@ -35,7 +49,7 @@ internal sealed class Employee : EntityBase
     public OrgUnit OrgUnit { get; set; } = null!;
 
     /// <summary>
-    /// The Russian full-text index of <see cref="FullName"/> and <see cref="Position"/>, maintained by the database.
+    /// The Russian full-text index of the name parts and <see cref="Position"/>, maintained by the database.
     /// </summary>
     public NpgsqlTsVector SearchVector { get; private set; } = null!;
 }

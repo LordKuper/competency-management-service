@@ -47,10 +47,22 @@ export function EmployeeForm({
       onFinish={submit}
     >
       <Form.Item
-        name="fullName"
-        label="ФИО"
-        rules={[{ required: true, whitespace: true, message: "Введите ФИО" }]}
+        name="lastName"
+        label="Фамилия"
+        rules={[
+          { required: true, whitespace: true, message: "Введите фамилию" },
+        ]}
       >
+        <Input autoComplete="off" />
+      </Form.Item>
+      <Form.Item
+        name="firstName"
+        label="Имя"
+        rules={[{ required: true, whitespace: true, message: "Введите имя" }]}
+      >
+        <Input autoComplete="off" />
+      </Form.Item>
+      <Form.Item name="middleName" label="Отчество">
         <Input autoComplete="off" />
       </Form.Item>
       <Form.Item

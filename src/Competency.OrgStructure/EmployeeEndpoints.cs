@@ -133,7 +133,9 @@ internal static class EmployeeEndpoints
 
         var employee = new Employee
         {
-            FullName = input.FullName,
+            LastName = input.LastName,
+            FirstName = input.FirstName,
+            MiddleName = input.MiddleName,
             Position = input.Position,
             IsActive = input.IsActive,
             OrgUnit = unit,
@@ -190,7 +192,9 @@ internal static class EmployeeEndpoints
         }
 
         ifMatch.ApplyTo(context, employee);
-        employee.FullName = input.FullName;
+        employee.LastName = input.LastName;
+        employee.FirstName = input.FirstName;
+        employee.MiddleName = input.MiddleName;
         employee.Position = input.Position;
         employee.IsActive = input.IsActive;
         employee.OrgUnit = unit;

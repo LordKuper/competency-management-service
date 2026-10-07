@@ -396,7 +396,9 @@ export interface components {
             employeeName: null | string;
         };
         EmployeeRequest: {
-            fullName: string;
+            lastName: string;
+            firstName: string;
+            middleName?: null | string;
             position: string;
             /** Format: uuid */
             orgUnitId: string;
@@ -405,6 +407,9 @@ export interface components {
         EmployeeResponse: {
             /** Format: uuid */
             id: string;
+            lastName: string;
+            firstName: string;
+            middleName: null | string;
             fullName: string;
             email: null | string;
             /** Format: uuid */

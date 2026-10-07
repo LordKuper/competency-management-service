@@ -2420,15 +2420,25 @@
       },
       "EmployeeRequest": {
         "required": [
-          "fullName",
+          "lastName",
+          "firstName",
           "position",
           "orgUnitId",
           "isActive"
         ],
         "type": "object",
         "properties": {
-          "fullName": {
+          "lastName": {
             "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "middleName": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "position": {
             "type": "string"
@@ -2445,6 +2455,9 @@
       "EmployeeResponse": {
         "required": [
           "id",
+          "lastName",
+          "firstName",
+          "middleName",
           "fullName",
           "email",
           "orgUnitId",
@@ -2456,6 +2469,18 @@
           "id": {
             "type": "string",
             "format": "uuid"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "middleName": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "fullName": {
             "type": "string"

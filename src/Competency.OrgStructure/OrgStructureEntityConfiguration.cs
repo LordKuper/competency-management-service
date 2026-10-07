@@ -12,6 +12,7 @@ namespace Competency.OrgStructure;
 internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationContributor
 {
     private const string TrigramExtension = "pg_trgm";
+    private const string FullNameSql = "last_name || ' ' || first_name || coalesce(' ' || middle_name, '')";
     private const string EmployeeAccountsSql = "SELECT employee_id, email FROM users WHERE employee_id IS NOT NULL";
 
     public void Configure(ModelBuilder modelBuilder)
@@ -40,14 +41,17 @@ internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationCont
         {
             ConfigureBase(entity);
             entity.ToTable("employees");
-            entity.Property(e => e.FullName).HasColumnName("full_name").HasMaxLength(Employee.FullNameMaxLength);
+            entity.Property(e => e.LastName).HasColumnName("last_name").HasMaxLength(Employee.NameMaxLength);
+            entity.Property(e => e.FirstName).HasColumnName("first_name").HasMaxLength(Employee.NameMaxLength);
+            entity.Property(e => e.MiddleName).HasColumnName("middle_name").HasMaxLength(Employee.NameMaxLength);
+            entity.Property(e => e.FullName).HasColumnName("full_name").HasComputedColumnSql(FullNameSql, stored: true);
             entity.Property(e => e.Position).HasColumnName("position").HasMaxLength(Employee.PositionMaxLength);
             entity.Property(e => e.IsActive).HasColumnName("is_active");
             entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
 
             entity.HasOne(e => e.OrgUnit).WithMany().HasForeignKey(e => e.OrgUnitId).OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasGeneratedTsVectorColumn(e => e.SearchVector, TextSearch.FullTextConfig, e => new { e.FullName, e.Position });
+            entity.HasGeneratedTsVectorColumn(e => e.SearchVector, TextSearch.FullTextConfig, e => new { e.LastName, e.FirstName, e.MiddleName, e.Position });
             entity.Property(e => e.SearchVector).HasColumnName("search_vector");
             entity.HasIndex(e => e.SearchVector).HasMethod("GIN");
             entity.HasIndex(e => e.FullName, "IX_employees_full_name_trgm").HasMethod("gin").HasOperators(TextSearch.TrigramOperators);

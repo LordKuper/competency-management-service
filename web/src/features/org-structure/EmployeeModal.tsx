@@ -162,7 +162,9 @@ function EmployeeEditor({
         initialValues={
           existing
             ? {
-                fullName: existing.employee.fullName,
+                lastName: existing.employee.lastName,
+                firstName: existing.employee.firstName,
+                middleName: existing.employee.middleName ?? undefined,
                 orgUnitId: existing.employee.orgUnitId,
                 position: existing.employee.position,
                 isActive: existing.employee.isActive ?? undefined,
