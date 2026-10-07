@@ -281,3 +281,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
 
 - 2026-10-07 — route Task 21: critical (dispatch after Task 20)
+
+## 2026-10-07 — Поправка scope: инициалы и фамилия в шапке (AC-13), Task 22 (волна 19, параллельно с Task 21)
+
+- **Decision**: Если учётная запись привязана к сотруднику, рядом с аватаркой показывается «И. О. Фамилия» (неразрывные пробелы; без отчества — «И. Фамилия»), иначе e-mail. `/auth/me` расширяется частями ФИО привязанного сотрудника (разбор строки ФИО на клиенте ненадёжен).
+- **Rationale**: Явный запрос пользователя (`new or changed scope`, расширение контракта).
+- **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
+
+- 2026-10-07 — route Task 22: critical (dispatch with Task 21 after Task 20)
