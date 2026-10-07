@@ -249,3 +249,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Принято: эндпойнты сотрудника остаются в OrgStructure, учётная сторона — один порт `IEmployeeAccounts.BlockAsync(employeeId, unbind)`, реализованный в UserManagement на том же `AppDbContext` (одна транзакция, одна блокировка дерева, один `SaveChanges`); `/impact` и выполнение используют один расчёт `EmployeeImpact`; ответ `/impact` — `{ headOfUnits, account: { email, isBlocked } | null }` (строка об отвязке выводится клиентом для удаления); смена security stamp без `UserManager` ради атомарности; уже заблокированные учётные записи при увольнении не меняются; 409: повторное увольнение, возврат работающего, возврат в неактивное подразделение; `isActive` в POST/PUT игнорируется; убрана только декоративная иконка подразделения (шеврон раскрытия оставлен); окно сотрудника — только правка; меню на карточке сотрудника создаётся лениво (2000 карточек: 35 мс вместо 850 мс); привязка к уволенному сотруднику отклоняется (400). Read-only окно сотрудника удалено (нет вызывающих).
 - **Rationale**: В пределах AC-8 (ослаблен), 9, 10, 12, 15, 17, 18; проверено на scratch-PostgreSQL (каскад, обрыв сессии, 412 и откат без частичных изменений, гонка с правкой подразделения без deadlock, CHECK, Down при несвязанных учётках падает явно) и в UI через CDP (46 проверок).
 - **Affected docs**: `src/Competency.OrgStructure/`, `src/Competency.UserManagement/`, `src/Competency.Platform/Migrations/`, `web/src/features/org-structure/`, `web/src/features/users/`
+
+## 2026-10-07 — Пользователи: меню действий в строке и модальные окна (AC-13), Task 19 (волна 17)
+
+- **Decision**: Пользователь не нашёл правку учётной записи (была на странице `/users/:id` по ссылке-e-mail). По его выбору: меню «⋮» в строке списка — «Править» (окно: e-mail, роль, привязка), «Заблокировать»/«Разблокировать», «Сбросить пароль»; создание тоже в окне; страницы `/users/new` и `/users/:id` удаляются. Backend не меняется.
+- **Rationale**: Явный выбор пользователя при ручной проверке; функциональность AC-7/AC-8 уже была, меняется только подача (единообразно с меню карточек оргструктуры).
+- **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
+
+- 2026-10-07 — route Task 19: critical

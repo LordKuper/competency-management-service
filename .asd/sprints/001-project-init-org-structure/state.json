@@ -109,6 +109,13 @@
       "decision": "AC-8 relaxed: user accounts may be unbound",
       "reason": "accounts may exist without an employee",
       "evidence": "decisions-log.md 2026-10-07 AC-8 relaxed"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-13 users UI: row actions menu and modals, Task 19 wave 17",
+      "reason": "user editing must be obvious",
+      "evidence": "decisions-log.md 2026-10-07 Task 19"
     }
   ],
   "task_routing": {
@@ -218,6 +225,12 @@
       "execution": "agent",
       "tier": "critical",
       "reason": "risk:hard delete with cascade in one transaction, account CHECK relaxation, session revocation, public contract, audit of each change",
+      "resolved_model": "sonnet"
+    },
+    "Task 19": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:account mutation UI moved to modals, removal of pages and routes",
       "resolved_model": "sonnet"
     }
   },
