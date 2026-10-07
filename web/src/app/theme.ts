@@ -5,6 +5,7 @@ const color = {
   primaryHover: "#2338C2",
   primaryActive: "#182CC2",
   primarySubtle: "#EBF2FD",
+  accent: "#FBAE40",
   textPrimary: "#292929",
   textSecondary: "#4B4B4C",
   textMuted: "#5F6670",
@@ -28,6 +29,13 @@ const color = {
   info: "#1B64C8",
   infoBg: "#EBF2FD",
 } as const;
+
+/** Design tokens antd has no counterpart for: the accent colour, the focus ring offset and the ease-in curve. antd publishes every token key as a `--ant-*` CSS variable, which the stylesheet reads. */
+const customToken = {
+  colorAccent: color.accent,
+  focusRingOffset: 2,
+  motionEaseIn: "cubic-bezier(0.55, 0.055, 0.675, 0.19)",
+};
 
 const fontFamily = "PT Sans, Segoe UI, Roboto, Arial, sans-serif";
 const fontFamilyCode = "PT Mono, Consolas, Courier New, monospace";
@@ -122,6 +130,7 @@ export const theme: ThemeConfig = {
     lineWidth: 1,
     lineWidthFocus: 2,
     controlOutlineWidth: 2,
+    ...customToken,
 
     boxShadow: "0 8px 24px rgba(8, 18, 64, 0.16)",
     boxShadowSecondary: "0 4px 12px rgba(8, 18, 64, 0.12)",

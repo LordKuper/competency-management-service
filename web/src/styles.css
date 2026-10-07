@@ -34,6 +34,40 @@ body {
   margin: 0;
 }
 
+/* biome-ignore-start lint/complexity/noImportantStyles: antd draws its own focus ring, with a smaller offset or none
+   on fields, and its loading shimmer from selectors of higher specificity; a theme token cannot reach them. */
+
+/* Keyboard focus ring: primary on light surfaces, accent on the dark header. */
+:focus-visible {
+  outline: var(--ant-line-width-focus) solid var(--ant-color-primary-border) !important;
+  outline-offset: var(--ant-focus-ring-offset) !important;
+}
+
+.ant-layout-header :focus-visible {
+  outline-color: var(--ant-color-accent) !important;
+}
+
+/* The focused part of a compound field is its inner input; the ring goes around the whole field instead. */
+.ant-input-affix-wrapper input:focus-visible,
+.ant-select input:focus-visible {
+  outline: none !important;
+}
+
+.ant-input-affix-wrapper:has(input:focus-visible),
+.ant-select:has(input:focus-visible) {
+  outline: var(--ant-line-width-focus) solid var(--ant-color-primary-border);
+  outline-offset: var(--ant-focus-ring-offset);
+}
+
+/* A loading placeholder stays still when the user asks for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  .ant-skeleton-active * {
+    animation: none !important;
+  }
+}
+
+/* biome-ignore-end lint/complexity/noImportantStyles: end of the antd overrides */
+
 /* antd 6 paints button states from --ant-btn-* variables set on
    .ant-btn-color-default.ant-btn-variant-text (0,3,0 + :where); matching that
    selector plus the class (0,4,0) lets us override the variables, not the states. */
@@ -51,10 +85,6 @@ body {
     var(--ant-color-text-light-solid) 20%,
     transparent
   );
-}
-
-.header-user-button.ant-btn:focus-visible {
-  outline-color: var(--ant-color-text-light-solid);
 }
 
 /* Hierarchy of unit and employee cards: each nested list is indented under its
@@ -188,11 +218,6 @@ body {
 
 .org-employee__menu:active {
   background: var(--ant-color-bg-text-active);
-}
-
-.org-employee__menu:focus-visible {
-  outline: var(--ant-line-width-focus) solid var(--ant-color-primary-border);
-  outline-offset: var(--ant-line-width);
 }
 
 .org-employee__details {

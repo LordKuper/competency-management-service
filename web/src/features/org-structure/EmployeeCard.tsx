@@ -23,10 +23,15 @@ interface EmployeeCardProps {
   onAction: (action: EmployeeAction, employee: Employee) => void;
 }
 
+function focusWhenMounted(button: HTMLButtonElement | null) {
+  button?.focus();
+}
+
 /**
  * The actions button of a card, which opens the menu of what an administrator can do with the employee.
  * antd's Dropdown costs about a quarter of a millisecond per instance, which adds up to seconds for the thousands of
- * cards a unit may hold, so the button is plain markup until it is first used and only then becomes a Dropdown, already open.
+ * cards a unit may hold, so the button is plain markup until it is first used and only then becomes a Dropdown, already open;
+ * the button that replaces the used one takes its focus, so the keyboard stays on the card.
  */
 function EmployeeActions({
   employee,
@@ -40,6 +45,7 @@ function EmployeeActions({
       className="org-employee__menu"
       aria-label={`Действия с сотрудником ${employee.fullName}`}
       aria-haspopup="menu"
+      ref={isOpen === null ? undefined : focusWhenMounted}
       onClick={isOpen === null ? () => setIsOpen(true) : undefined}
     >
       <MoreOutlined />
