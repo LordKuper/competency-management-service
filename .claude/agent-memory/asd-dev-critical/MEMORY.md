@@ -36,3 +36,4 @@
 - [Users row menu + modal](project_users-modal-menu-facts.md) — 409 alert suppressed for field conflicts, reset target by id from live list, gcTime 0 on account query, smoke facts
 - [Org head rule + order](project_org-head-rule-facts.md) — create field dropped silently, check-on-change, picker current quirk, Collator ru yo, antd 6 select DOM/click
 - [Org employee search](project_org-employee-search-facts.md) — server q is ILIKE+FTS not substring, q>200 is 400, matches-mode precedence, debounce masking, duplicated useDebouncedValue
+- [Full verification cycle](project_full-verification-cycle-facts.md) — toast thenable keeps confirm open 3 s, real-change stale test, lockout trap, 10 500-employee numbers
