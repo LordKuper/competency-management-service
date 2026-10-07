@@ -36,7 +36,7 @@ internal static class SessionAuthentication
     }
 
     /// <summary>
-    /// Builds the principal a session carries: the account, its role, its employee when bound, and the security stamp the session was issued under.
+    /// Builds the principal a session carries: the account, its role, and the security stamp the session was issued under.
     /// </summary>
     /// <param name="user">The account that signed in.</param>
     /// <returns>The authenticated principal to sign in with.</returns>
@@ -48,10 +48,6 @@ internal static class SessionAuthentication
             new(PlatformClaims.Role, user.Role.ToString()),
             new(SecurityStampClaim, user.SecurityStamp!),
         };
-        if (user.EmployeeId is { } employeeId)
-        {
-            claims.Add(new Claim(PlatformClaims.EmployeeId, employeeId.ToString()));
-        }
 
         return new ClaimsPrincipal(new ClaimsIdentity(claims, Scheme, nameType: null, roleType: PlatformClaims.Role));
     }

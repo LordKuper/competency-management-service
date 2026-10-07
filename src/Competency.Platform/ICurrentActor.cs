@@ -18,11 +18,6 @@ public interface ICurrentActor
     string? Role { get; }
 
     /// <summary>
-    /// The employee the signed-in account is linked to, from the <see cref="PlatformClaims.EmployeeId"/> claim.
-    /// </summary>
-    Guid? EmployeeId { get; }
-
-    /// <summary>
     /// The identifier of the current request, also sent to the client as <c>X-Request-Id</c>.
     /// </summary>
     string? RequestId { get; }

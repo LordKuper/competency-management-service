@@ -11,8 +11,6 @@ internal sealed class HttpContextCurrentActor(IHttpContextAccessor accessor) : I
 
     public string? Role => FindClaim(PlatformClaims.Role);
 
-    public Guid? EmployeeId => ParseGuid(FindClaim(PlatformClaims.EmployeeId));
-
     public string? RequestId => accessor.HttpContext?.Items[RequestIdMiddleware.ItemKey] as string;
 
     private string? FindClaim(string claimType) => accessor.HttpContext?.User.FindFirst(claimType)?.Value;
