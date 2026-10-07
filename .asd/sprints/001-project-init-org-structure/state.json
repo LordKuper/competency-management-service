@@ -1,7 +1,7 @@
 {
   "sprint_id": "001-project-init-org-structure",
   "branch": "sprint/001-project-init-org-structure",
-  "phase": "impl-review",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -198,6 +198,13 @@
       "gate": "impl-review finding wave-2/iter-03 external #1",
       "decision_actor": "user",
       "decision": "fix lockout accounting race",
+      "reason": "user choice (recommended)",
+      "evidence": "decisions-log.md 2026-10-07"
+    },
+    {
+      "gate": "impl-review FAIL escalation wave-3/iter-01",
+      "decision_actor": "user",
+      "decision": "all external findings accepted for fix; F6 answer: path only",
       "reason": "user choice (recommended)",
       "evidence": "decisions-log.md 2026-10-07"
     }
@@ -424,6 +431,12 @@
       "execution": "agent",
       "reason": "risk:authentication",
       "resolved_model": "sonnet"
+    },
+    "review-fix wave-3/iter-01": {
+      "tier": "critical",
+      "execution": "agent",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -495,7 +508,12 @@
         },
         {
           "iteration": 1,
-          "verdicts": {},
+          "verdicts": {
+            "iter-01": {
+              "combined": "CONCERNS",
+              "external": "FAIL"
+            }
+          },
           "iteration_heads": {
             "iter-01": "f7019ef479310d80f919ecbd1350e0d31548a8ef"
           },
@@ -505,8 +523,8 @@
     }
   },
   "created_at": "2026-10-05T00:00:00Z",
-  "updated_at": "2026-10-07T17:22:51.274Z",
-  "review_fixes_pending": null,
+  "updated_at": "2026-10-07T17:46:20.057Z",
+  "review_fixes_pending": "wave-3/iter-01",
   "test_defects_pending": null,
   "pr": null,
   "archived_at": null

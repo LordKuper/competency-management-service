@@ -364,3 +364,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — impl-test entry 6: impacted set green (backend 102/102, web 23/23, lint/build clean), 5 rows in 3 tests added (concurrent wrong passwords, unsaved count → 500); no defects
 - 2026-10-07 — impl-review wave 2 iteration 4 (floor high): combined latched (iter 2), external only
 - 2026-10-07 — impl-review wave-2/iter-04: external APPROVE (latched), combined inherited APPROVE; wave 2 roster met → wave 3 iteration 1 (floor low)
+- 2026-10-07 — impl-review wave-3/iter-01: combined CONCERNS (F1–F11), external FAIL (#1–#7; #1 agent-memory recipe could delete the user dev DB volume). User: fix all; F6 — search opens only the path, full employee list only on manual open. → impl review-fix (review_fixes_pending = wave-3/iter-01): code + asd-dev-critical memory fixes to dev (critical); external #3 (SPA auth tests) to impl-test entry 7; dispatch HEAD 61784f5
