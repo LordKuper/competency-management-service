@@ -361,3 +361,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — impl-review wave-2/iter-03: combined inherited APPROVE, external CONCERNS (#1 high: wrong-password attempt accounting race in VerifyPasswordAsync). User: fix → impl review-fix (review_fixes_pending = wave-2/iter-03); route: critical, dispatch HEAD 67926dd
 - 2026-10-07 — review-fix wave-2/iter-03 done (69b73b0): password check + attempt accounting under users row FOR UPDATE with reload; LockoutStarted only on the transitioning request; IdentityResult checked; impl COMPLETED (NEXT: impl-test)
 - 2026-10-07 — route impl-test entry 6: critical, dispatch HEAD 69b73b0
+- 2026-10-07 — impl-test entry 6: impacted set green (backend 102/102, web 23/23, lint/build clean), 5 rows in 3 tests added (concurrent wrong passwords, unsaved count → 500); no defects
+- 2026-10-07 — impl-review wave 2 iteration 4 (floor high): combined latched (iter 2), external only
