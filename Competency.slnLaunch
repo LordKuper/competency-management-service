@@ -1,6 +1,6 @@
 [
   {
-    "Name": "Все сервисы",
+    "Name": "Everything",
     "Projects": [
       {
         "Path": "deploy\\dev\\docker-compose.dcproj",
@@ -15,12 +15,12 @@
       {
         "Path": "web\\web.esproj",
         "Action": "Start",
-        "DebugTarget": "localhost (Edge)"
+        "DebugTarget": "localhost (Chrome)"
       }
     ]
   },
   {
-    "Name": "Только API",
+    "Name": "API",
     "Projects": [
       {
         "Path": "deploy\\dev\\docker-compose.dcproj",
