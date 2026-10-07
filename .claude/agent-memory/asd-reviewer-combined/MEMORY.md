@@ -5,3 +5,4 @@
 - [Re-review without a shell](feedback_rereview-no-shell-checks.md) — back hash, suite and pin claims from canon text and the tester's record; say what was not recomputed
 - [Ledger finding mapping](feedback_ledger-finding-mapping.md) — one f per rule row, none on file/section rows, Findings table first, no pipes in cells
 - [Delta re-review: decisions-log first](feedback_delta-review-decisions-log.md) — read decisions-log for design-promote routing before flagging doc drift; shared-host log waits are vacuous
+- [Wave-review probes](feedback_wave-review-probes.md) — decisions-log "Open:" lines, unused test helpers, per-row lookup loops, body comments, AC ids in class docs: one Grep each

@@ -1,7 +1,7 @@
 {
   "sprint_id": "001-project-init-org-structure",
   "branch": "sprint/001-project-init-org-structure",
-  "phase": "impl-review",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -186,6 +186,13 @@
       "decision": "external #1 accepted for fix (ENABLE ALWAYS TRIGGER); combined F2 answered: follow VS profiles Everything/API, Chrome",
       "reason": "user choice",
       "evidence": "decisions-log.md 2026-10-07"
+    },
+    {
+      "gate": "impl-review reviewer question wave-2/iter-01 F1",
+      "decision_actor": "user",
+      "decision": "refuse unblock while bound employee does not work; serialize binding/creation with dismissal",
+      "reason": "user choice (recommended)",
+      "evidence": "decisions-log.md 2026-10-07"
     }
   ],
   "task_routing": {
@@ -368,6 +375,18 @@
       "execution": "agent",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "review-fix wave-2/iter-01": {
+      "tier": "critical",
+      "execution": "agent",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-2/iter-01 tests": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -408,7 +427,12 @@
         },
         {
           "iteration": 1,
-          "verdicts": {},
+          "verdicts": {
+            "iter-01": {
+              "combined": "CONCERNS",
+              "external": "CONCERNS"
+            }
+          },
           "iteration_heads": {
             "iter-01": "c86a9a343322a6a2a2a8a61e6c625864e01559d3"
           },
@@ -424,8 +448,8 @@
     }
   },
   "created_at": "2026-10-05T00:00:00Z",
-  "updated_at": "2026-10-07T15:00:03.433Z",
-  "review_fixes_pending": null,
+  "updated_at": "2026-10-07T15:13:19.796Z",
+  "review_fixes_pending": "wave-2/iter-01",
   "test_defects_pending": null,
   "pr": null,
   "archived_at": null

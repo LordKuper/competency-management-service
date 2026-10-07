@@ -348,3 +348,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — impl-test entry 3: impacted set green (backend 87/87, web 23/23, lint/build clean), 0/0 tests; no defects
 - 2026-10-07 — impl-review wave 1 iteration 3 (floor high): combined latched (iter 2), external only
 - 2026-10-07 — impl-review wave-1/iter-03: external APPROVE (latched), combined inherited APPROVE; wave 1 roster met → wave 2 iteration 1 (floor low)
+- 2026-10-07 — impl-review wave-2/iter-01: combined CONCERNS (F1–F5), external CONCERNS (#1–#4). User answer F1 (= external #1): refuse unblocking an account bound to a non-working employee (409), binding/creation serialized with dismissal (external #2). → impl review-fix (review_fixes_pending = wave-2/iter-01): code findings to dev (critical), test-file findings F4/F5 to tester (standard), dispatch HEAD 073d875
