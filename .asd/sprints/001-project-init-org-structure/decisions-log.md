@@ -291,3 +291,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — route Task 22: critical (dispatch with Task 21 after Task 20)
 
 - 2026-10-07 — verification depth: user chose fast checks for impl change requests (build Release, ef pending-changes, web lint/build/check:api; no scratch DB, real-backend or UI smokes); applied to running Task 20 and to Tasks 21–22; depth deferred to impl-test/impl-review
+
+## 2026-10-07 — Правило проекта: глубина проверок в impl
+
+- **Decision**: В `.asd/project/custom-coding-rules.md` добавлен раздел «Verification depth in impl»: impl выполняется максимально быстро с минимальными проверками (Release build 0/0, ef pending-changes, web lint/build/check:api); полный цикл проверок (scratch PostgreSQL, реальные API- и UI-smoke, производительность AC-11) — один раз, при первом одобрении перехода impl → impl-test; fix-режимы impl полный цикл не повторяют; гейты impl-test и impl-review не меняются.
+- **Rationale**: Явное требование пользователя; закрепляет решение о скорости итераций для всех следующих спринтов.
+- **Affected docs**: `.asd/project/custom-coding-rules.md`
