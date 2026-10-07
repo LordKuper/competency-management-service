@@ -265,3 +265,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: `.asd/sprints/001-project-init-org-structure/sprint.md`, `.asd/sprints/001-project-init-org-structure/plan.md`
 
 - 2026-10-07 — route Task 20: critical (dispatch after Task 19)
+
+## 2026-10-07 — Волна 17: Task 19 принят (пользователи: меню в строке и модальные окна)
+
+- **Decision**: Принято: одно окно `UserModal` для создания и правки (`GET /users/{id}` при открытии, `If-Match`), меню «⋮» в строке (Править / Заблокировать-Разблокировать / Сбросить пароль), страницы `/users/new` и `/users/:id` удалены; колонка сотрудника показывает «Не привязан»; 409 с полем показывается только под полем (двойной показ из Task 16 устранён), прочие 409 — один раз в окне; `gcTime: 0` у запроса учётной записи; сохранение инвалидирует запросы пользователей и оргструктуры; блокировка последнего администратора из меню строки показывает прежний toast. Реальный smoke: 60 проверок пройдены.
+- **Rationale**: В пределах AC-7, 8, 13; backend не менялся.
+- **Affected docs**: `web/src/features/users/`
+
+- 2026-10-07 — dispatch Task 20 (critical)
