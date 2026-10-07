@@ -7,8 +7,8 @@ using Npgsql;
 namespace Competency.Platform;
 
 /// <summary>
-/// Turns every unhandled exception into a ProblemDetails response and logs only its type, root type and database error code,
-/// never its message, which may carry personal data or database values.
+/// Turns every unhandled exception into a ProblemDetails response and logs only its type, root type, database error code
+/// and, for a server error, its stack trace, never its message, which may carry personal data or database values.
 /// </summary>
 internal sealed class ProblemExceptionHandler(
     IProblemDetailsService problemDetailsService,
@@ -24,14 +24,16 @@ internal sealed class ProblemExceptionHandler(
     {
         var sqlState = FindPostgresException(exception)?.SqlState;
         var status = ResolveStatus(exception, sqlState);
+        var isServerError = status >= StatusCodes.Status500InternalServerError;
 
         logger.Log(
-            status >= StatusCodes.Status500InternalServerError ? LogLevel.Error : LogLevel.Warning,
-            "Request failed with status {Status}: {ExceptionType}, root {RootExceptionType}, sqlstate {SqlState}",
+            isServerError ? LogLevel.Error : LogLevel.Warning,
+            "Request failed with status {Status}: {ExceptionType}, root {RootExceptionType}, sqlstate {SqlState}, stack {StackTrace}",
             status,
             exception.GetType().FullName,
             exception.GetBaseException().GetType().FullName,
-            sqlState);
+            sqlState,
+            isServerError ? exception.StackTrace : null);
 
         httpContext.Response.StatusCode = status;
         await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
