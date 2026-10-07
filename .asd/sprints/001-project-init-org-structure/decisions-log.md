@@ -372,3 +372,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-07 — impl-review wave-3/iter-02: external APPROVE (latched), combined CONCERNS (F1: unused delayMs param in useDebouncedValue; json() alias in test fakeApi) → impl review-fix (review_fixes_pending = wave-3/iter-02): (a) dev, (b) tester, standard, dispatch HEAD d717faf
 - 2026-10-07 — review-fix wave-3/iter-02 done (24a6eec dev, 0e54ba2 tester); web build verified green after both; impl COMPLETED (NEXT: impl-test)
 - 2026-10-07 — route impl-test entry 8: standard, dispatch HEAD 0e54ba2
+- 2026-10-07 — impl-test entry 8: impacted set green (web 60/60, lint/build clean), 0/0 tests; no defects
+- 2026-10-07 — impl-review wave 3 iteration 3 (floor high): external latched (iter 2), combined only
