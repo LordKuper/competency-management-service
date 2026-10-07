@@ -31,3 +31,4 @@
 - [EF left join count facts](project_ef-left-join-count-and-visibility-facts.md) — group-count join needs `(int?)x.Count ?? 0` (else 500), join vs subquery plans, role visibility rule, parity-check method
 - [E-mail on the account](project_email-on-account-facts.md) — keyless ToSqlQuery cross-module read, UserName=Email, backfill and Down strip, Git Bash curl Cyrillic, race 409
 - [CDP real-backend smoke](project_web-cdp-real-backend-smoke-facts.md) — antd DOM ids, popup animation waits, real mouse for selects, sign-in landing, node -e quote trap
+- [Employee name split](project_employee-name-split-facts.md) — EF scaffold is wrong for column -> generated, Up/Down SQL, heap cost, old-client 400, TEMPLATE-copy verification
