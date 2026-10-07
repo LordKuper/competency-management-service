@@ -35,6 +35,44 @@ public sealed class PlatformTests(TestEnvironment environment)
     }
 
     [Fact]
+    public async Task Ac3_Readiness_ReportsUnavailableWhenTheDatabaseIsGone_WhileLivenessStaysUp()
+    {
+        await using var host = await environment.StartHostAsync();
+        (await host.Anonymous().GetAsync("/healthz/ready")).Status.Should().Be(HttpStatusCode.OK);
+
+        await environment.DropDatabaseAsync(host);
+
+        (await host.Anonymous().GetAsync("/healthz/ready")).Status.Should().Be(HttpStatusCode.ServiceUnavailable);
+        (await host.Anonymous().GetAsync("/healthz/live")).Status.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Ac6_StartWithoutAnAdministratorAndWithoutBootstrapSettings_FailsNamingTheMissingSettings()
+    {
+        var settings = new Dictionary<string, string> { ["Bootstrap__AdminEmail"] = string.Empty, ["Bootstrap__AdminPassword"] = string.Empty };
+
+        var failure = await FluentActions.Awaiting(() => environment.StartHostAsync(settings)).Should().ThrowAsync<InvalidOperationException>();
+
+        failure.Which.Message.Should().Contain("Bootstrap:AdminEmail").And.Contain("Bootstrap:AdminPassword");
+    }
+
+    [Fact]
+    public async Task Ac6_RestartOnTheSameDatabase_KeepsTheExistingAdministratorAndIgnoresOtherBootstrapSettings()
+    {
+        var shared = await environment.SharedHostAsync();
+        var otherEmail = $"{Scenarios.Unique("restart")}@test.local";
+        const string OtherPassword = "Other-Admin-12345!";
+        var settings = new Dictionary<string, string> { ["Bootstrap__AdminEmail"] = otherEmail, ["Bootstrap__AdminPassword"] = OtherPassword };
+
+        await using var restarted = await ApiHost.StartAsync(shared.ConnectionString, settings);
+
+        var admin = await restarted.LoginAsync(ApiHost.AdminEmail, ApiHost.AdminPassword);
+        (await admin.GetAsync($"/api/v1/users?q={Uri.EscapeDataString(otherEmail)}")).Json!["total"]!.GetValue<int>().Should().Be(0);
+        (await restarted.Anonymous().PostAsync("/api/v1/auth/login", new { email = otherEmail, password = OtherPassword })).Status
+            .Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
     public async Task Ac5_Logs_AreJsonAndCarryNoPasswordsEmailsNamesOrSqlValues()
     {
         var host = await environment.SharedHostAsync();

@@ -8,6 +8,7 @@ namespace Competency.Tests.Infrastructure;
 /// <summary>
 /// The real API in a child process on a loopback port, started from the build output of the API project against one PostgreSQL database:
 /// real Kestrel, real middleware, migrations and first administrator applied at start, exactly as in deployment.
+/// A test run killed before its hosts are disposed leaves them running: stop them by their listening port.
 /// </summary>
 public sealed class ApiHost : IAsyncDisposable
 {

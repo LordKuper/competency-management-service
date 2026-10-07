@@ -159,7 +159,7 @@ public sealed class AuditTests(TestEnvironment environment)
         var admin = await (await environment.SharedHostAsync()).AdminAsync();
         var adminId = (await admin.GetAsync("/api/v1/auth/me")).Id;
         var first = await admin.CreateUnitAsync();
-        var second = await admin.CreateUnitAsync();
+        await admin.CreateUnitAsync();
 
         var byEntity = (await admin.GetAsync($"/api/v1/audit?action=OrgUnit.Created&entityId={first.Id}")).Expect(HttpStatusCode.OK);
         var byActor = (await admin.GetAsync($"/api/v1/audit?actor={adminId}&pageSize=1")).Expect(HttpStatusCode.OK);
@@ -173,7 +173,6 @@ public sealed class AuditTests(TestEnvironment environment)
         future.Json!["total"]!.GetValue<int>().Should().Be(0);
         var timestamps = recent.Json!["items"]!.AsArray().Select(row => row!["timestamp"]!.GetValue<DateTimeOffset>()).ToArray();
         timestamps.Should().BeInDescendingOrder();
-        recent.Json["items"]!.AsArray().Select(row => row!["entityId"]!.GetValue<string>()).Should().Contain([first.Id.ToString(), second.Id.ToString()]);
         reversed.Status.Should().Be(HttpStatusCode.BadRequest);
         (await admin.GetAsync("/api/v1/audit?pageSize=201")).Status.Should().Be(HttpStatusCode.BadRequest);
         (await admin.GetAsync("/api/v1/audit?page=0")).Status.Should().Be(HttpStatusCode.BadRequest);

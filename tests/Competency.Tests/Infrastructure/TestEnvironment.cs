@@ -46,6 +46,19 @@ public sealed class TestEnvironment : IAsyncLifetime
         return await ApiHost.StartAsync($"{connectionString};{GssSetting}", settings);
     }
 
+    /// <summary>
+    /// Drops the database of a running host, so that the host stays up while its database is gone.
+    /// </summary>
+    /// <param name="host">The host whose database is dropped.</param>
+    public async Task DropDatabaseAsync(ApiHost host)
+    {
+        var database = new NpgsqlConnectionStringBuilder(host.ConnectionString).Database;
+        await using var admin = new NpgsqlConnection(container.GetConnectionString());
+        await admin.OpenAsync(TestContext.Current.CancellationToken);
+        await using var drop = new NpgsqlCommand($"DROP DATABASE {database} WITH (FORCE)", admin);
+        await drop.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+    }
+
     public async ValueTask InitializeAsync() => await container.StartAsync();
 
     public async ValueTask DisposeAsync()

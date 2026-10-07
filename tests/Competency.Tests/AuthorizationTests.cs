@@ -115,9 +115,11 @@ public sealed class AuthorizationTests(TestEnvironment environment)
             (await user.GetAsync($"/api/v1/org-units/{inactive.Id}{hidden}")).Status.Should().Be(HttpStatusCode.NotFound, hidden);
         }
 
-        var units = (await user.GetAsync("/api/v1/org-units?pageSize=200")).Expect(HttpStatusCode.OK);
+        var foundActive = await user.GetAsync($"/api/v1/org-units?q={Uri.EscapeDataString(active.Json!["name"]!.GetValue<string>())}");
+        var foundInactive = await user.GetAsync($"/api/v1/org-units?q={Uri.EscapeDataString(inactive.Json!["name"]!.GetValue<string>())}");
         var tree = (await user.GetAsync("/api/v1/org-units/tree")).Expect(HttpStatusCode.OK);
-        Ids(units.Json!["items"]!).Should().Contain(active.Id).And.NotContain(inactive.Id);
+        Ids(foundActive.Expect(HttpStatusCode.OK).Json!["items"]!).Should().Equal(active.Id);
+        Ids(foundInactive.Expect(HttpStatusCode.OK).Json!["items"]!).Should().BeEmpty();
         Ids(tree.Json!).Should().Contain(active.Id).And.NotContain(inactive.Id);
 
         (await user.GetAsync($"/api/v1/employees/{dismissed.Id}")).Status.Should().Be(HttpStatusCode.NotFound);
