@@ -124,7 +124,7 @@ internal static class AuthEndpoints
     /// <summary>
     /// Replaces the signed-in user's password. Every other session of the user ends; the current one continues under the new security stamp.
     /// The current password is checked with the sign-in lockout accounting, so that a stolen session cannot guess it without limit:
-    /// a wrong one counts as a failed attempt and a locked account is refused without checking. The new password and its audit event are saved together.
+    /// a wrong one counts as a failed attempt, a lockout it starts is audited as at sign-in, and a locked account is refused without checking. The new password and its audit event are saved together.
     /// </summary>
     private static async Task<Results<NoContent, ValidationProblem, ProblemHttpResult, UnauthorizedHttpResult>> ChangePasswordAsync(
         ChangePasswordRequest request,
@@ -146,8 +146,13 @@ internal static class AuthEndpoints
             return TypedResults.Unauthorized();
         }
 
-        if (await VerifyPasswordAsync(users, user, request.CurrentPassword) is not null)
+        if (await VerifyPasswordAsync(users, user, request.CurrentPassword) is { } denial)
         {
+            if (denial == LoginDenial.LockoutStarted)
+            {
+                await AuditLockoutAsync(audit, user, cancellationToken);
+            }
+
             return Rejections.From(IdentityResult.Failed(users.ErrorDescriber.PasswordMismatch()));
         }
 
@@ -220,13 +225,19 @@ internal static class AuthEndpoints
         await audit.WriteAsync(
             new AuditEntry(LoginFailedAction, nameof(AppUser), user?.Id.ToString(), Reason: reason.ToString(), Actor: actor, Role: role),
             cancellationToken);
-        if (denial == LoginDenial.LockoutStarted)
+        if (denial == LoginDenial.LockoutStarted && user is not null)
         {
-            await audit.WriteAsync(
-                new AuditEntry(LockedOutAction, nameof(AppUser), user?.Id.ToString(), Actor: actor, Role: role),
-                cancellationToken);
+            await AuditLockoutAsync(audit, user, cancellationToken);
         }
 
         return TypedResults.Problem(detail: LoginFailedDetail, statusCode: StatusCodes.Status401Unauthorized, title: LoginFailedTitle);
     }
+
+    /// <summary>
+    /// Journals the lockout that the account's failed attempt just started, from a sign-in or from a password change.
+    /// </summary>
+    private static Task AuditLockoutAsync(IAuditWriter audit, AppUser user, CancellationToken cancellationToken) =>
+        audit.WriteAsync(
+            new AuditEntry(LockedOutAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString()),
+            cancellationToken);
 }
