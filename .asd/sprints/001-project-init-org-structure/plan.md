@@ -9,7 +9,7 @@ responsibility:
 
 ## Overview
 
-План покрывает AC-1…AC-13, AC-15, AC-16 и AC-17 (AC-16 и AC-17 добавлены, AC-9 изменён поправками scope по запросам пользователя при impl assessment: Task 11–14; AC-6, 7, 10, 11, 12, 13, 17 изменены поправками Task 15 и 16) из [sprint.md](./sprint.md) (workflow `lite`, acceptance-criteria source — `sprint.md`). AC-14 (регистрация подсистем `org-structure`, `user-management`, `audit` в `docs/architecture/subsystems.md` и их `<id>.md`, требования и UX в `docs/`) выполняет фаза design-promote после impl-review; отдельной Task у неё нет. Входной материал для dev: [audit.md](./audit.md) (риски и spike-пункты), `docs/architecture/stack.html` и `docs/architecture/tech-reference/` (точные версии, конвенции технологий), `docs/ux/DESIGN.md`, `docs/Постановка.md` (§4, §29, §39–§46).
+План покрывает AC-1…AC-13, AC-15, AC-16 и AC-17 (AC-16 и AC-17 добавлены, AC-9 изменён поправками scope по запросам пользователя при impl assessment: Task 11–14; AC-6, 7, 10, 11, 12, 13, 17 изменены поправками Task 15, 16 и 17) из [sprint.md](./sprint.md) (workflow `lite`, acceptance-criteria source — `sprint.md`). AC-14 (регистрация подсистем `org-structure`, `user-management`, `audit` в `docs/architecture/subsystems.md` и их `<id>.md`, требования и UX в `docs/`) выполняет фаза design-promote после impl-review; отдельной Task у неё нет. Входной материал для dev: [audit.md](./audit.md) (риски и spike-пункты), `docs/architecture/stack.html` и `docs/architecture/tech-reference/` (точные версии, конвенции технологий), `docs/ux/DESIGN.md`, `docs/Постановка.md` (§4, §29, §39–§46).
 
 Раскладка репозитория:
 - backend — `src/Competency.Api` (хост: `Program.cs`, сборка модулей, SPA-статика), `src/Competency.Platform` (общее ядро), модули `src/Competency.Audit`, `src/Competency.OrgStructure`, `src/Competency.UserManagement`; корень — `Competency.slnx`, `global.json`, `Directory.Build.props`, `.config/dotnet-tools.json`;
@@ -170,6 +170,12 @@ Material risk: change: изменение потока входа в SPA (лог
 - [x] AC-6,7,13: вход по e-mail (поле «E-mail», автозаполнение), список/карточка/форма создания пользователя — e-mail вместо имени пользователя, ошибки 409 о дубле e-mail под полем, шапка и меню пользователя показывают e-mail; убрать табельный номер и e-mail сотрудника из всех форм и карточек (e-mail сотрудника в модальном окне показывается из учётной записи, без возможности правки)
 Tech reference: antd-6.6.5, react-router-8.4.0, tanstack-react-query-5.104.1.
 
+### Task 17: ФИО сотрудника тремя полями
+Material risk: change: изменение схемы БД и публичного контракта (разбор существующих ФИО миграцией), поиск и индексы по ФИО, аудируемые свойства
+- [ ] AC-10,11: backend: у `Employee` вместо `FullName` — `LastName` и `FirstName` (обязательные, до 100 символов, без пробелов по краям) и `MiddleName` (необязательное, до 100 символов); отображаемое ФИО «Фамилия Имя Отчество» хранится как производное (stored generated колонка `full_name` из трёх полей), так что FTS `russian`, trigram-индекс и сортировка по ФИО продолжают работать без изменения запросов; запросы создания и правки принимают три поля (валидация, русские сообщения под полями), ответы (`EmployeeResponse`, `OrgUnitTreeNodeResponse.HeadName`, `EmployeeStatus`/`IEmployeeDirectory`, списки пользователей и `/auth/me` с именем привязанного сотрудника, `headName` в дереве, picker) отдают `lastName`/`firstName`/`middleName` и производное `fullName` (только чтение) там, где оно показывается; корректирующая миграция: добавить колонки, заполнить из существующего `full_name` (первый токен — фамилия, второй — имя, остаток — отчество; запись из одного слова — фамилия, имя «—»? — выбрать и описать безопасное правило), затем сделать `full_name` производным (пересоздать индексы по нему), `Down` возвращает обычную колонку `full_name`; аудит: аудируемые свойства — три поля вместо `FullName`; регенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts`
+- [ ] AC-10,13,17: frontend: модальное окно сотрудника — три поля «Фамилия», «Имя», «Отчество» (необязательное, без звёздочки); все места, где показывалось ФИО (карточки сотрудников, руководитель в карточке подразделения, picker руководителя и привязки учётной записи, список и карточка пользователей, шапка меню пользователя при наличии имени, модальное окно) показывают производное ФИО из ответа; серверные ошибки 400 раскладываются под соответствующие поля; без мёртвого кода
+Tech reference: efcore-10.0.12, npgsql-entityframeworkcore-postgresql-10.0.3, antd-6.6.5.
+
 ## Risks
 - Docker не установлен на dev-машине: ручной шаг отложен до Task 10 (последняя волна); до этого момента миграции Task 4–6 (расширение `pg_trgm`, схема Identity, триггер журнала) не исполнялись против реального PostgreSQL, ошибки в них обнаруживаются поздно — Task 10 и impl-test обязаны прогнать их первыми.
 - Учётка БД приложения имеет DDL-права (решение пользователя): триггер неизменяемости журнала не защищает от DDL.
@@ -193,11 +199,13 @@ Tech reference: antd-6.6.5, react-router-8.4.0, tanstack-react-query-5.104.1.
 | 12 | 14 |
 | 13 | 15 |
 | 14 | 16 |
+| 15 | 17 |
 
 - Task 2 и Task 3 зависят от Task 1 (проекты, `openapi.json`).
 - Task 4, 5, 6 идут последовательно: общий `AppDbContext` и единая линия миграций (конфликт model snapshot при параллельной генерации); Task 4 первым, чтобы сущности Task 5–6 аудировались с начала.
 - Task 6 зависит от Task 5 (`IEmployeeDirectory`, статус сотрудника) и Task 4 (`IAuditWriter`).
 - Task 7 зависит от Task 3 и Task 6 (оболочка, backend пользователей); Task 7 владеет оболочкой (`web/src/app/**`), хуком текущего пользователя и контрактом навигации фич. Task 8 и 9 зависят от Task 7 (хук роли, навигация), идут параллельно в своих каталогах `web/src/features/<feature>/` и общих файлов не правят (волны переразбиты при impl: исходная волна 6 с Task 7, 8, 9 порождала зависимость от ещё не созданного хука).
+- Task 17 (ФИО тремя полями, backend и frontend вместе) идёт после Task 16 (волна 15).
 - Task 15 (backend e-mail/вход/табельный номер) идёт после Task 14 (волна 13); Task 16 (frontend) зависит от контракта Task 15 (волна 14).
 - Task 14 (поправка AC-17) зависит от Task 5, 12, 13 (backend подразделений, карточки) и идёт последней (волна 12).
 - Task 13 (поправка AC-9) зависит от Task 5 (backend подразделений), Task 8/12 (UI) и идёт последней (волна 11).

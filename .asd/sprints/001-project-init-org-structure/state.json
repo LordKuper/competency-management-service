@@ -88,6 +88,13 @@
       "decision": "AC-6,7,10,11,12,13,17 changed; Tasks 15,16 waves 13-14",
       "reason": "email to user account, login by email, no personnel number, no employees page, add unit/employee flows",
       "evidence": "decisions-log.md 2026-10-06 scope amendment Task 15-16"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-10 changed, Task 17 wave 15",
+      "reason": "employee full name as last/first/middle name fields",
+      "evidence": "decisions-log.md 2026-10-07 scope amendment Task 17"
     }
   ],
   "task_routing": {
@@ -185,6 +192,12 @@
       "execution": "agent",
       "tier": "critical",
       "reason": "risk:SPA login flow by e-mail, mutation modals, removal of pages and routes",
+      "resolved_model": "sonnet"
+    },
+    "Task 17": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:DB schema and public contract change with data split migration, search indexes, audited properties",
       "resolved_model": "sonnet"
     }
   },
