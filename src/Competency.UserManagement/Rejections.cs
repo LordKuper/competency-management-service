@@ -1,3 +1,4 @@
+using Competency.Platform;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -9,18 +10,11 @@ namespace Competency.UserManagement;
 /// </summary>
 internal static class Rejections
 {
-    private const string ConflictTitle = "Операция отклонена";
     private const string InvalidTitle = "Проверьте введённые данные";
     private const string CurrentPasswordField = "currentPassword";
     private const string EmailField = "email";
     private const string GeneralField = "";
     private const string DefaultPasswordField = "newPassword";
-
-    public static ProblemHttpResult Conflict(string detail) =>
-        TypedResults.Problem(detail: detail, statusCode: StatusCodes.Status409Conflict, title: ConflictTitle);
-
-    public static ValidationProblem Invalid(string field, string message) =>
-        TypedResults.ValidationProblem(new Dictionary<string, string[]> { [field] = [message] });
 
     /// <summary>
     /// Turns a failed Identity operation into the response that fits it: a stale version, a taken e-mail, or the problems with the input.
@@ -40,7 +34,7 @@ internal static class Rejections
             return TypedResults.Problem(new HttpValidationProblemDetails(new Dictionary<string, string[]> { [EmailField] = [taken.Description] })
             {
                 Status = StatusCodes.Status409Conflict,
-                Title = ConflictTitle,
+                Title = Rejection.ConflictTitle,
                 Detail = taken.Description,
             });
         }

@@ -79,7 +79,7 @@ internal static class UserEndpoints
 
         if (query.SearchPattern() is { } pattern)
         {
-            users = users.Where(user => EF.Functions.ILike(user.Email!, pattern, UserListQuery.LikeEscape));
+            users = users.Where(user => EF.Functions.ILike(user.Email!, pattern, ListRequest.LikeEscape));
         }
 
         var total = await users.CountAsync(cancellationToken);
@@ -139,12 +139,12 @@ internal static class UserEndpoints
         {
             if (await employees.ProblemAsync(employeeId, cancellationToken) is { } problem)
             {
-                return Rejections.Invalid("employeeId", problem);
+                return Rejection.Invalid("employeeId", problem);
             }
 
             if (await context.IsBoundElsewhereAsync(employeeId, Guid.Empty, cancellationToken))
             {
-                return Rejections.Conflict(EmployeeBinding.AlreadyBound);
+                return Rejection.Conflict(EmployeeBinding.AlreadyBound);
             }
         }
 
@@ -189,19 +189,19 @@ internal static class UserEndpoints
         {
             if (await employees.ProblemAsync(employeeId, cancellationToken) is { } problem)
             {
-                return Rejections.Invalid("employeeId", problem);
+                return Rejection.Invalid("employeeId", problem);
             }
 
             if (await context.IsBoundElsewhereAsync(employeeId, user.Id, cancellationToken))
             {
-                return Rejections.Conflict(EmployeeBinding.AlreadyBound);
+                return Rejection.Conflict(EmployeeBinding.AlreadyBound);
             }
         }
 
         if (user.IsActiveAdministrator() && request.Role != UserRole.GlobalAdmin
             && !await context.HasOtherAsync(user.Id, cancellationToken))
         {
-            return Rejections.Conflict(ActiveAdministrators.LastOneMessage);
+            return Rejection.Conflict(ActiveAdministrators.LastOneMessage);
         }
 
         ifMatch.ApplyTo(context, user);
@@ -238,7 +238,7 @@ internal static class UserEndpoints
 
         if (user.IsActiveAdministrator() && !await context.HasOtherAsync(user.Id, cancellationToken))
         {
-            return Rejections.Conflict(ActiveAdministrators.LastOneMessage);
+            return Rejection.Conflict(ActiveAdministrators.LastOneMessage);
         }
 
         ifMatch.ApplyTo(context, user);
@@ -271,7 +271,7 @@ internal static class UserEndpoints
 
         if (user.EmployeeId is { } employeeId && await employees.ProblemAsync(employeeId, cancellationToken) is not null)
         {
-            return Rejections.Conflict(UnblockNeedsWorkingEmployee);
+            return Rejection.Conflict(UnblockNeedsWorkingEmployee);
         }
 
         ifMatch.ApplyTo(context, user);

@@ -134,12 +134,12 @@ internal static class EmployeeEndpoints
         var unit = await context.Set<OrgUnit>().FirstOrDefaultAsync(candidate => candidate.Id == input.OrgUnitId, cancellationToken);
         if (unit is null)
         {
-            return Rejections.Invalid("orgUnitId", "Подразделение не найдено.");
+            return Rejection.Invalid("orgUnitId", "Подразделение не найдено.");
         }
 
         if (!unit.IsActive)
         {
-            return Rejections.Invalid("orgUnitId", "Подразделение неактивно.");
+            return Rejection.Invalid("orgUnitId", "Подразделение неактивно.");
         }
 
         var employee = new Employee
@@ -181,12 +181,12 @@ internal static class EmployeeEndpoints
         var unit = await context.Set<OrgUnit>().FirstOrDefaultAsync(candidate => candidate.Id == input.OrgUnitId, cancellationToken);
         if (unit is null)
         {
-            return Rejections.Invalid("orgUnitId", "Подразделение не найдено.");
+            return Rejection.Invalid("orgUnitId", "Подразделение не найдено.");
         }
 
         if (unit.Id != employee.OrgUnitId && !unit.IsActive)
         {
-            return Rejections.Invalid("orgUnitId", "Подразделение неактивно.");
+            return Rejection.Invalid("orgUnitId", "Подразделение неактивно.");
         }
 
         ifMatch.ApplyTo(context, employee);
@@ -242,14 +242,14 @@ internal static class EmployeeEndpoints
 
         if (!employee.IsActive)
         {
-            return Rejections.Conflict($"Сотрудник «{employee.FullName}» уже не работает.");
+            return Rejection.Conflict($"Сотрудник «{employee.FullName}» уже не работает.");
         }
 
         await accounts.LockAdministratorsAsync(cancellationToken);
         var impact = await EmployeeImpact.OfAsync(context, accounts, id, cancellationToken);
         if (impact.IsRefused)
         {
-            return Rejections.Conflict(EmployeeImpact.LastAdministratorMessage);
+            return Rejection.Conflict(EmployeeImpact.LastAdministratorMessage);
         }
 
         await impact.ApplyAsync(id, accounts, unbindAccount: false, cancellationToken);
@@ -278,12 +278,12 @@ internal static class EmployeeEndpoints
 
         if (employee.IsActive)
         {
-            return Rejections.Conflict($"Сотрудник «{employee.FullName}» уже работает.");
+            return Rejection.Conflict($"Сотрудник «{employee.FullName}» уже работает.");
         }
 
         if (await context.UnitProblemAsync(employee.OrgUnitId, "Подразделение", cancellationToken) is { } unitProblem)
         {
-            return Rejections.Conflict($"Нельзя вернуть сотрудника «{employee.FullName}» на работу. {unitProblem} Сначала активируйте подразделение или переведите сотрудника в другое.");
+            return Rejection.Conflict($"Нельзя вернуть сотрудника «{employee.FullName}» на работу. {unitProblem} Сначала активируйте подразделение или переведите сотрудника в другое.");
         }
 
         ifMatch.ApplyTo(context, employee);
@@ -314,7 +314,7 @@ internal static class EmployeeEndpoints
         var impact = await EmployeeImpact.OfAsync(context, accounts, id, cancellationToken);
         if (impact.IsRefused)
         {
-            return Rejections.Conflict(EmployeeImpact.LastAdministratorMessage);
+            return Rejection.Conflict(EmployeeImpact.LastAdministratorMessage);
         }
 
         await impact.ApplyAsync(id, accounts, unbindAccount: true, cancellationToken);
@@ -342,9 +342,9 @@ internal static class EmployeeEndpoints
 
     private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, string text)
     {
-        var pattern = TextSearch.ContainsPattern(text);
+        var pattern = ListRequest.ContainsPattern(text);
         return employees.Where(employee =>
-            EF.Functions.ILike(employee.FullName, pattern, TextSearch.LikeEscape)
+            EF.Functions.ILike(employee.FullName, pattern, ListRequest.LikeEscape)
             || employee.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)));
     }
 

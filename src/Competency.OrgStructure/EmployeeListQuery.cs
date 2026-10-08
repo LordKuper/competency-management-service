@@ -1,3 +1,4 @@
+using Competency.Platform;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Competency.OrgStructure;
@@ -12,7 +13,7 @@ internal sealed record EmployeeListQuery(
     [FromQuery(Name = "orgUnitId")] Guid? OrgUnitId = null,
     [FromQuery(Name = "includeDescendants")] bool IncludeDescendants = false,
     [FromQuery(Name = "page")] int Page = 1,
-    [FromQuery(Name = "pageSize")] int PageSize = ListQueries.DefaultPageSize)
+    [FromQuery(Name = "pageSize")] int PageSize = ListRequest.DefaultPageSize)
 {
-    public Dictionary<string, string[]> Validate() => ListQueries.Validate(Page, PageSize, Q);
+    public Dictionary<string, string[]> Validate() => ListRequest.Validate(Page, PageSize, Q);
 }
