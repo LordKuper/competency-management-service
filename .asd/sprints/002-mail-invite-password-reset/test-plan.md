@@ -21,17 +21,16 @@ responsibility:
 | 8 | bffabb7 | delta с записи 7: `git diff 352584d...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (5 файлов: `AuthEndpoints.cs` — только doc-комментарий; тесты `LastAdministratorTests.cs`, `RowLock.cs`, `PasswordPolicyTests.cs`, `AccountLinkTests.cs`; AC-7, review-fix wave-2/iter-01: external #1, детерминированный тест гонки последних администраторов) |
 | 9 | 274b926 | delta с записи 8: `git diff bffabb7...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` — ПУСТО (единственная правка review-fix wave-2/iter-02 — e260b3d, память агента `.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md`) |
 | 10 | c372e1b | delta с записи 9: `git diff 274b926...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (3 файла web: `useSendUserMail.ts`, `UserListPage.tsx`, `passwordPolicy.ts`; review-fix wave-3/iter-01: F1 защита и индикатор повторной отправки письма, F2 склонение «символа»/«символов», external #1 текст предупреждения) |
+| 11 | | delta с записи 10: `git diff c372e1b...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (2 файла web: `useSendUserMail.ts` — только JSDoc; `userMail.test.tsx` — комментарий перенесён в JSDoc хелпера `isClosing`; review-fix wave-3/iter-02) |
 
 
 ## Risk → check decisions
 
-Строки записей 1–9 — в `test-plan.entry-01.md` … `test-plan.entry-09.md`. Запись 10 (delta с 274b926, review-fix wave-3/iter-01):
+Строки записей 1–10 — в `test-plan.entry-01.md` … `test-plan.entry-10.md`. Запись 11 (delta с c372e1b, review-fix wave-3/iter-02):
 
 | Change | Material risk | Chosen check | Decision | Reason |
 |---|---|---|---|---|
-| `useSendUserMail.ts`, `UserListPage.tsx`: повторный клик по пункту меню во время отправки (F1) | второй POST со старой версией даёт 412 и ложную ошибку; администратор не видит, что письмо отправляется | компонентный тест `userMail.test.tsx` (ответ удерживается `deferred`): сообщение «Отправка письма…» показано, пункт меню `aria-disabled`, клик по нему не создаёт второго POST, после ответа сообщение уходит | add | поведение наблюдаемо через экран и сеть; доказано fail-first |
-| `passwordPolicy.ts`: `Intl.PluralRules("ru")` (F2) | «Не короче 21 символов» — грамматическая ошибка в подсказке всех трёх экранов пароля | компонентный тест `linkScreens.test.tsx` в `describe.each` (оба экрана): minLength 21 → «Не короче 21 символа;» (форма «символов» уже закрыта тестом на 17) | add | граница правила «one» русского числа; fail-first |
-| `useSendUserMail.ts`: текст предупреждения «Письмо не отправлено» (external #1) | текст изменился | существующие тесты `MAIL_NOT_SENT` (`/Почтовый сервер не принял письмо/`) | none | регулярное выражение уже совпадает с новым текстом; правка не нужна, предстратегический прогон зелёный |
+| `useSendUserMail.ts`: JSDoc перенесён; `userMail.test.tsx`: комментарий перенесён в JSDoc хелпера `isClosing` | поведение не менялось (только комментарии/документация) | существующие тесты `userMail.test.tsx` | none | дельта — комментарии без изменения кода и ассертов; новое поведение отсутствует, новые тесты не нужны (§17) |
 
 ## Removed tests
 
@@ -44,8 +43,6 @@ Level and AC/risk covered are visible in the test file itself (name, path) — n
 
 | Test | Regression proof |
 |---|---|
-| `userMail.test.tsx` «shows progress and issues one request only while a send is pending, then removes the progress» (F1) | fail-first: `useSendUserMail.ts` и `UserListPage.tsx` откачены к 8942059~1 в рабочем дереве — тест красный (нет «Отправка письма…»); затем восстановлены из HEAD |
-| `linkScreens.test.tsx` «declines the noun by the Russian plural rule: 21 is «символа»…» ×2 экрана (F2) | fail-first: `passwordPolicy.ts` откачен к 8942059~1 (всегда «символов») — оба случая красные; затем восстановлен из HEAD |
 
 ## Suite run
 
@@ -57,11 +54,11 @@ record, by the time `pr` runs. Each per-entry record measures only the tree that
 analysed, not any tree produced later
 (`.asd/rules/sprint-lifecycle.md` "Impacted test set").
 
-- Command: `npm --prefix web test`, `npm --prefix web run lint`, `npm --prefix web run build`, `dotnet build Competency.slnx -c Release --tl:off`
-- Scope: запись 10 — impacted set: `userMail.test.tsx` (потребитель `useSendUserMail`, `UserListPage`, `useMailReport` через `UserModal`) и `linkScreens.test.tsx` (потребитель `passwordPolicy` через `LinkPasswordPage`, `ChangePasswordModal`); предохранитель не сработал (общая инфраструктура, сборочная и CI-конфигурация не тронуты). Web-набор мал, выполнен целиком. Backend не тронут — только сборка. Измерено дерево HEAD плюс тесты записи 10
-- Result: pass — web 11 файлов / 89 из 89 (86 + 3 новых; при откате кода 3 красных, на HEAD 0 красных)
-- Lint / build: pass — `lint` (biome + tsc) exit 0; `build` web ✓; `dotnet build -c Release` 0 ошибок, 0 предупреждений
-- HEAD: a3f99b25d55f4acae4cbfdd47e978d627e1884a6
+- Command: `npm --prefix web test`, `npm --prefix web run lint`, `npm --prefix web run build`
+- Scope: запись 11 — impacted set: `userMail.test.tsx` (меняется) и потребители `useSendUserMail`; предохранитель не сработал (общая инфраструктура, сборочная и CI-конфигурация не тронуты). Web-набор мал, выполнен целиком. Backend не тронут — не запускался. Измерено дерево HEAD
+- Result: pass — web 11 файлов / 89 из 89, 0 красных
+- Lint / build: pass — `lint` (biome + tsc) exit 0; `build` web ✓
+- HEAD: c42ec8de413b53f86e712ac3baa18e755b59e657
 
 ## Defects
 
