@@ -19,16 +19,16 @@ responsibility:
 | 6 | 772dde2 | delta с записи 5: `git diff cb8ee2a...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (7 файлов: `AuthEndpoints.cs`, `PasswordPolicyResponse.cs`, `openapi.json`, `schema.d.ts`, `passwordPolicy.ts`, `LinkPasswordPage.tsx`, `ChangePasswordModal.tsx`; AC-19, минимальная длина пароля из API) |
 | 7 | 352584d | delta с записи 6: `git diff 772dde2...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (6 файлов: `PlatformModule.cs`, `SmtpOptions.cs`, `MailSender.cs`, `appsettings.json`, `deploy/README.md`, `deploy/dev/README.md`; AC-1, review-fix wave-1/iter-01: external #1, #2, combined F1–F3) |
 | 8 | bffabb7 | delta с записи 7: `git diff 352584d...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (5 файлов: `AuthEndpoints.cs` — только doc-комментарий; тесты `LastAdministratorTests.cs`, `RowLock.cs`, `PasswordPolicyTests.cs`, `AccountLinkTests.cs`; AC-7, review-fix wave-2/iter-01: external #1, детерминированный тест гонки последних администраторов) |
+| 9 | | delta с записи 8: `git diff bffabb7...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` — ПУСТО (единственная правка review-fix wave-2/iter-02 — e260b3d, память агента `.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md`) |
 
-Предохранитель impacted set (`sprint-lifecycle.md` "Impacted test set"), запись 8: дельта — doc-комментарий в `AuthEndpoints.cs` (поведение не менялось) и тестовый код; `RowLock.cs` — общий тестовый помощник, но не сборочная, CI-конфигурация и не общий модуль приложения: его потребители находятся поиском по `tests` (`LastAdministratorTests`, `AccountLinkRaceTests`, `SignInRaceTests`), перегрузка `HoldAsync(host, userId)` сохранила сигнатуру. Предохранитель не срабатывает. Набор: изменённые файлы тестов (`LastAdministratorTests`, `PasswordPolicyTests`, `AccountLinkTests`) плюс потребители `RowLock` (`AccountLinkRaceTests`, `SignInRaceTests`); web не тронут. Предстратегический прогон: backend 44 из 44 (`-c Release`, сборка `Debug` занята процессом пользователя). Строки review-fix записи 7 (`Ac7_…`, строки 36 и 54 прежнего файла) ротированы в `test-plan.entry-07.md` вместе с остальными; удалений для переноса нет.
 
 ## Risk → check decisions
 
-Строки записей 1–7 — в `test-plan.entry-01.md` … `test-plan.entry-07.md` (строки review-fix wave-2/iter-01 — в записи 7). Запись 8 (delta с 352584d):
+Строки записей 1–8 — в `test-plan.entry-01.md` … `test-plan.entry-08.md`. Запись 9 (delta с bffabb7): код и тесты не менялись, новых рисков нет.
 
 | Change | Material risk | Chosen check | Decision | Reason |
 |---|---|---|---|---|
-| `AuthEndpoints.cs` doc-комментарий; правки doc-комментариев `PasswordPolicyTests.cs`, `AccountLinkTests.cs`; `RowLock.HoldActiveAdministratorsAsync` и переписанный `Ac7_…` (AC-7) | поведение приложения не менялось; риск гонки уже закрыт детерминированным тестом с доказательством мутациями (запись 7, review-fix) | — | none | новых рисков нет, новые тесты не нужны (§17); помощник `RowLock` проверяется тестом, который его использует. Остальные потребители `RowLock` прошли в предстратегическом прогоне |
+| — | — | — | none | дельта кода и тестов пуста: единственная правка после записи 8 — коммит e260b3d в память агента (`.claude/agent-memory/asd-tester-critical/`), вне поверхности изменений; нового поведения нет, новые тесты не нужны (§17) |
 
 ## Removed tests
 
@@ -52,11 +52,11 @@ record, by the time `pr` runs. Each per-entry record measures only the tree that
 analysed, not any tree produced later
 (`.asd/rules/sprint-lifecycle.md` "Impacted test set").
 
-- Command: `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj -c Release --filter-class "*LastAdministratorTests" --filter-class "*PasswordPolicyTests" --filter-class "*AccountLinkTests" --filter-class "*AccountLinkRaceTests" --filter-class "*SignInRaceTests"` (`test` из `commands.yaml`, суженный до impacted set; `-c Release`, вывод `Debug` может быть занят Visual Studio пользователя)
-- Scope: запись 8 — предохранитель не сработал (дельта: doc-комментарий и тестовый код); набор: три изменённых файла тестов плюс потребители `RowLock`; web не тронут (последний полный прогон web — запись 7, 86 из 86); измерено дерево HEAD, тесты записи 8 не добавлялись
-- Result: pass — backend 44 passed / 0 failed / 0 skipped (exit 0)
-- Lint / build: pass — `npm --prefix web run lint` exit 0, `dotnet build Competency.slnx --tl:off -c Release` 0 предупреждений, 0 ошибок, `npm --prefix web run build` exit 0
-- HEAD: 226300b724969a9c87770a612f88ca1028a59900
+- Command: `dotnet test --solution Competency.slnx -c Release` (backend целиком; `-c Release`, вывод `Debug` может быть занят Visual Studio пользователя) плюс `npm --prefix web run lint`
+- Scope: запись 9 — impacted set пуст (дельта кода и тестов пуста); предохранитель не сработал. Правило не описывает облегчённый прогон при пустом наборе, поэтому выбран полный backend; web не тронут (последний полный прогон web — запись 7, 86 из 86). Измерено дерево HEAD
+- Result: pass — backend 166 passed / 0 failed / 0 skipped (exit 0)
+- Lint / build: pass — `npm --prefix web run lint` exit 0; сборка выполнена в составе `dotnet test` (`-c Release`)
+- HEAD: 7750700921a35dc91aaf5072f7c86859bb8c0253
 
 ## Defects
 
