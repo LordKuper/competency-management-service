@@ -13,6 +13,7 @@ Orchestration body for the `asd-phase-plan` skill. Operation-mapping to host too
 - request user decision: rare, phase-level escalation only
 - the main orchestrator authors, gates and logs plan.md inline
 - append friction: `F-N` entries to `<sprint>/friction-log.md` per `sprint-lifecycle.md` "Friction log"
+- timing: per `sprint-lifecycle.md` "Operation timing" — no dispatch ops (the orchestrator authors inline); only its `user-wait` rule applies
 
 ## Workflow
 

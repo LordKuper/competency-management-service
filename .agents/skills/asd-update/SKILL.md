@@ -1,5 +1,5 @@
 ---
-# ASD generated. Edit .asd/skills/asd-update/SKILL.md. source_digest=sha256:fa71a8e3afe4f6942d8a4011dd5f682ae2671b80a73b26a51bffdf9d0b2a1365 content_digest=sha256:62fae4ab6d91e196791bd24e7b03aec69d790009c65cd1bf0ec180da5f180d34 asd_version=8.0.0 schema=1
+# ASD generated. Edit .asd/skills/asd-update/SKILL.md. source_digest=sha256:6cf765b826c48fa4db7766b78b6f82a1d29d56946f94ac9dd8a2e663c1fef592 content_digest=sha256:5d60e5577cd994f5a690eef3400b1b177a523bb71f043a3016fe342408c93114 asd_version=13.8.0 schema=1
 name: asd-update
 description: "Updates the ASD framework infrastructure (.asd/rules, .asd/templates, ASD agents/skills/hooks, .asd/migrations) in a consumer project to the latest version by fetching them from the configured ASD repo's main branch, replacing only framework-managed paths, running any pending `.asd/migrations/<version>.js` scripts in ascending order, and never touching consumer-owned config (beyond a migration's release-mandated key renames and removals, plus the value mappings, key insertions and shipped-comment rewrites that carry a renamed or removed key's or value's intent), sprints, persistent docs, or custom skills/agents/hooks. Use when the user runs $asd-update or asks to update, upgrade, or pull the latest ASD framework / workflow version."
 ---
@@ -22,7 +22,7 @@ Never touched: `.asd/project/**` (except `config.yaml`, which a release migratio
 
 ## Run
 
-1. Confirm with user (it overwrites framework files): show what will update, offer dry run.
+1. Confirm with user (it overwrites framework files): show what will update, offer dry run. Skipped in sprint-mediated mode (below).
 2. Run command `node "$(git rev-parse --show-toplevel)/.asd/skills/asd-update/update.js"` — self-locating, so this works from any directory in the repo (a bare relative path only resolves from the repo root).
    - Preview first: append `--dry-run` (reports the full classification — add/update/delete/conflict — mutates nothing).
 3. Updater flow: fetch tarball from `repo`@`branch` → compute the full classification for every `managed_paths` entry (fail-closed on an unfamiliar `schema_version`, unsafe path, or case-collision) → show every conflict and planned action → only THEN write (add/update/delete) → run pending migrations → rewrite `.asd/release-manifest.json` (`asd_version` + `upstream_hashes`).
@@ -32,6 +32,17 @@ Never touched: `.asd/project/**` (except `config.yaml`, which a release migratio
    - Script contract (also in each script's own header comment): filename (minus `.js`) is the exact target version it migrates a consumer TO, e.g. `.asd/migrations/3.2.0.js`; `module.exports = (ctx) => void | Promise<void>` with `ctx.repoRoot` = the consumer's project root; zero-dependency Node (may `require` `.asd/sync.js` from `ctx.repoRoot` for helpers); idempotent — re-running an already-applied migration is a no-op, never an error.
 5. Automatically runs `node .asd/sync.js --check` afterward — canon changed upstream means the provider-views (`.claude/`, `.codex/`, `.agents/`) are now stale; report this, do not auto-apply.
 6. Report version `old -> new` (or the version actually reached, if a migration failed) + counts from script output.
+
+## Sprint-mediated mode
+
+Run by `.asd/workflows/asd-phase-scope.md` step 1 when the user chose to update at `asd-sprint`'s new-sprint version check.
+
+- That choice is the confirmation: skip Run step 1; Run steps 2-6 apply unchanged.
+- Conflicts and `--force` still go to the user — never force without asking.
+- No commit here: the orchestrator commits the result. Report a failed migration or a declined conflict as a partial update; the orchestrator owns what follows.
+- Self-hosting guard unchanged: `asd-sprint` never runs the check when `self_hosting: enabled`.
+
+Version check: `node "$(git rev-parse --show-toplevel)/.asd/skills/asd-update/update.js" --check-version` is read-only. It fetches only the remote `.asd/release-manifest.json` (raw GitHub URL from the local manifest's `repo`/`branch`), reads only its `asd_version` (must match `^\d+(\.\d+)*$`; every other field is untrusted and ignored), prints one JSON line on stdout (e.g. `{"local":"13.7.0","remote":"13.8.0","newer":true}`) and exits 0. Any network, parse or repo error, a body over 1 MiB, or the 5 s total timeout, prints one warning line on stderr and `remote: null, newer: false`.
 
 ## After
 

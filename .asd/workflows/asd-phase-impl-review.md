@@ -4,7 +4,7 @@ Orchestration body for the `asd-phase-impl-review` skill. Operation-mapping to h
 
 ## Preconditions
 - Active sprint at `.asd/sprints/<NNN-slug>/`
-- **Clean worktree at phase entry** (`sprint-lifecycle.md`'s impl-review contract, sole SSoT): before any dispatch, run `git status --porcelain`; non-empty output → `FAILED`, naming the dirty paths. Measured once, at entry, before step 1.
+- **Clean worktree at phase entry** (`sprint-lifecycle.md`'s impl-review contract, sole SSoT): after committing a dirty timing ledger and before any dispatch, run `git status --porcelain`; non-empty output → `FAILED`, naming the dirty paths. Measured once, at entry, before step 1.
 - **Wave shape at entry**: a `reviews.impl` without `waves` (legacy flat node) is rewritten inline as `{wave: 1, waves: [<that node>]}` before anything below reads it (`sprint-lifecycle.md` "Review iteration counters" legacy shape). Below, K = `reviews.impl.wave`, "the wave node" = `reviews.impl.waves[K-1]`, n = `waves.length`, `<id>` = this iteration's id `wave-<K>/iter-NN`.
 - impl-test COMPLETED signal received with a green impacted-set run (`sprint-lifecycle.md` "Impacted test set"); `state.json.phase` advanced from `impl-test`
 - **First entry** (after initial impl): all plan.md Task checkboxes ticked; impl assessment approved
@@ -17,6 +17,7 @@ Orchestration body for the `asd-phase-impl-review` skill. Operation-mapping to h
 - request user decision: reviewer questions, escalation on FAIL or iteration cap
 - delegate to agent in parallel: reviewers; the orchestrator writes state, routing and decisions inline; `asd-tester` runs step 8's test-fix and the terminal full-suite gate.
 - append friction: `F-N` entries to `<sprint>/friction-log.md` per `sprint-lifecycle.md` "Friction log"
+- timing: per `sprint-lifecycle.md` "Operation timing" — a `review-iteration` op from step 2 to step 8's resolution (or step 10's); `dispatch` ops (`<reviewer key> <id>`; `external-review` kind for External Review) around step 6's reviewers and step 8's and step 9's tester dispatches (re-runs included, routing attrs carried); step 9's tester payload carries `<sprint>/timing.jsonl` and its dispatch id (the `suite` ops' `--parent`) and brackets each run with a `suite` op (`scope=full`); commit a dirty ledger before the entry check
 
 ## Workflow
 

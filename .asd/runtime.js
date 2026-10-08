@@ -94,6 +94,17 @@ const MEMORY_HISTORY_PATTERNS = [
   /\biteration \d+\b/i,
   /\[REVIEW-(design|impl)-[a-z]+\]: *(APPROVE|CONCERNS|FAIL)/,
 ];
+/** A sprint's timing ledger file name, the one each archived sprint is scanned for. */
+const TIMING_LEDGER = 'timing.jsonl';
+/** Operation kinds a timing ledger records. */
+const TIMING_KINDS = ['phase', 'dispatch', 'review-iteration', 'suite', 'external-review', 'user-wait'];
+/** Kinds timing a single machine operation, the only ones the slow set ranks; user waits are never slow. */
+const LEAF_MACHINE_KINDS = ['dispatch', 'suite', 'external-review'];
+const TIMING_OUTCOMES = ['done', 'interrupted'];
+/** Longest leaf machine operations the timing summary always lists as slow. */
+const SLOW_TOP_N = 5;
+/** Minutes past which a leaf machine operation is slow whatever its rank. */
+const SLOW_MINUTES = 30;
 
 function stable(value) {
   if (Array.isArray(value)) return '[' + value.map(stable).join(',') + ']';
@@ -1038,6 +1049,291 @@ async function agentLivenessCommand(flags) {
   }
 }
 
+/** A timing ledger's open and close entries in order; an unparseable line, such as a half-written tail, is skipped. */
+function timingEntries(text) {
+  const parse = (line) => {
+    try { return JSON.parse(line); } catch (_) { return null; }
+  };
+  return text.split('\n').map(parse).filter((entry) => entry && (entry.op === 'open' || entry.op === 'close') && typeof entry.id === 'string');
+}
+
+/** Replays ledger entries: the ops still open keyed by id, the close entries, and the ids of closes no open preceded. */
+function ledgerState(entries) {
+  const open = new Map();
+  const closed = [];
+  const unpaired = [];
+  for (const entry of entries) {
+    if (entry.op === 'open') {
+      open.set(entry.id, entry);
+      continue;
+    }
+    if (!open.delete(entry.id)) unpaired.push(entry.id);
+    closed.push(entry);
+  }
+  return { open, closed, unpaired };
+}
+
+function phaseName(id) {
+  return id.replace(/#\d+$/, '');
+}
+
+function phaseOrdinal(id) {
+  const match = /#(\d+)$/.exec(id);
+  return match === null ? 1 : Number(match[1]);
+}
+
+/** The open op an id names: its exact id, else the latest open phase op its bare phase name names. */
+function resolveOpen(open, id) {
+  if (open.has(id)) return open.get(id);
+  return [...open.values()].reverse().find((entry) => entry.kind === 'phase' && phaseName(entry.id) === id);
+}
+
+function closeEntry(entry, end, outcome) {
+  return { op: 'close', id: entry.id, kind: entry.kind, parent: entry.parent, start: entry.start, end, outcome, attrs: entry.attrs };
+}
+
+/** Text appending `entries` to a ledger holding `text`, starting a fresh line after a half-written tail. */
+function ledgerAppendText(text, entries) {
+  if (entries.length === 0) return '';
+  const separator = text !== '' && !text.endsWith('\n') ? '\n' : '';
+  return separator + entries.map((entry) => `${JSON.stringify(entry)}\n`).join('');
+}
+
+function timingIds(value, name) {
+  if (value === undefined) return [];
+  const ids = typeof value === 'string' ? value.split(',').map((id) => id.trim()) : [];
+  if (ids.length === 0 || ids.includes('')) fail(`${name} <id,...> must list non-empty ids`);
+  return ids;
+}
+
+function timingAttrs(value) {
+  if (value === undefined) return {};
+  return Object.fromEntries(value.split(';').map((pair) => {
+    const at = pair.indexOf('=');
+    if (at < 1) fail(`--attrs entry must be k=v: ${pair}`);
+    return [pair.slice(0, at).trim(), pair.slice(at + 1).trim()];
+  }));
+}
+
+/** Validates `timing`'s flags into `{close, outcome, open, kind, parent, attrs}`. */
+function timingRequest(flags) {
+  const close = timingIds(flags.close, '--close');
+  const open = timingIds(flags.open, '--open');
+  if (close.length === 0 && open.length === 0) fail('--close <id,...> or --open <id,...> required');
+  if (flags.outcome !== undefined && close.length === 0) fail('--outcome applies to --close only');
+  const outcome = flags.outcome === undefined ? 'done' : flags.outcome;
+  if (!TIMING_OUTCOMES.includes(outcome)) fail(`--outcome must be ${TIMING_OUTCOMES.join(' or ')}`);
+  if (open.length === 0 && [flags.kind, flags.parent, flags.attrs].some((value) => value !== undefined)) fail('--kind/--parent/--attrs apply to --open only');
+  if (open.length > 0 && !TIMING_KINDS.includes(flags.kind)) fail(`--kind must be one of ${TIMING_KINDS.join(', ')}`);
+  const badPhase = flags.kind === 'phase' ? open.find((name) => !/^[a-z]+(-[a-z]+)*$/.test(name)) : undefined;
+  if (badPhase !== undefined) fail(`--open of a phase takes its bare phase name: ${badPhase}`);
+  return { close, outcome, open, kind: flags.kind, parent: flags.parent, attrs: timingAttrs(flags.attrs) };
+}
+
+/** One `timing` call against a ledger holding `text`, as `{text, warnings}`: the text to append, closes before opens, each stamped `now` (ISO 8601 UTC). A close naming no open op is still recorded, unpaired, so the summary reports it; an open of an id already open, or of a phase whose bare name is already open, is skipped. Both warn. A phase opens as `<name>#<n>`, n its entry ordinal; an open without `parent` takes the open phase. */
+function timingAppend(text, flags, now) {
+  const request = timingRequest(flags);
+  const entries = timingEntries(text);
+  const { open } = ledgerState(entries);
+  const warnings = [];
+  const written = [];
+  for (const id of request.close) {
+    const entry = resolveOpen(open, id);
+    if (entry === undefined) warnings.push(`close of ${id} matches no open op`);
+    else open.delete(entry.id);
+    written.push(closeEntry(entry || { id, kind: null, parent: null, start: null, attrs: {} }, now, request.outcome));
+  }
+  const phaseOpens = entries.filter((entry) => entry.op === 'open' && entry.kind === 'phase').map((entry) => phaseName(entry.id));
+  for (const name of request.open) {
+    const id = request.kind === 'phase' ? `${name}#${phaseOpens.filter((opened) => opened === name).length + 1}` : name;
+    if (open.has(id) || (request.kind === 'phase' && [...open.values()].some((entry) => entry.kind === 'phase' && phaseName(entry.id) === name))) {
+      warnings.push(`open of ${request.kind === 'phase' ? name : id} skipped: already open`);
+      continue;
+    }
+    const entry = { op: 'open', id, kind: request.kind, parent: openParent(open, request), start: now, attrs: request.attrs };
+    open.set(id, entry);
+    if (request.kind === 'phase') phaseOpens.push(name);
+    written.push(entry);
+  }
+  return { text: ledgerAppendText(text, written), warnings };
+}
+
+/** A new op's parent: the open op `--parent` names, kept verbatim when none is open; without `--parent`, the open phase op for any op but a phase. */
+function openParent(open, request) {
+  if (request.parent !== undefined) {
+    const named = resolveOpen(open, request.parent);
+    return named === undefined ? request.parent : named.id;
+  }
+  const phase = request.kind === 'phase' ? undefined : [...open.values()].reverse().find((entry) => entry.kind === 'phase');
+  return phase === undefined ? null : phase.id;
+}
+
+/** The `{text, warnings}` closing every op a ledger holding `text` leaves open as `interrupted`, at the latest of its start, the ledger's last timestamp and `headDate` (the HEAD commit's ISO 8601 date). */
+function timingRecover(text, headDate) {
+  const head = Date.parse(headDate);
+  if (!Number.isFinite(head)) fail(`HEAD commit date unreadable: ${headDate}`);
+  const entries = timingEntries(text);
+  const end = new Date(Math.max(head, ...entries.flatMap((entry) => [entry.start, entry.end]).map(Date.parse).filter(Number.isFinite))).toISOString();
+  const closes = [...ledgerState(entries).open.values()].map((entry) => closeEntry(entry, end, 'interrupted'));
+  return { text: ledgerAppendText(text, closes), warnings: [] };
+}
+
+/** Runs `timing` or `timing-recover` as one append to `--ledger`, a missing ledger a no-op unless `timing --create`. Any failure, a malformed command line included, prints one stderr warning and still exits 0, so recording never stops the workflow. */
+function timingCommand(command, args) {
+  try {
+    const flags = parseFlagArgs(args, ['create']);
+    if (typeof flags.ledger !== 'string') fail('--ledger <path> required');
+    const exists = fs.existsSync(flags.ledger);
+    if (!exists && !(command === 'timing' && flags.create === true)) return 0;
+    const text = exists ? fs.readFileSync(flags.ledger, 'utf8') : '';
+    const result = command === 'timing' ? timingAppend(text, flags, new Date().toISOString()) : timingRecover(text, runGit(['log', '-1', '--format=%cI']).trim());
+    if (result.text !== '') fs.appendFileSync(flags.ledger, result.text, 'utf8');
+    if (result.warnings.length > 0) process.stderr.write(`${command}: ${result.warnings.join('; ')}\n`);
+  } catch (error) {
+    process.stderr.write(`${command}: warning, nothing recorded: ${error.message}\n`);
+  }
+  return 0;
+}
+
+/** Closed ops as `{id, kind, parent, start, end, ms, negative, outcome, attrs}`, times in epoch ms; a close without a readable start and end is left out, a negative duration clamped to 0 and marked. */
+function closedOps(closed) {
+  return closed.filter((entry) => Number.isFinite(Date.parse(entry.start)) && Number.isFinite(Date.parse(entry.end))).map((entry) => {
+    const start = Date.parse(entry.start);
+    const end = Date.parse(entry.end);
+    return { id: entry.id, kind: entry.kind, parent: entry.parent, start, end, ms: Math.max(0, end - start), negative: end < start, outcome: entry.outcome, attrs: entry.attrs || {} };
+  });
+}
+
+function seconds(ms) {
+  return Math.round(ms / 1000);
+}
+
+function median(values) {
+  const sorted = values.slice().sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+/** Length of the union of `{start, end}` intervals, in ms. */
+function unionMs(intervals) {
+  let total = 0;
+  let reach = -Infinity;
+  for (const { start, end } of intervals.slice().sort((a, b) => a.start - b.start)) {
+    total += Math.max(0, end - Math.max(start, reach));
+    reach = Math.max(reach, end);
+  }
+  return total;
+}
+
+function groupTotals(ops, keyOf) {
+  const groups = new Map();
+  ops.forEach((op) => {
+    const group = groups.get(keyOf(op)) || { count: 0, ms: 0 };
+    groups.set(keyOf(op), { count: group.count + 1, ms: group.ms + op.ms });
+  });
+  return groups;
+}
+
+function phaseAndKindTotals(ops) {
+  return { by_phase: groupTotals(ops.filter((op) => op.kind === 'phase'), (op) => phaseName(op.id)), by_kind: groupTotals(ops, (op) => op.kind) };
+}
+
+function totalsInSeconds(groups) {
+  return Object.fromEntries([...groups].map(([key, group]) => [key, { count: group.count, seconds: seconds(group.ms) }]));
+}
+
+function modelTotals(ops) {
+  const timed = ops.filter((op) => op.kind === 'dispatch' || op.kind === 'external-review');
+  return [...groupTotals(timed, (op) => JSON.stringify([op.attrs.agent || null, op.attrs.tier || null, op.attrs.model || null]))].map(([key, group]) => {
+    const [agent, tier, model] = JSON.parse(key);
+    return { agent, tier, model, count: group.count, seconds: seconds(group.ms) };
+  });
+}
+
+/** The slow set: the SLOW_TOP_N longest leaf machine ops (no other machine op names them as `parent`) plus every one over SLOW_MINUTES, longest first. Durations are machine time, overlapping user-wait ops subtracted; each op carries its excess over its kind's median in this sprint. */
+function slowOps(ops) {
+  const waits = ops.filter((op) => op.kind === 'user-wait');
+  const machine = ops.filter((op) => LEAF_MACHINE_KINDS.includes(op.kind)).map((op) => ({
+    ...op, ms: op.ms - unionMs(waits.map((wait) => ({ start: Math.max(wait.start, op.start), end: Math.min(wait.end, op.end) }))),
+  }));
+  const parents = new Set(machine.map((op) => op.parent));
+  const leaves = machine.filter((op) => !parents.has(op.id));
+  const kindMedian = (kind) => median(leaves.filter((op) => op.kind === kind).map((op) => op.ms));
+  return leaves.slice().sort((a, b) => b.ms - a.ms).filter((op, rank) => rank < SLOW_TOP_N || op.ms > SLOW_MINUTES * 60000).map((op) => ({
+    id: op.id, kind: op.kind, parent: op.parent, seconds: seconds(op.ms), excess_seconds: seconds(op.ms - kindMedian(op.kind)), outcome: op.outcome, attrs: op.attrs,
+  }));
+}
+
+function reworkTotals(ops) {
+  const total = (picked) => ({ count: picked.length, seconds: seconds(picked.reduce((sum, op) => sum + op.ms, 0)), ids: picked.map((op) => op.id) });
+  return {
+    reentries: total(ops.filter((op) => op.kind === 'phase' && phaseOrdinal(op.id) > 1)),
+    iterations: total(ops.filter((op) => op.kind === 'review-iteration' && Number(op.attrs.iteration) >= 2)),
+    interrupted: total(ops.filter((op) => op.outcome === 'interrupted')),
+  };
+}
+
+/** Per phase and kind, the median of archived sprints' totals and how many sprints recorded it; null with no archived ledger. */
+function timingBaseline(archivedTexts) {
+  if (archivedTexts.length === 0) return null;
+  const sprints = archivedTexts.map((text) => phaseAndKindTotals(closedOps(ledgerState(timingEntries(text)).closed)));
+  const medians = (field) => {
+    const samples = new Map();
+    sprints.forEach((totals) => totals[field].forEach((group, key) => samples.set(key, (samples.get(key) || []).concat(group.ms))));
+    return Object.fromEntries([...samples].map(([key, values]) => [key, { median_seconds: seconds(median(values)), sprints: values.length }]));
+  };
+  return { ledgers: archivedTexts.length, by_phase: medians('by_phase'), by_kind: medians('by_kind') };
+}
+
+function timingGaps(ops, open, unpaired) {
+  const openOps = [...open.values()].map((entry) => ({ id: entry.id, kind: entry.kind, start: Date.parse(entry.start), end: Infinity }));
+  const all = ops.concat(openOps);
+  const phases = all.filter((op) => op.kind === 'phase');
+  const inPhase = (op) => phases.some((phase) => op.start >= phase.start && op.start <= phase.end);
+  return {
+    close_without_open: unpaired,
+    outside_phase: all.filter((op) => op.kind !== 'phase' && !inPhase(op)).map((op) => op.id),
+    open: [...open.values()].map((entry) => ({ id: entry.id, kind: entry.kind, start: entry.start })),
+    negative: ops.filter((op) => op.negative).map((op) => op.id),
+  };
+}
+
+/** The deterministic timing summary of a ledger holding `text` (null when it is missing) against archived sprints' ledger texts; it reads no clock, so an op still open is reported open, never measured. Machine time is the phase union minus the user-wait union; unaccounted time is wall time outside every phase. */
+function timingSummary(text, archivedTexts) {
+  if (text === null) return { timing: null };
+  const entries = timingEntries(text);
+  const { open, closed, unpaired } = ledgerState(entries);
+  const ops = closedOps(closed);
+  const ofKind = (kind) => ops.filter((op) => op.kind === kind);
+  const stamps = entries.flatMap((entry) => [entry.start, entry.end]).map(Date.parse).filter(Number.isFinite);
+  const wallMs = stamps.length === 0 ? 0 : Math.max(...stamps) - Math.min(...stamps);
+  const waitMs = unionMs(ofKind('user-wait'));
+  const totals = phaseAndKindTotals(ops);
+  return {
+    timing: {
+      wall_seconds: seconds(wallMs),
+      machine_seconds: seconds(unionMs(ofKind('phase').concat(ofKind('user-wait'))) - waitMs),
+      user_wait_seconds: seconds(waitMs),
+      unaccounted_seconds: seconds(wallMs - unionMs(ofKind('phase'))),
+      by_phase: totalsInSeconds(totals.by_phase),
+      by_kind: totalsInSeconds(totals.by_kind),
+      by_model: modelTotals(ops),
+      slow: slowOps(ops),
+      user_waits: ofKind('user-wait').sort((a, b) => a.start - b.start).map((op) => ({ id: op.id, gate: op.attrs.gate || null, parent: op.parent, start: new Date(op.start).toISOString(), seconds: seconds(op.ms), outcome: op.outcome })),
+      rework: reworkTotals(ops),
+      baseline: timingBaseline(archivedTexts),
+      gaps: timingGaps(ops, open, unpaired),
+    },
+  };
+}
+
+function timingSummaryCommand(flags) {
+  if (typeof flags.ledger !== 'string' || typeof flags.archive !== 'string') fail('--ledger <path> and --archive <archived sprints dir> required');
+  const sprints = fs.existsSync(flags.archive) ? fs.readdirSync(flags.archive, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort() : [];
+  const archived = sprints.map((sprint) => path.join(flags.archive, sprint, TIMING_LEDGER)).filter((file) => fs.existsSync(file)).map((file) => fs.readFileSync(file, 'utf8'));
+  return timingSummary(fs.existsSync(flags.ledger) ? fs.readFileSync(flags.ledger, 'utf8') : null, archived);
+}
+
 function parseFlagArgs(argv, booleanFlags) {
   const bools = booleanFlags || [];
   const out = {};
@@ -1059,6 +1355,7 @@ function inputJson(flags) {
 
 async function main(argv) {
   const command = argv[2];
+  if (command === 'timing' || command === 'timing-recover') return timingCommand(command, argv.slice(3));
   const flags = parseFlagArgs(argv.slice(3), ['self-hosting', 'late']);
   if (command === 'manifest-digest') {
     process.stdout.write(coverageManifestDigest(JSON.parse(fs.readFileSync(flags.manifest, 'utf8'))) + '\n');
@@ -1125,11 +1422,15 @@ async function main(argv) {
     return 0;
   }
   if (command === 'agent-liveness') return agentLivenessCommand(flags);
-  fail('usage: emit-manifest, manifest-digest, validate-ledger, persist-review, external-preflight, external-record-failure, route-task, defect-stalemate, memory-check, draft-snapshot, review-waves, wave-files, retro-candidates, scratch-dir, or agent-liveness');
+  if (command === 'timing-summary') {
+    process.stdout.write(JSON.stringify(timingSummaryCommand(flags)) + '\n');
+    return 0;
+  }
+  fail('usage: emit-manifest, manifest-digest, validate-ledger, persist-review, external-preflight, external-record-failure, route-task, defect-stalemate, memory-check, draft-snapshot, review-waves, wave-files, retro-candidates, scratch-dir, agent-liveness, timing, timing-recover, or timing-summary');
 }
 
 if (require.main === module) {
   main(process.argv).then((code) => { process.exitCode = code; }, (error) => { process.stderr.write(`${error.message}\n`); process.exitCode = 2; });
 }
 
-module.exports = { AUDIT_BATCH_THRESHOLD_FILES, COMBINED_REVIEWER, EXTERNAL_REVIEWER, INTERNAL_REVIEWERS, LARGE_WAVE_FILES, LEDGER_NA_SHAPE, LEDGER_ROW_EXAMPLE, LEDGER_VOCABULARY, MAX_REVIEW_WAVES, NA_PREDICATES, WAVE_THRESHOLD_BYTES, WAVE_THRESHOLD_FILES, WAVE_THRESHOLD_LINES, agentLiveness, backlogRows, buildInvocation, coverageManifestDigest, defectStalemate, draftSnapshot, emitCoverageManifest, externalPreflight, isDocumentation, isTest, loadWorkflow, numstatLines, persistReview, recordExternalFailure, retroCandidates, retroRows, reviewFindings, reviewWaveCount, reviewerFiles, reviewerKeys, routeTask, validateCoverageLedger, validateWaveDivision, waveFiles, fingerprint };
+module.exports = { AUDIT_BATCH_THRESHOLD_FILES, COMBINED_REVIEWER, EXTERNAL_REVIEWER, INTERNAL_REVIEWERS, LARGE_WAVE_FILES, LEDGER_NA_SHAPE, LEDGER_ROW_EXAMPLE, LEDGER_VOCABULARY, MAX_REVIEW_WAVES, NA_PREDICATES, SLOW_MINUTES, SLOW_TOP_N, WAVE_THRESHOLD_BYTES, WAVE_THRESHOLD_FILES, WAVE_THRESHOLD_LINES, agentLiveness, backlogRows, buildInvocation, coverageManifestDigest, defectStalemate, draftSnapshot, emitCoverageManifest, externalPreflight, isDocumentation, isTest, loadWorkflow, numstatLines, persistReview, recordExternalFailure, retroCandidates, retroRows, reviewFindings, reviewWaveCount, reviewerFiles, reviewerKeys, routeTask, timingAppend, timingRecover, timingSummary, validateCoverageLedger, validateWaveDivision, waveFiles, fingerprint };

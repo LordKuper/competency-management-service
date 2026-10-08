@@ -14,6 +14,7 @@ Orchestration body for the `asd-phase-design-review` skill. Operation-mapping to
 - request user decision: reviewer questions, escalation on FAIL or iteration cap
 - delegate to agent in parallel: reviewers; delegate to agent sequentially: creator autofix; the orchestrator writes state and decisions-log inline
 - append friction: `F-N` entries to `<sprint>/friction-log.md` per `sprint-lifecycle.md` "Friction log"
+- timing: per `sprint-lifecycle.md` "Operation timing" — a `review-iteration` op from step 4 to step 9's resolution (loop or exit); `dispatch` ops (`<reviewer key> iter-NN`; `external-review` kind for External Review) around step 7's reviewers and around step 9's creator dispatches
 
 ## Workflow
 

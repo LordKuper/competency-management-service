@@ -43,6 +43,7 @@ Set by `project.subsystem_decomposition` in config (`enabled` | `disabled`). Lay
 │       │   ├── test-plan.entry-NN.md          # rotated narrative segments, "Test plan"
 │       │   ├── manual-steps.md
 │       │   ├── friction-log.md
+│       │   ├── timing.jsonl                   # orchestrator-owned; written only via runtime.js timing*, sprint-lifecycle.md "Operation timing"; archived with the sprint
 │       │   ├── retrospective.html
 │       │   └── reviews/
 │       │       ├── design/iter-NN/<reviewer>.md, <reviewer>.late.md
