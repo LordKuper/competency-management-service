@@ -1,10 +1,10 @@
 ---
-# ASD generated. Edit .asd/agents/asd-dev.md. source_digest=sha256:1bbae45dc201c7ba2cb76325c16f7a27b5ffe3d59bf9f5f3fc3d9a809c8f7e76 content_digest=sha256:f5dd079c4092fa23bf273f41d66a1b1a981ca2b1bd0d852330162854ebaff8db asd_version=13.4.0 schema=1
+# ASD generated. Edit .asd/agents/asd-dev.md. source_digest=sha256:87427691a2e33a427713096a8510d6801535e420c09f351b51abedbf26d62640 content_digest=sha256:cdcf32548b969907602f839cc35d9faee2eb2e99ff4ced988831d89f7102f18f asd_version=13.7.0 schema=1
 name: asd-dev-critical
 description: "Server/CLI/library code and UI code, components, client-side logic, consuming DESIGN.md tokens wherever UI work applies. Covers: production code authoring per plan tasks (backend and frontend), fixing impl-review findings and impl-test defects, running lint/build/run commands from commands.yaml, registering TODO stubs in stubs.md. Does NOT handle: any test authoring or test runs — unit, integration, e2e (delegates to asd-tester in the impl-test phase), architecture decisions (delegates to asd-architect), design system token edits (delegates to asd-ux), accessibility requirements (read-only consumer of accessibility.html), code review (delegates to reviewer agents). Task class: critical."
 tools: [Read, Glob, Grep, Edit, Write, Bash, WebFetch, WebSearch]
-model: sonnet
-effort: xhigh
+model: opus
+effort: high
 maxTurns: 1000
 memory: project
 ---

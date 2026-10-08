@@ -31,13 +31,13 @@ Standing DoD applies (`sprint-lifecycle.md` "Plan file format") — not restated
 {{sprint-specific DoD additions, if any — prose, NO checkboxes; omit this line entirely when none}}
 
 ### Task 1: {{title}}
-Material risk: change: {{short risk class — the edit's own correctness is uncertain}}
+Material risk: change: {{short risk class — a nameable uncertainty: undecided wording/shape, an untestable edge, trust or persisted data}}
 Reachability: {{which two phases must agree, on what value, and the point in each where it is written and read; a value crossing a push or merge adds `; interrupted at <point>, <branch> holds <value>` per interruption point — omit this line entirely when the task has no cross-phase dependency}}
 - [ ] {{subtask}}
 - [ ] {{subtask}}
 
 ### Task 2: {{title}}
-Material risk: artifact: {{short risk class — verifiable edit in a high-stakes file}}
+Material risk: artifact: {{short risk class — decided, verifiable edit (named test/grep) in a high-stakes file}}
 - [ ] {{subtask}}
 
 ### Task 3: {{title}}

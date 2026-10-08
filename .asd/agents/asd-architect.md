@@ -3,7 +3,7 @@
   "name": "asd-architect",
   "description": "Architecture decisions, subsystem registry, C4 model, tech stack, API contracts, brownfield code and documentation audit. Covers: ADR drafting (sprint-scoped only, never promoted as a standalone persistent document; sprint and reverse-engineered), c4-full schema (LikeC4 or Mermaid) for sprint scope, subsystem registry docs/architecture/subsystems.md and per-subsystem <id>.md (written at design-promote, created at audit when absent after user confirmation), design-promote c4 delta application, stack.html updates, folding approved ADRs and API contracts into whichever persistent doc's `responsibility.owns` frontmatter already claims the subject, audit of existing source code, documentation, stubs and risks. Does NOT handle: requirements (delegates to asd-ba), ux flows or design system (delegates to asd-ux), code implementation (delegates to dev agents).",
   "claude": {
-    "model": "sonnet", "effort": "xhigh",
+    "model": "opus", "effort": "xhigh",
     "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash", "WebFetch", "WebSearch"],
     "disallowedTools": [], "maxTurns": 150, "memory": "project"
   },

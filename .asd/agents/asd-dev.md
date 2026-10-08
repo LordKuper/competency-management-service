@@ -10,7 +10,7 @@
   "codex": { "model": "sol", "model_reasoning_effort": "medium", "sandbox_mode": "workspace-write", "web_search": "live" },
   "variants": {
     "mechanical": { "claude": { "model": "haiku" }, "codex": { "model": "luna", "model_reasoning_effort": "low" } },
-    "critical": { "claude": { "model": "sonnet", "effort": "xhigh" }, "codex": { "model": "sol", "model_reasoning_effort": "high" } }
+    "critical": { "claude": { "model": "opus", "effort": "high" }, "codex": { "model": "sol", "model_reasoning_effort": "high" } }
   }
 }
 ---

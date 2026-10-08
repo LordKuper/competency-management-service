@@ -3,7 +3,7 @@
   "name": "asd-reviewer-combined",
   "description": "Impl-review single-pass internal reviewer for workflows whose `reviewers.impl` names `combined` (lite): applies the Correctness and Efficiency rubrics to every change, the Documentation rubric when a documentation file is in scope, and gives an overall quality assessment of every change. Covers: bugs, security, contracts, best practices, AC→code trace against `sprint.md` AC-N, UI/accessibility conformance, over-engineering and structure/cohesion checklists, complexity-vs-value, performance; conditionally SSoT, template adherence, persistent-doc actuality, in-code doc comments, stub resolution, Framework mode, documentation economy; overall quality. Does NOT handle: design-review (lite has none; standard dispatches asd-reviewer-correctness/efficiency/documentation), test-plan/test-quality review and AC→check coverage (no Testing review in lite; `test-plan.md` is context only, the manual-verification decision is the orchestrator's), standard's impl-review (asd-reviewer-correctness/efficiency/testing/documentation), fixing (creators autofix per review-policy).",
   "claude": {
-    "model": "sonnet", "effort": "xhigh",
+    "model": "opus", "effort": "high",
     "tools": ["Read", "Glob", "Grep", "WebFetch", "WebSearch"],
     "disallowedTools": ["Edit", "Bash"], "maxTurns": 100, "memory": "project"
   },
