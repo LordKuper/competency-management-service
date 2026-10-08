@@ -13,7 +13,7 @@ namespace Competency.UserManagement;
 
 /// <summary>
 /// The session API. Permission matrix: signing in, asking for a password reset link, and setting a password from an invitation or reset link
-/// are anonymous and rate limited per client address; signing out, reading the own account and changing the own password need any signed-in user
+/// are anonymous and rate limited per client address; reading the password policy is anonymous and not rate limited; signing out, reading the own account and changing the own password need any signed-in user
 /// and act on the account in the session, never on one named in the request.
 /// Every failed sign-in answers with the same response, whether the account is unknown, the password wrong, the account locked,
 /// blocked, invited and not yet registered, or its employee gone, so the response reveals nothing about accounts; so does every request for a reset link.
