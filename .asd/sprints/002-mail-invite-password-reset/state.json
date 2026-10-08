@@ -77,6 +77,14 @@
       "decision": "AC-17 added (dev SMTP defaults in appsettings.Development.json, personal SMTP via .NET User Secrets), Task 7 wave 6",
       "reason": "persistent Mailtrap sandbox without secrets in repo; cost 0 iterations / 0 fix rounds",
       "evidence": "decisions-log.md 2026-10-08 scope amendment AC-17"
+    },
+    {
+      "gate": "impl assessment",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "approve Task 7",
+      "reason": "AC-17 user-authorized amendment; risk none; no flagged choices; build 0/0, lint clean; paths within Task 7",
+      "evidence": "7bc40e2",
+      "artifact_revision": "7bc40e2"
     }
   ],
   "task_routing": {
@@ -155,7 +163,7 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T10:32:31.979Z",
+  "updated_at": "2026-10-08T10:34:05.571Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

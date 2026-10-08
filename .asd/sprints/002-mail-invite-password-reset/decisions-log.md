@@ -64,3 +64,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — impl-test: defects D-1, D-2 (agent memory, asd-dev-critical) → impl test-fix (digest 702cd83ca8c9c9d848d9341a9cd5feca9c29ab332bb4b8db89b0c0d2320c051f); the same impl entry then runs unticked Task 7 (AC-17) in initial mode
 - 2026-10-08 — route test-fix D-1,D-2: standard (memory-fix dispatch to owner asd-dev-critical), dispatch HEAD eacf980; risk none via grep of the two memory files
 - 2026-10-08 — impl test-fix: defects D-1, D-2 resolved (1798700, memory-fix by owner asd-dev-critical); continuing the same impl entry in initial mode over unticked Task 7 (F-1)
+- 2026-10-08 — route Task 7: standard, dispatch HEAD a0d9c1d; risk none
+- 2026-10-08 — wave 6 done: Task 7 (7bc40e2); completion gate: build 0/0, lint 0, paths within Task 7; impl assessment for Task 7 passed adaptively (user-authorized AC-17, risk none, Flagged choices: none); NEXT impl-test entry 2
