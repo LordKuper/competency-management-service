@@ -20,6 +20,7 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 |---|---|---|---|
 | F-1 | impl-test | Правило поправки скоупа не описывает новую Task при выходе impl-test в test-fix | D-1, D-2 |
 | F-2 | impl-test | Поправка скоупа на smoke-проверке зелёного impl-test: выход в impl initial не описан | — |
+| F-3 | impl-review | Ревьюер перезаписал собственный файл памяти частичным содержимым | reviews/impl/wave-3/iter-02/combined |
 
 ## F-1 — Правило поправки скоупа не описывает новую Task при выходе impl-test в test-fix
 
@@ -36,3 +37,11 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **What happened**: Smoke-проверка entry 2 (шаг 10) дала замечания пользователя, принятые как AC-18 / Task 8. Шаг 10 предписывает только `NEXT: impl-review`; маршрут к impl initial для неотмеченной Task при зелёном наборе тестов не описан. Оркестратор выбрал `NEXT: impl` (разрешён `lite.json` `next["impl-test"]`) без флагов исправлений — impl входит в initial по неотмеченной Task 8.
 - **Impact**: решение по аналогии; smoke-проверка, стоящая после зелёного прогона, порождает поправки, а их цикл (impl → impl-test → повторная smoke) правилом не задан.
 - **Refs**: —
+
+## F-3 — Ревьюер перезаписал собственный файл памяти частичным содержимым
+
+- **Phase**: impl-review
+- **Surface**: agent — `asd-reviewer-combined` (wave-3/iter-02), `.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md`
+- **What happened**: При добавлении двух приёмов проверки ревьюер записал файл памяти целиком (`Write`), оставив только frontmatter, затем сам восстановил текст из диффов архивного спринта 001. Оркестратор сверил с git: итоговое изменение только добавляет строки, потерь нет. В новый текст попала ссылка на спринт («sprint 002 `SENDING_KEY`»), что противоречит правилу содержания памяти (`artifact-layout.md` "Agent memory").
+- **Impact**: риск потери накопленной памяти агента; ручная сверка оркестратором.
+- **Refs**: reviews/impl/wave-3/iter-02/combined

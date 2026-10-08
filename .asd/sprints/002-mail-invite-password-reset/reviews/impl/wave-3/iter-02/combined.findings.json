@@ -1,0 +1,1 @@
+[{"id":"F1","severity":"high","location":"web/src/features/users/userMail.test.tsx:208 (AC-6, AC-11)"},{"id":"F2","severity":"medium","location":"web/src/features/users/useSendUserMail.ts:28-36 (AC-6, AC-9)"}]
