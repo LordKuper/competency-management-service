@@ -23,7 +23,7 @@ A no-op skip, other zero-content decision, dispatch routing line or failed-dispa
 
 ```markdown
 - YYYY-MM-DD — <phase> skipped: <reason>
-- YYYY-MM-DD — route <taskIds>: <tier>, dispatch HEAD <sha>
+- YYYY-MM-DD — route <taskIds>: <tier>, dispatch HEAD <sha>[; risk <declaration>]
 - YYYY-MM-DD — reconstruction: landed <ids>; re-dispatched <ids>
 - YYYY-MM-DD — stall: <agent> <dispatch ids>
 ```
