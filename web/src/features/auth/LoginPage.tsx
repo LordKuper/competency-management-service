@@ -1,18 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  theme as antdTheme,
-  Button,
-  Flex,
-  Form,
-  Input,
-  Typography,
-} from "antd";
+import { theme as antdTheme, Button, Flex, Form, Input } from "antd";
 import { useNavigate } from "react-router";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
 import { showFieldErrors } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { PRODUCT_TAGLINE } from "../../app/productName";
 import { AuthCard, AuthLink } from "./AuthCard";
 import { FORGOT_PASSWORD_PATH } from "./ForgotPasswordPage";
 import { currentUserQueryKey } from "./useCurrentUser";
@@ -40,9 +32,6 @@ export function LoginPage() {
 
   return (
     <AuthCard title="Вход в систему">
-      <Typography.Paragraph type="secondary">
-        {PRODUCT_TAGLINE}
-      </Typography.Paragraph>
       <Form
         form={form}
         name="login"
