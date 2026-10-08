@@ -16,7 +16,7 @@ responsibility:
 | 3 | 2d661f6 | delta с записи 2: `git diff 906d167...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (5 файлов: `AccountMail.cs`, `AuthCard.tsx`, `passwordPolicy.ts`, `LinkPasswordPage.tsx`, `UserForm.tsx`; AC-18) |
 | 4 | 6a13874 | delta с записи 3: `git diff 2d661f6...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (3 файла: `AuthCard.tsx`, `appsettings.json`, `deploy/README.md`; AC-18, AC-4 срок приглашения — неделя) |
 | 5 | cb8ee2a | delta с записи 4: `git diff 6a13874...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (2 файла: `LoginPage.tsx`, `productName.ts`; AC-18, подзаголовок экрана входа убран) |
-| 6 | | delta с записи 5: `git diff cb8ee2a...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (7 файлов: `AuthEndpoints.cs`, `PasswordPolicyResponse.cs`, `openapi.json`, `schema.d.ts`, `passwordPolicy.ts`, `LinkPasswordPage.tsx`, `ChangePasswordModal.tsx`; AC-19, минимальная длина пароля из API) |
+| 6 | 772dde2 | delta с записи 5: `git diff cb8ee2a...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (7 файлов: `AuthEndpoints.cs`, `PasswordPolicyResponse.cs`, `openapi.json`, `schema.d.ts`, `passwordPolicy.ts`, `LinkPasswordPage.tsx`, `ChangePasswordModal.tsx`; AC-19, минимальная длина пароля из API) |
 
 Предохранитель impacted set (`sprint-lifecycle.md` "Impacted test set"), запись 6: дельта — `AuthEndpoints.cs` и `PasswordPolicyResponse.cs` (модуль `UserManagement`), `openapi/openapi.json` и `web/src/api/schema.d.ts` (производные артефакты контракта, добавочно), `passwordPolicy.ts`, `LinkPasswordPage.tsx`, `ChangePasswordModal.tsx` (каталог `features/auth`). Сборочной, CI- или общей инфраструктуры нет: `AuthEndpoints.cs` — файл одного модуля, а не общий модуль. Предохранитель не срабатывает. Набор по ссылкам: `ContractTests` (читает `openapi.json`), `linkScreens.test.tsx` (рендерит оба экрана с хуком), новый `PasswordPolicyTests`; `ChangePasswordModal` тестами не охвачен. Предстратегический прогон: backend 157 из 157, web 82 из 82 (запрос политики без обработчика получает 599, экраны остаются на запасной подсказке). Сборка `Debug` занята процессом пользователя, backend в `-c Release`.
 
@@ -98,4 +98,4 @@ result: pass — название крупное, соразмерно лого�
 
 | AC-19 | Запустить приложение (профиль F5 «Everything»). Открыть `/accept-invitation#token=x` («Задание пароля»), `/reset-password#token=x` («Новый пароль»), затем после входа открыть окно смены пароля. Сверить число с `Identity:Password:RequiredLength` (по умолчанию 10; при желании запустить API с `Identity__Password__RequiredLength=14`) | подсказка под полем пароля на всех трёх: «Не короче N символов; заглавные и строчные буквы, цифры и специальные символы.», N совпадает с настройкой |
 
-result:
+result: pass — подсказка называет точную длину на всех трёх экранах

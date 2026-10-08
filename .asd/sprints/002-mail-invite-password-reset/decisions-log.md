@@ -103,3 +103,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: sprint.md AC-19, plan.md Task 11
 - 2026-10-08 — route Task 11: standard, dispatch HEAD 41667f4; risk none
 - 2026-10-08 — wave 10 done: Task 11 (2bc7c32): GET /api/v1/auth/password-policy (GetPasswordPolicy) → {minLength}, usePasswordHint; completion gate: build 0/0, lint 0; impl assessment passed adaptively (Flagged choices: none)
+- 2026-10-08 — route impl-test entry 6: standard, dispatch HEAD 13afa16; risk none via test run
+- 2026-10-08 — impl-test entry 6: smoke AC-19 (user): pass
+- 2026-10-08 — impl-test: impacted set green (backend 160/160, web 86/86, lint/build/check:api clean), 4/0 tests (entry 6); all Manual verification rows have results; NEXT impl-review
