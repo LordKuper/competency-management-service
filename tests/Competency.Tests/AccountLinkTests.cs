@@ -48,7 +48,7 @@ public sealed partial class AccountLinkTests(TestEnvironment environment)
         Cyrillic().IsMatch(mail.Subject).Should().BeTrue("the subject is in Russian");
         Cyrillic().IsMatch(mail.Text).Should().BeTrue("the text is in Russian");
         (await host.ScalarAsync<TimeSpan>($"SELECT link_expires_at - link_issued_at FROM users WHERE id = '{created.Id}'"))
-            .Should().Be(TimeSpan.FromHours(72), "an invitation is valid for 72 hours by default");
+            .Should().Be(TimeSpan.FromDays(7), "an invitation is valid for one week by default");
     }
 
     [Fact]
