@@ -1,0 +1,63 @@
+{
+  "sprint_id": "002-mail-invite-password-reset",
+  "branch": "sprint/002-mail-invite-password-reset",
+  "phase": "scope",
+  "workflow": "lite",
+  "documents": {
+    "audit": true,
+    "prd": true,
+    "ux_spec": true,
+    "adr": true,
+    "c4": true
+  },
+  "user_gates": "adaptive",
+  "gate_decisions": [
+    {
+      "gate": "workflow choice",
+      "decision_actor": "user",
+      "decision": "lite",
+      "reason": "user chose lite over recommended standard",
+      "evidence": "decisions-log.md 2026-10-08 workflow"
+    },
+    {
+      "gate": "scope",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "sprint.md AC-1..12,14..16; kept as one sprint",
+      "evidence": "decisions-log.md 2026-10-08 scope accepted"
+    },
+    {
+      "gate": "retro intake dispositions",
+      "decision_actor": "user",
+      "decision": "P-1,P-3,P-4,P-5 included (AC-12,14,15,16); P-2 deferred",
+      "reason": "cost 0 iterations / 0 fix rounds (new criteria)",
+      "evidence": ".asd/project/retro-backlog.md"
+    }
+  ],
+  "task_routing": {},
+  "skipped_phases": [],
+  "reviews": {
+    "design": {
+      "iteration": 0,
+      "verdicts": {},
+      "latched": {}
+    },
+    "impl": {
+      "wave": 1,
+      "waves": [
+        {
+          "iteration": 0,
+          "verdicts": {},
+          "iteration_heads": {},
+          "latched": {}
+        }
+      ]
+    }
+  },
+  "created_at": "2026-10-08T06:32:00.726Z",
+  "updated_at": "2026-10-08T06:37:31.647Z",
+  "review_fixes_pending": null,
+  "test_defects_pending": null,
+  "pr": null,
+  "archived_at": null
+}
