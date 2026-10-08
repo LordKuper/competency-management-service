@@ -93,3 +93,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — scope amendment (user): AC-18 + no tagline «Компетенции и карьерный рост» on anonymous screens → Task 10, wave 9; cost 0 iterations / 0 fix rounds; NEXT impl initial (F-2)
 - 2026-10-08 — route Task 10: standard, dispatch HEAD f4cf5c7; risk none
 - 2026-10-08 — wave 9 done: Task 10 (ca1b233); completion gate: build 0/0, lint 0, web build 0; impl assessment passed adaptively (Flagged choices: none)
+- 2026-10-08 — route impl-test entry 5: standard, dispatch HEAD c4d1c7a; risk none via test run
+- 2026-10-08 — impl-test entry 5: suite green (impacted, valve not fired; backend 157/157, web 82/82, lint/build/check:api clean), 0/0 tests (tagline removal: none)
