@@ -52,3 +52,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Пользователь принял реализацию Task 1–6 и выборы dev 1–9 (без XML-документации `PageResponse<T>` ради неизменного `openapi.json`, класс `Rejection`; `MailSender` → false на любом отказе, кроме отмены; логин/пароль SMTP — оба или ни одного; ключи `Smtp:SecureSocketOptions`, `AccountLinks:*`, порты Mailpit 11025/18025; CA relay — в `deploy/README.md`; `mailSent` в `UserResponse`, версия 1 у новой записи; `LinkPasswordRequest`; общий счётчик лимита 10/60 с на IP, интервал 5 мин, очередь 1000; чтение сотрудника под блокировкой строки; меню без подтверждения, «письмо не отправлено» — модальное окно; токен удаляется из адреса).
 - **Rationale**: Выборы в рамках AC и решений аудита; ручную проверку отправки через Mailtrap пользователь выполнит сам (инструкции даны в чате), она не блокирует impl-test.
 - **Affected docs**: plan.md
+- 2026-10-08 — route impl-test entry 1: critical, dispatch HEAD 342baa6; risk change: authentication
+
+## 2026-10-08 — scope amendment AC-17 (Task 7, wave 6)
+
+- **Decision**: Добавлен AC-17: значения SMTP по умолчанию (Mailpit) и публичный адрес — в `appsettings.Development.json`; личные параметры SMTP (Mailtrap Sandbox) — через .NET User Secrets вне репозитория. Task 7 в новой последней волне 6.
+- **Rationale**: Пользователь хочет постоянную настройку без ручных действий при запуске и без секретов в репозитории; переменные окружения из `launchSettings.json` перекрывали бы user secrets. Затраты AC-17: 0 итераций ревью, 0 раундов исправлений (новый критерий). Audit не переоценивается: поправка — конфигурация разработки без изменения контракта, схемы или поведения в production.
+- **Affected docs**: sprint.md AC-17, plan.md Task 7

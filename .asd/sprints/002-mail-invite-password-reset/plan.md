@@ -110,6 +110,13 @@ Material risk: change: authentication — анонимные экраны со �
 - [x] AC-11: адаптивность desktop/tablet, токены `docs/ux/DESIGN.md`; `lint`, `build`, `check:api` чисты
 Tech reference: react-19.3.0, react-router-8.4.0, antd-6.6.5, tanstack-react-query-5.104.1, openapi-fetch-0.17.0, openapi-typescript-7.13.0, typescript-6.0.2, vite-8.3.2.
 
+### Task 7: Личные параметры SMTP через User Secrets
+Material risk: none
+- [ ] AC-17: перенести `Smtp__*` и `App__PublicBaseUrl` из `environmentVariables` профиля в `src/Competency.Api/Properties/launchSettings.json` в новый `src/Competency.Api/appsettings.Development.json` (`Smtp:*` на Mailpit `127.0.0.1:11025`, `None`, без аутентификации; `App:PublicBaseUrl` `http://localhost:5173`); `ConnectionStrings__Default`, `Bootstrap__*`, `ASPNETCORE_ENVIRONMENT` остаются в `launchSettings.json`
+- [ ] AC-17: убедиться, что user secrets подключаются в `Development` (`UserSecretsId` уже есть в `Competency.Api.csproj`, `WebApplication.CreateBuilder` добавляет их для entry assembly) и что значения из user secrets переопределяют `appsettings.Development.json`; tooling-запуск OpenAPI и тестовый хост (`ApiHost`, задаёт `Smtp__*` переменными окружения) не затронуты
+- [ ] AC-17: `deploy/dev/README.md` — раздел о собственной SMTP-песочнице: команды `dotnet user-secrets set "Smtp:…" … --project src/Competency.Api` для Host, Port, SecureSocketOptions, UserName, Password (на примере Mailtrap Sandbox `sandbox.smtp.mailtrap.io:587`, `StartTls`), «Manage User Secrets» в Visual Studio, возврат к Mailpit (`dotnet user-secrets clear` или удаление ключей `Smtp:*`); секреты не попадают в репозиторий
+Tech reference: aspnetcore-10.0.12, mailkit-4.18.1, mailpit-1.31.4, visual-studio-multiproject-launch-17.11.
+
 ## Risks
 - Тесты: около 48 вызовов `Scenarios.CreateUserAsync` создают пользователей с паролем, тесты `reset-password` в `AuditTests` — всё это перестаёт работать после Task 4–5 и правится в impl-test (сборка не ломается: тесты обращаются к API через HTTP).
 - Перехват писем в интеграционных тестах (Mailpit через ядро Testcontainers или заглушка SMTP) выбирает impl-test; Mailpit в CI — ещё один образ.
@@ -125,12 +132,14 @@ Tech reference: react-19.3.0, react-router-8.4.0, antd-6.6.5, tanstack-react-que
 | 3 | 4 |
 | 4 | 5 |
 | 5 | 6 |
+| 6 | 7 |
 
 - Task 1 один в волне 1: AC-12 меняет глубину проверок, по которой dev выполняет все следующие Task.
 - Task 2 и 3 не пересекаются по файлам: Task 2 — новые файлы общих типов в `Competency.Platform` и `.cs`-файлы модулей; Task 3 — почтовые файлы `Competency.Platform`, `Competency.Platform.csproj`, все `packages.lock.json`, `Competency.Api`, `deploy/**`. Task 2 не меняет `.csproj` и lock-файлы.
 - Task 4 зависит от Task 2 (контракт до изменений проверен пустым diff) и Task 3 (отправка писем, публичный адрес).
 - Task 5 зависит от Task 4 (хранилище ссылки, письма, те же `AuthEndpoints.cs`/`UserEndpoints.cs`).
 - Task 6 зависит от контракта Task 4–5 (`web/src/api/schema.d.ts`).
+- Task 7 (поправка скоупа 2026-10-08, AC-17) — новая последняя волна 6: меняет `launchSettings.json` и `deploy/dev/README.md` после Task 3.
 
 ## Out of scope
 - Скрипт наполнения 10 000+ сотрудников (решение пользователя 2026-10-08, audit Q-4).
