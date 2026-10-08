@@ -44,7 +44,7 @@ colors:
   rating-level-3: "#2B42E5"    # level 3 "independent on complex tasks"; text white
   rating-level-4: "#081240"    # level 4 "sets standards, develops others"; text white
 typography:
-  # Weights: only 400 and 700 exist in the PT families; never 500/600. Sizes: 12 / 14 / 16 / 20 / 24 / 30 (+13 code).
+  # Weights: only 400 and 700 exist in the PT families; never 500/600. Sizes: 12 / 14 / 16 / 20 / 24 / 30 (+13 code, +45 brand-wordmark).
   heading-1:
     fontFamily: PT Sans, Segoe UI, Roboto, Arial, sans-serif   # page title (one per screen), empty-state title on full pages
     fontSize: 30px
@@ -106,6 +106,11 @@ typography:
     fontSize: 13px
     fontWeight: 400
     lineHeight: 20px
+  brand-wordmark:
+    fontFamily: PT Sans, Segoe UI, Roboto, Arial, sans-serif   # product name beside the logo on the sign-in and other no-session cards only (1.5x heading-1); never a heading, never in the app header
+    fontSize: 45px
+    fontWeight: 700
+    lineHeight: 71px
 rounded:
   # --- corner radii ---
   rounded-xs: 2px              # small controls (24px), tags, status chips, table sort marks, checkbox
@@ -137,6 +142,8 @@ spacing:
   control-height-md: 32px      # default height of buttons, inputs, selects, date pickers (desktop)
   control-height-lg: 40px      # primary page action and every control at tablet widths (touch-friendly)
   target-min: 24px             # smallest allowed clickable area incl. icon-only buttons (WCAG 2.5.8); gap to neighbors >= space-xs
+  # --- brand on no-session screens ---
+  brand-logo-size-auth: 80px   # logo (square) on the sign-in, forgot-password and set-password cards; sits beside brand-wordmark
   # --- competency matrix ---
   matrix-row-height: 48px      # minimum height of a matrix row (32px rating chip + space-xs above and below)
   matrix-cell-min-width: 72px  # minimum width of a rating/rater column cell
@@ -650,6 +657,7 @@ The user chose the PT family (ParaType) as a license-suitable replacement for th
 | `data-numeric` | 14 / 22 | 400, tabular figures | compared numbers |
 | `data-column-header` | 14 / 20 | 700, Narrow | matrix column headers |
 | `code` | 13 / 20 | 400, Mono | identifiers and codes |
+| `brand-wordmark` | 45 / 71 | 700 | product name beside the logo on cards without a session (1.5 x `heading-1`; above the 30px heading ceiling by decision) |
 
 ### Rules
 
@@ -657,6 +665,7 @@ The user chose the PT family (ParaType) as a license-suitable replacement for th
 - Numbers that are compared or summed down a column (scores, weights, ratings, percentages) use `data-numeric` and are right-aligned. A single digit in a `rating-level-*` cell uses `body-strong`.
 - No uppercase transforms and no letter-spacing on Cyrillic labels (hurts word-shape recognition); `letterSpacing` stays at the font default.
 - Cap running text at about 75 characters per line.
+- `brand-wordmark` is the only size above `heading-1`: it names the product on the cards without a session (sign-in, forgot password, set password), is set in `text-primary` (14.6:1) and never appears in the header, in a heading or elsewhere. The line-height 71px is the antd base line-height 1.5714 at 45px; the row stays as tall as the logo (`brand-logo-size-auth`) because the two are centered.
 - Text colors come from the Colors section; a size or weight never replaces the contrast requirement.
 
 ### Fonts: license, coverage, delivery
@@ -679,6 +688,7 @@ The user chose the PT family (ParaType) as a license-suitable replacement for th
 | line-heights 38/30, 32/24, 28/20, 24/16, 22/14 | `lineHeightHeading1` 1.2667, `lineHeightHeading2` 1.3333, `lineHeightHeading3` 1.4, `lineHeightHeading4` 1.5, `lineHeightHeading5` 1.5714 |
 | bold weight 700 | `fontWeightStrong` (override the default 600) |
 | `data-column-header`, `data-numeric` | no antd token: custom column-header class and `font-variant-numeric: tabular-nums` on numeric columns |
+| `brand-wordmark` | no antd token: `fontSize` 45 (1.5 x `fontSizeHeading1`) on the name element of the no-session card, bold (`fontWeightStrong`) |
 
 antd's default algorithm already yields 14 / 12 / 16 / 20 for `fontSize` / `fontSizeSM` / `fontSizeLG` / `fontSizeXL`; the heading sizes differ from its defaults (38 / 30 / 24 / 20 / 16) and must be set explicitly. Do not use `compactAlgorithm`.
 
@@ -737,6 +747,7 @@ Comfortable density (antd default size, not compact). The base grid is 4px; ever
 | 4px grid | `sizeUnit` 4, `sizeStep` 4 (antd defaults) |
 | `header-height` | `Layout.headerHeight` 56, `Layout.headerPadding` `0 24px` |
 | `page-gutter` | content-area padding (custom CSS variable, not an antd token) |
+| `brand-logo-size-auth` | no antd token: width and height of the logo `img` on the no-session card |
 | `breakpoint-md` ... `-xxl` | `screenMD` 768, `screenLG` 992, `screenXL` 1200, `screenXXL` 1600 |
 | table cell | `Table.cellPaddingBlock` 12 (`space-sm`), `Table.cellPaddingInline` 16 (`space-md`); `size="middle"` (`cellPaddingBlockMD` 8, `cellPaddingInlineMD` 12) only for secondary nested tables |
 | form | `Form.itemMarginBottom` 24 (`space-xl`), `Form.verticalLabelPadding` `0 0 8px` (`space-xs`), vertical layout by default |
@@ -849,6 +860,7 @@ Components are the ones the concept needs (an internal HR and competency-matrix 
 | Header (`app-header`) | `Layout.Header` | one | `header-height` 56; brand (logo on a light round plate, product name), horizontal navigation menu, user button with `avatar`; text 17.9:1 |
 | Header navigation (`nav-item`, `-hover`, `-active`) | `Menu` theme dark, `mode="horizontal"`, inside `Layout.Header` | default / hover / active / focus | the only navigation; there is no sider. Text 8.0:1 default (`text-inverse-muted`), hover brightens the text to `text-inverse` (17.9:1) with no fill, current section is filled with `primary` and white text (7.0:1); items are `control-height-lg`; the fill is the cue of the current section. Focus is `focus-ring-inverse` |
 | Header user button (`header-button-hover`, `-pressed`) | `Button type="text"` on the dark header | default / hover / pressed / focus | label and `avatar` in `text-inverse`; hover fill `overlay-inverse-hover` (12% white, 13.0:1), pressed `overlay-inverse-pressed` (20% white, 9.9:1); opens the user menu (`dropdown-item`) |
+| Card without a session (`brand-wordmark`, `brand-logo-size-auth`; panel from `surface-panel`, `rounded-lg`, `space-xl` padding) | `Card` centered on `surface-page` (`Row`/`Col`) | one; shared by sign-in, forgot password and set password | no header and no navigation. Top row, centered: the logo (`brand-logo-size-auth` square, empty alt because the name is next to it) and the product name in `brand-wordmark` / `text-primary`, wrapping under the logo on a narrow card; below it the screen title `heading-1`, then the form. No tagline. The only link of the card (for example "Не помню пароль") sits under the primary button, centered, in `primary` |
 | Breadcrumb (`breadcrumb`, `-current`) | `Breadcrumb` | link / current | 8.1:1 and 13.4:1 on `surface-page`; current page is plain text, not a link |
 | Tabs (`tab`, `-hover`, `-active`) | `Tabs` | default / hover / active / focus / disabled | 8.7:1, 14.6:1, 7.0:1; active adds a 2px `primary` indicator line |
 | Steps (`step-current`, `-done`, `-upcoming`) | `Steps` | current / done / upcoming | wave stages (12 statuses): vertical on detail pages, titles always visible, done = check icon, current = filled number; contrast 7.0:1, 6.2:1, 7.5:1 |

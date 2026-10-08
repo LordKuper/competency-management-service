@@ -14,7 +14,7 @@ responsibility:
   <meta name="subsystem" content="audit">
   <meta name="sprint-id" content="">
   <meta name="status" content="approved">
-  <meta name="updated" content="2026-10-07">
+  <meta name="updated" content="2026-10-08">
   <meta name="responsibility" content="product requirements of the audit subsystem: append-only journal of actions and sign-in events, its reading by global administrators, the Journal section, operational log hygiene">
   <meta name="provenance" content="original">
   <meta name="source" content="">
@@ -208,7 +208,7 @@ responsibility:
           <span class="status-approved">approved</span>
         </div>
         <h1>Требования — Журнал аудита</h1>
-        <div class="stats">4 goals · 4 stories · 14 AC · 5 non-goals · updated 2026-10-07</div>
+        <div class="stats">4 goals · 4 stories · 15 AC · 5 non-goals · updated 2026-10-08</div>
       </header>
       <main>
 <!--
@@ -240,7 +240,7 @@ provenance: original
     <summary>Глобальный администратор <span class="count">3</span></summary>
     <ul class="stories">
       <li><b>as</b> глобальный администратор, <b>I want</b> видеть, кто, когда и что изменил в пользователях, подразделениях и сотрудниках, с прежними и новыми значениями, <b>so that</b> разбирать спорные изменения (AC-2, AC-3, AC-5, AC-11…AC-13).</li>
-      <li><b>as</b> глобальный администратор, <b>I want</b> видеть успешные и неуспешные входы, блокировки при переборе пароля, выходы и смены паролей, <b>so that</b> выявлять подбор паролей и подозрительную активность (AC-6…AC-8).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> видеть успешные и неуспешные входы, блокировки при переборе пароля, выходы, смены и сбросы паролей, приглашения и неудачи отправки писем, <b>so that</b> выявлять подбор паролей и подозрительную активность и понимать, почему человек не получил письмо (AC-6…AC-8, AC-15).</li>
       <li><b>as</b> глобальный администратор, <b>I want</b> фильтровать журнал по периоду, актору, действию, сущности и идентификатору запроса, <b>so that</b> быстро найти нужные события (AC-12, AC-13).</li>
     </ul>
   </details>
@@ -264,15 +264,16 @@ provenance: original
       <tr id="AC-3"><td><a href="#AC-3">AC-3</a></td><td>Каждое создание, изменение и удаление пользователей, подразделений и сотрудников журналируется с действием вида «Сущность.Created / Updated / Deleted» и прежним и новым значениями изменённых полей (для создания — только новыми, для удаления — только прежними).</td><td><span class="chip area">мутации</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-4"><td><a href="#AC-4">AC-4</a></td><td>Запись об изменении сохраняется в одной транзакции с самим изменением: не бывает изменения без записи и записи об откатанном изменении.</td><td><span class="chip area">мутации</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-5"><td><a href="#AC-5">AC-5</a></td><td>Каждое изменение, вызванное каскадом увольнения или удаления сотрудника (<a href="org-structure.html#AC-14">org-structure AC-14…AC-16</a>), — подразделение, потерявшее руководителя; блокировка и отвязка учётной записи; сам сотрудник — журналируется отдельной записью. Привязка и отвязка учётной записи к сотруднику — запись об изменении учётной записи.</td><td><span class="chip area">мутации</span></td><td><span class="chip prio-must">must</span></td></tr>
-      <tr id="AC-6"><td><a href="#AC-6">AC-6</a></td><td>Журналируются события входа: успешный вход; неуспешный вход (причина отказа — в поле «причина»); начало временной блокировки при переборе пароля, в том числе начатой неверным текущим паролем при его смене; выход; смена собственного пароля; сброс пароля администратором.</td><td><span class="chip area">события входа</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-6"><td><a href="#AC-6">AC-6</a></td><td>Журналируются события входа и паролей: успешный вход; неуспешный вход (причина отказа — в поле «причина», в том числе вход приглашённой учётной записи, не задавшей пароль); начало временной блокировки при переборе пароля, в том числе начатой неверным текущим паролем при его смене; выход; смена собственного пароля; выдача ссылки для сброса пароля существующей учётной записи (инициатор — сама запись или администратор; запрос на неизвестный адрес не журналируется); сброс пароля по ссылке; завершение регистрации по приглашению.</td><td><span class="chip area">события входа</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-7"><td><a href="#AC-7">AC-7</a></td><td>События входа записываются независимо от исхода операции: отказ во входе остаётся в журнале.</td><td><span class="chip area">события входа</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-8"><td><a href="#AC-8">AC-8</a></td><td>Актор неуспешного входа — идентификатор известной учётной записи либо «unknown»; текст, введённый при входе (в том числе пароль в чужом поле), в журнал не попадает.</td><td><span class="chip area">события входа</span></td><td><span class="chip prio-must">must</span></td></tr>
-      <tr id="AC-9"><td><a href="#AC-9">AC-9</a></td><td>В журнал не попадают пароли, их хэши, штампы безопасности и счётчик неудачных попыток входа.</td><td><span class="chip area">состав записи</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-9"><td><a href="#AC-9">AC-9</a></td><td>В журнал не попадают пароли, их хэши, штампы безопасности, счётчик неудачных попыток входа, а также ссылки для задания пароля, их токены и хэши.</td><td><span class="chip area">состав записи</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-10"><td><a href="#AC-10">AC-10</a></td><td>Актор, роль и идентификатор запроса берутся из контекста запроса; для действий самой системы актор — «system».</td><td><span class="chip area">состав записи</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-11"><td><a href="#AC-11">AC-11</a></td><td>Читать журнал может только глобальный администратор (остальным — 403): новые события сверху, постранично (по умолчанию 50, не более 200 на странице).</td><td><span class="chip area">чтение</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-12"><td><a href="#AC-12">AC-12</a></td><td>Журнал фильтруется по периоду (границы включительно), актору, действию, типу сущности, идентификатору сущности и идентификатору запроса.</td><td><span class="chip area">чтение</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-13"><td><a href="#AC-13">AC-13</a></td><td>Раздел «Журнал» доступен только администратору: таблица событий с фильтрами AC-12, постраничность, просмотр прежнего и нового значений; редактирования нет.</td><td><span class="chip area">интерфейс</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-14"><td><a href="#AC-14">AC-14</a></td><td>Эксплуатационные JSON-логи приложения в stdout не содержат персональных данных и значений SQL-параметров.</td><td><span class="chip area">логи</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-15"><td><a href="#AC-15">AC-15</a></td><td>Журналируются письма учётным записям: отправка и повторная отправка приглашения (с указанием, первичное оно или повторное) и неудача отправки письма (с указанием вида письма — приглашение или сброс пароля). Запись о неудаче не содержит адреса получателя, ссылки и токена; для письма, отправленного в фоне по анонимному запросу, актор — «system».</td><td><span class="chip area">события почты</span></td><td><span class="chip prio-must">must</span></td></tr>
     </tbody>
   </table>
 </section>
@@ -288,7 +289,7 @@ provenance: original
   </ul>
 </section>
       </main>
-      <footer>by ASD workflow | 2026-10-07</footer>
+      <footer>by ASD workflow | 2026-10-08</footer>
     </div>
   </div>
 </body>

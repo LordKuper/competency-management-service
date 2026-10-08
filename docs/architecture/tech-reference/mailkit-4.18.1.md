@@ -7,23 +7,30 @@ responsibility:
 
 # MailKit @ 4.18.1
 
-Область: SMTP-клиент (`MailKit.Net.Smtp.SmtpClient`) для уведомлений и писем Identity через корпоративный SMTP relay; письма строит MimeKit 4.18.1 (транзитивно). IMAP/POP3 не используются.
+Область: SMTP-клиент (`MailKit.Net.Smtp.SmtpClient`) для писем через корпоративный SMTP relay — приглашения и ссылки сброса пароля (`user-management`); письма строит MimeKit 4.18.1 (транзитивно). IMAP/POP3 и `IEmailSender<TUser>` Identity не используются.
 
 ## Canonical source
 - Репозиторий и README: https://github.com/jstedfast/MailKit
 - Release notes: https://github.com/jstedfast/MailKit/blob/master/ReleaseNotes.md
 - FAQ (TLS/SSL, кодировки): https://github.com/jstedfast/MailKit/blob/master/FAQ.md
-- NuGet (nuspec 4.18.1): https://api.nuget.org/v3-flatcontainer/mailkit/4.18.1/mailkit.nuspec — лицензия MIT; цели .NET Framework 4.6.2/4.7/4.8, .NET Standard 2.0/2.1, `net8.0`, `net10.0`; зависимости: `MimeKit` 4.18.1, `System.Formats.Asn1` 10.0.0 (+ `System.Threading.Tasks.Extensions` 4.6.3 на netstandard2.0/.NET Framework). Версии ≥ 4.15: 4.15.0, 4.15.1, 4.16.0, 4.17.0, 4.18.0, 4.18.1 (последняя стабильная).
-- Last verified: 2026-10-05
+- Исходник `MailService` (умолчание `CheckCertificateRevocation`): https://raw.githubusercontent.com/jstedfast/MailKit/master/MailKit/MailService.cs
+- NuGet (nuspec 4.18.1): https://api.nuget.org/v3-flatcontainer/mailkit/4.18.1/mailkit.nuspec — лицензия MIT; цели .NET Framework 4.6.2/4.7/4.8, .NET Standard 2.0/2.1, `net8.0`, `net10.0`; группа `net10.0`: `MimeKit` 4.18.1, `System.Formats.Asn1` 10.0.0. Версии ≥ 4.15: 4.15.0, 4.15.1, 4.16.0, 4.17.0, 4.18.0, 4.18.1 (последняя стабильная на 2026-10-05).
+- Граф `net10.0` в lock-файлах проекта: MailKit 4.18.1 → MimeKit 4.18.1 (MIT; https://api.nuget.org/v3-flatcontainer/mimekit/4.18.1/mimekit.nuspec, группа `net10.0`) → `BouncyCastle.Cryptography` 2.7.0 (MIT, без зависимостей) и `System.Security.Cryptography.Pkcs` 10.0.0 (MIT, группа `net10.0` пуста). `System.Formats.Asn1` в lock-файлах нет: библиотека входит в платформу .NET 10.
+- Last verified: 2026-10-08
 - Оценка риска знаний (Phase 5): **MEDIUM** — 4.15–4.18 (2026-02…2026-09) новее среза знаний; сверены release notes.
 
 ## API surface used in project
-- Отправка: `using var client = new SmtpClient(); await client.ConnectAsync(host, port, SecureSocketOptions.StartTls, ct); await client.AuthenticateAsync(user, password, ct); await client.SendAsync(message, ct); await client.DisconnectAsync(true, ct);` (README показывает синхронный вариант; все API отменяемы и имеют async-версии).
-- `SecureSocketOptions`: стандартные порты (25, 587) — `None`/`StartTls`/`StartTlsWhenAvailable`; SSL-порты (465) — `SslOnConnect`; `Auto` — автоопределение. Выбор определяется параметрами relay (открытый вопрос Q8).
-- Сертификаты: `client.ServerCertificateValidationCallback` (проверка по CN/эмитенту/отпечатку вместо `=> true`), `client.CheckCertificateRevocation = false` — когда CRL/OCSP недоступны (в изолированном контуре применимо), `client.SslProtocols` — только для устаревших серверов.
-- Письма (MimeKit): `MimeMessage` (`From`/`To` — `MailboxAddress`, `Subject`, `Body` — `TextPart`/`BodyBuilder`); кириллица в теме и теле кодируется библиотекой (UTF-8); `System.Text.Encoding.CodePagesEncodingProvider` (пакет `System.Text.Encoding.CodePages`) нужен только для устаревших кодовых страниц, не для UTF-8.
-- Диагностика протокола: `new ProtocolLogger(...)`/`ProtocolLogger` — выводит содержимое SMTP-сессии.
-- Интеграция с Identity: реализация `IEmailSender<TUser>` (`Microsoft.AspNetCore.Identity`) поверх `SmtpClient`.
+- `src/Competency.Platform/MailSender.cs` — одно соединение на письмо, вся отправка под `CancellationTokenSource.CancelAfter(Smtp:Timeout)`, связанным с токеном вызывающего; example:
+  ```csharp
+  using var client = new SmtpClient { CheckCertificateRevocation = settings.CheckCertificateRevocation };
+  await client.ConnectAsync(settings.Host, settings.Port, settings.SecureSocketOptions, timeout.Token);
+  if (!string.IsNullOrEmpty(settings.UserName)) await client.AuthenticateAsync(settings.UserName, settings.Password, timeout.Token);
+  await client.SendAsync(message, timeout.Token);
+  await client.DisconnectAsync(true, timeout.Token);
+  ```
+- `SecureSocketOptions`: стандартные порты (25, 587) — `None`/`StartTls`/`StartTlsWhenAvailable`; SSL-порт (465) — `SslOnConnect`; `Auto` — автоопределение. В проекте — значение `Smtp:SecureSocketOptions`, по умолчанию `StartTls`.
+- `CheckCertificateRevocation`: в MailKit по умолчанию `true` (конструктор `MailService`); в проекте — `Smtp:CheckCertificateRevocation`, тоже `true`. `ServerCertificateValidationCallback` и `SslProtocols` не используются.
+- Письма (MimeKit): `MimeMessage` с `Subject` и `TextPart(TextFormat.Plain)`; `From`/`To` — `MailboxAddress.Parse`; `MailboxAddress.TryParse` проверяет `Smtp:From` при старте. Кириллица в теме и теле кодируется библиотекой (UTF-8); `CodePagesEncodingProvider` не нужен.
 
 ## Version-specific notes
 - 4.18.1 (2026-09-27): исправлена завышенная в 100 раз телеметрия длительностей (histograms) на Linux/macOS; 4.18.0 (2026-09-13): исправления телеметрии, IMAP PARTIAL.
@@ -38,12 +45,16 @@ responsibility:
 - Прочих несовместимых изменений между 4.14.x и 4.18.1 для SMTP-отправки в release notes не обнаружено.
 
 ## Project conventions
-- Транспорт — корпоративный SMTP relay (внешняя зависимость, параметры аутентификации/TLS — Q8); учётные данные и хост — только из Kubernetes Secret/ConfigMap.
-- Отправка не блокирует HTTP-запрос: уведомления идут через outbox/`BackgroundService` (повторы, идемпотентность — design); `SmtpClient` не использовать одновременно из нескольких потоков (FAQ формулирует правило для `ImapClient`: `SyncRoot`; для SMTP применять то же) — экземпляр на отправку/пачку.
-- Контур изолирован: проверка отзыва сертификатов (CRL/OCSP) недоступна → `CheckCertificateRevocation = false` только при подтверждённой необходимости; предпочитать валидацию по доверенной внутренней CA, а не `=> true`.
-- Адреса получателей из пользовательского ввода валидировать до построения `MailboxAddress`; тексты писем и тема — русские, шаблоны в ресурсах.
-- В production не включать `ProtocolLogger` (PII, содержимое писем и данные аутентификации); значения не логируются.
+- Один конкретный класс `MailSender` в `Competency.Platform`, без интерфейса, singleton: соединение не держит, поэтому общий для запросов и фоновой очереди; `SmtpClient` — новый на каждое письмо и не используется из нескольких потоков.
+- Настройки `Smtp`: `Host`, `Port`, `SecureSocketOptions`, `UserName` и `Password` (только из Secret, оба или ни одного; без логина `AuthenticateAsync` не вызывается), `From`, `Timeout` (по умолчанию 15 с), `CheckCertificateRevocation`. Проверяются при старте вне build-time генерации OpenAPI: имя хоста, порт, **определённое** значение `SecureSocketOptions` (`Enum.IsDefined` — неизвестное число иначе связалось бы и отправляло без TLS), `0 < Timeout ≤ 49.17:02:47.294` (предел `CancelAfter`, `uint.MaxValue - 1` мс), адрес `From` с доменом.
+- Когда отправлять (решение пользователя 2026-10-08, вместо прежнего «отправка не блокирует HTTP-запрос»): письма по действиям администратора — синхронно сразу после фиксации транзакции, не дольше `Smtp:Timeout`, итог возвращается в ответе (`mailSent`); анонимный «Не помню пароль» — фоновая очередь в памяти (`Channel` + `BackgroundService`, `PasswordResetQueue`), потеря при перезапуске принята. Outbox и автоматических повторов нет. Никогда не отправлять внутри транзакции БД или под блокировкой.
+- Отказ: `SendAsync` возвращает `false` на любое исключение, кроме отмены вызывающим, и пишет в лог только тип исключения — без адресов, текста письма и ответа сервера. `ProtocolLogger` не используется (содержимое писем, ссылки и данные аутентификации).
+- Тексты и темы писем — русские, строковыми константами в коде модуля (`src/Competency.UserManagement/AccountMail.cs`), не `.resx`: писем два; вернуться к ресурсам, когда писем станет много или появится редактор шаблонов.
+- Адрес получателя проверяется на границе API до построения `MailboxAddress`.
+- Доверие внутреннему CA relay — шаг развёртывания (`SSL_CERT_FILE`, `deploy/README.md`); callback `=> true` запрещён; `CheckCertificateRevocation = false` — только явным решением оператора, когда CRL/OCSP недоступны из пода.
+- В разработке письма уходят в Mailpit (`mailpit-1.31.4.md`), режим `None` без аутентификации; личная SMTP-песочница — через .NET User Secrets (`deploy/dev/README.md`).
 
 ## Known issues and workarounds
-- `SslHandshakeException`: неверная комбинация порт/`SecureSocketOptions`, недоверенный сертификат (внутренняя CA), недоступные CRL/OCSP, устаревшие протоколы сервера — см. FAQ (callback валидации, `CheckCertificateRevocation`, `SslProtocols`).
-- В 4.18.1 исправлено завышение в 100 раз телеметрических гистограмм длительностей на Linux/macOS (nuspec); важно только при включённых метриках/OTLP (в стеке — условный пункт).
+- `SslHandshakeException`: неверная комбинация порт/`SecureSocketOptions`, недоверенный сертификат (внутренняя CA), недоступные CRL/OCSP, устаревшие протоколы сервера — см. FAQ и `deploy/README.md` («Доверие внутреннему CA»).
+- `AuthenticateAsync` к серверу без AUTH (Mailpit по умолчанию) бросает `NotSupportedException("The SMTP server does not support authentication.")`; `StartTls` к серверу без STARTTLS — тоже `NotSupportedException`. Поэтому при пустом логине аутентификация пропускается, а для перехватчика — `None`.
+- В 4.18.1 исправлено завышение в 100 раз телеметрических гистограмм длительностей на Linux/macOS; важно только при включённых метриках/OTLP (в стеке — условный пункт).

@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-mail-invite-password-reset",
   "branch": "sprint/002-mail-invite-password-reset",
-  "phase": "impl-review",
+  "phase": "design-promote",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -187,6 +187,27 @@
       "decision": "advance to design-promote",
       "reason": "all 3 waves APPROVE/latched; every FAIL/question decided by user; terminal full suite green (backend 166/166, web 89/89, lint/build clean) at aef943d; no waiver or debt",
       "evidence": "test-plan.md Suite run e3f324a; decisions-log.md 2026-10-08"
+    },
+    {
+      "gate": "design-promote decomposition",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "no new subsystem; user-management changed (registry entry + user-management.md updated by architect)",
+      "reason": "audit Subsystems map: no new subsystems; changes inside user-management, platform core outside registry",
+      "evidence": "audit.md Subsystems map"
+    },
+    {
+      "gate": "design-system gate",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "pass",
+      "reason": "docs/ux/DESIGN.md, design-system.html, accessibility.html exist",
+      "evidence": "repo"
+    },
+    {
+      "gate": "DESIGN.md token change",
+      "decision_actor": "user",
+      "decision": "add brand-wordmark typography token (45px/700) and brand-logo-size-auth 80px + sign-in card component note",
+      "reason": "design-promote questions (recommended)",
+      "evidence": "decisions-log.md 2026-10-08 DESIGN.md tokens"
     }
   ],
   "task_routing": {
@@ -464,7 +485,7 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T14:06:52.942Z",
+  "updated_at": "2026-10-08T14:29:39.035Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
