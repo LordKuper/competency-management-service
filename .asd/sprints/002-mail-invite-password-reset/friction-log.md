@@ -22,6 +22,7 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 | F-2 | impl-test | Поправка скоупа на smoke-проверке зелёного impl-test: выход в impl initial не описан | — |
 | F-3 | impl-review | Ревьюер перезаписал собственный файл памяти частичным содержимым | reviews/impl/wave-3/iter-02/combined |
 | F-4 | impl-review | Ревьюер прочитал отчёты предыдущей итерации по совету собственной памяти | reviews/impl/wave-3/iter-03/combined |
+| F-5 | impl-review | Терминальный прогон tester вернул пустой отчёт, оркестратор принял результат по диску без повторного запуска | — |
 
 ## F-1 — Правило поправки скоупа не описывает новую Task при выходе impl-test в test-fix
 
@@ -54,3 +55,11 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **What happened**: Файл памяти ревьюера содержал совет читать отчёт предыдущей итерации; следуя ему, ревьюер открыл `iter-02/combined.md` и `iter-02/external.md`, что запрещено правилом чистого контекста. Ревьюер сам сообщил об этом, исправил память (убрал совет и номер спринта) и основал вердикт на коде, диффе, decisions-log и test-plan.
 - **Impact**: нарушение независимости итерации ревью (вердикт APPROVE при пороге high); память агента может навязывать запрещённые правилом действия.
 - **Refs**: reviews/impl/wave-3/iter-03/combined, F-3
+
+## F-5 — Терминальный прогон tester вернул пустой отчёт, оркестратор принял результат по диску без повторного запуска
+
+- **Phase**: impl-review
+- **Surface**: agent — `asd-tester` (`impl-review wave-3/iter-03 suite`); rule `.asd/rules/sprint-lifecycle.md` "State recovery" «Failed dispatch»
+- **What happened**: Диспетчеризация завершилась текстом «placeholder» вместо отчёта о завершении. В `test-plan.md` `Suite run` и коммите e3f324a был записан зелёный полный прогон; оркестратор засчитал его по этим следам на диске, хотя правило «Failed dispatch» требует считать такую диспетчеризацию незавершённой и запускать заново.
+- **Impact**: отступление от правила восстановления; вердикт полного прогона опирается на запись агента без его итогового сигнала.
+- **Refs**: —
