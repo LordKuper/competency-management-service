@@ -146,3 +146,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — impl-test entry 11: web 89/89, lint/build 0; 0/0 tests; NEXT impl-review
 - 2026-10-08 — impl-review wave 3 iteration 3 (floor high): external latched (iter 2), combined only
 - 2026-10-08 — impl-review wave-3/iter-03: combined APPROVE (latched), external inherited APPROVE; wave 3 = last wave, reviewer DoD met → terminal full-suite gate (F-4 recorded: reviewer read prior-iteration reports via its memory; memory fixed, memory-check clean)
+- 2026-10-08 — route impl-review wave-3/iter-03 suite: standard, dispatch HEAD aef943d; risk none via full suite
+- 2026-10-08 — impl-review DoD met: terminal full suite green at aef943d (backend 166/166, web 89/89, lint/build clean; e3f324a); tester return text was empty ('placeholder') — result verified from on-disk Suite run and commit; green handoff passed adaptively; NEXT: design-promote
