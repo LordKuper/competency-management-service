@@ -135,3 +135,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — route review-fix wave-3/iter-01: standard, dispatch HEAD 4bc52a0; risk none via lint/build
 - 2026-10-08 — review-fix wave-3/iter-01 done (8942059: useSendUserMail {sendMail,isSending} with pending guard, loading message, disabled menu item; Intl.PluralRules «символа/символов»; shared not-sent warning without «Учётная запись сохранена»); flagged choices accepted (menu item disabled on every row while any send is pending; new loading text «Отправка письма…»); completion gate lint 0, web build 0
 - 2026-10-08 — impl fix for wave-3/iter-01: findings resolved
+- 2026-10-08 — route impl-test entry 10: standard, dispatch HEAD a3f99b2; risk none via test run
+- 2026-10-08 — impl-test entry 10: web 89/89, lint/build 0, backend build 0/0; 3 tests added (fail-first); NEXT impl-review
