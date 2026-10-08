@@ -24,7 +24,7 @@ export function AuthCard({
             <img src="/brand/logo-256.png" alt="" width={80} height={80} />
             <Typography.Text
               strong
-              style={{ fontSize: token.fontSizeHeading2 }}
+              style={{ fontSize: `calc(${token.fontSizeHeading1}px * 1.5)` }}
             >
               {PRODUCT_NAME}
             </Typography.Text>
