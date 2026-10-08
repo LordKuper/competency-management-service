@@ -54,11 +54,11 @@ record, by the time `pr` runs. Each per-entry record measures only the tree that
 analysed, not any tree produced later
 (`.asd/rules/sprint-lifecycle.md` "Impacted test set").
 
-- Command: `npm --prefix web test`, `npm --prefix web run lint`, `npm --prefix web run build`
-- Scope: запись 11 — impacted set: `userMail.test.tsx` (меняется) и потребители `useSendUserMail`; предохранитель не сработал (общая инфраструктура, сборочная и CI-конфигурация не тронуты). Web-набор мал, выполнен целиком. Backend не тронут — не запускался. Измерено дерево HEAD
-- Result: pass — web 11 файлов / 89 из 89, 0 красных
-- Lint / build: pass — `lint` (biome + tsc) exit 0; `build` web ✓
-- HEAD: c42ec8de413b53f86e712ac3baa18e755b59e657
+- Command: `dotnet test --solution Competency.slnx -c Release && npm --prefix web test`; `npm --prefix web run lint`; `dotnet build Competency.slnx -c Release --tl:off && npm --prefix web run build`
+- Scope: terminal full-suite (impl-review wave-3/iter-03), unscoped, whole tree
+- Result: pass — backend 166 из 166 (exit 0, 0 сбоев, 0 пропущено); web 11 файлов / 89 из 89 (exit 0)
+- Lint / build: pass — `lint` exit 0; backend build -c Release exit 0 (0 предупреждений, 0 ошибок); web build exit 0
+- HEAD: aef943d2303ee03218f810d516a6838ee70eb009
 
 ## Defects
 
