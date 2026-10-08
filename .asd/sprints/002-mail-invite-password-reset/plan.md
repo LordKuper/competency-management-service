@@ -47,23 +47,23 @@ Material risk: none
 
 ### Task 2: Общие вспомогательные типы в Competency.Platform
 Material risk: artifact: cross-module refactor via `git diff -- openapi/openapi.json` пуст и `npm --prefix web run check:api`
-- [ ] AC-16: перенести `PageResponse<T>` из `Competency.OrgStructure` и `Competency.UserManagement` в `Competency.Platform` (`public`, XML-комментарии — `GenerateDocumentationFile` + `TreatWarningsAsErrors`); имена схем `PageResponseOf…` не меняются
-- [ ] AC-16: `AuditPageResponse` свести к общему типу без переименования схемы `AuditPageResponse` в `openapi.json` (тонкий тип или сопоставление имени схемы — выбор dev по меньшему коду; критерий — пустой diff `openapi.json`)
-- [ ] AC-16: перенести `Rejections.Conflict`/`Invalid` (заголовок «Операция отклонена») в `Competency.Platform`; модульные `UnitProblemAsync`, `EmployeeProblemAsync`, `From(IdentityResult)` остаются в модулях
-- [ ] AC-16: общие пределы страниц (`DefaultPageSize` 50, `MaxPageSize` 200, `MaxPage`, прежние тексты ошибок) и проверка `page`/`pageSize` — в `Competency.Platform`; вызовы в `AuditQuery.cs`, `ListQueries.cs`, `UserListQuery.cs`
-- [ ] AC-16: общее экранирование LIKE и предел длины поиска 200 — в `Competency.Platform`; вызовы в `TextSearch.cs` и `UserListQuery.cs` (обрезка пробелов в `UserListQuery` сохраняется)
-- [ ] AC-16: удалить модульные копии; `dotnet build`, `check:api` чисты, `git diff -- openapi/openapi.json` пуст
+- [x] AC-16: перенести `PageResponse<T>` из `Competency.OrgStructure` и `Competency.UserManagement` в `Competency.Platform` (`public`, XML-комментарии — `GenerateDocumentationFile` + `TreatWarningsAsErrors`); имена схем `PageResponseOf…` не меняются
+- [x] AC-16: `AuditPageResponse` свести к общему типу без переименования схемы `AuditPageResponse` в `openapi.json` (тонкий тип или сопоставление имени схемы — выбор dev по меньшему коду; критерий — пустой diff `openapi.json`)
+- [x] AC-16: перенести `Rejections.Conflict`/`Invalid` (заголовок «Операция отклонена») в `Competency.Platform`; модульные `UnitProblemAsync`, `EmployeeProblemAsync`, `From(IdentityResult)` остаются в модулях
+- [x] AC-16: общие пределы страниц (`DefaultPageSize` 50, `MaxPageSize` 200, `MaxPage`, прежние тексты ошибок) и проверка `page`/`pageSize` — в `Competency.Platform`; вызовы в `AuditQuery.cs`, `ListQueries.cs`, `UserListQuery.cs`
+- [x] AC-16: общее экранирование LIKE и предел длины поиска 200 — в `Competency.Platform`; вызовы в `TextSearch.cs` и `UserListQuery.cs` (обрезка пробелов в `UserListQuery` сохраняется)
+- [x] AC-16: удалить модульные копии; `dotnet build`, `check:api` чисты, `git diff -- openapi/openapi.json` пуст
 Tech reference: aspnetcore-10.0.12, microsoft-aspnetcore-openapi-10.0.12, efcore-10.0.12.
 
 ### Task 3: Почтовый транспорт, публичный адрес и dev-перехватчик
 Material risk: change: security — секреты SMTP, режим TLS и проверка конфигурации при старте, не ломающая build-time генерацию OpenAPI
-- [ ] AC-1: подключить MailKit 4.18.1 в `Competency.Platform` (точная версия, обновить `packages.lock.json` всех проектов); один конкретный класс отправки без интерфейса: хост, порт, режим TLS (`SecureSocketOptions`, по умолчанию `StartTls`), необязательные логин и пароль (без логина `AuthenticateAsync` не вызывается — иначе MailKit бросает `NotSupportedException` на сервере без AUTH), адрес отправителя, таймаут (по умолчанию 15 с) из секции конфигурации `Smtp`; `ProtocolLogger` не используется; в лог при отказе — только тип исключения, без адресов и содержимого
-- [ ] AC-2: настройка публичного адреса приложения (`App:PublicBaseUrl`) с проверкой абсолютного http(s) URL при старте
-- [ ] AC-1,2: проверка конфигурации `Smtp` и `App:PublicBaseUrl` при старте — только вне tooling-запуска (`GetDocument.Insider`), как миграции и bootstrap
-- [ ] AC-3: сервис Mailpit `axllent/mailpit:v1.31.4` в `deploy/dev/docker-compose.yml`: SMTP и веб-интерфейс только на `127.0.0.1`, порты переопределяются переменными окружения по образцу `DEV_DB_PORT`, порт 1110 не публикуется, без тома и `MP_DATABASE`, `MP_ALLOWED_HOSTS=localhost` (защита от DNS rebinding), healthcheck образа; проверить, что профиль F5 «Everything» поднимает и этот сервис (`.dcproj` с `DockerServiceName=db`)
-- [ ] AC-3: `src/Competency.Api/Properties/launchSettings.json` — `Smtp__*` на Mailpit (`None`, без аутентификации) и `App__PublicBaseUrl` = адрес Vite (`http://localhost:5173`) в профилях
-- [ ] AC-1,3: `deploy/k8s/configmap.yaml` (хост, порт, режим TLS, отправитель, таймаут, публичный адрес), `deploy/secret.template.yaml` и `deploy/k8s/app.yaml` (`Smtp__UserName`, `Smtp__Password` через `secretKeyRef`, `optional: true`)
-- [ ] AC-3: `deploy/dev/README.md` (перехватчик, адрес веб-интерфейса) и `deploy/README.md` (новые ключи; доверие внутреннему CA relay — шаг развёртывания)
+- [x] AC-1: подключить MailKit 4.18.1 в `Competency.Platform` (точная версия, обновить `packages.lock.json` всех проектов); один конкретный класс отправки без интерфейса: хост, порт, режим TLS (`SecureSocketOptions`, по умолчанию `StartTls`), необязательные логин и пароль (без логина `AuthenticateAsync` не вызывается — иначе MailKit бросает `NotSupportedException` на сервере без AUTH), адрес отправителя, таймаут (по умолчанию 15 с) из секции конфигурации `Smtp`; `ProtocolLogger` не используется; в лог при отказе — только тип исключения, без адресов и содержимого
+- [x] AC-2: настройка публичного адреса приложения (`App:PublicBaseUrl`) с проверкой абсолютного http(s) URL при старте
+- [x] AC-1,2: проверка конфигурации `Smtp` и `App:PublicBaseUrl` при старте — только вне tooling-запуска (`GetDocument.Insider`), как миграции и bootstrap
+- [x] AC-3: сервис Mailpit `axllent/mailpit:v1.31.4` в `deploy/dev/docker-compose.yml`: SMTP и веб-интерфейс только на `127.0.0.1`, порты переопределяются переменными окружения по образцу `DEV_DB_PORT`, порт 1110 не публикуется, без тома и `MP_DATABASE`, `MP_ALLOWED_HOSTS=localhost` (защита от DNS rebinding), healthcheck образа; проверить, что профиль F5 «Everything» поднимает и этот сервис (`.dcproj` с `DockerServiceName=db`)
+- [x] AC-3: `src/Competency.Api/Properties/launchSettings.json` — `Smtp__*` на Mailpit (`None`, без аутентификации) и `App__PublicBaseUrl` = адрес Vite (`http://localhost:5173`) в профилях
+- [x] AC-1,3: `deploy/k8s/configmap.yaml` (хост, порт, режим TLS, отправитель, таймаут, публичный адрес), `deploy/secret.template.yaml` и `deploy/k8s/app.yaml` (`Smtp__UserName`, `Smtp__Password` через `secretKeyRef`, `optional: true`)
+- [x] AC-3: `deploy/dev/README.md` (перехватчик, адрес веб-интерфейса) и `deploy/README.md` (новые ключи; доверие внутреннему CA relay — шаг развёртывания)
 Tech reference: mailkit-4.18.1, mailpit-1.31.4, aspnetcore-10.0.12, microsoft-aspnetcore-openapi-10.0.12, visual-studio-multiproject-launch-17.11.
 
 ### Task 4: Регистрация по приглашению (backend)
