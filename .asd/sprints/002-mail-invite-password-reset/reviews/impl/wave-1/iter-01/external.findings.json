@@ -1,0 +1,1 @@
+[{"id":"1","severity":"high","location":"src/Competency.Platform/PlatformModule.cs:229"},{"id":"2","severity":"medium","location":"src/Competency.Platform/PlatformModule.cs:232 (эффект в MailSender.cs:28)"}]

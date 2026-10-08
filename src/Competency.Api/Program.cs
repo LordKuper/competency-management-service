@@ -6,6 +6,7 @@ using Competency.Platform;
 using Competency.UserManagement;
 using Microsoft.AspNetCore.DataProtection;
 
+const string ContractVersion = "2.0.0";
 const string SpaFallbackPattern = "{*path:nonfile:regex(^(?!api/).*$)}";
 
 var isToolingRun = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
@@ -15,7 +16,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole();
 
-builder.Services.AddOpenApi(options => options.AddOperationTransformer<VersionHeadersOperationTransformer>());
+builder.Services.AddOpenApi(options => options
+    .AddOperationTransformer<VersionHeadersOperationTransformer>()
+    .AddDocumentTransformer((document, _, _) =>
+    {
+        document.Info.Version = ContractVersion;
+        return Task.CompletedTask;
+    }));
 builder.Services.AddApplication(builder.Configuration);
 
 if (isToolingRun)
@@ -31,6 +38,7 @@ var app = builder.Build();
 
 if (!isToolingRun)
 {
+    app.Services.ValidateMailSettings();
     await app.Services.MigrateDatabaseAsync(waitForDatabase: app.Environment.IsDevelopment());
     await app.Services.EnsureBootstrapAdminAsync();
 }

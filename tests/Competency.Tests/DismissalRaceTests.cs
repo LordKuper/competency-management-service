@@ -50,7 +50,7 @@ public sealed class DismissalRaceTests(TestEnvironment environment)
         {
             "create" => admin.PostAsync(
                 "/api/v1/users",
-                new { email = $"{Scenarios.Unique("late")}@test.local", password = Scenarios.UserPassword, role = Scenarios.User, employeeId = employee.Id }),
+                new { email = $"{Scenarios.Unique("late")}@test.local", role = Scenarios.User, employeeId = employee.Id }),
             "bind" => admin.PutAsync(
                 $"/api/v1/users/{account!.Id}",
                 new { email = account.Email, role = Scenarios.User, employeeId = employee.Id },

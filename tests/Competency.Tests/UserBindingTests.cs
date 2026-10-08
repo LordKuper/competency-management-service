@@ -43,7 +43,7 @@ public sealed class UserBindingTests(TestEnvironment environment)
 
         var onCreate = await admin.PostAsync(
             "/api/v1/users",
-            new { email = $"{Scenarios.Unique("second")}@test.local", password = Scenarios.UserPassword, role = Scenarios.User, employeeId = employee.Id });
+            new { email = $"{Scenarios.Unique("second")}@test.local", role = Scenarios.User, employeeId = employee.Id });
         var onUpdate = await admin.PutAsync(
             $"/api/v1/users/{other.Id}",
             new { email = other.Email, role = Scenarios.User, employeeId = employee.Id },
@@ -64,10 +64,10 @@ public sealed class UserBindingTests(TestEnvironment environment)
 
         var unknown = await admin.PostAsync(
             "/api/v1/users",
-            new { email = $"{Scenarios.Unique("ghost")}@test.local", password = Scenarios.UserPassword, role = Scenarios.User, employeeId = Guid.NewGuid() });
+            new { email = $"{Scenarios.Unique("ghost")}@test.local", role = Scenarios.User, employeeId = Guid.NewGuid() });
         var notWorking = await admin.PostAsync(
             "/api/v1/users",
-            new { email = $"{Scenarios.Unique("gone")}@test.local", password = Scenarios.UserPassword, role = Scenarios.User, employeeId = dismissed.Id });
+            new { email = $"{Scenarios.Unique("gone")}@test.local", role = Scenarios.User, employeeId = dismissed.Id });
 
         unknown.Status.Should().Be(HttpStatusCode.BadRequest, unknown.Body);
         unknown.FieldErrors("employeeId").Should().ContainSingle();
@@ -114,20 +114,15 @@ public sealed class UserBindingTests(TestEnvironment environment)
 
         var duplicate = await admin.PostAsync(
             "/api/v1/users",
-            new { email = $"{local.ToUpperInvariant()}@TEST.local", password = Scenarios.UserPassword, role = Scenarios.User, employeeId = (Guid?)null });
+            new { email = $"{local.ToUpperInvariant()}@TEST.local", role = Scenarios.User, employeeId = (Guid?)null });
         var malformed = await admin.PostAsync(
             "/api/v1/users",
-            new { email = "not-an-email", password = Scenarios.UserPassword, role = Scenarios.User, employeeId = (Guid?)null });
-        var weakPassword = await admin.PostAsync(
-            "/api/v1/users",
-            new { email = $"{Scenarios.Unique("weak")}@test.local", password = "short", role = Scenarios.User, employeeId = (Guid?)null });
+            new { email = "not-an-email", role = Scenarios.User, employeeId = (Guid?)null });
 
         duplicate.Status.Should().Be(HttpStatusCode.Conflict, duplicate.Body);
         duplicate.FieldErrors("email").Should().ContainSingle();
         malformed.Status.Should().Be(HttpStatusCode.BadRequest);
         malformed.FieldErrors("email").Should().ContainSingle();
-        weakPassword.Status.Should().Be(HttpStatusCode.BadRequest);
-        weakPassword.FieldErrors("password").Should().NotBeEmpty();
         (await host.LoginAsync(first.Email.ToLowerInvariant(), first.Password)).Should().NotBeNull();
     }
 

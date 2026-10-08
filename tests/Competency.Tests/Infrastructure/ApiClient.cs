@@ -15,10 +15,16 @@ public sealed class ApiClient : IDisposable
 {
     private readonly HttpClient http;
 
-    public ApiClient(Uri baseAddress)
+    public ApiClient(Uri baseAddress, ApiHost host)
     {
+        Host = host;
         http = new HttpClient(new HttpClientHandler { UseCookies = true, AllowAutoRedirect = false }) { BaseAddress = baseAddress };
     }
+
+    /// <summary>
+    /// The host this client talks to, for the arrangements that only its database can do.
+    /// </summary>
+    public ApiHost Host { get; }
 
     public Task<ApiResponse> GetAsync(string path, Action<HttpRequestMessage>? configure = null) =>
         SendAsync(HttpMethod.Get, path, configure: configure);

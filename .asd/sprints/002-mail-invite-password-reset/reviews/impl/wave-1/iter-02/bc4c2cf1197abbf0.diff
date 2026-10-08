@@ -1,0 +1,194 @@
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index 00dc6d9..6f59b6e 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -34,4 +34,6 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Link races: `RowLock.HoldAsync` on the account row, start one request, `RowLock.UntilWaitingAsync(host, n)`, start the next, release: Postgres serves row-lock waiters in arrival order, so each order has a fixed outcome (accept-first against block gives 412 for the block, which read the version before the wait). Reset against own-password change with change first is a true race (change saves outside the lock): assert exactly one winner, not which. Use a class-fixture host so the waiter count is the test's own.
+ - Equivalent mutants: `ClearLink` in change-password is redundant with the stamp binding of the link (remove both to see the test go red); `IsActiveAdministrator`'s `!IsInvited` only matters in a state with no active administrator.
+ - While the user's Visual Studio runs `Competency.Api.exe` the Debug output is locked and `dotnet test --solution Competency.slnx` fails to copy DLLs: run `-c Release`. Never kill by a command-line pattern that matches your own shell wrappers; kill by PID (a pattern kill took the background wrappers with it). A scratch copy of the tree with a `node_modules` junction: `rmdir` the junction before deleting. A Python patch script via a bash heredoc turns `\n` in its strings into real newlines: write it with the Write tool.
++- Startup-validation tests: rows of `PlatformTests.Ac1_StartWithAMissingOrInvalidMailOrLinkSetting_…` are one `InlineData` each (a refused start is ~2 s); a setting is checked by value, so a boundary needs a row on each side (`…294` accepted with a real send, `…295` refused). The shipped `appsettings.json` sits in the test bin, so a shipped default is read in-process with `new ConfigurationBuilder().AddJsonFile("appsettings.json")…Get<SmtpOptions>()`. A BCL limit is confirmed with `dotnet run file.cs` in the scratchpad (.NET 10). A test that uses a property the pre-fix `src` lacks does not compile in the pre-fix copy: delete that test from the copy and prove it by mutation on the current `src`.
++- `dotnet test --project … --filter-method` takes a wildcard pattern: a bare method name runs zero tests (exit 8), use `*Name*`. A `sed -i` mutation in a scratch copy rewrites line endings, so show the diff with `diff --strip-trailing-cr`.
+ - `docs/architecture/tech-reference/` gates test libraries too: Playwright and `Microsoft.AspNetCore.Mvc.Testing` have no reference, so the Tester may not implement with them until the Architect adds one. Check the directory before planning e2e.
+diff --git a/deploy/README.md b/deploy/README.md
+index 43cafd1..a55f239 100644
+--- a/deploy/README.md
++++ b/deploy/README.md
+@@ -72,16 +72,21 @@ kubectl -n competency rollout status deployment/app
+ - `Smtp__Host`, `Smtp__Port` — корпоративный SMTP relay; `Smtp__From` — адрес отправителя, можно с именем: `Имя <адрес>`.
+ - `Smtp__SecureSocketOptions` — защита соединения: `StartTls` (порт 587, значение по умолчанию), `SslOnConnect` (порт 465), `StartTlsWhenAvailable`, `Auto`, `None`. `None` и `StartTlsWhenAvailable` допускают отправку без шифрования — только для перехватчика почты в разработке.
+ - `Smtp__Timeout` — предел одной отправки (по умолчанию `00:00:15`): письма по действиям администратора уходят сразу после сохранения, и его запрос ждёт отправку не дольше этого времени.
+-- Необязательные ключи (значения по умолчанию заданы в образе): `AccountLinks__InvitationLifetime` — срок ссылки-приглашения (`7.00:00:00`); `AccountLinks__PasswordResetLifetime` — срок ссылки сброса пароля (`01:00:00`); `AccountLinks__PasswordResetInterval` — не чаще какого интервала запрос «Не помню пароль» выдаёт учётной записи новую ссылку (`00:05:00`, более частые запросы молча пропускаются); `RateLimiting__PasswordReset__PermitLimit` и `RateLimiting__PasswordReset__WindowSeconds` — лимит запросов с одного адреса (`10` за `60` с), общий для «Не помню пароль», сброса пароля по ссылке и принятия приглашения.
++- Необязательные ключи (значения по умолчанию заданы в образе): `AccountLinks__InvitationLifetime` — срок ссылки-приглашения (`7.00:00:00`); `AccountLinks__PasswordResetLifetime` — срок ссылки сброса пароля (`01:00:00`); `AccountLinks__PasswordResetInterval` — не чаще какого интервала запрос «Не помню пароль» выдаёт учётной записи новую ссылку (`00:05:00`, более частые запросы молча пропускаются); `RateLimiting__PasswordReset__PermitLimit` и `RateLimiting__PasswordReset__WindowSeconds` — лимит запросов с одного адреса (`10` за `60` с), общий для «Не помню пароль», сброса пароля по ссылке и принятия приглашения; `Smtp__CheckCertificateRevocation` — проверка отзыва сертификата relay (`true`), см. «Доверие внутреннему CA».
+ 
+-Доверие внутреннему CA (шаг развёртывания): если сертификат relay выпущен внутренним CA, образ ему не доверяет, и отправка по `StartTls`/`SslOnConnect` завершается ошибкой TLS (`SslHandshakeException` в журнале). Смонтировать в под файл PEM, в котором системные корневые сертификаты дополнены сертификатом внутреннего CA (например, из ConfigMap), и указать путь к нему в переменной `SSL_CERT_FILE` контейнера `app`. Отключать проверку сертификата нельзя. После развёртывания проверить отправку: например, отправить приглашение на свой адрес.
++Доверие внутреннему CA (шаг развёртывания): отправка по `StartTls`/`SslOnConnect` завершается ошибкой TLS (`SslHandshakeException` в журнале) в двух случаях.
++
++- CA не доверен: сертификат relay выпущен внутренним CA, которому образ не доверяет. Смонтировать в под файл PEM, в котором системные корневые сертификаты дополнены сертификатом внутреннего CA (например, из ConfigMap), и указать путь к нему в переменной `SSL_CERT_FILE` контейнера `app`.
++- CA доверен, но точка распространения CRL/OCSP внутреннего CA недоступна из пода: проверка отзыва сертификата не проходит. Сначала обеспечить поду доступ к CRL/OCSP. Если это невозможно, оператор явно принимает решение и задаёт в `app-config` `Smtp__CheckCertificateRevocation: "false"`: отключается только проверка отзыва, сертификат и цепочка по-прежнему проверяются, но отозванный сертификат relay будет принят.
++
++Отключать проверку сертификата нельзя. После развёртывания проверить отправку: например, отправить приглашение на свой адрес.
+ 
+ Доступ без Ingress, для проверки: `kubectl -n competency port-forward svc/app 8080:8080` и `curl http://localhost:8080/healthz/ready`.
+ 
+ ## 4. Поведение при старте
+ 
+ - `app` применяет схему сам (`MigrateAsync`) учётной записью из `ConnectionStrings__Default`; ей нужны DDL-права, расширение `pg_trgm` создаёт миграция. Порт открывается после миграций, поэтому `startupProbe` ждёт их; liveness — `/healthz/live`, readiness — `/healthz/ready` (проверяет БД).
+-- До миграций `app` проверяет настройки почты и публичного адреса: не задан или неверен `Smtp__Host`, `Smtp__Port`, `Smtp__From`, `Smtp__Timeout`, `App__PublicBaseUrl` (не абсолютный http(s) URL) или задан только один из `Smtp__UserName`/`Smtp__Password` — старт завершается ошибкой, в которой названы неверные ключи (логин и пароль SMTP в журнал не попадают). Доступность relay при старте не проверяется: отказ отправки виден только при отправке письма. Существующее развёртывание при обновлении до этой версии не стартует, пока эти ключи не заполнены в `app-config`.
++- До миграций `app` проверяет настройки почты и публичного адреса: не задан или неверен `Smtp__Host`, `Smtp__Port`, `Smtp__SecureSocketOptions` (не одно из перечисленных выше значений), `Smtp__From`, `Smtp__Timeout` (не положительный или больше `49.17:02:47.294`), `App__PublicBaseUrl` (не абсолютный http(s) URL) или задан только один из `Smtp__UserName`/`Smtp__Password` — старт завершается ошибкой, в которой названы неверные ключи (логин и пароль SMTP в журнал не попадают). Доступность relay при старте не проверяется: отказ отправки виден только при отправке письма. Существующее развёртывание при обновлении до этой версии не стартует, пока эти ключи не заполнены в `app-config`.
+ - Kubernetes не гарантирует порядок запуска: пока `db` не готова, процесс `app` завершается и перезапускается — на первом развёртывании возможны рестарты.
+ - Если активного глобального администратора нет, `app` создаёт его из `Bootstrap__AdminEmail` и `Bootstrap__AdminPassword`; существующего не перезаписывает. Нет администратора и нет одного из ключей — старт завершается ошибкой, в которой назван недостающий ключ (пароль в журнал не попадает). После первого входа ключи `Bootstrap__*` можно убрать из Secret (`optional: true`).
+ - Обновление существующего развёртывания: миграция `EmailOnUserAccount` добавляет учётным записям обязательный уникальный e-mail и заполняет его для уже существующих записей значением `<имя пользователя>@local.invalid` (имя пользователя для входа становится тем же адресом). Войти нужно этим адресом и прежним паролем, затем заменить его на настоящий в разделе «Пользователи». Ключ Secret `Bootstrap__AdminUserName` больше не читается и его можно удалить; `Bootstrap__AdminEmail` для существующего администратора не используется. Миграция безвозвратно удаляет табельный номер и e-mail сотрудников (e-mail сотрудника теперь берётся из его учётной записи); журнал `audit` старые значения сохраняет.
+diff --git a/deploy/dev/README.md b/deploy/dev/README.md
+index 184ebce..5d07b49 100644
+--- a/deploy/dev/README.md
++++ b/deploy/dev/README.md
+@@ -54,7 +54,7 @@ JSON не допускает комментариев, поэтому огово
+ 
+ Вся почта приложения уходит в Mailpit, реальные письма не отправляются. Письма видны в веб-интерфейсе http://localhost:18025 и хранятся, пока работает контейнер: тома у Mailpit нет, остановка удаляет письма. Ссылки в письмах ведут на Vite (http://localhost:5173, `App:PublicBaseUrl`) и в профиле `API` без Vite не открываются.
+ 
+-Порты 11025 и 18025 меняются переменными среды до запуска Visual Studio: `DEV_MAIL_SMTP_PORT` (тот же порт — в `Smtp:Port` файла `appsettings.Development.json`) и `DEV_MAIL_UI_PORT`. Веб-интерфейс отвечает только на имена `localhost` и `127.0.0.1` (`MP_ALLOWED_HOSTS`, защита от DNS rebinding).
++Порты 11025 и 18025 меняются переменными среды до запуска Visual Studio: `DEV_MAIL_SMTP_PORT` (тот же порт — `dotnet user-secrets set "Smtp:Port" "<порт>" --project src/Competency.Api`, см. «Своя SMTP-песочница») и `DEV_MAIL_UI_PORT`. Веб-интерфейс отвечает только на имена `localhost` и `127.0.0.1` (`MP_ALLOWED_HOSTS`, защита от DNS rebinding).
+ 
+ ## Своя SMTP-песочница
+ 
+diff --git a/src/Competency.Api/appsettings.json b/src/Competency.Api/appsettings.json
+index ac3f736..ccc3297 100644
+--- a/src/Competency.Api/appsettings.json
++++ b/src/Competency.Api/appsettings.json
+@@ -41,6 +41,7 @@
+   },
+   "Smtp": {
+     "SecureSocketOptions": "StartTls",
++    "CheckCertificateRevocation": true,
+     "Timeout": "00:00:15"
+   },
+   "RateLimiting": {
+diff --git a/src/Competency.Platform/MailSender.cs b/src/Competency.Platform/MailSender.cs
+index c720d82..c139d6f 100644
+--- a/src/Competency.Platform/MailSender.cs
++++ b/src/Competency.Platform/MailSender.cs
+@@ -28,7 +28,7 @@ public sealed class MailSender(IOptions<SmtpOptions> options, ILogger<MailSender
+         timeout.CancelAfter(settings.Timeout);
+         try
+         {
+-            using var client = new SmtpClient();
++            using var client = new SmtpClient { CheckCertificateRevocation = settings.CheckCertificateRevocation };
+             await client.ConnectAsync(settings.Host, settings.Port, settings.SecureSocketOptions, timeout.Token);
+             if (!string.IsNullOrEmpty(settings.UserName))
+             {
+diff --git a/src/Competency.Platform/PlatformModule.cs b/src/Competency.Platform/PlatformModule.cs
+index 8a16392..c2a8565 100644
+--- a/src/Competency.Platform/PlatformModule.cs
++++ b/src/Competency.Platform/PlatformModule.cs
+@@ -52,6 +52,7 @@ public static class PlatformModule
+     private const int PostgresMajorVersion = 18;
+     private static readonly TimeSpan DatabaseWaitTimeout = TimeSpan.FromSeconds(60);
+     private static readonly TimeSpan DatabaseWaitDelay = TimeSpan.FromSeconds(1);
++    private static readonly TimeSpan MaxSmtpTimeout = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
+ 
+     /// <summary>
+     /// Registers the cross-cutting services every module relies on.
+@@ -227,9 +228,12 @@ public static class PlatformModule
+     {
+         services.AddOptions<SmtpOptions>()
+             .Bind(configuration.GetSection(SmtpSection))
+-            .Validate(smtp => !string.IsNullOrWhiteSpace(smtp.Host), "'Smtp:Host' is not set.")
++            .Validate(smtp => Uri.CheckHostName(smtp.Host) != UriHostNameType.Unknown, "'Smtp:Host' is not a host name or address.")
+             .Validate(smtp => smtp.Port is > IPEndPoint.MinPort and <= IPEndPoint.MaxPort, "'Smtp:Port' is not a port number.")
+-            .Validate(smtp => smtp.Timeout > TimeSpan.Zero, "'Smtp:Timeout' is not a positive time span.")
++            .Validate(smtp => Enum.IsDefined(smtp.SecureSocketOptions), "'Smtp:SecureSocketOptions' is not a defined option.")
++            .Validate(
++                smtp => smtp.Timeout > TimeSpan.Zero && smtp.Timeout <= MaxSmtpTimeout,
++                $"'Smtp:Timeout' is not a positive time span of at most {MaxSmtpTimeout}.")
+             .Validate(
+                 smtp => string.IsNullOrEmpty(smtp.UserName) == string.IsNullOrEmpty(smtp.Password),
+                 "'Smtp:UserName' and 'Smtp:Password' are set only together.")
+diff --git a/src/Competency.Platform/SmtpOptions.cs b/src/Competency.Platform/SmtpOptions.cs
+index 072f6c9..04052f3 100644
+--- a/src/Competency.Platform/SmtpOptions.cs
++++ b/src/Competency.Platform/SmtpOptions.cs
+@@ -22,6 +22,12 @@ public sealed class SmtpOptions
+     /// </summary>
+     public SecureSocketOptions SecureSocketOptions { get; set; }
+ 
++    /// <summary>
++    /// Whether the server certificate is checked for revocation (CRL/OCSP); turn it off only when the revocation endpoints are unreachable from the host.
++    /// The certificate and its chain are validated either way.
++    /// </summary>
++    public bool CheckCertificateRevocation { get; set; } = true;
++
+     /// <summary>
+     /// Sign-in name on the server; empty when the server takes mail without authentication.
+     /// </summary>
+diff --git a/tests/Competency.Tests/PlatformTests.cs b/tests/Competency.Tests/PlatformTests.cs
+index 82aa09b..a8c87bf 100644
+--- a/tests/Competency.Tests/PlatformTests.cs
++++ b/tests/Competency.Tests/PlatformTests.cs
+@@ -1,15 +1,18 @@
+ using System.Net;
+ using System.Text.Json.Nodes;
+ using AwesomeAssertions;
++using Competency.Platform;
+ using Competency.Tests.Infrastructure;
++using Microsoft.Extensions.Configuration;
+ using Npgsql;
+ using Xunit;
+ 
+ namespace Competency.Tests;
+ 
+ /// <summary>
+-/// The platform on a real database: schema applied from an empty database, probes, what the logs carry, the account role limited
+-/// in the database itself, and the journal append-only in the database itself, for the application account too.
++/// The platform on a real database: schema applied from an empty database, probes, the mail and link settings it refuses to start with,
++/// what the logs carry, the account role limited in the database itself, and the journal append-only in the database itself,
++/// for the application account too.
+ /// </summary>
+ public sealed class PlatformTests(TestEnvironment environment)
+ {
+@@ -17,6 +20,8 @@ public sealed class PlatformTests(TestEnvironment environment)
+     private const string CheckViolation = "23514";
+     private const string UnknownRole = "Auditor";
+     private const string FailureLogCategory = "Competency.Platform.ProblemExceptionHandler";
++    private const string LongestSmtpTimeout = "49.17:02:47.294";
++    private const string OneMillisecondOverTheLongestSmtpTimeout = "49.17:02:47.295";
+ 
+     [Fact]
+     public async Task Ac3_EmptyDatabase_GetsSchemaExtensionsAndBootstrapAdministrator()
+@@ -84,6 +89,10 @@ public sealed class PlatformTests(TestEnvironment environment)
+ 
+     [Theory]
+     [InlineData("Smtp__Host", "", "Smtp:Host")]
++    [InlineData("Smtp__Host", "<SMTP_HOST>", "Smtp:Host")]
++    [InlineData("Smtp__SecureSocketOptions", "99", "Smtp:SecureSocketOptions")]
++    [InlineData("Smtp__Timeout", "50.00:00:00", "Smtp:Timeout")]
++    [InlineData("Smtp__Timeout", OneMillisecondOverTheLongestSmtpTimeout, "Smtp:Timeout")]
+     [InlineData("Smtp__From", "not a mailbox", "Smtp:From")]
+     [InlineData("Smtp__UserName", "only-a-name", "Smtp:UserName")]
+     [InlineData("App__PublicBaseUrl", "ftp://calibr.test.local", "App:PublicBaseUrl")]
+@@ -101,6 +110,26 @@ public sealed class PlatformTests(TestEnvironment environment)
+         failure!.Message.Should().Contain($"'{setting}'");
+     }
+ 
++    [Fact]
++    public async Task Ac1_TheLongestSmtpTimeoutTheStartAccepts_StillSendsTheMail()
++    {
++        await using var host = await environment.StartHostAsync(new Dictionary<string, string> { ["Smtp__Timeout"] = LongestSmtpTimeout });
++        var email = $"{Scenarios.Unique("longest")}@test.local";
++
++        var created = (await (await host.AdminAsync()).PostAsync("/api/v1/users", new { email, role = Scenarios.User, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
++
++        created.Json!["mailSent"]!.GetValue<bool>().Should().BeTrue("the send timer accepts the longest timeout the start allows");
++        (await environment.Mail.WaitForAsync(email)).Should().ContainSingle();
++    }
++
++    [Fact]
++    public void Ac1_ShippedSmtpSettings_CheckCertificateRevocation_UntilAnOperatorSwitchesItOff()
++    {
++        var shipped = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("Smtp").Get<SmtpOptions>();
++
++        shipped!.CheckCertificateRevocation.Should().BeTrue("only an operator who cannot reach the revocation endpoints turns the check off");
++    }
++
+     [Fact]
+     public async Task Ac4_BootstrapAdministrator_IsCreatedWhenTheOnlyAdministratorHasNotSetAPasswordYet()
+     {

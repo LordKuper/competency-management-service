@@ -1,23 +1,20 @@
 import { Button, Form, Input, Select, Space } from "antd";
 import type { UserRole } from "../../app/featureContract";
 import { useFormSubmit } from "../../app/useFormSubmit";
-import { PASSWORD_HINT } from "../auth/passwordPolicy";
 import { EmployeePicker } from "./EmployeePicker";
 import { ROLE_OPTIONS } from "./roles";
 
-/** What the account form submits; `password` is present only on the create form. */
+/** What the account form submits. */
 export interface UserInput {
   email: string;
   role: UserRole;
   employeeId: string | null;
-  password?: string;
 }
 
 interface UserFormValues {
   email: string;
   role: UserRole;
   employeeId?: string;
-  password?: string;
 }
 
 interface UserFormProps {
@@ -25,7 +22,7 @@ interface UserFormProps {
   initialValues?: UserFormValues;
   /** The employee already bound, listed by name even when the search does not return them. */
   employee?: { id: string; name: string };
-  /** Whether the form creates an account, which adds the password field. */
+  /** Whether the form creates an account, which is then invited by e-mail to set its own password. */
   isNew?: boolean;
   submitLabel: string;
   /** Saves the input; a rejection is shown on the fields it names and by the caller. */
@@ -63,22 +60,17 @@ export function UserForm({
       <Form.Item
         name="email"
         label="E-mail"
+        extra={
+          isNew
+            ? "На этот адрес придёт приглашение со ссылкой, по которой пользователь сам задаст пароль."
+            : undefined
+        }
         rules={[
           { required: true, whitespace: true, message: "Введите e-mail" },
         ]}
       >
         <Input type="email" autoComplete="off" placeholder="name@example.com" />
       </Form.Item>
-      {isNew && (
-        <Form.Item
-          name="password"
-          label="Пароль"
-          extra={PASSWORD_HINT}
-          rules={[{ required: true, message: "Введите пароль" }]}
-        >
-          <Input.Password autoComplete="new-password" />
-        </Form.Item>
-      )}
       <Form.Item
         name="role"
         label="Роль"
@@ -86,11 +78,7 @@ export function UserForm({
       >
         <Select options={ROLE_OPTIONS} />
       </Form.Item>
-      <Form.Item
-        name="employeeId"
-        label="Сотрудник"
-        extra="Необязательно: учётная запись может быть привязана к одному работающему сотруднику или не привязана ни к кому."
-      >
+      <Form.Item name="employeeId" label="Сотрудник">
         <EmployeePicker current={employee} />
       </Form.Item>
       <Space>

@@ -41,6 +41,17 @@ internal static class EmployeeBinding
         };
 
     /// <summary>
+    /// Whether the account may get a password reset link: it has registered, is not blocked, and its employee, if any, works.
+    /// </summary>
+    /// <param name="employees">The employee directory.</param>
+    /// <param name="user">The account.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns><see langword="true"/> when the account is active and registered.</returns>
+    public static async Task<bool> MayResetPasswordAsync(this IEmployeeDirectory employees, AppUser user, CancellationToken cancellationToken) =>
+        !user.IsInvited && !user.IsBlocked
+        && (user.EmployeeId is not { } employeeId || await employees.FindAsync(employeeId, cancellationToken) is { IsActive: true });
+
+    /// <summary>
     /// Whether an account other than the given one is already bound to the employee.
     /// </summary>
     /// <param name="context">The context to query through.</param>

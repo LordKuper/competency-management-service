@@ -1,24 +1,13 @@
 using Competency.Platform;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace Competency.OrgStructure;
 
 /// <summary>
-/// The responses that reject a change the structure's rules forbid, with reasons addressed to the administrator,
-/// and the checks that produce those reasons for referenced units and employees.
+/// The checks that say why a referenced unit or employee cannot be used, so a change can be rejected with that reason.
 /// </summary>
 internal static class Rejections
 {
-    private const string ConflictTitle = "Операция отклонена";
-
-    public static ProblemHttpResult Conflict(string detail) =>
-        TypedResults.Problem(detail: detail, statusCode: StatusCodes.Status409Conflict, title: ConflictTitle);
-
-    public static ValidationProblem Invalid(string field, string message) =>
-        TypedResults.ValidationProblem(new Dictionary<string, string[]> { [field] = [message] });
-
     /// <summary>
     /// Says why a unit cannot be used as a parent: it does not exist or is inactive.
     /// </summary>

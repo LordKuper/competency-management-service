@@ -1,0 +1,210 @@
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md b/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
+index 2ff16c4..08eaccc 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
+@@ -1,6 +1,6 @@
+ ---
+ name: frontend-wave-probes
+-description: how a 120-file web/ plus agent-memory impl-review wave was finished in about 45 turns - read ranges, one-Grep probes that found real defects, diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers
++description: how a 120-file web/ plus agent-memory impl-review wave was finished in about 45 turns - read ranges, one-Grep probes that found real defects, diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers, row-menu mutation and Russian plural probes
+ metadata:
+   type: feedback
+ ---
+@@ -23,6 +23,11 @@ the diff (TSX tolerates the larger size); skip `package-lock.json`, `schema.d.ts
+   keyboard focus is lost; the CDP smokes in memory were mouse-only.
+ - Agent-memory files: grep each cited component or constant (`UserCard`, `SEARCH_TEXT_MAX_LENGTH`) in `web/src`, `src` and
+   `tests`, and every "does not provide" / "NOT yet run" claim against the code; four stale claims turned up in one wave.
++- A row-menu action with no confirm dialog (`useSendUserMail`, sprint 002): check for a pending guard or loading state, then
++  the server handler (does it bump the version before a slow SMTP send, `Smtp:Timeout` 15 s?). A second click with the row's
++  old `If-Match` gets 412 and `describeApiError` blames "другим пользователем".
++- Russian text with a number from config (`Не короче ${n} символов`): one plural form is wrong for n ending in 1 (21, 31);
++  `Intl.PluralRules("ru")` is the fix.
+ 
+ **Re-review of a review-fix delta (wave-3/iter-02, about 40 turns, one finding):**
+ - After a duplicated helper is hoisted into one shared module, Grep its call sites: a parameter every caller leaves at the
+@@ -36,7 +41,8 @@ the diff (TSX tolerates the larger size); skip `package-lock.json`, `schema.d.ts
+ - Check each fix against the iter-01 report and `decisions-log.md` "review-fix" entry first; every iter-01 item was closed, so
+   only the new surface (shared hooks, test infra) needed fresh scanning.
+ 
+-**Line arithmetic without a shell:** for a new-file hunk, file line = diff line minus the line number of its `@@` header.
++**Line arithmetic without a shell:** for a new-file hunk, file line = diff line minus the line number of its `@@` header; for a
++whole-file replace, subtract the line number of the last `-` line instead.
+ 
+ **Language:** the dispatch header listed `language.docs: ru` and the policy puts reviews under `language.docs`, so the report
+ prose was Russian with the template headings and tokens in English; earlier waves of this sprint were English.
+diff --git a/web/src/features/auth/linkScreens.test.tsx b/web/src/features/auth/linkScreens.test.tsx
+index ac3da13..74948a0 100644
+--- a/web/src/features/auth/linkScreens.test.tsx
++++ b/web/src/features/auth/linkScreens.test.tsx
+@@ -202,6 +202,18 @@ describe.each([INVITATION, RESET])(
+       expect(fakeApi.calls("GET /api/v1/auth/me")).toHaveLength(0);
+     });
+ 
++    it("declines the noun by the Russian plural rule: 21 is «символа», not «символов»", async () => {
++      fakeApi.on("GET /api/v1/auth/password-policy", () =>
++        Response.json({ minLength: 21 }),
++      );
++
++      await openApp(`${screenUnderTest.path}#token=${TOKEN}`);
++
++      expect(
++        await screen.findByText(/^Не короче 21 символа;/),
++      ).toBeInTheDocument();
++    });
++
+     it("falls back to the hint without a number when the policy cannot be read", async () => {
+       fakeApi.on("GET /api/v1/auth/password-policy", () => problem(500));
+ 
+diff --git a/web/src/features/auth/passwordPolicy.ts b/web/src/features/auth/passwordPolicy.ts
+index b66e4d9..ed29870 100644
+--- a/web/src/features/auth/passwordPolicy.ts
++++ b/web/src/features/auth/passwordPolicy.ts
+@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
+ import { api } from "../../api/client";
+ import { unwrap } from "../../api/unwrap";
+ 
++const PLURAL = new Intl.PluralRules("ru");
+ const RULES = "заглавные и строчные буквы, цифры и специальные символы.";
+ 
+ /**
+@@ -16,6 +17,6 @@ export function usePasswordHint(): string {
+     retry: false,
+   });
+   return data
+-    ? `Не короче ${data.minLength} символов; ${RULES}`
++    ? `Не короче ${data.minLength} ${PLURAL.select(data.minLength) === "one" ? "символа" : "символов"}; ${RULES}`
+     : `Пароль должен быть длинным и содержать ${RULES}`;
+ }
+diff --git a/web/src/features/users/UserListPage.tsx b/web/src/features/users/UserListPage.tsx
+index 0fd76bb..680dacf 100644
+--- a/web/src/features/users/UserListPage.tsx
++++ b/web/src/features/users/UserListPage.tsx
+@@ -60,7 +60,7 @@ type UserDialog = { kind: "create" } | { kind: "edit"; userId: string };
+ export function UserListPage() {
+   const { token } = antdTheme.useToken();
+   const confirmBlockChange = useBlockUser();
+-  const sendMail = useSendUserMail();
++  const { sendMail, isSending } = useSendUserMail();
+   const [dialog, setDialog] = useState<UserDialog | null>(null);
+   const [params, setParams] = useState<UserListParams>({
+     page: 1,
+@@ -111,6 +111,7 @@ export function UserListPage() {
+                       label: user.isInvited
+                         ? "Отправить приглашение повторно"
+                         : "Отправить ссылку для сброса пароля",
++                      disabled: isSending,
+                       onClick: () => sendMail(user),
+                     },
+                   ]),
+diff --git a/web/src/features/users/useSendUserMail.ts b/web/src/features/users/useSendUserMail.ts
+index 36c29e3..e1e45fb 100644
+--- a/web/src/features/users/useSendUserMail.ts
++++ b/web/src/features/users/useSendUserMail.ts
+@@ -17,7 +17,7 @@ export function useMailReport() {
+       modal.warning({
+         title: "Письмо не отправлено",
+         content:
+-          "Почтовый сервер не принял письмо. Учётная запись сохранена; отправьте письмо повторно позже из меню пользователя.",
++          "Почтовый сервер не принял письмо. Отправьте письмо повторно позже из меню пользователя.",
+       });
+     } else {
+       message.success(sentText);
+@@ -28,8 +28,11 @@ export function useMailReport() {
+ /**
+  * Returns the action that e-mails an account a new link: the invitation again to an invited account, or a password
+  * reset link to a registered one. The new link voids the previous one; the server refuses an account in the wrong state.
+- * The accounts are reread whatever the outcome.
++ * The accounts are reread whatever the outcome. The send is synchronous on the server, so a progress message stays
++ * up meanwhile and the row being sent cannot be sent again (a second click would carry the stale version and get 412).
+  */
++const SENDING_KEY = "send-user-mail";
++
+ export function useSendUserMail() {
+   const { message } = App.useApp();
+   const reportMail = useMailReport();
+@@ -48,6 +51,13 @@ export function useSendUserMail() {
+             }),
+       );
+     },
++    onMutate: () => {
++      message.loading({
++        key: SENDING_KEY,
++        content: "Отправка письма…",
++        duration: 0,
++      });
++    },
+     onSuccess: (sent) => {
+       reportMail(
+         sent.mailSent,
+@@ -59,8 +69,16 @@ export function useSendUserMail() {
+     onError: (error) => {
+       message.error(describeApiError(error));
+     },
+-    onSettled: () => queryClient.invalidateQueries({ queryKey: usersQueryKey }),
++    onSettled: () => {
++      message.destroy(SENDING_KEY);
++      return queryClient.invalidateQueries({ queryKey: usersQueryKey });
++    },
+   });
+ 
+-  return (user: UserResponse) => send.mutate(user);
++  return {
++    sendMail: (user: UserResponse) => {
++      if (!send.isPending) send.mutate(user);
++    },
++    isSending: send.isPending,
++  };
+ }
+diff --git a/web/src/features/users/userMail.test.tsx b/web/src/features/users/userMail.test.tsx
+index cca47ad..15a7cb6 100644
+--- a/web/src/features/users/userMail.test.tsx
++++ b/web/src/features/users/userMail.test.tsx
+@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi } from "../../test/fakeApi";
++import { deferred, fakeApi } from "../../test/fakeApi";
+ import { UserListPage } from "./UserListPage";
+ import type { UserResponse } from "./usersApi";
+ 
+@@ -183,6 +183,39 @@ describe("row menu (AC-6, AC-9, AC-11)", () => {
+     },
+   );
+ 
++  it("shows progress and issues one request only while a send is pending, then removes the progress", async () => {
++    const answer = deferred<Response>();
++    fakeApi.on(
++      `POST /api/v1/users/${INVITED.id}/resend-invitation`,
++      () => answer.promise,
++    );
++    await openUsers();
++    const user = userEvent.setup();
++
++    await openMenuOf(user, INVITED);
++    await user.click(await screen.findByRole("menuitem", { name: RESEND }));
++
++    expect(await screen.findByText("Отправка письма…")).toBeInTheDocument();
++    await openMenuOf(user, INVITED);
++    const again = await screen.findByRole("menuitem", { name: RESEND });
++    expect(again).toHaveAttribute("aria-disabled", "true");
++    await user.click(again);
++
++    answer.resolve(Response.json({ ...INVITED, mailSent: true }));
++    expect(
++      await screen.findByText("Приглашение отправлено повторно"),
++    ).toBeInTheDocument();
++    // antd keeps a destroyed message in the DOM for its leave animation, which jsdom never finishes
++    await waitFor(() =>
++      expect(
++        screen.queryByText("Отправка письма…")?.closest("[role=alert]"),
++      ).toHaveClass("ant-message-fade-leave"),
++    );
++    expect(
++      fakeApi.calls(`POST /api/v1/users/${INVITED.id}/resend-invitation`),
++    ).toHaveLength(1);
++  });
++
+   it("keeps a warning on screen until closed when the mail server did not accept the mail", async () => {
+     fakeApi.on(`POST /api/v1/users/${INVITED.id}/resend-invitation`, () =>
+       Response.json({ ...INVITED, mailSent: false }),

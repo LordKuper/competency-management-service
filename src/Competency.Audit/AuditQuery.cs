@@ -1,3 +1,4 @@
+using Competency.Platform;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Competency.Audit;
@@ -15,29 +16,15 @@ internal sealed record AuditQuery(
     [FromQuery(Name = "entityId")] string? EntityId = null,
     [FromQuery(Name = "requestId")] string? RequestId = null,
     [FromQuery(Name = "page")] int Page = 1,
-    [FromQuery(Name = "pageSize")] int PageSize = AuditQuery.DefaultPageSize)
+    [FromQuery(Name = "pageSize")] int PageSize = ListRequest.DefaultPageSize)
 {
-    private const int DefaultPageSize = 50;
-    private const int MaxPageSize = 200;
-    private const int MaxPage = int.MaxValue / MaxPageSize;
-
     /// <summary>
     /// Checks the request against the paging limits and the period order.
     /// </summary>
     /// <returns>The problems found by field name; empty when the request is valid.</returns>
     public Dictionary<string, string[]> Validate()
     {
-        var errors = new Dictionary<string, string[]>();
-        if (Page is < 1 or > MaxPage)
-        {
-            errors["page"] = [$"page must be between 1 and {MaxPage}."];
-        }
-
-        if (PageSize is < 1 or > MaxPageSize)
-        {
-            errors["pageSize"] = [$"pageSize must be between 1 and {MaxPageSize}."];
-        }
-
+        var errors = ListRequest.Validate(Page, PageSize);
         if (From > To)
         {
             errors["to"] = ["to must not be earlier than from."];

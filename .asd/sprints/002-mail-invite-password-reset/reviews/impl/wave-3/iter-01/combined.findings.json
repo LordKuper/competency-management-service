@@ -1,0 +1,1 @@
+[{"id":"F1","severity":"medium","location":"web/src/features/users/useSendUserMail.ts:37, :65; web/src/features/users/UserListPage.tsx:114 (AC-6, AC-9, AC-11)"},{"id":"F2","severity":"low","location":"web/src/features/auth/passwordPolicy.ts:19 (AC-19)"},{"id":"F3","severity":"low","location":"web/src/features/users/useSendUserMail.ts:20 (AC-11)"}]

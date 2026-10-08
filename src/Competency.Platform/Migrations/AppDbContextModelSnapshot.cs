@@ -285,6 +285,22 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_blocked");
 
+                    b.Property<DateTimeOffset?>("LinkExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("link_expires_at");
+
+                    b.Property<DateTimeOffset?>("LinkIssuedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("link_issued_at");
+
+                    b.Property<string>("LinkSecurityStamp")
+                        .HasColumnType("text")
+                        .HasColumnName("link_security_stamp");
+
+                    b.Property<byte[]>("LinkTokenHash")
+                        .HasColumnType("bytea")
+                        .HasColumnName("link_token_hash");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean")
                         .HasColumnName("lockout_enabled");
@@ -335,6 +351,10 @@ namespace Competency.Platform.Migrations
                     b.HasIndex("EmployeeId")
                         .IsUnique()
                         .HasFilter("employee_id IS NOT NULL");
+
+                    b.HasIndex("LinkTokenHash")
+                        .IsUnique()
+                        .HasFilter("link_token_hash IS NOT NULL");
 
                     b.HasIndex("NormalizedEmail")
                         .IsUnique();

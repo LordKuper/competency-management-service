@@ -65,7 +65,7 @@ internal static class OrgUnitEndpoints
         }
 
         var text = TextSearch.Normalize(query.Q);
-        var pattern = text is null ? null : TextSearch.ContainsPattern(text);
+        var pattern = text is null ? null : ListRequest.ContainsPattern(text);
         var page = await context.Set<OrgUnit>()
             .AsNoTracking()
             .VisibleTo(actor)
@@ -73,7 +73,7 @@ internal static class OrgUnitEndpoints
             .WhereIf(query.ParentId is not null, unit => unit.ParentId == query.ParentId)
             .WhereIf(
                 text is not null,
-                unit => EF.Functions.ILike(unit.Name, pattern!, TextSearch.LikeEscape)
+                unit => EF.Functions.ILike(unit.Name, pattern!, ListRequest.LikeEscape)
                     || unit.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text!)))
             .OrderBy(unit => unit.Name)
             .ThenBy(unit => unit.Id)
@@ -227,7 +227,7 @@ internal static class OrgUnitEndpoints
         if (request.ParentId is { } parentId
             && await context.UnitProblemAsync(parentId, ParentSubject, cancellationToken) is { } parentProblem)
         {
-            return Rejections.Invalid("parentId", parentProblem);
+            return Rejection.Invalid("parentId", parentProblem);
         }
 
         var unit = new OrgUnit
@@ -266,7 +266,7 @@ internal static class OrgUnitEndpoints
             && headId != unit.HeadEmployeeId
             && await HeadProblemAsync(context, headId, unit.Id, cancellationToken) is { } headProblem)
         {
-            return Rejections.Invalid("headEmployeeId", headProblem);
+            return Rejection.Invalid("headEmployeeId", headProblem);
         }
 
         ifMatch.ApplyTo(context, unit);
@@ -295,12 +295,12 @@ internal static class OrgUnitEndpoints
         {
             if (await context.UnitProblemAsync(parentId, ParentSubject, cancellationToken) is { } parentProblem)
             {
-                return Rejections.Invalid("parentId", parentProblem);
+                return Rejection.Invalid("parentId", parentProblem);
             }
 
             if (await context.DescendantIds(id).AnyAsync(candidate => candidate == parentId, cancellationToken))
             {
-                return Rejections.Conflict($"Нельзя перенести подразделение «{unit.Name}» в себя или в своё дочернее подразделение: иерархия не допускает циклов.");
+                return Rejection.Conflict($"Нельзя перенести подразделение «{unit.Name}» в себя или в своё дочернее подразделение: иерархия не допускает циклов.");
             }
         }
 
@@ -330,14 +330,14 @@ internal static class OrgUnitEndpoints
                 .CountAsync(child => child.ParentId == id && child.IsActive, cancellationToken);
             if (activeChildren > 0)
             {
-                return Rejections.Conflict($"Нельзя деактивировать подразделение «{unit.Name}»: в нём есть активные дочерние подразделения ({activeChildren}). Сначала деактивируйте или перенесите их.");
+                return Rejection.Conflict($"Нельзя деактивировать подразделение «{unit.Name}»: в нём есть активные дочерние подразделения ({activeChildren}). Сначала деактивируйте или перенесите их.");
             }
 
             var activeEmployees = await context.Set<Employee>()
                 .CountAsync(employee => employee.OrgUnitId == id && employee.IsActive, cancellationToken);
             if (activeEmployees > 0)
             {
-                return Rejections.Conflict($"Нельзя деактивировать подразделение «{unit.Name}»: в нём есть работающие сотрудники ({activeEmployees}). Сначала переведите их в другое подразделение или отметьте как не работающих.");
+                return Rejection.Conflict($"Нельзя деактивировать подразделение «{unit.Name}»: в нём есть работающие сотрудники ({activeEmployees}). Сначала переведите их в другое подразделение или отметьте как не работающих.");
             }
         }
 
@@ -366,13 +366,13 @@ internal static class OrgUnitEndpoints
             if (unit.ParentId is { } parentId
                 && await context.UnitProblemAsync(parentId, ParentSubject, cancellationToken) is { } parentProblem)
             {
-                return Rejections.Conflict($"Нельзя активировать подразделение «{unit.Name}». {parentProblem}");
+                return Rejection.Conflict($"Нельзя активировать подразделение «{unit.Name}». {parentProblem}");
             }
 
             if (unit.HeadEmployeeId is { } headId
                 && await context.EmployeeProblemAsync(headId, HeadSubject, cancellationToken) is { } headProblem)
             {
-                return Rejections.Conflict($"Нельзя активировать подразделение «{unit.Name}». {headProblem} Назначьте другого руководителя.");
+                return Rejection.Conflict($"Нельзя активировать подразделение «{unit.Name}». {headProblem} Назначьте другого руководителя.");
             }
         }
 

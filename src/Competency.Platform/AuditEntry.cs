@@ -11,6 +11,7 @@ namespace Competency.Platform;
 /// <param name="NewValue">The audited property values after the action, as JSON.</param>
 /// <param name="Actor">Overrides the ambient actor for events raised before a principal exists, such as sign-in.</param>
 /// <param name="Role">Overrides the ambient role together with <paramref name="Actor"/>.</param>
+/// <param name="RequestId">Overrides the ambient request id for work done outside the request that caused it, such as a queued e-mail.</param>
 public sealed record AuditEntry(
     string Action,
     string EntityType,
@@ -19,4 +20,5 @@ public sealed record AuditEntry(
     string? OldValue = null,
     string? NewValue = null,
     string? Actor = null,
-    string? Role = null);
+    string? Role = null,
+    string? RequestId = null);

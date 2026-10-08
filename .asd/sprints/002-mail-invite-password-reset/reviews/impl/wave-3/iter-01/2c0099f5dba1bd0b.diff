@@ -1,0 +1,2075 @@
+diff --git a/.claude/agent-memory/asd-dev-critical/project_users-modal-menu-facts.md b/.claude/agent-memory/asd-dev-critical/project_users-modal-menu-facts.md
+index ba8ad19..46f1a53 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_users-modal-menu-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_users-modal-menu-facts.md
+@@ -1,6 +1,6 @@
+ ---
+ name: users-modal-menu-facts
+-description: Task 19 (users row menu + create/edit modal) - why the 409 alert is suppressed for field conflicts, reset target looked up from the live list, gcTime 0 on the account query, and the CDP smoke facts
++description: Task 19 (users row menu + create/edit modal) - why the 409 alert is suppressed for field conflicts, gcTime 0 on the account query, the sprint 002 mail menu item that replaced the admin reset modal, and the CDP smoke facts
+ metadata:
+   type: project
+ ---
+@@ -8,11 +8,11 @@ metadata:
+ Task 19 (2026-10-07), `web/src/features/users`, antd 6.6.5 / TanStack Query 5.104.1, scratch DB + Release API + Vite 5900, all removed:
+ 
+ - **409 has two shapes**: a taken e-mail comes as `HttpValidationProblemDetails` (`errors.email` plus `title`/`detail` with the same text), every other 409 (binding `AlreadyBound`, last administrator) has no `errors`. `showFieldErrors` puts the first under E-mail, `ErrorAlert` would print it again (the Task 16 "shown twice" note), so `UserModal` hides the alert for `status === 409 && errors !== undefined`. A 400 keeps its generic alert ("исправьте отмеченные поля"), it does not repeat the field text. Counting the Russian sentence in the modal text (exactly 1) is the check.
+-- **Reset-password target is looked up by id** from the live list data (`dialog.kind === "resetPassword"` + `data.items.find`), not stored as a row copy: the form submits `If-Match` from the row, and after a 412 the invalidation refetches the list, so a retry carries the new version. `ResetPasswordModal` lost its `open` prop (mounted only while shown, like `EmployeeModal`).
++- **Superseded in sprint 002 (AC-9)**: the Task 19 admin reset-password modal and its endpoint are gone. The row menu now has one mail item (not for blocked accounts): «Отправить приглашение повторно» for an invited account, «Отправить ссылку для сброса пароля» otherwise, both through `useSendUserMail` (`web/src/features/users/useSendUserMail.ts`), which posts `resend-invitation` / `send-password-reset` with `If-Match` from the row and invalidates `usersQueryKey` in `onSettled`. `UserListPage` dialogs are only `create` / `edit`.
+ - **`userQuery` has `gcTime: 0`**: with the default cache the edit modal would first show the previous (older-version) detail of that account, e.g. right after the same admin blocked it from the menu, and a fast Save would 412 against the admin's own change.
+ - Save invalidates `usersQueryKey` and `invalidateOrgStructure` in `onSettled`, because employee cards show the account e-mail; inactive queries are only marked stale. Proven with SPA navigation (menu click, no reload): after binding, opening Оргструктура refetched `GET /employees?orgUnitId=...` and the card showed the new e-mail.
+ - Blocking the last administrator from the row menu still surfaces as the `message.error` toast of `useBlockUser` (the confirm closes); only the edit modal shows the 409 inline.
+-- **Smoke harness**: the Task 18 scripts adapt with `sed` (DB name, port, key dir). Facts new here: `.ant-form-item:has(#user_employeeId)` works in Chrome selectors; the select clear icon needs the real `mouseMoved` that `clickJs` sends first; EmployeePicker options need ~1.2 s after `Input.insertText`; the password-reset login check runs from node `fetch` with `Origin` set to the API origin (a browser fetch would replace the admin cookie); open the menu by `button[aria-label="Действия с пользователем <email>"]`, wait ~800 ms, items under `.ant-dropdown:not(.ant-dropdown-hidden)`. The whole 60-check run took about 90 s and passed first time.
++- **Smoke harness**: the Task 18 scripts adapt with `sed` (DB name, port, key dir). Facts new here: `.ant-form-item:has(#user_employeeId)` works in Chrome selectors; the select clear icon needs the real `mouseMoved` that `clickJs` sends first; EmployeePicker options need ~1.2 s after `Input.insertText`; a login check as another account (Task 19 used it after the since-removed admin password reset) runs from node `fetch` with `Origin` set to the API origin (a browser fetch would replace the admin cookie); open the menu by `button[aria-label="Действия с пользователем <email>"]`, wait ~800 ms, items under `.ant-dropdown:not(.ant-dropdown-hidden)`. The whole 60-check run took about 90 s and passed first time.
+ 
+ **Why:** each decided the modal's error handling or saved a failed smoke run.
+ **How to apply:** any later change to the account screens, the 409/412 handling in modals, or a browser smoke of `/users` (see also [[web-cdp-real-backend-smoke-facts]], [[web-org-card-hierarchy-facts]], [[employee-dismissal-cascade-facts]]).
+diff --git a/.claude/agent-memory/asd-dev-critical/project_web-anonymous-link-screens-facts.md b/.claude/agent-memory/asd-dev-critical/project_web-anonymous-link-screens-facts.md
+new file mode 100644
+index 0000000..21c7df9
+--- /dev/null
++++ b/.claude/agent-memory/asd-dev-critical/project_web-anonymous-link-screens-facts.md
+@@ -0,0 +1,15 @@
++---
++name: web-anonymous-link-screens-facts
++description: Sprint 002 Task 6 web facts - token from the URL fragment under StrictMode, router links with antd link styling, empty 202/204 in openapi-fetch, mail-sent reporting
++metadata:
++  type: project
++---
++
++- `main.tsx` renders under `StrictMode`, which calls `useState` initializers twice. Reading the `#token=` fragment must stay pure in the initializer (`useState(() => new URLSearchParams(hash.slice(1)).get("token"))`); the fragment is dropped in a `useEffect` with the router's `navigate(pathname, { replace: true })`, which is `history.replaceState` and keeps `router.state.location` free of the token too. Clearing inside the initializer would lose the token on the second call.
++- antd has no global `a` styles (the `App` component sets only colour/font); link styling lives on `.ant-typography-link`. A router link that looks like antd is `Typography.Link` with `href={useHref(to)}` and `onClick={useLinkClickHandler<HTMLElement>(to)}` (handles modifier clicks) - `AuthLink` in `features/auth/AuthCard.tsx`.
++- `openapi-fetch` 0.17 returns `data: undefined` for 204 and for `Content-Length: 0`, and for a chunked/no-length OK body it reads text and parses only if non-empty, so the empty 202 of `forgot-password` never throws in `unwrap`.
++- The invalid-link answer is a 400 ProblemDetails without `errors` (title/detail in Russian); a password-policy refusal is a 400 with `errors.password`. `describeApiError` turns any 400 without `errors[""]` into the generic "исправьте отмеченные поля", so the link screens read `title`/`detail` themselves.
++- `mailSent === false` is shown with `modal.warning` (stays until closed), success with a toast; a mutation `onSuccess` must not return the toast thenable (it would hold the mutation pending for the toast's lifetime, see `useBlockUser`).
++
++**Why:** each decided how the anonymous screens and the mail actions were written.
++**How to apply:** later anonymous screens, link/token handling in the SPA, and impl-test of these screens (see also [[web-ui-test-and-form-gotchas]], [[users-modal-menu-facts]]).
+diff --git a/web/index.html b/web/index.html
+index 4ac70c9..7ef8c27 100644
+--- a/web/index.html
++++ b/web/index.html
+@@ -3,6 +3,7 @@
+   <head>
+     <meta charset="utf-8" />
+     <meta name="viewport" content="width=device-width, initial-scale=1" />
++    <meta name="referrer" content="no-referrer" />
+     <title>Калибр</title>
+     <link rel="icon" type="image/png" href="/brand/logo-64.png" />
+   </head>
+diff --git a/web/src/api/schema.d.ts b/web/src/api/schema.d.ts
+index 754cb2e..a69e82b 100644
+--- a/web/src/api/schema.d.ts
++++ b/web/src/api/schema.d.ts
+@@ -4,6 +4,22 @@
+  */
+ 
+ export interface paths {
++    "/api/v1/auth/password-policy": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        get: operations["GetPasswordPolicy"];
++        put?: never;
++        post?: never;
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
+     "/api/v1/audit": {
+         parameters: {
+             query?: never;
+@@ -308,6 +324,54 @@ export interface paths {
+         patch?: never;
+         trace?: never;
+     };
++    "/api/v1/auth/forgot-password": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        get?: never;
++        put?: never;
++        post: operations["ForgotPassword"];
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
++    "/api/v1/auth/reset-password": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        get?: never;
++        put?: never;
++        post: operations["ResetPassword"];
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
++    "/api/v1/auth/accept-invitation": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        get?: never;
++        put?: never;
++        post: operations["AcceptInvitation"];
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
+     "/api/v1/users": {
+         parameters: {
+             query?: never;
+@@ -372,7 +436,7 @@ export interface paths {
+         patch?: never;
+         trace?: never;
+     };
+-    "/api/v1/users/{id}/reset-password": {
++    "/api/v1/users/{id}/resend-invitation": {
+         parameters: {
+             query?: never;
+             header?: never;
+@@ -381,7 +445,23 @@ export interface paths {
+         };
+         get?: never;
+         put?: never;
+-        post: operations["ResetUserPassword"];
++        post: operations["ResendUserInvitation"];
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
++    "/api/v1/users/{id}/send-password-reset": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        get?: never;
++        put?: never;
++        post: operations["SendUserPasswordReset"];
+         delete?: never;
+         options?: never;
+         head?: never;
+@@ -427,7 +507,6 @@ export interface components {
+         };
+         CreateUserRequest: {
+             email: string;
+-            password: string;
+             role: components["schemas"]["UserRole"];
+             /** Format: uuid */
+             employeeId: null | string;
+@@ -477,6 +556,9 @@ export interface components {
+             /** Format: int32 */
+             version?: null | number;
+         };
++        ForgotPasswordRequest: {
++            email: string;
++        };
+         HttpValidationProblemDetails: {
+             type?: null | string;
+             title?: null | string;
+@@ -489,6 +571,10 @@ export interface components {
+             };
+         };
+         JsonElement: unknown;
++        LinkPasswordRequest: {
++            token: string;
++            password: string;
++        };
+         LoginRequest: {
+             email: string;
+             password: string;
+@@ -559,6 +645,10 @@ export interface components {
+             /** Format: int32 */
+             pageSize: number;
+         };
++        PasswordPolicyResponse: {
++            /** Format: int32 */
++            minLength: number;
++        };
+         ProblemDetails: {
+             type?: null | string;
+             title?: null | string;
+@@ -567,9 +657,6 @@ export interface components {
+             detail?: null | string;
+             instance?: null | string;
+         };
+-        ResetPasswordRequest: {
+-            newPassword: string;
+-        };
+         UpdateOrgUnitRequest: {
+             name: string;
+             /** Format: uuid */
+@@ -587,11 +674,13 @@ export interface components {
+             email: string;
+             role: components["schemas"]["UserRole"];
+             isBlocked: boolean;
++            isInvited: boolean;
+             /** Format: uuid */
+             employeeId: null | string;
+             employeeName: null | string;
+             /** Format: int32 */
+             version: number;
++            mailSent: null | boolean;
+         };
+         /** @enum {unknown} */
+         UserRole: "User" | "GlobalAdmin";
+@@ -604,6 +693,26 @@ export interface components {
+ }
+ export type $defs = Record<string, never>;
+ export interface operations {
++    GetPasswordPolicy: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody?: never;
++        responses: {
++            /** @description OK */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["PasswordPolicyResponse"];
++                };
++            };
++        };
++    };
+     ListAuditEvents: {
+         parameters: {
+             query?: {
+@@ -1995,12 +2104,133 @@ export interface operations {
+             };
+         };
+     };
++    ForgotPassword: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["ForgotPasswordRequest"];
++            };
++        };
++        responses: {
++            /** @description Accepted */
++            202: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content?: never;
++            };
++            /** @description Bad Request */
++            400: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
++                };
++            };
++            /** @description Too Many Requests */
++            429: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
++        };
++    };
++    ResetPassword: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["LinkPasswordRequest"];
++            };
++        };
++        responses: {
++            /** @description No Content */
++            204: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content?: never;
++            };
++            /** @description Bad Request */
++            400: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
++            /** @description Too Many Requests */
++            429: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
++        };
++    };
++    AcceptInvitation: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["LinkPasswordRequest"];
++            };
++        };
++        responses: {
++            /** @description No Content */
++            204: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content?: never;
++            };
++            /** @description Bad Request */
++            400: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
++            /** @description Too Many Requests */
++            429: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
++        };
++    };
+     ListUsers: {
+         parameters: {
+             query?: {
+                 q?: string;
+                 role?: components["schemas"]["UserRole"];
+                 isBlocked?: boolean;
++                isInvited?: boolean;
+                 page?: number;
+                 pageSize?: number;
+             };
+@@ -2435,7 +2665,7 @@ export interface operations {
+             };
+         };
+     };
+-    ResetUserPassword: {
++    ResendUserInvitation: {
+         parameters: {
+             query?: never;
+             header: {
+@@ -2447,11 +2677,97 @@ export interface operations {
+             };
+             cookie?: never;
+         };
+-        requestBody: {
+-            content: {
+-                "application/json": components["schemas"]["ResetPasswordRequest"];
++        requestBody?: never;
++        responses: {
++            /** @description OK */
++            200: {
++                headers: {
++                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
++                    ETag?: string;
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["UserResponse"];
++                };
+             };
++            /** @description Bad Request */
++            400: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
++            /** @description Precondition Failed */
++            412: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
++            /** @description Precondition Required */
++            428: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
++        };
++    };
++    SendUserPasswordReset: {
++        parameters: {
++            query?: never;
++            header: {
++                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
++                "If-Match": string;
++            };
++            path: {
++                id: string;
++            };
++            cookie?: never;
+         };
++        requestBody?: never;
+         responses: {
+             /** @description OK */
+             200: {
+@@ -2470,7 +2786,7 @@ export interface operations {
+                     [name: string]: unknown;
+                 };
+                 content: {
+-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                 };
+             };
+             /** @description Unauthorized */
+@@ -2500,6 +2816,15 @@ export interface operations {
+                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                 };
+             };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/problem+json": components["schemas"]["ProblemDetails"];
++                };
++            };
+             /** @description Precondition Failed */
+             412: {
+                 headers: {
+diff --git a/web/src/app/productName.ts b/web/src/app/productName.ts
+index 4b86eab..64d0414 100644
+--- a/web/src/app/productName.ts
++++ b/web/src/app/productName.ts
+@@ -1,5 +1,2 @@
+ /** Product name shown in the shell header and on the sign-in screen. */
+ export const PRODUCT_NAME = "Калибр";
+-
+-/** One-line description of what the product is for, shown under the sign-in heading. */
+-export const PRODUCT_TAGLINE = "Компетенции и карьерный рост";
+diff --git a/web/src/features/auth/AuthCard.tsx b/web/src/features/auth/AuthCard.tsx
+new file mode 100644
+index 0000000..87f477b
+--- /dev/null
++++ b/web/src/features/auth/AuthCard.tsx
+@@ -0,0 +1,49 @@
++import { theme as antdTheme, Card, Col, Flex, Row, Typography } from "antd";
++import type { ReactNode } from "react";
++import { useHref, useLinkClickHandler } from "react-router";
++import { PRODUCT_NAME } from "../../app/productName";
++
++/** Frame of the screens used without a session (sign-in, forgotten password, password by link): a centred card with the logo and the screen title. */
++export function AuthCard({
++  title,
++  children,
++}: {
++  title: string;
++  children: ReactNode;
++}) {
++  const { token } = antdTheme.useToken();
++  return (
++    <Row
++      justify="center"
++      align="middle"
++      style={{ minHeight: "100vh", background: token.colorBgLayout }}
++    >
++      <Col xs={22} sm={16} md={12} lg={8} xl={6}>
++        <Card>
++          <Flex justify="center" align="center" gap={token.marginSM} wrap>
++            <img src="/brand/logo-256.png" alt="" width={80} height={80} />
++            <Typography.Text
++              strong
++              style={{ fontSize: `calc(${token.fontSizeHeading1}px * 1.5)` }}
++            >
++              {PRODUCT_NAME}
++            </Typography.Text>
++          </Flex>
++          <Typography.Title level={1}>{title}</Typography.Title>
++          {children}
++        </Card>
++      </Col>
++    </Row>
++  );
++}
++
++/** A link to another screen of the app, styled as an antd link and followed without reloading the page. */
++export function AuthLink({ to, children }: { to: string; children: string }) {
++  const href = useHref(to);
++  const onClick = useLinkClickHandler<HTMLElement>(to);
++  return (
++    <Typography.Link href={href} onClick={onClick}>
++      {children}
++    </Typography.Link>
++  );
++}
+diff --git a/web/src/features/auth/ChangePasswordModal.tsx b/web/src/features/auth/ChangePasswordModal.tsx
+index 97216dd..f4362c0 100644
+--- a/web/src/features/auth/ChangePasswordModal.tsx
++++ b/web/src/features/auth/ChangePasswordModal.tsx
+@@ -4,7 +4,7 @@ import { api } from "../../api/client";
+ import { unwrap } from "../../api/unwrap";
+ import { showFieldErrors } from "../../app/apiErrors";
+ import { ErrorAlert } from "../../app/ErrorAlert";
+-import { PASSWORD_HINT } from "./passwordPolicy";
++import { usePasswordHint } from "./passwordPolicy";
+ 
+ interface ChangePasswordValues {
+   currentPassword: string;
+@@ -38,6 +38,7 @@ export function ChangePasswordModal({
+ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
+   const [form] = Form.useForm<ChangePasswordValues>();
+   const { message } = App.useApp();
++  const passwordHint = usePasswordHint();
+   const change = useMutation({
+     mutationFn: async ({
+       currentPassword,
+@@ -77,7 +78,7 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
+       <Form.Item
+         name="newPassword"
+         label="Новый пароль"
+-        extra={PASSWORD_HINT}
++        extra={passwordHint}
+         rules={[{ required: true, message: "Введите новый пароль" }]}
+       >
+         <Input.Password autoComplete="new-password" />
+diff --git a/web/src/features/auth/ForgotPasswordPage.tsx b/web/src/features/auth/ForgotPasswordPage.tsx
+new file mode 100644
+index 0000000..c1fdbb2
+--- /dev/null
++++ b/web/src/features/auth/ForgotPasswordPage.tsx
+@@ -0,0 +1,94 @@
++import { useMutation } from "@tanstack/react-query";
++import {
++  Alert,
++  theme as antdTheme,
++  Button,
++  Flex,
++  Form,
++  Input,
++  Typography,
++} from "antd";
++import { api } from "../../api/client";
++import { unwrap } from "../../api/unwrap";
++import { showFieldErrors } from "../../app/apiErrors";
++import { ErrorAlert } from "../../app/ErrorAlert";
++import { LOGIN_PATH } from "../../app/featureContract";
++import { AuthCard, AuthLink } from "./AuthCard";
++
++/** Address of the screen that asks for a password reset link. */
++export const FORGOT_PASSWORD_PATH = "/forgot-password";
++
++interface ForgotPasswordValues {
++  email: string;
++}
++
++/**
++ * Asks for a password reset link without a session. Every accepted request ends in the same neutral notice,
++ * so the screen never tells whether an account with the address exists.
++ */
++export function ForgotPasswordPage() {
++  const { token } = antdTheme.useToken();
++  const [form] = Form.useForm<ForgotPasswordValues>();
++  const request = useMutation({
++    mutationFn: async (body: ForgotPasswordValues) =>
++      unwrap(await api.POST("/api/v1/auth/forgot-password", { body })),
++    onError: (error) => showFieldErrors(form, error),
++  });
++
++  return (
++    <AuthCard title="Восстановление пароля">
++      {request.isSuccess ? (
++        <Alert
++          type="info"
++          showIcon
++          title="Проверьте почту"
++          description="Если учётная запись с этим e-mail существует, на него отправлено письмо со ссылкой для задания нового пароля."
++        />
++      ) : (
++        <>
++          <Typography.Paragraph type="secondary">
++            Введите e-mail учётной записи: на него придёт письмо со ссылкой для
++            задания нового пароля.
++          </Typography.Paragraph>
++          <Form
++            form={form}
++            name="forgot-password"
++            layout="vertical"
++            noValidate
++            onFinish={(values) => request.mutate(values)}
++          >
++            {request.isError && (
++              <Form.Item>
++                <ErrorAlert
++                  title="Не удалось отправить запрос"
++                  error={request.error}
++                />
++              </Form.Item>
++            )}
++            <Form.Item
++              name="email"
++              label="E-mail"
++              rules={[
++                { required: true, whitespace: true, message: "Введите e-mail" },
++              ]}
++            >
++              <Input type="email" autoComplete="username" autoFocus />
++            </Form.Item>
++            <Button
++              type="primary"
++              htmlType="submit"
++              size="large"
++              block
++              loading={request.isPending}
++            >
++              Отправить ссылку
++            </Button>
++          </Form>
++        </>
++      )}
++      <Flex justify="center" style={{ marginBlockStart: token.margin }}>
++        <AuthLink to={LOGIN_PATH}>Вернуться ко входу</AuthLink>
++      </Flex>
++    </AuthCard>
++  );
++}
+diff --git a/web/src/features/auth/LinkPasswordPage.tsx b/web/src/features/auth/LinkPasswordPage.tsx
+new file mode 100644
+index 0000000..a0871d1
+--- /dev/null
++++ b/web/src/features/auth/LinkPasswordPage.tsx
+@@ -0,0 +1,190 @@
++import { useMutation } from "@tanstack/react-query";
++import {
++  Alert,
++  App,
++  theme as antdTheme,
++  Button,
++  Flex,
++  Form,
++  Input,
++  Typography,
++} from "antd";
++import { useEffect, useState } from "react";
++import { useLocation, useNavigate } from "react-router";
++import { ApiError } from "../../api/ApiError";
++import { api } from "../../api/client";
++import { unwrap } from "../../api/unwrap";
++import { showFieldErrors } from "../../app/apiErrors";
++import { ErrorAlert } from "../../app/ErrorAlert";
++import { LOGIN_PATH } from "../../app/featureContract";
++import { AuthCard, AuthLink } from "./AuthCard";
++import { FORGOT_PASSWORD_PATH } from "./ForgotPasswordPage";
++import { usePasswordHint } from "./passwordPolicy";
++
++interface LinkPasswordValues {
++  password: string;
++  confirmPassword: string;
++}
++
++interface LinkPasswordPageProps {
++  /** The anonymous method that spends the link. */
++  path: "/api/v1/auth/accept-invitation" | "/api/v1/auth/reset-password";
++  title: string;
++  intro: string;
++  submitLabel: string;
++  /** Shown on the sign-in screen once the password is set. */
++  doneMessage: string;
++}
++
++/** The server refuses an unusable link with a 400 that names no field; a rejected password comes with field errors. */
++function isInvalidLink(error: unknown): error is ApiError {
++  return (
++    error instanceof ApiError &&
++    error.status === 400 &&
++    error.errors === undefined
++  );
++}
++
++/** Screen of the invitation link: the user sets the first password of the account. */
++export function AcceptInvitationPage() {
++  return (
++    <LinkPasswordPage
++      path="/api/v1/auth/accept-invitation"
++      title="Задание пароля"
++      intro="Задайте пароль, чтобы завершить регистрацию."
++      submitLabel="Задать пароль"
++      doneMessage="Пароль задан. Войдите в систему."
++    />
++  );
++}
++
++/** Screen of the password reset link: the user replaces a forgotten password. */
++export function ResetPasswordPage() {
++  return (
++    <LinkPasswordPage
++      path="/api/v1/auth/reset-password"
++      title="Новый пароль"
++      intro="Задайте новый пароль. Все действующие сессии учётной записи будут завершены."
++      submitLabel="Сохранить пароль"
++      doneMessage="Пароль изменён. Войдите в систему с новым паролем."
++    />
++  );
++}
++
++/**
++ * Sets a password from an e-mailed link without a session. The token comes in the address fragment, which never reaches
++ * the server or a referrer; it is read once into state and the fragment is dropped from the address at once, so the
++ * token stays out of the history and of a copied address. Only the POST spends it.
++ */
++function LinkPasswordPage({
++  path,
++  title,
++  intro,
++  submitLabel,
++  doneMessage,
++}: LinkPasswordPageProps) {
++  const { token: designToken } = antdTheme.useToken();
++  const { hash, pathname } = useLocation();
++  const navigate = useNavigate();
++  const { message } = App.useApp();
++  const passwordHint = usePasswordHint();
++  const [form] = Form.useForm<LinkPasswordValues>();
++  const [token] = useState(() =>
++    new URLSearchParams(hash.slice(1)).get("token"),
++  );
++  useEffect(() => {
++    if (hash) void navigate(pathname, { replace: true });
++  }, [hash, pathname, navigate]);
++  const setPassword = useMutation({
++    mutationFn: async ({ password }: LinkPasswordValues) =>
++      unwrap(await api.POST(path, { body: { token: token ?? "", password } })),
++    onSuccess: () => {
++      message.success(doneMessage);
++      void navigate(LOGIN_PATH, { replace: true });
++    },
++    onError: (error) => showFieldErrors(form, error),
++  });
++  const invalidLink = isInvalidLink(setPassword.error)
++    ? setPassword.error
++    : undefined;
++
++  return (
++    <AuthCard title={title}>
++      {!token || invalidLink ? (
++        <>
++          <Alert
++            type="error"
++            showIcon
++            title={invalidLink?.title ?? "Ссылка недействительна"}
++            description={
++              invalidLink?.detail ??
++              "В адресе нет ключа ссылки. Откройте ссылку из письма полностью."
++            }
++          />
++          <Flex
++            justify="center"
++            gap={designToken.margin}
++            wrap
++            style={{ marginBlockStart: designToken.margin }}
++          >
++            <AuthLink to={FORGOT_PASSWORD_PATH}>Не помню пароль</AuthLink>
++            <AuthLink to={LOGIN_PATH}>Вернуться ко входу</AuthLink>
++          </Flex>
++        </>
++      ) : (
++        <>
++          <Typography.Paragraph type="secondary">{intro}</Typography.Paragraph>
++          <Form
++            form={form}
++            name="link-password"
++            layout="vertical"
++            noValidate
++            onFinish={(values) => setPassword.mutate(values)}
++          >
++            {setPassword.isError && (
++              <Form.Item>
++                <ErrorAlert
++                  title="Не удалось задать пароль"
++                  error={setPassword.error}
++                />
++              </Form.Item>
++            )}
++            <Form.Item
++              name="password"
++              label="Пароль"
++              extra={passwordHint}
++              rules={[{ required: true, message: "Введите пароль" }]}
++            >
++              <Input.Password autoComplete="new-password" autoFocus />
++            </Form.Item>
++            <Form.Item
++              name="confirmPassword"
++              label="Повторите пароль"
++              dependencies={["password"]}
++              rules={[
++                { required: true, message: "Повторите пароль" },
++                ({ getFieldValue }) => ({
++                  validator: (_, value) =>
++                    !value || getFieldValue("password") === value
++                      ? Promise.resolve()
++                      : Promise.reject(new Error("Пароли не совпадают")),
++                }),
++              ]}
++            >
++              <Input.Password autoComplete="new-password" />
++            </Form.Item>
++            <Button
++              type="primary"
++              htmlType="submit"
++              size="large"
++              block
++              loading={setPassword.isPending}
++            >
++              {submitLabel}
++            </Button>
++          </Form>
++        </>
++      )}
++    </AuthCard>
++  );
++}
+diff --git a/web/src/features/auth/LoginPage.tsx b/web/src/features/auth/LoginPage.tsx
+index 7270079..79f0489 100644
+--- a/web/src/features/auth/LoginPage.tsx
++++ b/web/src/features/auth/LoginPage.tsx
+@@ -1,21 +1,12 @@
+ import { useMutation, useQueryClient } from "@tanstack/react-query";
+-import {
+-  theme as antdTheme,
+-  Button,
+-  Card,
+-  Col,
+-  Flex,
+-  Form,
+-  Input,
+-  Row,
+-  Typography,
+-} from "antd";
++import { theme as antdTheme, Button, Flex, Form, Input } from "antd";
+ import { useNavigate } from "react-router";
+ import { api } from "../../api/client";
+ import { unwrap } from "../../api/unwrap";
+ import { showFieldErrors } from "../../app/apiErrors";
+ import { ErrorAlert } from "../../app/ErrorAlert";
+-import { PRODUCT_NAME, PRODUCT_TAGLINE } from "../../app/productName";
++import { AuthCard, AuthLink } from "./AuthCard";
++import { FORGOT_PASSWORD_PATH } from "./ForgotPasswordPage";
+ import { currentUserQueryKey } from "./useCurrentUser";
+ 
+ interface LoginValues {
+@@ -40,70 +31,53 @@ export function LoginPage() {
+   });
+ 
+   return (
+-    <Row
+-      justify="center"
+-      align="middle"
+-      style={{ minHeight: "100vh", background: token.colorBgLayout }}
+-    >
+-      <Col xs={22} sm={16} md={12} lg={8} xl={6}>
+-        <Card>
+-          <Flex justify="center">
+-            <img
+-              src="/brand/logo-256.png"
+-              alt={PRODUCT_NAME}
+-              width={80}
+-              height={80}
+-            />
+-          </Flex>
+-          <Typography.Title level={1}>Вход в систему</Typography.Title>
+-          <Typography.Paragraph type="secondary">
+-            {PRODUCT_TAGLINE}
+-          </Typography.Paragraph>
+-          <Form
+-            form={form}
+-            name="login"
+-            layout="vertical"
+-            autoComplete="on"
+-            noValidate
+-            onFinish={(values) => signIn.mutate(values)}
+-          >
+-            {signIn.isError && (
+-              <Form.Item>
+-                <ErrorAlert title="Не удалось войти" error={signIn.error} />
+-              </Form.Item>
+-            )}
+-            <Form.Item
+-              name="email"
+-              label="E-mail"
+-              rules={[
+-                {
+-                  required: true,
+-                  whitespace: true,
+-                  message: "Введите e-mail",
+-                },
+-              ]}
+-            >
+-              <Input type="email" autoComplete="username" autoFocus />
+-            </Form.Item>
+-            <Form.Item
+-              name="password"
+-              label="Пароль"
+-              rules={[{ required: true, message: "Введите пароль" }]}
+-            >
+-              <Input.Password autoComplete="current-password" />
+-            </Form.Item>
+-            <Button
+-              type="primary"
+-              htmlType="submit"
+-              size="large"
+-              block
+-              loading={signIn.isPending}
+-            >
+-              Войти
+-            </Button>
+-          </Form>
+-        </Card>
+-      </Col>
+-    </Row>
++    <AuthCard title="Вход в систему">
++      <Form
++        form={form}
++        name="login"
++        layout="vertical"
++        autoComplete="on"
++        noValidate
++        onFinish={(values) => signIn.mutate(values)}
++      >
++        {signIn.isError && (
++          <Form.Item>
++            <ErrorAlert title="Не удалось войти" error={signIn.error} />
++          </Form.Item>
++        )}
++        <Form.Item
++          name="email"
++          label="E-mail"
++          rules={[
++            {
++              required: true,
++              whitespace: true,
++              message: "Введите e-mail",
++            },
++          ]}
++        >
++          <Input type="email" autoComplete="username" autoFocus />
++        </Form.Item>
++        <Form.Item
++          name="password"
++          label="Пароль"
++          rules={[{ required: true, message: "Введите пароль" }]}
++        >
++          <Input.Password autoComplete="current-password" />
++        </Form.Item>
++        <Button
++          type="primary"
++          htmlType="submit"
++          size="large"
++          block
++          loading={signIn.isPending}
++        >
++          Войти
++        </Button>
++      </Form>
++      <Flex justify="center" style={{ marginBlockStart: token.margin }}>
++        <AuthLink to={FORGOT_PASSWORD_PATH}>Не помню пароль</AuthLink>
++      </Flex>
++    </AuthCard>
+   );
+ }
+diff --git a/web/src/features/auth/linkScreens.test.tsx b/web/src/features/auth/linkScreens.test.tsx
+new file mode 100644
+index 0000000..ac3da13
+--- /dev/null
++++ b/web/src/features/auth/linkScreens.test.tsx
+@@ -0,0 +1,217 @@
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { StrictMode } from "react";
++import { RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { LOGIN_PATH } from "../../app/featureContract";
++import { Providers } from "../../app/Providers";
++import { router } from "../../app/router";
++import { fakeApi, problem } from "../../test/fakeApi";
++import { FORGOT_PASSWORD_PATH } from "./ForgotPasswordPage";
++
++const TOKEN = "token-from-the-mail";
++const PASSWORD = "Correct-horse-1!";
++const INVITATION = {
++  path: "/accept-invitation",
++  route: "POST /api/v1/auth/accept-invitation",
++  title: "Задание пароля",
++  submit: "Задать пароль",
++  done: "Пароль задан. Войдите в систему.",
++};
++const RESET = {
++  path: "/reset-password",
++  route: "POST /api/v1/auth/reset-password",
++  title: "Новый пароль",
++  submit: "Сохранить пароль",
++  done: "Пароль изменён. Войдите в систему с новым паролем.",
++};
++const INVALID_LINK_TITLE = "Ссылка недействительна";
++const INVALID_LINK_DETAIL = "Ссылка устарела или уже использована.";
++
++const currentPath = () => router.state.location.pathname;
++
++async function openApp(address: string) {
++  await router.navigate(address);
++  render(
++    <StrictMode>
++      <Providers>
++        <RouterProvider router={router} />
++      </Providers>
++    </StrictMode>,
++  );
++}
++
++async function submitPasswords(submit: string, confirmation = PASSWORD) {
++  const user = userEvent.setup();
++  await user.type(await screen.findByLabelText("Пароль"), PASSWORD);
++  await user.type(screen.getByLabelText("Повторите пароль"), confirmation);
++  await user.click(screen.getByRole("button", { name: submit }));
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe.each([INVITATION, RESET])(
++  "$title screen (AC-5, AC-8, AC-11)",
++  (screenUnderTest) => {
++    it("reads the token from the address fragment, drops the fragment from the address at once and sends the token only in the request body", async () => {
++      fakeApi.on(
++        screenUnderTest.route,
++        () => new Response(null, { status: 204 }),
++      );
++
++      await openApp(`${screenUnderTest.path}#token=${TOKEN}`);
++
++      expect(
++        await screen.findByRole("heading", { name: screenUnderTest.title }),
++      ).toBeInTheDocument();
++      await waitFor(() => expect(window.location.hash).toBe(""));
++      expect(router.state.location.hash).toBe("");
++      expect(window.location.href).not.toContain(TOKEN);
++      expect(fakeApi.calls(screenUnderTest.route)).toHaveLength(0);
++
++      await submitPasswords(screenUnderTest.submit);
++
++      await waitFor(() => expect(currentPath()).toBe(LOGIN_PATH));
++      expect(await screen.findByText(screenUnderTest.done)).toBeInTheDocument();
++      const [request] = fakeApi.calls(screenUnderTest.route);
++      expect(await request?.json()).toEqual({
++        token: TOKEN,
++        password: PASSWORD,
++      });
++      expect(request?.url).not.toContain(TOKEN);
++    });
++
++    it("explains an address without a token and offers no form", async () => {
++      await openApp(screenUnderTest.path);
++
++      expect(
++        await screen.findByText("Откройте ссылку из письма полностью.", {
++          exact: false,
++        }),
++      ).toBeInTheDocument();
++      expect(screen.queryByLabelText("Пароль")).not.toBeInTheDocument();
++      expect(
++        screen.getByRole("link", { name: "Не помню пароль" }),
++      ).toBeInTheDocument();
++    });
++
++    it("replaces the form with the server's explanation and the way to ask for a new link when the link is refused", async () => {
++      fakeApi.on(screenUnderTest.route, () =>
++        problem(400, {
++          title: INVALID_LINK_TITLE,
++          detail: INVALID_LINK_DETAIL,
++        }),
++      );
++      await openApp(`${screenUnderTest.path}#token=${TOKEN}`);
++
++      await submitPasswords(screenUnderTest.submit);
++
++      expect(await screen.findByText(INVALID_LINK_DETAIL)).toBeInTheDocument();
++      expect(screen.getByText(INVALID_LINK_TITLE)).toBeInTheDocument();
++      expect(screen.queryByLabelText("Пароль")).not.toBeInTheDocument();
++      await userEvent
++        .setup()
++        .click(screen.getByRole("link", { name: "Не помню пароль" }));
++      await waitFor(() => expect(currentPath()).toBe(FORGOT_PASSWORD_PATH));
++    });
++
++    it("keeps the form and marks the password field when the password breaks the policy, which leaves the link unspent", async () => {
++      const policy = "Пароль: слишком короткий.";
++      fakeApi.on(screenUnderTest.route, () =>
++        problem(400, { title: "Validation", errors: { password: [policy] } }),
++      );
++      await openApp(`${screenUnderTest.path}#token=${TOKEN}`);
++
++      await submitPasswords(screenUnderTest.submit);
++
++      expect(await screen.findByText(policy)).toBeInTheDocument();
++      expect(screen.getByLabelText("Пароль")).toBeInTheDocument();
++      expect(screen.queryByText(INVALID_LINK_TITLE)).not.toBeInTheDocument();
++      expect(currentPath()).toBe(screenUnderTest.path);
++    });
++
++    it("sends nothing while the two passwords differ", async () => {
++      await openApp(`${screenUnderTest.path}#token=${TOKEN}`);
++
++      await submitPasswords(screenUnderTest.submit, `${PASSWORD}-other`);
++
++      expect(
++        await screen.findByText("Пароли не совпадают"),
++      ).toBeInTheDocument();
++      expect(fakeApi.calls(screenUnderTest.route)).toHaveLength(0);
++    });
++  },
++);
++
++describe("forgotten password (AC-7, AC-11)", () => {
++  it("is reached from the sign-in screen", async () => {
++    await openApp(LOGIN_PATH);
++
++    await userEvent
++      .setup()
++      .click(await screen.findByRole("link", { name: "Не помню пароль" }));
++
++    expect(
++      await screen.findByRole("heading", { name: "Восстановление пароля" }),
++    ).toBeInTheDocument();
++    expect(currentPath()).toBe(FORGOT_PASSWORD_PATH);
++  });
++
++  it("sends the address and answers with the same neutral notice, without session", async () => {
++    fakeApi.on(
++      "POST /api/v1/auth/forgot-password",
++      () => new Response(null, { status: 202 }),
++    );
++    await openApp(FORGOT_PASSWORD_PATH);
++    const user = userEvent.setup();
++
++    await user.type(
++      await screen.findByLabelText("E-mail"),
++      "someone@test.local",
++    );
++    await user.click(screen.getByRole("button", { name: "Отправить ссылку" }));
++
++    expect(await screen.findByText("Проверьте почту")).toBeInTheDocument();
++    expect(
++      screen.getByText(/Если учётная запись с этим e-mail существует/),
++    ).toBeInTheDocument();
++    expect(
++      await fakeApi.calls("POST /api/v1/auth/forgot-password")[0]?.json(),
++    ).toEqual({ email: "someone@test.local" });
++    expect(fakeApi.calls("GET /api/v1/auth/me")).toHaveLength(0);
++  });
++});
++
++describe.each([INVITATION, RESET])(
++  "password hint on the $title screen (AC-19)",
++  (screenUnderTest) => {
++    it("names the minimum length the server reports, asking for it without a session", async () => {
++      fakeApi.on("GET /api/v1/auth/password-policy", () =>
++        Response.json({ minLength: 17 }),
++      );
++
++      await openApp(`${screenUnderTest.path}#token=${TOKEN}`);
++
++      expect(
++        await screen.findByText(/^Не короче 17 символов;/),
++      ).toBeInTheDocument();
++      expect(fakeApi.calls("GET /api/v1/auth/password-policy")).toHaveLength(1);
++      expect(fakeApi.calls("GET /api/v1/auth/me")).toHaveLength(0);
++    });
++
++    it("falls back to the hint without a number when the policy cannot be read", async () => {
++      fakeApi.on("GET /api/v1/auth/password-policy", () => problem(500));
++
++      await openApp(`${screenUnderTest.path}#token=${TOKEN}`);
++
++      expect(
++        await screen.findByText(/^Пароль должен быть длинным и содержать/),
++      ).toBeInTheDocument();
++      expect(screen.queryByText(/Не короче/)).not.toBeInTheDocument();
++      expect(fakeApi.calls("GET /api/v1/auth/me")).toHaveLength(0);
++    });
++  },
++);
+diff --git a/web/src/features/auth/passwordPolicy.ts b/web/src/features/auth/passwordPolicy.ts
+index 9adfb89..b66e4d9 100644
+--- a/web/src/features/auth/passwordPolicy.ts
++++ b/web/src/features/auth/passwordPolicy.ts
+@@ -1,3 +1,21 @@
+-/** Hint under every new-password field. It names no length, a deployment setting: the server applies the rules and reports what a rejected password lacks. */
+-export const PASSWORD_HINT =
+-  "Пароль должен быть длинным и содержать заглавные и строчные буквы, цифры и специальные символы. Если пароль не подойдёт, сервис укажет, чего в нём не хватает.";
++import { useQuery } from "@tanstack/react-query";
++import { api } from "../../api/client";
++import { unwrap } from "../../api/unwrap";
++
++const RULES = "заглавные и строчные буквы, цифры и специальные символы.";
++
++/**
++ * Hint under every new-password field. The minimum length is a deployment setting, so it comes from the anonymous
++ * `GET /api/v1/auth/password-policy`; until it is known, or if the request fails, the hint names no number.
++ */
++export function usePasswordHint(): string {
++  const { data } = useQuery({
++    queryKey: ["auth", "password-policy"],
++    queryFn: async () => unwrap(await api.GET("/api/v1/auth/password-policy")),
++    staleTime: 60 * 60 * 1000,
++    retry: false,
++  });
++  return data
++    ? `Не короче ${data.minLength} символов; ${RULES}`
++    : `Пароль должен быть длинным и содержать ${RULES}`;
++}
+diff --git a/web/src/features/auth/routes.ts b/web/src/features/auth/routes.ts
+index ebf2315..2a7ac17 100644
+--- a/web/src/features/auth/routes.ts
++++ b/web/src/features/auth/routes.ts
+@@ -1,5 +1,15 @@
+ import { LOGIN_PATH } from "../../app/featureContract";
++import { FORGOT_PASSWORD_PATH, ForgotPasswordPage } from "./ForgotPasswordPage";
++import { AcceptInvitationPage, ResetPasswordPage } from "./LinkPasswordPage";
+ import { LoginPage } from "./LoginPage";
+ 
+-/** The sign-in screen lives outside the shell, which would otherwise demand a session. */
+-export const standaloneRoutes = [{ path: LOGIN_PATH, Component: LoginPage }];
++/**
++ * Screens used without a session live outside the shell, which would otherwise demand one. The addresses of the
++ * link screens are fixed by the e-mails the server sends.
++ */
++export const standaloneRoutes = [
++  { path: LOGIN_PATH, Component: LoginPage },
++  { path: FORGOT_PASSWORD_PATH, Component: ForgotPasswordPage },
++  { path: "/accept-invitation", Component: AcceptInvitationPage },
++  { path: "/reset-password", Component: ResetPasswordPage },
++];
+diff --git a/web/src/features/users/ResetPasswordModal.tsx b/web/src/features/users/ResetPasswordModal.tsx
+deleted file mode 100644
+index fa6d0a2..0000000
+--- a/web/src/features/users/ResetPasswordModal.tsx
++++ /dev/null
+@@ -1,91 +0,0 @@
+-import { useMutation, useQueryClient } from "@tanstack/react-query";
+-import { App, Button, Form, Input, Modal, Space, Typography } from "antd";
+-import { api } from "../../api/client";
+-import { ifMatchOf } from "../../api/ifMatch";
+-import { unwrap } from "../../api/unwrap";
+-import { showFieldErrors } from "../../app/apiErrors";
+-import { ErrorAlert } from "../../app/ErrorAlert";
+-import { PASSWORD_HINT } from "../auth/passwordPolicy";
+-import { type UserResponse, usersQueryKey } from "./usersApi";
+-
+-interface ResetPasswordValues {
+-  newPassword: string;
+-}
+-
+-interface ResetPasswordModalProps {
+-  user: UserResponse;
+-  onClose: () => void;
+-}
+-
+-/** Dialog in which an administrator sets a new password for another account. Mount it only while it is shown, so every opening starts clean. */
+-export function ResetPasswordModal({ user, onClose }: ResetPasswordModalProps) {
+-  return (
+-    <Modal title="Сброс пароля" open onCancel={onClose} footer={null}>
+-      <ResetPasswordForm user={user} onDone={onClose} />
+-    </Modal>
+-  );
+-}
+-
+-function ResetPasswordForm({
+-  user,
+-  onDone,
+-}: {
+-  user: UserResponse;
+-  onDone: () => void;
+-}) {
+-  const [form] = Form.useForm<ResetPasswordValues>();
+-  const queryClient = useQueryClient();
+-  const { message } = App.useApp();
+-  const reset = useMutation({
+-    mutationFn: async ({ newPassword }: ResetPasswordValues) =>
+-      unwrap(
+-        await api.POST("/api/v1/users/{id}/reset-password", {
+-          params: {
+-            path: { id: user.id },
+-            header: { "If-Match": ifMatchOf(user.version) },
+-          },
+-          body: { newPassword },
+-        }),
+-      ),
+-    onSuccess: () => {
+-      message.success("Пароль сброшен");
+-      onDone();
+-    },
+-    onError: (error) => showFieldErrors(form, error),
+-    onSettled: () => queryClient.invalidateQueries({ queryKey: usersQueryKey }),
+-  });
+-
+-  return (
+-    <Form
+-      form={form}
+-      name="reset-password"
+-      layout="vertical"
+-      onFinish={(values) => reset.mutate(values)}
+-    >
+-      <Typography.Paragraph>
+-        Задайте новый пароль для «{user.email}». Все действующие сессии
+-        пользователя будут завершены; передайте пароль пользователю безопасным
+-        способом.
+-      </Typography.Paragraph>
+-      {reset.isError && (
+-        <Form.Item>
+-          <ErrorAlert title="Не удалось сбросить пароль" error={reset.error} />
+-        </Form.Item>
+-      )}
+-      <Form.Item
+-        name="newPassword"
+-        label="Новый пароль"
+-        extra={PASSWORD_HINT}
+-        rules={[{ required: true, message: "Введите новый пароль" }]}
+-      >
+-        <Input.Password autoComplete="new-password" autoFocus />
+-      </Form.Item>
+-      <Space>
+-        <Button type="primary" htmlType="submit" loading={reset.isPending}>
+-          Сбросить пароль
+-        </Button>
+-        <Button onClick={onDone}>Отмена</Button>
+-      </Space>
+-    </Form>
+-  );
+-}
+diff --git a/web/src/features/users/UserForm.tsx b/web/src/features/users/UserForm.tsx
+index 74bbdf1..a478640 100644
+--- a/web/src/features/users/UserForm.tsx
++++ b/web/src/features/users/UserForm.tsx
+@@ -1,23 +1,20 @@
+ import { Button, Form, Input, Select, Space } from "antd";
+ import type { UserRole } from "../../app/featureContract";
+ import { useFormSubmit } from "../../app/useFormSubmit";
+-import { PASSWORD_HINT } from "../auth/passwordPolicy";
+ import { EmployeePicker } from "./EmployeePicker";
+ import { ROLE_OPTIONS } from "./roles";
+ 
+-/** What the account form submits; `password` is present only on the create form. */
++/** What the account form submits. */
+ export interface UserInput {
+   email: string;
+   role: UserRole;
+   employeeId: string | null;
+-  password?: string;
+ }
+ 
+ interface UserFormValues {
+   email: string;
+   role: UserRole;
+   employeeId?: string;
+-  password?: string;
+ }
+ 
+ interface UserFormProps {
+@@ -25,7 +22,7 @@ interface UserFormProps {
+   initialValues?: UserFormValues;
+   /** The employee already bound, listed by name even when the search does not return them. */
+   employee?: { id: string; name: string };
+-  /** Whether the form creates an account, which adds the password field. */
++  /** Whether the form creates an account, which is then invited by e-mail to set its own password. */
+   isNew?: boolean;
+   submitLabel: string;
+   /** Saves the input; a rejection is shown on the fields it names and by the caller. */
+@@ -63,22 +60,17 @@ export function UserForm({
+       <Form.Item
+         name="email"
+         label="E-mail"
++        extra={
++          isNew
++            ? "На этот адрес придёт приглашение со ссылкой, по которой пользователь сам задаст пароль."
++            : undefined
++        }
+         rules={[
+           { required: true, whitespace: true, message: "Введите e-mail" },
+         ]}
+       >
+         <Input type="email" autoComplete="off" placeholder="name@example.com" />
+       </Form.Item>
+-      {isNew && (
+-        <Form.Item
+-          name="password"
+-          label="Пароль"
+-          extra={PASSWORD_HINT}
+-          rules={[{ required: true, message: "Введите пароль" }]}
+-        >
+-          <Input.Password autoComplete="new-password" />
+-        </Form.Item>
+-      )}
+       <Form.Item
+         name="role"
+         label="Роль"
+@@ -86,11 +78,7 @@ export function UserForm({
+       >
+         <Select options={ROLE_OPTIONS} />
+       </Form.Item>
+-      <Form.Item
+-        name="employeeId"
+-        label="Сотрудник"
+-        extra="Необязательно: учётная запись может быть привязана к одному работающему сотруднику или не привязана ни к кому."
+-      >
++      <Form.Item name="employeeId" label="Сотрудник">
+         <EmployeePicker current={employee} />
+       </Form.Item>
+       <Space>
+diff --git a/web/src/features/users/UserListPage.tsx b/web/src/features/users/UserListPage.tsx
+index ccffd0d..0fd76bb 100644
+--- a/web/src/features/users/UserListPage.tsx
++++ b/web/src/features/users/UserListPage.tsx
+@@ -2,6 +2,7 @@ import {
+   CheckCircleOutlined,
+   EditOutlined,
+   KeyOutlined,
++  MailOutlined,
+   MoreOutlined,
+   StopOutlined,
+ } from "@ant-design/icons";
+@@ -24,7 +25,6 @@ import {
+ import { useState } from "react";
+ import { ErrorAlert } from "../../app/ErrorAlert";
+ import type { UserRole } from "../../app/featureContract";
+-import { ResetPasswordModal } from "./ResetPasswordModal";
+ import { ROLE_LABEL, ROLE_OPTIONS } from "./roles";
+ import { UserModal } from "./UserModal";
+ import { UserStatusTag } from "./UserStatusTag";
+@@ -34,22 +34,33 @@ import {
+   type UserResponse,
+   userListQuery,
+ } from "./usersApi";
++import { useSendUserMail } from "./useSendUserMail";
+ 
+ const DEFAULT_PAGE_SIZE = 20;
+ 
+-const BLOCKED_OPTIONS = [
+-  { value: false, label: "Активные" },
+-  { value: true, label: "Заблокированные" },
+-];
++/** The state filter; an invited account that is also blocked is listed under both of its states, as its tags show. */
++const STATE_FILTERS = {
++  active: { label: "Активные", isBlocked: false, isInvited: false },
++  invited: { label: "Приглашённые", isBlocked: undefined, isInvited: true },
++  blocked: { label: "Заблокированные", isBlocked: true, isInvited: undefined },
++};
+ 
+-type UserDialog =
+-  | { kind: "create" }
+-  | { kind: "edit" | "resetPassword"; userId: string };
++type StateFilter = keyof typeof STATE_FILTERS;
+ 
+-/** List of accounts for administrators: search, role and state filters, paging, and a row menu to edit, block, unblock or reset the password. The dialogs live here, once for all rows. */
++const STATE_OPTIONS = Object.entries(STATE_FILTERS).map(
++  ([value, { label }]) => ({
++    value,
++    label,
++  }),
++);
++
++type UserDialog = { kind: "create" } | { kind: "edit"; userId: string };
++
++/** List of accounts for administrators: search, role and state filters, paging, and a row menu to edit, block or unblock, and to e-mail an invitation again or a password reset link. The dialogs live here, once for all rows. */
+ export function UserListPage() {
+   const { token } = antdTheme.useToken();
+   const confirmBlockChange = useBlockUser();
++  const sendMail = useSendUserMail();
+   const [dialog, setDialog] = useState<UserDialog | null>(null);
+   const [params, setParams] = useState<UserListParams>({
+     page: 1,
+@@ -57,10 +68,6 @@ export function UserListPage() {
+   });
+   const { data, error, isFetching, refetch } = useQuery(userListQuery(params));
+   const closeDialog = () => setDialog(null);
+-  const resetTarget =
+-    dialog?.kind === "resetPassword"
+-      ? data?.items.find((user) => user.id === dialog.userId)
+-      : undefined;
+ 
+   const columns: TableColumnsType<UserResponse> = [
+     { title: "E-mail", dataIndex: "email" },
+@@ -76,8 +83,10 @@ export function UserListPage() {
+     },
+     {
+       title: "Состояние",
+-      dataIndex: "isBlocked",
+-      render: (isBlocked: boolean) => <UserStatusTag isBlocked={isBlocked} />,
++      key: "state",
++      render: (_, user) => (
++        <UserStatusTag isBlocked={user.isBlocked} isInvited={user.isInvited} />
++      ),
+     },
+     {
+       title: "Действия",
+@@ -93,6 +102,18 @@ export function UserListPage() {
+                 label: "Править",
+                 onClick: () => setDialog({ kind: "edit", userId: user.id }),
+               },
++              ...(user.isBlocked
++                ? []
++                : [
++                    {
++                      key: "sendMail",
++                      icon: user.isInvited ? <MailOutlined /> : <KeyOutlined />,
++                      label: user.isInvited
++                        ? "Отправить приглашение повторно"
++                        : "Отправить ссылку для сброса пароля",
++                      onClick: () => sendMail(user),
++                    },
++                  ]),
+               {
+                 key: "toggleBlock",
+                 icon: user.isBlocked ? (
+@@ -104,13 +125,6 @@ export function UserListPage() {
+                 label: user.isBlocked ? "Разблокировать" : "Заблокировать",
+                 onClick: () => confirmBlockChange(user),
+               },
+-              {
+-                key: "resetPassword",
+-                icon: <KeyOutlined />,
+-                label: "Сбросить пароль",
+-                onClick: () =>
+-                  setDialog({ kind: "resetPassword", userId: user.id }),
+-              },
+             ],
+           }}
+         >
+@@ -166,11 +180,19 @@ export function UserListPage() {
+             allowClear
+             aria-label="Фильтр по состоянию"
+             placeholder="Состояние"
+-            options={BLOCKED_OPTIONS}
++            options={STATE_OPTIONS}
+             style={{ width: "100%" }}
+-            onChange={(isBlocked?: boolean) =>
+-              setParams((previous) => ({ ...previous, isBlocked, page: 1 }))
+-            }
++            onChange={(state?: StateFilter) => {
++              const { isBlocked, isInvited } = state
++                ? STATE_FILTERS[state]
++                : { isBlocked: undefined, isInvited: undefined };
++              setParams((previous) => ({
++                ...previous,
++                isBlocked,
++                isInvited,
++                page: 1,
++              }));
++            }}
+           />
+         </Col>
+       </Row>
+@@ -208,9 +230,6 @@ export function UserListPage() {
+       {dialog?.kind === "edit" && (
+         <UserModal userId={dialog.userId} onClose={closeDialog} />
+       )}
+-      {resetTarget && (
+-        <ResetPasswordModal user={resetTarget} onClose={closeDialog} />
+-      )}
+     </Space>
+   );
+ }
+diff --git a/web/src/features/users/UserModal.tsx b/web/src/features/users/UserModal.tsx
+index 1047e51..bb68b9f 100644
+--- a/web/src/features/users/UserModal.tsx
++++ b/web/src/features/users/UserModal.tsx
+@@ -9,6 +9,7 @@ import { useEditBase } from "../../app/useEditBase";
+ import { invalidateOrgStructure } from "../org-structure/orgStructureApi";
+ import { UserForm, type UserInput } from "./UserForm";
+ import { type UserResponse, userQuery, usersQueryKey } from "./usersApi";
++import { useMailReport } from "./useSendUserMail";
+ 
+ interface UserModalProps {
+   /** Account to change; omitted when an account is created. */
+@@ -80,9 +81,10 @@ interface UserEditorProps extends Pick<UserModalProps, "onClose"> {
+ function UserEditor({ existing: latest, onClose }: UserEditorProps) {
+   const queryClient = useQueryClient();
+   const { message } = App.useApp();
++  const reportMail = useMailReport();
+   const { base: existing, noteSaveFailure } = useEditBase(latest);
+   const save = useMutation({
+-    mutationFn: async ({ password, ...account }: UserInput) =>
++    mutationFn: async (account: UserInput) =>
+       unwrap(
+         existing
+           ? await api.PUT("/api/v1/users/{id}", {
+@@ -92,12 +94,15 @@ function UserEditor({ existing: latest, onClose }: UserEditorProps) {
+               },
+               body: account,
+             })
+-          : await api.POST("/api/v1/users", {
+-              body: { ...account, password: password ?? "" },
+-            }),
++          : await api.POST("/api/v1/users", { body: account }),
+       ),
+-    onSuccess: () => {
+-      message.success(existing ? "Изменения сохранены" : "Пользователь создан");
++    onSuccess: (saved) => {
++      if (existing) message.success("Изменения сохранены");
++      else
++        reportMail(
++          saved.mailSent,
++          "Пользователь создан, приглашение отправлено",
++        );
+       onClose();
+     },
+     onError: noteSaveFailure,
+diff --git a/web/src/features/users/UserStatusTag.tsx b/web/src/features/users/UserStatusTag.tsx
+index df405d4..bb23c45 100644
+--- a/web/src/features/users/UserStatusTag.tsx
++++ b/web/src/features/users/UserStatusTag.tsx
+@@ -1,10 +1,24 @@
+-import { Tag } from "antd";
++import { Flex, Tag } from "antd";
+ 
+-/** Names the account state in words, since colour alone must not carry it. */
+-export function UserStatusTag({ isBlocked }: { isBlocked: boolean }) {
+-  return isBlocked ? (
+-    <Tag color="error">Заблокирован</Tag>
+-  ) : (
+-    <Tag color="success">Активен</Tag>
++/** Names the account state in words, since colour alone must not carry it; an invited account may be blocked as well. */
++export function UserStatusTag({
++  isBlocked,
++  isInvited,
++}: {
++  isBlocked: boolean;
++  isInvited: boolean;
++}) {
++  if (!isInvited) {
++    return isBlocked ? (
++      <Tag color="error">Заблокирован</Tag>
++    ) : (
++      <Tag color="success">Активен</Tag>
++    );
++  }
++  return (
++    <Flex gap="small" wrap>
++      <Tag color="processing">Приглашён</Tag>
++      {isBlocked && <Tag color="error">Заблокирован</Tag>}
++    </Flex>
+   );
+ }
+diff --git a/web/src/features/users/useSendUserMail.ts b/web/src/features/users/useSendUserMail.ts
+new file mode 100644
+index 0000000..36c29e3
+--- /dev/null
++++ b/web/src/features/users/useSendUserMail.ts
+@@ -0,0 +1,66 @@
++import { useMutation, useQueryClient } from "@tanstack/react-query";
++import { App } from "antd";
++import { api } from "../../api/client";
++import { ifMatchOf } from "../../api/ifMatch";
++import { unwrap } from "../../api/unwrap";
++import { describeApiError } from "../../app/apiErrors";
++import { type UserResponse, usersQueryKey } from "./usersApi";
++
++/**
++ * Returns what tells the administrator whether an account e-mail went out. A failed send leaves the saved change in
++ * place and has to be repeated, so it stays on screen until closed rather than in a passing toast.
++ */
++export function useMailReport() {
++  const { message, modal } = App.useApp();
++  return (mailSent: boolean | null, sentText: string) => {
++    if (mailSent === false) {
++      modal.warning({
++        title: "Письмо не отправлено",
++        content:
++          "Почтовый сервер не принял письмо. Учётная запись сохранена; отправьте письмо повторно позже из меню пользователя.",
++      });
++    } else {
++      message.success(sentText);
++    }
++  };
++}
++
++/**
++ * Returns the action that e-mails an account a new link: the invitation again to an invited account, or a password
++ * reset link to a registered one. The new link voids the previous one; the server refuses an account in the wrong state.
++ * The accounts are reread whatever the outcome.
++ */
++export function useSendUserMail() {
++  const { message } = App.useApp();
++  const reportMail = useMailReport();
++  const queryClient = useQueryClient();
++  const send = useMutation({
++    mutationFn: async (user: UserResponse) => {
++      const params = {
++        path: { id: user.id },
++        header: { "If-Match": ifMatchOf(user.version) },
++      };
++      return unwrap(
++        user.isInvited
++          ? await api.POST("/api/v1/users/{id}/resend-invitation", { params })
++          : await api.POST("/api/v1/users/{id}/send-password-reset", {
++              params,
++            }),
++      );
++    },
++    onSuccess: (sent) => {
++      reportMail(
++        sent.mailSent,
++        sent.isInvited
++          ? "Приглашение отправлено повторно"
++          : "Ссылка для сброса пароля отправлена",
++      );
++    },
++    onError: (error) => {
++      message.error(describeApiError(error));
++    },
++    onSettled: () => queryClient.invalidateQueries({ queryKey: usersQueryKey }),
++  });
++
++  return (user: UserResponse) => send.mutate(user);
++}
+diff --git a/web/src/features/users/userMail.test.tsx b/web/src/features/users/userMail.test.tsx
+new file mode 100644
+index 0000000..cca47ad
+--- /dev/null
++++ b/web/src/features/users/userMail.test.tsx
+@@ -0,0 +1,227 @@
++import { render, screen, waitFor, within } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi } from "../../test/fakeApi";
++import { UserListPage } from "./UserListPage";
++import type { UserResponse } from "./usersApi";
++
++const account = (
++  id: string,
++  state: { isBlocked: boolean; isInvited: boolean },
++  version: number,
++): UserResponse => ({
++  id,
++  email: `${id}@test.local`,
++  role: "User",
++  employeeId: null,
++  employeeName: null,
++  version,
++  mailSent: null,
++  ...state,
++});
++
++const INVITED = account("invited", { isBlocked: false, isInvited: true }, 3);
++const ACTIVE = account("active", { isBlocked: false, isInvited: false }, 5);
++const BLOCKED = account("blocked", { isBlocked: true, isInvited: false }, 7);
++const INVITED_BLOCKED = account(
++  "invitedblocked",
++  { isBlocked: true, isInvited: true },
++  9,
++);
++const ACCOUNTS = [INVITED, ACTIVE, BLOCKED, INVITED_BLOCKED];
++const EMPLOYEE_PAGE = { items: [], total: 0, page: 1, pageSize: 20 };
++
++const RESEND = /Отправить приглашение повторно/;
++const RESET_LINK = /Отправить ссылку для сброса пароля/;
++const OLD_RESET = /Сбросить пароль/;
++const MAIL_NOT_SENT = /Почтовый сервер не принял письмо/;
++
++function serveUsers() {
++  fakeApi.on("GET /api/v1/users", () =>
++    Response.json({
++      items: ACCOUNTS,
++      total: ACCOUNTS.length,
++      page: 1,
++      pageSize: 20,
++    }),
++  );
++  fakeApi.on("GET /api/v1/employees", () => Response.json(EMPLOYEE_PAGE));
++}
++
++async function openUsers() {
++  serveUsers();
++  render(
++    <Providers>
++      <UserListPage />
++    </Providers>,
++  );
++  await screen.findByText(INVITED.email);
++}
++
++async function openMenuOf(
++  user: ReturnType<typeof userEvent.setup>,
++  row: UserResponse,
++) {
++  await user.click(
++    screen.getByRole("button", {
++      name: `Действия с пользователем ${row.email}`,
++    }),
++  );
++}
++
++const rowOf = (row: UserResponse) =>
++  within(screen.getByText(row.email).closest("tr") as HTMLElement);
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("account states (AC-6, AC-11)", () => {
++  it("names each state in words, an invited account that is blocked as both", async () => {
++    await openUsers();
++
++    expect(rowOf(INVITED).getByText("Приглашён")).toBeInTheDocument();
++    expect(rowOf(INVITED).queryByText("Заблокирован")).not.toBeInTheDocument();
++    expect(rowOf(ACTIVE).getByText("Активен")).toBeInTheDocument();
++    expect(rowOf(BLOCKED).getByText("Заблокирован")).toBeInTheDocument();
++    expect(rowOf(INVITED_BLOCKED).getByText("Приглашён")).toBeInTheDocument();
++    expect(
++      rowOf(INVITED_BLOCKED).getByText("Заблокирован"),
++    ).toBeInTheDocument();
++  });
++
++  it("asks the list for the invited accounts only, without a block filter, when the invited state is chosen", async () => {
++    await openUsers();
++    const user = userEvent.setup();
++
++    await user.click(screen.getByLabelText("Фильтр по состоянию"));
++    await user.click(await screen.findByTitle("Приглашённые"));
++
++    await waitFor(() => {
++      const query = new URL(
++        fakeApi.calls("GET /api/v1/users").at(-1)?.url ?? "",
++      ).searchParams;
++      expect(query.get("isInvited")).toBe("true");
++      expect(query.has("isBlocked")).toBe(false);
++    });
++  });
++});
++
++describe("row menu (AC-6, AC-9, AC-11)", () => {
++  it.each([
++    ["an invited account", INVITED, RESEND, RESET_LINK],
++    ["a registered active account", ACTIVE, RESET_LINK, RESEND],
++  ])(
++    "offers %s the link that fits its state and never the old password reset",
++    async (_name, row, offered, withheld) => {
++      await openUsers();
++      const user = userEvent.setup();
++
++      await openMenuOf(user, row);
++
++      expect(
++        await screen.findByRole("menuitem", { name: offered }),
++      ).toBeInTheDocument();
++      expect(
++        screen.queryByRole("menuitem", { name: withheld }),
++      ).not.toBeInTheDocument();
++      expect(
++        screen.queryByRole("menuitem", { name: OLD_RESET }),
++      ).not.toBeInTheDocument();
++    },
++  );
++
++  it.each([
++    ["a blocked account", BLOCKED],
++    ["an invited account that is blocked", INVITED_BLOCKED],
++  ])("offers no mail to %s", async (_name, row) => {
++    await openUsers();
++    const user = userEvent.setup();
++
++    await openMenuOf(user, row);
++
++    expect(
++      await screen.findByRole("menuitem", { name: /Разблокировать/ }),
++    ).toBeInTheDocument();
++    expect(
++      screen.queryByRole("menuitem", { name: RESEND }),
++    ).not.toBeInTheDocument();
++    expect(
++      screen.queryByRole("menuitem", { name: RESET_LINK }),
++    ).not.toBeInTheDocument();
++  });
++
++  it.each([
++    ["resend-invitation", INVITED, RESEND, "Приглашение отправлено повторно"],
++    [
++      "send-password-reset",
++      ACTIVE,
++      RESET_LINK,
++      "Ссылка для сброса пароля отправлена",
++    ],
++  ])(
++    "%s: sends the row's version, reports the mail as sent and rereads the list",
++    async (action, row, item, sentText) => {
++      fakeApi.on(`POST /api/v1/users/${row.id}/${action}`, () =>
++        Response.json({ ...row, mailSent: true }),
++      );
++      await openUsers();
++      const user = userEvent.setup();
++
++      await openMenuOf(user, row);
++      await user.click(await screen.findByRole("menuitem", { name: item }));
++
++      expect(await screen.findByText(sentText)).toBeInTheDocument();
++      const [request] = fakeApi.calls(`POST /api/v1/users/${row.id}/${action}`);
++      expect(request?.headers.get("If-Match")).toBe(`"${row.version}"`);
++      await waitFor(() =>
++        expect(fakeApi.calls("GET /api/v1/users")).toHaveLength(2),
++      );
++      expect(screen.queryByText(MAIL_NOT_SENT)).not.toBeInTheDocument();
++    },
++  );
++
++  it("keeps a warning on screen until closed when the mail server did not accept the mail", async () => {
++    fakeApi.on(`POST /api/v1/users/${INVITED.id}/resend-invitation`, () =>
++      Response.json({ ...INVITED, mailSent: false }),
++    );
++    await openUsers();
++    const user = userEvent.setup();
++
++    await openMenuOf(user, INVITED);
++    await user.click(await screen.findByRole("menuitem", { name: RESEND }));
++
++    expect(await screen.findByText(MAIL_NOT_SENT)).toBeInTheDocument();
++    expect(
++      screen.queryByText("Приглашение отправлено повторно"),
++    ).not.toBeInTheDocument();
++  });
++});
++
++describe("new account (AC-4, AC-11)", () => {
++  it("asks for no password, sends none and reports whether the invitation went out", async () => {
++    fakeApi.on("POST /api/v1/users", () =>
++      Response.json({ ...INVITED, mailSent: false }, { status: 201 }),
++    );
++    await openUsers();
++    const user = userEvent.setup();
++
++    await user.click(
++      screen.getByRole("button", { name: "Создать пользователя" }),
++    );
++    const dialog = within(await screen.findByRole("dialog"));
++    expect(dialog.getByLabelText("E-mail")).toBeInTheDocument();
++    expect(dialog.queryByLabelText(/Пароль/)).not.toBeInTheDocument();
++    await user.type(dialog.getByLabelText("E-mail"), "new@test.local");
++    await user.click(dialog.getByRole("button", { name: "Создать" }));
++
++    expect(await screen.findByText(MAIL_NOT_SENT)).toBeInTheDocument();
++    expect(await fakeApi.calls("POST /api/v1/users")[0]?.json()).toEqual({
++      email: "new@test.local",
++      role: "User",
++      employeeId: null,
++    });
++  });
++});
+diff --git a/web/src/features/users/usersApi.ts b/web/src/features/users/usersApi.ts
+index 30f6659..b8c3c3c 100644
+--- a/web/src/features/users/usersApi.ts
++++ b/web/src/features/users/usersApi.ts
+@@ -12,6 +12,7 @@ export interface UserListParams {
+   q?: string;
+   role?: UserRole;
+   isBlocked?: boolean;
++  isInvited?: boolean;
+   page: number;
+   pageSize: number;
+ }

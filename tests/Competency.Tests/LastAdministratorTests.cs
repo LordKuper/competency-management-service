@@ -17,12 +17,20 @@ public sealed class AdministratorsHost(TestEnvironment environment) : HostFixtur
     public async Task<TestUser> NewAdministratorAsync(ApiClient by, Guid? employeeId = null)
     {
         var created = await by.CreateUserAsync(Scenarios.GlobalAdmin, employeeId);
+        Track(created);
+        return created;
+    }
+
+    /// <summary>
+    /// Adds an administrator that became able to sign in some other way, such as by an invitation, to the candidates for the active one.
+    /// </summary>
+    /// <param name="account">The administrator's account.</param>
+    public void Track(TestUser account)
+    {
         lock (administrators)
         {
-            administrators.Add((created.Email, created.Password));
+            administrators.Add((account.Email, account.Password));
         }
-
-        return created;
     }
 
     /// <summary>
@@ -62,8 +70,9 @@ public sealed class AdministratorsHost(TestEnvironment environment) : HostFixtur
 
 /// <summary>
 /// The last active global administrator can be neither blocked, demoted, dismissed nor deleted, also when changes race.
+/// An administrator who has been invited and has not set a password yet is not an active one.
 /// </summary>
-public sealed class LastAdministratorTests(AdministratorsHost fixture) : IClassFixture<AdministratorsHost>
+public sealed class LastAdministratorTests(AdministratorsHost fixture, TestEnvironment environment) : IClassFixture<AdministratorsHost>
 {
     private const string LastAdministratorWording = "последн";
     private const string EmployeeWording = "сотрудник";
@@ -113,6 +122,30 @@ public sealed class LastAdministratorTests(AdministratorsHost fixture) : IClassF
 
         var current = await sole.GetUserAsync(soleId);
         (await sole.PostAsync($"/api/v1/users/{soleId}/block", ifMatch: current.ETag)).Status.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task Ac4_InvitedAdministrator_IsNotAnotherActiveOneUntilItSetsAPassword()
+    {
+        var (sole, soleId) = await fixture.ActiveAdministratorAsync();
+        var invited = await sole.InviteUserAsync(Scenarios.GlobalAdmin);
+        var token = (await environment.Mail.WaitForAsync(invited.Email))[0].Token;
+        var current = await sole.GetUserAsync(soleId);
+
+        var block = await sole.PostAsync($"/api/v1/users/{soleId}/block", ifMatch: current.ETag);
+        var demote = await sole.PutAsync(
+            $"/api/v1/users/{soleId}",
+            new { email = current.Json!["email"]!.GetValue<string>(), role = Scenarios.User, employeeId = (Guid?)null },
+            current.ETag);
+
+        block.Status.Should().Be(HttpStatusCode.Conflict, "an administrator who cannot sign in is not another active one");
+        block.Json!["detail"]!.GetValue<string>().Should().Contain(LastAdministratorWording);
+        demote.Status.Should().Be(HttpStatusCode.Conflict);
+        demote.Json!["detail"]!.GetValue<string>().Should().Contain(LastAdministratorWording);
+        (await fixture.Host.Anonymous().PostAsync("/api/v1/auth/accept-invitation", new { token, password = invited.Password })).Expect(HttpStatusCode.NoContent);
+        fixture.Track(invited);
+        (await sole.PostAsync($"/api/v1/users/{soleId}/block", ifMatch: current.ETag)).Expect(HttpStatusCode.OK);
+        (await fixture.ActiveAdministratorAsync()).Id.Should().Be(invited.Id, "once registered, the invited administrator is the active one");
     }
 
     [Fact]
@@ -195,38 +228,43 @@ public sealed class LastAdministratorTests(AdministratorsHost fixture) : IClassF
     [InlineData("dismiss", "block")]
     public async Task Ac7_TwoConcurrentRemovalsOfTheOnlyTwoAdministrators_LeaveExactlyOne(string removalByX, string removalByY)
     {
-        const int Rounds = 4;
-        for (var round = 0; round < Rounds; round++)
-        {
-            var (current, currentId) = await fixture.ActiveAdministratorAsync();
-            var unit = await current.CreateUnitAsync();
-            var employeeX = await current.CreateEmployeeAsync(unit.Id);
-            var employeeY = await current.CreateEmployeeAsync(unit.Id);
-            var x = await fixture.NewAdministratorAsync(current, employeeX.Id);
-            var y = await fixture.NewAdministratorAsync(current, employeeY.Id);
-            var clientX = await x.SignInAsync(fixture.Host);
-            var clientY = await y.SignInAsync(fixture.Host);
-            (await clientX.PostAsync($"/api/v1/users/{currentId}/block", ifMatch: (await clientX.GetUserAsync(currentId)).ETag)).Expect(HttpStatusCode.OK);
-            var versionOfY = (await clientX.GetUserAsync(y.Id)).ETag!;
-            var versionOfX = (await clientY.GetUserAsync(x.Id)).ETag!;
-            var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var (current, currentId) = await fixture.ActiveAdministratorAsync();
+        var unit = await current.CreateUnitAsync();
+        var employeeX = await current.CreateEmployeeAsync(unit.Id);
+        var employeeY = await current.CreateEmployeeAsync(unit.Id);
+        var x = await fixture.NewAdministratorAsync(current, employeeX.Id);
+        var y = await fixture.NewAdministratorAsync(current, employeeY.Id);
+        await current.InviteUserAsync(Scenarios.GlobalAdmin);
+        var clientX = await x.SignInAsync(fixture.Host);
+        var clientY = await y.SignInAsync(fixture.Host);
+        (await clientX.PostAsync($"/api/v1/users/{currentId}/block", ifMatch: (await clientX.GetUserAsync(currentId)).ETag)).Expect(HttpStatusCode.OK);
+        var versionOfY = (await clientX.GetUserAsync(y.Id)).ETag!;
+        var versionOfX = (await clientY.GetUserAsync(x.Id)).ETag!;
 
-            var removeY = Remove(removalByX, clientX, y.Id, versionOfY, employeeY, gate.Task);
-            var removeX = Remove(removalByY, clientY, x.Id, versionOfX, employeeX, gate.Task);
-            gate.SetResult();
-            var results = await Task.WhenAll(removeY, removeX);
+        await using var held = await RowLock.HoldActiveAdministratorsAsync(fixture.Host);
+        var removeY = Remove(removalByX, clientX, y.Id, versionOfY, employeeY);
+        await WaitForTheLockAsync(removeY, 1);
+        var removeX = Remove(removalByY, clientY, x.Id, versionOfX, employeeX);
+        await WaitForTheLockAsync(removeX, 2);
+        await held.ReleaseAsync();
+        var results = await Task.WhenAll(removeY, removeX);
 
-            results.Count(result => result.Status == HttpStatusCode.OK).Should().Be(1, string.Join(" | ", results.Select(result => $"{result.Code} {result.Body}")));
-            results.Where(result => result.Status != HttpStatusCode.OK).Should().OnlyContain(result => result.Status == HttpStatusCode.Conflict || result.Status == HttpStatusCode.Unauthorized);
-            await fixture.ActiveAdministratorAsync();
-        }
+        results[0].Status.Should().Be(HttpStatusCode.OK, results[0].Body);
+        results[1].Status.Should().Be(HttpStatusCode.Conflict, "the removal that came second finds the first one done and no other active administrator, the invited one not counting: " + results[1].Body);
+        results[1].Json!["detail"]!.GetValue<string>().Should().Contain(LastAdministratorWording);
+        (await fixture.ActiveAdministratorAsync()).Id.Should().Be(x.Id);
     }
 
-    private static async Task<ApiResponse> Remove(string kind, ApiClient by, Guid victimId, string victimVersion, ApiResponse victimEmployee, Task start)
-    {
-        await start;
-        return kind == "block"
+    private static async Task<ApiResponse> Remove(string kind, ApiClient by, Guid victimId, string victimVersion, ApiResponse victimEmployee) =>
+        kind == "block"
             ? await by.PostAsync($"/api/v1/users/{victimId}/block", ifMatch: victimVersion)
             : await by.PostAsync($"/api/v1/employees/{victimEmployee.Id}/dismiss", ifMatch: victimEmployee.ETag);
+
+    private async Task WaitForTheLockAsync(Task<ApiResponse> request, int queued)
+    {
+        var waiting = RowLock.UntilWaitingAsync(fixture.Host, queued);
+        await Task.WhenAny(waiting, request);
+        request.IsCompleted.Should().BeFalse($"removal {queued} must wait for the administrators lock the test holds, not answer: {(request.IsCompleted ? (await request).Body : string.Empty)}");
+        await waiting;
     }
 }

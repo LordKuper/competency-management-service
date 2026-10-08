@@ -13,6 +13,15 @@ Put here: forbidden libraries/APIs, perf budgets (latency, memory, throughput, r
 
 ## Verification depth in impl
 
-- Impl (initial mode, every wave and every change request at the impl assessment gate) is done as fast as possible with minimal checks: `dotnet build Competency.slnx --tl:off -c Release` with 0 warnings and 0 errors, `dotnet ef migrations has-pending-model-changes` clean, `npm --prefix web run lint`, `build` and `check:api` clean. No scratch database, no real-backend API or UI smoke, no screenshots, no performance runs. The dev report states what was not verified.
-- The full verification cycle (scratch PostgreSQL with migrations applied through the app, real-backend API smoke, UI smoke, performance checks for AC-11) runs once, when the user first approves the transition from impl to impl-test, before impl-test starts.
-- Impl fix modes (review-fix, test-fix) use the minimal checks only; they never repeat the full cycle. impl-test and impl-review keep their own gates unchanged.
+- There is no separate full manual verification cycle before impl-test. Verification is done by impl-test with automated tests in the repository: API integration tests on real PostgreSQL through the existing test host, web tests on vitest with a mocked API.
+- Impl (initial mode, every wave and every change request at the impl assessment gate) and impl fix modes (review-fix, test-fix) use minimal checks only: `dotnet build Competency.slnx --tl:off -c Release` with 0 warnings and 0 errors, `dotnet ef migrations has-pending-model-changes` clean, `npm --prefix web run lint`, `build` and `check:api` clean. No scratch database, no real-backend API or UI smoke, no screenshots. The dev report states what was not verified.
+- Performance is measured only for a Task with a declared perf risk, on a reusable seed script for 10 000+ employees. The first Task with a declared perf risk creates the script; later Tasks reuse it.
+- Playwright and e2e are not used (user decision).
+
+## Multi-row invariant locking
+
+- Every rule that guards an invariant spanning several rows (last active administrator, wrong-password counter, one account per employee, dismissal cascade) declares its lock in plan, including its place in the global lock order, and gets a deterministic race test in impl-test.
+
+## Shared helper types
+
+- Helper types shared across modules (paged list response, ProblemDetails rejections, LIKE escaping, page limits) live in `Competency.Platform`; never copy them per module.

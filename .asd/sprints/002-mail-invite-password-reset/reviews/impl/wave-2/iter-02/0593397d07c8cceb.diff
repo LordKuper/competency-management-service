@@ -1,0 +1,204 @@
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_wave-review-probes.md b/.claude/agent-memory/asd-reviewer-combined/feedback_wave-review-probes.md
+index 886d3ef..489c276 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/feedback_wave-review-probes.md
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_wave-review-probes.md
+@@ -1,6 +1,6 @@
+ ---
+ name: wave-review-probes
+-description: cheap probes that found real defects in a many-file domain-backend plus tests wave - decisions-log Open lines, unused test helpers, per-row lookup loops, in-body comments
++description: cheap probes that found real defects (or ruled out false ones) in a many-file domain-backend plus tests wave - decisions-log Open lines, audit.md design choices, unused test helpers, per-row lookup loops, in-body comments
+ metadata:
+   type: feedback
+ ---
+@@ -10,12 +10,16 @@ On a domain-backend plus API-test wave, these probes paid off and cost one Grep
+ - Grep `decisions-log.md` for `Open:` / the task's acceptance line before judging an invariant. An "Open:" note there is an
+   unresolved item the orchestrator parked for review, not a user decision: raise it as a finding with a `question:` escalation
+   (the last-administrator rule vs an unblocked admin bound to a dismissed employee was one).
++- Before flagging a surprising side effect of a design choice (e.g. a role change voiding an invitation link through the
++  security-stamp binding), Grep `audit.md` for it: an audit proposal the user accepted is authority, not a finding (sprint 002).
+ - For every helper, fixture class and extension in `tests/**/Infrastructure`, Grep the name over `tests`; a declaration with no
+   other hit is dead code, which the over-engineering checklist makes critical.
+ - In a list endpoint, look for `foreach ... await directory.Find...` over page rows: a per-row lookup through a cross-module
+   interface is the n+1 to flag (the org side joins, the user side looped).
+-- Scan for body comments with `^\s+// |[;{}]\s+//[^/]` per source folder (code-style §7 bans them); a review-fix commit can add one.
+-- code-style §8 lets an AC id live only in a test's name or path, so `/// AC-N:` in class summaries counts once the floor is low.
++- Scan the diff for added body comments and AC ids with `^\+\s+//[^/]|^\+.*[;{}]\s+//[^/]|AC-\d+` (code-style §7 bans body
++  comments; §8 lets an AC id live only in a test's name or path, so `/// AC-N:` in class summaries counts once the floor is low,
++  as does prose like "the acceptance ids are those of the sprint").
++- When a wave adds an anonymous endpoint, re-read the "Permission matrix" summary of its endpoint class: it goes stale silently.
+ 
+ **Why:** the wave diff was ~9.6k lines; the whole-diff read found the logic, these greps found the rule violations in minutes.
+ 
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index 6f59b6e..8ee17f6 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -37,3 +37,4 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Startup-validation tests: rows of `PlatformTests.Ac1_StartWithAMissingOrInvalidMailOrLinkSetting_…` are one `InlineData` each (a refused start is ~2 s); a setting is checked by value, so a boundary needs a row on each side (`…294` accepted with a real send, `…295` refused). The shipped `appsettings.json` sits in the test bin, so a shipped default is read in-process with `new ConfigurationBuilder().AddJsonFile("appsettings.json")…Get<SmtpOptions>()`. A BCL limit is confirmed with `dotnet run file.cs` in the scratchpad (.NET 10). A test that uses a property the pre-fix `src` lacks does not compile in the pre-fix copy: delete that test from the copy and prove it by mutation on the current `src`.
+ - `dotnet test --project … --filter-method` takes a wildcard pattern: a bare method name runs zero tests (exit 8), use `*Name*`. A `sed -i` mutation in a scratch copy rewrites line endings, so show the diff with `diff --strip-trailing-cr`.
+ - `docs/architecture/tech-reference/` gates test libraries too: Playwright and `Microsoft.AspNetCore.Mvc.Testing` have no reference, so the Tester may not implement with them until the Architect adds one. Check the directory before planning e2e.
++- Last-administrator race (`LastAdministratorTests`): `RowLock.HoldActiveAdministratorsAsync` runs the SQL of `ActiveAdministrators.LockAsync`, so the test also holds the victims' rows. Block and dismissal each take the tree advisory lock (`OrgTree`) and then the administrators lock, and either one serializes them alone: dropping just one is an equivalent mutant (green), only dropping both, or `password_hash != null` in `HasOtherAsync`, reddens (the loser answers 200, not 409). The loser must answer 409, never 401: its session was valid when it queued. Wait with `Task.WhenAny(waiting, request)` and assert `request.IsCompleted` is false, so a path that does not wait fails on an assertion, not on the 30 s timeout; run each theory row alone in a mutation, because the first red leaves the shared `AdministratorsHost` without an administrator.
+diff --git a/src/Competency.UserManagement/AuthEndpoints.cs b/src/Competency.UserManagement/AuthEndpoints.cs
+index a7e8e25..ef66925 100644
+--- a/src/Competency.UserManagement/AuthEndpoints.cs
++++ b/src/Competency.UserManagement/AuthEndpoints.cs
+@@ -13,7 +13,7 @@ namespace Competency.UserManagement;
+ 
+ /// <summary>
+ /// The session API. Permission matrix: signing in, asking for a password reset link, and setting a password from an invitation or reset link
+-/// are anonymous and rate limited per client address; signing out, reading the own account and changing the own password need any signed-in user
++/// are anonymous and rate limited per client address; reading the password policy is anonymous and not rate limited; signing out, reading the own account and changing the own password need any signed-in user
+ /// and act on the account in the session, never on one named in the request.
+ /// Every failed sign-in answers with the same response, whether the account is unknown, the password wrong, the account locked,
+ /// blocked, invited and not yet registered, or its employee gone, so the response reveals nothing about accounts; so does every request for a reset link.
+diff --git a/tests/Competency.Tests/AccountLinkTests.cs b/tests/Competency.Tests/AccountLinkTests.cs
+index ad305e6..5f99e7d 100644
+--- a/tests/Competency.Tests/AccountLinkTests.cs
++++ b/tests/Competency.Tests/AccountLinkTests.cs
+@@ -9,7 +9,7 @@ namespace Competency.Tests;
+ /// <summary>
+ /// Registration by invitation and password reset by e-mailed link, from the administrator's action and the user's request to the screen the
+ /// link opens: what is mailed and to whom, that a link is spent once and stops working for every reason alike, and that nothing the anonymous
+-/// requests answer tells whether an account exists. The acceptance ids in the names are those of the sprint that introduced the links.
++/// requests answer tells whether an account exists.
+ /// </summary>
+ public sealed partial class AccountLinkTests(TestEnvironment environment)
+ {
+diff --git a/tests/Competency.Tests/Infrastructure/RowLock.cs b/tests/Competency.Tests/Infrastructure/RowLock.cs
+index 64bb91f..5ee8e49 100644
+--- a/tests/Competency.Tests/Infrastructure/RowLock.cs
++++ b/tests/Competency.Tests/Infrastructure/RowLock.cs
+@@ -4,14 +4,15 @@ using Xunit;
+ namespace Competency.Tests.Infrastructure;
+ 
+ /// <summary>
+-/// The row lock of one account, held in a transaction on a connection of its own, so that every request that locks or changes the
+-/// account stops until the lock is released. Holding it lets a test line requests up on the lock in an order it chooses, and release
+-/// them together, which is the window in which requests that do not wait for each other would act on the same stale copy of the account.
+-/// Run such a test on a host of its own: the waiters are counted over the whole database.
++/// The row lock of one account, or of the set of active administrators, held in a transaction on a connection of its own, so that every
++/// request that locks or changes those rows stops until the lock is released. Holding it lets a test line requests up on the lock in an order
++/// it chooses, and release them together, which is the window in which requests that do not wait for each other would act on the same stale
++/// copy of the rows. Run such a test on a host of its own: the waiters are counted over the whole database.
+ /// </summary>
+ public sealed class RowLock : IAsyncDisposable
+ {
+     private const string WaitingForALock = "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'";
++    private const string ActiveAdministrators = $"SELECT id FROM users WHERE role = '{Scenarios.GlobalAdmin}' AND NOT is_blocked AND password_hash IS NOT NULL ORDER BY id FOR UPDATE";
+ 
+     private readonly NpgsqlConnection connection;
+     private readonly NpgsqlTransaction transaction;
+@@ -22,12 +23,20 @@ public sealed class RowLock : IAsyncDisposable
+         this.transaction = transaction;
+     }
+ 
+-    public static async Task<RowLock> HoldAsync(ApiHost host, Guid userId)
++    public static Task<RowLock> HoldAsync(ApiHost host, Guid userId) => HoldAsync(host, $"SELECT id FROM users WHERE id = '{userId}' FOR UPDATE");
++
++    /// <summary>
++    /// Holds the rows of every active administrator, the lock that guards the rule that one always exists.
++    /// </summary>
++    /// <param name="host">The host whose database is locked.</param>
++    public static Task<RowLock> HoldActiveAdministratorsAsync(ApiHost host) => HoldAsync(host, ActiveAdministrators);
++
++    private static async Task<RowLock> HoldAsync(ApiHost host, string lockQuery)
+     {
+         var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(host.ConnectionString) { Pooling = false }.ConnectionString);
+         await connection.OpenAsync(TestContext.Current.CancellationToken);
+         var transaction = await connection.BeginTransactionAsync(TestContext.Current.CancellationToken);
+-        await using var command = new NpgsqlCommand($"SELECT id FROM users WHERE id = '{userId}' FOR UPDATE", connection, transaction);
++        await using var command = new NpgsqlCommand(lockQuery, connection, transaction);
+         await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+         return new RowLock(connection, transaction);
+     }
+diff --git a/tests/Competency.Tests/LastAdministratorTests.cs b/tests/Competency.Tests/LastAdministratorTests.cs
+index cb52bde..9292335 100644
+--- a/tests/Competency.Tests/LastAdministratorTests.cs
++++ b/tests/Competency.Tests/LastAdministratorTests.cs
+@@ -228,39 +228,43 @@ public sealed class LastAdministratorTests(AdministratorsHost fixture, TestEnvir
+     [InlineData("dismiss", "block")]
+     public async Task Ac7_TwoConcurrentRemovalsOfTheOnlyTwoAdministrators_LeaveExactlyOne(string removalByX, string removalByY)
+     {
+-        const int Rounds = 4;
+-        for (var round = 0; round < Rounds; round++)
+-        {
+-            var (current, currentId) = await fixture.ActiveAdministratorAsync();
+-            var unit = await current.CreateUnitAsync();
+-            var employeeX = await current.CreateEmployeeAsync(unit.Id);
+-            var employeeY = await current.CreateEmployeeAsync(unit.Id);
+-            var x = await fixture.NewAdministratorAsync(current, employeeX.Id);
+-            var y = await fixture.NewAdministratorAsync(current, employeeY.Id);
+-            await current.InviteUserAsync(Scenarios.GlobalAdmin);
+-            var clientX = await x.SignInAsync(fixture.Host);
+-            var clientY = await y.SignInAsync(fixture.Host);
+-            (await clientX.PostAsync($"/api/v1/users/{currentId}/block", ifMatch: (await clientX.GetUserAsync(currentId)).ETag)).Expect(HttpStatusCode.OK);
+-            var versionOfY = (await clientX.GetUserAsync(y.Id)).ETag!;
+-            var versionOfX = (await clientY.GetUserAsync(x.Id)).ETag!;
+-            var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+-
+-            var removeY = Remove(removalByX, clientX, y.Id, versionOfY, employeeY, gate.Task);
+-            var removeX = Remove(removalByY, clientY, x.Id, versionOfX, employeeX, gate.Task);
+-            gate.SetResult();
+-            var results = await Task.WhenAll(removeY, removeX);
+-
+-            results.Count(result => result.Status == HttpStatusCode.OK).Should().Be(1, string.Join(" | ", results.Select(result => $"{result.Code} {result.Body}")));
+-            results.Where(result => result.Status != HttpStatusCode.OK).Should().OnlyContain(result => result.Status == HttpStatusCode.Conflict || result.Status == HttpStatusCode.Unauthorized);
+-            await fixture.ActiveAdministratorAsync();
+-        }
++        var (current, currentId) = await fixture.ActiveAdministratorAsync();
++        var unit = await current.CreateUnitAsync();
++        var employeeX = await current.CreateEmployeeAsync(unit.Id);
++        var employeeY = await current.CreateEmployeeAsync(unit.Id);
++        var x = await fixture.NewAdministratorAsync(current, employeeX.Id);
++        var y = await fixture.NewAdministratorAsync(current, employeeY.Id);
++        await current.InviteUserAsync(Scenarios.GlobalAdmin);
++        var clientX = await x.SignInAsync(fixture.Host);
++        var clientY = await y.SignInAsync(fixture.Host);
++        (await clientX.PostAsync($"/api/v1/users/{currentId}/block", ifMatch: (await clientX.GetUserAsync(currentId)).ETag)).Expect(HttpStatusCode.OK);
++        var versionOfY = (await clientX.GetUserAsync(y.Id)).ETag!;
++        var versionOfX = (await clientY.GetUserAsync(x.Id)).ETag!;
++
++        await using var held = await RowLock.HoldActiveAdministratorsAsync(fixture.Host);
++        var removeY = Remove(removalByX, clientX, y.Id, versionOfY, employeeY);
++        await WaitForTheLockAsync(removeY, 1);
++        var removeX = Remove(removalByY, clientY, x.Id, versionOfX, employeeX);
++        await WaitForTheLockAsync(removeX, 2);
++        await held.ReleaseAsync();
++        var results = await Task.WhenAll(removeY, removeX);
++
++        results[0].Status.Should().Be(HttpStatusCode.OK, results[0].Body);
++        results[1].Status.Should().Be(HttpStatusCode.Conflict, "the removal that came second finds the first one done and no other active administrator, the invited one not counting: " + results[1].Body);
++        results[1].Json!["detail"]!.GetValue<string>().Should().Contain(LastAdministratorWording);
++        (await fixture.ActiveAdministratorAsync()).Id.Should().Be(x.Id);
+     }
+ 
+-    private static async Task<ApiResponse> Remove(string kind, ApiClient by, Guid victimId, string victimVersion, ApiResponse victimEmployee, Task start)
+-    {
+-        await start;
+-        return kind == "block"
++    private static async Task<ApiResponse> Remove(string kind, ApiClient by, Guid victimId, string victimVersion, ApiResponse victimEmployee) =>
++        kind == "block"
+             ? await by.PostAsync($"/api/v1/users/{victimId}/block", ifMatch: victimVersion)
+             : await by.PostAsync($"/api/v1/employees/{victimEmployee.Id}/dismiss", ifMatch: victimEmployee.ETag);
++
++    private async Task WaitForTheLockAsync(Task<ApiResponse> request, int queued)
++    {
++        var waiting = RowLock.UntilWaitingAsync(fixture.Host, queued);
++        await Task.WhenAny(waiting, request);
++        request.IsCompleted.Should().BeFalse($"removal {queued} must wait for the administrators lock the test holds, not answer: {(request.IsCompleted ? (await request).Body : string.Empty)}");
++        await waiting;
+     }
+ }
+diff --git a/tests/Competency.Tests/PasswordPolicyTests.cs b/tests/Competency.Tests/PasswordPolicyTests.cs
+index fd5b4c3..1ad6542 100644
+--- a/tests/Competency.Tests/PasswordPolicyTests.cs
++++ b/tests/Competency.Tests/PasswordPolicyTests.cs
+@@ -16,7 +16,7 @@ public sealed class LongPasswordHost(TestEnvironment environment)
+ }
+ 
+ /// <summary>
+-/// AC-19: the interface learns the shortest accepted password from the server, without a session, and the number follows the deployment's setting.
++/// The interface learns the shortest accepted password from the server, without a session, and the number follows the deployment's setting.
+ /// </summary>
+ public sealed class PasswordPolicyTests(LongPasswordHost fixture, TestEnvironment environment) : IClassFixture<LongPasswordHost>
+ {

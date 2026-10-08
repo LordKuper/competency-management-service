@@ -7,7 +7,8 @@ using Microsoft.Extensions.Logging;
 namespace Competency.UserManagement;
 
 /// <summary>
-/// Creates the first global administrator from the environment when none is active, so a fresh system can be signed in to.
+/// Creates the first global administrator from the environment when none is active, so a fresh system can be signed in to;
+/// an invited administrator who has not set a password yet does not count, since no one can sign in as them.
 /// An existing administrator is never touched, whatever the environment says; the password is never logged.
 /// </summary>
 internal sealed class AdminBootstrapper(
@@ -26,7 +27,7 @@ internal sealed class AdminBootstrapper(
     /// <exception cref="InvalidOperationException">No administrator is active and the environment does not provide a usable one.</exception>
     public async Task EnsureAdminAsync(CancellationToken cancellationToken)
     {
-        if (await context.Set<AppUser>().AnyAsync(user => user.Role == UserRole.GlobalAdmin && !user.IsBlocked, cancellationToken))
+        if (await context.Set<AppUser>().AnyAsync(user => user.Role == UserRole.GlobalAdmin && !user.IsBlocked && user.PasswordHash != null, cancellationToken))
         {
             return;
         }

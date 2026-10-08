@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace Competency.UserManagement;
 
 /// <summary>
-/// The rule that at least one active global administrator always exists, enforced by locking the set of active administrators
+/// The rule that at least one active global administrator, one that is not blocked and has registered, always exists, enforced by locking the set of active administrators
 /// for the length of every change that could shrink it, so two concurrent changes cannot each leave "the other one" behind.
 /// </summary>
 internal static class ActiveAdministrators
@@ -42,10 +42,10 @@ internal static class ActiveAdministrators
     /// <returns>A task that completes once the lock is held.</returns>
     public static async Task LockAsync(this AppDbContext context, CancellationToken cancellationToken) =>
         await context.Database.ExecuteSqlAsync(
-            $"SELECT id FROM users WHERE role = {nameof(UserRole.GlobalAdmin)} AND NOT is_blocked ORDER BY id FOR UPDATE",
+            $"SELECT id FROM users WHERE role = {nameof(UserRole.GlobalAdmin)} AND NOT is_blocked AND password_hash IS NOT NULL ORDER BY id FOR UPDATE",
             cancellationToken);
 
-    public static bool IsActiveAdministrator(this AppUser user) => user.Role == UserRole.GlobalAdmin && !user.IsBlocked;
+    public static bool IsActiveAdministrator(this AppUser user) => user.Role == UserRole.GlobalAdmin && !user.IsBlocked && !user.IsInvited;
 
     /// <summary>
     /// Whether another active administrator exists, so the given one may be blocked or demoted; call it under the lock of <see cref="BeginExclusiveAsync"/> or <see cref="LockAsync"/>.
@@ -55,5 +55,7 @@ internal static class ActiveAdministrators
     /// <param name="cancellationToken">Cancels the query.</param>
     /// <returns><see langword="true"/> when at least one other active administrator exists.</returns>
     public static Task<bool> HasOtherAsync(this AppDbContext context, Guid userId, CancellationToken cancellationToken) =>
-        context.Set<AppUser>().AnyAsync(user => user.Role == UserRole.GlobalAdmin && !user.IsBlocked && user.Id != userId, cancellationToken);
+        context.Set<AppUser>().AnyAsync(
+            user => user.Role == UserRole.GlobalAdmin && !user.IsBlocked && user.PasswordHash != null && user.Id != userId,
+            cancellationToken);
 }

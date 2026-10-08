@@ -1,0 +1,503 @@
+{
+  "sprint_id": "002-mail-invite-password-reset",
+  "branch": "sprint/002-mail-invite-password-reset",
+  "phase": "pr",
+  "workflow": "lite",
+  "documents": {
+    "audit": true,
+    "prd": true,
+    "ux_spec": true,
+    "adr": true,
+    "c4": true
+  },
+  "user_gates": "adaptive",
+  "gate_decisions": [
+    {
+      "gate": "workflow choice",
+      "decision_actor": "user",
+      "decision": "lite",
+      "reason": "user chose lite over recommended standard",
+      "evidence": "decisions-log.md 2026-10-08 workflow"
+    },
+    {
+      "gate": "scope",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "sprint.md AC-1..12,14..16; kept as one sprint",
+      "evidence": "decisions-log.md 2026-10-08 scope accepted"
+    },
+    {
+      "gate": "retro intake dispositions",
+      "decision_actor": "user",
+      "decision": "P-1,P-3,P-4,P-5 included (AC-12,14,15,16); P-2 deferred",
+      "reason": "cost 0 iterations / 0 fix rounds (new criteria)",
+      "evidence": ".asd/project/retro-backlog.md"
+    },
+    {
+      "gate": "audit contradictions Q-1,Q-2",
+      "decision_actor": "user",
+      "decision": "Q-1 neutral anon response; Q-2 admin sync, anon background in-memory queue",
+      "reason": "AC-1 vs AC-7; mailkit convention vs AC-11",
+      "evidence": "audit.md Contradictions"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-1 narrowed (Q-1/Q-2), AC-9 info.version 2.0.0 (Q-3), AC-12 script on first perf task (Q-4)",
+      "reason": "audit questions",
+      "evidence": "decisions-log.md 2026-10-08 audit answers"
+    },
+    {
+      "gate": "audit",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "accept",
+      "reason": "all hard decisions answered by user; no new subsystem; Mailpit dev-only MIT within user-delegated tool choice",
+      "evidence": "audit.md",
+      "artifact_revision": "audit.md 2026-10-08"
+    },
+    {
+      "gate": "plan",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "plan.md 6 tasks 5 waves",
+      "evidence": "plan.md",
+      "artifact_revision": "3edaec3"
+    },
+    {
+      "gate": "impl assessment",
+      "decision_actor": "user",
+      "decision": "approve",
+      "reason": "Tasks 1-6 accepted with flagged choices 1-9",
+      "evidence": "decisions-log.md 2026-10-08 impl assessment approved",
+      "artifact_revision": "8443aad"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-17 added (dev SMTP defaults in appsettings.Development.json, personal SMTP via .NET User Secrets), Task 7 wave 6",
+      "reason": "persistent Mailtrap sandbox without secrets in repo; cost 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-08 scope amendment AC-17"
+    },
+    {
+      "gate": "impl assessment",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "approve Task 7",
+      "reason": "AC-17 user-authorized amendment; risk none; no flagged choices; build 0/0, lint clean; paths within Task 7",
+      "evidence": "7bc40e2",
+      "artifact_revision": "7bc40e2"
+    },
+    {
+      "gate": "manual verification smoke",
+      "decision_actor": "user",
+      "decision": "AC-11 pass, AC-3 pass, with copy/brand remarks",
+      "reason": "impl-test entry 2 smoke check",
+      "evidence": "test-plan.md Manual verification"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-18 added (copy removals, product name next to logo on anonymous screens), Task 8 wave 7",
+      "reason": "smoke-check remarks; cost 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-08 scope amendment AC-18"
+    },
+    {
+      "gate": "impl assessment",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "approve Task 8",
+      "reason": "AC-18 user-requested copy/brand edits; flagged choices (logo alt empty next to visible name as in AppShell; plain bold name, no tile on light card) follow docs/ux/app-shell.html pattern; build 0/0, lint clean",
+      "evidence": "f39d5c0",
+      "artifact_revision": "f39d5c0"
+    },
+    {
+      "gate": "manual verification smoke",
+      "decision_actor": "user",
+      "decision": "AC-18 fail: name too small; invitation lifetime 1 week",
+      "reason": "impl-test entry 3 smoke",
+      "evidence": "test-plan.md Manual verification AC-18"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-18 changed (large product name), invitation lifetime default 72h -> 7 days; Task 9 wave 8",
+      "reason": "smoke remarks; cost AC-18/AC-4: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-08 scope amendment Task 9"
+    },
+    {
+      "gate": "impl assessment",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "approve Task 9",
+      "reason": "user-requested larger name and 7-day lifetime; flagged 45 px (1.5x heading-1 token) above DESIGN.md scale accepted for impl, DESIGN.md wordmark token proposal deferred to design-promote hard gate; build 0/0, lint clean",
+      "evidence": "af3f5c6",
+      "artifact_revision": "af3f5c6"
+    },
+    {
+      "gate": "manual verification smoke",
+      "decision_actor": "user",
+      "decision": "AC-18 repeat pass; remove tagline",
+      "reason": "impl-test entry 4 smoke",
+      "evidence": "test-plan.md Manual verification"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-18 changed: no tagline on anonymous screens; Task 10 wave 9",
+      "reason": "smoke remark; cost 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-08 Task 10"
+    },
+    {
+      "gate": "impl assessment",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "approve Task 10",
+      "reason": "user-requested tagline removal; Flagged choices none; build 0/0, lint clean",
+      "evidence": "ca1b233",
+      "artifact_revision": "ca1b233"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-19 added (exact min password length in hint from GET /auth/password-policy), Task 11 wave 10",
+      "reason": "user request; API source chosen over hardcoded value (sprint 001 review F8, code-style §12); cost 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-08 scope amendment AC-19"
+    },
+    {
+      "gate": "impl assessment",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "approve Task 11",
+      "reason": "user-authorized AC-19; additive contract; Flagged choices none; build 0/0, lint clean",
+      "evidence": "2bc7c32",
+      "artifact_revision": "2bc7c32"
+    },
+    {
+      "gate": "manual verification smoke",
+      "decision_actor": "user",
+      "decision": "AC-19 pass",
+      "reason": "impl-test entry 6 smoke",
+      "evidence": "test-plan.md Manual verification AC-19"
+    },
+    {
+      "gate": "impl-review FAIL escalation wave-1/iter-01",
+      "decision_actor": "user",
+      "decision": "external #1,#2 accepted for fix; combined F1 answered: add Smtp:CheckCertificateRevocation (default true)",
+      "reason": "user choice (recommended)",
+      "evidence": "reviews/impl/wave-1/iter-01"
+    },
+    {
+      "gate": "impl-review green handoff",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "advance to design-promote",
+      "reason": "all 3 waves APPROVE/latched; every FAIL/question decided by user; terminal full suite green (backend 166/166, web 89/89, lint/build clean) at aef943d; no waiver or debt",
+      "evidence": "test-plan.md Suite run e3f324a; decisions-log.md 2026-10-08"
+    },
+    {
+      "gate": "design-promote decomposition",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "no new subsystem; user-management changed (registry entry + user-management.md updated by architect)",
+      "reason": "audit Subsystems map: no new subsystems; changes inside user-management, platform core outside registry",
+      "evidence": "audit.md Subsystems map"
+    },
+    {
+      "gate": "design-system gate",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "pass",
+      "reason": "docs/ux/DESIGN.md, design-system.html, accessibility.html exist",
+      "evidence": "repo"
+    },
+    {
+      "gate": "DESIGN.md token change",
+      "decision_actor": "user",
+      "decision": "add brand-wordmark typography token (45px/700) and brand-logo-size-auth 80px + sign-in card component note",
+      "reason": "design-promote questions (recommended)",
+      "evidence": "decisions-log.md 2026-10-08 DESIGN.md tokens"
+    },
+    {
+      "gate": "PR publication",
+      "decision_actor": "user",
+      "decision": "open and merge",
+      "reason": "user approved push + PR + squash merge",
+      "evidence": "decisions-log.md 2026-10-08 PR"
+    }
+  ],
+  "task_routing": {
+    "Task 1": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 2": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "artifact-risk:cross-module refactor",
+      "resolved_model": "sonnet"
+    },
+    "Task 3": {
+      "tier": "critical",
+      "execution": "agent",
+      "reason": "risk:security",
+      "resolved_model": "opus"
+    },
+    "Task 4": {
+      "tier": "critical",
+      "execution": "agent",
+      "reason": "risk:authentication",
+      "resolved_model": "opus"
+    },
+    "Task 5": {
+      "tier": "critical",
+      "execution": "agent",
+      "reason": "risk:authentication",
+      "resolved_model": "opus"
+    },
+    "Task 6": {
+      "tier": "critical",
+      "execution": "agent",
+      "reason": "risk:authentication",
+      "resolved_model": "opus"
+    },
+    "impl-test entry 1": {
+      "tier": "critical",
+      "execution": "agent",
+      "reason": "risk:authentication",
+      "resolved_model": "sonnet"
+    },
+    "test-fix D-1,D-2": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "opus"
+    },
+    "Task 7": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 2": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 8": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 3": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 9": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 4": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 10": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 5": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 11": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 6": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-1/iter-01": {
+      "tier": "critical",
+      "execution": "agent",
+      "reason": "risk:security",
+      "resolved_model": "opus"
+    },
+    "impl-test entry 7": {
+      "tier": "critical",
+      "execution": "agent",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-2/iter-01": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-2/iter-01 tests": {
+      "tier": "critical",
+      "execution": "agent",
+      "reason": "risk:race test",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 8": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-2/iter-02": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 9": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-3/iter-01": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 10": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-3/iter-02": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-3/iter-02 tests": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 11": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-review wave-3/iter-03 suite": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    }
+  },
+  "skipped_phases": [],
+  "reviews": {
+    "design": {
+      "iteration": 0,
+      "verdicts": {},
+      "latched": {}
+    },
+    "impl": {
+      "wave": 3,
+      "waves": [
+        {
+          "iteration": 2,
+          "verdicts": {
+            "iter-01": {
+              "combined": "CONCERNS",
+              "external": "FAIL"
+            },
+            "iter-02": {
+              "combined": "APPROVE",
+              "external": "APPROVE"
+            }
+          },
+          "iteration_heads": {
+            "iter-01": "e0e145f2bca0122b91b2067ce92a418dea1b39ce",
+            "iter-02": "8d264c954bc8926ba145492376a3c655eac0dee6"
+          },
+          "latched": {
+            "combined": 2,
+            "external": 2
+          }
+        },
+        {
+          "iteration": 3,
+          "verdicts": {
+            "iter-01": {
+              "combined": "CONCERNS",
+              "external": "CONCERNS"
+            },
+            "iter-02": {
+              "combined": "CONCERNS",
+              "external": "APPROVE"
+            },
+            "iter-03": {
+              "combined": "APPROVE",
+              "external": "APPROVE"
+            }
+          },
+          "iteration_heads": {
+            "iter-01": "8d264c954bc8926ba145492376a3c655eac0dee6",
+            "iter-02": "a72df71c5e11dbb8568584477221be84768df9a8",
+            "iter-03": "f3735b94c8ca956693a8ff1e0cba67c058bdcd86"
+          },
+          "latched": {
+            "external": 2,
+            "combined": 3
+          }
+        },
+        {
+          "iteration": 3,
+          "verdicts": {
+            "iter-01": {
+              "combined": "CONCERNS",
+              "external": "CONCERNS"
+            },
+            "iter-02": {
+              "combined": "CONCERNS",
+              "external": "APPROVE"
+            },
+            "iter-03": {
+              "combined": "APPROVE",
+              "external": "APPROVE"
+            }
+          },
+          "iteration_heads": {
+            "iter-01": "f3735b94c8ca956693a8ff1e0cba67c058bdcd86",
+            "iter-02": "d73b85c6254ea8d8ac844be3c67c1bcbfbff9dc5",
+            "iter-03": "5c5ff4558ee260a664e4fcbb2ad24045089e1b5f"
+          },
+          "latched": {
+            "external": 2,
+            "combined": 3
+          }
+        }
+      ]
+    }
+  },
+  "created_at": "2026-10-08T06:32:00.726Z",
+  "updated_at": "2026-10-08T14:42:44.589Z",
+  "review_fixes_pending": null,
+  "test_defects_pending": null,
+  "pr": {
+    "number": 4,
+    "url": "https://github.com/LordKuper/competency-management-service/pull/4"
+  },
+  "archived_at": null
+}

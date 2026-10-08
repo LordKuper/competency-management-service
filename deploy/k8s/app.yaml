@@ -86,6 +86,19 @@ spec:
                   name: competency-secret
                   key: Bootstrap__AdminPassword
                   optional: true
+            # Only for a relay that requires authentication; set both keys or neither.
+            - name: Smtp__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: competency-secret
+                  key: Smtp__UserName
+                  optional: true
+            - name: Smtp__Password
+              valueFrom:
+                secretKeyRef:
+                  name: competency-secret
+                  key: Smtp__Password
+                  optional: true
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

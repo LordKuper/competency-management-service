@@ -1,5 +1,6 @@
 using System.Data.Common;
 using System.Diagnostics;
+using System.Net;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +15,8 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using MimeKit;
 
 namespace Competency.Platform;
 
@@ -32,7 +35,16 @@ public static class PlatformModule
     /// </summary>
     public const string LoginRateLimitPolicy = "login";
 
+    /// <summary>
+    /// Name of the rate-limiting policy for the anonymous endpoints that take an e-mailed link or ask for one, for <c>RequireRateLimiting</c>.
+    /// Every endpoint under it draws on one budget per client address.
+    /// </summary>
+    public const string PasswordResetRateLimitPolicy = "password-reset";
+
     private const string LoginRateLimitSection = "RateLimiting:Login";
+    private const string PasswordResetRateLimitSection = "RateLimiting:PasswordReset";
+    private const string SmtpSection = "Smtp";
+    private const string AppSection = "App";
     private const string UnknownClient = "unknown";
     private const string KeysPathSetting = "DataProtection:KeysPath";
     private const string DataProtectionApplicationName = "competency-management-service";
@@ -40,6 +52,7 @@ public static class PlatformModule
     private const int PostgresMajorVersion = 18;
     private static readonly TimeSpan DatabaseWaitTimeout = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan DatabaseWaitDelay = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan MaxSmtpTimeout = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
 
     /// <summary>
     /// Registers the cross-cutting services every module relies on.
@@ -70,9 +83,22 @@ public static class PlatformModule
         services.AddHttpContextAccessor();
         services.AddSingleton<ICurrentActor, HttpContextCurrentActor>();
         AddAuthorizationPolicies(services);
-        AddLoginRateLimiter(services, configuration);
+        AddRateLimiter(services, configuration);
+        AddMail(services, configuration);
 
         return services;
+    }
+
+    /// <summary>
+    /// Fails, naming the settings at fault, when the <c>Smtp</c> or <c>App</c> settings are missing or invalid, so a misconfigured host does not start.
+    /// Call it explicitly at start, never from a tooling host, which is not configured for mail.
+    /// </summary>
+    /// <param name="services">The root service provider.</param>
+    /// <exception cref="OptionsValidationException">A setting is missing or invalid.</exception>
+    public static void ValidateMailSettings(this IServiceProvider services)
+    {
+        _ = services.GetRequiredService<IOptions<SmtpOptions>>().Value;
+        _ = services.GetRequiredService<IOptions<AppOptions>>().Value;
     }
 
     /// <summary>
@@ -174,19 +200,53 @@ public static class PlatformModule
         services.AddSingleton<IAuthorizationMiddlewareResultHandler, StatusAuthorizationResultHandler>();
     }
 
-    private static void AddLoginRateLimiter(IServiceCollection services, IConfiguration configuration) =>
+    /// <summary>
+    /// Adds the fixed-window policies partitioned by client address. The middleware keys a partition by policy name and address,
+    /// so the endpoints sharing a policy share its counter.
+    /// </summary>
+    private static void AddRateLimiter(IServiceCollection services, IConfiguration configuration) =>
         services.AddRateLimiter(options =>
         {
-            var login = configuration.GetRequiredSection(LoginRateLimitSection).Get<LoginRateLimitOptions>()!;
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            options.AddPolicy(LoginRateLimitPolicy, httpContext => RateLimitPartition.GetFixedWindowLimiter(
-                httpContext.Connection.RemoteIpAddress?.ToString() ?? UnknownClient,
-                _ => new FixedWindowRateLimiterOptions
-                {
-                    PermitLimit = login.PermitLimit,
-                    Window = TimeSpan.FromSeconds(login.WindowSeconds),
-                }));
+            AddPerAddressPolicy(options, LoginRateLimitPolicy, configuration.GetRequiredSection(LoginRateLimitSection));
+            AddPerAddressPolicy(options, PasswordResetRateLimitPolicy, configuration.GetRequiredSection(PasswordResetRateLimitSection));
         });
+
+    private static void AddPerAddressPolicy(RateLimiterOptions options, string policy, IConfigurationSection section)
+    {
+        var budget = section.Get<RateLimitOptions>()!;
+        options.AddPolicy(policy, httpContext => RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? UnknownClient,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = budget.PermitLimit,
+                Window = TimeSpan.FromSeconds(budget.WindowSeconds),
+            }));
+    }
+
+    private static void AddMail(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<SmtpOptions>()
+            .Bind(configuration.GetSection(SmtpSection))
+            .Validate(smtp => Uri.CheckHostName(smtp.Host) != UriHostNameType.Unknown, "'Smtp:Host' is not a host name or address.")
+            .Validate(smtp => smtp.Port is > IPEndPoint.MinPort and <= IPEndPoint.MaxPort, "'Smtp:Port' is not a port number.")
+            .Validate(smtp => Enum.IsDefined(smtp.SecureSocketOptions), "'Smtp:SecureSocketOptions' is not a defined option.")
+            .Validate(
+                smtp => smtp.Timeout > TimeSpan.Zero && smtp.Timeout <= MaxSmtpTimeout,
+                $"'Smtp:Timeout' is not a positive time span of at most {MaxSmtpTimeout}.")
+            .Validate(
+                smtp => string.IsNullOrEmpty(smtp.UserName) == string.IsNullOrEmpty(smtp.Password),
+                "'Smtp:UserName' and 'Smtp:Password' are set only together.")
+            .Validate(
+                smtp => MailboxAddress.TryParse(smtp.From, out var sender) && sender.Domain.Length > 0,
+                "'Smtp:From' is not a mailbox address.");
+        services.AddOptions<AppOptions>()
+            .Bind(configuration.GetSection(AppSection))
+            .Validate(
+                app => app.PublicBaseUrl is { IsAbsoluteUri: true, Scheme: "http" or "https" },
+                "'App:PublicBaseUrl' is not an absolute http or https URL.");
+        services.AddSingleton<MailSender>();
+    }
 
     private static string GetConnectionString(IConfiguration configuration) =>
         configuration.GetConnectionString(ConnectionStringName)

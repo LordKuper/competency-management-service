@@ -17,6 +17,16 @@ services:
       timeout: 3s
       retries: 20
 
+  mailpit:
+    image: axllent/mailpit:v1.31.4
+    environment:
+      MP_ALLOWED_HOSTS: localhost
+      # Без этого приветствие SMTP приходит через 8-10 с из-за обратного DNS на Docker Desktop.
+      MP_SMTP_DISABLE_RDNS: "true"
+    ports:
+      - "127.0.0.1:${DEV_MAIL_SMTP_PORT:-11025}:1025"
+      - "127.0.0.1:${DEV_MAIL_UI_PORT:-18025}:8025"
+
 volumes:
   pgdata:
     name: competency-dev-pgdata

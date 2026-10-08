@@ -1,0 +1,1404 @@
+diff --git a/.claude/agent-memory/asd-architect/reference_techref-verification-sources.md b/.claude/agent-memory/asd-architect/reference_techref-verification-sources.md
+index 5ed587c..edc9600 100644
+--- a/.claude/agent-memory/asd-architect/reference_techref-verification-sources.md
++++ b/.claude/agent-memory/asd-architect/reference_techref-verification-sources.md
+@@ -13,6 +13,9 @@ For tech-reference verification (Phase 5-6) the architect has no Bash; use WebFe
+ - Bundled npm version of a Node release: `raw.githubusercontent.com/nodejs/node/v<ver>/deps/npm/package.json` (release blog omits it).
+ 
+ - Highest version on a semver line (e.g. `@types/node` 24.x when `latest` is another major): `registry.npmjs.org/<pkg>/<range>` returns 404; use `https://data.jsdelivr.com/v1/packages/npm/<pkg>/resolved?specifier=24`, then confirm with the exact-version manifest and 404 probes for the next patch/minor.
++- Docker image versions/dates: `https://hub.docker.com/v2/repositories/<ns>/<repo>/tags?page_size=8&ordering=last_updated` returns exact ISO timestamps per tag (reliable, unlike GitHub releases pages); pair with raw CHANGELOG/LICENSE from `raw.githubusercontent.com`.
++- Docker image config without running it: `https://hub.docker.com/v2/repositories/<ns>/<repo>/tags/<tag>/images` lists per-platform digest, size and layer instructions (USER/VOLUME/HEALTHCHECK/EXPOSE presence, base rootfs).
++- GitHub JSON API works via WebFetch: `api.github.com/repos/<o>/<r>/releases/tags/<tag>` (exact published_at), `api.github.com/repos/<o>/<r>/contents/<dir>?ref=<tag>` (find which source file holds a function before fetching raw).
+ - unpkg `index.d.ts` / `package.json` fetches work for `@types/*` (large files come back partially summarized — say what was not seen).
+ 
+ **Why:** WebFetch runs a small summarizer; on GitHub releases pages it rendered 2026 dates as 2024/2025 and invented plausible details. **How to apply:** take dates from CHANGELOG files / registry, cross-check any claim that matters with a second source, and never quote summarizer dates from releases pages.
+diff --git a/.claude/agent-memory/asd-dev-critical/project_dotnet-build-time-host-gotchas.md b/.claude/agent-memory/asd-dev-critical/project_dotnet-build-time-host-gotchas.md
+index fa991c0..35ec64f 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_dotnet-build-time-host-gotchas.md
++++ b/.claude/agent-memory/asd-dev-critical/project_dotnet-build-time-host-gotchas.md
+@@ -8,6 +8,7 @@ metadata:
+ Verified on SDK 10.0.400 with Microsoft.Extensions.ApiDescription.Server 10.0.12 and EF Core 10.0.12:
+ 
+ - `GetDocument.Insider` really starts the host (stub server): hosted services run and middleware is instantiated. The framework `DataProtectionHostedService` creates a key file in the user profile during `dotnet build`. Guard registrations that have startup side effects (data-protection key storage), not only post-`Build()` code; migrations and similar explicit calls go under the same entry-assembly check. A cookie-auth registration (`AddAuthentication`) re-registers default data protection, so the tooling branch then needs `UseEphemeralDataProtectionProvider()`.
++- Options validation: `ValidateOnStart()` runs at host start, so in `GetDocument.Insider` too; register `.Validate(...)` only and resolve `IOptions<T>.Value` explicitly under `!isToolingRun` (Sprint 002 `ValidateMailSettings`). The first failing options type throws, so errors of a second type show only after the first is fixed. A binder conversion failure (`Failed to convert configuration value abc at ...`) prints the raw value: keep secrets as `string` properties.
+ - `dotnet ef` with an `IDesignTimeDbContextFactory` in the startup assembly never runs `Program.cs`; no `ef` entry-assembly guard is needed. A factory that reuses the application's own service registration keeps the design-time model identical to runtime.
+ - `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3 only requires `Relational >= 10.0.4`, so NuGet resolves Relational 10.0.4 next to EF 10.0.12 in every project without a direct pin; pin `Microsoft.EntityFrameworkCore.Relational` explicitly in the project that owns the context and read the lock files to confirm.
+ - `PrivateAssets="all"` on `Microsoft.EntityFrameworkCore.Design` already keeps it and its Roslyn-based dependencies out of `dotnet publish` output; no `ExcludeAssets` needed. Check `deps.json`, not just file names.
+diff --git a/.claude/agent-memory/asd-dev-critical/project_vs-f5-launch-facts.md b/.claude/agent-memory/asd-dev-critical/project_vs-f5-launch-facts.md
+index a66c7e3..a581d0f 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_vs-f5-launch-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_vs-f5-launch-facts.md
+@@ -11,6 +11,7 @@ Task 11 (AC-16) wired F5 for `Competency.slnx`. The IDE itself was never run by
+ - **Format**: JSON array of `{Name, Projects[{Path, Action, DebugTarget}]}`; `Action` is `None|Start|StartWithoutDebugging`; `Path` is relative to the solution folder; list order is launch order (no waiting for readiness); unlisted projects get `None`. `DebugTarget` is matched case-insensitively against the project's debug targets and silently ignored when unmatched: csproj = `launchSettings.json` profile name, esproj = `.vscode/launch.json` configuration name (`localhost (Edge)`), dcproj = compose launch profile (`Docker Compose`). Comments and trailing commas are tolerated by the reader.
+ - **esproj dev server**: started only by the project's Deploy step (`StartupTaskDeployProvider`), only when the esproj is a startup project and a browser configuration is selected from `launch.json` (types `edge`/`chrome`/`msedge`). It skips the command when the launch URL's port is already open, otherwise runs `cmd /c <StartupCommand> || pause` and polls the port. So the slnx entry needs `<Build /><Deploy />` (VS writes exactly that), and the dev server must serve the `url` port of the configuration.
+ - **dcproj**: slnx entry `<Build />`. `Microsoft.Docker.Sdk` also ships inside the .NET SDK as a stub, so `dotnet build Competency.slnx` and `dotnet test --solution` run the dcproj as a no-op and the esproj (with `ShouldRunNpmInstall`/`ShouldRunBuildScript` false) without Node. Without `<Build />` entries the CLI just logs "not selected for build" and skips both, with them it loads both; the results are the same, 0 warnings. VS's real targets run `docker compose config` at build (set `DEV_DB_PORT` to move the port) and create nothing. `DependencyAwareStart=true` switches VS to a `--no-start` launch; not needed for a single service and it does not make other projects wait.
++- **dcproj starts every compose service**: VS 18.9 `Microsoft.Docker.dll` (`BaseComposeClient.UpAsync`, decompiled 2026-10-08) runs `docker compose ... up -d` with no service list; only a dcproj `launchSettings.json` profile with `serviceActions: DoNotStart` excludes one. `DockerServiceName` picks the launch-action service only. Mailpit was added to the same compose file on that basis.
+ - **JS SDK**: pinned `Microsoft.VisualStudio.JavaScript.Sdk/1.0.5984942`, the version VS 18.9 ships in `C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages`; a machine without VS restores it from nuget.org.
+ - The first prompt wrongly said Container Tools and the JavaScript project system were missing: `vswhere -requires Microsoft.VisualStudio.Component.DockerTools` (and `...JavaScript.TypeScript`) both returned the install.
+ 
+diff --git a/deploy/README.md b/deploy/README.md
+index 4467fc8..43cafd1 100644
+--- a/deploy/README.md
++++ b/deploy/README.md
+@@ -53,6 +53,7 @@ kubectl create namespace competency
+ cp deploy/secret.template.yaml <путь вне репозитория>/competency-secret.yaml
+ # заполнить плейсхолдеры, затем:
+ kubectl -n competency apply -f <путь вне репозитория>/competency-secret.yaml
++# заполнить плейсхолдеры в deploy/k8s/configmap.yaml (почта и публичный адрес), затем:
+ kubectl -n competency apply -f deploy/k8s/
+ kubectl -n competency rollout status statefulset/db
+ kubectl -n competency rollout status deployment/app
+@@ -63,14 +64,28 @@ kubectl -n competency rollout status deployment/app
+ - `POSTGRES_PASSWORD` — пароль пользователя БД; `ConnectionStrings__Default` — строка подключения `app` с тем же паролем (без `;` и кавычек в пароле); `Database` и `Username` совпадают с `db-config`; `GSS Encryption Mode=Disable` из шаблона оставить (причина — в комментарии шаблона). Пароль применяется при первой инициализации тома: позже Secret его не меняет.
+ - `Bootstrap__AdminEmail`, `Bootstrap__AdminPassword` — первый глобальный администратор: его e-mail и пароль задаются при развёртывании так же, как пароль БД, и в репозиторий не попадают. E-mail одновременно служит именем для входа (отдельного имени пользователя нет), должен быть корректным адресом не длиннее 254 символов. Пароль подчиняется политике Identity: не короче 10 символов, цифра, строчная и заглавная буква, неалфавитно-цифровой символ.
+ 
++- `Smtp__UserName`, `Smtp__Password` — учётная запись SMTP relay. Оба ключа задаются вместе; если relay принимает почту без аутентификации, оба удаляются из Secret (`optional: true`).
++
++Почта и публичный адрес в `app-config` (`deploy/k8s/configmap.yaml`):
++
++- `App__PublicBaseUrl` — адрес, по которому пользователи открывают приложение (например, `https://competency.corp.example`); с него начинаются все ссылки в письмах, заголовок `Host` запроса на них не влияет.
++- `Smtp__Host`, `Smtp__Port` — корпоративный SMTP relay; `Smtp__From` — адрес отправителя, можно с именем: `Имя <адрес>`.
++- `Smtp__SecureSocketOptions` — защита соединения: `StartTls` (порт 587, значение по умолчанию), `SslOnConnect` (порт 465), `StartTlsWhenAvailable`, `Auto`, `None`. `None` и `StartTlsWhenAvailable` допускают отправку без шифрования — только для перехватчика почты в разработке.
++- `Smtp__Timeout` — предел одной отправки (по умолчанию `00:00:15`): письма по действиям администратора уходят сразу после сохранения, и его запрос ждёт отправку не дольше этого времени.
++- Необязательные ключи (значения по умолчанию заданы в образе): `AccountLinks__InvitationLifetime` — срок ссылки-приглашения (`7.00:00:00`); `AccountLinks__PasswordResetLifetime` — срок ссылки сброса пароля (`01:00:00`); `AccountLinks__PasswordResetInterval` — не чаще какого интервала запрос «Не помню пароль» выдаёт учётной записи новую ссылку (`00:05:00`, более частые запросы молча пропускаются); `RateLimiting__PasswordReset__PermitLimit` и `RateLimiting__PasswordReset__WindowSeconds` — лимит запросов с одного адреса (`10` за `60` с), общий для «Не помню пароль», сброса пароля по ссылке и принятия приглашения.
++
++Доверие внутреннему CA (шаг развёртывания): если сертификат relay выпущен внутренним CA, образ ему не доверяет, и отправка по `StartTls`/`SslOnConnect` завершается ошибкой TLS (`SslHandshakeException` в журнале). Смонтировать в под файл PEM, в котором системные корневые сертификаты дополнены сертификатом внутреннего CA (например, из ConfigMap), и указать путь к нему в переменной `SSL_CERT_FILE` контейнера `app`. Отключать проверку сертификата нельзя. После развёртывания проверить отправку: например, отправить приглашение на свой адрес.
++
+ Доступ без Ingress, для проверки: `kubectl -n competency port-forward svc/app 8080:8080` и `curl http://localhost:8080/healthz/ready`.
+ 
+ ## 4. Поведение при старте
+ 
+ - `app` применяет схему сам (`MigrateAsync`) учётной записью из `ConnectionStrings__Default`; ей нужны DDL-права, расширение `pg_trgm` создаёт миграция. Порт открывается после миграций, поэтому `startupProbe` ждёт их; liveness — `/healthz/live`, readiness — `/healthz/ready` (проверяет БД).
++- До миграций `app` проверяет настройки почты и публичного адреса: не задан или неверен `Smtp__Host`, `Smtp__Port`, `Smtp__From`, `Smtp__Timeout`, `App__PublicBaseUrl` (не абсолютный http(s) URL) или задан только один из `Smtp__UserName`/`Smtp__Password` — старт завершается ошибкой, в которой названы неверные ключи (логин и пароль SMTP в журнал не попадают). Доступность relay при старте не проверяется: отказ отправки виден только при отправке письма. Существующее развёртывание при обновлении до этой версии не стартует, пока эти ключи не заполнены в `app-config`.
+ - Kubernetes не гарантирует порядок запуска: пока `db` не готова, процесс `app` завершается и перезапускается — на первом развёртывании возможны рестарты.
+ - Если активного глобального администратора нет, `app` создаёт его из `Bootstrap__AdminEmail` и `Bootstrap__AdminPassword`; существующего не перезаписывает. Нет администратора и нет одного из ключей — старт завершается ошибкой, в которой назван недостающий ключ (пароль в журнал не попадает). После первого входа ключи `Bootstrap__*` можно убрать из Secret (`optional: true`).
+ - Обновление существующего развёртывания: миграция `EmailOnUserAccount` добавляет учётным записям обязательный уникальный e-mail и заполняет его для уже существующих записей значением `<имя пользователя>@local.invalid` (имя пользователя для входа становится тем же адресом). Войти нужно этим адресом и прежним паролем, затем заменить его на настоящий в разделе «Пользователи». Ключ Secret `Bootstrap__AdminUserName` больше не читается и его можно удалить; `Bootstrap__AdminEmail` для существующего администратора не используется. Миграция безвозвратно удаляет табельный номер и e-mail сотрудников (e-mail сотрудника теперь берётся из его учётной записи); журнал `audit` старые значения сохраняет.
++- Переход на контракт API 2.0.0 (`info.version`, путь `/api/v1` прежний): администратор больше не задаёт пароль другим учётным записям. Метод `POST /api/v1/users/{id}/reset-password` удалён — вместо него `POST /api/v1/users/{id}/send-password-reset` отправляет пользователю ссылку для сброса пароля (пароль не меняется); поле `password` в `POST /api/v1/users` больше не читается — новая учётная запись создаётся приглашённой и получает письмо-приглашение. Пароли существующих учётных записей сохраняются. Интеграции, которые задавали пароль через API, нужно перевести на эти письма. Учётные записи с адресами `@local.invalid` (после миграции `EmailOnUserAccount`) писем не получат: сначала замените им адрес на настоящий в разделе «Пользователи».
+ - ФИО сотрудника: миграция `EmployeeNameInThreeFields` делит прежнее ФИО по пробелам на фамилию (первое слово), имя (второе) и отчество (остальные слова). Запись из одного слова получает имя `-`, пустая — `-` в фамилии и имени: такие записи нужно исправить вручную в разделе «Оргструктура». Часть длиннее 100 символов останавливает миграцию без изменений в БД — сначала сократите такое ФИО. Старые значения в журнале `audit` не меняются.
+ - Ключи DataProtection лежат на PVC `app-keys` (путь `DataProtection__KeysPath`); пока том жив, cookie-сессии переживают рестарт. `strategy: Recreate`, одна реплика: том `ReadWriteOnce`, а миграции не должны идти из двух подов.
+ - Данные PostgreSQL — на PVC `data-db-0`, смонтированном строго в `/var/lib/postgresql`; каталог данных не переопределяется.
+@@ -83,7 +98,7 @@ kubectl -n competency rollout status deployment/app
+ 
+ TLS, резервное копирование и доставка образов — открытые вопросы, их ведёт `docs/architecture/stack.html`.
+ 
+-- TLS: Ingress не задан. `Authentication__Cookie__SecurePolicy` в `app-config` равен `SameAsRequest`; когда TLS заканчивается перед приложением, поставить `Always`. Заголовки `X-Forwarded-*` приложение не разбирает: за прокси лимит входа (`RateLimiting:Login`) считается по адресу прокси, а не клиента.
++- TLS: Ingress не задан. `Authentication__Cookie__SecurePolicy` в `app-config` равен `SameAsRequest`; когда TLS заканчивается перед приложением, поставить `Always`. Заголовки `X-Forwarded-*` приложение не разбирает: за прокси лимиты входа и сброса пароля (`RateLimiting:Login`, `RateLimiting:PasswordReset`) считаются по адресу прокси, а не клиента.
+ - Резервного копирования нет, манифестов бэкапа нет; PVC `data-db-0` и `app-keys` — единственные копии данных.
+ - Доставка образов (registry или tar) не выбрана.
+ - `app` подключается учётной записью `POSTGRES_USER` — это суперпользователь кластера; отдельной роли с правами только на свою БД нет. Триггеры неизменяемости журнала включены как `ENABLE ALWAYS`, поэтому срабатывают и при `SET session_replication_role = replica`, но от DDL (`DROP TRIGGER`, `DISABLE TRIGGER`) не защищают (решение спринта). Расширение `pg_trgm` помечено как trusted, и роль-владелец БД без прав суперпользователя создаёт его сама (проверено).
+diff --git a/deploy/dev/README.md b/deploy/dev/README.md
+index 011dd6f..184ebce 100644
+--- a/deploy/dev/README.md
++++ b/deploy/dev/README.md
+@@ -4,7 +4,8 @@
+ 
+ | Что | Чем запускается | Адрес |
+ |---|---|---|
+-| PostgreSQL 18.6 | compose-проект `deploy/dev/docker-compose.dcproj` (единственный сервис `db`) | `127.0.0.1:15432` |
++| PostgreSQL 18.6 | compose-проект `deploy/dev/docker-compose.dcproj`, сервис `db` | `127.0.0.1:15432` |
++| Перехватчик почты Mailpit 1.31.4 | тот же compose-проект, сервис `mailpit` | SMTP `127.0.0.1:11025`, письма — http://localhost:18025 |
+ | API | `src/Competency.Api` под отладчиком, профиль `Competency.Api` из `Properties/launchSettings.json` | http://localhost:5000 |
+ | Vite и браузер | `web/web.esproj` (`npm run dev`), конфигурация `localhost (Chrome)` из `web/.vscode/launch.json` | http://localhost:5173 |
+ 
+@@ -13,6 +14,8 @@
+ - `Everything` — БД, API под отладчиком, Vite; Chrome открывается на http://localhost:5173, запросы `/api` Vite проксирует на :5000. Войти: e-mail и пароль администратора из `Bootstrap__AdminEmail` и `Bootstrap__AdminPassword` в `launchSettings.json`.
+ - `API` — БД и API под отладчиком, без Vite и браузера. БД входит в оба профиля: API применяет миграции при старте и без БД не работает.
+ 
++Перехватчик почты поднимается в обоих профилях вместе с БД: Visual Studio запускает compose-проект командой `docker compose … up -d` без списка сервисов, то есть все сервисы `docker-compose.yml` (`DockerServiceName=db` выбирает только сервис для действия запуска).
++
+ ## Требования
+ 
+ 1. Visual Studio 2026 или Visual Studio 2022 17.14+ (решение в формате `.slnx`; многопроектные профили запуска — с 17.11). В Visual Studio Installer → «Изменить» → рабочая нагрузка «ASP.NET и разработка веб-приложений», в ней включить:
+@@ -22,7 +25,7 @@
+    Отдельная нагрузка «Node.js» не требуется.
+ 2. Docker Desktop запущен, режим Linux-контейнеров.
+ 3. Node.js 24.x и npm в `PATH` (`engines` в `web/package.json`). Один раз выполнить `npm ci` в каталоге `web`: установка зависимостей из MSBuild отключена.
+-4. Порты 5000, 5173 и 15432 свободны. Занят 15432 (например, БД, поднятой вручную) — остановить её или задать другой порт: переменная среды `DEV_DB_PORT` до запуска Visual Studio и тот же порт в `ConnectionStrings__Default` профиля `Competency.Api`. Windows резервирует диапазоны портов (`netsh int ipv4 show excludedportrange protocol=tcp`), поэтому 5432 здесь не используется.
++4. Порты 5000, 5173, 15432, 11025 и 18025 свободны (последние два — Mailpit, см. «Почта»). Занят 15432 (например, БД, поднятой вручную) — остановить её или задать другой порт: переменная среды `DEV_DB_PORT` до запуска Visual Studio и тот же порт в `ConnectionStrings__Default` профиля `Competency.Api`. Windows резервирует диапазоны портов (`netsh int ipv4 show excludedportrange protocol=tcp`), поэтому 5432 здесь не используется.
+ 
+ ## Как включить профиль запуска
+ 
+@@ -45,6 +48,29 @@ JSON не допускает комментариев, поэтому огово
+ |---|---|
+ | `deploy/dev/docker-compose.yml` | пользователь, пароль и имя БД (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`) |
+ | `src/Competency.Api/Properties/launchSettings.json` | `ConnectionStrings__Default` с тем же паролем (`GSS Encryption Mode=Disable` — причина в `deploy/secret.template.yaml`); `Bootstrap__AdminEmail`, `Bootstrap__AdminPassword` |
++| `src/Competency.Api/appsettings.Development.json` | `Smtp:*` — перехватчик без шифрования и аутентификации; `App:PublicBaseUrl` — адрес Vite |
++
++## Почта
++
++Вся почта приложения уходит в Mailpit, реальные письма не отправляются. Письма видны в веб-интерфейсе http://localhost:18025 и хранятся, пока работает контейнер: тома у Mailpit нет, остановка удаляет письма. Ссылки в письмах ведут на Vite (http://localhost:5173, `App:PublicBaseUrl`) и в профиле `API` без Vite не открываются.
++
++Порты 11025 и 18025 меняются переменными среды до запуска Visual Studio: `DEV_MAIL_SMTP_PORT` (тот же порт — в `Smtp:Port` файла `appsettings.Development.json`) и `DEV_MAIL_UI_PORT`. Веб-интерфейс отвечает только на имена `localhost` и `127.0.0.1` (`MP_ALLOWED_HOSTS`, защита от DNS rebinding).
++
++## Своя SMTP-песочница
++
++Чтобы смотреть письма не в Mailpit, а в собственной песочнице (пример — Mailtrap Sandbox), значения `Smtp:*` из `appsettings.Development.json` переопределяются User Secrets: они лежат вне репозитория (`%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json`) и в `Development` читаются после `appsettings.Development.json`. Логин и пароль задаются вместе.
++
++```
++dotnet user-secrets set "Smtp:Host" "sandbox.smtp.mailtrap.io" --project src/Competency.Api
++dotnet user-secrets set "Smtp:Port" "587" --project src/Competency.Api
++dotnet user-secrets set "Smtp:SecureSocketOptions" "StartTls" --project src/Competency.Api
++dotnet user-secrets set "Smtp:UserName" "<логин из Mailtrap>" --project src/Competency.Api
++dotnet user-secrets set "Smtp:Password" "<пароль из Mailtrap>" --project src/Competency.Api
++```
++
++В Visual Studio то же делает «Manage User Secrets» в контекстном меню проекта `Competency.Api`: открывается `secrets.json`, ключи — `{ "Smtp": { "Host": "…", … } }`.
++
++Вернуться к Mailpit: `dotnet user-secrets clear --project src/Competency.Api` (удаляет все секреты проекта) или `dotnet user-secrets remove "Smtp:Host" --project src/Competency.Api` и так для каждого ключа `Smtp:*`. Секреты в репозиторий не попадают.
+ 
+ ## База, созданная до входа по e-mail
+ 
+@@ -52,10 +78,10 @@ JSON не допускает комментариев, поэтому огово
+ 
+ ## Остановка БД
+ 
+-Остановка отладки (Shift+F5) завершает API и Vite; контейнер БД может остаться запущенным. Остановить:
++Остановка отладки (Shift+F5) завершает API и Vite; контейнеры БД и Mailpit могут остаться запущенными. Остановить:
+ 
+-- в Visual Studio: View → Other Windows → Containers, контейнер `db` проекта `competency-dev` → Stop;
+-- из консоли: `docker compose -f deploy/dev/docker-compose.yml down` — контейнер удаляется, данные остаются в томе `competency-dev-pgdata`; `down -v` удаляет и данные (следующий запуск начнёт с чистой БД).
++- в Visual Studio: View → Other Windows → Containers, контейнеры `db` и `mailpit` проекта `competency-dev` → Stop;
++- из консоли: `docker compose -f deploy/dev/docker-compose.yml down` — контейнеры удаляются, данные БД остаются в томе `competency-dev-pgdata`, письма Mailpit пропадают; `down -v` удаляет и данные (следующий запуск начнёт с чистой БД).
+ 
+ ## Независимость от Visual Studio
+ 
+diff --git a/deploy/dev/docker-compose.yml b/deploy/dev/docker-compose.yml
+index 9da12d2..d6e57f1 100644
+--- a/deploy/dev/docker-compose.yml
++++ b/deploy/dev/docker-compose.yml
+@@ -17,6 +17,16 @@ services:
+       timeout: 3s
+       retries: 20
+ 
++  mailpit:
++    image: axllent/mailpit:v1.31.4
++    environment:
++      MP_ALLOWED_HOSTS: localhost
++      # Без этого приветствие SMTP приходит через 8-10 с из-за обратного DNS на Docker Desktop.
++      MP_SMTP_DISABLE_RDNS: "true"
++    ports:
++      - "127.0.0.1:${DEV_MAIL_SMTP_PORT:-11025}:1025"
++      - "127.0.0.1:${DEV_MAIL_UI_PORT:-18025}:8025"
++
+ volumes:
+   pgdata:
+     name: competency-dev-pgdata
+diff --git a/deploy/k8s/app.yaml b/deploy/k8s/app.yaml
+index 31e7fa0..5eaa92c 100644
+--- a/deploy/k8s/app.yaml
++++ b/deploy/k8s/app.yaml
+@@ -86,6 +86,19 @@ spec:
+                   name: competency-secret
+                   key: Bootstrap__AdminPassword
+                   optional: true
++            # Only for a relay that requires authentication; set both keys or neither.
++            - name: Smtp__UserName
++              valueFrom:
++                secretKeyRef:
++                  name: competency-secret
++                  key: Smtp__UserName
++                  optional: true
++            - name: Smtp__Password
++              valueFrom:
++                secretKeyRef:
++                  name: competency-secret
++                  key: Smtp__Password
++                  optional: true
+           securityContext:
+             allowPrivilegeEscalation: false
+             capabilities:
+diff --git a/deploy/k8s/configmap.yaml b/deploy/k8s/configmap.yaml
+index 510e6ed..a03a699 100644
+--- a/deploy/k8s/configmap.yaml
++++ b/deploy/k8s/configmap.yaml
+@@ -14,6 +14,18 @@ data:
+   # Files in the image never change at runtime, and every config watcher spends one instance
+   # of the node-wide inotify limit.
+   DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE: "false"
++  # Address users open the application at; every link in an e-mail starts with it. The app does not start without
++  # an absolute http(s) URL here.
++  App__PublicBaseUrl: "<PUBLIC_BASE_URL>"
++  # Corporate SMTP relay. Credentials, when the relay needs them, go to the Secret (Smtp__UserName, Smtp__Password).
++  Smtp__Host: "<SMTP_HOST>"
++  Smtp__Port: "587"
++  # None, Auto, SslOnConnect (port 465), StartTls (port 587) or StartTlsWhenAvailable. None sends mail unencrypted.
++  Smtp__SecureSocketOptions: StartTls
++  # Sender mailbox, optionally "Name <address>".
++  Smtp__From: "<SMTP_FROM>"
++  # Upper bound for one send; an administrator's request waits for it.
++  Smtp__Timeout: "00:00:15"
+ ---
+ apiVersion: v1
+ kind: ConfigMap
+diff --git a/deploy/secret.template.yaml b/deploy/secret.template.yaml
+index 2b557c3..9de031f 100644
+--- a/deploy/secret.template.yaml
++++ b/deploy/secret.template.yaml
+@@ -17,3 +17,6 @@ stringData:
+   # E-mail and password of the first global administrator are deployment parameters. The e-mail is the sign-in name.
+   Bootstrap__AdminEmail: "<ADMIN_EMAIL>"
+   Bootstrap__AdminPassword: "<ADMIN_PASSWORD>"
++  # SMTP relay account. Delete both keys when the relay takes mail without authentication.
++  Smtp__UserName: "<SMTP_USER_NAME>"
++  Smtp__Password: "<SMTP_PASSWORD>"
+diff --git a/src/Competency.Api/Program.cs b/src/Competency.Api/Program.cs
+index 1796abf..6c356db 100644
+--- a/src/Competency.Api/Program.cs
++++ b/src/Competency.Api/Program.cs
+@@ -6,6 +6,7 @@ using Competency.Platform;
+ using Competency.UserManagement;
+ using Microsoft.AspNetCore.DataProtection;
+ 
++const string ContractVersion = "2.0.0";
+ const string SpaFallbackPattern = "{*path:nonfile:regex(^(?!api/).*$)}";
+ 
+ var isToolingRun = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
+@@ -15,7 +16,13 @@ var builder = WebApplication.CreateBuilder(args);
+ builder.Logging.ClearProviders();
+ builder.Logging.AddJsonConsole();
+ 
+-builder.Services.AddOpenApi(options => options.AddOperationTransformer<VersionHeadersOperationTransformer>());
++builder.Services.AddOpenApi(options => options
++    .AddOperationTransformer<VersionHeadersOperationTransformer>()
++    .AddDocumentTransformer((document, _, _) =>
++    {
++        document.Info.Version = ContractVersion;
++        return Task.CompletedTask;
++    }));
+ builder.Services.AddApplication(builder.Configuration);
+ 
+ if (isToolingRun)
+@@ -31,6 +38,7 @@ var app = builder.Build();
+ 
+ if (!isToolingRun)
+ {
++    app.Services.ValidateMailSettings();
+     await app.Services.MigrateDatabaseAsync(waitForDatabase: app.Environment.IsDevelopment());
+     await app.Services.EnsureBootstrapAdminAsync();
+ }
+diff --git a/src/Competency.Api/appsettings.Development.json b/src/Competency.Api/appsettings.Development.json
+new file mode 100644
+index 0000000..1f495f5
+--- /dev/null
++++ b/src/Competency.Api/appsettings.Development.json
+@@ -0,0 +1,11 @@
++{
++  "Smtp": {
++    "Host": "127.0.0.1",
++    "Port": 11025,
++    "SecureSocketOptions": "None",
++    "From": "noreply@kalibr.local"
++  },
++  "App": {
++    "PublicBaseUrl": "http://localhost:5173"
++  }
++}
+diff --git a/src/Competency.Api/appsettings.json b/src/Competency.Api/appsettings.json
+index b2df186..ac3f736 100644
+--- a/src/Competency.Api/appsettings.json
++++ b/src/Competency.Api/appsettings.json
+@@ -34,10 +34,23 @@
+       "DefaultLockoutTimeSpan": "00:15:00"
+     }
+   },
++  "AccountLinks": {
++    "InvitationLifetime": "7.00:00:00",
++    "PasswordResetLifetime": "01:00:00",
++    "PasswordResetInterval": "00:05:00"
++  },
++  "Smtp": {
++    "SecureSocketOptions": "StartTls",
++    "Timeout": "00:00:15"
++  },
+   "RateLimiting": {
+     "Login": {
+       "PermitLimit": 10,
+       "WindowSeconds": 60
++    },
++    "PasswordReset": {
++      "PermitLimit": 10,
++      "WindowSeconds": 60
+     }
+   }
+ }
+diff --git a/src/Competency.Api/packages.lock.json b/src/Competency.Api/packages.lock.json
+index 1cacac7..dc17bee 100644
+--- a/src/Competency.Api/packages.lock.json
++++ b/src/Competency.Api/packages.lock.json
+@@ -34,11 +34,24 @@
+         "resolved": "10.0.12",
+         "contentHash": "Z/bU4AL/E4m0j5tduRjIuqZrVMK//wRAM+iq+UcQtjQuEMwBnMY8AQ+MvK4IQZAdKb5Zlk9PUglfsN53xOmU3A=="
+       },
++      "BouncyCastle.Cryptography": {
++        "type": "Transitive",
++        "resolved": "2.7.0",
++        "contentHash": "U+12df8UEWHgBi04YVf/Lgi2dy3SItlIYvHjjEVa/BngCQIzDCDRBk50DDByCfDvSbe5pRNFr3b7UrVK2kMcLw=="
++      },
+       "Humanizer.Core": {
+         "type": "Transitive",
+         "resolved": "2.14.1",
+         "contentHash": "lQKvtaTDOXnoVJ20ibTuSIOf2i0uO0MPbDhd1jm238I+U/2ZnRENj0cktKZhtchBMtCUSRQ5v4xBCUbKNmyVMw=="
+       },
++      "MailKit": {
++        "type": "Transitive",
++        "resolved": "4.18.1",
++        "contentHash": "EssBsnKHvIcH1QpqqsVUEWAlAHI3dkGXJpKAzSNJ8PGjClNynSo9bRkT68jVZkxhREm0Z51Dwu3127f4WfIiRg==",
++        "dependencies": {
++          "MimeKit": "4.18.1"
++        }
++      },
+       "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+         "type": "Transitive",
+         "resolved": "10.0.12",
+@@ -154,6 +167,15 @@
+         "resolved": "1.0.52",
+         "contentHash": "oNv2JtYXhpdJrX63nibx1JT3uCESOBQ1LAk7Dtz/sr0+laW0KRM6eKp4CZ3MHDR2siIkKsY8MmUkeP5DKkQQ5w=="
+       },
++      "MimeKit": {
++        "type": "Transitive",
++        "resolved": "4.18.1",
++        "contentHash": "D8AfFVMFVJldWmhQWCziC9nWUN/zayFFBAKpyjVyCeh0tqBiI9jtUVuMrKgWw1EGnCp09msDZldbRvp2jfUehQ==",
++        "dependencies": {
++          "BouncyCastle.Cryptography": "2.7.0",
++          "System.Security.Cryptography.Pkcs": "10.0.0"
++        }
++      },
+       "Mono.TextTemplating": {
+         "type": "Transitive",
+         "resolved": "3.0.0",
+@@ -235,6 +257,11 @@
+           "System.Composition.Runtime": "9.0.0"
+         }
+       },
++      "System.Security.Cryptography.Pkcs": {
++        "type": "Transitive",
++        "resolved": "10.0.0",
++        "contentHash": "UPWqLSygJlFerRi9XNIuM0a1VC8gHUIufyP24xQ0sc+XimqUAEcjpOz9DhKpyDjH+5B/wO3RpC0KpkEeDj/ddg=="
++      },
+       "competency.audit": {
+         "type": "Project",
+         "dependencies": {
+@@ -250,6 +277,7 @@
+       "competency.platform": {
+         "type": "Project",
+         "dependencies": {
++          "MailKit": "[4.18.1, )",
+           "Microsoft.EntityFrameworkCore": "[10.0.12, )",
+           "Microsoft.EntityFrameworkCore.Relational": "[10.0.12, )",
+           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )"
+diff --git a/src/Competency.Audit/AuditEventFactory.cs b/src/Competency.Audit/AuditEventFactory.cs
+index 755a101..b524937 100644
+--- a/src/Competency.Audit/AuditEventFactory.cs
++++ b/src/Competency.Audit/AuditEventFactory.cs
+@@ -21,6 +21,6 @@ internal sealed class AuditEventFactory(ICurrentActor currentActor, TimeProvider
+         OldValue = entry.OldValue,
+         NewValue = entry.NewValue,
+         Reason = entry.Reason,
+-        RequestId = currentActor.RequestId,
++        RequestId = entry.RequestId ?? currentActor.RequestId,
+     };
+ }
+diff --git a/src/Competency.Audit/AuditPageResponse.cs b/src/Competency.Audit/AuditPageResponse.cs
+index 8dd6add..3c1ff00 100644
+--- a/src/Competency.Audit/AuditPageResponse.cs
++++ b/src/Competency.Audit/AuditPageResponse.cs
+@@ -1,6 +1,9 @@
++using Competency.Platform;
++
+ namespace Competency.Audit;
+ 
+ /// <summary>
+-/// One page of journal rows, newest first, with the number of rows matching the filters across all pages.
++/// One page of journal rows, newest first. It exists only to keep the <c>AuditPageResponse</c> schema name of the published contract.
+ /// </summary>
+-internal sealed record AuditPageResponse(IReadOnlyList<AuditEventResponse> Items, int Total, int Page, int PageSize);
++internal sealed record AuditPageResponse(IReadOnlyList<AuditEventResponse> Items, int Total, int Page, int PageSize)
++    : PageResponse<AuditEventResponse>(Items, Total, Page, PageSize);
+diff --git a/src/Competency.Audit/AuditQuery.cs b/src/Competency.Audit/AuditQuery.cs
+index 688cbc7..231da70 100644
+--- a/src/Competency.Audit/AuditQuery.cs
++++ b/src/Competency.Audit/AuditQuery.cs
+@@ -1,3 +1,4 @@
++using Competency.Platform;
+ using Microsoft.AspNetCore.Mvc;
+ 
+ namespace Competency.Audit;
+@@ -15,29 +16,15 @@ internal sealed record AuditQuery(
+     [FromQuery(Name = "entityId")] string? EntityId = null,
+     [FromQuery(Name = "requestId")] string? RequestId = null,
+     [FromQuery(Name = "page")] int Page = 1,
+-    [FromQuery(Name = "pageSize")] int PageSize = AuditQuery.DefaultPageSize)
++    [FromQuery(Name = "pageSize")] int PageSize = ListRequest.DefaultPageSize)
+ {
+-    private const int DefaultPageSize = 50;
+-    private const int MaxPageSize = 200;
+-    private const int MaxPage = int.MaxValue / MaxPageSize;
+-
+     /// <summary>
+     /// Checks the request against the paging limits and the period order.
+     /// </summary>
+     /// <returns>The problems found by field name; empty when the request is valid.</returns>
+     public Dictionary<string, string[]> Validate()
+     {
+-        var errors = new Dictionary<string, string[]>();
+-        if (Page is < 1 or > MaxPage)
+-        {
+-            errors["page"] = [$"page must be between 1 and {MaxPage}."];
+-        }
+-
+-        if (PageSize is < 1 or > MaxPageSize)
+-        {
+-            errors["pageSize"] = [$"pageSize must be between 1 and {MaxPageSize}."];
+-        }
+-
++        var errors = ListRequest.Validate(Page, PageSize);
+         if (From > To)
+         {
+             errors["to"] = ["to must not be earlier than from."];
+diff --git a/src/Competency.Audit/packages.lock.json b/src/Competency.Audit/packages.lock.json
+index 395494a..4c8bab9 100644
+--- a/src/Competency.Audit/packages.lock.json
++++ b/src/Competency.Audit/packages.lock.json
+@@ -2,6 +2,19 @@
+   "version": 1,
+   "dependencies": {
+     "net10.0": {
++      "BouncyCastle.Cryptography": {
++        "type": "Transitive",
++        "resolved": "2.7.0",
++        "contentHash": "U+12df8UEWHgBi04YVf/Lgi2dy3SItlIYvHjjEVa/BngCQIzDCDRBk50DDByCfDvSbe5pRNFr3b7UrVK2kMcLw=="
++      },
++      "MailKit": {
++        "type": "Transitive",
++        "resolved": "4.18.1",
++        "contentHash": "EssBsnKHvIcH1QpqqsVUEWAlAHI3dkGXJpKAzSNJ8PGjClNynSo9bRkT68jVZkxhREm0Z51Dwu3127f4WfIiRg==",
++        "dependencies": {
++          "MimeKit": "4.18.1"
++        }
++      },
+       "Microsoft.EntityFrameworkCore": {
+         "type": "Transitive",
+         "resolved": "10.0.12",
+@@ -29,6 +42,15 @@
+           "Microsoft.EntityFrameworkCore": "10.0.12"
+         }
+       },
++      "MimeKit": {
++        "type": "Transitive",
++        "resolved": "4.18.1",
++        "contentHash": "D8AfFVMFVJldWmhQWCziC9nWUN/zayFFBAKpyjVyCeh0tqBiI9jtUVuMrKgWw1EGnCp09msDZldbRvp2jfUehQ==",
++        "dependencies": {
++          "BouncyCastle.Cryptography": "2.7.0",
++          "System.Security.Cryptography.Pkcs": "10.0.0"
++        }
++      },
+       "Npgsql": {
+         "type": "Transitive",
+         "resolved": "10.0.3",
+@@ -44,9 +66,15 @@
+           "Npgsql": "10.0.3"
+         }
+       },
++      "System.Security.Cryptography.Pkcs": {
++        "type": "Transitive",
++        "resolved": "10.0.0",
++        "contentHash": "UPWqLSygJlFerRi9XNIuM0a1VC8gHUIufyP24xQ0sc+XimqUAEcjpOz9DhKpyDjH+5B/wO3RpC0KpkEeDj/ddg=="
++      },
+       "competency.platform": {
+         "type": "Project",
+         "dependencies": {
++          "MailKit": "[4.18.1, )",
+           "Microsoft.EntityFrameworkCore": "[10.0.12, )",
+           "Microsoft.EntityFrameworkCore.Relational": "[10.0.12, )",
+           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )"
+diff --git a/src/Competency.OrgStructure/EmployeeEndpoints.cs b/src/Competency.OrgStructure/EmployeeEndpoints.cs
+index 17157f4..d838249 100644
+--- a/src/Competency.OrgStructure/EmployeeEndpoints.cs
++++ b/src/Competency.OrgStructure/EmployeeEndpoints.cs
+@@ -134,12 +134,12 @@ internal static class EmployeeEndpoints
+         var unit = await context.Set<OrgUnit>().FirstOrDefaultAsync(candidate => candidate.Id == input.OrgUnitId, cancellationToken);
+         if (unit is null)
+         {
+-            return Rejections.Invalid("orgUnitId", "Подразделение не найдено.");
++            return Rejection.Invalid("orgUnitId", "Подразделение не найдено.");
+         }
+ 
+         if (!unit.IsActive)
+         {
+-            return Rejections.Invalid("orgUnitId", "Подразделение неактивно.");
++            return Rejection.Invalid("orgUnitId", "Подразделение неактивно.");
+         }
+ 
+         var employee = new Employee
+@@ -181,12 +181,12 @@ internal static class EmployeeEndpoints
+         var unit = await context.Set<OrgUnit>().FirstOrDefaultAsync(candidate => candidate.Id == input.OrgUnitId, cancellationToken);
+         if (unit is null)
+         {
+-            return Rejections.Invalid("orgUnitId", "Подразделение не найдено.");
++            return Rejection.Invalid("orgUnitId", "Подразделение не найдено.");
+         }
+ 
+         if (unit.Id != employee.OrgUnitId && !unit.IsActive)
+         {
+-            return Rejections.Invalid("orgUnitId", "Подразделение неактивно.");
++            return Rejection.Invalid("orgUnitId", "Подразделение неактивно.");
+         }
+ 
+         ifMatch.ApplyTo(context, employee);
+@@ -242,14 +242,14 @@ internal static class EmployeeEndpoints
+ 
+         if (!employee.IsActive)
+         {
+-            return Rejections.Conflict($"Сотрудник «{employee.FullName}» уже не работает.");
++            return Rejection.Conflict($"Сотрудник «{employee.FullName}» уже не работает.");
+         }
+ 
+         await accounts.LockAdministratorsAsync(cancellationToken);
+         var impact = await EmployeeImpact.OfAsync(context, accounts, id, cancellationToken);
+         if (impact.IsRefused)
+         {
+-            return Rejections.Conflict(EmployeeImpact.LastAdministratorMessage);
++            return Rejection.Conflict(EmployeeImpact.LastAdministratorMessage);
+         }
+ 
+         await impact.ApplyAsync(id, accounts, unbindAccount: false, cancellationToken);
+@@ -278,12 +278,12 @@ internal static class EmployeeEndpoints
+ 
+         if (employee.IsActive)
+         {
+-            return Rejections.Conflict($"Сотрудник «{employee.FullName}» уже работает.");
++            return Rejection.Conflict($"Сотрудник «{employee.FullName}» уже работает.");
+         }
+ 
+         if (await context.UnitProblemAsync(employee.OrgUnitId, "Подразделение", cancellationToken) is { } unitProblem)
+         {
+-            return Rejections.Conflict($"Нельзя вернуть сотрудника «{employee.FullName}» на работу. {unitProblem} Сначала активируйте подразделение или переведите сотрудника в другое.");
++            return Rejection.Conflict($"Нельзя вернуть сотрудника «{employee.FullName}» на работу. {unitProblem} Сначала активируйте подразделение или переведите сотрудника в другое.");
+         }
+ 
+         ifMatch.ApplyTo(context, employee);
+@@ -314,7 +314,7 @@ internal static class EmployeeEndpoints
+         var impact = await EmployeeImpact.OfAsync(context, accounts, id, cancellationToken);
+         if (impact.IsRefused)
+         {
+-            return Rejections.Conflict(EmployeeImpact.LastAdministratorMessage);
++            return Rejection.Conflict(EmployeeImpact.LastAdministratorMessage);
+         }
+ 
+         await impact.ApplyAsync(id, accounts, unbindAccount: true, cancellationToken);
+@@ -342,9 +342,9 @@ internal static class EmployeeEndpoints
+ 
+     private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, string text)
+     {
+-        var pattern = TextSearch.ContainsPattern(text);
++        var pattern = ListRequest.ContainsPattern(text);
+         return employees.Where(employee =>
+-            EF.Functions.ILike(employee.FullName, pattern, TextSearch.LikeEscape)
++            EF.Functions.ILike(employee.FullName, pattern, ListRequest.LikeEscape)
+             || employee.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)));
+     }
+ 
+diff --git a/src/Competency.OrgStructure/EmployeeListQuery.cs b/src/Competency.OrgStructure/EmployeeListQuery.cs
+index ebd7513..6677000 100644
+--- a/src/Competency.OrgStructure/EmployeeListQuery.cs
++++ b/src/Competency.OrgStructure/EmployeeListQuery.cs
+@@ -1,3 +1,4 @@
++using Competency.Platform;
+ using Microsoft.AspNetCore.Mvc;
+ 
+ namespace Competency.OrgStructure;
+@@ -12,7 +13,7 @@ internal sealed record EmployeeListQuery(
+     [FromQuery(Name = "orgUnitId")] Guid? OrgUnitId = null,
+     [FromQuery(Name = "includeDescendants")] bool IncludeDescendants = false,
+     [FromQuery(Name = "page")] int Page = 1,
+-    [FromQuery(Name = "pageSize")] int PageSize = ListQueries.DefaultPageSize)
++    [FromQuery(Name = "pageSize")] int PageSize = ListRequest.DefaultPageSize)
+ {
+-    public Dictionary<string, string[]> Validate() => ListQueries.Validate(Page, PageSize, Q);
++    public Dictionary<string, string[]> Validate() => ListRequest.Validate(Page, PageSize, Q);
+ }
+diff --git a/src/Competency.OrgStructure/ListQueries.cs b/src/Competency.OrgStructure/ListQueries.cs
+index 2d9ed2f..4e3135f 100644
+--- a/src/Competency.OrgStructure/ListQueries.cs
++++ b/src/Competency.OrgStructure/ListQueries.cs
+@@ -1,45 +1,14 @@
+ using System.Linq.Expressions;
++using Competency.Platform;
+ using Microsoft.EntityFrameworkCore;
+ 
+ namespace Competency.OrgStructure;
+ 
+ /// <summary>
+-/// The paging rules and query steps the unit and employee lists share.
++/// The query steps the unit and employee lists share.
+ /// </summary>
+ internal static class ListQueries
+ {
+-    public const int DefaultPageSize = 50;
+-    private const int MaxPageSize = 200;
+-    private const int MaxPage = int.MaxValue / MaxPageSize;
+-
+-    /// <summary>
+-    /// Checks the paging and search text of a list request.
+-    /// </summary>
+-    /// <param name="page">The requested page, counting from 1.</param>
+-    /// <param name="pageSize">The requested number of rows per page.</param>
+-    /// <param name="searchText">The requested search text.</param>
+-    /// <returns>The problems found by field name; empty when the request is valid.</returns>
+-    public static Dictionary<string, string[]> Validate(int page, int pageSize, string? searchText)
+-    {
+-        var errors = new Dictionary<string, string[]>();
+-        if (page is < 1 or > MaxPage)
+-        {
+-            errors["page"] = [$"page must be between 1 and {MaxPage}."];
+-        }
+-
+-        if (pageSize is < 1 or > MaxPageSize)
+-        {
+-            errors["pageSize"] = [$"pageSize must be between 1 and {MaxPageSize}."];
+-        }
+-
+-        if (searchText?.Length > TextSearch.MaxLength)
+-        {
+-            errors["q"] = [$"q must not be longer than {TextSearch.MaxLength} characters."];
+-        }
+-
+-        return errors;
+-    }
+-
+     public static IQueryable<T> WhereIf<T>(this IQueryable<T> source, bool condition, Expression<Func<T, bool>> predicate) =>
+         condition ? source.Where(predicate) : source;
+ 
+diff --git a/src/Competency.OrgStructure/OrgUnitEndpoints.cs b/src/Competency.OrgStructure/OrgUnitEndpoints.cs
+index 8249a14..3904cdd 100644
+--- a/src/Competency.OrgStructure/OrgUnitEndpoints.cs
++++ b/src/Competency.OrgStructure/OrgUnitEndpoints.cs
+@@ -65,7 +65,7 @@ internal static class OrgUnitEndpoints
+         }
+ 
+         var text = TextSearch.Normalize(query.Q);
+-        var pattern = text is null ? null : TextSearch.ContainsPattern(text);
++        var pattern = text is null ? null : ListRequest.ContainsPattern(text);
+         var page = await context.Set<OrgUnit>()
+             .AsNoTracking()
+             .VisibleTo(actor)
+@@ -73,7 +73,7 @@ internal static class OrgUnitEndpoints
+             .WhereIf(query.ParentId is not null, unit => unit.ParentId == query.ParentId)
+             .WhereIf(
+                 text is not null,
+-                unit => EF.Functions.ILike(unit.Name, pattern!, TextSearch.LikeEscape)
++                unit => EF.Functions.ILike(unit.Name, pattern!, ListRequest.LikeEscape)
+                     || unit.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text!)))
+             .OrderBy(unit => unit.Name)
+             .ThenBy(unit => unit.Id)
+@@ -227,7 +227,7 @@ internal static class OrgUnitEndpoints
+         if (request.ParentId is { } parentId
+             && await context.UnitProblemAsync(parentId, ParentSubject, cancellationToken) is { } parentProblem)
+         {
+-            return Rejections.Invalid("parentId", parentProblem);
++            return Rejection.Invalid("parentId", parentProblem);
+         }
+ 
+         var unit = new OrgUnit
+@@ -266,7 +266,7 @@ internal static class OrgUnitEndpoints
+             && headId != unit.HeadEmployeeId
+             && await HeadProblemAsync(context, headId, unit.Id, cancellationToken) is { } headProblem)
+         {
+-            return Rejections.Invalid("headEmployeeId", headProblem);
++            return Rejection.Invalid("headEmployeeId", headProblem);
+         }
+ 
+         ifMatch.ApplyTo(context, unit);
+@@ -295,12 +295,12 @@ internal static class OrgUnitEndpoints
+         {
+             if (await context.UnitProblemAsync(parentId, ParentSubject, cancellationToken) is { } parentProblem)
+             {
+-                return Rejections.Invalid("parentId", parentProblem);
++                return Rejection.Invalid("parentId", parentProblem);
+             }
+ 
+             if (await context.DescendantIds(id).AnyAsync(candidate => candidate == parentId, cancellationToken))
+             {
+-                return Rejections.Conflict($"Нельзя перенести подразделение «{unit.Name}» в себя или в своё дочернее подразделение: иерархия не допускает циклов.");
++                return Rejection.Conflict($"Нельзя перенести подразделение «{unit.Name}» в себя или в своё дочернее подразделение: иерархия не допускает циклов.");
+             }
+         }
+ 
+@@ -330,14 +330,14 @@ internal static class OrgUnitEndpoints
+                 .CountAsync(child => child.ParentId == id && child.IsActive, cancellationToken);
+             if (activeChildren > 0)
+             {
+-                return Rejections.Conflict($"Нельзя деактивировать подразделение «{unit.Name}»: в нём есть активные дочерние подразделения ({activeChildren}). Сначала деактивируйте или перенесите их.");
++                return Rejection.Conflict($"Нельзя деактивировать подразделение «{unit.Name}»: в нём есть активные дочерние подразделения ({activeChildren}). Сначала деактивируйте или перенесите их.");
+             }
+ 
+             var activeEmployees = await context.Set<Employee>()
+                 .CountAsync(employee => employee.OrgUnitId == id && employee.IsActive, cancellationToken);
+             if (activeEmployees > 0)
+             {
+-                return Rejections.Conflict($"Нельзя деактивировать подразделение «{unit.Name}»: в нём есть работающие сотрудники ({activeEmployees}). Сначала переведите их в другое подразделение или отметьте как не работающих.");
++                return Rejection.Conflict($"Нельзя деактивировать подразделение «{unit.Name}»: в нём есть работающие сотрудники ({activeEmployees}). Сначала переведите их в другое подразделение или отметьте как не работающих.");
+             }
+         }
+ 
+@@ -366,13 +366,13 @@ internal static class OrgUnitEndpoints
+             if (unit.ParentId is { } parentId
+                 && await context.UnitProblemAsync(parentId, ParentSubject, cancellationToken) is { } parentProblem)
+             {
+-                return Rejections.Conflict($"Нельзя активировать подразделение «{unit.Name}». {parentProblem}");
++                return Rejection.Conflict($"Нельзя активировать подразделение «{unit.Name}». {parentProblem}");
+             }
+ 
+             if (unit.HeadEmployeeId is { } headId
+                 && await context.EmployeeProblemAsync(headId, HeadSubject, cancellationToken) is { } headProblem)
+             {
+-                return Rejections.Conflict($"Нельзя активировать подразделение «{unit.Name}». {headProblem} Назначьте другого руководителя.");
++                return Rejection.Conflict($"Нельзя активировать подразделение «{unit.Name}». {headProblem} Назначьте другого руководителя.");
+             }
+         }
+ 
+diff --git a/src/Competency.OrgStructure/OrgUnitListQuery.cs b/src/Competency.OrgStructure/OrgUnitListQuery.cs
+index 2359588..21b69ed 100644
+--- a/src/Competency.OrgStructure/OrgUnitListQuery.cs
++++ b/src/Competency.OrgStructure/OrgUnitListQuery.cs
+@@ -1,3 +1,4 @@
++using Competency.Platform;
+ using Microsoft.AspNetCore.Mvc;
+ 
+ namespace Competency.OrgStructure;
+@@ -11,7 +12,7 @@ internal sealed record OrgUnitListQuery(
+     [FromQuery(Name = "isActive")] bool? IsActive = null,
+     [FromQuery(Name = "parentId")] Guid? ParentId = null,
+     [FromQuery(Name = "page")] int Page = 1,
+-    [FromQuery(Name = "pageSize")] int PageSize = ListQueries.DefaultPageSize)
++    [FromQuery(Name = "pageSize")] int PageSize = ListRequest.DefaultPageSize)
+ {
+-    public Dictionary<string, string[]> Validate() => ListQueries.Validate(Page, PageSize, Q);
++    public Dictionary<string, string[]> Validate() => ListRequest.Validate(Page, PageSize, Q);
+ }
+diff --git a/src/Competency.OrgStructure/PageResponse.cs b/src/Competency.OrgStructure/PageResponse.cs
+deleted file mode 100644
+index cb081f6..0000000
+--- a/src/Competency.OrgStructure/PageResponse.cs
++++ /dev/null
+@@ -1,7 +0,0 @@
+-namespace Competency.OrgStructure;
+-
+-/// <summary>
+-/// One page of a list, with the number of rows matching the filters across all pages.
+-/// </summary>
+-/// <typeparam name="T">The row type.</typeparam>
+-internal sealed record PageResponse<T>(IReadOnlyList<T> Items, int Total, int Page, int PageSize);
+diff --git a/src/Competency.OrgStructure/Rejections.cs b/src/Competency.OrgStructure/Rejections.cs
+index 0e95ec3..3736011 100644
+--- a/src/Competency.OrgStructure/Rejections.cs
++++ b/src/Competency.OrgStructure/Rejections.cs
+@@ -1,24 +1,13 @@
+ using Competency.Platform;
+-using Microsoft.AspNetCore.Http;
+-using Microsoft.AspNetCore.Http.HttpResults;
+ using Microsoft.EntityFrameworkCore;
+ 
+ namespace Competency.OrgStructure;
+ 
+ /// <summary>
+-/// The responses that reject a change the structure's rules forbid, with reasons addressed to the administrator,
+-/// and the checks that produce those reasons for referenced units and employees.
++/// The checks that say why a referenced unit or employee cannot be used, so a change can be rejected with that reason.
+ /// </summary>
+ internal static class Rejections
+ {
+-    private const string ConflictTitle = "Операция отклонена";
+-
+-    public static ProblemHttpResult Conflict(string detail) =>
+-        TypedResults.Problem(detail: detail, statusCode: StatusCodes.Status409Conflict, title: ConflictTitle);
+-
+-    public static ValidationProblem Invalid(string field, string message) =>
+-        TypedResults.ValidationProblem(new Dictionary<string, string[]> { [field] = [message] });
+-
+     /// <summary>
+     /// Says why a unit cannot be used as a parent: it does not exist or is inactive.
+     /// </summary>
+diff --git a/src/Competency.OrgStructure/TextSearch.cs b/src/Competency.OrgStructure/TextSearch.cs
+index 1b1c804..86d7008 100644
+--- a/src/Competency.OrgStructure/TextSearch.cs
++++ b/src/Competency.OrgStructure/TextSearch.cs
+@@ -1,14 +1,12 @@
+ namespace Competency.OrgStructure;
+ 
+ /// <summary>
+-/// The conventions shared by the search indexes and the search queries: the Russian full-text configuration and substring matching.
++/// The conventions shared by the search indexes and the search queries: the Russian full-text configuration and text preparation.
+ /// </summary>
+ internal static class TextSearch
+ {
+     public const string FullTextConfig = "russian";
+     public const string TrigramOperators = "gin_trgm_ops";
+-    public const int MaxLength = 200;
+-    public const string LikeEscape = "\\";
+ 
+     /// <summary>
+     /// Prepares a user's search text.
+@@ -16,12 +14,4 @@ internal static class TextSearch
+     /// <param name="text">The text as typed, possibly absent.</param>
+     /// <returns>The trimmed text, or <see langword="null"/> when there is nothing to search for.</returns>
+     public static string? Normalize(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+-
+-    /// <summary>
+-    /// Builds an <c>ILIKE</c> pattern that matches the text anywhere in a value, treating the text literally.
+-    /// </summary>
+-    /// <param name="text">The text to find.</param>
+-    /// <returns>The pattern, using <see cref="LikeEscape"/> as the escape character.</returns>
+-    public static string ContainsPattern(string text) =>
+-        $"%{text.Replace(LikeEscape, LikeEscape + LikeEscape).Replace("%", LikeEscape + "%").Replace("_", LikeEscape + "_")}%";
+ }
+diff --git a/src/Competency.OrgStructure/packages.lock.json b/src/Competency.OrgStructure/packages.lock.json
+index 395494a..4c8bab9 100644
+--- a/src/Competency.OrgStructure/packages.lock.json
++++ b/src/Competency.OrgStructure/packages.lock.json
+@@ -2,6 +2,19 @@
+   "version": 1,
+   "dependencies": {
+     "net10.0": {
++      "BouncyCastle.Cryptography": {
++        "type": "Transitive",
++        "resolved": "2.7.0",
++        "contentHash": "U+12df8UEWHgBi04YVf/Lgi2dy3SItlIYvHjjEVa/BngCQIzDCDRBk50DDByCfDvSbe5pRNFr3b7UrVK2kMcLw=="
++      },
++      "MailKit": {
++        "type": "Transitive",
++        "resolved": "4.18.1",
++        "contentHash": "EssBsnKHvIcH1QpqqsVUEWAlAHI3dkGXJpKAzSNJ8PGjClNynSo9bRkT68jVZkxhREm0Z51Dwu3127f4WfIiRg==",
++        "dependencies": {
++          "MimeKit": "4.18.1"
++        }
++      },
+       "Microsoft.EntityFrameworkCore": {
+         "type": "Transitive",
+         "resolved": "10.0.12",
+@@ -29,6 +42,15 @@
+           "Microsoft.EntityFrameworkCore": "10.0.12"
+         }
+       },
++      "MimeKit": {
++        "type": "Transitive",
++        "resolved": "4.18.1",
++        "contentHash": "D8AfFVMFVJldWmhQWCziC9nWUN/zayFFBAKpyjVyCeh0tqBiI9jtUVuMrKgWw1EGnCp09msDZldbRvp2jfUehQ==",
++        "dependencies": {
++          "BouncyCastle.Cryptography": "2.7.0",
++          "System.Security.Cryptography.Pkcs": "10.0.0"
++        }
++      },
+       "Npgsql": {
+         "type": "Transitive",
+         "resolved": "10.0.3",
+@@ -44,9 +66,15 @@
+           "Npgsql": "10.0.3"
+         }
+       },
++      "System.Security.Cryptography.Pkcs": {
++        "type": "Transitive",
++        "resolved": "10.0.0",
++        "contentHash": "UPWqLSygJlFerRi9XNIuM0a1VC8gHUIufyP24xQ0sc+XimqUAEcjpOz9DhKpyDjH+5B/wO3RpC0KpkEeDj/ddg=="
++      },
+       "competency.platform": {
+         "type": "Project",
+         "dependencies": {
++          "MailKit": "[4.18.1, )",
+           "Microsoft.EntityFrameworkCore": "[10.0.12, )",
+           "Microsoft.EntityFrameworkCore.Relational": "[10.0.12, )",
+           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )"
+diff --git a/src/Competency.Platform/AppOptions.cs b/src/Competency.Platform/AppOptions.cs
+new file mode 100644
+index 0000000..54c3917
+--- /dev/null
++++ b/src/Competency.Platform/AppOptions.cs
+@@ -0,0 +1,12 @@
++namespace Competency.Platform;
++
++/// <summary>
++/// Settings of the application as a whole, bound from the <c>App</c> configuration section.
++/// </summary>
++public sealed class AppOptions
++{
++    /// <summary>
++    /// Absolute http(s) address users open the application at; links in e-mails are built from it, never from the request's <c>Host</c>.
++    /// </summary>
++    public Uri PublicBaseUrl { get; set; } = null!;
++}
+diff --git a/src/Competency.Platform/AuditEntry.cs b/src/Competency.Platform/AuditEntry.cs
+index 5106e0d..cd01a48 100644
+--- a/src/Competency.Platform/AuditEntry.cs
++++ b/src/Competency.Platform/AuditEntry.cs
+@@ -11,6 +11,7 @@ namespace Competency.Platform;
+ /// <param name="NewValue">The audited property values after the action, as JSON.</param>
+ /// <param name="Actor">Overrides the ambient actor for events raised before a principal exists, such as sign-in.</param>
+ /// <param name="Role">Overrides the ambient role together with <paramref name="Actor"/>.</param>
++/// <param name="RequestId">Overrides the ambient request id for work done outside the request that caused it, such as a queued e-mail.</param>
+ public sealed record AuditEntry(
+     string Action,
+     string EntityType,
+@@ -19,4 +20,5 @@ public sealed record AuditEntry(
+     string? OldValue = null,
+     string? NewValue = null,
+     string? Actor = null,
+-    string? Role = null);
++    string? Role = null,
++    string? RequestId = null);
+diff --git a/src/Competency.Platform/Competency.Platform.csproj b/src/Competency.Platform/Competency.Platform.csproj
+index 38818d7..adad129 100644
+--- a/src/Competency.Platform/Competency.Platform.csproj
++++ b/src/Competency.Platform/Competency.Platform.csproj
+@@ -13,6 +13,7 @@
+   </ItemGroup>
+ 
+   <ItemGroup>
++    <PackageReference Include="MailKit" Version="4.18.1" />
+     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
+     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
+     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+diff --git a/src/Competency.Platform/ListRequest.cs b/src/Competency.Platform/ListRequest.cs
+new file mode 100644
+index 0000000..afe03c0
+--- /dev/null
++++ b/src/Competency.Platform/ListRequest.cs
+@@ -0,0 +1,61 @@
++namespace Competency.Platform;
++
++/// <summary>
++/// The paging limits and search-text conventions that every list request shares.
++/// </summary>
++public static class ListRequest
++{
++    /// <summary>
++    /// The number of rows per page when the request names none.
++    /// </summary>
++    public const int DefaultPageSize = 50;
++
++    /// <summary>
++    /// The longest search text a request may carry.
++    /// </summary>
++    public const int MaxSearchLength = 200;
++
++    /// <summary>
++    /// The escape character of <see cref="ContainsPattern"/>.
++    /// </summary>
++    public const string LikeEscape = "\\";
++
++    private const int MaxPageSize = 200;
++    private const int MaxPage = int.MaxValue / MaxPageSize;
++
++    /// <summary>
++    /// Checks the paging and the search text of a list request.
++    /// </summary>
++    /// <param name="page">The requested page, counting from 1.</param>
++    /// <param name="pageSize">The requested number of rows per page.</param>
++    /// <param name="searchText">The requested search text, if the list is searchable.</param>
++    /// <returns>The problems found by field name; empty when the request is valid.</returns>
++    public static Dictionary<string, string[]> Validate(int page, int pageSize, string? searchText = null)
++    {
++        var errors = new Dictionary<string, string[]>();
++        if (page is < 1 or > MaxPage)
++        {
++            errors["page"] = [$"page must be between 1 and {MaxPage}."];
++        }
++
++        if (pageSize is < 1 or > MaxPageSize)
++        {
++            errors["pageSize"] = [$"pageSize must be between 1 and {MaxPageSize}."];
++        }
++
++        if (searchText?.Length > MaxSearchLength)
++        {
++            errors["q"] = [$"q must not be longer than {MaxSearchLength} characters."];
++        }
++
++        return errors;
++    }
++
++    /// <summary>
++    /// Builds an <c>ILIKE</c> pattern that matches the text anywhere in a value, treating the text literally.
++    /// </summary>
++    /// <param name="text">The text to find.</param>
++    /// <returns>The pattern, using <see cref="LikeEscape"/> as the escape character.</returns>
++    public static string ContainsPattern(string text) =>
++        $"%{text.Replace(LikeEscape, LikeEscape + LikeEscape).Replace("%", LikeEscape + "%").Replace("_", LikeEscape + "_")}%";
++}
+diff --git a/src/Competency.Platform/LoginRateLimitOptions.cs b/src/Competency.Platform/LoginRateLimitOptions.cs
+deleted file mode 100644
+index 05b3ba2..0000000
+--- a/src/Competency.Platform/LoginRateLimitOptions.cs
++++ /dev/null
+@@ -1,11 +0,0 @@
+-namespace Competency.Platform;
+-
+-/// <summary>
+-/// The sign-in attempt budget per client address, bound from <c>RateLimiting:Login</c>.
+-/// </summary>
+-internal sealed class LoginRateLimitOptions
+-{
+-    public int PermitLimit { get; set; }
+-
+-    public int WindowSeconds { get; set; }
+-}
+diff --git a/src/Competency.Platform/MailSender.cs b/src/Competency.Platform/MailSender.cs
+new file mode 100644
+index 0000000..c720d82
+--- /dev/null
++++ b/src/Competency.Platform/MailSender.cs
+@@ -0,0 +1,56 @@
++using MailKit.Net.Smtp;
++using Microsoft.Extensions.Logging;
++using Microsoft.Extensions.Options;
++using MimeKit;
++using MimeKit.Text;
++
++namespace Competency.Platform;
++
++/// <summary>
++/// Sends plain-text mail through the SMTP server from <see cref="SmtpOptions"/>, one connection per message.
++/// Thread-safe: it holds no connection between calls, so request handlers and background services share one instance.
++/// Never call it inside a database transaction or under a lock: it waits on the network for up to <see cref="SmtpOptions.Timeout"/>.
++/// </summary>
++public sealed class MailSender(IOptions<SmtpOptions> options, ILogger<MailSender> logger)
++{
++    /// <summary>
++    /// Sends one message. A failure is logged by exception type only, so the recipient, the content and the server reply stay out of the log.
++    /// </summary>
++    /// <param name="recipient">The recipient's e-mail address.</param>
++    /// <param name="subject">The subject line.</param>
++    /// <param name="body">The plain-text body.</param>
++    /// <param name="cancellationToken">Cancels the send; a cancellation by the caller is rethrown, not reported as a failure.</param>
++    /// <returns><see langword="true"/> when the server accepted the message; <see langword="false"/> when sending failed or timed out.</returns>
++    public async Task<bool> SendAsync(string recipient, string subject, string body, CancellationToken cancellationToken)
++    {
++        var settings = options.Value;
++        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
++        timeout.CancelAfter(settings.Timeout);
++        try
++        {
++            using var client = new SmtpClient();
++            await client.ConnectAsync(settings.Host, settings.Port, settings.SecureSocketOptions, timeout.Token);
++            if (!string.IsNullOrEmpty(settings.UserName))
++            {
++                await client.AuthenticateAsync(settings.UserName, settings.Password, timeout.Token);
++            }
++
++            await client.SendAsync(CreateMessage(settings.From, recipient, subject, body), timeout.Token);
++            await client.DisconnectAsync(true, timeout.Token);
++            return true;
++        }
++        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
++        {
++            logger.LogError("Mail was not sent: {ExceptionType}", exception.GetType().FullName);
++            return false;
++        }
++    }
++
++    private static MimeMessage CreateMessage(string from, string recipient, string subject, string body)
++    {
++        var message = new MimeMessage { Subject = subject, Body = new TextPart(TextFormat.Plain) { Text = body } };
++        message.From.Add(MailboxAddress.Parse(from));
++        message.To.Add(MailboxAddress.Parse(recipient));
++        return message;
++    }
++}
+diff --git a/src/Competency.Platform/PageResponse.cs b/src/Competency.Platform/PageResponse.cs
+new file mode 100644
+index 0000000..ea43a77
+--- /dev/null
++++ b/src/Competency.Platform/PageResponse.cs
+@@ -0,0 +1,7 @@
++namespace Competency.Platform;
++
++// One page of a list, with the number of rows matching the filters across all pages.
++// Deliberately without XML documentation: the OpenAPI generator would copy it into the published schemas.
++#pragma warning disable CS1591
++public record PageResponse<T>(IReadOnlyList<T> Items, int Total, int Page, int PageSize);
++#pragma warning restore CS1591
+diff --git a/src/Competency.Platform/PlatformModule.cs b/src/Competency.Platform/PlatformModule.cs
+index b3ae317..8a16392 100644
+--- a/src/Competency.Platform/PlatformModule.cs
++++ b/src/Competency.Platform/PlatformModule.cs
+@@ -1,5 +1,6 @@
+ using System.Data.Common;
+ using System.Diagnostics;
++using System.Net;
+ using System.Text.Json.Serialization;
+ using System.Threading.RateLimiting;
+ using Microsoft.AspNetCore.Authorization;
+@@ -14,6 +15,8 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
+ using Microsoft.Extensions.Configuration;
+ using Microsoft.Extensions.DependencyInjection;
+ using Microsoft.Extensions.DependencyInjection.Extensions;
++using Microsoft.Extensions.Options;
++using MimeKit;
+ 
+ namespace Competency.Platform;
+ 
+@@ -32,7 +35,16 @@ public static class PlatformModule
+     /// </summary>
+     public const string LoginRateLimitPolicy = "login";
+ 
++    /// <summary>
++    /// Name of the rate-limiting policy for the anonymous endpoints that take an e-mailed link or ask for one, for <c>RequireRateLimiting</c>.
++    /// Every endpoint under it draws on one budget per client address.
++    /// </summary>
++    public const string PasswordResetRateLimitPolicy = "password-reset";
++
+     private const string LoginRateLimitSection = "RateLimiting:Login";
++    private const string PasswordResetRateLimitSection = "RateLimiting:PasswordReset";
++    private const string SmtpSection = "Smtp";
++    private const string AppSection = "App";
+     private const string UnknownClient = "unknown";
+     private const string KeysPathSetting = "DataProtection:KeysPath";
+     private const string DataProtectionApplicationName = "competency-management-service";
+@@ -70,11 +82,24 @@ public static class PlatformModule
+         services.AddHttpContextAccessor();
+         services.AddSingleton<ICurrentActor, HttpContextCurrentActor>();
+         AddAuthorizationPolicies(services);
+-        AddLoginRateLimiter(services, configuration);
++        AddRateLimiter(services, configuration);
++        AddMail(services, configuration);
+ 
+         return services;
+     }
+ 
++    /// <summary>
++    /// Fails, naming the settings at fault, when the <c>Smtp</c> or <c>App</c> settings are missing or invalid, so a misconfigured host does not start.
++    /// Call it explicitly at start, never from a tooling host, which is not configured for mail.
++    /// </summary>
++    /// <param name="services">The root service provider.</param>
++    /// <exception cref="OptionsValidationException">A setting is missing or invalid.</exception>
++    public static void ValidateMailSettings(this IServiceProvider services)
++    {
++        _ = services.GetRequiredService<IOptions<SmtpOptions>>().Value;
++        _ = services.GetRequiredService<IOptions<AppOptions>>().Value;
++    }
++
+     /// <summary>
+     /// Adds the platform request pipeline: request id, ProblemDetails error responses for unhandled exceptions and bodyless error statuses,
+     /// the cross-site check on state-changing requests and rate limiting.
+@@ -174,20 +199,51 @@ public static class PlatformModule
+         services.AddSingleton<IAuthorizationMiddlewareResultHandler, StatusAuthorizationResultHandler>();
+     }
+ 
+-    private static void AddLoginRateLimiter(IServiceCollection services, IConfiguration configuration) =>
++    /// <summary>
++    /// Adds the fixed-window policies partitioned by client address. The middleware keys a partition by policy name and address,
++    /// so the endpoints sharing a policy share its counter.
++    /// </summary>
++    private static void AddRateLimiter(IServiceCollection services, IConfiguration configuration) =>
+         services.AddRateLimiter(options =>
+         {
+-            var login = configuration.GetRequiredSection(LoginRateLimitSection).Get<LoginRateLimitOptions>()!;
+             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+-            options.AddPolicy(LoginRateLimitPolicy, httpContext => RateLimitPartition.GetFixedWindowLimiter(
+-                httpContext.Connection.RemoteIpAddress?.ToString() ?? UnknownClient,
+-                _ => new FixedWindowRateLimiterOptions
+-                {
+-                    PermitLimit = login.PermitLimit,
+-                    Window = TimeSpan.FromSeconds(login.WindowSeconds),
+-                }));
++            AddPerAddressPolicy(options, LoginRateLimitPolicy, configuration.GetRequiredSection(LoginRateLimitSection));
++            AddPerAddressPolicy(options, PasswordResetRateLimitPolicy, configuration.GetRequiredSection(PasswordResetRateLimitSection));
+         });
+ 
++    private static void AddPerAddressPolicy(RateLimiterOptions options, string policy, IConfigurationSection section)
++    {
++        var budget = section.Get<RateLimitOptions>()!;
++        options.AddPolicy(policy, httpContext => RateLimitPartition.GetFixedWindowLimiter(
++            httpContext.Connection.RemoteIpAddress?.ToString() ?? UnknownClient,
++            _ => new FixedWindowRateLimiterOptions
++            {
++                PermitLimit = budget.PermitLimit,
++                Window = TimeSpan.FromSeconds(budget.WindowSeconds),
++            }));
++    }
++
++    private static void AddMail(IServiceCollection services, IConfiguration configuration)
++    {
++        services.AddOptions<SmtpOptions>()
++            .Bind(configuration.GetSection(SmtpSection))
++            .Validate(smtp => !string.IsNullOrWhiteSpace(smtp.Host), "'Smtp:Host' is not set.")
++            .Validate(smtp => smtp.Port is > IPEndPoint.MinPort and <= IPEndPoint.MaxPort, "'Smtp:Port' is not a port number.")
++            .Validate(smtp => smtp.Timeout > TimeSpan.Zero, "'Smtp:Timeout' is not a positive time span.")
++            .Validate(
++                smtp => string.IsNullOrEmpty(smtp.UserName) == string.IsNullOrEmpty(smtp.Password),
++                "'Smtp:UserName' and 'Smtp:Password' are set only together.")
++            .Validate(
++                smtp => MailboxAddress.TryParse(smtp.From, out var sender) && sender.Domain.Length > 0,
++                "'Smtp:From' is not a mailbox address.");
++        services.AddOptions<AppOptions>()
++            .Bind(configuration.GetSection(AppSection))
++            .Validate(
++                app => app.PublicBaseUrl is { IsAbsoluteUri: true, Scheme: "http" or "https" },
++                "'App:PublicBaseUrl' is not an absolute http or https URL.");
++        services.AddSingleton<MailSender>();
++    }
++
+     private static string GetConnectionString(IConfiguration configuration) =>
+         configuration.GetConnectionString(ConnectionStringName)
+         ?? throw new InvalidOperationException($"Connection string '{ConnectionStringName}' is not configured.");
+diff --git a/src/Competency.Platform/RateLimitOptions.cs b/src/Competency.Platform/RateLimitOptions.cs
+new file mode 100644
+index 0000000..52aca62
+--- /dev/null
++++ b/src/Competency.Platform/RateLimitOptions.cs
+@@ -0,0 +1,11 @@
++namespace Competency.Platform;
++
++/// <summary>
++/// The request budget per client address of one rate-limiting policy, bound from its <c>RateLimiting</c> subsection.
++/// </summary>
++internal sealed class RateLimitOptions
++{
++    public int PermitLimit { get; set; }
++
++    public int WindowSeconds { get; set; }
++}
+diff --git a/src/Competency.Platform/Rejection.cs b/src/Competency.Platform/Rejection.cs
+new file mode 100644
+index 0000000..e9fcf11
+--- /dev/null
++++ b/src/Competency.Platform/Rejection.cs
+@@ -0,0 +1,32 @@
++using Microsoft.AspNetCore.Http;
++using Microsoft.AspNetCore.Http.HttpResults;
++
++namespace Competency.Platform;
++
++/// <summary>
++/// The responses that reject a change a module's rules forbid.
++/// </summary>
++public static class Rejection
++{
++    /// <summary>
++    /// The title of a 409 response.
++    /// </summary>
++    public const string ConflictTitle = "Операция отклонена";
++
++    /// <summary>
++    /// Rejects a request that conflicts with the current state.
++    /// </summary>
++    /// <param name="detail">The reason, addressed to the user.</param>
++    /// <returns>A 409 response.</returns>
++    public static ProblemHttpResult Conflict(string detail) =>
++        TypedResults.Problem(detail: detail, statusCode: StatusCodes.Status409Conflict, title: ConflictTitle);
++
++    /// <summary>
++    /// Rejects a request whose field is invalid.
++    /// </summary>
++    /// <param name="field">The request field.</param>
++    /// <param name="message">The reason, addressed to the user.</param>
++    /// <returns>A 400 response naming the field.</returns>
++    public static ValidationProblem Invalid(string field, string message) =>
++        TypedResults.ValidationProblem(new Dictionary<string, string[]> { [field] = [message] });
++}
+diff --git a/src/Competency.Platform/SmtpOptions.cs b/src/Competency.Platform/SmtpOptions.cs
+new file mode 100644
+index 0000000..072f6c9
+--- /dev/null
++++ b/src/Competency.Platform/SmtpOptions.cs
+@@ -0,0 +1,44 @@
++using MailKit.Security;
++
++namespace Competency.Platform;
++
++/// <summary>
++/// The SMTP server mail is sent through, bound from the <c>Smtp</c> configuration section.
++/// </summary>
++public sealed class SmtpOptions
++{
++    /// <summary>
++    /// Host name or address of the SMTP server.
++    /// </summary>
++    public string Host { get; set; } = string.Empty;
++
++    /// <summary>
++    /// TCP port of the SMTP server.
++    /// </summary>
++    public int Port { get; set; }
++
++    /// <summary>
++    /// How the connection is secured; <see cref="SecureSocketOptions.None"/> only for a local mail catcher.
++    /// </summary>
++    public SecureSocketOptions SecureSocketOptions { get; set; }
++
++    /// <summary>
++    /// Sign-in name on the server; empty when the server takes mail without authentication.
++    /// </summary>
++    public string UserName { get; set; } = string.Empty;
++
++    /// <summary>
++    /// Password for <see cref="UserName"/>; a secret, never logged.
++    /// </summary>
++    public string Password { get; set; } = string.Empty;
++
++    /// <summary>
++    /// Sender mailbox, optionally with a display name (<c>Name &lt;address&gt;</c>).
++    /// </summary>
++    public string From { get; set; } = string.Empty;
++
++    /// <summary>
++    /// Upper bound for one whole send, from connecting to disconnecting, so a caller waiting on it is not held for long.
++    /// </summary>
++    public TimeSpan Timeout { get; set; }
++}
+diff --git a/src/Competency.Platform/packages.lock.json b/src/Competency.Platform/packages.lock.json
+index a59e786..075befc 100644
+--- a/src/Competency.Platform/packages.lock.json
++++ b/src/Competency.Platform/packages.lock.json
+@@ -2,6 +2,15 @@
+   "version": 1,
+   "dependencies": {
+     "net10.0": {
++      "MailKit": {
++        "type": "Direct",
++        "requested": "[4.18.1, )",
++        "resolved": "4.18.1",
++        "contentHash": "EssBsnKHvIcH1QpqqsVUEWAlAHI3dkGXJpKAzSNJ8PGjClNynSo9bRkT68jVZkxhREm0Z51Dwu3127f4WfIiRg==",
++        "dependencies": {
++          "MimeKit": "4.18.1"
++        }
++      },
+       "Microsoft.EntityFrameworkCore": {
+         "type": "Direct",
+         "requested": "[10.0.12, )",
+@@ -32,6 +41,11 @@
+           "Npgsql": "10.0.3"
+         }
+       },
++      "BouncyCastle.Cryptography": {
++        "type": "Transitive",
++        "resolved": "2.7.0",
++        "contentHash": "U+12df8UEWHgBi04YVf/Lgi2dy3SItlIYvHjjEVa/BngCQIzDCDRBk50DDByCfDvSbe5pRNFr3b7UrVK2kMcLw=="
++      },
+       "Microsoft.EntityFrameworkCore.Abstractions": {
+         "type": "Transitive",
+         "resolved": "10.0.12",
+@@ -42,10 +56,24 @@
+         "resolved": "10.0.12",
+         "contentHash": "Kd4o2oO1A6dfKxjz5LS16QyLtpCFTUiFWwmBABETAXRsSImBdRdWeKjSgbbRhAMiV3a3/nWr95ZtzClT4uaADQ=="
+       },
++      "MimeKit": {
++        "type": "Transitive",
++        "resolved": "4.18.1",
++        "contentHash": "D8AfFVMFVJldWmhQWCziC9nWUN/zayFFBAKpyjVyCeh0tqBiI9jtUVuMrKgWw1EGnCp09msDZldbRvp2jfUehQ==",
++        "dependencies": {
++          "BouncyCastle.Cryptography": "2.7.0",
++          "System.Security.Cryptography.Pkcs": "10.0.0"
++        }
++      },
+       "Npgsql": {
+         "type": "Transitive",
+         "resolved": "10.0.3",
+         "contentHash": "7nb5YzXuvWWJxB0J8DiyL3we+X4FOctZrt0fIBnucOIaIevFEEwGQVZKtiu9olXdlNAK1eNgqSral6r/jlhI4w=="
++      },
++      "System.Security.Cryptography.Pkcs": {
++        "type": "Transitive",
++        "resolved": "10.0.0",
++        "contentHash": "UPWqLSygJlFerRi9XNIuM0a1VC8gHUIufyP24xQ0sc+XimqUAEcjpOz9DhKpyDjH+5B/wO3RpC0KpkEeDj/ddg=="
+       }
+     }
+   }

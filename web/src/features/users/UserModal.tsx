@@ -9,6 +9,7 @@ import { useEditBase } from "../../app/useEditBase";
 import { invalidateOrgStructure } from "../org-structure/orgStructureApi";
 import { UserForm, type UserInput } from "./UserForm";
 import { type UserResponse, userQuery, usersQueryKey } from "./usersApi";
+import { useMailReport } from "./useSendUserMail";
 
 interface UserModalProps {
   /** Account to change; omitted when an account is created. */
@@ -80,9 +81,10 @@ interface UserEditorProps extends Pick<UserModalProps, "onClose"> {
 function UserEditor({ existing: latest, onClose }: UserEditorProps) {
   const queryClient = useQueryClient();
   const { message } = App.useApp();
+  const reportMail = useMailReport();
   const { base: existing, noteSaveFailure } = useEditBase(latest);
   const save = useMutation({
-    mutationFn: async ({ password, ...account }: UserInput) =>
+    mutationFn: async (account: UserInput) =>
       unwrap(
         existing
           ? await api.PUT("/api/v1/users/{id}", {
@@ -92,12 +94,15 @@ function UserEditor({ existing: latest, onClose }: UserEditorProps) {
               },
               body: account,
             })
-          : await api.POST("/api/v1/users", {
-              body: { ...account, password: password ?? "" },
-            }),
+          : await api.POST("/api/v1/users", { body: account }),
       ),
-    onSuccess: () => {
-      message.success(existing ? "Изменения сохранены" : "Пользователь создан");
+    onSuccess: (saved) => {
+      if (existing) message.success("Изменения сохранены");
+      else
+        reportMail(
+          saved.mailSent,
+          "Пользователь создан, приглашение отправлено",
+        );
       onClose();
     },
     onError: noteSaveFailure,

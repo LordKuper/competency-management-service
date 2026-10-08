@@ -1,0 +1,1 @@
+[{"id":"F1","severity":"medium","location":"deploy/README.md:77; src/Competency.Platform/MailSender.cs:31"},{"id":"F2","severity":"low","location":"src/Competency.Platform/PlatformModule.cs:230; deploy/k8s/configmap.yaml:21"},{"id":"F3","severity":"low","location":"deploy/dev/README.md:57"}]
