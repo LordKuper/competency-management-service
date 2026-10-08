@@ -87,15 +87,15 @@ Tech reference: microsoft-aspnetcore-identity-entityframeworkcore-10.0.12, aspne
 Material risk: change: authentication — сброс по ссылке, обрыв сессий, перечисление учётных записей
 Material risk: change: security — анонимные методы, ограничения частоты, фоновая очередь
 Material risk: change: public contract — удаление `reset-password`, новые методы, `info.version` 2.0.0
-- [ ] AC-7: анонимный `POST /api/v1/auth/forgot-password` (e-mail): немедленный одинаковый ответ 202 при любом e-mail; запрос кладётся в фоновую очередь в памяти (`Channel` + `BackgroundService`); обработчик: строка записи `FOR UPDATE`, ссылка выдаётся только активной зарегистрированной записи (не заблокирована, есть пароль, привязанный сотрудник работает) и не чаще настраиваемого интервала по времени выдачи (тихий пропуск); письмо — после фиксации; для несуществующих адресов ничего не хранится
-- [ ] AC-7: политика ограничения частоты по адресу (`RateLimiting:PasswordReset`, по образцу `login`) для `forgot-password`, `reset-password` по токену и `accept-invitation`
-- [ ] AC-8: анонимный `POST /api/v1/auth/reset-password` (токен, новый пароль): строка записи `FOR UPDATE`, проверка ссылки, политика пароля, установка хэша, снятие lockout за перебор (не блокировки администратором), погашение ссылки, смена stamp (все сессии обрываются); уволенный сотрудник войти по-прежнему не может; недействительная ссылка — 400 с общим текстом
-- [ ] AC-9: удалить `POST /api/v1/users/{id}/reset-password` и `ResetPasswordRequest`; добавить `POST /api/v1/users/{id}/send-password-reset` (администратор, `If-Match`): только для активной зарегистрированной записи (иначе 409), пароль не меняется, письмо — то же, что в AC-7, синхронно после фиксации, результат отправки в ответе
-- [ ] AC-8: смена собственного пароля погашает действующую ссылку сброса
-- [ ] AC-10: события `Auth.PasswordResetRequested` (актор — администратор или сама запись), `Auth.PasswordResetCompleted`, `Mail.SendFailed`; в фоне — необязательный request id в `AuditEntry` (аддитивно), без `HttpContext`
-- [ ] AC-2: письмо сброса — русские тема и текст, ссылка от `App:PublicBaseUrl`, токен во фрагменте
-- [ ] AC-9: `info.version` документа OpenAPI — `2.0.0`; перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts`
-- [ ] AC-9: `deploy/README.md`, раздел «Обновление существующего развёртывания»: переход для удалённого метода и поля `password`, записи с адресами `@local.invalid` письма не получат — сначала заменить адрес
+- [x] AC-7: анонимный `POST /api/v1/auth/forgot-password` (e-mail): немедленный одинаковый ответ 202 при любом e-mail; запрос кладётся в фоновую очередь в памяти (`Channel` + `BackgroundService`); обработчик: строка записи `FOR UPDATE`, ссылка выдаётся только активной зарегистрированной записи (не заблокирована, есть пароль, привязанный сотрудник работает) и не чаще настраиваемого интервала по времени выдачи (тихий пропуск); письмо — после фиксации; для несуществующих адресов ничего не хранится
+- [x] AC-7: политика ограничения частоты по адресу (`RateLimiting:PasswordReset`, по образцу `login`) для `forgot-password`, `reset-password` по токену и `accept-invitation`
+- [x] AC-8: анонимный `POST /api/v1/auth/reset-password` (токен, новый пароль): строка записи `FOR UPDATE`, проверка ссылки, политика пароля, установка хэша, снятие lockout за перебор (не блокировки администратором), погашение ссылки, смена stamp (все сессии обрываются); уволенный сотрудник войти по-прежнему не может; недействительная ссылка — 400 с общим текстом
+- [x] AC-9: удалить `POST /api/v1/users/{id}/reset-password` и `ResetPasswordRequest`; добавить `POST /api/v1/users/{id}/send-password-reset` (администратор, `If-Match`): только для активной зарегистрированной записи (иначе 409), пароль не меняется, письмо — то же, что в AC-7, синхронно после фиксации, результат отправки в ответе
+- [x] AC-8: смена собственного пароля погашает действующую ссылку сброса
+- [x] AC-10: события `Auth.PasswordResetRequested` (актор — администратор или сама запись), `Auth.PasswordResetCompleted`, `Mail.SendFailed`; в фоне — необязательный request id в `AuditEntry` (аддитивно), без `HttpContext`
+- [x] AC-2: письмо сброса — русские тема и текст, ссылка от `App:PublicBaseUrl`, токен во фрагменте
+- [x] AC-9: `info.version` документа OpenAPI — `2.0.0`; перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts`
+- [x] AC-9: `deploy/README.md`, раздел «Обновление существующего развёртывания»: переход для удалённого метода и поля `password`, записи с адресами `@local.invalid` письма не получат — сначала заменить адрес
 Tech reference: microsoft-aspnetcore-identity-entityframeworkcore-10.0.12, aspnetcore-10.0.12, efcore-10.0.12, mailkit-4.18.1, microsoft-aspnetcore-openapi-10.0.12.
 
 ### Task 6: Экраны регистрации и сброса, управление пользователями (frontend)
