@@ -78,11 +78,7 @@ export function UserForm({
       >
         <Select options={ROLE_OPTIONS} />
       </Form.Item>
-      <Form.Item
-        name="employeeId"
-        label="Сотрудник"
-        extra="Необязательно: учётная запись может быть привязана к одному работающему сотруднику или не привязана ни к кому."
-      >
+      <Form.Item name="employeeId" label="Сотрудник">
         <EmployeePicker current={employee} />
       </Form.Item>
       <Space>

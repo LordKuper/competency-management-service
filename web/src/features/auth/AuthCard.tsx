@@ -20,13 +20,14 @@ export function AuthCard({
     >
       <Col xs={22} sm={16} md={12} lg={8} xl={6}>
         <Card>
-          <Flex justify="center">
-            <img
-              src="/brand/logo-256.png"
-              alt={PRODUCT_NAME}
-              width={80}
-              height={80}
-            />
+          <Flex justify="center" align="center" gap={token.marginSM} wrap>
+            <img src="/brand/logo-256.png" alt="" width={80} height={80} />
+            <Typography.Text
+              strong
+              style={{ fontSize: token.fontSizeHeading2 }}
+            >
+              {PRODUCT_NAME}
+            </Typography.Text>
           </Flex>
           <Typography.Title level={1}>{title}</Typography.Title>
           {children}

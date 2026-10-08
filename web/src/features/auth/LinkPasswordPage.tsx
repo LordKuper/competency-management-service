@@ -51,7 +51,7 @@ export function AcceptInvitationPage() {
     <LinkPasswordPage
       path="/api/v1/auth/accept-invitation"
       title="Задание пароля"
-      intro="Задайте пароль, чтобы завершить регистрацию. Затем войдите в систему по своему e-mail и этому паролю."
+      intro="Задайте пароль, чтобы завершить регистрацию."
       submitLabel="Задать пароль"
       doneMessage="Пароль задан. Войдите в систему."
     />

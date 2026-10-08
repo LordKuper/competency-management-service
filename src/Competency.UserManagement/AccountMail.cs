@@ -40,8 +40,6 @@ internal sealed class AccountMail(MailSender sender, IOptions<AppOptions> app, I
             {Link(InvitationRoute, token)}
 
             Ссылка одноразовая и действует ограниченное время. Если она не открывается, попросите администратора отправить приглашение повторно.
-
-            Если вы не ждали этого письма, просто удалите его.
             """;
         var sent = await sender.SendAsync(user.Email!, InvitationSubject, body, cancellationToken);
         var entry = sent
