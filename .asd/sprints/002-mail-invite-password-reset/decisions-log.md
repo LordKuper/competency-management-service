@@ -132,3 +132,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — impl-review wave 2 iteration 3 (floor high): external latched (iter 2), combined only
 - 2026-10-08 — impl-review wave-2/iter-03: combined APPROVE (latched), external inherited APPROVE; wave 2 roster met → wave 3 iteration 1 (floor low)
 - 2026-10-08 — impl-review wave-3/iter-01: combined CONCERNS (F1 medium resend/send-reset without pending guard → 412 on double click; F2 low Russian plural «символов»; F3 low «Учётная запись сохранена» in shared not-sent warning), external CONCERNS (#1 medium = combined F1, deduplicated) → impl review-fix (review_fixes_pending = wave-3/iter-01): dev chain F1+#1, F2, F3 (standard); tests via impl-test
+- 2026-10-08 — route review-fix wave-3/iter-01: standard, dispatch HEAD 4bc52a0; risk none via lint/build
+- 2026-10-08 — review-fix wave-3/iter-01 done (8942059: useSendUserMail {sendMail,isSending} with pending guard, loading message, disabled menu item; Intl.PluralRules «символа/символов»; shared not-sent warning without «Учётная запись сохранена»); flagged choices accepted (menu item disabled on every row while any send is pending; new loading text «Отправка письма…»); completion gate lint 0, web build 0
+- 2026-10-08 — impl fix for wave-3/iter-01: findings resolved
