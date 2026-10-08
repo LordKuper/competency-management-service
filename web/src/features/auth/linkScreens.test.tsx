@@ -184,3 +184,34 @@ describe("forgotten password (AC-7, AC-11)", () => {
     expect(fakeApi.calls("GET /api/v1/auth/me")).toHaveLength(0);
   });
 });
+
+describe.each([INVITATION, RESET])(
+  "password hint on the $title screen (AC-19)",
+  (screenUnderTest) => {
+    it("names the minimum length the server reports, asking for it without a session", async () => {
+      fakeApi.on("GET /api/v1/auth/password-policy", () =>
+        Response.json({ minLength: 17 }),
+      );
+
+      await openApp(`${screenUnderTest.path}#token=${TOKEN}`);
+
+      expect(
+        await screen.findByText(/^Не короче 17 символов;/),
+      ).toBeInTheDocument();
+      expect(fakeApi.calls("GET /api/v1/auth/password-policy")).toHaveLength(1);
+      expect(fakeApi.calls("GET /api/v1/auth/me")).toHaveLength(0);
+    });
+
+    it("falls back to the hint without a number when the policy cannot be read", async () => {
+      fakeApi.on("GET /api/v1/auth/password-policy", () => problem(500));
+
+      await openApp(`${screenUnderTest.path}#token=${TOKEN}`);
+
+      expect(
+        await screen.findByText(/^Пароль должен быть длинным и содержать/),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/Не короче/)).not.toBeInTheDocument();
+      expect(fakeApi.calls("GET /api/v1/auth/me")).toHaveLength(0);
+    });
+  },
+);

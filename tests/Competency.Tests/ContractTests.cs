@@ -66,6 +66,18 @@ public sealed class ContractTests(TestEnvironment environment)
         }
     }
 
+    [Fact]
+    public void Ac19_PasswordPolicy_IsPublished_AsAnAnonymousGet_WithoutA401Or429_AndWithTheMinimumLength()
+    {
+        var contract = ReadContract();
+        var responses = contract["paths"]!["/api/v1/auth/password-policy"]!["get"]!["responses"]!.AsObject();
+
+        responses.ContainsKey("200").Should().BeTrue();
+        responses.ContainsKey("401").Should().BeFalse("the method is open to an anonymous caller");
+        responses.ContainsKey("429").Should().BeFalse("the method is not rate limited");
+        contract["components"]!["schemas"]!["PasswordPolicyResponse"]!["properties"]!.AsObject().ContainsKey("minLength").Should().BeTrue();
+    }
+
     [Theory]
     [InlineData("/api/v1/users")]
     [InlineData("/api/v1/org-units")]

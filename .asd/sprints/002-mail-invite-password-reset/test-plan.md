@@ -16,18 +16,23 @@ responsibility:
 | 3 | 2d661f6 | delta с записи 2: `git diff 906d167...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (5 файлов: `AccountMail.cs`, `AuthCard.tsx`, `passwordPolicy.ts`, `LinkPasswordPage.tsx`, `UserForm.tsx`; AC-18) |
 | 4 | 6a13874 | delta с записи 3: `git diff 2d661f6...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (3 файла: `AuthCard.tsx`, `appsettings.json`, `deploy/README.md`; AC-18, AC-4 срок приглашения — неделя) |
 | 5 | cb8ee2a | delta с записи 4: `git diff 6a13874...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (2 файла: `LoginPage.tsx`, `productName.ts`; AC-18, подзаголовок экрана входа убран) |
+| 6 | | delta с записи 5: `git diff cb8ee2a...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (7 файлов: `AuthEndpoints.cs`, `PasswordPolicyResponse.cs`, `openapi.json`, `schema.d.ts`, `passwordPolicy.ts`, `LinkPasswordPage.tsx`, `ChangePasswordModal.tsx`; AC-19, минимальная длина пароля из API) |
 
-Предохранитель impacted set (`sprint-lifecycle.md` "Impacted test set"), запись 5: дельта — `LoginPage.tsx` (удалён абзац-подзаголовок) и `web/src/app/productName.ts` (удалена константа `PRODUCT_TAGLINE`). Каталог `web/src/app/` — не сборочная, CI- или общая инфраструктура: файл держит только константы названия продукта, а удалённая константа имела единственного потребителя (`LoginPage`); поиск по `src`, `web/src`, `tests`, `deploy`, `.claude/agent-memory/**` ссылок на `PRODUCT_TAGLINE` и текст подзаголовка не нашёл. Предохранитель не срабатывает. Набор по ссылкам — `linkScreens.test.tsx`/тесты `LoginPage` (web), backend не затронут. Предстратегический прогон выполнен шире набора, дёшево: backend 157 из 157, web 82 из 82. Сборка `Debug` занята процессом пользователя, backend в `-c Release`.
+Предохранитель impacted set (`sprint-lifecycle.md` "Impacted test set"), запись 6: дельта — `AuthEndpoints.cs` и `PasswordPolicyResponse.cs` (модуль `UserManagement`), `openapi/openapi.json` и `web/src/api/schema.d.ts` (производные артефакты контракта, добавочно), `passwordPolicy.ts`, `LinkPasswordPage.tsx`, `ChangePasswordModal.tsx` (каталог `features/auth`). Сборочной, CI- или общей инфраструктуры нет: `AuthEndpoints.cs` — файл одного модуля, а не общий модуль. Предохранитель не срабатывает. Набор по ссылкам: `ContractTests` (читает `openapi.json`), `linkScreens.test.tsx` (рендерит оба экрана с хуком), новый `PasswordPolicyTests`; `ChangePasswordModal` тестами не охвачен. Предстратегический прогон: backend 157 из 157, web 82 из 82 (запрос политики без обработчика получает 599, экраны остаются на запасной подсказке). Сборка `Debug` занята процессом пользователя, backend в `-c Release`.
 
 ## Risk → check decisions
 
-Строки записей 1–4 — в `test-plan.entry-01.md` … `test-plan.entry-04.md`. Запись 5 (delta с 6a13874):
+Строки записей 1–5 — в `test-plan.entry-01.md` … `test-plan.entry-05.md`. Запись 6 (delta с cb8ee2a):
 
 | Change | Material risk | Chosen check | Decision | Reason |
 |---|---|---|---|---|
-| `LoginPage.tsx` (убран абзац-подзаголовок «Компетенции и карьерный рост»), `productName.ts` (удалена `PRODUCT_TAGLINE`) (AC-18) | удаление ломает сборку или тест, ищущий текст; на экране остаётся пустой отступ | — | none | чистое удаление текста без ветвлений; ни один тест не опирается на подзаголовок (поиск выше, 157 + 82 зелёных без правок), `build` и `lint` ловят висячие импорты константы. Тест на отсутствие фразы закрепил бы буквальную прозу (`.claude/agent-memory/asd-dev-critical/project_tests-pin-literal-prose.md`), а не поведение (§17). Вид экрана пользователь уже подтвердил визуально в этом раунде, новая строка `Manual verification` не нужна |
+| `GET /api/v1/auth/password-policy`, `PasswordPolicyResponse { minLength }` из `IdentityOptions.Password.RequiredLength` (AC-19) | число зашито, а не берётся из настройки развёртывания; переопределение `Identity__Password__RequiredLength` не доходит до экрана | интеграционный на реальном хосте (`PasswordPolicyTests`: хост с `Identity__Password__RequiredLength=17`; общий хост отдаёт 10) | add | ровно то, ради чего AC-19: значение следует конфигурации. Путь через реальный Kestrel и привязку опций; юнит на `IOptions` повторил бы реализацию (§17) |
+| `.AllowAnonymous()` на новом методе (AC-19) | метод закрыт сессией, экраны ссылки (без сессии) получают 401 | те же интеграционные тесты: `Anonymous()` клиент без входа получает 200 | add | отдельный тест не нужен: оба случая выше идут анонимным клиентом |
+| `openapi/openapi.json`: метод присутствует, без 401/429, схема с `minLength` (AC-19) | метод пропал из контракта или получил 401/429 (клиент уводит анонимный экран на вход) | контрактный, по образцу `ContractTests.Ac5_AnonymousLinkMethods_…` | add | `check:api` ловит лишь расхождение файла с кодом, не свойства метода |
+| `usePasswordHint()` в `LinkPasswordPage` и `ChangePasswordModal` (AC-19) | подсказка не показывает число сервера; при сбое запроса подсказки нет или экран падает; анонимный экран зовёт `/auth/me` | компонентный (`linkScreens.test.tsx`, оба экрана ссылки): ответ 17 → «Не короче 17 символов;», запрос один, `/auth/me` ноль; ответ 500 → запасной текст без числа, `/auth/me` ноль | add | видимое поведение. `ChangePasswordModal` берёт тот же хук и отдельного теста не получает (число на модальном окне — в `Manual verification`) |
+| `schema.d.ts` (сгенерирован) | расхождение с контрактом | `check:api` | keep | существующая проверка |
 
-Проверка остатков (`artifact-layout.md` "Agent memory"): удалённые термины — `PRODUCT_TAGLINE` и «Компетенции и карьерный рост»; в `src`, `web/src`, `tests`, `deploy`, `.claude/agent-memory/**` утверждений о них нет.
+Проверка остатков (`artifact-layout.md` "Agent memory"): удалены константа `PASSWORD_HINT` и утверждение «подсказка не называет длину»; в `src`, `web/src`, `tests`, `deploy`, `.claude/agent-memory/**` утверждений о них нет (поиск пуст, кроме нового комментария в `passwordPolicy.ts` о запасном тексте).
 
 ## Removed tests
 
@@ -36,8 +41,13 @@ responsibility:
 
 ## Added tests
 
+Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
+
 | Test | Regression proof |
 |---|---|
+| `PasswordPolicyTests.Ac19_PasswordPolicy_ReportsTheLengthThatDeploymentConfigured_WithoutASession`, `…_ReportsTheShippedDefault_WhenNothingIsOverridden` | mutation (эндпоинт отдаёт зашитое `10` вместо `RequiredLength`): `dotnet test --solution Competency.slnx -c Release --filter-class "*PasswordPolicyTests"` → exit 2, упал тест настроенной длины 17 (тест умолчания 10 прошёл, как и ожидалось); runs: 1; мутация откатана |
+| `ContractTests.Ac19_PasswordPolicy_IsPublished_AsAnAnonymousGet_WithoutA401Or429_AndWithTheMinimumLength` | n/a: закрепляет уже верный контракт нового метода, без мутации; зелёный на `openapi.json` HEAD |
+| `linkScreens.test.tsx`: «password hint on the … screen (AC-19)», 2 теста × 2 экрана | mutation (хук подставляет «Не короче 8» вместо `data.minLength`): `npx vitest run src/features/auth/linkScreens.test.tsx` → exit 1, упали 2 из 16 — оба «names the minimum length…» (по экрану); тест запасного текста мутацию не затрагивает; runs: 1; мутация откатана |
 
 ## Suite run
 
@@ -50,10 +60,10 @@ analysed, not any tree produced later
 (`.asd/rules/sprint-lifecycle.md` "Impacted test set").
 
 - Command: `dotnet test --solution Competency.slnx -c Release && npm --prefix web test` (`test` из `commands.yaml`; `-c Release`, вывод `Debug` может быть занят Visual Studio пользователя)
-- Scope: запись 5 — предохранитель не сработал, набор по ссылкам (`LoginPage`); для дешёвой уверенности прогнаны оба проекта целиком
-- Result: pass — backend 157 passed / 0 failed / 0 skipped (exit 0), web 11 файлов, 82 passed / 0 failed (exit 0)
+- Scope: запись 6 — предохранитель не сработал, набор по ссылкам (`ContractTests`, `PasswordPolicyTests`, `linkScreens.test.tsx`); для дешёвой уверенности прогнаны оба проекта целиком
+- Result: pass — backend 160 passed / 0 failed / 0 skipped (exit 0), web 11 файлов, 86 passed / 0 failed (exit 0)
 - Lint / build: pass — `npm --prefix web run lint` exit 0, `npm --prefix web run check:api` exit 0, `dotnet build Competency.slnx --tl:off -c Release` без предупреждений и ошибок, `npm --prefix web run build` exit 0
-- HEAD: c4d1c7a2756016571c86d0dc0081e32823a89001
+- HEAD: 13afa160414d429663c342197cb1a669235431c4
 
 ## Defects
 
@@ -85,3 +95,7 @@ result: fail — название «Калибр» мелкое, должно б
 | AC-18 (повтор) | Запустить приложение (профиль F5 «Everything»). Открыть `/login`, `/forgot-password`, `/accept-invitation#token=x` при ширине ~1280 px и ~820 px | название «Калибр» крупнее прежнего (1.5× заголовка), соразмерно логотипу 80 px; вёрстка карточки не ломается и не выходит за границы окна на обоих размерах |
 
 result: pass — название крупное, соразмерно логотипу; дополнительно: убрать подзаголовок «Компетенции и карьерный рост» (Task 10)
+
+| AC-19 | Запустить приложение (профиль F5 «Everything»). Открыть `/accept-invitation#token=x` («Задание пароля»), `/reset-password#token=x` («Новый пароль»), затем после входа открыть окно смены пароля. Сверить число с `Identity:Password:RequiredLength` (по умолчанию 10; при желании запустить API с `Identity__Password__RequiredLength=14`) | подсказка под полем пароля на всех трёх: «Не короче N символов; заглавные и строчные буквы, цифры и специальные символы.», N совпадает с настройкой |
+
+result:
