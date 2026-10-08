@@ -15,20 +15,19 @@ responsibility:
 | 2 | 906d167 | delta с записи 1: `git diff 1cdc829...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (4 файла: `appsettings.Development.json`, `launchSettings.json`, `deploy/dev/docker-compose.yml`, `deploy/dev/README.md`; AC-17) плюс правки памяти D-1/D-2 (1798700) |
 | 3 | 2d661f6 | delta с записи 2: `git diff 906d167...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (5 файлов: `AccountMail.cs`, `AuthCard.tsx`, `passwordPolicy.ts`, `LinkPasswordPage.tsx`, `UserForm.tsx`; AC-18) |
 | 4 | 6a13874 | delta с записи 3: `git diff 2d661f6...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (3 файла: `AuthCard.tsx`, `appsettings.json`, `deploy/README.md`; AC-18, AC-4 срок приглашения — неделя) |
+| 5 | | delta с записи 4: `git diff 6a13874...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (2 файла: `LoginPage.tsx`, `productName.ts`; AC-18, подзаголовок экрана входа убран) |
 
-Предохранитель impacted set (`sprint-lifecycle.md` "Impacted test set"), запись 4: `src/Competency.Api/appsettings.json` — общий конфиг хоста (читается каждым тестовым хостом и всеми модулями), поэтому предохранитель срабатывает: набор вырождается в полный пакет. Остальные файлы дельты (`AuthCard.tsx`, `deploy/README.md`) локальны. Предстратегический прогон на дереве записи: backend 156 из 157 (сбой — `AccountLinkTests` AC-4: срок приглашения 72 ч против `7.00:00:00`), web 82 из 82 (`AuthCard` тестами не закреплён). Сборка `Debug` занята процессом пользователя, backend в `-c Release`.
+Предохранитель impacted set (`sprint-lifecycle.md` "Impacted test set"), запись 5: дельта — `LoginPage.tsx` (удалён абзац-подзаголовок) и `web/src/app/productName.ts` (удалена константа `PRODUCT_TAGLINE`). Каталог `web/src/app/` — не сборочная, CI- или общая инфраструктура: файл держит только константы названия продукта, а удалённая константа имела единственного потребителя (`LoginPage`); поиск по `src`, `web/src`, `tests`, `deploy`, `.claude/agent-memory/**` ссылок на `PRODUCT_TAGLINE` и текст подзаголовка не нашёл. Предохранитель не срабатывает. Набор по ссылкам — `linkScreens.test.tsx`/тесты `LoginPage` (web), backend не затронут. Предстратегический прогон выполнен шире набора, дёшево: backend 157 из 157, web 82 из 82. Сборка `Debug` занята процессом пользователя, backend в `-c Release`.
 
 ## Risk → check decisions
 
-Строки записи 1 — в `test-plan.entry-01.md`, записи 2 — в `test-plan.entry-02.md`, записи 3 — в `test-plan.entry-03.md`. Запись 4 (delta с 2d661f6):
+Строки записей 1–4 — в `test-plan.entry-01.md` … `test-plan.entry-04.md`. Запись 5 (delta с 6a13874):
 
 | Change | Material risk | Chosen check | Decision | Reason |
 |---|---|---|---|---|
-| `appsettings.json`: `AccountLinks:InvitationLifetime` `3.00:00:00` → `7.00:00:00`; sprint.md Goal и AC-4 — неделя (AC-4) | срок приглашения по умолчанию меняется молча; существующая проверка закрепляет старое значение | `AccountLinkTests.Ac4_…` (интеграционный, срок `link_expires_at - link_issued_at` в БД) | adjust | требование изменилось, это не дефект кода: ожидание `FromHours(72)` → `FromDays(7)`, текст причины обновлён. Новый тест не нужен: тот же путь уже наблюдает срок через БД (§17) |
-| `AuthCard.tsx` (название «Калибр» 1.5× от heading-1 рядом с логотипом 80 px) (AC-18) | вёрстка карточки ломается на узкой ширине | — | none | чистая вёрстка (класс/размер), jsdom не считает геометрию; закрепление размера закрепило бы литерал стиля, а не поведение (§17). Новая строка `Manual verification` AC-18 для повторного просмотра |
-| `deploy/README.md` (срок приглашения) | проза расходится с конфигом | — | none | документация; проверена сверкой с `appsettings.json` |
+| `LoginPage.tsx` (убран абзац-подзаголовок «Компетенции и карьерный рост»), `productName.ts` (удалена `PRODUCT_TAGLINE`) (AC-18) | удаление ломает сборку или тест, ищущий текст; на экране остаётся пустой отступ | — | none | чистое удаление текста без ветвлений; ни один тест не опирается на подзаголовок (поиск выше, 157 + 82 зелёных без правок), `build` и `lint` ловят висячие импорты константы. Тест на отсутствие фразы закрепил бы буквальную прозу (`.claude/agent-memory/asd-dev-critical/project_tests-pin-literal-prose.md`), а не поведение (§17). Вид экрана пользователь уже подтвердил визуально в этом раунде, новая строка `Manual verification` не нужна |
 
-Проверка остатков (`artifact-layout.md` "Agent memory"): удалённый термин — срок приглашения 3 суток / 72 часа; в `src`, `web/src`, `tests`, `deploy`, `.claude/agent-memory/**` утверждений о нём не осталось (кроме `bin/` артефактов сборки).
+Проверка остатков (`artifact-layout.md` "Agent memory"): удалённые термины — `PRODUCT_TAGLINE` и «Компетенции и карьерный рост»; в `src`, `web/src`, `tests`, `deploy`, `.claude/agent-memory/**` утверждений о них нет.
 
 ## Removed tests
 
@@ -51,10 +50,10 @@ analysed, not any tree produced later
 (`.asd/rules/sprint-lifecycle.md` "Impacted test set").
 
 - Command: `dotnet test --solution Competency.slnx -c Release && npm --prefix web test` (`test` из `commands.yaml`; `-c Release`, вывод `Debug` может быть занят Visual Studio пользователя)
-- Scope: запись 4 — предохранитель сработал (`appsettings.json`), прогнан полный набор обоих проектов. Предстратегический прогон: backend 156/157 (ожидаемый сбой AC-4), после корректировки теста — итог ниже
+- Scope: запись 5 — предохранитель не сработал, набор по ссылкам (`LoginPage`); для дешёвой уверенности прогнаны оба проекта целиком
 - Result: pass — backend 157 passed / 0 failed / 0 skipped (exit 0), web 11 файлов, 82 passed / 0 failed (exit 0)
 - Lint / build: pass — `npm --prefix web run lint` exit 0, `npm --prefix web run check:api` exit 0, `dotnet build Competency.slnx --tl:off -c Release` без предупреждений и ошибок, `npm --prefix web run build` exit 0
-- HEAD: 303e5c5b75413ebfc76f9b7c5a52aefaba8ecbd0
+- HEAD: c4d1c7a2756016571c86d0dc0081e32823a89001
 
 ## Defects
 
