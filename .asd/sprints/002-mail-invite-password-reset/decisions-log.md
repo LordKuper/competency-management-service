@@ -139,3 +139,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — impl-test entry 10: web 89/89, lint/build 0, backend build 0/0; 3 tests added (fail-first); NEXT impl-review
 - 2026-10-08 — impl-review wave 3 iteration 2 (floor medium)
 - 2026-10-08 — impl-review wave-3/iter-02: external APPROVE (latched), combined CONCERNS (F1 high: in-body comment in userMail.test.tsx it(...); F2 medium: useSendUserMail JSDoc detached by SENDING_KEY const and stale) → impl review-fix (review_fixes_pending = wave-3/iter-02): dev chain F2, tester chain F1 (standard)
+- 2026-10-08 — route review-fix wave-3/iter-02: standard (dev F2, then tester F1), dispatch HEAD 41c3c22; risk none via lint
+- 2026-10-08 — review-fix wave-3/iter-02 done (29f4ba0 dev F2 JSDoc placement/text; ffa3b15 tester F1 isClosing helper with JSDoc, web 89/89); completion gate lint 0, web build 0
+- 2026-10-08 — impl fix for wave-3/iter-02: findings resolved
