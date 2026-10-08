@@ -35,15 +35,3 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
-
-## 2026-10-08 — audit answers (Q-1…Q-4)
-
-- **Decision**: Q-1 — анонимный «Не помню пароль» всегда отвечает нейтрально, отказ SMTP только в журнале и логе. Q-2 — действия администратора отправляют письмо синхронно после фиксации с коротким таймаутом, анонимный запрос — фоновая очередь в памяти (без outbox). Q-3 — `info.version` 2.0.0, путь `/api/v1` прежний. Q-4 — скрипт наполнения 10 000+ создаёт первая Task с perf-риском, в этом спринте нет.
-- **Rationale**: Решения пользователя (рекомендованные варианты); затраты по AC-1, AC-9, AC-12: 0 итераций ревью, 0 раундов исправлений.
-- **Affected docs**: sprint.md AC-1, AC-9, AC-12; audit.md Contradictions, Gaps
-
-## 2026-10-08 — audit accepted (adaptive)
-
-- **Decision**: audit.md принят адаптивно; почтовый перехватчик — Mailpit `axllent/mailpit:v1.31.4` (MIT, только разработка), tech-reference пишется до реализации.
-- **Rationale**: Все жёсткие решения (противоречия, изменения AC) приняты пользователем; новых подсистем нет; выбор перехватчика делегирован пользователем в scope. Mailpit в интеграционных тестах (если plan его предложит) — решение plan.
-- **Affected docs**: audit.md, sprint.md
