@@ -85,3 +85,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: AC-18 уточнён: «Калибр» у логотипа — крупным шрифтом, соразмерным логотипу. Срок ссылки-приглашения по умолчанию — 7 дней вместо 72 часов (допущение в `sprint.md` Goal, AC-4). Task 9 в новой последней волне 8.
 - **Rationale**: Замечания пользователя на smoke-проверке. Затраты AC-18 и AC-4: 0 итераций ревью, 0 раундов исправлений (ревью ещё не было).
 - **Affected docs**: sprint.md, plan.md Task 9, test-plan.md Manual verification
+- 2026-10-08 — impl-test entry 3 → NEXT impl initial for unticked Task 9 (F-2)
