@@ -40,10 +40,10 @@ Standing DoD applies (`sprint-lifecycle.md` "Plan file format") — not restated
 
 ### Task 1: Правила проекта из ретро
 Material risk: none
-- [ ] AC-12: заменить раздел «Verification depth in impl» в `.asd/project/custom-coding-rules.md` текстом строки `001-project-init-org-structure#P-1` (`.asd/project/retro-backlog.md`) с уточнением AC-12: скрипт наполнения 10 000+ сотрудников создаёт первая Task с объявленным perf-риском и далее он переиспользуется; Playwright и e2e не используются
-- [ ] AC-14: добавить в `.asd/project/custom-coding-rules.md` правило `#P-3` (блокировка каждого многострочного инварианта объявляется в plan с местом в общем порядке блокировок и получает детерминированный тест гонки в impl-test)
-- [ ] AC-16: добавить в `.asd/project/custom-coding-rules.md` правило `#P-5` (общие для модулей вспомогательные типы живут в `Competency.Platform`)
-- [ ] AC-15: добавить в `.asd/project/custom-common-rules.md` правило `#P-4` (запрет разрушающих команд Docker для dev-стека пользователя и томов с фиксированным именем; временные прогоны — только собственные именованные тома, удаление по точному имени)
+- [x] AC-12: заменить раздел «Verification depth in impl» в `.asd/project/custom-coding-rules.md` текстом строки `001-project-init-org-structure#P-1` (`.asd/project/retro-backlog.md`) с уточнением AC-12: скрипт наполнения 10 000+ сотрудников создаёт первая Task с объявленным perf-риском и далее он переиспользуется; Playwright и e2e не используются
+- [x] AC-14: добавить в `.asd/project/custom-coding-rules.md` правило `#P-3` (блокировка каждого многострочного инварианта объявляется в plan с местом в общем порядке блокировок и получает детерминированный тест гонки в impl-test)
+- [x] AC-16: добавить в `.asd/project/custom-coding-rules.md` правило `#P-5` (общие для модулей вспомогательные типы живут в `Competency.Platform`)
+- [x] AC-15: добавить в `.asd/project/custom-common-rules.md` правило `#P-4` (запрет разрушающих команд Docker для dev-стека пользователя и томов с фиксированным именем; временные прогоны — только собственные именованные тома, удаление по точному имени)
 
 ### Task 2: Общие вспомогательные типы в Competency.Platform
 Material risk: artifact: cross-module refactor via `git diff -- openapi/openapi.json` пуст и `npm --prefix web run check:api`
