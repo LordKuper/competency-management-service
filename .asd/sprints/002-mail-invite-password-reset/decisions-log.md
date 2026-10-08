@@ -129,3 +129,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — impl fix for wave-2/iter-02: findings resolved
 - 2026-10-08 — route impl-test entry 9: standard, dispatch HEAD 7750700; risk none via test run
 - 2026-10-08 — impl-test entry 9: empty code delta; backend 166/166, lint 0; 0/0 tests; NEXT impl-review
+- 2026-10-08 — impl-review wave 2 iteration 3 (floor high): external latched (iter 2), combined only
+- 2026-10-08 — impl-review wave-2/iter-03: combined APPROVE (latched), external inherited APPROVE; wave 2 roster met → wave 3 iteration 1 (floor low)
