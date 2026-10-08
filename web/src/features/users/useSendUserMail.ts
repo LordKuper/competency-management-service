@@ -25,14 +25,15 @@ export function useMailReport() {
   };
 }
 
-/**
- * Returns the action that e-mails an account a new link: the invitation again to an invited account, or a password
- * reset link to a registered one. The new link voids the previous one; the server refuses an account in the wrong state.
- * The accounts are reread whatever the outcome. The send is synchronous on the server, so a progress message stays
- * up meanwhile and the row being sent cannot be sent again (a second click would carry the stale version and get 412).
- */
 const SENDING_KEY = "send-user-mail";
 
+/**
+ * Returns the action that e-mails an account a new link (the invitation again to an invited account, or a password
+ * reset link to a registered one) and whether a send is in progress: `{ sendMail, isSending }`. The new link voids the
+ * previous one; the server refuses an account in the wrong state. The accounts are reread whatever the outcome. The
+ * send is synchronous on the server, so a progress message stays up meanwhile and no account can be sent again until
+ * it ends (a repeated click would carry the stale version and get 412).
+ */
 export function useSendUserMail() {
   const { message } = App.useApp();
   const reportMail = useMailReport();
