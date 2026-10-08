@@ -86,3 +86,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Замечания пользователя на smoke-проверке. Затраты AC-18 и AC-4: 0 итераций ревью, 0 раундов исправлений (ревью ещё не было).
 - **Affected docs**: sprint.md, plan.md Task 9, test-plan.md Manual verification
 - 2026-10-08 — impl-test entry 3 → NEXT impl initial for unticked Task 9 (F-2)
+- 2026-10-08 — route Task 9: standard, dispatch HEAD 0fb31c2; risk none
+- 2026-10-08 — wave 8 done: Task 9 (af3f5c6); completion gate: build 0/0, lint 0, paths within Task 9; impl assessment passed adaptively (flagged: name 45 px = 1.5× heading-1 token, above DESIGN.md scale — wordmark token to be proposed at design-promote, hard gate); known test AccountLinkTests.cs:51 asserts 72 h → impl-test

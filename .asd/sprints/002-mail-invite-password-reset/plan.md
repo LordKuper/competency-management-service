@@ -129,8 +129,8 @@ Tech reference: react-19.3.0, antd-6.6.5, aspnetcore-10.0.12.
 
 ### Task 9: Крупное название у логотипа и срок приглашения 7 дней
 Material risk: none
-- [ ] AC-18: `web/src/features/auth/AuthCard.tsx` — название «Калибр» крупным шрифтом, соразмерным логотипу 80 px (токены antd / `docs/ux/DESIGN.md`; на ширине ~820 px не переносится некрасиво и не выходит за карточку)
-- [ ] AC-4: срок ссылки-приглашения по умолчанию — 7 дней: `AccountLinks:InvitationLifetime` = `7.00:00:00` в `src/Competency.Api/appsettings.json` и значение по умолчанию в `deploy/README.md`; прочие упоминания 72 часов/`3.00:00:00` в коде и `deploy/**` (grep)
+- [x] AC-18: `web/src/features/auth/AuthCard.tsx` — название «Калибр» крупным шрифтом, соразмерным логотипу 80 px (токены antd / `docs/ux/DESIGN.md`; на ширине ~820 px не переносится некрасиво и не выходит за карточку)
+- [x] AC-4: срок ссылки-приглашения по умолчанию — 7 дней: `AccountLinks:InvitationLifetime` = `7.00:00:00` в `src/Competency.Api/appsettings.json` и значение по умолчанию в `deploy/README.md`; прочие упоминания 72 часов/`3.00:00:00` в коде и `deploy/**` (grep)
 Tech reference: react-19.3.0, antd-6.6.5, aspnetcore-10.0.12.
 
 ## Risks

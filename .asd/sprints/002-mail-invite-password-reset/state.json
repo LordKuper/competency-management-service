@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-mail-invite-password-reset",
   "branch": "sprint/002-mail-invite-password-reset",
-  "phase": "impl",
+  "phase": "impl-test",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -121,6 +121,14 @@
       "decision": "AC-18 changed (large product name), invitation lifetime default 72h -> 7 days; Task 9 wave 8",
       "reason": "smoke remarks; cost AC-18/AC-4: 0 iterations / 0 fix rounds",
       "evidence": "decisions-log.md 2026-10-08 scope amendment Task 9"
+    },
+    {
+      "gate": "impl assessment",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "approve Task 9",
+      "reason": "user-requested larger name and 7-day lifetime; flagged 45 px (1.5x heading-1 token) above DESIGN.md scale accepted for impl, DESIGN.md wordmark token proposal deferred to design-promote hard gate; build 0/0, lint clean",
+      "evidence": "af3f5c6",
+      "artifact_revision": "af3f5c6"
     }
   ],
   "task_routing": {
@@ -201,6 +209,12 @@
       "execution": "agent",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "impl-test entry 4": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -223,7 +237,7 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T11:48:35.218Z",
+  "updated_at": "2026-10-08T11:49:58.721Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
