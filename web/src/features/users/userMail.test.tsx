@@ -212,10 +212,11 @@ describe("new account (AC-4, AC-11)", () => {
       screen.getByRole("button", { name: "Создать пользователя" }),
     );
     const dialog = within(await screen.findByRole("dialog"));
+    expect(dialog.getByLabelText("E-mail")).toBeInTheDocument();
+    expect(dialog.queryByLabelText(/Пароль/)).not.toBeInTheDocument();
     await user.type(dialog.getByLabelText("E-mail"), "new@test.local");
     await user.click(dialog.getByRole("button", { name: "Создать" }));
 
-    expect(dialog.queryByLabelText(/Пароль/)).not.toBeInTheDocument();
     expect(await screen.findByText(MAIL_NOT_SENT)).toBeInTheDocument();
     expect(await fakeApi.calls("POST /api/v1/users")[0]?.json()).toEqual({
       email: "new@test.local",
