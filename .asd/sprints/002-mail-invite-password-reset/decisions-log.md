@@ -62,3 +62,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — Task 7 (AC-17, undispatched) amended: + `MP_SMTP_DISABLE_RDNS: "true"` for dev Mailpit (impl-test entry 1 observation: ~8–10 s SMTP greeting via reverse DNS); within AC-17 "Mailpit по умолчанию", no new criterion
 - 2026-10-08 — impl-test entry 1: suite green (full via safety valve, -c Release: backend 157/157, web 82/82, lint/build/check:api clean), 8 test files added, 0 tests removed (5 rewritten in place for AC-4/AC-9); manual verification rows AC-11, AC-3 deferred to the first green entry
 - 2026-10-08 — impl-test: defects D-1, D-2 (agent memory, asd-dev-critical) → impl test-fix (digest 702cd83ca8c9c9d848d9341a9cd5feca9c29ab332bb4b8db89b0c0d2320c051f); the same impl entry then runs unticked Task 7 (AC-17) in initial mode
+- 2026-10-08 — route test-fix D-1,D-2: standard (memory-fix dispatch to owner asd-dev-critical), dispatch HEAD eacf980; risk none via grep of the two memory files
+- 2026-10-08 — impl test-fix: defects D-1, D-2 resolved (1798700, memory-fix by owner asd-dev-critical); continuing the same impl entry in initial mode over unticked Task 7 (F-1)
