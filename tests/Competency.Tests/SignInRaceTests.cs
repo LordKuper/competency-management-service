@@ -1,7 +1,6 @@
 using System.Net;
 using AwesomeAssertions;
 using Competency.Tests.Infrastructure;
-using Npgsql;
 using Xunit;
 
 namespace Competency.Tests;
@@ -17,7 +16,6 @@ public sealed class SignInRaceTests(SignInRaceHost fixture) : IClassFixture<Sign
     private const int AttemptsBeforeLockout = 5;
     private const string WrongPassword = "Wrong-Pass-12345!";
     private const string NewPassword = "Guessed-Pass-12345!";
-    private const string WaitingForALock = "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'";
 
     public enum Surface
     {
@@ -80,43 +78,9 @@ public sealed class SignInRaceTests(SignInRaceHost fixture) : IClassFixture<Sign
                 ? SignInAsync(host, account.Email, WrongPassword)
                 : session.PostAsync("/api/v1/auth/change-password", new { currentPassword = WrongPassword, newPassword = NewPassword }))
             .ToArray();
-        await Waiting.UntilAsync(async () => await host.ScalarAsync<long>(WaitingForALock) >= attempts, "every attempt waits for a lock");
+        await RowLock.UntilWaitingAsync(host, attempts);
         await held.ReleaseAsync();
         return await Task.WhenAll(pending);
-    }
-
-    /// <summary>
-    /// The row lock of one account, held in a transaction on a connection of its own, so that every request that locks or changes the
-    /// account stops until the lock is released.
-    /// </summary>
-    private sealed class RowLock : IAsyncDisposable
-    {
-        private readonly NpgsqlConnection connection;
-        private readonly NpgsqlTransaction transaction;
-
-        private RowLock(NpgsqlConnection connection, NpgsqlTransaction transaction)
-        {
-            this.connection = connection;
-            this.transaction = transaction;
-        }
-
-        public static async Task<RowLock> HoldAsync(ApiHost host, Guid userId)
-        {
-            var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(host.ConnectionString) { Pooling = false }.ConnectionString);
-            await connection.OpenAsync(TestContext.Current.CancellationToken);
-            var transaction = await connection.BeginTransactionAsync(TestContext.Current.CancellationToken);
-            await using var command = new NpgsqlCommand($"SELECT id FROM users WHERE id = '{userId}' FOR UPDATE", connection, transaction);
-            await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
-            return new RowLock(connection, transaction);
-        }
-
-        public Task ReleaseAsync() => transaction.CommitAsync(TestContext.Current.CancellationToken);
-
-        public async ValueTask DisposeAsync()
-        {
-            await transaction.DisposeAsync();
-            await connection.DisposeAsync();
-        }
     }
 }
 

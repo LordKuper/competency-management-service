@@ -17,6 +17,11 @@ public sealed class ApiHost : IAsyncDisposable
     public const string AdminEmail = "admin@test.local";
     public const string AdminPassword = "Admin-Test-12345!";
 
+    /// <summary>
+    /// The public address that the links in the mail of every host are built from.
+    /// </summary>
+    public const string PublicBaseUrl = "https://calibr.test.local";
+
     private static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan LogTimeout = TimeSpan.FromSeconds(10);
 
@@ -32,6 +37,17 @@ public sealed class ApiHost : IAsyncDisposable
         BaseAddress = baseAddress;
         ConnectionString = connectionString;
         admin = new Lazy<Task<ApiClient>>(() => LoginAsync(AdminEmail, AdminPassword));
+    }
+
+    /// <summary>
+    /// A TCP port on the loopback interface that nothing listens on, for a host whose mail server is not there.
+    /// </summary>
+    /// <returns>The port number.</returns>
+    public static int FreePort()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        return ((IPEndPoint)listener.LocalEndpoint).Port;
     }
 
     public Uri BaseAddress { get; }
@@ -128,6 +144,9 @@ public sealed class ApiHost : IAsyncDisposable
         startInfo.Environment["Bootstrap__AdminPassword"] = AdminPassword;
         startInfo.Environment["DataProtection__KeysPath"] = keysPath;
         startInfo.Environment["RateLimiting__Login__PermitLimit"] = "100000";
+        startInfo.Environment["RateLimiting__PasswordReset__PermitLimit"] = "100000";
+        startInfo.Environment["AccountLinks__PasswordResetInterval"] = "00:00:00";
+        startInfo.Environment["App__PublicBaseUrl"] = PublicBaseUrl;
         foreach (var (name, value) in settings ?? new Dictionary<string, string>())
         {
             startInfo.Environment[name] = value;
@@ -158,7 +177,7 @@ public sealed class ApiHost : IAsyncDisposable
     /// A client without a session.
     /// </summary>
     /// <returns>The anonymous client.</returns>
-    public ApiClient Anonymous() => new(BaseAddress);
+    public ApiClient Anonymous() => new(BaseAddress, this);
 
     /// <summary>
     /// The client of the first administrator created from the environment, signed in once and shared by the tests of this host.
@@ -198,13 +217,6 @@ public sealed class ApiHost : IAsyncDisposable
         {
             Directory.Delete(keysPath, recursive: true);
         }
-    }
-
-    private static int FreePort()
-    {
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        return ((IPEndPoint)listener.LocalEndpoint).Port;
     }
 
     private void Append(string? line)

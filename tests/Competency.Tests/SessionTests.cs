@@ -27,6 +27,7 @@ public sealed class SessionTests(TestEnvironment environment)
         var leaver = await admin.CreateUserAsync(employeeId: gone.Id);
         (await admin.PostAsync($"/api/v1/employees/{gone.Id}/dismiss", ifMatch: gone.ETag)).Expect(HttpStatusCode.OK);
         var known = await admin.CreateUserAsync();
+        var invited = await admin.InviteUserAsync();
 
         var failures = new[]
         {
@@ -34,6 +35,7 @@ public sealed class SessionTests(TestEnvironment environment)
             await SignInAsync(host, known.Email, "Wrong-Pass-12345!"),
             await SignInAsync(host, blocked.Email, blocked.Password),
             await SignInAsync(host, leaver.Email, leaver.Password),
+            await SignInAsync(host, invited.Email, invited.Password),
         };
 
         failures.Select(failure => failure.Status).Should().AllBeEquivalentTo(HttpStatusCode.Unauthorized);
@@ -91,22 +93,30 @@ public sealed class SessionTests(TestEnvironment environment)
     }
 
     [Fact]
-    public async Task Ac7_PasswordReset_EndsSessionsAndReplacesThePassword()
+    public async Task Ac8_PasswordResetByLink_EndsSessionsReplacesThePasswordAndEndsALockout()
     {
         var host = await environment.SharedHostAsync();
         var admin = await host.AdminAsync();
         var account = await admin.CreateUserAsync();
         var session = await account.SignInAsync(host);
         const string NewPassword = "Reset-Pass-12345!";
+        for (var attempt = 0; attempt < AttemptsBeforeLockout; attempt++)
+        {
+            (await SignInAsync(host, account.Email, WrongPassword)).Status.Should().Be(HttpStatusCode.Unauthorized);
+        }
 
-        var weak = await admin.PostAsync($"/api/v1/users/{account.Id}/reset-password", new { newPassword = "short" }, account.ETag);
-        (await admin.PostAsync($"/api/v1/users/{account.Id}/reset-password", new { newPassword = NewPassword }, account.ETag)).Expect(HttpStatusCode.OK);
+        (await SignInAsync(host, account.Email, account.Password)).Status.Should().Be(HttpStatusCode.Unauthorized, "the account is locked");
+        (await host.Anonymous().PostAsync("/api/v1/auth/forgot-password", new { email = account.Email })).Expect(HttpStatusCode.Accepted);
+        var token = (await environment.Mail.WaitForAsync(account.Email, 2))[1].Token;
+
+        var weak = await host.Anonymous().PostAsync("/api/v1/auth/reset-password", new { token, password = "short" });
+        (await host.Anonymous().PostAsync("/api/v1/auth/reset-password", new { token, password = NewPassword })).Expect(HttpStatusCode.NoContent);
 
         weak.Status.Should().Be(HttpStatusCode.BadRequest);
-        weak.FieldErrors("newPassword").Should().NotBeEmpty();
+        weak.FieldErrors("password").Should().NotBeEmpty();
         (await session.GetAsync("/api/v1/auth/me")).Status.Should().Be(HttpStatusCode.Unauthorized);
         (await SignInAsync(host, account.Email, account.Password)).Status.Should().Be(HttpStatusCode.Unauthorized);
-        (await SignInAsync(host, account.Email, NewPassword)).Status.Should().Be(HttpStatusCode.OK);
+        (await SignInAsync(host, account.Email, NewPassword)).Status.Should().Be(HttpStatusCode.OK, "the reset ended the lockout");
     }
 
     [Fact]

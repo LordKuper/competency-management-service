@@ -74,7 +74,7 @@ public sealed class PlatformTests(TestEnvironment environment)
         const string OtherPassword = "Other-Admin-12345!";
         var settings = new Dictionary<string, string> { ["Bootstrap__AdminEmail"] = otherEmail, ["Bootstrap__AdminPassword"] = OtherPassword };
 
-        await using var restarted = await ApiHost.StartAsync(shared.ConnectionString, settings);
+        await using var restarted = await ApiHost.StartAsync(shared.ConnectionString, environment.WithMail(settings));
 
         var admin = await restarted.LoginAsync(ApiHost.AdminEmail, ApiHost.AdminPassword);
         (await admin.GetAsync($"/api/v1/users?q={Uri.EscapeDataString(otherEmail)}")).Json!["total"]!.GetValue<int>().Should().Be(0);
@@ -82,11 +82,47 @@ public sealed class PlatformTests(TestEnvironment environment)
             .Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    [Theory]
+    [InlineData("Smtp__Host", "", "Smtp:Host")]
+    [InlineData("Smtp__From", "not a mailbox", "Smtp:From")]
+    [InlineData("Smtp__UserName", "only-a-name", "Smtp:UserName")]
+    [InlineData("App__PublicBaseUrl", "ftp://calibr.test.local", "App:PublicBaseUrl")]
+    [InlineData("AccountLinks__InvitationLifetime", "00:00:00", "AccountLinks:InvitationLifetime")]
+    public async Task Ac1_StartWithAMissingOrInvalidMailOrLinkSetting_FailsNamingTheSetting(string name, string value, string setting)
+    {
+        ApiHost? started = null;
+        var failure = await Record.ExceptionAsync(async () => started = await environment.StartHostAsync(new Dictionary<string, string> { [name] = value }));
+        if (started is not null)
+        {
+            await started.DisposeAsync();
+        }
+
+        failure.Should().BeOfType<InvalidOperationException>("a host that cannot send its mail or build its links must refuse to start");
+        failure!.Message.Should().Contain($"'{setting}'");
+    }
+
+    [Fact]
+    public async Task Ac4_BootstrapAdministrator_IsCreatedWhenTheOnlyAdministratorHasNotSetAPasswordYet()
+    {
+        await using var first = await environment.StartHostAsync();
+        await first.ExecuteAsync($"UPDATE users SET password_hash = NULL WHERE email = '{ApiHost.AdminEmail}'");
+        var otherEmail = $"{Scenarios.Unique("bootstrap")}@test.local";
+        const string OtherPassword = "Other-Admin-12345!";
+        var settings = new Dictionary<string, string> { ["Bootstrap__AdminEmail"] = otherEmail, ["Bootstrap__AdminPassword"] = OtherPassword };
+
+        await using var restarted = await ApiHost.StartAsync(first.ConnectionString, environment.WithMail(settings));
+
+        var created = await restarted.LoginAsync(otherEmail, OtherPassword);
+        (await created.GetAsync("/api/v1/users?role=GlobalAdmin")).Expect(HttpStatusCode.OK);
+        (await restarted.Anonymous().PostAsync("/api/v1/auth/login", new { email = ApiHost.AdminEmail, password = ApiHost.AdminPassword })).Status
+            .Should().Be(HttpStatusCode.Unauthorized, "an administrator without a password cannot sign in");
+    }
+
     /// <summary>
     /// Runs on a host of its own, so that only this test's records can satisfy the wait for the 412 log line.
     /// </summary>
     [Fact]
-    public async Task Ac5_Logs_AreJsonAndCarryNoPasswordsEmailsNamesOrSqlValues()
+    public async Task Ac5_Logs_AreJsonAndCarryNoPasswordsEmailsNamesLinksOrSqlValues()
     {
         await using var host = await environment.StartHostAsync();
         var admin = await host.AdminAsync();
@@ -95,7 +131,11 @@ public sealed class PlatformTests(TestEnvironment environment)
         var wrongPassword = $"Wrong-{Guid.NewGuid():N}-2!";
         var unit = await admin.CreateUnitAsync(name: Scenarios.Unique("Отдел-лог"));
         var employee = await admin.CreateEmployeeAsync(unit.Id, lastName: Scenarios.Unique("Логов"));
-        (await admin.PostAsync("/api/v1/users", new { email, password, role = Scenarios.User, employeeId = employee.Id })).Expect(HttpStatusCode.Created);
+        (await admin.PostAsync("/api/v1/users", new { email, role = Scenarios.User, employeeId = employee.Id })).Expect(HttpStatusCode.Created);
+        var invitation = (await environment.Mail.WaitForAsync(email))[0];
+        (await host.Anonymous().PostAsync("/api/v1/auth/accept-invitation", new { token = invitation.Token, password })).Expect(HttpStatusCode.NoContent);
+        (await host.Anonymous().PostAsync("/api/v1/auth/forgot-password", new { email })).Expect(HttpStatusCode.Accepted);
+        var reset = (await environment.Mail.WaitForAsync(email, 2))[1];
         (await host.Anonymous().PostAsync("/api/v1/auth/login", new { email, password = wrongPassword })).Status.Should().Be(HttpStatusCode.Unauthorized);
 
         var stale = await admin.PutAsync($"/api/v1/org-units/{unit.Id}", new { name = "Чужое имя", headEmployeeId = (Guid?)null }, "\"999\"");
@@ -103,7 +143,12 @@ public sealed class PlatformTests(TestEnvironment environment)
         stale.Status.Should().Be(HttpStatusCode.PreconditionFailed);
         var logs = await host.LogsAfterAsync("\"Status\":412");
         logs.Split('\n').Where(line => line.Trim().Length > 0).Should().OnlyContain(line => line.TrimStart().StartsWith('{'), "every log line is a JSON document");
-        foreach (var personalValue in new[] { email, password, wrongPassword, unit.Json!["name"]!.GetValue<string>(), employee.Json!["lastName"]!.GetValue<string>() })
+        var personalValues = new[]
+        {
+            email, password, wrongPassword, unit.Json!["name"]!.GetValue<string>(), employee.Json!["lastName"]!.GetValue<string>(),
+            invitation.Token, reset.Token, invitation.Link.ToString(), reset.Link.ToString(), ApiHost.PublicBaseUrl, invitation.Subject, invitation.Subject.JsonEscaped(), "Здравствуйте".JsonEscaped(),
+        };
+        foreach (var personalValue in personalValues)
         {
             logs.Should().NotContain(personalValue);
         }

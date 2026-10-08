@@ -81,63 +81,134 @@ public sealed class AuditTests(TestEnvironment environment)
     {
         var host = await environment.SharedHostAsync();
         var admin = await host.AdminAsync();
-        var secrets = new[] { $"Create-{Guid.NewGuid():N}-1!", $"Reset-{Guid.NewGuid():N}-2!", $"Change-{Guid.NewGuid():N}-3!", $"Wrong-{Guid.NewGuid():N}-4!" };
+        var secrets = new[] { $"Create-{Guid.NewGuid():N}-1!", $"Change-{Guid.NewGuid():N}-2!", $"Wrong-{Guid.NewGuid():N}-3!" };
         var email = $"{Scenarios.Unique("secret")}@test.local";
-        var created = (await admin.PostAsync("/api/v1/users", new { email, password = secrets[0], role = Scenarios.User, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
-        var reset = (await admin.PostAsync($"/api/v1/users/{created.Id}/reset-password", new { newPassword = secrets[1] }, created.ETag)).Expect(HttpStatusCode.OK);
-        var session = await host.LoginAsync(email, secrets[1]);
-        (await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = secrets[1], newPassword = secrets[2] })).Expect(HttpStatusCode.NoContent);
-        (await host.Anonymous().PostAsync("/api/v1/auth/login", new { email, password = secrets[3] })).Status.Should().Be(HttpStatusCode.Unauthorized);
+        var created = (await admin.PostAsync("/api/v1/users", new { email, role = Scenarios.User, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
+        var token = (await environment.Mail.WaitForAsync(email))[0].Token;
+        var registered = (await host.Anonymous().PostAsync("/api/v1/auth/accept-invitation", new { token, password = secrets[0] })).Expect(HttpStatusCode.NoContent);
+        var session = await host.LoginAsync(email, secrets[0]);
+        (await session.PostAsync("/api/v1/auth/change-password", new { currentPassword = secrets[0], newPassword = secrets[1] })).Expect(HttpStatusCode.NoContent);
+        (await host.Anonymous().PostAsync("/api/v1/auth/login", new { email, password = secrets[2] })).Status.Should().Be(HttpStatusCode.Unauthorized);
 
-        var creation = (await admin.AuditOfRequestAsync(created.RequestId!)).Single()!;
+        var creation = (await admin.AuditOfRequestAsync(created.RequestId!)).Single(row => row!["action"]!.GetValue<string>() == "AppUser.Created")!;
         Keys(creation["newValue"]).Should().Equal(UserProperties);
-        (await admin.AuditOfRequestAsync(reset.RequestId!)).Actions().Should().Equal("AppUser.PasswordReset");
+        (await admin.AuditOfRequestAsync(registered.RequestId!)).Actions().Should().Equal("Auth.RegistrationCompleted");
         foreach (var secret in secrets)
         {
             (await CountRowsAsync(host, $"concat_ws(' ', old_value::text, new_value::text, reason, entity_id, actor) LIKE '%{secret}%'"))
                 .Should().Be(0, "no journal row may contain a password");
         }
 
-        (await CountRowsAsync(host, "concat_ws(' ', old_value::text, new_value::text) ~* '(password|hash|stamp|lockout|concurrency)'"))
+        (await CountRowsAsync(host, "concat_ws(' ', old_value::text, new_value::text) ~* '(password|hash|stamp|lockout|concurrency|link|token)'"))
             .Should().Be(0, "only allow-listed properties are journaled");
     }
 
+    [Fact]
+    public async Task Ac10_LinkEvents_AreJournaledWithTheirActorAndCarryNoTokenLinkAddressOrPassword()
+    {
+        var host = await environment.SharedHostAsync();
+        var admin = await host.AdminAsync();
+        var adminId = (await admin.GetAsync("/api/v1/auth/me")).Id;
+        var email = $"{Scenarios.Unique("events")}@test.local";
+        const string NewPassword = "Events-Pass-12345!";
+        var invited = await admin.InviteUserAsync(email: email);
+        var invitation = (await environment.Mail.WaitForAsync(email))[0];
+        (await admin.PostAsync($"/api/v1/users/{invited.Id}/resend-invitation", ifMatch: (await admin.GetUserAsync(invited.Id)).ETag)).Expect(HttpStatusCode.OK);
+        var repeat = (await environment.Mail.WaitForAsync(email, 2))[1];
+        (await host.Anonymous().PostAsync("/api/v1/auth/accept-invitation", new { token = repeat.Token, password = Scenarios.UserPassword })).Expect(HttpStatusCode.NoContent);
+        var sentByAdmin = (await admin.PostAsync($"/api/v1/users/{invited.Id}/send-password-reset", ifMatch: (await admin.GetUserAsync(invited.Id)).ETag)).Expect(HttpStatusCode.OK);
+        var adminLink = (await environment.Mail.WaitForAsync(email, 3))[2];
+        var asked = (await host.Anonymous().PostAsync("/api/v1/auth/forgot-password", new { email })).Expect(HttpStatusCode.Accepted);
+        await Waiting.UntilAsync(async () => (await admin.AuditOfRequestAsync(asked.RequestId!)).Count > 0, "the queued request is journaled");
+        var askedLink = (await environment.Mail.WaitForAsync(email, 4))[3];
+        var reset = (await host.Anonymous().PostAsync("/api/v1/auth/reset-password", new { token = askedLink.Token, password = NewPassword })).Expect(HttpStatusCode.NoContent);
+
+        var byAccount = (await admin.GetAsync($"/api/v1/audit?entityId={invited.Id}&pageSize=200")).Expect(HttpStatusCode.OK).Json!["items"]!.AsArray();
+        byAccount.Actions().Should().Equal(
+            "AppUser.Created",
+            "AppUser.InvitationSent",
+            "AppUser.InvitationSent",
+            "Auth.PasswordResetCompleted",
+            "Auth.PasswordResetRequested",
+            "Auth.PasswordResetRequested",
+            "Auth.RegistrationCompleted");
+        byAccount.Where(row => row!["action"]!.GetValue<string>() == "AppUser.InvitationSent")
+            .Select(row => row!["reason"]!.GetValue<string>()).Order().Should().Equal("Initial", "Repeat");
+        byAccount.Where(row => row!["action"]!.GetValue<string>() == "Auth.PasswordResetRequested")
+            .Select(row => row!["actor"]!.GetValue<string>()).Order().Should().BeEquivalentTo(new[] { adminId.ToString(), invited.Id.ToString() }.Order());
+        (await admin.AuditOfRequestAsync(sentByAdmin.RequestId!)).Single()!["actor"]!.GetValue<string>().Should().Be(adminId.ToString());
+        (await admin.AuditOfRequestAsync(asked.RequestId!)).Single()!["actor"]!.GetValue<string>()
+            .Should().Be(invited.Id.ToString(), "a request the account made itself is journaled from the queue under the account's identity and the request's id");
+        (await admin.AuditOfRequestAsync(reset.RequestId!)).Single()!["actor"]!.GetValue<string>().Should().Be(invited.Id.ToString());
+        var secrets = new[] { invitation.Token, repeat.Token, adminLink.Token, askedLink.Token, ApiHost.PublicBaseUrl, "token=", NewPassword, Scenarios.UserPassword };
+        foreach (var secret in secrets)
+        {
+            (await CountRowsAsync(host, $"concat_ws(' ', old_value::text, new_value::text, reason, entity_id, actor, role, request_id) LIKE '%{secret}%'"))
+                .Should().Be(0, $"no journal row may contain '{secret}'");
+        }
+
+        (await CountRowsAsync(host, $"action <> 'AppUser.Created' AND concat_ws(' ', old_value::text, new_value::text, reason, entity_id, actor, role, request_id) ILIKE '%{email}%'"))
+            .Should().Be(0, "only the creation, which records the allow-listed e-mail property, names the address");
+    }
+
     [Theory]
-    [InlineData("reset-password", "AppUser.PasswordReset", HttpStatusCode.OK)]
-    [InlineData("change-password", "Auth.PasswordChanged", HttpStatusCode.NoContent)]
-    public async Task Ac15_CredentialChangeAndItsJournalRow_AreSavedTogetherOrNotAtAll(string operation, string action, HttpStatusCode success)
+    [InlineData("change-password", "Auth.PasswordChanged")]
+    [InlineData("reset-password", "Auth.PasswordResetCompleted")]
+    [InlineData("accept-invitation", "Auth.RegistrationCompleted")]
+    public async Task Ac15_CredentialChangeAndItsJournalRow_AreSavedTogetherOrNotAtAll(string operation, string action)
     {
         await using var host = await environment.StartHostAsync();
         var admin = await host.AdminAsync();
-        var account = await admin.CreateUserAsync();
-        var session = await account.SignInAsync(host);
+        var account = operation == "accept-invitation" ? await admin.InviteUserAsync() : await admin.CreateUserAsync();
+        var session = operation == "accept-invitation" ? null : await account.SignInAsync(host);
+        var token = await LinkTokenAsync(admin, account, operation);
         const string NewPassword = "Atomic-Pass-12345!";
         var constraint = $"ck_audit_action_marker_{Guid.NewGuid():N}";
         await host.ExecuteAsync($"ALTER TABLE audit_events ADD CONSTRAINT {constraint} CHECK (action <> '{action}')");
+        var versionBefore = (await admin.GetUserAsync(account.Id)).ETag;
 
-        var failed = await ChangePassword(account.ETag);
+        var failed = await ChangePassword();
         var unchanged = await admin.GetUserAsync(account.Id);
         var oldPassword = await host.Anonymous().PostAsync("/api/v1/auth/login", new { email = account.Email, password = account.Password });
         var newPassword = await host.Anonymous().PostAsync("/api/v1/auth/login", new { email = account.Email, password = NewPassword });
-        var sessionAfterFailure = await session.GetAsync("/api/v1/auth/me");
+        var sessionAfterFailure = session is null ? null : await session.GetAsync("/api/v1/auth/me");
         await host.ExecuteAsync($"ALTER TABLE audit_events DROP CONSTRAINT {constraint}");
-        var changed = await ChangePassword((await admin.GetUserAsync(account.Id)).ETag!);
+        var changed = await ChangePassword();
 
         failed.Status.Should().Be(HttpStatusCode.InternalServerError, "the journal row cannot be written");
-        unchanged.ETag.Should().Be(account.ETag, "the account version moves only with a saved change");
-        oldPassword.Status.Should().Be(HttpStatusCode.OK, "the password is changed only when its journal row is saved with it");
+        unchanged.ETag.Should().Be(versionBefore, "the account version moves only with a saved change");
+        oldPassword.Status.Should().Be(
+            operation == "accept-invitation" ? HttpStatusCode.Unauthorized : HttpStatusCode.OK,
+            "the password is changed only when its journal row is saved with it");
         newPassword.Status.Should().Be(HttpStatusCode.Unauthorized);
-        sessionAfterFailure.Status.Should().Be(HttpStatusCode.OK, "a change that was not saved ends no session");
-        changed.Status.Should().Be(success, changed.Body);
+        sessionAfterFailure?.Status.Should().Be(HttpStatusCode.OK, "a change that was not saved ends no session");
+        changed.Status.Should().Be(HttpStatusCode.NoContent, $"a link whose change was not saved is not spent, so the same link works afterwards: {changed.Body}");
         (await admin.AuditOfRequestAsync(changed.RequestId!)).Actions().Should().Equal(action);
         (await host.Anonymous().PostAsync("/api/v1/auth/login", new { email = account.Email, password = NewPassword })).Status.Should().Be(HttpStatusCode.OK);
-        (await session.GetAsync("/api/v1/auth/me")).Status.Should().Be(
-            operation == "reset-password" ? HttpStatusCode.Unauthorized : HttpStatusCode.OK,
-            "a reset ends the sessions of the account, a password change keeps the current one");
+        if (session is not null)
+        {
+            (await session.GetAsync("/api/v1/auth/me")).Status.Should().Be(
+                operation == "reset-password" ? HttpStatusCode.Unauthorized : HttpStatusCode.OK,
+                "a reset ends the sessions of the account, a password change keeps the current one");
+        }
 
-        Task<ApiResponse> ChangePassword(string version) => operation == "reset-password"
-            ? admin.PostAsync($"/api/v1/users/{account.Id}/reset-password", new { newPassword = NewPassword }, version)
-            : session.PostAsync("/api/v1/auth/change-password", new { currentPassword = account.Password, newPassword = NewPassword });
+        Task<ApiResponse> ChangePassword() => operation == "change-password"
+            ? session!.PostAsync("/api/v1/auth/change-password", new { currentPassword = account.Password, newPassword = NewPassword })
+            : host.Anonymous().PostAsync($"/api/v1/auth/{operation}", new { token, password = NewPassword });
+    }
+
+    private async Task<string> LinkTokenAsync(ApiClient admin, TestUser account, string operation)
+    {
+        switch (operation)
+        {
+            case "accept-invitation":
+                return (await environment.Mail.WaitForAsync(account.Email))[0].Token;
+            case "reset-password":
+                (await admin.PostAsync($"/api/v1/users/{account.Id}/send-password-reset", ifMatch: account.ETag)).Expect(HttpStatusCode.OK);
+                return (await environment.Mail.WaitForAsync(account.Email, 2))[1].Token;
+            default:
+                return string.Empty;
+        }
     }
 
     [Fact]
@@ -161,6 +232,8 @@ public sealed class AuditTests(TestEnvironment environment)
         var session = await host.Anonymous().PostAsync("/api/v1/auth/login", new { email = other.Email, password = other.Password });
         var otherSession = await other.SignInAsync(host);
         var logout = await otherSession.PostAsync("/api/v1/auth/logout");
+        var invited = await admin.InviteUserAsync();
+        var invitedAttempt = await host.Anonymous().PostAsync("/api/v1/auth/login", new { email = invited.Email, password = typedPassword });
 
         var unknownRow = (await admin.AuditOfRequestAsync(unknown.RequestId!)).Single()!;
         unknownRow["action"]!.GetValue<string>().Should().Be("Auth.LoginFailed");
@@ -184,6 +257,11 @@ public sealed class AuditTests(TestEnvironment environment)
         var success = (await admin.AuditOfRequestAsync(session.RequestId!)).Single()!;
         success["action"]!.GetValue<string>().Should().Be("Auth.LoginSucceeded");
         success["actor"]!.GetValue<string>().Should().Be(other.Id.ToString());
+        invitedAttempt.Status.Should().Be(HttpStatusCode.Unauthorized);
+        var invitedRow = (await admin.AuditOfRequestAsync(invitedAttempt.RequestId!)).Single()!;
+        invitedRow["action"]!.GetValue<string>().Should().Be("Auth.LoginFailed");
+        invitedRow["reason"]!.GetValue<string>().Should().Be("Invited");
+        invitedRow["actor"]!.GetValue<string>().Should().Be(invited.Id.ToString());
         var signOut = (await admin.AuditOfRequestAsync(logout.RequestId!)).Single()!;
         signOut["action"]!.GetValue<string>().Should().Be("Auth.Logout");
         signOut["entityId"]!.GetValue<string>().Should().Be(other.Id.ToString());

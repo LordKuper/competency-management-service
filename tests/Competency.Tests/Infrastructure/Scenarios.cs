@@ -1,5 +1,7 @@
 using System.Net;
+using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Identity;
 
 namespace Competency.Tests.Infrastructure;
 
@@ -8,7 +10,7 @@ namespace Competency.Tests.Infrastructure;
 /// </summary>
 /// <param name="Id">The account id.</param>
 /// <param name="Email">The e-mail, which is also the sign-in name.</param>
-/// <param name="Password">The password it was created with.</param>
+/// <param name="Password">The password the account has once it is registered, which is the one tests sign in with.</param>
 /// <param name="ETag">The entity tag at creation.</param>
 public sealed record TestUser(Guid Id, string Email, string Password, string ETag);
 
@@ -20,6 +22,8 @@ public static class Scenarios
     public const string UserPassword = "Valid-Pass-12345!";
     public const string User = "User";
     public const string GlobalAdmin = "GlobalAdmin";
+
+    private static readonly Lazy<string> UserPasswordHash = new(() => new PasswordHasher<object>().HashPassword(new object(), UserPassword));
 
     public static string Unique(string prefix) => $"{prefix}-{Guid.NewGuid().ToString("N")[..8]}";
 
@@ -38,12 +42,26 @@ public static class Scenarios
             new { lastName = lastName ?? Unique("Иванов"), firstName, middleName, position, orgUnitId = unitId }))
         .Expect(HttpStatusCode.Created);
 
-    public static async Task<TestUser> CreateUserAsync(this ApiClient admin, string role = User, Guid? employeeId = null, string? email = null)
+    /// <summary>
+    /// Creates an account the way an administrator does: without a password, invited by e-mail, so it cannot sign in yet.
+    /// </summary>
+    public static async Task<TestUser> InviteUserAsync(this ApiClient admin, string role = User, Guid? employeeId = null, string? email = null)
     {
         var address = email ?? $"{Unique("user")}@test.local";
-        var created = (await admin.PostAsync("/api/v1/users", new { email = address, password = UserPassword, role, employeeId }))
-            .Expect(HttpStatusCode.Created);
+        var created = (await admin.PostAsync("/api/v1/users", new { email = address, role, employeeId })).Expect(HttpStatusCode.Created);
         return new TestUser(created.Id, address, UserPassword, created.ETag!);
+    }
+
+    /// <summary>
+    /// Creates an account that has already set its password, so a test that is not about registration can sign in as it.
+    /// The registration is written to the database directly, as the invitation link would have left it: the password set and the link spent.
+    /// </summary>
+    public static async Task<TestUser> CreateUserAsync(this ApiClient admin, string role = User, Guid? employeeId = null, string? email = null)
+    {
+        var invited = await admin.InviteUserAsync(role, employeeId, email);
+        await admin.Host.ExecuteAsync(
+            $"UPDATE users SET password_hash = '{UserPasswordHash.Value}', link_token_hash = NULL, link_expires_at = NULL, link_issued_at = NULL, link_security_stamp = NULL WHERE id = '{invited.Id}'");
+        return invited;
     }
 
     public static Task<ApiClient> SignInAsync(this TestUser user, ApiHost host) => host.LoginAsync(user.Email, user.Password);
@@ -77,6 +95,11 @@ public static class Scenarios
         var page = (await admin.GetAsync($"/api/v1/audit?requestId={requestId}&pageSize=200")).Expect(HttpStatusCode.OK);
         return page.Json!["items"]!.AsArray();
     }
+
+    /// <summary>
+    /// The text as it appears inside a JSON string, where the log writer escapes what is not plain ASCII, so a search for the text finds it there.
+    /// </summary>
+    public static string JsonEscaped(this string text) => JsonSerializer.Serialize(text)[1..^1];
 
     public static string[] Actions(this JsonArray rows) => [.. rows.Select(row => row!["action"]!.GetValue<string>()).Order()];
 }

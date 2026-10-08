@@ -19,7 +19,8 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         ("PUT", "/api/v1/users/{id}", new { email = "a@test.local", role = Scenarios.User, employeeId = (Guid?)null }),
         ("POST", "/api/v1/users/{id}/block", null),
         ("POST", "/api/v1/users/{id}/unblock", null),
-        ("POST", "/api/v1/users/{id}/reset-password", new { newPassword = Scenarios.UserPassword }),
+        ("POST", "/api/v1/users/{id}/resend-invitation", null),
+        ("POST", "/api/v1/users/{id}/send-password-reset", null),
         ("PUT", "/api/v1/org-units/{id}", new { name = "Отдел", headEmployeeId = (Guid?)null }),
         ("POST", "/api/v1/org-units/{id}/move", new { parentId = (Guid?)null }),
         ("POST", "/api/v1/org-units/{id}/deactivate", null),
@@ -82,11 +83,12 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
     [Theory]
     [InlineData("update")]
     [InlineData("block")]
-    [InlineData("reset-password")]
+    [InlineData("send-password-reset")]
+    [InlineData("resend-invitation")]
     public async Task Ac5_StaleUserWrite_IsRefusedWith412_AndLeavesTheAccountAsItWas(string action)
     {
         var admin = await (await environment.SharedHostAsync()).AdminAsync();
-        var user = await admin.CreateUserAsync();
+        var user = action == "resend-invitation" ? await admin.InviteUserAsync() : await admin.CreateUserAsync();
         var bumped = (await admin.PutAsync(
             $"/api/v1/users/{user.Id}",
             new { email = $"{Scenarios.Unique("moved")}@test.local", role = Scenarios.User, employeeId = (Guid?)null },
@@ -96,7 +98,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         {
             "update" => await admin.PutAsync($"/api/v1/users/{user.Id}", new { email = user.Email, role = Scenarios.GlobalAdmin, employeeId = (Guid?)null }, user.ETag),
             "block" => await admin.PostAsync($"/api/v1/users/{user.Id}/block", ifMatch: user.ETag),
-            _ => await admin.PostAsync($"/api/v1/users/{user.Id}/reset-password", new { newPassword = "Other-Pass-12345!" }, user.ETag),
+            _ => await admin.PostAsync($"/api/v1/users/{user.Id}/{action}", ifMatch: user.ETag),
         };
 
         stale.Status.Should().Be(HttpStatusCode.PreconditionFailed, stale.Body);
