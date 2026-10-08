@@ -114,6 +114,7 @@ Tech reference: react-19.3.0, react-router-8.4.0, antd-6.6.5, tanstack-react-que
 Material risk: none
 - [ ] AC-17: перенести `Smtp__*` и `App__PublicBaseUrl` из `environmentVariables` профиля в `src/Competency.Api/Properties/launchSettings.json` в новый `src/Competency.Api/appsettings.Development.json` (`Smtp:*` на Mailpit `127.0.0.1:11025`, `None`, без аутентификации; `App:PublicBaseUrl` `http://localhost:5173`); `ConnectionStrings__Default`, `Bootstrap__*`, `ASPNETCORE_ENVIRONMENT` остаются в `launchSettings.json`
 - [ ] AC-17: убедиться, что user secrets подключаются в `Development` (`UserSecretsId` уже есть в `Competency.Api.csproj`, `WebApplication.CreateBuilder` добавляет их для entry assembly) и что значения из user secrets переопределяют `appsettings.Development.json`; tooling-запуск OpenAPI и тестовый хост (`ApiHost`, задаёт `Smtp__*` переменными окружения) не затронуты
+- [ ] AC-17: `deploy/dev/docker-compose.yml` — сервису Mailpit `MP_SMTP_DISABLE_RDNS: "true"` (без него приветствие SMTP приходит через ~8–10 с из-за обратного DNS на Docker Desktop — наблюдение impl-test entry 1, `test-plan.md`), чтобы письма по умолчанию не упирались в таймаут 15 с
 - [ ] AC-17: `deploy/dev/README.md` — раздел о собственной SMTP-песочнице: команды `dotnet user-secrets set "Smtp:…" … --project src/Competency.Api` для Host, Port, SecureSocketOptions, UserName, Password (на примере Mailtrap Sandbox `sandbox.smtp.mailtrap.io:587`, `StartTls`), «Manage User Secrets» в Visual Studio, возврат к Mailpit (`dotnet user-secrets clear` или удаление ключей `Smtp:*`); секреты не попадают в репозиторий
 Tech reference: aspnetcore-10.0.12, mailkit-4.18.1, mailpit-1.31.4, visual-studio-multiproject-launch-17.11.
 
@@ -139,7 +140,7 @@ Tech reference: aspnetcore-10.0.12, mailkit-4.18.1, mailpit-1.31.4, visual-studi
 - Task 4 зависит от Task 2 (контракт до изменений проверен пустым diff) и Task 3 (отправка писем, публичный адрес).
 - Task 5 зависит от Task 4 (хранилище ссылки, письма, те же `AuthEndpoints.cs`/`UserEndpoints.cs`).
 - Task 6 зависит от контракта Task 4–5 (`web/src/api/schema.d.ts`).
-- Task 7 (поправка скоупа 2026-10-08, AC-17) — новая последняя волна 6: меняет `launchSettings.json` и `deploy/dev/README.md` после Task 3.
+- Task 7 (поправка скоупа 2026-10-08, AC-17) — новая последняя волна 6: меняет `launchSettings.json`, `deploy/dev/docker-compose.yml` и `deploy/dev/README.md` после Task 3.
 
 ## Out of scope
 - Скрипт наполнения 10 000+ сотрудников (решение пользователя 2026-10-08, audit Q-4).
