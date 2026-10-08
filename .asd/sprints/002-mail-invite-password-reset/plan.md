@@ -70,17 +70,17 @@ Tech reference: mailkit-4.18.1, mailpit-1.31.4, aspnetcore-10.0.12, microsoft-as
 Material risk: change: authentication — новое состояние «приглашён», одноразовая ссылка и правило последнего администратора
 Material risk: change: migration — новые колонки ссылки в `users`
 Material risk: change: public contract — создание без пароля, новые методы и поля `/api/v1/users` и `/api/v1/auth`
-- [ ] AC-4,5: миграция `users`: хэш ссылки, срок, время выдачи, stamp на момент выдачи (nullable, уникальный частичный индекс по хэшу); данные не переносятся; `has-pending-model-changes` чист
-- [ ] AC-4,5,6: хранилище ссылки в `user-management`: выдача (случайный токен ≥ 256 бит, хранится только SHA-256), проверка (хэш, срок, совпадение stamp), погашение; смена e-mail записи очищает ссылку; колонки ссылки не `[Audited]`
-- [ ] AC-4,9: `POST /api/v1/users` без пароля: запись создаётся приглашённой, письмо-приглашение — после фиксации, синхронно, с результатом отправки в ответе (аддитивное поле); `CreateUserRequest` без `password`
-- [ ] AC-5: анонимный `POST /api/v1/auth/accept-invitation` (токен, пароль по `Identity:Password`): строка записи `FOR UPDATE`, проверка ссылки, установка хэша, снятие lockout, погашение ссылки, смена stamp; недействительная ссылка — 400 с общим текстом; ограничение частоты — политика Task 5 подключается в Task 5
-- [ ] AC-6: `POST /api/v1/users/{id}/resend-invitation` (администратор, `If-Match`): только для приглашённой незаблокированной записи (иначе 409), новая ссылка заменяет прежнюю, письмо — после фиксации, результат отправки в ответе
-- [ ] AC-6: `UserResponse` получает признак «приглашён»; `ListUsers` — фильтр по нему
-- [ ] AC-4,5: вход приглашённой записи — тот же 401, время выравнивается `SpendHashingTime`, своя причина в `Auth.LoginFailed`
-- [ ] AC-4: признак «активный администратор» дополнить «зарегистрирован» в `ActiveAdministrators.LockAsync`, `IsActiveAdministrator`, `HasOtherAsync`, `AdminBootstrapper`, `EmployeeAccounts.IsLastActiveAdministratorAsync`
-- [ ] AC-2: письмо-приглашение — русские тема и текст со ссылкой от `App:PublicBaseUrl`, токен во фрагменте; строковые константы в `user-management`
-- [ ] AC-10: события `AppUser.InvitationSent` (причина — первичная/повторная), `Auth.RegistrationCompleted`, `Mail.SendFailed` (тип письма, без адреса); изменения — `Stage`, отправка и отказ — `WriteAsync` после фиксации; без токенов, ссылок, адресов
-- [ ] AC-4…6: перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts`
+- [x] AC-4,5: миграция `users`: хэш ссылки, срок, время выдачи, stamp на момент выдачи (nullable, уникальный частичный индекс по хэшу); данные не переносятся; `has-pending-model-changes` чист
+- [x] AC-4,5,6: хранилище ссылки в `user-management`: выдача (случайный токен ≥ 256 бит, хранится только SHA-256), проверка (хэш, срок, совпадение stamp), погашение; смена e-mail записи очищает ссылку; колонки ссылки не `[Audited]`
+- [x] AC-4,9: `POST /api/v1/users` без пароля: запись создаётся приглашённой, письмо-приглашение — после фиксации, синхронно, с результатом отправки в ответе (аддитивное поле); `CreateUserRequest` без `password`
+- [x] AC-5: анонимный `POST /api/v1/auth/accept-invitation` (токен, пароль по `Identity:Password`): строка записи `FOR UPDATE`, проверка ссылки, установка хэша, снятие lockout, погашение ссылки, смена stamp; недействительная ссылка — 400 с общим текстом; ограничение частоты — политика Task 5 подключается в Task 5
+- [x] AC-6: `POST /api/v1/users/{id}/resend-invitation` (администратор, `If-Match`): только для приглашённой незаблокированной записи (иначе 409), новая ссылка заменяет прежнюю, письмо — после фиксации, результат отправки в ответе
+- [x] AC-6: `UserResponse` получает признак «приглашён»; `ListUsers` — фильтр по нему
+- [x] AC-4,5: вход приглашённой записи — тот же 401, время выравнивается `SpendHashingTime`, своя причина в `Auth.LoginFailed`
+- [x] AC-4: признак «активный администратор» дополнить «зарегистрирован» в `ActiveAdministrators.LockAsync`, `IsActiveAdministrator`, `HasOtherAsync`, `AdminBootstrapper`, `EmployeeAccounts.IsLastActiveAdministratorAsync`
+- [x] AC-2: письмо-приглашение — русские тема и текст со ссылкой от `App:PublicBaseUrl`, токен во фрагменте; строковые константы в `user-management`
+- [x] AC-10: события `AppUser.InvitationSent` (причина — первичная/повторная), `Auth.RegistrationCompleted`, `Mail.SendFailed` (тип письма, без адреса); изменения — `Stage`, отправка и отказ — `WriteAsync` после фиксации; без токенов, ссылок, адресов
+- [x] AC-4…6: перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts`
 Tech reference: microsoft-aspnetcore-identity-entityframeworkcore-10.0.12, aspnetcore-10.0.12, efcore-10.0.12, npgsql-entityframeworkcore-postgresql-10.0.3, dotnet-ef-10.0.12, mailkit-4.18.1, microsoft-aspnetcore-openapi-10.0.12.
 
 ### Task 5: Сброс пароля по ссылке и удаление задания пароля администратором (backend)
