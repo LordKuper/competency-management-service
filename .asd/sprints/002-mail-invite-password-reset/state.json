@@ -107,6 +107,20 @@
       "reason": "AC-18 user-requested copy/brand edits; flagged choices (logo alt empty next to visible name as in AppShell; plain bold name, no tile on light card) follow docs/ux/app-shell.html pattern; build 0/0, lint clean",
       "evidence": "f39d5c0",
       "artifact_revision": "f39d5c0"
+    },
+    {
+      "gate": "manual verification smoke",
+      "decision_actor": "user",
+      "decision": "AC-18 fail: name too small; invitation lifetime 1 week",
+      "reason": "impl-test entry 3 smoke",
+      "evidence": "test-plan.md Manual verification AC-18"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-18 changed (large product name), invitation lifetime default 72h -> 7 days; Task 9 wave 8",
+      "reason": "smoke remarks; cost AC-18/AC-4: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-08 scope amendment Task 9"
     }
   ],
   "task_routing": {
@@ -203,7 +217,7 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T11:40:48.094Z",
+  "updated_at": "2026-10-08T11:48:27.987Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

@@ -77,3 +77,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — impl-test entry 2: suite green (full via safety valve; backend 157/157, web 82/82, lint/build/check:api clean), 0/0 tests (AC-17 decision none); unticked Task 8 (AC-18) → NEXT impl initial (F-2)
 - 2026-10-08 — route Task 8: standard, dispatch HEAD 2ed9c4d; risk none
 - 2026-10-08 — wave 7 done: Task 8 (f39d5c0); completion gate: build 0/0, lint 0, paths within Task 8; impl assessment passed adaptively (flagged: logo alt "" beside visible «Калибр» as in AppShell, plain bold name without tile); NEXT impl-test entry 3
+- 2026-10-08 — route impl-test entry 3: standard, dispatch HEAD e4a8416; risk none via test run
+- 2026-10-08 — impl-test entry 3: suite green (impacted, valve not fired; backend 157/157, web 82/82, lint/build/check:api clean), 0/0 tests; smoke AC-18 (user): fail — name too small, invitation lifetime must be a week
+
+## 2026-10-08 — scope amendment (Task 9, wave 8)
+
+- **Decision**: AC-18 уточнён: «Калибр» у логотипа — крупным шрифтом, соразмерным логотипу. Срок ссылки-приглашения по умолчанию — 7 дней вместо 72 часов (допущение в `sprint.md` Goal, AC-4). Task 9 в новой последней волне 8.
+- **Rationale**: Замечания пользователя на smoke-проверке. Затраты AC-18 и AC-4: 0 итераций ревью, 0 раундов исправлений (ревью ещё не было).
+- **Affected docs**: sprint.md, plan.md Task 9, test-plan.md Manual verification
