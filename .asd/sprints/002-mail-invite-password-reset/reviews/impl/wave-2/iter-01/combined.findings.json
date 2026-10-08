@@ -1,0 +1,1 @@
+[{"id":"F1","severity":"low","location":"tests/Competency.Tests/PasswordPolicyTests.cs:19; tests/Competency.Tests/AccountLinkTests.cs:12; src/Competency.UserManagement/AuthEndpoints.cs:15"}]
