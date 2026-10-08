@@ -66,3 +66,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — impl test-fix: defects D-1, D-2 resolved (1798700, memory-fix by owner asd-dev-critical); continuing the same impl entry in initial mode over unticked Task 7 (F-1)
 - 2026-10-08 — route Task 7: standard, dispatch HEAD a0d9c1d; risk none
 - 2026-10-08 — wave 6 done: Task 7 (7bc40e2); completion gate: build 0/0, lint 0, paths within Task 7; impl assessment for Task 7 passed adaptively (user-authorized AC-17, risk none, Flagged choices: none); NEXT impl-test entry 2
+- 2026-10-08 — route impl-test entry 2: standard, dispatch HEAD 4700f99; risk none via test run
+- 2026-10-08 — impl-test entry 2 smoke check (user): AC-11 pass, AC-3 pass; remarks → AC-18
+
+## 2026-10-08 — scope amendment AC-18 (Task 8, wave 7)
+
+- **Decision**: Добавлен AC-18 по замечаниям smoke-проверки: убрать фразы из письма-приглашения, подсказки о пароле, вступления «Задание пароля» и подсказку поля сотрудника; на экранах без сессии рядом с логотипом — название «Калибр». Task 8 в новой последней волне 7.
+- **Rationale**: Решение пользователя; название «Калибр» уже утверждено (`docs/ux/app-shell.html` «Бренд», `web/src/app/productName.ts`) — новой брендовой директивы нет. Затраты AC-18: 0 итераций ревью, 0 раундов исправлений (новый критерий). Audit не переоценивается: тексты и разметка без изменения контракта.
+- **Affected docs**: sprint.md AC-18, plan.md Task 8, test-plan.md Manual verification

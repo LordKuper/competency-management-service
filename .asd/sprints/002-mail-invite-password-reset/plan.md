@@ -118,6 +118,15 @@ Material risk: none
 - [x] AC-17: `deploy/dev/README.md` — раздел о собственной SMTP-песочнице: команды `dotnet user-secrets set "Smtp:…" … --project src/Competency.Api` для Host, Port, SecureSocketOptions, UserName, Password (на примере Mailtrap Sandbox `sandbox.smtp.mailtrap.io:587`, `StartTls`), «Manage User Secrets» в Visual Studio, возврат к Mailpit (`dotnet user-secrets clear` или удаление ключей `Smtp:*`); секреты не попадают в репозиторий
 Tech reference: aspnetcore-10.0.12, mailkit-4.18.1, mailpit-1.31.4, visual-studio-multiproject-launch-17.11.
 
+### Task 8: Правки текстов и экрана входа по smoke-проверке
+Material risk: none
+- [ ] AC-18: `src/Competency.UserManagement/AccountMail.cs` — убрать из письма-приглашения строку «Если вы не ждали этого письма, просто удалите его.» (письмо сброса не меняется)
+- [ ] AC-18: `web/src/features/auth/AuthCard.tsx` — рядом с логотипом название системы `PRODUCT_NAME` («Калибр», `web/src/app/productName.ts`), токены `docs/ux/DESIGN.md`, адаптивность desktop/tablet сохраняется
+- [ ] AC-18: `web/src/features/auth/passwordPolicy.ts` — убрать из `PASSWORD_HINT` фразу «Если пароль не подойдёт, сервис укажет, чего в нём не хватает.»
+- [ ] AC-18: `web/src/features/auth/LinkPasswordPage.tsx` — убрать из вступления экрана «Задание пароля» фразу «Затем войдите в систему по своему e-mail и этому паролю.»
+- [ ] AC-18: `web/src/features/users/UserForm.tsx` — убрать подсказку `extra` у поля сотрудника
+Tech reference: react-19.3.0, antd-6.6.5, aspnetcore-10.0.12.
+
 ## Risks
 - Тесты: около 48 вызовов `Scenarios.CreateUserAsync` создают пользователей с паролем, тесты `reset-password` в `AuditTests` — всё это перестаёт работать после Task 4–5 и правится в impl-test (сборка не ломается: тесты обращаются к API через HTTP).
 - Перехват писем в интеграционных тестах (Mailpit через ядро Testcontainers или заглушка SMTP) выбирает impl-test; Mailpit в CI — ещё один образ.
@@ -134,6 +143,7 @@ Tech reference: aspnetcore-10.0.12, mailkit-4.18.1, mailpit-1.31.4, visual-studi
 | 4 | 5 |
 | 5 | 6 |
 | 6 | 7 |
+| 7 | 8 |
 
 - Task 1 один в волне 1: AC-12 меняет глубину проверок, по которой dev выполняет все следующие Task.
 - Task 2 и 3 не пересекаются по файлам: Task 2 — новые файлы общих типов в `Competency.Platform` и `.cs`-файлы модулей; Task 3 — почтовые файлы `Competency.Platform`, `Competency.Platform.csproj`, все `packages.lock.json`, `Competency.Api`, `deploy/**`. Task 2 не меняет `.csproj` и lock-файлы.
@@ -141,6 +151,7 @@ Tech reference: aspnetcore-10.0.12, mailkit-4.18.1, mailpit-1.31.4, visual-studi
 - Task 5 зависит от Task 4 (хранилище ссылки, письма, те же `AuthEndpoints.cs`/`UserEndpoints.cs`).
 - Task 6 зависит от контракта Task 4–5 (`web/src/api/schema.d.ts`).
 - Task 7 (поправка скоупа 2026-10-08, AC-17) — новая последняя волна 6: меняет `launchSettings.json`, `deploy/dev/docker-compose.yml` и `deploy/dev/README.md` после Task 3.
+- Task 8 (поправка скоупа 2026-10-08, AC-18, по итогам smoke-проверки impl-test entry 2) — новая последняя волна 7.
 
 ## Out of scope
 - Скрипт наполнения 10 000+ сотрудников (решение пользователя 2026-10-08, audit Q-4).

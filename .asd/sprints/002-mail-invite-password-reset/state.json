@@ -85,6 +85,20 @@
       "reason": "AC-17 user-authorized amendment; risk none; no flagged choices; build 0/0, lint clean; paths within Task 7",
       "evidence": "7bc40e2",
       "artifact_revision": "7bc40e2"
+    },
+    {
+      "gate": "manual verification smoke",
+      "decision_actor": "user",
+      "decision": "AC-11 pass, AC-3 pass, with copy/brand remarks",
+      "reason": "impl-test entry 2 smoke check",
+      "evidence": "test-plan.md Manual verification"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-18 added (copy removals, product name next to logo on anonymous screens), Task 8 wave 7",
+      "reason": "smoke-check remarks; cost 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-08 scope amendment AC-18"
     }
   ],
   "task_routing": {
@@ -169,7 +183,7 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T10:34:14.359Z",
+  "updated_at": "2026-10-08T11:38:25.880Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
