@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-mail-invite-password-reset",
   "branch": "sprint/002-mail-invite-password-reset",
-  "phase": "impl-test",
+  "phase": "impl-review",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -312,25 +312,35 @@
       "latched": {}
     },
     "impl": {
-      "wave": 1,
+      "wave": 2,
       "waves": [
         {
-          "iteration": 1,
+          "iteration": 2,
           "verdicts": {
             "iter-01": {
               "combined": "CONCERNS",
               "external": "FAIL"
+            },
+            "iter-02": {
+              "combined": "APPROVE",
+              "external": "APPROVE"
             }
           },
           "iteration_heads": {
-            "iter-01": "e0e145f2bca0122b91b2067ce92a418dea1b39ce"
+            "iter-01": "e0e145f2bca0122b91b2067ce92a418dea1b39ce",
+            "iter-02": "8d264c954bc8926ba145492376a3c655eac0dee6"
           },
-          "latched": {}
+          "latched": {
+            "combined": 2,
+            "external": 2
+          }
         },
         {
-          "iteration": 0,
+          "iteration": 1,
           "verdicts": {},
-          "iteration_heads": {},
+          "iteration_heads": {
+            "iter-01": "8d264c954bc8926ba145492376a3c655eac0dee6"
+          },
           "latched": {}
         },
         {
@@ -343,7 +353,7 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T12:53:58.517Z",
+  "updated_at": "2026-10-08T13:13:06.398Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

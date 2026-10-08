@@ -114,3 +114,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — impl fix for wave-1/iter-01: findings resolved
 - 2026-10-08 — route impl-test entry 7: critical, dispatch HEAD 2a188ac; risk change: security
 - 2026-10-08 — impl-test entry 7: suite green (full via safety valve; backend 166/166, web 86/86, lint/build/check:api clean), 6 tests added (fail-first proven), 0 removed; NEXT impl-review
+- 2026-10-08 — impl-review wave 1 iteration 2 (floor medium)
+- 2026-10-08 — impl-review wave-1/iter-02: combined APPROVE, external APPROVE (both latched); wave 1 roster met → wave 2 iteration 1 (floor low)
