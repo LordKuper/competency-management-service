@@ -1,5 +1,6 @@
 using System.Data.Common;
 using System.Diagnostics;
+using System.Net;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +15,8 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using MimeKit;
 
 namespace Competency.Platform;
 
@@ -33,6 +36,8 @@ public static class PlatformModule
     public const string LoginRateLimitPolicy = "login";
 
     private const string LoginRateLimitSection = "RateLimiting:Login";
+    private const string SmtpSection = "Smtp";
+    private const string AppSection = "App";
     private const string UnknownClient = "unknown";
     private const string KeysPathSetting = "DataProtection:KeysPath";
     private const string DataProtectionApplicationName = "competency-management-service";
@@ -71,8 +76,21 @@ public static class PlatformModule
         services.AddSingleton<ICurrentActor, HttpContextCurrentActor>();
         AddAuthorizationPolicies(services);
         AddLoginRateLimiter(services, configuration);
+        AddMail(services, configuration);
 
         return services;
+    }
+
+    /// <summary>
+    /// Fails, naming the settings at fault, when the <c>Smtp</c> or <c>App</c> settings are missing or invalid, so a misconfigured host does not start.
+    /// Call it explicitly at start, never from a tooling host, which is not configured for mail.
+    /// </summary>
+    /// <param name="services">The root service provider.</param>
+    /// <exception cref="OptionsValidationException">A setting is missing or invalid.</exception>
+    public static void ValidateMailSettings(this IServiceProvider services)
+    {
+        _ = services.GetRequiredService<IOptions<SmtpOptions>>().Value;
+        _ = services.GetRequiredService<IOptions<AppOptions>>().Value;
     }
 
     /// <summary>
@@ -187,6 +205,27 @@ public static class PlatformModule
                     Window = TimeSpan.FromSeconds(login.WindowSeconds),
                 }));
         });
+
+    private static void AddMail(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<SmtpOptions>()
+            .Bind(configuration.GetSection(SmtpSection))
+            .Validate(smtp => !string.IsNullOrWhiteSpace(smtp.Host), "'Smtp:Host' is not set.")
+            .Validate(smtp => smtp.Port is > IPEndPoint.MinPort and <= IPEndPoint.MaxPort, "'Smtp:Port' is not a port number.")
+            .Validate(smtp => smtp.Timeout > TimeSpan.Zero, "'Smtp:Timeout' is not a positive time span.")
+            .Validate(
+                smtp => string.IsNullOrEmpty(smtp.UserName) == string.IsNullOrEmpty(smtp.Password),
+                "'Smtp:UserName' and 'Smtp:Password' are set only together.")
+            .Validate(
+                smtp => MailboxAddress.TryParse(smtp.From, out var sender) && sender.Domain.Length > 0,
+                "'Smtp:From' is not a mailbox address.");
+        services.AddOptions<AppOptions>()
+            .Bind(configuration.GetSection(AppSection))
+            .Validate(
+                app => app.PublicBaseUrl is { IsAbsoluteUri: true, Scheme: "http" or "https" },
+                "'App:PublicBaseUrl' is not an absolute http or https URL.");
+        services.AddSingleton<MailSender>();
+    }
 
     private static string GetConnectionString(IConfiguration configuration) =>
         configuration.GetConnectionString(ConnectionStringName)

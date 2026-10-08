@@ -31,6 +31,7 @@ var app = builder.Build();
 
 if (!isToolingRun)
 {
+    app.Services.ValidateMailSettings();
     await app.Services.MigrateDatabaseAsync(waitForDatabase: app.Environment.IsDevelopment());
     await app.Services.EnsureBootstrapAdminAsync();
 }
