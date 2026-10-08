@@ -19,6 +19,7 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 | ID | Phase | Problem | Refs |
 |---|---|---|---|
 | F-1 | impl-test | Правило поправки скоупа не описывает новую Task при выходе impl-test в test-fix | D-1, D-2 |
+| F-2 | impl-test | Поправка скоупа на smoke-проверке зелёного impl-test: выход в impl initial не описан | — |
 
 ## F-1 — Правило поправки скоупа не описывает новую Task при выходе impl-test в test-fix
 
@@ -27,3 +28,11 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **What happened**: Поправка AC-17 (Task 7, волна 6) принята во время impl-test entry 1; entry 1 вернул `D-1`, `D-2` в impl test-fix. Правило «одна запись impl выполняет два режима» сформулировано только для `review_fixes_pending`; для test-fix шаг 11 не предписывает продолжить initial-режим по неотмеченным Task. Оркестратор применил тот же порядок по аналогии (test-fix, затем Task 7 initial, затем impl assessment) и записал это в decisions-log.
 - **Impact**: решение по аналогии вместо правила; риск, что Task 7 осталась бы неотмеченной до impl-review.
 - **Refs**: D-1, D-2
+
+## F-2 — Поправка скоупа на smoke-проверке зелёного impl-test: выход в impl initial не описан
+
+- **Phase**: impl-test
+- **Surface**: rule — `.asd/workflows/asd-phase-impl-test.md` step 10, `.asd/rules/sprint-lifecycle.md` "Scope amendment"
+- **What happened**: Smoke-проверка entry 2 (шаг 10) дала замечания пользователя, принятые как AC-18 / Task 8. Шаг 10 предписывает только `NEXT: impl-review`; маршрут к impl initial для неотмеченной Task при зелёном наборе тестов не описан. Оркестратор выбрал `NEXT: impl` (разрешён `lite.json` `next["impl-test"]`) без флагов исправлений — impl входит в initial по неотмеченной Task 8.
+- **Impact**: решение по аналогии; smoke-проверка, стоящая после зелёного прогона, порождает поправки, а их цикл (impl → impl-test → повторная smoke) правилом не задан.
+- **Refs**: —

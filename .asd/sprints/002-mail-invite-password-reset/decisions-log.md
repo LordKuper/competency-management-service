@@ -74,3 +74,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Добавлен AC-18 по замечаниям smoke-проверки: убрать фразы из письма-приглашения, подсказки о пароле, вступления «Задание пароля» и подсказку поля сотрудника; на экранах без сессии рядом с логотипом — название «Калибр». Task 8 в новой последней волне 7.
 - **Rationale**: Решение пользователя; название «Калибр» уже утверждено (`docs/ux/app-shell.html` «Бренд», `web/src/app/productName.ts`) — новой брендовой директивы нет. Затраты AC-18: 0 итераций ревью, 0 раундов исправлений (новый критерий). Audit не переоценивается: тексты и разметка без изменения контракта.
 - **Affected docs**: sprint.md AC-18, plan.md Task 8, test-plan.md Manual verification
+- 2026-10-08 — impl-test entry 2: suite green (full via safety valve; backend 157/157, web 82/82, lint/build/check:api clean), 0/0 tests (AC-17 decision none); unticked Task 8 (AC-18) → NEXT impl initial (F-2)

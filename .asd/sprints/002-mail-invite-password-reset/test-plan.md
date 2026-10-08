@@ -12,7 +12,7 @@ responsibility:
 | Entry | HEAD analysed | Scope |
 |---|---|---|
 | 1 | 1cdc829 | вся поверхность изменений: `git diff main...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (75 файлов, ветка на 342baa6) |
-| 2 | | delta с записи 1: `git diff 1cdc829...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (4 файла: `appsettings.Development.json`, `launchSettings.json`, `deploy/dev/docker-compose.yml`, `deploy/dev/README.md`; AC-17) плюс правки памяти D-1/D-2 (1798700) |
+| 2 | 906d167 | delta с записи 1: `git diff 1cdc829...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (4 файла: `appsettings.Development.json`, `launchSettings.json`, `deploy/dev/docker-compose.yml`, `deploy/dev/README.md`; AC-17) плюс правки памяти D-1/D-2 (1798700) |
 
 Предохранитель impacted set (`sprint-lifecycle.md` "Impacted test set"): поверхность затрагивает общую инфраструктуру (`PlatformModule.cs`, все `packages.lock.json`, `Program.cs`, `appsettings.json`), поэтому набор — полный (`dotnet test` + `npm test`), без выборки по ссылкам и AC. Предстратегический прогон существующих тестов: backend 116 тестов, 116 красных (хост API не стартует без `Smtp__*`/`App__PublicBaseUrl`, `dotnet test --solution Competency.slnx -c Release`, exit 2); web 60 из 60 зелёных (`npm --prefix web test`, exit 0). Сборка `Debug` занята процессом `Competency.Api` пользователя (запущен из Visual Studio, не останавливался), поэтому backend гоняется в `-c Release`.
 
