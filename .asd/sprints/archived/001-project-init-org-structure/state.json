@@ -1,7 +1,7 @@
 {
   "sprint_id": "001-project-init-org-structure",
   "branch": "sprint/001-project-init-org-structure",
-  "phase": "pr",
+  "phase": "done",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -270,6 +270,13 @@
       "decision": "open and merge",
       "reason": "user approved push + PR + squash merge",
       "evidence": "decisions-log.md 2026-10-07"
+    },
+    {
+      "gate": "sprint-closure",
+      "decision_actor": "orchestrator",
+      "decision": "close and archive",
+      "reason": "PR #2 MERGED",
+      "evidence": "merge commit a85980d0aeef3ee651b815dc81a4248b61d0c309"
     }
   ],
   "task_routing": {
@@ -629,12 +636,14 @@
     }
   },
   "created_at": "2026-10-05T00:00:00Z",
-  "updated_at": "2026-10-07T20:40:39.018Z",
+  "updated_at": "2026-10-08T06:30:28.331Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": {
     "number": 2,
-    "url": "https://github.com/LordKuper/competency-management-service/pull/2"
+    "url": "https://github.com/LordKuper/competency-management-service/pull/2",
+    "state": "merged",
+    "merge_commit": "a85980d0aeef3ee651b815dc81a4248b61d0c309"
   },
-  "archived_at": null
+  "archived_at": "2026-10-08T06:30:28.331Z"
 }
