@@ -17,7 +17,7 @@ export function useMailReport() {
       modal.warning({
         title: "Письмо не отправлено",
         content:
-          "Почтовый сервер не принял письмо. Учётная запись сохранена; отправьте письмо повторно позже из меню пользователя.",
+          "Почтовый сервер не принял письмо. Отправьте письмо повторно позже из меню пользователя.",
       });
     } else {
       message.success(sentText);
@@ -28,8 +28,11 @@ export function useMailReport() {
 /**
  * Returns the action that e-mails an account a new link: the invitation again to an invited account, or a password
  * reset link to a registered one. The new link voids the previous one; the server refuses an account in the wrong state.
- * The accounts are reread whatever the outcome.
+ * The accounts are reread whatever the outcome. The send is synchronous on the server, so a progress message stays
+ * up meanwhile and the row being sent cannot be sent again (a second click would carry the stale version and get 412).
  */
+const SENDING_KEY = "send-user-mail";
+
 export function useSendUserMail() {
   const { message } = App.useApp();
   const reportMail = useMailReport();
@@ -48,6 +51,13 @@ export function useSendUserMail() {
             }),
       );
     },
+    onMutate: () => {
+      message.loading({
+        key: SENDING_KEY,
+        content: "Отправка письма…",
+        duration: 0,
+      });
+    },
     onSuccess: (sent) => {
       reportMail(
         sent.mailSent,
@@ -59,8 +69,16 @@ export function useSendUserMail() {
     onError: (error) => {
       message.error(describeApiError(error));
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: usersQueryKey }),
+    onSettled: () => {
+      message.destroy(SENDING_KEY);
+      return queryClient.invalidateQueries({ queryKey: usersQueryKey });
+    },
   });
 
-  return (user: UserResponse) => send.mutate(user);
+  return {
+    sendMail: (user: UserResponse) => {
+      if (!send.isPending) send.mutate(user);
+    },
+    isSending: send.isPending,
+  };
 }

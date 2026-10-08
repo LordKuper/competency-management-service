@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
 
+const PLURAL = new Intl.PluralRules("ru");
 const RULES = "заглавные и строчные буквы, цифры и специальные символы.";
 
 /**
@@ -16,6 +17,6 @@ export function usePasswordHint(): string {
     retry: false,
   });
   return data
-    ? `Не короче ${data.minLength} символов; ${RULES}`
+    ? `Не короче ${data.minLength} ${PLURAL.select(data.minLength) === "one" ? "символа" : "символов"}; ${RULES}`
     : `Пароль должен быть длинным и содержать ${RULES}`;
 }

@@ -60,7 +60,7 @@ type UserDialog = { kind: "create" } | { kind: "edit"; userId: string };
 export function UserListPage() {
   const { token } = antdTheme.useToken();
   const confirmBlockChange = useBlockUser();
-  const sendMail = useSendUserMail();
+  const { sendMail, isSending } = useSendUserMail();
   const [dialog, setDialog] = useState<UserDialog | null>(null);
   const [params, setParams] = useState<UserListParams>({
     page: 1,
@@ -111,6 +111,7 @@ export function UserListPage() {
                       label: user.isInvited
                         ? "Отправить приглашение повторно"
                         : "Отправить ссылку для сброса пароля",
+                      disabled: isSending,
                       onClick: () => sendMail(user),
                     },
                   ]),
