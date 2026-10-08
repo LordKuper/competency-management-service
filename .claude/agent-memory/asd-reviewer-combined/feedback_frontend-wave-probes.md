@@ -1,6 +1,6 @@
 ---
 name: frontend-wave-probes
-description: how a 120-file web/ plus agent-memory impl-review wave was finished in about 45 turns - read ranges, one-Grep probes that found real defects, diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers
+description: how a 120-file web/ plus agent-memory impl-review wave was finished in about 45 turns - read ranges, one-Grep probes that found real defects, diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers, row-menu mutation and Russian plural probes
 metadata:
   type: feedback
 ---
@@ -23,6 +23,11 @@ the diff (TSX tolerates the larger size); skip `package-lock.json`, `schema.d.ts
   keyboard focus is lost; the CDP smokes in memory were mouse-only.
 - Agent-memory files: grep each cited component or constant (`UserCard`, `SEARCH_TEXT_MAX_LENGTH`) in `web/src`, `src` and
   `tests`, and every "does not provide" / "NOT yet run" claim against the code; four stale claims turned up in one wave.
+- A row-menu action with no confirm dialog (`useSendUserMail`, sprint 002): check for a pending guard or loading state, then
+  the server handler (does it bump the version before a slow SMTP send, `Smtp:Timeout` 15 s?). A second click with the row's
+  old `If-Match` gets 412 and `describeApiError` blames "другим пользователем".
+- Russian text with a number from config (`Не короче ${n} символов`): one plural form is wrong for n ending in 1 (21, 31);
+  `Intl.PluralRules("ru")` is the fix.
 
 **Re-review of a review-fix delta (wave-3/iter-02, about 40 turns, one finding):**
 - After a duplicated helper is hoisted into one shared module, Grep its call sites: a parameter every caller leaves at the
@@ -36,7 +41,8 @@ the diff (TSX tolerates the larger size); skip `package-lock.json`, `schema.d.ts
 - Check each fix against the iter-01 report and `decisions-log.md` "review-fix" entry first; every iter-01 item was closed, so
   only the new surface (shared hooks, test infra) needed fresh scanning.
 
-**Line arithmetic without a shell:** for a new-file hunk, file line = diff line minus the line number of its `@@` header.
+**Line arithmetic without a shell:** for a new-file hunk, file line = diff line minus the line number of its `@@` header; for a
+whole-file replace, subtract the line number of the last `-` line instead.
 
 **Language:** the dispatch header listed `language.docs: ru` and the policy puts reviews under `language.docs`, so the report
 prose was Russian with the template headings and tokens in English; earlier waves of this sprint were English.

@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-mail-invite-password-reset",
   "branch": "sprint/002-mail-invite-password-reset",
-  "phase": "impl-review",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -332,6 +332,12 @@
       "execution": "agent",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "review-fix wave-3/iter-01": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -393,7 +399,12 @@
         },
         {
           "iteration": 1,
-          "verdicts": {},
+          "verdicts": {
+            "iter-01": {
+              "combined": "CONCERNS",
+              "external": "CONCERNS"
+            }
+          },
           "iteration_heads": {
             "iter-01": "f3735b94c8ca956693a8ff1e0cba67c058bdcd86"
           },
@@ -403,8 +414,8 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T13:40:48.387Z",
-  "review_fixes_pending": null,
+  "updated_at": "2026-10-08T13:47:03.061Z",
+  "review_fixes_pending": "wave-3/iter-01",
   "test_defects_pending": null,
   "pr": null,
   "archived_at": null
