@@ -120,11 +120,11 @@ Tech reference: aspnetcore-10.0.12, mailkit-4.18.1, mailpit-1.31.4, visual-studi
 
 ### Task 8: Правки текстов и экрана входа по smoke-проверке
 Material risk: none
-- [ ] AC-18: `src/Competency.UserManagement/AccountMail.cs` — убрать из письма-приглашения строку «Если вы не ждали этого письма, просто удалите его.» (письмо сброса не меняется)
-- [ ] AC-18: `web/src/features/auth/AuthCard.tsx` — рядом с логотипом название системы `PRODUCT_NAME` («Калибр», `web/src/app/productName.ts`), токены `docs/ux/DESIGN.md`, адаптивность desktop/tablet сохраняется
-- [ ] AC-18: `web/src/features/auth/passwordPolicy.ts` — убрать из `PASSWORD_HINT` фразу «Если пароль не подойдёт, сервис укажет, чего в нём не хватает.»
-- [ ] AC-18: `web/src/features/auth/LinkPasswordPage.tsx` — убрать из вступления экрана «Задание пароля» фразу «Затем войдите в систему по своему e-mail и этому паролю.»
-- [ ] AC-18: `web/src/features/users/UserForm.tsx` — убрать подсказку `extra` у поля сотрудника
+- [x] AC-18: `src/Competency.UserManagement/AccountMail.cs` — убрать из письма-приглашения строку «Если вы не ждали этого письма, просто удалите его.» (письмо сброса не меняется)
+- [x] AC-18: `web/src/features/auth/AuthCard.tsx` — рядом с логотипом название системы `PRODUCT_NAME` («Калибр», `web/src/app/productName.ts`), токены `docs/ux/DESIGN.md`, адаптивность desktop/tablet сохраняется
+- [x] AC-18: `web/src/features/auth/passwordPolicy.ts` — убрать из `PASSWORD_HINT` фразу «Если пароль не подойдёт, сервис укажет, чего в нём не хватает.»
+- [x] AC-18: `web/src/features/auth/LinkPasswordPage.tsx` — убрать из вступления экрана «Задание пароля» фразу «Затем войдите в систему по своему e-mail и этому паролю.»
+- [x] AC-18: `web/src/features/users/UserForm.tsx` — убрать подсказку `extra` у поля сотрудника
 Tech reference: react-19.3.0, antd-6.6.5, aspnetcore-10.0.12.
 
 ## Risks
