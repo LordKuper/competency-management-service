@@ -46,3 +46,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — wave 4 done: Task 5 (bc591a7); SPA route /reset-password, POST /auth/forgot-password (202), POST /auth/reset-password, POST /users/{id}/send-password-reset, LinkPasswordRequest shared by accept/reset, info.version 2.0.0; one password-reset rate-limit counter per IP across three endpoints. Minimal web compile fix (ResetPasswordModal removed, menu item removed). Flagged choices (LinkPasswordRequest rename; employee read under row lock in worker/admin path; defaults interval 5 min, limit 10/60 s, queue 1000; change-password vs reset → 412 as before; Mail.SendFailed actor system in background) held for impl assessment
 - 2026-10-08 — route Task 6: critical, dispatch HEAD c4a90ec; risk change: authentication
 - 2026-10-08 — wave 5 done: Task 6 (5435f37); completion gate: build 0 warnings/0 errors, web build ok, lint exit 0; all paths within Task scopes
+
+## 2026-10-08 — impl assessment approved
+
+- **Decision**: Пользователь принял реализацию Task 1–6 и выборы dev 1–9 (без XML-документации `PageResponse<T>` ради неизменного `openapi.json`, класс `Rejection`; `MailSender` → false на любом отказе, кроме отмены; логин/пароль SMTP — оба или ни одного; ключи `Smtp:SecureSocketOptions`, `AccountLinks:*`, порты Mailpit 11025/18025; CA relay — в `deploy/README.md`; `mailSent` в `UserResponse`, версия 1 у новой записи; `LinkPasswordRequest`; общий счётчик лимита 10/60 с на IP, интервал 5 мин, очередь 1000; чтение сотрудника под блокировкой строки; меню без подтверждения, «письмо не отправлено» — модальное окно; токен удаляется из адреса).
+- **Rationale**: Выборы в рамках AC и решений аудита; ручную проверку отправки через Mailtrap пользователь выполнит сам (инструкции даны в чате), она не блокирует impl-test.
+- **Affected docs**: plan.md
