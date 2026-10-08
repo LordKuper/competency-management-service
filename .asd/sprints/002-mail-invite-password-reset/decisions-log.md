@@ -124,3 +124,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — impl-test entry 8: impacted set green (valve not fired; backend 44/44 impacted, build 0/0, lint/web build 0), 0/0 tests; NEXT impl-review
 - 2026-10-08 — impl-review wave 2 iteration 2 (floor medium)
 - 2026-10-08 — impl-review wave-2/iter-02: external APPROVE (latched), combined CONCERNS (F1 medium: asd-tester-critical memory line 12 gate-start race advice contradicts lines 18/40 and the locking rule) → impl review-fix (review_fixes_pending = wave-2/iter-02): memory-fix dispatch to owner asd-tester-critical
+- 2026-10-08 — route review-fix wave-2/iter-02: standard (memory-fix, owner asd-tester-critical), dispatch HEAD 040fd05; risk none via grep of memory file
+- 2026-10-08 — review-fix wave-2/iter-02 done (e260b3d memory-fix by owner asd-tester-critical: gate-start races only without a multi-row invariant; held-lock races with one known status); completion gate build 0/0, lint 0
+- 2026-10-08 — impl fix for wave-2/iter-02: findings resolved
