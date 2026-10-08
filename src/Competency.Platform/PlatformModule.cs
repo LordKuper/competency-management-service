@@ -52,6 +52,7 @@ public static class PlatformModule
     private const int PostgresMajorVersion = 18;
     private static readonly TimeSpan DatabaseWaitTimeout = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan DatabaseWaitDelay = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan MaxSmtpTimeout = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
 
     /// <summary>
     /// Registers the cross-cutting services every module relies on.
@@ -227,9 +228,12 @@ public static class PlatformModule
     {
         services.AddOptions<SmtpOptions>()
             .Bind(configuration.GetSection(SmtpSection))
-            .Validate(smtp => !string.IsNullOrWhiteSpace(smtp.Host), "'Smtp:Host' is not set.")
+            .Validate(smtp => Uri.CheckHostName(smtp.Host) != UriHostNameType.Unknown, "'Smtp:Host' is not a host name or address.")
             .Validate(smtp => smtp.Port is > IPEndPoint.MinPort and <= IPEndPoint.MaxPort, "'Smtp:Port' is not a port number.")
-            .Validate(smtp => smtp.Timeout > TimeSpan.Zero, "'Smtp:Timeout' is not a positive time span.")
+            .Validate(smtp => Enum.IsDefined(smtp.SecureSocketOptions), "'Smtp:SecureSocketOptions' is not a defined option.")
+            .Validate(
+                smtp => smtp.Timeout > TimeSpan.Zero && smtp.Timeout <= MaxSmtpTimeout,
+                $"'Smtp:Timeout' is not a positive time span of at most {MaxSmtpTimeout}.")
             .Validate(
                 smtp => string.IsNullOrEmpty(smtp.UserName) == string.IsNullOrEmpty(smtp.Password),
                 "'Smtp:UserName' and 'Smtp:Password' are set only together.")
