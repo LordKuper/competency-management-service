@@ -74,6 +74,16 @@ async function openMenuOf(
 const rowOf = (row: UserResponse) =>
   within(screen.getByText(row.email).closest("tr") as HTMLElement);
 
+/** antd keeps a closed message in the DOM for its leave animation, which jsdom never finishes. */
+function isClosing(text: string) {
+  return (
+    screen
+      .queryByText(text)
+      ?.closest("[role=alert]")
+      ?.classList.contains("ant-message-fade-leave") ?? false
+  );
+}
+
 beforeEach(() => {
   queryClient.clear();
 });
@@ -205,12 +215,7 @@ describe("row menu (AC-6, AC-9, AC-11)", () => {
     expect(
       await screen.findByText("Приглашение отправлено повторно"),
     ).toBeInTheDocument();
-    // antd keeps a destroyed message in the DOM for its leave animation, which jsdom never finishes
-    await waitFor(() =>
-      expect(
-        screen.queryByText("Отправка письма…")?.closest("[role=alert]"),
-      ).toHaveClass("ant-message-fade-leave"),
-    );
+    await waitFor(() => expect(isClosing("Отправка письма…")).toBe(true));
     expect(
       fakeApi.calls(`POST /api/v1/users/${INVITED.id}/resend-invitation`),
     ).toHaveLength(1);
