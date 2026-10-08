@@ -16,7 +16,7 @@ public sealed class LongPasswordHost(TestEnvironment environment)
 }
 
 /// <summary>
-/// AC-19: the interface learns the shortest accepted password from the server, without a session, and the number follows the deployment's setting.
+/// The interface learns the shortest accepted password from the server, without a session, and the number follows the deployment's setting.
 /// </summary>
 public sealed class PasswordPolicyTests(LongPasswordHost fixture, TestEnvironment environment) : IClassFixture<LongPasswordHost>
 {

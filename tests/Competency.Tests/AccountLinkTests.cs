@@ -9,7 +9,7 @@ namespace Competency.Tests;
 /// <summary>
 /// Registration by invitation and password reset by e-mailed link, from the administrator's action and the user's request to the screen the
 /// link opens: what is mailed and to whom, that a link is spent once and stops working for every reason alike, and that nothing the anonymous
-/// requests answer tells whether an account exists. The acceptance ids in the names are those of the sprint that introduced the links.
+/// requests answer tells whether an account exists.
 /// </summary>
 public sealed partial class AccountLinkTests(TestEnvironment environment)
 {
