@@ -21,7 +21,7 @@ responsibility:
 | 8 | bffabb7 | delta с записи 7: `git diff 352584d...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (5 файлов: `AuthEndpoints.cs` — только doc-комментарий; тесты `LastAdministratorTests.cs`, `RowLock.cs`, `PasswordPolicyTests.cs`, `AccountLinkTests.cs`; AC-7, review-fix wave-2/iter-01: external #1, детерминированный тест гонки последних администраторов) |
 | 9 | 274b926 | delta с записи 8: `git diff bffabb7...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` — ПУСТО (единственная правка review-fix wave-2/iter-02 — e260b3d, память агента `.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md`) |
 | 10 | c372e1b | delta с записи 9: `git diff 274b926...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (3 файла web: `useSendUserMail.ts`, `UserListPage.tsx`, `passwordPolicy.ts`; review-fix wave-3/iter-01: F1 защита и индикатор повторной отправки письма, F2 склонение «символа»/«символов», external #1 текст предупреждения) |
-| 11 | | delta с записи 10: `git diff c372e1b...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (2 файла web: `useSendUserMail.ts` — только JSDoc; `userMail.test.tsx` — комментарий перенесён в JSDoc хелпера `isClosing`; review-fix wave-3/iter-02) |
+| 11 | 759792b | delta с записи 10: `git diff c372e1b...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (2 файла web: `useSendUserMail.ts` — только JSDoc; `userMail.test.tsx` — комментарий перенесён в JSDoc хелпера `isClosing`; review-fix wave-3/iter-02) |
 
 
 ## Risk → check decisions
