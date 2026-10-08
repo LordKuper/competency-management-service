@@ -120,3 +120,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — route review-fix wave-2/iter-01: standard, dispatch HEAD 2048ba4; risk none via build; route review-fix wave-2/iter-01 tests: critical; risk change: race test determinism
 - 2026-10-08 — review-fix wave-2/iter-01 done (7000d33 dev: AuthEndpoints access matrix; 0eb1c83 tester: deterministic last-admin race via RowLock.HoldActiveAdministratorsAsync + pg_stat_activity waiters, doc comment fixes; 97b4db7 tester memory); fail-first: both locks dropped / registered predicate dropped → red; single-lock drops equivalent (recorded); backend 166/166; completion gate build 0/0, lint 0
 - 2026-10-08 — impl fix for wave-2/iter-01: findings resolved
+- 2026-10-08 — route impl-test entry 8: standard, dispatch HEAD 226300b; risk none via test run
+- 2026-10-08 — impl-test entry 8: impacted set green (valve not fired; backend 44/44 impacted, build 0/0, lint/web build 0), 0/0 tests; NEXT impl-review
