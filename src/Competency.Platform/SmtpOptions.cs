@@ -23,6 +23,12 @@ public sealed class SmtpOptions
     public SecureSocketOptions SecureSocketOptions { get; set; }
 
     /// <summary>
+    /// Whether the server certificate is checked for revocation (CRL/OCSP); turn it off only when the revocation endpoints are unreachable from the host.
+    /// The certificate and its chain are validated either way.
+    /// </summary>
+    public bool CheckCertificateRevocation { get; set; } = true;
+
+    /// <summary>
     /// Sign-in name on the server; empty when the server takes mail without authentication.
     /// </summary>
     public string UserName { get; set; } = string.Empty;

@@ -28,7 +28,7 @@ public sealed class MailSender(IOptions<SmtpOptions> options, ILogger<MailSender
         timeout.CancelAfter(settings.Timeout);
         try
         {
-            using var client = new SmtpClient();
+            using var client = new SmtpClient { CheckCertificateRevocation = settings.CheckCertificateRevocation };
             await client.ConnectAsync(settings.Host, settings.Port, settings.SecureSocketOptions, timeout.Token);
             if (!string.IsNullOrEmpty(settings.UserName))
             {
