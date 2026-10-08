@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi } from "../../test/fakeApi";
+import { deferred, fakeApi } from "../../test/fakeApi";
 import { UserListPage } from "./UserListPage";
 import type { UserResponse } from "./usersApi";
 
@@ -182,6 +182,39 @@ describe("row menu (AC-6, AC-9, AC-11)", () => {
       expect(screen.queryByText(MAIL_NOT_SENT)).not.toBeInTheDocument();
     },
   );
+
+  it("shows progress and issues one request only while a send is pending, then removes the progress", async () => {
+    const answer = deferred<Response>();
+    fakeApi.on(
+      `POST /api/v1/users/${INVITED.id}/resend-invitation`,
+      () => answer.promise,
+    );
+    await openUsers();
+    const user = userEvent.setup();
+
+    await openMenuOf(user, INVITED);
+    await user.click(await screen.findByRole("menuitem", { name: RESEND }));
+
+    expect(await screen.findByText("Отправка письма…")).toBeInTheDocument();
+    await openMenuOf(user, INVITED);
+    const again = await screen.findByRole("menuitem", { name: RESEND });
+    expect(again).toHaveAttribute("aria-disabled", "true");
+    await user.click(again);
+
+    answer.resolve(Response.json({ ...INVITED, mailSent: true }));
+    expect(
+      await screen.findByText("Приглашение отправлено повторно"),
+    ).toBeInTheDocument();
+    // antd keeps a destroyed message in the DOM for its leave animation, which jsdom never finishes
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Отправка письма…")?.closest("[role=alert]"),
+      ).toHaveClass("ant-message-fade-leave"),
+    );
+    expect(
+      fakeApi.calls(`POST /api/v1/users/${INVITED.id}/resend-invitation`),
+    ).toHaveLength(1);
+  });
 
   it("keeps a warning on screen until closed when the mail server did not accept the mail", async () => {
     fakeApi.on(`POST /api/v1/users/${INVITED.id}/resend-invitation`, () =>

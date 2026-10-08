@@ -202,6 +202,18 @@ describe.each([INVITATION, RESET])(
       expect(fakeApi.calls("GET /api/v1/auth/me")).toHaveLength(0);
     });
 
+    it("declines the noun by the Russian plural rule: 21 is «символа», not «символов»", async () => {
+      fakeApi.on("GET /api/v1/auth/password-policy", () =>
+        Response.json({ minLength: 21 }),
+      );
+
+      await openApp(`${screenUnderTest.path}#token=${TOKEN}`);
+
+      expect(
+        await screen.findByText(/^Не короче 21 символа;/),
+      ).toBeInTheDocument();
+    });
+
     it("falls back to the hint without a number when the policy cannot be read", async () => {
       fakeApi.on("GET /api/v1/auth/password-policy", () => problem(500));
 
