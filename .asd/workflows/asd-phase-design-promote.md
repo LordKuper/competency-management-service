@@ -10,6 +10,8 @@ The main phase orchestrator owns decomposition, state and gates inline. Mode fol
 
 Append friction: `F-N` entries to `<sprint>/friction-log.md` per `sprint-lifecycle.md` "Friction log".
 
+Timing: per `sprint-lifecycle.md` "Operation timing" — `dispatch` ops around step 3's and step 4's agent dispatches.
+
 ## Delegates
 
 - `asd-ba`, `asd-architect`, `asd-ux` only for their domain artifacts

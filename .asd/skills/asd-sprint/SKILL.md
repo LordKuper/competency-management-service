@@ -16,14 +16,16 @@
 
 ## Operations used
 - Read files / search repo — detect active sprint; read state.json, its frozen workflow definition `.asd/workflows/<workflow>.json` (`sprint-lifecycle.md` "Workflows"), config.yaml, custom-common-rules.md
-- Run command — Step 0's `git fetch` and `git merge --ff-only`; `git status`, `git branch --show-current`; `gh pr view`/`gh pr list` (merged-unclosed detection), `git fetch`/`git show`/`git log`/`git ls-remote --tags origin`/`gh release view` (release retry check), `gh pr merge` (a legacy finalize PR only); decisions-log rotation (rename, copy template, commit those paths)
-- Request user decision — new-sprint confirm, resume/abort choice, release retry or continue (never free-form scope text)
+- Run command — Step 0's `git fetch` and `git merge --ff-only`; `git status`, `git branch --show-current`; `gh pr view`/`gh pr list` (merged-unclosed detection), `git fetch`/`git show`/`git log`/`git ls-remote --tags origin`/`gh release view` (release retry check), `gh pr merge` (a legacy finalize PR only); decisions-log rotation (rename, copy template, commit those paths); `update.js --check-version`; `runtime.js timing`/`timing-recover`
+- Request user decision — new-sprint confirm, resume/abort choice, release retry or continue, ASD update or continue (never free-form scope text)
 - Delegate to skill — phase skills, plus `asd-init` per "Skills dispatched"
 - No other writes — phase skills and their inline orchestrator own writes
 
 ## Workflow
 
 Before a phase-skill delegation below, rotate the decisions log when `.asd/rules/artifact-layout.md` "Decisions log" requires it.
+
+Phase ops (`sprint-lifecycle.md` "Operation timing"): before each phase-skill delegation run `node .asd/runtime.js timing --ledger <sprint>/timing.jsonl --open <phase> --kind phase`, Step 3 closing the returned phase in the same call (`--close <phase>`); on return close it `done` on `COMPLETED`, `--outcome interrupted` on `FAILED`/`ABORT`; a `QUESTION` halt leaves it open: the relayed question opens a `user-wait` (`gate`: short question label) closed once the answer is processed, and the re-delegation reuses the open phase op (a repeat open is skipped). None for new-sprint scope (its step 1 opens its own), on pr open mode's return (it closed its own), for merge mode (resume at `phase="pr"`, `pr.state="open"`) or the release retry.
 
 ### Step 0: fast-forward the base branch
 Before Step 1, fast-forward local `git.base_branch` exactly as `git-strategy.md` "Branch" states: a refusal halts and asks the user; an unreachable remote warns and continues on local state. Rules, workflows and phase skills are read only after this step; this skill's own text and the session-start files are the pre-fetch copy.
@@ -41,12 +43,13 @@ Before Step 1, fast-forward local `git.base_branch` exactly as `git-strategy.md`
 ### Step 2A: new-sprint flow
 1. Read `.asd/project/config.yaml` (confirm init complete)
 2. `git status` — if dirty, request user decision: commit / stash / abort
+2a. Unless `self_hosting: enabled`: `node "$(git rev-parse --show-toplevel)/.asd/skills/asd-update/update.js" --check-version`. `newer: true` → request user decision (hard, `checkpoints.md` "Gate policy"): update to v<remote> now, then start | continue on v<local>; carry the answer to scope. A warning → continue.
 3. Collect scope as a plain chat message; request user decision only to confirm start or abort
-4. Delegate to skill `asd-phase-scope`, passing scope text and any merged-unclosed sprint Step 1 carries; its step 1 asks the workflow choice and runs the closure write
+4. Delegate to skill `asd-phase-scope`, passing scope text, any merged-unclosed sprint Step 1 carries and step 2a's answer; its step 1 asks the workflow choice, runs the closure write and, on *update*, the update
 5. On COMPLETED → advance per Step 3
 
 ### Step 2B: resume flow
-1. Read `.asd/sprints/<NNN-slug>/state.json` and its frozen workflow definition
+1. Read `.asd/sprints/<NNN-slug>/state.json` and its frozen workflow definition; run `node .asd/runtime.js timing-recover --ledger <sprint>/timing.jsonl`
 2. Show: sprint id, workflow, current phase, review iteration (`reviews.design.iteration` when phase=`design-review`; when phase=`impl-review`, `wave <K>/<n>` = `reviews.impl.wave`/`waves.length` plus that wave's `iteration`, a legacy flat `reviews.impl` read as wave 1 of 1 — `sprint-lifecycle.md` "Review iteration counters"), last review verdict (if any)
 3. Request user decision: resume (default) | re-run current phase | re-run earlier phase | abort sprint. Re-run options offer only phases of the definition's `phases`; under the design-block collapse test (`standard` only, `sprint-lifecycle.md` "Workflows"), neither offers `design`, `design-review` or `design-promote`.
 4. Delegate to the matching phase skill. *resume* re-enters `phase`, except `phase="design-promote"` under the collapse test (`standard` only; `sprint-lifecycle.md` "Design/design-review/design-promote collapse"): then dispatch `plan`. *re-run earlier phase* = rollback: its inline state update resets the review state per **rollback reset** in `sprint-lifecycle.md`, reading the definition's `rollback_reset` — `reviews.design`'s counter, `reviews.impl` to its seed wave node — with the severity floors.
@@ -61,7 +64,7 @@ After any phase skill returns:
 User may interrupt anytime; asd-sprint re-detects state on next invocation.
 
 ## Skills dispatched
-Phase skills of the frozen workflow's `phases` (`.asd/workflows/<workflow>.json`), plus `asd-init` sprint-mediated mode for a plan-declared settings change (`asd-phase-impl.md` step 6). No other skill set.
+Phase skills of the frozen workflow's `phases` (`.asd/workflows/<workflow>.json`), plus `asd-init` sprint-mediated mode for a plan-declared settings change (`asd-phase-impl.md` step 6) and `asd-update` sprint-mediated mode on the Step 2A update choice (`asd-phase-scope.md` step 1). No other skill set.
 
 ## Return contract (single line)
 ```

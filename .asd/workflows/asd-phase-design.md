@@ -15,6 +15,7 @@ Orchestration body for the `asd-phase-design` skill. Operation-mapping to host t
 - delegate to agent, sequential: BA, UX, Architect, optional Architect (c4-full)
 - dispatch skill `asd-design-system` when gate detects missing files
 - append friction: `F-N` entries to `<sprint>/friction-log.md` per `sprint-lifecycle.md` "Friction log"
+- timing: per `sprint-lifecycle.md` "Operation timing" — `dispatch` ops around the agent dispatches of steps 6, 8, 9 and 10
 
 ## Workflow
 

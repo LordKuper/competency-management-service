@@ -11,6 +11,8 @@
 
 Append friction: `F-N` entries to `<sprint>/friction-log.md` per `sprint-lifecycle.md` "Friction log".
 
+Timing: per `sprint-lifecycle.md` "Operation timing" — `dispatch` ops around step 2's, step 3's and step 3a's agent dispatches.
+
 ## Delegates
 
 - `asd-architect` — single default audit owner; registry writes after confirmation

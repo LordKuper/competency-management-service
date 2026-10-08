@@ -9,7 +9,7 @@ source: ""                    # optional path/URL when provenance != original
 
 <!-- Derived analysis: reference every entry by its F-N id, never restate it. Phase semantics: .asd/rules/sprint-lifecycle.md "Retro phase". -->
 <!-- Row ids and English literals: .asd/rules/sprint-lifecycle.md "Retro phase" (Retro row id); intake parses them. -->
-<!-- EMPTY-LOG BRANCH: keep Outcome (lede "No friction recorded this sprint.") and Systemic proposals, OMIT Analysis + Actions — two h2 still leaves {{TOC_NAV}} empty per artifact-layout.md's threshold. -->
+<!-- EMPTY-LOG BRANCH: keep Outcome (lede "No friction recorded this sprint."), Systemic proposals and Duration, OMIT Analysis + Actions — three h2 reach the TOC threshold, so {{TOC_NAV}} is filled per artifact-layout.md. -->
 
 <section id="outcome" class="hero">
   <h2>Outcome</h2>
@@ -49,6 +49,38 @@ source: ""                    # optional path/URL when provenance != original
     </thead>
     <tbody>
       <tr id="P-1"><td>{{one imperative line | covered by: cited existing rule}}</td><td><span class="chip area">{{consumer | asd}}</span></td><td><code>{{home per sprint-lifecycle.md "Retro phase"}}</code></td><td>{{what a future sprint spends less of}}</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Third section, kept on both branches. Fill from `node .asd/runtime.js timing-summary` JSON; never restate the ledger. Summary rows: wall, machine, user-wait, unaccounted time; totals by phase, kind, agent/tier/model; rework; baseline medians only when present. Slow set = the top 5 leaf machine ops plus every one over 30 min, each with its excess. List every user wait. Each slow op or avoidable wait names its cause and links its row: <a href="#P-1">P-1</a> or <a href="#A-1">A-1</a>; an unavoidable wait or an op with no proposal has no link. Rows here are not retro-candidates: no P-/A- ids. `{"timing": null}` (no ledger): replace the three subsections with one line "No timing data". -->
+<section id="duration">
+  <h2>Duration</h2>
+  <h3>Summary</h3>
+  <table>
+    <thead>
+      <tr><th>Measure</th><th>Key</th><th>Time</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>{{wall | machine | user-wait | unaccounted | phase | kind | agent/tier/model | rework | baseline median}}</td><td>{{phase, kind or agent name | —}}</td><td>{{duration}}</td></tr>
+    </tbody>
+  </table>
+  <h3>Slow set</h3>
+  <table>
+    <thead>
+      <tr><th>Operation</th><th>Duration</th><th>Excess</th><th>Cause</th><th>Row</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>{{kind, phase and target}}</td><td>{{duration}}</td><td>{{over the sprint median of its kind}}</td><td>{{cause from the run record, one sentence}}</td><td><a href="#P-1">P-1</a></td></tr>
+    </tbody>
+  </table>
+  <h3>User waits</h3>
+  <table>
+    <thead>
+      <tr><th>Wait</th><th>Duration</th><th>Avoidable</th><th>Cause</th><th>Row</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>{{phase and escalation}}</td><td>{{duration}}</td><td>{{yes: adaptive evidence | deterministic rule | decision already authorised; no}}</td><td>{{cause, one sentence}}</td><td><a href="#P-2">P-2</a></td></tr>
     </tbody>
   </table>
 </section>

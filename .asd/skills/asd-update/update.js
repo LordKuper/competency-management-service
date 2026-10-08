@@ -48,6 +48,8 @@
  *   node .asd/skills/asd-update/update.js [--dry-run]
  *   node .asd/skills/asd-update/update.js --force <relPath...>   (after review,
  *     overwrite specific reported conflicts the user has explicitly confirmed)
+ *   node .asd/skills/asd-update/update.js --check-version   (read-only: prints
+ *     {local, remote, newer} JSON from the remote manifest, always exits 0)
  */
 'use strict';
 
@@ -56,6 +58,7 @@ const path = require('path');
 const os = require('os');
 const https = require('https');
 const { execFileSync } = require('child_process');
+const { pipeline } = require('stream/promises');
 
 const sync = require(path.join(__dirname, '..', '..', 'sync.js'));
 
@@ -433,26 +436,107 @@ function parseRepo(url) {
   return { owner: m[1], name: m[2] };
 }
 
-function get(url, cb) {
-  https.get(url, { headers: { 'User-Agent': 'asd-update' } }, (res) => {
-    if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-      res.resume();
-      return get(res.headers.location, cb);
-    }
-    cb(res);
-  }).on('error', (e) => { throw new Error(`network error: ${e.message}`); });
+// A dead network or proxy fails fast instead of hanging the sprint start: the
+// version check has a total deadline and a body cap (its response is
+// untrusted), the tarball a socket-idle timeout.
+const VERSION_CHECK_TIMEOUT_MS = 5000;
+const VERSION_CHECK_MAX_BYTES = 1024 * 1024;
+const TARBALL_IDLE_TIMEOUT_MS = 30000;
+const MAX_REDIRECTS = 5;
+const VERSION_RE = /^\d+(?:\.\d+)*$/;
+
+function upstreamRef(manifest) {
+  return Object.assign(parseRepo(manifest.repo), { branch: manifest.branch || 'main' });
 }
 
-function download(url, dest) {
+function request(url, timeoutMs, signal) {
   return new Promise((resolve, reject) => {
-    get(url, (res) => {
-      if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode} fetching ${url}`));
-      const f = fs.createWriteStream(dest);
-      res.pipe(f);
-      f.on('finish', () => f.close(() => resolve()));
-      f.on('error', reject);
-    });
+    const req = https.get(url, { headers: { 'User-Agent': 'asd-update' }, timeout: timeoutMs, signal }, resolve);
+    req.on('timeout', () => req.destroy(new Error(`timed out after ${timeoutMs} ms`)));
+    req.on('error', (e) => reject(new Error(`network error fetching ${url}: ${e.message}`)));
   });
+}
+
+// Resolves with a 200 response only, following at most MAX_REDIRECTS hops;
+// every failure rejects, so no caller can crash on an unhandled network error.
+async function get(url, timeoutMs, signal) {
+  let target = url;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    const res = await request(target, timeoutMs, signal);
+    const isRedirect = res.statusCode >= 300 && res.statusCode < 400 && res.headers.location;
+    if (!isRedirect && res.statusCode === 200) return res;
+    res.resume();
+    if (!isRedirect) throw new Error(`HTTP ${res.statusCode} fetching ${target}`);
+    target = new URL(res.headers.location, target).href;
+  }
+  throw new Error(`more than ${MAX_REDIRECTS} redirects fetching ${url}`);
+}
+
+async function download(url, dest) {
+  await pipeline(await get(url, TARBALL_IDLE_TIMEOUT_MS), fs.createWriteStream(dest));
+}
+
+async function fetchManifestText(url) {
+  const deadline = new AbortController();
+  const timer = setTimeout(() => deadline.abort(), VERSION_CHECK_TIMEOUT_MS);
+  try {
+    const chunks = [];
+    let bytes = 0;
+    for await (const chunk of await get(url, VERSION_CHECK_TIMEOUT_MS, deadline.signal)) {
+      bytes += chunk.length;
+      if (bytes > VERSION_CHECK_MAX_BYTES) throw new Error(`response over ${VERSION_CHECK_MAX_BYTES} bytes fetching ${url}`);
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks).toString('utf8');
+  } catch (e) {
+    throw deadline.signal.aborted ? new Error(`timed out after ${VERSION_CHECK_TIMEOUT_MS} ms fetching ${url}`) : e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function readManifestVersion(manifestText, origin) {
+  let manifest;
+  try {
+    manifest = JSON.parse(manifestText);
+  } catch (e) {
+    throw new Error(`${origin} release-manifest.json is not valid JSON: ${e.message}`);
+  }
+  const version = manifest && manifest.asd_version;
+  if (typeof version !== 'string' || !VERSION_RE.test(version)) {
+    throw new Error(`${origin} release-manifest.json has no valid asd_version`);
+  }
+  return version;
+}
+
+/**
+ * Compares the local and remote manifests' `asd_version`. Every remote field
+ * other than `asd_version` is ignored: the remote text is untrusted data.
+ * Throws on malformed JSON or an `asd_version` that is not dotted-numeric.
+ * @param {string} localManifestText
+ * @param {string} remoteManifestText
+ * @returns {{local: string, remote: string, newer: boolean}}
+ */
+function compareManifestVersions(localManifestText, remoteManifestText) {
+  const local = readManifestVersion(localManifestText, 'local');
+  const remote = readManifestVersion(remoteManifestText, 'remote');
+  return { local, remote, newer: compareVersions(remote, local) > 0 };
+}
+
+// Read-only: fetches nothing but the remote manifest and always exits 0, so an
+// offline or misconfigured project only warns and the sprint start continues.
+async function checkVersion() {
+  let local = null;
+  try {
+    const localText = sync.readNormalized(path.join(sync.findRepoRoot(process.cwd()), '.asd', 'release-manifest.json'));
+    local = readManifestVersion(localText, 'local');
+    const { owner, name, branch } = upstreamRef(JSON.parse(localText));
+    const remoteText = await fetchManifestText(`https://raw.githubusercontent.com/${owner}/${name}/${branch}/.asd/release-manifest.json`);
+    log(JSON.stringify(compareManifestVersions(localText, remoteText)));
+  } catch (e) {
+    process.stderr.write(`asd-update: version check skipped: ${e.message.replace(/\s+/g, ' ')}\n`);
+    log(JSON.stringify({ local, remote: null, newer: false }));
+  }
 }
 
 function checkTar() {
@@ -468,8 +552,7 @@ function checkTar() {
 // `.asd/`). Caller is responsible for cleanup (cleanupFetch()).
 async function fetchUpstreamTarball(manifest) {
   checkTar();
-  const { owner, name } = parseRepo(manifest.repo);
-  const branch = manifest.branch || 'main';
+  const { owner, name, branch } = upstreamRef(manifest);
   const tarUrl = `https://codeload.github.com/${owner}/${name}/tar.gz/refs/heads/${branch}`;
 
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'asd-update-'));
@@ -568,7 +651,8 @@ async function main() {
 }
 
 if (require.main === module) {
-  main();
+  if (process.argv.includes('--check-version')) checkVersion();
+  else main();
 }
 
 module.exports = {
@@ -581,6 +665,7 @@ module.exports = {
   applyPlan,
   buildNextUpstreamHashes,
   compareVersions,
+  compareManifestVersions,
   listMigrations,
   pendingMigrations,
   unionMigrationsByVersion,

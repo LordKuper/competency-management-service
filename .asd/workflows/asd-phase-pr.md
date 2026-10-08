@@ -4,6 +4,8 @@ The main orchestrator owns this workflow and delegates no orchestration role.
 
 Append friction: `F-N` entries to `<sprint>/friction-log.md` per `sprint-lifecycle.md` "Friction log".
 
+Timing: per `sprint-lifecycle.md` "Operation timing" — open mode closes the pr phase op before step 3's final bookkeeping commit and push, or before step 2's hand-over to merge mode (ledger committed with step 2's commit, alone when it writes none); merge mode records nothing.
+
 ## Open mode
 
 1. Read config, state, plan, reviews, test-plan with its segments (`artifact-layout.md` "Test plan"), retrospective and stubs. Confirm every plan task, AC trace, required review verdict (reviews-green over every impl-review wave per `sprint-lifecycle.md` "PR phase"; satisfied per its "State recovery", External Review's skip form and legacy values included), full-suite record, lint/build record and stub rule; `pr` requires review DoD plus a completed `retro` (`checkpoints.md`), so `<sprint>/retrospective.html` is a DoD input and its absence blocks. Re-run required checks after a relevant diff. A failed or missing check blocks.

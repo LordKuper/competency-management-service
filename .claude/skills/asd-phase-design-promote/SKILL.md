@@ -1,8 +1,8 @@
 ---
-# ASD generated. Edit .asd/skills/asd-phase-design-promote/SKILL.md. source_digest=sha256:b4ec2db3e65e6dbf27b9d50877eb91b011c641933c8d91517acd75e34025101e content_digest=sha256:f5b7cb90eede8706ae210b082bb5185180dab6766bc8ab5147ebae936b0ee7ef asd_version=13.3.0 schema=1
+# ASD generated. Edit .asd/skills/asd-phase-design-promote/SKILL.md. source_digest=sha256:7850ecd38ceb9665f6bd8681f340a8519c43cc26ac28ee70173a15ae532293b4 content_digest=sha256:53eb649b7d73954d7b428488506ab6261ee3cf2970ee07d1d8feab8b2030c047 asd_version=13.8.0 schema=1
 name: asd-phase-design-promote
 description: "Runs the ASD design-promote phase: the phase orchestrator handles decomposition and gates, then in-scope domain creators promote persistent docs — from approved drafts after design-review (standard workflow), or from the accepted implementation after impl-review with no draft and no review (lite workflow), where it runs before retro. Use when asd-sprint dispatches design-promote, or when the user explicitly asks to run or re-run design-promote for the active sprint."
-allowed-tools: "Read Write Edit AskUserQuestion Task"
+allowed-tools: "Read Write Edit AskUserQuestion Task Bash(node .asd/runtime.js:*)"
 ---
 
 Operation mapping: see `.asd/rules/providers.md`.
