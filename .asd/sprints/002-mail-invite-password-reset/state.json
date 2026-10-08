@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-mail-invite-password-reset",
   "branch": "sprint/002-mail-invite-password-reset",
-  "phase": "impl-test",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -151,6 +151,13 @@
       "reason": "user-requested tagline removal; Flagged choices none; build 0/0, lint clean",
       "evidence": "ca1b233",
       "artifact_revision": "ca1b233"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-19 added (exact min password length in hint from GET /auth/password-policy), Task 11 wave 10",
+      "reason": "user request; API source chosen over hardcoded value (sprint 001 review F8, code-style §12); cost 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-08 scope amendment AC-19"
     }
   ],
   "task_routing": {
@@ -249,6 +256,12 @@
       "execution": "agent",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "Task 11": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -271,7 +284,7 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T11:56:19.642Z",
+  "updated_at": "2026-10-08T12:00:14.194Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
