@@ -127,3 +127,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — route review-fix wave-2/iter-02: standard (memory-fix, owner asd-tester-critical), dispatch HEAD 040fd05; risk none via grep of memory file
 - 2026-10-08 — review-fix wave-2/iter-02 done (e260b3d memory-fix by owner asd-tester-critical: gate-start races only without a multi-row invariant; held-lock races with one known status); completion gate build 0/0, lint 0
 - 2026-10-08 — impl fix for wave-2/iter-02: findings resolved
+- 2026-10-08 — route impl-test entry 9: standard, dispatch HEAD 7750700; risk none via test run
+- 2026-10-08 — impl-test entry 9: empty code delta; backend 166/166, lint 0; 0/0 tests; NEXT impl-review

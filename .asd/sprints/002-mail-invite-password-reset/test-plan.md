@@ -19,7 +19,7 @@ responsibility:
 | 6 | 772dde2 | delta с записи 5: `git diff cb8ee2a...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (7 файлов: `AuthEndpoints.cs`, `PasswordPolicyResponse.cs`, `openapi.json`, `schema.d.ts`, `passwordPolicy.ts`, `LinkPasswordPage.tsx`, `ChangePasswordModal.tsx`; AC-19, минимальная длина пароля из API) |
 | 7 | 352584d | delta с записи 6: `git diff 772dde2...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (6 файлов: `PlatformModule.cs`, `SmtpOptions.cs`, `MailSender.cs`, `appsettings.json`, `deploy/README.md`, `deploy/dev/README.md`; AC-1, review-fix wave-1/iter-01: external #1, #2, combined F1–F3) |
 | 8 | bffabb7 | delta с записи 7: `git diff 352584d...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (5 файлов: `AuthEndpoints.cs` — только doc-комментарий; тесты `LastAdministratorTests.cs`, `RowLock.cs`, `PasswordPolicyTests.cs`, `AccountLinkTests.cs`; AC-7, review-fix wave-2/iter-01: external #1, детерминированный тест гонки последних администраторов) |
-| 9 | | delta с записи 8: `git diff bffabb7...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` — ПУСТО (единственная правка review-fix wave-2/iter-02 — e260b3d, память агента `.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md`) |
+| 9 | 274b926 | delta с записи 8: `git diff bffabb7...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` — ПУСТО (единственная правка review-fix wave-2/iter-02 — e260b3d, память агента `.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md`) |
 
 
 ## Risk → check decisions
