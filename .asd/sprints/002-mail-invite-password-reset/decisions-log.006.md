@@ -35,3 +35,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
+- 2026-10-08 — retro: retrospective.html written (analysed branch: 5 friction entries F-1…F-5, F-5 appended in retro; 4 actions A-1…A-4 — 2 upstream ASD, 1 consumer, 1 covered by; 4 systemic proposals P-1…P-4 — 2 consumer, 1 upstream ASD, 1 covered by); NEXT: pr
