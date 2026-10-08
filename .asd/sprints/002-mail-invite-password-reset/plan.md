@@ -140,8 +140,8 @@ Tech reference: react-19.3.0, antd-6.6.5.
 
 ### Task 11: Минимальная длина пароля в подсказке из API
 Material risk: none
-- [ ] AC-19: анонимный `GET /api/v1/auth/password-policy` (`.AllowAnonymous()`, вне группы, объявляющей 401) → `{ minLength }` из `IdentityOptions.Password.RequiredLength` (`IOptions<IdentityOptions>`); перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts` (аддитивно, `info.version` остаётся 2.0.0)
-- [ ] AC-19: `web/src/features/auth/passwordPolicy.ts` и его вызовы (`LinkPasswordPage.tsx`, `ChangePasswordModal.tsx`) — подсказка вида «Не короче N символов; заглавные и строчные буквы, цифры и специальные символы.» с N из запроса политики (React Query, долгий `staleTime`); пока значение не загружено или запрос не удался — подсказка без числа
+- [x] AC-19: анонимный `GET /api/v1/auth/password-policy` (`.AllowAnonymous()`, вне группы, объявляющей 401) → `{ minLength }` из `IdentityOptions.Password.RequiredLength` (`IOptions<IdentityOptions>`); перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts` (аддитивно, `info.version` остаётся 2.0.0)
+- [x] AC-19: `web/src/features/auth/passwordPolicy.ts` и его вызовы (`LinkPasswordPage.tsx`, `ChangePasswordModal.tsx`) — подсказка вида «Не короче N символов; заглавные и строчные буквы, цифры и специальные символы.» с N из запроса политики (React Query, долгий `staleTime`); пока значение не загружено или запрос не удался — подсказка без числа
 Tech reference: aspnetcore-10.0.12, microsoft-aspnetcore-identity-entityframeworkcore-10.0.12, microsoft-aspnetcore-openapi-10.0.12, react-19.3.0, tanstack-react-query-5.104.1, openapi-fetch-0.17.0.
 
 ## Risks

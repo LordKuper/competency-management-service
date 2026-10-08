@@ -101,3 +101,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Подсказка о пароле называет точную минимальную длину; число — из нового анонимного `GET /api/v1/auth/password-policy` (`Identity:Password:RequiredLength`). Task 11 в новой последней волне 10.
 - **Rationale**: Запрос пользователя; источник — API, а не константа во frontend: это сохраняет решение спринта 001 (archived `001-project-init-org-structure` decisions-log 2026-10-07 «review-fix wave-3/iter-01 … Password hint no longer states the length», review F8, `code-style.md` §12) и даёт точное число. Затраты AC-19: 0 итераций ревью, 0 раундов исправлений.
 - **Affected docs**: sprint.md AC-19, plan.md Task 11
+- 2026-10-08 — route Task 11: standard, dispatch HEAD 41667f4; risk none
+- 2026-10-08 — wave 10 done: Task 11 (2bc7c32): GET /api/v1/auth/password-policy (GetPasswordPolicy) → {minLength}, usePasswordHint; completion gate: build 0/0, lint 0; impl assessment passed adaptively (Flagged choices: none)

@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-mail-invite-password-reset",
   "branch": "sprint/002-mail-invite-password-reset",
-  "phase": "impl",
+  "phase": "impl-test",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -158,6 +158,14 @@
       "decision": "AC-19 added (exact min password length in hint from GET /auth/password-policy), Task 11 wave 10",
       "reason": "user request; API source chosen over hardcoded value (sprint 001 review F8, code-style §12); cost 0 iterations / 0 fix rounds",
       "evidence": "decisions-log.md 2026-10-08 scope amendment AC-19"
+    },
+    {
+      "gate": "impl assessment",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "approve Task 11",
+      "reason": "user-authorized AC-19; additive contract; Flagged choices none; build 0/0, lint clean",
+      "evidence": "2bc7c32",
+      "artifact_revision": "2bc7c32"
     }
   ],
   "task_routing": {
@@ -262,6 +270,12 @@
       "execution": "agent",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "impl-test entry 6": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -284,7 +298,7 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T12:00:14.194Z",
+  "updated_at": "2026-10-08T12:01:45.836Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
