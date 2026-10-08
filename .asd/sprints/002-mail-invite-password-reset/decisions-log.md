@@ -112,3 +112,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — route review-fix wave-1/iter-01: critical, dispatch HEAD d4be2fc; risk change: security
 - 2026-10-08 — review-fix wave-1/iter-01 done (cf381d1 #1 SecureSocketOptions defined, #2 Smtp:Timeout ≤ 49.17:02:47.294, F2 Uri.CheckHostName; 2e616dc F1 Smtp:CheckCertificateRevocation default true + README both CA cases; 0e43e68 F3 README user-secrets port); completion gate build 0/0, lint 0; flagged choices accepted (class default true for CheckCertificateRevocation; exact CancelAfter max)
 - 2026-10-08 — impl fix for wave-1/iter-01: findings resolved
+- 2026-10-08 — route impl-test entry 7: critical, dispatch HEAD 2a188ac; risk change: security
+- 2026-10-08 — impl-test entry 7: suite green (full via safety valve; backend 166/166, web 86/86, lint/build/check:api clean), 6 tests added (fail-first proven), 0 removed; NEXT impl-review
