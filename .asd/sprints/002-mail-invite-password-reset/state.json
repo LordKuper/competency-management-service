@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-mail-invite-password-reset",
   "branch": "sprint/002-mail-invite-password-reset",
-  "phase": "impl-test",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -129,6 +129,20 @@
       "reason": "user-requested larger name and 7-day lifetime; flagged 45 px (1.5x heading-1 token) above DESIGN.md scale accepted for impl, DESIGN.md wordmark token proposal deferred to design-promote hard gate; build 0/0, lint clean",
       "evidence": "af3f5c6",
       "artifact_revision": "af3f5c6"
+    },
+    {
+      "gate": "manual verification smoke",
+      "decision_actor": "user",
+      "decision": "AC-18 repeat pass; remove tagline",
+      "reason": "impl-test entry 4 smoke",
+      "evidence": "test-plan.md Manual verification"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-18 changed: no tagline on anonymous screens; Task 10 wave 9",
+      "reason": "smoke remark; cost 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-08 Task 10"
     }
   ],
   "task_routing": {
@@ -215,6 +229,12 @@
       "execution": "agent",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "Task 10": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -237,7 +257,7 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T11:49:58.721Z",
+  "updated_at": "2026-10-08T11:55:26.173Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

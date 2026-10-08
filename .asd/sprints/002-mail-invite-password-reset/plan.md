@@ -133,6 +133,11 @@ Material risk: none
 - [x] AC-4: срок ссылки-приглашения по умолчанию — 7 дней: `AccountLinks:InvitationLifetime` = `7.00:00:00` в `src/Competency.Api/appsettings.json` и значение по умолчанию в `deploy/README.md`; прочие упоминания 72 часов/`3.00:00:00` в коде и `deploy/**` (grep)
 Tech reference: react-19.3.0, antd-6.6.5, aspnetcore-10.0.12.
 
+### Task 10: Без подзаголовка на экранах без сессии
+Material risk: none
+- [ ] AC-18: убрать подзаголовок «Компетенции и карьерный рост» (`PRODUCT_TAGLINE`, `web/src/app/productName.ts`) с экранов без сессии; константу удалить, если других вызовов не остаётся
+Tech reference: react-19.3.0, antd-6.6.5.
+
 ## Risks
 - Тесты: около 48 вызовов `Scenarios.CreateUserAsync` создают пользователей с паролем, тесты `reset-password` в `AuditTests` — всё это перестаёт работать после Task 4–5 и правится в impl-test (сборка не ломается: тесты обращаются к API через HTTP).
 - Перехват писем в интеграционных тестах (Mailpit через ядро Testcontainers или заглушка SMTP) выбирает impl-test; Mailpit в CI — ещё один образ.
@@ -151,6 +156,7 @@ Tech reference: react-19.3.0, antd-6.6.5, aspnetcore-10.0.12.
 | 6 | 7 |
 | 7 | 8 |
 | 8 | 9 |
+| 9 | 10 |
 
 - Task 1 один в волне 1: AC-12 меняет глубину проверок, по которой dev выполняет все следующие Task.
 - Task 2 и 3 не пересекаются по файлам: Task 2 — новые файлы общих типов в `Competency.Platform` и `.cs`-файлы модулей; Task 3 — почтовые файлы `Competency.Platform`, `Competency.Platform.csproj`, все `packages.lock.json`, `Competency.Api`, `deploy/**`. Task 2 не меняет `.csproj` и lock-файлы.
@@ -160,6 +166,7 @@ Tech reference: react-19.3.0, antd-6.6.5, aspnetcore-10.0.12.
 - Task 7 (поправка скоупа 2026-10-08, AC-17) — новая последняя волна 6: меняет `launchSettings.json`, `deploy/dev/docker-compose.yml` и `deploy/dev/README.md` после Task 3.
 - Task 8 (поправка скоупа 2026-10-08, AC-18, по итогам smoke-проверки impl-test entry 2) — новая последняя волна 7.
 - Task 9 (поправка 2026-10-08 по smoke-проверке impl-test entry 3: размер названия, срок приглашения) — новая последняя волна 8.
+- Task 10 (поправка 2026-10-08 по повторной smoke-проверке AC-18: убрать подзаголовок) — новая последняя волна 9.
 
 ## Out of scope
 - Скрипт наполнения 10 000+ сотрудников (решение пользователя 2026-10-08, audit Q-4).
