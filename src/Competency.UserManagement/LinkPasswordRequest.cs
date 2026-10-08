@@ -1,9 +1,9 @@
 namespace Competency.UserManagement;
 
 /// <summary>
-/// An invited user setting their first password with the token from the invitation link.
+/// A user setting a password with the token from an e-mailed link: the first one from an invitation, or a new one from a password reset link.
 /// </summary>
-internal sealed record AcceptInvitationRequest
+internal sealed record LinkPasswordRequest
 {
     public required string Token { get; init; }
 

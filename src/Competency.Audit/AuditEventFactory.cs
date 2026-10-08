@@ -21,6 +21,6 @@ internal sealed class AuditEventFactory(ICurrentActor currentActor, TimeProvider
         OldValue = entry.OldValue,
         NewValue = entry.NewValue,
         Reason = entry.Reason,
-        RequestId = currentActor.RequestId,
+        RequestId = entry.RequestId ?? currentActor.RequestId,
     };
 }

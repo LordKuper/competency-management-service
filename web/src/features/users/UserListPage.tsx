@@ -1,7 +1,6 @@
 import {
   CheckCircleOutlined,
   EditOutlined,
-  KeyOutlined,
   MoreOutlined,
   StopOutlined,
 } from "@ant-design/icons";
@@ -24,7 +23,6 @@ import {
 import { useState } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import type { UserRole } from "../../app/featureContract";
-import { ResetPasswordModal } from "./ResetPasswordModal";
 import { ROLE_LABEL, ROLE_OPTIONS } from "./roles";
 import { UserModal } from "./UserModal";
 import { UserStatusTag } from "./UserStatusTag";
@@ -42,11 +40,9 @@ const BLOCKED_OPTIONS = [
   { value: true, label: "Заблокированные" },
 ];
 
-type UserDialog =
-  | { kind: "create" }
-  | { kind: "edit" | "resetPassword"; userId: string };
+type UserDialog = { kind: "create" } | { kind: "edit"; userId: string };
 
-/** List of accounts for administrators: search, role and state filters, paging, and a row menu to edit, block, unblock or reset the password. The dialogs live here, once for all rows. */
+/** List of accounts for administrators: search, role and state filters, paging, and a row menu to edit, block or unblock. The dialogs live here, once for all rows. */
 export function UserListPage() {
   const { token } = antdTheme.useToken();
   const confirmBlockChange = useBlockUser();
@@ -57,10 +53,6 @@ export function UserListPage() {
   });
   const { data, error, isFetching, refetch } = useQuery(userListQuery(params));
   const closeDialog = () => setDialog(null);
-  const resetTarget =
-    dialog?.kind === "resetPassword"
-      ? data?.items.find((user) => user.id === dialog.userId)
-      : undefined;
 
   const columns: TableColumnsType<UserResponse> = [
     { title: "E-mail", dataIndex: "email" },
@@ -103,13 +95,6 @@ export function UserListPage() {
                 danger: !user.isBlocked,
                 label: user.isBlocked ? "Разблокировать" : "Заблокировать",
                 onClick: () => confirmBlockChange(user),
-              },
-              {
-                key: "resetPassword",
-                icon: <KeyOutlined />,
-                label: "Сбросить пароль",
-                onClick: () =>
-                  setDialog({ kind: "resetPassword", userId: user.id }),
               },
             ],
           }}
@@ -207,9 +192,6 @@ export function UserListPage() {
       {dialog?.kind === "create" && <UserModal onClose={closeDialog} />}
       {dialog?.kind === "edit" && (
         <UserModal userId={dialog.userId} onClose={closeDialog} />
-      )}
-      {resetTarget && (
-        <ResetPasswordModal user={resetTarget} onClose={closeDialog} />
       )}
     </Space>
   );

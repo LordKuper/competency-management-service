@@ -35,7 +35,14 @@ public static class PlatformModule
     /// </summary>
     public const string LoginRateLimitPolicy = "login";
 
+    /// <summary>
+    /// Name of the rate-limiting policy for the anonymous endpoints that take an e-mailed link or ask for one, for <c>RequireRateLimiting</c>.
+    /// Every endpoint under it draws on one budget per client address.
+    /// </summary>
+    public const string PasswordResetRateLimitPolicy = "password-reset";
+
     private const string LoginRateLimitSection = "RateLimiting:Login";
+    private const string PasswordResetRateLimitSection = "RateLimiting:PasswordReset";
     private const string SmtpSection = "Smtp";
     private const string AppSection = "App";
     private const string UnknownClient = "unknown";
@@ -75,7 +82,7 @@ public static class PlatformModule
         services.AddHttpContextAccessor();
         services.AddSingleton<ICurrentActor, HttpContextCurrentActor>();
         AddAuthorizationPolicies(services);
-        AddLoginRateLimiter(services, configuration);
+        AddRateLimiter(services, configuration);
         AddMail(services, configuration);
 
         return services;
@@ -192,19 +199,29 @@ public static class PlatformModule
         services.AddSingleton<IAuthorizationMiddlewareResultHandler, StatusAuthorizationResultHandler>();
     }
 
-    private static void AddLoginRateLimiter(IServiceCollection services, IConfiguration configuration) =>
+    /// <summary>
+    /// Adds the fixed-window policies partitioned by client address. The middleware keys a partition by policy name and address,
+    /// so the endpoints sharing a policy share its counter.
+    /// </summary>
+    private static void AddRateLimiter(IServiceCollection services, IConfiguration configuration) =>
         services.AddRateLimiter(options =>
         {
-            var login = configuration.GetRequiredSection(LoginRateLimitSection).Get<LoginRateLimitOptions>()!;
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            options.AddPolicy(LoginRateLimitPolicy, httpContext => RateLimitPartition.GetFixedWindowLimiter(
-                httpContext.Connection.RemoteIpAddress?.ToString() ?? UnknownClient,
-                _ => new FixedWindowRateLimiterOptions
-                {
-                    PermitLimit = login.PermitLimit,
-                    Window = TimeSpan.FromSeconds(login.WindowSeconds),
-                }));
+            AddPerAddressPolicy(options, LoginRateLimitPolicy, configuration.GetRequiredSection(LoginRateLimitSection));
+            AddPerAddressPolicy(options, PasswordResetRateLimitPolicy, configuration.GetRequiredSection(PasswordResetRateLimitSection));
         });
+
+    private static void AddPerAddressPolicy(RateLimiterOptions options, string policy, IConfigurationSection section)
+    {
+        var budget = section.Get<RateLimitOptions>()!;
+        options.AddPolicy(policy, httpContext => RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? UnknownClient,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = budget.PermitLimit,
+                Window = TimeSpan.FromSeconds(budget.WindowSeconds),
+            }));
+    }
 
     private static void AddMail(IServiceCollection services, IConfiguration configuration)
     {

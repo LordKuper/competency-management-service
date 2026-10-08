@@ -17,7 +17,7 @@ public static class UserManagementModule
     /// <summary>
     /// Registers the UserManagement module services: the account table, Identity with the password and lockout policy read from
     /// the <c>Identity</c> configuration section, no restriction on user-name characters (the user name is the e-mail, checked by the requests) and the account id read from the platform subject claim, the cookie session read from
-    /// <c>Authentication:Cookie</c>, the lifetime of e-mailed links read from <c>AccountLinks</c>, the account e-mails, and the bootstrap of the first administrator. The host adds <c>UseAuthentication</c> to its pipeline.
+    /// <c>Authentication:Cookie</c>, the lifetime of e-mailed links read from <c>AccountLinks</c>, the account e-mails, the queue of anonymous password reset requests, and the bootstrap of the first administrator. The host adds <c>UseAuthentication</c> to its pipeline.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
     /// <param name="configuration">The application configuration holding the Identity and cookie settings.</param>
@@ -42,9 +42,13 @@ public static class UserManagementModule
         services.AddScoped<AdminBootstrapper>();
         services.AddScoped<IEmployeeAccounts, EmployeeAccounts>();
         services.AddSingleton<AccountMail>();
+        services.AddSingleton<PasswordResetQueue>();
+        services.AddHostedService(provider => provider.GetRequiredService<PasswordResetQueue>());
         services.AddOptions<AccountLinkOptions>()
             .Bind(configuration.GetSection(AccountLinkOptions.Section))
             .Validate(links => links.InvitationLifetime > TimeSpan.Zero, $"'{AccountLinkOptions.Section}:InvitationLifetime' is not a positive time span.")
+            .Validate(links => links.PasswordResetLifetime > TimeSpan.Zero, $"'{AccountLinkOptions.Section}:PasswordResetLifetime' is not a positive time span.")
+            .Validate(links => links.PasswordResetInterval >= TimeSpan.Zero, $"'{AccountLinkOptions.Section}:PasswordResetInterval' is a negative time span.")
             .ValidateOnStart();
         return services;
     }

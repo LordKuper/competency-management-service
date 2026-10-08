@@ -15,18 +15,20 @@ namespace Competency.UserManagement;
 /// with 403 whichever account the request names, and an unknown account answers 404 only to an administrator.
 /// Changes carry <c>If-Match</c>. Creating, changing, blocking and unblocking an account run under the employee tree lock, taken first,
 /// so that no account is ever bound to or unblocked with an employee who is being dismissed; those that could remove an administrator
-/// also lock the active administrators, after it. A password reset and its audit event are saved together.
-/// A new account is invited: it has no password and is e-mailed a link to set one. A repeated invitation locks only the account row.
-/// Invitations are e-mailed after the change is committed and its locks released, and the response tells whether the mail server accepted them.
-/// Accounts are never deleted: blocking ends them. Blocking, a password reset, and a change of role or employee end the account's sessions.
+/// also lock the active administrators, after it.
+/// A new account is invited: it has no password and is e-mailed a link to set one. Administrators never set passwords: they send a registered account
+/// a password reset link instead, which leaves its password as it is. A repeated invitation and a reset link lock only the account row.
+/// Links are e-mailed after the change is committed and its locks released, and the response tells whether the mail server accepted them.
+/// Accounts are never deleted: blocking ends them. Blocking and a change of role or employee end the account's sessions.
 /// </summary>
 internal static class UserEndpoints
 {
     private const string Route = "/api/v1/users";
     private const string Tag = "Users";
-    private const string PasswordResetAction = "AppUser.PasswordReset";
     private const string ResendNeedsInvitedAccount =
         "Приглашение можно отправить повторно только учётной записи, которая ещё не задала пароль и не заблокирована.";
+    private const string ResetNeedsActiveAccount =
+        "Ссылку для сброса пароля можно отправить только учётной записи, которая уже задала пароль, не заблокирована и привязана к работающему сотруднику или ни к кому.";
     private const string UnblockNeedsWorkingEmployee =
         "Нельзя разблокировать учётную запись, пока привязанный сотрудник не работает. Сначала верните сотрудника на работу или отвяжите от него учётную запись.";
 
@@ -55,8 +57,9 @@ internal static class UserEndpoints
         administrators.MapPost("/{id:guid}/resend-invitation", ResendInvitationAsync).WithName("ResendUserInvitation").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        administrators.MapPost("/{id:guid}/reset-password", ResetPasswordAsync).WithName("ResetUserPassword").ProducesETag()
-            .ProducesProblem(StatusCodes.Status404NotFound);
+        administrators.MapPost("/{id:guid}/send-password-reset", SendPasswordResetAsync).WithName("SendUserPasswordReset").ProducesETag()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
     }
 
     /// <summary>
@@ -345,46 +348,47 @@ internal static class UserEndpoints
         return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken));
     }
 
-    private static async Task<Results<Ok<UserResponse>, NotFound, ValidationProblem, ProblemHttpResult>> ResetPasswordAsync(
+    /// <summary>
+    /// Issues a password reset link to an active registered account and e-mails it, the same link the account could ask for itself;
+    /// the password stays as it is until the user sets a new one from the link, and an earlier link no longer works.
+    /// </summary>
+    private static async Task<Results<Ok<UserResponse>, NotFound, ProblemHttpResult>> SendPasswordResetAsync(
         Guid id,
-        ResetPasswordRequest request,
         IfMatch ifMatch,
         UserManager<AppUser> users,
         AppDbContext context,
         IEmployeeDirectory employees,
+        AccountMail mail,
         IAuditWriter audit,
+        IOptions<AccountLinkOptions> links,
+        TimeProvider time,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
-        var errors = request.Validate();
-        if (errors.Count > 0)
-        {
-            return TypedResults.ValidationProblem(errors);
-        }
-
+        await using var transaction = await context.BeginAccountLockAsync(id, cancellationToken);
         var user = await users.FindByIdAsync(id.ToString());
         if (user is null)
         {
             return TypedResults.NotFound();
         }
 
-        var policy = await users.ValidatePasswordAsync(user, request.NewPassword);
-        if (!policy.Succeeded)
+        if (!await employees.MayResetPasswordAsync(user, cancellationToken))
         {
-            return Rejections.From(policy);
+            return Rejection.Conflict(ResetNeedsActiveAccount);
         }
 
         ifMatch.ApplyTo(context, user);
-        user.PasswordHash = users.PasswordHasher.HashPassword(user, request.NewPassword);
-        user.ClearLockout();
-        audit.Stage(new AuditEntry(PasswordResetAction, nameof(AppUser), user.Id.ToString()), context);
-        var result = await users.UpdateSecurityStampAsync(user);
+        var token = user.IssueLink(time.GetUtcNow(), links.Value.PasswordResetLifetime);
+        audit.Stage(new AuditEntry(PasswordResetQueue.RequestedAction, nameof(AppUser), user.Id.ToString()), context);
+        var result = await users.UpdateAsync(user);
         if (!result.Succeeded)
         {
             return Rejections.From(result);
         }
 
-        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken));
+        await transaction.CommitAsync(cancellationToken);
+        var mailSent = await mail.SendPasswordResetAsync(user, token, requestId: null, cancellationToken);
+        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken) with { MailSent = mailSent });
     }
 
     private static async Task<UserResponse> RespondAsync(
