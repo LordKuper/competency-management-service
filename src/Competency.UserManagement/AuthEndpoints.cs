@@ -11,10 +11,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.UserManagement;
 
 /// <summary>
-/// The session API. Permission matrix: signing in is anonymous and rate limited; signing out, reading the own account and
-/// changing the own password need any signed-in user and act on the account in the session, never on one named in the request.
+/// The session API. Permission matrix: signing in is anonymous and rate limited, and accepting an invitation is anonymous;
+/// signing out, reading the own account and changing the own password need any signed-in user and act on the account in the session, never on one named in the request.
 /// Every failed sign-in answers with the same response, whether the account is unknown, the password wrong, the account locked,
-/// blocked or its employee gone, so the response reveals nothing about accounts. Events are audited without passwords.
+/// blocked, invited and not yet registered, or its employee gone, so the response reveals nothing about accounts.
+/// Any unusable invitation link gets one and the same response, which never says why. Events are audited without passwords or links.
 /// </summary>
 internal static class AuthEndpoints
 {
@@ -29,6 +30,9 @@ internal static class AuthEndpoints
     private const string LockedOutAction = "Auth.LockedOut";
     private const string LogoutAction = "Auth.Logout";
     private const string PasswordChangedAction = "Auth.PasswordChanged";
+    private const string RegistrationCompletedAction = "Auth.RegistrationCompleted";
+    private const string InvalidLinkTitle = "Ссылка недействительна";
+    private const string InvalidLinkDetail = "Ссылка устарела или уже использована. Попросите администратора отправить приглашение повторно.";
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -40,6 +44,9 @@ internal static class AuthEndpoints
             .AllowAnonymous()
             .RequireRateLimiting(PlatformModule.LoginRateLimitPolicy)
             .ProducesProblem(StatusCodes.Status429TooManyRequests);
+        endpoints.MapGroup(Route).WithTags(Tag).MapPost("/accept-invitation", AcceptInvitationAsync).WithName("AcceptInvitation")
+            .AllowAnonymous()
+            .ProducesProblem(StatusCodes.Status400BadRequest);
 
         var signedIn = auth.MapGroup(string.Empty).RequireAuthorization(AuthorizationPolicies.Authenticated);
         signedIn.MapPost("/logout", LogoutAsync).WithName("Logout");
@@ -53,6 +60,7 @@ internal static class AuthEndpoints
     private enum LoginDenial
     {
         UnknownUser,
+        Invited,
         LockedOut,
         WrongPassword,
         LockoutStarted,
@@ -80,6 +88,12 @@ internal static class AuthEndpoints
         {
             SpendHashingTime(users, request.Password);
             return await DenyAsync(audit, null, LoginDenial.UnknownUser, cancellationToken);
+        }
+
+        if (user.IsInvited)
+        {
+            SpendHashingTime(users, request.Password);
+            return await DenyAsync(audit, user, LoginDenial.Invited, cancellationToken);
         }
 
         var denial = await VerifyPasswordAsync(users, context, user, request.Password, cancellationToken);
@@ -177,6 +191,73 @@ internal static class AuthEndpoints
     }
 
     /// <summary>
+    /// Sets the first password of an invited account from its invitation link and spends the link; the user then signs in as usual.
+    /// The password is hashed first; then the account row is locked and re-read, the link checked again against the committed state,
+    /// and the password, the cleared lockout and link, a new security stamp and the audit event are saved together, so a link is spent once
+    /// and a concurrent repeated invitation or block either voids it first or comes after. Nothing else is requested while the row is locked.
+    /// </summary>
+    private static async Task<Results<NoContent, ValidationProblem, ProblemHttpResult>> AcceptInvitationAsync(
+        AcceptInvitationRequest request,
+        UserManager<AppUser> users,
+        AppDbContext context,
+        IAuditWriter audit,
+        TimeProvider time,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(request.Token))
+        {
+            return InvalidLink();
+        }
+
+        var errors = request.Validate();
+        if (errors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
+
+        var tokenHash = AppUser.HashLinkToken(request.Token);
+        var user = await context.Set<AppUser>().FirstOrDefaultAsync(candidate => candidate.LinkTokenHash == tokenHash, cancellationToken);
+        if (user is null || !CanAcceptInvitation(user, tokenHash, time))
+        {
+            return InvalidLink();
+        }
+
+        var policy = await users.ValidatePasswordAsync(user, request.Password);
+        if (!policy.Succeeded)
+        {
+            return Rejections.From(policy, "password");
+        }
+
+        var passwordHash = users.PasswordHasher.HashPassword(user, request.Password);
+        await using var transaction = await context.BeginAccountLockAsync(user.Id, cancellationToken);
+        await context.Entry(user).ReloadAsync(cancellationToken);
+        if (!CanAcceptInvitation(user, tokenHash, time))
+        {
+            return InvalidLink();
+        }
+
+        user.PasswordHash = passwordHash;
+        user.ClearLockout();
+        user.ClearLink();
+        user.EndSessions();
+        audit.Stage(
+            new AuditEntry(RegistrationCompletedAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString()),
+            context);
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return TypedResults.NoContent();
+    }
+
+    private static bool CanAcceptInvitation(AppUser user, byte[] tokenHash, TimeProvider time) =>
+        user.IsInvited && user.HasValidLink(tokenHash, time.GetUtcNow());
+
+    /// <summary>
+    /// Refuses an unusable link with 400 rather than 401, which the application would take for an ended session.
+    /// </summary>
+    private static ProblemHttpResult InvalidLink() =>
+        TypedResults.Problem(detail: InvalidLinkDetail, statusCode: StatusCodes.Status400BadRequest, title: InvalidLinkTitle);
+
+    /// <summary>
     /// Verifies the password with lockout accounting, one attempt at a time per account: the account row is locked and re-read first,
     /// so concurrent attempts are counted one after another against the committed state and only the attempt that reaches the limit
     /// starts the lockout. A locked account is refused without checking, a wrong password counts as a failed attempt and a correct one
@@ -190,8 +271,7 @@ internal static class AuthEndpoints
         string password,
         CancellationToken cancellationToken)
     {
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-        await context.Database.ExecuteSqlAsync($"SELECT id FROM users WHERE id = {user.Id} FOR UPDATE", cancellationToken);
+        await using var transaction = await context.BeginAccountLockAsync(user.Id, cancellationToken);
         await context.Entry(user).ReloadAsync(cancellationToken);
         var denial = await CountAttemptAsync(users, user, password);
         await transaction.CommitAsync(cancellationToken);

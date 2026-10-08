@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Competency.UserManagement;
 
@@ -15,6 +16,8 @@ namespace Competency.UserManagement;
 /// Changes carry <c>If-Match</c>. Creating, changing, blocking and unblocking an account run under the employee tree lock, taken first,
 /// so that no account is ever bound to or unblocked with an employee who is being dismissed; those that could remove an administrator
 /// also lock the active administrators, after it. A password reset and its audit event are saved together.
+/// A new account is invited: it has no password and is e-mailed a link to set one. A repeated invitation locks only the account row.
+/// Invitations are e-mailed after the change is committed and its locks released, and the response tells whether the mail server accepted them.
 /// Accounts are never deleted: blocking ends them. Blocking, a password reset, and a change of role or employee end the account's sessions.
 /// </summary>
 internal static class UserEndpoints
@@ -22,6 +25,8 @@ internal static class UserEndpoints
     private const string Route = "/api/v1/users";
     private const string Tag = "Users";
     private const string PasswordResetAction = "AppUser.PasswordReset";
+    private const string ResendNeedsInvitedAccount =
+        "Приглашение можно отправить повторно только учётной записи, которая ещё не задала пароль и не заблокирована.";
     private const string UnblockNeedsWorkingEmployee =
         "Нельзя разблокировать учётную запись, пока привязанный сотрудник не работает. Сначала верните сотрудника на работу или отвяжите от него учётную запись.";
 
@@ -45,6 +50,9 @@ internal static class UserEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
         administrators.MapPost("/{id:guid}/unblock", UnblockAsync).WithName("UnblockUser").ProducesETag()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        administrators.MapPost("/{id:guid}/resend-invitation", ResendInvitationAsync).WithName("ResendUserInvitation").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
         administrators.MapPost("/{id:guid}/reset-password", ResetPasswordAsync).WithName("ResetUserPassword").ProducesETag()
@@ -75,6 +83,11 @@ internal static class UserEndpoints
         if (query.IsBlocked is { } isBlocked)
         {
             users = users.Where(user => user.IsBlocked == isBlocked);
+        }
+
+        if (query.IsInvited is { } isInvited)
+        {
+            users = isInvited ? users.Where(user => user.PasswordHash == null) : users.Where(user => user.PasswordHash != null);
         }
 
         if (query.SearchPattern() is { } pattern)
@@ -125,6 +138,9 @@ internal static class UserEndpoints
         UserManager<AppUser> users,
         AppDbContext context,
         IEmployeeDirectory employees,
+        AccountMail mail,
+        IOptions<AccountLinkOptions> links,
+        TimeProvider time,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -150,16 +166,58 @@ internal static class UserEndpoints
 
         var user = new AppUser { Role = request.Role, EmployeeId = request.EmployeeId };
         user.SetEmail(request.Email.Trim());
-        var result = await users.CreateAsync(user, request.Password);
+        var result = await users.CreateAsync(user);
         if (!result.Succeeded)
         {
-            return Rejections.From(result, "password");
+            return Rejections.From(result);
+        }
+
+        var token = user.IssueLink(time.GetUtcNow(), links.Value.InvitationLifetime);
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        var mailSent = await mail.SendInvitationAsync(user, token, isRepeat: false, cancellationToken);
+        var created = await RespondAsync(user, employees, response, cancellationToken) with { MailSent = mailSent };
+        return TypedResults.Created($"{Route}/{created.Id}", created);
+    }
+
+    /// <summary>
+    /// Replaces the link of an account that has not set its password yet and e-mails it again, so the earlier invitation no longer works.
+    /// </summary>
+    private static async Task<Results<Ok<UserResponse>, NotFound, ProblemHttpResult>> ResendInvitationAsync(
+        Guid id,
+        IfMatch ifMatch,
+        UserManager<AppUser> users,
+        AppDbContext context,
+        IEmployeeDirectory employees,
+        AccountMail mail,
+        IOptions<AccountLinkOptions> links,
+        TimeProvider time,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await context.BeginAccountLockAsync(id, cancellationToken);
+        var user = await users.FindByIdAsync(id.ToString());
+        if (user is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (!user.IsInvited || user.IsBlocked)
+        {
+            return Rejection.Conflict(ResendNeedsInvitedAccount);
+        }
+
+        ifMatch.ApplyTo(context, user);
+        var token = user.IssueLink(time.GetUtcNow(), links.Value.InvitationLifetime);
+        var result = await users.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            return Rejections.From(result);
         }
 
         await transaction.CommitAsync(cancellationToken);
-        response.SetETag(user.Version);
-        var created = UserResponse.From(user, await employees.NameAsync(user.EmployeeId, cancellationToken));
-        return TypedResults.Created($"{Route}/{created.Id}", created);
+        var mailSent = await mail.SendInvitationAsync(user, token, isRepeat: true, cancellationToken);
+        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken) with { MailSent = mailSent });
     }
 
     private static async Task<Results<Ok<UserResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateAsync(

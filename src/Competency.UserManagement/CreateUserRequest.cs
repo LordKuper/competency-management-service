@@ -1,13 +1,11 @@
 namespace Competency.UserManagement;
 
 /// <summary>
-/// The fields of a new account. An account of either role may have an employee; <c>employeeId</c> is null for none.
+/// The fields of a new account, which is invited to set its own password by e-mail. An account of either role may have an employee; <c>employeeId</c> is null for none.
 /// </summary>
 internal sealed record CreateUserRequest
 {
     public required string Email { get; init; }
-
-    public required string Password { get; init; }
 
     public required UserRole Role { get; init; }
 
@@ -21,7 +19,6 @@ internal sealed record CreateUserRequest
     {
         var errors = new Dictionary<string, string[]>();
         CredentialChecks.CheckEmail(errors, "email", Email);
-        CredentialChecks.CheckPassword(errors, "password", Password);
         EmployeeBinding.CheckRole(errors, Role);
         return errors;
     }

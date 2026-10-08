@@ -11,6 +11,7 @@ internal sealed record UserListQuery(
     [FromQuery(Name = "q")] string? Q = null,
     [FromQuery(Name = "role")] UserRole? Role = null,
     [FromQuery(Name = "isBlocked")] bool? IsBlocked = null,
+    [FromQuery(Name = "isInvited")] bool? IsInvited = null,
     [FromQuery(Name = "page")] int Page = 1,
     [FromQuery(Name = "pageSize")] int PageSize = ListRequest.DefaultPageSize)
 {
