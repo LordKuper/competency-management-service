@@ -35,3 +35,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
+
+## 2026-10-08 — `.asd/sprints/002-mail-invite-password-reset/plan.md` accepted
+
+- **Decision**: План принят пользователем (accept): 6 Task в 5 волнах (1 | 2, 3 | 4 | 5 | 6); открытых заглушек нет (stubs.md пуст, audit без «Related open stubs»).
+- **Rationale**: Покрыты AC-1…AC-12, AC-14…AC-16; порядок блокировок объявлен по правилу AC-14; tech-reference `mailpit-1.31.4.md` написан до принятия; Mailpit: `MP_ALLOWED_HOSTS=localhost`, без AUTH при пустом логине.
+- **Affected docs**: plan.md, docs/architecture/tech-reference/mailpit-1.31.4.md
