@@ -8,12 +8,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ConnectionStrings__Default": "Host=localhost;Port=15432;Database=competency;Username=competency;Password=dev_pass_123;GSS Encryption Mode=Disable",
         "Bootstrap__AdminEmail": "admin@kalibr.local",
-        "Bootstrap__AdminPassword": "Admin-Dev-12345!",
-        "Smtp__Host": "127.0.0.1",
-        "Smtp__Port": "11025",
-        "Smtp__SecureSocketOptions": "None",
-        "Smtp__From": "noreply@kalibr.local",
-        "App__PublicBaseUrl": "http://localhost:5173"
+        "Bootstrap__AdminPassword": "Admin-Dev-12345!"
       }
     }
   }

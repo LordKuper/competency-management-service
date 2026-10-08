@@ -47,13 +47,30 @@ JSON не допускает комментариев, поэтому огово
 | Где | Что задано |
 |---|---|
 | `deploy/dev/docker-compose.yml` | пользователь, пароль и имя БД (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`) |
-| `src/Competency.Api/Properties/launchSettings.json` | `ConnectionStrings__Default` с тем же паролем (`GSS Encryption Mode=Disable` — причина в `deploy/secret.template.yaml`); `Bootstrap__AdminEmail`, `Bootstrap__AdminPassword`; `Smtp__*` — перехватчик без шифрования и аутентификации; `App__PublicBaseUrl` — адрес Vite |
+| `src/Competency.Api/Properties/launchSettings.json` | `ConnectionStrings__Default` с тем же паролем (`GSS Encryption Mode=Disable` — причина в `deploy/secret.template.yaml`); `Bootstrap__AdminEmail`, `Bootstrap__AdminPassword` |
+| `src/Competency.Api/appsettings.Development.json` | `Smtp:*` — перехватчик без шифрования и аутентификации; `App:PublicBaseUrl` — адрес Vite |
 
 ## Почта
 
-Вся почта приложения уходит в Mailpit, реальные письма не отправляются. Письма видны в веб-интерфейсе http://localhost:18025 и хранятся, пока работает контейнер: тома у Mailpit нет, остановка удаляет письма. Ссылки в письмах ведут на Vite (http://localhost:5173, `App__PublicBaseUrl`) и в профиле `API` без Vite не открываются.
+Вся почта приложения уходит в Mailpit, реальные письма не отправляются. Письма видны в веб-интерфейсе http://localhost:18025 и хранятся, пока работает контейнер: тома у Mailpit нет, остановка удаляет письма. Ссылки в письмах ведут на Vite (http://localhost:5173, `App:PublicBaseUrl`) и в профиле `API` без Vite не открываются.
 
-Порты 11025 и 18025 меняются переменными среды до запуска Visual Studio: `DEV_MAIL_SMTP_PORT` (тот же порт — в `Smtp__Port` профиля `Competency.Api`) и `DEV_MAIL_UI_PORT`. Веб-интерфейс отвечает только на имена `localhost` и `127.0.0.1` (`MP_ALLOWED_HOSTS`, защита от DNS rebinding).
+Порты 11025 и 18025 меняются переменными среды до запуска Visual Studio: `DEV_MAIL_SMTP_PORT` (тот же порт — в `Smtp:Port` файла `appsettings.Development.json`) и `DEV_MAIL_UI_PORT`. Веб-интерфейс отвечает только на имена `localhost` и `127.0.0.1` (`MP_ALLOWED_HOSTS`, защита от DNS rebinding).
+
+## Своя SMTP-песочница
+
+Чтобы смотреть письма не в Mailpit, а в собственной песочнице (пример — Mailtrap Sandbox), значения `Smtp:*` из `appsettings.Development.json` переопределяются User Secrets: они лежат вне репозитория (`%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json`) и в `Development` читаются после `appsettings.Development.json`. Логин и пароль задаются вместе.
+
+```
+dotnet user-secrets set "Smtp:Host" "sandbox.smtp.mailtrap.io" --project src/Competency.Api
+dotnet user-secrets set "Smtp:Port" "587" --project src/Competency.Api
+dotnet user-secrets set "Smtp:SecureSocketOptions" "StartTls" --project src/Competency.Api
+dotnet user-secrets set "Smtp:UserName" "<логин из Mailtrap>" --project src/Competency.Api
+dotnet user-secrets set "Smtp:Password" "<пароль из Mailtrap>" --project src/Competency.Api
+```
+
+В Visual Studio то же делает «Manage User Secrets» в контекстном меню проекта `Competency.Api`: открывается `secrets.json`, ключи — `{ "Smtp": { "Host": "…", … } }`.
+
+Вернуться к Mailpit: `dotnet user-secrets clear --project src/Competency.Api` (удаляет все секреты проекта) или `dotnet user-secrets remove "Smtp:Host" --project src/Competency.Api` и так для каждого ключа `Smtp:*`. Секреты в репозиторий не попадают.
 
 ## База, созданная до входа по e-mail
 
