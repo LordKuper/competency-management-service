@@ -106,3 +106,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-08 — route impl-test entry 6: standard, dispatch HEAD 13afa16; risk none via test run
 - 2026-10-08 — impl-test entry 6: smoke AC-19 (user): pass
 - 2026-10-08 — impl-test: impacted set green (backend 160/160, web 86/86, lint/build/check:api clean), 4/0 tests (entry 6); all Manual verification rows have results; NEXT impl-review
+- 2026-10-08 — impl-review division: 3 waves (lines 5756, files 113, bytes 405921 vs thresholds 3000/34/180000): wave 1 — platform, mail transport, AC-16 shared types, Api config, deploy (38 files); wave 2 — user-management backend, migration, openapi.json, backend tests (54); wave 3 — web screens, users UI, web tests (21)
+- 2026-10-08 — impl-review wave 1 iteration 1 (floor low)
+- 2026-10-08 — impl-review wave-1/iter-01: combined CONCERNS (F1 medium CRL/OCSP, F2 low Smtp:Host placeholder, F3 low README port), external FAIL (#1 high SecureSocketOptions undefined value → no TLS, #2 medium Smtp:Timeout above CancelAfter max). User: #1, #2 fix; F1 answer — add Smtp:CheckCertificateRevocation (default true) + README both cases → impl review-fix (review_fixes_pending = wave-1/iter-01)

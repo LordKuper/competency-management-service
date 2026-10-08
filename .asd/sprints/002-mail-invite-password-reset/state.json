@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-mail-invite-password-reset",
   "branch": "sprint/002-mail-invite-password-reset",
-  "phase": "impl-test",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -173,6 +173,13 @@
       "decision": "AC-19 pass",
       "reason": "impl-test entry 6 smoke",
       "evidence": "test-plan.md Manual verification AC-19"
+    },
+    {
+      "gate": "impl-review FAIL escalation wave-1/iter-01",
+      "decision_actor": "user",
+      "decision": "external #1,#2 accepted for fix; combined F1 answered: add Smtp:CheckCertificateRevocation (default true)",
+      "reason": "user choice (recommended)",
+      "evidence": "reviews/impl/wave-1/iter-01"
     }
   ],
   "task_routing": {
@@ -283,6 +290,12 @@
       "execution": "agent",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "review-fix wave-1/iter-01": {
+      "tier": "critical",
+      "execution": "agent",
+      "reason": "risk:security",
+      "resolved_model": "opus"
     }
   },
   "skipped_phases": [],
@@ -296,6 +309,25 @@
       "wave": 1,
       "waves": [
         {
+          "iteration": 1,
+          "verdicts": {
+            "iter-01": {
+              "combined": "CONCERNS",
+              "external": "FAIL"
+            }
+          },
+          "iteration_heads": {
+            "iter-01": "e0e145f2bca0122b91b2067ce92a418dea1b39ce"
+          },
+          "latched": {}
+        },
+        {
+          "iteration": 0,
+          "verdicts": {},
+          "iteration_heads": {},
+          "latched": {}
+        },
+        {
           "iteration": 0,
           "verdicts": {},
           "iteration_heads": {},
@@ -305,8 +337,8 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T12:25:37.513Z",
-  "review_fixes_pending": null,
+  "updated_at": "2026-10-08T12:50:14.414Z",
+  "review_fixes_pending": "wave-1/iter-01",
   "test_defects_pending": null,
   "pr": null,
   "archived_at": null
