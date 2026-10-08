@@ -135,7 +135,7 @@ Tech reference: react-19.3.0, antd-6.6.5, aspnetcore-10.0.12.
 
 ### Task 10: Без подзаголовка на экранах без сессии
 Material risk: none
-- [ ] AC-18: убрать подзаголовок «Компетенции и карьерный рост» (`PRODUCT_TAGLINE`, `web/src/app/productName.ts`) с экранов без сессии; константу удалить, если других вызовов не остаётся
+- [x] AC-18: убрать подзаголовок «Компетенции и карьерный рост» (`PRODUCT_TAGLINE`, `web/src/app/productName.ts`) с экранов без сессии; константу удалить, если других вызовов не остаётся
 Tech reference: react-19.3.0, antd-6.6.5.
 
 ## Risks

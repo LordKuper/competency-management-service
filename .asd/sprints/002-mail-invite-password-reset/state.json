@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-mail-invite-password-reset",
   "branch": "sprint/002-mail-invite-password-reset",
-  "phase": "impl",
+  "phase": "impl-test",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -143,6 +143,14 @@
       "decision": "AC-18 changed: no tagline on anonymous screens; Task 10 wave 9",
       "reason": "smoke remark; cost 0 iterations / 0 fix rounds",
       "evidence": "decisions-log.md 2026-10-08 Task 10"
+    },
+    {
+      "gate": "impl assessment",
+      "decision_actor": "orchestrator (adaptive)",
+      "decision": "approve Task 10",
+      "reason": "user-requested tagline removal; Flagged choices none; build 0/0, lint clean",
+      "evidence": "ca1b233",
+      "artifact_revision": "ca1b233"
     }
   ],
   "task_routing": {
@@ -235,6 +243,12 @@
       "execution": "agent",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "impl-test entry 5": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -257,7 +271,7 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T11:55:26.173Z",
+  "updated_at": "2026-10-08T11:56:19.642Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
