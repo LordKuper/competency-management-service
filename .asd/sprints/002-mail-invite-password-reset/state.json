@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-mail-invite-password-reset",
   "branch": "sprint/002-mail-invite-password-reset",
-  "phase": "impl-test",
+  "phase": "impl-review",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -362,6 +362,12 @@
       "execution": "agent",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "impl-review wave-3/iter-03 suite": {
+      "tier": "standard",
+      "execution": "agent",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -422,7 +428,7 @@
           }
         },
         {
-          "iteration": 2,
+          "iteration": 3,
           "verdicts": {
             "iter-01": {
               "combined": "CONCERNS",
@@ -431,21 +437,27 @@
             "iter-02": {
               "combined": "CONCERNS",
               "external": "APPROVE"
+            },
+            "iter-03": {
+              "combined": "APPROVE",
+              "external": "APPROVE"
             }
           },
           "iteration_heads": {
             "iter-01": "f3735b94c8ca956693a8ff1e0cba67c058bdcd86",
-            "iter-02": "d73b85c6254ea8d8ac844be3c67c1bcbfbff9dc5"
+            "iter-02": "d73b85c6254ea8d8ac844be3c67c1bcbfbff9dc5",
+            "iter-03": "5c5ff4558ee260a664e4fcbb2ad24045089e1b5f"
           },
           "latched": {
-            "external": 2
+            "external": 2,
+            "combined": 3
           }
         }
       ]
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T13:57:55.545Z",
+  "updated_at": "2026-10-08T14:05:04.233Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

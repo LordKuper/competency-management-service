@@ -1,0 +1,101 @@
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md b/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
+index 08eaccc..3d8a275 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
+@@ -1,6 +1,6 @@
+ ---
+ name: frontend-wave-probes
+-description: how a 120-file web/ plus agent-memory impl-review wave was finished in about 45 turns - read ranges, one-Grep probes that found real defects, diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers, row-menu mutation and Russian plural probes
++description: how a 120-file web/ plus agent-memory impl-review wave was finished in about 45 turns - read ranges, one-Grep probes that found real defects, diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers, row-menu mutation and Russian plural probes, JSDoc detached by a new const
+ metadata:
+   type: feedback
+ ---
+@@ -10,7 +10,8 @@ the diff (TSX tolerates the larger size); skip `package-lock.json`, `schema.d.ts
+ 
+ **Probes that paid off, one Grep each:**
+ - `^\s+// ` over `web/src`: in-body comments hide inside object-literal arguments (`modal.confirm({ // note` ...) of arrow
+-  functions; code-style §7 counts them, a config-object comment in `vite.config.ts` is not in a function body.
++  functions and inside `it(...)` callbacks of tests; code-style §7 counts them, a config-object comment in `vite.config.ts` is
++  not in a function body.
+ - `export (const|function|type|interface|class) \w+` with `-o` over `web/src`, then one Grep per suspicious name: a theme
+   `layout` constant with no importer, an `etag` field nobody reads, status-tag components called only with `isActive={false}`.
+ - `from "\.\./users/|from "\.\./org-structure/"` plus the helper name (`ifMatchOf`): generic helpers parked in one feature make
+@@ -28,6 +29,8 @@ the diff (TSX tolerates the larger size); skip `package-lock.json`, `schema.d.ts
+   old `If-Match` gets 412 and `describeApiError` blames "другим пользователем".
+ - Russian text with a number from config (`Не короче ${n} символов`): one plural form is wrong for n ending in 1 (21, 31);
+   `Intl.PluralRules("ru")` is the fix.
++- A review-fix that adds a module-level `const` to a hook file: check it did not land between the exported function and its
++  JSDoc (sprint 002 `SENDING_KEY`); the doc then attaches to the const and the export has none.
+ 
+ **Re-review of a review-fix delta (wave-3/iter-02, about 40 turns, one finding):**
+ - After a duplicated helper is hoisted into one shared module, Grep its call sites: a parameter every caller leaves at the
+@@ -47,5 +50,8 @@ whole-file replace, subtract the line number of the last `-` line instead.
+ **Language:** the dispatch header listed `language.docs: ru` and the policy puts reviews under `language.docs`, so the report
+ prose was Russian with the template headings and tokens in English; earlier waves of this sprint were English.
+ 
++**Writing memory:** `Write` replaces the whole file; never write a partial file. If one was lost, the full text of a reviewer
++memory file is in the archived sprint review diffs (`.asd/sprints/archived/**/*.diff`, new-file hunks).
++
+ **Why:** the Read tool refuses over 25k tokens; these probes found the defects the diff read could not show.
+ **How to apply:** run them right after the diff read, before building the ledger; keep one finding per rule row.
+diff --git a/web/src/features/users/useSendUserMail.ts b/web/src/features/users/useSendUserMail.ts
+index e1e45fb..93856e3 100644
+--- a/web/src/features/users/useSendUserMail.ts
++++ b/web/src/features/users/useSendUserMail.ts
+@@ -25,14 +25,15 @@ export function useMailReport() {
+   };
+ }
+ 
+-/**
+- * Returns the action that e-mails an account a new link: the invitation again to an invited account, or a password
+- * reset link to a registered one. The new link voids the previous one; the server refuses an account in the wrong state.
+- * The accounts are reread whatever the outcome. The send is synchronous on the server, so a progress message stays
+- * up meanwhile and the row being sent cannot be sent again (a second click would carry the stale version and get 412).
+- */
+ const SENDING_KEY = "send-user-mail";
+ 
++/**
++ * Returns the action that e-mails an account a new link (the invitation again to an invited account, or a password
++ * reset link to a registered one) and whether a send is in progress: `{ sendMail, isSending }`. The new link voids the
++ * previous one; the server refuses an account in the wrong state. The accounts are reread whatever the outcome. The
++ * send is synchronous on the server, so a progress message stays up meanwhile and no account can be sent again until
++ * it ends (a repeated click would carry the stale version and get 412).
++ */
+ export function useSendUserMail() {
+   const { message } = App.useApp();
+   const reportMail = useMailReport();
+diff --git a/web/src/features/users/userMail.test.tsx b/web/src/features/users/userMail.test.tsx
+index 15a7cb6..5894e93 100644
+--- a/web/src/features/users/userMail.test.tsx
++++ b/web/src/features/users/userMail.test.tsx
+@@ -74,6 +74,16 @@ async function openMenuOf(
+ const rowOf = (row: UserResponse) =>
+   within(screen.getByText(row.email).closest("tr") as HTMLElement);
+ 
++/** antd keeps a closed message in the DOM for its leave animation, which jsdom never finishes. */
++function isClosing(text: string) {
++  return (
++    screen
++      .queryByText(text)
++      ?.closest("[role=alert]")
++      ?.classList.contains("ant-message-fade-leave") ?? false
++  );
++}
++
+ beforeEach(() => {
+   queryClient.clear();
+ });
+@@ -205,12 +215,7 @@ describe("row menu (AC-6, AC-9, AC-11)", () => {
+     expect(
+       await screen.findByText("Приглашение отправлено повторно"),
+     ).toBeInTheDocument();
+-    // antd keeps a destroyed message in the DOM for its leave animation, which jsdom never finishes
+-    await waitFor(() =>
+-      expect(
+-        screen.queryByText("Отправка письма…")?.closest("[role=alert]"),
+-      ).toHaveClass("ant-message-fade-leave"),
+-    );
++    await waitFor(() => expect(isClosing("Отправка письма…")).toBe(true));
+     expect(
+       fakeApi.calls(`POST /api/v1/users/${INVITED.id}/resend-invitation`),
+     ).toHaveLength(1);
