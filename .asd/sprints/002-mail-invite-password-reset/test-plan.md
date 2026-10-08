@@ -13,19 +13,19 @@ responsibility:
 |---|---|---|
 | 1 | 1cdc829 | вся поверхность изменений: `git diff main...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (75 файлов, ветка на 342baa6) |
 | 2 | 906d167 | delta с записи 1: `git diff 1cdc829...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (4 файла: `appsettings.Development.json`, `launchSettings.json`, `deploy/dev/docker-compose.yml`, `deploy/dev/README.md`; AC-17) плюс правки памяти D-1/D-2 (1798700) |
+| 3 |  | delta с записи 2: `git diff 906d167...HEAD` без `.asd`, `docs`, `.claude`, `.codex`, `.agents` (5 файлов: `AccountMail.cs`, `AuthCard.tsx`, `passwordPolicy.ts`, `LinkPasswordPage.tsx`, `UserForm.tsx`; AC-18) |
 
-Предохранитель impacted set (`sprint-lifecycle.md` "Impacted test set"): поверхность затрагивает общую инфраструктуру (`PlatformModule.cs`, все `packages.lock.json`, `Program.cs`, `appsettings.json`), поэтому набор — полный (`dotnet test` + `npm test`), без выборки по ссылкам и AC. Предстратегический прогон существующих тестов: backend 116 тестов, 116 красных (хост API не стартует без `Smtp__*`/`App__PublicBaseUrl`, `dotnet test --solution Competency.slnx -c Release`, exit 2); web 60 из 60 зелёных (`npm --prefix web test`, exit 0). Сборка `Debug` занята процессом `Competency.Api` пользователя (запущен из Visual Studio, не останавливался), поэтому backend гоняется в `-c Release`.
+Предохранитель impacted set (`sprint-lifecycle.md` "Impacted test set"), запись 3: `AccountMail.cs` — файл модуля `Competency.UserManagement`, остальные — файлы фич `web/src/features/{auth,users}`; сборочной, CI- и общей инфраструктуры нет, предохранитель не срабатывает, набор — по ссылкам: `linkScreens.test.tsx`, `userMail.test.tsx` (web) и тесты, шлющие письма `AccountMail` (`AccountLinkTests`, `AccountLinkLimitTests`, `AccountLinkRaceTests`, `MailFailureTests`, `MailTransportTests`). Поиск по `tests` и `web/src`: ни один тест не ищет изменённые тексты (`не ждали`, `PASSWORD_HINT`, подсказку поля «Сотрудник»), `alt` логотипа или название продукта. Предстратегический прогон выполнен шире набора, дёшево: backend 157 из 157 зелёных (`dotnet test --solution Competency.slnx -c Release`, exit 0), web 82 из 82 зелёных (`npm --prefix web test`, exit 0). Сборка `Debug` занята процессом `Competency.Api` пользователя, поэтому backend в `-c Release`.
 
 ## Risk → check decisions
 
-Строки записи 1 — в `test-plan.entry-01.md`. Запись 2 (delta с 1cdc829): строки ниже; суперсединг строки записи 1 про `deploy/dev/docker-compose.yml`, `launchSettings.json`.
+Строки записи 1 — в `test-plan.entry-01.md`, записи 2 — в `test-plan.entry-02.md`. Запись 3 (delta с 906d167):
 
 | Change | Material risk | Chosen check | Decision | Reason |
 |---|---|---|---|---|
-| `src/Competency.Api/appsettings.Development.json` (SMTP по умолчанию → Mailpit `127.0.0.1:11025`, `None`; `App:PublicBaseUrl`), удаление `Smtp__*`/`App__PublicBaseUrl` из `launchSettings.json` (AC-17) | пользовательские секреты не перекрывают dev-умолчания; dev-хост не стартует без `Smtp__*` | — | none | декларативный JSON без ветвлений; приоритет пользовательских секретов над `appsettings.Development.json` в Development — поведение фреймворка, не проекта. Тестовый хост работает в Production с явными переменными окружения (запись 1), файл на него не влияет; проверка Development-запуска потребовала бы нового хоста в другой среде (новая инфраструктура теста, §17). Старт без значений уже покрывает `PlatformTests.Ac1_StartWithAMissingOrInvalidMailOrLinkSetting_…`; файл проходит `build` (копируется в вывод) |
-| `deploy/dev/docker-compose.yml` (`MP_SMTP_DISABLE_RDNS: "true"` у Mailpit), `deploy/dev/README.md` (раздел user-secrets) (AC-17) | письмо из dev-стека ждёт ~10 с приветствия SMTP | — | none | декларативный ключ образа и проза; тот же ключ уже проверен в тестовом Mailpit (`MailCatcher`: без него сессия ждёт ~10 с, запись 1); запуск dev-стека — ручная проверка (строка AC-3 ниже), стек пользователя не трогался |
+| `AccountMail.cs` (из письма-приглашения убрана фраза «Если вы не ждали этого письма…»), `LinkPasswordPage.tsx`, `passwordPolicy.ts` (`PASSWORD_HINT`), `UserForm.tsx` (убрана подсказка поля), `AuthCard.tsx` (название «Калибр» рядом с логотипом, `alt=""`) (AC-18) | правка текстов ломает существующую проверку; название продукта читается дважды (логотип с `alt` и текст) | — | none | чистая правка формулировок и вёрстки без ветвлений; существующие тесты не опираются на удалённые тексты (поиск выше, 157 + 82 зелёных без правок), поэтому корректировать нечего. Тест на отсутствие фразы или на текст подсказки закрепил бы буквальную прозу (`.claude/agent-memory/asd-dev-critical/project_tests-pin-literal-prose.md`), а не поведение (§17). Вид карточки (название рядом с логотипом) в jsdom не проверяется; пользовательский просмотр — новая строка `Manual verification` AC-18 |
 
-Проверка остатков (`artifact-layout.md` "Agent memory"): удалённые термины дельты — `Smtp__*` и `App__PublicBaseUrl` в `launchSettings.json`; в `src`, `tests`, `deploy`, `.claude/agent-memory/**` утверждений об их наличии в профиле запуска нет (упоминания `Smtp__*` — настройки тестового хоста и `appsettings.Development.json`). Дефекты памяти записи 1 (`D-1`, `D-2`) исправлены в 1798700.
+Проверка остатков (`artifact-layout.md` "Agent memory"): удалённые термины дельты — фраза «Если вы не ждали этого письма…», подсказка поля «Сотрудник», `alt` логотипа «Калибр»; в `src`, `web/src`, `tests`, `deploy`, `.claude/agent-memory/**` утверждений о них нет.
 
 ## Removed tests
 
@@ -48,10 +48,10 @@ analysed, not any tree produced later
 (`.asd/rules/sprint-lifecycle.md` "Impacted test set").
 
 - Command: `dotnet test --solution Competency.slnx -c Release && npm --prefix web test` (`test` из `commands.yaml`; `-c Release`, вывод `Debug` может быть занят Visual Studio пользователя)
-- Scope: full (запись 2; предохранитель: дельта — конфигурация `src/Competency.Api/` и `appsettings`, класс общей инфраструктуры, поэтому выборка не применялась; повтор полного прогона обязателен и для повторного входа). Предстратегический прогон = этот же: дельта не менялась между ним и итогом
+- Scope: запись 3 — impacted set дельты (предохранитель не сработал, см. выше); фактически прогнан полный набор обоих проектов. Предстратегический прогон = этот же: дельта не менялась между ним и итогом
 - Result: pass — backend 157 passed / 0 failed / 0 skipped (exit 0), web 11 файлов, 82 passed / 0 failed (exit 0)
 - Lint / build: pass — `npm --prefix web run lint` exit 0, `npm --prefix web run check:api` exit 0, `dotnet build Competency.slnx --tl:off -c Release` 0 предупреждений 0 ошибок, `npm --prefix web run build` exit 0
-- HEAD: 4700f9990d7dfdb6b11f980d472d247b87a8c68d
+- HEAD: e4a841662d62e68f0fd6cb07b0e717d8aa2ca868
 
 ## Defects
 
@@ -75,3 +75,5 @@ result: pass — экраны отображаются нормально на �
 | AC-3 | В dev-стеке (профиль F5 «Everything») создать пользователя в «Пользователях» и открыть веб-интерфейс Mailpit (`http://127.0.0.1:18025`) | в Mailpit есть письмо-приглашение на русском со ссылкой на `http://localhost:5173/accept-invitation#token=…`; ссылка открывает экран «Задание пароля» |
 
 result: pass — письмо пришло, ссылка рабочая; замечания к текстам и экрану входа (поправка AC-18, Task 8)
+
+| AC-18 | Запустить приложение (профиль F5 «Everything»). Открыть `/login`, `/forgot-password`, `/accept-invitation#token=x` при ширине ~1280 px и ~820 px; в «Пользователях» открыть форму создания пользователя; создать пользователя и открыть письмо-приглашение в Mailpit (`http://127.0.0.1:18025`) | на карточке рядом с логотипом показано название «Калибр», вёрстка не ломается на обоих размерах; в форме пользователя нет подсказки под полем «Сотрудник»; подсказка пароля и вводный текст на экране задания пароля короче; в письме нет фразы «Если вы не ждали этого письма, просто удалите его.» |
