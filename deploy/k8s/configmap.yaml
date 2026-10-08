@@ -14,6 +14,18 @@ data:
   # Files in the image never change at runtime, and every config watcher spends one instance
   # of the node-wide inotify limit.
   DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE: "false"
+  # Address users open the application at; every link in an e-mail starts with it. The app does not start without
+  # an absolute http(s) URL here.
+  App__PublicBaseUrl: "<PUBLIC_BASE_URL>"
+  # Corporate SMTP relay. Credentials, when the relay needs them, go to the Secret (Smtp__UserName, Smtp__Password).
+  Smtp__Host: "<SMTP_HOST>"
+  Smtp__Port: "587"
+  # None, Auto, SslOnConnect (port 465), StartTls (port 587) or StartTlsWhenAvailable. None sends mail unencrypted.
+  Smtp__SecureSocketOptions: StartTls
+  # Sender mailbox, optionally "Name <address>".
+  Smtp__From: "<SMTP_FROM>"
+  # Upper bound for one send; an administrator's request waits for it.
+  Smtp__Timeout: "00:00:15"
 ---
 apiVersion: v1
 kind: ConfigMap
