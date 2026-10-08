@@ -54,7 +54,7 @@ JSON не допускает комментариев, поэтому огово
 
 Вся почта приложения уходит в Mailpit, реальные письма не отправляются. Письма видны в веб-интерфейсе http://localhost:18025 и хранятся, пока работает контейнер: тома у Mailpit нет, остановка удаляет письма. Ссылки в письмах ведут на Vite (http://localhost:5173, `App:PublicBaseUrl`) и в профиле `API` без Vite не открываются.
 
-Порты 11025 и 18025 меняются переменными среды до запуска Visual Studio: `DEV_MAIL_SMTP_PORT` (тот же порт — в `Smtp:Port` файла `appsettings.Development.json`) и `DEV_MAIL_UI_PORT`. Веб-интерфейс отвечает только на имена `localhost` и `127.0.0.1` (`MP_ALLOWED_HOSTS`, защита от DNS rebinding).
+Порты 11025 и 18025 меняются переменными среды до запуска Visual Studio: `DEV_MAIL_SMTP_PORT` (тот же порт — `dotnet user-secrets set "Smtp:Port" "<порт>" --project src/Competency.Api`, см. «Своя SMTP-песочница») и `DEV_MAIL_UI_PORT`. Веб-интерфейс отвечает только на имена `localhost` и `127.0.0.1` (`MP_ALLOWED_HOSTS`, защита от DNS rebinding).
 
 ## Своя SMTP-песочница
 
