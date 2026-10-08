@@ -33,11 +33,11 @@
 - [CDP real-backend smoke](project_web-cdp-real-backend-smoke-facts.md) — antd DOM ids, popup animation waits, real mouse for selects, sign-in landing, node -e quote trap
 - [Employee name split](project_employee-name-split-facts.md) — EF scaffold is wrong for column -> generated, Up/Down SQL, heap cost, old-client 400, TEMPLATE-copy verification
 - [Employee dismissal cascade](project_employee-dismissal-cascade-facts.md) — IEmployeeAccounts port, direct stamp change, forced-failure/race checks, antd Dropdown cost per card
-- [Users row menu + modal](project_users-modal-menu-facts.md) — 409 alert suppressed for field conflicts, reset target by id from live list, gcTime 0 on account query, smoke facts
+- [Users row menu + modal](project_users-modal-menu-facts.md) — 409 alert suppressed for field conflicts, mail item replaced reset modal, gcTime 0 on account query, smoke facts
 - [Org head rule + order](project_org-head-rule-facts.md) — create field dropped silently, check-on-change, picker current quirk, Collator ru yo, antd 6 select DOM/click
 - [Org employee search](project_org-employee-search-facts.md) — server q is ILIKE+FTS not substring, q>200 is 400, searched units open as path only, absolute open/close choices, debounce masking
 - [Full verification cycle](project_full-verification-cycle-facts.md) — toast thenable keeps confirm open 3 s, real-change stale test, lockout trap, 10 500-employee numbers
 - [Web focus ring and antd CSS](project_web-focus-ring-and-antd-css-facts.md) — antd focus specificity vs !important and Biome, custom tokens as CSS vars, rc-dropdown keys, CDP keyboard check
 - [Invitation link facts](project_invitation-link-facts.md) — CreateAsync overwrites stamp (version 1), record params always required in OpenAPI, anon endpoint off the 401 group
-- [Password reset link facts](project_password-reset-link-facts.md) — one rate-limit counter per policy across endpoints, ApiHost limit, queue wiring, change-password 412 race
+- [Password reset link facts](project_password-reset-link-facts.md) — one rate-limit counter per policy across endpoints, ApiHost raises both limits, queue wiring, change-password 412 race
 - [Anonymous link screens](project_web-anonymous-link-screens-facts.md) — StrictMode-safe fragment token, router links styled as antd, empty 202, invalid-link 400 shape
