@@ -19,7 +19,7 @@ import { ErrorAlert } from "../../app/ErrorAlert";
 import { LOGIN_PATH } from "../../app/featureContract";
 import { AuthCard, AuthLink } from "./AuthCard";
 import { FORGOT_PASSWORD_PATH } from "./ForgotPasswordPage";
-import { PASSWORD_HINT } from "./passwordPolicy";
+import { usePasswordHint } from "./passwordPolicy";
 
 interface LinkPasswordValues {
   password: string;
@@ -87,6 +87,7 @@ function LinkPasswordPage({
   const { hash, pathname } = useLocation();
   const navigate = useNavigate();
   const { message } = App.useApp();
+  const passwordHint = usePasswordHint();
   const [form] = Form.useForm<LinkPasswordValues>();
   const [token] = useState(() =>
     new URLSearchParams(hash.slice(1)).get("token"),
@@ -151,7 +152,7 @@ function LinkPasswordPage({
             <Form.Item
               name="password"
               label="Пароль"
-              extra={PASSWORD_HINT}
+              extra={passwordHint}
               rules={[{ required: true, message: "Введите пароль" }]}
             >
               <Input.Password autoComplete="new-password" autoFocus />

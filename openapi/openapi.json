@@ -5,6 +5,26 @@
     "version": "2.0.0"
   },
   "paths": {
+    "/api/v1/auth/password-policy": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "GetPasswordPolicy",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordPolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit": {
       "get": {
         "tags": [
@@ -3523,6 +3543,18 @@
           }
         }
       },
+      "PasswordPolicyResponse": {
+        "required": [
+          "minLength"
+        ],
+        "type": "object",
+        "properties": {
+          "minLength": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -3666,6 +3698,9 @@
   },
   "tags": [
     {
+      "name": "Auth"
+    },
+    {
       "name": "Audit"
     },
     {
@@ -3673,9 +3708,6 @@
     },
     {
       "name": "Employees"
-    },
-    {
-      "name": "Auth"
     },
     {
       "name": "Users"

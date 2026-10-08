@@ -4,7 +4,7 @@ import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
 import { showFieldErrors } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { PASSWORD_HINT } from "./passwordPolicy";
+import { usePasswordHint } from "./passwordPolicy";
 
 interface ChangePasswordValues {
   currentPassword: string;
@@ -38,6 +38,7 @@ export function ChangePasswordModal({
 function ChangePasswordForm({ onDone }: { onDone: () => void }) {
   const [form] = Form.useForm<ChangePasswordValues>();
   const { message } = App.useApp();
+  const passwordHint = usePasswordHint();
   const change = useMutation({
     mutationFn: async ({
       currentPassword,
@@ -77,7 +78,7 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
       <Form.Item
         name="newPassword"
         label="Новый пароль"
-        extra={PASSWORD_HINT}
+        extra={passwordHint}
         rules={[{ required: true, message: "Введите новый пароль" }]}
       >
         <Input.Password autoComplete="new-password" />

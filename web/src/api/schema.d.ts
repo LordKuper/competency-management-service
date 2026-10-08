@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/auth/password-policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetPasswordPolicy"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit": {
         parameters: {
             query?: never;
@@ -629,6 +645,10 @@ export interface components {
             /** Format: int32 */
             pageSize: number;
         };
+        PasswordPolicyResponse: {
+            /** Format: int32 */
+            minLength: number;
+        };
         ProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -673,6 +693,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    GetPasswordPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordPolicyResponse"];
+                };
+            };
+        };
+    };
     ListAuditEvents: {
         parameters: {
             query?: {

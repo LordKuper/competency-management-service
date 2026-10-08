@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Competency.UserManagement;
 
@@ -61,6 +62,10 @@ internal static class AuthEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest);
         links.MapPost("/accept-invitation", AcceptInvitationAsync).WithName("AcceptInvitation")
             .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        endpoints.MapGet(Route + "/password-policy", GetPasswordPolicy).WithName("GetPasswordPolicy")
+            .WithTags(Tag)
+            .AllowAnonymous();
 
         var signedIn = auth.MapGroup(string.Empty).RequireAuthorization(AuthorizationPolicies.Authenticated);
         signedIn.MapPost("/logout", LogoutAsync).WithName("Logout");
@@ -135,6 +140,12 @@ internal static class AuthEndpoints
             cancellationToken);
         return TypedResults.Ok(CurrentUserResponse.From(user, employee));
     }
+
+    /// <summary>
+    /// Tells the shortest accepted password length, read from the identity options so that the interface never repeats the setting.
+    /// </summary>
+    private static Ok<PasswordPolicyResponse> GetPasswordPolicy(IOptions<IdentityOptions> options) =>
+        TypedResults.Ok(new PasswordPolicyResponse(options.Value.Password.RequiredLength));
 
     private static async Task<NoContent> LogoutAsync(HttpContext httpContext, ICurrentActor actor, IAuditWriter audit, CancellationToken cancellationToken)
     {
