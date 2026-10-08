@@ -1,15 +1,18 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
+using Competency.Platform;
 using Competency.Tests.Infrastructure;
+using Microsoft.Extensions.Configuration;
 using Npgsql;
 using Xunit;
 
 namespace Competency.Tests;
 
 /// <summary>
-/// The platform on a real database: schema applied from an empty database, probes, what the logs carry, the account role limited
-/// in the database itself, and the journal append-only in the database itself, for the application account too.
+/// The platform on a real database: schema applied from an empty database, probes, the mail and link settings it refuses to start with,
+/// what the logs carry, the account role limited in the database itself, and the journal append-only in the database itself,
+/// for the application account too.
 /// </summary>
 public sealed class PlatformTests(TestEnvironment environment)
 {
@@ -17,6 +20,8 @@ public sealed class PlatformTests(TestEnvironment environment)
     private const string CheckViolation = "23514";
     private const string UnknownRole = "Auditor";
     private const string FailureLogCategory = "Competency.Platform.ProblemExceptionHandler";
+    private const string LongestSmtpTimeout = "49.17:02:47.294";
+    private const string OneMillisecondOverTheLongestSmtpTimeout = "49.17:02:47.295";
 
     [Fact]
     public async Task Ac3_EmptyDatabase_GetsSchemaExtensionsAndBootstrapAdministrator()
@@ -84,6 +89,10 @@ public sealed class PlatformTests(TestEnvironment environment)
 
     [Theory]
     [InlineData("Smtp__Host", "", "Smtp:Host")]
+    [InlineData("Smtp__Host", "<SMTP_HOST>", "Smtp:Host")]
+    [InlineData("Smtp__SecureSocketOptions", "99", "Smtp:SecureSocketOptions")]
+    [InlineData("Smtp__Timeout", "50.00:00:00", "Smtp:Timeout")]
+    [InlineData("Smtp__Timeout", OneMillisecondOverTheLongestSmtpTimeout, "Smtp:Timeout")]
     [InlineData("Smtp__From", "not a mailbox", "Smtp:From")]
     [InlineData("Smtp__UserName", "only-a-name", "Smtp:UserName")]
     [InlineData("App__PublicBaseUrl", "ftp://calibr.test.local", "App:PublicBaseUrl")]
@@ -99,6 +108,26 @@ public sealed class PlatformTests(TestEnvironment environment)
 
         failure.Should().BeOfType<InvalidOperationException>("a host that cannot send its mail or build its links must refuse to start");
         failure!.Message.Should().Contain($"'{setting}'");
+    }
+
+    [Fact]
+    public async Task Ac1_TheLongestSmtpTimeoutTheStartAccepts_StillSendsTheMail()
+    {
+        await using var host = await environment.StartHostAsync(new Dictionary<string, string> { ["Smtp__Timeout"] = LongestSmtpTimeout });
+        var email = $"{Scenarios.Unique("longest")}@test.local";
+
+        var created = (await (await host.AdminAsync()).PostAsync("/api/v1/users", new { email, role = Scenarios.User, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
+
+        created.Json!["mailSent"]!.GetValue<bool>().Should().BeTrue("the send timer accepts the longest timeout the start allows");
+        (await environment.Mail.WaitForAsync(email)).Should().ContainSingle();
+    }
+
+    [Fact]
+    public void Ac1_ShippedSmtpSettings_CheckCertificateRevocation_UntilAnOperatorSwitchesItOff()
+    {
+        var shipped = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("Smtp").Get<SmtpOptions>();
+
+        shipped!.CheckCertificateRevocation.Should().BeTrue("only an operator who cannot reach the revocation endpoints turns the check off");
     }
 
     [Fact]
