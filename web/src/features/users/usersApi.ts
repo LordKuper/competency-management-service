@@ -12,6 +12,7 @@ export interface UserListParams {
   q?: string;
   role?: UserRole;
   isBlocked?: boolean;
+  isInvited?: boolean;
   page: number;
   pageSize: number;
 }

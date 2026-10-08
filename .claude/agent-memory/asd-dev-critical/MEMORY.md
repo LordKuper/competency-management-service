@@ -40,3 +40,4 @@
 - [Web focus ring and antd CSS](project_web-focus-ring-and-antd-css-facts.md) — antd focus specificity vs !important and Biome, custom tokens as CSS vars, rc-dropdown keys, CDP keyboard check
 - [Invitation link facts](project_invitation-link-facts.md) — CreateAsync overwrites stamp (version 1), record params always required in OpenAPI, anon endpoint off the 401 group
 - [Password reset link facts](project_password-reset-link-facts.md) — one rate-limit counter per policy across endpoints, ApiHost limit, queue wiring, change-password 412 race
+- [Anonymous link screens](project_web-anonymous-link-screens-facts.md) — StrictMode-safe fragment token, router links styled as antd, empty 202, invalid-link 400 shape

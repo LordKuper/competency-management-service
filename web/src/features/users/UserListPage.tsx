@@ -1,6 +1,8 @@
 import {
   CheckCircleOutlined,
   EditOutlined,
+  KeyOutlined,
+  MailOutlined,
   MoreOutlined,
   StopOutlined,
 } from "@ant-design/icons";
@@ -32,20 +34,33 @@ import {
   type UserResponse,
   userListQuery,
 } from "./usersApi";
+import { useSendUserMail } from "./useSendUserMail";
 
 const DEFAULT_PAGE_SIZE = 20;
 
-const BLOCKED_OPTIONS = [
-  { value: false, label: "Активные" },
-  { value: true, label: "Заблокированные" },
-];
+/** The state filter; an invited account that is also blocked is listed under both of its states, as its tags show. */
+const STATE_FILTERS = {
+  active: { label: "Активные", isBlocked: false, isInvited: false },
+  invited: { label: "Приглашённые", isBlocked: undefined, isInvited: true },
+  blocked: { label: "Заблокированные", isBlocked: true, isInvited: undefined },
+};
+
+type StateFilter = keyof typeof STATE_FILTERS;
+
+const STATE_OPTIONS = Object.entries(STATE_FILTERS).map(
+  ([value, { label }]) => ({
+    value,
+    label,
+  }),
+);
 
 type UserDialog = { kind: "create" } | { kind: "edit"; userId: string };
 
-/** List of accounts for administrators: search, role and state filters, paging, and a row menu to edit, block or unblock. The dialogs live here, once for all rows. */
+/** List of accounts for administrators: search, role and state filters, paging, and a row menu to edit, block or unblock, and to e-mail an invitation again or a password reset link. The dialogs live here, once for all rows. */
 export function UserListPage() {
   const { token } = antdTheme.useToken();
   const confirmBlockChange = useBlockUser();
+  const sendMail = useSendUserMail();
   const [dialog, setDialog] = useState<UserDialog | null>(null);
   const [params, setParams] = useState<UserListParams>({
     page: 1,
@@ -68,8 +83,10 @@ export function UserListPage() {
     },
     {
       title: "Состояние",
-      dataIndex: "isBlocked",
-      render: (isBlocked: boolean) => <UserStatusTag isBlocked={isBlocked} />,
+      key: "state",
+      render: (_, user) => (
+        <UserStatusTag isBlocked={user.isBlocked} isInvited={user.isInvited} />
+      ),
     },
     {
       title: "Действия",
@@ -85,6 +102,18 @@ export function UserListPage() {
                 label: "Править",
                 onClick: () => setDialog({ kind: "edit", userId: user.id }),
               },
+              ...(user.isBlocked
+                ? []
+                : [
+                    {
+                      key: "sendMail",
+                      icon: user.isInvited ? <MailOutlined /> : <KeyOutlined />,
+                      label: user.isInvited
+                        ? "Отправить приглашение повторно"
+                        : "Отправить ссылку для сброса пароля",
+                      onClick: () => sendMail(user),
+                    },
+                  ]),
               {
                 key: "toggleBlock",
                 icon: user.isBlocked ? (
@@ -151,11 +180,19 @@ export function UserListPage() {
             allowClear
             aria-label="Фильтр по состоянию"
             placeholder="Состояние"
-            options={BLOCKED_OPTIONS}
+            options={STATE_OPTIONS}
             style={{ width: "100%" }}
-            onChange={(isBlocked?: boolean) =>
-              setParams((previous) => ({ ...previous, isBlocked, page: 1 }))
-            }
+            onChange={(state?: StateFilter) => {
+              const { isBlocked, isInvited } = state
+                ? STATE_FILTERS[state]
+                : { isBlocked: undefined, isInvited: undefined };
+              setParams((previous) => ({
+                ...previous,
+                isBlocked,
+                isInvited,
+                page: 1,
+              }));
+            }}
           />
         </Col>
       </Row>
