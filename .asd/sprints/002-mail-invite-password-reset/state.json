@@ -208,6 +208,13 @@
       "decision": "add brand-wordmark typography token (45px/700) and brand-logo-size-auth 80px + sign-in card component note",
       "reason": "design-promote questions (recommended)",
       "evidence": "decisions-log.md 2026-10-08 DESIGN.md tokens"
+    },
+    {
+      "gate": "PR publication",
+      "decision_actor": "user",
+      "decision": "open and merge",
+      "reason": "user approved push + PR + squash merge",
+      "evidence": "decisions-log.md 2026-10-08 PR"
     }
   ],
   "task_routing": {
@@ -485,9 +492,12 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T14:34:00.678Z",
+  "updated_at": "2026-10-08T14:42:44.589Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
-  "pr": null,
+  "pr": {
+    "number": 4,
+    "url": "https://github.com/LordKuper/competency-management-service/pull/4"
+  },
   "archived_at": null
 }

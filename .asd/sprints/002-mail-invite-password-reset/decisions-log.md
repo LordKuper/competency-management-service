@@ -36,3 +36,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 
 <!-- entries appended below this line -->
 - 2026-10-08 — pr open mode: DoD verified (plan 0 unticked; reviews 3/3 waves APPROVE; full suite green at aef943d, no code/test/stub diff since; stubs none; retrospective.html present); no PR for head branch
+- 2026-10-08 — PR opened with user approval (open and merge): https://github.com/LordKuper/competency-management-service/pull/4
