@@ -97,6 +97,23 @@ namespace Competency.Platform.Migrations
                     b.ToTable("audit_events", (string)null);
                 });
 
+            modelBuilder.Entity("Competency.CareerFramework.OrgUnitHr", b =>
+                {
+                    b.Property<Guid>("OrgUnitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_unit_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("OrgUnitId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("org_unit_hr", (string)null);
+                });
+
             modelBuilder.Entity("Competency.OrgStructure.Employee", b =>
                 {
                     b.Property<Guid>("Id")
@@ -426,6 +443,21 @@ namespace Competency.Platform.Migrations
                         {
                             t.HasCheckConstraint("ck_users_role", "role IN ('User', 'GlobalAdmin')");
                         });
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.OrgUnitHr", b =>
+                {
+                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
+                        .WithOne()
+                        .HasForeignKey("Competency.CareerFramework.OrgUnitHr", "OrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Competency.OrgStructure.Employee", b =>

@@ -1,4 +1,5 @@
 using Competency.Audit;
+using Competency.CareerFramework;
 using Competency.OrgStructure;
 using Competency.Platform;
 using Competency.UserManagement;
@@ -14,5 +15,6 @@ internal static class ApplicationServices
         .AddPlatform(configuration)
         .AddAuditModule()
         .AddOrgStructureModule()
-        .AddUserManagementModule(configuration);
+        .AddUserManagementModule(configuration)
+        .AddCareerFrameworkModule();
 }
