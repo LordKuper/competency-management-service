@@ -1,7 +1,7 @@
 {
   "sprint_id": "003-positions-career-competency",
   "branch": "sprint/003-positions-career-competency",
-  "phase": "audit",
+  "phase": "plan",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -69,6 +69,28 @@
       "reason": "audit.md complete; all contradictions and ambiguities settled by user",
       "evidence": "audit.md",
       "artifact_revision": "audit.md 2026-10-09"
+    },
+    {
+      "gate": "new subsystem career-framework",
+      "decision_actor": "user",
+      "decision": "approve: Competency.CareerFramework, HR assignment inside it, ports IEmployeeDirectory (extended) + IUserDirectory",
+      "reason": "audit R-10: decided at plan, registry written at design-promote",
+      "evidence": "decisions-log.md 2026-10-09 plan decisions"
+    },
+    {
+      "gate": "material architecture: physical deletion principle",
+      "decision_actor": "user",
+      "decision": "link rows (unit position list, HR assignment) deleted physically with audit event; stack.html principle clarified at design-promote",
+      "reason": "audit R-14",
+      "evidence": "decisions-log.md 2026-10-09 plan decisions"
+    },
+    {
+      "gate": "plan",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "plan.md Task 1-9, 6 waves; UI texts section approved (AC-20)",
+      "evidence": "decisions-log.md 2026-10-09 plan accepted",
+      "artifact_revision": "plan.md 2026-10-09"
     }
   ],
   "task_routing": {},
@@ -92,7 +114,7 @@
     }
   },
   "created_at": "2026-10-09T07:25:11.340Z",
-  "updated_at": "2026-10-09T08:33:34.985Z",
+  "updated_at": "2026-10-09T08:56:05.408Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
