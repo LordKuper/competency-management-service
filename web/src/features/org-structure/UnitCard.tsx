@@ -7,6 +7,7 @@ import {
   RightOutlined,
   StopOutlined,
   SwapOutlined,
+  UnorderedListOutlined,
   UserAddOutlined,
 } from "@ant-design/icons";
 import { theme as antdTheme, Button, Card, Dropdown, Flex } from "antd";
@@ -22,6 +23,7 @@ export type UnitAction =
   | "addEmployee"
   | "edit"
   | "move"
+  | "positions"
   | "toggleActive";
 
 interface UnitCardProps {
@@ -118,6 +120,12 @@ export const UnitCard = memo(function UnitCard({
                   icon: <SwapOutlined />,
                   label: "Перенести",
                   onClick: () => onAction("move", unit),
+                },
+                {
+                  key: "positions",
+                  icon: <UnorderedListOutlined />,
+                  label: "Должности",
+                  onClick: () => onAction("positions", unit),
                 },
                 { type: "divider" },
                 {

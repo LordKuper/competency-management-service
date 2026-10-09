@@ -183,9 +183,15 @@ function EmployeeEditor({
                 firstName: existing.employee.firstName,
                 middleName: existing.employee.middleName ?? undefined,
                 orgUnitId: existing.employee.orgUnitId,
-                position: existing.employee.position,
+                positionId: existing.employee.positionId,
               }
             : { orgUnitId }
+        }
+        position={
+          existing && {
+            id: existing.employee.positionId,
+            name: existing.employee.position,
+          }
         }
         email={existing?.employee.email}
         submitLabel={existing ? "Сохранить" : "Создать"}

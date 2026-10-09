@@ -17,6 +17,7 @@ import {
 import { ancestorIds, buildUnitTree } from "./orgTree";
 import type { UnitAction } from "./UnitCard";
 import { UnitFormModal } from "./UnitFormModal";
+import { UnitPositionsModal } from "./UnitPositionsModal";
 import { UnitTree } from "./UnitTree";
 import { useEmployeeLifecycle } from "./useEmployeeLifecycle";
 import { SEARCH_MIN_LENGTH } from "./useEmployeeSearch";
@@ -29,7 +30,7 @@ type PageDialog =
   | { kind: "addUnit"; parentId: string | null }
   | { kind: "addEmployee"; orgUnitId?: string }
   | { kind: "editEmployee"; employeeId: string }
-  | { kind: "edit" | "move"; unitId: string };
+  | { kind: "edit" | "move" | "positions"; unitId: string };
 
 /**
  * The structure screen: a hierarchy of unit and employee cards, searchable by unit name and by employee name and
@@ -77,7 +78,9 @@ export function OrgStructurePage() {
   );
 
   const dialogUnit =
-    dialog?.kind === "edit" || dialog?.kind === "move"
+    dialog?.kind === "edit" ||
+    dialog?.kind === "move" ||
+    dialog?.kind === "positions"
       ? units?.find((unit) => unit.id === dialog.unitId)
       : undefined;
 
@@ -206,6 +209,9 @@ export function OrgStructurePage() {
       )}
       {dialog?.kind === "move" && dialogUnit && (
         <MoveUnitModal unit={dialogUnit} onClose={closeDialog} />
+      )}
+      {dialog?.kind === "positions" && dialogUnit && (
+        <UnitPositionsModal unit={dialogUnit} onClose={closeDialog} />
       )}
     </Space>
   );
