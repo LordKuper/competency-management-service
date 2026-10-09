@@ -7,21 +7,25 @@ import {
   RightOutlined,
   StopOutlined,
   SwapOutlined,
+  TeamOutlined,
   UnorderedListOutlined,
   UserAddOutlined,
 } from "@ant-design/icons";
+import { useQuery } from "@tanstack/react-query";
 import { theme as antdTheme, Button, Card, Dropdown, Flex } from "antd";
 import { memo, useEffect, useRef } from "react";
+import { effectiveHr, unitHrQuery } from "../career/careerApi";
 import { Highlighted } from "./Highlighted";
 import type { OrgUnit, OrgUnitTreeNode } from "./orgStructureApi";
 import type { UnitOpenness } from "./orgTree";
 import { UnitStatusTag } from "./StatusTags";
 
-/** What an administrator can do with a unit from its card. */
+/** What can be done with a unit from its card: "positions" and "hr" for everyone, the rest for administrators. */
 export type UnitAction =
   | "addChild"
   | "addEmployee"
   | "edit"
+  | "hr"
   | "move"
   | "positions"
   | "toggleActive";
@@ -58,6 +62,8 @@ export const UnitCard = memo(function UnitCard({
   const inactiveNote = unit.isActive ? "" : " (подразделение неактивно)";
   const isOpen = openness !== "closed";
   const cardRef = useRef<HTMLDivElement>(null);
+  const { data: unitHr } = useQuery(unitHrQuery(unit.id));
+  const hr = unitHr && effectiveHr(unitHr);
 
   useEffect(() => {
     if (isSelected) cardRef.current?.scrollIntoView({ block: "center" });
@@ -90,70 +96,83 @@ export const UnitCard = memo(function UnitCard({
           <Highlighted text={unit.name} needle={needle} />
         </Button>
         {!unit.isActive && <UnitStatusTag />}
-        {isAdmin && (
-          <Dropdown
-            trigger={["click"]}
-            menu={{
-              items: [
-                {
-                  key: "addChild",
-                  icon: <PlusOutlined />,
-                  label: `Добавить подразделение${inactiveNote}`,
-                  disabled: !unit.isActive,
-                  onClick: () => onAction("addChild", unit),
-                },
-                {
-                  key: "addEmployee",
-                  icon: <UserAddOutlined />,
-                  label: `Добавить сотрудника${inactiveNote}`,
-                  disabled: !unit.isActive,
-                  onClick: () => onAction("addEmployee", unit),
-                },
-                {
-                  key: "edit",
-                  icon: <EditOutlined />,
-                  label: "Править",
-                  onClick: () => onAction("edit", unit),
-                },
-                {
-                  key: "move",
-                  icon: <SwapOutlined />,
-                  label: "Перенести",
-                  onClick: () => onAction("move", unit),
-                },
-                {
-                  key: "positions",
-                  icon: <UnorderedListOutlined />,
-                  label: "Должности",
-                  onClick: () => onAction("positions", unit),
-                },
-                { type: "divider" },
-                {
-                  key: "toggleActive",
-                  icon: unit.isActive ? (
-                    <StopOutlined />
-                  ) : (
-                    <CheckCircleOutlined />
-                  ),
-                  danger: unit.isActive,
-                  label: unit.isActive ? "Деактивировать" : "Активировать",
-                  onClick: () => onAction("toggleActive", unit),
-                },
-              ],
-            }}
-          >
-            <Button
-              type="text"
-              icon={<MoreOutlined />}
-              aria-label={`Действия с подразделением ${unit.name}`}
-            />
-          </Dropdown>
-        )}
+        <Dropdown
+          trigger={["click"]}
+          menu={{
+            items: [
+              ...(isAdmin
+                ? [
+                    {
+                      key: "addChild",
+                      icon: <PlusOutlined />,
+                      label: `Добавить подразделение${inactiveNote}`,
+                      disabled: !unit.isActive,
+                      onClick: () => onAction("addChild", unit),
+                    },
+                    {
+                      key: "addEmployee",
+                      icon: <UserAddOutlined />,
+                      label: `Добавить сотрудника${inactiveNote}`,
+                      disabled: !unit.isActive,
+                      onClick: () => onAction("addEmployee", unit),
+                    },
+                    {
+                      key: "edit",
+                      icon: <EditOutlined />,
+                      label: "Править",
+                      onClick: () => onAction("edit", unit),
+                    },
+                    {
+                      key: "move",
+                      icon: <SwapOutlined />,
+                      label: "Перенести",
+                      onClick: () => onAction("move", unit),
+                    },
+                  ]
+                : []),
+              {
+                key: "positions",
+                icon: <UnorderedListOutlined />,
+                label: "Должности",
+                onClick: () => onAction("positions", unit),
+              },
+              {
+                key: "hr",
+                icon: <TeamOutlined />,
+                label: "HR",
+                onClick: () => onAction("hr", unit),
+              },
+              ...(isAdmin
+                ? [
+                    { type: "divider" as const },
+                    {
+                      key: "toggleActive",
+                      icon: unit.isActive ? (
+                        <StopOutlined />
+                      ) : (
+                        <CheckCircleOutlined />
+                      ),
+                      danger: unit.isActive,
+                      label: unit.isActive ? "Деактивировать" : "Активировать",
+                      onClick: () => onAction("toggleActive", unit),
+                    },
+                  ]
+                : []),
+            ],
+          }}
+        >
+          <Button
+            type="text"
+            icon={<MoreOutlined />}
+            aria-label={`Действия с подразделением ${unit.name}`}
+          />
+        </Dropdown>
       </Flex>
       <div className="org-card__meta">
         <span>Подразделений: {childCount}</span>
         <span>Сотрудников: {unit.employeeCount}</span>
         <span>Руководитель: {unit.headName ?? "не назначен"}</span>
+        {hr && <span>HR: {hr.name}</span>}
       </div>
     </Card>
   );
