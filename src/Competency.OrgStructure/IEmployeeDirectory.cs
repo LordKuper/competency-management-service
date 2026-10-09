@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace Competency.OrgStructure;
 
 /// <summary>
-/// Access to the employee directory for other modules, which never see the module's entities.
+/// Access to employees and organization units for other modules, which never see the module's entities.
 /// Implementations are scoped to a request, because they share its database context.
 /// </summary>
 public interface IEmployeeDirectory
@@ -25,6 +25,30 @@ public interface IEmployeeDirectory
     Task<IReadOnlyDictionary<Guid, EmployeeStatus>> FindManyAsync(IReadOnlyCollection<Guid> employeeIds, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Finds an organization unit.
+    /// </summary>
+    /// <param name="unitId">The unit identifier.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The unit's facts, or <see langword="null"/> when no such unit exists.</returns>
+    Task<OrgUnitStatus?> FindUnitAsync(Guid unitId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Finds a unit and every unit above it, for rules that apply to the nearest unit up the tree that meets a condition, such as having a head.
+    /// </summary>
+    /// <param name="unitId">The unit the chain starts from.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The unit first, then its parent and so on up to the root; empty when the unit does not exist.</returns>
+    Task<IReadOnlyList<OrgUnitStatus>> FindAncestryAsync(Guid unitId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Finds the units an employee heads. Nothing in the data limits them to the employee's own unit, so there may be several, in any part of the tree.
+    /// </summary>
+    /// <param name="employeeId">The employee identifier.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The headed units, active or not, in name order; empty when the employee heads none or does not exist.</returns>
+    Task<IReadOnlyList<OrgUnitStatus>> FindHeadedUnitsAsync(Guid employeeId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Starts a transaction and takes the lock every employee and unit change holds, until the transaction ends, so that what the caller
     /// then reads about employees, such as whether one works, cannot change before the caller commits. A caller that also locks the
     /// active administrators must take this lock first, as dismissing an employee does, or the two could wait for each other.
@@ -32,4 +56,13 @@ public interface IEmployeeDirectory
     /// <param name="cancellationToken">Cancels the wait for the lock.</param>
     /// <returns>The open transaction; the caller commits it, and disposing it releases the lock.</returns>
     Task<IDbContextTransaction> BeginExclusiveAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Starts a transaction and takes the same lock in shared mode, until the transaction ends, so that rights the caller derives from
+    /// units, their heads and employees cannot change before it commits, while other such readers run alongside. It must be the caller's
+    /// first lock, before any of its own, and a caller that may change units or employees takes <see cref="BeginExclusiveAsync"/> instead.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the wait for the lock.</param>
+    /// <returns>The open transaction; the caller commits it, and disposing it releases the lock.</returns>
+    Task<IDbContextTransaction> BeginSharedAsync(CancellationToken cancellationToken = default);
 }

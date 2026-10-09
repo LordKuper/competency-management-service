@@ -10,7 +10,7 @@ namespace Competency.OrgStructure;
 public static class OrgStructureModule
 {
     /// <summary>
-    /// Registers the OrgStructure module services, including the <see cref="IEmployeeDirectory"/> other modules read employees through.
+    /// Registers the OrgStructure module services, including the <see cref="IEmployeeDirectory"/> other modules read employees and units through.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
     /// <returns>The same collection, for chaining.</returns>
