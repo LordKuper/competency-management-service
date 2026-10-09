@@ -55,3 +55,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-09 — route Task 10: standard, dispatch HEAD f51aca9; risk none via npm --prefix web run typecheck
 - 2026-10-09 — Task 3 flagged choices accepted: `FindAncestryAsync` включает само подразделение первым (шаг 1 маршрута пропускает его), защита от цикла `CYCLE … USING path`, `FindHeadedUnitsAsync` без фильтра активности (фильтрует вызывающий), «действующая учётная запись» — один раз в `UserStatus.IsActive`; Task 10 COMPLETED (eca4c33), web typecheck и lint чисты
 - 2026-10-09 — route Task 4: critical, dispatch HEAD 273d5ee; risk change: security
+- 2026-10-09 — Task 4 flagged choices accepted: `IEmployeeDirectory.FindSubtreeAsync` (поддерево для наследования HR без прямого чтения `org_units`); неактивные подразделения вне ролей процесса; GET HR возвращает `assigned` и `inherited` с признаком `isActive` учётной записи (видят все — выносится на impl assessment); PUT/DELETE HR без If-Match, 204; метод «ответственный HR подразделения» — в Task 7; производный текст «Пользователь не найден»
+- 2026-10-09 — route Task 5: critical, dispatch HEAD eee40ef; risk change: security, change: migration
+- 2026-10-09 — route Task 6: standard, dispatch HEAD eee40ef; risk none via npm --prefix web run lint

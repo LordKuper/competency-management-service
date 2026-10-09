@@ -123,6 +123,18 @@
       "tier": "critical",
       "reason": "risk:security",
       "resolved_model": "opus"
+    },
+    "Task 5": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "opus"
+    },
+    "Task 6": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -145,7 +157,7 @@
     }
   },
   "created_at": "2026-10-09T07:25:11.340Z",
-  "updated_at": "2026-10-09T09:23:44.372Z",
+  "updated_at": "2026-10-09T09:33:57.997Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
