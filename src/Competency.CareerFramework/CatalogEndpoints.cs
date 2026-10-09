@@ -20,7 +20,7 @@ internal static class CatalogEndpoints
     public const string UnavailableMessage = "Запись не найдена или недоступна";
 
     private const string Tag = "Career";
-    private const string DuplicateNameMessage = "Запись с таким названием уже есть";
+    public const string DuplicateNameMessage = "Запись с таким названием уже есть";
     private const string NotDraftMessage = "Согласовать можно только черновую запись";
     private const string DraftActivationMessage = "Черновую запись нужно согласовать";
     private const string ApprovedAction = "Approved";

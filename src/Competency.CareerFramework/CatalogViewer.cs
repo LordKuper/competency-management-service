@@ -7,7 +7,7 @@ namespace Competency.CareerFramework;
 /// What the signed-in user may see and do in the career catalogues, from their account role and their process roles at the moment of asking.
 /// Global administrators see and keep every entry. A responsible HR sees active and inactive entries of every unit and drafts of the units
 /// they answer for, and keeps those units' entries. A unit head sees and edits their unit's drafts. An author always sees their own drafts.
-/// Everyone sees active entries.
+/// Whoever reads a matrix version in work also reads the drafts it uses. Everyone sees active entries.
 /// </summary>
 /// <param name="UserId">The signed-in account.</param>
 /// <param name="IsAdmin">Whether the account is a global administrator.</param>
@@ -15,6 +15,11 @@ namespace Competency.CareerFramework;
 /// <param name="HrUnitIds">The units the account is the responsible HR of.</param>
 internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Guid> HeadedUnitIds, IReadOnlySet<Guid> HrUnitIds)
 {
+    /// <summary>
+    /// The entries of the matrix versions in work the user reads through the approval route rather than as a keeper or head of their unit.
+    /// </summary>
+    public IReadOnlySet<Guid> RouteEntryIds { get; init; } = new HashSet<Guid>();
+
     /// <summary>
     /// Works out the signed-in user's rights; a writer calls it under the catalogue lock, so the rights hold until it commits.
     /// </summary>
@@ -46,9 +51,11 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Gui
         var seesInactive = IsAdmin || HrUnitIds.Count > 0;
         var userId = UserId;
         var draftUnitIds = HeadedUnitIds.Union(HrUnitIds).Select(id => (Guid?)id).ToList();
+        var routeEntryIds = RouteEntryIds.ToList();
         return entry => entry.Status == CatalogStatus.Active
             || (entry.Status == CatalogStatus.Inactive && seesInactive)
-            || (entry.Status == CatalogStatus.Draft && (isAdmin || entry.AuthorId == userId || draftUnitIds.Contains(entry.OwnerOrgUnitId)));
+            || (entry.Status == CatalogStatus.Draft
+                && (isAdmin || entry.AuthorId == userId || draftUnitIds.Contains(entry.OwnerOrgUnitId) || routeEntryIds.Contains(entry.Id)));
     }
 
     /// <summary>

@@ -19,7 +19,7 @@ internal static class CompetencyEndpoints
     private const string DirectionField = "directionId";
     private const string ScaleField = "scaleId";
 
-    private static readonly CatalogKind<CareerCompetency, CompetencyResponse> Kind = new(
+    internal static readonly CatalogKind<CareerCompetency, CompetencyResponse> Kind = new(
         "Competency",
         CompetencyResponse.From,
         competency => other => other.DirectionId == competency.DirectionId);

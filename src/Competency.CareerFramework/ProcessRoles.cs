@@ -71,6 +71,48 @@ internal sealed class ProcessRoles(AppDbContext context, IEmployeeDirectory empl
     }
 
     /// <summary>
+    /// The responsible HR of a unit: the account assigned to the unit itself or else to the nearest unit above it with an assignment.
+    /// An account that cannot act leaves the unit without a responsible HR rather than passing the role further up.
+    /// </summary>
+    /// <param name="unitId">The unit.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The account, or <see langword="null"/> when no assignment applies or its account cannot act.</returns>
+    public async Task<Guid?> ResponsibleHrAsync(Guid unitId, CancellationToken cancellationToken)
+    {
+        var ancestry = await employees.FindAncestryAsync(unitId, cancellationToken);
+        var ancestryIds = ancestry.Select(unit => unit.Id).ToList();
+        var assigneeOf = await context.Set<OrgUnitHr>()
+            .Where(assignment => ancestryIds.Contains(assignment.OrgUnitId))
+            .ToDictionaryAsync(assignment => assignment.OrgUnitId, assignment => assignment.UserId, cancellationToken);
+        var nearest = ancestry.FirstOrDefault(unit => assigneeOf.ContainsKey(unit.Id));
+        if (nearest is null)
+        {
+            return null;
+        }
+
+        var userId = assigneeOf[nearest.Id];
+        return await users.FindAsync(userId, cancellationToken) is { IsActive: true } ? userId : null;
+    }
+
+    /// <summary>
+    /// The account of the unit's head when the head is a working employee bound to an account that can act.
+    /// </summary>
+    /// <param name="unit">The unit.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The account, or <see langword="null"/> when the unit is deactivated or has no such head.</returns>
+    public async Task<Guid?> HeadAccountAsync(OrgUnitStatus unit, CancellationToken cancellationToken)
+    {
+        if (unit is not { IsActive: true, HeadEmployeeId: { } headId }
+            || await employees.FindAsync(headId, cancellationToken) is not { IsActive: true })
+        {
+            return null;
+        }
+
+        var accounts = await users.FindByEmployeeIdsAsync([headId], cancellationToken);
+        return accounts.TryGetValue(headId, out var account) && account.IsActive ? account.Id : null;
+    }
+
+    /// <summary>
     /// Walks up from a unit to the first unit with an assignment. Every unit of the subtrees lies below an assigned unit,
     /// so the walk ends inside them.
     /// </summary>

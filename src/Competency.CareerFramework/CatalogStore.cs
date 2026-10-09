@@ -16,6 +16,7 @@ internal sealed class CatalogStore(
     IEmployeeDirectory employees,
     IUserDirectory users,
     ProcessRoles roles,
+    MatrixRoute route,
     ICurrentActor actor,
     TimeProvider time)
 {
@@ -34,7 +35,16 @@ internal sealed class CatalogStore(
         return transaction;
     }
 
-    public Task<CatalogViewer> ViewerAsync(CancellationToken cancellationToken) => CatalogViewer.LoadAsync(actor, roles, cancellationToken);
+    /// <summary>
+    /// Works out the signed-in user's rights in the catalogues, including the drafts they read through the matrix versions they take part in.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    /// <returns>The user's rights.</returns>
+    public async Task<CatalogViewer> ViewerAsync(CancellationToken cancellationToken)
+    {
+        var viewer = await CatalogViewer.LoadAsync(actor, roles, cancellationToken);
+        return viewer with { RouteEntryIds = await route.RouteEntryIdsAsync(viewer, cancellationToken) };
+    }
 
     /// <summary>
     /// Finds an entry the user can read, tracked for a change.

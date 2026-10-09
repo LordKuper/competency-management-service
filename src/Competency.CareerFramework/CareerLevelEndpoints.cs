@@ -20,7 +20,7 @@ internal static class CareerLevelEndpoints
     private const string NextLevelsField = "nextLevelIds";
     private const string SelfReferenceMessage = "Уровень не может ссылаться на себя";
 
-    private static readonly CatalogKind<CareerLevel, CareerLevelResponse> Kind = new(
+    internal static readonly CatalogKind<CareerLevel, CareerLevelResponse> Kind = new(
         "CareerLevel",
         CareerLevelResponse.From,
         level => other => other.TrackId == level.TrackId);

@@ -425,6 +425,46 @@ namespace Competency.Platform.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Competency.CareerFramework.CompetencyMatrix", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("DirectionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("direction_id");
+
+                    b.Property<Guid>("OrgUnitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_unit_id");
+
+                    b.Property<Guid>("TrackId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("track_id");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DirectionId");
+
+                    b.HasIndex("TrackId");
+
+                    b.HasIndex("OrgUnitId", "TrackId")
+                        .IsUnique();
+
+                    b.ToTable("competency_matrices", (string)null);
+                });
+
             modelBuilder.Entity("Competency.CareerFramework.CompetencyScale", b =>
                 {
                     b.Property<Guid>("Id")
@@ -536,6 +576,176 @@ namespace Competency.Platform.Migrations
                     b.HasIndex("ChangedById");
 
                     b.ToTable("competency_versions", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.MatrixDecision", b =>
+                {
+                    b.Property<Guid>("VersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("version_id");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer")
+                        .HasColumnName("sequence");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("at");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("comment");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Step")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("step");
+
+                    b.Property<int?>("VariantNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("variant_number");
+
+                    b.HasKey("VersionId", "Sequence");
+
+                    b.HasIndex("ActorId");
+
+                    b.ToTable("matrix_version_decisions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_matrix_version_decisions_kind", "kind IN ('Submitted', 'Skipped', 'Approved', 'AutoApproved', 'Returned', 'AcceptedChanges', 'AcceptedAndRevising', 'RolledBack', 'Published')");
+
+                            t.HasCheckConstraint("ck_matrix_version_decisions_step", "step IN ('Superior', 'Hr')");
+                        });
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.MatrixVariant", b =>
+                {
+                    b.Property<Guid>("VersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("version_id");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer")
+                        .HasColumnName("number");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("content");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("kind");
+
+                    b.HasKey("VersionId", "Number");
+
+                    b.HasIndex("CreatedById");
+
+                    b.ToTable("matrix_version_variants", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_matrix_version_variants_kind", "kind IN ('Author', 'Approver')");
+                        });
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.MatrixVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("content");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("MatrixId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("matrix_id");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer")
+                        .HasColumnName("number");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<Guid>("ScaleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scale_id");
+
+                    b.Property<string>("Snapshot")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("snapshot");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Step")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("step");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("ScaleId");
+
+                    b.HasIndex("MatrixId", "Number")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "MatrixId" }, "ux_matrix_versions_in_work")
+                        .IsUnique()
+                        .HasFilter("status IN ('Draft', 'OnReview', 'Returned')");
+
+                    b.HasIndex(new[] { "MatrixId" }, "ux_matrix_versions_published")
+                        .IsUnique()
+                        .HasFilter("status = 'Published'");
+
+                    b.ToTable("matrix_versions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_matrix_versions_status", "status IN ('Draft', 'OnReview', 'Returned', 'Approved', 'Published', 'Archived')");
+
+                            t.HasCheckConstraint("ck_matrix_versions_step", "step IN ('Superior', 'Hr')");
+                        });
                 });
 
             modelBuilder.Entity("Competency.CareerFramework.OrgUnitHr", b =>
@@ -987,6 +1197,27 @@ namespace Competency.Platform.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("Competency.CareerFramework.CompetencyMatrix", b =>
+                {
+                    b.HasOne("Competency.CareerFramework.CareerDirection", null)
+                        .WithMany()
+                        .HasForeignKey("DirectionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
+                        .WithMany()
+                        .HasForeignKey("OrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.CareerFramework.CareerTrack", null)
+                        .WithMany()
+                        .HasForeignKey("TrackId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Competency.CareerFramework.CompetencyScale", b =>
                 {
                     b.HasOne("Competency.UserManagement.AppUser", null)
@@ -1012,6 +1243,58 @@ namespace Competency.Platform.Migrations
                         .HasForeignKey("CompetencyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.MatrixDecision", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Competency.CareerFramework.MatrixVersion", null)
+                        .WithMany()
+                        .HasForeignKey("VersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.MatrixVariant", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.CareerFramework.MatrixVersion", null)
+                        .WithMany()
+                        .HasForeignKey("VersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.MatrixVersion", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.CareerFramework.CompetencyMatrix", "Matrix")
+                        .WithMany()
+                        .HasForeignKey("MatrixId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.CareerFramework.CompetencyScale", null)
+                        .WithMany()
+                        .HasForeignKey("ScaleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Matrix");
                 });
 
             modelBuilder.Entity("Competency.CareerFramework.OrgUnitHr", b =>

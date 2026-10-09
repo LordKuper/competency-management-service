@@ -3,11 +3,12 @@ using Competency.Platform;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// Contributes the CareerFramework tables to the shared model: the <see cref="OrgUnitHr"/> assignments and the career catalogues,
+/// Contributes the CareerFramework tables to the shared model: the <see cref="OrgUnitHr"/> assignments, the career catalogues and the matrices,
 /// with snake_case names, statuses and types stored as their names, and foreign keys that never cascade.
 /// </summary>
 internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationContributor
@@ -25,6 +26,16 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
     private static readonly string StatusCheckSql = EnumCheckSql<CatalogStatus>("status");
     private static readonly string TypeCheckSql = EnumCheckSql<CompetencyType>("type");
     private static readonly JsonSerializerOptions PointsJson = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions DocumentJson = new(JsonSerializerDefaults.Web);
+
+    private static readonly ValueConverter<MatrixContent, string> ContentConverter = new(
+        content => content.ToJson(),
+        json => MatrixContent.FromJson(json));
+
+    private static readonly ValueComparer<MatrixContent> ContentComparer = new(
+        (left, right) => left!.SameAs(right!),
+        content => content.ToJson().GetHashCode(StringComparison.Ordinal),
+        content => MatrixContent.FromJson(content.ToJson()));
 
     public void Configure(ModelBuilder modelBuilder)
     {
@@ -94,6 +105,100 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
 
             entity.HasOne<CareerCompetency>().WithMany().HasForeignKey(e => e.CompetencyId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(UserEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CompetencyVersion.ChangedById)).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        ConfigureMatrices(modelBuilder);
+    }
+
+    /// <summary>
+    /// Maps matrices, their versions and the versions' history. Partial unique indexes back up the transition locks: at most one
+    /// published and one in-work version per matrix.
+    /// </summary>
+    private static void ConfigureMatrices(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<CompetencyMatrix>(entity =>
+        {
+            entity.ToTable("competency_matrices");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Version).HasColumnName("version");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
+            entity.Property(e => e.DirectionId).HasColumnName("direction_id");
+            entity.Property(e => e.TrackId).HasColumnName("track_id");
+            entity.HasIndex(e => new { e.OrgUnitId, e.TrackId }).IsUnique();
+
+            entity.HasOne(OrgUnitEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CompetencyMatrix.OrgUnitId)).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<CareerDirection>().WithMany().HasForeignKey(e => e.DirectionId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<CareerTrack>().WithMany().HasForeignKey(e => e.TrackId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<MatrixVersion>(entity =>
+        {
+            entity.ToTable("matrix_versions", table =>
+            {
+                table.HasCheckConstraint("ck_matrix_versions_status", EnumCheckSql<MatrixVersionStatus>("status"));
+                table.HasCheckConstraint("ck_matrix_versions_step", EnumCheckSql<ApprovalStep>("step"));
+            });
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Version).HasColumnName("version");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.MatrixId).HasColumnName("matrix_id");
+            entity.Property(e => e.Number).HasColumnName("number");
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(EnumMaxLength);
+            entity.Property(e => e.Step).HasColumnName("step").HasConversion<string>().HasMaxLength(EnumMaxLength);
+            entity.Property(e => e.ScaleId).HasColumnName("scale_id");
+            entity.Property(e => e.AuthorId).HasColumnName("author_id");
+            entity.Property(e => e.Content).HasColumnName("content").HasColumnType("jsonb").HasConversion(ContentConverter, ContentComparer);
+            entity.Property(e => e.Snapshot).HasColumnName("snapshot").HasColumnType("jsonb").HasConversion(
+                snapshot => JsonSerializer.Serialize(snapshot, DocumentJson),
+                json => JsonSerializer.Deserialize<MatrixEntries>(json, DocumentJson));
+            entity.Property(e => e.PublishedAt).HasColumnName("published_at");
+            entity.HasIndex(e => new { e.MatrixId, e.Number }).IsUnique();
+            entity.HasIndex(e => e.MatrixId, "ux_matrix_versions_published").IsUnique().HasFilter("status = 'Published'");
+            entity.HasIndex(e => e.MatrixId, "ux_matrix_versions_in_work").IsUnique().HasFilter("status IN ('Draft', 'OnReview', 'Returned')");
+            entity.HasIndex(e => e.ScaleId);
+
+            entity.HasOne(e => e.Matrix).WithMany().HasForeignKey(e => e.MatrixId).OnDelete(DeleteBehavior.Restrict);
+            entity.Navigation(e => e.Matrix).AutoInclude();
+            entity.HasOne<CompetencyScale>().WithMany().HasForeignKey(e => e.ScaleId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(UserEntityName, navigationName: null).WithMany().HasForeignKey(nameof(MatrixVersion.AuthorId)).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<MatrixVariant>(entity =>
+        {
+            entity.ToTable("matrix_version_variants", table => table.HasCheckConstraint("ck_matrix_version_variants_kind", EnumCheckSql<MatrixVariantKind>("kind")));
+            entity.HasKey(e => new { e.VersionId, e.Number });
+            entity.Property(e => e.VersionId).HasColumnName("version_id");
+            entity.Property(e => e.Number).HasColumnName("number");
+            entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(EnumMaxLength);
+            entity.Property(e => e.Content).HasColumnName("content").HasColumnType("jsonb").HasConversion(ContentConverter, ContentComparer);
+            entity.Property(e => e.CreatedById).HasColumnName("created_by_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+
+            entity.HasOne<MatrixVersion>().WithMany().HasForeignKey(e => e.VersionId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(UserEntityName, navigationName: null).WithMany().HasForeignKey(nameof(MatrixVariant.CreatedById)).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<MatrixDecision>(entity =>
+        {
+            entity.ToTable("matrix_version_decisions", table =>
+            {
+                table.HasCheckConstraint("ck_matrix_version_decisions_kind", EnumCheckSql<MatrixDecisionKind>("kind"));
+                table.HasCheckConstraint("ck_matrix_version_decisions_step", EnumCheckSql<ApprovalStep>("step"));
+            });
+            entity.HasKey(e => new { e.VersionId, e.Sequence });
+            entity.Property(e => e.VersionId).HasColumnName("version_id");
+            entity.Property(e => e.Sequence).HasColumnName("sequence");
+            entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(EnumMaxLength);
+            entity.Property(e => e.Step).HasColumnName("step").HasConversion<string>().HasMaxLength(EnumMaxLength);
+            entity.Property(e => e.ActorId).HasColumnName("actor_id");
+            entity.Property(e => e.At).HasColumnName("at");
+            entity.Property(e => e.Comment).HasColumnName("comment").HasMaxLength(MatrixDecision.CommentMaxLength);
+            entity.Property(e => e.VariantNumber).HasColumnName("variant_number");
+            entity.HasIndex(e => e.ActorId);
+
+            entity.HasOne<MatrixVersion>().WithMany().HasForeignKey(e => e.VersionId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(UserEntityName, navigationName: null).WithMany().HasForeignKey(nameof(MatrixDecision.ActorId)).OnDelete(DeleteBehavior.Restrict);
         });
     }
 

@@ -19,6 +19,9 @@ public static class CareerFrameworkModule
         services.AddSingleton<IEntityConfigurationContributor, CareerFrameworkEntityConfiguration>();
         services.AddScoped<ProcessRoles>();
         services.AddScoped<CatalogStore>();
+        services.AddScoped<MatrixRoute>();
+        services.AddScoped<MatrixCatalog>();
+        services.AddScoped<MatrixWorkflow>();
         return services;
     }
 
@@ -38,6 +41,9 @@ public static class CareerFrameworkModule
         CompetencyEndpoints.Map(endpoints);
         CompetencyScaleEndpoints.Map(endpoints);
         CatalogDraftEndpoints.Map(endpoints);
+        MatrixEndpoints.Map(endpoints);
+        MatrixVersionEndpoints.Map(endpoints);
+        MatrixApprovalEndpoints.Map(endpoints);
         return endpoints;
     }
 }

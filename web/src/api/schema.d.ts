@@ -1172,10 +1172,269 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/career/matrices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListMatrices"];
+        put?: never;
+        post: operations["CreateMatrix"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMatrix"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrices/{id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListMatrixVersions"];
+        put?: never;
+        post: operations["CreateMatrixVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMatrixVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["UpdateMatrixVersionContent"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["SubmitMatrixVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ApproveMatrixVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ReturnMatrixVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/accept-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AcceptMatrixVersionChanges"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/accept-and-revise": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AcceptAndReviseMatrixVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/rollback-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RollbackMatrixVersionChanges"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMatrixVersionHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/variants/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMatrixVersionVariant"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/variants/{number}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMatrixVersionVariantDiff"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListMatrixApprovals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ApprovalResponse: {
+            /** Format: uuid */
+            versionId: string;
+            /** Format: uuid */
+            matrixId: string;
+            /** Format: int32 */
+            number: number;
+            /** Format: uuid */
+            trackId: string;
+            trackName: string;
+            /** Format: uuid */
+            orgUnitId: string;
+            orgUnitName: string;
+            step: components["schemas"]["ApprovalStep"];
+            /** Format: date-time */
+            submittedAt: null | string;
+        };
+        /** @enum {unknown} */
+        ApprovalStep: "Superior" | "Hr" | null;
         AuditEventResponse: {
             /** Format: uuid */
             id: string;
@@ -1251,6 +1510,11 @@ export interface components {
             salaryTo: null | number;
             /** Format: int32 */
             version: number;
+        };
+        CareerPersonResponse: {
+            /** Format: uuid */
+            userId: string;
+            name: string;
         };
         CareerTrackResponse: {
             /** Format: uuid */
@@ -1459,6 +1723,243 @@ export interface components {
             email: string;
             password: string;
         };
+        /** @enum {unknown} */
+        MatrixAction: "Edit" | "Submit" | "Approve" | "Return" | "AcceptChanges" | "AcceptAndRevise" | "RollbackChanges";
+        MatrixBlock: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            isMandatory: boolean;
+        };
+        MatrixBlockWeight: {
+            /** Format: uuid */
+            levelId: string;
+            /** Format: uuid */
+            blockId: string;
+            /** Format: double */
+            percent: number;
+            /** Format: double */
+            minPercent: null | number;
+        };
+        MatrixChange: {
+            kind: components["schemas"]["MatrixChangeKind"];
+            type: components["schemas"]["MatrixChangeType"];
+            /** Format: uuid */
+            levelId: null | string;
+            /** Format: uuid */
+            blockId: null | string;
+            /** Format: uuid */
+            competencyId: null | string;
+        };
+        /** @enum {unknown} */
+        MatrixChangeKind: "Level" | "Block" | "Competency" | "BlockWeight" | "Requirement";
+        /** @enum {unknown} */
+        MatrixChangeType: "Added" | "Removed" | "Changed";
+        MatrixCompetency: {
+            /** Format: uuid */
+            competencyId: string;
+            /** Format: uuid */
+            blockId: string;
+        };
+        MatrixCompetencyEntry: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description: null | string;
+            /** Format: uuid */
+            categoryId: string;
+            categoryName: string;
+            /** Format: uuid */
+            directionId: null | string;
+            type: components["schemas"]["CompetencyType"];
+            /** Format: int32 */
+            versionNumber: number;
+            status: components["schemas"]["CatalogStatus"];
+        };
+        MatrixContent: {
+            levels: components["schemas"]["MatrixLevel"][];
+            blocks: components["schemas"]["MatrixBlock"][];
+            competencies: components["schemas"]["MatrixCompetency"][];
+            blockWeights: components["schemas"]["MatrixBlockWeight"][];
+            requirements: components["schemas"]["MatrixRequirement"][];
+        };
+        /** @enum {unknown} */
+        MatrixDecisionKind: "Submitted" | "Skipped" | "Approved" | "AutoApproved" | "Returned" | "AcceptedChanges" | "AcceptedAndRevising" | "RolledBack" | "Published";
+        MatrixDecisionResponse: {
+            /** Format: int32 */
+            sequence: number;
+            kind: components["schemas"]["MatrixDecisionKind"];
+            step: null | components["schemas"]["ApprovalStep"];
+            /** Format: uuid */
+            actorId: null | string;
+            actorName: null | string;
+            /** Format: date-time */
+            at: string;
+            comment: null | string;
+            /** Format: int32 */
+            variantNumber: null | number;
+        };
+        MatrixDiffResponse: {
+            /** Format: int32 */
+            number: number;
+            /** Format: int32 */
+            previousNumber: null | number;
+            before: components["schemas"]["MatrixContent"];
+            after: components["schemas"]["MatrixContent"];
+            changes: components["schemas"]["MatrixChange"][];
+        };
+        MatrixEntries: {
+            direction: components["schemas"]["MatrixNamedEntry"];
+            track: components["schemas"]["MatrixNamedEntry"];
+            scale: components["schemas"]["MatrixScaleEntry"];
+            levels: components["schemas"]["MatrixLevelEntry"][];
+            competencies: components["schemas"]["MatrixCompetencyEntry"][];
+        };
+        MatrixHistoryResponse: {
+            variants: components["schemas"]["MatrixVariantSummaryResponse"][];
+            decisions: components["schemas"]["MatrixDecisionResponse"][];
+        };
+        MatrixLevel: {
+            /** Format: uuid */
+            levelId: string;
+            /** Format: double */
+            minOverallPercent: null | number;
+        };
+        MatrixLevelEntry: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            code: string;
+            isManagerial: boolean;
+            /** Format: date */
+            validFrom: null | string;
+            /** Format: date */
+            validTo: null | string;
+            roleDescription: null | string;
+            status: components["schemas"]["CatalogStatus"];
+        };
+        MatrixNamedEntry: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            status: components["schemas"]["CatalogStatus"];
+        };
+        MatrixRequirement: {
+            /** Format: uuid */
+            levelId: string;
+            /** Format: uuid */
+            competencyId: string;
+            /** Format: int32 */
+            requiredScore: null | number;
+            type: components["schemas"]["CompetencyType"];
+            /** Format: double */
+            weight: number;
+            isMandatory: boolean;
+            expectedBehavior: null | string;
+            evidenceExamples: null | string;
+            /** Format: date */
+            validFrom: null | string;
+        };
+        MatrixResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            orgUnitId: string;
+            orgUnitName: string;
+            /** Format: uuid */
+            directionId: string;
+            directionName: string;
+            /** Format: uuid */
+            trackId: string;
+            trackName: string;
+            publishedVersion: null | components["schemas"]["MatrixVersionRef"];
+            inWorkVersion: null | components["schemas"]["MatrixVersionRef"];
+            /** Format: date-time */
+            createdAt: string;
+        };
+        MatrixReturnRequest: {
+            comment: null | string;
+        };
+        MatrixScaleEntry: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            points: components["schemas"]["ScalePoint"][];
+            status: components["schemas"]["CatalogStatus"];
+        };
+        /** @enum {unknown} */
+        MatrixVariantKind: "Author" | "Approver";
+        MatrixVariantResponse: {
+            /** Format: int32 */
+            number: number;
+            kind: components["schemas"]["MatrixVariantKind"];
+            /** Format: uuid */
+            createdById: string;
+            createdByName: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            content: components["schemas"]["MatrixContent"];
+        };
+        MatrixVariantSummaryResponse: {
+            /** Format: int32 */
+            number: number;
+            kind: components["schemas"]["MatrixVariantKind"];
+            /** Format: uuid */
+            createdById: string;
+            createdByName: null | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        MatrixVersionRef: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            number: number;
+            status: components["schemas"]["MatrixVersionStatus"];
+        };
+        MatrixVersionResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            matrixId: string;
+            /** Format: int32 */
+            number: number;
+            status: components["schemas"]["MatrixVersionStatus"];
+            step: null | components["schemas"]["ApprovalStep"];
+            /** Format: uuid */
+            scaleId: string;
+            /** Format: uuid */
+            authorId: string;
+            authorName: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            publishedAt: null | string;
+            content: components["schemas"]["MatrixContent"];
+            entries: components["schemas"]["MatrixEntries"];
+            superiorApprover: null | components["schemas"]["CareerPersonResponse"];
+            hr: null | components["schemas"]["CareerPersonResponse"];
+            returnedWithChanges: boolean;
+            actions: components["schemas"]["MatrixAction"][];
+            /** Format: int32 */
+            version: number;
+        };
+        /** @enum {unknown} */
+        MatrixVersionStatus: "Draft" | "OnReview" | "Returned" | "Approved" | "Published" | "Archived";
+        MatrixVersionSummaryResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            number: number;
+            status: components["schemas"]["MatrixVersionStatus"];
+            /** Format: uuid */
+            authorId: string;
+            authorName: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            publishedAt: null | string;
+        };
         MoveOrgUnitRequest: {
             /** Format: uuid */
             parentId: null | string;
@@ -1510,6 +2011,16 @@ export interface components {
             ownerOrgUnitId: null | string;
             points: components["schemas"]["ScalePoint"][];
             name: string;
+        };
+        NewMatrixRequest: {
+            /** Format: uuid */
+            orgUnitId: string;
+            /** Format: uuid */
+            directionId: string;
+            /** Format: uuid */
+            trackId: string;
+            /** Format: uuid */
+            scaleId: string;
         };
         OrgUnitHrPersonResponse: {
             /** Format: uuid */
@@ -1623,6 +2134,15 @@ export interface components {
         };
         PageResponseOfEmployeeResponse: {
             items: components["schemas"]["EmployeeResponse"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+        };
+        PageResponseOfMatrixResponse: {
+            items: components["schemas"]["MatrixResponse"][];
             /** Format: int32 */
             total: number;
             /** Format: int32 */
@@ -8013,6 +8533,1079 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CatalogDraftResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListMatrices: {
+        parameters: {
+            query?: {
+                orgUnitId?: string;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageResponseOfMatrixResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    CreateMatrix: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewMatrixRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetMatrix: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListMatrixVersions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixVersionSummaryResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    CreateMatrixVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixVersionResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetMatrixVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixVersionResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateMatrixVersionContent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MatrixContent"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixVersionResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    SubmitMatrixVersion: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixVersionResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ApproveMatrixVersion: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixVersionResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ReturnMatrixVersion: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MatrixReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixVersionResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    AcceptMatrixVersionChanges: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixVersionResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    AcceptAndReviseMatrixVersion: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixVersionResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    RollbackMatrixVersionChanges: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixVersionResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetMatrixVersionHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixHistoryResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetMatrixVersionVariant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixVariantResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetMatrixVersionVariantDiff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixDiffResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListMatrixApprovals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalResponse"][];
                 };
             };
             /** @description Unauthorized */

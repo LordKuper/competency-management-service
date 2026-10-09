@@ -4,17 +4,20 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of competency scales. Scale names are unique across the catalogue.
+/// The API of competency scales. Scale names are unique across the catalogue. A scale a published matrix version has used never changes,
+/// so the version keeps meaning what it meant; the catalogue lock, which publication also takes, keeps the check and a publication apart.
 /// </summary>
 internal static class CompetencyScaleEndpoints
 {
     private const string Route = "/api/v1/career/scales";
+    private const string PublishedMessage = "Используется в опубликованной матрице — изменить нельзя";
 
-    private static readonly CatalogKind<CompetencyScale, CompetencyScaleResponse> Kind = new("CompetencyScale", CompetencyScaleResponse.From);
+    internal static readonly CatalogKind<CompetencyScale, CompetencyScaleResponse> Kind = new("CompetencyScale", CompetencyScaleResponse.From);
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -102,7 +105,14 @@ internal static class CompetencyScaleEndpoints
             return Rejection.Forbidden();
         }
 
-        // TODO(sprint-003-positions-career-competency): reject with 409 a change of a scale that a published matrix version uses, once matrix versions exist (Task 7)
+        if (await context.Set<MatrixVersion>().AnyAsync(
+                version => version.ScaleId == scale.Id
+                    && (version.Status == MatrixVersionStatus.Published || version.Status == MatrixVersionStatus.Archived),
+                cancellationToken))
+        {
+            return Rejection.Conflict(PublishedMessage);
+        }
+
         ifMatch.ApplyTo(context, scale);
         scale.Name = request.TrimmedName();
         scale.Points = request.StoredPoints();
