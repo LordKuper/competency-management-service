@@ -3,3 +3,5 @@
 {"op":"close","id":"wait workflow choice","kind":"user-wait","parent":"scope#1","start":"2026-10-09T07:00:44.132Z","end":"2026-10-09T07:00:58.291Z","outcome":"done","attrs":{"gate":"workflow choice"}}
 {"op":"open","id":"wait scope clarification","kind":"user-wait","parent":"scope#1","start":"2026-10-09T07:03:07.293Z","attrs":{"gate":"scope clarification"}}
 {"op":"close","id":"wait scope clarification","kind":"user-wait","parent":"scope#1","start":"2026-10-09T07:03:07.293Z","end":"2026-10-09T07:24:49.035Z","outcome":"done","attrs":{"gate":"scope clarification"}}
+{"op":"open","id":"wait scope gate","kind":"user-wait","parent":"scope#1","start":"2026-10-09T07:26:13.213Z","attrs":{"gate":"scope"}}
+{"op":"close","id":"wait scope gate","kind":"user-wait","parent":"scope#1","start":"2026-10-09T07:26:13.213Z","end":"2026-10-09T07:55:58.921Z","outcome":"done","attrs":{"gate":"scope"}}
