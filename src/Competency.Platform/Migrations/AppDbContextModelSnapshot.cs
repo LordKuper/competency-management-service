@@ -140,11 +140,9 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("org_unit_id");
 
-                    b.Property<string>("Position")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("position");
+                    b.Property<Guid>("PositionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("position_id");
 
                     b.Property<NpgsqlTsVector>("SearchVector")
                         .IsRequired()
@@ -152,7 +150,7 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("tsvector")
                         .HasColumnName("search_vector")
                         .HasAnnotation("Npgsql:TsVectorConfig", "russian")
-                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "LastName", "FirstName", "MiddleName", "Position" });
+                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "LastName", "FirstName", "MiddleName" });
 
                     b.Property<int>("Version")
                         .IsConcurrencyToken()
@@ -162,6 +160,8 @@ namespace Competency.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrgUnitId");
+
+                    b.HasIndex("PositionId");
 
                     b.HasIndex("SearchVector");
 
@@ -253,6 +253,66 @@ namespace Competency.Platform.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
 
                     b.ToTable("org_units", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.OrgStructure.OrgUnitPosition", b =>
+                {
+                    b.Property<Guid>("OrgUnitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_unit_id");
+
+                    b.Property<Guid>("PositionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("position_id");
+
+                    b.HasKey("OrgUnitId", "PositionId");
+
+                    b.HasIndex("PositionId");
+
+                    b.ToTable("org_unit_positions", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.OrgStructure.Position", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<NpgsqlTsVector>("SearchVector")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector")
+                        .HasColumnName("search_vector")
+                        .HasAnnotation("Npgsql:TsVectorConfig", "russian")
+                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "Name" });
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SearchVector");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
+
+                    b.ToTable("positions", (string)null);
                 });
 
             modelBuilder.Entity("Competency.UserManagement.AppUser", b =>
@@ -376,7 +436,15 @@ namespace Competency.Platform.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Competency.OrgStructure.Position", "Position")
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("OrgUnit");
+
+                    b.Navigation("Position");
                 });
 
             modelBuilder.Entity("Competency.OrgStructure.OrgUnit", b =>
@@ -390,6 +458,25 @@ namespace Competency.Platform.Migrations
                         .WithMany()
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Competency.OrgStructure.OrgUnitPosition", b =>
+                {
+                    b.HasOne("Competency.OrgStructure.OrgUnit", "OrgUnit")
+                        .WithMany()
+                        .HasForeignKey("OrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.OrgStructure.Position", "Position")
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("OrgUnit");
+
+                    b.Navigation("Position");
                 });
 
             modelBuilder.Entity("Competency.UserManagement.AppUser", b =>

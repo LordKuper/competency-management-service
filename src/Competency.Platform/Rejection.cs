@@ -29,4 +29,18 @@ public static class Rejection
     /// <returns>A 400 response naming the field.</returns>
     public static ValidationProblem Invalid(string field, string message) =>
         TypedResults.ValidationProblem(new Dictionary<string, string[]> { [field] = [message] });
+
+    /// <summary>
+    /// Rejects a request whose field value must be unique and is already taken, such as a duplicate name.
+    /// </summary>
+    /// <param name="field">The request field.</param>
+    /// <param name="message">The reason, addressed to the user.</param>
+    /// <returns>A 409 response naming the field, so a form shows the reason under it.</returns>
+    public static ProblemHttpResult Taken(string field, string message) =>
+        TypedResults.Problem(new HttpValidationProblemDetails(new Dictionary<string, string[]> { [field] = [message] })
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = ConflictTitle,
+            Detail = message,
+        });
 }

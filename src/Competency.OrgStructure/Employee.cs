@@ -12,7 +12,6 @@ namespace Competency.OrgStructure;
 internal sealed class Employee : EntityBase
 {
     public const int NameMaxLength = 100;
-    public const int PositionMaxLength = 200;
 
     [Audited]
     public required string LastName { get; set; }
@@ -32,10 +31,13 @@ internal sealed class Employee : EntityBase
     public string FullName { get; private set; } = null!;
 
     /// <summary>
-    /// The position as free text.
+    /// The position from the catalogue. It must be active and allowed in the unit when it is given or the employee is transferred,
+    /// and stays as it is when the position is later deactivated or taken off the unit's list.
     /// </summary>
     [Audited]
-    public required string Position { get; set; }
+    public Guid PositionId { get; set; }
+
+    public Position Position { get; set; } = null!;
 
     /// <summary>
     /// Whether the employee works in the organization; visible to global administrators only.
@@ -49,7 +51,7 @@ internal sealed class Employee : EntityBase
     public OrgUnit OrgUnit { get; set; } = null!;
 
     /// <summary>
-    /// The Russian full-text index of the name parts and <see cref="Position"/>, maintained by the database.
+    /// The Russian full-text index of the name parts, maintained by the database; the position is searched through <see cref="OrgStructure.Position.SearchVector"/>.
     /// </summary>
     public NpgsqlTsVector SearchVector { get; private set; } = null!;
 }

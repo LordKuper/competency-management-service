@@ -14,11 +14,14 @@ namespace Competency.OrgStructure;
 /// read the full projection and change employees, under the tree lock and with <c>If-Match</c>.
 /// Dismissal and deletion cascade to the units the employee heads and to the bound account in the same transaction,
 /// and administrators preview exactly those changes first. A transfer likewise takes the employee off the headship of the unit they leave.
+/// A new position, and any position after a transfer, must be active and allowed in the unit or a unit above it; a save that changes
+/// neither leaves an earlier position as it is, even if it has since been deactivated or taken off the list.
 /// </summary>
 internal static class EmployeeEndpoints
 {
     private const string Route = "/api/v1/employees";
     private const string Tag = "Employees";
+    private const string PositionField = "positionId";
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -76,7 +79,7 @@ internal static class EmployeeEndpoints
 
         if (TextSearch.Normalize(query.Q) is { } text)
         {
-            employees = employees.Matching(text);
+            employees = employees.Matching(context.Set<Position>(), text);
         }
 
         var page = await employees
@@ -142,12 +145,17 @@ internal static class EmployeeEndpoints
             return Rejection.Invalid("orgUnitId", "Подразделение неактивно.");
         }
 
+        if (await context.PositionProblemAsync(input.PositionId, unit.Id, cancellationToken) is { } positionProblem)
+        {
+            return Rejection.Invalid(PositionField, positionProblem);
+        }
+
         var employee = new Employee
         {
             LastName = input.LastName,
             FirstName = input.FirstName,
             MiddleName = input.MiddleName,
-            Position = input.Position,
+            PositionId = input.PositionId,
             OrgUnit = unit,
         };
         context.Add(employee);
@@ -189,6 +197,12 @@ internal static class EmployeeEndpoints
             return Rejection.Invalid("orgUnitId", "Подразделение неактивно.");
         }
 
+        if ((input.PositionId != employee.PositionId || unit.Id != employee.OrgUnitId)
+            && await context.PositionProblemAsync(input.PositionId, unit.Id, cancellationToken) is { } positionProblem)
+        {
+            return Rejection.Invalid(PositionField, positionProblem);
+        }
+
         ifMatch.ApplyTo(context, employee);
         if (unit.Id != employee.OrgUnitId)
         {
@@ -198,7 +212,7 @@ internal static class EmployeeEndpoints
         employee.LastName = input.LastName;
         employee.FirstName = input.FirstName;
         employee.MiddleName = input.MiddleName;
-        employee.Position = input.Position;
+        employee.PositionId = input.PositionId;
         employee.OrgUnit = unit;
 
         return TypedResults.Ok(await SaveAsync(employee, context, transaction, response, cancellationToken));
@@ -340,12 +354,20 @@ internal static class EmployeeEndpoints
         }
     }
 
-    private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, string text)
+    /// <summary>
+    /// Narrows the employees to those whose full name contains the text, or whose name parts or position match it as Russian full text.
+    /// The position is matched through the catalogue's own index, because a generated column cannot read another table.
+    /// </summary>
+    private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, IQueryable<Position> positions, string text)
     {
         var pattern = ListRequest.ContainsPattern(text);
+        var matchingPositionIds = positions
+            .Where(position => position.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)))
+            .Select(position => position.Id);
         return employees.Where(employee =>
             EF.Functions.ILike(employee.FullName, pattern, ListRequest.LikeEscape)
-            || employee.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)));
+            || employee.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text))
+            || matchingPositionIds.Contains(employee.PositionId));
     }
 
     /// <summary>

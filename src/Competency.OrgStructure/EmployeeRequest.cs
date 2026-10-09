@@ -14,7 +14,10 @@ internal sealed record EmployeeRequest
 
     public string? MiddleName { get; init; }
 
-    public required string Position { get; init; }
+    /// <summary>
+    /// The position from the catalogue; checked against the unit when it or the unit changes.
+    /// </summary>
+    public required Guid PositionId { get; init; }
 
     public required Guid OrgUnitId { get; init; }
 
@@ -32,7 +35,6 @@ internal sealed record EmployeeRequest
             CheckText(errors, "middleName", "Отчество", MiddleName, Employee.NameMaxLength);
         }
 
-        CheckText(errors, "position", "Должность", Position, Employee.PositionMaxLength);
         return errors;
     }
 
@@ -45,7 +47,6 @@ internal sealed record EmployeeRequest
         LastName = LastName.Trim(),
         FirstName = FirstName.Trim(),
         MiddleName = string.IsNullOrWhiteSpace(MiddleName) ? null : MiddleName.Trim(),
-        Position = Position.Trim(),
     };
 
     private static void CheckText(Dictionary<string, string[]> errors, string field, string label, string? value, int maxLength)

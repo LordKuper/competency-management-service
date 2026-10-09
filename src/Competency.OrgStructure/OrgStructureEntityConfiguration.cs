@@ -5,9 +5,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Competency.OrgStructure;
 
 /// <summary>
-/// Contributes the <see cref="OrgUnit"/> and <see cref="Employee"/> tables to the shared model: snake_case names,
+/// Contributes the <see cref="OrgUnit"/>, <see cref="Employee"/>, <see cref="Position"/> and <see cref="OrgUnitPosition"/> tables to the shared model: snake_case names,
 /// foreign keys that never cascade, and the Russian full-text and trigram indexes that serve search.
 /// It also maps the keyless <see cref="EmployeeAccount"/> query over the accounts table, which has no table of its own.
+/// The unique index on <c>lower(name)</c> of positions is created by the migration's own SQL, because the model cannot express an index on an expression.
 /// </summary>
 internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationContributor
 {
@@ -45,16 +46,40 @@ internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationCont
             entity.Property(e => e.FirstName).HasColumnName("first_name").HasMaxLength(Employee.NameMaxLength);
             entity.Property(e => e.MiddleName).HasColumnName("middle_name").HasMaxLength(Employee.NameMaxLength);
             entity.Property(e => e.FullName).HasColumnName("full_name").HasComputedColumnSql(FullNameSql, stored: true);
-            entity.Property(e => e.Position).HasColumnName("position").HasMaxLength(Employee.PositionMaxLength);
+            entity.Property(e => e.PositionId).HasColumnName("position_id");
             entity.Property(e => e.IsActive).HasColumnName("is_active");
             entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
 
             entity.HasOne(e => e.OrgUnit).WithMany().HasForeignKey(e => e.OrgUnitId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Position).WithMany().HasForeignKey(e => e.PositionId).OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasGeneratedTsVectorColumn(e => e.SearchVector, TextSearch.FullTextConfig, e => new { e.LastName, e.FirstName, e.MiddleName, e.Position });
+            entity.HasGeneratedTsVectorColumn(e => e.SearchVector, TextSearch.FullTextConfig, e => new { e.LastName, e.FirstName, e.MiddleName });
             entity.Property(e => e.SearchVector).HasColumnName("search_vector");
             entity.HasIndex(e => e.SearchVector).HasMethod("GIN");
             entity.HasIndex(e => e.FullName, "IX_employees_full_name_trgm").HasMethod("gin").HasOperators(TextSearch.TrigramOperators);
+        });
+
+        modelBuilder.Entity<Position>(entity =>
+        {
+            ConfigureBase(entity);
+            entity.ToTable("positions");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(Position.NameMaxLength);
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
+
+            entity.HasGeneratedTsVectorColumn(e => e.SearchVector, TextSearch.FullTextConfig, e => e.Name);
+            entity.Property(e => e.SearchVector).HasColumnName("search_vector");
+            entity.HasIndex(e => e.SearchVector).HasMethod("GIN");
+        });
+
+        modelBuilder.Entity<OrgUnitPosition>(entity =>
+        {
+            entity.ToTable("org_unit_positions");
+            entity.HasKey(e => new { e.OrgUnitId, e.PositionId });
+            entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
+            entity.Property(e => e.PositionId).HasColumnName("position_id");
+
+            entity.HasOne(e => e.OrgUnit).WithMany().HasForeignKey(e => e.OrgUnitId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Position).WithMany().HasForeignKey(e => e.PositionId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<EmployeeAccount>(entity =>
