@@ -29,3 +29,13 @@
 {"op":"close","id":"Task 2","kind":"dispatch","parent":"impl#1","start":"2026-10-09T08:57:36.070Z","end":"2026-10-09T09:16:11.322Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
 {"op":"open","id":"Task 2","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:16:26.669Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
 {"op":"close","id":"Task 2","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:16:26.669Z","end":"2026-10-09T09:18:15.151Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 3","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:18:29.192Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 10","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:18:29.259Z","attrs":{"agent":"asd-tester","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 10","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:18:29.259Z","end":"2026-10-09T09:19:32.377Z","outcome":"done","attrs":{"agent":"asd-tester","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 3","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:18:29.192Z","end":"2026-10-09T09:23:36.581Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 4","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:23:44.573Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 4","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:23:44.573Z","end":"2026-10-09T09:33:57.597Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 5","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:33:58.278Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 6","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:33:58.354Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 6","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:33:58.354Z","end":"2026-10-09T09:36:32.630Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 5","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:33:58.278Z","end":"2026-10-09T09:59:18.098Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
