@@ -21,3 +21,11 @@
 {"op":"close","id":"asd-architect plan#1","kind":"dispatch","parent":"plan#1","start":"2026-10-09T08:48:44.193Z","end":"2026-10-09T08:56:05.348Z","outcome":"interrupted","attrs":{"agent":"asd-architect","tier":"default","model":"opus"}}
 {"op":"open","id":"asd-architect plan#2","kind":"dispatch","parent":"plan#1","start":"2026-10-09T08:56:19.184Z","attrs":{"agent":"asd-architect","tier":"default","model":"opus"}}
 {"op":"close","id":"asd-architect plan#2","kind":"dispatch","parent":"plan#1","start":"2026-10-09T08:56:19.184Z","end":"2026-10-09T08:57:00.069Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"default","model":"opus"}}
+{"op":"close","id":"plan#1","kind":"phase","parent":null,"start":"2026-10-09T08:34:08.228Z","end":"2026-10-09T08:57:07.899Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#1","kind":"phase","parent":null,"start":"2026-10-09T08:57:07.899Z","attrs":{}}
+{"op":"open","id":"Task 1","kind":"dispatch","parent":"impl#1","start":"2026-10-09T08:57:36.008Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"Task 2","kind":"dispatch","parent":"impl#1","start":"2026-10-09T08:57:36.070Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 1","kind":"dispatch","parent":"impl#1","start":"2026-10-09T08:57:36.008Z","end":"2026-10-09T08:58:28.181Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 2","kind":"dispatch","parent":"impl#1","start":"2026-10-09T08:57:36.070Z","end":"2026-10-09T09:16:11.322Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 2","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:16:26.669Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 2","kind":"dispatch","parent":"impl#1","start":"2026-10-09T09:16:26.669Z","end":"2026-10-09T09:18:15.151Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
