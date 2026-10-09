@@ -19,6 +19,7 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 |---|---|---|---|
 | F-1 | audit | Архитектор записал файл своей памяти, хотя payload аудита требовал только чтение | — |
 | F-2 | audit | Ротация журнала решений перед делегированием audit выполнена после запуска скилла аудита, а не до | — |
+| F-3 | impl | Gate impl требует чистый typecheck, который ломают тесты при смене контракта | — |
 
 ## F-1 — Архитектор записал файл своей памяти, хотя payload аудита требовал только чтение
 
@@ -34,4 +35,12 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **Surface**: skill — `asd-sprint` Workflow «Before a phase-skill delegation below, rotate the decisions log»
 - **What happened**: Оркестратор вызвал `asd-phase-audit` до ротации `decisions-log.md`; ротацию сделал первым действием внутри фазы, до любой записи аудита.
 - **Impact**: Порядок нарушен, содержимое не пострадало; повторной работы не было.
+- **Refs**: —
+
+## F-3 — Gate impl требует чистый typecheck, который ломают тесты при смене контракта
+
+- **Phase**: impl
+- **Surface**: rule — `asd-phase-impl.md` step 9 (build + lint) vs запрет dev править тесты; `custom-coding-rules.md` «Verification depth in impl»
+- **What happened**: Task 2 сменила вход публичного контракта; `lint`/`build` web запускают typecheck и по тестам, две фикстуры перестали компилироваться, а dev не вправе их править.
+- **Impact**: Пересмотр plan посреди impl (Test-only Task 10) и лишний диспатч tester'а.
 - **Refs**: —

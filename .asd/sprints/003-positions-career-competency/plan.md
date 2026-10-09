@@ -46,8 +46,8 @@ Standing DoD applies (`sprint-lifecycle.md` "Plan file format") — not restated
 
 ### Task 1: Правила проекта из ретро
 Material risk: none
-- [ ] AC-20: добавить в `.asd/project/custom-common-rules.md` раздел с правилом строки `002-mail-invite-password-reset#P-1` (`.asd/project/retro-backlog.md`): для спринта с видимыми пользователю текстами (письма, подсказки, заголовки, метки) plan перечисляет эти тексты и элементы бренда списком на утверждение пользователем до impl, а не после первой smoke-проверки
-- [ ] AC-21: добавить в `.asd/project/custom-coding-rules.md` раздел с правилом строки `002-mail-invite-password-reset#P-2`: dev и tester перед коммитом проверяют свой дифф поиском комментариев в теле функций и ссылок на AC и спринт в комментариях (`.asd/rules/code-style.md` §7, §8) и исправляют их до ревью
+- [x] AC-20: добавить в `.asd/project/custom-common-rules.md` раздел с правилом строки `002-mail-invite-password-reset#P-1` (`.asd/project/retro-backlog.md`): для спринта с видимыми пользователю текстами (письма, подсказки, заголовки, метки) plan перечисляет эти тексты и элементы бренда списком на утверждение пользователем до impl, а не после первой smoke-проверки
+- [x] AC-21: добавить в `.asd/project/custom-coding-rules.md` раздел с правилом строки `002-mail-invite-password-reset#P-2`: dev и tester перед коммитом проверяют свой дифф поиском комментариев в теле функций и ссылок на AC и спринт в комментариях (`.asd/rules/code-style.md` §7, §8) и исправляют их до ревью
 
 ### Task 2: Справочник должностей и выбор должности сотрудника
 Material risk: change: migration — перенос текстовых должностей в справочник и пересоздание `search_vector` без потери данных (R-1, R-2)
@@ -110,6 +110,11 @@ Material risk: none
 Material risk: none
 - [ ] AC-19: вкладка «Матрицы» — список с фильтром по подразделению, создание матрицы руководителем; страница матрицы — шапка, выбор версии, статус (`tag-*`), шаги маршрута (`Steps`), редактор «компетенции × уровни» на токенах `matrix-*` (липкий первый столбец, DESIGN.md «Competency matrix»), блоки и коэффициенты, пороги, форма требования; действия «Отправить на согласование», «Согласовать», «Вернуть с правками» (комментарий), «Принять правки», «Принять и доработать», «Откатить правки», «Создать новую версию»; показ правок согласующего — фон `warning-bg` плюс иконка и текст «Изменено согласующим» (без новых токенов DESIGN.md); история вариантов и решений; список «Ждут моего согласования» на вкладке «На согласовании»; тексты — раздел «Тексты интерфейса»
 
+### Task 10: Тестовые данные web под контракт 3.0.0
+Material risk: none
+Test-only: web/src/features/org-structure/EmployeeCards.test.tsx, web/src/features/org-structure/orgTree.test.ts
+- [ ] AC-6: привести фикстуры `Employee` в `EmployeeCards.test.tsx` и `orgTree.test.ts` к контракту 3.0.0 (`positionId` и `position` в ответе), чтобы `npm --prefix web run typecheck` (часть `lint` и `build`) был чист; поведение тестов не меняется
+
 ## Тексты интерфейса
 
 Утверждаются вместе с планом (правило AC-20). `{…}` — подставляемое значение. Подписи, не перечисленные здесь, повторяют названия полей AC в `sprint.md` дословно.
@@ -151,13 +156,13 @@ Material risk: none
 | Wave | Tasks |
 |---|---|
 | 1 | Task 1, Task 2 |
-| 2 | Task 3 |
+| 2 | Task 3, Task 10 |
 | 3 | Task 4 |
 | 4 | Task 5, Task 6 |
 | 5 | Task 7, Task 8 |
 | 6 | Task 9 |
 
-- Task 3 зависит от Task 2 (общие файлы `src/Competency.OrgStructure/`).
+- Task 3 зависит от Task 2 (общие файлы `src/Competency.OrgStructure/`); Task 10 — от Task 2 (контракт 3.0.0).
 - Task 4 зависит от Task 3 (порты); Task 5 и Task 7 — от Task 4 (модуль, роли процесса); Task 7 — от Task 5 (записи справочников в версии).
 - Task 6 зависит от Task 4 (API HR и ролей); Task 8 — от Task 5 (API справочников); Task 9 — от Task 7 (API матриц) и Task 6 (каркас раздела).
 - Миграции и перегенерация `openapi/openapi.json` / `web/src/api/schema.d.ts` — Task 2, 4, 5, 7, каждая в своей волне.
