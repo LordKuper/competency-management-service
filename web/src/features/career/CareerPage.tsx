@@ -1,12 +1,14 @@
-import { Tabs, Typography } from "antd";
+import { Space, Tabs, Typography } from "antd";
+import { ApprovalsSection } from "./ApprovalsSection";
 import { CompetenciesTab } from "./CompetenciesTab";
 import { useCanApprove } from "./careerApi";
 import { DirectionsTracksTab } from "./DirectionsTracksTab";
 import { DraftsSection } from "./DraftsSection";
+import { MatricesTab } from "./MatricesTab";
 import { ScalesTab } from "./ScalesTab";
 
 const TABS = [
-  { key: "matrices", label: "Матрицы", children: null },
+  { key: "matrices", label: "Матрицы", children: <MatricesTab /> },
   {
     key: "tracks",
     label: "Направления и треки",
@@ -25,7 +27,16 @@ export function CareerPage() {
         {
           key: "approvals",
           label: "На согласовании",
-          children: <DraftsSection />,
+          children: (
+            <Space
+              orientation="vertical"
+              size="large"
+              style={{ display: "flex" }}
+            >
+              <ApprovalsSection />
+              <DraftsSection />
+            </Space>
+          ),
         },
       ]
     : TABS;

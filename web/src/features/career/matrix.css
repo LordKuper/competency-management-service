@@ -1,0 +1,109 @@
+/* Competency matrix: sizes and rating colours of the design tokens; every other value comes from antd tokens. */
+.matrix-grid,
+.matrix-legend {
+  --matrix-row-height: 48px;
+  --matrix-cell-min-width: 72px;
+  --matrix-name-column-width: 280px;
+  --rating-level-0: var(--ant-color-fill-tertiary);
+  --rating-level-1: #c7d0fb;
+  --rating-level-2: #9ba8f9;
+  --rating-level-3: var(--ant-color-primary);
+  --rating-level-4: var(--ant-color-bg-spotlight);
+}
+
+.matrix-grid .ant-table-thead > tr > th {
+  font-family: "PT Sans Narrow", var(--ant-font-family);
+  font-weight: var(--ant-font-weight-strong);
+}
+
+.matrix-grid .ant-table-thead > tr > th.matrix-cell {
+  min-width: var(--matrix-cell-min-width);
+  padding: var(--ant-padding-xs);
+}
+
+.matrix-grid .ant-table-tbody > tr > td.matrix-cell {
+  min-width: var(--matrix-cell-min-width);
+  height: var(--matrix-row-height);
+  padding: var(--ant-padding-xs) var(--ant-padding-sm);
+  text-align: center;
+}
+
+.matrix-grid .matrix-name-cell {
+  width: var(--matrix-name-column-width);
+  min-width: var(--matrix-name-column-width);
+  max-width: var(--matrix-name-column-width);
+  padding: var(--ant-padding-sm);
+}
+
+.matrix-grid .ant-table-tbody > tr > td.matrix-name-cell {
+  height: var(--matrix-row-height);
+  overflow-wrap: anywhere;
+}
+
+.matrix-grid .ant-table-tbody > tr > td.matrix-changed,
+.matrix-grid .ant-table-tbody > tr.matrix-changed-row > td.matrix-name-cell {
+  background: var(--ant-color-warning-bg);
+}
+
+.matrix-cell-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ant-margin-xxs);
+  width: 100%;
+  min-height: calc(var(--matrix-row-height) - var(--ant-padding-xs) * 2);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.matrix-cell-button:hover {
+  background: var(--ant-color-primary-bg);
+}
+
+.rating-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ant-control-height);
+  height: var(--ant-control-height);
+  border-radius: var(--ant-border-radius);
+  font-weight: var(--ant-font-weight-strong);
+  color: var(--ant-color-bg-spotlight);
+  background: var(--rating-level-0);
+}
+
+.rating-chip--1 {
+  background: var(--rating-level-1);
+}
+
+.rating-chip--2 {
+  background: var(--rating-level-2);
+}
+
+.rating-chip--3 {
+  background: var(--rating-level-3);
+  color: var(--ant-color-text-light-solid);
+}
+
+.rating-chip--4 {
+  background: var(--rating-level-4);
+  color: var(--ant-color-text-light-solid);
+}
+
+.matrix-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ant-margin-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.matrix-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ant-margin-xs);
+}
