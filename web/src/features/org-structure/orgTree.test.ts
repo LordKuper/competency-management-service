@@ -34,6 +34,7 @@ function employeeIn(orgUnitId: string): Employee {
     email: null,
     orgUnitId,
     orgUnitName: "",
+    positionId: "position",
     position: "Инженер",
   };
 }

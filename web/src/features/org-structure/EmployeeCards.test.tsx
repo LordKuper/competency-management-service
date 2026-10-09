@@ -15,6 +15,7 @@ function employee(id: string, fullName: string): Employee {
     email: null,
     orgUnitId: "unit",
     orgUnitName: "Отдел",
+    positionId: "position",
     position: "Инженер",
   };
 }
