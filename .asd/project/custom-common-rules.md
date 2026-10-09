@@ -14,3 +14,7 @@ Phase-scoped rules go elsewhere — design constraints to `custom-design-rules.m
 ## Docker safety
 
 - Agents never run destructive Docker commands (`down -v`, `volume rm`, `volume prune`) against the user's dev stack or volumes with a fixed name. Temporary runs use only their own named volumes and delete them by exact name.
+
+## User-visible texts approval
+
+- A sprint with user-visible texts (emails, hints, headings, labels) lists those texts and the brand elements in plan for user approval before impl starts, not after the first smoke check. (`002-mail-invite-password-reset#P-1`)
