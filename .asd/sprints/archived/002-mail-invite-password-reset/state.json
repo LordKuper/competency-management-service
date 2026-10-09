@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-mail-invite-password-reset",
   "branch": "sprint/002-mail-invite-password-reset",
-  "phase": "pr",
+  "phase": "done",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -215,6 +215,13 @@
       "decision": "open and merge",
       "reason": "user approved push + PR + squash merge",
       "evidence": "decisions-log.md 2026-10-08 PR"
+    },
+    {
+      "gate": "sprint-closure",
+      "decision_actor": "orchestrator",
+      "decision": "close and archive",
+      "reason": "PR #4 MERGED",
+      "evidence": "merge commit c3cc0321957d37f884e8c6825e101239ac22fd60"
     }
   ],
   "task_routing": {
@@ -492,12 +499,14 @@
     }
   },
   "created_at": "2026-10-08T06:32:00.726Z",
-  "updated_at": "2026-10-08T14:42:44.589Z",
+  "updated_at": "2026-10-09T07:00:39.000Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": {
     "number": 4,
-    "url": "https://github.com/LordKuper/competency-management-service/pull/4"
+    "url": "https://github.com/LordKuper/competency-management-service/pull/4",
+    "state": "merged",
+    "merge_commit": "c3cc0321957d37f884e8c6825e101239ac22fd60"
   },
-  "archived_at": null
+  "archived_at": "2026-10-09T07:00:39.000Z"
 }
