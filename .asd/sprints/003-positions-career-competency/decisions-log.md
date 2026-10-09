@@ -50,3 +50,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: В plan добавлена Test-only Task 10 (волна 2, `asd-tester`): фикстуры `Employee` в `EmployeeCards.test.tsx` и `orgTree.test.ts` под контракт 3.0.0; критерии и прочие Task не меняются.
 - **Rationale**: Смена входа `/api/v1/employees` (Task 2, AC-6) ломает typecheck web-тестов, а он входит в `lint`/`build` gate impl; dev не правит тесты. Адаптивное решение оркестратора: объём — две фикстуры, проверка — `npm --prefix web run typecheck`.
 - **Affected docs**: plan.md
+- 2026-10-09 — Task 2 follow-up accepted (cc0e98d): смешанный запрос ФИО+должность снова находит сотрудника; полнотекстовый путь без GIN-индекса (конкатенация векторов) принят — перф-бюджет org-structure AC-24 (P95 < 2 с на 10 000) проверяется в impl-test
