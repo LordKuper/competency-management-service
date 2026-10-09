@@ -46,6 +46,17 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
     public async Task<IReadOnlyList<OrgUnitStatus>> FindAncestryAsync(Guid unitId, CancellationToken cancellationToken = default) =>
         await context.Ancestry(unitId).ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<OrgUnitStatus>> FindSubtreeAsync(Guid unitId, CancellationToken cancellationToken = default)
+    {
+        var subtreeIds = context.DescendantIds(unitId);
+        return await context
+            .Set<OrgUnit>()
+            .AsNoTracking()
+            .Where(unit => subtreeIds.Contains(unit.Id))
+            .Select(UnitStatusProjection)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<OrgUnitStatus>> FindHeadedUnitsAsync(Guid employeeId, CancellationToken cancellationToken = default) =>
         await context
             .Set<OrgUnit>()

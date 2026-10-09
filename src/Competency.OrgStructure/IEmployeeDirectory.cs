@@ -41,6 +41,14 @@ public interface IEmployeeDirectory
     Task<IReadOnlyList<OrgUnitStatus>> FindAncestryAsync(Guid unitId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Finds a unit and every unit below it, for rules a unit passes down to the units under it, such as an assignment they inherit.
+    /// </summary>
+    /// <param name="unitId">The top of the subtree.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The units of the subtree, active or not, in no particular order; empty when the unit does not exist.</returns>
+    Task<IReadOnlyList<OrgUnitStatus>> FindSubtreeAsync(Guid unitId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Finds the units an employee heads. Nothing in the data limits them to the employee's own unit, so there may be several, in any part of the tree.
     /// </summary>
     /// <param name="employeeId">The employee identifier.</param>
