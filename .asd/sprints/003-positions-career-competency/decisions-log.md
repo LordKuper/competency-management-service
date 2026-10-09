@@ -53,3 +53,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-09 — Task 2 follow-up accepted (cc0e98d): смешанный запрос ФИО+должность снова находит сотрудника; полнотекстовый путь без GIN-индекса (конкатенация векторов) принят — перф-бюджет org-structure AC-24 (P95 < 2 с на 10 000) проверяется в impl-test
 - 2026-10-09 — route Task 3: critical, dispatch HEAD f51aca9; risk change: lock ordering
 - 2026-10-09 — route Task 10: standard, dispatch HEAD f51aca9; risk none via npm --prefix web run typecheck
+- 2026-10-09 — Task 3 flagged choices accepted: `FindAncestryAsync` включает само подразделение первым (шаг 1 маршрута пропускает его), защита от цикла `CYCLE … USING path`, `FindHeadedUnitsAsync` без фильтра активности (фильтрует вызывающий), «действующая учётная запись» — один раз в `UserStatus.IsActive`; Task 10 COMPLETED (eca4c33), web typecheck и lint чисты

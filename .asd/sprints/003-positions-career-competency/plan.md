@@ -63,8 +63,8 @@ Tech reference: efcore-10.0.12, npgsql-entityframeworkcore-postgresql-10.0.3, sq
 
 ### Task 3: Порты чтения для карьерной модели
 Material risk: change: lock ordering — разделяемый режим блокировки дерева рядом с эксклюзивным (R-6)
-- [ ] AC-7: расширить `IEmployeeDirectory` / `EmployeeDirectory` (`src/Competency.OrgStructure/`): факты о подразделении (существует, активно, `parentId`, `headEmployeeId`, название); упорядоченная от ближайшего цепочка предков подразделения с руководителями (`WITH RECURSIVE … ORDER BY depth`); подразделения под руководством сотрудника (список); `BeginSharedAsync` — `pg_advisory_xact_lock_shared(5001001)` в `OrgTree` рядом с `BeginExclusiveAsync`; вызовы — Task 4, 5, 7
-- [ ] AC-7, AC-8: новый опубликованный порт `IUserDirectory` в `src/Competency.UserManagement/` (объявляет и реализует модуль, регистрация в `UserManagementModule.cs`): по id пользователя и по набору id сотрудников — e-mail, `employeeId`, заблокирована ли, зарегистрирована ли (`password_hash IS NOT NULL`); вызовы — Task 4, 7
+- [x] AC-7: расширить `IEmployeeDirectory` / `EmployeeDirectory` (`src/Competency.OrgStructure/`): факты о подразделении (существует, активно, `parentId`, `headEmployeeId`, название); упорядоченная от ближайшего цепочка предков подразделения с руководителями (`WITH RECURSIVE … ORDER BY depth`); подразделения под руководством сотрудника (список); `BeginSharedAsync` — `pg_advisory_xact_lock_shared(5001001)` в `OrgTree` рядом с `BeginExclusiveAsync`; вызовы — Task 4, 5, 7
+- [x] AC-7, AC-8: новый опубликованный порт `IUserDirectory` в `src/Competency.UserManagement/` (объявляет и реализует модуль, регистрация в `UserManagementModule.cs`): по id пользователя и по набору id сотрудников — e-mail, `employeeId`, заблокирована ли, зарегистрирована ли (`password_hash IS NOT NULL`); вызовы — Task 4, 7
 Tech reference: efcore-10.0.12, sql-postgresql-18.6.
 
 ### Task 4: Модуль карьерной модели, закрепление HR и роли процесса
@@ -113,7 +113,7 @@ Material risk: none
 ### Task 10: Тестовые данные web под контракт 3.0.0
 Material risk: none
 Test-only: web/src/features/org-structure/EmployeeCards.test.tsx, web/src/features/org-structure/orgTree.test.ts
-- [ ] AC-6: привести фикстуры `Employee` в `EmployeeCards.test.tsx` и `orgTree.test.ts` к контракту 3.0.0 (`positionId` и `position` в ответе), чтобы `npm --prefix web run typecheck` (часть `lint` и `build`) был чист; поведение тестов не меняется
+- [x] AC-6: привести фикстуры `Employee` в `EmployeeCards.test.tsx` и `orgTree.test.ts` к контракту 3.0.0 (`positionId` и `position` в ответе), чтобы `npm --prefix web run typecheck` (часть `lint` и `build`) был чист; поведение тестов не меняется
 
 ## Тексты интерфейса
 
