@@ -54,3 +54,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-09 — route Task 3: critical, dispatch HEAD f51aca9; risk change: lock ordering
 - 2026-10-09 — route Task 10: standard, dispatch HEAD f51aca9; risk none via npm --prefix web run typecheck
 - 2026-10-09 — Task 3 flagged choices accepted: `FindAncestryAsync` включает само подразделение первым (шаг 1 маршрута пропускает его), защита от цикла `CYCLE … USING path`, `FindHeadedUnitsAsync` без фильтра активности (фильтрует вызывающий), «действующая учётная запись» — один раз в `UserStatus.IsActive`; Task 10 COMPLETED (eca4c33), web typecheck и lint чисты
+- 2026-10-09 — route Task 4: critical, dispatch HEAD 273d5ee; risk change: security
