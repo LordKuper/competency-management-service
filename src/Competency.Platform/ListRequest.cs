@@ -56,6 +56,14 @@ public static class ListRequest
     /// </summary>
     /// <param name="text">The text to find.</param>
     /// <returns>The pattern, using <see cref="LikeEscape"/> as the escape character.</returns>
-    public static string ContainsPattern(string text) =>
-        $"%{text.Replace(LikeEscape, LikeEscape + LikeEscape).Replace("%", LikeEscape + "%").Replace("_", LikeEscape + "_")}%";
+    public static string ContainsPattern(string text) => $"%{ExactPattern(text)}%";
+
+    /// <summary>
+    /// Builds an <c>ILIKE</c> pattern that matches a value equal to the text regardless of letter case, treating the text literally.
+    /// On a multibyte database <c>ILIKE</c> compares the <c>lower()</c> forms, so the match agrees with an index on <c>lower(name)</c>.
+    /// </summary>
+    /// <param name="text">The text to match.</param>
+    /// <returns>The pattern, using <see cref="LikeEscape"/> as the escape character.</returns>
+    public static string ExactPattern(string text) =>
+        text.Replace(LikeEscape, LikeEscape + LikeEscape).Replace("%", LikeEscape + "%").Replace("_", LikeEscape + "_");
 }

@@ -1,14 +1,21 @@
 using System.Linq.Expressions;
-using Competency.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.OrgStructure;
+namespace Competency.Platform;
 
 /// <summary>
-/// The query steps the unit and employee lists share.
+/// The query steps the module lists share.
 /// </summary>
-internal static class ListQueries
+public static class ListQueries
 {
+    /// <summary>
+    /// Applies a filter only when the request asks for it.
+    /// </summary>
+    /// <typeparam name="T">The row type.</typeparam>
+    /// <param name="source">The query to filter.</param>
+    /// <param name="condition">Whether to apply the filter.</param>
+    /// <param name="predicate">The filter.</param>
+    /// <returns>The filtered query, or the same query when the condition is false.</returns>
     public static IQueryable<T> WhereIf<T>(this IQueryable<T> source, bool condition, Expression<Func<T, bool>> predicate) =>
         condition ? source.Where(predicate) : source;
 

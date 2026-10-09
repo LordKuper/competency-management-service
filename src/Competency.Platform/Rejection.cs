@@ -22,6 +22,12 @@ public static class Rejection
         TypedResults.Problem(detail: detail, statusCode: StatusCodes.Status409Conflict, title: ConflictTitle);
 
     /// <summary>
+    /// Rejects a change of a resource the caller can read but has no right to change; a resource the caller cannot read is reported as not found instead.
+    /// </summary>
+    /// <returns>A 403 response.</returns>
+    public static ProblemHttpResult Forbidden() => TypedResults.Problem(statusCode: StatusCodes.Status403Forbidden);
+
+    /// <summary>
     /// Rejects a request whose field is invalid.
     /// </summary>
     /// <param name="field">The request field.</param>
