@@ -79,7 +79,7 @@ internal static class EmployeeEndpoints
 
         if (TextSearch.Normalize(query.Q) is { } text)
         {
-            employees = employees.Matching(context.Set<Position>(), text);
+            employees = employees.Matching(text);
         }
 
         var page = await employees
@@ -355,19 +355,17 @@ internal static class EmployeeEndpoints
     }
 
     /// <summary>
-    /// Narrows the employees to those whose full name contains the text, or whose name parts or position match it as Russian full text.
-    /// The position is matched through the catalogue's own index, because a generated column cannot read another table.
+    /// Narrows the employees to those whose full name contains the text, or whose name parts and position together match it as Russian full text,
+    /// so one query may mix name and position words. A generated column cannot read another table, so the employee's vector is joined
+    /// with its position's vector at query time.
     /// </summary>
-    private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, IQueryable<Position> positions, string text)
+    private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, string text)
     {
         var pattern = ListRequest.ContainsPattern(text);
-        var matchingPositionIds = positions
-            .Where(position => position.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)))
-            .Select(position => position.Id);
         return employees.Where(employee =>
             EF.Functions.ILike(employee.FullName, pattern, ListRequest.LikeEscape)
-            || employee.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text))
-            || matchingPositionIds.Contains(employee.PositionId));
+            || employee.SearchVector.Concat(employee.Position.SearchVector)
+                .Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)));
     }
 
     /// <summary>
