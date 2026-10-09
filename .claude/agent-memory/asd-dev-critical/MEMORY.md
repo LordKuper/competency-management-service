@@ -42,3 +42,4 @@
 - [Password reset link facts](project_password-reset-link-facts.md) — one rate-limit counter per policy across endpoints, ApiHost raises both limits, queue wiring, change-password 412 race
 - [Anonymous link screens](project_web-anonymous-link-screens-facts.md) — StrictMode-safe fragment token, router links styled as antd, empty 202, invalid-link 400 shape
 - [Position catalogue facts](project_position-catalogue-facts.md) — lower(name) index only in migration SQL, U& whitespace set for .NET Trim parity, FromSql lower() lookup, which tests break
+- [Career catalogue facts](project_career-catalogue-facts.md) — jsonb points via converter (complex types skip audit), uuid[] next levels for If-Match, Russian build output, unverified ILIKE equality
