@@ -1,0 +1,56 @@
+{
+  "sprint_id": "003-positions-career-competency",
+  "branch": "sprint/003-positions-career-competency",
+  "phase": "scope",
+  "workflow": "lite",
+  "documents": {
+    "audit": true,
+    "prd": true,
+    "ux_spec": true,
+    "adr": true,
+    "c4": true
+  },
+  "user_gates": "adaptive",
+  "gate_decisions": [
+    {
+      "gate": "workflow choice",
+      "decision_actor": "user",
+      "decision": "lite",
+      "reason": "user chose lite over recommended standard",
+      "evidence": "decisions-log.md 2026-10-09 workflow"
+    },
+    {
+      "gate": "scope clarification",
+      "decision_actor": "user",
+      "decision": "shared position catalog + per-unit list, inherited from ancestors; full career framework per Постановка §5-7; no position-level link; new scoped roles",
+      "reason": "ambiguity blocking concrete scope",
+      "evidence": "decisions-log.md 2026-10-09 scope answers"
+    }
+  ],
+  "task_routing": {},
+  "skipped_phases": [],
+  "reviews": {
+    "design": {
+      "iteration": 0,
+      "verdicts": {},
+      "latched": {}
+    },
+    "impl": {
+      "wave": 1,
+      "waves": [
+        {
+          "iteration": 0,
+          "verdicts": {},
+          "iteration_heads": {},
+          "latched": {}
+        }
+      ]
+    }
+  },
+  "created_at": "2026-10-09T07:25:11.340Z",
+  "updated_at": "2026-10-09T07:25:11.340Z",
+  "review_fixes_pending": null,
+  "test_defects_pending": null,
+  "pr": null,
+  "archived_at": null
+}
