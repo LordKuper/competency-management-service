@@ -5,3 +5,9 @@
 {"op":"close","id":"wait scope clarification","kind":"user-wait","parent":"scope#1","start":"2026-10-09T07:03:07.293Z","end":"2026-10-09T07:24:49.035Z","outcome":"done","attrs":{"gate":"scope clarification"}}
 {"op":"open","id":"wait scope gate","kind":"user-wait","parent":"scope#1","start":"2026-10-09T07:26:13.213Z","attrs":{"gate":"scope"}}
 {"op":"close","id":"wait scope gate","kind":"user-wait","parent":"scope#1","start":"2026-10-09T07:26:13.213Z","end":"2026-10-09T07:55:58.921Z","outcome":"done","attrs":{"gate":"scope"}}
+{"op":"close","id":"scope#1","kind":"phase","parent":null,"start":"2026-10-09T07:00:44.070Z","end":"2026-10-09T07:56:11.036Z","outcome":"done","attrs":{}}
+{"op":"open","id":"audit#1","kind":"phase","parent":null,"start":"2026-10-09T07:56:11.036Z","attrs":{}}
+{"op":"open","id":"asd-architect audit#1","kind":"dispatch","parent":"audit#1","start":"2026-10-09T07:56:38.905Z","attrs":{"agent":"asd-architect","tier":"default","model":"inherit"}}
+{"op":"close","id":"asd-architect audit#1","kind":"dispatch","parent":"audit#1","start":"2026-10-09T07:56:38.905Z","end":"2026-10-09T08:17:03.722Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"default","model":"inherit"}}
+{"op":"open","id":"wait audit contradictions","kind":"user-wait","parent":"audit#1","start":"2026-10-09T08:19:09.855Z","attrs":{"gate":"audit contradictions"}}
+{"op":"close","id":"wait audit contradictions","kind":"user-wait","parent":"audit#1","start":"2026-10-09T08:19:09.855Z","end":"2026-10-09T08:33:34.926Z","outcome":"done","attrs":{"gate":"audit contradictions"}}
