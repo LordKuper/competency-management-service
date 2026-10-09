@@ -18,6 +18,7 @@ public static class CareerFrameworkModule
     {
         services.AddSingleton<IEntityConfigurationContributor, CareerFrameworkEntityConfiguration>();
         services.AddScoped<ProcessRoles>();
+        services.AddScoped<CatalogStore>();
         return services;
     }
 
@@ -30,6 +31,13 @@ public static class CareerFrameworkModule
     {
         OrgUnitHrEndpoints.Map(endpoints);
         ProcessRoleEndpoints.Map(endpoints);
+        CareerDirectionEndpoints.Map(endpoints);
+        CareerTrackEndpoints.Map(endpoints);
+        CareerLevelEndpoints.Map(endpoints);
+        CompetencyCategoryEndpoints.Map(endpoints);
+        CompetencyEndpoints.Map(endpoints);
+        CompetencyScaleEndpoints.Map(endpoints);
+        CatalogDraftEndpoints.Map(endpoints);
         return endpoints;
     }
 }
