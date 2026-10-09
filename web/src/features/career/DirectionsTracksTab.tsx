@@ -1,0 +1,234 @@
+import { useQuery } from "@tanstack/react-query";
+import { Button, Empty, Flex, Space, Table, type TableColumnsType } from "antd";
+import { useState } from "react";
+import { ErrorAlert } from "../../app/ErrorAlert";
+import { EntryActions, entryColumns } from "./CatalogParts";
+import {
+  type CareerLevel,
+  type CareerTrack,
+  type CatalogEntry,
+  directionsQuery,
+  levelsQuery,
+  tracksQuery,
+} from "./catalogApi";
+import { LevelModal } from "./LevelModal";
+import { NameModal } from "./NameModal";
+import { useCatalogRights } from "./useCatalogRights";
+
+/** Dialog of a table: creating (`"create"`) or editing the row with that id; null when closed. */
+type Dialog = "create" | string | null;
+
+const NAME_COLUMN = { title: "Название", dataIndex: "name" };
+
+/** Directions with their tracks and the tracks' levels, nested as expandable rows. */
+export function DirectionsTracksTab() {
+  const rights = useCatalogRights();
+  const [dialog, setDialog] = useState<Dialog>(null);
+  const { data, error, isFetching, refetch } = useQuery(directionsQuery());
+  const edited = data?.items.find((direction) => direction.id === dialog);
+  const columns: TableColumnsType<CatalogEntry> = [
+    NAME_COLUMN,
+    ...entryColumns<CatalogEntry>(),
+    {
+      title: "Действия",
+      key: "actions",
+      render: (_, direction) => (
+        <EntryActions
+          segment="directions"
+          entry={direction}
+          onEdit={() => setDialog(direction.id)}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <Space orientation="vertical" size="large" style={{ display: "flex" }}>
+      {rights.canCreate && (
+        <Flex>
+          <Button type="primary" onClick={() => setDialog("create")}>
+            Добавить направление
+          </Button>
+        </Flex>
+      )}
+      {error && (
+        <ErrorAlert
+          title="Не удалось загрузить направления"
+          error={error}
+          onRetry={() => void refetch()}
+        />
+      )}
+      <Table<CatalogEntry>
+        rowKey="id"
+        columns={columns}
+        dataSource={data?.items}
+        loading={isFetching}
+        pagination={false}
+        scroll={{ x: "max-content" }}
+        expandable={{
+          expandedRowRender: (direction) => (
+            <TracksTable direction={direction} />
+          ),
+        }}
+        locale={{
+          emptyText: (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="Направлений пока нет"
+            />
+          ),
+        }}
+      />
+      {dialog === "create" && (
+        <NameModal
+          segment="directions"
+          title="Добавить направление"
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {edited && (
+        <NameModal
+          segment="directions"
+          title="Править"
+          entry={edited}
+          onClose={() => setDialog(null)}
+        />
+      )}
+    </Space>
+  );
+}
+
+function TracksTable({ direction }: { direction: CatalogEntry }) {
+  const rights = useCatalogRights();
+  const [dialog, setDialog] = useState<Dialog>(null);
+  const { data, error, isFetching, refetch } = useQuery(
+    tracksQuery(direction.id),
+  );
+  const edited = data?.items.find((track) => track.id === dialog);
+  const columns: TableColumnsType<CareerTrack> = [
+    NAME_COLUMN,
+    ...entryColumns<CareerTrack>(),
+    {
+      title: "Действия",
+      key: "actions",
+      render: (_, track) => (
+        <EntryActions
+          segment="tracks"
+          entry={track}
+          onEdit={() => setDialog(track.id)}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <Space orientation="vertical" size="middle" style={{ display: "flex" }}>
+      {rights.canCreate && (
+        <Flex>
+          <Button onClick={() => setDialog("create")}>Добавить трек</Button>
+        </Flex>
+      )}
+      {error && (
+        <ErrorAlert
+          title="Не удалось загрузить треки"
+          error={error}
+          onRetry={() => void refetch()}
+        />
+      )}
+      <Table<CareerTrack>
+        rowKey="id"
+        columns={columns}
+        dataSource={data?.items}
+        loading={isFetching}
+        pagination={false}
+        scroll={{ x: "max-content" }}
+        expandable={{
+          expandedRowRender: (track) => <LevelsTable track={track} />,
+        }}
+      />
+      {dialog === "create" && (
+        <NameModal
+          segment="tracks"
+          title="Добавить трек"
+          directionId={direction.id}
+          defaultOwner={direction.ownerOrgUnitId}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {edited && (
+        <NameModal
+          segment="tracks"
+          title="Править"
+          entry={edited}
+          onClose={() => setDialog(null)}
+        />
+      )}
+    </Space>
+  );
+}
+
+function LevelsTable({ track }: { track: CareerTrack }) {
+  const rights = useCatalogRights();
+  const [dialog, setDialog] = useState<Dialog>(null);
+  const { data, error, isFetching, refetch } = useQuery(levelsQuery(track.id));
+  const edited = data?.items.find((level) => level.id === dialog);
+  const columns: TableColumnsType<CareerLevel> = [
+    NAME_COLUMN,
+    { title: "Код уровня", dataIndex: "code" },
+    ...entryColumns<CareerLevel>(),
+    {
+      title: "Действия",
+      key: "actions",
+      render: (_, level) => (
+        <EntryActions
+          segment="levels"
+          entry={level}
+          onEdit={() => setDialog(level.id)}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <Space orientation="vertical" size="middle" style={{ display: "flex" }}>
+      {rights.canCreate && (
+        <Flex>
+          <Button onClick={() => setDialog("create")}>Добавить уровень</Button>
+        </Flex>
+      )}
+      {error && (
+        <ErrorAlert
+          title="Не удалось загрузить уровни"
+          error={error}
+          onRetry={() => void refetch()}
+        />
+      )}
+      <Table<CareerLevel>
+        rowKey="id"
+        columns={columns}
+        dataSource={data?.items}
+        loading={isFetching}
+        pagination={false}
+        scroll={{ x: "max-content" }}
+        locale={{
+          emptyText: (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="В треке пока нет уровней"
+            />
+          ),
+        }}
+      />
+      {dialog === "create" && (
+        <LevelModal track={track} onClose={() => setDialog(null)} />
+      )}
+      {edited && (
+        <LevelModal
+          track={track}
+          level={edited}
+          onClose={() => setDialog(null)}
+        />
+      )}
+    </Space>
+  );
+}
