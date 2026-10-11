@@ -91,3 +91,5 @@
 {"op":"close","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T11:37:19.272Z","end":"2026-10-11T12:10:27.537Z","outcome":"done","attrs":{"gate":"impl assessment"}}
 {"op":"open","id":"wait scope amendment blockers","kind":"user-wait","parent":"impl#1","start":"2026-10-11T12:10:27.596Z","attrs":{"gate":"new or changed scope"}}
 {"op":"close","id":"wait scope amendment blockers","kind":"user-wait","parent":"impl#1","start":"2026-10-11T12:10:27.596Z","end":"2026-10-11T12:13:40.987Z","outcome":"done","attrs":{"gate":"new or changed scope"}}
+{"op":"open","id":"Task 17","kind":"dispatch","parent":"impl#1","start":"2026-10-11T12:13:41.580Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 17","kind":"dispatch","parent":"impl#1","start":"2026-10-11T12:13:41.580Z","end":"2026-10-11T12:25:33.902Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
