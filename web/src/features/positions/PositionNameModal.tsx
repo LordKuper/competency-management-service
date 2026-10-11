@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Form, Input, Modal, Space } from "antd";
+import { Button, Form, Input, Space } from "antd";
 import { ApiError } from "../../api/ApiError";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
+import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
@@ -55,7 +56,7 @@ export function PositionNameModal({
   });
 
   return (
-    <Modal
+    <AppModal
       open
       title={position ? "Переименование должности" : "Новая должность"}
       onCancel={onClose}
@@ -75,7 +76,7 @@ export function PositionNameModal({
           onCancel={onClose}
         />
       </Space>
-    </Modal>
+    </AppModal>
   );
 }
 

@@ -1,6 +1,7 @@
-import { Alert, Button, Modal, Space } from "antd";
+import { Alert, Button, Space } from "antd";
 import type { ReactNode } from "react";
 import { ApiError } from "../../api/ApiError";
+import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
 
 const CONFLICT_STATUS = 409;
@@ -43,7 +44,7 @@ export function CatalogModal({
     error.errors === undefined;
 
   return (
-    <Modal
+    <AppModal
       open
       title={title}
       onCancel={(event) => {
@@ -62,7 +63,7 @@ export function CatalogModal({
           )}
         {children}
       </Space>
-    </Modal>
+    </AppModal>
   );
 }
 

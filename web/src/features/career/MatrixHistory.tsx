@@ -1,4 +1,5 @@
-import { Modal, Typography } from "antd";
+import { Typography } from "antd";
+import { AppModal } from "../../app/AppModal";
 import type { MatrixHistory as History, MatrixDecision } from "./matrixApi";
 import { DECISION_TEXTS } from "./matrixLabels";
 
@@ -28,7 +29,7 @@ export function MatrixHistoryModal({
   onClose,
 }: MatrixHistoryModalProps) {
   return (
-    <Modal open title="История" onCancel={onClose} footer={null}>
+    <AppModal open title="История" onCancel={onClose} footer={null}>
       <ul>
         {history.decisions.map((decision) => (
           <li key={decision.sequence}>
@@ -51,6 +52,6 @@ export function MatrixHistoryModal({
           </li>
         ))}
       </ul>
-    </Modal>
+    </AppModal>
   );
 }

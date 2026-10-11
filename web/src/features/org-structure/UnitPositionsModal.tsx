@@ -4,7 +4,6 @@ import {
   Button,
   Flex,
   Form,
-  Modal,
   Select,
   Skeleton,
   Space,
@@ -14,6 +13,7 @@ import { useState } from "react";
 import { ApiError } from "../../api/ApiError";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
+import { AppModal } from "../../app/AppModal";
 import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
@@ -102,7 +102,7 @@ export function UnitPositionsModal({ unit, onClose }: UnitPositionsModalProps) {
   }
 
   return (
-    <Modal
+    <AppModal
       open
       title={`Должности подразделения «${unit.name}»`}
       onCancel={onClose}
@@ -184,7 +184,7 @@ export function UnitPositionsModal({ unit, onClose }: UnitPositionsModalProps) {
           )}
         </Space>
       )}
-    </Modal>
+    </AppModal>
   );
 }
 

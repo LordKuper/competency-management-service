@@ -1,17 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  App,
-  Button,
-  Form,
-  Modal,
-  Select,
-  Skeleton,
-  Space,
-  Typography,
-} from "antd";
+import { App, Button, Form, Select, Skeleton, Space, Typography } from "antd";
 import { useState } from "react";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
+import { AppModal } from "../../app/AppModal";
 import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
@@ -76,7 +68,7 @@ export function UnitHrModal({ unit, onClose }: UnitHrModalProps) {
   }
 
   return (
-    <Modal
+    <AppModal
       open
       title={`HR подразделения «${unit.name}»`}
       onCancel={onClose}
@@ -120,7 +112,7 @@ export function UnitHrModal({ unit, onClose }: UnitHrModalProps) {
           )}
         </Space>
       )}
-    </Modal>
+    </AppModal>
   );
 }
 

@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { App, Button, Form, Input, Modal, Space, Typography } from "antd";
+import { App, Button, Form, Input, Space, Typography } from "antd";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
+import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
@@ -74,7 +75,7 @@ export function UnitFormModal({
   });
 
   return (
-    <Modal
+    <AppModal
       open
       title={unit ? "Изменение подразделения" : "Новое подразделение"}
       onCancel={onClose}
@@ -96,7 +97,7 @@ export function UnitFormModal({
           onCancel={onClose}
         />
       </Space>
-    </Modal>
+    </AppModal>
   );
 }
 

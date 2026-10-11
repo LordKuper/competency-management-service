@@ -1,7 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
-import { App, Button, Form, Input, Modal, Space } from "antd";
+import { App, Button, Form, Input, Space } from "antd";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
+import { AppModal } from "../../app/AppModal";
 import { showFieldErrors } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { usePasswordHint } from "./passwordPolicy";
@@ -23,7 +24,7 @@ export function ChangePasswordModal({
   onClose,
 }: ChangePasswordModalProps) {
   return (
-    <Modal
+    <AppModal
       title="Смена пароля"
       open={open}
       onCancel={onClose}
@@ -31,7 +32,7 @@ export function ChangePasswordModal({
       destroyOnHidden
     >
       <ChangePasswordForm onDone={onClose} />
-    </Modal>
+    </AppModal>
   );
 }
 
@@ -73,7 +74,7 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
         label="Текущий пароль"
         rules={[{ required: true, message: "Введите текущий пароль" }]}
       >
-        <Input.Password autoComplete="current-password" autoFocus />
+        <Input.Password autoComplete="current-password" />
       </Form.Item>
       <Form.Item
         name="newPassword"

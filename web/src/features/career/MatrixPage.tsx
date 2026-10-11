@@ -5,7 +5,6 @@ import {
   Flex,
   Form,
   Input,
-  Modal,
   Select,
   Skeleton,
   Space,
@@ -15,6 +14,7 @@ import {
 } from "antd";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useProcessRoles } from "./careerApi";
 import { MatrixDeleteButton } from "./MatrixDeleteButton";
@@ -164,7 +164,7 @@ interface ReturnModalProps {
 function ReturnModal({ isPending, onReturn, onClose }: ReturnModalProps) {
   const [form] = Form.useForm<{ comment?: string }>();
   return (
-    <Modal
+    <AppModal
       open
       title={RETURN_LABEL}
       okText={RETURN_LABEL}
@@ -183,7 +183,7 @@ function ReturnModal({ isPending, onReturn, onClose }: ReturnModalProps) {
           <Input.TextArea autoSize={{ minRows: 3 }} />
         </Form.Item>
       </Form>
-    </Modal>
+    </AppModal>
   );
 }
 

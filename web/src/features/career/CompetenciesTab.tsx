@@ -4,13 +4,13 @@ import {
   Empty,
   Flex,
   Input,
-  Modal,
   Skeleton,
   Space,
   Table,
   type TableColumnsType,
 } from "antd";
 import { useState } from "react";
+import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { EntryActions, entryColumns } from "./CatalogParts";
 import { COMPETENCY_TYPES, CompetencyModal } from "./CompetencyModal";
@@ -216,7 +216,7 @@ function VersionsModal({
   );
 
   return (
-    <Modal open title="История версий" onCancel={onClose} footer={null}>
+    <AppModal open title="История версий" onCancel={onClose} footer={null}>
       {error && (
         <ErrorAlert
           title="Не удалось загрузить историю версий"
@@ -230,6 +230,6 @@ function VersionsModal({
           <li key={version.number}>{versionLine(version)}</li>
         ))}
       </ul>
-    </Modal>
+    </AppModal>
   );
 }
