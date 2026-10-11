@@ -51,3 +51,7 @@
 {"op":"open","id":"impl assessment change 2","kind":"dispatch","parent":"impl#1","start":"2026-10-11T10:06:49.501Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"impl assessment change 2","kind":"dispatch","parent":"impl#1","start":"2026-10-11T10:06:49.501Z","end":"2026-10-11T10:08:13.465Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"impl assessment change 1","kind":"dispatch","parent":"impl#1","start":"2026-10-11T10:06:49.437Z","end":"2026-10-11T10:10:22.317Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T10:10:45.535Z","attrs":{"gate":"impl assessment"}}
+{"op":"close","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T10:10:45.535Z","end":"2026-10-11T10:14:46.136Z","outcome":"done","attrs":{"gate":"impl assessment"}}
+{"op":"open","id":"impl assessment change 3","kind":"dispatch","parent":"impl#1","start":"2026-10-11T10:14:46.200Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"impl assessment change 3","kind":"dispatch","parent":"impl#1","start":"2026-10-11T10:14:46.200Z","end":"2026-10-11T10:15:40.859Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
