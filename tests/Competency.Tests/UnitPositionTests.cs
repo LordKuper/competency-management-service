@@ -63,14 +63,18 @@ public sealed class UnitPositionTests(TestEnvironment environment)
         await AllowAsync(admin, parent.Id, first, second);
         await AllowAsync(admin, child.Id, second, third);
 
-        var ofChild = (await ListAsync(admin, child.Id)).Select(row => (row!["name"]!.GetValue<string>(), row["orgUnitId"]!.GetValue<string>(), row!["orgUnitName"]!.GetValue<string>())).ToList();
+        var ofChild = await ListAsync(admin, child.Id);
         var ofGrandchild = (await ListAsync(admin, grandchild.Id)).Select(Describe).ToList();
 
-        ofChild.Should().Equal(
-            ($"А {token}", parent.Id.ToString(), parent.Json!["name"]!.GetValue<string>()),
-            ($"Б {token}", child.Id.ToString(), child.Json!["name"]!.GetValue<string>()),
-            ($"Б {token}", parent.Id.ToString(), parent.Json!["name"]!.GetValue<string>()),
-            ($"В {token}", child.Id.ToString(), child.Json!["name"]!.GetValue<string>()));
+        ofChild.Select(row => row!["name"]!.GetValue<string>()).Should().Equal([$"А {token}", $"Б {token}", $"Б {token}", $"В {token}"], "the list is in name order");
+        ofChild.Select(row => $"{Describe(row)} / {row!["orgUnitName"]!.GetValue<string>()}").Should().BeEquivalentTo(
+            [
+                $"А {token} / {parent.Id} / {parent.Json!["name"]!.GetValue<string>()}",
+                $"Б {token} / {child.Id} / {child.Json!["name"]!.GetValue<string>()}",
+                $"Б {token} / {parent.Id} / {parent.Json!["name"]!.GetValue<string>()}",
+                $"В {token} / {child.Id} / {child.Json!["name"]!.GetValue<string>()}",
+            ],
+            "the order of one position listed by two units follows the unit names, which are random here, so only the rows are compared");
         ofGrandchild.Should().HaveCount(4, "the unit's own list is empty and the lists above it come whole");
         (await ListAsync(admin, parent.Id)).Select(Describe).Should().Equal([$"А {token} / {parent.Id}", $"Б {token} / {parent.Id}"], "the units below do not pass their positions up");
     }
