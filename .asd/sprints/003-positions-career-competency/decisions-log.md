@@ -204,3 +204,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — route impl-test entry 3: standard, dispatch HEAD 9747cb5; risk none via dotnet test (дельта — doc-комментарии, удаление неиспользуемой константы теста, память)
 - 2026-10-12 — impl-test: impacted set green (полный набор по предохранителю: backend 473/473, web 303/303), 0/0 tests (entry 3)
 - 2026-10-12 — impl-review wave-1/iter-02: combined APPROVE (F1–F3 закрыты), external APPROVE (latched) → волна 1 закрыта; переход к волне 2
+
+## 2026-10-12 — F6 answer: competency owner not shown
+
+- **Decision**: На вопрос ревьюера (wave-2/iter-01 combined F6) пользователь ответил «не показывать»: поле «владелец (пользователь)» убрано из AC-12, автор остаётся в истории версий; F6 закрыт без изменения кода (override).
+- **Rationale**: Решение пользователя (hard gate «new or changed scope»); стоимость AC-12: ≥1 итерация ревью (нижняя граница), 0 раундов исправлений.
+- **Affected docs**: sprint.md AC-12; reviews/impl/wave-2/iter-01/combined.md
+- 2026-10-12 — impl-review wave-2/iter-01: combined CONCERNS (F1 critical тест, F2 medium, F3–F5, F7 low; F6 закрыт решением пользователя), external CONCERNS (1 critical, 2–3 high, 4–6 medium) → impl review-fix (wave-2/iter-01)
