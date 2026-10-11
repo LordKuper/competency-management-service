@@ -31,13 +31,43 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         ("DELETE", "/api/v1/employees/{id}", null),
     ];
 
+    private static readonly (string Method, string Path, object? Body)[] CatalogueEndpoints =
+    [
+        .. new[] { "directions", "categories", "tracks", "levels", "scales", "competencies" }.SelectMany(kind => new (string, string, object?)[]
+        {
+            ("POST", $"/api/v1/career/{kind}/{{id}}/approve", null),
+            ("POST", $"/api/v1/career/{kind}/{{id}}/deactivate", null),
+            ("POST", $"/api/v1/career/{kind}/{{id}}/activate", null),
+            ("DELETE", $"/api/v1/career/{kind}/{{id}}", null),
+        }),
+        ("PUT", "/api/v1/career/directions/{id}", new { name = "Направление" }),
+        ("PUT", "/api/v1/career/categories/{id}", new { name = "Категория" }),
+        ("PUT", "/api/v1/career/tracks/{id}", new { name = "Трек" }),
+        ("PUT", "/api/v1/career/levels/{id}", new { name = "Уровень" }),
+        ("PUT", "/api/v1/career/scales/{id}", new { name = "Шкала", points = CareerScenarios.Points() }),
+        ("PUT", "/api/v1/career/competencies/{id}", new { name = "Навык", description = (string?)null, categoryId = UnknownId, directionId = (Guid?)null, type = "Profile", scaleId = (Guid?)null }),
+        ("POST", "/api/v1/career/scales/{id}/make-default", null),
+        ("PUT", "/api/v1/career/tracks/{id}/level-order", new { levelIds = Array.Empty<Guid>() }),
+        ("DELETE", "/api/v1/career/matrices/{id}", null),
+        ("PUT", "/api/v1/career/matrix-versions/{id}/content", new { levels = Array.Empty<object>(), blocks = Array.Empty<object>(), competencies = Array.Empty<object>(), blockWeights = Array.Empty<object>(), requirements = Array.Empty<object>() }),
+        ("POST", "/api/v1/career/matrix-versions/{id}/submit", null),
+        ("POST", "/api/v1/career/matrix-versions/{id}/approve", null),
+        ("POST", "/api/v1/career/matrix-versions/{id}/return", new { comment = (string?)null }),
+        ("POST", "/api/v1/career/matrix-versions/{id}/accept-changes", null),
+        ("POST", "/api/v1/career/matrix-versions/{id}/accept-and-revise", null),
+        ("POST", "/api/v1/career/matrix-versions/{id}/rollback-changes", null),
+        ("PUT", "/api/v1/positions/{id}", new { name = "Должность" }),
+        ("POST", "/api/v1/positions/{id}/deactivate", null),
+        ("POST", "/api/v1/positions/{id}/activate", null),
+    ];
+
     [Fact]
     public async Task Ac5_EveryVersionedEndpoint_RequiresIfMatchWith428()
     {
         var admin = await (await environment.SharedHostAsync()).AdminAsync();
 
         var wrong = new List<string>();
-        foreach (var (method, template, body) in VersionedEndpoints)
+        foreach (var (method, template, body) in VersionedEndpoints.Concat(CatalogueEndpoints))
         {
             var response = await admin.SendAsync(new HttpMethod(method), template.Replace("{id}", UnknownId.ToString()), body);
             if (response.Status != HttpStatusCode.PreconditionRequired || response.ContentType != ProblemJson)

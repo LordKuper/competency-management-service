@@ -209,6 +209,30 @@ public sealed class CatalogRightsTests(CareerHost fixture) : IClassFixture<Caree
         refusals.Should().BeEmpty();
     }
 
+    [Theory]
+    [MemberData(nameof(Kinds))]
+    public async Task Ac24_TheListsAreFilteredByStatus_ForWhoeverMayReadThatStatus(string kind)
+    {
+        var org = await fixture.OrgAsync();
+        var catalogue = await CatalogueAsync(kind, org);
+        var active = (await catalogue.CreateAsync(org.Admin)).Expect(HttpStatusCode.Created);
+        var draft = (await catalogue.CreateAsync(org.TeamHead.Client)).Expect(HttpStatusCode.Created);
+        var inactive = (await catalogue.CreateAsync(org.Admin)).Expect(HttpStatusCode.Created);
+        (await org.Admin.PostAsync($"{catalogue.Path}/{inactive.Id}/deactivate", ifMatch: inactive.ETag)).Expect(HttpStatusCode.OK);
+        var names = new[] { active, draft, inactive }.Select(entry => entry.Json!["name"]!.GetValue<string>()).ToArray();
+
+        async Task<string[]> Listed(ApiClient who, string status) =>
+            [.. (await who.GetAsync($"{catalogue.Path}?status={status}&pageSize=200")).Expect(HttpStatusCode.OK).ItemNames().Where(names.Contains)];
+
+        (await Listed(org.Hr.Client, "Active")).Should().Equal(names[0]);
+        (await Listed(org.Hr.Client, "Draft")).Should().Equal(names[1]);
+        (await Listed(org.Hr.Client, "Inactive")).Should().Equal(names[2]);
+        (await Listed(org.Plain.Client, "Active")).Should().Equal(names[0]);
+        (await Listed(org.Plain.Client, "Draft")).Should().BeEmpty();
+        (await Listed(org.Plain.Client, "Inactive")).Should().BeEmpty();
+        (await Listed(org.TeamHead.Client, "Draft")).Should().Equal(names[1]);
+    }
+
     private static async Task<string[]> Names(ApiClient client, string path, string name) =>
         (await client.GetAsync($"{path}?q={Uri.EscapeDataString(name)}&pageSize=200")).Expect(HttpStatusCode.OK).ItemNames();
 
