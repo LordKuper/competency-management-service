@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Form, Select } from "antd";
 import { useNavigate } from "react-router";
 import { useFormSubmit } from "../../app/useFormSubmit";
+import { orgUnitTreeQuery } from "../org-structure/orgStructureApi";
+import { ancestorIds } from "../org-structure/orgTree";
 import { CatalogModal, FormActions } from "./CatalogModal";
 import { useProcessRoles } from "./careerApi";
 import {
@@ -24,6 +26,8 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
   const navigate = useNavigate();
   const [form] = Form.useForm<NewMatrix>();
   const directionId = Form.useWatch("directionId", form);
+  const orgUnitId = Form.useWatch("orgUnitId", form);
+  const units = useQuery(orgUnitTreeQuery);
   const roles = useProcessRoles();
   const directions = useQuery(directionsQuery());
   const tracks = useQuery({
@@ -40,6 +44,13 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
     onSettled: () => invalidateMatrices(queryClient),
   });
   const { isSubmitting, submit } = useFormSubmit(form, create.mutateAsync);
+  // The server accepts a track of the unit itself or of a unit above it.
+  const trackUnits = new Set(
+    orgUnitId ? [orgUnitId, ...ancestorIds(units.data ?? [], orgUnitId)] : [],
+  );
+  const matrixTracks = (tracks.data?.items ?? []).filter((track) =>
+    trackUnits.has(track.ownerOrgUnitId),
+  );
   const options = (entries: readonly { id: string; name: string }[]) =>
     entries.map((entry) => ({ value: entry.id, label: entry.name }));
 
@@ -61,7 +72,10 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
           label="Подразделение"
           rules={[{ required: true }]}
         >
-          <Select options={options(roles.data?.headedUnits ?? [])} />
+          <Select
+            options={options(roles.data?.headedUnits ?? [])}
+            onChange={() => form.resetFields(["trackId"])}
+          />
         </Form.Item>
         <Form.Item
           name="directionId"
@@ -78,9 +92,9 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
         <Form.Item name="trackId" label="Трек" rules={[{ required: true }]}>
           <Select
             showSearch={{ optionFilterProp: "label" }}
-            disabled={!directionId}
+            disabled={!directionId || !orgUnitId}
             loading={tracks.isFetching}
-            options={options(usableEntries(tracks.data?.items, null))}
+            options={options(usableEntries(matrixTracks, null))}
           />
         </Form.Item>
         <Form.Item name="scaleId" label="Шкала" rules={[{ required: true }]}>

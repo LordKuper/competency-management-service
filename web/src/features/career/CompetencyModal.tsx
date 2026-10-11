@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Form, Input, Select } from "antd";
+import { useEffect } from "react";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogModal, FormActions } from "./CatalogModal";
-import { OwnerFormItem } from "./CatalogParts";
 import { CategorySelect } from "./CategorySelect";
 import {
   type Competency,
@@ -25,7 +25,6 @@ const FIELDS = [
   "directionId",
   "type",
   "scaleId",
-  "ownerOrgUnitId",
 ] as const;
 
 export const COMPETENCY_TYPES: Record<CompetencyType, string> = {
@@ -40,13 +39,12 @@ const TYPE_OPTIONS = Object.entries(COMPETENCY_TYPES).map(([value, label]) => ({
 }));
 
 interface CompetencyValues {
-  ownerOrgUnitId?: string | null;
   name: string;
   description?: string | null;
   categoryId: string;
   directionId?: string | null;
   type: CompetencyType;
-  scaleId: string;
+  scaleId?: string;
 }
 
 interface CompetencyModalProps {
@@ -70,7 +68,7 @@ export function CompetencyModal({
         categoryId: values.categoryId,
         directionId: values.directionId ?? null,
         type: values.type,
-        scaleId: values.scaleId,
+        scaleId: values.scaleId ?? null,
       };
       return unwrap(
         competency
@@ -81,9 +79,7 @@ export function CompetencyModal({
               },
               body,
             })
-          : await api.POST("/api/v1/career/competencies", {
-              body: { ...body, ownerOrgUnitId: values.ownerOrgUnitId ?? null },
-            }),
+          : await api.POST("/api/v1/career/competencies", { body }),
       );
     },
     onSuccess: onClose,
@@ -123,7 +119,16 @@ function CompetencyForm({
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
   const directions = useQuery(directionsQuery());
   const scales = useQuery(scalesQuery());
-  const owner = Form.useWatch("ownerOrgUnitId", form);
+  const defaultScaleId = scales.data?.items.find(
+    (scale) => scale.isDefault,
+  )?.id;
+
+  // The scales arrive after the form opens; a new competency starts with the default one unless the user chose first.
+  useEffect(() => {
+    if (!competency && defaultScaleId && !form.getFieldValue("scaleId")) {
+      form.setFieldValue("scaleId", defaultScaleId);
+    }
+  }, [competency, defaultScaleId, form]);
 
   return (
     <Form
@@ -140,7 +145,6 @@ function CompetencyForm({
       }}
       onFinish={submit}
     >
-      {!competency && <OwnerFormItem />}
       <Form.Item
         name="name"
         label="Название"
@@ -162,9 +166,7 @@ function CompetencyForm({
         label="Категория"
         rules={[{ required: true }]}
       >
-        <CategorySelect
-          ownerOrgUnitId={competency ? competency.ownerOrgUnitId : owner}
-        />
+        <CategorySelect />
       </Form.Item>
       <Form.Item name="directionId" label="Направление">
         <Select

@@ -107,6 +107,11 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
   const edited = data?.items.find((track) => track.id === dialog);
   const columns: TableColumnsType<CareerTrack> = [
     NAME_COLUMN,
+    {
+      title: "Владелец",
+      dataIndex: "ownerOrgUnitName",
+      render: (name: string) => `Подразделение: ${name}`,
+    },
     ...entryColumns<CareerTrack>(),
     {
       title: "Действия",
@@ -115,6 +120,7 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
         <EntryActions
           segment="tracks"
           entry={track}
+          unitId={track.ownerOrgUnitId}
           onEdit={() => setDialog(track.id)}
         />
       ),
@@ -123,7 +129,7 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
 
   return (
     <Space orientation="vertical" size="middle" style={{ display: "flex" }}>
-      {rights.canCreate && (
+      {rights.canCreateTrack && (
         <Flex>
           <Button onClick={() => setDialog("create")}>Добавить трек</Button>
         </Flex>
@@ -151,7 +157,6 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
           segment="tracks"
           title="Добавить трек"
           directionId={direction.id}
-          defaultOwner={direction.ownerOrgUnitId}
           onClose={() => setDialog(null)}
         />
       )}
@@ -183,6 +188,7 @@ function LevelsTable({ track }: { track: CareerTrack }) {
         <EntryActions
           segment="levels"
           entry={level}
+          unitId={track.ownerOrgUnitId}
           onEdit={() => setDialog(level.id)}
         />
       ),
@@ -191,7 +197,7 @@ function LevelsTable({ track }: { track: CareerTrack }) {
 
   return (
     <Space orientation="vertical" size="middle" style={{ display: "flex" }}>
-      {rights.canCreate && (
+      {rights.canEdit(track, track.ownerOrgUnitId) && (
         <Flex>
           <Button onClick={() => setDialog("create")}>Добавить уровень</Button>
         </Flex>

@@ -36,7 +36,6 @@ export type CatalogSegment =
 const SEGMENT_OF_KIND: Record<CatalogKind, CatalogSegment> = {
   Direction: "directions",
   Track: "tracks",
-  Level: "levels",
   Category: "categories",
   Competency: "competencies",
   Scale: "scales",
@@ -216,20 +215,20 @@ export async function approveDraft(draft: CatalogDraft) {
 /** Values of a form that names an entry of a catalogue with nothing else to it. */
 export interface NamedEntryValues {
   name: string;
-  ownerOrgUnitId?: string | null;
+  /** Unit and direction of a track being created. */
+  ownerOrgUnitId?: string;
   directionId?: string;
 }
 
 /**
- * Creates (no `base`) or renames a direction, track or category. Creation of a track names its direction; the three
- * catalogues share the rename endpoint's shape and the direction and category the creation's.
+ * Creates (no `base`) or renames a direction, track or category. A track is created in a unit and a direction; the
+ * three catalogues share the rename endpoint's shape and a direction and a category the creation's.
  */
 export async function saveNamedEntry(
   segment: "directions" | "tracks" | "categories",
   values: NamedEntryValues,
   base: { id: string; version: number } | undefined,
 ) {
-  const ownerOrgUnitId = values.ownerOrgUnitId ?? null;
   if (base) {
     return unwrap(
       await api.PUT(
@@ -244,12 +243,12 @@ export async function saveNamedEntry(
       ),
     );
   }
-  if (segment === "tracks" && values.directionId) {
+  if (segment === "tracks" && values.directionId && values.ownerOrgUnitId) {
     return unwrap(
       await api.POST("/api/v1/career/tracks", {
         body: {
           name: values.name,
-          ownerOrgUnitId,
+          ownerOrgUnitId: values.ownerOrgUnitId,
           directionId: values.directionId,
         },
       }),
@@ -257,7 +256,19 @@ export async function saveNamedEntry(
   }
   return unwrap(
     await api.POST(`/api/v1/career/${segment}` as "/api/v1/career/directions", {
-      body: { name: values.name, ownerOrgUnitId },
+      body: { name: values.name },
+    }),
+  );
+}
+
+/** Makes an active scale the one a competency takes when none is named. */
+export async function makeScaleDefault(scale: { id: string; version: number }) {
+  return unwrap(
+    await api.POST("/api/v1/career/scales/{id}/make-default", {
+      params: {
+        path: { id: scale.id },
+        header: { "If-Match": ifMatchOf(scale.version) },
+      },
     }),
   );
 }

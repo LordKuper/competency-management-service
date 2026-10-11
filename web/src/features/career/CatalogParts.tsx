@@ -1,16 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  App,
-  Button,
-  Form,
-  Select,
-  Space,
-  type TableColumnsType,
-  Tag,
-} from "antd";
+import { App, Button, Space, type TableColumnsType, Tag } from "antd";
 import type { ReactNode } from "react";
 import { describeApiError } from "../../app/apiErrors";
-import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
 import {
   type CatalogAction,
   type CatalogEntry,
@@ -20,8 +11,6 @@ import {
   invalidateCatalogs,
 } from "./catalogApi";
 import { useCatalogRights } from "./useCatalogRights";
-
-const SHARED_OWNER = "Общая";
 
 const STATUS_TAGS: Record<CatalogStatus, { label: string; color?: string }> = {
   Draft: { label: "Черновик", color: "warning" },
@@ -35,14 +24,7 @@ export function CatalogStatusTag({ status }: { status: CatalogStatus }) {
   return <Tag color={color}>{label}</Tag>;
 }
 
-/** The unit that keeps an entry, or the word for a shared one. */
-export function ownerLabel(entry: Pick<CatalogEntry, "ownerOrgUnitName">) {
-  return entry.ownerOrgUnitName
-    ? `Подразделение: ${entry.ownerOrgUnitName}`
-    : SHARED_OWNER;
-}
-
-/** The status and owner columns every catalogue table ends with before its actions. */
+/** The status column every catalogue table ends with before its actions. */
 export function entryColumns<T extends CatalogEntry>(): TableColumnsType<T> {
   return [
     {
@@ -50,17 +32,14 @@ export function entryColumns<T extends CatalogEntry>(): TableColumnsType<T> {
       dataIndex: "status",
       render: (status: CatalogStatus) => <CatalogStatusTag status={status} />,
     },
-    {
-      title: "Владелец",
-      key: "owner",
-      render: (_, entry) => ownerLabel(entry),
-    },
   ];
 }
 
 interface EntryActionsProps {
   segment: CatalogSegment;
   entry: CatalogEntry;
+  /** Unit of the track the entry is or belongs to; omitted for an entry that belongs to no unit. */
+  unitId?: string;
   /** Opens the edit dialog; omitted for an entry that cannot be edited here. */
   onEdit?: () => void;
   /** Further actions of the row, shown first. */
@@ -71,6 +50,7 @@ interface EntryActionsProps {
 export function EntryActions({
   segment,
   entry,
+  unitId,
   onEdit,
   children,
 }: EntryActionsProps) {
@@ -83,12 +63,12 @@ export function EntryActions({
     onError: (failure) => message.error(describeApiError(failure)),
     onSettled: () => invalidateCatalogs(queryClient),
   });
-  const canManage = rights.canManage(entry);
+  const canManage = rights.canManage(unitId);
 
   return (
     <Space size={0} wrap>
       {children}
-      {onEdit && rights.canEdit(entry) && (
+      {onEdit && rights.canEdit(entry, unitId) && (
         <Button type="link" size="small" onClick={onEdit}>
           Править
         </Button>
@@ -125,31 +105,5 @@ export function EntryActions({
         </Button>
       )}
     </Space>
-  );
-}
-
-/**
- * The unit that will keep a new entry. Administrators may leave it empty for a shared entry or pick any unit;
- * heads and HR choose among the units they work for.
- */
-export function OwnerFormItem() {
-  const rights = useCatalogRights();
-  return (
-    <Form.Item
-      name="ownerOrgUnitId"
-      label="Подразделение"
-      rules={[{ required: !rights.isAdmin }]}
-    >
-      {rights.isAdmin ? (
-        <OrgUnitSelect allowClear placeholder={SHARED_OWNER} />
-      ) : (
-        <Select
-          options={rights.ownerUnits.map((unit) => ({
-            value: unit.id,
-            label: unit.name,
-          }))}
-        />
-      )}
-    </Form.Item>
   );
 }

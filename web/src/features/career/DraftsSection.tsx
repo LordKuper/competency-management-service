@@ -21,7 +21,6 @@ import { useCatalogRights } from "./useCatalogRights";
 const KIND_LABELS: Record<CatalogKind, string> = {
   Direction: "Направление",
   Track: "Трек",
-  Level: "Уровень",
   Category: "Категория",
   Competency: "Компетенция",
   Scale: "Шкала",
@@ -61,7 +60,7 @@ export function DraftsSection() {
       title: "Действия",
       key: "actions",
       render: (_, draft) =>
-        rights.keeps(draft.ownerOrgUnitId) && (
+        rights.canManage(draft.ownerOrgUnitId ?? undefined) && (
           <Button
             type="link"
             size="small"

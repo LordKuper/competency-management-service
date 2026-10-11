@@ -6,7 +6,6 @@ import { unwrap } from "../../api/unwrap";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogModal, FormActions } from "./CatalogModal";
-import { OwnerFormItem } from "./CatalogParts";
 import {
   type CareerLevel,
   type CareerTrack,
@@ -21,7 +20,6 @@ const NAME_MAX_LENGTH = 200;
 const FIELDS = [
   "name",
   "code",
-  "ownerOrgUnitId",
   "previousLevelId",
   "nextLevelIds",
   "validFrom",
@@ -32,7 +30,6 @@ const FIELDS = [
 ] as const;
 
 interface LevelValues {
-  ownerOrgUnitId?: string | null;
   name: string;
   code: string;
   previousLevelId?: string | null;
@@ -60,7 +57,7 @@ export function LevelModal({ track, level: latest, onClose }: LevelModalProps) {
   const queryClient = useQueryClient();
   const rights = useCatalogRights();
   const { base: level, noteSaveFailure } = useEditBase(latest);
-  const mayReadSalary = !!level && rights.keeps(level.ownerOrgUnitId);
+  const mayReadSalary = !!level && rights.keeps(track.ownerOrgUnitId);
   const salaryRead = useQuery({
     ...levelSalaryQuery(level?.id ?? ""),
     enabled: mayReadSalary,
@@ -90,11 +87,7 @@ export function LevelModal({ track, level: latest, onClose }: LevelModalProps) {
           )
         : unwrap(
             await api.POST("/api/v1/career/levels", {
-              body: {
-                ...body,
-                trackId: track.id,
-                ownerOrgUnitId: values.ownerOrgUnitId ?? null,
-              },
+              body: { ...body, trackId: track.id },
             }),
           );
       const salaryFrom = values.salaryFrom ?? null;
@@ -135,7 +128,7 @@ export function LevelModal({ track, level: latest, onClose }: LevelModalProps) {
           key={level?.version}
           level={level}
           salary={salary}
-          defaultOwner={track.ownerOrgUnitId}
+          canReadSalary={rights.keeps(track.ownerOrgUnitId)}
           onSubmit={(values) => save.mutateAsync(values)}
           onCancel={onClose}
         />
@@ -148,7 +141,8 @@ interface LevelFormProps {
   level?: CareerLevel;
   /** The range as the server returned it; absent when the user may not read it. */
   salary?: LevelSalary;
-  defaultOwner: string | null;
+  /** Whether the user may read and set salary ranges of the track's levels. */
+  canReadSalary: boolean;
   onSubmit: (values: LevelValues) => Promise<unknown>;
   onCancel: () => void;
 }
@@ -156,15 +150,13 @@ interface LevelFormProps {
 function LevelForm({
   level,
   salary,
-  defaultOwner,
+  canReadSalary,
   onSubmit,
   onCancel,
 }: LevelFormProps) {
-  const rights = useCatalogRights();
   const [form] = Form.useForm<LevelValues>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
   const { data: levels, isFetching } = useQuery(levelsQuery());
-  const owner = Form.useWatch("ownerOrgUnitId", form);
   const chosen = new Set([
     level?.previousLevelId,
     ...(level?.nextLevelIds ?? []),
@@ -179,7 +171,7 @@ function LevelForm({
       value: other.id,
       label: `${other.name} (${other.code})`,
     }));
-  const showSalary = level ? salary !== undefined : rights.keeps(owner);
+  const showSalary = level ? salary !== undefined : canReadSalary;
 
   return (
     <Form
@@ -187,7 +179,6 @@ function LevelForm({
       name="career-level"
       layout="vertical"
       initialValues={{
-        ownerOrgUnitId: defaultOwner ?? undefined,
         name: level?.name ?? "",
         code: level?.code ?? "",
         previousLevelId: level?.previousLevelId ?? undefined,
@@ -201,7 +192,6 @@ function LevelForm({
       }}
       onFinish={submit}
     >
-      {!level && <OwnerFormItem />}
       <Form.Item
         name="name"
         label="Название"

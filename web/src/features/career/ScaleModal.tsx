@@ -6,15 +6,13 @@ import { unwrap } from "../../api/unwrap";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogModal, FormActions } from "./CatalogModal";
-import { OwnerFormItem } from "./CatalogParts";
 import { invalidateCatalogs, type Scale, type ScalePoint } from "./catalogApi";
 
 const NAME_MAX_LENGTH = 200;
-const FIELDS = ["name", "points", "ownerOrgUnitId"] as const;
+const FIELDS = ["name", "points"] as const;
 const USED_NOTICE = "Используется в опубликованной матрице — изменить нельзя";
 
 interface ScaleValues {
-  ownerOrgUnitId?: string | null;
   name: string;
   points?: Partial<ScalePoint>[];
 }
@@ -48,7 +46,7 @@ export function ScaleModal({ scale: latest, onClose }: ScaleModalProps) {
               body,
             })
           : await api.POST("/api/v1/career/scales", {
-              body: { ...body, ownerOrgUnitId: values.ownerOrgUnitId ?? null },
+              body,
             }),
       );
     },
@@ -96,7 +94,6 @@ function ScaleForm({ scale, onSubmit, onCancel }: ScaleFormProps) {
       }}
       onFinish={submit}
     >
-      {!scale && <OwnerFormItem />}
       <Form.Item
         name="name"
         label="Название"

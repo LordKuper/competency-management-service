@@ -16,20 +16,12 @@ interface CategorySelectProps {
   id?: string;
   value?: string;
   onChange?: (value: string | undefined) => void;
-  /** Unit that would keep a category added here; null for a shared one. */
-  ownerOrgUnitId: string | null | undefined;
 }
 
 /**
- * Searchable choice of a category. When the typed name matches none, the list offers to add it for the competency's
- * unit, and the new category is picked without leaving the form. The server still decides whether the addition is allowed.
+ * Searchable choice of a category. When the typed name matches none, the list offers to add it, and the new category is picked without leaving the form. The server still decides whether the addition is allowed.
  */
-export function CategorySelect({
-  id,
-  value,
-  onChange,
-  ownerOrgUnitId,
-}: CategorySelectProps) {
+export function CategorySelect({ id, value, onChange }: CategorySelectProps) {
   const queryClient = useQueryClient();
   const rights = useCatalogRights();
   const { message } = App.useApp();
@@ -37,11 +29,7 @@ export function CategorySelect({
   const { data, error, isFetching } = useQuery(categoriesQuery());
   const add = useMutation({
     mutationFn: (name: string) =>
-      saveNamedEntry(
-        "categories",
-        { name, ownerOrgUnitId: ownerOrgUnitId ?? null },
-        undefined,
-      ),
+      saveNamedEntry("categories", { name }, undefined),
     onSuccess: (category) => onChange?.(category.id),
     onError: (failure) => message.error(describeApiError(failure)),
     onSettled: () => invalidateCatalogs(queryClient),
@@ -57,7 +45,7 @@ export function CategorySelect({
     !options.some(
       (option) => option.label.toLocaleLowerCase() === name.toLocaleLowerCase(),
     );
-  if (isNew && rights.canCreateFor(ownerOrgUnitId ?? null)) {
+  if (isNew && rights.canCreate) {
     options.push({ value: ADD_VALUE, label: `Добавить категорию «${name}»` });
   }
 

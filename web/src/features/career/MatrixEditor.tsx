@@ -104,7 +104,6 @@ function chipLevel(score: number) {
 }
 
 function MatrixEditorBody({
-  matrix,
   version,
   base,
   changed,
@@ -188,9 +187,7 @@ function MatrixEditorBody({
         ) &&
         (competency.directionId === null ||
           competency.directionId === entries.direction.id) &&
-        (competency.status === "Active" ||
-          (competency.status === "Draft" &&
-            competency.ownerOrgUnitId === matrix.orgUnitId)),
+        competency.status !== "Inactive",
     )
     .map((competency) => ({ value: competency.id, label: competency.name }));
 

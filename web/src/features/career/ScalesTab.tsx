@@ -1,9 +1,24 @@
-import { useQuery } from "@tanstack/react-query";
-import { Button, Flex, Space, Table, type TableColumnsType } from "antd";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  App,
+  Button,
+  Flex,
+  Space,
+  Table,
+  type TableColumnsType,
+  Tag,
+} from "antd";
 import { useState } from "react";
+import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { EntryActions, entryColumns } from "./CatalogParts";
-import { type Scale, type ScalePoint, scalesQuery } from "./catalogApi";
+import {
+  invalidateCatalogs,
+  makeScaleDefault,
+  type Scale,
+  type ScalePoint,
+  scalesQuery,
+} from "./catalogApi";
 import { ScaleModal } from "./ScaleModal";
 import { useCatalogRights } from "./useCatalogRights";
 
@@ -18,11 +33,26 @@ const POINT_COLUMNS: TableColumnsType<ScalePoint> = [
 /** The scales, the base one and those added later, each opening to its points. */
 export function ScalesTab() {
   const rights = useCatalogRights();
+  const { message } = App.useApp();
+  const queryClient = useQueryClient();
   const [dialog, setDialog] = useState<Dialog>(null);
+  const makeDefault = useMutation({
+    mutationFn: makeScaleDefault,
+    onError: (failure) => message.error(describeApiError(failure)),
+    onSettled: () => invalidateCatalogs(queryClient),
+  });
   const { data, error, isFetching, refetch } = useQuery(scalesQuery());
   const edited = data?.items.find((scale) => scale.id === dialog);
   const columns: TableColumnsType<Scale> = [
-    { title: "Название", dataIndex: "name" },
+    {
+      title: "Название",
+      dataIndex: "name",
+      render: (name: string, scale) => (
+        <>
+          {name} {scale.isDefault && <Tag color="processing">По умолчанию</Tag>}
+        </>
+      ),
+    },
     ...entryColumns<Scale>(),
     {
       title: "Действия",
@@ -32,7 +62,18 @@ export function ScalesTab() {
           segment="scales"
           entry={scale}
           onEdit={() => setDialog(scale.id)}
-        />
+        >
+          {rights.isHr && scale.status === "Active" && !scale.isDefault && (
+            <Button
+              type="link"
+              size="small"
+              disabled={makeDefault.isPending}
+              onClick={() => makeDefault.mutate(scale)}
+            >
+              Сделать по умолчанию
+            </Button>
+          )}
+        </EntryActions>
       ),
     },
   ];

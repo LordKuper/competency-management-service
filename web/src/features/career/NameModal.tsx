@@ -1,15 +1,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Form, Input } from "antd";
+import { Form, Input, Select } from "antd";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
+import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
 import { CatalogModal, FormActions } from "./CatalogModal";
-import { OwnerFormItem } from "./CatalogParts";
 import {
   type CatalogEntry,
   invalidateCatalogs,
   type NamedEntryValues,
   saveNamedEntry,
 } from "./catalogApi";
+import { useCatalogRights } from "./useCatalogRights";
 
 const NAME_MAX_LENGTH = 200;
 const FIELDS = ["name", "ownerOrgUnitId"] as const;
@@ -21,8 +22,6 @@ interface NameModalProps {
   entry?: CatalogEntry;
   /** Direction of a track being created. */
   directionId?: string;
-  /** Unit offered first for a new entry, the one its parent belongs to. */
-  defaultOwner?: string | null;
   onClose: () => void;
 }
 
@@ -32,7 +31,6 @@ export function NameModal({
   title,
   entry: latest,
   directionId,
-  defaultOwner,
   onClose,
 }: NameModalProps) {
   const queryClient = useQueryClient();
@@ -56,7 +54,7 @@ export function NameModal({
         key={entry?.version}
         name={entry?.name ?? ""}
         isNew={!entry}
-        defaultOwner={defaultOwner}
+        hasUnit={segment === "tracks"}
         onSubmit={(values) => save.mutateAsync(values)}
         onCancel={onClose}
       />
@@ -67,18 +65,13 @@ export function NameModal({
 interface NameFormProps {
   name: string;
   isNew: boolean;
-  defaultOwner?: string | null;
+  /** Whether a new entry is put in a unit of the user's choice: tracks are. */
+  hasUnit: boolean;
   onSubmit: (values: NamedEntryValues) => Promise<unknown>;
   onCancel: () => void;
 }
 
-function NameForm({
-  name,
-  isNew,
-  defaultOwner,
-  onSubmit,
-  onCancel,
-}: NameFormProps) {
+function NameForm({ name, isNew, hasUnit, onSubmit, onCancel }: NameFormProps) {
   const [form] = Form.useForm<NamedEntryValues>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
 
@@ -87,10 +80,10 @@ function NameForm({
       form={form}
       name="catalog-name"
       layout="vertical"
-      initialValues={{ name, ownerOrgUnitId: defaultOwner ?? undefined }}
+      initialValues={{ name }}
       onFinish={submit}
     >
-      {isNew && <OwnerFormItem />}
+      {isNew && hasUnit && <TrackUnitFormItem />}
       <Form.Item
         name="name"
         label="Название"
@@ -106,5 +99,28 @@ function NameForm({
       </Form.Item>
       <FormActions isSubmitting={isSubmitting} onCancel={onCancel} />
     </Form>
+  );
+}
+
+/** The unit of a new track: administrators pick any unit, heads and HR one of the units they work for. */
+function TrackUnitFormItem() {
+  const rights = useCatalogRights();
+  return (
+    <Form.Item
+      name="ownerOrgUnitId"
+      label="Подразделение"
+      rules={[{ required: true }]}
+    >
+      {rights.isAdmin ? (
+        <OrgUnitSelect isActiveRequired />
+      ) : (
+        <Select
+          options={rights.ownerUnits.map((unit) => ({
+            value: unit.id,
+            label: unit.name,
+          }))}
+        />
+      )}
+    </Form.Item>
   );
 }
