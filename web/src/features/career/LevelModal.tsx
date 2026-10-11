@@ -155,7 +155,7 @@ export function LevelModal({
 
   return (
     <CatalogModal
-      title={level || draft ? "Править" : "Добавить уровень"}
+      title={level || draft ? "Изменение уровня" : "Новый уровень"}
       error={save.error}
       fields={FIELDS}
       onClose={onClose}

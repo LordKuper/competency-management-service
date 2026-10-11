@@ -90,14 +90,14 @@ export function DirectionsTracksTab() {
       {dialog === "create" && (
         <NameModal
           segment="directions"
-          title="Добавить направление"
+          title="Новое направление"
           onClose={() => setDialog(null)}
         />
       )}
       {edited && (
         <NameModal
           segment="directions"
-          title="Править"
+          title="Изменение направления"
           entry={edited}
           onClose={() => setDialog(null)}
         />

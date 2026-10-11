@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Form, Input, InputNumber, Space } from "antd";
+import { Button, Flex, Form, Input, InputNumber } from "antd";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
@@ -9,6 +9,8 @@ import { CatalogModal, FormActions } from "./CatalogModal";
 import { invalidateCatalogs, type Scale, type ScalePoint } from "./catalogApi";
 
 const NAME_MAX_LENGTH = 200;
+const LABEL_MAX_LENGTH = 500;
+const POINT_SCORE_WIDTH = 96;
 const FIELDS = ["name", "points"] as const;
 const USED_NOTICE = "Используется в опубликованной матрице — изменить нельзя";
 
@@ -57,7 +59,7 @@ export function ScaleModal({ scale: latest, onClose }: ScaleModalProps) {
 
   return (
     <CatalogModal
-      title={scale ? "Править" : "Добавить шкалу"}
+      title={scale ? "Изменение шкалы" : "Новая шкала"}
       error={save.error}
       fields={FIELDS}
       conflictNotice={USED_NOTICE}
@@ -111,25 +113,33 @@ function ScaleForm({ scale, onSubmit, onCancel }: ScaleFormProps) {
         {(fields, { add, remove }) => (
           <>
             {fields.map((field) => (
-              <Space key={field.key} align="start" wrap>
+              <Flex key={field.key} gap="middle" align="start">
                 <Form.Item
                   name={[field.name, "score"]}
                   label="Балл"
                   rules={[{ required: true }]}
+                  style={{ width: POINT_SCORE_WIDTH }}
                 >
-                  <InputNumber />
+                  <InputNumber style={{ width: "100%" }} />
                 </Form.Item>
                 <Form.Item
                   name={[field.name, "label"]}
                   label="Значение"
-                  rules={[{ required: true, whitespace: true }]}
+                  rules={[
+                    { required: true, whitespace: true },
+                    {
+                      max: LABEL_MAX_LENGTH,
+                      message: `Не длиннее ${LABEL_MAX_LENGTH} символов`,
+                    },
+                  ]}
+                  style={{ flex: 1 }}
                 >
-                  <Input autoComplete="off" />
+                  <Input.TextArea autoSize={{ minRows: 1 }} />
                 </Form.Item>
                 <Form.Item label=" ">
                   <Button onClick={() => remove(field.name)}>Удалить</Button>
                 </Form.Item>
-              </Space>
+              </Flex>
             ))}
             <Form.Item>
               <Button onClick={() => add({})}>Добавить балл</Button>

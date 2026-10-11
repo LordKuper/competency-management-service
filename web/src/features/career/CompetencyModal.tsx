@@ -89,7 +89,7 @@ export function CompetencyModal({
 
   return (
     <CatalogModal
-      title={competency ? "Править" : "Добавить компетенцию"}
+      title={competency ? "Изменение компетенции" : "Новая компетенция"}
       error={save.error}
       fields={FIELDS}
       onClose={onClose}

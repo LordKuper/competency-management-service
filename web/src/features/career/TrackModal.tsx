@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Form, Input, Select, Typography } from "antd";
+import { Form, Input, Select, Typography, theme } from "antd";
 import { useState } from "react";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
@@ -40,6 +40,7 @@ export function TrackModal({
   onClose,
 }: TrackModalProps) {
   const queryClient = useQueryClient();
+  const { token } = theme.useToken();
   const rights = useCatalogRights();
   const [form] = Form.useForm<TrackValues>();
   const { base, noteSaveFailure } = useEditBase(latest);
@@ -79,7 +80,7 @@ export function TrackModal({
 
   return (
     <CatalogModal
-      title={latest ? "Править" : "Добавить трек"}
+      title={latest ? "Изменение трека" : "Новый трек"}
       error={save.error}
       fields={FIELDS}
       onClose={onClose}
@@ -124,7 +125,7 @@ export function TrackModal({
           <Input autoComplete="off" />
         </Form.Item>
         {unitId && (
-          <section>
+          <section style={{ marginBottom: token.marginLG }}>
             <Typography.Title level={5}>Уровни</Typography.Title>
             {latest && <LevelsTable track={latest} editable />}
             <PendingLevels

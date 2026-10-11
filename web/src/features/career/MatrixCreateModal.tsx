@@ -56,7 +56,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
 
   return (
     <CatalogModal
-      title="Создать матрицу"
+      title="Новая матрица"
       error={create.error}
       fields={FIELDS}
       onClose={onClose}

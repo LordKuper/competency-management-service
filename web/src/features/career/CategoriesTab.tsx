@@ -78,14 +78,14 @@ export function CategoriesTab() {
       {dialog === "create" && (
         <NameModal
           segment="categories"
-          title="Добавить категорию"
+          title="Новая категория"
           onClose={() => setDialog(null)}
         />
       )}
       {edited && (
         <NameModal
           segment="categories"
-          title="Править"
+          title="Изменение категории"
           entry={edited}
           onClose={() => setDialog(null)}
         />
