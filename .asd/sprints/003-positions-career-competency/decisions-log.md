@@ -211,3 +211,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Решение пользователя (hard gate «new or changed scope»); стоимость AC-12: ≥1 итерация ревью (нижняя граница), 0 раундов исправлений.
 - **Affected docs**: sprint.md AC-12; reviews/impl/wave-2/iter-01/combined.md
 - 2026-10-12 — impl-review wave-2/iter-01: combined CONCERNS (F1 critical тест, F2 medium, F3–F5, F7 low; F6 закрыт решением пользователя), external CONCERNS (1 critical, 2–3 high, 4–6 medium) → impl review-fix (wave-2/iter-01)
+- 2026-10-12 — route review-fix wave-2/iter-01: critical, dispatch HEAD 85d43aa; risk change: workflow state machine (external 1 — возврат HR с комментарием), dev chain: external 1–6, combined F2–F5, F7; tester chain: combined F1
