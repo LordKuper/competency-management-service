@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi } from "../../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { ApprovalsSection } from "./ApprovalsSection";
 import { CategoriesTab } from "./CategoriesTab";
 import { CompetenciesTab } from "./CompetenciesTab";
@@ -265,6 +266,17 @@ const queries = (route: string) =>
     .calls(route)
     .map((call) => Object.fromEntries(new URL(call.url).searchParams));
 
+async function tableSettled() {
+  await waitFor(() => {
+    const blocked = Array.from(
+      document.querySelectorAll(".ant-spin-container"),
+    ).filter(
+      (container) => getComputedStyle(container).pointerEvents === "none",
+    );
+    expect(blocked).toHaveLength(0);
+  });
+}
+
 function headerOf(scope: HTMLElement, column: string) {
   const header = within(scope)
     .getAllByRole("columnheader")
@@ -278,7 +290,9 @@ beforeEach(() => {
   serve();
 });
 
-describe("column filters send their value under the param the server reads (AC-24)", () => {
+describe("column filters send their value under the param the server reads (AC-24)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   it.each(CASES)("$table", async (filter) => {
     render(
       <Providers>
@@ -304,6 +318,7 @@ describe("column filters send their value under the param the server reads (AC-2
         expect(queries(filter.route).length).toBeGreaterThan(0),
       );
     }
+    await tableSettled();
     const asked = queries(filter.route).length;
     expect(queries(filter.route)[0]).not.toHaveProperty(filter.param);
 

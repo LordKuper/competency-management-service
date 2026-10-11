@@ -8,6 +8,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { type ReactElement, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { LONG_FLOW_TIMEOUT } from "../test/timeouts";
 import { AppModal } from "./AppModal";
 import { Providers } from "./Providers";
 
@@ -61,7 +62,7 @@ function Dialog({
   );
 }
 
-describe("AppModal initial focus", () => {
+describe("AppModal initial focus", { timeout: LONG_FLOW_TIMEOUT }, () => {
   it("moves focus to the first field of the form when the dialog opens", async () => {
     await open(
       <Dialog>

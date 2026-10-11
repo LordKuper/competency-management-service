@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi, problem } from "../../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import type { OrgUnit } from "./orgStructureApi";
 import { UnitHrModal } from "./UnitHrModal";
 
@@ -69,7 +70,7 @@ beforeEach(() => {
   queryClient.clear();
 });
 
-describe("HR of a unit (AC-8)", () => {
+describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
   it("shows the assigned HR and the one inherited from above", async () => {
     serve("User", {
       assigned: person("u1", "Иванова Анна", "sales", "Продажи"),

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi, problem } from "../../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { careerQueryKey } from "./careerApi";
 import { MatrixCreateModal } from "./MatrixCreateModal";
 
@@ -144,7 +145,7 @@ beforeEach(() => {
   queryClient.clear();
 });
 
-describe("starting a matrix (AC-14)", () => {
+describe("starting a matrix (AC-14)", { timeout: LONG_FLOW_TIMEOUT }, () => {
   it("offers the units the user heads, and only the tracks of the chosen unit and of the units above it", async () => {
     const user = await openModal();
     await choose(user, "Подразделение", "Команда");

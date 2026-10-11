@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi } from "../../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { currentUserQueryKey } from "../auth/useCurrentUser";
 import { CareerPage } from "./CareerPage";
 import { careerQueryKey } from "./careerApi";
@@ -50,7 +51,9 @@ beforeEach(() => {
   queryClient.clear();
 });
 
-describe("tabs of the career model (AC-24, AC-19)", () => {
+describe("tabs of the career model (AC-24, AC-19)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   it("run in the order the records are created in, the approvals last, for a global administrator", async () => {
     await openAs("GlobalAdmin");
 

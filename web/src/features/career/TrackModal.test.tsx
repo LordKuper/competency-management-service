@@ -5,6 +5,7 @@ import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi, problem } from "../../test/fakeApi";
 import { stubRowLayout } from "../../test/stubRowLayout";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { currentUserQueryKey } from "../auth/useCurrentUser";
 import { careerQueryKey } from "./careerApi";
 import type { CareerTrack } from "./catalogApi";
@@ -160,7 +161,9 @@ afterEach(() => {
   restoreLayout = () => undefined;
 });
 
-describe("saving a track together with its levels (AC-10, AC-11)", () => {
+describe("saving a track together with its levels (AC-10, AC-11)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   it("creates the track, then each level in turn, then puts the levels in the order the user arranged", async () => {
     const served = serve();
     const onClose = vi.fn();

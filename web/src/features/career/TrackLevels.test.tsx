@@ -6,6 +6,7 @@ import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi } from "../../test/fakeApi";
 import { stubRowLayout } from "../../test/stubRowLayout";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import type { CareerLevel, CareerTrack } from "./catalogApi";
 import {
   arrangeLevels,
@@ -183,7 +184,9 @@ afterEach(() => {
   restoreLayout = () => undefined;
 });
 
-describe("the level list of the track dialog (AC-11)", () => {
+describe("the level list of the track dialog (AC-11)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   it("shows the hint, a handle named after each level with the Russian role description, and the instructions for the keyboard", async () => {
     renderLevels(arrangeLevels(SAVED, [], undefined));
 

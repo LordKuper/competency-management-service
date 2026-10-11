@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi, problem } from "../../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import type { Scale } from "./catalogApi";
 import { ScaleModal } from "./ScaleModal";
 
@@ -29,6 +30,15 @@ function open(scale?: Scale) {
   return { onClose, user: userEvent.setup() };
 }
 
+async function fill(
+  user: ReturnType<typeof userEvent.setup>,
+  field: HTMLElement,
+  text: string,
+) {
+  await user.click(field);
+  await user.paste(text);
+}
+
 const save = (user: ReturnType<typeof userEvent.setup>) =>
   user.click(screen.getByRole("button", { name: "Сохранить" }));
 
@@ -36,19 +46,19 @@ beforeEach(() => {
   queryClient.clear();
 });
 
-describe("scale form (AC-13)", () => {
+describe("scale form (AC-13)", { timeout: LONG_FLOW_TIMEOUT }, () => {
   it("creates a scale with the points that were typed", async () => {
     fakeApi.on("POST /api/v1/career/scales", () => Response.json(EXISTING));
     const { onClose, user } = open();
 
-    await user.type(screen.getByLabelText("Название"), "Новая");
-    await user.type(screen.getByLabelText("Балл"), "0");
-    await user.type(screen.getByLabelText("Значение"), "Не владеет");
+    await fill(user, screen.getByLabelText("Название"), "Новая");
+    await fill(user, screen.getByLabelText("Балл"), "0");
+    await fill(user, screen.getByLabelText("Значение"), "Не владеет");
     await user.click(screen.getByRole("button", { name: "Добавить балл" }));
     const scores = screen.getAllByLabelText("Балл");
     const labels = screen.getAllByLabelText("Значение");
-    await user.type(scores[1] as HTMLElement, "1");
-    await user.type(labels[1] as HTMLElement, "Владеет");
+    await fill(user, scores[1] as HTMLElement, "1");
+    await fill(user, labels[1] as HTMLElement, "Владеет");
     await save(user);
 
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());

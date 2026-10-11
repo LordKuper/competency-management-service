@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi } from "../../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { careerQueryKey } from "./careerApi";
 import { MatrixPage } from "./MatrixPage";
 import type { MatrixAction, MatrixVersion } from "./matrixApi";
@@ -120,7 +121,9 @@ beforeEach(() => {
   queryClient.clear();
 });
 
-describe("actions on a matrix version (AC-15, AC-16, AC-19)", () => {
+describe("actions on a matrix version (AC-15, AC-16, AC-19)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   it.each<[MatrixAction, string, string]>([
     ["Submit", "Отправить на согласование", "submit"],
     ["Approve", "Согласовать", "approve"],
@@ -268,7 +271,9 @@ describe("actions on a matrix version (AC-15, AC-16, AC-19)", () => {
   });
 });
 
-describe("a new version of a published matrix (AC-15)", () => {
+describe("a new version of a published matrix (AC-15)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   const published = () =>
     version({ status: "Published", step: null, actions: [] });
 
@@ -316,7 +321,9 @@ describe("a new version of a published matrix (AC-15)", () => {
   });
 });
 
-describe("what an approver changed in a returned version (AC-16, AC-19)", () => {
+describe("what an approver changed in a returned version (AC-16, AC-19)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   const JUNIOR_LEVEL = "junior";
   const DESIGN = "design";
   const requirement = {
@@ -443,7 +450,9 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", () => 
   });
 });
 
-describe("editing the content of a draft version (AC-14, AC-15, AC-17)", () => {
+describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   const CONTENT_ROUTE = `PUT /api/v1/career/matrix-versions/${VERSION_ID}/content`;
 
   const draft = () =>

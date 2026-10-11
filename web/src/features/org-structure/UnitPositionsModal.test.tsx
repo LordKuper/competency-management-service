@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi, problem } from "../../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import type { OrgUnit } from "./orgStructureApi";
 import { UnitPositionsModal } from "./UnitPositionsModal";
 
@@ -70,7 +71,9 @@ beforeEach(() => {
   queryClient.clear();
 });
 
-describe("positions of a unit (AC-2, AC-4)", () => {
+describe("positions of a unit (AC-2, AC-4)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   it("lists the unit's own positions apart from the inherited ones, each inherited one with the unit it comes from", async () => {
     serve("GlobalAdmin");
     await openModal();

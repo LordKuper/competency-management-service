@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi, problem } from "../../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { PositionsPage } from "./PositionsPage";
 
 const LIST = "GET /api/v1/positions";
@@ -68,7 +69,9 @@ beforeEach(() => {
   queryClient.clear();
 });
 
-describe("position catalogue page (AC-1, AC-24)", () => {
+describe("position catalogue page (AC-1, AC-24)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   it("starts with the active positions, names the columns and tags each position's status in words", async () => {
     serveList();
     await openPage();

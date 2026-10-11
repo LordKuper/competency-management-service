@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/ApiError";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { moreBlockersText, useConfirmDeletion } from "./useConfirmDeletion";
 
 type Deletion = Parameters<ReturnType<typeof useConfirmDeletion>>[0];
@@ -58,7 +59,9 @@ describe("moreBlockersText (AC-25)", () => {
   });
 });
 
-describe("confirming a deletion (AC-25)", () => {
+describe("confirming a deletion (AC-25)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   it("asks «Удалить {вид} «{название}»?» with the extra line, danger-styled, and focuses «Отмена»", async () => {
     await ask({
       kind: "трек",

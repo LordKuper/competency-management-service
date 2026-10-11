@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi } from "../../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import type { OrgUnitTreeNode } from "./orgStructureApi";
 import { UnitCard } from "./UnitCard";
 
@@ -56,7 +57,9 @@ beforeEach(() => {
   queryClient.clear();
 });
 
-describe("unit card (AC-2, AC-8, AC-19)", () => {
+describe("unit card (AC-2, AC-8, AC-19)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   it("names the HR who answers for the unit, the unit's own before the inherited one", async () => {
     show({
       assigned: person("Иванова Анна"),

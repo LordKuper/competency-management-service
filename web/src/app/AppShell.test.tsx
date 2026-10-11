@@ -18,13 +18,13 @@ const ACCOUNT = {
   employeeMiddleName: null,
 };
 
-async function openAs(role: "GlobalAdmin" | "User") {
+async function openAs(role: "GlobalAdmin" | "User", path: string = paths.tree) {
   fakeApi.on("GET /api/v1/auth/me", () => Response.json({ ...ACCOUNT, role }));
   fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([]));
   fakeApi.on("GET /api/v1/career/me", () =>
     Response.json({ headedUnits: [], hrUnits: [] }),
   );
-  await router.navigate(paths.tree);
+  await router.navigate(path);
   render(
     <Providers>
       <RouterProvider router={router} />
@@ -79,5 +79,28 @@ describe("navigation entries by role (AC-19)", () => {
       "top:Оргструктура",
       "top:Карьерная модель",
     ]);
+  });
+});
+
+describe("the position catalogue address (AC-1, AC-19)", () => {
+  it("opens the catalogue for a global administrator", async () => {
+    fakeApi.on("GET /api/v1/positions", () =>
+      Response.json({ items: [], total: 0, page: 1, pageSize: 20 }),
+    );
+
+    await openAs("GlobalAdmin", "/positions");
+
+    expect(
+      await screen.findByRole("heading", { name: "Должности" }),
+    ).toBeInTheDocument();
+  });
+
+  it("gives an ordinary user the not-found page and requests no positions", async () => {
+    await openAs("User", "/positions");
+
+    expect(
+      await screen.findByRole("heading", { name: "Страница не найдена" }),
+    ).toBeInTheDocument();
+    expect(fakeApi.calls("GET /api/v1/positions")).toHaveLength(0);
   });
 });

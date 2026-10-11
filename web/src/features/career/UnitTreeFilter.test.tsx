@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi } from "../../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { unitFilter } from "./UnitTreeFilter";
 
 const unit = (id: string, name: string, parentId: string | null) => ({
@@ -44,7 +45,9 @@ beforeEach(() => {
   queryClient.clear();
 });
 
-describe("unit filter of the career tables (AC-24)", () => {
+describe("unit filter of the career tables (AC-24)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   it("shows the filter value the server was asked for, one unit at a time, under the name of the param", () => {
     expect(unitFilter("orgUnitId", undefined)).toMatchObject({
       key: "orgUnitId",

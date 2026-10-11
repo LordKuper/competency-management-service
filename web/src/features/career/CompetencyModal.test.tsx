@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi } from "../../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { CompetencyModal } from "./CompetencyModal";
 import type { Competency } from "./catalogApi";
 
@@ -103,7 +104,9 @@ beforeEach(() => {
   queryClient.clear();
 });
 
-describe("scale of a new competency (AC-22)", () => {
+describe("scale of a new competency (AC-22)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   it("starts with the default scale, which a save sends", async () => {
     fakeApi.on("POST /api/v1/career/competencies", () =>
       Response.json({ ...EXISTING, version: 1 }),

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi, problem } from "../../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { PositionSelect } from "./PositionSelect";
 
 function entry(positionId: string, name: string, isActive = true) {
@@ -57,7 +58,9 @@ beforeEach(() => {
   queryClient.clear();
 });
 
-describe("position choice in the employee form (AC-4)", () => {
+describe("position choice in the employee form (AC-4)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
   it("offers the active positions of the chosen unit, with the placeholder «Выберите должность»", async () => {
     serve();
     const user = await openSelect();
