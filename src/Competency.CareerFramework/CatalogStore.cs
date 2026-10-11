@@ -38,6 +38,19 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
+    /// Starts a transaction for a change that only refers to catalogue entries: the tree lock and then the catalogue lock, both in shared
+    /// mode, so entries it checks cannot be deleted before it commits while such changes still run side by side.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the wait for the locks.</param>
+    /// <returns>The open transaction; the caller commits it, and disposing it releases the locks.</returns>
+    public async Task<IDbContextTransaction> BeginSharedAsync(CancellationToken cancellationToken)
+    {
+        var transaction = await employees.BeginSharedAsync(cancellationToken);
+        await context.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock_shared({LockKey})", cancellationToken);
+        return transaction;
+    }
+
+    /// <summary>
     /// Works out the signed-in user's rights in the catalogues, including the drafts they read through the matrix versions they take part in.
     /// </summary>
     /// <param name="cancellationToken">Cancels the lookups.</param>

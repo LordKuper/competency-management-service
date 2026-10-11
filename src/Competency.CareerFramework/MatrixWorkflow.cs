@@ -9,7 +9,7 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The life of matrix versions: editing, the approval route and publication. Every status change holds, in this order, the tree lock in
 /// shared mode, the catalogue lock, because publication makes drafts active, and the matrix row, and needs <c>If-Match</c>; content
-/// edits rely on <c>If-Match</c> alone. Who may act is worked out under those locks at the moment of acting.
+/// edits hold the tree and the catalogue lock in shared mode and rely on <c>If-Match</c> for the version row. Who may act is worked out under those locks at the moment of acting.
 /// </summary>
 internal sealed class MatrixWorkflow(
     AppDbContext context,
@@ -119,6 +119,7 @@ internal sealed class MatrixWorkflow(
 
     /// <summary>
     /// Replaces the content of a version: by a unit head while it is a draft, and by the current approver while it is on review.
+    /// The catalogue lock is held shared, so an entry the content refers to cannot be deleted between the reference check and the save.
     /// </summary>
     public async Task<Results<Ok<MatrixVersionResponse>, NotFound, ValidationProblem, ProblemHttpResult>> EditAsync(
         Guid id,
@@ -133,6 +134,7 @@ internal sealed class MatrixWorkflow(
             return TypedResults.ValidationProblem(errors);
         }
 
+        await using var transaction = await store.BeginSharedAsync(cancellationToken);
         var viewer = await ViewerAsync(cancellationToken);
         if (await context.Set<MatrixVersion>().FirstOrDefaultAsync(version => version.Id == id, cancellationToken) is not { } version
             || await StateAsync(version, viewer, cancellationToken) is not { } state)
@@ -159,6 +161,7 @@ internal sealed class MatrixWorkflow(
             await context.SaveChangesAsync(cancellationToken);
         }
 
+        await transaction.CommitAsync(cancellationToken);
         return TypedResults.Ok(await DescribeAsync(version, state, response, cancellationToken));
     }
 
