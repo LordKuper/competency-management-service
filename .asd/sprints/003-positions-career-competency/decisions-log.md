@@ -199,3 +199,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: `review-waves` принял деление; темы — по подсистемам, чтобы ревьюер видел связный объём.
 - **Affected docs**: reviews/impl/waves.json, state.json
 - 2026-10-12 — impl-review wave-1/iter-01: combined CONCERNS (F1 critical — мёртвая константа `BeforeCareer` в тестовой инфраструктуре; F2 low — литерал `btrim` в памяти asd-dev-critical; F3 low — повторы doc-комментариев правила должности), external APPROVE (latched); → impl review-fix (wave-1/iter-01); memory-check отклонил память asd-reviewer-combined (идентификаторы спринта, строки 13, 17) — memory-fix владельцу в том же раунде
+- 2026-10-12 — route review-fix wave-1/iter-01: standard, dispatch HEAD 7095e27; risk none via npm --prefix web run lint и dotnet build (F3 — doc-комментарии, F1 — тест, F2 и память ревьюера — memory-fix)
