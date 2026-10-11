@@ -1,0 +1,118 @@
+diff --git a/.claude/agent-memory/asd-dev-critical/project_position-catalogue-facts.md b/.claude/agent-memory/asd-dev-critical/project_position-catalogue-facts.md
+index 63ce02e..5bcdce8 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_position-catalogue-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_position-catalogue-facts.md
+@@ -8,7 +8,7 @@ metadata:
+ Task 2 of sprint 003 (2026-10-09), EF Core 10.0.12 / Npgsql 10.0.3, not run against PostgreSQL:
+ 
+ - The unique index on `lower(name)` of `positions` cannot be expressed in the EF model; it lives only in the migration's `Sql("CREATE UNIQUE INDEX ...")`. `has-pending-model-changes` stays clean, and `DropTable` in Down drops it.
+-- SQL `btrim(s)` strips spaces only; to match .NET `Trim()` the migration passes the `Char.IsWhiteSpace` set as `U&' \0009\000A\000B\000C\000D\0085\00A0\1680\2000-\200A\2028\2029\202F\205F\3000'` (each code point listed). Put it in a C# verbatim `@"..."` constant and interpolate into the `$"""` SQL.
++- SQL `btrim(s)` strips spaces only; to match .NET `Trim()` the migration passes the `Char.IsWhiteSpace` set as a `U&'...'` literal, copied from the `Whitespace` constant in `src/Competency.Platform/Migrations/20261009090759_PositionCatalogue.cs` (a C# verbatim `@"..."` string interpolated into the `$"""` SQL). List every code point (U+2000 to U+200A one by one): `btrim`'s second argument is a plain character set, not a regex, so `\2000-\200A` would trim `-` and keep U+2001 to U+2009.
+ - `p.Name.ToLower() == name.ToLower()` would lower the parameter in .NET (funcletized). The lookup is `FromSql($"SELECT * FROM positions WHERE lower(name) = lower({name})")`, so both sides use PG `lower()` like the index.
+ - `dotnet build Competency.slnx` still compiles the test project after `position` -> `positionId` (backend tests post JSON); the web typecheck breaks in `EmployeeCards.test.tsx` and `orgTree.test.ts` (typed `Employee` fixtures without `positionId`).
+ - `int` response fields are plain `number` in `schema.d.ts` now (no `number | string`).
+diff --git a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+index be77c01..4c8d1b8 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+@@ -5,6 +5,6 @@
+ - [Re-review without a shell](feedback_rereview-no-shell-checks.md) — back hash, suite and pin claims from canon text and the tester's record; say what was not recomputed
+ - [Ledger finding mapping](feedback_ledger-finding-mapping.md) — one f per rule row, none on file/section rows, Findings table first, no pipes in cells
+ - [Delta re-review: decisions-log first](feedback_delta-review-decisions-log.md) — read decisions-log for design-promote routing before flagging doc drift; shared-host log waits are vacuous
+-- [Wave-review probes](feedback_wave-review-probes.md) — decisions-log "Open:" lines, unused test helpers, per-row lookup loops, body comments, AC ids in class docs: one Grep each
++- [Wave-review probes](feedback_wave-review-probes.md) — decisions-log Open/accepted lines, unused test helpers and constants, per-row lookups, body comments, AcN_ test prefixes, memory literals vs code
+ - [Doc entries on a code delta](feedback_doc-entries-on-code-delta.md) — memory md files un-gate the Documentation rows; read the doc-comment entry literally, report language follows language.docs, no Edit tool
+ - [Frontend wave probes](feedback_frontend-wave-probes.md) — web/ plus agent-memory wave: unused exports, always-constant props, cross-feature helpers, antd d.ts deprecations, stale memory claims, diff-to-file line arithmetic
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_wave-review-probes.md b/.claude/agent-memory/asd-reviewer-combined/feedback_wave-review-probes.md
+index e2ce724..16a354e 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/feedback_wave-review-probes.md
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_wave-review-probes.md
+@@ -1,6 +1,6 @@
+ ---
+ name: wave-review-probes
+-description: cheap probes that found real defects (or ruled out false ones) in a many-file domain-backend plus tests wave - decisions-log Open lines, audit.md design choices, unused test helpers, per-row lookup loops, in-body comments, memory bullets contradicting a new one
++description: cheap probes that found real defects (or ruled out false ones) in a many-file domain-backend plus tests wave - decisions-log Open lines and accepted trade-offs, audit.md design choices, unused test helpers and constants, per-row lookup loops, in-body comments, memory bullets contradicting a new one or the code
+ metadata:
+   type: feedback
+ ---
+@@ -9,19 +9,25 @@ On a domain-backend plus API-test wave, these probes paid off and cost one Grep
+ 
+ - Grep `decisions-log.md` for `Open:` / the task's acceptance line before judging an invariant. An "Open:" note there is an
+   unresolved item the orchestrator parked for review, not a user decision: raise it as a finding with a `question:` escalation
+-  (the last-administrator rule vs an unblocked admin bound to a dismissed employee was one).
++  (the last-administrator rule vs an unblocked admin bound to a dismissed employee was one). The same log also records accepted
++  trade-offs (e.g. tsvector concatenation without a GIN index, accepted with a measured p95 in test-plan) - not a finding.
+ - Before flagging a surprising side effect of a design choice (e.g. a role change voiding an invitation link through the
+   security-stamp binding), Grep `audit.md` for it: an audit proposal the user accepted is authority, not a finding (sprint 002).
+-- For every helper, fixture class and extension in `tests/**/Infrastructure`, Grep the name over `tests`; a declaration with no
+-  other hit is dead code, which the over-engineering checklist makes critical.
++- For every helper, fixture class, extension and public constant in `tests/**/Infrastructure`, Grep the name over `src` and
++  `tests`; a declaration with no other hit is dead code, which the over-engineering checklist makes critical (e.g. an
++  unused migration-id constant among used ones).
+ - In a list endpoint, look for `foreach ... await directory.Find...` over page rows: a per-row lookup through a cross-module
+   interface is the n+1 to flag (the org side joins, the user side looped).
+ - Scan the diff for added body comments and AC ids with `^\+\s+//[^/]|^\+.*[;{}]\s+//[^/]|AC-\d+` (code-style §7 bans body
+   comments; §8 lets an AC id live only in a test's name or path, so `/// AC-N:` in class summaries counts once the floor is low,
+   as does prose like "the acceptance ids are those of the sprint").
++- `AcN_` prefixes in test method names follow the subsystem docs' AC numbering (Platform `Ac5_`, `Ac16_`, Deployment `Ac8_`),
++  not the current sprint.md: a mismatch with sprint ACs is not a finding.
+ - When a wave adds an anonymous endpoint, re-read the "Permission matrix" summary of its endpoint class: it goes stale silently.
+ - When a review fix appends a memory bullet that replaces a technique, read the whole memory file: an older general bullet
+   often still prescribes the rejected technique (the tester's gate-start race bullet outlived the held-lock rewrite, sprint 002).
++- A memory bullet that quotes a code literal in shorthand (a `\2000-\200A` range in a `btrim` character set, where `-` is a
++  literal hyphen) is a copy hazard: compare it with the constant in code.
+ 
+ **Why:** the wave diff was ~9.6k lines; the whole-diff read found the logic, these greps found the rule violations in minutes.
+ 
+diff --git a/src/Competency.OrgStructure/EmployeeEndpoints.cs b/src/Competency.OrgStructure/EmployeeEndpoints.cs
+index 7c9cdab..e7fed6d 100644
+--- a/src/Competency.OrgStructure/EmployeeEndpoints.cs
++++ b/src/Competency.OrgStructure/EmployeeEndpoints.cs
+@@ -14,8 +14,6 @@ namespace Competency.OrgStructure;
+ /// read the full projection and change employees, under the tree lock and with <c>If-Match</c>.
+ /// Dismissal and deletion cascade to the units the employee heads and to the bound account in the same transaction,
+ /// and administrators preview exactly those changes first. A transfer likewise takes the employee off the headship of the unit they leave.
+-/// A new position, and any position after a transfer, must be active and allowed in the unit or a unit above it; a save that changes
+-/// neither leaves an earlier position as it is, even if it has since been deactivated or taken off the list.
+ /// </summary>
+ internal static class EmployeeEndpoints
+ {
+diff --git a/src/Competency.OrgStructure/EmployeeRequest.cs b/src/Competency.OrgStructure/EmployeeRequest.cs
+index a657ec9..5d7fd20 100644
+--- a/src/Competency.OrgStructure/EmployeeRequest.cs
++++ b/src/Competency.OrgStructure/EmployeeRequest.cs
+@@ -14,9 +14,6 @@ internal sealed record EmployeeRequest
+ 
+     public string? MiddleName { get; init; }
+ 
+-    /// <summary>
+-    /// The position from the catalogue; checked against the unit when it or the unit changes.
+-    /// </summary>
+     public required Guid PositionId { get; init; }
+ 
+     public required Guid OrgUnitId { get; init; }
+diff --git a/src/Competency.OrgStructure/OrgUnitPositionEndpoints.cs b/src/Competency.OrgStructure/OrgUnitPositionEndpoints.cs
+index 977ad35..3bf89e5 100644
+--- a/src/Competency.OrgStructure/OrgUnitPositionEndpoints.cs
++++ b/src/Competency.OrgStructure/OrgUnitPositionEndpoints.cs
+@@ -10,7 +10,7 @@ namespace Competency.OrgStructure;
+ /// <summary>
+ /// The API of the positions allowed in a unit. Any signed-in user reads a visible unit's own and inherited positions;
+ /// only global administrators change the unit's own list, under the tree lock, so an employee is never saved with a position
+-/// taken off the list at the same moment. Taking a position off the list deletes the row and leaves the employees' positions as they are.
++/// taken off the list at the same moment.
+ /// </summary>
+ internal static class OrgUnitPositionEndpoints
+ {
+diff --git a/tests/Competency.Tests/Infrastructure/MigrationDatabase.cs b/tests/Competency.Tests/Infrastructure/MigrationDatabase.cs
+index 937e0be..cc19a5f 100644
+--- a/tests/Competency.Tests/Infrastructure/MigrationDatabase.cs
++++ b/tests/Competency.Tests/Infrastructure/MigrationDatabase.cs
+@@ -18,7 +18,6 @@ public sealed class MigrationDatabase : IAsyncDisposable
+ {
+     public const string BeforePositions = "20261008074548_AccountLinks";
+     public const string Positions = "20261009090759_PositionCatalogue";
+-    public const string BeforeCareer = "20261009093207_OrgUnitHr";
+     public const string Catalogues = "20261009095543_CareerCatalogues";
+     public const string Matrices = "20261009102128_CompetencyMatrices";
+     public const string BeforeOwnership = Matrices;

@@ -203,3 +203,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — impl fix for wave-1/iter-01: findings resolved — F3 (779cf49), F1 (c52a603, tester), F2 (427f62b, memory-fix asd-dev-critical); память asd-reviewer-combined исправлена владельцем (memory-check чист), закоммичена оркестратором; gate: Release 0/0, web lint чист
 - 2026-10-12 — route impl-test entry 3: standard, dispatch HEAD 9747cb5; risk none via dotnet test (дельта — doc-комментарии, удаление неиспользуемой константы теста, память)
 - 2026-10-12 — impl-test: impacted set green (полный набор по предохранителю: backend 473/473, web 303/303), 0/0 tests (entry 3)
+- 2026-10-12 — impl-review wave-1/iter-02: combined APPROVE (F1–F3 закрыты), external APPROVE (latched) → волна 1 закрыта; переход к волне 2
