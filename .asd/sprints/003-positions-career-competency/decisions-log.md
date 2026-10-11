@@ -156,3 +156,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Прямое указание пользователя на impl assessment (hard gate «new or changed scope»); стоимость AC-11, AC-18: 0 итераций ревью, 0 раундов исправлений.
 - **Affected docs**: sprint.md AC-11, AC-18, Out of scope; plan.md Task 19, «Тексты интерфейса», Dependencies; .asd/project/custom-common-rules.md
 - 2026-10-11 — route Task 19: critical, dispatch HEAD 9595a64; risk change: migration
+- 2026-10-11 — Task 19 accepted (68c8a37, память 5446179): колонки и endpoints оклада удалены (миграция RemoveCareerLevelSalary, Down — пустые колонки), поля «Оклад от/до» убраны, правило «No financial data» в custom-common-rules.md; блок «Уровни» в окне нового трека виден сразу; старые события журнала с окладом остаются (журнал append-only, ветка не выпущена). Gate: Release 0/0, web lint, build, check:api чисты; plan.md — все подзадачи отмечены
