@@ -181,3 +181,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Gate завершения impl пройден (Release-сборка 0/0, web lint, build, check:api чисты; пути — только назначенные; открытых заглушек спринта нет); ничего не проверялось против PostgreSQL и в браузере — это работа impl-test.
 - **Affected docs**: state.json
 - 2026-10-11 — route impl-test entry 1: critical, dispatch HEAD 6f01bb8; risk change: migration, change: security, change: lock ordering
+- 2026-10-11 — stall: asd-tester-critical impl-test entry 1 (лимит API, без сигнала завершения)
+- 2026-10-11 — reconstruction: landed 80f374f, 1192ebf, 2e03ce1 (impl-test entry 1 — запись не считается выполненной); re-dispatched impl-test entry 1 (11 неотслеживаемых web-тестов, test-plan.md нет)
+- 2026-10-11 — route impl-test entry 1: critical, dispatch HEAD 2e03ce1 (re-dispatch, priorTier critical); risk change: migration, change: security, change: lock ordering
