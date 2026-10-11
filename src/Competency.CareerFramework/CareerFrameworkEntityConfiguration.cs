@@ -21,6 +21,11 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
     private const string UserEntityName = "Competency.UserManagement.AppUser";
     private const int EnumMaxLength = 16;
 
+    /// <summary>
+    /// The longest decision kind, <c>AcceptedAndRevising</c>, has 19 letters, more than the other enumerations need.
+    /// </summary>
+    private const int DecisionKindMaxLength = 32;
+
     private static readonly string StatusCheckSql = EnumCheckSql<CatalogStatus>("status");
     private static readonly string TypeCheckSql = EnumCheckSql<CompetencyType>("type");
     private static readonly JsonSerializerOptions PointsJson = new(JsonSerializerDefaults.Web);
@@ -180,7 +185,7 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
             entity.HasKey(e => new { e.VersionId, e.Sequence });
             entity.Property(e => e.VersionId).HasColumnName("version_id");
             entity.Property(e => e.Sequence).HasColumnName("sequence");
-            entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(EnumMaxLength);
+            entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(DecisionKindMaxLength);
             entity.Property(e => e.Step).HasColumnName("step").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.ActorId).HasColumnName("actor_id");
             entity.Property(e => e.At).HasColumnName("at");
