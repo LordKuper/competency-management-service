@@ -153,7 +153,7 @@ internal sealed class CatalogStore(
     /// Numbers the levels of one track from 1 in the given order. The levels that move are first set aside under negative numbers, so the
     /// unique number of a level within its track holds after every single update. Each moved level is then saved on its own: EF orders the
     /// updates of one save by the unique index it knows, from the numbers it read, and refuses two levels that trade places as a cycle,
-    /// although the database no longer holds those numbers.
+    /// although the database no longer holds those numbers. A round trip per moved level is affordable, because a track holds a handful.
     /// </summary>
     /// <param name="levels">All levels of the track, tracked, in their new order.</param>
     /// <param name="cancellationToken">Cancels the update.</param>
@@ -166,7 +166,6 @@ internal sealed class CatalogStore(
             $"UPDATE career_levels SET position = -position WHERE id = ANY({movingIds})",
             cancellationToken);
 
-        // ponytail: one save per moved level, a round trip each; a track holds a handful of levels.
         foreach (var (level, position) in moving)
         {
             level.Position = position;

@@ -22,7 +22,8 @@ internal static class CatalogDraftEndpoints
         .WithName("ListCatalogDrafts");
 
     /// <summary>
-    /// The drafts, oldest first, optionally of one kind or of one unit; only a track has a unit.
+    /// The drafts, oldest first, optionally of one kind or of one unit; only a track has a unit. The filters apply after every draft is
+    /// loaded, because drafts wait for approval and the list stays short.
     /// </summary>
     private static async Task<Ok<List<CatalogDraftResponse>>> ListAsync(
         [FromQuery(Name = "kind")] CatalogEntryKind? kind,
@@ -49,7 +50,6 @@ internal static class CatalogDraftEndpoints
             .. await DraftsAsync(context.Set<CompetencyScale>(), cancellationToken),
         ];
 
-        // ponytail: filters after loading every draft; drafts wait for approval, so the list stays short
         var drafts = all.Where(draft => (kind is null || KindOf(draft) == kind) && (orgUnitId is null || draft.UnitId == orgUnitId)).ToList();
         var unitNames = await store.UnitNamesAsync(drafts.Select(draft => draft.UnitId), cancellationToken);
         var authorNames = await store.UserNamesAsync(drafts.Select(draft => draft.AuthorId), cancellationToken);
