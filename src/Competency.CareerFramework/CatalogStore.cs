@@ -52,13 +52,15 @@ internal sealed class CatalogStore(
 
     /// <summary>
     /// Works out the signed-in user's rights in the catalogues, including the drafts they read through the matrix versions they take part in.
+    /// Those are not worked out for global administrators and HR, who read every draft a matrix version can use: the drafts of no unit
+    /// anyway, and draft levels belong to draft tracks, which no matrix uses.
     /// </summary>
     /// <param name="cancellationToken">Cancels the lookups.</param>
     /// <returns>The user's rights.</returns>
     public async Task<CatalogViewer> ViewerAsync(CancellationToken cancellationToken)
     {
         var viewer = await CatalogViewer.LoadAsync(actor, roles, cancellationToken);
-        return viewer with { RouteEntryIds = await route.RouteEntryIdsAsync(viewer, cancellationToken) };
+        return viewer.IsAdmin || viewer.IsHr ? viewer : viewer with { RouteEntryIds = await route.RouteEntryIdsAsync(viewer, cancellationToken) };
     }
 
     /// <summary>

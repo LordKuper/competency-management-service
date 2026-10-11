@@ -127,7 +127,7 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// <returns>Each version with its turn.</returns>
     public async Task<IReadOnlyList<(MatrixVersion Version, MatrixTurn Turn)>> AwaitingAsync(CatalogViewer viewer, CancellationToken cancellationToken)
     {
-        var unitIds = (await UnitsBelowHeadedAsync(viewer, cancellationToken)).Union(viewer.HrUnitIds).ToList();
+        var unitIds = (await UnitsBelowHeadedAsync(viewer, cancellationToken)).Keys.Union(viewer.HrUnitIds).ToList();
         var versions = await context.Set<MatrixVersion>()
             .AsNoTracking()
             .Where(version => version.Status == MatrixVersionStatus.OnReview && unitIds.Contains(version.Matrix.OrgUnitId))
@@ -146,38 +146,78 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     }
 
     /// <summary>
-    /// The versions in work of the units below the user's headed units for which the user is the superior approver.
+    /// The versions in work of the units below the user's headed units for which the user is the superior approver: walking up from a
+    /// unit's parent, the first unit whose head can act is one the user heads. The walk stays inside the headed subtrees, so no ancestry
+    /// is read, and the head of each unit on the way is looked up once.
     /// </summary>
     private async Task<List<MatrixVersion>> SuperiorOfAsync(CatalogViewer viewer, CancellationToken cancellationToken)
     {
-        var belowIds = await UnitsBelowHeadedAsync(viewer, cancellationToken);
-        if (belowIds.Count == 0)
+        var below = await UnitsBelowHeadedAsync(viewer, cancellationToken);
+        if (below.Count == 0)
         {
             return [];
         }
 
+        var belowIds = below.Keys.ToList();
         var candidates = await context.Set<MatrixVersion>()
             .AsNoTracking()
             .Where(IsInWork)
             .Where(version => belowIds.Contains(version.Matrix.OrgUnitId))
             .ToListAsync(cancellationToken);
-        var approverOf = new Dictionary<Guid, Guid?>();
+        var headOf = new Dictionary<Guid, Guid?>();
+        var approvedUnitIds = new HashSet<Guid>();
         foreach (var unitId in candidates.Select(version => version.Matrix.OrgUnitId).Distinct())
         {
-            approverOf[unitId] = await SuperiorApproverAsync(unitId, cancellationToken);
+            if (await NearestActingHeadIsViewerAsync(below[unitId].ParentId, viewer, below, headOf, cancellationToken))
+            {
+                approvedUnitIds.Add(unitId);
+            }
         }
 
-        return [.. candidates.Where(version => approverOf[version.Matrix.OrgUnitId] == viewer.UserId)];
+        return [.. candidates.Where(version => approvedUnitIds.Contains(version.Matrix.OrgUnitId))];
     }
 
-    private async Task<List<Guid>> UnitsBelowHeadedAsync(CatalogViewer viewer, CancellationToken cancellationToken)
+    private async Task<bool> NearestActingHeadIsViewerAsync(
+        Guid? startId,
+        CatalogViewer viewer,
+        IReadOnlyDictionary<Guid, OrgUnitStatus> below,
+        Dictionary<Guid, Guid?> headOf,
+        CancellationToken cancellationToken)
     {
-        var belowIds = new HashSet<Guid>();
-        foreach (var headedId in viewer.HeadedUnitIds)
+        var current = startId;
+        while (current is { } id && !viewer.HeadedUnitIds.Contains(id) && below.TryGetValue(id, out var unit))
         {
-            belowIds.UnionWith((await employees.FindSubtreeAsync(headedId, cancellationToken)).Select(unit => unit.Id).Where(id => id != headedId));
+            if (!headOf.TryGetValue(id, out var head))
+            {
+                head = await roles.HeadAccountAsync(unit, cancellationToken);
+                headOf[id] = head;
+            }
+
+            if (head is not null)
+            {
+                return false;
+            }
+
+            current = unit.ParentId;
         }
 
-        return [.. belowIds];
+        return current is { } reached && viewer.HeadedUnitIds.Contains(reached);
+    }
+
+    /// <summary>
+    /// The units strictly below the user's headed units, by identifier.
+    /// </summary>
+    private async Task<Dictionary<Guid, OrgUnitStatus>> UnitsBelowHeadedAsync(CatalogViewer viewer, CancellationToken cancellationToken)
+    {
+        var below = new Dictionary<Guid, OrgUnitStatus>();
+        foreach (var headedId in viewer.HeadedUnitIds)
+        {
+            foreach (var unit in (await employees.FindSubtreeAsync(headedId, cancellationToken)).Where(unit => unit.Id != headedId))
+            {
+                below.TryAdd(unit.Id, unit);
+            }
+        }
+
+        return below;
     }
 }
