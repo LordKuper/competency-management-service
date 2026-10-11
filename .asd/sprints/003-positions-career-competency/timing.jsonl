@@ -55,3 +55,7 @@
 {"op":"close","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T10:10:45.535Z","end":"2026-10-11T10:14:46.136Z","outcome":"done","attrs":{"gate":"impl assessment"}}
 {"op":"open","id":"impl assessment change 3","kind":"dispatch","parent":"impl#1","start":"2026-10-11T10:14:46.200Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"impl assessment change 3","kind":"dispatch","parent":"impl#1","start":"2026-10-11T10:14:46.200Z","end":"2026-10-11T10:15:40.859Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T10:15:45.644Z","attrs":{"gate":"impl assessment"}}
+{"op":"close","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T10:15:45.644Z","end":"2026-10-11T10:22:05.731Z","outcome":"done","attrs":{"gate":"impl assessment"}}
+{"op":"open","id":"wait scope amendment AC-9","kind":"user-wait","parent":"impl#1","start":"2026-10-11T10:22:05.795Z","attrs":{"gate":"new or changed scope"}}
+{"op":"close","id":"wait scope amendment AC-9","kind":"user-wait","parent":"impl#1","start":"2026-10-11T10:22:05.795Z","end":"2026-10-11T10:37:54.091Z","outcome":"done","attrs":{"gate":"new or changed scope"}}
