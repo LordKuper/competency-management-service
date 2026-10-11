@@ -175,6 +175,13 @@ internal static class MatrixEndpoints
             return Rejection.Conflict(PublishedMessage);
         }
 
+        // Checked before the save: a stale version deletes no version row, and the matrix delete in the same batch then breaks the
+        // version's foreign key before EF counts the rows. The matrix lock keeps the versions read here current.
+        if (versions.Any(version => version.Version != ifMatch.Version))
+        {
+            return TypedResults.Problem(statusCode: StatusCodes.Status412PreconditionFailed);
+        }
+
         var versionIds = versions.Select(version => version.Id).ToList();
         foreach (var variant in await context.Set<MatrixVariant>().Where(variant => versionIds.Contains(variant.VersionId)).ToListAsync(cancellationToken))
         {
