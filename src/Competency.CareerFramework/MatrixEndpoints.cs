@@ -218,18 +218,12 @@ internal static class MatrixEndpoints
         }
 
         var viewer = await workflow.ViewerAsync(cancellationToken);
-        var readable = new List<MatrixVersion>();
-        foreach (var version in await context.Set<MatrixVersion>()
-                     .AsNoTracking()
-                     .Where(version => version.MatrixId == id)
-                     .OrderByDescending(version => version.Number)
-                     .ToListAsync(cancellationToken))
-        {
-            if (await route.CanReadAsync(viewer, version, isHistory: false, cancellationToken))
-            {
-                readable.Add(version);
-            }
-        }
+        var versions = await context.Set<MatrixVersion>()
+            .AsNoTracking()
+            .Where(version => version.MatrixId == id)
+            .OrderByDescending(version => version.Number)
+            .ToListAsync(cancellationToken);
+        var readable = await route.ReadableAsync(viewer, versions, cancellationToken);
 
         var names = await store.UserNamesAsync(readable.Select(version => (Guid?)version.AuthorId), cancellationToken);
         return TypedResults.Ok(readable
@@ -312,17 +306,13 @@ internal static class MatrixEndpoints
             .Where(track => trackIds.Contains(track.Id))
             .ToDictionaryAsync(track => track.Id, track => track.Name, cancellationToken);
         var unitNames = await store.UnitNamesAsync(matrices.Select(matrix => (Guid?)matrix.OrgUnitId), cancellationToken);
+        var readableInWork = await route.ReadableAsync(viewer, [.. versions.Where(version => version.IsInWork)], cancellationToken);
 
         var described = new List<MatrixResponse>();
         foreach (var matrix in matrices)
         {
             var published = versions.FirstOrDefault(version => version.MatrixId == matrix.Id && version.IsPublic);
-            var inWork = versions.FirstOrDefault(version => version.MatrixId == matrix.Id && version.IsInWork);
-            if (inWork is not null && !await route.CanReadAsync(viewer, inWork, isHistory: false, cancellationToken))
-            {
-                inWork = null;
-            }
-
+            var inWork = readableInWork.FirstOrDefault(version => version.MatrixId == matrix.Id);
             described.Add(new MatrixResponse(
                 matrix.Id,
                 matrix.OrgUnitId,

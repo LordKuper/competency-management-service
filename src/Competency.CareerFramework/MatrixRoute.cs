@@ -65,17 +65,54 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// <param name="isHistory">Whether the user asks for the history rather than the version itself.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
     /// <returns>True when the user may read it.</returns>
-    public async Task<bool> CanReadAsync(CatalogViewer viewer, MatrixVersion version, bool isHistory, CancellationToken cancellationToken)
+    public async Task<bool> CanReadAsync(CatalogViewer viewer, MatrixVersion version, bool isHistory, CancellationToken cancellationToken) =>
+        ReadsWithoutLookup(viewer, version, isHistory)
+        || await context.Set<MatrixDecision>().AnyAsync(decision => decision.VersionId == version.Id && decision.ActorId == viewer.UserId, cancellationToken)
+        || await IsSuperiorApproverAsync(viewer, version.Matrix.OrgUnitId, cancellationToken);
+
+    /// <summary>
+    /// The versions the user may read, by the rule of <see cref="CanReadAsync"/>, for a list: whoever acted on the versions is found in
+    /// one query, and the superior approver once per unit.
+    /// </summary>
+    /// <param name="viewer">The user's rights.</param>
+    /// <param name="versions">The versions.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    /// <returns>The readable versions in their given order.</returns>
+    public async Task<List<MatrixVersion>> ReadableAsync(CatalogViewer viewer, IReadOnlyList<MatrixVersion> versions, CancellationToken cancellationToken)
     {
-        var unitId = version.Matrix.OrgUnitId;
-        if ((version.IsPublic && !isHistory) || viewer.IsAdmin || viewer.HeadedUnitIds.Contains(unitId) || viewer.HrUnitIds.Contains(unitId)
-            || version.AuthorId == viewer.UserId)
+        var userId = viewer.UserId;
+        var pendingIds = versions.Where(version => !ReadsWithoutLookup(viewer, version, isHistory: false)).Select(version => version.Id).ToList();
+        var actedOnIds = pendingIds.Count == 0
+            ? []
+            : (await context.Set<MatrixDecision>()
+                .Where(decision => pendingIds.Contains(decision.VersionId) && decision.ActorId == userId)
+                .Select(decision => decision.VersionId)
+                .Distinct()
+                .ToListAsync(cancellationToken)).ToHashSet();
+        var superiorOf = new Dictionary<Guid, bool>();
+        var readable = new List<MatrixVersion>();
+        foreach (var version in versions)
         {
-            return true;
+            if (ReadsWithoutLookup(viewer, version, isHistory: false) || actedOnIds.Contains(version.Id))
+            {
+                readable.Add(version);
+                continue;
+            }
+
+            var unitId = version.Matrix.OrgUnitId;
+            if (!superiorOf.TryGetValue(unitId, out var isSuperior))
+            {
+                isSuperior = await IsSuperiorApproverAsync(viewer, unitId, cancellationToken);
+                superiorOf[unitId] = isSuperior;
+            }
+
+            if (isSuperior)
+            {
+                readable.Add(version);
+            }
         }
 
-        return await context.Set<MatrixDecision>().AnyAsync(decision => decision.VersionId == version.Id && decision.ActorId == viewer.UserId, cancellationToken)
-            || await SuperiorApproverAsync(unitId, cancellationToken) == viewer.UserId;
+        return readable;
     }
 
     /// <summary>
@@ -150,6 +187,19 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// unit's parent, the first unit whose head can act is one the user heads. The walk stays inside the headed subtrees, so no ancestry
     /// is read, and the head of each unit on the way is looked up once.
     /// </summary>
+    private static bool ReadsWithoutLookup(CatalogViewer viewer, MatrixVersion version, bool isHistory)
+    {
+        var unitId = version.Matrix.OrgUnitId;
+        return (version.IsPublic && !isHistory) || viewer.IsAdmin || viewer.HeadedUnitIds.Contains(unitId) || viewer.HrUnitIds.Contains(unitId)
+            || version.AuthorId == viewer.UserId;
+    }
+
+    /// <summary>
+    /// Whether the user is the superior approver of the unit; the approver heads the unit above, so a user who heads none is not.
+    /// </summary>
+    private async Task<bool> IsSuperiorApproverAsync(CatalogViewer viewer, Guid unitId, CancellationToken cancellationToken) =>
+        viewer.HeadedUnitIds.Count > 0 && await SuperiorApproverAsync(unitId, cancellationToken) == viewer.UserId;
+
     private async Task<List<MatrixVersion>> SuperiorOfAsync(CatalogViewer viewer, CancellationToken cancellationToken)
     {
         var below = await UnitsBelowHeadedAsync(viewer, cancellationToken);
