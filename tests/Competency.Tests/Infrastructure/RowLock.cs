@@ -23,7 +23,49 @@ public sealed class RowLock : IAsyncDisposable
         this.transaction = transaction;
     }
 
+    public const long TreeKey = 5_001_001;
+    public const long CatalogueKey = 5_003_001;
+
     public static Task<RowLock> HoldAsync(ApiHost host, Guid userId) => HoldAsync(host, $"SELECT id FROM users WHERE id = '{userId}' FOR UPDATE");
+
+    /// <summary>
+    /// Holds an advisory lock the application takes with <c>pg_advisory_xact_lock</c>, exclusively or shared, as the writer or the reader of
+    /// what the lock guards would hold it, so a test can say which requests wait for it and which pass.
+    /// </summary>
+    /// <param name="host">The host whose database is locked.</param>
+    /// <param name="key">The lock key.</param>
+    /// <param name="shared">Whether to hold it in shared mode.</param>
+    public static Task<RowLock> HoldAdvisoryAsync(ApiHost host, long key, bool shared = false) =>
+        HoldAsync(host, shared ? $"SELECT pg_advisory_xact_lock_shared({key})" : $"SELECT pg_advisory_xact_lock({key})");
+
+    /// <summary>
+    /// Holds the row of a matrix, which every change of its versions locks.
+    /// </summary>
+    /// <param name="host">The host whose database is locked.</param>
+    /// <param name="matrixId">The matrix.</param>
+    public static Task<RowLock> HoldMatrixAsync(ApiHost host, Guid matrixId) =>
+        HoldAsync(host, $"SELECT id FROM competency_matrices WHERE id = '{matrixId}' FOR UPDATE");
+
+    /// <summary>
+    /// Sends a request that must stop at a lock another connection holds, and returns it once it is waiting.
+    /// </summary>
+    /// <param name="host">The host whose database is watched.</param>
+    /// <param name="waiters">How many requests, this one included, wait for a lock.</param>
+    /// <param name="send">Sends the request.</param>
+    /// <returns>The pending request.</returns>
+    public static async Task<Task<ApiResponse>> StartWaitingAsync(ApiHost host, int waiters, Func<Task<ApiResponse>> send)
+    {
+        var request = send();
+        await Waiting.UntilAsync(
+            async () => request.IsCompleted || await host.ScalarAsync<long>(WaitingForALock) >= waiters,
+            $"{waiters} request(s) wait for a lock or the request is answered");
+        if (request.IsCompleted)
+        {
+            throw new Xunit.Sdk.XunitException($"The request did not wait for the lock, it was answered: {await request}");
+        }
+
+        return request;
+    }
 
     /// <summary>
     /// Holds the rows of every active administrator, the lock that guards the rule that one always exists.

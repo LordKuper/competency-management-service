@@ -39,6 +39,28 @@ public sealed class EmployeeSearchTests(TestEnvironment environment)
     }
 
     [Fact]
+    public async Task Ac5_Search_FindsAnEmployeeByAQueryMixingANameWordAndAPositionWord_AndFollowsARenameOfThePosition()
+    {
+        var admin = await (await environment.SharedHostAsync()).AdminAsync();
+        var unit = await admin.CreateUnitAsync();
+        var token = Scenarios.Unique("x")[2..];
+        var target = await admin.CreateEmployeeAsync(unit.Id, $"Иванов{token}", "Пётр", position: $"Бухгалтер {token}");
+        await admin.CreateEmployeeAsync(unit.Id, $"Иванов{token}", "Олег", position: $"Менеджер {token}");
+        await admin.CreateEmployeeAsync(unit.Id, $"Петров{token}", "Иван", position: $"Бухгалтер {token}");
+        var position = (await admin.GetAsync($"/api/v1/positions/{target.Json!["positionId"]!.GetValue<Guid>()}")).Expect(HttpStatusCode.OK);
+
+        var mixed = await SearchAsync(admin, unit.Id, $"Иванов{token} бухгалтера");
+        var renamed = (await admin.PutAsync($"/api/v1/positions/{position.Id}", new { name = $"Аудитор {token}" }, position.ETag)).Expect(HttpStatusCode.OK);
+        var byOldPosition = await SearchAsync(admin, unit.Id, $"Иванов{token} бухгалтера");
+        var byNewPosition = await SearchAsync(admin, unit.Id, $"Иванов{token} аудитор");
+
+        mixed.Should().Equal(target.Id);
+        renamed.Json!["name"]!.GetValue<string>().Should().Be($"Аудитор {token}");
+        byOldPosition.Should().BeEmpty("the position is searched through the catalogue, so a renamed position is found under its new name only");
+        byNewPosition.Should().Equal(target.Id);
+    }
+
+    [Fact]
     public async Task Ac11_PercentAndUnderscore_AreSearchedAsCharacters()
     {
         var admin = await (await environment.SharedHostAsync()).AdminAsync();
