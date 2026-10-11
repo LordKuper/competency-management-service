@@ -149,3 +149,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-11 — impl assessment: пользователь — при двух баллах с одинаковым значением шкала не сохраняется без текста ошибки; показать «Баллы не должны повторяться» (уже принятый серверный текст) и прочие ошибки баллов в окне шкалы
 - 2026-10-11 — route impl assessment change 5: standard, dispatch HEAD 1fc245b; risk none via npm --prefix web run lint
 - 2026-10-11 — impl assessment change 5 выполнен (6f1a917): у списка баллов не было места для ошибки поля `points` — добавлены проверка повторов на клиенте и `Form.ErrorList`; в других окнах карьерной модели такой проблемы нет; web lint и build чисты
+
+## 2026-10-11 — scope amendment no financial data accepted
+
+- **Decision**: По указанию пользователя диапазон оклада убирается из карьерных уровней (AC-11, AC-18); финансовая информация в системе не хранится — правило проекта в `custom-common-rules.md` (долговременный дом решения) и пункт Out of scope. Plan: Task 19 (backend, миграция и экраны, волна 15). Риск R-8 (утечка оклада) снимается.
+- **Rationale**: Прямое указание пользователя на impl assessment (hard gate «new or changed scope»); стоимость AC-11, AC-18: 0 итераций ревью, 0 раундов исправлений.
+- **Affected docs**: sprint.md AC-11, AC-18, Out of scope; plan.md Task 19, «Тексты интерфейса», Dependencies; .asd/project/custom-common-rules.md
+- 2026-10-11 — route Task 19: critical, dispatch HEAD 9595a64; risk change: migration
