@@ -182,11 +182,6 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
         return awaiting;
     }
 
-    /// <summary>
-    /// The versions in work of the units below the user's headed units for which the user is the superior approver: walking up from a
-    /// unit's parent, the first unit whose head can act is one the user heads. The walk stays inside the headed subtrees, so no ancestry
-    /// is read, and the head of each unit on the way is looked up once.
-    /// </summary>
     private static bool ReadsWithoutLookup(CatalogViewer viewer, MatrixVersion version, bool isHistory)
     {
         var unitId = version.Matrix.OrgUnitId;
@@ -200,6 +195,11 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     private async Task<bool> IsSuperiorApproverAsync(CatalogViewer viewer, Guid unitId, CancellationToken cancellationToken) =>
         viewer.HeadedUnitIds.Count > 0 && await SuperiorApproverAsync(unitId, cancellationToken) == viewer.UserId;
 
+    /// <summary>
+    /// The versions in work of the units below the user's headed units for which the user is the superior approver: walking up from a
+    /// unit's parent, the first unit whose head can act is one the user heads. The walk stays inside the headed subtrees, so no ancestry
+    /// is read, and the head of each unit on the way is looked up once.
+    /// </summary>
     private async Task<List<MatrixVersion>> SuperiorOfAsync(CatalogViewer viewer, CancellationToken cancellationToken)
     {
         var below = await UnitsBelowHeadedAsync(viewer, cancellationToken);
