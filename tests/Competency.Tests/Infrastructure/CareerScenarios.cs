@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json.Nodes;
 
 namespace Competency.Tests.Infrastructure;
 
@@ -8,8 +7,7 @@ namespace Competency.Tests.Infrastructure;
 /// </summary>
 /// <param name="User">The account with the credentials it signs in with.</param>
 /// <param name="Client">The client holding the session.</param>
-/// <param name="EmployeeId">The employee the account is bound to.</param>
-public sealed record Member(TestUser User, ApiClient Client, Guid? EmployeeId = null)
+public sealed record Member(TestUser User, ApiClient Client)
 {
     public Guid Id => User.Id;
 }
@@ -24,8 +22,6 @@ public sealed class CareerOrg
     private CareerOrg()
     {
     }
-
-    public ApiHost Host { get; private init; } = null!;
 
     public ApiClient Admin { get; private init; } = null!;
 
@@ -69,7 +65,6 @@ public sealed class CareerOrg
         var sibling = await admin.CreateUnitAsync(department.Id);
         return new CareerOrg
         {
-            Host = host,
             Admin = admin,
             Root = root,
             Department = department,
@@ -98,7 +93,7 @@ public static class CareerScenarios
         var employee = await admin.CreateEmployeeAsync(unit.Id);
         var account = await admin.CreateUserAsync(employeeId: employee.Id);
         (await admin.SetHeadAsync(unit, employee.Id)).Expect(HttpStatusCode.OK);
-        return new Member(account, await account.SignInAsync(host), employee.Id);
+        return new Member(account, await account.SignInAsync(host));
     }
 
     public static async Task<Member> HrOfAsync(this ApiClient admin, ApiHost host, Guid unitId)
@@ -151,7 +146,4 @@ public static class CareerScenarios
 
     public static string[] ItemNames(this ApiResponse page) =>
         [.. page.Json!["items"]!.AsArray().Select(item => item!["name"]!.GetValue<string>())];
-
-    public static string[] Statuses(this JsonNode? rows) =>
-        [.. rows!.AsArray().Select(item => item!["status"]!.GetValue<string>())];
 }
