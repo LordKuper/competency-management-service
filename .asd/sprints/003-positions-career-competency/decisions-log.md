@@ -83,3 +83,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-11 — impl assessment changes 1 (66793b9) и 2 (209555d) выполнены; приняты: при заблокированном собственном HR не-администратор получает и `inherited: null` (A-5 — ответственного HR нет), `isActive` в конце записи ответа; gate: Release 0/0, web lint, build, check:api чисты; пути — только назначенные
 - 2026-10-11 — impl assessment: пользователь сообщил, что «Карьерная модель» и «Администрирование» скрыты под «…» (сжатие горизонтального меню antd: `Menu` с `flex: none` в шапке); route impl assessment change 3: standard, dispatch HEAD a65e3fd; risk none via npm --prefix web run lint
 - 2026-10-11 — impl assessment change 3 выполнен (de6aacf): `Menu` в шапке — `flex: 1, minWidth: 0` (rc-overflow меряет `clientWidth` своего `<ul>`); факт добавлен в antd-6.6.5.md; web lint чист; в браузере не проверено — проверяет пользователь
+
+## 2026-10-11 — scope amendment AC-9/AC-10 (in progress): directions and tracks ownership
+
+- **Decision**: Пользователь: направление не привязано к подразделению — ведут глобальный администратор и любой HR, руководители подразделений создают черновые направления, действующими их делает администратор или любой HR; трек обязательно принадлежит подразделению, матрица подразделения строится только по треку своего или вышестоящего подразделения. Правило для уровней, категорий, компетенций и шкал — уточняется (вопрос пользователя «что такое уровень?»).
+- **Rationale**: Указание пользователя на impl assessment (hard gate «new or changed scope»); стоимость AC-9, AC-10, AC-14: 0 итераций ревью, 0 раундов исправлений.
+- **Affected docs**: sprint.md AC-9, AC-10, AC-14 (после завершения уточнения)
