@@ -157,3 +157,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: sprint.md AC-11, AC-18, Out of scope; plan.md Task 19, «Тексты интерфейса», Dependencies; .asd/project/custom-common-rules.md
 - 2026-10-11 — route Task 19: critical, dispatch HEAD 9595a64; risk change: migration
 - 2026-10-11 — Task 19 accepted (68c8a37, память 5446179): колонки и endpoints оклада удалены (миграция RemoveCareerLevelSalary, Down — пустые колонки), поля «Оклад от/до» убраны, правило «No financial data» в custom-common-rules.md; блок «Уровни» в окне нового трека виден сразу; старые события журнала с окладом остаются (журнал append-only, ветка не выпущена). Gate: Release 0/0, web lint, build, check:api чисты; plan.md — все подзадачи отмечены
+
+## 2026-10-11 — scope amendment simplified levels accepted
+
+- **Decision**: AC-11: уровень — название, статус и порядок в треке (от младшего к старшему); убраны код, признак управленческого уровня, период действия, описание роли, ссылки на предыдущий и следующие уровни; порядок — перетаскиванием в окне трека с подсказкой «Уровни идут от младшего к старшему. Перетащите строку, чтобы изменить порядок»; AC-25: проверки удаления трека и уровня без ссылок между уровнями. Новая зависимость `@dnd-kit` (выбор пользователя вместо встроенного перетаскивания с кнопками; рекомендован встроенный вариант). Plan: Task 20 (волна 16); справка `@dnd-kit` — до диспатча; `stack.html` — на design-promote.
+- **Rationale**: Указания пользователя на impl assessment (hard gates «new or changed scope» и «stack direction»); стоимость AC-11, AC-25: 0 итераций ревью, 0 раундов исправлений.
+- **Affected docs**: sprint.md AC-11, AC-25; plan.md Task 20, «Тексты интерфейса», Dependencies; docs/architecture/tech-reference/ (новая справка); на design-promote — stack.html

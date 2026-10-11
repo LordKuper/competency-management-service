@@ -126,6 +126,20 @@
       "decision": "AC-11, AC-18 amended: salary range removed, no financial data in the system; Task 19 wave 15",
       "reason": "user instruction at impl assessment; cost AC-11, AC-18: 0 iterations / 0 fix rounds",
       "evidence": "decisions-log.md 2026-10-11 scope amendment no financial data"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-11 amended (level = name, status, order; drag-and-drop ordering in track form, hint text), AC-25 simplified; Task 20 wave 16",
+      "reason": "user instruction at impl assessment; cost AC-11, AC-25: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-11 scope amendment simplified levels"
+    },
+    {
+      "gate": "material stack direction: new dependency",
+      "decision_actor": "user",
+      "decision": "@dnd-kit for level drag-and-drop (over native DnD + buttons)",
+      "reason": "user choice; tech reference before Task 20; stack.html at design-promote",
+      "evidence": "decisions-log.md 2026-10-11 scope amendment simplified levels"
     }
   ],
   "task_routing": {
@@ -294,7 +308,7 @@
     }
   },
   "created_at": "2026-10-09T07:25:11.340Z",
-  "updated_at": "2026-10-11T14:38:12.551Z",
+  "updated_at": "2026-10-11T14:56:05.038Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
