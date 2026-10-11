@@ -39,7 +39,10 @@ internal static class OrgUnitHrEndpoints
     }
 
     /// <summary>
-    /// A deactivated unit is visible to global administrators only.
+    /// A deactivated unit is visible to global administrators only. Global administrators also see assignments whose account cannot act,
+    /// with the flag that says so. Other users see only assignments whose account can act, without the flag: an own assignment whose account
+    /// cannot act leaves the unit without an HR, so neither it nor the inherited one is shown, and an inherited one whose account cannot act
+    /// is not shown either.
     /// </summary>
     private static async Task<Results<Ok<OrgUnitHrResponse>, NotFound>> GetAsync(
         Guid id,
@@ -50,7 +53,8 @@ internal static class OrgUnitHrEndpoints
         CancellationToken cancellationToken)
     {
         var ancestry = await employees.FindAncestryAsync(id, cancellationToken);
-        if (ancestry is not [var unit, ..] || (!unit.IsActive && actor.Role != PlatformClaims.GlobalAdminRole))
+        var isAdmin = actor.Role == PlatformClaims.GlobalAdminRole;
+        if (ancestry is not [var unit, ..] || (!unit.IsActive && !isAdmin))
         {
             return TypedResults.NotFound();
         }
@@ -61,9 +65,19 @@ internal static class OrgUnitHrEndpoints
             .ToDictionaryAsync(assignment => assignment.OrgUnitId, assignment => assignment.UserId, cancellationToken);
         var inheritedFrom = ancestry.Skip(1).FirstOrDefault(candidate => assigneeOf.ContainsKey(candidate.Id));
 
-        return TypedResults.Ok(new OrgUnitHrResponse(
-            await DescribeAsync(unit, assigneeOf, employees, users, cancellationToken),
-            await DescribeAsync(inheritedFrom, assigneeOf, employees, users, cancellationToken)));
+        var assigned = await DescribeAsync(unit, assigneeOf, employees, users, cancellationToken);
+        var inherited = await DescribeAsync(inheritedFrom, assigneeOf, employees, users, cancellationToken);
+        if (isAdmin)
+        {
+            return TypedResults.Ok(new OrgUnitHrResponse(assigned, inherited));
+        }
+
+        return TypedResults.Ok(assigned is { IsActive: false }
+            ? new OrgUnitHrResponse(null, null)
+            : new OrgUnitHrResponse(AbleToAct(assigned), AbleToAct(inherited)));
+
+        static OrgUnitHrPersonResponse? AbleToAct(OrgUnitHrPersonResponse? person) =>
+            person is { IsActive: true } ? person with { IsActive = null } : null;
     }
 
     /// <summary>
@@ -141,6 +155,6 @@ internal static class OrgUnitHrEndpoints
         }
 
         var employee = user.EmployeeId is { } employeeId ? await employees.FindAsync(employeeId, cancellationToken) : null;
-        return new OrgUnitHrPersonResponse(user.Id, employee?.FullName ?? user.Email, user.IsActive, source.Id, source.Name);
+        return new OrgUnitHrPersonResponse(user.Id, employee?.FullName ?? user.Email, source.Id, source.Name, user.IsActive);
     }
 }

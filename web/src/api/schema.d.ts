@@ -2026,10 +2026,10 @@ export interface components {
             /** Format: uuid */
             userId: string;
             name: string;
-            isActive: boolean;
             /** Format: uuid */
             orgUnitId: string;
             orgUnitName: string;
+            isActive?: null | boolean;
         };
         OrgUnitHrRequest: {
             /** Format: uuid */

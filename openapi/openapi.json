@@ -12192,7 +12192,6 @@
         "required": [
           "userId",
           "name",
-          "isActive",
           "orgUnitId",
           "orgUnitName"
         ],
@@ -12205,15 +12204,18 @@
           "name": {
             "type": "string"
           },
-          "isActive": {
-            "type": "boolean"
-          },
           "orgUnitId": {
             "type": "string",
             "format": "uuid"
           },
           "orgUnitName": {
             "type": "string"
+          },
+          "isActive": {
+            "type": [
+              "null",
+              "boolean"
+            ]
           }
         }
       },
