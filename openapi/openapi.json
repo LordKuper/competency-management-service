@@ -4085,7 +4085,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewCatalogEntryRequest"
+                "$ref": "#/components/schemas/CatalogNameRequest"
               }
             }
           },
@@ -6343,7 +6343,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewCatalogEntryRequest"
+                "$ref": "#/components/schemas/CatalogNameRequest"
               }
             }
           },
@@ -7056,7 +7056,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewCompetencyRequest"
+                "$ref": "#/components/schemas/CompetencyRequest"
               }
             }
           },
@@ -7799,7 +7799,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewCompetencyScaleRequest"
+                "$ref": "#/components/schemas/CompetencyScaleRequest"
               }
             }
           },
@@ -8041,6 +8041,124 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/career/scales/{id}/make-default": {
+      "post": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "MakeCompetencyScaleDefault",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompetencyScaleResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -10105,8 +10223,6 @@
           "previousLevelId",
           "nextLevelIds",
           "status",
-          "ownerOrgUnitId",
-          "ownerOrgUnitName",
           "version"
         ],
         "type": "object",
@@ -10168,19 +10284,6 @@
           },
           "status": {
             "$ref": "#/components/schemas/CatalogStatus"
-          },
-          "ownerOrgUnitId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "ownerOrgUnitName": {
-            "type": [
-              "null",
-              "string"
-            ]
           },
           "version": {
             "type": "integer",
@@ -10282,17 +10385,11 @@
             "$ref": "#/components/schemas/CatalogStatus"
           },
           "ownerOrgUnitId": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": "string",
             "format": "uuid"
           },
           "ownerOrgUnitName": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": "string"
           },
           "version": {
             "type": "integer",
@@ -10375,7 +10472,6 @@
         "enum": [
           "Direction",
           "Track",
-          "Level",
           "Category",
           "Competency",
           "Scale"
@@ -10386,8 +10482,6 @@
           "id",
           "name",
           "status",
-          "ownerOrgUnitId",
-          "ownerOrgUnitName",
           "version"
         ],
         "type": "object",
@@ -10401,19 +10495,6 @@
           },
           "status": {
             "$ref": "#/components/schemas/CatalogStatus"
-          },
-          "ownerOrgUnitId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "ownerOrgUnitName": {
-            "type": [
-              "null",
-              "string"
-            ]
           },
           "version": {
             "type": "integer",
@@ -10460,7 +10541,6 @@
           "categoryId",
           "directionId",
           "type",
-          "scaleId",
           "name"
         ],
         "type": "object",
@@ -10486,7 +10566,10 @@
             "$ref": "#/components/schemas/CompetencyType"
           },
           "scaleId": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "uuid"
           },
           "name": {
@@ -10504,8 +10587,6 @@
           "type",
           "scaleId",
           "status",
-          "ownerOrgUnitId",
-          "ownerOrgUnitName",
           "createdAt",
           "versionNumber",
           "version"
@@ -10546,19 +10627,6 @@
           "status": {
             "$ref": "#/components/schemas/CatalogStatus"
           },
-          "ownerOrgUnitId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "ownerOrgUnitName": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -10596,9 +10664,8 @@
           "id",
           "name",
           "points",
+          "isDefault",
           "status",
-          "ownerOrgUnitId",
-          "ownerOrgUnitName",
           "version"
         ],
         "type": "object",
@@ -10616,21 +10683,11 @@
               "$ref": "#/components/schemas/ScalePoint"
             }
           },
+          "isDefault": {
+            "type": "boolean"
+          },
           "status": {
             "$ref": "#/components/schemas/CatalogStatus"
-          },
-          "ownerOrgUnitId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "ownerOrgUnitName": {
-            "type": [
-              "null",
-              "string"
-            ]
           },
           "version": {
             "type": "integer",
@@ -11975,7 +12032,6 @@
       },
       "NewCareerLevelRequest": {
         "required": [
-          "ownerOrgUnitId",
           "trackId",
           "code",
           "isManagerial",
@@ -11988,13 +12044,6 @@
         ],
         "type": "object",
         "properties": {
-          "ownerOrgUnitId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
           "trackId": {
             "type": "string",
             "format": "uuid"
@@ -12046,115 +12095,19 @@
       },
       "NewCareerTrackRequest": {
         "required": [
+          "ownerOrgUnitId",
           "directionId",
-          "ownerOrgUnitId",
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "directionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "ownerOrgUnitId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "NewCatalogEntryRequest": {
-        "required": [
-          "ownerOrgUnitId",
           "name"
         ],
         "type": "object",
         "properties": {
           "ownerOrgUnitId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "NewCompetencyRequest": {
-        "required": [
-          "ownerOrgUnitId",
-          "description",
-          "categoryId",
-          "directionId",
-          "type",
-          "scaleId",
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "ownerOrgUnitId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "description": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "categoryId": {
             "type": "string",
             "format": "uuid"
           },
           "directionId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "type": {
-            "$ref": "#/components/schemas/CompetencyType"
-          },
-          "scaleId": {
             "type": "string",
             "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "NewCompetencyScaleRequest": {
-        "required": [
-          "ownerOrgUnitId",
-          "points",
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "ownerOrgUnitId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "points": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ScalePoint"
-            }
           },
           "name": {
             "type": "string"

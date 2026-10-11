@@ -3,7 +3,7 @@ using Competency.Platform;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// A career level of one track. The track never changes, because matrices are built from a track's levels.
+/// A career level, a part of one track and kept by the track's unit. The track never changes, because matrices are built from a track's levels.
 /// The salary range is read and changed apart from the other fields, because only some readers may see it.
 /// </summary>
 [Audited]
@@ -46,4 +46,7 @@ internal sealed class CareerLevel : CatalogEntry
 
     [Audited]
     public decimal? SalaryTo { get; set; }
+
+    /// <inheritdoc />
+    public override Guid? UnitId => Track.OwnerOrgUnitId;
 }

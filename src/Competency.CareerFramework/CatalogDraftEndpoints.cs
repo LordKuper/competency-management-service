@@ -8,8 +8,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of the drafts awaiting the signed-in user's approval: those of the units the user is the responsible HR of, and every draft
-/// for a global administrator. Anyone else gets an empty list.
+/// The API of the drafts awaiting the signed-in user's approval: for an HR every draft of no unit and the draft tracks of the units the user
+/// is the responsible HR of, and every draft for a global administrator. Anyone else gets an empty list. Draft levels are approved with
+/// their track, so the list leaves them out.
 /// </summary>
 internal static class CatalogDraftEndpoints
 {
@@ -28,53 +29,50 @@ internal static class CatalogDraftEndpoints
         CancellationToken cancellationToken)
     {
         var viewer = await store.ViewerAsync(cancellationToken);
-        if (!viewer.IsAdmin && viewer.HrUnitIds.Count == 0)
+        if (!viewer.IsAdmin && !viewer.IsHr)
         {
             return TypedResults.Ok(new List<CatalogDraftResponse>());
         }
 
-        List<DraftRow> drafts =
+        var hrUnitIds = viewer.HrUnitIds.ToList();
+        List<CatalogEntry> drafts =
         [
-            .. await DraftsAsync<CareerDirection>(context, viewer, CatalogEntryKind.Direction, cancellationToken),
-            .. await DraftsAsync<CareerTrack>(context, viewer, CatalogEntryKind.Track, cancellationToken),
-            .. await DraftsAsync<CareerLevel>(context, viewer, CatalogEntryKind.Level, cancellationToken),
-            .. await DraftsAsync<CompetencyCategory>(context, viewer, CatalogEntryKind.Category, cancellationToken),
-            .. await DraftsAsync<CareerCompetency>(context, viewer, CatalogEntryKind.Competency, cancellationToken),
-            .. await DraftsAsync<CompetencyScale>(context, viewer, CatalogEntryKind.Scale, cancellationToken),
+            .. await DraftsAsync(context.Set<CareerDirection>(), cancellationToken),
+            .. await DraftsAsync(
+                context.Set<CareerTrack>().WhereIf(!viewer.IsAdmin, track => hrUnitIds.Contains(track.OwnerOrgUnitId)),
+                cancellationToken),
+            .. await DraftsAsync(context.Set<CompetencyCategory>(), cancellationToken),
+            .. await DraftsAsync(context.Set<CareerCompetency>(), cancellationToken),
+            .. await DraftsAsync(context.Set<CompetencyScale>(), cancellationToken),
         ];
 
-        var unitNames = await store.UnitNamesAsync(drafts.Select(draft => draft.OwnerOrgUnitId), cancellationToken);
+        var unitNames = await store.UnitNamesAsync(drafts.Select(draft => draft.UnitId), cancellationToken);
         var authorNames = await store.UserNamesAsync(drafts.Select(draft => draft.AuthorId), cancellationToken);
         return TypedResults.Ok(drafts
             .OrderBy(draft => draft.CreatedAt)
             .ThenBy(draft => draft.Id)
             .Select(draft => new CatalogDraftResponse(
-                draft.Kind,
+                KindOf(draft),
                 draft.Id,
                 draft.Name,
-                draft.OwnerOrgUnitId,
-                draft.OwnerOrgUnitId is { } unitId ? unitNames.GetValueOrDefault(unitId) : null,
+                draft.UnitId,
+                draft.UnitId is { } unitId ? unitNames.GetValueOrDefault(unitId) : null,
                 draft.AuthorId,
                 draft.AuthorId is { } authorId ? authorNames.GetValueOrDefault(authorId) : null,
                 draft.CreatedAt))
             .ToList());
     }
 
-    private static Task<List<DraftRow>> DraftsAsync<T>(
-        AppDbContext context,
-        CatalogViewer viewer,
-        CatalogEntryKind kind,
-        CancellationToken cancellationToken)
-        where T : CatalogEntry
-    {
-        var unitIds = viewer.HrUnitIds.Select(id => (Guid?)id).ToList();
-        return context.Set<T>()
-            .AsNoTracking()
-            .Where(entry => entry.Status == CatalogStatus.Draft)
-            .WhereIf(!viewer.IsAdmin, entry => unitIds.Contains(entry.OwnerOrgUnitId))
-            .Select(entry => new DraftRow(kind, entry.Id, entry.Name, entry.OwnerOrgUnitId, entry.AuthorId, entry.CreatedAt))
-            .ToListAsync(cancellationToken);
-    }
+    private static Task<List<T>> DraftsAsync<T>(IQueryable<T> source, CancellationToken cancellationToken)
+        where T : CatalogEntry =>
+        source.AsNoTracking().Where(entry => entry.Status == CatalogStatus.Draft).ToListAsync(cancellationToken);
 
-    private sealed record DraftRow(CatalogEntryKind Kind, Guid Id, string Name, Guid? OwnerOrgUnitId, Guid? AuthorId, DateTimeOffset CreatedAt);
+    private static CatalogEntryKind KindOf(CatalogEntry entry) => entry switch
+    {
+        CareerDirection => CatalogEntryKind.Direction,
+        CareerTrack => CatalogEntryKind.Track,
+        CompetencyCategory => CatalogEntryKind.Category,
+        CareerCompetency => CatalogEntryKind.Competency,
+        _ => CatalogEntryKind.Scale,
+    };
 }

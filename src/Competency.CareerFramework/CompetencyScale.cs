@@ -4,7 +4,7 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// A scale that competencies are assessed on, with its points. The points are stored on the scale itself, so changing them changes
-/// the scale's version and is journaled with it.
+/// the scale's version and is journaled with it. Exactly one scale is the default, which a new competency gets unless it names another.
 /// </summary>
 [Audited]
 internal sealed class CompetencyScale : CatalogEntry
@@ -18,4 +18,7 @@ internal sealed class CompetencyScale : CatalogEntry
     /// </summary>
     [Audited]
     public List<ScalePoint> Points { get; set; } = [];
+
+    [Audited]
+    public bool IsDefault { get; set; }
 }

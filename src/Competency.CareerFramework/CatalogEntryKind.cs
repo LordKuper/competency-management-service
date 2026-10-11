@@ -11,7 +11,6 @@ internal enum CatalogEntryKind
 {
     Direction,
     Track,
-    Level,
     Category,
     Competency,
     Scale,

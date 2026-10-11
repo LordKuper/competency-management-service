@@ -1,3 +1,4 @@
+using Competency.OrgStructure;
 using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -85,13 +86,14 @@ internal static class MatrixEndpoints
     }
 
     /// <summary>
-    /// Creates a unit's matrix for an active track of an active direction, with an empty first version as a draft. A unit has one
-    /// matrix per track, which the catalogue lock and a unique index keep so.
+    /// Creates a unit's matrix for an active track of an active direction, the track kept by the unit or a unit above it, with an empty
+    /// first version as a draft. A unit has one matrix per track, which the catalogue lock and a unique index keep so.
     /// </summary>
     private static async Task<Results<Created<MatrixResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
         NewMatrixRequest request,
         AppDbContext context,
         CatalogStore store,
+        IEmployeeDirectory employees,
         MatrixWorkflow workflow,
         MatrixRoute route,
         CancellationToken cancellationToken)
@@ -103,7 +105,7 @@ internal static class MatrixEndpoints
             return Rejection.Forbidden();
         }
 
-        if (await ReferenceProblemAsync(request, context, store, cancellationToken) is { } invalid)
+        if (await ReferenceProblemAsync(request, viewer.UserId, context, store, employees, cancellationToken) is { } invalid)
         {
             return invalid;
         }
@@ -183,13 +185,15 @@ internal static class MatrixEndpoints
         workflow.CreateVersionAsync(id, response, cancellationToken);
 
     /// <summary>
-    /// Says why the direction, track or scale cannot be used: a new matrix needs an active direction and an active track of it, and a
-    /// scale that is active or a draft of the unit.
+    /// Says why the direction, track or scale cannot be used: a new matrix needs an active direction, an active track of it kept by the
+    /// matrix unit or a unit above it, and a scale that is active or a draft of the matrix author.
     /// </summary>
     private static async Task<ValidationProblem?> ReferenceProblemAsync(
         NewMatrixRequest request,
+        Guid authorId,
         AppDbContext context,
         CatalogStore store,
+        IEmployeeDirectory employees,
         CancellationToken cancellationToken)
     {
         if (!await context.Set<CareerDirection>().AnyAsync(
@@ -199,14 +203,18 @@ internal static class MatrixEndpoints
             return Rejection.Invalid(DirectionField, CatalogEndpoints.UnavailableMessage);
         }
 
+        var unitIds = (await employees.FindAncestryAsync(request.OrgUnitId, cancellationToken)).Select(unit => unit.Id).ToList();
         if (!await context.Set<CareerTrack>().AnyAsync(
-                track => track.Id == request.TrackId && track.DirectionId == request.DirectionId && track.Status == CatalogStatus.Active,
+                track => track.Id == request.TrackId
+                    && track.DirectionId == request.DirectionId
+                    && track.Status == CatalogStatus.Active
+                    && unitIds.Contains(track.OwnerOrgUnitId),
                 cancellationToken))
         {
             return Rejection.Invalid(TrackField, CatalogEndpoints.UnavailableMessage);
         }
 
-        return await store.IsUsableAsync<CompetencyScale>(request.ScaleId, request.OrgUnitId, cancellationToken)
+        return await store.IsUsableAsync<CompetencyScale>(request.ScaleId, authorId, cancellationToken)
             ? null
             : Rejection.Invalid(ScaleField, CatalogEndpoints.UnavailableMessage);
     }

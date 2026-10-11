@@ -5,9 +5,11 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// What the signed-in user may see and do in the career catalogues, from their account role and their process roles at the moment of asking.
-/// Global administrators see and keep every entry. A responsible HR sees active and inactive entries of every unit and drafts of the units
-/// they answer for, and keeps those units' entries. A unit head sees and edits their unit's drafts. An author always sees their own drafts.
-/// Whoever reads a matrix version in work also reads the drafts it uses. Everyone sees active entries.
+/// Global administrators and every HR keep the entries no unit keeps, and a unit head proposes drafts of them. A track is kept by global
+/// administrators and the responsible HR of its unit, and its unit's head edits it while it is a draft; a level goes with its track.
+/// Every HR sees active and inactive entries. A draft of no unit is seen by its author, every HR and global administrators; a draft track or
+/// level by its author, the head and the responsible HR of its unit and global administrators. Whoever reads a matrix version in work also
+/// reads the drafts it uses. Everyone sees active entries.
 /// </summary>
 /// <param name="UserId">The signed-in account.</param>
 /// <param name="IsAdmin">Whether the account is a global administrator.</param>
@@ -19,6 +21,11 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Gui
     /// The entries of the matrix versions in work the user reads through the approval route rather than as a keeper or head of their unit.
     /// </summary>
     public IReadOnlySet<Guid> RouteEntryIds { get; init; } = new HashSet<Guid>();
+
+    /// <summary>
+    /// Whether the user is an HR: the responsible HR of at least one unit.
+    /// </summary>
+    public bool IsHr => HrUnitIds.Count > 0;
 
     /// <summary>
     /// Works out the signed-in user's rights; a writer calls it under the catalogue lock, so the rights hold until it commits.
@@ -48,42 +55,54 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Gui
         where T : CatalogEntry
     {
         var isAdmin = IsAdmin;
-        var seesInactive = IsAdmin || HrUnitIds.Count > 0;
+        var seesInactive = IsAdmin || IsHr;
         var userId = UserId;
-        var draftUnitIds = HeadedUnitIds.Union(HrUnitIds).Select(id => (Guid?)id).ToList();
+        var unitIds = HeadedUnitIds.Union(HrUnitIds).ToList();
         var routeEntryIds = RouteEntryIds.ToList();
-        return entry => entry.Status == CatalogStatus.Active
-            || (entry.Status == CatalogStatus.Inactive && seesInactive)
-            || (entry.Status == CatalogStatus.Draft
-                && (isAdmin || entry.AuthorId == userId || draftUnitIds.Contains(entry.OwnerOrgUnitId) || routeEntryIds.Contains(entry.Id)));
+        LambdaExpression sees = typeof(T) == typeof(CareerTrack)
+            ? (Expression<Func<CareerTrack, bool>>)(track => track.Status == CatalogStatus.Active
+                || (track.Status == CatalogStatus.Inactive && seesInactive)
+                || (track.Status == CatalogStatus.Draft && (isAdmin || track.AuthorId == userId || unitIds.Contains(track.OwnerOrgUnitId))))
+            : typeof(T) == typeof(CareerLevel)
+                ? (Expression<Func<CareerLevel, bool>>)(level => level.Status == CatalogStatus.Active
+                    || (level.Status == CatalogStatus.Inactive && seesInactive)
+                    || (level.Status == CatalogStatus.Draft
+                        && (isAdmin || level.AuthorId == userId || unitIds.Contains(level.Track.OwnerOrgUnitId) || routeEntryIds.Contains(level.Id))))
+                : (Expression<Func<T, bool>>)(entry => entry.Status == CatalogStatus.Active
+                    || (entry.Status == CatalogStatus.Inactive && seesInactive)
+                    || (entry.Status == CatalogStatus.Draft && (seesInactive || entry.AuthorId == userId || routeEntryIds.Contains(entry.Id))));
+        return (Expression<Func<T, bool>>)sees;
     }
 
     /// <summary>
-    /// Whether the user may change the entry's fields: the keepers of its unit, and the unit's head while the entry is a draft.
+    /// Whether the user may change the entry's fields: its keepers, and while it is a draft the head of its unit, or for an entry of no unit
+    /// its author while they head a unit. A level's fields change with the rights to its track.
     /// </summary>
-    /// <param name="entry">An entry the user can read.</param>
+    /// <param name="entry">An entry the user can read; a level with its track loaded.</param>
     /// <returns>True when the user may edit it.</returns>
-    public bool CanEdit(CatalogEntry entry) =>
-        Keeps(entry.OwnerOrgUnitId) || (entry.Status == CatalogStatus.Draft && IsHeadOf(entry.OwnerOrgUnitId));
+    public bool CanEdit(CatalogEntry entry) => entry is CareerLevel level
+        ? CanEdit(level.Track)
+        : Keeps(entry.UnitId) || (entry.Status == CatalogStatus.Draft && Heads(entry.UnitId) && (entry.UnitId is not null || entry.AuthorId == UserId));
 
     /// <summary>
-    /// Whether the user may approve, deactivate and reactivate the entry, and read and change a level's salary range:
-    /// global administrators, and the responsible HR of the entry's unit.
+    /// Whether the user may approve, deactivate and reactivate the entry, and read and change a level's salary range: global administrators,
+    /// the responsible HR of the entry's unit, and every HR for an entry of no unit.
     /// </summary>
-    /// <param name="entry">An entry the user can read.</param>
+    /// <param name="entry">An entry the user can read; a level with its track loaded.</param>
     /// <returns>True when the user keeps the entry.</returns>
-    public bool CanManage(CatalogEntry entry) => Keeps(entry.OwnerOrgUnitId);
+    public bool CanManage(CatalogEntry entry) => Keeps(entry.UnitId);
 
     /// <summary>
-    /// The status a new entry of the unit gets from this user: active from its keepers, a draft from its head.
+    /// The status a new entry gets from this user: active from its keepers, a draft from the head of its unit, or for an entry of no unit
+    /// from any unit head.
     /// </summary>
-    /// <param name="ownerOrgUnitId">The unit the entry is for; null for a shared entry.</param>
+    /// <param name="unitId">The unit of the new track; null for an entry of no unit.</param>
     /// <returns>The status, or <see langword="null"/> when the user may not create the entry.</returns>
-    public CatalogStatus? StatusOfNew(Guid? ownerOrgUnitId) => Keeps(ownerOrgUnitId)
+    public CatalogStatus? StatusOfNew(Guid? unitId) => Keeps(unitId)
         ? CatalogStatus.Active
-        : IsHeadOf(ownerOrgUnitId) ? CatalogStatus.Draft : null;
+        : Heads(unitId) ? CatalogStatus.Draft : null;
 
-    private bool Keeps(Guid? ownerOrgUnitId) => IsAdmin || (ownerOrgUnitId is { } unitId && HrUnitIds.Contains(unitId));
+    private bool Keeps(Guid? unitId) => IsAdmin || (unitId is { } id ? HrUnitIds.Contains(id) : IsHr);
 
-    private bool IsHeadOf(Guid? ownerOrgUnitId) => ownerOrgUnitId is { } unitId && HeadedUnitIds.Contains(unitId);
+    private bool Heads(Guid? unitId) => unitId is { } id ? HeadedUnitIds.Contains(id) : HeadedUnitIds.Count > 0;
 }

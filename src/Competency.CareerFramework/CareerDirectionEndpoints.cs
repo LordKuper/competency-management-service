@@ -7,7 +7,7 @@ namespace Competency.CareerFramework;
 /// </summary>
 internal static class CareerDirectionEndpoints
 {
-    private static readonly CatalogKind<CareerDirection, CatalogEntryResponse> Kind = new("CareerDirection", CatalogEntryResponse.From);
+    private static readonly CatalogKind<CareerDirection, CatalogEntryResponse> Kind = new("CareerDirection", (entry, _) => CatalogEntryResponse.From(entry));
 
     public static void Map(IEndpointRouteBuilder endpoints) => endpoints.MapNamedCatalog(
         "/api/v1/career/directions",
@@ -16,7 +16,6 @@ internal static class CareerDirectionEndpoints
         (request, status, authorId) => new CareerDirection
         {
             Name = request.TrimmedName(),
-            OwnerOrgUnitId = request.OwnerOrgUnitId,
             Status = status,
             AuthorId = authorId,
         });

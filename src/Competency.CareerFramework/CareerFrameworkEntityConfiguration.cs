@@ -54,7 +54,9 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
 
         ConfigureEntry<CareerTrack>(modelBuilder, "career_tracks", entity =>
         {
+            entity.Property(e => e.OwnerOrgUnitId).HasColumnName("owner_org_unit_id");
             entity.Property(e => e.DirectionId).HasColumnName("direction_id");
+            entity.HasOne(OrgUnitEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CareerTrack.OwnerOrgUnitId)).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<CareerDirection>().WithMany().HasForeignKey(e => e.DirectionId).OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -62,16 +64,7 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
 
         ConfigureEntry<CompetencyCategory>(modelBuilder, "competency_categories", _ => { });
 
-        ConfigureEntry<CompetencyScale>(modelBuilder, "competency_scales", entity => entity.Property(e => e.Points)
-            .HasColumnName("points")
-            .HasColumnType("jsonb")
-            .HasConversion(
-                points => JsonSerializer.Serialize(points, PointsJson),
-                json => JsonSerializer.Deserialize<List<ScalePoint>>(json, PointsJson) ?? new List<ScalePoint>(),
-                new ValueComparer<List<ScalePoint>>(
-                    (left, right) => left!.SequenceEqual(right!),
-                    points => points.Aggregate(0, (hash, point) => HashCode.Combine(hash, point)),
-                    points => points.ToList())));
+        ConfigureEntry<CompetencyScale>(modelBuilder, "competency_scales", ConfigureScale);
 
         ConfigureEntry<CareerCompetency>(modelBuilder, "competencies", entity =>
         {
@@ -221,6 +214,25 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
     }
 
     /// <summary>
+    /// Maps a scale's points and its default flag; a partial unique index keeps the flag on one scale at most.
+    /// </summary>
+    private static void ConfigureScale(EntityTypeBuilder<CompetencyScale> entity)
+    {
+        entity.Property(e => e.Points)
+            .HasColumnName("points")
+            .HasColumnType("jsonb")
+            .HasConversion(
+                points => JsonSerializer.Serialize(points, PointsJson),
+                json => JsonSerializer.Deserialize<List<ScalePoint>>(json, PointsJson) ?? new List<ScalePoint>(),
+                new ValueComparer<List<ScalePoint>>(
+                    (left, right) => left!.SequenceEqual(right!),
+                    points => points.Aggregate(0, (hash, point) => HashCode.Combine(hash, point)),
+                    points => points.ToList()));
+        entity.Property(e => e.IsDefault).HasColumnName("is_default");
+        entity.HasIndex(e => e.IsDefault, "ux_competency_scales_default").IsUnique().HasFilter("is_default");
+    }
+
+    /// <summary>
     /// Maps the columns every catalogue entry shares, then the entry type's own.
     /// </summary>
     private static void ConfigureEntry<T>(ModelBuilder modelBuilder, string table, Action<EntityTypeBuilder<T>> configure)
@@ -231,11 +243,9 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
         entity.Property(e => e.Version).HasColumnName("version");
         entity.Property(e => e.CreatedAt).HasColumnName("created_at");
         entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(CatalogEntry.NameMaxLength);
-        entity.Property(e => e.OwnerOrgUnitId).HasColumnName("owner_org_unit_id");
         entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(EnumMaxLength);
         entity.Property(e => e.AuthorId).HasColumnName("author_id");
 
-        entity.HasOne(OrgUnitEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CatalogEntry.OwnerOrgUnitId)).OnDelete(DeleteBehavior.Restrict);
         entity.HasOne(UserEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CatalogEntry.AuthorId)).OnDelete(DeleteBehavior.Restrict);
 
         configure(entity);

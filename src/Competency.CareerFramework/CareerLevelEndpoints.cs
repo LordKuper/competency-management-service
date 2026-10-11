@@ -9,8 +9,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of career levels. Level names are unique within their track. The salary range has endpoints of its own, readable and changeable
-/// only by the level's keepers, so no other response ever carries it.
+/// The API of career levels, the parts of a track: whoever may edit the track creates and edits its levels, and a level is kept by its
+/// track's keepers. Level names are unique within their track. The salary range has endpoints of its own, readable and changeable only by
+/// the level's keepers, so no other response ever carries it.
 /// </summary>
 internal static class CareerLevelEndpoints
 {
@@ -22,7 +23,7 @@ internal static class CareerLevelEndpoints
 
     internal static readonly CatalogKind<CareerLevel, CareerLevelResponse> Kind = new(
         "CareerLevel",
-        CareerLevelResponse.From,
+        (level, _) => CareerLevelResponse.From(level),
         level => other => other.TrackId == level.TrackId);
 
     public static void Map(IEndpointRouteBuilder endpoints)
@@ -57,6 +58,9 @@ internal static class CareerLevelEndpoints
             store,
             cancellationToken);
 
+    /// <summary>
+    /// Adds a level to an active or draft track; the level takes the track's status, so a draft track's levels are approved with it.
+    /// </summary>
     private static async Task<Results<Created<CareerLevelResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
         NewCareerLevelRequest request,
         AppDbContext context,
@@ -72,17 +76,18 @@ internal static class CareerLevelEndpoints
 
         await using var transaction = await store.BeginWriteAsync(cancellationToken);
         var viewer = await store.ViewerAsync(cancellationToken);
-        if (viewer.StatusOfNew(request.OwnerOrgUnitId) is not { } status)
-        {
-            return Rejection.Forbidden();
-        }
-
-        if (!await store.IsUsableAsync<CareerTrack>(request.TrackId, request.OwnerOrgUnitId, cancellationToken))
+        if (await store.FindVisibleAsync<CareerTrack>(request.TrackId, viewer, cancellationToken) is not { } track
+            || track.Status == CatalogStatus.Inactive)
         {
             return Rejection.Invalid(TrackField, CatalogEndpoints.UnavailableMessage);
         }
 
-        if (await ReferenceProblemAsync(request, request.OwnerOrgUnitId, current: null, store, cancellationToken) is { } invalid)
+        if (!viewer.CanEdit(track))
+        {
+            return Rejection.Forbidden();
+        }
+
+        if (await ReferenceProblemAsync(request, track.OwnerOrgUnitId, current: null, context, cancellationToken) is { } invalid)
         {
             return invalid;
         }
@@ -91,10 +96,9 @@ internal static class CareerLevelEndpoints
         {
             Name = request.TrimmedName(),
             Code = request.Code.Trim(),
-            OwnerOrgUnitId = request.OwnerOrgUnitId,
-            Status = status,
+            Status = track.Status,
             AuthorId = viewer.UserId,
-            TrackId = request.TrackId,
+            TrackId = track.Id,
         };
         request.ApplyTo(level);
         if (await CatalogEndpoints.NameProblemAsync(level, Kind, store, cancellationToken) is { } taken)
@@ -135,7 +139,7 @@ internal static class CareerLevelEndpoints
             return Rejection.Forbidden();
         }
 
-        if (await ReferenceProblemAsync(request, level.OwnerOrgUnitId, level, store, cancellationToken) is { } invalid)
+        if (await ReferenceProblemAsync(request, level.Track.OwnerOrgUnitId, level, context, cancellationToken) is { } invalid)
         {
             return invalid;
         }
@@ -206,14 +210,14 @@ internal static class CareerLevelEndpoints
     }
 
     /// <summary>
-    /// Says why the previous or next levels cannot be used. Only references the change adds are checked, so a level that has since
-    /// been deactivated may stay where it was.
+    /// Says why the previous or next levels cannot be used: a level may refer to active levels and to the draft levels of its unit's tracks.
+    /// Only references the change adds are checked, so a level that has since been deactivated may stay where it was.
     /// </summary>
     private static async Task<ValidationProblem?> ReferenceProblemAsync(
         CareerLevelRequest request,
-        Guid? ownerOrgUnitId,
+        Guid unitId,
         CareerLevel? current,
-        CatalogStore store,
+        AppDbContext context,
         CancellationToken cancellationToken)
     {
         if (request.PreviousLevelId is { } previousId && previousId != current?.PreviousLevelId)
@@ -223,7 +227,7 @@ internal static class CareerLevelEndpoints
                 return Rejection.Invalid(PreviousLevelField, SelfReferenceMessage);
             }
 
-            if (!await store.IsUsableAsync<CareerLevel>(previousId, ownerOrgUnitId, cancellationToken))
+            if (!await IsUsableAsync(previousId, unitId, context, cancellationToken))
             {
                 return Rejection.Invalid(PreviousLevelField, CatalogEndpoints.UnavailableMessage);
             }
@@ -236,7 +240,7 @@ internal static class CareerLevelEndpoints
                 return Rejection.Invalid(NextLevelsField, SelfReferenceMessage);
             }
 
-            if (!await store.IsUsableAsync<CareerLevel>(nextId, ownerOrgUnitId, cancellationToken))
+            if (!await IsUsableAsync(nextId, unitId, context, cancellationToken))
             {
                 return Rejection.Invalid(NextLevelsField, CatalogEndpoints.UnavailableMessage);
             }
@@ -244,4 +248,10 @@ internal static class CareerLevelEndpoints
 
         return null;
     }
+
+    private static Task<bool> IsUsableAsync(Guid levelId, Guid unitId, AppDbContext context, CancellationToken cancellationToken) =>
+        context.Set<CareerLevel>().AnyAsync(
+            level => level.Id == levelId
+                && (level.Status == CatalogStatus.Active || (level.Status == CatalogStatus.Draft && level.Track.OwnerOrgUnitId == unitId)),
+            cancellationToken);
 }

@@ -10,7 +10,8 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// The API of the competency catalogue. Competency names are unique within their direction, and among general competencies.
-/// Every change adds a version to the competency's history, which anyone who can read the competency can read.
+/// Every change adds a version to the competency's history, which anyone who can read the competency can read. A request that names no
+/// scale gets the default scale.
 /// </summary>
 internal static class CompetencyEndpoints
 {
@@ -21,7 +22,7 @@ internal static class CompetencyEndpoints
 
     internal static readonly CatalogKind<CareerCompetency, CompetencyResponse> Kind = new(
         "Competency",
-        CompetencyResponse.From,
+        (competency, _) => CompetencyResponse.From(competency),
         competency => other => other.DirectionId == competency.DirectionId);
 
     public static void Map(IEndpointRouteBuilder endpoints)
@@ -59,7 +60,7 @@ internal static class CompetencyEndpoints
             cancellationToken);
 
     private static async Task<Results<Created<CompetencyResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
-        NewCompetencyRequest request,
+        CompetencyRequest request,
         AppDbContext context,
         CatalogStore store,
         HttpResponse response,
@@ -73,12 +74,17 @@ internal static class CompetencyEndpoints
 
         await using var transaction = await store.BeginWriteAsync(cancellationToken);
         var viewer = await store.ViewerAsync(cancellationToken);
-        if (viewer.StatusOfNew(request.OwnerOrgUnitId) is not { } status)
+        if (viewer.StatusOfNew(unitId: null) is not { } status)
         {
             return Rejection.Forbidden();
         }
 
-        if (await ReferenceProblemAsync(request, request.OwnerOrgUnitId, current: null, store, cancellationToken) is { } invalid)
+        if (await ScaleIdAsync(request, context, cancellationToken) is not { } scaleId)
+        {
+            return Rejection.Invalid(ScaleField, CatalogEndpoints.UnavailableMessage);
+        }
+
+        if (await ReferenceProblemAsync(request, scaleId, viewer.UserId, current: null, store, cancellationToken) is { } invalid)
         {
             return invalid;
         }
@@ -86,11 +92,10 @@ internal static class CompetencyEndpoints
         var competency = new CareerCompetency
         {
             Name = request.TrimmedName(),
-            OwnerOrgUnitId = request.OwnerOrgUnitId,
             Status = status,
             AuthorId = viewer.UserId,
         };
-        request.ApplyTo(competency);
+        request.ApplyTo(competency, scaleId);
         if (await CatalogEndpoints.NameProblemAsync(competency, Kind, store, cancellationToken) is { } taken)
         {
             return taken;
@@ -128,13 +133,18 @@ internal static class CompetencyEndpoints
             return Rejection.Forbidden();
         }
 
-        if (await ReferenceProblemAsync(request, competency.OwnerOrgUnitId, competency, store, cancellationToken) is { } invalid)
+        if (await ScaleIdAsync(request, context, cancellationToken) is not { } scaleId)
+        {
+            return Rejection.Invalid(ScaleField, CatalogEndpoints.UnavailableMessage);
+        }
+
+        if (await ReferenceProblemAsync(request, scaleId, competency.AuthorId, competency, store, cancellationToken) is { } invalid)
         {
             return invalid;
         }
 
         ifMatch.ApplyTo(context, competency);
-        request.ApplyTo(competency);
+        request.ApplyTo(competency, scaleId);
         if (await CatalogEndpoints.NameProblemAsync(competency, Kind, store, cancellationToken) is { } taken)
         {
             return taken;
@@ -179,30 +189,40 @@ internal static class CompetencyEndpoints
     }
 
     /// <summary>
-    /// Says why the category, direction or scale cannot be used. Only references the change sets anew are checked, so an entry that has
-    /// since been deactivated may stay where it was.
+    /// The scale the request names, or else the default scale; null when it names none and no scale is the default.
+    /// </summary>
+    private static async Task<Guid?> ScaleIdAsync(CompetencyRequest request, AppDbContext context, CancellationToken cancellationToken) =>
+        request.ScaleId ?? await context.Set<CompetencyScale>()
+            .Where(scale => scale.IsDefault)
+            .Select(scale => (Guid?)scale.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+    /// <summary>
+    /// Says why the category, direction or scale cannot be used: an entry may refer to active entries and to its author's drafts.
+    /// Only references the change sets anew are checked, so an entry that has since been deactivated may stay where it was.
     /// </summary>
     private static async Task<ValidationProblem?> ReferenceProblemAsync(
         CompetencyRequest request,
-        Guid? ownerOrgUnitId,
+        Guid scaleId,
+        Guid? authorId,
         CareerCompetency? current,
         CatalogStore store,
         CancellationToken cancellationToken)
     {
         if (request.CategoryId != current?.CategoryId
-            && !await store.IsUsableAsync<CompetencyCategory>(request.CategoryId, ownerOrgUnitId, cancellationToken))
+            && !await store.IsUsableAsync<CompetencyCategory>(request.CategoryId, authorId, cancellationToken))
         {
             return Rejection.Invalid(CategoryField, CatalogEndpoints.UnavailableMessage);
         }
 
         if (request.DirectionId is { } directionId && directionId != current?.DirectionId
-            && !await store.IsUsableAsync<CareerDirection>(directionId, ownerOrgUnitId, cancellationToken))
+            && !await store.IsUsableAsync<CareerDirection>(directionId, authorId, cancellationToken))
         {
             return Rejection.Invalid(DirectionField, CatalogEndpoints.UnavailableMessage);
         }
 
-        if (request.ScaleId != current?.ScaleId
-            && !await store.IsUsableAsync<CompetencyScale>(request.ScaleId, ownerOrgUnitId, cancellationToken))
+        if (scaleId != current?.ScaleId
+            && !await store.IsUsableAsync<CompetencyScale>(scaleId, authorId, cancellationToken))
         {
             return Rejection.Invalid(ScaleField, CatalogEndpoints.UnavailableMessage);
         }

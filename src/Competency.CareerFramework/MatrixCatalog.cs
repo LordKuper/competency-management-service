@@ -1,4 +1,5 @@
 using System.Globalization;
+using Competency.OrgStructure;
 using Competency.Platform;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,9 +8,9 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The catalogue side of matrix versions: which entries a version may refer to, whether a version is complete enough to be handed on,
 /// and the entries it refers to as they stand. A version refers to the levels of its matrix track, to competencies of its scale and of
-/// the matrix direction or general ones, and to entries that are active or drafts of the matrix unit.
+/// the matrix direction or general ones, and to entries that are active or drafts whose author heads the matrix unit.
 /// </summary>
-internal sealed class MatrixCatalog(AppDbContext context)
+internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory employees, ProcessRoles roles)
 {
     private const string ContentField = "content";
     private const string ForeignLevelMessage = "Уровень не из трека матрицы";
@@ -28,6 +29,7 @@ internal sealed class MatrixCatalog(AppDbContext context)
     public async Task<Dictionary<string, string[]>?> ReferenceProblemAsync(MatrixVersion version, MatrixContent content, CancellationToken cancellationToken)
     {
         var entries = await LoadAsync(version.ScaleId, content, cancellationToken);
+        var headId = await HeadOfAsync(version.Matrix, cancellationToken);
         var levels = content.Levels.Select(item => entries.Levels.GetValueOrDefault(item.LevelId)).ToList();
         var competencies = content.Competencies.Select(item => entries.Competencies.GetValueOrDefault(item.CompetencyId)).ToList();
         var previousIds = version.Content.Levels.Select(level => level.LevelId)
@@ -44,7 +46,7 @@ internal sealed class MatrixCatalog(AppDbContext context)
         {
             problem = ForeignCompetencyMessage;
         }
-        else if (referenced.Any(entry => !previousIds.Contains(entry!.Id) && !IsUsable(entry, version.Matrix)))
+        else if (referenced.Any(entry => !previousIds.Contains(entry!.Id) && !IsUsable(entry, headId)))
         {
             problem = CatalogEndpoints.UnavailableMessage;
         }
@@ -95,7 +97,7 @@ internal sealed class MatrixCatalog(AppDbContext context)
             problems.Add($"У критической компетенции «{entries.CompetencyName(requirement.CompetencyId)}» не задан минимальный уровень");
         }
 
-        problems.AddRange(EntryProblems(version, entries));
+        problems.AddRange(EntryProblems(version, entries, await HeadOfAsync(version.Matrix, cancellationToken)));
         foreach (var requirement in content.Requirements.Where(requirement => !entries.HasScore(requirement.RequiredScore)))
         {
             problems.Add($"Требуемого уровня {requirement.RequiredScore} компетенции «{entries.CompetencyName(requirement.CompetencyId)}» нет в шкале версии");
@@ -172,11 +174,10 @@ internal sealed class MatrixCatalog(AppDbContext context)
         return drafts;
     }
 
-    private static IEnumerable<string> EntryProblems(MatrixVersion version, LoadedEntries entries)
+    private static IEnumerable<string> EntryProblems(MatrixVersion version, LoadedEntries entries, Guid? headId)
     {
-        var matrix = version.Matrix;
         IEnumerable<CatalogEntry> all = [entries.Scale, .. entries.Levels.Values, .. entries.Competencies.Values];
-        foreach (var entry in all.Where(entry => !IsUsable(entry, matrix)))
+        foreach (var entry in all.Where(entry => !IsUsable(entry, headId)))
         {
             yield return $"В версии есть неактивная запись «{entry.Name}»";
         }
@@ -187,8 +188,16 @@ internal sealed class MatrixCatalog(AppDbContext context)
         }
     }
 
-    private static bool IsUsable(CatalogEntry entry, CompetencyMatrix matrix) =>
-        entry.Status == CatalogStatus.Active || (entry.Status == CatalogStatus.Draft && entry.OwnerOrgUnitId == matrix.OrgUnitId);
+    private static bool IsUsable(CatalogEntry entry, Guid? headId) =>
+        entry.Status == CatalogStatus.Active || (entry.Status == CatalogStatus.Draft && headId is not null && entry.AuthorId == headId);
+
+    /// <summary>
+    /// The account of the matrix unit's head, whose drafts the matrix may use; null when the unit has no head who can act.
+    /// </summary>
+    private async Task<Guid?> HeadOfAsync(CompetencyMatrix matrix, CancellationToken cancellationToken) =>
+        await employees.FindUnitAsync(matrix.OrgUnitId, cancellationToken) is { } unit
+            ? await roles.HeadAccountAsync(unit, cancellationToken)
+            : null;
 
     private static bool Fits(CareerCompetency competency, MatrixVersion version) =>
         competency.ScaleId == version.ScaleId && (competency.DirectionId is null || competency.DirectionId == version.Matrix.DirectionId);

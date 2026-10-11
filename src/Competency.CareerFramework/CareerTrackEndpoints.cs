@@ -1,3 +1,4 @@
+using Competency.OrgStructure;
 using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -8,12 +9,13 @@ using Microsoft.AspNetCore.Routing;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of career tracks. Track names are unique within their direction.
+/// The API of career tracks. A track belongs to one unit; track names are unique within their direction.
 /// </summary>
 internal static class CareerTrackEndpoints
 {
     private const string Route = "/api/v1/career/tracks";
     private const string DirectionField = "directionId";
+    private const string OrgUnitField = "ownerOrgUnitId";
 
     private static readonly CatalogKind<CareerTrack, CareerTrackResponse> Kind = new(
         "CareerTrack",
@@ -47,6 +49,7 @@ internal static class CareerTrackEndpoints
         NewCareerTrackRequest request,
         AppDbContext context,
         CatalogStore store,
+        IEmployeeDirectory employees,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -57,13 +60,18 @@ internal static class CareerTrackEndpoints
         }
 
         await using var transaction = await store.BeginWriteAsync(cancellationToken);
+        if (await employees.FindUnitAsync(request.OwnerOrgUnitId, cancellationToken) is not { IsActive: true })
+        {
+            return Rejection.Invalid(OrgUnitField, CatalogEndpoints.UnavailableMessage);
+        }
+
         var viewer = await store.ViewerAsync(cancellationToken);
         if (viewer.StatusOfNew(request.OwnerOrgUnitId) is not { } status)
         {
             return Rejection.Forbidden();
         }
 
-        if (!await store.IsUsableAsync<CareerDirection>(request.DirectionId, request.OwnerOrgUnitId, cancellationToken))
+        if (!await store.IsUsableAsync<CareerDirection>(request.DirectionId, viewer.UserId, cancellationToken))
         {
             return Rejection.Invalid(DirectionField, CatalogEndpoints.UnavailableMessage);
         }

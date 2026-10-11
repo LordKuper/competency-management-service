@@ -1108,6 +1108,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/career/scales/{id}/make-default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["MakeCompetencyScaleDefault"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/career/scales/{id}/approve": {
         parameters: {
             query?: never;
@@ -1491,9 +1507,6 @@ export interface components {
             previousLevelId: null | string;
             nextLevelIds: string[];
             status: components["schemas"]["CatalogStatus"];
-            /** Format: uuid */
-            ownerOrgUnitId: null | string;
-            ownerOrgUnitName: null | string;
             /** Format: int32 */
             version: number;
         };
@@ -1524,8 +1537,8 @@ export interface components {
             directionId: string;
             status: components["schemas"]["CatalogStatus"];
             /** Format: uuid */
-            ownerOrgUnitId: null | string;
-            ownerOrgUnitName: null | string;
+            ownerOrgUnitId: string;
+            ownerOrgUnitName: string;
             /** Format: int32 */
             version: number;
         };
@@ -1549,15 +1562,12 @@ export interface components {
             createdAt: string;
         };
         /** @enum {unknown} */
-        CatalogEntryKind: "Direction" | "Track" | "Level" | "Category" | "Competency" | "Scale";
+        CatalogEntryKind: "Direction" | "Track" | "Category" | "Competency" | "Scale";
         CatalogEntryResponse: {
             /** Format: uuid */
             id: string;
             name: string;
             status: components["schemas"]["CatalogStatus"];
-            /** Format: uuid */
-            ownerOrgUnitId: null | string;
-            ownerOrgUnitName: null | string;
             /** Format: int32 */
             version: number;
         };
@@ -1578,7 +1588,7 @@ export interface components {
             directionId: null | string;
             type: components["schemas"]["CompetencyType"];
             /** Format: uuid */
-            scaleId: string;
+            scaleId?: null | string;
             name: string;
         };
         CompetencyResponse: {
@@ -1594,9 +1604,6 @@ export interface components {
             /** Format: uuid */
             scaleId: string;
             status: components["schemas"]["CatalogStatus"];
-            /** Format: uuid */
-            ownerOrgUnitId: null | string;
-            ownerOrgUnitName: null | string;
             /** Format: date-time */
             createdAt: string;
             /** Format: int32 */
@@ -1613,10 +1620,8 @@ export interface components {
             id: string;
             name: string;
             points: components["schemas"]["ScalePoint"][];
+            isDefault: boolean;
             status: components["schemas"]["CatalogStatus"];
-            /** Format: uuid */
-            ownerOrgUnitId: null | string;
-            ownerOrgUnitName: null | string;
             /** Format: int32 */
             version: number;
         };
@@ -1966,8 +1971,6 @@ export interface components {
         };
         NewCareerLevelRequest: {
             /** Format: uuid */
-            ownerOrgUnitId: null | string;
-            /** Format: uuid */
             trackId: string;
             code: string;
             isManagerial: boolean;
@@ -1983,33 +1986,9 @@ export interface components {
         };
         NewCareerTrackRequest: {
             /** Format: uuid */
+            ownerOrgUnitId: string;
+            /** Format: uuid */
             directionId: string;
-            /** Format: uuid */
-            ownerOrgUnitId: null | string;
-            name: string;
-        };
-        NewCatalogEntryRequest: {
-            /** Format: uuid */
-            ownerOrgUnitId: null | string;
-            name: string;
-        };
-        NewCompetencyRequest: {
-            /** Format: uuid */
-            ownerOrgUnitId: null | string;
-            description: null | string;
-            /** Format: uuid */
-            categoryId: string;
-            /** Format: uuid */
-            directionId: null | string;
-            type: components["schemas"]["CompetencyType"];
-            /** Format: uuid */
-            scaleId: string;
-            name: string;
-        };
-        NewCompetencyScaleRequest: {
-            /** Format: uuid */
-            ownerOrgUnitId: null | string;
-            points: components["schemas"]["ScalePoint"][];
             name: string;
         };
         NewMatrixRequest: {
@@ -5331,7 +5310,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["NewCatalogEntryRequest"];
+                "application/json": components["schemas"]["CatalogNameRequest"];
             };
         };
         responses: {
@@ -6993,7 +6972,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["NewCatalogEntryRequest"];
+                "application/json": components["schemas"]["CatalogNameRequest"];
             };
         };
         responses: {
@@ -7507,7 +7486,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["NewCompetencyRequest"];
+                "application/json": components["schemas"]["CompetencyRequest"];
             };
         };
         responses: {
@@ -8058,7 +8037,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["NewCompetencyScaleRequest"];
+                "application/json": components["schemas"]["CompetencyScaleRequest"];
             };
         };
         responses: {
@@ -8189,6 +8168,96 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    MakeCompetencyScaleDefault: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompetencyScaleResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unauthorized */

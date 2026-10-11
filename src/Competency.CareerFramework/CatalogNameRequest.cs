@@ -1,7 +1,7 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The name of a catalogue entry, for renaming a direction, track or category; entry requests with more fields extend it.
+/// The name of a catalogue entry, for creating a direction or category and renaming it or a track; entry requests with more fields extend it.
 /// </summary>
 internal record CatalogNameRequest
 {

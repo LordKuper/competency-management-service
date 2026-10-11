@@ -2,7 +2,7 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// A career level as the API returns it, without its salary range, which only some readers get, from the salary endpoint.
-/// The direction is the track's. The version equals the <c>ETag</c> a change returns and is sent back in <c>If-Match</c>.
+/// The direction and the unit are the track's. The version equals the <c>ETag</c> a change returns and is sent back in <c>If-Match</c>.
 /// </summary>
 internal sealed record CareerLevelResponse(
     Guid Id,
@@ -17,11 +17,9 @@ internal sealed record CareerLevelResponse(
     Guid? PreviousLevelId,
     IReadOnlyList<Guid> NextLevelIds,
     CatalogStatus Status,
-    Guid? OwnerOrgUnitId,
-    string? OwnerOrgUnitName,
     int Version)
 {
-    public static CareerLevelResponse From(CareerLevel level, string? ownerOrgUnitName) => new(
+    public static CareerLevelResponse From(CareerLevel level) => new(
         level.Id,
         level.Name,
         level.Track.DirectionId,
@@ -34,7 +32,5 @@ internal sealed record CareerLevelResponse(
         level.PreviousLevelId,
         level.NextLevelIds,
         level.Status,
-        level.OwnerOrgUnitId,
-        ownerOrgUnitName,
         level.Version);
 }

@@ -11,13 +11,15 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The API of competency scales. Scale names are unique across the catalogue. A scale a published matrix version has used never changes,
 /// so the version keeps meaning what it meant; the catalogue lock, which publication also takes, keeps the check and a publication apart.
+/// Exactly one scale is the default; making another active scale the default takes the flag from the previous one.
 /// </summary>
 internal static class CompetencyScaleEndpoints
 {
     private const string Route = "/api/v1/career/scales";
     private const string PublishedMessage = "Используется в опубликованной матрице — изменить нельзя";
+    private const string InactiveDefaultMessage = "По умолчанию может быть только действующая шкала";
 
-    internal static readonly CatalogKind<CompetencyScale, CompetencyScaleResponse> Kind = new("CompetencyScale", CompetencyScaleResponse.From);
+    internal static readonly CatalogKind<CompetencyScale, CompetencyScaleResponse> Kind = new("CompetencyScale", (scale, _) => CompetencyScaleResponse.From(scale));
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -27,6 +29,10 @@ internal static class CompetencyScaleEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
         group.MapPut("/{id:guid}", UpdateAsync).WithName("UpdateCompetencyScale").ProducesETag()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        group.MapPost("/{id:guid}/make-default", MakeDefaultAsync).WithName("MakeCompetencyScaleDefault").ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
@@ -41,7 +47,7 @@ internal static class CompetencyScaleEndpoints
         CatalogEndpoints.ListAsync(context.Set<CompetencyScale>(), query, Kind, store, cancellationToken);
 
     private static async Task<Results<Created<CompetencyScaleResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
-        NewCompetencyScaleRequest request,
+        CompetencyScaleRequest request,
         AppDbContext context,
         CatalogStore store,
         HttpResponse response,
@@ -55,7 +61,7 @@ internal static class CompetencyScaleEndpoints
 
         await using var transaction = await store.BeginWriteAsync(cancellationToken);
         var viewer = await store.ViewerAsync(cancellationToken);
-        if (viewer.StatusOfNew(request.OwnerOrgUnitId) is not { } status)
+        if (viewer.StatusOfNew(unitId: null) is not { } status)
         {
             return Rejection.Forbidden();
         }
@@ -64,7 +70,6 @@ internal static class CompetencyScaleEndpoints
         {
             Name = request.TrimmedName(),
             Points = request.StoredPoints(),
-            OwnerOrgUnitId = request.OwnerOrgUnitId,
             Status = status,
             AuthorId = viewer.UserId,
         };
@@ -121,6 +126,46 @@ internal static class CompetencyScaleEndpoints
             return taken;
         }
 
+        return TypedResults.Ok(await CatalogEndpoints.CommitAsync(scale, Kind, store, transaction, response, cancellationToken));
+    }
+
+    /// <summary>
+    /// Makes an active scale the default. The previous default loses the flag in a save of its own first, so the index that allows one
+    /// default never sees two.
+    /// </summary>
+    private static async Task<Results<Ok<CompetencyScaleResponse>, NotFound, ProblemHttpResult>> MakeDefaultAsync(
+        Guid id,
+        IfMatch ifMatch,
+        AppDbContext context,
+        CatalogStore store,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await store.BeginWriteAsync(cancellationToken);
+        var viewer = await store.ViewerAsync(cancellationToken);
+        if (await store.FindVisibleAsync<CompetencyScale>(id, viewer, cancellationToken) is not { } scale)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (!viewer.CanManage(scale))
+        {
+            return Rejection.Forbidden();
+        }
+
+        if (scale.Status != CatalogStatus.Active)
+        {
+            return Rejection.Conflict(InactiveDefaultMessage);
+        }
+
+        if (await context.Set<CompetencyScale>().FirstOrDefaultAsync(other => other.IsDefault && other.Id != id, cancellationToken) is { } previous)
+        {
+            previous.IsDefault = false;
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        ifMatch.ApplyTo(context, scale);
+        scale.IsDefault = true;
         return TypedResults.Ok(await CatalogEndpoints.CommitAsync(scale, Kind, store, transaction, response, cancellationToken));
     }
 }

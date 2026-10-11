@@ -38,7 +38,7 @@ internal static class CatalogEndpoints
         string route,
         string listName,
         CatalogKind<TEntry, CatalogEntryResponse> kind,
-        Func<NewCatalogEntryRequest, CatalogStatus, Guid, TEntry> create)
+        Func<CatalogNameRequest, CatalogStatus, Guid, TEntry> create)
         where TEntry : CatalogEntry
     {
         var group = endpoints.MapCatalogGroup(route);
@@ -49,7 +49,7 @@ internal static class CatalogEndpoints
             .WithName(listName);
         group.MapPost(
                 string.Empty,
-                (NewCatalogEntryRequest request, AppDbContext context, CatalogStore store, HttpResponse response, CancellationToken cancellationToken) =>
+                (CatalogNameRequest request, AppDbContext context, CatalogStore store, HttpResponse response, CancellationToken cancellationToken) =>
                     CreateNamedAsync(request, route, create, kind, context, store, response, cancellationToken))
             .WithName($"Create{kind.Name}")
             .ProducesETag()
@@ -136,8 +136,8 @@ internal static class CatalogEndpoints
             .ThenBy(entry => entry.Id)
             .ToPageAsync(query.Page, query.PageSize, cancellationToken);
 
-        var unitNames = await store.UnitNamesAsync(page.Items.Select(entry => entry.OwnerOrgUnitId), cancellationToken);
-        var items = page.Items.Select(entry => kind.Describe(entry, NameOf(entry.OwnerOrgUnitId, unitNames))).ToList();
+        var unitNames = await store.UnitNamesAsync(page.Items.Select(entry => entry.UnitId), cancellationToken);
+        var items = page.Items.Select(entry => kind.Describe(entry, NameOf(entry.UnitId, unitNames))).ToList();
         return TypedResults.Ok(new PageResponse<TResponse>(items, page.Total, page.Page, page.PageSize));
     }
 
@@ -178,9 +178,9 @@ internal static class CatalogEndpoints
         CancellationToken cancellationToken)
         where TEntry : CatalogEntry
     {
-        var unitNames = await store.UnitNamesAsync([entry.OwnerOrgUnitId], cancellationToken);
+        var unitNames = await store.UnitNamesAsync([entry.UnitId], cancellationToken);
         response.SetETag(entry.Version);
-        return kind.Describe(entry, NameOf(entry.OwnerOrgUnitId, unitNames));
+        return kind.Describe(entry, NameOf(entry.UnitId, unitNames));
     }
 
     private static string? NameOf(Guid? unitId, IReadOnlyDictionary<Guid, string> unitNames) =>
@@ -208,9 +208,9 @@ internal static class CatalogEndpoints
     }
 
     private static async Task<Results<Created<CatalogEntryResponse>, ValidationProblem, ProblemHttpResult>> CreateNamedAsync<TEntry>(
-        NewCatalogEntryRequest request,
+        CatalogNameRequest request,
         string route,
-        Func<NewCatalogEntryRequest, CatalogStatus, Guid, TEntry> create,
+        Func<CatalogNameRequest, CatalogStatus, Guid, TEntry> create,
         CatalogKind<TEntry, CatalogEntryResponse> kind,
         AppDbContext context,
         CatalogStore store,
@@ -226,7 +226,7 @@ internal static class CatalogEndpoints
 
         await using var transaction = await store.BeginWriteAsync(cancellationToken);
         var viewer = await store.ViewerAsync(cancellationToken);
-        if (viewer.StatusOfNew(request.OwnerOrgUnitId) is not { } status)
+        if (viewer.StatusOfNew(unitId: null) is not { } status)
         {
             return Rejection.Forbidden();
         }
@@ -282,8 +282,8 @@ internal static class CatalogEndpoints
     }
 
     /// <summary>
-    /// Makes a draft active and journals the approval as an event of its own. The name is checked again, because the drafts of other
-    /// units did not compete with it while it was a draft.
+    /// Makes a draft active and journals the approval as an event of its own; approving a track approves its draft levels with it.
+    /// Names are checked again, because the drafts of other authors did not compete with them while they were drafts.
     /// </summary>
     private static async Task<Results<Ok<TResponse>, NotFound, ProblemHttpResult>> ApproveAsync<TEntry, TResponse>(
         Guid id,
@@ -320,9 +320,43 @@ internal static class CatalogEndpoints
             return taken;
         }
 
-        var entityType = typeof(TEntry).Name;
-        audit.Stage(new AuditEntry($"{entityType}.{ApprovedAction}", entityType, entry.Id.ToString()), context);
+        if (entry is CareerTrack track && await ApproveLevelsAsync(track, context, store, audit, cancellationToken) is { } levelTaken)
+        {
+            return levelTaken;
+        }
+
+        StageApproval(entry, context, audit);
         return TypedResults.Ok(await CommitAsync(entry, kind, store, transaction, response, cancellationToken));
+    }
+
+    private static async Task<ProblemHttpResult?> ApproveLevelsAsync(
+        CareerTrack track,
+        AppDbContext context,
+        CatalogStore store,
+        IAuditWriter audit,
+        CancellationToken cancellationToken)
+    {
+        var drafts = await context.Set<CareerLevel>()
+            .Where(level => level.TrackId == track.Id && level.Status == CatalogStatus.Draft)
+            .ToListAsync(cancellationToken);
+        foreach (var level in drafts)
+        {
+            level.Status = CatalogStatus.Active;
+            if (await store.IsNameTakenAsync(level, CareerLevelEndpoints.Kind.SameScope?.Invoke(level), cancellationToken))
+            {
+                return Rejection.Conflict($"{DuplicateNameMessage}: «{level.Name}»");
+            }
+
+            StageApproval(level, context, audit);
+        }
+
+        return null;
+    }
+
+    private static void StageApproval(CatalogEntry entry, AppDbContext context, IAuditWriter audit)
+    {
+        var entityType = entry.GetType().Name;
+        audit.Stage(new AuditEntry($"{entityType}.{ApprovedAction}", entityType, entry.Id.ToString()), context);
     }
 
     /// <summary>

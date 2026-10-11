@@ -60,7 +60,7 @@ internal sealed class CatalogStore(
 
     /// <summary>
     /// Whether another entry in the same scope has the entry's name regardless of letter case. An entry competes with the entries that are
-    /// not drafts and with the drafts of its own unit, so a draft another unit keeps to itself never blocks a name, and is checked again when approved.
+    /// not drafts and with the drafts of its own author, so a draft another author keeps to themselves never blocks a name, and is checked again when approved.
     /// </summary>
     /// <typeparam name="T">The entry type.</typeparam>
     /// <param name="entry">The entry about to be saved.</param>
@@ -71,30 +71,30 @@ internal sealed class CatalogStore(
         where T : CatalogEntry
     {
         var id = entry.Id;
-        var ownerOrgUnitId = entry.OwnerOrgUnitId;
+        var authorId = entry.AuthorId;
         var pattern = ListRequest.ExactPattern(entry.Name);
         return context.Set<T>()
             .WhereIf(sameScope is not null, sameScope!)
             .AnyAsync(
                 other => other.Id != id
                     && EF.Functions.ILike(other.Name, pattern, ListRequest.LikeEscape)
-                    && (other.Status != CatalogStatus.Draft || other.OwnerOrgUnitId == ownerOrgUnitId),
+                    && (other.Status != CatalogStatus.Draft || other.AuthorId == authorId),
                 cancellationToken);
     }
 
     /// <summary>
-    /// Whether an entry of the given unit may refer to the entry: an active one, or a draft of the same unit.
+    /// Whether an entry of the given author may refer to the entry: an active one, or a draft of the same author.
     /// </summary>
     /// <typeparam name="T">The referenced entry type.</typeparam>
     /// <param name="id">The referenced entry.</param>
-    /// <param name="ownerOrgUnitId">The unit of the referring entry; null for a shared one.</param>
+    /// <param name="authorId">The author of the referring entry.</param>
     /// <param name="cancellationToken">Cancels the query.</param>
     /// <returns>True when the reference is allowed; false also when the entry does not exist.</returns>
-    public Task<bool> IsUsableAsync<T>(Guid id, Guid? ownerOrgUnitId, CancellationToken cancellationToken)
+    public Task<bool> IsUsableAsync<T>(Guid id, Guid? authorId, CancellationToken cancellationToken)
         where T : CatalogEntry =>
         context.Set<T>().AnyAsync(
             entry => entry.Id == id
-                && (entry.Status == CatalogStatus.Active || (entry.Status == CatalogStatus.Draft && entry.OwnerOrgUnitId == ownerOrgUnitId)),
+                && (entry.Status == CatalogStatus.Active || (entry.Status == CatalogStatus.Draft && entry.AuthorId == authorId)),
             cancellationToken);
 
     /// <summary>
@@ -117,7 +117,7 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
-    /// The names of units, for showing who keeps an entry.
+    /// The names of units, for showing which unit keeps a track or a matrix.
     /// </summary>
     /// <param name="unitIds">The units; nulls are skipped.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>

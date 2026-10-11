@@ -1,7 +1,7 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The name and points of a scale; the points replace the scale's points as a whole.
+/// The name and points of a new scale or of a change of one; the points replace the scale's points as a whole.
 /// </summary>
 internal record CompetencyScaleRequest : CatalogNameRequest
 {

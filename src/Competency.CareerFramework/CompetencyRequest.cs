@@ -1,7 +1,7 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The fields of a competency that may change; every field must be sent, an absent value as null.
+/// The fields of a new competency or of a change of one; every field but the scale must be sent, an absent value as null.
 /// </summary>
 internal record CompetencyRequest : CatalogNameRequest
 {
@@ -16,7 +16,10 @@ internal record CompetencyRequest : CatalogNameRequest
 
     public required CompetencyType Type { get; init; }
 
-    public required Guid ScaleId { get; init; }
+    /// <summary>
+    /// The scale; absent or null for the default scale.
+    /// </summary>
+    public Guid? ScaleId { get; init; }
 
     /// <inheritdoc />
     public override Dictionary<string, string[]> Validate()
@@ -30,13 +33,14 @@ internal record CompetencyRequest : CatalogNameRequest
     /// Copies the fields onto the competency; call after <see cref="Validate"/> succeeded.
     /// </summary>
     /// <param name="competency">The competency to change.</param>
-    public void ApplyTo(CareerCompetency competency)
+    /// <param name="scaleId">The scale the request names, or else the default scale.</param>
+    public void ApplyTo(CareerCompetency competency, Guid scaleId)
     {
         competency.Name = TrimmedName();
         competency.Description = OptionalText(Description);
         competency.CategoryId = CategoryId;
         competency.DirectionId = DirectionId;
         competency.Type = Type;
-        competency.ScaleId = ScaleId;
+        competency.ScaleId = scaleId;
     }
 }

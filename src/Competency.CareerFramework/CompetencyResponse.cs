@@ -13,13 +13,11 @@ internal sealed record CompetencyResponse(
     CompetencyType Type,
     Guid ScaleId,
     CatalogStatus Status,
-    Guid? OwnerOrgUnitId,
-    string? OwnerOrgUnitName,
     DateTimeOffset CreatedAt,
     int VersionNumber,
     int Version)
 {
-    public static CompetencyResponse From(CareerCompetency competency, string? ownerOrgUnitName) => new(
+    public static CompetencyResponse From(CareerCompetency competency) => new(
         competency.Id,
         competency.Name,
         competency.Description,
@@ -28,8 +26,6 @@ internal sealed record CompetencyResponse(
         competency.Type,
         competency.ScaleId,
         competency.Status,
-        competency.OwnerOrgUnitId,
-        ownerOrgUnitName,
         competency.CreatedAt,
         CompetencyVersion.NumberOf(competency),
         competency.Version);
