@@ -112,6 +112,13 @@
       "decision": "AC-24 amended (unit tree filter), AC-25 added (delete unreferenced career records); Task 15 wave 11, Task 16 wave 12",
       "reason": "user remarks at impl assessment; cost AC-24: 0 iterations / 0 fix rounds",
       "evidence": "decisions-log.md 2026-10-11 scope amendment delete records"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-25 amended: deletion refusal lists up to 5 visible blockers + count of others; category draft deletable by its author; Task 17 wave 13, Task 18 wave 14",
+      "reason": "user remark at impl assessment; cost AC-23, AC-25: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-11 scope amendment deletion blockers"
     }
   ],
   "task_routing": {
@@ -228,6 +235,12 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "Task 17": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "opus"
     }
   },
   "skipped_phases": [],
@@ -250,7 +263,7 @@
     }
   },
   "created_at": "2026-10-09T07:25:11.340Z",
-  "updated_at": "2026-10-11T11:33:52.219Z",
+  "updated_at": "2026-10-11T12:13:41.048Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

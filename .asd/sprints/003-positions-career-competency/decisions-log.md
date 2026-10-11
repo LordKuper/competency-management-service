@@ -127,3 +127,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-11 — route Task 16: standard, dispatch HEAD 07304c0; risk none via npm --prefix web run lint
 - 2026-10-11 — memory-fix выполнен (8fe32da): идентификаторы спринта и Task убраны из `project_career-record-deletion-facts.md`, memory-check чист
 - 2026-10-11 — Task 16 accepted: удаление в UI через общий `useConfirmDeletion` и кнопку в `EntryActions` (по `canEdit`; у категорий кнопка видна и руководителю на черновике, сервер по AC-23 отвечает 403 — на ревью), удаление матрицы — If-Match версии в работе, фильтр подразделений — `TreeSelect` с поиском; производный aria-label «Подразделение». Gate: Release 0/0, web lint, build, check:api чисты; пути — только назначенные Task 15, 16 и память dev; plan.md — все подзадачи отмечены
+
+## 2026-10-11 — scope amendment deletion blockers accepted
+
+- **Decision**: AC-25 дополнен: отказ в удалении перечисляет до 5 видимых пользователю мешающих записей (вид и название) и ниже «и N других связанных записей» с согласованием числа; невидимые — только в числе; черновик категории может удалить и его автор (единое правило AC-25). Plan: Task 17 (backend, волна 13), Task 18 (экран, волна 14).
+- **Rationale**: Замечание пользователя на impl assessment и ответ на вопрос о правах удаления черновика категории (рекомендованный вариант); стоимость AC-23, AC-25: 0 итераций ревью, 0 раундов исправлений.
+- **Affected docs**: sprint.md AC-25; plan.md Task 17, Task 18, «Тексты интерфейса», Dependencies
+- 2026-10-11 — route Task 17: critical, dispatch HEAD 4748273; risk change: security
