@@ -107,7 +107,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     }
 
     /// <summary>
-    /// The entries the version refers to as they stand now, in the order of its content.
+    /// The entries the version refers to as they stand now: levels in track order, competencies in the order of the content.
     /// </summary>
     /// <param name="version">The version.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
@@ -129,11 +129,9 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             new MatrixNamedEntry(direction.Id, direction.Name, direction.Status),
             new MatrixNamedEntry(track.Id, track.Name, track.Status),
             new MatrixScaleEntry(entries.Scale.Id, entries.Scale.Name, entries.Scale.Points, entries.Scale.Status),
-            [.. content.Levels
-                .Select(item => entries.Levels.GetValueOrDefault(item.LevelId))
-                .OfType<CareerLevel>()
-                .Select(level => new MatrixLevelEntry(
-                    level.Id, level.Name, level.Code, level.IsManagerial, level.ValidFrom, level.ValidTo, level.RoleDescription, level.Status))],
+            [.. entries.Levels.Values
+                .OrderBy(level => level.Position)
+                .Select(level => new MatrixLevelEntry(level.Id, level.Name, level.Status))],
             [.. content.Competencies
                 .Select(item => entries.Competencies.GetValueOrDefault(item.CompetencyId))
                 .OfType<CareerCompetency>()

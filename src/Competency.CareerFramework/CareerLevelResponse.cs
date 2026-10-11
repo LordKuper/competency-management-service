@@ -8,13 +8,7 @@ internal sealed record CareerLevelResponse(
     string Name,
     Guid DirectionId,
     Guid TrackId,
-    string Code,
-    bool IsManagerial,
-    DateOnly? ValidFrom,
-    DateOnly? ValidTo,
-    string? RoleDescription,
-    Guid? PreviousLevelId,
-    IReadOnlyList<Guid> NextLevelIds,
+    int Position,
     CatalogStatus Status,
     int Version)
 {
@@ -23,13 +17,7 @@ internal sealed record CareerLevelResponse(
         level.Name,
         level.Track.DirectionId,
         level.TrackId,
-        level.Code,
-        level.IsManagerial,
-        level.ValidFrom,
-        level.ValidTo,
-        level.RoleDescription,
-        level.PreviousLevelId,
-        level.NextLevelIds,
+        level.Position,
         level.Status,
         level.Version);
 }

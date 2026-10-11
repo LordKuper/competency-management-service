@@ -1,9 +1,9 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// A new career level: its fields and track, which never changes afterwards.
+/// A new career level: its name and track, which never changes afterwards.
 /// </summary>
-internal sealed record NewCareerLevelRequest : CareerLevelRequest
+internal sealed record NewCareerLevelRequest : CatalogNameRequest
 {
     public required Guid TrackId { get; init; }
 }

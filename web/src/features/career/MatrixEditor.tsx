@@ -141,6 +141,17 @@ function MatrixEditorBody({
     ),
     ...entries.levels.map((level) => [level.id, level.name] as const),
   ]);
+  const trackOrder = [
+    ...(catalogLevels.data?.items ?? []),
+    ...entries.levels,
+  ].map((level) => level.id);
+  const rank = (levelId: string) => {
+    const index = trackOrder.indexOf(levelId);
+    return index === -1 ? trackOrder.length : index;
+  };
+  const shownLevelIds = shown.levels
+    .map((level) => level.levelId)
+    .sort((left, right) => rank(left) - rank(right));
   const competencies = new Map<string, CompetencyInfo>([
     ...(catalogCompetencies.data?.items ?? []).map(
       (competency) => [competency.id, competency] as const,
@@ -306,7 +317,7 @@ function MatrixEditorBody({
       className: "matrix-name-cell",
       render: (_, row) => renderName(row),
     },
-    ...shown.levels.map(({ levelId }) => ({
+    ...shownLevelIds.map((levelId) => ({
       key: levelId,
       className: "matrix-cell",
       title: (
@@ -393,6 +404,7 @@ function MatrixEditorBody({
       />
       <MatrixBlocks
         content={shown}
+        levelIds={shownLevelIds}
         levelNames={levelNames}
         changed={changed}
         isEditable={isEditable}

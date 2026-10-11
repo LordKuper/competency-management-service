@@ -25,7 +25,10 @@ function isShownUnderFields(error: unknown, fields: readonly string[]) {
   );
 }
 
-/** Dialog shell of the catalogue forms. Mount it only while it is shown, so every opening starts clean. */
+/**
+ * Dialog shell of the catalogue forms. Mount it only while it is shown, so every opening starts clean. An Escape that
+ * something inside has already handled, such as cancelling the move of a level, leaves the dialog open.
+ */
 export function CatalogModal({
   title,
   error,
@@ -40,7 +43,14 @@ export function CatalogModal({
     error.errors === undefined;
 
   return (
-    <Modal open title={title} onCancel={onClose} footer={null}>
+    <Modal
+      open
+      title={title}
+      onCancel={(event) => {
+        if (!event.defaultPrevented) onClose();
+      }}
+      footer={null}
+    >
       <Space orientation="vertical" size="large" style={{ display: "flex" }}>
         {isConflict && conflictNotice && (
           <Alert type="warning" showIcon title={conflictNotice} />

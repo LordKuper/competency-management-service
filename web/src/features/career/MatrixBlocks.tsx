@@ -66,6 +66,8 @@ function PercentField({
 
 interface MatrixBlocksProps {
   content: MatrixContent;
+  /** The levels of the content in track order. */
+  levelIds: readonly string[];
   levelNames: ReadonlyMap<string, string>;
   changed: ChangedPlaces;
   isEditable: boolean;
@@ -75,13 +77,14 @@ interface MatrixBlocksProps {
 /** The blocks of competencies with their coefficients and thresholds per level. */
 export function MatrixBlocks({
   content,
+  levelIds,
   levelNames,
   changed,
   isEditable,
   onChange,
 }: MatrixBlocksProps) {
-  const levelColumns: TableColumnsType<MatrixBlock> = content.levels.map(
-    ({ levelId }) => {
+  const levelColumns: TableColumnsType<MatrixBlock> = levelIds.map(
+    (levelId) => {
       const levelName = levelNames.get(levelId) ?? "";
       const weightOf = (block: MatrixBlock) =>
         content.blockWeights.find(

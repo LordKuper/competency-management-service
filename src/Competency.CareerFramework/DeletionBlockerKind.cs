@@ -9,7 +9,6 @@ namespace Competency.CareerFramework;
 internal enum DeletionBlockerKind
 {
     Track,
-    Level,
     Competency,
 
     /// <summary>

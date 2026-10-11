@@ -20,7 +20,6 @@ type Blocker = ApiError["blockers"][number];
 
 const KIND_LABELS: Record<Blocker["kind"], string> = {
   Track: "Трек",
-  Level: "Уровень",
   Competency: "Компетенция",
   CompetencyVersion: "Версия компетенции",
   Matrix: "Матрица",
@@ -38,9 +37,7 @@ function blockerText({ kind, name, context }: Blocker): string {
   const label = `${KIND_LABELS[kind]} «${name}»`;
   if (!context) return label;
   if (kind === "Matrix") return `${label} — ${context}`;
-  return kind === "Level"
-    ? `${label} (трек «${context}»)`
-    : `${label} (${context})`;
+  return `${label} (${context})`;
 }
 
 function Refusal({ error }: { error: ApiError }) {

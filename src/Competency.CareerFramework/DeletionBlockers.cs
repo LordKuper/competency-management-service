@@ -38,14 +38,6 @@ internal sealed class DeletionBlockers(CatalogViewer viewer, AppDbContext contex
         AddAsync(entries, entry => new DeletionBlocker(kind, entry.Id, entry.Name, null));
 
     /// <summary>
-    /// Adds levels, each named with its track.
-    /// </summary>
-    /// <param name="levels">The referring levels.</param>
-    /// <returns>A task that completes when they are counted.</returns>
-    public Task AddLevelsAsync(IQueryable<CareerLevel> levels) =>
-        AddAsync(levels, level => new DeletionBlocker(DeletionBlockerKind.Level, level.Id, level.Name, level.Track.Name));
-
-    /// <summary>
     /// Adds matrices, oldest first, each named by its track and unit; every signed-in user reads matrices.
     /// </summary>
     /// <param name="matrices">The referring matrices.</param>

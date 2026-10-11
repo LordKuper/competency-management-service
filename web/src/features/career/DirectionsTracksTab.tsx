@@ -160,9 +160,7 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
         scroll={{ x: "max-content" }}
         onChange={onFilterChange(setFilters)}
         expandable={{
-          expandedRowRender: (track) => (
-            <LevelsTable track={track} editable={false} />
-          ),
+          expandedRowRender: (track) => <LevelsTable track={track} />,
         }}
       />
       {dialog === "create" && (

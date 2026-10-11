@@ -134,17 +134,22 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
-    /// The levels outside the given ones that name one of them as their previous or a next level.
+    /// Numbers the levels of one track from 1 in the given order. The levels that move are first set aside under negative numbers, so the
+    /// unique number of a level within its track holds after every single update of the save.
     /// </summary>
-    /// <param name="levelIds">The levels about to be deleted.</param>
-    /// <returns>The levels, a query to compose with others.</returns>
-    public IQueryable<CareerLevel> LevelsReferencing(Guid[] levelIds)
+    /// <param name="levels">All levels of the track, tracked, in their new order.</param>
+    /// <param name="cancellationToken">Cancels the update.</param>
+    /// <returns>A task that completes when the moving levels are set aside; the caller saves the new numbers.</returns>
+    public async Task MoveLevelsAsync(IReadOnlyList<CareerLevel> levels, CancellationToken cancellationToken)
     {
-        var referencingIds = context.Database.SqlQuery<Guid>($"""
-            SELECT id AS "Value" FROM career_levels
-            WHERE NOT (id = ANY({levelIds})) AND (previous_level_id = ANY({levelIds}) OR next_level_ids && {levelIds})
-            """);
-        return context.Set<CareerLevel>().Where(level => referencingIds.Contains(level.Id));
+        var movingIds = levels.Where((level, index) => level.Position != index + 1).Select(level => level.Id).ToArray();
+        await context.Database.ExecuteSqlAsync(
+            $"UPDATE career_levels SET position = -position WHERE id = ANY({movingIds})",
+            cancellationToken);
+        for (var index = 0; index < levels.Count; index++)
+        {
+            levels[index].Position = index + 1;
+        }
     }
 
     /// <summary>

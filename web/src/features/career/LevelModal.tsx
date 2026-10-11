@@ -1,57 +1,25 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Checkbox, Form, Input, Select } from "antd";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Form, Input } from "antd";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogModal, FormActions } from "./CatalogModal";
-import {
-  type CareerLevel,
-  invalidateCatalogs,
-  levelsQuery,
-} from "./catalogApi";
+import { type CareerLevel, invalidateCatalogs } from "./catalogApi";
 
 const NAME_MAX_LENGTH = 200;
-const FIELDS = [
-  "name",
-  "code",
-  "previousLevelId",
-  "nextLevelIds",
-  "validFrom",
-  "validTo",
-  "roleDescription",
-] as const;
+const FIELDS = ["name"] as const;
 
 export interface LevelValues {
   name: string;
-  code: string;
-  previousLevelId?: string | null;
-  nextLevelIds?: string[];
-  isManagerial?: boolean;
-  validFrom?: string | null;
-  validTo?: string | null;
-  roleDescription?: string | null;
 }
 
-function levelBody(values: LevelValues) {
-  return {
-    name: values.name,
-    code: values.code,
-    isManagerial: values.isManagerial ?? false,
-    validFrom: values.validFrom || null,
-    validTo: values.validTo || null,
-    roleDescription: values.roleDescription?.trim() || null,
-    previousLevelId: values.previousLevelId ?? null,
-    nextLevelIds: values.nextLevelIds ?? [],
-  };
-}
-
-/** Creates a level of the track. */
+/** Creates a level of the track; the server puts it after the track's other levels. */
 export async function createLevel(trackId: string, values: LevelValues) {
   return unwrap(
     await api.POST("/api/v1/career/levels", {
-      body: { ...levelBody(values), trackId },
+      body: { name: values.name, trackId },
     }),
   );
 }
@@ -68,7 +36,7 @@ interface LevelModalProps {
   onClose: () => void;
 }
 
-/** Dialog that creates a level of a track or edits one. */
+/** Dialog that creates a level of a track or renames one. */
 export function LevelModal({
   trackId,
   level: latest,
@@ -94,7 +62,7 @@ export function LevelModal({
             path: { id: level.id },
             header: { "If-Match": ifMatchOf(level.version) },
           },
-          body: levelBody(values),
+          body: { name: values.name },
         }),
       );
     },
@@ -112,8 +80,7 @@ export function LevelModal({
     >
       <LevelForm
         key={level?.version}
-        level={level}
-        draft={draft}
+        initialName={draft?.name ?? level?.name ?? ""}
         onSubmit={(values) => save.mutateAsync(values)}
         onCancel={onClose}
       />
@@ -122,48 +89,21 @@ export function LevelModal({
 }
 
 interface LevelFormProps {
-  level?: CareerLevel;
-  draft?: LevelValues;
+  initialName: string;
   onSubmit: (values: LevelValues) => Promise<unknown>;
   onCancel: () => void;
 }
 
-function LevelForm({ level, draft, onSubmit, onCancel }: LevelFormProps) {
+function LevelForm({ initialName, onSubmit, onCancel }: LevelFormProps) {
   const [form] = Form.useForm<LevelValues>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
-  const { data: levels, isFetching } = useQuery(levelsQuery());
-  const chosen = new Set([
-    level?.previousLevelId,
-    ...(level?.nextLevelIds ?? []),
-  ]);
-  const options = (levels?.items ?? [])
-    .filter(
-      (other) =>
-        other.id !== level?.id &&
-        (other.status !== "Inactive" || chosen.has(other.id)),
-    )
-    .map((other) => ({
-      value: other.id,
-      label: `${other.name} (${other.code})`,
-    }));
 
   return (
     <Form
       form={form}
       name="career-level"
       layout="vertical"
-      initialValues={
-        draft ?? {
-          name: level?.name ?? "",
-          code: level?.code ?? "",
-          previousLevelId: level?.previousLevelId ?? undefined,
-          nextLevelIds: level?.nextLevelIds ?? [],
-          isManagerial: level?.isManagerial ?? false,
-          validFrom: level?.validFrom ?? "",
-          validTo: level?.validTo ?? "",
-          roleDescription: level?.roleDescription ?? "",
-        }
-      }
+      initialValues={{ name: initialName }}
       onFinish={submit}
     >
       <Form.Item
@@ -178,37 +118,6 @@ function LevelForm({ level, draft, onSubmit, onCancel }: LevelFormProps) {
         ]}
       >
         <Input autoComplete="off" />
-      </Form.Item>
-      <Form.Item name="code" label="Код уровня">
-        <Input autoComplete="off" />
-      </Form.Item>
-      <Form.Item name="previousLevelId" label="Предыдущий уровень">
-        <Select
-          allowClear
-          showSearch={{ optionFilterProp: "label" }}
-          loading={isFetching}
-          options={options}
-        />
-      </Form.Item>
-      <Form.Item name="nextLevelIds" label="Следующие уровни">
-        <Select
-          mode="multiple"
-          showSearch={{ optionFilterProp: "label" }}
-          loading={isFetching}
-          options={options}
-        />
-      </Form.Item>
-      <Form.Item name="isManagerial" valuePropName="checked">
-        <Checkbox>Управленческий уровень</Checkbox>
-      </Form.Item>
-      <Form.Item name="validFrom" label="Действует с">
-        <Input type="date" />
-      </Form.Item>
-      <Form.Item name="validTo" label="Действует по">
-        <Input type="date" />
-      </Form.Item>
-      <Form.Item name="roleDescription" label="Описание роли">
-        <Input.TextArea autoSize={{ minRows: 3 }} />
       </Form.Item>
       <FormActions isSubmitting={isSubmitting} onCancel={onCancel} />
     </Form>

@@ -804,6 +804,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/career/tracks/{id}/level-order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["OrderCareerTrackLevels"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/career/levels": {
         parameters: {
             query?: never;
@@ -1459,19 +1475,6 @@ export interface components {
             /** Format: int32 */
             pageSize: number;
         };
-        CareerLevelRequest: {
-            code: string;
-            isManagerial: boolean;
-            /** Format: date */
-            validFrom: null | string;
-            /** Format: date */
-            validTo: null | string;
-            roleDescription: null | string;
-            /** Format: uuid */
-            previousLevelId: null | string;
-            nextLevelIds: string[];
-            name: string;
-        };
         CareerLevelResponse: {
             /** Format: uuid */
             id: string;
@@ -1480,16 +1483,8 @@ export interface components {
             directionId: string;
             /** Format: uuid */
             trackId: string;
-            code: string;
-            isManagerial: boolean;
-            /** Format: date */
-            validFrom: null | string;
-            /** Format: date */
-            validTo: null | string;
-            roleDescription: null | string;
-            /** Format: uuid */
-            previousLevelId: null | string;
-            nextLevelIds: string[];
+            /** Format: int32 */
+            position: number;
             status: components["schemas"]["CatalogStatus"];
             /** Format: int32 */
             version: number;
@@ -1647,7 +1642,7 @@ export interface components {
             context: null | string;
         };
         /** @enum {unknown} */
-        DeletionBlockerKind: "Track" | "Level" | "Competency" | "CompetencyVersion" | "Matrix";
+        DeletionBlockerKind: "Track" | "Competency" | "CompetencyVersion" | "Matrix";
         DeletionRefusal: {
             type?: null | string;
             title?: null | string;
@@ -1710,6 +1705,9 @@ export interface components {
             };
         };
         JsonElement: unknown;
+        LevelOrderRequest: {
+            levelIds: string[];
+        };
         LinkPasswordRequest: {
             token: string;
             password: string;
@@ -1824,13 +1822,6 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
-            code: string;
-            isManagerial: boolean;
-            /** Format: date */
-            validFrom: null | string;
-            /** Format: date */
-            validTo: null | string;
-            roleDescription: null | string;
             status: components["schemas"]["CatalogStatus"];
         };
         MatrixNamedEntry: {
@@ -1962,16 +1953,6 @@ export interface components {
         NewCareerLevelRequest: {
             /** Format: uuid */
             trackId: string;
-            code: string;
-            isManagerial: boolean;
-            /** Format: date */
-            validFrom: null | string;
-            /** Format: date */
-            validTo: null | string;
-            roleDescription: null | string;
-            /** Format: uuid */
-            previousLevelId: null | string;
-            nextLevelIds: string[];
             name: string;
         };
         NewCareerTrackRequest: {
@@ -6444,6 +6425,91 @@ export interface operations {
             };
         };
     };
+    OrderCareerTrackLevels: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LevelOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CareerTrackResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ListCareerLevels: {
         parameters: {
             query?: {
@@ -6606,7 +6672,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CareerLevelRequest"];
+                "application/json": components["schemas"]["CatalogNameRequest"];
             };
         };
         responses: {

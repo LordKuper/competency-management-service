@@ -135,14 +135,15 @@ internal static class CatalogEndpoints
         .Produces<DeletionRefusal>(StatusCodes.Status409Conflict, ProblemContentType);
 
     /// <summary>
-    /// Reads one page of the entries of <paramref name="source"/> the user can read, in name order.
+    /// Reads one page of the entries of <paramref name="source"/> the user can read, in name order unless <paramref name="order"/> gives another.
     /// </summary>
     public static async Task<Results<Ok<PageResponse<TResponse>>, ValidationProblem>> ListAsync<TEntry, TResponse>(
         IQueryable<TEntry> source,
         CatalogListQuery query,
         CatalogKind<TEntry, TResponse> kind,
         CatalogStore store,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Func<IQueryable<TEntry>, IOrderedQueryable<TEntry>>? order = null)
         where TEntry : CatalogEntry
     {
         var errors = query.Validate();
@@ -153,12 +154,12 @@ internal static class CatalogEndpoints
 
         var viewer = await store.ViewerAsync(cancellationToken);
         var pattern = query.NamePattern();
-        var page = await source
+        var filtered = source
             .AsNoTracking()
             .Where(viewer.Sees<TEntry>())
             .WhereIf(query.Status is not null, entry => entry.Status == query.Status)
-            .WhereIf(pattern is not null, entry => EF.Functions.ILike(entry.Name, pattern!, ListRequest.LikeEscape))
-            .OrderBy(entry => entry.Name)
+            .WhereIf(pattern is not null, entry => EF.Functions.ILike(entry.Name, pattern!, ListRequest.LikeEscape));
+        var page = await (order?.Invoke(filtered) ?? filtered.OrderBy(entry => entry.Name))
             .ThenBy(entry => entry.Id)
             .ToPageAsync(query.Page, query.PageSize, cancellationToken);
 

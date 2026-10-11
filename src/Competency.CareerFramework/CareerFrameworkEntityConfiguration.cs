@@ -196,17 +196,11 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
     private static void ConfigureLevel(EntityTypeBuilder<CareerLevel> entity)
     {
         entity.Property(e => e.TrackId).HasColumnName("track_id");
-        entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(CareerLevel.CodeMaxLength);
-        entity.Property(e => e.IsManagerial).HasColumnName("is_managerial");
-        entity.Property(e => e.ValidFrom).HasColumnName("valid_from");
-        entity.Property(e => e.ValidTo).HasColumnName("valid_to");
-        entity.Property(e => e.RoleDescription).HasColumnName("role_description").HasMaxLength(CareerLevel.RoleDescriptionMaxLength);
-        entity.Property(e => e.PreviousLevelId).HasColumnName("previous_level_id");
-        entity.Property(e => e.NextLevelIds).HasColumnName("next_level_ids");
+        entity.Property(e => e.Position).HasColumnName("position");
+        entity.HasIndex(e => new { e.TrackId, e.Position }, "ux_career_levels_track_position").IsUnique();
 
         entity.HasOne(e => e.Track).WithMany().HasForeignKey(e => e.TrackId).OnDelete(DeleteBehavior.Restrict);
         entity.Navigation(e => e.Track).AutoInclude();
-        entity.HasOne<CareerLevel>().WithMany().HasForeignKey(e => e.PreviousLevelId).OnDelete(DeleteBehavior.Restrict);
     }
 
     /// <summary>

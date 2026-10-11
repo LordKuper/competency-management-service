@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Form, Input, Select, Typography, theme } from "antd";
 import { useState } from "react";
 import { useEditBase } from "../../app/useEditBase";
@@ -8,10 +8,12 @@ import { CatalogModal, FormActions } from "./CatalogModal";
 import {
   type CareerTrack,
   invalidateCatalogs,
+  levelsQuery,
+  orderLevels,
   saveNamedEntry,
 } from "./catalogApi";
-import { createLevel, type LevelValues } from "./LevelModal";
-import { LevelsTable, PendingLevels } from "./TrackLevels";
+import { createLevel } from "./LevelModal";
+import { arrangeLevels, type PendingLevel, TrackLevels } from "./TrackLevels";
 import { useCatalogRights } from "./useCatalogRights";
 
 const NAME_MAX_LENGTH = 200;
@@ -30,9 +32,10 @@ interface TrackModalProps {
 }
 
 /**
- * Dialog that creates or edits a track together with its levels. «Сохранить» saves the track first and then each level
- * added here, one after another. If a level fails, the track and the levels before it stay saved: the dialog stays open
- * on the track as saved, lists only the levels that are left, and a second «Сохранить» retries them.
+ * Dialog that creates or edits a track together with its levels. «Сохранить» saves the track first, then each level
+ * added here, one after another, and then the order of the levels if it was changed. If a step fails, the steps before
+ * it stay saved: the dialog stays open on the track as saved, keeps the order, lists as pending only the levels that are
+ * left, and a second «Сохранить» retries the rest.
  */
 export function TrackModal({
   directionId,
@@ -44,30 +47,48 @@ export function TrackModal({
   const rights = useCatalogRights();
   const [form] = Form.useForm<TrackValues>();
   const { base, noteSaveFailure } = useEditBase(latest);
-  // A track this dialog created or renamed, as the server returned it; it stands in for `base` when none is edited.
-  const [saved, setSaved] = useState<{
-    id: string;
-    name: string;
-    version: number;
-  }>();
-  const [pending, setPending] = useState<LevelValues[]>([]);
+  const [saved, setSaved] = useState<CareerTrack>();
+  const [pending, setPending] = useState<PendingLevel[]>([]);
+  const [order, setOrder] = useState<string[]>();
   const current = saved ?? base;
+  const levels = useQuery({
+    ...levelsQuery(current?.id),
+    enabled: current !== undefined,
+  });
+  const rows = arrangeLevels(
+    current ? (levels.data?.items ?? []) : [],
+    pending,
+    order,
+  );
   const save = useMutation({
     mutationFn: async (values: TrackValues) => {
       let track = current;
       if (!track || values.name !== track.name) {
-        track = await saveNamedEntry(
+        track = (await saveNamedEntry(
           "tracks",
           { ...values, directionId },
           track,
-        );
+        )) as CareerTrack;
         setSaved(track);
       }
+      const createdIds = new Map<string, string>();
       let rest = pending;
       for (const level of pending) {
-        await createLevel(track.id, level);
+        const created = await createLevel(track.id, level.values);
+        createdIds.set(level.key, created.id);
         rest = rest.slice(1);
         setPending(rest);
+        setOrder((keys) =>
+          keys?.map((key) => (key === level.key ? created.id : key)),
+        );
+      }
+      if (order) {
+        setSaved(
+          await orderLevels(
+            track,
+            rows.map((row) => createdIds.get(row.key) ?? row.key),
+          ),
+        );
       }
     },
     onSuccess: onClose,
@@ -124,8 +145,16 @@ export function TrackModal({
         </Form.Item>
         <section style={{ marginBottom: token.marginLG }}>
           <Typography.Title level={5}>Уровни</Typography.Title>
-          {latest && <LevelsTable track={latest} editable />}
-          <PendingLevels levels={pending} onChange={setPending} />
+          <TrackLevels
+            track={current}
+            rows={rows}
+            isLoading={levels.isFetching}
+            error={levels.error}
+            onRetry={() => void levels.refetch()}
+            pending={pending}
+            onPendingChange={setPending}
+            onOrderChange={setOrder}
+          />
         </section>
         <FormActions isSubmitting={isSubmitting} onCancel={onClose} />
       </Form>

@@ -10,14 +10,16 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of career tracks. A track belongs to one unit; track names are unique within their direction. Deleting a track deletes its levels.
+/// The API of career tracks. A track belongs to one unit; track names are unique within their direction. Whoever may edit a track puts its
+/// levels in order. Deleting a track deletes its levels.
 /// </summary>
 internal static class CareerTrackEndpoints
 {
     private const string Route = "/api/v1/career/tracks";
     private const string DirectionField = "directionId";
     private const string OrgUnitField = "ownerOrgUnitId";
-    private const string InUseMessage = "Трек используют матрицы или уровни других треков — удалить нельзя";
+    private const string LevelsField = "levelIds";
+    private const string InUseMessage = "Трек используют матрицы — удалить нельзя";
 
     private static readonly CatalogKind<CareerTrack, CareerTrackResponse> Kind = new(
         "CareerTrack",
@@ -32,11 +34,14 @@ internal static class CareerTrackEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
         group.MapEntryEndpoints(Kind, mapRename: true);
+        group.MapPut("/{id:guid}/level-order", OrderLevelsAsync).WithName("OrderCareerTrackLevels").ProducesETag()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound);
         group.MapDeleteEntry(Kind, RemoveLevelsAsync);
     }
 
     /// <summary>
-    /// A track goes with its levels, unless a matrix is built on it or a level of another track names one of its levels.
+    /// A track goes with its levels, unless a matrix is built on it.
     /// </summary>
     private static async Task<string?> RemoveLevelsAsync(
         CareerTrack track,
@@ -46,16 +51,53 @@ internal static class CareerTrackEndpoints
         CancellationToken cancellationToken)
     {
         var id = track.Id;
-        var levels = await context.Set<CareerLevel>().Where(level => level.TrackId == id).ToListAsync(cancellationToken);
         await blockers.AddMatricesAsync(context.Set<CompetencyMatrix>().Where(matrix => matrix.TrackId == id));
-        await blockers.AddLevelsAsync(store.LevelsReferencing([.. levels.Select(level => level.Id)]));
         if (blockers.Any)
         {
             return InUseMessage;
         }
 
-        context.RemoveRange(levels);
+        context.RemoveRange(await context.Set<CareerLevel>().Where(level => level.TrackId == id).ToListAsync(cancellationToken));
         return null;
+    }
+
+    /// <summary>
+    /// Puts the track's levels in the listed order, the most junior first; levels the list leaves out, such as one added meanwhile or one
+    /// the user cannot read, follow in their current order. The change is a change of the track, so it takes the track's version.
+    /// </summary>
+    private static async Task<Results<Ok<CareerTrackResponse>, NotFound, ValidationProblem, ProblemHttpResult>> OrderLevelsAsync(
+        Guid id,
+        LevelOrderRequest request,
+        IfMatch ifMatch,
+        AppDbContext context,
+        CatalogStore store,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await store.BeginWriteAsync(cancellationToken);
+        var viewer = await store.ViewerAsync(cancellationToken);
+        if (await store.FindVisibleAsync<CareerTrack>(id, viewer, cancellationToken) is not { } track)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (!viewer.CanEdit(track))
+        {
+            return Rejection.Forbidden();
+        }
+
+        var levels = await context.Set<CareerLevel>().Where(level => level.TrackId == id).OrderBy(level => level.Position).ToListAsync(cancellationToken);
+        var listed = (request.LevelIds ?? []).Distinct().ToList();
+        if (listed.Any(levelId => levels.All(level => level.Id != levelId)))
+        {
+            return Rejection.Invalid(LevelsField, CatalogEndpoints.UnavailableMessage);
+        }
+
+        List<CareerLevel> ordered = [.. listed.Select(levelId => levels.First(level => level.Id == levelId)), .. levels.Where(level => !listed.Contains(level.Id))];
+        await store.MoveLevelsAsync(ordered, cancellationToken);
+        ifMatch.ApplyTo(context, track);
+        context.Entry(track).Property(entry => entry.Version).IsModified = true;
+        return TypedResults.Ok(await CatalogEndpoints.CommitAsync(track, Kind, store, transaction, response, cancellationToken));
     }
 
     private static Task<Results<Ok<PageResponse<CareerTrackResponse>>, ValidationProblem>> ListAsync(

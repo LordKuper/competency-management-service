@@ -307,3 +307,19 @@ export async function deleteEntry(
     ),
   );
 }
+
+/** Puts the track's levels in the given order, the most junior first; the track takes a new version. */
+export async function orderLevels(
+  track: { id: string; version: number },
+  levelIds: string[],
+) {
+  return unwrap(
+    await api.PUT("/api/v1/career/tracks/{id}/level-order", {
+      params: {
+        path: { id: track.id },
+        header: { "If-Match": ifMatchOf(track.version) },
+      },
+      body: { levelIds },
+    }),
+  );
+}

@@ -5599,6 +5599,124 @@
         }
       }
     },
+    "/api/v1/career/tracks/{id}/level-order": {
+      "put": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "OrderCareerTrackLevels",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LevelOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerTrackResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/career/levels": {
       "get": {
         "tags": [
@@ -5758,6 +5876,63 @@
       }
     },
     "/api/v1/career/levels/{id}": {
+      "get": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "GetCareerLevel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerLevelResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
       "put": {
         "tags": [
           "Career"
@@ -5787,7 +5962,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CareerLevelRequest"
+                "$ref": "#/components/schemas/CatalogNameRequest"
               }
             }
           },
@@ -5874,63 +6049,6 @@
           },
           "428": {
             "description": "Precondition Required",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "Career"
-        ],
-        "operationId": "GetCareerLevel",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "headers": {
-              "ETag": {
-                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CareerLevelResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -10755,77 +10873,13 @@
           }
         }
       },
-      "CareerLevelRequest": {
-        "required": [
-          "code",
-          "isManagerial",
-          "validFrom",
-          "validTo",
-          "roleDescription",
-          "previousLevelId",
-          "nextLevelIds",
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "isManagerial": {
-            "type": "boolean"
-          },
-          "validFrom": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "validTo": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "roleDescription": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "previousLevelId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "nextLevelIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
       "CareerLevelResponse": {
         "required": [
           "id",
           "name",
           "directionId",
           "trackId",
-          "code",
-          "isManagerial",
-          "validFrom",
-          "validTo",
-          "roleDescription",
-          "previousLevelId",
-          "nextLevelIds",
+          "position",
           "status",
           "version"
         ],
@@ -10846,45 +10900,9 @@
             "type": "string",
             "format": "uuid"
           },
-          "code": {
-            "type": "string"
-          },
-          "isManagerial": {
-            "type": "boolean"
-          },
-          "validFrom": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "validTo": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "roleDescription": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "previousLevelId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "nextLevelIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            }
+          "position": {
+            "type": "integer",
+            "format": "int32"
           },
           "status": {
             "$ref": "#/components/schemas/CatalogStatus"
@@ -11451,7 +11469,6 @@
       "DeletionBlockerKind": {
         "enum": [
           "Track",
-          "Level",
           "Competency",
           "CompetencyVersion",
           "Matrix"
@@ -11708,6 +11725,21 @@
         }
       },
       "JsonElement": { },
+      "LevelOrderRequest": {
+        "required": [
+          "levelIds"
+        ],
+        "type": "object",
+        "properties": {
+          "levelIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
       "LinkPasswordRequest": {
         "required": [
           "token",
@@ -12154,11 +12186,6 @@
         "required": [
           "id",
           "name",
-          "code",
-          "isManagerial",
-          "validFrom",
-          "validTo",
-          "roleDescription",
           "status"
         ],
         "type": "object",
@@ -12169,32 +12196,6 @@
           },
           "name": {
             "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "isManagerial": {
-            "type": "boolean"
-          },
-          "validFrom": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "validTo": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "roleDescription": {
-            "type": [
-              "null",
-              "string"
-            ]
           },
           "status": {
             "$ref": "#/components/schemas/CatalogStatus"
@@ -12672,13 +12673,6 @@
       "NewCareerLevelRequest": {
         "required": [
           "trackId",
-          "code",
-          "isManagerial",
-          "validFrom",
-          "validTo",
-          "roleDescription",
-          "previousLevelId",
-          "nextLevelIds",
           "name"
         ],
         "type": "object",
@@ -12686,46 +12680,6 @@
           "trackId": {
             "type": "string",
             "format": "uuid"
-          },
-          "code": {
-            "type": "string"
-          },
-          "isManagerial": {
-            "type": "boolean"
-          },
-          "validFrom": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "validTo": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "roleDescription": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "previousLevelId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "nextLevelIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            }
           },
           "name": {
             "type": "string"

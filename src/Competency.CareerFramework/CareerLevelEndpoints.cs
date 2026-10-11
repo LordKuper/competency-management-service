@@ -9,17 +9,14 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of career levels, the parts of a track: whoever may edit the track creates and edits its levels, and a level is kept by its
-/// track's keepers. Level names are unique within their track. A level no matrix and no other level names can be deleted.
+/// The API of career levels, the parts of a track: whoever may edit the track creates, renames and deletes its levels, and a level is kept by
+/// its track's keepers. Level names are unique within their track. Lists give levels in track order. A level no matrix uses can be deleted.
 /// </summary>
 internal static class CareerLevelEndpoints
 {
     private const string Route = "/api/v1/career/levels";
     private const string TrackField = "trackId";
-    private const string PreviousLevelField = "previousLevelId";
-    private const string NextLevelsField = "nextLevelIds";
-    private const string SelfReferenceMessage = "Уровень не может ссылаться на себя";
-    private const string InUseMessage = "Уровень используют матрицы или другие уровни — удалить нельзя";
+    private const string InUseMessage = "Уровень используют матрицы — удалить нельзя";
 
     internal static readonly CatalogKind<CareerLevel, CareerLevelResponse> Kind = new(
         "CareerLevel",
@@ -33,11 +30,7 @@ internal static class CareerLevelEndpoints
         group.MapPost(string.Empty, CreateAsync).WithName("CreateCareerLevel").ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        group.MapPut("/{id:guid}", UpdateAsync).WithName("UpdateCareerLevel").ProducesETag()
-            .ProducesProblem(StatusCodes.Status403Forbidden)
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
-        group.MapEntryEndpoints(Kind);
+        group.MapEntryEndpoints(Kind, mapRename: true);
         group.MapDeleteEntry(Kind, InUseAsync);
     }
 
@@ -49,7 +42,6 @@ internal static class CareerLevelEndpoints
         CancellationToken cancellationToken)
     {
         await blockers.AddMatricesAsync(store.MatricesUsing(level));
-        await blockers.AddLevelsAsync(store.LevelsReferencing([level.Id]));
         return blockers.Any ? InUseMessage : null;
     }
 
@@ -64,10 +56,12 @@ internal static class CareerLevelEndpoints
             query,
             Kind,
             store,
-            cancellationToken);
+            cancellationToken,
+            levels => levels.OrderBy(level => level.Track.Name).ThenBy(level => level.TrackId).ThenBy(level => level.Position));
 
     /// <summary>
-    /// Adds a level to an active or draft track; the level takes the track's status, so a draft track's levels are approved with it.
+    /// Adds a level after the track's other levels to an active or draft track; the level takes the track's status, so a draft track's
+    /// levels are approved with it.
     /// </summary>
     private static async Task<Results<Created<CareerLevelResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
         NewCareerLevelRequest request,
@@ -95,20 +89,17 @@ internal static class CareerLevelEndpoints
             return Rejection.Forbidden();
         }
 
-        if (await ReferenceProblemAsync(request, track.OwnerOrgUnitId, current: null, context, cancellationToken) is { } invalid)
-        {
-            return invalid;
-        }
-
+        var lastPosition = await context.Set<CareerLevel>()
+            .Where(level => level.TrackId == track.Id)
+            .MaxAsync(level => (int?)level.Position, cancellationToken);
         var level = new CareerLevel
         {
             Name = request.TrimmedName(),
-            Code = request.Code.Trim(),
             Status = track.Status,
             AuthorId = viewer.UserId,
             TrackId = track.Id,
+            Position = (lastPosition ?? 0) + 1,
         };
-        request.ApplyTo(level);
         if (await CatalogEndpoints.NameProblemAsync(level, Kind, store, cancellationToken) is { } taken)
         {
             return taken;
@@ -119,92 +110,4 @@ internal static class CareerLevelEndpoints
         var created = await CatalogEndpoints.CommitAsync(level, Kind, store, transaction, response, cancellationToken);
         return TypedResults.Created($"{Route}/{level.Id}", created);
     }
-
-    private static async Task<Results<Ok<CareerLevelResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateAsync(
-        Guid id,
-        CareerLevelRequest request,
-        IfMatch ifMatch,
-        AppDbContext context,
-        CatalogStore store,
-        HttpResponse response,
-        CancellationToken cancellationToken)
-    {
-        var errors = request.Validate();
-        if (errors.Count > 0)
-        {
-            return TypedResults.ValidationProblem(errors);
-        }
-
-        await using var transaction = await store.BeginWriteAsync(cancellationToken);
-        var viewer = await store.ViewerAsync(cancellationToken);
-        if (await store.FindVisibleAsync<CareerLevel>(id, viewer, cancellationToken) is not { } level)
-        {
-            return TypedResults.NotFound();
-        }
-
-        if (!viewer.CanEdit(level))
-        {
-            return Rejection.Forbidden();
-        }
-
-        if (await ReferenceProblemAsync(request, level.Track.OwnerOrgUnitId, level, context, cancellationToken) is { } invalid)
-        {
-            return invalid;
-        }
-
-        ifMatch.ApplyTo(context, level);
-        request.ApplyTo(level);
-        if (await CatalogEndpoints.NameProblemAsync(level, Kind, store, cancellationToken) is { } taken)
-        {
-            return taken;
-        }
-
-        return TypedResults.Ok(await CatalogEndpoints.CommitAsync(level, Kind, store, transaction, response, cancellationToken));
-    }
-
-    /// <summary>
-    /// Says why the previous or next levels cannot be used: a level may refer to active levels and to the draft levels of its unit's tracks.
-    /// Only references the change adds are checked, so a level that has since been deactivated may stay where it was.
-    /// </summary>
-    private static async Task<ValidationProblem?> ReferenceProblemAsync(
-        CareerLevelRequest request,
-        Guid unitId,
-        CareerLevel? current,
-        AppDbContext context,
-        CancellationToken cancellationToken)
-    {
-        if (request.PreviousLevelId is { } previousId && previousId != current?.PreviousLevelId)
-        {
-            if (previousId == current?.Id)
-            {
-                return Rejection.Invalid(PreviousLevelField, SelfReferenceMessage);
-            }
-
-            if (!await IsUsableAsync(previousId, unitId, context, cancellationToken))
-            {
-                return Rejection.Invalid(PreviousLevelField, CatalogEndpoints.UnavailableMessage);
-            }
-        }
-
-        foreach (var nextId in request.DistinctNextLevelIds().Except(current?.NextLevelIds ?? []))
-        {
-            if (nextId == current?.Id)
-            {
-                return Rejection.Invalid(NextLevelsField, SelfReferenceMessage);
-            }
-
-            if (!await IsUsableAsync(nextId, unitId, context, cancellationToken))
-            {
-                return Rejection.Invalid(NextLevelsField, CatalogEndpoints.UnavailableMessage);
-            }
-        }
-
-        return null;
-    }
-
-    private static Task<bool> IsUsableAsync(Guid levelId, Guid unitId, AppDbContext context, CancellationToken cancellationToken) =>
-        context.Set<CareerLevel>().AnyAsync(
-            level => level.Id == levelId
-                && (level.Status == CatalogStatus.Active || (level.Status == CatalogStatus.Draft && level.Track.OwnerOrgUnitId == unitId)),
-            cancellationToken);
 }

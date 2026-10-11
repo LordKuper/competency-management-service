@@ -6,9 +6,4 @@ namespace Competency.CareerFramework;
 internal sealed record MatrixLevelEntry(
     Guid Id,
     string Name,
-    string Code,
-    bool IsManagerial,
-    DateOnly? ValidFrom,
-    DateOnly? ValidTo,
-    string? RoleDescription,
     CatalogStatus Status);
