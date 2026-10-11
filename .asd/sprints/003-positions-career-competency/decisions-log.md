@@ -184,3 +184,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-11 — stall: asd-tester-critical impl-test entry 1 (лимит API, без сигнала завершения)
 - 2026-10-11 — reconstruction: landed 80f374f, 1192ebf, 2e03ce1 (impl-test entry 1 — запись не считается выполненной); re-dispatched impl-test entry 1 (11 неотслеживаемых web-тестов, test-plan.md нет)
 - 2026-10-11 — route impl-test entry 1: critical, dispatch HEAD 2e03ce1 (re-dispatch, priorTier critical); risk change: migration, change: security, change: lock ordering
+- 2026-10-12 — impl-test: defects D-1, D-2, D-3, D-4, D-5, D-6 → impl test-fix (digest ea49c0f8610c1c2dc5382032de1a7e28315e8d72f08c1445fba17d94d0cd5f12); D-5, D-6 — память asd-dev-critical (memory-fix владельцу); impacted = полный набор (предохранитель); backend 469 (465 зелёных, 4 красных), web 303 зелёных; перф AC-24: p95 23 мс на 10 000 сотрудниках (разовый замер, постоянного теста нет)

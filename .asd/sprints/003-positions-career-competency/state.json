@@ -340,9 +340,9 @@
     }
   },
   "created_at": "2026-10-09T07:25:11.340Z",
-  "updated_at": "2026-10-11T17:45:08.329Z",
+  "updated_at": "2026-10-11T21:04:58.776Z",
   "review_fixes_pending": null,
-  "test_defects_pending": null,
+  "test_defects_pending": true,
   "pr": null,
   "archived_at": null
 }

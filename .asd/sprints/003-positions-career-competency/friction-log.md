@@ -21,6 +21,7 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 | F-2 | audit | Ротация журнала решений перед делегированием audit выполнена после запуска скилла аудита, а не до | — |
 | F-3 | impl | Gate impl требует чистый typecheck, который ломают тесты при смене контракта | — |
 | F-4 | impl | Dev поднял временную PostgreSQL для проверки, хотя правило проекта запрещает scratch-БД в impl | — |
+| F-5 | impl-test | Строки Symptom дефектов содержат traceId и случайные имена — проверка stalemate по идентичности слепа | test-plan.md D-1…D-4 |
 
 ## F-1 — Архитектор записал файл своей памяти, хотя payload аудита требовал только чтение
 
@@ -53,3 +54,11 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **What happened**: Для проверки отказов удаления dev запустил собственный контейнер PostgreSQL с данными и удалил его после проверки; том пользователя не затронут.
 - **Impact**: Лишнее время impl на проверку, которая принадлежит impl-test; правило проекта нарушено, хотя без вреда данным.
 - **Refs**: —
+
+## F-5 — Symptom дефектов несёт traceId и случайные имена, stalemate-проверка слепа
+
+- **Phase**: impl-test
+- **Surface**: rule — `.asd/rules/sprint-lifecycle.md` «Impl-test phase» Stalemate (идентичность — файл, строка отказа раннера, тест) и `runtime.js defect-stalemate`
+- **What happened**: Tester записал строку раннера дословно; у ответов 500 и у D-4 в ней `traceId` и сгенерированные имена, которые меняются на каждом прогоне.
+- **Impact**: Повтор того же набора дефектов на следующем входе не будет распознан как stalemate.
+- **Refs**: test-plan.md D-1…D-4
