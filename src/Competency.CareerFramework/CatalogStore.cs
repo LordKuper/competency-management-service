@@ -135,20 +135,26 @@ internal sealed class CatalogStore(
 
     /// <summary>
     /// Numbers the levels of one track from 1 in the given order. The levels that move are first set aside under negative numbers, so the
-    /// unique number of a level within its track holds after every single update of the save.
+    /// unique number of a level within its track holds after every single update. Each moved level is then saved on its own: EF orders the
+    /// updates of one save by the unique index it knows, from the numbers it read, and refuses two levels that trade places as a cycle,
+    /// although the database no longer holds those numbers.
     /// </summary>
     /// <param name="levels">All levels of the track, tracked, in their new order.</param>
     /// <param name="cancellationToken">Cancels the update.</param>
-    /// <returns>A task that completes when the moving levels are set aside; the caller saves the new numbers.</returns>
+    /// <returns>A task that completes when every moved level is saved under its new number, inside the caller's transaction.</returns>
     public async Task MoveLevelsAsync(IReadOnlyList<CareerLevel> levels, CancellationToken cancellationToken)
     {
-        var movingIds = levels.Where((level, index) => level.Position != index + 1).Select(level => level.Id).ToArray();
+        var moving = levels.Select((level, index) => (Level: level, Position: index + 1)).Where(move => move.Level.Position != move.Position).ToList();
+        var movingIds = moving.Select(move => move.Level.Id).ToArray();
         await context.Database.ExecuteSqlAsync(
             $"UPDATE career_levels SET position = -position WHERE id = ANY({movingIds})",
             cancellationToken);
-        for (var index = 0; index < levels.Count; index++)
+
+        // ponytail: one save per moved level, a round trip each; a track holds a handful of levels.
+        foreach (var (level, position) in moving)
         {
-            levels[index].Position = index + 1;
+            level.Position = position;
+            await context.SaveChangesAsync(cancellationToken);
         }
     }
 
