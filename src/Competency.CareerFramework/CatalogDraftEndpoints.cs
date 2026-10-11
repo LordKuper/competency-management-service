@@ -2,6 +2,7 @@ using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,9 +22,11 @@ internal static class CatalogDraftEndpoints
         .WithName("ListCatalogDrafts");
 
     /// <summary>
-    /// The drafts, oldest first.
+    /// The drafts, oldest first, optionally of one kind or of one unit; only a track has a unit.
     /// </summary>
     private static async Task<Ok<List<CatalogDraftResponse>>> ListAsync(
+        [FromQuery(Name = "kind")] CatalogEntryKind? kind,
+        [FromQuery(Name = "orgUnitId")] Guid? orgUnitId,
         AppDbContext context,
         CatalogStore store,
         CancellationToken cancellationToken)
@@ -35,7 +38,7 @@ internal static class CatalogDraftEndpoints
         }
 
         var hrUnitIds = viewer.HrUnitIds.ToList();
-        List<CatalogEntry> drafts =
+        List<CatalogEntry> all =
         [
             .. await DraftsAsync(context.Set<CareerDirection>(), cancellationToken),
             .. await DraftsAsync(
@@ -46,6 +49,8 @@ internal static class CatalogDraftEndpoints
             .. await DraftsAsync(context.Set<CompetencyScale>(), cancellationToken),
         ];
 
+        // ponytail: filters after loading every draft; drafts wait for approval, so the list stays short
+        var drafts = all.Where(draft => (kind is null || KindOf(draft) == kind) && (orgUnitId is null || draft.UnitId == orgUnitId)).ToList();
         var unitNames = await store.UnitNamesAsync(drafts.Select(draft => draft.UnitId), cancellationToken);
         var authorNames = await store.UserNamesAsync(drafts.Select(draft => draft.AuthorId), cancellationToken);
         return TypedResults.Ok(drafts

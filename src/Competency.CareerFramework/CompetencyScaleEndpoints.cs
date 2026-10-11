@@ -41,10 +41,16 @@ internal static class CompetencyScaleEndpoints
 
     private static Task<Results<Ok<PageResponse<CompetencyScaleResponse>>, ValidationProblem>> ListAsync(
         [AsParameters] CatalogListQuery query,
+        [FromQuery(Name = "isDefault")] bool? isDefault,
         AppDbContext context,
         CatalogStore store,
         CancellationToken cancellationToken) =>
-        CatalogEndpoints.ListAsync(context.Set<CompetencyScale>(), query, Kind, store, cancellationToken);
+        CatalogEndpoints.ListAsync(
+            context.Set<CompetencyScale>().WhereIf(isDefault is not null, scale => scale.IsDefault == isDefault),
+            query,
+            Kind,
+            store,
+            cancellationToken);
 
     private static async Task<Results<Created<CompetencyScaleResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
         CompetencyScaleRequest request,

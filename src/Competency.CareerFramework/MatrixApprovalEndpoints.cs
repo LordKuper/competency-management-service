@@ -2,6 +2,7 @@ using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,9 +20,11 @@ internal static class MatrixApprovalEndpoints
         .WithName("ListMatrixApprovals");
 
     /// <summary>
-    /// The versions, longest waiting first.
+    /// The versions, longest waiting first, optionally of one unit or at one step.
     /// </summary>
     private static async Task<Ok<List<ApprovalResponse>>> ListAsync(
+        [FromQuery(Name = "orgUnitId")] Guid? orgUnitId,
+        [FromQuery(Name = "step")] ApprovalStep? step,
         AppDbContext context,
         CatalogStore store,
         MatrixWorkflow workflow,
@@ -29,7 +32,9 @@ internal static class MatrixApprovalEndpoints
         CancellationToken cancellationToken)
     {
         var viewer = await workflow.ViewerAsync(cancellationToken);
-        var awaiting = await route.AwaitingAsync(viewer, cancellationToken);
+        var awaiting = (await route.AwaitingAsync(viewer, cancellationToken))
+            .Where(item => (orgUnitId is null || item.Version.Matrix.OrgUnitId == orgUnitId) && (step is null || item.Turn.Step == step))
+            .ToList();
         var versionIds = awaiting.Select(item => item.Version.Id).ToList();
         var submittedAt = await context.Set<MatrixDecision>()
             .AsNoTracking()

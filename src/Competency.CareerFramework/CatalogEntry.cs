@@ -4,7 +4,7 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// An entry of a career catalogue: a direction, track, level, competency category, competency or scale. Only a track belongs to a unit,
-/// and a level to its track's; every other entry belongs to no unit. Names are stored trimmed. Entries are never deleted, only deactivated.
+/// and a level to its track's; every other entry belongs to no unit. Names are stored trimmed. Entries are deactivated rather than deleted; only a category no competency uses can be deleted.
 /// </summary>
 internal abstract class CatalogEntry : EntityBase
 {

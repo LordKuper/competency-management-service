@@ -19,6 +19,7 @@ internal static class CompetencyEndpoints
     private const string CategoryField = "categoryId";
     private const string DirectionField = "directionId";
     private const string ScaleField = "scaleId";
+    private const string TypeField = "type";
 
     internal static readonly CatalogKind<CareerCompetency, CompetencyResponse> Kind = new(
         "Competency",
@@ -46,6 +47,7 @@ internal static class CompetencyEndpoints
         [FromQuery(Name = CategoryField)] Guid? categoryId,
         [FromQuery(Name = DirectionField)] Guid? directionId,
         [FromQuery(Name = ScaleField)] Guid? scaleId,
+        [FromQuery(Name = TypeField)] CompetencyType? type,
         AppDbContext context,
         CatalogStore store,
         CancellationToken cancellationToken) =>
@@ -53,7 +55,8 @@ internal static class CompetencyEndpoints
             context.Set<CareerCompetency>()
                 .WhereIf(categoryId is not null, competency => competency.CategoryId == categoryId)
                 .WhereIf(directionId is not null, competency => competency.DirectionId == directionId)
-                .WhereIf(scaleId is not null, competency => competency.ScaleId == scaleId),
+                .WhereIf(scaleId is not null, competency => competency.ScaleId == scaleId)
+                .WhereIf(type is not null, competency => competency.Type == type),
             query,
             Kind,
             store,

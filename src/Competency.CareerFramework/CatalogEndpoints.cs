@@ -34,7 +34,8 @@ internal static class CatalogEndpoints
     /// <summary>
     /// Maps the whole API of a catalogue whose entries are a name alone: the list, creation and the entry endpoints.
     /// </summary>
-    public static void MapNamedCatalog<TEntry>(
+    /// <returns>The catalogue's route group, for the endpoints only one catalogue has.</returns>
+    public static RouteGroupBuilder MapNamedCatalog<TEntry>(
         this IEndpointRouteBuilder endpoints,
         string route,
         string listName,
@@ -57,6 +58,7 @@ internal static class CatalogEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
         group.MapEntryEndpoints(kind, mapRename: true);
+        return group;
     }
 
     /// <summary>

@@ -38,10 +38,12 @@ internal static class MatrixEndpoints
     }
 
     /// <summary>
-    /// One page of matrices, oldest first, optionally of one unit.
+    /// One page of matrices, oldest first, optionally of one unit, direction or track.
     /// </summary>
     private static async Task<Results<Ok<PageResponse<MatrixResponse>>, ValidationProblem>> ListAsync(
         [FromQuery(Name = OrgUnitField)] Guid? orgUnitId,
+        [FromQuery(Name = DirectionField)] Guid? directionId,
+        [FromQuery(Name = TrackField)] Guid? trackId,
         AppDbContext context,
         CatalogStore store,
         MatrixWorkflow workflow,
@@ -59,6 +61,8 @@ internal static class MatrixEndpoints
         var matrices = await context.Set<CompetencyMatrix>()
             .AsNoTracking()
             .WhereIf(orgUnitId is not null, matrix => matrix.OrgUnitId == orgUnitId)
+            .WhereIf(directionId is not null, matrix => matrix.DirectionId == directionId)
+            .WhereIf(trackId is not null, matrix => matrix.TrackId == trackId)
             .OrderBy(matrix => matrix.CreatedAt)
             .ThenBy(matrix => matrix.Id)
             .ToPageAsync(page, pageSize, cancellationToken);

@@ -35,11 +35,14 @@ internal static class CareerTrackEndpoints
     private static Task<Results<Ok<PageResponse<CareerTrackResponse>>, ValidationProblem>> ListAsync(
         [AsParameters] CatalogListQuery query,
         [FromQuery(Name = DirectionField)] Guid? directionId,
+        [FromQuery(Name = OrgUnitField)] Guid? ownerOrgUnitId,
         AppDbContext context,
         CatalogStore store,
         CancellationToken cancellationToken) =>
         CatalogEndpoints.ListAsync(
-            context.Set<CareerTrack>().WhereIf(directionId is not null, track => track.DirectionId == directionId),
+            context.Set<CareerTrack>()
+                .WhereIf(directionId is not null, track => track.DirectionId == directionId)
+                .WhereIf(ownerOrgUnitId is not null, track => track.OwnerOrgUnitId == ownerOrgUnitId),
             query,
             Kind,
             store,

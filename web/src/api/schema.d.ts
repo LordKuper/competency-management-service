@@ -926,7 +926,7 @@ export interface paths {
         get: operations["GetCompetencyCategory"];
         put: operations["UpdateCompetencyCategory"];
         post?: never;
-        delete?: never;
+        delete: operations["DeleteCompetencyCategory"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5777,6 +5777,7 @@ export interface operations {
                 page?: number;
                 pageSize?: number;
                 directionId?: string;
+                ownerOrgUnitId?: string;
             };
             header?: never;
             path?: never;
@@ -7161,6 +7162,92 @@ export interface operations {
             };
         };
     };
+    DeleteCompetencyCategory: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ApproveCompetencyCategory: {
         parameters: {
             query?: never;
@@ -7441,6 +7528,7 @@ export interface operations {
                 categoryId?: string;
                 directionId?: string;
                 scaleId?: string;
+                type?: components["schemas"]["CompetencyType"];
             };
             header?: never;
             path?: never;
@@ -7992,6 +8080,7 @@ export interface operations {
                 status?: components["schemas"]["CatalogStatus"];
                 page?: number;
                 pageSize?: number;
+                isDefault?: boolean;
             };
             header?: never;
             path?: never;
@@ -8588,7 +8677,10 @@ export interface operations {
     };
     ListCatalogDrafts: {
         parameters: {
-            query?: never;
+            query?: {
+                kind?: components["schemas"]["CatalogEntryKind"];
+                orgUnitId?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -8619,6 +8711,8 @@ export interface operations {
         parameters: {
             query?: {
                 orgUnitId?: string;
+                directionId?: string;
+                trackId?: string;
                 page?: number;
                 pageSize?: number;
             };
@@ -9661,7 +9755,10 @@ export interface operations {
     };
     ListMatrixApprovals: {
         parameters: {
-            query?: never;
+            query?: {
+                orgUnitId?: string;
+                step?: components["schemas"]["ApprovalStep"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
