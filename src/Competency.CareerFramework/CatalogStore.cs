@@ -76,19 +76,33 @@ internal sealed class CatalogStore(
     /// <summary>
     /// Whether another entry in the same scope has the entry's name regardless of letter case. An entry competes with the entries that are
     /// not drafts and with the drafts of its own author, so a draft another author keeps to themselves never blocks a name, and is checked again when approved.
+    /// Entries changed in the same save count as they will be saved, so drafts of different authors approved together, such as the levels
+    /// of an approved track, cannot become active under one name.
     /// </summary>
     /// <typeparam name="T">The entry type.</typeparam>
     /// <param name="entry">The entry about to be saved.</param>
     /// <param name="sameScope">The entries whose names must differ, such as the tracks of one direction; null for the whole catalogue.</param>
     /// <param name="cancellationToken">Cancels the query.</param>
     /// <returns>True when the name is taken.</returns>
-    public Task<bool> IsNameTakenAsync<T>(T entry, Expression<Func<T, bool>>? sameScope, CancellationToken cancellationToken)
+    public async Task<bool> IsNameTakenAsync<T>(T entry, Expression<Func<T, bool>>? sameScope, CancellationToken cancellationToken)
         where T : CatalogEntry
     {
         var id = entry.Id;
         var authorId = entry.AuthorId;
+        var pending = context.ChangeTracker.Entries<T>()
+            .Where(other => other.State is EntityState.Added or EntityState.Modified)
+            .Select(other => other.Entity)
+            .Where(other => other.Id != id
+                && string.Equals(other.Name, entry.Name, StringComparison.OrdinalIgnoreCase)
+                && (other.Status != CatalogStatus.Draft || other.AuthorId == authorId))
+            .ToList();
+        if (pending.Count > 0 && (sameScope is null || pending.Any(sameScope.Compile())))
+        {
+            return true;
+        }
+
         var pattern = ListRequest.ExactPattern(entry.Name);
-        return context.Set<T>()
+        return await context.Set<T>()
             .WhereIf(sameScope is not null, sameScope!)
             .AnyAsync(
                 other => other.Id != id
