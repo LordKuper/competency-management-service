@@ -112,7 +112,7 @@ function ShellFrame({ user }: { user: CurrentUser }) {
               mode="horizontal"
               selectedKeys={current ? [current.key] : []}
               items={menuItems(navItems)}
-              style={{ flex: "none" }}
+              style={{ flex: 1, minWidth: 0 }}
             />
           )}
           <div style={{ marginInlineStart: "auto" }}>
