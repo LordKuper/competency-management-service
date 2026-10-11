@@ -5,6 +5,7 @@ import {
   Grid,
   Layout,
   Menu,
+  type MenuProps,
   Spin,
 } from "antd";
 import type { CSSProperties } from "react";
@@ -15,6 +16,7 @@ import {
   useCurrentUser,
 } from "../features/auth/useCurrentUser";
 import { ErrorAlert } from "./ErrorAlert";
+import type { NavItem } from "./featureContract";
 import { navItemsFor } from "./features";
 import { PRODUCT_NAME } from "./productName";
 import { UserMenu } from "./UserMenu";
@@ -27,6 +29,24 @@ const productNameStyle: CSSProperties = {
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
 };
+
+/** Entries of the "admin" group form one submenu, placed where its first entry would be. */
+function menuItems(navItems: NavItem[]): MenuProps["items"] {
+  const leaf = (item: NavItem) => ({
+    key: item.key,
+    label: <Link to={item.path}>{item.label}</Link>,
+  });
+  const items: NonNullable<MenuProps["items"]> = [];
+  const admin: NavItem[] = [];
+  for (const item of navItems) {
+    if (!item.group) items.push(leaf(item));
+    else if (admin.push(item) === 1)
+      items.push({ key: "admin", label: "Администрирование", children: [] });
+  }
+  const group = items.find((item) => item?.key === "admin");
+  if (group && "children" in group) group.children = admin.map(leaf);
+  return items;
+}
 
 /**
  * Frame of every signed-in screen and the route guard: nothing renders until the session is known,
@@ -91,10 +111,7 @@ function ShellFrame({ user }: { user: CurrentUser }) {
               theme="dark"
               mode="horizontal"
               selectedKeys={current ? [current.key] : []}
-              items={navItems.map((item) => ({
-                key: item.key,
-                label: <Link to={item.path}>{item.label}</Link>,
-              }))}
+              items={menuItems(navItems)}
               style={{ flex: "none" }}
             />
           )}

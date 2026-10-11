@@ -8,7 +8,8 @@ export const navItems: NavItem[] = [
     key: "positions",
     label: "Должности",
     path: "/positions",
-    order: 25,
+    order: 40,
+    group: "admin",
     roles: ["GlobalAdmin"],
   },
 ];

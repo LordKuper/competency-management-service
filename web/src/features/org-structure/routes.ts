@@ -5,7 +5,7 @@ import { paths } from "./paths";
 
 /** Every signed-in user reads the structure. */
 export const navItems: NavItem[] = [
-  { key: "org-structure", label: "Оргструктура", path: paths.tree, order: 20 },
+  { key: "org-structure", label: "Оргструктура", path: paths.tree, order: 10 },
 ];
 
 /** The card hierarchy, from which employees and units are opened and, for administrators, changed. */
