@@ -11,8 +11,15 @@ import {
 import { useState } from "react";
 import { Link } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
 import { useProcessRoles } from "./careerApi";
+import { directionsQuery, tracksQuery } from "./catalogApi";
+import type { FilterOption } from "./columnFilters";
+import {
+  choiceFilter,
+  entryOptions,
+  onFilterChange,
+  useUnitOptions,
+} from "./columnFilters";
 import { MatrixCreateModal } from "./MatrixCreateModal";
 import { type Matrix, type MatrixListParams, matricesQuery } from "./matrixApi";
 import { VERSION_STATUS_LABELS } from "./matrixLabels";
@@ -30,25 +37,41 @@ function versionCell(version: Matrix["inWorkVersion"]) {
   );
 }
 
-const COLUMNS: TableColumnsType<Matrix> = [
-  { title: "Подразделение", dataIndex: "orgUnitName" },
-  { title: "Направление", dataIndex: "directionName" },
-  {
-    title: "Трек",
-    dataIndex: "trackName",
-    render: (name: string, matrix) => (
-      <Link to={`/career/matrices/${matrix.id}`}>{name}</Link>
-    ),
-  },
-  {
-    title: "Опубликована",
-    dataIndex: "publishedVersion",
-    render: versionCell,
-  },
-  { title: "В работе", dataIndex: "inWorkVersion", render: versionCell },
-];
+function columns(
+  params: MatrixListParams,
+  units: FilterOption[],
+  directions: FilterOption[],
+  tracks: FilterOption[],
+): TableColumnsType<Matrix> {
+  return [
+    {
+      title: "Подразделение",
+      dataIndex: "orgUnitName",
+      ...choiceFilter("orgUnitId", params.orgUnitId, units, true),
+    },
+    {
+      title: "Направление",
+      dataIndex: "directionName",
+      ...choiceFilter("directionId", params.directionId, directions, true),
+    },
+    {
+      title: "Трек",
+      dataIndex: "trackName",
+      ...choiceFilter("trackId", params.trackId, tracks, true),
+      render: (name: string, matrix) => (
+        <Link to={`/career/matrices/${matrix.id}`}>{name}</Link>
+      ),
+    },
+    {
+      title: "Опубликована",
+      dataIndex: "publishedVersion",
+      render: versionCell,
+    },
+    { title: "В работе", dataIndex: "inWorkVersion", render: versionCell },
+  ];
+}
 
-/** The matrices of the units, filtered by unit; a unit head may start one. */
+/** The matrices of the units, filtered by unit, direction and track in the column headers; a unit head may start one. */
 export function MatricesTab() {
   const roles = useProcessRoles();
   const [isCreating, setIsCreating] = useState(false);
@@ -60,24 +83,20 @@ export function MatricesTab() {
     ...matricesQuery(params),
     placeholderData: (previous) => previous,
   });
+  const units = useUnitOptions();
+  const directions = entryOptions(useQuery(directionsQuery()).data?.items);
+  const tracks = entryOptions(useQuery(tracksQuery()).data?.items);
   const canCreate = (roles.data?.headedUnits.length ?? 0) > 0;
 
   return (
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>
-      <Flex justify="space-between" align="center" gap="middle" wrap>
-        <OrgUnitSelect
-          allowClear
-          placeholder="Подразделение"
-          onChange={(orgUnitId) =>
-            setParams((previous) => ({ ...previous, orgUnitId, page: 1 }))
-          }
-        />
-        {canCreate && (
+      {canCreate && (
+        <Flex>
           <Button type="primary" onClick={() => setIsCreating(true)}>
             Создать матрицу
           </Button>
-        )}
-      </Flex>
+        </Flex>
+      )}
       {error && (
         <ErrorAlert
           title="Не удалось загрузить матрицы"
@@ -87,10 +106,11 @@ export function MatricesTab() {
       )}
       <Table<Matrix>
         rowKey="id"
-        columns={COLUMNS}
+        columns={columns(params, units, directions, tracks)}
         dataSource={data?.items}
         loading={isFetching}
         scroll={{ x: "max-content" }}
+        onChange={onFilterChange(setParams)}
         locale={{
           emptyText: (
             <Empty

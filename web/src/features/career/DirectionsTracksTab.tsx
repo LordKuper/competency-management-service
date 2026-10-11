@@ -4,11 +4,15 @@ import { useState } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { EntryActions, entryColumns } from "./CatalogParts";
 import {
+  ALL_ENTRIES,
   type CareerTrack,
   type CatalogEntry,
+  type CatalogListParams,
   directionsQuery,
+  type TrackFilters,
   tracksQuery,
 } from "./catalogApi";
+import { choiceFilter, onFilterChange, useUnitOptions } from "./columnFilters";
 import { NameModal } from "./NameModal";
 import { LevelsTable } from "./TrackLevels";
 import { TrackModal } from "./TrackModal";
@@ -23,11 +27,14 @@ const NAME_COLUMN = { title: "Название", dataIndex: "name" };
 export function DirectionsTracksTab() {
   const rights = useCatalogRights();
   const [dialog, setDialog] = useState<Dialog>(null);
-  const { data, error, isFetching, refetch } = useQuery(directionsQuery());
+  const [params, setParams] = useState<CatalogListParams>(ALL_ENTRIES);
+  const { data, error, isFetching, refetch } = useQuery(
+    directionsQuery(params),
+  );
   const edited = data?.items.find((direction) => direction.id === dialog);
   const columns: TableColumnsType<CatalogEntry> = [
     NAME_COLUMN,
-    ...entryColumns<CatalogEntry>(),
+    ...entryColumns<CatalogEntry>(params.status),
     {
       title: "Действия",
       key: "actions",
@@ -64,6 +71,7 @@ export function DirectionsTracksTab() {
         loading={isFetching}
         pagination={false}
         scroll={{ x: "max-content" }}
+        onChange={onFilterChange(setParams)}
         expandable={{
           expandedRowRender: (direction) => (
             <TracksTable direction={direction} />
@@ -100,8 +108,10 @@ export function DirectionsTracksTab() {
 function TracksTable({ direction }: { direction: CatalogEntry }) {
   const rights = useCatalogRights();
   const [dialog, setDialog] = useState<Dialog>(null);
+  const [filters, setFilters] = useState<TrackFilters>({});
+  const units = useUnitOptions();
   const { data, error, isFetching, refetch } = useQuery(
-    tracksQuery(direction.id),
+    tracksQuery(direction.id, filters),
   );
   const edited = data?.items.find((track) => track.id === dialog);
   const columns: TableColumnsType<CareerTrack> = [
@@ -109,9 +119,10 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
     {
       title: "Владелец",
       dataIndex: "ownerOrgUnitName",
+      ...choiceFilter("ownerOrgUnitId", filters.ownerOrgUnitId, units, true),
       render: (name: string) => `Подразделение: ${name}`,
     },
-    ...entryColumns<CareerTrack>(),
+    ...entryColumns<CareerTrack>(filters.status),
     {
       title: "Действия",
       key: "actions",
@@ -147,6 +158,7 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
         loading={isFetching}
         pagination={false}
         scroll={{ x: "max-content" }}
+        onChange={onFilterChange(setFilters)}
         expandable={{
           expandedRowRender: (track) => (
             <LevelsTable track={track} editable={false} />

@@ -44,8 +44,34 @@ const SEGMENT_OF_KIND: Record<CatalogKind, CatalogSegment> = {
 /** Paging and search of a catalogue list; pages count from 1. */
 export interface CatalogListParams {
   q?: string;
+  status?: CatalogStatus;
   page: number;
   pageSize: number;
+}
+
+/** Column filters of the competency list. */
+export interface CompetencyListParams extends CatalogListParams {
+  categoryId?: string;
+  directionId?: string;
+  scaleId?: string;
+  type?: CompetencyType;
+}
+
+/** Column filters of the scale list. */
+export interface ScaleListParams extends CatalogListParams {
+  isDefault?: boolean;
+}
+
+/** Column filters of the track list: the unit that owns the track matches exactly. */
+export interface TrackFilters {
+  status?: CatalogStatus;
+  ownerOrgUnitId?: string;
+}
+
+/** Column filters of the draft list. */
+export interface DraftListParams {
+  kind?: CatalogKind;
+  orgUnitId?: string;
 }
 
 /**
@@ -66,13 +92,14 @@ export function directionsQuery(params: CatalogListParams = ALL_ENTRIES) {
   });
 }
 
-export function tracksQuery(directionId: string) {
+/** The tracks of one direction, or of every direction when none is given. */
+export function tracksQuery(directionId?: string, filters: TrackFilters = {}) {
   return queryOptions({
-    queryKey: [...catalogQueryKey, "tracks", directionId],
+    queryKey: [...catalogQueryKey, "tracks", directionId ?? null, filters],
     queryFn: async () =>
       unwrap(
         await api.GET("/api/v1/career/tracks", {
-          params: { query: { ...ALL_ENTRIES, directionId } },
+          params: { query: { ...ALL_ENTRIES, directionId, ...filters } },
         }),
       ),
   });
@@ -105,19 +132,19 @@ export function levelSalaryQuery(levelId: string) {
   });
 }
 
-export function categoriesQuery() {
+export function categoriesQuery(params: CatalogListParams = ALL_ENTRIES) {
   return queryOptions({
-    queryKey: [...catalogQueryKey, "categories"],
+    queryKey: [...catalogQueryKey, "categories", params],
     queryFn: async () =>
       unwrap(
         await api.GET("/api/v1/career/categories", {
-          params: { query: ALL_ENTRIES },
+          params: { query: params },
         }),
       ),
   });
 }
 
-export function competenciesQuery(params: CatalogListParams) {
+export function competenciesQuery(params: CompetencyListParams) {
   return queryOptions({
     queryKey: [...catalogQueryKey, "competencies", params],
     queryFn: async () =>
@@ -141,23 +168,28 @@ export function competencyVersionsQuery(competencyId: string) {
   });
 }
 
-export function scalesQuery() {
+export function scalesQuery(params: ScaleListParams = ALL_ENTRIES) {
   return queryOptions({
-    queryKey: [...catalogQueryKey, "scales"],
+    queryKey: [...catalogQueryKey, "scales", params],
     queryFn: async () =>
       unwrap(
         await api.GET("/api/v1/career/scales", {
-          params: { query: ALL_ENTRIES },
+          params: { query: params },
         }),
       ),
   });
 }
 
 /** Draft entries waiting for the signed-in HR. */
-export const draftsQuery = queryOptions({
-  queryKey: [...catalogQueryKey, "drafts"],
-  queryFn: async () => unwrap(await api.GET("/api/v1/career/drafts")),
-});
+export function draftsQuery(params: DraftListParams = {}) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "drafts", params],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/drafts", { params: { query: params } }),
+      ),
+  });
+}
 
 /** Rereads every catalogue query after a change. */
 export function invalidateCatalogs(queryClient: QueryClient) {
@@ -268,6 +300,21 @@ export async function makeScaleDefault(scale: { id: string; version: number }) {
       params: {
         path: { id: scale.id },
         header: { "If-Match": ifMatchOf(scale.version) },
+      },
+    }),
+  );
+}
+
+/** Deletes a category no competency uses; the server answers 409 to one that is in use. */
+export async function deleteCategory(category: {
+  id: string;
+  version: number;
+}) {
+  return unwrap(
+    await api.DELETE("/api/v1/career/categories/{id}", {
+      params: {
+        path: { id: category.id },
+        header: { "If-Match": ifMatchOf(category.version) },
       },
     }),
   );

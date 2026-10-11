@@ -10,6 +10,7 @@ import {
   changeCatalogStatus,
   invalidateCatalogs,
 } from "./catalogApi";
+import { choiceFilter } from "./columnFilters";
 import { useCatalogRights } from "./useCatalogRights";
 
 const STATUS_TAGS: Record<CatalogStatus, { label: string; color?: string }> = {
@@ -24,13 +25,20 @@ export function CatalogStatusTag({ status }: { status: CatalogStatus }) {
   return <Tag color={color}>{label}</Tag>;
 }
 
-/** The status column every catalogue table ends with before its actions. */
-export function entryColumns<T extends CatalogEntry>(): TableColumnsType<T> {
+const STATUS_OPTIONS = Object.entries(STATUS_TAGS).map(
+  ([value, { label }]) => ({ text: label, value }),
+);
+
+/** The status column every catalogue table ends with before its actions; `status` is the status filter in the query params. */
+export function entryColumns<T extends CatalogEntry>(
+  status?: CatalogStatus,
+): TableColumnsType<T> {
   return [
     {
       title: "Статус",
       dataIndex: "status",
-      render: (status: CatalogStatus) => <CatalogStatusTag status={status} />,
+      ...choiceFilter("status", status, STATUS_OPTIONS),
+      render: (value: CatalogStatus) => <CatalogStatusTag status={value} />,
     },
   ];
 }

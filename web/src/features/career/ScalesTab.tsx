@@ -13,12 +13,15 @@ import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { EntryActions, entryColumns } from "./CatalogParts";
 import {
+  ALL_ENTRIES,
   invalidateCatalogs,
   makeScaleDefault,
   type Scale,
+  type ScaleListParams,
   type ScalePoint,
   scalesQuery,
 } from "./catalogApi";
+import { choiceFilter, onFilterChange } from "./columnFilters";
 import { ScaleModal } from "./ScaleModal";
 import { useCatalogRights } from "./useCatalogRights";
 
@@ -41,19 +44,24 @@ export function ScalesTab() {
     onError: (failure) => message.error(describeApiError(failure)),
     onSettled: () => invalidateCatalogs(queryClient),
   });
-  const { data, error, isFetching, refetch } = useQuery(scalesQuery());
+  const [params, setParams] = useState<ScaleListParams>(ALL_ENTRIES);
+  const { data, error, isFetching, refetch } = useQuery(scalesQuery(params));
   const edited = data?.items.find((scale) => scale.id === dialog);
   const columns: TableColumnsType<Scale> = [
     {
       title: "Название",
       dataIndex: "name",
-      render: (name: string, scale) => (
-        <>
-          {name} {scale.isDefault && <Tag color="processing">По умолчанию</Tag>}
-        </>
-      ),
     },
-    ...entryColumns<Scale>(),
+    {
+      title: "По умолчанию",
+      dataIndex: "isDefault",
+      ...choiceFilter("isDefault", params.isDefault, [
+        { text: "По умолчанию", value: true },
+      ]),
+      render: (isDefault: boolean) =>
+        isDefault && <Tag color="processing">По умолчанию</Tag>,
+    },
+    ...entryColumns<Scale>(params.status),
     {
       title: "Действия",
       key: "actions",
@@ -101,6 +109,7 @@ export function ScalesTab() {
         loading={isFetching}
         pagination={false}
         scroll={{ x: "max-content" }}
+        onChange={onFilterChange(setParams)}
         expandable={{
           expandedRowRender: (scale) => (
             <Table<ScalePoint>

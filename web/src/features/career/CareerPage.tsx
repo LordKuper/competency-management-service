@@ -9,15 +9,15 @@ import { MatricesTab } from "./MatricesTab";
 import { ScalesTab } from "./ScalesTab";
 
 const TABS = [
-  { key: "matrices", label: "Матрицы", children: <MatricesTab /> },
+  { key: "scales", label: "Шкалы", children: <ScalesTab /> },
+  { key: "categories", label: "Категории", children: <CategoriesTab /> },
   {
     key: "tracks",
     label: "Направления и треки",
     children: <DirectionsTracksTab />,
   },
   { key: "competencies", label: "Компетенции", children: <CompetenciesTab /> },
-  { key: "categories", label: "Категории", children: <CategoriesTab /> },
-  { key: "scales", label: "Шкалы", children: <ScalesTab /> },
+  { key: "matrices", label: "Матрицы", children: <MatricesTab /> },
 ];
 
 /** The career model section: one tab per reference and matrix screen; "На согласовании" only for those who approve. */

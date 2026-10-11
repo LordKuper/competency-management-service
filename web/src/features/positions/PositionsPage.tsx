@@ -3,12 +3,9 @@ import {
   App,
   theme as antdTheme,
   Button,
-  Col,
   Empty,
   Flex,
   Input,
-  Row,
-  Segmented,
   Space,
   Table,
   type TableColumnsType,
@@ -20,6 +17,7 @@ import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { choiceFilter, onFilterChange } from "../career/columnFilters";
 import { PositionNameModal } from "./PositionNameModal";
 import { PositionStatusTag } from "./PositionStatusTag";
 import {
@@ -32,22 +30,15 @@ import {
 
 const DEFAULT_PAGE_SIZE = 20;
 
-const STATUS_FILTERS = {
-  active: { label: "Активные", isActive: true },
-  inactive: { label: "Неактивные", isActive: false },
-  all: { label: "Все", isActive: undefined },
-};
-
-type StatusFilter = keyof typeof STATUS_FILTERS;
-
-const STATUS_OPTIONS = Object.entries(STATUS_FILTERS).map(
-  ([value, { label }]) => ({ value: value as StatusFilter, label }),
-);
+const STATUS_OPTIONS = [
+  { text: "Активна", value: true },
+  { text: "Неактивна", value: false },
+];
 
 type PositionDialog = { kind: "create" } | { kind: "rename"; id: string };
 
 /**
- * The position catalogue for administrators: search, status filter, paging, creation, renaming, deactivation after
+ * The position catalogue for administrators: search, paging, the status filter in the column header, creation, renaming, deactivation after
  * showing how many working employees keep the position, and return to work. The dialogs live here, once for all rows.
  */
 export function PositionsPage() {
@@ -55,9 +46,8 @@ export function PositionsPage() {
   const { modal, message } = App.useApp();
   const queryClient = useQueryClient();
   const [dialog, setDialog] = useState<PositionDialog | null>(null);
-  const [status, setStatus] = useState<StatusFilter>("active");
   const [params, setParams] = useState<PositionListParams>({
-    isActive: STATUS_FILTERS.active.isActive,
+    isActive: true,
     page: 1,
     pageSize: DEFAULT_PAGE_SIZE,
   });
@@ -108,6 +98,7 @@ export function PositionsPage() {
     {
       title: "Статус",
       dataIndex: "isActive",
+      ...choiceFilter("isActive", params.isActive, STATUS_OPTIONS),
       render: (isActive: boolean) => <PositionStatusTag isActive={isActive} />,
     },
     {
@@ -160,36 +151,19 @@ export function PositionsPage() {
           Добавить должность
         </Button>
       </Flex>
-      <Row gutter={[token.margin, token.margin]} align="middle">
-        <Col xs={24} md={12} lg={10}>
-          <Input.Search
-            allowClear
-            aria-label="Найти должность"
-            placeholder="Найти должность"
-            onSearch={(text) =>
-              setParams((previous) => ({
-                ...previous,
-                q: text.trim() || undefined,
-                page: 1,
-              }))
-            }
-          />
-        </Col>
-        <Col xs={24} md={12} lg={14}>
-          <Segmented<StatusFilter>
-            options={STATUS_OPTIONS}
-            value={status}
-            onChange={(next) => {
-              setStatus(next);
-              setParams((previous) => ({
-                ...previous,
-                isActive: STATUS_FILTERS[next].isActive,
-                page: 1,
-              }));
-            }}
-          />
-        </Col>
-      </Row>
+      <Input.Search
+        allowClear
+        aria-label="Найти должность"
+        placeholder="Найти должность"
+        style={{ maxWidth: token.controlHeight * 10 }}
+        onSearch={(text) =>
+          setParams((previous) => ({
+            ...previous,
+            q: text.trim() || undefined,
+            page: 1,
+          }))
+        }
+      />
       {error && (
         <ErrorAlert
           title="Не удалось загрузить должности"
@@ -203,6 +177,7 @@ export function PositionsPage() {
         dataSource={data?.items}
         loading={isFetching}
         scroll={{ x: "max-content" }}
+        onChange={onFilterChange(setParams)}
         locale={{
           emptyText: (
             <Empty

@@ -15,8 +15,8 @@ import { ErrorAlert } from "../../app/ErrorAlert";
 import { EntryActions, entryColumns } from "./CatalogParts";
 import { COMPETENCY_TYPES, CompetencyModal } from "./CompetencyModal";
 import {
-  type CatalogListParams,
   type Competency,
+  type CompetencyListParams,
   type CompetencyVersion,
   categoriesQuery,
   competenciesQuery,
@@ -24,6 +24,7 @@ import {
   directionsQuery,
   scalesQuery,
 } from "./catalogApi";
+import { choiceFilter, entryOptions, onFilterChange } from "./columnFilters";
 import { useCatalogRights } from "./useCatalogRights";
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -47,7 +48,7 @@ function namesById(items: readonly { id: string; name: string }[] | undefined) {
 export function CompetenciesTab() {
   const rights = useCatalogRights();
   const [dialog, setDialog] = useState<Dialog | null>(null);
-  const [params, setParams] = useState<CatalogListParams>({
+  const [params, setParams] = useState<CompetencyListParams>({
     page: 1,
     pageSize: DEFAULT_PAGE_SIZE,
   });
@@ -55,32 +56,61 @@ export function CompetenciesTab() {
     ...competenciesQuery(params),
     placeholderData: (previous) => previous,
   });
-  const categories = namesById(useQuery(categoriesQuery()).data?.items);
-  const directions = namesById(useQuery(directionsQuery()).data?.items);
-  const scales = namesById(useQuery(scalesQuery()).data?.items);
+  const categoryItems = useQuery(categoriesQuery()).data?.items;
+  const directionItems = useQuery(directionsQuery()).data?.items;
+  const scaleItems = useQuery(scalesQuery()).data?.items;
+  const categories = namesById(categoryItems);
+  const directions = namesById(directionItems);
+  const scales = namesById(scaleItems);
   const columns: TableColumnsType<Competency> = [
     { title: "Название", dataIndex: "name" },
     {
       title: "Категория",
       dataIndex: "categoryId",
+      ...choiceFilter(
+        "categoryId",
+        params.categoryId,
+        entryOptions(categoryItems),
+        true,
+      ),
       render: (id: string) => categories.get(id),
     },
     {
       title: "Направление",
       dataIndex: "directionId",
+      ...choiceFilter(
+        "directionId",
+        params.directionId,
+        entryOptions(directionItems),
+        true,
+      ),
       render: (id: string | null) => (id ? directions.get(id) : "Общая"),
     },
     {
       title: "Тип",
       dataIndex: "type",
+      ...choiceFilter(
+        "type",
+        params.type,
+        Object.entries(COMPETENCY_TYPES).map(([value, text]) => ({
+          text,
+          value,
+        })),
+      ),
       render: (type) => COMPETENCY_TYPES[type as Competency["type"]],
     },
     {
       title: "Шкала",
       dataIndex: "scaleId",
+      ...choiceFilter(
+        "scaleId",
+        params.scaleId,
+        entryOptions(scaleItems),
+        true,
+      ),
       render: (id: string) => scales.get(id),
     },
-    ...entryColumns<Competency>(),
+    ...entryColumns<Competency>(params.status),
     { title: "Версия", dataIndex: "versionNumber" },
     {
       title: "Действия",
@@ -142,6 +172,7 @@ export function CompetenciesTab() {
         dataSource={data?.items}
         loading={isFetching}
         scroll={{ x: "max-content" }}
+        onChange={onFilterChange(setParams)}
         locale={{
           emptyText: (
             <Empty

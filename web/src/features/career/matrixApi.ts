@@ -32,9 +32,11 @@ export type MatrixTransition =
   | "accept-and-revise"
   | "rollback-changes";
 
-/** Paging and unit filter of the matrix list; pages count from 1. */
+/** Paging and column filters of the matrix list; pages count from 1. */
 export interface MatrixListParams {
   orgUnitId?: string;
+  directionId?: string;
+  trackId?: string;
   page: number;
   pageSize: number;
 }
@@ -114,11 +116,24 @@ export function matrixDiffQuery(versionId: string, number: number) {
   });
 }
 
+/** Column filters of the approvals list. */
+export interface ApprovalListParams {
+  orgUnitId?: string;
+  step?: NonNullable<Approval["step"]>;
+}
+
 /** Versions waiting for the signed-in user's decision. */
-export const approvalsQuery = queryOptions({
-  queryKey: [...matrixQueryKey, "approvals"],
-  queryFn: async () => unwrap(await api.GET("/api/v1/career/approvals")),
-});
+export function approvalsQuery(params: ApprovalListParams = {}) {
+  return queryOptions({
+    queryKey: [...matrixQueryKey, "approvals", params],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/approvals", {
+          params: { query: params },
+        }),
+      ),
+  });
+}
 
 /** Rereads every matrix query after a change. */
 export function invalidateMatrices(queryClient: QueryClient) {

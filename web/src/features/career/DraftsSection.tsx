@@ -7,15 +7,18 @@ import {
   type TableColumnsType,
   Typography,
 } from "antd";
+import { useState } from "react";
 import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import {
   approveDraft,
   type CatalogDraft,
   type CatalogKind,
+  type DraftListParams,
   draftsQuery,
   invalidateCatalogs,
 } from "./catalogApi";
+import { choiceFilter, onFilterChange, useUnitOptions } from "./columnFilters";
 import { useCatalogRights } from "./useCatalogRights";
 
 const KIND_LABELS: Record<CatalogKind, string> = {
@@ -31,8 +34,10 @@ export function DraftsSection() {
   const rights = useCatalogRights();
   const { message } = App.useApp();
   const queryClient = useQueryClient();
+  const [params, setParams] = useState<DraftListParams>({});
+  const units = useUnitOptions();
   const { data, error, isFetching, refetch } = useQuery({
-    ...draftsQuery,
+    ...draftsQuery(params),
     enabled: rights.isHr,
   });
   const approve = useMutation({
@@ -48,11 +53,17 @@ export function DraftsSection() {
     {
       title: "Тип",
       dataIndex: "kind",
+      ...choiceFilter(
+        "kind",
+        params.kind,
+        Object.entries(KIND_LABELS).map(([value, text]) => ({ text, value })),
+      ),
       render: (kind: CatalogKind) => KIND_LABELS[kind],
     },
     {
       title: "Подразделение",
       dataIndex: "ownerOrgUnitName",
+      ...choiceFilter("orgUnitId", params.orgUnitId, units, true),
       render: (name: string | null) => name ?? "Общая",
     },
     { title: "Автор", dataIndex: "authorName" },
@@ -90,6 +101,7 @@ export function DraftsSection() {
         loading={isFetching}
         pagination={false}
         scroll={{ x: "max-content" }}
+        onChange={onFilterChange(setParams)}
         locale={{
           emptyText: (
             <Empty
