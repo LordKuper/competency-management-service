@@ -113,3 +113,7 @@
 {"op":"close","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T14:46:16.841Z","end":"2026-10-11T14:54:41.864Z","outcome":"done","attrs":{"gate":"impl assessment"}}
 {"op":"open","id":"wait scope amendment levels","kind":"user-wait","parent":"impl#1","start":"2026-10-11T14:54:41.929Z","attrs":{"gate":"new or changed scope"}}
 {"op":"close","id":"wait scope amendment levels","kind":"user-wait","parent":"impl#1","start":"2026-10-11T14:54:41.929Z","end":"2026-10-11T14:56:04.981Z","outcome":"done","attrs":{"gate":"new or changed scope"}}
+{"op":"open","id":"asd-architect impl#1","kind":"dispatch","parent":"impl#1","start":"2026-10-11T14:56:05.353Z","attrs":{"agent":"asd-architect","tier":"default","model":"opus"}}
+{"op":"close","id":"asd-architect impl#1","kind":"dispatch","parent":"impl#1","start":"2026-10-11T14:56:05.353Z","end":"2026-10-11T15:09:45.330Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"default","model":"opus"}}
+{"op":"open","id":"wait ui texts dnd","kind":"user-wait","parent":"impl#1","start":"2026-10-11T15:10:01.212Z","attrs":{"gate":"ui texts"}}
+{"op":"close","id":"wait ui texts dnd","kind":"user-wait","parent":"impl#1","start":"2026-10-11T15:10:01.212Z","end":"2026-10-11T15:14:23.473Z","outcome":"done","attrs":{"gate":"ui texts"}}
