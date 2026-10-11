@@ -292,6 +292,12 @@
       "tier": "critical",
       "reason": "risk:migration",
       "resolved_model": "opus"
+    },
+    "impl assessment change 6": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -314,7 +320,7 @@
     }
   },
   "created_at": "2026-10-09T07:25:11.340Z",
-  "updated_at": "2026-10-11T15:14:23.531Z",
+  "updated_at": "2026-10-11T16:11:24.151Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
