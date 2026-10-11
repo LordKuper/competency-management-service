@@ -345,13 +345,19 @@ internal sealed class MatrixWorkflow(
     }
 
     /// <summary>
-    /// Approves the version as submitted; an approver who changed it returns it instead.
+    /// Approves the version as submitted; an approver who changed it returns it instead. Completeness is checked again, because the
+    /// catalogue entries the version uses may have changed since it was handed on.
     /// </summary>
     private async Task<ProblemHttpResult?> ApproveAsync(Progress progress, MatrixTurn turn, CancellationToken cancellationToken)
     {
         if (HasApproverChanges(progress))
         {
             return Rejection.Conflict(ChangedByApproverMessage);
+        }
+
+        if (await IncompleteAsync(progress.Version, cancellationToken) is { } incomplete)
+        {
+            return incomplete;
         }
 
         RecordPassedOver(progress, turn);
