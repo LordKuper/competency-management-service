@@ -1,4 +1,4 @@
 - [Fail-first and `none` honesty](feedback_fail-first-and-none-honesty.md) — transcribe the first-failing assertion, never justify `none` with "it's prose", never assert a qualifier where the substance is assertable
 - [Mutation runs trip the hash ledger](project_mutation-runs-trip-the-hash-ledger.md) — editing a managed_paths file to prove a mutation also fails upstream_hashes; expected noise
 - [Testability envelope](project_testability-envelope.md) — what is testable here, honest `none` decisions, mutation and fixture traps, and the §7 in-body-comment ban.
-- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, jsdom/dnd-kit/filter-wiring web traps, fake fetch, forcing a 5xx
+- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/filter-wiring web traps, fake fetch, forcing a 5xx
