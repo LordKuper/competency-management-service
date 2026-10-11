@@ -25,7 +25,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         ("POST", "/api/v1/org-units/{id}/move", new { parentId = (Guid?)null }),
         ("POST", "/api/v1/org-units/{id}/deactivate", null),
         ("POST", "/api/v1/org-units/{id}/activate", null),
-        ("PUT", "/api/v1/employees/{id}", new { lastName = "Иванов", firstName = "Иван", middleName = (string?)null, position = "Инженер", orgUnitId = UnknownId }),
+        ("PUT", "/api/v1/employees/{id}", new { lastName = "Иванов", firstName = "Иван", middleName = (string?)null, positionId = UnknownId, orgUnitId = UnknownId }),
         ("POST", "/api/v1/employees/{id}/dismiss", null),
         ("POST", "/api/v1/employees/{id}/rehire", null),
         ("DELETE", "/api/v1/employees/{id}", null),
@@ -147,14 +147,14 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         var employee = await admin.CreateEmployeeAsync(unit.Id, firstName: "Пётр");
         var bumped = (await admin.PutAsync(
             $"/api/v1/employees/{employee.Id}",
-            new { lastName = employee.Json!["lastName"]!.GetValue<string>(), firstName = "Павел", middleName = (string?)null, position = "Инженер", orgUnitId = unit.Id },
+            new { lastName = employee.Json!["lastName"]!.GetValue<string>(), firstName = "Павел", middleName = (string?)null, positionId = employee.Json["positionId"]!.GetValue<Guid>(), orgUnitId = unit.Id },
             employee.ETag)).Expect(HttpStatusCode.OK);
 
         var stale = action switch
         {
             "update" => await admin.PutAsync(
                 $"/api/v1/employees/{employee.Id}",
-                new { lastName = "Затёртый", firstName = "Пётр", middleName = (string?)null, position = "Инженер", orgUnitId = unit.Id },
+                new { lastName = "Затёртый", firstName = "Пётр", middleName = (string?)null, positionId = employee.Json["positionId"]!.GetValue<Guid>(), orgUnitId = unit.Id },
                 employee.ETag),
             "dismiss" => await admin.PostAsync($"/api/v1/employees/{employee.Id}/dismiss", ifMatch: employee.ETag),
             _ => await admin.DeleteAsync($"/api/v1/employees/{employee.Id}", employee.ETag),
