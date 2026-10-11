@@ -192,3 +192,17 @@
 {"op":"close","id":"impl-test entry 3","kind":"dispatch","parent":"impl-test#3","start":"2026-10-11T21:50:03.851Z","end":"2026-10-11T21:53:11.813Z","outcome":"done","attrs":{"agent":"asd-tester","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"impl-test#3","kind":"phase","parent":null,"start":"2026-10-11T21:50:03.477Z","end":"2026-10-11T21:53:12.147Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-review#2","kind":"phase","parent":null,"start":"2026-10-11T21:53:12.147Z","attrs":{}}
+{"op":"open","id":"impl-review wave-1/iter-02","kind":"review-iteration","parent":"impl-review#2","start":"2026-10-11T21:53:20.758Z","attrs":{"wave":"1","iteration":"2"}}
+{"op":"open","id":"combined wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-11T21:53:20.822Z","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
+{"op":"close","id":"combined wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-11T21:53:20.822Z","end":"2026-10-11T21:55:04.240Z","outcome":"done","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
+{"op":"close","id":"impl-review wave-1/iter-02","kind":"review-iteration","parent":"impl-review#2","start":"2026-10-11T21:53:20.758Z","end":"2026-10-11T21:55:04.304Z","outcome":"done","attrs":{"wave":"1","iteration":"2"}}
+{"op":"open","id":"impl-review wave-2/iter-01","kind":"review-iteration","parent":"impl-review#2","start":"2026-10-11T21:55:18.221Z","attrs":{"wave":"2","iteration":"1"}}
+{"op":"open","id":"combined wave-2/iter-01","kind":"dispatch","parent":"impl-review wave-2/iter-01","start":"2026-10-11T21:55:18.287Z","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
+{"op":"open","id":"external wave-2/iter-01","kind":"external-review","parent":"impl-review wave-2/iter-01","start":"2026-10-11T21:55:18.350Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"external wave-2/iter-01","kind":"external-review","parent":"impl-review wave-2/iter-01","start":"2026-10-11T21:55:18.350Z","end":"2026-10-11T22:03:29.903Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"combined wave-2/iter-01","kind":"dispatch","parent":"impl-review wave-2/iter-01","start":"2026-10-11T21:55:18.287Z","end":"2026-10-11T22:06:28.130Z","outcome":"done","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
+{"op":"open","id":"wait F6 competency owner","kind":"user-wait","parent":"impl-review#2","start":"2026-10-11T22:06:37.441Z","attrs":{"gate":"reviewer question"}}
+{"op":"close","id":"wait F6 competency owner","kind":"user-wait","parent":"impl-review#2","start":"2026-10-11T22:06:37.441Z","end":"2026-10-11T22:08:04.882Z","outcome":"done","attrs":{"gate":"reviewer question"}}
+{"op":"close","id":"impl-review wave-2/iter-01","kind":"review-iteration","parent":"impl-review#2","start":"2026-10-11T21:55:18.221Z","end":"2026-10-11T22:08:05.383Z","outcome":"done","attrs":{"wave":"2","iteration":"1"}}
+{"op":"close","id":"impl-review#2","kind":"phase","parent":null,"start":"2026-10-11T21:53:12.147Z","end":"2026-10-11T22:08:05.450Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#4","kind":"phase","parent":null,"start":"2026-10-11T22:08:05.450Z","attrs":{}}
