@@ -170,3 +170,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-11 — impl assessment: пользователь — при открытии любого модального окна фокус в первом поле, а без полей — на кнопке действия по умолчанию (во всём приложении); на design-promote — `docs/ux/accessibility.html`
 - 2026-10-11 — route impl assessment change 6: standard, dispatch HEAD 7241d74; risk none via npm --prefix web run lint
 - 2026-10-11 — impl assessment change 6 выполнен (3e9904c): общая обёртка `web/src/app/AppModal.tsx` для всех `<Modal>` — фокус в первое поле при открытии (с ожиданием появления полей после загрузки), без полей — основная кнопка; подтверждения — фокус на OK (умолчание antd 6.6.5); возврат фокуса — умолчание rc-dialog; вопрос «фокус на «Отмена» в подтверждениях удаления» — пользователю. web lint и build чисты
+- 2026-10-11 — impl assessment: пользователь — в подтверждениях необратимых действий (удалить, уволить, заблокировать и подобных) фокус при открытии на «Отмена»
+- 2026-10-11 — route impl assessment change 7: standard, dispatch HEAD 530a0d0; risk none via npm --prefix web run lint
