@@ -23,6 +23,7 @@ internal static class CatalogEndpoints
     public const string DuplicateNameMessage = "Запись с таким названием уже есть";
     private const string NotDraftMessage = "Согласовать можно только черновую запись";
     private const string DraftActivationMessage = "Черновую запись нужно согласовать";
+    private const string DefaultScaleDeactivationMessage = "Шкалу по умолчанию нельзя деактивировать — сначала сделайте по умолчанию другую шкалу";
     private const string ApprovedAction = "Approved";
 
     public static RouteGroupBuilder MapCatalogGroup(this IEndpointRouteBuilder endpoints, string route) => endpoints.MapGroup(route)
@@ -361,7 +362,8 @@ internal static class CatalogEndpoints
 
     /// <summary>
     /// Deactivates an entry or brings an inactive one back; setting the status an entry already has changes nothing.
-    /// A draft becomes active only by approval. A deactivated draft stops being a draft, so its name is checked like an approved one's.
+    /// A draft becomes active only by approval, and the default scale stays active, because new competencies get it. A deactivated draft
+    /// stops being a draft, so its name is checked like an approved one's.
     /// </summary>
     private static async Task<Results<Ok<TResponse>, NotFound, ProblemHttpResult>> SetStatusAsync<TEntry, TResponse>(
         Guid id,
@@ -389,6 +391,11 @@ internal static class CatalogEndpoints
         if (entry.Status == CatalogStatus.Draft && status == CatalogStatus.Active)
         {
             return Rejection.Conflict(DraftActivationMessage);
+        }
+
+        if (status == CatalogStatus.Inactive && entry is CompetencyScale { IsDefault: true })
+        {
+            return Rejection.Conflict(DefaultScaleDeactivationMessage);
         }
 
         var leavesDraft = entry.Status == CatalogStatus.Draft;
