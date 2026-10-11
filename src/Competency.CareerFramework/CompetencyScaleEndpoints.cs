@@ -11,13 +11,16 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The API of competency scales. Scale names are unique across the catalogue. A scale a published matrix version has used never changes,
 /// so the version keeps meaning what it meant; the catalogue lock, which publication also takes, keeps the check and a publication apart.
-/// Exactly one scale is the default; making another active scale the default takes the flag from the previous one.
+/// Exactly one scale is the default; making another active scale the default takes the flag from the previous one. A scale other than
+/// the default that no competency, version in a competency's history or matrix version is on can be deleted.
 /// </summary>
 internal static class CompetencyScaleEndpoints
 {
     private const string Route = "/api/v1/career/scales";
     private const string PublishedMessage = "Используется в опубликованной матрице — изменить нельзя";
     private const string InactiveDefaultMessage = "По умолчанию может быть только действующая шкала";
+    private const string DefaultDeletionMessage = "Шкалу по умолчанию удалить нельзя";
+    private const string InUseMessage = "Шкалу используют компетенции или матрицы — удалить нельзя";
 
     internal static readonly CatalogKind<CompetencyScale, CompetencyScaleResponse> Kind = new("CompetencyScale", (scale, _) => CompetencyScaleResponse.From(scale));
 
@@ -37,6 +40,22 @@ internal static class CompetencyScaleEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
         group.MapEntryEndpoints(Kind);
+        group.MapDeleteEntry(Kind, InUseAsync);
+    }
+
+    private static async Task<string?> InUseAsync(CompetencyScale scale, AppDbContext context, CatalogStore store, CancellationToken cancellationToken)
+    {
+        if (scale.IsDefault)
+        {
+            return DefaultDeletionMessage;
+        }
+
+        var id = scale.Id;
+        return await context.Set<CareerCompetency>().AnyAsync(competency => competency.ScaleId == id, cancellationToken)
+            || await context.Set<CompetencyVersion>().AnyAsync(version => version.ScaleId == id, cancellationToken)
+            || await context.Set<MatrixVersion>().AnyAsync(version => version.ScaleId == id, cancellationToken)
+                ? InUseMessage
+                : null;
     }
 
     private static Task<Results<Ok<PageResponse<CompetencyScaleResponse>>, ValidationProblem>> ListAsync(

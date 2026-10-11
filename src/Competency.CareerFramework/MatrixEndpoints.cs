@@ -12,6 +12,7 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The API of competency matrices and their lists of versions. Every signed-in user reads matrices and their published and archived
 /// versions; a version in work is listed only to those who may read it. Only the head of a unit creates its matrices and new versions.
+/// A matrix that was never published can be deleted.
 /// </summary>
 internal static class MatrixEndpoints
 {
@@ -21,6 +22,7 @@ internal static class MatrixEndpoints
     private const string TrackField = "trackId";
     private const string ScaleField = "scaleId";
     private const string DuplicateMatrixMessage = "У подразделения уже есть матрица для этого трека";
+    private const string PublishedMessage = "Матрицу с опубликованными версиями удалить нельзя";
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -30,6 +32,10 @@ internal static class MatrixEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
         group.MapGet("/{id:guid}", GetAsync).WithName("GetMatrix").ProducesProblem(StatusCodes.Status404NotFound);
+        group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteMatrix")
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
         group.MapGet("/{id:guid}/versions", VersionsAsync).WithName("ListMatrixVersions").ProducesProblem(StatusCodes.Status404NotFound);
         group.MapPost("/{id:guid}/versions", CreateVersionAsync).WithName("CreateMatrixVersion").ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -136,6 +142,60 @@ internal static class MatrixEndpoints
 
         var described = (await DescribeAsync([created], viewer, context, store, route, cancellationToken))[0];
         return TypedResults.Created($"{Route}/{created.Id}", described);
+    }
+
+    /// <summary>
+    /// Deletes a matrix none of whose versions was ever published, with its version in work and that version's variants and decisions,
+    /// each row journaled; only the head of the matrix unit or a global administrator may. Such a matrix has one version, the one in work,
+    /// and <c>If-Match</c> carries that version's version, because the matrix row itself never changes.
+    /// </summary>
+    private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> DeleteAsync(
+        Guid id,
+        IfMatch ifMatch,
+        AppDbContext context,
+        CatalogStore store,
+        MatrixWorkflow workflow,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await workflow.BeginTransitionAsync(id, cancellationToken);
+        if (await context.Set<CompetencyMatrix>().FirstOrDefaultAsync(matrix => matrix.Id == id, cancellationToken) is not { } matrix)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var viewer = await workflow.ViewerAsync(cancellationToken);
+        if (!viewer.IsAdmin && !viewer.HeadedUnitIds.Contains(matrix.OrgUnitId))
+        {
+            return Rejection.Forbidden();
+        }
+
+        var versions = await context.Set<MatrixVersion>().Where(version => version.MatrixId == id).ToListAsync(cancellationToken);
+        if (versions.Any(version => !version.IsInWork))
+        {
+            return Rejection.Conflict(PublishedMessage);
+        }
+
+        var versionIds = versions.Select(version => version.Id).ToList();
+        foreach (var variant in await context.Set<MatrixVariant>().Where(variant => versionIds.Contains(variant.VersionId)).ToListAsync(cancellationToken))
+        {
+            store.RemoveHistoryRow(variant, $"{variant.VersionId},{variant.Number}");
+        }
+
+        foreach (var decision in await context.Set<MatrixDecision>().Where(decision => versionIds.Contains(decision.VersionId)).ToListAsync(cancellationToken))
+        {
+            store.RemoveHistoryRow(decision, $"{decision.VersionId},{decision.Sequence}");
+        }
+
+        foreach (var version in versions)
+        {
+            ifMatch.ApplyTo(context, version);
+            context.Remove(version);
+        }
+
+        context.Remove(matrix);
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return TypedResults.NoContent();
     }
 
     /// <summary>

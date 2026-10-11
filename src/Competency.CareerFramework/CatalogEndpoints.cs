@@ -112,6 +112,28 @@ internal static class CatalogEndpoints
     }
 
     /// <summary>
+    /// Maps deleting an entry nothing refers to any more, by whoever may edit it and for a draft also by its author. The entry and the
+    /// parts that go with it are removed row by row, so each deletion is journaled.
+    /// </summary>
+    /// <param name="group">The catalogue's route group.</param>
+    /// <param name="kind">The catalogue.</param>
+    /// <param name="removeParts">Runs under the catalogue lock once the user may delete the entry: returns why the entry is still in use,
+    /// or marks the parts that go with it for removal and returns null.</param>
+    /// <returns>The endpoint.</returns>
+    public static RouteHandlerBuilder MapDeleteEntry<TEntry, TResponse>(
+        this RouteGroupBuilder group,
+        CatalogKind<TEntry, TResponse> kind,
+        Func<TEntry, AppDbContext, CatalogStore, CancellationToken, Task<string?>> removeParts)
+        where TEntry : CatalogEntry => group.MapDelete(
+            "/{id:guid}",
+            (Guid id, IfMatch ifMatch, AppDbContext context, CatalogStore store, CancellationToken cancellationToken) =>
+                DeleteAsync(id, ifMatch, removeParts, context, store, cancellationToken))
+        .WithName($"Delete{kind.Name}")
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict);
+
+    /// <summary>
     /// Reads one page of the entries of <paramref name="source"/> the user can read, in name order.
     /// </summary>
     public static async Task<Results<Ok<PageResponse<TResponse>>, ValidationProblem>> ListAsync<TEntry, TResponse>(
@@ -282,6 +304,38 @@ internal static class CatalogEndpoints
         }
 
         return TypedResults.Ok(await CommitAsync(entry, kind, store, transaction, response, cancellationToken));
+    }
+
+    private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> DeleteAsync<TEntry>(
+        Guid id,
+        IfMatch ifMatch,
+        Func<TEntry, AppDbContext, CatalogStore, CancellationToken, Task<string?>> removeParts,
+        AppDbContext context,
+        CatalogStore store,
+        CancellationToken cancellationToken)
+        where TEntry : CatalogEntry
+    {
+        await using var transaction = await store.BeginWriteAsync(cancellationToken);
+        var viewer = await store.ViewerAsync(cancellationToken);
+        if (await store.FindVisibleAsync<TEntry>(id, viewer, cancellationToken) is not { } entry)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (!viewer.CanDelete(entry))
+        {
+            return Rejection.Forbidden();
+        }
+
+        if (await removeParts(entry, context, store, cancellationToken) is { } inUse)
+        {
+            return Rejection.Conflict(inUse);
+        }
+
+        ifMatch.ApplyTo(context, entry);
+        context.Remove(entry);
+        await store.SaveAsync(entry, transaction, cancellationToken);
+        return TypedResults.NoContent();
     }
 
     /// <summary>

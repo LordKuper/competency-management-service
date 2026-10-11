@@ -11,7 +11,7 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The API of career levels, the parts of a track: whoever may edit the track creates and edits its levels, and a level is kept by its
 /// track's keepers. Level names are unique within their track. The salary range has endpoints of its own, readable and changeable only by
-/// the level's keepers, so no other response ever carries it.
+/// the level's keepers, so no other response ever carries it. A level no matrix and no other level names can be deleted.
 /// </summary>
 internal static class CareerLevelEndpoints
 {
@@ -20,6 +20,7 @@ internal static class CareerLevelEndpoints
     private const string PreviousLevelField = "previousLevelId";
     private const string NextLevelsField = "nextLevelIds";
     private const string SelfReferenceMessage = "Уровень не может ссылаться на себя";
+    private const string InUseMessage = "Уровень используют матрицы или другие уровни — удалить нельзя";
 
     internal static readonly CatalogKind<CareerLevel, CareerLevelResponse> Kind = new(
         "CareerLevel",
@@ -43,7 +44,13 @@ internal static class CareerLevelEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
         group.MapEntryEndpoints(Kind);
+        group.MapDeleteEntry(Kind, InUseAsync);
     }
+
+    private static async Task<string?> InUseAsync(CareerLevel level, AppDbContext context, CatalogStore store, CancellationToken cancellationToken) =>
+        await store.IsInMatricesAsync(level, cancellationToken) || await store.IsLevelReferencedAsync([level.Id], cancellationToken)
+            ? InUseMessage
+            : null;
 
     private static Task<Results<Ok<PageResponse<CareerLevelResponse>>, ValidationProblem>> ListAsync(
         [AsParameters] CatalogListQuery query,

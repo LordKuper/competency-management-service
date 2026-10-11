@@ -11,7 +11,7 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The API of the competency catalogue. Competency names are unique within their direction, and among general competencies.
 /// Every change adds a version to the competency's history, which anyone who can read the competency can read. A request that names no
-/// scale gets the default scale.
+/// scale gets the default scale. A competency no matrix uses can be deleted with its history.
 /// </summary>
 internal static class CompetencyEndpoints
 {
@@ -20,6 +20,7 @@ internal static class CompetencyEndpoints
     private const string DirectionField = "directionId";
     private const string ScaleField = "scaleId";
     private const string TypeField = "type";
+    private const string InUseMessage = "Компетенцию используют матрицы — удалить нельзя";
 
     internal static readonly CatalogKind<CareerCompetency, CompetencyResponse> Kind = new(
         "Competency",
@@ -40,6 +41,26 @@ internal static class CompetencyEndpoints
         group.MapGet("/{id:guid}/versions", VersionsAsync).WithName("ListCompetencyVersions")
             .ProducesProblem(StatusCodes.Status404NotFound);
         group.MapEntryEndpoints(Kind);
+        group.MapDeleteEntry(Kind, RemoveVersionsAsync);
+    }
+
+    /// <summary>
+    /// A competency goes with its history, unless a matrix uses it.
+    /// </summary>
+    private static async Task<string?> RemoveVersionsAsync(CareerCompetency competency, AppDbContext context, CatalogStore store, CancellationToken cancellationToken)
+    {
+        if (await store.IsInMatricesAsync(competency, cancellationToken))
+        {
+            return InUseMessage;
+        }
+
+        var id = competency.Id;
+        foreach (var version in await context.Set<CompetencyVersion>().Where(version => version.CompetencyId == id).ToListAsync(cancellationToken))
+        {
+            store.RemoveHistoryRow(version, $"{version.CompetencyId},{version.Number}");
+        }
+
+        return null;
     }
 
     private static Task<Results<Ok<PageResponse<CompetencyResponse>>, ValidationProblem>> ListAsync(

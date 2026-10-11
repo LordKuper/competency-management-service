@@ -2,7 +2,7 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// One entry of a version's approval history: who did what, when, at which step, with which comment and variant.
-/// Rows are only ever added.
+/// Rows are only ever added, and deleted only with a matrix that was never published.
 /// </summary>
 internal sealed class MatrixDecision
 {

@@ -5,17 +5,19 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of career tracks. A track belongs to one unit; track names are unique within their direction.
+/// The API of career tracks. A track belongs to one unit; track names are unique within their direction. Deleting a track deletes its levels.
 /// </summary>
 internal static class CareerTrackEndpoints
 {
     private const string Route = "/api/v1/career/tracks";
     private const string DirectionField = "directionId";
     private const string OrgUnitField = "ownerOrgUnitId";
+    private const string InUseMessage = "Трек используют матрицы или уровни других треков — удалить нельзя";
 
     private static readonly CatalogKind<CareerTrack, CareerTrackResponse> Kind = new(
         "CareerTrack",
@@ -30,6 +32,24 @@ internal static class CareerTrackEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
         group.MapEntryEndpoints(Kind, mapRename: true);
+        group.MapDeleteEntry(Kind, RemoveLevelsAsync);
+    }
+
+    /// <summary>
+    /// A track goes with its levels, unless a matrix is built on it or a level of another track names one of its levels.
+    /// </summary>
+    private static async Task<string?> RemoveLevelsAsync(CareerTrack track, AppDbContext context, CatalogStore store, CancellationToken cancellationToken)
+    {
+        var id = track.Id;
+        var levels = await context.Set<CareerLevel>().Where(level => level.TrackId == id).ToListAsync(cancellationToken);
+        if (await context.Set<CompetencyMatrix>().AnyAsync(matrix => matrix.TrackId == id, cancellationToken)
+            || await store.IsLevelReferencedAsync([.. levels.Select(level => level.Id)], cancellationToken))
+        {
+            return InUseMessage;
+        }
+
+        context.RemoveRange(levels);
+        return null;
     }
 
     private static Task<Results<Ok<PageResponse<CareerTrackResponse>>, ValidationProblem>> ListAsync(

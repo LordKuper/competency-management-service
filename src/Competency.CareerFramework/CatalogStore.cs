@@ -18,9 +18,11 @@ internal sealed class CatalogStore(
     ProcessRoles roles,
     MatrixRoute route,
     ICurrentActor actor,
+    IAuditWriter audit,
     TimeProvider time)
 {
     private const long LockKey = 5_003_001;
+    private const string DeletedAction = "Deleted";
 
     /// <summary>
     /// Starts a transaction for a catalogue change: first the tree lock in shared mode, because the writer's rights come from the tree,
@@ -96,6 +98,52 @@ internal sealed class CatalogStore(
             entry => entry.Id == id
                 && (entry.Status == CatalogStatus.Active || (entry.Status == CatalogStatus.Draft && entry.AuthorId == authorId)),
             cancellationToken);
+
+    /// <summary>
+    /// Whether a matrix version, a variant of one or the snapshot of a published one lists the level or competency. The documents are
+    /// jsonb, so the check is a containment query rather than a foreign key.
+    /// </summary>
+    /// <param name="entry">A level or a competency.</param>
+    /// <param name="cancellationToken">Cancels the query.</param>
+    /// <returns>True when a matrix uses the entry.</returns>
+    public Task<bool> IsInMatricesAsync(CatalogEntry entry, CancellationToken cancellationToken)
+    {
+        var (list, field) = entry is CareerLevel ? ("levels", "levelId") : ("competencies", "competencyId");
+        var id = entry.Id;
+        return context.Database.SqlQuery<int>($"""
+            SELECT 1 AS "Value" FROM matrix_versions
+            WHERE content -> {list} @> jsonb_build_array(jsonb_build_object({field}, {id}::text))
+                OR snapshot -> {list} @> jsonb_build_array(jsonb_build_object('id', {id}::text))
+            UNION ALL
+            SELECT 1 FROM matrix_version_variants
+            WHERE content -> {list} @> jsonb_build_array(jsonb_build_object({field}, {id}::text))
+            """).AnyAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Whether a level outside the given ones names one of them as its previous or a next level.
+    /// </summary>
+    /// <param name="levelIds">The levels about to be deleted.</param>
+    /// <param name="cancellationToken">Cancels the query.</param>
+    /// <returns>True when another level refers to them.</returns>
+    public Task<bool> IsLevelReferencedAsync(Guid[] levelIds, CancellationToken cancellationToken) =>
+        context.Database.SqlQuery<int>($"""
+            SELECT 1 AS "Value" FROM career_levels
+            WHERE NOT (id = ANY({levelIds})) AND (previous_level_id = ANY({levelIds}) OR next_level_ids && {levelIds})
+            """).AnyAsync(cancellationToken);
+
+    /// <summary>
+    /// Marks a history row for removal with the entry it belongs to and journals its deletion, which the journal does not record on its
+    /// own for rows that are not audited.
+    /// </summary>
+    /// <param name="row">The tracked row.</param>
+    /// <param name="entityId">The row's key as the journal writes keys: its parts joined by commas.</param>
+    public void RemoveHistoryRow(object row, string entityId)
+    {
+        context.Remove(row);
+        var entityType = row.GetType().Name;
+        audit.Stage(new AuditEntry($"{entityType}.{DeletedAction}", entityType, entityId), context);
+    }
 
     /// <summary>
     /// Saves the change and commits. A changed competency also gets its next version row, numbered after the version the save gave it.

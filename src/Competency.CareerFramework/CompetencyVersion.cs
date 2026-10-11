@@ -1,8 +1,8 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The state of a competency after one saved change, kept so its history can be read. Rows are only ever added; the journal
-/// already records the change itself, so the rows are not journaled again.
+/// The state of a competency after one saved change, kept so its history can be read. Rows are only ever added, and deleted
+/// only with their competency; the journal already records the change itself, so adding a row is not journaled again.
 /// </summary>
 internal sealed class CompetencyVersion
 {
