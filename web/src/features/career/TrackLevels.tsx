@@ -101,7 +101,7 @@ export function PendingLevels({
       render: (_, __, index) => (
         <Space size={0}>
           <Button type="link" size="small" onClick={() => setDialog(index)}>
-            Править
+            Изменить
           </Button>
           <Button
             type="link"

@@ -119,7 +119,7 @@ export const UnitCard = memo(function UnitCard({
                     {
                       key: "edit",
                       icon: <EditOutlined />,
-                      label: "Править",
+                      label: "Изменить",
                       onClick: () => onAction("edit", unit),
                     },
                     {

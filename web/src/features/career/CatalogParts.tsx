@@ -91,7 +91,7 @@ export function EntryActions({
       {children}
       {onEdit && rights.canEdit(entry, unitId) && (
         <Button type="link" size="small" onClick={onEdit}>
-          Править
+          Изменить
         </Button>
       )}
       {canManage && entry.status === "Draft" && (
