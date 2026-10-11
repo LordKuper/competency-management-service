@@ -43,7 +43,12 @@ internal static class CompetencyScaleEndpoints
         group.MapDeleteEntry(Kind, InUseAsync);
     }
 
-    private static async Task<string?> InUseAsync(CompetencyScale scale, AppDbContext context, CatalogStore store, CancellationToken cancellationToken)
+    private static async Task<string?> InUseAsync(
+        CompetencyScale scale,
+        DeletionBlockers blockers,
+        AppDbContext context,
+        CatalogStore store,
+        CancellationToken cancellationToken)
     {
         if (scale.IsDefault)
         {
@@ -51,11 +56,15 @@ internal static class CompetencyScaleEndpoints
         }
 
         var id = scale.Id;
-        return await context.Set<CareerCompetency>().AnyAsync(competency => competency.ScaleId == id, cancellationToken)
-            || await context.Set<CompetencyVersion>().AnyAsync(version => version.ScaleId == id, cancellationToken)
-            || await context.Set<MatrixVersion>().AnyAsync(version => version.ScaleId == id, cancellationToken)
-                ? InUseMessage
-                : null;
+        var competencies = context.Set<CareerCompetency>();
+        await blockers.AddAsync(competencies.Where(competency => competency.ScaleId == id), DeletionBlockerKind.Competency);
+        await blockers.AddAsync(
+            competencies.Where(competency => competency.ScaleId != id
+                && context.Set<CompetencyVersion>().Any(version => version.CompetencyId == competency.Id && version.ScaleId == id)),
+            DeletionBlockerKind.CompetencyVersion);
+        await blockers.AddMatricesAsync(context.Set<CompetencyMatrix>()
+            .Where(matrix => context.Set<MatrixVersion>().Any(version => version.MatrixId == matrix.Id && version.ScaleId == id)));
+        return blockers.Any ? InUseMessage : null;
     }
 
     private static Task<Results<Ok<PageResponse<CompetencyScaleResponse>>, ValidationProblem>> ListAsync(

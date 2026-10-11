@@ -20,6 +20,7 @@ internal static class CatalogEndpoints
     public const string UnavailableMessage = "Запись не найдена или недоступна";
 
     private const string Tag = "Career";
+    private const string ProblemContentType = "application/problem+json";
     public const string DuplicateNameMessage = "Запись с таким названием уже есть";
     private const string NotDraftMessage = "Согласовать можно только черновую запись";
     private const string DraftActivationMessage = "Черновую запись нужно согласовать";
@@ -117,13 +118,13 @@ internal static class CatalogEndpoints
     /// </summary>
     /// <param name="group">The catalogue's route group.</param>
     /// <param name="kind">The catalogue.</param>
-    /// <param name="removeParts">Runs under the catalogue lock once the user may delete the entry: returns why the entry is still in use,
-    /// or marks the parts that go with it for removal and returns null.</param>
+    /// <param name="removeParts">Runs under the catalogue lock once the user may delete the entry: adds the records that refer to the
+    /// entry and returns why it is still in use, or marks the parts that go with it for removal and returns null.</param>
     /// <returns>The endpoint.</returns>
     public static RouteHandlerBuilder MapDeleteEntry<TEntry, TResponse>(
         this RouteGroupBuilder group,
         CatalogKind<TEntry, TResponse> kind,
-        Func<TEntry, AppDbContext, CatalogStore, CancellationToken, Task<string?>> removeParts)
+        Func<TEntry, DeletionBlockers, AppDbContext, CatalogStore, CancellationToken, Task<string?>> removeParts)
         where TEntry : CatalogEntry => group.MapDelete(
             "/{id:guid}",
             (Guid id, IfMatch ifMatch, AppDbContext context, CatalogStore store, CancellationToken cancellationToken) =>
@@ -131,7 +132,7 @@ internal static class CatalogEndpoints
         .WithName($"Delete{kind.Name}")
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
-        .ProducesProblem(StatusCodes.Status409Conflict);
+        .Produces<DeletionRefusal>(StatusCodes.Status409Conflict, ProblemContentType);
 
     /// <summary>
     /// Reads one page of the entries of <paramref name="source"/> the user can read, in name order.
@@ -309,7 +310,7 @@ internal static class CatalogEndpoints
     private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> DeleteAsync<TEntry>(
         Guid id,
         IfMatch ifMatch,
-        Func<TEntry, AppDbContext, CatalogStore, CancellationToken, Task<string?>> removeParts,
+        Func<TEntry, DeletionBlockers, AppDbContext, CatalogStore, CancellationToken, Task<string?>> removeParts,
         AppDbContext context,
         CatalogStore store,
         CancellationToken cancellationToken)
@@ -327,9 +328,10 @@ internal static class CatalogEndpoints
             return Rejection.Forbidden();
         }
 
-        if (await removeParts(entry, context, store, cancellationToken) is { } inUse)
+        var blockers = new DeletionBlockers(viewer, context, store, cancellationToken);
+        if (await removeParts(entry, blockers, context, store, cancellationToken) is { } inUse)
         {
-            return Rejection.Conflict(inUse);
+            return blockers.Refuse(inUse);
         }
 
         ifMatch.ApplyTo(context, entry);

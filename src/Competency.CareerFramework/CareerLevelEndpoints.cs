@@ -47,10 +47,17 @@ internal static class CareerLevelEndpoints
         group.MapDeleteEntry(Kind, InUseAsync);
     }
 
-    private static async Task<string?> InUseAsync(CareerLevel level, AppDbContext context, CatalogStore store, CancellationToken cancellationToken) =>
-        await store.IsInMatricesAsync(level, cancellationToken) || await store.IsLevelReferencedAsync([level.Id], cancellationToken)
-            ? InUseMessage
-            : null;
+    private static async Task<string?> InUseAsync(
+        CareerLevel level,
+        DeletionBlockers blockers,
+        AppDbContext context,
+        CatalogStore store,
+        CancellationToken cancellationToken)
+    {
+        await blockers.AddMatricesAsync(store.MatricesUsing(level));
+        await blockers.AddLevelsAsync(store.LevelsReferencing([level.Id]));
+        return blockers.Any ? InUseMessage : null;
+    }
 
     private static Task<Results<Ok<PageResponse<CareerLevelResponse>>, ValidationProblem>> ListAsync(
         [AsParameters] CatalogListQuery query,

@@ -1669,6 +1669,26 @@ export interface components {
             employeeFirstName: null | string;
             employeeMiddleName: null | string;
         };
+        DeletionBlocker: {
+            kind: components["schemas"]["DeletionBlockerKind"];
+            /** Format: uuid */
+            id: string;
+            name: string;
+            context: null | string;
+        };
+        /** @enum {unknown} */
+        DeletionBlockerKind: "Track" | "Level" | "Competency" | "CompetencyVersion" | "Matrix";
+        DeletionRefusal: {
+            type?: null | string;
+            title?: null | string;
+            /** Format: int32 */
+            status?: null | number;
+            detail?: null | string;
+            instance?: null | string;
+            blockers: components["schemas"]["DeletionBlocker"][];
+            /** Format: int32 */
+            moreCount: number;
+        };
         EmployeeImpactAccount: {
             email: string;
             isBlocked: boolean;
@@ -5562,7 +5582,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["DeletionRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -6161,7 +6181,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["DeletionRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -6759,7 +6779,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["DeletionRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -7483,7 +7503,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["DeletionRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -8084,7 +8104,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["DeletionRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -8722,7 +8742,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["DeletionRefusal"];
                 };
             };
             /** @description Precondition Failed */

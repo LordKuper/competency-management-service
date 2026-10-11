@@ -38,12 +38,18 @@ internal static class CareerTrackEndpoints
     /// <summary>
     /// A track goes with its levels, unless a matrix is built on it or a level of another track names one of its levels.
     /// </summary>
-    private static async Task<string?> RemoveLevelsAsync(CareerTrack track, AppDbContext context, CatalogStore store, CancellationToken cancellationToken)
+    private static async Task<string?> RemoveLevelsAsync(
+        CareerTrack track,
+        DeletionBlockers blockers,
+        AppDbContext context,
+        CatalogStore store,
+        CancellationToken cancellationToken)
     {
         var id = track.Id;
         var levels = await context.Set<CareerLevel>().Where(level => level.TrackId == id).ToListAsync(cancellationToken);
-        if (await context.Set<CompetencyMatrix>().AnyAsync(matrix => matrix.TrackId == id, cancellationToken)
-            || await store.IsLevelReferencedAsync([.. levels.Select(level => level.Id)], cancellationToken))
+        await blockers.AddMatricesAsync(context.Set<CompetencyMatrix>().Where(matrix => matrix.TrackId == id));
+        await blockers.AddLevelsAsync(store.LevelsReferencing([.. levels.Select(level => level.Id)]));
+        if (blockers.Any)
         {
             return InUseMessage;
         }

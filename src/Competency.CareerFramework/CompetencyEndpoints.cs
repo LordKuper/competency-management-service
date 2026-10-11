@@ -47,9 +47,15 @@ internal static class CompetencyEndpoints
     /// <summary>
     /// A competency goes with its history, unless a matrix uses it.
     /// </summary>
-    private static async Task<string?> RemoveVersionsAsync(CareerCompetency competency, AppDbContext context, CatalogStore store, CancellationToken cancellationToken)
+    private static async Task<string?> RemoveVersionsAsync(
+        CareerCompetency competency,
+        DeletionBlockers blockers,
+        AppDbContext context,
+        CatalogStore store,
+        CancellationToken cancellationToken)
     {
-        if (await store.IsInMatricesAsync(competency, cancellationToken))
+        await blockers.AddMatricesAsync(store.MatricesUsing(competency));
+        if (blockers.Any)
         {
             return InUseMessage;
         }

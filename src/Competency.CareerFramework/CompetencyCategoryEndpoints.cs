@@ -1,9 +1,5 @@
 using Competency.Platform;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
 
 namespace Competency.CareerFramework;
 
@@ -27,44 +23,26 @@ internal static class CompetencyCategoryEndpoints
                 Status = status,
                 AuthorId = authorId,
             })
-        .MapDelete("/{id:guid}", DeleteAsync)
-        .WithName("DeleteCompetencyCategory")
-        .ProducesProblem(StatusCodes.Status403Forbidden)
-        .ProducesProblem(StatusCodes.Status404NotFound)
-        .ProducesProblem(StatusCodes.Status409Conflict);
+        .MapDeleteEntry(Kind, InUseAsync);
 
     /// <summary>
-    /// Deletes a category its keepers no longer need. The check runs under the catalogue lock, which every competency change also takes,
-    /// so no competency can start using the category before the deletion commits.
+    /// The check runs under the catalogue lock, which every competency change also takes, so no competency can start using the category
+    /// before the deletion commits.
     /// </summary>
-    private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> DeleteAsync(
-        Guid id,
-        IfMatch ifMatch,
+    private static async Task<string?> InUseAsync(
+        CompetencyCategory category,
+        DeletionBlockers blockers,
         AppDbContext context,
         CatalogStore store,
         CancellationToken cancellationToken)
     {
-        await using var transaction = await store.BeginWriteAsync(cancellationToken);
-        var viewer = await store.ViewerAsync(cancellationToken);
-        if (await store.FindVisibleAsync<CompetencyCategory>(id, viewer, cancellationToken) is not { } category)
-        {
-            return TypedResults.NotFound();
-        }
-
-        if (!viewer.CanManage(category))
-        {
-            return Rejection.Forbidden();
-        }
-
-        if (await context.Set<CareerCompetency>().AnyAsync(competency => competency.CategoryId == id, cancellationToken)
-            || await context.Set<CompetencyVersion>().AnyAsync(version => version.CategoryId == id, cancellationToken))
-        {
-            return Rejection.Conflict(InUseMessage);
-        }
-
-        ifMatch.ApplyTo(context, category);
-        context.Remove(category);
-        await store.SaveAsync(category, transaction, cancellationToken);
-        return TypedResults.NoContent();
+        var id = category.Id;
+        var competencies = context.Set<CareerCompetency>();
+        await blockers.AddAsync(competencies.Where(competency => competency.CategoryId == id), DeletionBlockerKind.Competency);
+        await blockers.AddAsync(
+            competencies.Where(competency => competency.CategoryId != id
+                && context.Set<CompetencyVersion>().Any(version => version.CompetencyId == competency.Id && version.CategoryId == id)),
+            DeletionBlockerKind.CompetencyVersion);
+        return blockers.Any ? InUseMessage : null;
     }
 }

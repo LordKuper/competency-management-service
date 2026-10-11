@@ -113,37 +113,39 @@ internal sealed class CatalogStore(
             cancellationToken);
 
     /// <summary>
-    /// Whether a matrix version, a variant of one or the snapshot of a published one lists the level or competency. The documents are
-    /// jsonb, so the check is a containment query rather than a foreign key.
+    /// The matrices one of whose versions, a variant of one or the snapshot of a published one lists the level or competency. The
+    /// documents are jsonb, so the check is a containment query rather than a foreign key.
     /// </summary>
     /// <param name="entry">A level or a competency.</param>
-    /// <param name="cancellationToken">Cancels the query.</param>
-    /// <returns>True when a matrix uses the entry.</returns>
-    public Task<bool> IsInMatricesAsync(CatalogEntry entry, CancellationToken cancellationToken)
+    /// <returns>The matrices, a query to compose with others.</returns>
+    public IQueryable<CompetencyMatrix> MatricesUsing(CatalogEntry entry)
     {
         var (list, field) = entry is CareerLevel ? ("levels", "levelId") : ("competencies", "competencyId");
         var id = entry.Id;
-        return context.Database.SqlQuery<int>($"""
-            SELECT 1 AS "Value" FROM matrix_versions
+        var matrixIds = context.Database.SqlQuery<Guid>($"""
+            SELECT matrix_id AS "Value" FROM matrix_versions
             WHERE content -> {list} @> jsonb_build_array(jsonb_build_object({field}, {id}::text))
                 OR snapshot -> {list} @> jsonb_build_array(jsonb_build_object('id', {id}::text))
-            UNION ALL
-            SELECT 1 FROM matrix_version_variants
-            WHERE content -> {list} @> jsonb_build_array(jsonb_build_object({field}, {id}::text))
-            """).AnyAsync(cancellationToken);
+                OR id IN (
+                    SELECT version_id FROM matrix_version_variants
+                    WHERE content -> {list} @> jsonb_build_array(jsonb_build_object({field}, {id}::text)))
+            """);
+        return context.Set<CompetencyMatrix>().Where(matrix => matrixIds.Contains(matrix.Id));
     }
 
     /// <summary>
-    /// Whether a level outside the given ones names one of them as its previous or a next level.
+    /// The levels outside the given ones that name one of them as their previous or a next level.
     /// </summary>
     /// <param name="levelIds">The levels about to be deleted.</param>
-    /// <param name="cancellationToken">Cancels the query.</param>
-    /// <returns>True when another level refers to them.</returns>
-    public Task<bool> IsLevelReferencedAsync(Guid[] levelIds, CancellationToken cancellationToken) =>
-        context.Database.SqlQuery<int>($"""
-            SELECT 1 AS "Value" FROM career_levels
+    /// <returns>The levels, a query to compose with others.</returns>
+    public IQueryable<CareerLevel> LevelsReferencing(Guid[] levelIds)
+    {
+        var referencingIds = context.Database.SqlQuery<Guid>($"""
+            SELECT id AS "Value" FROM career_levels
             WHERE NOT (id = ANY({levelIds})) AND (previous_level_id = ANY({levelIds}) OR next_level_ids && {levelIds})
-            """).AnyAsync(cancellationToken);
+            """);
+        return context.Set<CareerLevel>().Where(level => referencingIds.Contains(level.Id));
+    }
 
     /// <summary>
     /// Marks a history row for removal with the entry it belongs to and journals its deletion, which the journal does not record on its

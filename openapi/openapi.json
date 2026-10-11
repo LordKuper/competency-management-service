@@ -4401,7 +4401,7 @@
             "content": {
               "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/DeletionRefusal"
                 }
               }
             }
@@ -5207,7 +5207,7 @@
             "content": {
               "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/DeletionRefusal"
                 }
               }
             }
@@ -6005,7 +6005,7 @@
             "content": {
               "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/DeletionRefusal"
                 }
               }
             }
@@ -6970,7 +6970,7 @@
             "content": {
               "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/DeletionRefusal"
                 }
               }
             }
@@ -7791,7 +7791,7 @@
             "content": {
               "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/DeletionRefusal"
                 }
               }
             }
@@ -8642,7 +8642,7 @@
             "content": {
               "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
+                  "$ref": "#/components/schemas/DeletionRefusal"
                 }
               }
             }
@@ -11644,6 +11644,92 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "DeletionBlocker": {
+        "required": [
+          "kind",
+          "id",
+          "name",
+          "context"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/DeletionBlockerKind"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "context": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DeletionBlockerKind": {
+        "enum": [
+          "Track",
+          "Level",
+          "Competency",
+          "CompetencyVersion",
+          "Matrix"
+        ]
+      },
+      "DeletionRefusal": {
+        "required": [
+          "blockers",
+          "moreCount"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeletionBlocker"
+            }
+          },
+          "moreCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
