@@ -166,6 +166,7 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
             ("a threshold above 100", c => c["levels"]![0]!["minOverallPercent"] = 100.5m, "Коэффициенты и пороги — от 0 до 100 %"),
             ("a negative coefficient", c => c["blockWeights"]![0]!["percent"] = -1, "Коэффициенты и пороги — от 0 до 100 %"),
             ("a negative weight", c => c["requirements"]![0]!["weight"] = -1, "Вес не может быть отрицательным"),
+            ("a number that is no requirement type", c => c["requirements"]![0]!["type"] = 999, "Укажите допустимый тип требования"),
             ("a long description", c => c["requirements"]![0]!["expectedBehavior"] = new string('я', 4001), "Описание и примеры — не длиннее 4000 символов"),
         };
 
@@ -237,6 +238,22 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
 
         stale.Status.Should().Be(HttpStatusCode.PreconditionFailed);
         (await kit.GetVersionAsync(org.Admin)).Json!["content"]!["requirements"]![0]!["expectedBehavior"]!.GetValue<string>().Should().Be("Первая правка");
+    }
+
+    [Fact]
+    public async Task Ac17_RepeatingAnEditWithTheTagItUsed_IsRefusedWith412_EvenThoughTheDocumentIsTheSame_WhileTheCurrentTagKeepsTheVersion()
+    {
+        var org = await fixture.OrgAsync();
+        var kit = await MatrixKit.CreateAsync(org);
+        var opened = await kit.ETagAsync();
+        var first = (await kit.SaveAsync(org.TeamHead.Client, kit.Content("Первая правка"), opened)).Expect(HttpStatusCode.OK);
+
+        var stale = await kit.SaveAsync(org.TeamHead.Client, kit.Content("Первая правка"), opened);
+        var current = await kit.SaveAsync(org.TeamHead.Client, kit.Content("Первая правка"), first.ETag);
+
+        stale.Status.Should().Be(HttpStatusCode.PreconditionFailed, stale.Body);
+        current.Status.Should().Be(HttpStatusCode.OK, current.Body);
+        current.ETag.Should().Be(first.ETag, "a document that changes nothing leaves the version as it was");
     }
 
     [Fact]

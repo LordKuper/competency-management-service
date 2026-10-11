@@ -114,6 +114,29 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         }
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Ac15_Approval_RefusesAVersionTheCatalogueMadeIncompleteAfterItWasHandedOn_AtBothSteps(bool atHrStep)
+    {
+        var org = await fixture.OrgAsync();
+        var kit = await ReadyAsync(org);
+        (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
+        if (atHrStep)
+        {
+            (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
+        }
+
+        (await org.Admin.PostAsync($"/api/v1/career/competencies/{kit.Profile.Id}/deactivate", ifMatch: kit.Profile.ETag)).Expect(HttpStatusCode.OK);
+
+        var refused = await kit.TransitAsync(atHrStep ? org.Hr.Client : org.DepartmentHead.Client, "approve");
+
+        refused.Status.Should().Be(HttpStatusCode.Conflict, refused.Body);
+        refused.FieldErrors("content").Should().Equal([$"В версии есть неактивная запись «{kit.Profile.Json!["name"]!.GetValue<string>()}»"]);
+        (await kit.StatusAsync()).Should().Be("OnReview");
+        (await kit.DecisionsAsync()).Should().Equal(atHrStep ? ["Submitted", "Approved@Superior"] : ["Submitted"]);
+    }
+
     [Fact]
     public async Task Ac16_Submit_IsRefusedWithoutAResponsibleHr_AndTheVersionStaysADraft()
     {
@@ -342,6 +365,28 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
     }
 
     [Fact]
+    public async Task Ac16_AnHrReturnWithOnlyAComment_AfterTheSuperiorsAcceptedChanges_CannotBeAcceptedAsItIs()
+    {
+        var org = await fixture.OrgAsync();
+        var kit = await ReadyAsync(org);
+        (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
+        (await kit.SaveAsync(org.DepartmentHead.Client, kit.Content("Правка согласующего"))).Expect(HttpStatusCode.OK);
+        (await kit.TransitAsync(org.DepartmentHead.Client, "return", new { comment = (string?)null })).Expect(HttpStatusCode.OK);
+        (await kit.TransitAsync(org.TeamHead.Client, "accept-changes")).Expect(HttpStatusCode.OK);
+        (await kit.TransitAsync(org.Hr.Client, "return", new { comment = "Нужны примеры" })).Expect(HttpStatusCode.OK);
+
+        var forAuthor = (await kit.GetVersionAsync(org.TeamHead.Client)).Expect(HttpStatusCode.OK);
+        var accepted = await kit.TransitAsync(org.TeamHead.Client, "accept-changes");
+
+        forAuthor.Json!["status"]!.GetValue<string>().Should().Be("Returned");
+        forAuthor.Json["returnedWithChanges"]!.GetValue<bool>().Should().BeFalse("the HR changed nothing; the changes in the document are the superior's, already accepted");
+        MatrixKit.Actions(forAuthor).Should().BeEquivalentTo(["AcceptAndRevise", "RollbackChanges"]);
+        accepted.Status.Should().Be(HttpStatusCode.Conflict, accepted.Body);
+        accepted.Json!["detail"]!.GetValue<string>().Should().Be(NotAllowedMessage);
+        (await kit.DecisionsAsync()).Should().Equal("Submitted", "Returned@Superior", "AcceptedChanges@Superior", "Returned@Hr");
+    }
+
+    [Fact]
     public async Task Ac16_RollingBackTheChanges_ReturnsTheAuthorsVariantAsADraft()
     {
         var org = await fixture.OrgAsync();
@@ -542,6 +587,52 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
     }
 
     [Fact]
+    public async Task Ac9_TheDraftCategoryOfAUsedCompetency_IsReadByTheRouteWhileInWork_AndMadeActiveAndJournaledByPublication()
+    {
+        var org = await fixture.OrgAsync();
+        var kit = await MatrixKit.CreateAsync(org, competencyAuthor: org.TeamHead.Client);
+        var category = await UseDraftCategoryAsync(org, kit);
+        await kit.PrepareAsync();
+
+        foreach (var reader in new[] { org.TeamHead, org.DepartmentHead, org.Hr })
+        {
+            (await reader.Client.GetAsync($"/api/v1/career/categories/{category.Id}")).Status.Should().Be(HttpStatusCode.OK, reader.User.Email);
+        }
+
+        foreach (var stranger in new[] { org.Plain, org.SiblingHead, org.RootHead })
+        {
+            (await stranger.Client.GetAsync($"/api/v1/career/categories/{category.Id}")).Status.Should().Be(HttpStatusCode.NotFound, stranger.User.Email);
+        }
+
+        (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
+        (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
+        var published = (await kit.TransitAsync(org.Hr.Client, "approve")).Expect(HttpStatusCode.OK);
+
+        (await org.Plain.Client.GetAsync($"/api/v1/career/categories/{category.Id}")).Expect(HttpStatusCode.OK).Json!["status"]!.GetValue<string>().Should().Be("Active");
+        (await org.Admin.AuditOfRequestAsync(published.RequestId!)).Actions().Count(action => action == "CompetencyCategory.Approved").Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Ac9_Publication_IsRefusedWhenTheDraftCategoryOfAUsedCompetencyWouldTakeANameAnActiveCategoryHasNow()
+    {
+        var org = await fixture.OrgAsync();
+        var kit = await MatrixKit.CreateAsync(org, competencyAuthor: org.TeamHead.Client);
+        var category = await UseDraftCategoryAsync(org, kit);
+        var categoryName = category.Json!["name"]!.GetValue<string>();
+        await kit.PrepareAsync();
+        (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
+        (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
+        (await org.Admin.PostAsync("/api/v1/career/categories", new { name = categoryName.ToUpperInvariant() })).Expect(HttpStatusCode.Created);
+
+        var refused = await kit.TransitAsync(org.Hr.Client, "approve");
+
+        refused.Status.Should().Be(HttpStatusCode.Conflict, refused.Body);
+        refused.Json!["detail"]!.GetValue<string>().Should().Be($"Запись с таким названием уже есть: «{categoryName}»");
+        (await kit.StatusAsync()).Should().Be("OnReview");
+        (await org.Admin.GetAsync($"/api/v1/career/categories/{category.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Draft");
+    }
+
+    [Fact]
     public async Task Ac16_Actions_AreOpenOnlyToTheParticipantWhoseTurnItIs()
     {
         var org = await fixture.OrgAsync();
@@ -582,6 +673,23 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         stale.Status.Should().Be(HttpStatusCode.PreconditionFailed);
         (await kit.StatusAsync()).Should().Be("Draft");
         (await kit.DecisionsAsync()).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Ac17_AStaleVersion_IsRefusedWith412_BeforeTheHandOverCheckJudgesTheDocument()
+    {
+        var org = await fixture.OrgAsync();
+        var kit = await MatrixKit.CreateAsync(org);
+        var opened = await kit.ETagAsync();
+        var incomplete = kit.Content();
+        incomplete["requirements"]!.AsArray().RemoveAt(3);
+        incomplete["requirements"]!.AsArray().RemoveAt(2);
+        (await kit.SaveAsync(org.TeamHead.Client, incomplete, opened)).Expect(HttpStatusCode.OK);
+
+        var stale = await kit.TransitAsync(org.TeamHead.Client, "submit", etag: opened);
+
+        stale.Status.Should().Be(HttpStatusCode.PreconditionFailed, stale.Body);
+        (await kit.StatusAsync()).Should().Be("Draft");
     }
 
     [Fact]
@@ -654,6 +762,25 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
     }
 
     private async Task<MatrixKit> ReadyAsync(CareerOrg org) => await (await MatrixKit.CreateAsync(org)).PrepareAsync();
+
+    /// <summary>
+    /// Moves the kit's critical competency, a draft of the team's head, to a new draft category of the same head, and returns the category.
+    /// </summary>
+    private static async Task<ApiResponse> UseDraftCategoryAsync(CareerOrg org, MatrixKit kit)
+    {
+        var category = (await org.TeamHead.Client.PostAsync("/api/v1/career/categories", new { name = Scenarios.Unique("Своя категория") })).Expect(HttpStatusCode.Created);
+        var body = new
+        {
+            name = kit.Critical.Json!["name"]!.GetValue<string>(),
+            description = (string?)null,
+            categoryId = category.Id,
+            directionId = kit.Direction.Id,
+            type = "Critical",
+            scaleId = Guid.Parse(CareerScenarios.BaseScaleId),
+        };
+        (await org.TeamHead.Client.PutAsync($"/api/v1/career/competencies/{kit.Critical.Id}", body, kit.Critical.ETag)).Expect(HttpStatusCode.OK);
+        return category;
+    }
 
     private static async Task BlockAsync(CareerOrg org, params Member[] members)
     {

@@ -263,6 +263,42 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
     }
 
     [Fact]
+    public async Task Ac11_ReactivatingATrackDeactivatedAsADraft_ApprovesItsDraftLevelsAndJournalsEach()
+    {
+        var org = await fixture.OrgAsync();
+        var direction = await org.Admin.MakeDirectionAsync();
+        var draft = (await CreateTrackAsync(org.TeamHead.Client, org.Team.Id, direction.Id)).Expect(HttpStatusCode.Created);
+        var junior = await org.TeamHead.Client.MakeLevelAsync(draft.Id);
+        var senior = await org.TeamHead.Client.MakeLevelAsync(draft.Id);
+        var deactivated = (await org.Admin.PostAsync($"/api/v1/career/tracks/{draft.Id}/deactivate", ifMatch: draft.ETag)).Expect(HttpStatusCode.OK);
+
+        var activated = (await org.Hr.Client.PostAsync($"/api/v1/career/tracks/{draft.Id}/activate", ifMatch: deactivated.ETag)).Expect(HttpStatusCode.OK);
+
+        (await org.Plain.Client.GetAsync($"/api/v1/career/levels/{junior.Id}")).Expect(HttpStatusCode.OK).Json!["status"]!.GetValue<string>().Should().Be("Active");
+        (await org.Plain.Client.GetAsync($"/api/v1/career/levels/{senior.Id}")).Expect(HttpStatusCode.OK).Json!["status"]!.GetValue<string>().Should().Be("Active");
+        (await org.Admin.AuditOfRequestAsync(activated.RequestId!)).Actions().Count(action => action == "CareerLevel.Approved").Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Ac11_ReactivatingATrackDeactivatedAsADraft_IsRefusedWhenTwoOfItsDraftLevelsOfDifferentAuthorsHaveOneName_AndChangesNothing()
+    {
+        var org = await fixture.OrgAsync();
+        var direction = await org.Admin.MakeDirectionAsync();
+        var draft = (await CreateTrackAsync(org.TeamHead.Client, org.Team.Id, direction.Id)).Expect(HttpStatusCode.Created);
+        var byHead = await org.TeamHead.Client.MakeLevelAsync(draft.Id, "Старший");
+        var byHr = await org.Hr.Client.MakeLevelAsync(draft.Id, "старший");
+        var deactivated = (await org.Admin.PostAsync($"/api/v1/career/tracks/{draft.Id}/deactivate", ifMatch: draft.ETag)).Expect(HttpStatusCode.OK);
+
+        var refused = await org.Hr.Client.PostAsync($"/api/v1/career/tracks/{draft.Id}/activate", ifMatch: deactivated.ETag);
+
+        refused.Status.Should().Be(HttpStatusCode.Conflict, refused.Body);
+        refused.Json!["detail"]!.GetValue<string>().Should().StartWith("Запись с таким названием уже есть");
+        (await org.Admin.GetAsync($"/api/v1/career/tracks/{draft.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Inactive");
+        (await org.Admin.GetAsync($"/api/v1/career/levels/{byHead.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Draft");
+        (await org.Admin.GetAsync($"/api/v1/career/levels/{byHr.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Draft");
+    }
+
+    [Fact]
     public async Task Ac11_LevelOrder_FollowsTheListedLevels_LeavesTheUnlistedOnesInTheirOrderAtTheEnd_AndChangesTheTracksVersion()
     {
         var org = await fixture.OrgAsync();

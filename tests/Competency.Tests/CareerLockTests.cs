@@ -398,6 +398,26 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
     }
 
     [Fact]
+    public async Task Ac15_ATransitionWaitingWhileTheMatrixIsDeleted_FindsItsVersionGone_AndIsAnsweredNotFound()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
+        var etag = await kit.ETagAsync();
+        var delete = () => org.TeamHead.Client.DeleteAsync($"/api/v1/career/matrices/{kit.MatrixId}", etag);
+        var submit = () => kit.TransitAsync(org.TeamHead.Client, "submit", etag: etag);
+
+        await using var gate = await RowLock.HoldMatrixAsync(fixture.Host, kit.MatrixId);
+        var first = await RowLock.StartWaitingAsync(fixture.Host, 1, delete);
+        var second = await RowLock.StartWaitingAsync(fixture.Host, 2, submit);
+        await gate.ReleaseAsync();
+
+        (await first).Status.Should().Be(HttpStatusCode.NoContent);
+        var late = await second;
+        late.Status.Should().Be(HttpStatusCode.NotFound, late.Body);
+        (await fixture.Host.ScalarAsync<long>($"SELECT count(*) FROM matrix_versions WHERE id = '{kit.VersionId}'")).Should().Be(0);
+    }
+
+    [Fact]
     public async Task Ac15_TwoRequestsForANewVersion_LeaveOneVersionInWork_AndTheSecondIsRefused()
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);

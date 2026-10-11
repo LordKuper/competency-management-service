@@ -77,6 +77,25 @@ public sealed class CompetencyTests(CareerHost fixture) : IClassFixture<CareerHo
     }
 
     [Fact]
+    public async Task Ac12_Competency_RefusesANumberThatNamesNoType_OnCreationAndOnChange()
+    {
+        var org = await fixture.OrgAsync();
+        var categoryId = await org.Admin.CategoryIdAsync();
+        var competency = await org.Admin.MakeCompetencyAsync(categoryId);
+
+        var created = await org.Admin.PostAsync("/api/v1/career/competencies", Body(Scenarios.Unique("Навык"), categoryId, null, type: 999));
+        var changed = await org.Admin.PutAsync($"/api/v1/career/competencies/{competency.Id}", Body(Scenarios.Unique("Навык"), categoryId, null, type: 999), competency.ETag);
+
+        foreach (var refused in new[] { created, changed })
+        {
+            refused.Status.Should().Be(HttpStatusCode.BadRequest, refused.Body);
+            refused.FieldErrors("type").Should().Equal("Укажите допустимый тип");
+        }
+
+        (await org.Admin.GetAsync($"/api/v1/career/competencies/{competency.Id}")).Json!["type"]!.GetValue<string>().Should().Be("Profile");
+    }
+
+    [Fact]
     public async Task Ac12_Competency_CanRefer_OnlyToActiveEntriesAndToDraftsOfItsAuthor()
     {
         var org = await fixture.OrgAsync();
@@ -174,8 +193,8 @@ public sealed class CompetencyTests(CareerHost fixture) : IClassFixture<CareerHo
         categories.Json["items"]!.AsArray().Select(item => item!["status"]!.GetValue<string>()).Should().OnlyContain(status => status == "Active");
     }
 
-    private static object Body(string name, Guid categoryId, Guid? directionId, string? description = null, string type = "Profile", Guid? scaleId = null) =>
-        new { name, description, categoryId, directionId, type, scaleId };
+    private static object Body(string name, Guid categoryId, Guid? directionId, string? description = null, object? type = null, Guid? scaleId = null) =>
+        new { name, description, categoryId, directionId, type = type ?? "Profile", scaleId };
 
     private static async Task<string[]> IdsAsync(ApiClient client, string token, string query) =>
         (await client.GetAsync($"/api/v1/career/competencies?q={Uri.EscapeDataString(token)}&{query}&pageSize=200")).Expect(HttpStatusCode.OK).ItemIds();

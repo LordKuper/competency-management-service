@@ -83,6 +83,65 @@ public sealed class MatrixAccessTests(CareerHost fixture) : IClassFixture<Career
     }
 
     [Fact]
+    public async Task Ac18_TheVersionInWork_ShowsInTheMatrixAndItsLists_ToItsReadersAndToNoOneElse_AcrossUnitsOfOnePage()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var ofTeam = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
+        var ofDepartment = await (await MatrixKit.CreateAsync(org, org.Department.Id, org.DepartmentHead.Client)).PrepareAsync();
+
+        var readers = new[] { org.TeamHead, org.DepartmentHead, org.Hr };
+        foreach (var reader in readers)
+        {
+            (await InWorkInListAsync(reader.Client))[ofTeam.MatrixId.ToString()].Should().BeTrue(reader.User.Email);
+            (await VersionNumbersAsync(reader.Client, ofTeam.MatrixId)).Should().Equal(1);
+            (await reader.Client.GetAsync($"/api/v1/career/matrices/{ofTeam.MatrixId}")).Json!["inWorkVersion"].Should().NotBeNull(reader.User.Email);
+        }
+
+        (await org.Admin.GetAsync($"/api/v1/career/matrices/{ofTeam.MatrixId}")).Json!["inWorkVersion"].Should().NotBeNull();
+
+        foreach (var stranger in new[] { org.SiblingHr, org.SiblingHead, org.Plain })
+        {
+            (await InWorkInListAsync(stranger.Client))[ofTeam.MatrixId.ToString()].Should().BeFalse(stranger.User.Email);
+            (await VersionNumbersAsync(stranger.Client, ofTeam.MatrixId)).Should().BeEmpty(stranger.User.Email);
+        }
+
+        var forRoot = await InWorkInListAsync(org.RootHead.Client);
+        forRoot[ofDepartment.MatrixId.ToString()].Should().BeTrue("the head of the root unit is the superior approver of the department's matrix");
+        forRoot[ofTeam.MatrixId.ToString()].Should().BeFalse("the department's head, who acts, is the superior approver of the team's matrix");
+        (await VersionNumbersAsync(org.RootHead.Client, ofDepartment.MatrixId)).Should().Equal(1);
+        (await VersionNumbersAsync(org.RootHead.Client, ofTeam.MatrixId)).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Ac18_AParticipantWhoActed_KeepsSeeingTheVersionInWorkInTheMatrixAndItsLists_EvenAfterLosingTheRole()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
+        (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
+        (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
+        var employee = await org.Admin.CreateEmployeeAsync(org.Department.Id);
+        (await org.Admin.SetHeadAsync(org.Department, employee.Id)).Expect(HttpStatusCode.OK);
+
+        (await InWorkInListAsync(org.DepartmentHead.Client))[kit.MatrixId.ToString()].Should().BeTrue();
+        (await VersionNumbersAsync(org.DepartmentHead.Client, kit.MatrixId)).Should().Equal(1);
+        (await InWorkInListAsync(org.Plain.Client))[kit.MatrixId.ToString()].Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Ac18_TheDraftEntriesOfAVersion_AreReadByTheSuperiorApproverWhoTakesOverFromABlockedHead()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var scale = (await org.TeamHead.Client.PostAsync("/api/v1/career/scales", new { name = Scenarios.Unique("Своя шкала"), points = CareerScenarios.Points() })).Expect(HttpStatusCode.Created);
+        var kit = await (await MatrixKit.CreateAsync(org, scaleId: scale.Id, competencyAuthor: org.TeamHead.Client)).PrepareAsync();
+        var department = await org.Admin.GetUserAsync(org.DepartmentHead.Id);
+        (await org.Admin.PostAsync($"/api/v1/users/{org.DepartmentHead.Id}/block", ifMatch: department.ETag)).Expect(HttpStatusCode.OK);
+
+        (await org.RootHead.Client.GetAsync($"/api/v1/career/scales/{scale.Id}")).Status.Should().Be(HttpStatusCode.OK);
+        (await org.RootHead.Client.GetAsync($"/api/v1/career/competencies/{kit.Critical.Id}")).Status.Should().Be(HttpStatusCode.OK);
+        (await org.SiblingHead.Client.GetAsync($"/api/v1/career/scales/{scale.Id}")).Status.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task Ac18_TheHistory_VariantsAndDiff_AreForTheParticipantsOnly_WhateverTheStatusOfTheVersion()
     {
         var org = await fixture.OrgAsync();
@@ -217,6 +276,14 @@ public sealed class MatrixAccessTests(CareerHost fixture) : IClassFixture<Career
         byTrack.Should().Equal(second.MatrixId.ToString());
         mismatch.Should().BeEmpty();
     }
+
+    private static async Task<Dictionary<string, bool>> InWorkInListAsync(ApiClient client) =>
+        (await client.GetAsync("/api/v1/career/matrices?pageSize=200")).Expect(HttpStatusCode.OK).Json!["items"]!.AsArray()
+            .ToDictionary(item => item!["id"]!.GetValue<string>(), item => item!["inWorkVersion"] is not null);
+
+    private static async Task<int[]> VersionNumbersAsync(ApiClient client, Guid matrixId) =>
+        [.. (await client.GetAsync($"/api/v1/career/matrices/{matrixId}/versions")).Expect(HttpStatusCode.OK).Json!.AsArray()
+            .Select(version => version!["number"]!.GetValue<int>())];
 
     private static async Task<List<Approval>> ApprovalsAsync(ApiClient client, string query = "") =>
         [.. (await client.GetAsync($"/api/v1/career/approvals?{query}")).Expect(HttpStatusCode.OK).Json!.AsArray()
