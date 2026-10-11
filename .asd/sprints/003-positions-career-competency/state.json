@@ -140,6 +140,14 @@
       "decision": "@dnd-kit for level drag-and-drop (over native DnD + buttons)",
       "reason": "user choice; tech reference before Task 20; stack.html at design-promote",
       "evidence": "decisions-log.md 2026-10-11 scope amendment simplified levels"
+    },
+    {
+      "gate": "impl assessment",
+      "decision_actor": "user",
+      "decision": "approve",
+      "reason": "Task 1-20 and impl assessment changes 1-7 done; build Release 0/0, web lint/build/check:api clean; no open sprint stubs",
+      "evidence": "decisions-log.md 2026-10-11 impl assessment approved",
+      "artifact_revision": "HEAD cee67d9"
     }
   ],
   "task_routing": {
@@ -326,7 +334,7 @@
     }
   },
   "created_at": "2026-10-09T07:25:11.340Z",
-  "updated_at": "2026-10-11T16:15:13.665Z",
+  "updated_at": "2026-10-11T17:44:38.240Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

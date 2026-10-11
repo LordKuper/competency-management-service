@@ -174,3 +174,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-11 — route impl assessment change 7: standard, dispatch HEAD 530a0d0; risk none via npm --prefix web run lint
 - 2026-10-11 — impl assessment change 7 (8e73d70): `destructiveConfirm` — фокус «Отмена» в подтверждениях с красной кнопкой; увольнение осталось на OK (кнопка не красная) — не принято: пользователь согласовал «Отмена» для «удалить, уволить, заблокировать»; возврат на правку (увольнение — фокус «Отмена», стиль кнопки прежний)
 - 2026-10-11 — impl assessment change 7 follow-up (20c7d63): увольнение — фокус «Отмена» без изменения стиля кнопки, возврат на работу — OK; web lint и build чисты
+
+## 2026-10-11 — impl assessment approved
+
+- **Decision**: Пользователь одобрил результат impl: Task 1–20 (с поправками скоупа 2026-10-11: AC-9, AC-11, AC-14, AC-18, AC-22…AC-25) и правки impl assessment 1–7; переход к impl-test.
+- **Rationale**: Gate завершения impl пройден (Release-сборка 0/0, web lint, build, check:api чисты; пути — только назначенные; открытых заглушек спринта нет); ничего не проверялось против PostgreSQL и в браузере — это работа impl-test.
+- **Affected docs**: state.json
