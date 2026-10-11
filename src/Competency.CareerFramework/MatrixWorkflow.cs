@@ -446,7 +446,7 @@ internal sealed class MatrixWorkflow(
     }
 
     /// <summary>
-    /// Publishes the approved version: makes the drafts it uses active, after checking their names again as approving a draft does,
+    /// Publishes the approved version: makes the drafts it uses and the draft categories of its competencies active, after checking their names again as approving a draft does,
     /// archives the previously published version in a save of its own, so the published-version index never sees two, and freezes the
     /// entries the version refers to into its snapshot.
     /// </summary>
@@ -490,6 +490,7 @@ internal sealed class MatrixWorkflow(
         CareerLevel level => store.IsNameTakenAsync(level, CareerLevelEndpoints.Kind.SameScope?.Invoke(level), cancellationToken),
         CareerCompetency competency => store.IsNameTakenAsync(competency, CompetencyEndpoints.Kind.SameScope?.Invoke(competency), cancellationToken),
         CompetencyScale scale => store.IsNameTakenAsync(scale, CompetencyScaleEndpoints.Kind.SameScope?.Invoke(scale), cancellationToken),
+        CompetencyCategory category => store.IsNameTakenAsync(category, CompetencyCategoryEndpoints.Kind.SameScope?.Invoke(category), cancellationToken),
         _ => Task.FromResult(false),
     };
 

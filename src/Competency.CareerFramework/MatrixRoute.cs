@@ -84,7 +84,7 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// </summary>
     /// <param name="viewer">The user's rights.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    /// <returns>The identifiers of the levels, competencies and scales of those versions.</returns>
+    /// <returns>The identifiers of the levels, competencies, categories of those competencies and scales of those versions.</returns>
     public async Task<IReadOnlySet<Guid>> RouteEntryIdsAsync(CatalogViewer viewer, CancellationToken cancellationToken)
     {
         var userId = viewer.UserId;
@@ -97,11 +97,22 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
         versions.AddRange(await SuperiorOfAsync(viewer, cancellationToken));
 
         var ids = new HashSet<Guid>();
+        var competencyIds = new HashSet<Guid>();
         foreach (var version in versions)
         {
             ids.Add(version.ScaleId);
             ids.UnionWith(version.Content.Levels.Select(level => level.LevelId));
-            ids.UnionWith(version.Content.Competencies.Select(competency => competency.CompetencyId));
+            competencyIds.UnionWith(version.Content.Competencies.Select(competency => competency.CompetencyId));
+        }
+
+        if (competencyIds.Count > 0)
+        {
+            var used = competencyIds.ToList();
+            ids.UnionWith(used);
+            ids.UnionWith(await context.Set<CareerCompetency>()
+                .Where(competency => used.Contains(competency.Id))
+                .Select(competency => competency.CategoryId)
+                .ToListAsync(cancellationToken));
         }
 
         return ids;

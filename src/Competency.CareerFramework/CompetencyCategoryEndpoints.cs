@@ -11,7 +11,7 @@ internal static class CompetencyCategoryEndpoints
 {
     private const string InUseMessage = "Категорию используют компетенции — удалить нельзя";
 
-    private static readonly CatalogKind<CompetencyCategory, CatalogEntryResponse> Kind = new("CompetencyCategory", (entry, _) => CatalogEntryResponse.From(entry));
+    internal static readonly CatalogKind<CompetencyCategory, CatalogEntryResponse> Kind = new("CompetencyCategory", (entry, _) => CatalogEntryResponse.From(entry));
 
     public static void Map(IEndpointRouteBuilder endpoints) => endpoints.MapNamedCatalog(
             "/api/v1/career/categories",

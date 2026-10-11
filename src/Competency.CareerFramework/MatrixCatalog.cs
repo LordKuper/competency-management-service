@@ -148,7 +148,8 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     }
 
     /// <summary>
-    /// The draft entries the version refers to, tracked, so publishing the version can make them active.
+    /// The draft entries the version refers to and the draft categories of its competencies, tracked, so publishing the version can make
+    /// them active.
     /// </summary>
     /// <param name="version">The version.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
@@ -159,6 +160,10 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         var competencyIds = version.Content.Competencies.Select(competency => competency.CompetencyId).ToList();
         List<CatalogEntry> drafts =
         [
+            .. await context.Set<CompetencyCategory>()
+                .Where(category => category.Status == CatalogStatus.Draft
+                    && context.Set<CareerCompetency>().Any(competency => competencyIds.Contains(competency.Id) && competency.CategoryId == category.Id))
+                .ToListAsync(cancellationToken),
             .. await context.Set<CompetencyScale>()
                 .Where(scale => scale.Id == version.ScaleId && scale.Status == CatalogStatus.Draft)
                 .ToListAsync(cancellationToken),
