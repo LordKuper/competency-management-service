@@ -10,8 +10,7 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// The API of career levels, the parts of a track: whoever may edit the track creates and edits its levels, and a level is kept by its
-/// track's keepers. Level names are unique within their track. The salary range has endpoints of its own, readable and changeable only by
-/// the level's keepers, so no other response ever carries it. A level no matrix and no other level names can be deleted.
+/// track's keepers. Level names are unique within their track. A level no matrix and no other level names can be deleted.
 /// </summary>
 internal static class CareerLevelEndpoints
 {
@@ -38,11 +37,6 @@ internal static class CareerLevelEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        group.MapGet("/{id:guid}/salary", GetSalaryAsync).WithName("GetCareerLevelSalary").ProducesETag()
-            .ProducesProblem(StatusCodes.Status404NotFound);
-        group.MapPut("/{id:guid}/salary", UpdateSalaryAsync).WithName("UpdateCareerLevelSalary").ProducesETag()
-            .ProducesProblem(StatusCodes.Status403Forbidden)
-            .ProducesProblem(StatusCodes.Status404NotFound);
         group.MapEntryEndpoints(Kind);
         group.MapDeleteEntry(Kind, InUseAsync);
     }
@@ -166,61 +160,6 @@ internal static class CareerLevelEndpoints
         }
 
         return TypedResults.Ok(await CatalogEndpoints.CommitAsync(level, Kind, store, transaction, response, cancellationToken));
-    }
-
-    /// <summary>
-    /// A level the user cannot keep has no readable salary range, so it answers 404 like any unreadable resource.
-    /// </summary>
-    private static async Task<Results<Ok<CareerLevelSalaryResponse>, NotFound>> GetSalaryAsync(
-        Guid id,
-        CatalogStore store,
-        HttpResponse response,
-        CancellationToken cancellationToken)
-    {
-        var viewer = await store.ViewerAsync(cancellationToken);
-        if (await store.FindVisibleAsync<CareerLevel>(id, viewer, cancellationToken) is not { } level || !viewer.CanManage(level))
-        {
-            return TypedResults.NotFound();
-        }
-
-        response.SetETag(level.Version);
-        return TypedResults.Ok(CareerLevelSalaryResponse.From(level));
-    }
-
-    private static async Task<Results<Ok<CareerLevelSalaryResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateSalaryAsync(
-        Guid id,
-        CareerLevelSalaryRequest request,
-        IfMatch ifMatch,
-        AppDbContext context,
-        CatalogStore store,
-        HttpResponse response,
-        CancellationToken cancellationToken)
-    {
-        var errors = request.Validate();
-        if (errors.Count > 0)
-        {
-            return TypedResults.ValidationProblem(errors);
-        }
-
-        await using var transaction = await store.BeginWriteAsync(cancellationToken);
-        var viewer = await store.ViewerAsync(cancellationToken);
-        if (await store.FindVisibleAsync<CareerLevel>(id, viewer, cancellationToken) is not { } level)
-        {
-            return TypedResults.NotFound();
-        }
-
-        if (!viewer.CanManage(level))
-        {
-            return Rejection.Forbidden();
-        }
-
-        ifMatch.ApplyTo(context, level);
-        level.SalaryFrom = request.SalaryFrom;
-        level.SalaryTo = request.SalaryTo;
-        await store.SaveAsync(level, transaction, cancellationToken);
-
-        response.SetETag(level.Version);
-        return TypedResults.Ok(CareerLevelSalaryResponse.From(level));
     }
 
     /// <summary>

@@ -12,7 +12,6 @@ export type CatalogEntry = Schemas["CatalogEntryResponse"];
 export type CatalogStatus = Schemas["CatalogStatus"];
 export type CareerTrack = Schemas["CareerTrackResponse"];
 export type CareerLevel = Schemas["CareerLevelResponse"];
-export type LevelSalary = Schemas["CareerLevelSalaryResponse"];
 export type Competency = Schemas["CompetencyResponse"];
 export type CompetencyType = Schemas["CompetencyType"];
 export type CompetencyVersion = Schemas["CompetencyVersionResponse"];
@@ -115,20 +114,6 @@ export function levelsQuery(trackId?: string) {
           params: { query: { ...ALL_ENTRIES, trackId } },
         }),
       ),
-  });
-}
-
-/** The salary range of a level; it answers 404 to a user who may not read it. */
-export function levelSalaryQuery(levelId: string) {
-  return queryOptions({
-    queryKey: [...catalogQueryKey, "level-salary", levelId],
-    queryFn: async () =>
-      unwrap(
-        await api.GET("/api/v1/career/levels/{id}/salary", {
-          params: { path: { id: levelId } },
-        }),
-      ),
-    retry: false,
   });
 }
 

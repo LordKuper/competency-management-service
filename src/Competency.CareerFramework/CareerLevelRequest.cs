@@ -1,7 +1,7 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The fields of a career level that may change; every field must be sent, an absent value as null. The salary range is changed apart.
+/// The fields of a career level that may change; every field must be sent, an absent value as null.
 /// </summary>
 internal record CareerLevelRequest : CatalogNameRequest
 {

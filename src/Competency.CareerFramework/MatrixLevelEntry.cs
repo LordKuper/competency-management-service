@@ -1,7 +1,7 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// A career level of a matrix version, without its salary range.
+/// A career level of a matrix version.
 /// </summary>
 internal sealed record MatrixLevelEntry(
     Guid Id,

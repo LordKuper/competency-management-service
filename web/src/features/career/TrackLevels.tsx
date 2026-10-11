@@ -68,7 +68,6 @@ export function LevelsTable({
       />
       {edited && (
         <LevelModal
-          ownerOrgUnitId={track.ownerOrgUnitId}
           trackId={track.id}
           level={edited}
           onClose={() => setEditedId(null)}
@@ -79,17 +78,12 @@ export function LevelsTable({
 }
 
 interface PendingLevelsProps {
-  ownerOrgUnitId: string;
   levels: readonly LevelValues[];
   onChange: (levels: LevelValues[]) => void;
 }
 
 /** Levels added in the track dialog that are saved with the track: add, edit and remove before «Сохранить». */
-export function PendingLevels({
-  ownerOrgUnitId,
-  levels,
-  onChange,
-}: PendingLevelsProps) {
+export function PendingLevels({ levels, onChange }: PendingLevelsProps) {
   /** The level being edited by its place in the list, `"new"` for a level being added, null when no dialog is open. */
   const [dialog, setDialog] = useState<number | "new" | null>(null);
   const columns: TableColumnsType<LevelValues> = [
@@ -133,7 +127,6 @@ export function PendingLevels({
       </Flex>
       {dialog !== null && (
         <LevelModal
-          ownerOrgUnitId={ownerOrgUnitId}
           draft={dialog === "new" ? undefined : levels[dialog]}
           onCollect={(values) =>
             onChange(

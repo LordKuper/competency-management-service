@@ -836,22 +836,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/career/levels/{id}/salary": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["GetCareerLevelSalary"];
-        put: operations["UpdateCareerLevelSalary"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/career/levels/{id}/approve": {
         parameters: {
             query?: never;
@@ -1507,20 +1491,6 @@ export interface components {
             previousLevelId: null | string;
             nextLevelIds: string[];
             status: components["schemas"]["CatalogStatus"];
-            /** Format: int32 */
-            version: number;
-        };
-        CareerLevelSalaryRequest: {
-            /** Format: double */
-            salaryFrom: null | number;
-            /** Format: double */
-            salaryTo: null | number;
-        };
-        CareerLevelSalaryResponse: {
-            /** Format: double */
-            salaryFrom: null | number;
-            /** Format: double */
-            salaryTo: null | number;
             /** Format: int32 */
             version: number;
         };
@@ -6780,133 +6750,6 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["DeletionRefusal"];
-                };
-            };
-            /** @description Precondition Failed */
-            412: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Precondition Required */
-            428: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    GetCareerLevelSalary: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CareerLevelSalaryResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    UpdateCareerLevelSalary: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
-                "If-Match": string;
-            };
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CareerLevelSalaryRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CareerLevelSalaryResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Precondition Failed */

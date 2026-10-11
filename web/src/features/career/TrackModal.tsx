@@ -52,8 +52,6 @@ export function TrackModal({
   }>();
   const [pending, setPending] = useState<LevelValues[]>([]);
   const current = saved ?? base;
-  const watchedUnit = Form.useWatch("ownerOrgUnitId", form);
-  const unitId = latest?.ownerOrgUnitId ?? watchedUnit;
   const save = useMutation({
     mutationFn: async (values: TrackValues) => {
       let track = current;
@@ -124,17 +122,11 @@ export function TrackModal({
         >
           <Input autoComplete="off" />
         </Form.Item>
-        {unitId && (
-          <section style={{ marginBottom: token.marginLG }}>
-            <Typography.Title level={5}>Уровни</Typography.Title>
-            {latest && <LevelsTable track={latest} editable />}
-            <PendingLevels
-              ownerOrgUnitId={unitId}
-              levels={pending}
-              onChange={setPending}
-            />
-          </section>
-        )}
+        <section style={{ marginBottom: token.marginLG }}>
+          <Typography.Title level={5}>Уровни</Typography.Title>
+          {latest && <LevelsTable track={latest} editable />}
+          <PendingLevels levels={pending} onChange={setPending} />
+        </section>
         <FormActions isSubmitting={isSubmitting} onCancel={onClose} />
       </Form>
     </CatalogModal>

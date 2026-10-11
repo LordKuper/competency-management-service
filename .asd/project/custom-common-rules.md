@@ -18,3 +18,7 @@ Phase-scoped rules go elsewhere — design constraints to `custom-design-rules.m
 ## User-visible texts approval
 
 - A sprint with user-visible texts (emails, hints, headings, labels) lists those texts and the brand elements in plan for user approval before impl starts, not after the first smoke check. (`002-mail-invite-password-reset#P-1`)
+
+## No financial data
+
+- The system stores no financial information: salaries, salary ranges, budgets. No field, column, endpoint or screen carries it.

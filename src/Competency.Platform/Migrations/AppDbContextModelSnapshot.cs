@@ -258,16 +258,6 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("character varying(4000)")
                         .HasColumnName("role_description");
 
-                    b.Property<decimal?>("SalaryFrom")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)")
-                        .HasColumnName("salary_from");
-
-                    b.Property<decimal?>("SalaryTo")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)")
-                        .HasColumnName("salary_to");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(16)

@@ -20,8 +20,6 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
 
     private const string UserEntityName = "Competency.UserManagement.AppUser";
     private const int EnumMaxLength = 16;
-    private const int SalaryPrecision = 12;
-    private const int SalaryScale = 2;
 
     private static readonly string StatusCheckSql = EnumCheckSql<CatalogStatus>("status");
     private static readonly string TypeCheckSql = EnumCheckSql<CompetencyType>("type");
@@ -205,8 +203,6 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
         entity.Property(e => e.RoleDescription).HasColumnName("role_description").HasMaxLength(CareerLevel.RoleDescriptionMaxLength);
         entity.Property(e => e.PreviousLevelId).HasColumnName("previous_level_id");
         entity.Property(e => e.NextLevelIds).HasColumnName("next_level_ids");
-        entity.Property(e => e.SalaryFrom).HasColumnName("salary_from").HasPrecision(SalaryPrecision, SalaryScale);
-        entity.Property(e => e.SalaryTo).HasColumnName("salary_to").HasPrecision(SalaryPrecision, SalaryScale);
 
         entity.HasOne(e => e.Track).WithMany().HasForeignKey(e => e.TrackId).OnDelete(DeleteBehavior.Restrict);
         entity.Navigation(e => e.Track).AutoInclude();

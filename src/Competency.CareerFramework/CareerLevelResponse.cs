@@ -1,8 +1,7 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// A career level as the API returns it, without its salary range, which only some readers get, from the salary endpoint.
-/// The direction and the unit are the track's. The version equals the <c>ETag</c> a change returns and is sent back in <c>If-Match</c>.
+/// A career level as the API returns it. The direction and the unit are the track's. The version equals the <c>ETag</c> a change returns and is sent back in <c>If-Match</c>.
 /// </summary>
 internal sealed record CareerLevelResponse(
     Guid Id,

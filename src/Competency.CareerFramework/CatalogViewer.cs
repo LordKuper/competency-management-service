@@ -92,8 +92,7 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Gui
     public bool CanDelete(CatalogEntry entry) => CanEdit(entry) || (entry.Status == CatalogStatus.Draft && entry.AuthorId == UserId);
 
     /// <summary>
-    /// Whether the user may approve, deactivate and reactivate the entry, and read and change a level's salary range: global administrators,
-    /// the responsible HR of the entry's unit, and every HR for an entry of no unit.
+    /// Whether the user may approve, deactivate and reactivate the entry: global administrators, the responsible HR of the entry's unit, and every HR for an entry of no unit.
     /// </summary>
     /// <param name="entry">An entry the user can read; a level with its track loaded.</param>
     /// <returns>True when the user keeps the entry.</returns>

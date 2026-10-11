@@ -37,7 +37,6 @@ export function useCatalogRights() {
       canCreate: isHr || headed.size > 0,
       /** Whether the user may add a track: they need a unit to put it in. */
       canCreateTrack: isAdmin || ownerUnits.length > 0,
-      keeps,
       /** `unitId` is the unit of the track the entry is, or belongs to; omitted for an entry without a unit. */
       canEdit: (entry: Rated, unitId?: string) =>
         unitId === undefined
