@@ -99,15 +99,15 @@ internal static class CatalogEndpoints
 
         group.MapPost(
                 "/{id:guid}/deactivate",
-                (Guid id, IfMatch ifMatch, AppDbContext context, CatalogStore store, HttpResponse response, CancellationToken cancellationToken) =>
-                    SetStatusAsync(id, CatalogStatus.Inactive, ifMatch, kind, context, store, response, cancellationToken))
+                (Guid id, IfMatch ifMatch, AppDbContext context, CatalogStore store, IAuditWriter audit, HttpResponse response, CancellationToken cancellationToken) =>
+                    SetStatusAsync(id, CatalogStatus.Inactive, ifMatch, kind, context, store, audit, response, cancellationToken))
             .WithName($"Deactivate{kind.Name}")
             .ProducesStatusChange();
 
         group.MapPost(
                 "/{id:guid}/activate",
-                (Guid id, IfMatch ifMatch, AppDbContext context, CatalogStore store, HttpResponse response, CancellationToken cancellationToken) =>
-                    SetStatusAsync(id, CatalogStatus.Active, ifMatch, kind, context, store, response, cancellationToken))
+                (Guid id, IfMatch ifMatch, AppDbContext context, CatalogStore store, IAuditWriter audit, HttpResponse response, CancellationToken cancellationToken) =>
+                    SetStatusAsync(id, CatalogStatus.Active, ifMatch, kind, context, store, audit, response, cancellationToken))
             .WithName($"Activate{kind.Name}")
             .ProducesStatusChange();
     }
@@ -422,7 +422,8 @@ internal static class CatalogEndpoints
     /// <summary>
     /// Deactivates an entry or brings an inactive one back; setting the status an entry already has changes nothing.
     /// A draft becomes active only by approval, and the default scale stays active, because new competencies get it. A deactivated draft
-    /// stops being a draft, so its name is checked like an approved one's.
+    /// stops being a draft, so its name is checked like an approved one's. A track that left the draft status that way keeps its draft
+    /// levels, and reactivating it approves them as approving the track would have.
     /// </summary>
     private static async Task<Results<Ok<TResponse>, NotFound, ProblemHttpResult>> SetStatusAsync<TEntry, TResponse>(
         Guid id,
@@ -431,6 +432,7 @@ internal static class CatalogEndpoints
         CatalogKind<TEntry, TResponse> kind,
         AppDbContext context,
         CatalogStore store,
+        IAuditWriter audit,
         HttpResponse response,
         CancellationToken cancellationToken)
         where TEntry : CatalogEntry
@@ -463,6 +465,11 @@ internal static class CatalogEndpoints
         if (leavesDraft && await NameProblemAsync(entry, kind, store, cancellationToken) is { } taken)
         {
             return taken;
+        }
+
+        if (status == CatalogStatus.Active && entry is CareerTrack track && await ApproveLevelsAsync(track, context, store, audit, cancellationToken) is { } levelTaken)
+        {
+            return levelTaken;
         }
 
         return TypedResults.Ok(await CommitAsync(entry, kind, store, transaction, response, cancellationToken));
