@@ -96,3 +96,7 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Замечания пользователя на impl assessment; ревью ещё не было — стоимость затронутых AC: 0 итераций ревью, 0 раундов исправлений; поправка до точки деления impl-review, `floor_base` не нужен.
 - **Affected docs**: sprint.md AC-9, AC-11, AC-14, AC-22, AC-23; plan.md Task 11, Task 12, Overview, «Тексты интерфейса», Dependencies
 - 2026-10-11 — route Task 11: critical, dispatch HEAD bc14c17; risk change: security, change: migration
+- 2026-10-11 — Task 11 flagged choices accepted, кроме п. 7: «любой HR» — ответственный HR хотя бы одного активного подразделения; уникальность — среди нечерновых и черновиков того же автора для всех типов; черновик в матрице — только если его автор сейчас руководит подразделением матрицы; уровни через прежние endpoints с правами по треку; `scaleId: null` в PUT компетенции — шкала по умолчанию; трекам без подразделения миграция ставит корневое (только dev-данные); фильтр треков для AC-14 — на клиенте. П. 7 не принят: деактивация шкалы по умолчанию оставляет AC-22 («ровно у одной шкалы») невыполнимым — возврат Task 11.
+- 2026-10-11 — route Task 11: critical, dispatch HEAD 6ec1457 (re-dispatch, priorTier critical)
+- 2026-10-11 — Task 11 follow-up accepted (9b7ca26): деактивация шкалы по умолчанию — 409; новый серверный текст «Шкалу по умолчанию нельзя деактивировать — сначала сделайте по умолчанию другую шкалу»
+- 2026-10-11 — route Task 12: standard, dispatch HEAD 9b7ca26; risk none via npm --prefix web run lint
