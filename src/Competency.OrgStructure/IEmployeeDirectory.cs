@@ -33,6 +33,14 @@ public interface IEmployeeDirectory
     Task<OrgUnitStatus?> FindUnitAsync(Guid unitId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Finds many organization units in one query.
+    /// </summary>
+    /// <param name="unitIds">The unit identifiers.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The facts of each unit that exists, by identifier; identifiers of units that do not exist are absent.</returns>
+    Task<IReadOnlyDictionary<Guid, OrgUnitStatus>> FindUnitsAsync(IReadOnlyCollection<Guid> unitIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Finds a unit and every unit above it, for rules that apply to the nearest unit up the tree that meets a condition, such as having a head.
     /// </summary>
     /// <param name="unitId">The unit the chain starts from.</param>

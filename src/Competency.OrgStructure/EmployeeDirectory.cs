@@ -43,6 +43,19 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
         .Select(UnitStatusProjection)
         .FirstOrDefaultAsync(cancellationToken);
 
+    public async Task<IReadOnlyDictionary<Guid, OrgUnitStatus>> FindUnitsAsync(
+        IReadOnlyCollection<Guid> unitIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = unitIds.ToArray();
+        return await context
+            .Set<OrgUnit>()
+            .AsNoTracking()
+            .Where(unit => ids.Contains(unit.Id))
+            .Select(UnitStatusProjection)
+            .ToDictionaryAsync(status => status.Id, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<OrgUnitStatus>> FindAncestryAsync(Guid unitId, CancellationToken cancellationToken = default) =>
         await context.Ancestry(unitId).ToListAsync(cancellationToken);
 

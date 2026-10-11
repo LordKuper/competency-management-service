@@ -19,6 +19,19 @@ internal sealed class UserDirectory(AppDbContext context) : IUserDirectory
         .Select(StatusProjection)
         .FirstOrDefaultAsync(cancellationToken);
 
+    public async Task<IReadOnlyDictionary<Guid, UserStatus>> FindManyAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = userIds.ToArray();
+        return await context
+            .Set<AppUser>()
+            .AsNoTracking()
+            .Where(user => ids.Contains(user.Id))
+            .Select(StatusProjection)
+            .ToDictionaryAsync(status => status.Id, cancellationToken);
+    }
+
     public async Task<IReadOnlyDictionary<Guid, UserStatus>> FindByEmployeeIdsAsync(
         IReadOnlyCollection<Guid> employeeIds,
         CancellationToken cancellationToken = default)

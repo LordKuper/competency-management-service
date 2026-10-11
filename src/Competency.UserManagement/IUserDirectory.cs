@@ -15,6 +15,14 @@ public interface IUserDirectory
     Task<UserStatus?> FindAsync(Guid userId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Finds many accounts in one query.
+    /// </summary>
+    /// <param name="userIds">The account identifiers.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The status of each account that exists, by identifier; identifiers of accounts that do not exist are absent.</returns>
+    Task<IReadOnlyDictionary<Guid, UserStatus>> FindManyAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Finds the accounts bound to many employees in one query.
     /// </summary>
     /// <param name="employeeIds">The employee identifiers.</param>

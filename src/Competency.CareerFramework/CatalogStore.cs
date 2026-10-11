@@ -210,20 +210,12 @@ internal sealed class CatalogStore(
     /// The names of units, for showing which unit keeps a track or a matrix.
     /// </summary>
     /// <param name="unitIds">The units; nulls are skipped.</param>
-    /// <param name="cancellationToken">Cancels the lookups.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
     /// <returns>The name of each unit that exists, by identifier.</returns>
     public async Task<IReadOnlyDictionary<Guid, string>> UnitNamesAsync(IEnumerable<Guid?> unitIds, CancellationToken cancellationToken)
     {
-        var names = new Dictionary<Guid, string>();
-        foreach (var unitId in unitIds.OfType<Guid>().Distinct())
-        {
-            if (await employees.FindUnitAsync(unitId, cancellationToken) is { } unit)
-            {
-                names[unitId] = unit.Name;
-            }
-        }
-
-        return names;
+        var units = await employees.FindUnitsAsync([.. unitIds.OfType<Guid>().Distinct()], cancellationToken);
+        return units.ToDictionary(unit => unit.Key, unit => unit.Value.Name);
     }
 
     /// <summary>
@@ -234,15 +226,7 @@ internal sealed class CatalogStore(
     /// <returns>The name of each account that exists, by identifier.</returns>
     public async Task<IReadOnlyDictionary<Guid, string>> UserNamesAsync(IEnumerable<Guid?> userIds, CancellationToken cancellationToken)
     {
-        var accounts = new List<UserStatus>();
-        foreach (var userId in userIds.OfType<Guid>().Distinct())
-        {
-            if (await users.FindAsync(userId, cancellationToken) is { } account)
-            {
-                accounts.Add(account);
-            }
-        }
-
+        var accounts = (await users.FindManyAsync([.. userIds.OfType<Guid>().Distinct()], cancellationToken)).Values;
         var employeeIds = accounts.Select(account => account.EmployeeId).OfType<Guid>().ToList();
         var employeesById = await employees.FindManyAsync(employeeIds, cancellationToken);
         return accounts.ToDictionary(
