@@ -12,6 +12,8 @@ Operational facts seen building `web/` (sprint 001, Task 3), not derivable from 
 - `core.autocrlf=true` here. `openapi-typescript --check` compares bytes, so a CRLF checkout of `web/src/api/schema.d.ts` reads as stale; `web/.gitattributes` forces LF for the whole of `web/`.
 - In the one-command `git add && git diff --cached --check && git commit --only` form, a failing `--check` stops the chain and leaves the files staged. Fix or `git reset -q -- <paths>` in the very next command (stage-then-wait hazard, see [[parallel-agent-commit-sweep]]). Verbatim third-party text (OFL licences with trailing spaces) is exempted with a `-whitespace` attribute, not edited.
 
+- `vite.config.ts` `chunkSizeWarningLimit` sits just above the single bundle (raised to 1600 kB when @dnd-kit took it to ~1.54 MB); a new runtime dependency can cross it, so check the build tail for the chunk warning and raise the limit with the comment.
+
 **Why:** each cost a debugging round during the frontend scaffold.
 
 **How to apply:** any later task touching `web/` (regenerating `schema.d.ts`, running tests, committing licence or generated files).
