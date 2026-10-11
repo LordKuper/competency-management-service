@@ -446,9 +446,9 @@ internal sealed class MatrixWorkflow(
     }
 
     /// <summary>
-    /// Publishes the approved version: makes the drafts it uses and the draft categories of its competencies active, after checking their names again as approving a draft does,
-    /// archives the previously published version in a save of its own, so the published-version index never sees two, and freezes the
-    /// entries the version refers to into its snapshot.
+    /// Publishes the approved version: makes the drafts it uses and the draft categories of its competencies active, after checking
+    /// their names again as approving a draft does, archives the previously published version in a save of its own, so the
+    /// published-version index never sees two, and freezes the entries the version refers to into its snapshot.
     /// </summary>
     private async Task<ProblemHttpResult?> PublishAsync(Progress progress, CancellationToken cancellationToken)
     {
