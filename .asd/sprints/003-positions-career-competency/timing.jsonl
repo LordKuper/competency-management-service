@@ -79,3 +79,8 @@
 {"op":"close","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T11:18:26.250Z","end":"2026-10-11T11:21:52.810Z","outcome":"done","attrs":{"gate":"impl assessment"}}
 {"op":"open","id":"wait scope amendment delete","kind":"user-wait","parent":"impl#1","start":"2026-10-11T11:21:52.869Z","attrs":{"gate":"new or changed scope"}}
 {"op":"close","id":"wait scope amendment delete","kind":"user-wait","parent":"impl#1","start":"2026-10-11T11:21:52.869Z","end":"2026-10-11T11:23:21.658Z","outcome":"done","attrs":{"gate":"new or changed scope"}}
+{"op":"open","id":"Task 15","kind":"dispatch","parent":"impl#1","start":"2026-10-11T11:23:22.195Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 15","kind":"dispatch","parent":"impl#1","start":"2026-10-11T11:23:22.195Z","end":"2026-10-11T11:31:53.808Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 15","kind":"dispatch","parent":"impl#1","start":"2026-10-11T11:31:54.127Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 15","kind":"dispatch","parent":"impl#1","start":"2026-10-11T11:31:54.127Z","end":"2026-10-11T11:33:35.612Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 16","kind":"dispatch","parent":"impl#1","start":"2026-10-11T11:33:36.050Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
