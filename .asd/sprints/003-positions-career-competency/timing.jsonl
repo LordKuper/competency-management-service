@@ -174,3 +174,11 @@
 {"op":"close","id":"wait manual verification","kind":"user-wait","parent":"impl-test#2","start":"2026-10-11T21:37:11.020Z","end":"2026-10-11T21:38:27.483Z","outcome":"done","attrs":{"gate":"manual verification"}}
 {"op":"close","id":"impl-test#2","kind":"phase","parent":null,"start":"2026-10-11T21:14:06.806Z","end":"2026-10-11T21:38:27.808Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-review#1","kind":"phase","parent":null,"start":"2026-10-11T21:38:27.808Z","attrs":{}}
+{"op":"open","id":"impl-review wave-1/iter-01","kind":"review-iteration","parent":"impl-review#1","start":"2026-10-11T21:39:44.485Z","attrs":{"wave":"1","iteration":"1"}}
+{"op":"open","id":"combined wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-11T21:39:44.542Z","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
+{"op":"open","id":"external wave-1/iter-01","kind":"external-review","parent":"impl-review wave-1/iter-01","start":"2026-10-11T21:39:44.598Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"external wave-1/iter-01","kind":"external-review","parent":"impl-review wave-1/iter-01","start":"2026-10-11T21:39:44.598Z","end":"2026-10-11T21:44:32.766Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"combined wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-11T21:39:44.542Z","end":"2026-10-11T21:47:21.723Z","outcome":"done","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
+{"op":"close","id":"impl-review wave-1/iter-01","kind":"review-iteration","parent":"impl-review#1","start":"2026-10-11T21:39:44.485Z","end":"2026-10-11T21:47:36.174Z","outcome":"done","attrs":{"wave":"1","iteration":"1"}}
+{"op":"close","id":"impl-review#1","kind":"phase","parent":null,"start":"2026-10-11T21:38:27.808Z","end":"2026-10-11T21:47:36.236Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#3","kind":"phase","parent":null,"start":"2026-10-11T21:47:36.236Z","attrs":{}}
