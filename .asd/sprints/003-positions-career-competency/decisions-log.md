@@ -145,3 +145,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: plan.md «Тексты интерфейса»
 - 2026-10-11 — route impl assessment change 4: standard, dispatch HEAD be018a7; risk none via npm --prefix web run lint
 - 2026-10-11 — impl assessment: пользователь — надпись кнопок «Править» во всём приложении заменяется на «Изменить»; plan «Тексты интерфейса» дополнен; объём impl assessment change 4 расширен на `web/src` (кроме тестов)
+- 2026-10-11 — impl assessment change 4 выполнен (0e3727c, 1761cc9): заголовки окон, многострочное «Значение» балла (до 500 символов, производный текст «Не длиннее 500 символов»), отступ в окне трека, «Изменить» вместо «Править» во всём приложении; web lint и build чисты
