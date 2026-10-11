@@ -192,3 +192,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — route impl-test entry 2: critical, dispatch HEAD 45a0e1f; risk change: migration, change: lock ordering
 - 2026-10-12 — smoke check: все 4 строки Manual verification (AC-19 матрица, AC-11 перетаскивание уровней, AC-24 фильтр-дерево, AC-19 фокус окон) — pass, пользователь
 - 2026-10-12 — impl-test: impacted set green (полный набор по предохранителю: backend 473/473, web 303/303), 4/0 tests (entry 2); entry 1 — 517 добавлено, 0 удалено
+
+## 2026-10-12 — impl-review division into 3 waves
+
+- **Decision**: Объём impl-review — 303 файла, 54 667 строк, 2 273 854 байт (`main...HEAD`, пороги 3000 / 34 / 180 000) → 3 волны: 1 — backend оргструктуры, платформы, пользователей и хоста, миграции справочника должностей и HR, их тесты, развёртывание, контракт и память агентов (75 файлов); 2 — модуль `Competency.CareerFramework`, его миграции и тесты (128); 3 — web (100).
+- **Rationale**: `review-waves` принял деление; темы — по подсистемам, чтобы ревьюер видел связный объём.
+- **Affected docs**: reviews/impl/waves.json, state.json
