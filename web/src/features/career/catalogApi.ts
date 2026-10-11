@@ -305,17 +305,20 @@ export async function makeScaleDefault(scale: { id: string; version: number }) {
   );
 }
 
-/** Deletes a category no competency uses; the server answers 409 to one that is in use. */
-export async function deleteCategory(category: {
-  id: string;
-  version: number;
-}) {
+/** Deletes an entry of any catalogue; the server answers 409 with the reason to one that is in use. */
+export async function deleteEntry(
+  segment: CatalogSegment,
+  entry: { id: string; version: number },
+) {
   return unwrap(
-    await api.DELETE("/api/v1/career/categories/{id}", {
-      params: {
-        path: { id: category.id },
-        header: { "If-Match": ifMatchOf(category.version) },
+    await api.DELETE(
+      `/api/v1/career/${segment}/{id}` as "/api/v1/career/categories/{id}",
+      {
+        params: {
+          path: { id: entry.id },
+          header: { "If-Match": ifMatchOf(entry.version) },
+        },
       },
-    }),
+    ),
   );
 }

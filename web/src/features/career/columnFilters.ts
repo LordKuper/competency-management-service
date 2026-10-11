@@ -1,8 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
 import type { FilterValue } from "antd/es/table/interface";
-import { type Dispatch, type SetStateAction, useMemo } from "react";
-import { orgUnitTreeQuery } from "../org-structure/orgStructureApi";
-import { buildUnitTree, type UnitNode } from "../org-structure/orgTree";
+import type { Dispatch, SetStateAction } from "react";
 
 /** One value a column filter offers. */
 export interface FilterOption {
@@ -13,7 +10,8 @@ export interface FilterOption {
 /**
  * Column props of a one-value filter whose state lives in the query params: `current` is the param, so the filter shows
  * what the server was asked for. The column `key` must be the name of the param. `searchable` adds a search box to a long list.
- * The dropdown is widened so that long names (units) are not cut.
+ * The dropdown is widened so that long names are not cut.
+ *
  */
 export function choiceFilter(
   key: string,
@@ -60,17 +58,4 @@ export function entryOptions(
   items: readonly { id: string; name: string }[] | undefined,
 ): FilterOption[] {
   return (items ?? []).map(({ id, name }) => ({ text: name, value: id }));
-}
-
-function flatten(nodes: readonly UnitNode[]): FilterOption[] {
-  return nodes.flatMap(({ unit, children }) => [
-    { text: unit.name, value: unit.id },
-    ...flatten(children),
-  ]);
-}
-
-/** Every visible unit in tree order, for a unit filter. */
-export function useUnitOptions(): FilterOption[] {
-  const { data } = useQuery(orgUnitTreeQuery);
-  return useMemo(() => flatten(buildUnitTree(data ?? [])), [data]);
 }

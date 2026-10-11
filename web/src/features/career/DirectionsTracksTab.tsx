@@ -12,10 +12,11 @@ import {
   type TrackFilters,
   tracksQuery,
 } from "./catalogApi";
-import { choiceFilter, onFilterChange, useUnitOptions } from "./columnFilters";
+import { onFilterChange } from "./columnFilters";
 import { NameModal } from "./NameModal";
 import { LevelsTable } from "./TrackLevels";
 import { TrackModal } from "./TrackModal";
+import { unitFilter } from "./UnitTreeFilter";
 import { useCatalogRights } from "./useCatalogRights";
 
 /** Dialog of a table: creating (`"create"`) or editing the row with that id; null when closed. */
@@ -109,7 +110,6 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
   const rights = useCatalogRights();
   const [dialog, setDialog] = useState<Dialog>(null);
   const [filters, setFilters] = useState<TrackFilters>({});
-  const units = useUnitOptions();
   const { data, error, isFetching, refetch } = useQuery(
     tracksQuery(direction.id, filters),
   );
@@ -119,7 +119,7 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
     {
       title: "Владелец",
       dataIndex: "ownerOrgUnitName",
-      ...choiceFilter("ownerOrgUnitId", filters.ownerOrgUnitId, units, true),
+      ...unitFilter("ownerOrgUnitId", filters.ownerOrgUnitId),
       render: (name: string) => `Подразделение: ${name}`,
     },
     ...entryColumns<CareerTrack>(filters.status),

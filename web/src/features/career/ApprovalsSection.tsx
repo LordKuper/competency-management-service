@@ -3,28 +3,21 @@ import { Empty, Table, type TableColumnsType, Typography } from "antd";
 import { useState } from "react";
 import { Link } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import {
-  choiceFilter,
-  type FilterOption,
-  onFilterChange,
-  useUnitOptions,
-} from "./columnFilters";
+import { choiceFilter, onFilterChange } from "./columnFilters";
 import {
   type Approval,
   type ApprovalListParams,
   approvalsQuery,
 } from "./matrixApi";
 import { APPROVAL_STEP_LABELS } from "./matrixLabels";
+import { unitFilter } from "./UnitTreeFilter";
 
 const DATE_TIME = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "short",
   timeStyle: "short",
 });
 
-function columns(
-  params: ApprovalListParams,
-  units: FilterOption[],
-): TableColumnsType<Approval> {
+function columns(params: ApprovalListParams): TableColumnsType<Approval> {
   return [
     {
       title: "Матрица",
@@ -38,7 +31,7 @@ function columns(
     {
       title: "Подразделение",
       dataIndex: "orgUnitName",
-      ...choiceFilter("orgUnitId", params.orgUnitId, units, true),
+      ...unitFilter("orgUnitId", params.orgUnitId),
     },
     {
       title: "Шаг",
@@ -64,7 +57,6 @@ function columns(
 /** Versions of matrices that wait for the signed-in user's decision. */
 export function ApprovalsSection() {
   const [params, setParams] = useState<ApprovalListParams>({});
-  const units = useUnitOptions();
   const { data, error, isFetching, refetch } = useQuery(approvalsQuery(params));
 
   return (
@@ -79,7 +71,7 @@ export function ApprovalsSection() {
       )}
       <Table<Approval>
         rowKey="versionId"
-        columns={columns(params, units)}
+        columns={columns(params)}
         dataSource={data}
         loading={isFetching}
         pagination={false}

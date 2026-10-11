@@ -202,3 +202,22 @@ export async function returnMatrixVersion(
     }),
   );
 }
+
+/** Deletes a matrix that has no published version; its `If-Match` is the tag of the version in work, which is read first. */
+export async function deleteMatrix(matrix: Matrix) {
+  if (!matrix.inWorkVersion)
+    throw new Error("The matrix has no version in work");
+  const inWork = unwrap(
+    await api.GET("/api/v1/career/matrix-versions/{id}", {
+      params: { path: { id: matrix.inWorkVersion.id } },
+    }),
+  );
+  return unwrap(
+    await api.DELETE("/api/v1/career/matrices/{id}", {
+      params: {
+        path: { id: matrix.id },
+        header: { "If-Match": ifMatchOf(inWork.version) },
+      },
+    }),
+  );
+}

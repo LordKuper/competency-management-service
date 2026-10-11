@@ -14,9 +14,10 @@ import {
   Typography,
 } from "antd";
 import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useProcessRoles } from "./careerApi";
+import { MatrixDeleteButton } from "./MatrixDeleteButton";
 import { MatrixEditor } from "./MatrixEditor";
 import { MatrixErrorAlert } from "./MatrixErrorAlert";
 import { MatrixHistoryModal } from "./MatrixHistory";
@@ -189,6 +190,7 @@ function ReturnModal({ isPending, onReturn, onClose }: ReturnModalProps) {
 /** A matrix: its versions, the route a version takes, the editor of its content and the actions the user may take. */
 export function MatrixPage() {
   const { id = "" } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const roles = useProcessRoles();
   const matrixRead = useQuery(matrixQuery(id));
@@ -337,6 +339,10 @@ export function MatrixPage() {
         {history && (
           <Button onClick={() => setDialog("history")}>История</Button>
         )}
+        <MatrixDeleteButton
+          matrix={matrix}
+          onDeleted={() => void navigate("/career")}
+        />
       </Flex>
       {transit.error && (
         <MatrixErrorAlert

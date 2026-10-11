@@ -8,10 +8,12 @@ import {
   type CatalogSegment,
   type CatalogStatus,
   changeCatalogStatus,
+  deleteEntry,
   invalidateCatalogs,
 } from "./catalogApi";
 import { choiceFilter } from "./columnFilters";
 import { useCatalogRights } from "./useCatalogRights";
+import { useConfirmDeletion } from "./useConfirmDeletion";
 
 const STATUS_TAGS: Record<CatalogStatus, { label: string; color?: string }> = {
   Draft: { label: "Черновик", color: "warning" },
@@ -43,6 +45,16 @@ export function entryColumns<T extends CatalogEntry>(
   ];
 }
 
+/** What each catalogue's record is called in the deletion question, in the accusative. */
+const KIND_ACCUSATIVE: Record<CatalogSegment, string> = {
+  directions: "направление",
+  tracks: "трек",
+  levels: "уровень",
+  categories: "категорию",
+  competencies: "компетенцию",
+  scales: "шкалу",
+};
+
 interface EntryActionsProps {
   segment: CatalogSegment;
   entry: CatalogEntry;
@@ -54,7 +66,7 @@ interface EntryActionsProps {
   children?: ReactNode;
 }
 
-/** The row actions of an entry the rights allow: edit, approve a draft, deactivate, and return to work. */
+/** The row actions of an entry the rights allow: edit, approve a draft, deactivate, return to work, and delete. */
 export function EntryActions({
   segment,
   entry,
@@ -71,6 +83,7 @@ export function EntryActions({
     onError: (failure) => message.error(describeApiError(failure)),
     onSettled: () => invalidateCatalogs(queryClient),
   });
+  const confirmDeletion = useConfirmDeletion();
   const canManage = rights.canManage(unitId);
 
   return (
@@ -110,6 +123,24 @@ export function EntryActions({
           onClick={() => mutate("activate")}
         >
           Вернуть в работу
+        </Button>
+      )}
+      {rights.canEdit(entry, unitId) && (
+        <Button
+          type="link"
+          size="small"
+          danger
+          onClick={() =>
+            confirmDeletion({
+              kind: KIND_ACCUSATIVE[segment],
+              name: entry.name,
+              content:
+                segment === "tracks" ? "Будут удалены и его уровни" : undefined,
+              run: () => deleteEntry(segment, entry),
+            })
+          }
+        >
+          Удалить
         </Button>
       )}
     </Space>

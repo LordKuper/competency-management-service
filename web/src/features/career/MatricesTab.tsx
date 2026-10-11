@@ -14,15 +14,12 @@ import { ErrorAlert } from "../../app/ErrorAlert";
 import { useProcessRoles } from "./careerApi";
 import { directionsQuery, tracksQuery } from "./catalogApi";
 import type { FilterOption } from "./columnFilters";
-import {
-  choiceFilter,
-  entryOptions,
-  onFilterChange,
-  useUnitOptions,
-} from "./columnFilters";
+import { choiceFilter, entryOptions, onFilterChange } from "./columnFilters";
 import { MatrixCreateModal } from "./MatrixCreateModal";
+import { MatrixDeleteButton } from "./MatrixDeleteButton";
 import { type Matrix, type MatrixListParams, matricesQuery } from "./matrixApi";
 import { VERSION_STATUS_LABELS } from "./matrixLabels";
+import { unitFilter } from "./UnitTreeFilter";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -39,7 +36,6 @@ function versionCell(version: Matrix["inWorkVersion"]) {
 
 function columns(
   params: MatrixListParams,
-  units: FilterOption[],
   directions: FilterOption[],
   tracks: FilterOption[],
 ): TableColumnsType<Matrix> {
@@ -47,7 +43,7 @@ function columns(
     {
       title: "Подразделение",
       dataIndex: "orgUnitName",
-      ...choiceFilter("orgUnitId", params.orgUnitId, units, true),
+      ...unitFilter("orgUnitId", params.orgUnitId),
     },
     {
       title: "Направление",
@@ -68,6 +64,11 @@ function columns(
       render: versionCell,
     },
     { title: "В работе", dataIndex: "inWorkVersion", render: versionCell },
+    {
+      title: "Действия",
+      key: "actions",
+      render: (_, matrix) => <MatrixDeleteButton matrix={matrix} />,
+    },
   ];
 }
 
@@ -83,7 +84,6 @@ export function MatricesTab() {
     ...matricesQuery(params),
     placeholderData: (previous) => previous,
   });
-  const units = useUnitOptions();
   const directions = entryOptions(useQuery(directionsQuery()).data?.items);
   const tracks = entryOptions(useQuery(tracksQuery()).data?.items);
   const canCreate = (roles.data?.headedUnits.length ?? 0) > 0;
@@ -106,7 +106,7 @@ export function MatricesTab() {
       )}
       <Table<Matrix>
         rowKey="id"
-        columns={columns(params, units, directions, tracks)}
+        columns={columns(params, directions, tracks)}
         dataSource={data?.items}
         loading={isFetching}
         scroll={{ x: "max-content" }}

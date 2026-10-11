@@ -18,7 +18,8 @@ import {
   draftsQuery,
   invalidateCatalogs,
 } from "./catalogApi";
-import { choiceFilter, onFilterChange, useUnitOptions } from "./columnFilters";
+import { choiceFilter, onFilterChange } from "./columnFilters";
+import { unitFilter } from "./UnitTreeFilter";
 import { useCatalogRights } from "./useCatalogRights";
 
 const KIND_LABELS: Record<CatalogKind, string> = {
@@ -35,7 +36,6 @@ export function DraftsSection() {
   const { message } = App.useApp();
   const queryClient = useQueryClient();
   const [params, setParams] = useState<DraftListParams>({});
-  const units = useUnitOptions();
   const { data, error, isFetching, refetch } = useQuery({
     ...draftsQuery(params),
     enabled: rights.isHr,
@@ -63,7 +63,7 @@ export function DraftsSection() {
     {
       title: "Подразделение",
       dataIndex: "ownerOrgUnitName",
-      ...choiceFilter("orgUnitId", params.orgUnitId, units, true),
+      ...unitFilter("orgUnitId", params.orgUnitId),
       render: (name: string | null) => name ?? "Общая",
     },
     { title: "Автор", dataIndex: "authorName" },
