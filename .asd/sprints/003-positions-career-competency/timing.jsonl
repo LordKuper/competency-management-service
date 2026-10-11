@@ -87,3 +87,7 @@
 {"op":"open","id":"asd-dev-critical memory-fix#1","kind":"dispatch","parent":"impl#1","start":"2026-10-11T11:33:52.542Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
 {"op":"close","id":"asd-dev-critical memory-fix#1","kind":"dispatch","parent":"impl#1","start":"2026-10-11T11:33:52.542Z","end":"2026-10-11T11:34:23.632Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
 {"op":"close","id":"Task 16","kind":"dispatch","parent":"impl#1","start":"2026-10-11T11:33:36.050Z","end":"2026-10-11T11:36:57.719Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T11:37:19.272Z","attrs":{"gate":"impl assessment"}}
+{"op":"close","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T11:37:19.272Z","end":"2026-10-11T12:10:27.537Z","outcome":"done","attrs":{"gate":"impl assessment"}}
+{"op":"open","id":"wait scope amendment blockers","kind":"user-wait","parent":"impl#1","start":"2026-10-11T12:10:27.596Z","attrs":{"gate":"new or changed scope"}}
+{"op":"close","id":"wait scope amendment blockers","kind":"user-wait","parent":"impl#1","start":"2026-10-11T12:10:27.596Z","end":"2026-10-11T12:13:40.987Z","outcome":"done","attrs":{"gate":"new or changed scope"}}
