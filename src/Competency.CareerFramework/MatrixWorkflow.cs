@@ -234,9 +234,9 @@ internal sealed class MatrixWorkflow(
         }
 
         await using var transaction = await BeginTransitionAsync(matrixId.Value, cancellationToken);
-        var version = await context.Set<MatrixVersion>().FirstAsync(candidate => candidate.Id == id, cancellationToken);
         var viewer = await ViewerAsync(cancellationToken);
-        if (await StateAsync(version, viewer, cancellationToken) is not { } state)
+        if (await context.Set<MatrixVersion>().FirstOrDefaultAsync(candidate => candidate.Id == id, cancellationToken) is not { } version
+            || await StateAsync(version, viewer, cancellationToken) is not { } state)
         {
             return TypedResults.NotFound();
         }
