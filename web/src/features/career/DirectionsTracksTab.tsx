@@ -4,15 +4,14 @@ import { useState } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { EntryActions, entryColumns } from "./CatalogParts";
 import {
-  type CareerLevel,
   type CareerTrack,
   type CatalogEntry,
   directionsQuery,
-  levelsQuery,
   tracksQuery,
 } from "./catalogApi";
-import { LevelModal } from "./LevelModal";
 import { NameModal } from "./NameModal";
+import { LevelsTable } from "./TrackLevels";
+import { TrackModal } from "./TrackModal";
 import { useCatalogRights } from "./useCatalogRights";
 
 /** Dialog of a table: creating (`"create"`) or editing the row with that id; null when closed. */
@@ -149,89 +148,21 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
         pagination={false}
         scroll={{ x: "max-content" }}
         expandable={{
-          expandedRowRender: (track) => <LevelsTable track={track} />,
+          expandedRowRender: (track) => (
+            <LevelsTable track={track} editable={false} />
+          ),
         }}
       />
       {dialog === "create" && (
-        <NameModal
-          segment="tracks"
-          title="Добавить трек"
+        <TrackModal
           directionId={direction.id}
           onClose={() => setDialog(null)}
         />
       )}
       {edited && (
-        <NameModal
-          segment="tracks"
-          title="Править"
-          entry={edited}
-          onClose={() => setDialog(null)}
-        />
-      )}
-    </Space>
-  );
-}
-
-function LevelsTable({ track }: { track: CareerTrack }) {
-  const rights = useCatalogRights();
-  const [dialog, setDialog] = useState<Dialog>(null);
-  const { data, error, isFetching, refetch } = useQuery(levelsQuery(track.id));
-  const edited = data?.items.find((level) => level.id === dialog);
-  const columns: TableColumnsType<CareerLevel> = [
-    NAME_COLUMN,
-    { title: "Код уровня", dataIndex: "code" },
-    ...entryColumns<CareerLevel>(),
-    {
-      title: "Действия",
-      key: "actions",
-      render: (_, level) => (
-        <EntryActions
-          segment="levels"
-          entry={level}
-          unitId={track.ownerOrgUnitId}
-          onEdit={() => setDialog(level.id)}
-        />
-      ),
-    },
-  ];
-
-  return (
-    <Space orientation="vertical" size="middle" style={{ display: "flex" }}>
-      {rights.canEdit(track, track.ownerOrgUnitId) && (
-        <Flex>
-          <Button onClick={() => setDialog("create")}>Добавить уровень</Button>
-        </Flex>
-      )}
-      {error && (
-        <ErrorAlert
-          title="Не удалось загрузить уровни"
-          error={error}
-          onRetry={() => void refetch()}
-        />
-      )}
-      <Table<CareerLevel>
-        rowKey="id"
-        columns={columns}
-        dataSource={data?.items}
-        loading={isFetching}
-        pagination={false}
-        scroll={{ x: "max-content" }}
-        locale={{
-          emptyText: (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="В треке пока нет уровней"
-            />
-          ),
-        }}
-      />
-      {dialog === "create" && (
-        <LevelModal track={track} onClose={() => setDialog(null)} />
-      )}
-      {edited && (
-        <LevelModal
-          track={track}
-          level={edited}
+        <TrackModal
+          directionId={direction.id}
+          track={edited}
           onClose={() => setDialog(null)}
         />
       )}
