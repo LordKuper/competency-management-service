@@ -95,3 +95,7 @@
 {"op":"close","id":"Task 17","kind":"dispatch","parent":"impl#1","start":"2026-10-11T12:13:41.580Z","end":"2026-10-11T12:25:33.902Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
 {"op":"open","id":"Task 18","kind":"dispatch","parent":"impl#1","start":"2026-10-11T12:25:34.696Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"Task 18","kind":"dispatch","parent":"impl#1","start":"2026-10-11T12:25:34.696Z","end":"2026-10-11T12:27:02.400Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T12:27:31.195Z","attrs":{"gate":"impl assessment"}}
+{"op":"close","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T12:27:31.195Z","end":"2026-10-11T13:30:09.242Z","outcome":"done","attrs":{"gate":"impl assessment"}}
+{"op":"open","id":"wait ui texts dialog titles","kind":"user-wait","parent":"impl#1","start":"2026-10-11T13:30:09.305Z","attrs":{"gate":"ui texts"}}
+{"op":"close","id":"wait ui texts dialog titles","kind":"user-wait","parent":"impl#1","start":"2026-10-11T13:30:09.305Z","end":"2026-10-11T13:31:21.299Z","outcome":"done","attrs":{"gate":"ui texts"}}
