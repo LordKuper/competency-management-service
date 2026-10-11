@@ -190,3 +190,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — memory-fix D-5, D-6 (04864f3): устаревшие факты о `next_level_ids` и поле `position` убраны из памяти asd-dev-critical; статусы D-5, D-6 — fixed (оркестратор)
 - 2026-10-12 — impl test-fix: defects D-1, D-2, D-3, D-4, D-5, D-6 resolved; gate: Release 0/0, web lint и build чисты
 - 2026-10-12 — route impl-test entry 2: critical, dispatch HEAD 45a0e1f; risk change: migration, change: lock ordering
+- 2026-10-12 — smoke check: все 4 строки Manual verification (AC-19 матрица, AC-11 перетаскивание уровней, AC-24 фильтр-дерево, AC-19 фокус окон) — pass, пользователь
+- 2026-10-12 — impl-test: impacted set green (полный набор по предохранителю: backend 473/473, web 303/303), 4/0 tests (entry 2); entry 1 — 517 добавлено, 0 удалено
