@@ -93,3 +93,5 @@
 {"op":"close","id":"wait scope amendment blockers","kind":"user-wait","parent":"impl#1","start":"2026-10-11T12:10:27.596Z","end":"2026-10-11T12:13:40.987Z","outcome":"done","attrs":{"gate":"new or changed scope"}}
 {"op":"open","id":"Task 17","kind":"dispatch","parent":"impl#1","start":"2026-10-11T12:13:41.580Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
 {"op":"close","id":"Task 17","kind":"dispatch","parent":"impl#1","start":"2026-10-11T12:13:41.580Z","end":"2026-10-11T12:25:33.902Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 18","kind":"dispatch","parent":"impl#1","start":"2026-10-11T12:25:34.696Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 18","kind":"dispatch","parent":"impl#1","start":"2026-10-11T12:25:34.696Z","end":"2026-10-11T12:27:02.400Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
