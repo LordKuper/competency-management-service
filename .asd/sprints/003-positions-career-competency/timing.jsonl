@@ -138,3 +138,13 @@
 {"op":"close","id":"suite impl-test#1","kind":"suite","parent":"impl-test entry 1","start":"2026-10-11T17:46:36.158Z","end":"2026-10-11T17:49:26.521Z","outcome":"done","attrs":{"scope":"full"}}
 {"op":"close","id":"impl-test entry 1","kind":"dispatch","parent":"impl-test#1","start":"2026-10-11T17:45:08.523Z","end":"2026-10-11T19:51:07.719Z","outcome":"interrupted","attrs":{"agent":"asd-tester-critical","tier":"critical","model":"sonnet"}}
 {"op":"close","id":"impl-test#1","kind":"phase","parent":null,"start":"2026-10-11T17:44:38.474Z","end":"2026-10-11T19:51:07.719Z","outcome":"interrupted","attrs":{}}
+{"op":"open","id":"impl-test entry 1","kind":"dispatch","parent":null,"start":"2026-10-11T19:51:16.795Z","attrs":{"agent":"asd-tester-critical","tier":"critical","model":"sonnet"}}
+{"op":"open","id":"suite impl-test#2","kind":"suite","parent":"impl-test entry 1","start":"2026-10-11T19:53:14.132Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#2","kind":"suite","parent":"impl-test entry 1","start":"2026-10-11T19:53:14.132Z","end":"2026-10-11T20:23:04.731Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#3","kind":"suite","parent":"impl-test entry 1","start":"2026-10-11T20:49:38.765Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#3","kind":"suite","parent":"impl-test entry 1","start":"2026-10-11T20:49:38.765Z","end":"2026-10-11T20:50:14.703Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#4","kind":"suite","parent":"impl-test entry 1","start":"2026-10-11T20:56:57.176Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#4","kind":"suite","parent":"impl-test entry 1","start":"2026-10-11T20:56:57.176Z","end":"2026-10-11T20:58:54.041Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#5","kind":"suite","parent":"impl-test entry 1","start":"2026-10-11T20:59:40.086Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#5","kind":"suite","parent":"impl-test entry 1","start":"2026-10-11T20:59:40.086Z","end":"2026-10-11T21:01:18.490Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-test entry 1","kind":"dispatch","parent":null,"start":"2026-10-11T19:51:16.795Z","end":"2026-10-11T21:04:45.467Z","outcome":"done","attrs":{"agent":"asd-tester-critical","tier":"critical","model":"sonnet"}}
