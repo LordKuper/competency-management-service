@@ -80,3 +80,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: plan.md «Тексты интерфейса» → «Меню»; на design-promote — docs/ux/app-shell.html
 - 2026-10-11 — route impl assessment change 1: critical, dispatch HEAD 4a13cec; risk change: security
 - 2026-10-11 — route impl assessment change 2: standard, dispatch HEAD 4a13cec; risk none via npm --prefix web run lint
+- 2026-10-11 — impl assessment changes 1 (66793b9) и 2 (209555d) выполнены; приняты: при заблокированном собственном HR не-администратор получает и `inherited: null` (A-5 — ответственного HR нет), `isActive` в конце записи ответа; gate: Release 0/0, web lint, build, check:api чисты; пути — только назначенные
