@@ -13,7 +13,6 @@ responsibility:
 |---|---|---|
 | 1 | f902116b8e4f2d31ce8ce80c6b580b232b85508c | full change surface |
 | 2 | 165dc5420ce614ad26d4e615a7919a68b85ce338 | delta since entry 1 |
-
 | 3 |  | delta since entry 2 |
 
 Строки повествования записи 1 — в `test-plan.entry-01.md`, записи 2 — в `test-plan.entry-02.md`.
