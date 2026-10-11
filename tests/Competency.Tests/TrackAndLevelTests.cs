@@ -309,6 +309,53 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
     }
 
     [Fact]
+    public async Task Ac11_LevelOrder_WithAStaleTrackThatWouldMoveLevels_IsRefusedWith412_AndMovesAndJournalsNothing()
+    {
+        var org = await fixture.OrgAsync();
+        var direction = await org.Admin.MakeDirectionAsync();
+        var track = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
+        var levels = new List<ApiResponse>();
+        foreach (var name in new[] { "Один", "Два", "Три" })
+        {
+            levels.Add(await org.Admin.MakeLevelAsync(track.Id, name));
+        }
+
+        var stale = await org.Admin.PutAsync($"/api/v1/career/tracks/{track.Id}/level-order", new { levelIds = new[] { levels[2].Id, levels[1].Id, levels[0].Id } }, "\"999\"");
+
+        stale.Status.Should().Be(HttpStatusCode.PreconditionFailed, stale.Body);
+        (await LevelsOfAsync(org.Admin, track.Id)).Should().Equal(["Один", "Два", "Три"], "the levels are saved one by one before the track's version is checked, and the refusal must undo them");
+        (await org.Admin.AuditOfRequestAsync(stale.RequestId!)).Should().BeEmpty("the journal rows of the levels saved before the refusal are undone with them");
+    }
+
+    [Fact]
+    public async Task Ac17_LevelOrder_JournalsEachLevelThatMovedOnceWithItsOldAndNewPlace_AndRaisesOnlyTheirVersions()
+    {
+        var org = await fixture.OrgAsync();
+        var direction = await org.Admin.MakeDirectionAsync();
+        var track = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
+        var levels = new List<ApiResponse>();
+        foreach (var name in new[] { "Один", "Два", "Три", "Четыре" })
+        {
+            levels.Add(await org.Admin.MakeLevelAsync(track.Id, name));
+        }
+
+        var reordered = (await org.Admin.PutAsync($"/api/v1/career/tracks/{track.Id}/level-order", new { levelIds = new[] { levels[2].Id, levels[0].Id } }, track.ETag)).Expect(HttpStatusCode.OK);
+
+        var journal = await org.Admin.AuditOfRequestAsync(reordered.RequestId!);
+        journal.Actions().Should().Equal(["CareerLevel.Updated", "CareerLevel.Updated", "CareerLevel.Updated"], "the level that keeps its place and the track itself are not journaled");
+        journal.Select(row => $"{row!["entityId"]!.GetValue<string>()}:{row["oldValue"]!["position"]!.GetValue<int>()}>{row["newValue"]!["position"]!.GetValue<int>()}")
+            .Should().BeEquivalentTo([$"{levels[2].Id}:3>1", $"{levels[0].Id}:1>2", $"{levels[1].Id}:2>3"], "each row names the place the level had before the request, not the one it was set aside under");
+        var versions = (await org.Admin.GetAsync($"/api/v1/career/levels?trackId={track.Id}&pageSize=200")).Expect(HttpStatusCode.OK).Json!["items"]!.AsArray()
+            .ToDictionary(item => item!["id"]!.GetValue<Guid>(), item => item!["version"]!.GetValue<int>());
+        foreach (var moved in new[] { levels[0], levels[1], levels[2] })
+        {
+            versions[moved.Id].Should().Be(moved.Json!["version"]!.GetValue<int>() + 1, "a level moves in one save of its own");
+        }
+
+        versions[levels[3].Id].Should().Be(levels[3].Json!["version"]!.GetValue<int>());
+    }
+
+    [Fact]
     public async Task Ac11_Levels_AreListedInTheOrderOfTheirTrack_AndFilteredByTrack()
     {
         var org = await fixture.OrgAsync();

@@ -517,6 +517,31 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
     }
 
     [Fact]
+    public async Task Ac10_Publication_MakesActiveTwoDraftCompetenciesOfOneName_WhenOneIsOfTheDirectionAndTheOtherGeneral()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var kit = await MatrixKit.CreateAsync(org, competencyAuthor: org.TeamHead.Client);
+        var categoryId = await org.Admin.CategoryIdAsync();
+        var body = new
+        {
+            name = kit.Critical.Json!["name"]!.GetValue<string>(),
+            description = (string?)null,
+            categoryId,
+            directionId = (Guid?)null,
+            type = "Profile",
+            scaleId = Guid.Parse(CareerScenarios.BaseScaleId),
+        };
+        (await org.TeamHead.Client.PutAsync($"/api/v1/career/competencies/{kit.Profile.Id}", body, kit.Profile.ETag)).Expect(HttpStatusCode.OK);
+
+        await (await kit.PrepareAsync()).PublishAsync();
+
+        foreach (var competency in new[] { kit.Critical, kit.Profile })
+        {
+            (await org.Plain.Client.GetAsync($"/api/v1/career/competencies/{competency.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Active", "the names are unique within a direction and among the general competencies, not across them");
+        }
+    }
+
+    [Fact]
     public async Task Ac16_Actions_AreOpenOnlyToTheParticipantWhoseTurnItIs()
     {
         var org = await fixture.OrgAsync();
