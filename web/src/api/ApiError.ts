@@ -1,8 +1,14 @@
+import type { components } from "./schema";
+
 /** Failed API call: the HTTP status plus the problem-details fields the server sent. */
 export class ApiError extends Error {
   readonly status: number;
   readonly title: string | undefined;
   readonly detail: string | undefined;
+  /** Records that block a deletion (409 refusals only). */
+  readonly blockers: readonly components["schemas"]["DeletionBlocker"][];
+  /** How many more blocking records exist beyond `blockers`. */
+  readonly moreCount: number;
   /** Validation messages per field name, present only on validation problems. */
   readonly errors: Readonly<Record<string, readonly string[]>> | undefined;
 
@@ -16,6 +22,9 @@ export class ApiError extends Error {
     this.title = title;
     this.detail = readString(fields.detail);
     this.errors = readFieldErrors(fields.errors);
+    this.blockers = Array.isArray(fields.blockers) ? fields.blockers : [];
+    this.moreCount =
+      typeof fields.moreCount === "number" ? fields.moreCount : 0;
   }
 }
 
