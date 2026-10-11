@@ -144,3 +144,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Замечания пользователя на impl assessment; критерии AC не меняются (AC-19, AC-13, AC-11 — экраны).
 - **Affected docs**: plan.md «Тексты интерфейса»
 - 2026-10-11 — route impl assessment change 4: standard, dispatch HEAD be018a7; risk none via npm --prefix web run lint
+- 2026-10-11 — impl assessment: пользователь — надпись кнопок «Править» во всём приложении заменяется на «Изменить»; plan «Тексты интерфейса» дополнен; объём impl assessment change 4 расширен на `web/src` (кроме тестов)
