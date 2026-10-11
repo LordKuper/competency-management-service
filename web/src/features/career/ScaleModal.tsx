@@ -12,6 +12,7 @@ const NAME_MAX_LENGTH = 200;
 const LABEL_MAX_LENGTH = 500;
 const POINT_SCORE_WIDTH = 96;
 const FIELDS = ["name", "points"] as const;
+const DUPLICATE_SCORES = "Баллы не должны повторяться";
 const USED_NOTICE = "Используется в опубликованной матрице — изменить нельзя";
 
 interface ScaleValues {
@@ -109,8 +110,22 @@ function ScaleForm({ scale, onSubmit, onCancel }: ScaleFormProps) {
       >
         <Input autoComplete="off" />
       </Form.Item>
-      <Form.List name="points">
-        {(fields, { add, remove }) => (
+      <Form.List
+        name="points"
+        rules={[
+          {
+            validator: async (_, points?: Partial<ScalePoint>[]) => {
+              const scores = (points ?? [])
+                .map((point) => point?.score)
+                .filter((score) => score != null);
+              if (new Set(scores).size < scores.length) {
+                throw new Error(DUPLICATE_SCORES);
+              }
+            },
+          },
+        ]}
+      >
+        {(fields, { add, remove }, { errors }) => (
           <>
             {fields.map((field) => (
               <Flex key={field.key} gap="middle" align="start">
@@ -143,6 +158,7 @@ function ScaleForm({ scale, onSubmit, onCancel }: ScaleFormProps) {
             ))}
             <Form.Item>
               <Button onClick={() => add({})}>Добавить балл</Button>
+              <Form.ErrorList errors={errors} />
             </Form.Item>
           </>
         )}
