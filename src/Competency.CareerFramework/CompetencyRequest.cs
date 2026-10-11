@@ -26,6 +26,11 @@ internal record CompetencyRequest : CatalogNameRequest
     {
         var errors = base.Validate();
         CheckText(errors, "description", Description, CareerCompetency.DescriptionMaxLength, missingMessage: null);
+        if (!Enum.IsDefined(Type))
+        {
+            errors["type"] = ["Укажите допустимый тип"];
+        }
+
         return errors;
     }
 

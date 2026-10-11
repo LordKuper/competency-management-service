@@ -36,7 +36,7 @@ internal sealed record MatrixContent(
 
     /// <summary>
     /// Checks the document on its own: no missing lists or items, no repeated keys, items refer to levels, blocks and competencies of
-    /// the document, and numbers and texts within their limits. What the document refers to outside itself is checked against the catalogues.
+    /// the document, and numbers, requirement types and texts within their limits. What the document refers to outside itself is checked against the catalogues.
     /// </summary>
     /// <returns>The problems found by field name; empty when the document is valid.</returns>
     public Dictionary<string, string[]> Validate()
@@ -98,6 +98,11 @@ internal sealed record MatrixContent(
             || BlockWeights.Any(item => !IsPercent(item.Percent) || !IsPercent(item.MinPercent)))
         {
             return $"Коэффициенты и пороги — от 0 до {MaxPercent} %";
+        }
+
+        if (Requirements.Any(item => !Enum.IsDefined(item.Type)))
+        {
+            return "Укажите допустимый тип требования";
         }
 
         if (Requirements.Any(item => item.Weight < 0))
