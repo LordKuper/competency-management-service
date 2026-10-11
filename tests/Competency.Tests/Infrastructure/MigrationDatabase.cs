@@ -18,7 +18,6 @@ public sealed class MigrationDatabase : IAsyncDisposable
 {
     public const string BeforePositions = "20261008074548_AccountLinks";
     public const string Positions = "20261009090759_PositionCatalogue";
-    public const string BeforeCareer = "20261009093207_OrgUnitHr";
     public const string Catalogues = "20261009095543_CareerCatalogues";
     public const string Matrices = "20261009102128_CompetencyMatrices";
     public const string BeforeOwnership = Matrices;
