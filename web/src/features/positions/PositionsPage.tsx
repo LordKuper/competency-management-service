@@ -16,6 +16,7 @@ import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { describeApiError } from "../../app/apiErrors";
+import { destructiveConfirm } from "../../app/destructiveConfirm";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { choiceFilter, onFilterChange } from "../career/columnFilters";
 import { PositionNameModal } from "./PositionNameModal";
@@ -87,7 +88,7 @@ export function PositionsPage() {
       title: "Деактивировать должность?",
       content: `Сотрудники, которые её занимают (${employeeCount}), сохранят должность. Выбрать её для других сотрудников будет нельзя.`,
       okText: "Деактивировать",
-      okButtonProps: { danger: true },
+      ...destructiveConfirm(true),
       cancelText: "Отмена",
       onOk: () => setActive(position).then(() => undefined, reportFailure),
     });

@@ -5,6 +5,7 @@ import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
 import { AppModal } from "../../app/AppModal";
 import { describeApiError } from "../../app/apiErrors";
+import { destructiveConfirm } from "../../app/destructiveConfirm";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { useFormSubmit } from "../../app/useFormSubmit";
@@ -57,7 +58,7 @@ export function UnitHrModal({ unit, onClose }: UnitHrModalProps) {
       content:
         "Ответственным станет HR вышестоящего подразделения, если он назначен.",
       okText: "Снять закрепление",
-      okButtonProps: { danger: true },
+      ...destructiveConfirm(true),
       cancelText: "Отмена",
       onOk: () =>
         remove().then(

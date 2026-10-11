@@ -3,6 +3,7 @@ import { App } from "antd";
 import type { ReactNode } from "react";
 import { ApiError } from "../../api/ApiError";
 import { describeApiError } from "../../app/apiErrors";
+import { destructiveConfirm } from "../../app/destructiveConfirm";
 import { invalidateCatalogs } from "./catalogApi";
 import { invalidateMatrices } from "./matrixApi";
 
@@ -72,7 +73,7 @@ export function useConfirmDeletion() {
       title: `Удалить ${kind} «${name}»?`,
       content,
       okText: "Удалить",
-      okButtonProps: { danger: true },
+      ...destructiveConfirm(true),
       cancelText: "Отмена",
       onOk: () =>
         run().then(

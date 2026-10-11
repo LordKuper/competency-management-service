@@ -15,6 +15,7 @@ import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
 import { AppModal } from "../../app/AppModal";
 import { describeApiError } from "../../app/apiErrors";
+import { destructiveConfirm } from "../../app/destructiveConfirm";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { useFormSubmit } from "../../app/useFormSubmit";
@@ -94,7 +95,7 @@ export function UnitPositionsModal({ unit, onClose }: UnitPositionsModalProps) {
       title: `Исключить «${position.name}» из перечня?`,
       content: `Сотрудников подразделения и дочерних с этой должностью: ${employeeCount}. Их должность не изменится.`,
       okText: "Исключить",
-      okButtonProps: { danger: true },
+      ...destructiveConfirm(true),
       cancelText: "Отмена",
       onOk: () =>
         remove(position.positionId).then(() => undefined, reportFailure),

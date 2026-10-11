@@ -5,6 +5,7 @@ import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { describeApiError } from "../../app/apiErrors";
+import { destructiveConfirm } from "../../app/destructiveConfirm";
 import { usersQueryKey } from "../users/usersApi";
 import type { EmployeeAction } from "./EmployeeCard";
 import { EmployeeImpactList } from "./EmployeeImpactList";
@@ -100,7 +101,7 @@ export function useEmployeeLifecycle() {
           title: `${wording.title} «${employee.fullName}»?`,
           content,
           okText: wording.okText,
-          okButtonProps: { danger: action === "delete", disabled: isRefused },
+          ...destructiveConfirm(action === "delete", { disabled: isRefused }),
           cancelText: "Отмена",
           onOk: async () => {
             try {
