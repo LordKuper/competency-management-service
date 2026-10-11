@@ -20,6 +20,7 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 | F-1 | audit | Архитектор записал файл своей памяти, хотя payload аудита требовал только чтение | — |
 | F-2 | audit | Ротация журнала решений перед делегированием audit выполнена после запуска скилла аудита, а не до | — |
 | F-3 | impl | Gate impl требует чистый typecheck, который ломают тесты при смене контракта | — |
+| F-4 | impl | Dev поднял временную PostgreSQL для проверки, хотя правило проекта запрещает scratch-БД в impl | — |
 
 ## F-1 — Архитектор записал файл своей памяти, хотя payload аудита требовал только чтение
 
@@ -43,4 +44,12 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **Surface**: rule — `asd-phase-impl.md` step 9 (build + lint) vs запрет dev править тесты; `custom-coding-rules.md` «Verification depth in impl»
 - **What happened**: Task 2 сменила вход публичного контракта; `lint`/`build` web запускают typecheck и по тестам, две фикстуры перестали компилироваться, а dev не вправе их править.
 - **Impact**: Пересмотр plan посреди impl (Test-only Task 10) и лишний диспатч tester'а.
+- **Refs**: —
+
+## F-4 — Dev поднял временную PostgreSQL в impl вопреки правилу проекта
+
+- **Phase**: impl
+- **Surface**: agent — `asd-dev-critical` (Task 17); rule `.asd/project/custom-coding-rules.md` «Verification depth in impl» («No scratch database»)
+- **What happened**: Для проверки отказов удаления dev запустил собственный контейнер PostgreSQL с данными и удалил его после проверки; том пользователя не затронут.
+- **Impact**: Лишнее время impl на проверку, которая принадлежит impl-test; правило проекта нарушено, хотя без вреда данным.
 - **Refs**: —

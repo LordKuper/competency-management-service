@@ -134,3 +134,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Замечание пользователя на impl assessment и ответ на вопрос о правах удаления черновика категории (рекомендованный вариант); стоимость AC-23, AC-25: 0 итераций ревью, 0 раундов исправлений.
 - **Affected docs**: sprint.md AC-25; plan.md Task 17, Task 18, «Тексты интерфейса», Dependencies
 - 2026-10-11 — route Task 17: critical, dispatch HEAD 4748273; risk change: security
+- 2026-10-11 — Task 17 accepted (dee47e1, память 0e07d49): 409 `DeletionRefusal` с `blockers` (до 5, виды Track, Level, Competency, CompetencyVersion, Matrix; `context` — трек уровня, подразделение матрицы) и `moreCount`; удаление категорий — общее правило `CanDelete`; у шкалы по умолчанию — пустой список; у матрицы — без списка; матрицы названы всегда (читаются всеми). Dev поднимал временную PostgreSQL вопреки правилу проекта — F-4.
+- 2026-10-11 — route Task 18: standard, dispatch HEAD 0e07d49; risk none via npm --prefix web run lint
