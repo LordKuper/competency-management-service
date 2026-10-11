@@ -117,3 +117,5 @@
 {"op":"close","id":"asd-architect impl#1","kind":"dispatch","parent":"impl#1","start":"2026-10-11T14:56:05.353Z","end":"2026-10-11T15:09:45.330Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"default","model":"opus"}}
 {"op":"open","id":"wait ui texts dnd","kind":"user-wait","parent":"impl#1","start":"2026-10-11T15:10:01.212Z","attrs":{"gate":"ui texts"}}
 {"op":"close","id":"wait ui texts dnd","kind":"user-wait","parent":"impl#1","start":"2026-10-11T15:10:01.212Z","end":"2026-10-11T15:14:23.473Z","outcome":"done","attrs":{"gate":"ui texts"}}
+{"op":"open","id":"Task 20","kind":"dispatch","parent":"impl#1","start":"2026-10-11T15:14:23.962Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 20","kind":"dispatch","parent":"impl#1","start":"2026-10-11T15:14:23.962Z","end":"2026-10-11T15:30:02.392Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
