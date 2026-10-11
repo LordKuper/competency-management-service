@@ -14,8 +14,6 @@ namespace Competency.OrgStructure;
 /// read the full projection and change employees, under the tree lock and with <c>If-Match</c>.
 /// Dismissal and deletion cascade to the units the employee heads and to the bound account in the same transaction,
 /// and administrators preview exactly those changes first. A transfer likewise takes the employee off the headship of the unit they leave.
-/// A new position, and any position after a transfer, must be active and allowed in the unit or a unit above it; a save that changes
-/// neither leaves an earlier position as it is, even if it has since been deactivated or taken off the list.
 /// </summary>
 internal static class EmployeeEndpoints
 {

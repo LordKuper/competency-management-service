@@ -10,7 +10,7 @@ namespace Competency.OrgStructure;
 /// <summary>
 /// The API of the positions allowed in a unit. Any signed-in user reads a visible unit's own and inherited positions;
 /// only global administrators change the unit's own list, under the tree lock, so an employee is never saved with a position
-/// taken off the list at the same moment. Taking a position off the list deletes the row and leaves the employees' positions as they are.
+/// taken off the list at the same moment.
 /// </summary>
 internal static class OrgUnitPositionEndpoints
 {

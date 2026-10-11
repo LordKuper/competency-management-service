@@ -14,9 +14,6 @@ internal sealed record EmployeeRequest
 
     public string? MiddleName { get; init; }
 
-    /// <summary>
-    /// The position from the catalogue; checked against the unit when it or the unit changes.
-    /// </summary>
     public required Guid PositionId { get; init; }
 
     public required Guid OrgUnitId { get; init; }
