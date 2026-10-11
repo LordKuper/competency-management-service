@@ -101,7 +101,11 @@ export function useEmployeeLifecycle() {
           title: `${wording.title} «${employee.fullName}»?`,
           content,
           okText: wording.okText,
-          ...destructiveConfirm(action === "delete", { disabled: isRefused }),
+          ...destructiveConfirm(
+            action === "delete",
+            { disabled: isRefused },
+            action !== "rehire",
+          ),
           cancelText: "Отмена",
           onOk: async () => {
             try {
