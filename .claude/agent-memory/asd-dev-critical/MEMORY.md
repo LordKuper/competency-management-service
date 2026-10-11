@@ -47,3 +47,4 @@
 - [Typed problem extensions](project_typed-problem-extension-facts.md) — ProblemDetails subclass + Produces<T> for typed 409, composable SqlQuery ids, scratch PG and a copied login user
 - [Matrix workflow facts](project_matrix-workflow-facts.md) — same-column filtered indexes collapse unless named, ef migrations remove needs a DB, multi-heredoc bash breaks
 - [EF save-batch ordering](project_ef-save-batch-ordering-facts.md) — unique-index swap cycle, FK error before 412, name check blind to tracked drafts, enum ceilings, trailer -m
+- [Scripted insert orphans a summary](project_scripted-insert-doc-orphan.md) — inserting before a signature moves its XML doc onto the new member; anchor on `}` or `/// <summary>`
