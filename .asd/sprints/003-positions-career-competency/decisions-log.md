@@ -72,3 +72,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Производные тексты интерфейса и серверные сообщения Task 2, 4, 5, 7, 8, 9 приняты как есть; названия 12 категорий — с заглавной буквы; признак `isActive` учётной записи HR в `GET /api/v1/career/org-units/{id}/hr` показывается только глобальному администратору (запрос изменения); цвета уровней матрицы остаются в `matrix.css`. Пользователь пришлёт ещё замечания — оценка impl не завершена.
 - **Rationale**: Ответы пользователя на гейте impl assessment.
 - **Affected docs**: src/Competency.CareerFramework (GET HR), web/src/features/org-structure (окно и строка HR)
+
+## 2026-10-11 — impl assessment: navigation change request
+
+- **Decision**: Меню шапки: первый пункт «Оргструктура», затем «Карьерная модель», остальные пункты («Пользователи», «Должности», «Журнал») — в пункте «Администрирование» (виден только тем, кому доступен хотя бы один вложенный пункт). Пересматривает раздел «Меню» утверждённых «Текстов интерфейса» plan; новый текст «Администрирование».
+- **Rationale**: Замечание пользователя на гейте impl assessment; критерии AC не меняются (AC-19 — экраны и меню по ролям).
+- **Affected docs**: plan.md «Тексты интерфейса» → «Меню»; на design-promote — docs/ux/app-shell.html
+- 2026-10-11 — route impl assessment change 1: critical, dispatch HEAD 4a13cec; risk change: security
+- 2026-10-11 — route impl assessment change 2: standard, dispatch HEAD 4a13cec; risk none via npm --prefix web run lint
