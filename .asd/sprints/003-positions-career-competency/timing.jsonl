@@ -71,3 +71,5 @@
 {"op":"close","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-11T11:00:42.891Z","end":"2026-10-11T11:05:10.373Z","outcome":"done","attrs":{"gate":"impl assessment"}}
 {"op":"open","id":"wait scope amendment UI","kind":"user-wait","parent":"impl#1","start":"2026-10-11T11:05:10.438Z","attrs":{"gate":"new or changed scope"}}
 {"op":"close","id":"wait scope amendment UI","kind":"user-wait","parent":"impl#1","start":"2026-10-11T11:05:10.438Z","end":"2026-10-11T11:06:23.703Z","outcome":"done","attrs":{"gate":"new or changed scope"}}
+{"op":"open","id":"Task 13","kind":"dispatch","parent":"impl#1","start":"2026-10-11T11:06:34.853Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 13","kind":"dispatch","parent":"impl#1","start":"2026-10-11T11:06:34.853Z","end":"2026-10-11T11:11:22.108Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
