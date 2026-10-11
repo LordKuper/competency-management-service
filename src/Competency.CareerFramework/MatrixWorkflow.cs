@@ -68,11 +68,11 @@ internal sealed class MatrixWorkflow(
             _ => false,
         };
         var returnedWithChanges = version.Status == MatrixVersionStatus.Returned
-            && await context.Set<MatrixVariant>()
-                .Where(variant => variant.VersionId == version.Id)
-                .OrderByDescending(variant => variant.Number)
-                .Select(variant => variant.Kind)
-                .FirstOrDefaultAsync(cancellationToken) == MatrixVariantKind.Approver;
+            && await context.Set<MatrixDecision>()
+                .Where(decision => decision.VersionId == version.Id && decision.Kind == MatrixDecisionKind.Returned)
+                .OrderByDescending(decision => decision.Sequence)
+                .Select(decision => decision.VariantNumber)
+                .FirstOrDefaultAsync(cancellationToken) is not null;
         return new MatrixVersionState(turn, isTurnHolder, returnedWithChanges, ActionsOf(version.Status, isTurnHolder, returnedWithChanges));
     }
 
