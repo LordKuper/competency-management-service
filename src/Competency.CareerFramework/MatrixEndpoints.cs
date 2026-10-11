@@ -147,7 +147,9 @@ internal static class MatrixEndpoints
     /// <summary>
     /// Deletes a matrix none of whose versions was ever published, with its version in work and that version's variants and decisions,
     /// each row journaled; only the head of the matrix unit or a global administrator may. Such a matrix has one version, the one in work,
-    /// and <c>If-Match</c> carries that version's version, because the matrix row itself never changes.
+    /// and <c>If-Match</c> carries that version's version, because the matrix row itself never changes. <c>If-Match</c> is checked before
+    /// anything is removed: a stale version would delete no version row, and the matrix delete in the same batch would then break the
+    /// version's foreign key before EF counts the rows. The matrix lock keeps the versions read here current.
     /// </summary>
     private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> DeleteAsync(
         Guid id,
@@ -175,11 +177,9 @@ internal static class MatrixEndpoints
             return Rejection.Conflict(PublishedMessage);
         }
 
-        // Checked before the save: a stale version deletes no version row, and the matrix delete in the same batch then breaks the
-        // version's foreign key before EF counts the rows. The matrix lock keeps the versions read here current.
-        if (versions.Any(version => version.Version != ifMatch.Version))
+        foreach (var version in versions)
         {
-            return TypedResults.Problem(statusCode: StatusCodes.Status412PreconditionFailed);
+            ifMatch.ApplyTo(context, version);
         }
 
         var versionIds = versions.Select(version => version.Id).ToList();
@@ -193,11 +193,7 @@ internal static class MatrixEndpoints
             store.RemoveHistoryRow(decision, $"{decision.VersionId},{decision.Sequence}");
         }
 
-        foreach (var version in versions)
-        {
-            ifMatch.ApplyTo(context, version);
-            context.Remove(version);
-        }
+        context.RemoveRange(versions);
 
         context.Remove(matrix);
         await context.SaveChangesAsync(cancellationToken);
