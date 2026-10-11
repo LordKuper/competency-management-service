@@ -189,3 +189,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — test-fix D-1…D-4 accepted (3ed0b25, 23c909a, a2ec2a5, 7c5912a): перестановка уровней — отдельное сохранение на каждый перемещённый уровень; `matrix_version_decisions.kind` — varchar(32), миграция WidenMatrixDecisionKind; удаление матрицы — проверка If-Match до удаления зависимых строк; проверка уникальности учитывает изменённые в запросе записи (утверждение трека и публикация матрицы)
 - 2026-10-12 — memory-fix D-5, D-6 (04864f3): устаревшие факты о `next_level_ids` и поле `position` убраны из памяти asd-dev-critical; статусы D-5, D-6 — fixed (оркестратор)
 - 2026-10-12 — impl test-fix: defects D-1, D-2, D-3, D-4, D-5, D-6 resolved; gate: Release 0/0, web lint и build чисты
+- 2026-10-12 — route impl-test entry 2: critical, dispatch HEAD 45a0e1f; risk change: migration, change: lock ordering
