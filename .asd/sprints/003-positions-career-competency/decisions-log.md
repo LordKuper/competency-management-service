@@ -110,3 +110,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Прочтение замечаний принято пользователем с уточнением о дублирующих фильтрах; стоимость AC-19, AC-23: 0 итераций ревью, 0 раундов исправлений; физическое удаление категории — ещё одно уточнение принципа `stack.html` на design-promote.
 - **Affected docs**: sprint.md AC-23, AC-24; plan.md Task 13, Task 14, «Тексты интерфейса», Dependencies
 - 2026-10-11 — route Task 13: critical, dispatch HEAD f377000; risk change: public contract
+- 2026-10-11 — Task 13 accepted (8574f17): `DELETE /career/categories/{id}` (администратор и любой HR, 409 при ссылках компетенций и истории версий), восемь фильтров списков (точное совпадение подразделения, без дочерних); фильтры `/approvals` и `/drafts` — в памяти после полного списка (ponytail-комментарий, списки короткие); контракт аддитивный, web typecheck чист
+- 2026-10-11 — route Task 14: standard, dispatch HEAD 8574f17; risk none via npm --prefix web run lint
