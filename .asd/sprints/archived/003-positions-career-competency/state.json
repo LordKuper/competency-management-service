@@ -1,7 +1,7 @@
 {
   "sprint_id": "003-positions-career-competency",
   "branch": "sprint/003-positions-career-competency",
-  "phase": "pr",
+  "phase": "done",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -215,6 +215,13 @@
       "decision": "open PR #6 to main",
       "reason": "user: «Открыть PR»; merge after the user review",
       "evidence": "decisions-log.md 2026-10-12 PR #6"
+    },
+    {
+      "gate": "sprint-closure",
+      "decision_actor": "orchestrator",
+      "decision": "close and archive",
+      "reason": "PR #6 MERGED",
+      "evidence": "merge commit 01ff1ac6c842899123bb120ba49ab3b5ff935d26"
     }
   ],
   "task_routing": {
@@ -593,13 +600,14 @@
     }
   },
   "created_at": "2026-10-09T07:25:11.340Z",
-  "updated_at": "2026-10-11T23:02:34.771Z",
+  "updated_at": "2026-10-12T13:49:17.000Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": {
     "number": 6,
     "url": "https://github.com/LordKuper/competency-management-service/pull/6",
-    "state": "open"
+    "state": "merged",
+    "merge_commit": "01ff1ac6c842899123bb120ba49ab3b5ff935d26"
   },
-  "archived_at": null
+  "archived_at": "2026-10-12T13:49:17.000Z"
 }
