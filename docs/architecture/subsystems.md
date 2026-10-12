@@ -9,9 +9,10 @@ responsibility:
 
 | Id | Name | Role |
 |---|---|---|
-| [org-structure](./org-structure.md) | Оргструктура | Дерево подразделений и справочник сотрудников (подразделение, должность, статус «работает / не работает»); источник сведений о сотруднике для остальных подсистем |
+| [org-structure](./org-structure.md) | Оргструктура | Дерево подразделений, справочник должностей с перечнями допустимых должностей подразделений и справочник сотрудников (подразделение, должность, статус «работает / не работает»); источник сведений о сотрудниках и подразделениях для остальных подсистем |
 | [user-management](./user-management.md) | Управление пользователями | Локальные учётные записи, две роли, вход и сессия, приглашение и сброс пароля по ссылке из письма, привязка учётной записи к сотруднику, правило последнего активного администратора |
-| [audit](./audit.md) | Журнал действий | Append-only журнал изменений и событий входа, приглашений, сброса пароля и отправки писем; чтение только глобальным администратором |
+| [audit](./audit.md) | Журнал действий | Append-only журнал изменений и событий входа, приглашений, сброса пароля, отправки писем и согласования матриц; чтение только глобальным администратором |
+| [career-framework](./career-framework.md) | Карьерная модель | Профессиональные направления, карьерные треки и уровни, категории и каталог компетенций с историей версий, шкалы, версионируемые матрицы компетенций подразделений с маршрутом согласования; закрепление HR за подразделениями и роли процесса (руководитель подразделения, ответственный HR) |
 
 Общее ядро (`Competency.Platform`) и хост (`Competency.Api`) не подсистемы и в реестр не входят: их механизмы описаны в `stack.html` («Архитектурные принципы»), границы модулей — в `<id>.md`.
 
@@ -23,9 +24,10 @@ responsibility:
 C4Container
   title Калибр — подсистемы и их связи
   Container_Boundary(app, "Workload app — один процесс ASP.NET Core 10") {
-    Container(org-structure, "Оргструктура", "модуль Competency.OrgStructure", "Дерево подразделений и справочник сотрудников")
+    Container(org-structure, "Оргструктура", "модуль Competency.OrgStructure", "Дерево подразделений, справочник должностей и справочник сотрудников")
     Container(user-management, "Управление пользователями", "модуль Competency.UserManagement", "Учётные записи и роли, вход и сессия, приглашение и сброс пароля по ссылке из письма")
     Container(audit, "Журнал действий", "модуль Competency.Audit", "Append-only журнал изменений и событий")
+    Container(career-framework, "Карьерная модель", "модуль Competency.CareerFramework", "Справочники карьерной модели, матрицы компетенций и их согласование, закрепление HR и роли процесса")
     Container(platform-core, "Платформенное ядро", "Competency.Platform и хост Competency.Api", "Миграции, отправка почты, лимиты частоты, общие типы API")
   }
   ContainerDb(postgres, "PostgreSQL 18.6", "workload db", "Схема приложения и журнал audit_events")
@@ -36,9 +38,13 @@ C4Container
   Rel(org-structure, audit, "Пишет изменения", "атрибут Audited через Platform")
   Rel(user-management, audit, "Пишет изменения и события", "атрибут Audited и IAuditWriter через Platform")
   Rel(user-management, platform-core, "Отправляет письма после фиксации", "MailSender")
+  Rel(career-framework, org-structure, "Читает подразделения, руководителей и сотрудников, берёт блокировку дерева", "порт IEmployeeDirectory")
+  Rel(career-framework, user-management, "Читает учётные записи", "порт IUserDirectory")
+  Rel(career-framework, audit, "Пишет изменения и события", "атрибут Audited и IAuditWriter через Platform")
   Rel(org-structure, postgres, "Читает и пишет", "общий AppDbContext")
   Rel(user-management, postgres, "Читает и пишет", "общий AppDbContext")
   Rel(audit, postgres, "Читает и пишет", "общий AppDbContext")
+  Rel(career-framework, postgres, "Читает и пишет", "общий AppDbContext")
   Rel(platform-core, postgres, "Применяет миграции при старте", "EF Core и Npgsql")
   Rel(platform-core, smtp-relay, "Отправляет письма", "SMTP через MailKit")
 ```
