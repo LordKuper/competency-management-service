@@ -258,3 +258,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — design-promote: требования и UX-документы закоммичены (2616d71); memory-fix asd-ux (идентификаторы спринта убраны)
 - 2026-10-12 — impl assessment approved (user): Task 22 (7fe1d74) — не больше двух видимых действий строки, остальные в «…» (aria-label «Действия с «{название}»»), «Шкал пока нет», «Треков пока нет», подменю «Администрирование» в `surface-inverse`; тексты внесены в plan «Тексты интерфейса»
 - 2026-10-12 — route impl-test entry 7: standard, dispatch HEAD 7fe1d74; risk none via npm --prefix web test
+- 2026-10-12 — impl-test entry 7: оркестратор уточнил строку Manual verification AC-19 (меню «…» строки — светлый `dropdown-item` по DESIGN.md, тёмное — только подменю «Администрирование» в шапке) и HEAD в Suite run
+- 2026-10-12 — impl-test entry 7 smoke check: Manual verification п.6 (AC-19: меню «…», подменю «Администрирование», пустые таблицы) — pass, пользователь
+- 2026-10-12 — impl-test: impacted set green (полный web-набор по предохранителю: 369/369; backend не затронут), 15/0 tests (entry 7)
