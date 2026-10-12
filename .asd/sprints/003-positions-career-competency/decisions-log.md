@@ -229,3 +229,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — review-fix wave-3/iter-01 tester chain (a533b84, память 5c26483): тесты приведены к намеренным изменениям; web lint чист, vitest 301/301
 - 2026-10-12 — impl fix for wave-3/iter-01: findings resolved — combined F1–F7, external F1–F9; gate: Release 0/0, web lint и build чисты
 - 2026-10-12 — route impl-test entry 5: critical, dispatch HEAD bd9e42d; risk change: public contract (аддитивные поля и параметры списков справочников, флаги прав)
+- 2026-10-12 — impl-test entry 5: impacted set green (полный набор по предохранителю: backend 509/509, web 343/343), +22 backend / +42 web тестов; новых D-N нет; смоук-проверка новой строки Manual verification AC-24 (фильтры-справочники) не выполнена — у пользователя сбой запуска API под отладчиком (Internal CLR error 0x80131506; `dotnet run` у оркестратора стартует), строка переносится на следующий зелёный вход
+- 2026-10-12 — user decision (new or changed scope): AC-26 — пагинатор виден всегда во всех списках с постраничным выводом (и пустой список, и одна страница); вариант «Только видимость»: «Ждут моего согласования» и «Черновые записи» остаются целиком; Task 21, волна плана 17; floor_base=wave-3/1; latched волны 3 очищен
+- 2026-10-12 — route Task 21: standard, dispatch HEAD c3cb9b3; risk none via npm --prefix web test

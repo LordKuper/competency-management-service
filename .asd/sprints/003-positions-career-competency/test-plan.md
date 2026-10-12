@@ -15,7 +15,7 @@ responsibility:
 | 2 | 165dc5420ce614ad26d4e615a7919a68b85ce338 | delta since entry 1 |
 | 3 | 637c04f50dea52a8503f5a92524de8eb429ff850 | delta since entry 2 |
 | 4 | e10a343048d0504ad36453b6e7ac12c3c68b6f12 | delta since entry 3 |
-| 5 |  | delta since entry 4 |
+| 5 | c3cb9b3f998c73f137e08d0237caf18adbed8b23 | delta since entry 4 |
 
 Строки повествования записи 1 — в `test-plan.entry-01.md`, записи 2 — в `test-plan.entry-02.md`, записи 3 — в `test-plan.entry-03.md`, записи 4 — в `test-plan.entry-04.md`.
 
