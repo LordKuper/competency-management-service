@@ -8,7 +8,7 @@ type EmployeeFormValues = Partial<EmployeeInput>;
 
 interface EmployeeFormProps {
   initialValues: EmployeeFormValues;
-  /** The position the employee holds now; omitted for a new employee. */
+  /** The position the employee holds now, kept as a choice only while the unit stays the employee's; omitted for a new employee. */
   position?: { id: string; name: string };
   /** E-mail of the employee's account, shown without a way to change it; null means no account, omitted hides the row. */
   email?: string | null;
@@ -74,7 +74,10 @@ export function EmployeeForm({
         label="Должность"
         rules={[{ required: true, message: "Выберите должность" }]}
       >
-        <PositionSelect orgUnitId={orgUnitId} current={position} />
+        <PositionSelect
+          orgUnitId={orgUnitId}
+          current={orgUnitId === initialValues.orgUnitId ? position : undefined}
+        />
       </Form.Item>
       {email !== undefined && (
         <Form.Item

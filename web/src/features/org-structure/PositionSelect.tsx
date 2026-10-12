@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Select } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError } from "../../api/ApiError";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
@@ -18,6 +18,11 @@ interface PositionOption {
   label: string;
 }
 
+/** A position added from the form, with the unit it was added to. */
+interface AddedPosition extends PositionOption {
+  orgUnitId: string;
+}
+
 interface PositionSelectProps {
   /** Element id that associates the form item label with the control; supplied by the surrounding form item. */
   id?: string;
@@ -27,7 +32,7 @@ interface PositionSelectProps {
   onChange?: (value: string | undefined) => void;
   /** The unit chosen in the form, whose own and inherited lists the choice comes from. */
   orgUnitId?: string;
-  /** The position the employee holds now, listed by name even when it is no longer allowed or active, so an unrelated edit keeps it. */
+  /** The position the employee holds now, listed by name even when it is no longer allowed or active, so an unrelated edit keeps it; the caller passes it only while the unit is unchanged. */
   current?: { id: string; name: string };
 }
 
@@ -41,7 +46,8 @@ function describeAddFailure(error: unknown): string {
 /**
  * Searchable choice of the active positions allowed in the chosen unit. When the typed name matches none of them, the list
  * offers to add it: the server finds or creates the position, allows it in the unit and the form picks it, without leaving the form.
- * The entry is an ordinary option, so it is reached with the arrow keys like any other. The server still decides whether the choice is allowed.
+ * The entry is an ordinary option, so it is reached with the arrow keys like any other. A choice the newly chosen unit does not
+ * allow is cleared once its list has loaded. The server still decides whether the choice is allowed.
  */
 export function PositionSelect({
   id,
@@ -53,7 +59,7 @@ export function PositionSelect({
   const queryClient = useQueryClient();
   const { message } = App.useApp();
   const [search, setSearch] = useState("");
-  const [added, setAdded] = useState<PositionOption>();
+  const [added, setAdded] = useState<AddedPosition>();
   const { data, error, isFetching } = useQuery({
     ...unitPositionsQuery(orgUnitId ?? ""),
     enabled: orgUnitId !== undefined,
@@ -66,8 +72,8 @@ export function PositionSelect({
           body: { name },
         }),
       ),
-    onSuccess: (position) => {
-      setAdded({ value: position.id, label: position.name });
+    onSuccess: (position, { unitId }) => {
+      setAdded({ value: position.id, label: position.name, orgUnitId: unitId });
       onChange?.(position.id);
     },
     onError: (failure) => {
@@ -87,7 +93,7 @@ export function PositionSelect({
   }
   for (const extra of [
     current && { value: current.id, label: current.name },
-    added,
+    added?.orgUnitId === orgUnitId && added,
   ]) {
     if (extra && !options.has(extra.value)) options.set(extra.value, extra);
   }
@@ -98,6 +104,10 @@ export function PositionSelect({
       (option) => option.label.toLocaleLowerCase() === name.toLocaleLowerCase(),
     );
   const choices = [...options.values()];
+  const isValueOffered = value === undefined || options.has(value);
+  useEffect(() => {
+    if (data && !isValueOffered) onChange?.(undefined);
+  }, [data, isValueOffered, onChange]);
   if (orgUnitId !== undefined && isNew) {
     choices.push({ value: ADD_VALUE, label: `Добавить должность «${name}»` });
   }
