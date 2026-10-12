@@ -1,7 +1,7 @@
 {
   "sprint_id": "003-positions-career-competency",
   "branch": "sprint/003-positions-career-competency",
-  "phase": "impl-review",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -399,6 +399,12 @@
       "tier": "critical",
       "reason": "risk:public contract",
       "resolved_model": "sonnet"
+    },
+    "review-fix wave-3/iter-02": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
     }
   },
   "skipped_phases": [],

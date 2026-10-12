@@ -239,3 +239,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — user decision (FAIL escalation): external 1–3 приняты к исправлению (блокировка правки на время сохранения матрицы; повторное сохранение нового трека без повторного создания; порядок уровней из снимка у опубликованной и архивной матрицы)
 - 2026-10-12 — user decision (combined F1): имена категории, направления и шкалы — аддитивно в `CompetencyResponse`, отдельные чтения имён в таблице компетенций убираются
 - 2026-10-12 — route impl review-fix: review_fixes_pending = wave-3/iter-02 (combined F1–F3, external 1–3)
+- 2026-10-12 — route review-fix wave-3/iter-02: critical, dispatch HEAD 2134391; risk change: public contract (имена в CompetencyResponse), dev chain: external 1–3, combined F1, F2; tester chain: combined F3
