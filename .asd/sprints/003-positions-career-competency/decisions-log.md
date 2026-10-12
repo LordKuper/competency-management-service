@@ -249,3 +249,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — impl-review wave-3/iter-03: combined APPROVE, external APPROVE — волна 3 закрыта, reviewer DoD выполнен по всем волнам
 - 2026-10-12 — route impl-review wave-3/iter-03 suite: standard, dispatch HEAD 6d3e68f; risk none via full suite
 - 2026-10-12 — impl-review terminal full-suite gate green (a748d7c, HEAD f278872): backend 511/511, web 354/354, lint, build — reviewer DoD met; green handoff пройден адаптивно (оркестратор: все волны одобрены, ручные проверки pass, открытых выборов нет) → NEXT: design-promote
+- 2026-10-12 — design-promote (lite): декомпозиция — подсистема `career-framework` (утверждена пользователем на plan 2026-10-09), изменения `org-structure`, `user-management`, Platform; design-system gate пройден (DESIGN.md, design-system.html, accessibility.html есть); диспатч asd-architect, asd-ba, asd-ux

@@ -289,3 +289,7 @@
 {"op":"close","id":"suite impl-review#1","kind":"suite","parent":"impl-review wave-3/iter-03 suite","start":"2026-10-12T11:13:26.234Z","end":"2026-10-12T11:16:09.057Z","outcome":"done","attrs":{"scope":"full"}}
 {"op":"close","id":"impl-review wave-3/iter-03 suite","kind":"dispatch","parent":"impl-review#5","start":"2026-10-12T11:13:09.948Z","end":"2026-10-12T11:16:28.059Z","outcome":"done","attrs":{"agent":"asd-tester","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"impl-review#5","kind":"phase","parent":null,"start":"2026-10-12T11:08:13.931Z","end":"2026-10-12T11:16:28.059Z","outcome":"done","attrs":{}}
+{"op":"open","id":"design-promote#1","kind":"phase","parent":null,"start":"2026-10-12T11:16:57.330Z","attrs":{}}
+{"op":"open","id":"design-promote architect","kind":"dispatch","parent":"design-promote#1","start":"2026-10-12T11:17:06.880Z","attrs":{"agent":"asd-architect"}}
+{"op":"open","id":"design-promote ba","kind":"dispatch","parent":"design-promote#1","start":"2026-10-12T11:17:06.944Z","attrs":{"agent":"asd-ba"}}
+{"op":"open","id":"design-promote ux","kind":"dispatch","parent":"design-promote#1","start":"2026-10-12T11:17:07.008Z","attrs":{"agent":"asd-ux"}}

@@ -177,6 +177,14 @@
       "reason": "all 3 review waves approved by combined and external; terminal full suite green (backend 511/511, web 354/354, lint, build); no unresolved findings or flagged choices; manual verification rows all pass",
       "evidence": "decisions-log.md 2026-10-12 terminal suite green; test-plan.md Suite run",
       "artifact_revision": "HEAD a748d7c"
+    },
+    {
+      "gate": "decomposition",
+      "decision_actor": "orchestrator",
+      "decision": "promote approved subsystem career-framework (module Competency.CareerFramework); org-structure and user-management changed (positions, unit HR, IUserDirectory); platform If-Match rule",
+      "reason": "subsystem approved by the user at plan (hard gate, 2026-10-09); no further new subsystem or boundary",
+      "evidence": "decisions-log.003.md 2026-10-09 plan decisions: subsystem",
+      "artifact_revision": "HEAD d14646a"
     }
   ],
   "task_routing": {
