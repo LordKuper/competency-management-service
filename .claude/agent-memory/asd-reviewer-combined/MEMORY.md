@@ -8,3 +8,4 @@
 - [Wave-review probes](feedback_wave-review-probes.md) — decisions-log Open, "на ревью" and reversed choices, unused test members, per-row lookups, body comments, AcN_ prefixes, eager-guard callers
 - [Doc entries on a code delta](feedback_doc-entries-on-code-delta.md) — memory md files un-gate the Documentation rows; read the doc-comment entry literally, report language follows language.docs, no Edit tool
 - [Frontend wave probes](feedback_frontend-wave-probes.md) — web/ wave: unused exports and props, secure-context APIs, raw px, plurals, per-id name reads, picker exclude, antd d.ts, stale memory
+- [Scope-amendment UI probes](feedback_scope-amendment-ui-probes.md) — small web/ delta: JSDoc label examples vs approved text, component test hosting table suites with copied helpers
