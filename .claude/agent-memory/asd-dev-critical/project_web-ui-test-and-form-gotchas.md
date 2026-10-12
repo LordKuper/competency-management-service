@@ -13,6 +13,7 @@ Facts that cost a round while building the SPA shell and the account screens, no
 - antd `Form.Item` injects `id`, `value`, `onChange` into its single child. A custom control (here `EmployeePicker`) must forward `id` to the real input, otherwise the label has no associated control (testing-library: "no form control was found associated to that label").
 - `npm run lint` cannot take arguments (they go to the typecheck step). For Biome format/import-order diffs run `npx biome ci --colors=off --error-on-warnings <paths>` inside `web/` and hand-apply the shown diff; its import sort puts `Avatar, theme as antdTheme, Button` (not by the alias).
 - A Vite dev server started for a curl check: find the PID with `netstat -ano | grep :<port>` and stop it with `taskkill //PID <pid> //F //T`.
+- antd 6.6.5 Select: the top-level `searchValue`, `onSearch`, `filterOption` and `optionFilterProp` are deprecated in `@rc-component/select`; pass them in the `showSearch` object (`showSearch={{ filterOption: false, onSearch }}` for server search). Under `noUncheckedIndexedAccess`, `bytes[6] & 0x0f` on a `Uint8Array` fails the typecheck; set bytes with `.map((byte, index) => ...)`.
 
 **Why:** each was found only by running the throwaway scenarios or the linter.
 

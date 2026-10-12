@@ -13,12 +13,12 @@
 - [git commit --only option order](project_git-commit-only-option-order.md) — options incl. `-F -` go before `--`; a `git rm`ed path breaks `git add`, list it only in the commit
 - [.NET build-time host gotchas](project_dotnet-build-time-host-gotchas.md) — GetDocument.Insider runs hosted services; ef skips Program.cs; pin EF Relational; PrivateAssets keeps Design out of publish
 - [ASP.NET platform pipeline gotchas](project_aspnet-platform-pipeline-gotchas.md) — fallback-policy reach, EF categories that log exception text, OriginalValue semantics, no-DB test tricks
-- [Web toolchain Windows notes](project_web-toolchain-windows-notes.md) — slow first vitest run, NO_COLOR not --colors, --check LF vs autocrlf, staged-on-failed-check
+- [Web toolchain Windows notes](project_web-toolchain-windows-notes.md) — slow first vitest, NO_COLOR, --check LF, biome|tail hides diffs, tsc covers tests
 - [EF raw SQL and OpenAPI contract gotchas](project_ef-raw-sql-and-openapi-contract-gotchas.md) — Sql() needs its own `;`, `$$` vs node replace, int `number|string`, AsParameters names, UTC offsets
 - [Npgsql search and result-type gotchas](project_npgsql-search-and-result-type-gotchas.md) — 2-arg ILike has no escape, SqlQuery CTE composes, Conflict<T> is not problem+json, required init props
 - [Scratch host without PostgreSQL](project_scratch-host-without-postgres.md) — InMemory logic host with stubbed raw SQL; Npgsql SQL-capture host with a fake DbCommand and transaction
 - [Identity on a plain DbContext](project_identity-efcore-store-gotchas.md) — stock user store marks all columns modified; users table suffices; HasOne(string) is a nav name
-- [Web UI test and form gotchas](project_web-ui-test-and-form-gotchas.md) — jsdom ResizeObserver stubbed in setup.ts, router singleton vs resetModules, Form.Item id, biome diff trick
+- [Web UI test and form gotchas](project_web-ui-test-and-form-gotchas.md) — jsdom ResizeObserver, router singleton, Form.Item id, biome diff trick, showSearch object
 - [Web org-structure UI facts](project_web-org-structure-ui-facts.md) — antd Tree/TreeSelect/Table in jsdom, Escape closes Modal, edit draft vs refetch, form reset after 412, throwaway test lint
 - [Packaging offline verification](project_packaging-offline-verification.md) — fresh-clone publish, npm linux dry-run, yaml parse, Secret template kept out of deploy/k8s
 - [Docker spike recipe](project_docker-spike-recipe.md) — Git Bash docker path mangling, 10/min login limit, parallel curl pitfalls, scratch runner flags
