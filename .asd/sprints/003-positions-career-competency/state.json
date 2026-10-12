@@ -1,7 +1,7 @@
 {
   "sprint_id": "003-positions-career-competency",
   "branch": "sprint/003-positions-career-competency",
-  "phase": "design-promote",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -185,6 +185,13 @@
       "reason": "subsystem approved by the user at plan (hard gate, 2026-10-09); no further new subsystem or boundary",
       "evidence": "decisions-log.003.md 2026-10-09 plan decisions: subsystem",
       "artifact_revision": "HEAD d14646a"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "Task 22 (AC-19 conformance): row actions ≤2 visible + Dropdown, own empty-state texts for scales and nested tracks, «Администрирование» submenu background surface-inverse; plan wave 17",
+      "reason": "UX design-promote flagged choices 2–4; user: «Исправить сейчас»",
+      "evidence": "decisions-log.md 2026-10-12 Task 22; floor_base=wave-3/3"
     }
   ],
   "task_routing": {
@@ -439,6 +446,12 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "Task 22": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -514,10 +527,7 @@
             "iter-02": "4b8fc2776f4ee5b26ae56645fc32b77f7289d648",
             "iter-03": "877037fc00c2c7879db0cd59985544ba122cedb9"
           },
-          "latched": {
-            "combined": 3,
-            "external": 3
-          }
+          "latched": {}
         }
       ]
     }

@@ -23,6 +23,7 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 | F-4 | impl | Dev поднял временную PostgreSQL для проверки, хотя правило проекта запрещает scratch-БД в impl | — |
 | F-5 | impl-test | Строки Symptom дефектов содержат traceId и случайные имена — проверка stalemate по идентичности слепа | test-plan.md D-1…D-4 |
 | F-6 | impl | Review-fix: gate impl требует чистый typecheck тестов, а dev в fix mode тесты не трогает — снова понадобилась отдельная tester-цепочка вне находок | reviews/impl/wave-3/iter-01 |
+| F-7 | design-promote | UX при промоуте нашёл расхождения кода с DESIGN.md (действия строк > 2, пустые состояния, фон подменю), пропущенные impl-review по UI conformance | Task 22 |
 
 ## F-1 — Архитектор записал файл своей памяти, хотя payload аудита требовал только чтение
 
@@ -71,3 +72,11 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **What happened**: Исправления wave-3/iter-01 намеренно сменили API и пропсы; тесты перестали компилироваться, `npm run lint` красный. Находок в тест-файлах нет, но без тестера gate не пройти.
 - **Impact**: Оркестратор запускает tester-цепочку на восстановление тестов вне явного правила (как F-3 в initial mode).
 - **Refs**: reviews/impl/wave-3/iter-01
+
+## F-7 — Расхождения с DESIGN.md найдены только на design-promote
+
+- **Phase**: design-promote
+- **Surface**: rule — impl-review UI conformance (combined, external) против правил компонентов DESIGN.md («Row actions», «Messages answer what / why / what next»)
+- **What happened**: Три волны ревью одобрили веб-часть; UX при описании экранов нашёл до 5 видимых действий в строке, «Нет данных» в пустых таблицах и вероятный фон подменю antd по умолчанию.
+- **Impact**: Возврат в impl после закрытого ревью — ещё цикл impl → impl-test → impl-review.
+- **Refs**: Task 22
