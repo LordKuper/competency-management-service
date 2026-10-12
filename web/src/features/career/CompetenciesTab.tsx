@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Button,
+  Descriptions,
   Empty,
   Flex,
   Input,
+  Select,
   Skeleton,
   Space,
   Table,
@@ -12,7 +14,7 @@ import {
 import { useState } from "react";
 import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { EntryActions, entryColumns } from "./CatalogParts";
+import { CatalogStatusTag, EntryActions, entryColumns } from "./CatalogParts";
 import { COMPETENCY_TYPES, CompetencyModal } from "./CompetencyModal";
 import {
   type Competency,
@@ -22,6 +24,7 @@ import {
   competenciesQuery,
   competencyVersionsQuery,
   directionsQuery,
+  entryQuery,
   scalesQuery,
 } from "./catalogApi";
 import { choiceFilter, entryOptions, onFilterChange } from "./columnFilters";
@@ -204,6 +207,7 @@ function versionLine(version: CompetencyVersion) {
   return `Версия ${version.number} — ${DATE_TIME.format(new Date(version.changedAt))}${who}`;
 }
 
+/** The history of a competency: its versions, newest first, and the fields of the chosen one as it was saved. */
 function VersionsModal({
   competencyId,
   onClose,
@@ -214,6 +218,21 @@ function VersionsModal({
   const { data, error, isPending, refetch } = useQuery(
     competencyVersionsQuery(competencyId),
   );
+  const [number, setNumber] = useState<number>();
+  const chosen =
+    data?.find((version) => version.number === number) ?? data?.[0];
+  const category = useQuery({
+    ...entryQuery("categories", chosen?.categoryId ?? ""),
+    enabled: chosen !== undefined,
+  });
+  const direction = useQuery({
+    ...entryQuery("directions", chosen?.directionId ?? ""),
+    enabled: !!chosen?.directionId,
+  });
+  const scale = useQuery({
+    ...entryQuery("scales", chosen?.scaleId ?? ""),
+    enabled: chosen !== undefined,
+  });
 
   return (
     <AppModal open title="История версий" onCancel={onClose} footer={null}>
@@ -225,11 +244,51 @@ function VersionsModal({
         />
       )}
       {isPending && !error && <Skeleton active />}
-      <ul>
-        {data?.map((version) => (
-          <li key={version.number}>{versionLine(version)}</li>
-        ))}
-      </ul>
+      {chosen && (
+        <Space orientation="vertical" style={{ display: "flex" }}>
+          <Select
+            aria-label="Версия"
+            value={chosen.number}
+            options={data?.map((version) => ({
+              value: version.number,
+              label: versionLine(version),
+            }))}
+            onChange={setNumber}
+          />
+          <Descriptions
+            column={1}
+            items={[
+              { key: "name", label: "Название", children: chosen.name },
+              {
+                key: "description",
+                label: "Описание",
+                children: chosen.description,
+              },
+              {
+                key: "category",
+                label: "Категория",
+                children: category.data?.name,
+              },
+              {
+                key: "direction",
+                label: "Направление",
+                children: chosen.directionId ? direction.data?.name : "Общая",
+              },
+              {
+                key: "type",
+                label: "Тип",
+                children: COMPETENCY_TYPES[chosen.type],
+              },
+              { key: "scale", label: "Шкала", children: scale.data?.name },
+              {
+                key: "status",
+                label: "Статус",
+                children: <CatalogStatusTag status={chosen.status} />,
+              },
+            ]}
+          />
+        </Space>
+      )}
     </AppModal>
   );
 }

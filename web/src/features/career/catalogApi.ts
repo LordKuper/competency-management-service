@@ -141,6 +141,21 @@ export function competenciesQuery(params: CompetencyListParams) {
   });
 }
 
+/** One entry of a catalogue by its id, for the name of one that no list on the screen holds. */
+export function entryQuery(segment: CatalogSegment, id: string) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, segment, "entry", id],
+    queryFn: async () =>
+      unwrap(
+        await api.GET(
+          `/api/v1/career/${segment}/{id}` as "/api/v1/career/directions/{id}",
+          { params: { path: { id } } },
+        ),
+      ),
+    retry: false,
+  });
+}
+
 /** One competency by its id, for the name and type of one that no list on the screen holds. */
 export function competencyQuery(id: string) {
   return queryOptions({
