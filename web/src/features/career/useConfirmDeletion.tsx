@@ -26,12 +26,17 @@ const KIND_LABELS: Record<Blocker["kind"], string> = {
   Matrix: "Матрица",
 };
 
-/** «и 1 другая связанная запись» / «и 3 других связанных записи» / «и 5 других связанных записей». */
+const PLURAL = new Intl.PluralRules("ru-RU");
+
+const MORE_BLOCKERS: Record<string, string> = {
+  one: "другая связанная запись",
+  few: "других связанных записи",
+  many: "других связанных записей",
+};
+
+/** «и 1 другая связанная запись» / «и 3 других связанных записи» / «и 5 других связанных записей», by the Russian plural rules: 21 is «другая». */
 export function moreBlockersText(count: number): string {
-  if (count === 1) return "и 1 другая связанная запись";
-  const few =
-    count % 10 >= 2 && count % 10 <= 4 && ![12, 13, 14].includes(count % 100);
-  return `и ${count} других связанных ${few ? "записи" : "записей"}`;
+  return `и ${count} ${MORE_BLOCKERS[PLURAL.select(count)] ?? MORE_BLOCKERS.many}`;
 }
 
 function blockerText({ kind, name, context }: Blocker): string {
