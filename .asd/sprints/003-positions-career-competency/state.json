@@ -405,6 +405,12 @@
       "tier": "critical",
       "reason": "risk:public contract",
       "resolved_model": "opus"
+    },
+    "review-fix wave-3/iter-02 tester": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
