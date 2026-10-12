@@ -11,7 +11,7 @@ import {
   Tag,
   Typography,
 } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useEditBase } from "../../app/useEditBase";
 import { COMPETENCY_TYPES } from "./CompetencyModal";
 import {
@@ -76,6 +76,8 @@ interface MatrixEditorProps {
   changed: ChangedPlaces;
   /** Called after a save, once the cache holds the saved version. */
   onSaved: () => void;
+  /** Told whether the form holds edits that are not saved yet or are being saved, so the page holds back the transitions. */
+  onUnsavedChange: (isUnsaved: boolean) => void;
 }
 
 /**
@@ -109,6 +111,7 @@ function MatrixEditorBody({
   changed,
   noteSaveFailure,
   onSaved,
+  onUnsavedChange,
 }: MatrixEditorBodyProps) {
   const queryClient = useQueryClient();
   const isEditable = version.actions.includes("Edit");
@@ -134,6 +137,10 @@ function MatrixEditorBody({
     onError: noteSaveFailure,
     onSettled: () => invalidateMatrices(queryClient),
   });
+  const isUnsaved =
+    isEditable &&
+    (save.isPending || JSON.stringify(edited) !== JSON.stringify(base.content));
+  useEffect(() => onUnsavedChange(isUnsaved), [isUnsaved, onUnsavedChange]);
 
   const levelNames = new Map<string, string>([
     ...(catalogLevels.data?.items ?? []).map(

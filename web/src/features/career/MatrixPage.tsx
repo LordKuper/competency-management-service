@@ -198,6 +198,7 @@ export function MatrixPage() {
   const [chosenId, setChosenId] = useState<string>();
   const [session, setSession] = useState(0);
   const [dialog, setDialog] = useState<"return" | "history" | null>(null);
+  const [hasUnsaved, setHasUnsaved] = useState(false);
 
   const matrix = matrixRead.data;
   const latestVersionId = [...(versionsRead.data ?? [])].sort(
@@ -276,6 +277,11 @@ export function MatrixPage() {
   const isNextVersionOffered =
     isHead && !!matrix.publishedVersion && !matrix.inWorkVersion;
   const isBusy = transit.isPending || startVersion.isPending;
+  const transitions = TRANSITION_BUTTONS.filter((button) =>
+    version.actions.includes(button.action),
+  );
+  const canReturn = version.actions.includes("Return");
+  const isHeldBack = hasUnsaved && (transitions.length > 0 || canReturn);
 
   return (
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>
@@ -312,13 +318,11 @@ export function MatrixPage() {
         <Tag color={STATUS_COLORS[version.status]}>
           {VERSION_STATUS_LABELS[version.status]}
         </Tag>
-        {TRANSITION_BUTTONS.filter((button) =>
-          version.actions.includes(button.action),
-        ).map((button) => (
+        {transitions.map((button) => (
           <Button
             key={button.action}
             type={button.isPrimary ? "primary" : "default"}
-            disabled={isBusy}
+            disabled={isBusy || hasUnsaved}
             onClick={() =>
               transit.mutate({ version, transition: button.transition })
             }
@@ -326,8 +330,11 @@ export function MatrixPage() {
             {button.label}
           </Button>
         ))}
-        {version.actions.includes("Return") && (
-          <Button disabled={isBusy} onClick={() => setDialog("return")}>
+        {canReturn && (
+          <Button
+            disabled={isBusy || hasUnsaved}
+            onClick={() => setDialog("return")}
+          >
             {RETURN_LABEL}
           </Button>
         )}
@@ -344,6 +351,11 @@ export function MatrixPage() {
           onDeleted={() => void navigate("/career")}
         />
       </Flex>
+      {isHeldBack && (
+        <Typography.Text type="secondary">
+          Сначала сохраните изменения
+        </Typography.Text>
+      )}
       {transit.error && (
         <MatrixErrorAlert
           title="Не удалось выполнить действие"
@@ -363,6 +375,7 @@ export function MatrixPage() {
         version={version}
         changed={changed}
         onSaved={() => setSession((previous) => previous + 1)}
+        onUnsavedChange={setHasUnsaved}
       />
       {dialog === "return" && (
         <ReturnModal
