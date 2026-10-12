@@ -9,6 +9,8 @@ import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { type CatalogSegment, catalogQueryKey, entryQuery } from "./catalogApi";
 
 const PICKER_PAGE_SIZE = 20;
+/** The largest page the server gives. */
+const PAGE_SIZE_MAX = 200;
 /** Width of a column filter dropdown, in control heights. */
 export const FILTER_WIDTH_IN_CONTROLS = 11;
 
@@ -28,13 +30,16 @@ export interface PickerOption {
 
 /**
  * Server search of a catalogue as the user types, one page of the first matches by name. The chosen entry is listed by
- * its name even when the search does not return it, as one deactivated since it was chosen.
+ * its name even when the search does not return it, as one deactivated since it was chosen. The excluded entries are left
+ * out of the options, and the page grows by their number up to the largest page the server gives, so leaving them out
+ * does not shorten the list while fewer than 180 are excluded.
  */
 export function useCatalogSearch(
   segment: PickedSegment,
   value: string | undefined,
   filters: PickerFilters = {},
   isEnabled = true,
+  exclude: readonly string[] = [],
 ) {
   const [search, setSearch] = useState("");
   const text = useDebouncedValue(search.trim());
@@ -42,7 +47,7 @@ export function useCatalogSearch(
     ...filters,
     q: text || undefined,
     page: 1,
-    pageSize: PICKER_PAGE_SIZE,
+    pageSize: Math.min(PICKER_PAGE_SIZE + exclude.length, PAGE_SIZE_MAX),
   };
   const found = useQuery({
     queryKey: [...catalogQueryKey, segment, "search", query],
@@ -65,7 +70,9 @@ export function useCatalogSearch(
   const options: PickerOption[] = [
     ...(chosen.data && !isChosenListed ? [chosen.data] : []),
     ...items,
-  ].map((entry) => ({ value: entry.id, label: entry.name }));
+  ]
+    .filter((entry) => !exclude.includes(entry.id))
+    .map((entry) => ({ value: entry.id, label: entry.name }));
   return {
     search,
     setSearch,
@@ -110,6 +117,7 @@ export function CatalogSelect({
     value ?? undefined,
     filters,
     !disabled,
+    exclude,
   );
   return (
     <Select<string, PickerOption>
@@ -121,7 +129,7 @@ export function CatalogSelect({
         if (!isOpen) setSearch("");
       }}
       loading={isFetching}
-      options={options.filter((option) => !exclude.includes(option.value))}
+      options={options}
       notFoundContent={error ? describeApiError(error) : undefined}
     />
   );
