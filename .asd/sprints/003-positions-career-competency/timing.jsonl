@@ -278,3 +278,6 @@
 {"op":"close","id":"impl-test entry 6","kind":"dispatch","parent":"impl-test#7","start":"2026-10-12T10:19:21.110Z","end":"2026-10-12T11:08:13.871Z","outcome":"done","attrs":{"agent":"asd-tester-critical","tier":"critical","model":"sonnet"}}
 {"op":"close","id":"impl-test#7","kind":"phase","parent":null,"start":"2026-10-12T10:19:20.966Z","end":"2026-10-12T11:08:13.871Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-review#5","kind":"phase","parent":null,"start":"2026-10-12T11:08:13.931Z","attrs":{}}
+{"op":"open","id":"impl-review wave-3/iter-03","kind":"review-iteration","parent":"impl-review#5","start":"2026-10-12T11:08:26.782Z","attrs":{"wave":"3","iteration":"3"}}
+{"op":"open","id":"combined wave-3/iter-03","kind":"dispatch","parent":"impl-review wave-3/iter-03","start":"2026-10-12T11:08:26.849Z","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
+{"op":"open","id":"external wave-3/iter-03","kind":"external-review","parent":"impl-review wave-3/iter-03","start":"2026-10-12T11:08:26.914Z","attrs":{"model":"gpt-6.1-sol"}}
