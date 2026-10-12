@@ -344,3 +344,5 @@
 {"op":"close","id":"design-promote#1","kind":"phase","parent":null,"start":"2026-10-12T11:16:57.330Z","end":"2026-10-12T12:52:42.015Z","outcome":"interrupted","attrs":{}}
 {"op":"open","id":"design-promote#2","kind":"phase","parent":null,"start":"2026-10-12T12:52:42.083Z","attrs":{}}
 {"op":"open","id":"design-promote ux 2","kind":"dispatch","parent":"design-promote#2","start":"2026-10-12T12:52:42.326Z","attrs":{"agent":"asd-ux"}}
+{"op":"close","id":"design-promote ux 2","kind":"dispatch","parent":"design-promote#2","start":"2026-10-12T12:52:42.326Z","end":"2026-10-12T12:54:32.378Z","outcome":"done","attrs":{"agent":"asd-ux"}}
+{"op":"close","id":"design-promote#2","kind":"phase","parent":null,"start":"2026-10-12T12:52:42.083Z","end":"2026-10-12T12:54:32.378Z","outcome":"done","attrs":{}}

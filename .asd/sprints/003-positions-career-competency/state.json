@@ -1,7 +1,7 @@
 {
   "sprint_id": "003-positions-career-competency",
   "branch": "sprint/003-positions-career-competency",
-  "phase": "design-promote",
+  "phase": "retro",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -590,5 +590,6 @@
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
-  "archived_at": null
+  "archived_at": null,
+  "artifacts": {}
 }
