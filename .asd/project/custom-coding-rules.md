@@ -25,3 +25,7 @@ Put here: forbidden libraries/APIs, perf budgets (latency, memory, throughput, r
 ## Shared helper types
 
 - Helper types shared across modules (paged list response, ProblemDetails rejections, LIKE escaping, page limits) live in `Competency.Platform`; never copy them per module.
+
+## Comment self-check before commit
+
+- Before every commit, `asd-dev` and `asd-tester` search their own diff for comments inside function bodies and for references to AC or sprint in comments (`.asd/rules/code-style.md` §7, §8), and fix them before review. (`002-mail-invite-password-reset#P-2`)

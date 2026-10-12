@@ -63,7 +63,7 @@ function EmployeeActions({
           {
             key: "edit",
             icon: <EditOutlined />,
-            label: "Править",
+            label: "Изменить",
             onClick: () => onAction("edit", employee),
           },
           isDismissed

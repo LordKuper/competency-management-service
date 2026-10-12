@@ -20,9 +20,9 @@ export default defineConfig({
     },
   },
   build: {
-    // antd and its components are the bulk of the bundle (about 1.2 of 1.35 MB) and no split brings a chunk under
-    // the default 500 kB, so the limit sits just above the whole bundle to report growth of the application.
-    chunkSizeWarningLimit: 1500,
+    // antd and its components are the bulk of the bundle (about 1.54 MB) and no split brings a chunk under the
+    // default 500 kB, so the limit sits just above the whole bundle to report growth of the application.
+    chunkSizeWarningLimit: 1600,
   },
   test: {
     environment: "jsdom",

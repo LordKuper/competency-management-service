@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { App, Modal, Skeleton, Space } from "antd";
+import { App, Skeleton, Space } from "antd";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
+import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useEditBase } from "../../app/useEditBase";
 import { EmployeeForm } from "./EmployeeForm";
@@ -35,7 +36,7 @@ export function EmployeeModal({
   onSaved,
 }: EmployeeModalProps) {
   return (
-    <Modal
+    <AppModal
       open
       title={
         employeeId === undefined ? "Новый сотрудник" : "Изменение сотрудника"
@@ -56,7 +57,7 @@ export function EmployeeModal({
           onSaved={onSaved}
         />
       )}
-    </Modal>
+    </AppModal>
   );
 }
 
@@ -183,9 +184,15 @@ function EmployeeEditor({
                 firstName: existing.employee.firstName,
                 middleName: existing.employee.middleName ?? undefined,
                 orgUnitId: existing.employee.orgUnitId,
-                position: existing.employee.position,
+                positionId: existing.employee.positionId,
               }
             : { orgUnitId }
+        }
+        position={
+          existing && {
+            id: existing.employee.positionId,
+            name: existing.employee.position,
+          }
         }
         email={existing?.employee.email}
         submitLabel={existing ? "Сохранить" : "Создать"}

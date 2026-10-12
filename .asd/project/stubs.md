@@ -13,5 +13,4 @@ Persists across sprint archival.
 
 | Sprint | File:Line | Reason | Owner |
 |---|---|---|---|
-| — | — | no open stubs | — |
 

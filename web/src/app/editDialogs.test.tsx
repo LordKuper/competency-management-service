@@ -82,12 +82,17 @@ const dialogs: Dialog[] = [
       email: null,
       orgUnitId: "unit-1",
       orgUnitName: "Отдел",
+      positionId: "position-1",
       position: "Инженер",
       isActive: true,
       version,
     }),
-    serveOthers: () =>
-      fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([])),
+    serveOthers: () => {
+      fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([]));
+      fakeApi.on("GET /api/v1/org-units/unit-1/positions", () =>
+        Response.json([]),
+      );
+    },
     element: () => (
       <EmployeeModal employeeId="employee-1" onClose={noop} onSaved={noop} />
     ),

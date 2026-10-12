@@ -17,6 +17,7 @@
     <ProjectReference Include="..\..\src\Competency.Audit\Competency.Audit.csproj" />
     <ProjectReference Include="..\..\src\Competency.OrgStructure\Competency.OrgStructure.csproj" />
     <ProjectReference Include="..\..\src\Competency.UserManagement\Competency.UserManagement.csproj" />
+    <ProjectReference Include="..\..\src\Competency.CareerFramework\Competency.CareerFramework.csproj" />
   </ItemGroup>
 
 </Project>

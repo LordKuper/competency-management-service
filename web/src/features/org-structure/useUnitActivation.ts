@@ -5,6 +5,7 @@ import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { describeApiError } from "../../app/apiErrors";
+import { destructiveConfirm } from "../../app/destructiveConfirm";
 import { invalidateOrgStructure, type OrgUnit } from "./orgStructureApi";
 
 /**
@@ -42,7 +43,7 @@ export function useUnitActivation() {
           ? "Подразделение исчезнет из дерева у обычных пользователей. Деактивировать можно только подразделение без активных дочерних подразделений и работающих сотрудников. Активация вернёт всё как было."
           : "Подразделение снова появится в дереве у всех пользователей. Его родительское подразделение и руководитель должны быть активными.",
         okText: unit.isActive ? "Деактивировать" : "Активировать",
-        okButtonProps: { danger: unit.isActive },
+        ...destructiveConfirm(unit.isActive),
         cancelText: "Отмена",
         onOk: () =>
           change(unit).then(

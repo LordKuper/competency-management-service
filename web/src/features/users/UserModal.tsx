@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { App, Modal, Skeleton, Space } from "antd";
+import { App, Skeleton, Space } from "antd";
 import { ApiError } from "../../api/ApiError";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
+import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useEditBase } from "../../app/useEditBase";
 import { invalidateOrgStructure } from "../org-structure/orgStructureApi";
@@ -23,7 +24,7 @@ interface UserModalProps {
  */
 export function UserModal({ userId, onClose }: UserModalProps) {
   return (
-    <Modal
+    <AppModal
       open
       title={
         userId === undefined ? "Новый пользователь" : "Изменение пользователя"
@@ -36,7 +37,7 @@ export function UserModal({ userId, onClose }: UserModalProps) {
       ) : (
         <ChangedUser userId={userId} onClose={onClose} />
       )}
-    </Modal>
+    </AppModal>
   );
 }
 

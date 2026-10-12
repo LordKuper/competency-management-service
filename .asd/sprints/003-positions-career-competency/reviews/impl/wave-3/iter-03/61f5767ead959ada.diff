@@ -1,0 +1,1729 @@
+diff --git a/.claude/agent-memory/asd-dev-critical/MEMORY.md b/.claude/agent-memory/asd-dev-critical/MEMORY.md
+index 3116ac4..920bf19 100644
+--- a/.claude/agent-memory/asd-dev-critical/MEMORY.md
++++ b/.claude/agent-memory/asd-dev-critical/MEMORY.md
+@@ -37,7 +37,7 @@
+ - [Org head rule + order](project_org-head-rule-facts.md) — create field dropped silently, check-on-change, picker current quirk, Collator ru yo, antd 6 select DOM/click
+ - [Org employee search](project_org-employee-search-facts.md) — server q is ILIKE+FTS not substring, q>200 is 400, searched units open as path only, absolute open/close choices, debounce masking
+ - [Full verification cycle](project_full-verification-cycle-facts.md) — toast thenable keeps confirm open 3 s, real-change stale test, lockout trap, 10 500-employee numbers
+-- [Web focus ring and antd CSS](project_web-focus-ring-and-antd-css-facts.md) — antd focus specificity vs !important and Biome, custom tokens as CSS vars, rc-dropdown keys, CDP keyboard check
++- [Web focus ring and antd CSS](project_web-focus-ring-and-antd-css-facts.md) — explicit disabled beats componentDisabled; antd focus specificity vs !important and Biome, custom tokens as CSS vars, rc-dropdown keys, CDP keyboard check
+ - [Invitation link facts](project_invitation-link-facts.md) — CreateAsync overwrites stamp (version 1), record params always required in OpenAPI, anon endpoint off the 401 group
+ - [Password reset link facts](project_password-reset-link-facts.md) — one rate-limit counter per policy across endpoints, ApiHost raises both limits, queue wiring, change-password 412 race
+ - [Anonymous link screens](project_web-anonymous-link-screens-facts.md) — StrictMode-safe fragment token, router links styled as antd, empty 202, invalid-link 400 shape
+diff --git a/.claude/agent-memory/asd-dev-critical/project_scratch-host-without-postgres.md b/.claude/agent-memory/asd-dev-critical/project_scratch-host-without-postgres.md
+index 1fcbabd..1f4cc79 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_scratch-host-without-postgres.md
++++ b/.claude/agent-memory/asd-dev-critical/project_scratch-host-without-postgres.md
+@@ -13,5 +13,6 @@ Two scratch hosts outside the repo (project reference to Platform, `<Compile Inc
+ - **Whole-module logic host**: compile every module source file into the scratch project (`<Compile Include>` with `Exclude` for the raw-SQL helper file, replaced by a copy whose lock method returns a no-op transaction), add a stub entity with the CLR name another module's foreign key refers to, and replace a cross-module interface with a dictionary-backed fake. A header-free `HttpClient` plus `CookieContainer` per "browser" runs real cookie sessions; an `ILoggerProvider` at Trace level collects every log line and the audit table is read back through the context, so "no secret in logs or journal" is a string search for the literal passwords and the stored hashes and stamps. Several hosts per process (each with its own InMemory name and in-memory configuration) cover configuration variants, rate limiter, lockout timing and bootstrap cases.
+ - **SQL-capture host details**: one class implementing `DbCommandInterceptor`, `IDbConnectionInterceptor` and `IDbTransactionInterceptor`, registered as `IInterceptor`, is enough (`AddPlatform` attaches every registered one). `ExecuteSqlAsync` shows up as `NonQueryExecuting`; the audit INSERT and the entity UPDATE of one `SaveChanges` arrive as one `ReaderExecuting` command, and reading it back throws a cast from `DataTableReader` to `NpgsqlDataReader` after the SQL is printed (the request ends 500). Entity reads are answered by building a one-row `DataTable` from the `alias.column` names found in the SELECT list; counts are lower-case `count(*)::int`, existence checks `SELECT EXISTS (`. Replacing authentication with a middleware that sets `HttpContext.User` before `UseAuthorization` skips cookie validation queries.
+ 
++- **Cheapest translation probe of one store method**: a scratchpad console (Web SDK, `ProjectReference` to `src/Competency.Api`, `dotnet run -c Release`) that creates `Competency.Api.AppDbContextFactory` and the internal store by reflection (constructor args null except the context) and awaits the method. An Npgsql "host unknown" error means EF translated the query (it fails on connect, the `unused` host); an untranslatable query throws `InvalidOperationException` before that.
+ **Why:** with no Docker or PostgreSQL the only evidence for query translation and invariant logic is the generated SQL and these runs; building the harness took the longest part of the verification.
+ **How to apply:** any later task needing endpoint or SQL evidence before impl-test has a real database.
+diff --git a/.claude/agent-memory/asd-dev-critical/project_web-focus-ring-and-antd-css-facts.md b/.claude/agent-memory/asd-dev-critical/project_web-focus-ring-and-antd-css-facts.md
+index b044e36..6c9370c 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_web-focus-ring-and-antd-css-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_web-focus-ring-and-antd-css-facts.md
+@@ -1,6 +1,6 @@
+ ---
+ name: web-focus-ring-and-antd-css-facts
+-description: Overriding antd focus and shimmer styles from the stylesheet - specificity vs !important and Biome, custom theme tokens as CSS variables, rc-dropdown keyboard model, focus loss on an element swap, keyboard checks in headless Chrome without a backend
++description: antd componentDisabled vs explicit false; Overriding antd focus and shimmer styles from the stylesheet - specificity vs !important and Biome, custom theme tokens as CSS variables, rc-dropdown keyboard model, focus loss on an element swap, keyboard checks in headless Chrome without a backend
+ metadata:
+   type: project
+ ---
+@@ -16,5 +16,6 @@ Facts that decided the focus-ring work in `web/`, checked in headless Chrome, no
+ - **Skeleton shimmer ignores the `motion: false` token**; it needs a stylesheet rule under `@media (prefers-reduced-motion: reduce)`. `getComputedStyle(el).animationName` of every `.ant-skeleton-active *` shows it (`ant-skeleton-loading` vs `none`).
+ - **Keyboard check with no backend**: Node 24's global `WebSocket` talks CDP directly (no `ws` package); `Fetch.enable` on `<base>/api/*` plus `Fetch.fulfillRequest` serves mock JSON; `Input.dispatchKeyEvent` (`rawKeyDown`, `char` with `text` for Enter/Space, `keyUp`) gives real Tab/Enter/arrow/Esc, and `:focus-visible` matches after such keys; `Emulation.setEmulatedMedia` with `prefers-reduced-motion` must be set before the navigation because the theme reads the media query at module load. Wait ~450 ms before reading outlines (antd transitions them).
+ 
++- **`ConfigProvider componentDisabled` loses to an explicit `disabled={false}`** (antd 6: `customDisabled ?? contextDisabled`, same in Checkbox and `Form disabled`). To lock a whole editor through the context, children must pass `disabled={cond || undefined}`; native `<button>`s ignore the context and need their own prop.
+ **Why:** each cost a failed run or a wrong first fix while making keyboard focus match the design system.
+ **How to apply:** any change to global focus, ring or motion CSS, antd Dropdown/Menu keyboard behaviour, or a browser check of `web/` without the API (see also [[web-cdp-real-backend-smoke-facts]], [[web-org-card-hierarchy-facts]]).
+diff --git a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+index 7b9c148..1d73035 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-combined/MEMORY.md
+@@ -7,4 +7,4 @@
+ - [Delta re-review: decisions-log first](feedback_delta-review-decisions-log.md) — read decisions-log for design-promote routing before flagging doc drift; shared-host log waits are vacuous
+ - [Wave-review probes](feedback_wave-review-probes.md) — decisions-log Open, "на ревью" and reversed choices, unused test members, per-row lookups, body comments, AcN_ prefixes, eager-guard callers
+ - [Doc entries on a code delta](feedback_doc-entries-on-code-delta.md) — memory md files un-gate the Documentation rows; read the doc-comment entry literally, report language follows language.docs, no Edit tool
+-- [Frontend wave probes](feedback_frontend-wave-probes.md) — web/ wave: unused exports and props, secure-context APIs, raw px and disabled-without-reason, plurals, antd d.ts deprecations, stale memory
++- [Frontend wave probes](feedback_frontend-wave-probes.md) — web/ wave: unused exports and props, secure-context APIs, raw px, plurals, per-id name reads, picker exclude, antd d.ts, stale memory
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md b/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
+index 259e784..af9a10c 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
+@@ -1,6 +1,6 @@
+ ---
+ name: frontend-wave-probes
+-description: how a 100-120-file web/ plus agent-memory impl-review wave was finished in about 45-60 turns - read ranges, one-Grep probes that found real defects (unused exports and props, secure-context-only browser APIs, raw px and disabled-without-reason against design-system rules, Russian plurals), diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers, JSDoc detached by a new const
++description: how a 100-120-file web/ plus agent-memory impl-review wave was finished in about 45-60 turns - read ranges, one-Grep probes that found real defects (unused exports and props, secure-context-only browser APIs, raw px and disabled-without-reason against design-system rules, Russian plurals, per-id name reads and client-side exclude in server-search pickers), diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers, JSDoc detached by a new const
+ metadata:
+   type: feedback
+ ---
+@@ -29,8 +29,14 @@ Grep `^diff --git` over the diff first: its line numbers give every file's range
+   features depend on each other both ways; check decisions-log first, the orchestrator may have accepted it ("пока в career").
+ - `staleTime|refetchOnWindowFocus|gcTime` over `web/src`: no hit means the TanStack defaults (stale 0, refetch on focus)
+   apply to lists of thousands of rows.
++- `useQueries` fed by the ids of a table page (a `useEntryNames`-style hook resolving column names one `GET /{id}` each): an
++  N+1 on the client, repeated on every focus with default staleness. Compare with sibling responses that already carry the
++  names (`ownerOrgUnitName`, `directionName`); the fix is an additive name field, so raise it with a `question:` escalation.
++- A server-search picker with a fixed page size (20) that drops "already used" ids on the client (`exclude`): the visible list
++  shrinks or goes empty while free entries sit on the next pages. The page size has to grow by the excluded count.
+ - `web/node_modules/antd/es/<component>/index.d.ts` exists in this repo: grep it for `@deprecated` instead of trusting
+-  memory (antd 6 `Alert.message` is deprecated for `title`, `Steps` `description` for `content`, `direction` for `orientation`).
++  memory (antd 6 `Alert.message` is deprecated for `title`, `Steps` `description` for `content`, `direction` for `orientation`;
++  Select's top-level search props are in `@rc-component/select/es/Select.d.ts`, moved into `showSearch`).
+ - A component that returns a bare element first and a wrapper (`Dropdown`) around the same element later remounts it:
+   keyboard focus is lost; the CDP smokes in memory were mouse-only.
+ - Agent-memory files: grep each cited component or constant (`UserCard`, `SEARCH_TEXT_MAX_LENGTH`) in `web/src`, `src` and
+@@ -56,6 +62,9 @@ Grep `^diff --git` over the diff first: its line numbers give every file's range
+   not a finding.
+ - Check each fix against the `decisions-log.md` "review-fix" entry and the code only; never open another iteration's review
+   files (`review-policy.md` "Clean-context review iteration" forbids it). Then scan only the new surface (shared hooks, test infra).
++- The plan's UI-text paragraph approved for the review-fix lists every new string; Grep it once and compare instead of
++  reading the whole «Тексты интерфейса» section. The tester's "Added tests" rows name equivalent mutants (e.g. a hand-made
++  id de-duplication that react-query already does): read them before raising a redundancy.
+ 
+ **Line arithmetic without a shell:** for a new-file hunk, file line = diff line minus the line number of its `@@` header; for a
+ whole-file replace, subtract the line number of the last `-` line instead. Grep the current file for the line instead when cheap.
+diff --git a/.claude/agent-memory/asd-tester-critical/MEMORY.md b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+index 641d465..3786d0d 100644
+--- a/.claude/agent-memory/asd-tester-critical/MEMORY.md
++++ b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+@@ -1,4 +1,4 @@
+ - [Fail-first and `none` honesty](feedback_fail-first-and-none-honesty.md) — transcribe the first-failing assertion, never justify `none` with "it's prose", never assert a qualifier where the substance is assertable
+ - [Mutation runs trip the hash ledger](project_mutation-runs-trip-the-hash-ledger.md) — editing a managed_paths file to prove a mutation also fails upstream_hashes; expected noise
+ - [Testability envelope](project_testability-envelope.md) — what is testable here, honest `none` decisions, mutation and fixture traps, and the §7 in-body-comment ban.
+-- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/antd Select and pager/filter-wiring web traps, web pre-fix copy and mutation runner, fake fetch, forcing a 5xx
++- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/antd Select and pager/filter-wiring web traps, web pre-fix copy and mutation runner, fake fetch, forcing a 5xx, class-shared org, antd disabled-context locks
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index f4ec78d..362bad4 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -1,6 +1,6 @@
+ ---
+ name: competency-test-harness
+-description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the tech-reference gate
++description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate
+ metadata:
+   type: project
+ ---
+@@ -8,7 +8,7 @@ metadata:
+ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the test bin directory, configuration through environment variables) as a child process against one shared Testcontainers PostgreSQL; every host gets its own database. A child process beat an in-process host because per-host settings (rate limit, bootstrap administrator) stay independent and middleware, migrations and locks are the deployed ones. `Program` is internal and `InternalsVisibleTo` exists, but tests prefer HTTP plus raw Npgsql.
+ 
+ - xunit v3 parallelism is per collection (one class); theory rows of a method run serially; a class fixture may take the assembly fixture in its constructor. A test project with zero tests fails (`dotnet test` exit 8, vitest exit 1), so a green baseline needs tests, not configuration.
+-- Tests sharing a database must not rely on global state. Lists page by name (200 at most), so look an entity up by a unique-name filter, never by position. Anything about the set of administrators needs a dedicated host and a helper that checks the role at sign-in, because a demoted administrator can still sign in.
++- Tests sharing a database must not rely on global state. Lists page by name (200 at most), so look an entity up by a unique-name filter, never by position. Anything about the set of administrators needs a dedicated host and a helper that checks the role at sign-in, because a demoted administrator can still sign in. `CareerHost.OrgAsync()` is ONE tree per class: a test that creates tracks or other unit rows there changes what a sibling test counting by unit sees, and that shows only in a whole-class run (every `--filter-method` run stays green); such a test builds its own tree with `CareerOrg.CreateAsync(fixture.Host)`.
+ - Race tests, two kinds. A gate start (both requests behind a `TaskCompletionSource` created with `RunContinuationsAsynchronously`, every version fetched before the gate, a few rounds with fresh data, outcome set {200, 409} exactly, as in `OrgTreeTests`) is only for a race that does not guard a multi-row invariant; its window is narrow, so it gives no fail-first proof. A race over a multi-row invariant (last administrator, one account per employee, wrong-password counter, dismissal cascade) is built on a held lock or trigger pause, per the recipes below: the test fixes the arrival order, waits through `pg_stat_activity`, and every request, the loser included, has one known status (the last-administrator loser is 409, never 401). Where the order is fixed, do not accept an either-or status such as {200, 401} for the loser; it hides a path that never waited.
+ - A host that unexpectedly starts inside a "must fail to start" test has to be disposed: a leaked child keeps the runner's stdout pipe open and hangs `dotnet test` (and a `spawnSync` around it) until it is killed by its port.
+ - Mutation proofs for production code run in a `git archive HEAD` copy outside the repository, never in the working tree; a `node_modules` junction in that copy is removed with `rmdir` before `rm -rf`. A fixture that sorts identically under the wrong algorithm survives its mutation: a green mutation is a finding about the test.
+@@ -16,7 +16,7 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - A real 5xx without a test hook: on a dedicated host add a CHECK constraint whose name is a unique marker (raw SQL), then send the value it forbids. The error is an unmapped check violation, and Npgsql redacts the row detail, so the constraint name is the one string of the exception message that can prove a log record never carries it.
+ - A guard that a role cannot bypass (triggers enabled always) is tested inside a transaction: `SET LOCAL session_replication_role = replica`, run the statement, expect the rejection; disposing the transaction rolls back, so a regression cannot damage the shared host's journal.
+ - A deterministic race needs a pause point inside the first request's transaction, after its reads: on its own host add `BEFORE UPDATE ON employees` calling `pg_advisory_lock(k)` then `pg_advisory_unlock(k)`, hold `k` on an unpooled `NpgsqlConnection`, start the dismissal, wait until `pg_locks` shows it ungranted, fire the second request, wait for `late.IsCompleted || another ungranted lock`, then release. Count waiters through `pg_locks JOIN pg_stat_activity ON pid WHERE datname = current_database()`: `pg_locks` is cluster-wide and parallel classes share the container. A gate-start `TaskCompletionSource` race with a narrow window (an update-binding request is milliseconds) cannot give a fail-first proof; a held transaction can.
+-- Real fail-first for a review fix: `git archive <prior HEAD sha> src` plus the current `tests/` in a scratch copy, run the whole suite, list the reds. It showed the reviewer's "update-binding races dismissal" path was not reachable before the fix (both take the admin row lock, and one active administrator always exists); that row stays green pre-fix and is proven only by removing every lock from the endpoint. State that in the plan rather than claiming a regression proof.
++- Real fail-first for a review fix: `git archive <prior HEAD sha> src` plus the current `tests/` in a scratch copy, run the whole suite, list the reds. It showed the reviewer's "update-binding races dismissal" path was not reachable before the fix (both take the admin row lock, and one active administrator always exists); that row stays green pre-fix and is proven only by removing every lock from the endpoint. State that in the plan rather than claiming a regression proof. `using var scope = new AssertionScope()` (AwesomeAssertions.Execution) makes a test body report every assertion, so a later one (the response to a change, after the list and the read) gets its own mutation proof instead of hiding behind the first red.
+ - A race on one account's rows without a trigger: hold `SELECT id FROM users WHERE id = X FOR UPDATE` in a transaction on an unpooled `NpgsqlConnection`, fire N requests, `Waiting.UntilAsync` until `pg_stat_activity` shows N backends with `wait_event_type = 'Lock'` in `current_database()`, then commit. It also works against the pre-fix code (its UPDATEs queue on the same row), so the test reddens on assertions, not on the 30 s timeout. Use a class-fixture host (`HostFixture`) so no other test waits on locks in that database. `ProblemDetails` bodies carry a per-request `traceId`: compare bodies without it. Identity resets `AccessFailedCount` to 0 when it starts a lockout, so assert the lock by a refused right password, not by the count. An unsavable `IdentityResult.Failed` is reachable with `UPDATE users SET user_name = ''` (the user validator rejects it; sign-in still finds the account by e-mail).
+ - The `AdministratorsHost` class fixture is shared state: a test that fails after blocking the sole administrator makes every later test of the class red ("active ... is empty"). Read the first red only.
+ - `ApiResponse` once printed its computed `Id` in assertion failures, which turned any failed assertion over responses into a `NullReferenceException` (it hid the deadlock 500 of a lock-order mutation); `PrintMembers` now prints status and body only.
+@@ -27,7 +27,7 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Web tests: jsdom has no `ResizeObserver` (stubbed in `web/src/test/setup.ts`); Testing Library's accessible name collapses a non-breaking space, so assert the `aria-label` attribute for it; `Intl.Collator("ru")` sorts ё as е, so an ordering fixture must tell ICU order, code-point order and "ё right after е" apart.
+ - Web screens are tested against a fake network, `web/src/test/fakeApi.ts`, installed by `setup.ts` before the typed client loads (openapi-fetch takes `fetch` once, at `createClient`, and calls it with one `Request`): `fakeApi.on("METHOD /path", handler)`, `fakeApi.calls(route)`, `deferred()` to hold an answer. A request without a handler answers 599. Vitest filters are relative to `web/`; a `web/src/...` filter finds no tests and exits 1 with zero tests, so treat `total === 0` as an error in a mutation runner. `git apply -R` of a fix commit's diff works as a pre-fix copy unless a later commit touched the adjacent lines.
+ - Waiting traps in those tests: a form that remounts leaves the old input detached, so re-query the field on every step and flush a refetch with one more `user.type` (checking the draft right after `invalidateQueries` passes vacuously on the pre-fix code); an "is not requested" assertion on a debounced query is vacuous until the debounce has run, so use `vi.useFakeTimers()` after render, `fireEvent.change` and `act(() => vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS))` (a survivor, S8, found this); the focus-return refetch is async, so sync on a positive control (`/auth/me` refetches on focus) before asserting the other routes were not reread. Raising RTL `asyncUtilTimeout` turns a failing `waitFor` into the 5 s test timeout and hides the assertion message; leave the default.
+-- antd in jsdom: a Dropdown menu item's accessible name includes its icon label ("logout Выйти"), so match `{ name: /Выйти/ }`; a loading Button also carries the icon label, so `getByRole("button", { name: "Сохранить" })` failing means the button is stuck loading; antd Modal prints the harmless "getComputedStyle with pseudo-elements" notice. A search fixture letter can occur in a unit name ("я" is in "Компания"): pick one the fixture lacks.
++- antd in jsdom: a Dropdown menu item's accessible name includes its icon label ("logout Выйти"), so match `{ name: /Выйти/ }`; a loading Button also carries the icon label, so `getByRole("button", { name: "Сохранить" })` failing means the button is stuck loading; antd Modal prints the harmless "getComputedStyle with pseudo-elements" notice. A search fixture letter can occur in a unit name ("я" is in "Компания"): pick one the fixture lacks. antd `ConfigProvider componentDisabled` locks antd controls, but an explicit `disabled={false}` beats it (pass `cond || undefined`) and a native `<button>` ignores it: a lock test collects the KIND of every control left enabled into one list, not a count. A form that is recreated on success (a `key` bump) makes a "lock stays after success" mutation equivalent, "stays after an error" is not.
+ - `AppShell` returns null on a 401, but the unauthorized handler navigates first, so replacing that branch is unobservable in jsdom (recorded as a ceiling, not pinned).
+ - Mail: every host sends to one shared Mailpit container (`MailCatcher`, Testcontainers core generic container, no new package); `TestEnvironment.WithMail` merges its `Smtp__*` into each host's settings. It needs `MP_SMTP_DISABLE_RDNS=true`: without it each SMTP session waits ~10 s for the greeting under Docker Desktop (the suite took 11 min and `Waiting` timed out; the dev compose Mailpit has the same delay), plus `MP_MAX_MESSAGES=0`. Find mail by a unique recipient, never by position. The anonymous forgot-password queue is FIFO and single-reader, so the mail of a sentinel account sent last proves every earlier request was handled before asserting "no mail". The host's JSON log escapes non-ASCII: search `text.JsonEscaped()` as well as the raw text. A closed port (`ApiHost.FreePort()`) is SMTP failure, a started and never accepting `TcpListener` is a mail server that does not answer, a Mailpit started with `MP_SMTP_AUTH_FILE` (`WithResourceMapping` bytes, `user:pass\n`) is the authenticated branch.
+ - `Scenarios.CreateUserAsync` now creates through the API and writes the password hash directly (link columns cleared, `PasswordHasher<object>`, hash computed once); `InviteUserAsync` is the real passwordless create. `ApiClient.Host` gives extensions the database.
+@@ -49,15 +49,15 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Vitest refuses imports outside the web root (`?raw` is denied) and `import.meta.url` is an http URL under jsdom: read the OpenAPI document with `node:fs` from `process.cwd()/../openapi/openapi.json`, with `/// <reference types="node" />` first in the file because `tsconfig` limits `types`. Derive a closed list from a union with `Object.keys({…} satisfies Record<Union, true>)` so a new member fails the typecheck.
+ - Column-filter wiring across tables: click the header's `.ant-table-filter-trigger`, pick the `menuitem`, press `OK` (tree filter: combobox "Подразделение" and `.ant-select-tree-title`), assert the query string of the last request; scope a nested table with `.ant-table-expanded-row`. Run `biome check --write` on new test files; a Python `open(path, "w")` edit on Windows writes CRLF, which biome refuses, so open with `newline=""`.
+ - A run of the entry's new tests on a `git archive <prior HEAD> src` copy (repeat `--filter-method`, it ORs; copy the worktree tests in with `tar --exclude=bin --exclude=obj`) sorts them: red ones are fail-first, a green one only guards over-reach and the plan must say so. Suite timing ids continue the sprint's numbering (`suite impl-test#n`): read the ledger's last one before opening.
+-- Journal and version stamping: the journal interceptor writes one `<Entity>.Updated` row per modified entity whose allow-listed property changed, per `SaveChanges`, and `EntityStampingInterceptor` bumps every Modified versioned entity once per save; `Version` itself is not audited. A save split into several shows as extra journal rows (count assertion); `Entry(e).Property("Version").IsModified = true` bumps a version with no journal row, which proves a version assertion the count assertion would otherwise pre-empt. Rows of a rolled-back request leave nothing in `GET /audit?requestId=`.
++- Journal and version stamping: the journal interceptor writes one `<Entity>.Updated` row per modified entity whose allow-listed property changed, per `SaveChanges`, and `EntityStampingInterceptor` bumps every Modified versioned entity once per save; `Version` itself is not audited. A save split into several shows as extra journal rows (count assertion); `Entry(e).Property("Version").IsModified = true` bumps a version with no journal row, which proves a version assertion the count assertion would otherwise pre-empt. Rows of a rolled-back request leave nothing in `GET /audit?requestId=`. A created entry comes back as version 0 (the stamper bumps only Modified entities), so a web fake of a create answers 0; a fake answering 1 hid a `saved.version > base.version` condition for a whole review round.
+ - Schema-derived width sweep: `pg_constraint` (contype 'c', one `conkey`) joined to `pg_attribute` (varchar width is `atttypmod - 4`) with `regexp_matches(pg_get_constraintdef(oid), '''([^'']*)''', 'g')` gives the longest literal a CHECK admits per column, so enumeration members are never listed by hand. Add a `ContainAll` of known columns so a broken join cannot pass vacuously. Mutating the width comparison is equivalent at a clean HEAD; only a pre-fix copy proves the offender branch.
+ - Probe the pre-fix copy before building a cross-module theory. A write repeated with the tag it already used answers 412 on every plain EF path even when nothing changes (`IfMatch.ApplyTo` set the original `Version`, so the entity counts as modified and the UPDATE matches no row): seven kinds plus ten probe rows were all green pre-fix and the theory was dropped. Only a handler that skips `SaveChanges` for an unchanged document (matrix content) was red. A probe row whose first write is itself a no-op never bumped the version, so its repeat is not stale.
+ - Delete versus transition race: hold the matrix row (`RowLock.HoldMatrixAsync`), start the matrix delete (it takes the catalogue lock, then waits on the row) with `StartWaitingAsync(…, 1, …)`, then the transition (it waits on the catalogue lock) with `…, 2, …`, release: the delete commits first and the transition finds its version gone. Pre-fix answer 500 (`FirstAsync`), fixed answer 404. Pass the version's tag to both requests (`etag:` on `TransitAsync`) so no extra request runs inside the wait.
+ - Read-access rewrites need a test per path: single-version reads (`GET matrix-versions/{id}`) and the matrix lists (`GET matrices`, `GET matrices/{id}`, `…/versions`) use different code. A list test over two units of one page (the head of the root unit is the superior approver of the department's matrix but not of the team's) kills a per-unit cache keyed wrongly; a participant who acted and then lost the role kills a dropped acted-on lookup; a blocked nearer head makes the farther head the superior approver for draft-entry visibility. Unfiltered `GET matrices?pageSize=200` is safe on a class host (fewer than 200 matrices).
+ - A python or JS patch script written through a bash heredoc loses backslashes silently (a `replace` anchor stopped matching and nothing failed): write scripts with the Write tool, build line-ending separators with `String.fromCharCode(13)` and `grep -c` the result.
+ - Line endings: count CRLF pairs with python on the bytes (`count` of carriage return plus line feed); `grep -c` with a CR pattern reports 0 for a fully CRLF file in this shell. Worktree test files are a mix (some CRLF, most LF); the Edit tool and `open(..., newline='')` keep each file's own.
+-- Web pre-fix proof: `git archive <commit before the first fix> web` into a scratch directory, a junction for `node_modules` (`cmd //c "mklink /J node_modules <absolute path>"`), copy only the changed test files over it, `npx vitest run <files> --reporter=verbose`. Vitest does not typecheck, so new tests run against old code and fail on assertions. A wholesale-copied test file also brings the older tests of that file that the fix commit adapted: they go red too, so separate them by name before counting. Web mutation runner: one Node script, a single-anchor check per mutation, `vitest run <files> --reporter=json --outputFile=...`, read `assertionResults` with status failed, restore the file in `finally`; multi-line anchors are fine in a `git archive` web copy (LF).
++- Web pre-fix proof: `git archive <commit before the first fix> web` into a scratch directory, a junction for `node_modules` (`cmd //c "mklink /J node_modules <absolute path>"`), copy only the changed test files over it, `npx vitest run <files> --reporter=verbose`. Vitest does not typecheck, so new tests run against old code and fail on assertions. A wholesale-copied test file also brings the older tests of that file that the fix commit adapted: they go red too, so separate them by name before counting. Web mutation runner: one Node script, a single-anchor check per mutation, `vitest run <files> --reporter=json --outputFile=...`, read `assertionResults` with status failed, restore the file in `finally`; multi-line anchors are fine in a `git archive` web copy (LF). The runner starts `node node_modules/vitest/vitest.mjs run …` with an argument array, never `npx` with `shell: true`: the shell splits a `-t` pattern with spaces or `|` into file filters, the wrong tests run and the failures still look plausible.
+ - `dotnet test --filter-class` and `--filter-method` together are ANDed: a class filter plus a method filter of another class runs zero tests (exit 8). Run the two kinds in separate invocations. The Windows console codepage breaks Cyrillic runner output piped through Python (`UnicodeEncodeError`): write the extracted summary to a UTF-8 file and read it with the Read tool.
+-- Web test traps met with server-search pickers and paged tables: antd `Select` options are virtualised, so never count them, assert the request (`q`, `page`, `pageSize`) instead; the selected text also sits in the hidden dropdown, so scope it with `within(combobox.closest(".ant-select"))`; `getAllByRole` throws when nothing matches, use `queryAllByRole` for "no actions"; `findByRole("dialog", { name })` found nothing for `AppModal`, locate it by the `.ant-modal-title` text and `closest('[role="dialog"]')`; a pagination item is `getByTitle("2")` and its size changer `.ant-pagination-options .ant-select`; `toBeVisible()` fails inside modal bodies in jsdom, use `toBeInTheDocument()`; `Form.useWatch` is `undefined` on the first render, so a guard that clears a value must wait for the data of the watched unit (removing it reddens the control test).
++- Web test traps met with server-search pickers and paged tables: antd `Select` options are virtualised, so never count them, assert the request (`q`, `page`, `pageSize`) instead; the selected text also sits in the hidden dropdown, so scope it with `within(combobox.closest(".ant-select"))`; `getAllByRole` throws when nothing matches, use `queryAllByRole` for "no actions"; `findByRole("dialog", { name })` found nothing for `AppModal`, locate it by the `.ant-modal-title` text and `closest('[role="dialog"]')`; a pagination item is `getByTitle("2")` and its size changer `.ant-pagination-options .ant-select`; `toBeVisible()` fails inside modal bodies in jsdom, use `toBeInTheDocument()`; `Form.useWatch` is `undefined` on the first render, so a guard that clears a value must wait for the data of the watched unit (removing it reddens the control test). A mutation that keeps every excluded option can fail on the free option missing from the window of about eight rendered rows before it reaches the "excluded are absent" assert; keep one excluded option (`exclude.slice(1)`) to reach it.
+ - Removing `crypto.randomUUID` for a plain-HTTP test: `vi.stubGlobal("crypto", { getRandomValues: real.getRandomValues.bind(real) })` (a typed `(values: Uint8Array)` wrapper fails `tsc`), `vi.unstubAllGlobals()` in `afterEach`; a UUID builder is pinned by filling the bytes with 0x00 and 0xff, which shows the version and variant bits and the 8-4-4-4-12 layout.
+ - A mutation that survives once is a missing guard, not a nuisance: two web survivors (a reason text shown without a blocked button; the page-size argument of the pager) each got a test and were killed on the rerun. `useQueries` callers that de-duplicate ids by hand are an equivalent mutant, because react-query already collapses equal keys. A flags-by-role matrix test (kinds times readers, collecting every deviation into one `wrong` list, with `missing` printed for an absent field) names the absent field on the pre-fix copy at once.
+diff --git a/openapi/openapi.json b/openapi/openapi.json
+index 4dbad05..fb6f130 100644
+--- a/openapi/openapi.json
++++ b/openapi/openapi.json
+@@ -11240,9 +11240,12 @@
+           "name",
+           "description",
+           "categoryId",
++          "categoryName",
+           "directionId",
++          "directionName",
+           "type",
+           "scaleId",
++          "scaleName",
+           "status",
+           "createdAt",
+           "versionNumber",
+@@ -11269,6 +11272,9 @@
+             "type": "string",
+             "format": "uuid"
+           },
++          "categoryName": {
++            "type": "string"
++          },
+           "directionId": {
+             "type": [
+               "null",
+@@ -11276,6 +11282,12 @@
+             ],
+             "format": "uuid"
+           },
++          "directionName": {
++            "type": [
++              "null",
++              "string"
++            ]
++          },
+           "type": {
+             "$ref": "#/components/schemas/CompetencyType"
+           },
+@@ -11283,6 +11295,9 @@
+             "type": "string",
+             "format": "uuid"
+           },
++          "scaleName": {
++            "type": "string"
++          },
+           "status": {
+             "$ref": "#/components/schemas/CatalogStatus"
+           },
+diff --git a/src/Competency.CareerFramework/CareerTrackEndpoints.cs b/src/Competency.CareerFramework/CareerTrackEndpoints.cs
+index 3667c93..2866aa6 100644
+--- a/src/Competency.CareerFramework/CareerTrackEndpoints.cs
++++ b/src/Competency.CareerFramework/CareerTrackEndpoints.cs
+@@ -24,7 +24,7 @@ internal static class CareerTrackEndpoints
+ 
+     private static readonly CatalogKind<CareerTrack, CareerTrackResponse> Kind = new(
+         "CareerTrack",
+-        CareerTrackResponse.From,
++        (track, names, viewer) => CareerTrackResponse.From(track, names.GetValueOrDefault(track.OwnerOrgUnitId), viewer),
+         track => other => other.DirectionId == track.DirectionId);
+ 
+     public static void Map(IEndpointRouteBuilder endpoints)
+diff --git a/src/Competency.CareerFramework/CatalogEndpoints.cs b/src/Competency.CareerFramework/CatalogEndpoints.cs
+index b333e92..ad64e7b 100644
+--- a/src/Competency.CareerFramework/CatalogEndpoints.cs
++++ b/src/Competency.CareerFramework/CatalogEndpoints.cs
+@@ -164,8 +164,8 @@ internal static class CatalogEndpoints
+             .ThenBy(entry => entry.Id)
+             .ToPageAsync(query.Page, query.PageSize, cancellationToken);
+ 
+-        var unitNames = await store.UnitNamesAsync(page.Items.Select(entry => entry.UnitId), cancellationToken);
+-        var items = page.Items.Select(entry => kind.Describe(entry, NameOf(entry.UnitId, unitNames), viewer)).ToList();
++        var names = await NamesAsync(page.Items, kind, store, cancellationToken);
++        var items = page.Items.Select(entry => kind.Describe(entry, names, viewer)).ToList();
+         return TypedResults.Ok(new PageResponse<TResponse>(items, page.Total, page.Page, page.PageSize));
+     }
+ 
+@@ -208,13 +208,30 @@ internal static class CatalogEndpoints
+         CancellationToken cancellationToken)
+         where TEntry : CatalogEntry
+     {
+-        var unitNames = await store.UnitNamesAsync([entry.UnitId], cancellationToken);
++        var names = await NamesAsync([entry], kind, store, cancellationToken);
+         response.SetETag(entry.Version);
+-        return kind.Describe(entry, NameOf(entry.UnitId, unitNames), viewer);
++        return kind.Describe(entry, names, viewer);
+     }
+ 
+-    private static string? NameOf(Guid? unitId, IReadOnlyDictionary<Guid, string> unitNames) =>
+-        unitId is { } id ? unitNames.GetValueOrDefault(id) : null;
++    /// <summary>
++    /// The names the responses of the entries carry: of their units, and of the entries the kind says they refer to, read in one query for all of them.
++    /// </summary>
++    private static async Task<IReadOnlyDictionary<Guid, string>> NamesAsync<TEntry, TResponse>(
++        IReadOnlyCollection<TEntry> entries,
++        CatalogKind<TEntry, TResponse> kind,
++        CatalogStore store,
++        CancellationToken cancellationToken)
++        where TEntry : CatalogEntry
++    {
++        var unitNames = await store.UnitNamesAsync(entries.Select(entry => entry.UnitId), cancellationToken);
++        if (kind.References is not { } references)
++        {
++            return unitNames;
++        }
++
++        var entryNames = await store.EntryNamesAsync(entries.SelectMany(references), cancellationToken);
++        return unitNames.Concat(entryNames).ToDictionary();
++    }
+ 
+     private static RouteHandlerBuilder ProducesStatusChange(this RouteHandlerBuilder builder) => builder
+         .ProducesETag()
+diff --git a/src/Competency.CareerFramework/CatalogKind.cs b/src/Competency.CareerFramework/CatalogKind.cs
+index 6b934ae..88a2459 100644
+--- a/src/Competency.CareerFramework/CatalogKind.cs
++++ b/src/Competency.CareerFramework/CatalogKind.cs
+@@ -8,10 +8,13 @@ namespace Competency.CareerFramework;
+ /// <typeparam name="TEntry">The entry type.</typeparam>
+ /// <typeparam name="TResponse">The entry as the API returns it.</typeparam>
+ /// <param name="Name">The entry type's name in endpoint names, such as <c>CareerTrack</c>.</param>
+-/// <param name="Describe">Builds the response from the entry, the name of its unit, null for an entry of no unit, and the signed-in user's rights.</param>
++/// <param name="Describe">Builds the response from the entry, the names of its unit and of the entries it <paramref name="References"/> by
++/// identifier, and the signed-in user's rights.</param>
+ /// <param name="SameScope">The entries whose names must differ from the given entry's; null when names are unique across the catalogue.</param>
++/// <param name="References">The categories, directions and scales whose names the response carries; null when it carries none.</param>
+ internal sealed record CatalogKind<TEntry, TResponse>(
+     string Name,
+-    Func<TEntry, string?, CatalogViewer, TResponse> Describe,
+-    Func<TEntry, Expression<Func<TEntry, bool>>>? SameScope = null)
++    Func<TEntry, IReadOnlyDictionary<Guid, string>, CatalogViewer, TResponse> Describe,
++    Func<TEntry, Expression<Func<TEntry, bool>>>? SameScope = null,
++    Func<TEntry, IEnumerable<Guid?>>? References = null)
+     where TEntry : CatalogEntry;
+diff --git a/src/Competency.CareerFramework/CatalogStore.cs b/src/Competency.CareerFramework/CatalogStore.cs
+index 65efff3..bc56f3c 100644
+--- a/src/Competency.CareerFramework/CatalogStore.cs
++++ b/src/Competency.CareerFramework/CatalogStore.cs
+@@ -217,6 +217,21 @@ internal sealed class CatalogStore(
+         return units.ToDictionary(unit => unit.Key, unit => unit.Value.Name);
+     }
+ 
++    /// <summary>
++    /// The names of categories, directions and scales, for showing which ones a competency refers to; one query for all of them.
++    /// </summary>
++    /// <param name="ids">The entries; nulls are skipped.</param>
++    /// <param name="cancellationToken">Cancels the lookup.</param>
++    /// <returns>The name of each entry that exists, by identifier.</returns>
++    public async Task<IReadOnlyDictionary<Guid, string>> EntryNamesAsync(IEnumerable<Guid?> ids, CancellationToken cancellationToken)
++    {
++        var wanted = ids.OfType<Guid>().Distinct().ToList();
++        return await context.Set<CompetencyCategory>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name })
++            .Concat(context.Set<CareerDirection>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name }))
++            .Concat(context.Set<CompetencyScale>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name }))
++            .ToDictionaryAsync(entry => entry.Id, entry => entry.Name, cancellationToken);
++    }
++
+     /// <summary>
+     /// The names of accounts: the full name of the bound employee, or else the e-mail.
+     /// </summary>
+diff --git a/src/Competency.CareerFramework/CompetencyEndpoints.cs b/src/Competency.CareerFramework/CompetencyEndpoints.cs
+index 64f5b69..9dd5558 100644
+--- a/src/Competency.CareerFramework/CompetencyEndpoints.cs
++++ b/src/Competency.CareerFramework/CompetencyEndpoints.cs
+@@ -25,8 +25,9 @@ internal static class CompetencyEndpoints
+ 
+     internal static readonly CatalogKind<CareerCompetency, CompetencyResponse> Kind = new(
+         "Competency",
+-        (competency, _, viewer) => CompetencyResponse.From(competency, viewer),
+-        competency => other => other.DirectionId == competency.DirectionId);
++        CompetencyResponse.From,
++        competency => other => other.DirectionId == competency.DirectionId,
++        competency => [competency.CategoryId, competency.DirectionId, competency.ScaleId]);
+ 
+     public static void Map(IEndpointRouteBuilder endpoints)
+     {
+diff --git a/src/Competency.CareerFramework/CompetencyResponse.cs b/src/Competency.CareerFramework/CompetencyResponse.cs
+index 71d87f5..cd9ce80 100644
+--- a/src/Competency.CareerFramework/CompetencyResponse.cs
++++ b/src/Competency.CareerFramework/CompetencyResponse.cs
+@@ -1,7 +1,8 @@
+ namespace Competency.CareerFramework;
+ 
+ /// <summary>
+-/// A competency as the API returns it. The version number counts the competency's versions from 1 and names its latest entry in the
++/// A competency as the API returns it, with the names of its category, direction and scale; a general competency has no direction
++/// and so no direction name. The version number counts the competency's versions from 1 and names its latest entry in the
+ /// version history; the version equals the <c>ETag</c> a change returns and is sent back in <c>If-Match</c>.
+ /// <c>CanEdit</c> and <c>CanDelete</c> say whether the signed-in user may change and delete the entry now, so a client offers only what the server allows.
+ /// </summary>
+@@ -10,9 +11,12 @@ internal sealed record CompetencyResponse(
+     string Name,
+     string? Description,
+     Guid CategoryId,
++    string CategoryName,
+     Guid? DirectionId,
++    string? DirectionName,
+     CompetencyType Type,
+     Guid ScaleId,
++    string ScaleName,
+     CatalogStatus Status,
+     DateTimeOffset CreatedAt,
+     int VersionNumber,
+@@ -20,14 +24,17 @@ internal sealed record CompetencyResponse(
+     bool CanEdit,
+     bool CanDelete)
+ {
+-    public static CompetencyResponse From(CareerCompetency competency, CatalogViewer viewer) => new(
++    public static CompetencyResponse From(CareerCompetency competency, IReadOnlyDictionary<Guid, string> names, CatalogViewer viewer) => new(
+         competency.Id,
+         competency.Name,
+         competency.Description,
+         competency.CategoryId,
++        names.GetValueOrDefault(competency.CategoryId, string.Empty),
+         competency.DirectionId,
++        competency.DirectionId is { } directionId ? names.GetValueOrDefault(directionId, string.Empty) : null,
+         competency.Type,
+         competency.ScaleId,
++        names.GetValueOrDefault(competency.ScaleId, string.Empty),
+         competency.Status,
+         competency.CreatedAt,
+         CompetencyVersion.NumberOf(competency),
+diff --git a/tests/Competency.Tests/CompetencyTests.cs b/tests/Competency.Tests/CompetencyTests.cs
+index e85cd06..debb240 100644
+--- a/tests/Competency.Tests/CompetencyTests.cs
++++ b/tests/Competency.Tests/CompetencyTests.cs
+@@ -1,5 +1,7 @@
+ using System.Net;
++using System.Text.Json.Nodes;
+ using AwesomeAssertions;
++using AwesomeAssertions.Execution;
+ using Competency.Tests.Infrastructure;
+ using Xunit;
+ 
+@@ -182,6 +184,45 @@ public sealed class CompetencyTests(CareerHost fixture) : IClassFixture<CareerHo
+         (await IdsAsync(org.Plain.Client, token, string.Empty)).Should().BeEquivalentTo([plain.Id.ToString(), critical.Id.ToString()], "a user does not read the inactive one");
+     }
+ 
++    [Fact]
++    public async Task Ac24_Competency_NamesItsCategoryItsDirectionAndItsScale_InTheListAndOnItsOwn_AndAfterAChange()
++    {
++        var org = await fixture.OrgAsync();
++        var category = await org.Admin.MakeCategoryAsync();
++        var otherCategory = await org.Admin.MakeCategoryAsync();
++        var draftCategory = (await org.TeamHead.Client.PostAsync("/api/v1/career/categories", new { name = Scenarios.Unique("Своя") })).Expect(HttpStatusCode.Created);
++        var direction = await org.Admin.MakeDirectionAsync();
++        var scale = await org.Admin.MakeScaleAsync();
++        var baseScale = (await org.Admin.GetAsync($"/api/v1/career/scales/{CareerScenarios.BaseScaleId}")).Expect(HttpStatusCode.OK);
++        var token = Scenarios.Unique("ф")[2..];
++        var full = await org.Admin.MakeCompetencyAsync(category.Id, $"Полная {token}", direction.Id, scaleId: scale.Id);
++        var sameNames = await org.Admin.MakeCompetencyAsync(category.Id, $"Те же названия {token}", direction.Id, scaleId: scale.Id);
++        var general = (await org.TeamHead.Client.PostAsync("/api/v1/career/competencies", Body($"Общая {token}", draftCategory.Id, null))).Expect(HttpStatusCode.Created);
++        var expected = new Dictionary<string, string>
++        {
++            [Name(full)] = Names(category, direction, scale),
++            [Name(sameNames)] = Names(category, direction, scale),
++            [Name(general)] = Names(draftCategory, null, baseScale),
++        };
++
++        var listed = (await org.Admin.GetAsync($"/api/v1/career/competencies?q={Uri.EscapeDataString(token)}&pageSize=200")).Expect(HttpStatusCode.OK);
++        var read = new Dictionary<string, string>();
++        foreach (var competency in new[] { full, sameNames, general })
++        {
++            read[Name(competency)] = NamesOf((await org.Admin.GetAsync($"/api/v1/career/competencies/{competency.Id}")).Expect(HttpStatusCode.OK).Json);
++        }
++
++        var moved = (await org.Admin.PutAsync($"/api/v1/career/competencies/{sameNames.Id}", Body(Name(sameNames), otherCategory.Id, null), sameNames.ETag)).Expect(HttpStatusCode.OK);
++        var none = (await org.Admin.GetAsync($"/api/v1/career/competencies?q={Uri.EscapeDataString(Scenarios.Unique("нет"))}&pageSize=200")).Expect(HttpStatusCode.OK);
++
++        using var scope = new AssertionScope();
++        listed.Json!["items"]!.AsArray().ToDictionary(item => item!["name"]!.GetValue<string>(), NamesOf).Should().BeEquivalentTo(expected, "the list names them on one page");
++        read.Should().BeEquivalentTo(expected, "a competency read on its own names them the same");
++        new[] { full, sameNames, general }.ToDictionary(Name, competency => NamesOf(competency.Json)).Should().BeEquivalentTo(expected, "the response to the creation names them");
++        NamesOf(moved.Json).Should().Be(Names(otherCategory, null, baseScale), "the response to a change names what the competency refers to now");
++        none.Json!["items"]!.AsArray().Should().BeEmpty("a page with no competency asks for no names");
++    }
++
+     [Fact]
+     public async Task Ac23_Categories_StartWithTheGeneralOnes_ReadableByEveryone()
+     {
+@@ -196,6 +237,16 @@ public sealed class CompetencyTests(CareerHost fixture) : IClassFixture<CareerHo
+     private static object Body(string name, Guid categoryId, Guid? directionId, string? description = null, object? type = null, Guid? scaleId = null) =>
+         new { name, description, categoryId, directionId, type = type ?? "Profile", scaleId };
+ 
++    private static string Name(ApiResponse entry) => entry.Json!["name"]!.GetValue<string>();
++
++    private static string Names(ApiResponse category, ApiResponse? direction, ApiResponse scale) =>
++        $"{Name(category)} | {(direction is null ? "none" : Name(direction))} | {Name(scale)}";
++
++    private static string NamesOf(JsonNode? competency) => string.Join(
++        " | ",
++        new[] { "categoryName", "directionName", "scaleName" }.Select(field =>
++            competency!.AsObject().TryGetPropertyValue(field, out var value) ? value?.GetValue<string>() ?? "none" : "missing"));
++
+     private static async Task<string[]> IdsAsync(ApiClient client, string token, string query) =>
+         (await client.GetAsync($"/api/v1/career/competencies?q={Uri.EscapeDataString(token)}&{query}&pageSize=200")).Expect(HttpStatusCode.OK).ItemIds();
+ }
+diff --git a/tests/Competency.Tests/TrackAndLevelTests.cs b/tests/Competency.Tests/TrackAndLevelTests.cs
+index ced6ddf..13e70ae 100644
+--- a/tests/Competency.Tests/TrackAndLevelTests.cs
++++ b/tests/Competency.Tests/TrackAndLevelTests.cs
+@@ -429,6 +429,34 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
+         byStatus.Should().Equal(ofTeam.Id.ToString());
+     }
+ 
++    [Fact]
++    public async Task Ac9_Tracks_AreListedAndReadEachWithTheNameOfItsOwnUnit()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var direction = await org.Admin.MakeDirectionAsync();
++        var ofTeam = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
++        var ofSibling = await org.Admin.MakeTrackAsync(org.Sibling.Id, direction.Id);
++        var ofRoot = await org.Admin.MakeTrackAsync(org.Root.Id, direction.Id);
++        var unitOf = new Dictionary<Guid, string>
++        {
++            [ofTeam.Id] = org.Team.Json!["name"]!.GetValue<string>(),
++            [ofSibling.Id] = org.Sibling.Json!["name"]!.GetValue<string>(),
++            [ofRoot.Id] = org.Root.Json!["name"]!.GetValue<string>(),
++        };
++
++        var listed = (await org.Admin.GetAsync($"/api/v1/career/tracks?directionId={direction.Id}&pageSize=200")).Expect(HttpStatusCode.OK);
++        var read = new Dictionary<Guid, string>();
++        foreach (var id in unitOf.Keys)
++        {
++            read[id] = (await org.Admin.GetAsync($"/api/v1/career/tracks/{id}")).Expect(HttpStatusCode.OK).Json!["ownerOrgUnitName"]!.GetValue<string>();
++        }
++
++        listed.Json!["items"]!.AsArray()
++            .ToDictionary(item => item!["id"]!.GetValue<Guid>(), item => item!["ownerOrgUnitName"]!.GetValue<string>())
++            .Should().BeEquivalentTo(unitOf, "each row of the list names the unit of its own track");
++        read.Should().BeEquivalentTo(unitOf, "a track read on its own names its unit the same");
++    }
++
+     private static Task<ApiResponse> CreateTrackAsync(ApiClient client, Guid unitId, Guid directionId) =>
+         client.PostAsync("/api/v1/career/tracks", new { name = Scenarios.Unique("Трек"), ownerOrgUnitId = unitId, directionId });
+ 
+diff --git a/web/src/api/schema.d.ts b/web/src/api/schema.d.ts
+index e7c9a79..104ad4a 100644
+--- a/web/src/api/schema.d.ts
++++ b/web/src/api/schema.d.ts
+@@ -1571,11 +1571,14 @@ export interface components {
+             description: null | string;
+             /** Format: uuid */
+             categoryId: string;
++            categoryName: string;
+             /** Format: uuid */
+             directionId: null | string;
++            directionName: null | string;
+             type: components["schemas"]["CompetencyType"];
+             /** Format: uuid */
+             scaleId: string;
++            scaleName: string;
+             status: components["schemas"]["CatalogStatus"];
+             /** Format: date-time */
+             createdAt: string;
+diff --git a/web/src/app/useEditBase.ts b/web/src/app/useEditBase.ts
+index 245b32a..e57a1a7 100644
+--- a/web/src/app/useEditBase.ts
++++ b/web/src/app/useEditBase.ts
+@@ -3,6 +3,11 @@ import { ApiError } from "../api/ApiError";
+ 
+ const STALE_VERSION_STATUS = 412;
+ 
++/** Whether a save was refused because the record changed since the version it sent. */
++export function isStaleVersion(error: unknown) {
++  return error instanceof ApiError && error.status === STALE_VERSION_STATUS;
++}
++
+ /**
+  * The record an edit form is based on. It stays as it was when the dialog opened, whatever the cache refetches in the
+  * background, so unsaved input is never replaced and the version sent with a save is the one the form was built from.
+@@ -21,7 +26,7 @@ export function useEditBase<TRecord extends { version: number }>(
+   }
+ 
+   function noteSaveFailure(error: unknown) {
+-    if (error instanceof ApiError && error.status === STALE_VERSION_STATUS) {
++    if (isStaleVersion(error)) {
+       setIsRefused(true);
+     }
+   }
+diff --git a/web/src/features/career/CatalogSelect.test.tsx b/web/src/features/career/CatalogSelect.test.tsx
+new file mode 100644
+index 0000000..ba8ef56
+--- /dev/null
++++ b/web/src/features/career/CatalogSelect.test.tsx
+@@ -0,0 +1,95 @@
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import { CatalogSelect } from "./CatalogSelect";
++
++const COMPETENCIES_ROUTE = "GET /api/v1/career/competencies";
++const OPTION = ".ant-select-item-option-content";
++
++const competency = (number: number) => ({
++  id: `competency-${number}`,
++  name: `Компетенция ${String(number).padStart(3, "0")}`,
++});
++
++/** A server that has `count` competencies by name and gives as many of the first as the request asks for. */
++function serveCompetencies(count: number) {
++  const all = Array.from({ length: count }, (_, index) =>
++    competency(index + 1),
++  );
++  fakeApi.on(COMPETENCIES_ROUTE, (request) => {
++    const pageSize = Number(new URL(request.url).searchParams.get("pageSize"));
++    return Response.json({
++      items: all.slice(0, pageSize),
++      total: all.length,
++      page: 1,
++      pageSize,
++    });
++  });
++  return all;
++}
++
++function renderSelect(exclude: readonly string[]) {
++  render(
++    <Providers>
++      <CatalogSelect
++        segment="competencies"
++        aria-label="Компетенции"
++        exclude={exclude}
++      />
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++const askedPageSizes = () =>
++  fakeApi
++    .calls(COMPETENCIES_ROUTE)
++    .map((call) => new URL(call.url).searchParams.get("pageSize"));
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("a picker that leaves out the entries already used (AC-14)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("offers the entry that is left when the first twenty by name are the ones already used", async () => {
++    const all = serveCompetencies(21);
++    const used = all.slice(0, 20).map((entry) => entry.id);
++    const user = renderSelect(used);
++
++    await user.click(
++      await screen.findByRole("combobox", { name: "Компетенции" }),
++    );
++
++    expect(
++      await screen.findByText(competency(21).name, { selector: OPTION }),
++    ).toBeInTheDocument();
++    expect(
++      all
++        .slice(0, 20)
++        .filter((entry) =>
++          screen.queryByText(entry.name, { selector: OPTION }),
++        ),
++    ).toEqual([]);
++  });
++
++  it.each([
++    [0, "20"],
++    [1, "21"],
++    [180, "200"],
++    [250, "200"],
++  ])(
++    "with %i entries left out asks for a page of %s, never above the largest the server gives",
++    async (used, pageSize) => {
++      const all = serveCompetencies(300);
++      renderSelect(all.slice(0, used).map((entry) => entry.id));
++
++      await waitFor(() => expect(askedPageSizes()).toEqual([pageSize]));
++    },
++  );
++});
+diff --git a/web/src/features/career/CatalogSelect.tsx b/web/src/features/career/CatalogSelect.tsx
+index 493f1ed..b940bf4 100644
+--- a/web/src/features/career/CatalogSelect.tsx
++++ b/web/src/features/career/CatalogSelect.tsx
+@@ -9,6 +9,8 @@ import { useDebouncedValue } from "../../app/useDebouncedValue";
+ import { type CatalogSegment, catalogQueryKey, entryQuery } from "./catalogApi";
+ 
+ const PICKER_PAGE_SIZE = 20;
++/** The largest page the server gives. */
++const PAGE_SIZE_MAX = 200;
+ /** Width of a column filter dropdown, in control heights. */
+ export const FILTER_WIDTH_IN_CONTROLS = 11;
+ 
+@@ -28,13 +30,16 @@ export interface PickerOption {
+ 
+ /**
+  * Server search of a catalogue as the user types, one page of the first matches by name. The chosen entry is listed by
+- * its name even when the search does not return it, as one deactivated since it was chosen.
++ * its name even when the search does not return it, as one deactivated since it was chosen. The excluded entries are left
++ * out of the options, and the page grows by their number up to the largest page the server gives, so leaving them out
++ * does not shorten the list while fewer than 180 are excluded.
+  */
+ export function useCatalogSearch(
+   segment: PickedSegment,
+   value: string | undefined,
+   filters: PickerFilters = {},
+   isEnabled = true,
++  exclude: readonly string[] = [],
+ ) {
+   const [search, setSearch] = useState("");
+   const text = useDebouncedValue(search.trim());
+@@ -42,7 +47,7 @@ export function useCatalogSearch(
+     ...filters,
+     q: text || undefined,
+     page: 1,
+-    pageSize: PICKER_PAGE_SIZE,
++    pageSize: Math.min(PICKER_PAGE_SIZE + exclude.length, PAGE_SIZE_MAX),
+   };
+   const found = useQuery({
+     queryKey: [...catalogQueryKey, segment, "search", query],
+@@ -65,7 +70,9 @@ export function useCatalogSearch(
+   const options: PickerOption[] = [
+     ...(chosen.data && !isChosenListed ? [chosen.data] : []),
+     ...items,
+-  ].map((entry) => ({ value: entry.id, label: entry.name }));
++  ]
++    .filter((entry) => !exclude.includes(entry.id))
++    .map((entry) => ({ value: entry.id, label: entry.name }));
+   return {
+     search,
+     setSearch,
+@@ -110,6 +117,7 @@ export function CatalogSelect({
+     value ?? undefined,
+     filters,
+     !disabled,
++    exclude,
+   );
+   return (
+     <Select<string, PickerOption>
+@@ -121,7 +129,7 @@ export function CatalogSelect({
+         if (!isOpen) setSearch("");
+       }}
+       loading={isFetching}
+-      options={options.filter((option) => !exclude.includes(option.value))}
++      options={options}
+       notFoundContent={error ? describeApiError(error) : undefined}
+     />
+   );
+diff --git a/web/src/features/career/CompetenciesTab.tsx b/web/src/features/career/CompetenciesTab.tsx
+index 4c6d7d3..8368ff2 100644
+--- a/web/src/features/career/CompetenciesTab.tsx
++++ b/web/src/features/career/CompetenciesTab.tsx
+@@ -25,7 +25,6 @@ import {
+   competencyVersionsQuery,
+   entryQuery,
+   FIRST_PAGE,
+-  useEntryNames,
+ } from "./catalogApi";
+ import { choiceFilter, onFilterChange, pageProps } from "./columnFilters";
+ import { useCatalogRights } from "./useCatalogRights";
+@@ -51,19 +50,6 @@ export function CompetenciesTab() {
+     ...competenciesQuery(params),
+     placeholderData: (previous) => previous,
+   });
+-  const items = data?.items ?? [];
+-  const categories = useEntryNames(
+-    "categories",
+-    items.map((competency) => competency.categoryId),
+-  );
+-  const directions = useEntryNames(
+-    "directions",
+-    items.map((competency) => competency.directionId),
+-  );
+-  const scales = useEntryNames(
+-    "scales",
+-    items.map((competency) => competency.scaleId),
+-  );
+   const columns: TableColumnsType<Competency> = [
+     { title: "Название", dataIndex: "name" },
+     {
+@@ -75,7 +61,7 @@ export function CompetenciesTab() {
+         params.categoryId,
+         "Категория",
+       ),
+-      render: (id: string) => categories.get(id),
++      render: (_, competency) => competency.categoryName,
+     },
+     {
+       title: "Направление",
+@@ -86,7 +72,7 @@ export function CompetenciesTab() {
+         params.directionId,
+         "Направление",
+       ),
+-      render: (id: string | null) => (id ? directions.get(id) : "Общая"),
++      render: (_, competency) => competency.directionName ?? "Общая",
+     },
+     {
+       title: "Тип",
+@@ -105,7 +91,7 @@ export function CompetenciesTab() {
+       title: "Шкала",
+       dataIndex: "scaleId",
+       ...catalogFilter("scaleId", "scales", params.scaleId, "Шкала"),
+-      render: (id: string) => scales.get(id),
++      render: (_, competency) => competency.scaleName,
+     },
+     ...entryColumns<Competency>(params.status),
+     { title: "Версия", dataIndex: "versionNumber" },
+diff --git a/web/src/features/career/CompetencyModal.test.tsx b/web/src/features/career/CompetencyModal.test.tsx
+index 5332e56..90604fc 100644
+--- a/web/src/features/career/CompetencyModal.test.tsx
++++ b/web/src/features/career/CompetencyModal.test.tsx
+@@ -42,9 +42,12 @@ const EXISTING: Competency = {
+   name: "Проектирование",
+   description: null,
+   categoryId: CATEGORY.id,
++  categoryName: CATEGORY.name,
+   directionId: null,
++  directionName: null,
+   type: "Profile",
+   scaleId: OTHER_SCALE.id,
++  scaleName: OTHER_SCALE.name,
+   status: "Active",
+   createdAt: "2026-10-01T00:00:00Z",
+   versionNumber: 2,
+diff --git a/web/src/features/career/MatrixBlocks.tsx b/web/src/features/career/MatrixBlocks.tsx
+index 01073e2..0e6eaf4 100644
+--- a/web/src/features/career/MatrixBlocks.tsx
++++ b/web/src/features/career/MatrixBlocks.tsx
+@@ -74,7 +74,10 @@ interface MatrixBlocksProps {
+   onChange: (content: MatrixContent) => void;
+ }
+ 
+-/** The blocks of competencies with their coefficients and thresholds per level. */
++/**
++ * The blocks of competencies with their coefficients and thresholds per level. A control is disabled here only when it
++ * must be, and otherwise follows the disabled state around it, so the editor can lock them all while it saves.
++ */
+ export function MatrixBlocks({
+   content,
+   levelIds,
+@@ -185,7 +188,7 @@ export function MatrixBlocks({
+       key: "isMandatory",
+       render: (_, block) => (
+         <Checkbox
+-          disabled={!isEditable}
++          disabled={!isEditable || undefined}
+           checked={block.isMandatory}
+           onChange={(event) =>
+             onChange(
+@@ -213,7 +216,7 @@ export function MatrixBlocks({
+               type="link"
+               size="small"
+               danger
+-              disabled={isUsed}
++              disabled={isUsed || undefined}
+               onClick={() => onChange(removeBlock(content, block.id))}
+             >
+               Удалить
+diff --git a/web/src/features/career/MatrixCreateModal.test.tsx b/web/src/features/career/MatrixCreateModal.test.tsx
+index e012000..bf7ffba 100644
+--- a/web/src/features/career/MatrixCreateModal.test.tsx
++++ b/web/src/features/career/MatrixCreateModal.test.tsx
+@@ -72,7 +72,6 @@ function serve() {
+       ]),
+     ),
+   );
+-  // The server offers the tracks of the unit in `forOrgUnitId` and of the units above it.
+   fakeApi.on("GET /api/v1/career/tracks", (request) => {
+     const forUnit = new URL(request.url).searchParams.get("forOrgUnitId");
+     const chain = new Set<string>();
+diff --git a/web/src/features/career/MatrixEditor.tsx b/web/src/features/career/MatrixEditor.tsx
+index 7b313fc..fa34014 100644
+--- a/web/src/features/career/MatrixEditor.tsx
++++ b/web/src/features/career/MatrixEditor.tsx
+@@ -7,6 +7,7 @@ import {
+ } from "@tanstack/react-query";
+ import {
+   Button,
++  ConfigProvider,
+   Flex,
+   InputNumber,
+   Select,
+@@ -89,7 +90,10 @@ interface MatrixEditorProps {
+ 
+ /**
+  * The competency-by-level grid with the blocks and thresholds of a version. It is editable when the version's
+- * actions allow, and then keeps the edits in the form until they are saved.
++ * actions allow, and then keeps the edits in the form until they are saved. While a save is in flight its controls are
++ * disabled, so nothing typed then is lost when the saved version replaces the form. Levels go in the track order: a
++ * published or archived version keeps the order its entries were frozen in, and puts after them the levels only an
++ * earlier variant has; a version in work follows the catalogue.
+  */
+ export function MatrixEditor(props: MatrixEditorProps) {
+   const { base, noteSaveFailure } = useEditBase(props.version);
+@@ -163,16 +167,18 @@ function MatrixEditorBody({
+     (save.isPending || JSON.stringify(edited) !== JSON.stringify(base.content));
+   useEffect(() => onUnsavedChange?.(isUnsaved), [isUnsaved, onUnsavedChange]);
+ 
++  const catalogOrder = catalogLevels.data?.items ?? [];
+   const levelNames = new Map<string, string>([
+-    ...(catalogLevels.data?.items ?? []).map(
+-      (level) => [level.id, level.name] as const,
+-    ),
++    ...catalogOrder.map((level) => [level.id, level.name] as const),
+     ...entries.levels.map((level) => [level.id, level.name] as const),
+   ]);
+-  const trackOrder = [
+-    ...(catalogLevels.data?.items ?? []),
+-    ...entries.levels,
+-  ].map((level) => level.id);
++  const isFrozen =
++    version.status === "Published" || version.status === "Archived";
++  const trackOrder = (
++    isFrozen
++      ? [...entries.levels, ...catalogOrder]
++      : [...catalogOrder, ...entries.levels]
++  ).map((level) => level.id);
+   const rank = (levelId: string) => {
+     const index = trackOrder.indexOf(levelId);
+     return index === -1 ? trackOrder.length : index;
+@@ -305,6 +311,7 @@ function MatrixEditorBody({
+       <button
+         type="button"
+         className="matrix-cell-button"
++        disabled={save.isPending}
+         aria-label={`${competencies.get(competencyId)?.name}, ${levelName}`}
+         onClick={() =>
+           setDialog({ kind: "requirement", levelId, competencyId })
+@@ -369,133 +376,135 @@ function MatrixEditorBody({
+   const requested = dialog?.kind === "requirement" ? dialog : null;
+ 
+   return (
+-    <Space orientation="vertical" size="large" style={{ display: "flex" }}>
+-      {isEditable && (
+-        <Flex gap="small" wrap>
+-          <Button onClick={() => setDialog({ kind: "competency" })}>
+-            Добавить компетенцию
+-          </Button>
+-          <Button onClick={() => setDialog({ kind: "level" })}>
+-            Добавить уровень
+-          </Button>
+-          <Button
+-            type="primary"
+-            loading={save.isPending}
+-            onClick={() => save.mutate()}
+-          >
+-            Сохранить
+-          </Button>
+-        </Flex>
+-      )}
+-      {save.error != null && (
+-        <MatrixErrorAlert
+-          title="Не удалось сохранить запись"
+-          error={save.error}
+-        />
+-      )}
+-      {diff && (
+-        <MatrixChanges
+-          diff={diff}
+-          levelNames={levelNames}
+-          competencyNames={
+-            new Map(
+-              [...competencies].map(([id, competency]) => [
+-                id,
+-                competency.name,
+-              ]),
+-            )
+-          }
+-          scalePoints={entries.scale.points}
+-        />
+-      )}
+-      <ul className="matrix-legend">
+-        {entries.scale.points.map((point) => (
+-          <li key={point.score}>
+-            <span
+-              className={`rating-chip rating-chip--${chipLevel(point.score)}`}
++    <ConfigProvider componentDisabled={save.isPending}>
++      <Space orientation="vertical" size="large" style={{ display: "flex" }}>
++        {isEditable && (
++          <Flex gap="small" wrap>
++            <Button onClick={() => setDialog({ kind: "competency" })}>
++              Добавить компетенцию
++            </Button>
++            <Button onClick={() => setDialog({ kind: "level" })}>
++              Добавить уровень
++            </Button>
++            <Button
++              type="primary"
++              loading={save.isPending}
++              onClick={() => save.mutate()}
+             >
+-              {point.score}
+-            </span>
+-            {point.label}
+-          </li>
+-        ))}
+-      </ul>
+-      <Table<GridRow>
+-        className="matrix-grid"
+-        rowKey="key"
+-        columns={columns}
+-        dataSource={rows}
+-        pagination={false}
+-        scroll={{ x: "max-content" }}
+-        rowClassName={(row) =>
+-          row.competencyId && changed.competencies.has(row.competencyId)
+-            ? "matrix-changed-row"
+-            : ""
+-        }
+-      />
+-      <MatrixBlocks
+-        content={shown}
+-        levelIds={shownLevelIds}
+-        levelNames={levelNames}
+-        changed={changed}
+-        isEditable={isEditable}
+-        onChange={setEdited}
+-      />
+-      {dialog?.kind === "level" && (
+-        <AddLevelModal
+-          options={levelOptions}
+-          isLoading={catalogLevels.isFetching}
+-          onPick={(levelId) => {
+-            setEdited(addLevel(edited, levelId));
+-            setDialog(null);
+-          }}
+-          onClose={() => setDialog(null)}
+-        />
+-      )}
+-      {dialog?.kind === "competency" && (
+-        <AddCompetencyModal
+-          filters={competencyFilters}
+-          usedIds={shown.competencies.map((item) => item.competencyId)}
+-          blocks={blockOptions}
+-          onPick={(competencyId, blockId) => {
+-            setEdited(addCompetency(edited, competencyId, blockId));
+-            setDialog(null);
+-          }}
+-          onClose={() => setDialog(null)}
+-        />
+-      )}
+-      {requested && (
+-        <RequirementModal
+-          title={`${competencies.get(requested.competencyId)?.name}, ${levelNames.get(requested.levelId)}`}
+-          levelId={requested.levelId}
+-          competencyId={requested.competencyId}
+-          requirement={requirementOf(
+-            shown,
+-            requested.levelId,
+-            requested.competencyId,
+-          )}
+-          defaultType={
+-            competencies.get(requested.competencyId)?.type ?? "Profile"
++              Сохранить
++            </Button>
++          </Flex>
++        )}
++        {save.error != null && (
++          <MatrixErrorAlert
++            title="Не удалось сохранить запись"
++            error={save.error}
++          />
++        )}
++        {diff && (
++          <MatrixChanges
++            diff={diff}
++            levelNames={levelNames}
++            competencyNames={
++              new Map(
++                [...competencies].map(([id, competency]) => [
++                  id,
++                  competency.name,
++                ]),
++              )
++            }
++            scalePoints={entries.scale.points}
++          />
++        )}
++        <ul className="matrix-legend">
++          {entries.scale.points.map((point) => (
++            <li key={point.score}>
++              <span
++                className={`rating-chip rating-chip--${chipLevel(point.score)}`}
++              >
++                {point.score}
++              </span>
++              {point.label}
++            </li>
++          ))}
++        </ul>
++        <Table<GridRow>
++          className="matrix-grid"
++          rowKey="key"
++          columns={columns}
++          dataSource={rows}
++          pagination={false}
++          scroll={{ x: "max-content" }}
++          rowClassName={(row) =>
++            row.competencyId && changed.competencies.has(row.competencyId)
++              ? "matrix-changed-row"
++              : ""
+           }
+-          scalePoints={entries.scale.points}
++        />
++        <MatrixBlocks
++          content={shown}
++          levelIds={shownLevelIds}
++          levelNames={levelNames}
++          changed={changed}
+           isEditable={isEditable}
+-          onSave={(requirement) => {
+-            setEdited(withRequirement(edited, requirement));
+-            setDialog(null);
+-          }}
+-          onRemove={() => {
+-            setEdited(
+-              withoutRequirement(
+-                edited,
+-                requested.levelId,
+-                requested.competencyId,
+-              ),
+-            );
+-            setDialog(null);
+-          }}
+-          onClose={() => setDialog(null)}
++          onChange={setEdited}
+         />
+-      )}
+-    </Space>
++        {dialog?.kind === "level" && (
++          <AddLevelModal
++            options={levelOptions}
++            isLoading={catalogLevels.isFetching}
++            onPick={(levelId) => {
++              setEdited(addLevel(edited, levelId));
++              setDialog(null);
++            }}
++            onClose={() => setDialog(null)}
++          />
++        )}
++        {dialog?.kind === "competency" && (
++          <AddCompetencyModal
++            filters={competencyFilters}
++            usedIds={shown.competencies.map((item) => item.competencyId)}
++            blocks={blockOptions}
++            onPick={(competencyId, blockId) => {
++              setEdited(addCompetency(edited, competencyId, blockId));
++              setDialog(null);
++            }}
++            onClose={() => setDialog(null)}
++          />
++        )}
++        {requested && (
++          <RequirementModal
++            title={`${competencies.get(requested.competencyId)?.name}, ${levelNames.get(requested.levelId)}`}
++            levelId={requested.levelId}
++            competencyId={requested.competencyId}
++            requirement={requirementOf(
++              shown,
++              requested.levelId,
++              requested.competencyId,
++            )}
++            defaultType={
++              competencies.get(requested.competencyId)?.type ?? "Profile"
++            }
++            scalePoints={entries.scale.points}
++            isEditable={isEditable}
++            onSave={(requirement) => {
++              setEdited(withRequirement(edited, requirement));
++              setDialog(null);
++            }}
++            onRemove={() => {
++              setEdited(
++                withoutRequirement(
++                  edited,
++                  requested.levelId,
++                  requested.competencyId,
++                ),
++              );
++              setDialog(null);
++            }}
++            onClose={() => setDialog(null)}
++          />
++        )}
++      </Space>
++    </ConfigProvider>
+   );
+ }
+diff --git a/web/src/features/career/MatrixPage.test.tsx b/web/src/features/career/MatrixPage.test.tsx
+index 90fc75a..1ef624e 100644
+--- a/web/src/features/career/MatrixPage.test.tsx
++++ b/web/src/features/career/MatrixPage.test.tsx
+@@ -764,6 +764,146 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
+     ]);
+   });
+ 
++  function editorWithACompetency() {
++    const shown = draft();
++    const content = (minOverallPercent: number | null) => ({
++      levels: [{ levelId: "junior", minOverallPercent }],
++      blocks: [
++        { id: "core", name: "Основные", isMandatory: true },
++        { id: "extra", name: "Дополнительные", isMandatory: false },
++      ],
++      competencies: [{ competencyId: "design", blockId: "core" }],
++      blockWeights: [
++        { levelId: "junior", blockId: "core", percent: 100, minPercent: null },
++      ],
++      requirements: [
++        {
++          levelId: "junior",
++          competencyId: "design",
++          requiredScore: 2,
++          type: "Profile" as const,
++          weight: 1,
++          isMandatory: false,
++          expectedBehavior: null,
++          evidenceExamples: null,
++          validFrom: null,
++        },
++      ],
++    });
++    const opened = {
++      ...shown,
++      content: content(null),
++      entries: {
++        ...shown.entries,
++        competencies: [
++          {
++            id: "design",
++            name: "Проектирование",
++            description: null,
++            categoryId: "category",
++            categoryName: "Профессиональные",
++            directionId: null,
++            type: "Profile" as const,
++            versionNumber: 1,
++            status: "Active" as const,
++          },
++        ],
++      },
++    };
++    const saved = {
++      ...opened,
++      content: content(60),
++      version: VERSION_TAG + 1,
++    };
++    return { opened, saved };
++  }
++
++  it("locks every control of the editor while the content is being saved, so that nothing typed then is lost, and frees them once it is saved", async () => {
++    const held = deferred<Response>();
++    const { opened, saved } = editorWithACompetency();
++    serveEditor(opened);
++    fakeApi.on(CONTENT_ROUTE, () => held.promise);
++    const user = await openPage();
++    const threshold = await screen.findByRole("spinbutton", {
++      name: "Минимальный общий порог: Младший",
++    });
++    await user.type(threshold, "60");
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(threshold).toBeDisabled());
++    await user.type(threshold, "7");
++    const controls: [string, HTMLElement[]][] = [
++      ["percent field", screen.getAllByRole("spinbutton")],
++      [
++        "block name",
++        screen.getAllByRole("textbox", { name: "Название блока" }),
++      ],
++      [
++        "mandatory checkbox",
++        screen.getAllByRole("checkbox", { name: "Обязательный блок" }),
++      ],
++      [
++        "block choice",
++        screen.getAllByRole("combobox", { name: "Блок компетенций" }),
++      ],
++      [
++        "requirement cell",
++        [screen.getByRole("button", { name: "Проектирование, Младший" })],
++      ],
++      ["add block", [screen.getByRole("button", { name: /Добавить блок/ })]],
++      [
++        "add competency",
++        [screen.getByRole("button", { name: /Добавить компетенцию/ })],
++      ],
++      ["add level", [screen.getByRole("button", { name: /Добавить уровень/ })]],
++      ["save", [screen.getByRole("button", { name: /Сохранить/ })]],
++      ["delete", screen.getAllByRole("button", { name: /Удалить/ })],
++    ];
++    expect(
++      controls.flatMap(([kind, found]) =>
++        found
++          .filter((control) => !control.hasAttribute("disabled"))
++          .map(() => kind),
++      ),
++    ).toEqual([]);
++    expect(threshold).toHaveValue("60");
++    fakeApi.on(`GET /api/v1/career/matrix-versions/${VERSION_ID}`, () =>
++      Response.json(saved),
++    );
++    held.resolve(Response.json(saved));
++
++    await waitFor(() =>
++      expect(
++        screen.getByRole("button", { name: /Добавить блок/ }),
++      ).toBeEnabled(),
++    );
++    const freed = screen.getByRole("spinbutton", {
++      name: "Минимальный общий порог: Младший",
++    });
++    expect(freed).toBeEnabled();
++    expect(freed).toHaveValue("60");
++  });
++
++  it("frees the editor again, with what was typed still in it, when the save is refused", async () => {
++    serveEditor(editorWithACompetency().opened);
++    fakeApi.on(CONTENT_ROUTE, () => problem(500, { title: "Сбой" }));
++    const user = await openPage();
++    const threshold = await screen.findByRole("spinbutton", {
++      name: "Минимальный общий порог: Младший",
++    });
++    await user.type(threshold, "60");
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    await waitFor(() => expect(threshold).toBeEnabled());
++    expect(threshold).toHaveValue("60");
++    expect(screen.getByRole("button", { name: /Сохранить/ })).toBeEnabled();
++  });
++
+   it("offers no editing and no save for a version whose turn is not the user's", async () => {
+     serve(version({ status: "OnReview", actions: [] }));
+     await openPage();
+@@ -1006,7 +1146,7 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
+       withGeneral: "true",
+       inWork: "true",
+       page: "1",
+-      pageSize: "20",
++      pageSize: "21",
+     });
+   });
+ 
+@@ -1038,3 +1178,80 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
+     );
+   });
+ });
++
++describe("the levels of a version in the order of the track (AC-11, AC-17)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  const level = (id: string, name: string, position: number) => ({
++    id,
++    name,
++    status: "Active" as const,
++    directionId: "direction",
++    trackId: "track",
++    position,
++    version: 1,
++    canEdit: false,
++    canDelete: false,
++  });
++
++  async function levelColumns(status: MatrixVersion["status"]) {
++    const shown = version({
++      status,
++      step: null,
++      actions: [],
++      content: {
++        levels: [
++          { levelId: "senior", minOverallPercent: null },
++          { levelId: "junior", minOverallPercent: null },
++        ],
++        blocks: [],
++        competencies: [],
++        blockWeights: [],
++        requirements: [],
++      },
++      entries: {
++        ...version().entries,
++        levels: [
++          { id: "junior", name: "Младший", status: "Active" },
++          { id: "senior", name: "Старший", status: "Active" },
++        ],
++      },
++    });
++    serve(shown, { published: true, inWork: false });
++    fakeApi.on("GET /api/v1/career/levels", () =>
++      Response.json({
++        items: [level("senior", "Старший", 1), level("junior", "Младший", 2)],
++        total: 2,
++        page: 1,
++        pageSize: 200,
++      }),
++    );
++    await openPage();
++    const grid = document.querySelector(".matrix-grid") as HTMLElement;
++    await waitFor(() =>
++      expect(within(grid).getAllByRole("columnheader")).toHaveLength(3),
++    );
++    return within(grid)
++      .getAllByRole("columnheader")
++      .map((header) => header.textContent);
++  }
++
++  it.each<[MatrixVersion["status"]]>([["Published"], ["Archived"]])(
++    "shows a %s version's levels in the order they had when it was published, although the track has been put in another order since",
++    async (status) => {
++      expect(await levelColumns(status)).toEqual([
++        "Компетенции",
++        "Младший",
++        "Старший",
++      ]);
++    },
++  );
++
++  it("shows a version that is not published yet in the order the track has now", async () => {
++    expect(await levelColumns("OnReview")).toEqual([
++      "Компетенции",
++      "Старший",
++      "Младший",
++    ]);
++  });
++});
+diff --git a/web/src/features/career/TrackModal.test.tsx b/web/src/features/career/TrackModal.test.tsx
+index da13f81..364afe2 100644
+--- a/web/src/features/career/TrackModal.test.tsx
++++ b/web/src/features/career/TrackModal.test.tsx
+@@ -15,6 +15,9 @@ const DIRECTION_ID = "direction";
+ const SALES = "sales";
+ const TRACK_ROUTE = "POST /api/v1/career/tracks";
+ const LEVEL_ROUTE = "POST /api/v1/career/levels";
++const ORDER_ROUTE = "PUT /api/v1/career/tracks/created/level-order";
++/** The version the server gives a track it has just created: an entry is first saved as version 0. */
++const CREATED_VERSION = 0;
+ 
+ const unit = (id: string, name: string, parentId: string | null) => ({
+   id,
+@@ -78,7 +81,7 @@ function serve(): Served {
+   fakeApi.on(TRACK_ROUTE, async (request) => {
+     const body = await request.json();
+     served.steps.push(`track ${body.name} in ${body.ownerOrgUnitId}`);
+-    return Response.json(track("created", body.name, 1));
++    return Response.json(track("created", body.name, CREATED_VERSION));
+   });
+   fakeApi.on(LEVEL_ROUTE, async (request) => {
+     const body = await request.json();
+@@ -91,14 +94,11 @@ function serve(): Served {
+     served.levels.push(created);
+     return Response.json(created);
+   });
+-  fakeApi.on(
+-    "PUT /api/v1/career/tracks/created/level-order",
+-    async (request) => {
+-      const body = await request.json();
+-      served.steps.push(`order ${body.levelIds.join(",")}`);
+-      return Response.json(track("created", "Бэкенд", 2));
+-    },
+-  );
++  fakeApi.on(ORDER_ROUTE, async (request) => {
++    const body = await request.json();
++    served.steps.push(`order ${body.levelIds.join(",")}`);
++    return Response.json(track("created", "Бэкенд", 2));
++  });
+   return served;
+ }
+ 
+@@ -197,11 +197,9 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
+       "level Старший of created",
+       "order level-2,level-1",
+     ]);
+-    expect(
+-      fakeApi
+-        .calls("PUT /api/v1/career/tracks/created/level-order")[0]
+-        ?.headers.get("If-Match"),
+-    ).toBe('"1"');
++    expect(fakeApi.calls(ORDER_ROUTE)[0]?.headers.get("If-Match")).toBe(
++      `"${CREATED_VERSION}"`,
++    );
+   });
+ 
+   it("does not send an order the user did not change", async () => {
+@@ -275,6 +273,59 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
+     expect(fakeApi.calls(TRACK_ROUTE)).toHaveLength(1);
+   });
+ 
++  it("creates a new track once, and after the order is refused for a stale version reads the track again and sends the version it read", async () => {
++    const served = serve();
++    let refusals = 1;
++    fakeApi.on(ORDER_ROUTE, async (request) => {
++      const body = await request.json();
++      served.steps.push(`order ${body.levelIds.join(",")}`);
++      return refusals-- > 0
++        ? problem(412, { title: "Запись изменена" })
++        : Response.json(track("created", "Бэкенд", 8));
++    });
++    fakeApi.on("GET /api/v1/career/tracks/created", () =>
++      Response.json(track("created", "Бэкенд", 5)),
++    );
++    const onClose = vi.fn();
++    render(
++      <Providers>
++        <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
++      </Providers>,
++    );
++    const user = userEvent.setup();
++    await fillNewTrack(user, "Бэкенд");
++    await addLevel(user, "Младший");
++    await addLevel(user, "Старший");
++    restoreLayout = stubRowLayout();
++    screen
++      .getByRole("button", { name: "Перетащить уровень «Старший»" })
++      .focus();
++    await user.keyboard(" ");
++    await user.keyboard("{ArrowUp}");
++    await user.keyboard(" ");
++    await screen.findByText("Уровень «Старший» перемещён на позицию 1 из 2");
++
++    await save(user);
++
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(onClose).not.toHaveBeenCalled();
++    await save(user);
++
++    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
++    expect(served.steps).toEqual([
++      `track Бэкенд in ${SALES}`,
++      "level Младший of created",
++      "level Старший of created",
++      "order level-2,level-1",
++      "order level-2,level-1",
++    ]);
++    expect(
++      fakeApi.calls(ORDER_ROUTE).map((call) => call.headers.get("If-Match")),
++    ).toEqual([`"${CREATED_VERSION}"`, '"5"']);
++  });
++
+   it("renames an existing track against the version it was opened with, and creates nothing else", async () => {
+     const served = serve();
+     fakeApi.on("PUT /api/v1/career/tracks/existing", () =>
+diff --git a/web/src/features/career/TrackModal.tsx b/web/src/features/career/TrackModal.tsx
+index cf7cc6a..e8c6b8f 100644
+--- a/web/src/features/career/TrackModal.tsx
++++ b/web/src/features/career/TrackModal.tsx
+@@ -1,7 +1,7 @@
+ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+ import { Form, Input, Select, Typography, theme } from "antd";
+ import { useState } from "react";
+-import { useEditBase } from "../../app/useEditBase";
++import { isStaleVersion, useEditBase } from "../../app/useEditBase";
+ import { useFormSubmit } from "../../app/useFormSubmit";
+ import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
+ import { CatalogModal, FormActions } from "./CatalogModal";
+@@ -10,6 +10,7 @@ import {
+   invalidateCatalogs,
+   levelsQuery,
+   orderLevels,
++  readTrack,
+   saveNamedEntry,
+ } from "./catalogApi";
+ import { createLevel } from "./LevelModal";
+@@ -35,8 +36,9 @@ interface TrackModalProps {
+  * Dialog that creates or edits a track together with its levels. «Сохранить» saves the track first, then each level
+  * added here, one after another, and then the order of the levels if it was changed. If a step fails, the steps before
+  * it stay saved: the dialog stays open on the track as saved, keeps the order, lists as pending only the levels that are
+- * left, and a second «Сохранить» retries the rest. The track is the newer of the one saved here and the form base, so
+- * after a stale-version refusal the reread track replaces the saved one and the next save sends its version.
++ * left, and a second «Сохранить» retries the rest without creating the track again. The track is the one saved here when
++ * the dialog created it, read again after a stale-version refusal, and otherwise the newer of the one saved here and the
++ * form base, which moves to the reread track after such a refusal; either way the next save sends the reread version.
+  */
+ export function TrackModal({
+   directionId,
+@@ -51,7 +53,8 @@ export function TrackModal({
+   const [saved, setSaved] = useState<CareerTrack>();
+   const [pending, setPending] = useState<PendingLevel[]>([]);
+   const [order, setOrder] = useState<string[]>();
+-  const current = saved && saved.version > (base?.version ?? 0) ? saved : base;
++  const current =
++    saved && (!base || saved.version > base.version) ? saved : base;
+   const levels = useQuery({
+     ...levelsQuery(current?.id ?? ""),
+     enabled: current !== undefined,
+@@ -64,32 +67,39 @@ export function TrackModal({
+   const save = useMutation({
+     mutationFn: async (values: TrackValues) => {
+       let track = current;
+-      if (!track || values.name !== track.name) {
+-        track = (await saveNamedEntry(
+-          "tracks",
+-          { ...values, directionId },
+-          track,
+-        )) as CareerTrack;
+-        setSaved(track);
+-      }
+-      const createdIds = new Map<string, string>();
+-      let rest = pending;
+-      for (const level of pending) {
+-        const created = await createLevel(track.id, level.values);
+-        createdIds.set(level.key, created.id);
+-        rest = rest.slice(1);
+-        setPending(rest);
+-        setOrder((keys) =>
+-          keys?.map((key) => (key === level.key ? created.id : key)),
+-        );
+-      }
+-      if (order) {
+-        setSaved(
+-          await orderLevels(
++      try {
++        if (!track || values.name !== track.name) {
++          track = (await saveNamedEntry(
++            "tracks",
++            { ...values, directionId },
+             track,
+-            rows.map((row) => createdIds.get(row.key) ?? row.key),
+-          ),
+-        );
++          )) as CareerTrack;
++          setSaved(track);
++        }
++        const createdIds = new Map<string, string>();
++        let rest = pending;
++        for (const level of pending) {
++          const created = await createLevel(track.id, level.values);
++          createdIds.set(level.key, created.id);
++          rest = rest.slice(1);
++          setPending(rest);
++          setOrder((keys) =>
++            keys?.map((key) => (key === level.key ? created.id : key)),
++          );
++        }
++        if (order) {
++          setSaved(
++            await orderLevels(
++              track,
++              rows.map((row) => createdIds.get(row.key) ?? row.key),
++            ),
++          );
++        }
++      } catch (error) {
++        if (!latest && track && isStaleVersion(error)) {
++          await readTrack(track.id).then(setSaved, () => undefined);
++        }
++        throw error;
+       }
+     },
+     onSuccess: onClose,
+diff --git a/web/src/features/career/catalogApi.ts b/web/src/features/career/catalogApi.ts
+index 3c37a3b..3819f09 100644
+--- a/web/src/features/career/catalogApi.ts
++++ b/web/src/features/career/catalogApi.ts
+@@ -1,8 +1,4 @@
+-import {
+-  type QueryClient,
+-  queryOptions,
+-  useQueries,
+-} from "@tanstack/react-query";
++import { type QueryClient, queryOptions } from "@tanstack/react-query";
+ import { api } from "../../api/client";
+ import { ifMatchOf } from "../../api/ifMatch";
+ import type { components } from "../../api/schema";
+@@ -219,22 +215,6 @@ export function invalidateCatalogs(queryClient: QueryClient) {
+   return queryClient.invalidateQueries({ queryKey: catalogQueryKey });
+ }
+ 
+-/** Names of catalogue entries by id, each read on its own, for the few the rows of one page refer to. */
+-export function useEntryNames(
+-  segment: CatalogSegment,
+-  ids: readonly (string | null | undefined)[],
+-): ReadonlyMap<string, string> {
+-  const unique = [...new Set(ids)].filter((id): id is string => !!id);
+-  const reads = useQueries({
+-    queries: unique.map((id) => entryQuery(segment, id)),
+-  });
+-  return new Map(
+-    reads.flatMap((read) =>
+-      read.data ? [[read.data.id, read.data.name] as const] : [],
+-    ),
+-  );
+-}
+-
+ export type CatalogAction = "approve" | "deactivate" | "activate";
+ 
+ /**
+@@ -343,6 +323,13 @@ export async function deleteEntry(
+   );
+ }
+ 
++/** Reads a track as it stands now, as after a save refused for a stale version. */
++export async function readTrack(id: string) {
++  return unwrap(
++    await api.GET("/api/v1/career/tracks/{id}", { params: { path: { id } } }),
++  );
++}
++
+ /** Puts the track's levels in the given order, the most junior first; the track takes a new version. */
+ export async function orderLevels(
+   track: { id: string; version: number },
+diff --git a/web/src/features/career/catalogueTables.test.tsx b/web/src/features/career/catalogueTables.test.tsx
+index 472980a..664c859 100644
+--- a/web/src/features/career/catalogueTables.test.tsx
++++ b/web/src/features/career/catalogueTables.test.tsx
+@@ -364,9 +364,12 @@ describe("the competency table and its version history (AC-12, AC-24)", {
+     name: `Проектирование ${id}`,
+     description: "Описание",
+     categoryId: "category",
++    categoryName: "Профессиональные",
+     directionId,
++    directionName: directionId ? "Разработка" : null,
+     type: "Critical",
+     scaleId: "scale",
++    scaleName: "Базовая 0–4",
+     createdAt: "2026-10-01T10:00:00Z",
+     versionNumber: 2,
+     version: 3,
+@@ -410,7 +413,7 @@ describe("the competency table and its version history (AC-12, AC-24)", {
+     );
+   }
+ 
+-  it("names the category, the direction and the scale of each row by reading each once, and calls a competency of no direction «Общая»", async () => {
++  it("names the category, the direction and the scale of each row from the list response without reading each, and calls a competency of no direction «Общая»", async () => {
+     serveCompetencies();
+     showTable(<CompetenciesTab />);
+ 
+@@ -425,9 +428,13 @@ describe("the competency table and its version history (AC-12, AC-24)", {
+     expect(within(first).getByText("Разработка")).toBeVisible();
+     expect(within(first).getByText("Базовая 0–4")).toBeVisible();
+     expect(within(second).getByText("Общая")).toBeVisible();
+-    expect(
+-      fakeApi.calls("GET /api/v1/career/categories/category"),
+-    ).toHaveLength(1);
++    for (const route of [
++      "categories/category",
++      "directions/direction",
++      "scales/scale",
++    ]) {
++      expect(fakeApi.calls(`GET /api/v1/career/${route}`)).toHaveLength(0);
++    }
+   });
+ 
+   it("shows the fields of a saved version read-only, the newest first, and those of the one chosen in «Версия»", async () => {
+diff --git a/web/src/features/career/matrix.css b/web/src/features/career/matrix.css
+index 2b4b30a..0788710 100644
+--- a/web/src/features/career/matrix.css
++++ b/web/src/features/career/matrix.css
+@@ -60,10 +60,14 @@
+   cursor: pointer;
+ }
+ 
+-.matrix-cell-button:hover {
++.matrix-cell-button:hover:not(:disabled) {
+   background: var(--ant-color-primary-bg);
+ }
+ 
++.matrix-cell-button:disabled {
++  cursor: not-allowed;
++}
++
+ .rating-chip {
+   display: inline-flex;
+   align-items: center;

@@ -22,6 +22,12 @@ public static class Rejection
         TypedResults.Problem(detail: detail, statusCode: StatusCodes.Status409Conflict, title: ConflictTitle);
 
     /// <summary>
+    /// Rejects a change of a resource the caller can read but has no right to change; a resource the caller cannot read is reported as not found instead.
+    /// </summary>
+    /// <returns>A 403 response.</returns>
+    public static ProblemHttpResult Forbidden() => TypedResults.Problem(statusCode: StatusCodes.Status403Forbidden);
+
+    /// <summary>
     /// Rejects a request whose field is invalid.
     /// </summary>
     /// <param name="field">The request field.</param>
@@ -29,4 +35,18 @@ public static class Rejection
     /// <returns>A 400 response naming the field.</returns>
     public static ValidationProblem Invalid(string field, string message) =>
         TypedResults.ValidationProblem(new Dictionary<string, string[]> { [field] = [message] });
+
+    /// <summary>
+    /// Rejects a request whose field value must be unique and is already taken, such as a duplicate name.
+    /// </summary>
+    /// <param name="field">The request field.</param>
+    /// <param name="message">The reason, addressed to the user.</param>
+    /// <returns>A 409 response naming the field, so a form shows the reason under it.</returns>
+    public static ProblemHttpResult Taken(string field, string message) =>
+        TypedResults.Problem(new HttpValidationProblemDetails(new Dictionary<string, string[]> { [field] = [message] })
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = ConflictTitle,
+            Detail = message,
+        });
 }

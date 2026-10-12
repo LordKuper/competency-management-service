@@ -106,7 +106,7 @@ public sealed class OrgTreeTests(TestEnvironment environment)
         var childUnderInactiveParent = await Act(admin, child.Id, "activate");
         var hireIntoInactive = await admin.PostAsync(
             "/api/v1/employees",
-            new { lastName = "Сидоров", firstName = "Олег", middleName = (string?)null, position = "Инженер", orgUnitId = child.Id });
+            new { lastName = "Сидоров", firstName = "Олег", middleName = (string?)null, positionId = employee.Json!["positionId"]!.GetValue<Guid>(), orgUnitId = child.Id });
         var rehireIntoInactive = await admin.PostAsync($"/api/v1/employees/{employee.Id}/rehire", ifMatch: (await admin.GetEmployeeAsync(employee.Id)).ETag);
         (await Act(admin, parent.Id, "activate")).Expect(HttpStatusCode.OK);
         (await Act(admin, child.Id, "activate")).Expect(HttpStatusCode.OK);

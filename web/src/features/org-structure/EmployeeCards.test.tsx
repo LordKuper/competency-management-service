@@ -15,6 +15,7 @@ function employee(id: string, fullName: string): Employee {
     email: null,
     orgUnitId: "unit",
     orgUnitName: "Отдел",
+    positionId: "position",
     position: "Инженер",
   };
 }
@@ -86,7 +87,7 @@ describe("EmployeeCard actions menu (AC-18)", () => {
       .click(screen.getByRole("button", { name: actions }));
 
     expect(
-      await screen.findByRole("menuitem", { name: /Править/ }),
+      await screen.findByRole("menuitem", { name: /Изменить/ }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: actions })).toHaveFocus();
   });

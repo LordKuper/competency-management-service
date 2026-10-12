@@ -50,6 +50,7 @@ function employee(id: string, fullName: string, orgUnitId: string) {
     email: null,
     orgUnitId,
     orgUnitName: "",
+    positionId: "position-sales",
     position: "Менеджер по продажам",
   };
 }
@@ -74,6 +75,11 @@ function serve(searchAnswer: () => Response | Promise<Response>) {
     Response.json({ id: "account", email: "user@test.local", role: "User" }),
   );
   fakeApi.on("GET /api/v1/org-units/tree", () => Response.json(UNITS));
+  for (const { id } of UNITS) {
+    fakeApi.on(`GET /api/v1/career/org-units/${id}/hr`, () =>
+      Response.json({ assigned: null, inherited: null }),
+    );
+  }
   fakeApi.on(EMPLOYEES_ROUTE, (request) =>
     hasParam(request, "orgUnitId") ? page([OF_SUPPORT]) : searchAnswer(),
   );

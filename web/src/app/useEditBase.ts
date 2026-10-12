@@ -3,6 +3,11 @@ import { ApiError } from "../api/ApiError";
 
 const STALE_VERSION_STATUS = 412;
 
+/** Whether a save was refused because the record changed since the version it sent. */
+export function isStaleVersion(error: unknown) {
+  return error instanceof ApiError && error.status === STALE_VERSION_STATUS;
+}
+
 /**
  * The record an edit form is based on. It stays as it was when the dialog opened, whatever the cache refetches in the
  * background, so unsaved input is never replaced and the version sent with a save is the one the form was built from.
@@ -21,7 +26,7 @@ export function useEditBase<TRecord extends { version: number }>(
   }
 
   function noteSaveFailure(error: unknown) {
-    if (error instanceof ApiError && error.status === STALE_VERSION_STATUS) {
+    if (isStaleVersion(error)) {
       setIsRefused(true);
     }
   }

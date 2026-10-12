@@ -1,0 +1,91 @@
+---
+responsibility:
+  owns: per-sprint log of workflow friction — a rule, phase, gate, agent, skill, template or provider tool that malfunctioned or could not be followed
+  excludes: code defects (test-plan.md D-N), artifact-quality findings and verdicts (reviews/), human operational actions (manual-steps.md MS-N), decisions taken (decisions-log.md)
+  delegates_to: test-plan.md (defects), reviews/ (verdicts), manual-steps.md (manual actions), decisions-log.md (decisions), retrospective.html (analysis and recommendations)
+---
+
+# Friction log — sprint 003-positions-career-competency
+
+<!--
+Lifecycle, what qualifies, what never does, the F-N id scheme and who appends:
+.asd/rules/sprint-lifecycle.md "Friction log" — not restated here.
+Entry content is language.docs.
+Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
+-->
+
+
+| ID | Phase | Problem | Refs |
+|---|---|---|---|
+| F-1 | audit | Архитектор записал файл своей памяти, хотя payload аудита требовал только чтение | — |
+| F-2 | audit | Ротация журнала решений перед делегированием audit выполнена после запуска скилла аудита, а не до | — |
+| F-3 | impl | Gate impl требует чистый typecheck, который ломают тесты при смене контракта | — |
+| F-4 | impl | Dev поднял временную PostgreSQL для проверки, хотя правило проекта запрещает scratch-БД в impl | — |
+| F-5 | impl-test | Строки Symptom дефектов содержат traceId и случайные имена — проверка stalemate по идентичности слепа | test-plan.md D-1…D-4 |
+| F-6 | impl | Review-fix: gate impl требует чистый typecheck тестов, а dev в fix mode тесты не трогает — снова понадобилась отдельная tester-цепочка вне находок | reviews/impl/wave-3/iter-01 |
+| F-7 | design-promote | UX при промоуте нашёл расхождения кода с DESIGN.md (действия строк > 2, пустые состояния, фон подменю), пропущенные impl-review по UI conformance | Task 22 |
+| F-8 | retro | Пробелы журнала времени с первого входа impl-test (close_without_open, outside_phase) | timing.jsonl |
+
+## F-1 — Архитектор записал файл своей памяти, хотя payload аудита требовал только чтение
+
+- **Phase**: audit
+- **Surface**: agent — `asd-architect` (audit dispatch), `.claude/agent-memory/asd-architect/feedback_audit-contradiction-classification.md`, `MEMORY.md`
+- **What happened**: Payload диспатча указывал «Read-only: no file writes»; агент добавил заметку в собственную память и сам сообщил об этом в отчёте.
+- **Impact**: Лишняя запись вне payload, которую оркестратор проверяет (`memory-check`) и коммитит; запись не противоречит правилам.
+- **Refs**: —
+
+## F-2 — Ротация журнала решений выполнена после запуска скилла аудита
+
+- **Phase**: audit
+- **Surface**: skill — `asd-sprint` Workflow «Before a phase-skill delegation below, rotate the decisions log»
+- **What happened**: Оркестратор вызвал `asd-phase-audit` до ротации `decisions-log.md`; ротацию сделал первым действием внутри фазы, до любой записи аудита.
+- **Impact**: Порядок нарушен, содержимое не пострадало; повторной работы не было.
+- **Refs**: —
+
+## F-3 — Gate impl требует чистый typecheck, который ломают тесты при смене контракта
+
+- **Phase**: impl
+- **Surface**: rule — `asd-phase-impl.md` step 9 (build + lint) vs запрет dev править тесты; `custom-coding-rules.md` «Verification depth in impl»
+- **What happened**: Task 2 сменила вход публичного контракта; `lint`/`build` web запускают typecheck и по тестам, две фикстуры перестали компилироваться, а dev не вправе их править.
+- **Impact**: Пересмотр plan посреди impl (Test-only Task 10) и лишний диспатч tester'а.
+- **Refs**: —
+
+## F-4 — Dev поднял временную PostgreSQL в impl вопреки правилу проекта
+
+- **Phase**: impl
+- **Surface**: agent — `asd-dev-critical` (Task 17); rule `.asd/project/custom-coding-rules.md` «Verification depth in impl» («No scratch database»)
+- **What happened**: Для проверки отказов удаления dev запустил собственный контейнер PostgreSQL с данными и удалил его после проверки; том пользователя не затронут.
+- **Impact**: Лишнее время impl на проверку, которая принадлежит impl-test; правило проекта нарушено, хотя без вреда данным.
+- **Refs**: —
+
+## F-5 — Symptom дефектов несёт traceId и случайные имена, stalemate-проверка слепа
+
+- **Phase**: impl-test
+- **Surface**: rule — `.asd/rules/sprint-lifecycle.md` «Impl-test phase» Stalemate (идентичность — файл, строка отказа раннера, тест) и `runtime.js defect-stalemate`
+- **What happened**: Tester записал строку раннера дословно; у ответов 500 и у D-4 в ней `traceId` и сгенерированные имена, которые меняются на каждом прогоне.
+- **Impact**: Повтор того же набора дефектов на следующем входе не будет распознан как stalemate.
+- **Refs**: test-plan.md D-1…D-4
+
+## F-6 — Typecheck тестов в gate impl при review-fix
+
+- **Phase**: impl
+- **Surface**: rule — `.asd/workflows/asd-phase-impl.md` step 9 (lint с typecheck тестов) vs step 5 (tester-цепочка только для находок в тест-файлах)
+- **What happened**: Исправления wave-3/iter-01 намеренно сменили API и пропсы; тесты перестали компилироваться, `npm run lint` красный. Находок в тест-файлах нет, но без тестера gate не пройти.
+- **Impact**: Оркестратор запускает tester-цепочку на восстановление тестов вне явного правила (как F-3 в initial mode).
+- **Refs**: reviews/impl/wave-3/iter-01
+
+## F-7 — Расхождения с DESIGN.md найдены только на design-promote
+
+- **Phase**: design-promote
+- **Surface**: rule — impl-review UI conformance (combined, external) против правил компонентов DESIGN.md («Row actions», «Messages answer what / why / what next»)
+- **What happened**: Три волны ревью одобрили веб-часть; UX при описании экранов нашёл до 5 видимых действий в строке, «Нет данных» в пустых таблицах и вероятный фон подменю antd по умолчанию.
+- **Impact**: Возврат в impl после закрытого ревью — ещё цикл impl → impl-test → impl-review.
+- **Refs**: Task 22
+
+## F-8 — Пробелы журнала времени с первого входа impl-test
+
+- **Phase**: retro
+- **Surface**: tool — `runtime.js timing` / `timing-summary` (`gaps`), реконструкция после остановки impl-test entry 1
+- **What happened**: `timing-summary` показывает `close_without_open: impl-test` и `outside_phase` для `impl-test entry 1` и `suite impl-test#2…#5`: после остановки по лимиту API операции первого входа закрывались и открывались вне фазовой операции.
+- **Impact**: Длительность impl-test первого входа в сводке искажена; на решения не влияет.
+- **Refs**: timing.jsonl

@@ -19,6 +19,7 @@ internal static class EmployeeEndpoints
 {
     private const string Route = "/api/v1/employees";
     private const string Tag = "Employees";
+    private const string PositionField = "positionId";
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -142,12 +143,17 @@ internal static class EmployeeEndpoints
             return Rejection.Invalid("orgUnitId", "Подразделение неактивно.");
         }
 
+        if (await context.PositionProblemAsync(input.PositionId, unit.Id, cancellationToken) is { } positionProblem)
+        {
+            return Rejection.Invalid(PositionField, positionProblem);
+        }
+
         var employee = new Employee
         {
             LastName = input.LastName,
             FirstName = input.FirstName,
             MiddleName = input.MiddleName,
-            Position = input.Position,
+            PositionId = input.PositionId,
             OrgUnit = unit,
         };
         context.Add(employee);
@@ -189,6 +195,12 @@ internal static class EmployeeEndpoints
             return Rejection.Invalid("orgUnitId", "Подразделение неактивно.");
         }
 
+        if ((input.PositionId != employee.PositionId || unit.Id != employee.OrgUnitId)
+            && await context.PositionProblemAsync(input.PositionId, unit.Id, cancellationToken) is { } positionProblem)
+        {
+            return Rejection.Invalid(PositionField, positionProblem);
+        }
+
         ifMatch.ApplyTo(context, employee);
         if (unit.Id != employee.OrgUnitId)
         {
@@ -198,7 +210,7 @@ internal static class EmployeeEndpoints
         employee.LastName = input.LastName;
         employee.FirstName = input.FirstName;
         employee.MiddleName = input.MiddleName;
-        employee.Position = input.Position;
+        employee.PositionId = input.PositionId;
         employee.OrgUnit = unit;
 
         return TypedResults.Ok(await SaveAsync(employee, context, transaction, response, cancellationToken));
@@ -340,12 +352,18 @@ internal static class EmployeeEndpoints
         }
     }
 
+    /// <summary>
+    /// Narrows the employees to those whose full name contains the text, or whose name parts and position together match it as Russian full text,
+    /// so one query may mix name and position words. A generated column cannot read another table, so the employee's vector is joined
+    /// with its position's vector at query time.
+    /// </summary>
     private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, string text)
     {
         var pattern = ListRequest.ContainsPattern(text);
         return employees.Where(employee =>
             EF.Functions.ILike(employee.FullName, pattern, ListRequest.LikeEscape)
-            || employee.SearchVector.Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)));
+            || employee.SearchVector.Concat(employee.Position.SearchVector)
+                .Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)));
     }
 
     /// <summary>

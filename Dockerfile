@@ -29,6 +29,7 @@ COPY src/Competency.Platform/Competency.Platform.csproj src/Competency.Platform/
 COPY src/Competency.Audit/Competency.Audit.csproj src/Competency.Audit/packages.lock.json src/Competency.Audit/
 COPY src/Competency.OrgStructure/Competency.OrgStructure.csproj src/Competency.OrgStructure/packages.lock.json src/Competency.OrgStructure/
 COPY src/Competency.UserManagement/Competency.UserManagement.csproj src/Competency.UserManagement/packages.lock.json src/Competency.UserManagement/
+COPY src/Competency.CareerFramework/Competency.CareerFramework.csproj src/Competency.CareerFramework/packages.lock.json src/Competency.CareerFramework/
 RUN dotnet restore src/Competency.Api/Competency.Api.csproj
 COPY src/ src/
 # openapi.json is a committed contract, so the build-time document generation (it starts the app) stays off.

@@ -30,6 +30,13 @@ public static class Scenarios
     public static async Task<ApiResponse> CreateUnitAsync(this ApiClient admin, Guid? parentId = null, string? name = null) =>
         (await admin.PostAsync("/api/v1/org-units", new { name = name ?? Unique("Отдел"), parentId })).Expect(HttpStatusCode.Created);
 
+    /// <summary>
+    /// The catalogue position with the name, allowed in the unit: found regardless of letter case or created, and added to the unit's list,
+    /// the way the employee form's «Добавить должность» does it.
+    /// </summary>
+    public static async Task<Guid> PositionAsync(this ApiClient admin, Guid unitId, string name = "Инженер") =>
+        (await admin.PostAsync($"/api/v1/org-units/{unitId}/positions/quick-add", new { name })).Expect(HttpStatusCode.OK).Id;
+
     public static async Task<ApiResponse> CreateEmployeeAsync(
         this ApiClient admin,
         Guid unitId,
@@ -39,7 +46,7 @@ public static class Scenarios
         string position = "Инженер") =>
         (await admin.PostAsync(
             "/api/v1/employees",
-            new { lastName = lastName ?? Unique("Иванов"), firstName, middleName, position, orgUnitId = unitId }))
+            new { lastName = lastName ?? Unique("Иванов"), firstName, middleName, positionId = await admin.PositionAsync(unitId, position), orgUnitId = unitId }))
         .Expect(HttpStatusCode.Created);
 
     /// <summary>

@@ -11,7 +11,8 @@ namespace Competency.Tests;
 
 /// <summary>
 /// The platform on a real database: schema applied from an empty database, probes, the mail and link settings it refuses to start with,
-/// what the logs carry, the account role limited in the database itself, and the journal append-only in the database itself,
+/// what the logs carry, the account role limited in the database itself, the columns wide enough for every value a check constraint
+/// admits, and the journal append-only in the database itself,
 /// for the application account too.
 /// </summary>
 public sealed class PlatformTests(TestEnvironment environment)
@@ -235,6 +236,27 @@ public sealed class PlatformTests(TestEnvironment environment)
         rejection.Which.SqlState.Should().Be(CheckViolation);
         rejection.Which.ConstraintName.Should().Be("ck_users_role");
         (await admin.GetUserAsync(account.Id)).Json!["role"]!.GetValue<string>().Should().Be(Scenarios.User);
+    }
+
+    [Fact]
+    public async Task Ac16_EveryValueACheckConstraintAdmitsToAColumn_FitsTheColumnItChecks()
+    {
+        const string CheckedColumns = """
+            FROM pg_constraint c
+            JOIN pg_class t ON t.oid = c.conrelid
+            JOIN pg_namespace n ON n.oid = t.relnamespace AND n.nspname = 'public'
+            JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = c.conkey[1]
+            CROSS JOIN LATERAL (SELECT max(length(m[1])) AS longest FROM regexp_matches(pg_get_constraintdef(c.oid), '''([^'']*)''', 'g') AS m) literal
+            WHERE c.contype = 'c' AND cardinality(c.conkey) = 1 AND a.atttypid = 'varchar'::regtype AND a.atttypmod > 4 AND literal.longest IS NOT NULL
+            """;
+        var host = await environment.SharedHostAsync();
+
+        var reached = await host.ScalarAsync<string>($"SELECT string_agg(t.relname || '.' || a.attname, ', ') {CheckedColumns}");
+        var tooNarrow = await host.ScalarAsync<string>(
+            $"SELECT string_agg(t.relname || '.' || a.attname || ' admits ' || literal.longest || ' letters but holds ' || (a.atttypmod - 4), ', ') {CheckedColumns} AND literal.longest > a.atttypmod - 4");
+
+        reached.Should().ContainAll(["matrix_version_decisions.kind", "users.role"], "the sweep must reach the columns whose values are enumeration members, or it passes without looking");
+        tooNarrow.Should().BeNull("a member longer than its column is refused by the database when first saved, as AcceptedAndRevising was");
     }
 
     [Fact]

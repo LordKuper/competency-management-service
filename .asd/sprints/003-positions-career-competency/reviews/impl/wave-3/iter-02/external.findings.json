@@ -1,0 +1,1 @@
+[{"id":"1","severity":"critical","location":"web/src/features/career/MatrixEditor.tsx:156"},{"id":"2","severity":"high","location":"web/src/features/career/TrackModal.tsx:54"},{"id":"3","severity":"high","location":"web/src/features/career/MatrixEditor.tsx:172"}]

@@ -1,0 +1,1 @@
+[{"id":"F1","severity":"critical","location":"tests/Competency.Tests/Infrastructure/MigrationDatabase.cs:21"},{"id":"F2","severity":"low","location":".claude/agent-memory/asd-dev-critical/project_position-catalogue-facts.md:11"},{"id":"F3","severity":"low","location":"src/Competency.OrgStructure/EmployeeEndpoints.cs:17-18"}]

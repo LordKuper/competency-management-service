@@ -14,8 +14,8 @@ responsibility:
   <meta name="subsystem" content="org-structure">
   <meta name="sprint-id" content="">
   <meta name="status" content="approved">
-  <meta name="updated" content="2026-10-07">
-  <meta name="responsibility" content="ux flows and ui mockups of org-structure: the card hierarchy of units and employees, search, unit and employee actions and their dialogs">
+  <meta name="updated" content="2026-10-12">
+  <meta name="responsibility" content="ux flows and ui mockups of org-structure: the card hierarchy of units and employees, search, unit and employee actions and their dialogs, the position catalogue and the unit's positions and HR dialogs, the position choice in the employee form">
   <meta name="provenance" content="original">
   <title>UX-спецификация — Оргструктура (org-structure)</title>
   <style>
@@ -208,22 +208,60 @@ responsibility:
           <span class="status-approved">approved</span>
         </div>
         <h1>UX-спецификация — Оргструктура (org-structure)</h1>
-        <div class="stats">3 flows · 7 mockups · updated 2026-10-07</div>
+        <div class="stats">5 flows · 11 mockups · updated 2026-10-12</div>
       </header>
       <main>
 <!--
 responsibility:
-  owns: ux flows and ui mockups of org-structure (card hierarchy, search, unit and employee actions, dialogs)
+  owns: ux flows and ui mockups of org-structure (card hierarchy, search, unit and employee actions, dialogs, position catalogue, unit positions and HR dialogs, position choice)
   excludes: requirements, accessibility (project-wide), design-system components and tokens, new component proposals
-  delegates_to: docs/product/requirements/org-structure.html (requirements), accessibility.html (a11y), DESIGN.md (components and tokens)
+  delegates_to: docs/product/requirements/org-structure.html (requirements), accessibility.html (a11y), DESIGN.md (components and tokens), career-framework.html (column filters and tables shared with the career model)
 provenance: original
 -->
 
 <div class="ds" style="--ds-primary:#2B42E5;--ds-primary-hover:#2338C2;--ds-primary-active:#182CC2;--ds-primary-subtle:#EBF2FD;--ds-accent:#FBAE40;--ds-text-primary:#292929;--ds-text-secondary:#4B4B4C;--ds-text-muted:#5F6670;--ds-text-disabled:#A3A9B1;--ds-text-inverse:#FFFFFF;--ds-text-inverse-muted:#9BA8F9;--ds-surface-page:#F5F6F8;--ds-surface-panel:#FFFFFF;--ds-surface-muted:#EEEEEE;--ds-surface-inverse:#081240;--ds-border-subtle:#DDE1E6;--ds-border-control:#7D8590;--ds-overlay-scrim:#08124073;--ds-success:#197A4A;--ds-success-bg:#E6F4EC;--ds-warning:#A85800;--ds-warning-bg:#FFF4DF;--ds-danger:#C62832;--ds-danger-bg:#FDECEC;--ds-info:#1B64C8;--ds-info-bg:#EBF2FD;--ds-xxs:4px;--ds-xs:8px;--ds-sm:12px;--ds-md:16px;--ds-lg:20px;--ds-xl:24px;--ds-xxl:32px;--ds-xxxl:48px;--ds-header-h:56px;--ds-h-sm:24px;--ds-h-md:32px;--ds-h-lg:40px;--ds-r-xs:2px;--ds-r-md:4px;--ds-r-lg:8px;--ds-r-full:9999px;--ds-bw:1px;--ds-el-popup:0 4px 12px rgba(8,18,64,0.12);--ds-el-modal:0 8px 24px rgba(8,18,64,0.16);--ds-font-ui:'PT Sans','Segoe UI',Roboto,Arial,sans-serif;--ds-font-mono:'PT Mono',Consolas,'Courier New',monospace;--ds-t-h1:700 30px/38px var(--ds-font-ui);--ds-t-h2:700 24px/32px var(--ds-font-ui);--ds-t-h3:700 20px/28px var(--ds-font-ui);--ds-t-body-md:400 14px/22px var(--ds-font-ui);--ds-t-body-strong:700 14px/22px var(--ds-font-ui);--ds-t-body-sm:400 12px/20px var(--ds-font-ui);--ds-t-code:400 13px/20px var(--ds-font-mono);">
 
+<style>
+.ds .o-pg{background:var(--ds-surface-page);padding:var(--ds-xl);font:var(--ds-t-body-md);color:var(--ds-text-primary);}
+.ds .o-row{display:flex;align-items:center;gap:var(--ds-xs);flex-wrap:wrap;}
+.ds .o-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(45%,1fr));gap:var(--ds-md);align-items:start;}
+.ds .o-h1{font:var(--ds-t-h1);margin:0;}
+.ds .o-h2{font:var(--ds-t-h2);margin:0 0 var(--ds-md);}
+.ds .o-h3{font:var(--ds-t-h3);margin:0 0 var(--ds-xs);}
+.ds .o-cap{font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);}
+.ds .o-sec{color:var(--ds-text-secondary);}
+.ds .o-btn{display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);white-space:nowrap;}
+.ds .o-btn.pri{background:var(--ds-primary);border-color:var(--ds-primary);color:var(--ds-text-inverse);}
+.ds .o-btn.dng{background:var(--ds-danger);border-color:var(--ds-danger);color:var(--ds-text-inverse);}
+.ds .o-btn.foc,.ds .o-inp.foc{outline:calc(var(--ds-bw) * 2) solid var(--ds-primary);outline-offset:calc(var(--ds-bw) * 2);}
+.ds .o-lnk{display:inline-flex;align-items:center;min-height:var(--ds-h-sm);margin-right:var(--ds-sm);color:var(--ds-primary);white-space:nowrap;}
+.ds .o-lnk.dng{color:var(--ds-danger);}
+.ds .o-tag{display:inline-block;padding:0 var(--ds-xs);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);background:var(--ds-surface-muted);color:var(--ds-text-secondary);}
+.ds .o-tag.ok{background:var(--ds-success-bg);color:var(--ds-success);}
+.ds .o-scrim{background:var(--ds-overlay-scrim);padding:var(--ds-md);}
+.ds .o-modal{background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);}
+.ds .o-fld{margin-bottom:var(--ds-md);}
+.ds .o-lbl{font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);}
+.ds .o-inp{display:flex;align-items:center;justify-content:space-between;gap:var(--ds-xs);min-height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);background:var(--ds-surface-panel);}
+.ds .o-inp.on{border-color:var(--ds-primary);}
+.ds .o-inp.er{border-color:var(--ds-danger);}
+.ds .o-ph{color:var(--ds-text-muted);}
+.ds .o-help{font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);}
+.ds .o-ferr{font:var(--ds-t-body-sm);color:var(--ds-danger);margin-top:var(--ds-xxs);}
+.ds .o-pop{background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);}
+.ds .o-opt{display:flex;align-items:center;gap:var(--ds-xs);min-height:var(--ds-h-md);padding:0 var(--ds-sm);border-radius:var(--ds-r-md);}
+.ds .o-opt.sel{background:var(--ds-primary-subtle);font:var(--ds-t-body-strong);}
+.ds table.o-t{border-collapse:collapse;width:100%;margin:0;background:var(--ds-surface-panel);}
+.ds table.o-t th{position:static;background:var(--ds-surface-muted);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);padding:var(--ds-sm) var(--ds-md);text-align:left;border:0;vertical-align:middle;}
+.ds table.o-t td{background:var(--ds-surface-panel);padding:var(--ds-sm) var(--ds-md);border:0;border-top:var(--ds-bw) solid var(--ds-border-subtle);vertical-align:middle;}
+.ds .o-fi{margin-left:var(--ds-xs);color:var(--ds-text-muted);font-weight:400;}
+.ds .o-fi.on{color:var(--ds-primary);}
+.ds .o-item{display:flex;justify-content:space-between;align-items:center;gap:var(--ds-xs);min-height:var(--ds-h-md);}
+</style>
+
 <section id="flows" class="hero">
   <h2>Сценарии</h2>
-  <p class="lede">Раздел «Оргструктура» — одна страница с иерархией карточек двух видов: подразделение и сотрудник (AC-17). Отдельной страницы сотрудников, правой панели деталей и компонента-дерева нет. Все видят иерархию; создание, правку, перенос, деактивацию, увольнение и удаление выполняет только глобальный администратор, прямо с карточек (AC-9, AC-10, AC-18, AC-19). Роль «пользователь» видит только активные подразделения и работающих сотрудников — ФИО, e-mail учётной записи, подразделение, должность (AC-12); статус и меню действий ему недоступны.</p>
+  <p class="lede">Раздел «Оргструктура» — одна страница с иерархией карточек двух видов: подразделение и сотрудник (AC-17). Отдельной страницы сотрудников, правой панели деталей и компонента-дерева нет. Все видят иерархию; создание, правку, перенос, деактивацию, увольнение и удаление выполняет только глобальный администратор, прямо с карточек (AC-9, AC-10, AC-18, AC-19). Роль «пользователь» видит только активные подразделения и работающих сотрудников — ФИО, e-mail учётной записи, подразделение, должность (AC-12); статус и действия над подразделениями и сотрудниками ему недоступны, а меню карточки подразделения у него есть и содержит только «Должности» и «HR» — просмотр перечня допустимых должностей и ответственного HR. Должность сотрудника выбирается из справочника должностей; справочник ведёт глобальный администратор на странице «Должности» (раздел «Администрирование»).</p>
 
   <h3>Просмотр и поиск (все роли)</h3>
   <pre class="mermaid">
@@ -245,7 +283,9 @@ flowchart TD
   <pre class="mermaid">
 flowchart TD
   A["Кнопка Добавить подразделение или пункт меню карточки"] --> B["Окно Новое подразделение, родитель подставлен или не выбран"]
-  M["Меню карточки подразделения"] --> E["Править: название и руководитель"]
+  M["Меню карточки подразделения"] --> E["Изменить: название и руководитель"]
+  M --> P["Должности: окно перечня допустимых должностей"]
+  M --> H["HR: окно ответственного HR"]
   M --> V["Перенести: новый родитель или корень"]
   M --> W["Добавить сотрудника: подразделение подставлено"]
   M --> T["Деактивировать или Активировать: подтверждение"]
@@ -262,7 +302,7 @@ flowchart TD
   <h3>Сотрудник (администратор)</h3>
   <pre class="mermaid">
 flowchart TD
-  A["Меню карточки сотрудника"] --> B["Править: окно сотрудника"]
+  A["Меню карточки сотрудника"] --> B["Изменить: окно сотрудника"]
   A --> C["Уволить"]
   A --> D["Вернуть на работу, для уволенного"]
   A --> E["Удалить"]
@@ -275,6 +315,33 @@ flowchart TD
   D --> K["Подтверждение: учётная запись останется заблокированной"]
   B --> L{"Переводит руководителя в другое подразделение"}
   L -- "да" --> N["Подтверждение: подразделение останется без руководителя"]
+  </pre>
+
+  <h3>Справочник должностей и перечни подразделений</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Меню Администрирование, пункт Должности (администратор)"] --> B["Страница Должности: поиск, фильтр Статус по умолчанию Активна, страницы по 20"]
+  B --> C["Добавить должность: окно Новая должность"]
+  B --> D["Переименовать: окно Переименование должности"]
+  B --> E["Деактивировать: запрос числа работающих сотрудников, затем подтверждение, фокус на Отмена"]
+  B --> F["Вернуть в работу: сразу"]
+  M["Карточка подразделения, меню: Должности (все роли)"] --> G["Окно Должности подразделения: Собственные, Унаследованные"]
+  G -- "администратор: выбрать должность справочника, Добавить" --> H["Должность в собственном перечне"]
+  G -- "администратор: Исключить" --> I["Запрос числа работающих сотрудников подразделения и дочерних, подтверждение, фокус на Отмена"]
+  K["Карточка подразделения, меню: HR (все роли)"] --> L["Окно HR подразделения: закреплённый, унаследованный или не назначен"]
+  L -- "администратор: выбрать пользователя, Закрепить" --> N["Закрепление; строка HR на карточке обновляется"]
+  L -- "администратор: Снять закрепление" --> O["Подтверждение, фокус на Отмена"]
+  </pre>
+
+  <h3>Должность сотрудника</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Форма сотрудника: подразделение выбрано"] --> B["Поле Должность: список активных должностей перечня подразделения и вышестоящих, поиск по набранному"]
+  B --> C{"Набранное название есть в списке"}
+  C -- "да" --> D["Выбрать должность"]
+  C -- "нет" --> E["Последний пункт списка: Добавить должность и название"]
+  E --> F["Должность создана или найдена, добавлена в перечень подразделения, выбрана; форма не закрывается"]
+  A -- "подразделение изменено" --> G["Выбор, недоступный в новом подразделении, очищается после загрузки списка"]
   </pre>
 </section>
 
@@ -302,7 +369,7 @@ flowchart TD
         <div style="margin-top:var(--ds-md);display:grid;gap:var(--ds-xs);">
           <div style="background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-sm);">
             <div style="display:flex;align-items:center;gap:var(--ds-xs);"><span style="flex:1;display:flex;align-items:center;gap:var(--ds-xs);min-height:var(--ds-h-md);font:var(--ds-t-body-strong);"><span aria-hidden="true">▸</span>Генеральная дирекция</span><span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);">⋮</span></div>
-            <div style="display:flex;flex-wrap:wrap;column-gap:var(--ds-md);color:var(--ds-text-secondary);"><span>Подразделений: 3</span><span>Сотрудников: 4</span><span>Руководитель: Орлов Пётр Сергеевич</span></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:var(--ds-md);color:var(--ds-text-secondary);"><span>Подразделений: 3</span><span>Сотрудников: 4</span><span>Руководитель: Орлов Пётр Сергеевич</span><span>HR: Сидорова Анна Игоревна</span></div>
           </div>
           <div style="background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-sm);">
             <div style="display:flex;align-items:center;gap:var(--ds-xs);"><span style="flex:1;display:flex;align-items:center;gap:var(--ds-xs);min-height:var(--ds-h-md);font:var(--ds-t-body-strong);"><span aria-hidden="true">▸</span>Архивный отдел</span><span style="display:inline-block;padding:0 var(--ds-xs);background:var(--ds-surface-muted);color:var(--ds-text-secondary);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);">Неактивно</span><span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);">⋮</span></div>
@@ -313,11 +380,12 @@ flowchart TD
     </div>
     <p><b>Notes</b>:</p>
     <ul>
-      <li><b>Карточка подразделения показывает одно и то же в свёрнутом и раскрытом виде</b> (AC-17): название, число дочерних подразделений, число сотрудников, руководитель — всё это приходит в самом узле дерева, без запроса на каждую карточку. Метка «Неактивно» стоит только у неактивного подразделения: у активного статуса на карточке нет.</li>
+      <li><b>Карточка подразделения показывает одно и то же в свёрнутом и раскрытом виде</b> (AC-17): название, число дочерних подразделений, число сотрудников, руководитель — всё это приходит в самом узле дерева, без запроса на каждую карточку. Исключение — строка «HR: {имя}»: ответственный HR запрашивается для каждой видимой карточки отдельно (ответ помнится минуту), и пока он не пришёл или запрос не удался, строки нет. Метка «Неактивно» стоит только у неактивного подразделения: у активного статуса на карточке нет.</li>
       <li><b>Шеврон — управляющий элемент, не декоративная иконка.</b> Название на карточке — кнопка раскрытия (признак раскрытия доступен вспомогательным технологиям). Иконки перед названием нет (AC-18). Имя руководителя на карточке не интерактивно.</li>
       <li>Иерархия свёрнута по умолчанию. Загруженные узлы — все подразделения сразу, сотрудники подгружаются только при раскрытии подразделения.</li>
       <li><b>Кнопки страницы</b> (только администратору): «Добавить подразделение» — главное действие (<code>primary</code>), «Добавить сотрудника» — вторичное. Родитель и подразделение в этих окнах выбирает пользователь; из меню карточки подставляются сами.</li>
-      <li><b>Роль «пользователь»</b>: без кнопок и без меню «⋮»; видит только активные подразделения и работающих сотрудников; метки статуса сотрудников у него нет.</li>
+      <li><b>Роль «пользователь»</b>: без кнопок страницы; меню «⋮» подразделения содержит только «Должности» и «HR»; видит только активные подразделения и работающих сотрудников; метки статуса сотрудников у него нет.</li>
+      <li><b>Строка «HR: {имя}»</b> стоит в конце строки сведений карточки подразделения: показывается ответственный HR — закреплённый за подразделением или, если за ним никого нет, унаследованный от вышестоящего. Если ответственного нет, строка не показывается вовсе (в отличие от «Руководитель: не назначен»). HR, чья учётная запись не может действовать, строкой не показывается.</li>
       <li><b>Адрес с параметром <code>unit</code></b> раскрывает путь до подразделения и прокручивает к нему; его карточка выделена рамкой <code>primary</code> и заливкой <code>primary-subtle</code> и помечена как текущая для вспомогательных технологий. Так показываются новая запись после создания и общая ссылка.</li>
     </ul>
   </article>
@@ -410,7 +478,7 @@ flowchart TD
   <article class="mockup">
     <h3>Меню действий карточек</h3>
     <dl class="screen-meta">
-      <dt><b>Purpose</b></dt><dd>Дать администратору все операции над подразделением и сотрудником, не загромождая карточки.</dd>
+      <dt><b>Purpose</b></dt><dd>Дать администратору все операции над подразделением и сотрудником, не загромождая карточки; всем — просмотр перечня должностей и ответственного HR подразделения.</dd>
       <dt><b>Entry from</b></dt><dd>Кнопка «⋮» на карточке (подпись для вспомогательных технологий: «Действия с подразделением …», «Действия с сотрудником …»).</dd>
       <dt><b>Exit to</b></dt><dd>Окна и подтверждения.</dd>
     </dl>
@@ -421,10 +489,19 @@ flowchart TD
           <div style="display:inline-block;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);">
             <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">＋ Добавить подразделение</div>
             <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">👤 Добавить сотрудника</div>
-            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">✎ Править</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">✎ Изменить</div>
             <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">⇄ Перенести</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">☰ Должности</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">👥 HR</div>
             <div style="border-top:var(--ds-bw) solid var(--ds-border-subtle);margin:var(--ds-xxs) 0;"></div>
             <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);color:var(--ds-danger);">⊘ Деактивировать</div>
+          </div>
+        </div>
+        <div>
+          <div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Подразделение, роль «пользователь»</div>
+          <div style="display:inline-block;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);">
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">☰ Должности</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">👥 HR</div>
           </div>
         </div>
         <div>
@@ -432,8 +509,10 @@ flowchart TD
           <div style="display:inline-block;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);">
             <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);color:var(--ds-text-disabled);">＋ Добавить подразделение <span style="color:var(--ds-text-muted);">(подразделение неактивно)</span></div>
             <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);color:var(--ds-text-disabled);">👤 Добавить сотрудника <span style="color:var(--ds-text-muted);">(подразделение неактивно)</span></div>
-            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">✎ Править</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">✎ Изменить</div>
             <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">⇄ Перенести</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">☰ Должности</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">👥 HR</div>
             <div style="border-top:var(--ds-bw) solid var(--ds-border-subtle);margin:var(--ds-xxs) 0;"></div>
             <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">✓ Активировать</div>
           </div>
@@ -441,7 +520,7 @@ flowchart TD
         <div>
           <div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Сотрудник</div>
           <div style="display:inline-block;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);">
-            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">✎ Править</div>
+            <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">✎ Изменить</div>
             <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);">🚪 Уволить <span style="color:var(--ds-text-muted);">(для уволенного: «Вернуть на работу»)</span></div>
             <div style="border-top:var(--ds-bw) solid var(--ds-border-subtle);margin:var(--ds-xxs) 0;"></div>
             <div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-sm);color:var(--ds-danger);">🗑 Удалить</div>
@@ -454,7 +533,7 @@ flowchart TD
       <li><b>Разрушающее действие</b> («Деактивировать», «Удалить») — красный пункт после разделителя. «Уволить» разрушающим не окрашен: оно обратимо («Вернуть на работу»).</li>
       <li><b>Недоступный пункт объясняет причину текстом в самой подписи</b> — «(подразделение неактивно)»; цвет и состояние «недоступно» не единственный носитель смысла (DESIGN.md → Cross-component rules).</li>
       <li><b>Меню сотрудника</b> не создаётся, пока не нужно: до первого нажатия «⋮» — обычная кнопка, после нажатия меню открывается сразу, а фокус остаётся на кнопке. Так тысячи карточек отрисовываются быстро; пользователь разницы не видит.</li>
-      <li>Роль «пользователь» меню не получает.</li>
+      <li><b>«Должности» и «HR»</b> стоят после «Перенести» и доступны всем ролям: открывают окна перечня должностей и ответственного HR (макет «Окна подразделения: должности и HR»). Роль «пользователь» получает меню только из этих двух пунктов; меню сотрудника у неё нет. Подпись кнопки «Изменить» одинакова во всём приложении.</li>
     </ul>
   </article>
 
@@ -498,7 +577,7 @@ flowchart TD
             <div style="margin-bottom:var(--ds-sm);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Имя</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Алексей</div></div>
             <div style="margin-bottom:var(--ds-sm);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Отчество</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Викторович</div></div>
             <div style="margin-bottom:var(--ds-sm);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Подразделение</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Департамент разработки<span aria-hidden="true">▾</span></div><div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">Сотрудника можно перевести, выбрав другое подразделение.</div></div>
-            <div style="margin-bottom:var(--ds-sm);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Должность</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Ведущий разработчик</div></div>
+            <div style="margin-bottom:var(--ds-sm);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Должность</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);">Ведущий разработчик<span aria-hidden="true">▾</span></div></div>
             <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">E-mail</div>Нет учётной записи<div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">E-mail берётся из учётной записи сотрудника и меняется в разделе «Пользователи».</div></div>
             <div style="display:flex;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Сохранить</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span></div>
           </div>
@@ -507,8 +586,9 @@ flowchart TD
     </div>
     <p><b>Notes</b>:</p>
     <ul>
-      <li><b>Подразделение.</b> Создание: название и необязательный родитель (поиск по дереву; неактивные подразделения видны, но не выбираются и помечены «(неактивно)»). Правка: название и руководитель; родитель и статус меняются отдельными операциями («Перенести», «Деактивировать»). Руководитель — поиск среди <b>работающих сотрудников именно этого подразделения</b> (AC-19), текущий руководитель всегда в списке; у нового подразделения руководителя выбрать нельзя — об этом сказано текстом. В окне переноса само подразделение и все его потомки в списке родителей не предлагаются; сервер всё равно отклоняет цикл.</li>
-      <li><b>Сотрудник.</b> Фамилия, имя (обязательные), отчество (необязательное), подразделение (только активное), должность (обязательная); e-mail учётной записи показан без возможности правки (при отсутствии — «Нет учётной записи»). Переключателя статуса в форме нет: статус меняют «Уволить» и «Вернуть на работу». Создание открывается с подставленным подразделением (из меню карточки) или пустым (с кнопки страницы). Правка читает сотрудника при открытии, чтобы работать с актуальной версией; во время загрузки — заглушка, при ошибке — предупреждение с «Повторить».</li>
+      <li><b>Подразделение.</b> Создание: название и необязательный родитель (поиск по дереву; неактивные подразделения видны, но не выбираются и помечены «(неактивно)»). Изменение: название и руководитель; родитель и статус меняются отдельными операциями («Перенести», «Деактивировать»). Руководитель — поиск среди <b>работающих сотрудников именно этого подразделения</b> (AC-19), текущий руководитель всегда в списке; у нового подразделения руководителя выбрать нельзя — об этом сказано текстом. В окне переноса само подразделение и все его потомки в списке родителей не предлагаются; сервер всё равно отклоняет цикл.</li>
+      <li><b>Сотрудник.</b> Фамилия, имя (обязательные), отчество (необязательное), подразделение (только активное), должность (обязательная, выбор из справочника с поиском — макет «Выбор должности в форме сотрудника»); e-mail учётной записи показан без возможности правки (при отсутствии — «Нет учётной записи»). Переключателя статуса в форме нет: статус меняют «Уволить» и «Вернуть на работу». Создание открывается с подставленным подразделением (из меню карточки) или пустым (с кнопки страницы). Изменение читает сотрудника при открытии, чтобы работать с актуальной версией; во время загрузки — заглушка, при ошибке — предупреждение с «Повторить».</li>
+      <li><b>Фокус при открытии окна</b> — в первом поле (название, фамилия); у окон без полей — на главной кнопке (общее правило приложения).</li>
       <li>Автозаполнение браузера в формах выключено: формы правят данные других людей. Пробелы внутри фамилии, имени, отчества не схлопываются; пустое отчество очищает поле.</li>
       <li><b>Успех</b>: сообщение («Подразделение создано», «Изменения сохранены», «Подразделение перенесено», «Сотрудник создан»), окно закрывается, иерархия перечитывается; после создания открывается путь до новой записи (подразделения сотрудника) и карточка выделяется. Если запись изменена другим пользователем (412), показывается сообщение и актуальные данные; ввод пользователя до такого отказа фоновым обновлением не затирается.</li>
     </ul>
@@ -577,6 +657,7 @@ flowchart TD
       <li><b>Запрет сказан сразу.</b> Если к сотруднику привязан последний активный глобальный администратор, окно содержит только причину (красный текст), а кнопка подтверждения недоступна; причина видна текстом рядом (DESIGN.md → Cross-component rules). Сервер отклоняет такое действие кодом 409.</li>
       <li><b>«Вернуть на работу»</b> — подтверждение с текстом: учётная запись остаётся заблокированной и разблокируется в разделе «Пользователи», подразделения, которые сотрудник возглавлял, остаются без руководителя. Возврат в неактивное подразделение сервер отклоняет.</li>
       <li><b>Красная кнопка</b> только у необратимого: «Удалить» и «Деактивировать» (деактивируемое подразделение исчезает из дерева у обычных пользователей); «Уволить», «Активировать» и «Перевести» — обычные синие кнопки.</li>
+      <li><b>Фокус при открытии подтверждения необратимого действия — на «Отмене»</b>, чтобы Enter не выполнил его случайно: это «Удалить», «Деактивировать» и «Уволить» (у «Уволить» кнопка остаётся синей, но фокус на «Отмене»). У обратимых «Активировать» и «Вернуть на работу» фокус на подтверждающей кнопке.</li>
       <li><b>Отказ сервера</b> показывается окном с кнопкой «Понятно», которое остаётся, пока его не закроют: причина длинная и говорит, что сделать сначала. Подтверждающая кнопка реагирует сразу и не ждёт закрытия всплывающего сообщения об успехе.</li>
     </ul>
   </article>
@@ -621,6 +702,148 @@ flowchart TD
     </div>
     <p><b>Notes</b>: пока подразделения загружаются, выводится заглушка, повторяющая форму списка; при ошибке — предупреждение с причиной и кнопкой «Повторить». Загрузка и ошибка сотрудников касаются только раскрытого подразделения и не мешают остальной иерархии. Под reduced-motion заглушка загрузки не мерцает (DESIGN.md → Motion).</p>
   </article>
+
+  <article class="mockup">
+    <h3>Страница «Должности»: справочник, переименование, деактивация</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Вести общий справочник должностей: найти, добавить, переименовать, деактивировать и вернуть в работу.</dd>
+      <dt><b>Entry from</b></dt><dd>Пункт «Должности» меню «Администрирование» в шапке (только глобальный администратор).</dd>
+      <dt><b>Exit to</b></dt><dd>Окна названия и подтверждение деактивации.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="o-pg">
+        <div class="o-row" style="justify-content:space-between;margin-bottom:var(--ds-md);"><div class="o-h1">Должности</div><span class="o-btn pri">Добавить должность</span></div>
+        <div class="o-inp" style="max-width:calc(var(--ds-h-md) * 10);margin-bottom:var(--ds-md);"><span class="o-ph">Найти должность</span><span aria-hidden="true">🔍</span></div>
+        <table class="o-t">
+          <thead><tr><th>Название</th><th>Статус <span class="o-fi on">▼</span></th><th>Действия</th></tr></thead>
+          <tbody>
+            <tr><td>Ведущий разработчик</td><td><span class="o-tag ok">Активна</span></td><td><span class="o-lnk">Переименовать</span><span class="o-lnk dng">Деактивировать</span></td></tr>
+            <tr><td>Тестировщик</td><td><span class="o-tag ok">Активна</span></td><td><span class="o-lnk">Переименовать</span><span class="o-lnk dng">Деактивировать</span></td></tr>
+          </tbody>
+        </table>
+        <div class="o-cols" style="margin-top:var(--ds-xl);">
+          <div class="o-scrim"><div class="o-modal">
+            <div class="o-h2">Новая должность</div>
+            <div class="o-fld"><div class="o-lbl">Название</div><div class="o-inp er foc"></div><div class="o-ferr">⊗ Должность с таким названием уже есть</div></div>
+            <div class="o-row"><span class="o-btn pri">Сохранить</span><span class="o-btn">Отмена</span></div>
+          </div></div>
+          <div class="o-scrim"><div class="o-modal">
+            <div class="o-h3">Деактивировать должность?</div>
+            <p style="margin:0 0 var(--ds-md);">Сотрудники, которые её занимают (3), сохранят должность. Выбрать её для других сотрудников будет нельзя.</p>
+            <div class="o-row" style="justify-content:flex-end;"><span class="o-btn dng">Деактивировать</span><span class="o-btn foc">Отмена</span></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Список</b>: заголовок «Должности» и главная кнопка «Добавить должность»; поиск по названию «Найти должность» (по Enter или кнопке поиска); столбцы «Название», «Статус» с фильтром в заголовке (теги «Активна» — <code>tag-success</code>, «Неактивна» — <code>tag-neutral</code>), «Действия»; страницы по 20 с выбором размера. По умолчанию включён фильтр «Активна»: чтобы увидеть неактивные, фильтр меняют в заголовке столбца (устройство фильтров — <a href="career-framework.html">career-framework.html</a>). Физического удаления должности нет.</li>
+      <li><b>Окна.</b> «Новая должность» и «Переименование должности»: поле «Название» (обязательное, до 200 символов — «Укажите название», «Не длиннее 200 символов»; уникально без учёта регистра — «Должность с таким названием уже есть» под полем), «Сохранить», «Отмена». Фокус при открытии в поле названия.</li>
+      <li><b>Деактивация сначала показывает последствия.</b> Запрос возвращает число работающих сотрудников, занимающих должность, и подтверждение называет его; кнопка красная, фокус при открытии на «Отмене». Сотрудники сохраняют должность; выбрать её для других нельзя. «Вернуть в работу» выполняется сразу. Ошибки действий — всплывающее сообщение с причиной; ошибка загрузки — предупреждение «Не удалось загрузить должности» с «Повторить»; пусто — «Должностей пока нет».</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Окно «Должности подразделения»</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Увидеть, какие должности можно выбрать сотрудникам подразделения: собственный перечень и унаследованные от вышестоящих; администратору — менять собственный перечень.</dd>
+      <dt><b>Entry from</b></dt><dd>Пункт «Должности» меню карточки подразделения (все роли).</dd>
+      <dt><b>Exit to</b></dt><dd>Иерархия; подтверждение исключения.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="o-cols">
+        <div class="o-scrim"><div class="o-modal">
+          <div class="o-h2">Должности подразделения «Департамент разработки»</div>
+          <div class="o-h3">Собственные</div>
+          <div class="o-item"><span>Ведущий разработчик</span><span class="o-lnk dng" style="margin:0;">Исключить</span></div>
+          <div class="o-item"><span>Тестировщик <span class="o-tag">Неактивна</span></span><span class="o-lnk dng" style="margin:0;">Исключить</span></div>
+          <div class="o-h3" style="margin-top:var(--ds-md);">Унаследованные</div>
+          <div class="o-item"><span>Руководитель отдела <span class="o-sec">из «Генеральная дирекция»</span></span></div>
+          <div class="o-fld" style="margin-top:var(--ds-md);"><div class="o-lbl">Должность из справочника</div><div class="o-inp"><span class="o-ph">Выберите должность</span><span aria-hidden="true">▾</span></div></div>
+          <span class="o-btn">Добавить</span>
+        </div></div>
+        <div class="o-scrim"><div class="o-modal">
+          <div class="o-h3">Исключить «Ведущий разработчик» из перечня?</div>
+          <p style="margin:0 0 var(--ds-md);">Сотрудников подразделения и дочерних с этой должностью: 4. Их должность не изменится.</p>
+          <div class="o-row" style="justify-content:flex-end;"><span class="o-btn dng">Исключить</span><span class="o-btn foc">Отмена</span></div>
+          <div class="o-help" style="margin-top:var(--ds-md);">Пустые разделы: «Собственных должностей нет», «Унаследованных должностей нет».</div>
+        </div></div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Два раздела.</b> «Собственные» — перечень самого подразделения (у каждой строки у администратора «Исключить» с подписью для вспомогательных технологий «Исключить «{должность}» из перечня»); «Унаследованные» — должности перечней вышестоящих подразделений с указанием источника «из «{подразделение}»». Неактивная должность помечена тегом «Неактивна». Остальным ролям окно доступно только для чтения.</li>
+      <li><b>Добавление</b> — только администратору: выбор «Должность из справочника» с поиском на сервере по первым 20 активным должностям (уже имеющиеся в собственном перечне не предлагаются), кнопка «Добавить» (вторичная: окно не требует главного действия). Не выбрана — «Выберите должность» под полем; отказ сервера показывается под полем.</li>
+      <li><b>Исключение сначала показывает последствия</b>: подтверждение называет число работающих сотрудников подразделения и дочерних, которые держат должность; их должность не меняется. Красная кнопка «Исключить», фокус при открытии на «Отмене».</li>
+      <li>Загрузка — заглушка; ошибка — «Не удалось загрузить должности подразделения» с «Повторить».</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Окно «HR подразделения»</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Узнать, кто из HR отвечает за подразделение; администратору — закрепить за подразделением пользователя или снять закрепление.</dd>
+      <dt><b>Entry from</b></dt><dd>Пункт «HR» меню карточки подразделения (все роли).</dd>
+      <dt><b>Exit to</b></dt><dd>Иерархия; строка «HR: {имя}» на карточке обновляется.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="o-cols">
+        <div class="o-scrim"><div class="o-modal">
+          <div class="o-h2">HR подразделения «Департамент разработки»</div>
+          <p style="margin:0 0 var(--ds-xs);">Закреплён: Сидорова Анна Игоревна</p>
+          <p style="margin:0 0 var(--ds-md);">Унаследован из «Генеральная дирекция»: Козлов Игорь Павлович</p>
+          <div class="o-fld"><div class="o-lbl">Пользователь</div><div class="o-inp on foc"><span class="o-ph"></span><span aria-hidden="true">▾</span></div>
+            <div class="o-pop" style="margin-top:var(--ds-xxs);"><div class="o-opt">Сидорова Анна Игоревна (sidorova@example.com)</div><div class="o-opt sel">petrov@example.com</div></div>
+            <div class="o-ferr">⊗ Учётная запись заблокирована или не завершила регистрацию</div></div>
+          <div class="o-row"><span class="o-btn">Закрепить</span><span class="o-btn" style="border-color:var(--ds-danger);color:var(--ds-danger);">Снять закрепление</span></div>
+        </div></div>
+        <div class="o-scrim"><div class="o-modal">
+          <div class="o-h3">Снять закрепление HR?</div>
+          <p style="margin:0 0 var(--ds-md);">Ответственным станет HR вышестоящего подразделения, если он назначен.</p>
+          <div class="o-row" style="justify-content:flex-end;"><span class="o-btn dng">Снять закрепление</span><span class="o-btn foc">Отмена</span></div>
+          <div class="o-help" style="margin-top:var(--ds-md);">Без закрепления и без унаследованного HR окно говорит «HR не назначен».</div>
+        </div></div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Состояние</b> сказано строками: «Закреплён: {имя}» (закреплён за этим подразделением), «Унаследован из «{подразделение}»: {имя}» (закреплён за ближайшим вышестоящим), «HR не назначен». Закрепление действует для подразделения и всех дочерних, пока ниже не закреплён другой HR; за одним пользователем можно закрепить несколько подразделений. Остальным ролям окно доступно только для чтения.</li>
+      <li><b>Закрепление</b> — только администратору: поле «Пользователь» (поиск на сервере, первые 20 совпадений; подпись «{ФИО} ({e-mail})» или e-mail) и кнопка «Закрепить»; заблокированная или не завершившая регистрацию учётная запись отклоняется с сообщением под полем. «Снять закрепление» (красная контурная) спрашивает подтверждения; красная кнопка подтверждения, фокус при открытии на «Отмене».</li>
+      <li>Загрузка — заглушка; ошибка — «Не удалось загрузить HR подразделения» с «Повторить».</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Выбор должности в форме сотрудника</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Выбрать должность сотрудника только из справочника и, если нужной нет, добавить её, не уходя с формы.</dd>
+      <dt><b>Entry from</b></dt><dd>Окно «Новый сотрудник» или «Изменение сотрудника».</dd>
+      <dt><b>Exit to</b></dt><dd>Сохранение сотрудника.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="o-cols">
+        <div class="o-scrim"><div class="o-modal">
+          <div class="o-fld"><div class="o-lbl">Подразделение</div><div class="o-inp"><span>Департамент разработки</span><span aria-hidden="true">▾</span></div></div>
+          <div class="o-fld"><div class="o-lbl">Должность</div><div class="o-inp on foc"><span>Аналитик</span><span aria-hidden="true">▾</span></div>
+            <div class="o-pop" style="margin-top:var(--ds-xxs);">
+              <div class="o-opt">Аналитик данных</div>
+              <div class="o-opt sel">Добавить должность «Аналитик»</div>
+            </div></div>
+        </div></div>
+        <div class="o-scrim"><div class="o-modal">
+          <div class="o-fld"><div class="o-lbl">Подразделение</div><div class="o-inp"><span>Департамент продаж</span><span aria-hidden="true">▾</span></div></div>
+          <div class="o-fld"><div class="o-lbl">Должность</div><div class="o-inp er"><span class="o-ph">Выберите должность</span><span aria-hidden="true">▾</span></div><div class="o-ferr">⊗ Выберите должность</div></div>
+          <div class="o-help">Другие ошибки сервера под полем: «Должность недоступна в выбранном подразделении», «Должность неактивна».</div>
+        </div></div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Источник списка — активные должности перечня выбранного подразделения и всех вышестоящих.</b> Список строится после выбора подразделения; поле «Должность» ищет по набранному тексту среди них. Пока подразделение не выбрано, предлагать нечего. Смена подразделения заново строит список; прежний выбор, недоступный в новом подразделении, очищается после загрузки списка.</li>
+      <li><b>«Добавить должность «{текст}»»</b> — последний пункт списка, обычная опция, которой пользуются стрелками и Enter как любой другой (не отдельный блок под списком). Он появляется, когда набранное название не совпадает ни с одним пунктом без учёта регистра. Выбор создаёт должность в справочнике (или берёт существующую с тем же названием), добавляет её в перечень выбранного подразделения и выбирает её в форме; пока идёт добавление, поле недоступно с индикатором. Отказ сервера (например, неверное название) показывается всплывающим сообщением.</li>
+      <li><b>Должность, которую сотрудник уже занимает</b>, остаётся в списке по названию, пока подразделение не меняют, даже если её исключили из перечня или деактивировали, чтобы несвязанная правка не требовала менять должность. Подсказка пустого поля — «Выберите должность»; обязательное — «Выберите должность» под полем.</li>
+    </ul>
+  </article>
 </section>
 
 <section id="interaction-patterns">
@@ -633,6 +856,10 @@ flowchart TD
     <li><b>Состояние сказано словами</b>: «Неактивно» (подразделение), «Не работает» (сотрудник, только администратору), «(подразделение неактивно)» в недоступных пунктах меню.</li>
     <li><b>Адрес как состояние.</b> Параметр <code>unit</code> позволяет поделиться ссылкой на карточку и возвращает пользователя к только что созданной записи.</li>
     <li><b>Конфликты версий</b> (412): сообщение «Данные изменены другим пользователем…», данные перечитываются, форма пересобирается; фоновое обновление до отказа ввод не затирает.</li>
+    <li><b>Должность — выбор, а не ввод.</b> Должность сотрудника берётся из справочника; недостающую добавляют пунктом списка «Добавить должность «…»» прямо в форме, без ухода с неё.</li>
+    <li><b>Просмотр открыт всем, изменение — администратору.</b> Перечень должностей и ответственный HR подразделения доступны любой роли в окнах из меню карточки; менять их может только администратор.</li>
+    <li><b>Последствия видны до действия и для справочника должностей</b>: деактивация должности и исключение её из перечня называют число работающих сотрудников, которых это касается, и что их должность не изменится.</li>
+    <li><b>Фокус окон.</b> Первое поле; в окне без полей — главная кнопка; в подтверждении необратимого действия — «Отмена».</li>
   </ul>
 </section>
 
@@ -650,13 +877,15 @@ flowchart TD
       <tr><td><code>modal</code>, <code>scrim</code>, <code>button-primary</code>, <code>button-danger</code>, <code>button-default</code></td><td>Формы и подтверждения; <code>Modal.confirm</code> для деструктивных подтверждений.</td></tr>
       <tr><td>Подсветка совпадения (<code>mark</code>, <code>warning-bg</code>, текст не меняется)</td><td>Результаты поиска; не статус, а выделение фрагмента.</td></tr>
       <tr><td><code>empty-state</code>, <code>skeleton</code>, <code>alert-danger</code></td><td>Пустая структура, загрузка, ошибки.</td></tr>
+      <tr><td><code>table-header</code>, <code>table-row</code>, <code>pagination-item</code> (antd <code>Table</code>), <code>tag-success</code>, <code>tag-neutral</code>, <code>button-link</code></td><td>Страница «Должности»: список, статус «Активна» / «Неактивна», действия строки.</td></tr>
+      <tr><td><code>input</code>, <code>dropdown-item</code> (antd <code>Select</code> с поиском)</td><td>Выбор должности в форме сотрудника (с пунктом «Добавить должность «…»»), «Должность из справочника», «Пользователь» в окнах подразделения.</td></tr>
     </tbody>
   </table>
 </section>
 
 </div>
       </main>
-      <footer>by ASD workflow | 2026-10-07</footer>
+      <footer>by ASD workflow | 2026-10-12</footer>
     </div>
   </div>
 </body>

@@ -17,6 +17,8 @@ export interface NavItem {
   path: string;
   /** Position in the menu, ascending. */
   order: number;
+  /** Submenu the entry is grouped under; omitted means a top-level entry. */
+  group?: "admin";
   /** Roles that see the entry; omitted means every signed-in user. */
   roles?: ReadonlyArray<UserRole>;
 }

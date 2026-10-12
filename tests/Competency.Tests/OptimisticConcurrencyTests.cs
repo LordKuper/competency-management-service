@@ -25,10 +25,40 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         ("POST", "/api/v1/org-units/{id}/move", new { parentId = (Guid?)null }),
         ("POST", "/api/v1/org-units/{id}/deactivate", null),
         ("POST", "/api/v1/org-units/{id}/activate", null),
-        ("PUT", "/api/v1/employees/{id}", new { lastName = "Иванов", firstName = "Иван", middleName = (string?)null, position = "Инженер", orgUnitId = UnknownId }),
+        ("PUT", "/api/v1/employees/{id}", new { lastName = "Иванов", firstName = "Иван", middleName = (string?)null, positionId = UnknownId, orgUnitId = UnknownId }),
         ("POST", "/api/v1/employees/{id}/dismiss", null),
         ("POST", "/api/v1/employees/{id}/rehire", null),
         ("DELETE", "/api/v1/employees/{id}", null),
+    ];
+
+    private static readonly (string Method, string Path, object? Body)[] CatalogueEndpoints =
+    [
+        .. new[] { "directions", "categories", "tracks", "levels", "scales", "competencies" }.SelectMany(kind => new (string, string, object?)[]
+        {
+            ("POST", $"/api/v1/career/{kind}/{{id}}/approve", null),
+            ("POST", $"/api/v1/career/{kind}/{{id}}/deactivate", null),
+            ("POST", $"/api/v1/career/{kind}/{{id}}/activate", null),
+            ("DELETE", $"/api/v1/career/{kind}/{{id}}", null),
+        }),
+        ("PUT", "/api/v1/career/directions/{id}", new { name = "Направление" }),
+        ("PUT", "/api/v1/career/categories/{id}", new { name = "Категория" }),
+        ("PUT", "/api/v1/career/tracks/{id}", new { name = "Трек" }),
+        ("PUT", "/api/v1/career/levels/{id}", new { name = "Уровень" }),
+        ("PUT", "/api/v1/career/scales/{id}", new { name = "Шкала", points = CareerScenarios.Points() }),
+        ("PUT", "/api/v1/career/competencies/{id}", new { name = "Навык", description = (string?)null, categoryId = UnknownId, directionId = (Guid?)null, type = "Profile", scaleId = (Guid?)null }),
+        ("POST", "/api/v1/career/scales/{id}/make-default", null),
+        ("PUT", "/api/v1/career/tracks/{id}/level-order", new { levelIds = Array.Empty<Guid>() }),
+        ("DELETE", "/api/v1/career/matrices/{id}", null),
+        ("PUT", "/api/v1/career/matrix-versions/{id}/content", new { levels = Array.Empty<object>(), blocks = Array.Empty<object>(), competencies = Array.Empty<object>(), blockWeights = Array.Empty<object>(), requirements = Array.Empty<object>() }),
+        ("POST", "/api/v1/career/matrix-versions/{id}/submit", null),
+        ("POST", "/api/v1/career/matrix-versions/{id}/approve", null),
+        ("POST", "/api/v1/career/matrix-versions/{id}/return", new { comment = (string?)null }),
+        ("POST", "/api/v1/career/matrix-versions/{id}/accept-changes", null),
+        ("POST", "/api/v1/career/matrix-versions/{id}/accept-and-revise", null),
+        ("POST", "/api/v1/career/matrix-versions/{id}/rollback-changes", null),
+        ("PUT", "/api/v1/positions/{id}", new { name = "Должность" }),
+        ("POST", "/api/v1/positions/{id}/deactivate", null),
+        ("POST", "/api/v1/positions/{id}/activate", null),
     ];
 
     [Fact]
@@ -37,7 +67,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         var admin = await (await environment.SharedHostAsync()).AdminAsync();
 
         var wrong = new List<string>();
-        foreach (var (method, template, body) in VersionedEndpoints)
+        foreach (var (method, template, body) in VersionedEndpoints.Concat(CatalogueEndpoints))
         {
             var response = await admin.SendAsync(new HttpMethod(method), template.Replace("{id}", UnknownId.ToString()), body);
             if (response.Status != HttpStatusCode.PreconditionRequired || response.ContentType != ProblemJson)
@@ -147,14 +177,14 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         var employee = await admin.CreateEmployeeAsync(unit.Id, firstName: "Пётр");
         var bumped = (await admin.PutAsync(
             $"/api/v1/employees/{employee.Id}",
-            new { lastName = employee.Json!["lastName"]!.GetValue<string>(), firstName = "Павел", middleName = (string?)null, position = "Инженер", orgUnitId = unit.Id },
+            new { lastName = employee.Json!["lastName"]!.GetValue<string>(), firstName = "Павел", middleName = (string?)null, positionId = employee.Json["positionId"]!.GetValue<Guid>(), orgUnitId = unit.Id },
             employee.ETag)).Expect(HttpStatusCode.OK);
 
         var stale = action switch
         {
             "update" => await admin.PutAsync(
                 $"/api/v1/employees/{employee.Id}",
-                new { lastName = "Затёртый", firstName = "Пётр", middleName = (string?)null, position = "Инженер", orgUnitId = unit.Id },
+                new { lastName = "Затёртый", firstName = "Пётр", middleName = (string?)null, positionId = employee.Json["positionId"]!.GetValue<Guid>(), orgUnitId = unit.Id },
                 employee.ETag),
             "dismiss" => await admin.PostAsync($"/api/v1/employees/{employee.Id}/dismiss", ifMatch: employee.ETag),
             _ => await admin.DeleteAsync($"/api/v1/employees/{employee.Id}", employee.ETag),

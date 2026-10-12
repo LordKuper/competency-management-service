@@ -99,7 +99,7 @@ export function UserListPage() {
               {
                 key: "edit",
                 icon: <EditOutlined />,
-                label: "Править",
+                label: "Изменить",
                 onClick: () => setDialog({ kind: "edit", userId: user.id }),
               },
               ...(user.isBlocked

@@ -10,3 +10,5 @@ In `git commit --only -F - -- <paths>`, every option (`--only`, `-F -`, `-m`, �
 **Why:** memory-fix and new-file commits here run as one compound `git add -- <paths> && git commit --only …` command (see [[parallel-agent-commit-sweep]]), with the message piped via heredoc into `-F -`; misplacing `-F -` breaks that one-shot commit.
 
 **How to apply:** write it as `git commit --only -F - -- <paths> <<'EOF' … EOF`, options first, `--` last before paths.
+
+A file already removed with `git rm` is no longer a valid `git add -- <path>` pathspec: one such path makes the whole `git add` fail and stage nothing. Leave it out of `git add`, but list it after `--` in `git commit --only` (HEAD knows it, so the deletion is committed).

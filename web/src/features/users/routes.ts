@@ -8,7 +8,8 @@ export const navItems: NavItem[] = [
     key: "users",
     label: "Пользователи",
     path: "/users",
-    order: 10,
+    order: 30,
+    group: "admin",
     roles: ["GlobalAdmin"],
   },
 ];

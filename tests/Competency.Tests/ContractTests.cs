@@ -26,12 +26,29 @@ public sealed class ContractTests(TestEnvironment environment)
     ];
 
     [Fact]
-    public void Ac9_Contract_IsVersion2_WithoutTheAdministratorsPasswordMethod_AndWithTheLinkMethods()
+    public void Ac6_Contract_IsVersion3_WithThePositionAsAnIdentifier_AndNoFinancialData()
+    {
+        var contract = ReadContract();
+        var schemas = contract["components"]!["schemas"]!.AsObject();
+        var paths = contract["paths"]!.AsObject();
+        var request = schemas["EmployeeRequest"]!["properties"]!.AsObject();
+        var response = schemas["EmployeeResponse"]!["properties"]!.AsObject();
+
+        contract["info"]!["version"]!.GetValue<string>().Should().Be("3.0.0");
+        request.ContainsKey("positionId").Should().BeTrue("an employee's input names the catalogue position");
+        request.ContainsKey("position").Should().BeFalse("the free-text position left the input");
+        response.ContainsKey("positionId").Should().BeTrue();
+        response.ContainsKey("position").Should().BeTrue("the response keeps the position's name beside its identifier");
+        paths.ContainsKey("/api/v1/positions").Should().BeTrue();
+        contract.ToJsonString().Should().NotContainEquivalentOf("salary", "the system keeps no financial information");
+    }
+
+    [Fact]
+    public void Ac9_Contract_WithoutTheAdministratorsPasswordMethod_AndWithTheLinkMethods()
     {
         var contract = ReadContract();
         var paths = contract["paths"]!.AsObject();
 
-        contract["info"]!["version"]!.GetValue<string>().Should().Be("2.0.0");
         paths.ContainsKey(RemovedPasswordMethod).Should().BeFalse("an administrator no longer sets another account's password");
         paths.Select(path => path.Key).Should().OnlyContain(path => path.StartsWith("/api/v1/") || path.StartsWith("/healthz/"), "the path prefix did not change");
         foreach (var added in new[] { "/api/v1/users/{id}/resend-invitation", "/api/v1/users/{id}/send-password-reset" }.Concat(AnonymousLinkMethods))

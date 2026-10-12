@@ -1,6 +1,6 @@
 ---
 name: web-focus-ring-and-antd-css-facts
-description: Overriding antd focus and shimmer styles from the stylesheet - specificity vs !important and Biome, custom theme tokens as CSS variables, rc-dropdown keyboard model, focus loss on an element swap, keyboard checks in headless Chrome without a backend
+description: antd componentDisabled vs explicit false; Overriding antd focus and shimmer styles from the stylesheet - specificity vs !important and Biome, custom theme tokens as CSS variables, rc-dropdown keyboard model, focus loss on an element swap, keyboard checks in headless Chrome without a backend
 metadata:
   type: project
 ---
@@ -16,5 +16,6 @@ Facts that decided the focus-ring work in `web/`, checked in headless Chrome, no
 - **Skeleton shimmer ignores the `motion: false` token**; it needs a stylesheet rule under `@media (prefers-reduced-motion: reduce)`. `getComputedStyle(el).animationName` of every `.ant-skeleton-active *` shows it (`ant-skeleton-loading` vs `none`).
 - **Keyboard check with no backend**: Node 24's global `WebSocket` talks CDP directly (no `ws` package); `Fetch.enable` on `<base>/api/*` plus `Fetch.fulfillRequest` serves mock JSON; `Input.dispatchKeyEvent` (`rawKeyDown`, `char` with `text` for Enter/Space, `keyUp`) gives real Tab/Enter/arrow/Esc, and `:focus-visible` matches after such keys; `Emulation.setEmulatedMedia` with `prefers-reduced-motion` must be set before the navigation because the theme reads the media query at module load. Wait ~450 ms before reading outlines (antd transitions them).
 
+- **`ConfigProvider componentDisabled` loses to an explicit `disabled={false}`** (antd 6: `customDisabled ?? contextDisabled`, same in Checkbox and `Form disabled`). To lock a whole editor through the context, children must pass `disabled={cond || undefined}`; native `<button>`s ignore the context and need their own prop.
 **Why:** each cost a failed run or a wrong first fix while making keyboard focus match the design system.
 **How to apply:** any change to global focus, ring or motion CSS, antd Dropdown/Menu keyboard behaviour, or a browser check of `web/` without the API (see also [[web-cdp-real-backend-smoke-facts]], [[web-org-card-hierarchy-facts]]).

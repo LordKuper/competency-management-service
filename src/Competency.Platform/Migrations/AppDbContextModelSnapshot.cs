@@ -97,6 +97,612 @@ namespace Competency.Platform.Migrations
                     b.ToTable("audit_events", (string)null);
                 });
 
+            modelBuilder.Entity("Competency.CareerFramework.CareerCompetency", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("description");
+
+                    b.Property<Guid?>("DirectionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("direction_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("ScaleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scale_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("type");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("DirectionId");
+
+                    b.HasIndex("ScaleId");
+
+                    b.ToTable("competencies", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_competencies_status", "status IN ('Draft', 'Active', 'Inactive')");
+
+                            t.HasCheckConstraint("ck_competencies_type", "type IN ('Critical', 'Profile', 'Additional')");
+                        });
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CareerDirection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.ToTable("career_directions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_career_directions_status", "status IN ('Draft', 'Active', 'Inactive')");
+                        });
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CareerLevel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TrackId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("track_id");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex(new[] { "TrackId", "Position" }, "ux_career_levels_track_position")
+                        .IsUnique();
+
+                    b.ToTable("career_levels", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_career_levels_status", "status IN ('Draft', 'Active', 'Inactive')");
+                        });
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CareerTrack", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("DirectionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("direction_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("OwnerOrgUnitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_org_unit_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("DirectionId");
+
+                    b.HasIndex("OwnerOrgUnitId");
+
+                    b.ToTable("career_tracks", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_career_tracks_status", "status IN ('Draft', 'Active', 'Inactive')");
+                        });
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CompetencyCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.ToTable("competency_categories", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_competency_categories_status", "status IN ('Draft', 'Active', 'Inactive')");
+                        });
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CompetencyMatrix", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("DirectionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("direction_id");
+
+                    b.Property<Guid>("OrgUnitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_unit_id");
+
+                    b.Property<Guid>("TrackId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("track_id");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DirectionId");
+
+                    b.HasIndex("TrackId");
+
+                    b.HasIndex("OrgUnitId", "TrackId")
+                        .IsUnique();
+
+                    b.ToTable("competency_matrices", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CompetencyScale", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_default");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Points")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("points");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex(new[] { "IsDefault" }, "ux_competency_scales_default")
+                        .IsUnique()
+                        .HasFilter("is_default");
+
+                    b.ToTable("competency_scales", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_competency_scales_status", "status IN ('Draft', 'Active', 'Inactive')");
+                        });
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CompetencyVersion", b =>
+                {
+                    b.Property<Guid>("CompetencyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("competency_id");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer")
+                        .HasColumnName("number");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at");
+
+                    b.Property<Guid?>("ChangedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("changed_by_id");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("description");
+
+                    b.Property<Guid?>("DirectionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("direction_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("ScaleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scale_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("type");
+
+                    b.HasKey("CompetencyId", "Number");
+
+                    b.HasIndex("ChangedById");
+
+                    b.ToTable("competency_versions", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.MatrixDecision", b =>
+                {
+                    b.Property<Guid>("VersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("version_id");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer")
+                        .HasColumnName("sequence");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("at");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("comment");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Step")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("step");
+
+                    b.Property<int?>("VariantNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("variant_number");
+
+                    b.HasKey("VersionId", "Sequence");
+
+                    b.HasIndex("ActorId");
+
+                    b.ToTable("matrix_version_decisions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_matrix_version_decisions_kind", "kind IN ('Submitted', 'Skipped', 'Approved', 'AutoApproved', 'Returned', 'AcceptedChanges', 'AcceptedAndRevising', 'RolledBack', 'Published')");
+
+                            t.HasCheckConstraint("ck_matrix_version_decisions_step", "step IN ('Superior', 'Hr')");
+                        });
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.MatrixVariant", b =>
+                {
+                    b.Property<Guid>("VersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("version_id");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer")
+                        .HasColumnName("number");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("content");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("kind");
+
+                    b.HasKey("VersionId", "Number");
+
+                    b.HasIndex("CreatedById");
+
+                    b.ToTable("matrix_version_variants", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_matrix_version_variants_kind", "kind IN ('Author', 'Approver')");
+                        });
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.MatrixVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("content");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("MatrixId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("matrix_id");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer")
+                        .HasColumnName("number");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<Guid>("ScaleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scale_id");
+
+                    b.Property<string>("Snapshot")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("snapshot");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Step")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("step");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("ScaleId");
+
+                    b.HasIndex("MatrixId", "Number")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "MatrixId" }, "ux_matrix_versions_in_work")
+                        .IsUnique()
+                        .HasFilter("status IN ('Draft', 'OnReview', 'Returned')");
+
+                    b.HasIndex(new[] { "MatrixId" }, "ux_matrix_versions_published")
+                        .IsUnique()
+                        .HasFilter("status = 'Published'");
+
+                    b.ToTable("matrix_versions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_matrix_versions_status", "status IN ('Draft', 'OnReview', 'Returned', 'Approved', 'Published', 'Archived')");
+
+                            t.HasCheckConstraint("ck_matrix_versions_step", "step IN ('Superior', 'Hr')");
+                        });
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.OrgUnitHr", b =>
+                {
+                    b.Property<Guid>("OrgUnitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_unit_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("OrgUnitId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("org_unit_hr", (string)null);
+                });
+
             modelBuilder.Entity("Competency.OrgStructure.Employee", b =>
                 {
                     b.Property<Guid>("Id")
@@ -140,11 +746,9 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("org_unit_id");
 
-                    b.Property<string>("Position")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("position");
+                    b.Property<Guid>("PositionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("position_id");
 
                     b.Property<NpgsqlTsVector>("SearchVector")
                         .IsRequired()
@@ -152,7 +756,7 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("tsvector")
                         .HasColumnName("search_vector")
                         .HasAnnotation("Npgsql:TsVectorConfig", "russian")
-                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "LastName", "FirstName", "MiddleName", "Position" });
+                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "LastName", "FirstName", "MiddleName" });
 
                     b.Property<int>("Version")
                         .IsConcurrencyToken()
@@ -162,6 +766,8 @@ namespace Competency.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrgUnitId");
+
+                    b.HasIndex("PositionId");
 
                     b.HasIndex("SearchVector");
 
@@ -253,6 +859,66 @@ namespace Competency.Platform.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
 
                     b.ToTable("org_units", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.OrgStructure.OrgUnitPosition", b =>
+                {
+                    b.Property<Guid>("OrgUnitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_unit_id");
+
+                    b.Property<Guid>("PositionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("position_id");
+
+                    b.HasKey("OrgUnitId", "PositionId");
+
+                    b.HasIndex("PositionId");
+
+                    b.ToTable("org_unit_positions", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.OrgStructure.Position", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<NpgsqlTsVector>("SearchVector")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector")
+                        .HasColumnName("search_vector")
+                        .HasAnnotation("Npgsql:TsVectorConfig", "russian")
+                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "Name" });
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SearchVector");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
+
+                    b.ToTable("positions", (string)null);
                 });
 
             modelBuilder.Entity("Competency.UserManagement.AppUser", b =>
@@ -368,6 +1034,193 @@ namespace Competency.Platform.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Competency.CareerFramework.CareerCompetency", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Competency.CareerFramework.CompetencyCategory", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.CareerFramework.CareerDirection", null)
+                        .WithMany()
+                        .HasForeignKey("DirectionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Competency.CareerFramework.CompetencyScale", null)
+                        .WithMany()
+                        .HasForeignKey("ScaleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CareerDirection", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CareerLevel", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Competency.CareerFramework.CareerTrack", "Track")
+                        .WithMany()
+                        .HasForeignKey("TrackId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Track");
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CareerTrack", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Competency.CareerFramework.CareerDirection", null)
+                        .WithMany()
+                        .HasForeignKey("DirectionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerOrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CompetencyCategory", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CompetencyMatrix", b =>
+                {
+                    b.HasOne("Competency.CareerFramework.CareerDirection", null)
+                        .WithMany()
+                        .HasForeignKey("DirectionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
+                        .WithMany()
+                        .HasForeignKey("OrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.CareerFramework.CareerTrack", null)
+                        .WithMany()
+                        .HasForeignKey("TrackId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CompetencyScale", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CompetencyVersion", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("ChangedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Competency.CareerFramework.CareerCompetency", null)
+                        .WithMany()
+                        .HasForeignKey("CompetencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.MatrixDecision", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Competency.CareerFramework.MatrixVersion", null)
+                        .WithMany()
+                        .HasForeignKey("VersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.MatrixVariant", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.CareerFramework.MatrixVersion", null)
+                        .WithMany()
+                        .HasForeignKey("VersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.MatrixVersion", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.CareerFramework.CompetencyMatrix", "Matrix")
+                        .WithMany()
+                        .HasForeignKey("MatrixId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.CareerFramework.CompetencyScale", null)
+                        .WithMany()
+                        .HasForeignKey("ScaleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Matrix");
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.OrgUnitHr", b =>
+                {
+                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
+                        .WithOne()
+                        .HasForeignKey("Competency.CareerFramework.OrgUnitHr", "OrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Competency.OrgStructure.Employee", b =>
                 {
                     b.HasOne("Competency.OrgStructure.OrgUnit", "OrgUnit")
@@ -376,7 +1229,15 @@ namespace Competency.Platform.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Competency.OrgStructure.Position", "Position")
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("OrgUnit");
+
+                    b.Navigation("Position");
                 });
 
             modelBuilder.Entity("Competency.OrgStructure.OrgUnit", b =>
@@ -390,6 +1251,25 @@ namespace Competency.Platform.Migrations
                         .WithMany()
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Competency.OrgStructure.OrgUnitPosition", b =>
+                {
+                    b.HasOne("Competency.OrgStructure.OrgUnit", "OrgUnit")
+                        .WithMany()
+                        .HasForeignKey("OrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.OrgStructure.Position", "Position")
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("OrgUnit");
+
+                    b.Navigation("Position");
                 });
 
             modelBuilder.Entity("Competency.UserManagement.AppUser", b =>

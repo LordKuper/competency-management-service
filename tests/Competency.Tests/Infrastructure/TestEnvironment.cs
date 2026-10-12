@@ -54,7 +54,14 @@ public sealed class TestEnvironment : IAsyncLifetime
     /// Starts a host on a new empty database, so migrations and the first administrator are created by that host.
     /// </summary>
     /// <param name="settings">Configuration overrides for this host, as environment variable names with <c>__</c> separators.</param>
-    public async Task<ApiHost> StartHostAsync(IReadOnlyDictionary<string, string>? settings = null)
+    public async Task<ApiHost> StartHostAsync(IReadOnlyDictionary<string, string>? settings = null) =>
+        await ApiHost.StartAsync(await CreateDatabaseAsync(), WithMail(settings));
+
+    /// <summary>
+    /// Creates an empty database in the shared container, for a host to migrate or for a test that migrates it step by step.
+    /// </summary>
+    /// <returns>The Npgsql connection string of the new database.</returns>
+    public async Task<string> CreateDatabaseAsync()
     {
         var database = $"t{Guid.NewGuid():N}";
         await using (var admin = new NpgsqlConnection(container.GetConnectionString()))
@@ -65,7 +72,7 @@ public sealed class TestEnvironment : IAsyncLifetime
         }
 
         var connectionString = new NpgsqlConnectionStringBuilder(container.GetConnectionString()) { Database = database }.ConnectionString;
-        return await ApiHost.StartAsync($"{connectionString};{GssSetting}", WithMail(settings));
+        return $"{connectionString};{GssSetting}";
     }
 
     /// <summary>

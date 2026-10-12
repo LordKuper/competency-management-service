@@ -14,7 +14,7 @@ responsibility:
   <meta name="subsystem" content="project">
   <meta name="sprint-id" content="">
   <meta name="status" content="approved">
-  <meta name="updated" content="2026-10-08">
+  <meta name="updated" content="2026-10-12">
   <meta name="responsibility" content="ux flows and ui mockups of the application frame: sign-in session gate, header (brand, navigation, user menu), service pages">
   <meta name="provenance" content="original">
   <title>UX-спецификация — Каркас приложения и шапка</title>
@@ -208,7 +208,7 @@ responsibility:
           <span class="status-approved">approved</span>
         </div>
         <h1>UX-спецификация — Каркас приложения и шапка</h1>
-        <div class="stats">1 flows · 4 mockups · updated 2026-10-08</div>
+        <div class="stats">1 flows · 5 mockups · updated 2026-10-12</div>
       </header>
       <main>
 <!--
@@ -267,7 +267,7 @@ flowchart TD
     <dl class="screen-meta">
       <dt><b>Purpose</b></dt><dd>Постоянная рамка всех экранов: узнаваемый бренд, переход между разделами, имя текущего пользователя и выход.</dd>
       <dt><b>Entry from</b></dt><dd>Любой вход в приложение при действующей сессии.</dd>
-      <dt><b>Exit to</b></dt><dd>Разделы «Пользователи», «Оргструктура», «Журнал» (по роли); меню пользователя.</dd>
+      <dt><b>Exit to</b></dt><dd>Разделы «Оргструктура», «Карьерная модель», «Администрирование» → «Пользователи», «Должности», «Журнал» (по роли); меню пользователя.</dd>
     </dl>
     <div class="mockup-preview">
       <div style="background:var(--ds-surface-page);font:var(--ds-t-body-md);color:var(--ds-text-primary);border:var(--ds-bw) solid var(--ds-border-subtle);">
@@ -277,9 +277,9 @@ flowchart TD
             <b style="font:var(--ds-t-body-strong);">Калибр</b>
           </span>
           <span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);">
-            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Пользователи</span>
             <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);">Оргструктура</span>
-            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Журнал</span>
+            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Карьерная модель</span>
+            <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Администрирование <span aria-hidden="true">▾</span></span>
           </span>
           <span style="margin-left:auto;display:inline-flex;align-items:center;gap:var(--ds-xs);padding:0 var(--ds-xs);color:var(--ds-text-inverse);">
             <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АИ</span>
@@ -295,10 +295,42 @@ flowchart TD
     <p><b>Notes</b>:</p>
     <ul>
       <li><b>Бренд.</b> Название «Калибр» рядом с логотипом; подзаголовка нет нигде. Шапка не изменилась: логотип на круглой светлой плитке (его тёмная часть на тёмно-синей шапке сливается, контраст 1.44:1) и название <code>body-strong</code>; оно сжимается с многоточием, при обрезке полное название — в <code>title</code>. На карточке экранов без сессии (вход, «Не помню пароль», «Задание пароля», «Новый пароль») логотип (<code>brand-logo-size-auth</code>, 80 пикселей) стоит без плитки, а название «Калибр» набрано токеном <code>brand-wordmark</code> (45/71, жирный, <code>text-primary</code>), соразмерно логотипу; токены описаны в <a href="DESIGN.md">DESIGN.md</a>; ранее на экране входа стоял подзаголовок «Компетенции и карьерный рост», теперь он убран. Подробности и макет — <a href="user-management.html">user-management.html</a>, «Экран входа».</li>
-      <li><b>Навигация — горизонтальное меню в шапке</b> (тёмная тема меню), боковой панели нет: это решение закреплено в <a href="DESIGN.md">DESIGN.md</a> («Shell and navigation»). Состав по роли: администратор — «Пользователи», «Оргструктура», «Журнал»; пользователь — «Оргструктура». Текущий раздел залит <code>primary</code> с белым текстом (7.0:1, <code>nav-item-active</code>); остальные пункты — <code>text-inverse-muted</code> на <code>surface-inverse</code> (8.0:1, <code>nav-item</code>); при наведении пункт без заливки светлеет до <code>text-inverse</code> (17.9:1, <code>nav-item-hover</code>). Раздел определяется по началу адреса.</li>
+      <li><b>Навигация — горизонтальное меню в шапке</b> (тёмная тема меню), боковой панели нет: это решение закреплено в <a href="DESIGN.md">DESIGN.md</a> («Shell and navigation»). Порядок и состав: «Оргструктура» (первый пункт), «Карьерная модель» — оба видят все роли; «Администрирование» — только администратор, это пункт-список с вложенными «Пользователи», «Должности», «Журнал» (макет «Пункт «Администрирование»» ниже); пользователь без вложенных пунктов этого пункта не видит. Меню занимает всю свободную ширину шапки и не прячет пункты под «…». Текущий раздел залит <code>primary</code> с белым текстом (7.0:1, <code>nav-item-active</code>); остальные пункты — <code>text-inverse-muted</code> на <code>surface-inverse</code> (8.0:1, <code>nav-item</code>); при наведении пункт без заливки светлеет до <code>text-inverse</code> (17.9:1, <code>nav-item-hover</code>). Раздел определяется по началу адреса.</li>
       <li><b>Имя пользователя.</b> Привязанная учётная запись: «И.&nbsp;О.&nbsp;Фамилия» (инициалы имени и отчества и фамилия; пробелы между частями неразрывные), без отчества — «И.&nbsp;Фамилия»; непривязанная: e-mail. Аватарка — первые буквы имени и фамилии («АИ»), у непривязанной — первая буква e-mail. Имя видно от 992 пикселей; на планшете остаётся только аватарка, а доступное имя кнопки совпадает с видимой подписью.</li>
       <li><b>Область содержимого.</b> Фон <code>surface-page</code>, поля <code>page-gutter</code> (24) на десктопе. Заголовок страницы — <code>heading-1</code>, один на экран.</li>
       <li><b>Фокус.</b> Клавиатурный фокус всегда виден: кольцо 2 пикселя с отступом 2 пикселя, цвет <code>primary</code> на светлых поверхностях и <code>accent</code> на тёмной шапке (<code>focus-ring-inverse</code>, 9.6:1).</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Пункт «Администрирование»</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Собрать административные разделы под одним пунктом, чтобы шапка оставалась короткой и не прятала пункты.</dd>
+      <dt><b>Entry from</b></dt><dd>Пункт «Администрирование» в шапке (глобальный администратор).</dd>
+      <dt><b>Exit to</b></dt><dd>Разделы «Пользователи», «Должности», «Журнал».</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="background:var(--ds-surface-page);font:var(--ds-t-body-md);color:var(--ds-text-primary);border:var(--ds-bw) solid var(--ds-border-subtle);padding-bottom:var(--ds-xxl);">
+        <div style="display:flex;align-items:center;gap:var(--ds-xl);height:var(--ds-header-h);padding:0 var(--ds-xl);background:var(--ds-surface-inverse);color:var(--ds-text-inverse);">
+          <b style="font:var(--ds-t-body-strong);">Калибр</b>
+          <span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);">
+            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Оргструктура</span>
+            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Карьерная модель</span>
+            <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);">Администрирование <span aria-hidden="true">▴</span></span>
+          </span>
+        </div>
+        <div style="margin:var(--ds-xxs) 0 0 calc(var(--ds-xl) + var(--ds-xxxl) * 4);display:inline-block;background:var(--ds-surface-inverse);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);">
+          <div style="display:flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);">Пользователи</div>
+          <div style="display:flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);">Должности</div>
+          <div style="display:flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);">Журнал</div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Состав и порядок вложенных пунктов</b>: «Пользователи», «Должности», «Журнал»; все видны только глобальному администратору. Остальные роли пункта «Администрирование» не видят, и адреса этих разделов для них открывают «Страница не найдена» (проверки прав — на сервере).</li>
+      <li><b>Текущий раздел внутри списка</b> отмечается в самом пункте «Администрирование» (залит <code>primary</code>, как любой текущий раздел) и в раскрытом списке. Список открывается под пунктом, остаётся в тёмной теме шапки (<code>surface-inverse</code>, текст <code>text-inverse-muted</code> 8.0:1, текущий — <code>text-inverse</code> на <code>primary</code> 7.0:1) и управляется с клавиатуры как обычное меню (открыть, стрелки, закрыть Escape). Фокус — <code>focus-ring-inverse</code>.</li>
+      <li><b>Меню не сжимается в «…».</b> Горизонтальное меню занимает всю свободную ширину между брендом и кнопкой пользователя; если места не хватает, первым сжимается название бренда (многоточие).</li>
     </ul>
   </article>
 
@@ -424,7 +456,7 @@ flowchart TD
     <thead><tr><th>Компонент</th><th>Где используется</th></tr></thead>
     <tbody>
       <tr><td><code>app-header</code> (antd <code>Layout.Header</code>)</td><td>Шапка: <code>surface-inverse</code>, <code>text-inverse</code>, высота <code>header-height</code>; внутри бренд, меню, кнопка пользователя.</td></tr>
-      <tr><td><code>nav-item</code>, <code>nav-item-hover</code>, <code>nav-item-active</code> (antd <code>Menu</code>, тема dark, горизонтальный)</td><td>Навигация между разделами; пункт текущего раздела залит <code>primary</code>, при наведении текст светлеет до <code>text-inverse</code> без заливки.</td></tr>
+      <tr><td><code>nav-item</code>, <code>nav-item-hover</code>, <code>nav-item-active</code> (antd <code>Menu</code>, тема dark, горизонтальный)</td><td>Навигация между разделами; пункт текущего раздела залит <code>primary</code>, при наведении текст светлеет до <code>text-inverse</code> без заливки. Пункт-список «Администрирование» — те же токены, вложенные пункты в раскрывающемся тёмном списке (<code>surface-inverse</code>, тень <code>elevation-popup</code>).</td></tr>
       <tr><td><code>header-button-hover</code>, <code>header-button-pressed</code> (antd <code>Button type="text"</code>)</td><td>Кнопка пользователя на тёмной шапке: белая заливка 12% при наведении и 20% при нажатии, текст <code>text-inverse</code>.</td></tr>
       <tr><td><code>avatar</code> (antd <code>Avatar</code>)</td><td>Кнопка пользователя: <code>primary</code> на <code>primary-subtle</code>, две буквы; на тёмной шапке контраст 6.2:1.</td></tr>
       <tr><td>Плитка логотипа (составная: <code>surface-panel</code>, <code>rounded-full</code>, <code>control-height-md</code>)</td><td>Подложка логотипа на тёмной шапке. Отдельного компонентного токена нет.</td></tr>
@@ -436,7 +468,7 @@ flowchart TD
 
 </div>
       </main>
-      <footer>by ASD workflow | 2026-10-08</footer>
+      <footer>by ASD workflow | 2026-10-12</footer>
     </div>
   </div>
 </body>

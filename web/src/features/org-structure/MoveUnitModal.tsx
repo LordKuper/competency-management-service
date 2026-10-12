@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { App, Button, Form, Modal, Space } from "antd";
+import { App, Button, Form, Space } from "antd";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
+import { AppModal } from "../../app/AppModal";
 import { showFieldErrors } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { OrgUnitSelect } from "./OrgUnitSelect";
@@ -45,7 +46,12 @@ export function MoveUnitModal({ unit, onClose }: MoveUnitModalProps) {
   });
 
   return (
-    <Modal open title="Перенос подразделения" onCancel={onClose} footer={null}>
+    <AppModal
+      open
+      title="Перенос подразделения"
+      onCancel={onClose}
+      footer={null}
+    >
       <Form
         form={form}
         name="move-org-unit"
@@ -80,6 +86,6 @@ export function MoveUnitModal({ unit, onClose }: MoveUnitModalProps) {
           </Space>
         </Space>
       </Form>
-    </Modal>
+    </AppModal>
   );
 }

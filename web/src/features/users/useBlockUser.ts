@@ -4,6 +4,7 @@ import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { describeApiError } from "../../app/apiErrors";
+import { destructiveConfirm } from "../../app/destructiveConfirm";
 import { type UserResponse, usersQueryKey } from "./usersApi";
 
 /**
@@ -39,7 +40,7 @@ export function useBlockUser() {
         ? "Пользователь снова сможет войти в систему."
         : "Пользователь не сможет войти в систему, его действующие сессии будут завершены. Блокировку можно снять в любой момент.",
       okText: user.isBlocked ? "Разблокировать" : "Заблокировать",
-      okButtonProps: { danger: !user.isBlocked },
+      ...destructiveConfirm(!user.isBlocked),
       cancelText: "Отмена",
       onOk: () =>
         change.mutateAsync(user).then(

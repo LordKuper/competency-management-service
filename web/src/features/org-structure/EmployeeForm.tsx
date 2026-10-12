@@ -2,11 +2,14 @@ import { Button, Form, Input, Space, Typography } from "antd";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { OrgUnitSelect } from "./OrgUnitSelect";
 import type { EmployeeInput } from "./orgStructureApi";
+import { PositionSelect } from "./PositionSelect";
 
 type EmployeeFormValues = Partial<EmployeeInput>;
 
 interface EmployeeFormProps {
   initialValues: EmployeeFormValues;
+  /** The position the employee holds now, kept as a choice only while the unit stays the employee's; omitted for a new employee. */
+  position?: { id: string; name: string };
   /** E-mail of the employee's account, shown without a way to change it; null means no account, omitted hides the row. */
   email?: string | null;
   submitLabel: string;
@@ -15,9 +18,13 @@ interface EmployeeFormProps {
   onCancel: () => void;
 }
 
-/** Fields of an employee, shared by creation and editing; a transfer is a change of the unit. The status is not a field: it changes through dismissal and rehiring. */
+/**
+ * Fields of an employee, shared by creation and editing; a transfer is a change of the unit. The status is not a field: it changes through dismissal and rehiring.
+ * The position is chosen from those allowed in the chosen unit, so the choice follows the unit field.
+ */
 export function EmployeeForm({
   initialValues,
+  position,
   email,
   submitLabel,
   onSubmit,
@@ -25,6 +32,7 @@ export function EmployeeForm({
 }: EmployeeFormProps) {
   const [form] = Form.useForm<EmployeeInput>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
+  const orgUnitId = Form.useWatch("orgUnitId", form);
 
   return (
     <Form
@@ -62,13 +70,14 @@ export function EmployeeForm({
         <OrgUnitSelect isActiveRequired placeholder="Выберите подразделение" />
       </Form.Item>
       <Form.Item
-        name="position"
+        name="positionId"
         label="Должность"
-        rules={[
-          { required: true, whitespace: true, message: "Введите должность" },
-        ]}
+        rules={[{ required: true, message: "Выберите должность" }]}
       >
-        <Input autoComplete="off" />
+        <PositionSelect
+          orgUnitId={orgUnitId}
+          current={orgUnitId === initialValues.orgUnitId ? position : undefined}
+        />
       </Form.Item>
       {email !== undefined && (
         <Form.Item

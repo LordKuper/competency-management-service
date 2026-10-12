@@ -1,12 +1,13 @@
 using System.Reflection;
 using Competency.Api;
 using Competency.Audit;
+using Competency.CareerFramework;
 using Competency.OrgStructure;
 using Competency.Platform;
 using Competency.UserManagement;
 using Microsoft.AspNetCore.DataProtection;
 
-const string ContractVersion = "2.0.0";
+const string ContractVersion = "3.0.0";
 const string SpaFallbackPattern = "{*path:nonfile:regex(^(?!api/).*$)}";
 
 var isToolingRun = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
@@ -53,6 +54,7 @@ app.MapPlatformEndpoints();
 app.MapAuditEndpoints();
 app.MapOrgStructureEndpoints();
 app.MapUserManagementEndpoints();
+app.MapCareerFrameworkEndpoints();
 app.MapFallbackToFile(SpaFallbackPattern, "index.html").AllowAnonymous();
 
 await app.RunAsync();

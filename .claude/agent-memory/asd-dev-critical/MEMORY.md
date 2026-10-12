@@ -10,15 +10,15 @@
 - [JSON frontmatter quotes](project_json-frontmatter-quotes.md) — a `"Section"` citation in an agent `description` breaks sync.js JSON parsing
 - [Codex agent TOML probe](reference_codex-agent-toml-probe.md) — local no-auth check of agent TOML keys via `codex exec --strict-config` (prompt-input skips agents)
 - [Heredoc backslash collapse](project_heredoc-backslash-collapse.md) — quoted heredoc still halves double backslashes here; write backslash scripts via the write tool
-- [git commit --only option order](project_git-commit-only-option-order.md) — options incl. `-F -` go before `--`; after it they are read as pathspecs
+- [git commit --only option order](project_git-commit-only-option-order.md) — options incl. `-F -` go before `--`; a `git rm`ed path breaks `git add`, list it only in the commit
 - [.NET build-time host gotchas](project_dotnet-build-time-host-gotchas.md) — GetDocument.Insider runs hosted services; ef skips Program.cs; pin EF Relational; PrivateAssets keeps Design out of publish
 - [ASP.NET platform pipeline gotchas](project_aspnet-platform-pipeline-gotchas.md) — fallback-policy reach, EF categories that log exception text, OriginalValue semantics, no-DB test tricks
-- [Web toolchain Windows notes](project_web-toolchain-windows-notes.md) — slow first vitest run, NO_COLOR not --colors, --check LF vs autocrlf, staged-on-failed-check
+- [Web toolchain Windows notes](project_web-toolchain-windows-notes.md) — slow first vitest, NO_COLOR, --check LF, biome|tail hides diffs, tsc covers tests
 - [EF raw SQL and OpenAPI contract gotchas](project_ef-raw-sql-and-openapi-contract-gotchas.md) — Sql() needs its own `;`, `$$` vs node replace, int `number|string`, AsParameters names, UTC offsets
 - [Npgsql search and result-type gotchas](project_npgsql-search-and-result-type-gotchas.md) — 2-arg ILike has no escape, SqlQuery CTE composes, Conflict<T> is not problem+json, required init props
 - [Scratch host without PostgreSQL](project_scratch-host-without-postgres.md) — InMemory logic host with stubbed raw SQL; Npgsql SQL-capture host with a fake DbCommand and transaction
 - [Identity on a plain DbContext](project_identity-efcore-store-gotchas.md) — stock user store marks all columns modified; users table suffices; HasOne(string) is a nav name
-- [Web UI test and form gotchas](project_web-ui-test-and-form-gotchas.md) — jsdom ResizeObserver stubbed in setup.ts, router singleton vs resetModules, Form.Item id, biome diff trick
+- [Web UI test and form gotchas](project_web-ui-test-and-form-gotchas.md) — jsdom ResizeObserver, router singleton, Form.Item id, biome diff trick, showSearch object
 - [Web org-structure UI facts](project_web-org-structure-ui-facts.md) — antd Tree/TreeSelect/Table in jsdom, Escape closes Modal, edit draft vs refetch, form reset after 412, throwaway test lint
 - [Packaging offline verification](project_packaging-offline-verification.md) — fresh-clone publish, npm linux dry-run, yaml parse, Secret template kept out of deploy/k8s
 - [Docker spike recipe](project_docker-spike-recipe.md) — Git Bash docker path mangling, 10/min login limit, parallel curl pitfalls, scratch runner flags
@@ -37,7 +37,14 @@
 - [Org head rule + order](project_org-head-rule-facts.md) — create field dropped silently, check-on-change, picker current quirk, Collator ru yo, antd 6 select DOM/click
 - [Org employee search](project_org-employee-search-facts.md) — server q is ILIKE+FTS not substring, q>200 is 400, searched units open as path only, absolute open/close choices, debounce masking
 - [Full verification cycle](project_full-verification-cycle-facts.md) — toast thenable keeps confirm open 3 s, real-change stale test, lockout trap, 10 500-employee numbers
-- [Web focus ring and antd CSS](project_web-focus-ring-and-antd-css-facts.md) — antd focus specificity vs !important and Biome, custom tokens as CSS vars, rc-dropdown keys, CDP keyboard check
+- [Web focus ring and antd CSS](project_web-focus-ring-and-antd-css-facts.md) — explicit disabled beats componentDisabled; antd focus specificity vs !important and Biome, custom tokens as CSS vars, rc-dropdown keys, CDP keyboard check
 - [Invitation link facts](project_invitation-link-facts.md) — CreateAsync overwrites stamp (version 1), record params always required in OpenAPI, anon endpoint off the 401 group
 - [Password reset link facts](project_password-reset-link-facts.md) — one rate-limit counter per policy across endpoints, ApiHost raises both limits, queue wiring, change-password 412 race
 - [Anonymous link screens](project_web-anonymous-link-screens-facts.md) — StrictMode-safe fragment token, router links styled as antd, empty 202, invalid-link 400 shape
+- [Position catalogue facts](project_position-catalogue-facts.md) — lower(name) index only in migration SQL, U& whitespace set for .NET Trim parity, FromSql lower() lookup, which tests break
+- [Career catalogue facts](project_career-catalogue-facts.md) — jsonb points via converter (complex types skip audit), link tables miss If-Match, Russian build output, unverified ILIKE equality
+- [Career record deletion](project_career-record-deletion-facts.md) — jsonb containment check, explicit Deleted for unaudited history rows, matrix If-Match target, shared lock on content edits
+- [Typed problem extensions](project_typed-problem-extension-facts.md) — ProblemDetails subclass + Produces<T> for typed 409, composable SqlQuery ids, scratch PG and a copied login user
+- [Matrix workflow facts](project_matrix-workflow-facts.md) — same-column filtered indexes collapse unless named, ef migrations remove needs a DB, multi-heredoc bash breaks
+- [EF save-batch ordering](project_ef-save-batch-ordering-facts.md) — unique-index swap cycle, FK error before 412, name check blind to tracked drafts, enum ceilings, trailer -m
+- [Scripted insert orphans a summary](project_scripted-insert-doc-orphan.md) — inserting before a signature moves its XML doc onto the new member; anchor on `}` or `/// <summary>`

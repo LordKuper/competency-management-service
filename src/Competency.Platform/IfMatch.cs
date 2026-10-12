@@ -26,11 +26,20 @@ public sealed record IfMatch(int Version) : IBindableFromHttpContext<IfMatch>, I
     /// <summary>
     /// Guards the next save of the entity: sets the client's version as the original value of <see cref="IVersioned.Version"/>,
     /// so the update only matches a row still at that version and otherwise throws <see cref="DbUpdateConcurrencyException"/>.
+    /// A version the entity as read no longer has throws at once, because a request that ends up changing nothing saves nothing to check.
     /// </summary>
     /// <param name="context">The context tracking the entity.</param>
     /// <param name="entity">The tracked entity about to be modified.</param>
-    public void ApplyTo(DbContext context, IVersioned entity) =>
+    /// <exception cref="DbUpdateConcurrencyException">The client's version is not the entity's version.</exception>
+    public void ApplyTo(DbContext context, IVersioned entity)
+    {
+        if (entity.Version != Version)
+        {
+            throw new DbUpdateConcurrencyException("The If-Match version is not the current version.");
+        }
+
         context.Entry(entity).Property(nameof(IVersioned.Version)).OriginalValue = Version;
+    }
 
     /// <summary>
     /// Reads <c>If-Match</c>; an absent header is rejected as 428 and anything but a single strong tag issued by this API as 400.

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.OrgStructure;
 
 /// <summary>
-/// The checks that say why a referenced unit or employee cannot be used, so a change can be rejected with that reason.
+/// The checks that say why a referenced unit, employee or position cannot be used, so a change can be rejected with that reason.
 /// </summary>
 internal static class Rejections
 {
@@ -50,5 +50,31 @@ internal static class Rejections
             false => $"{subject} не работает.",
             true => null,
         };
+    }
+
+    /// <summary>
+    /// Says why an employee of the unit cannot be given the position: it is inactive, or neither the unit nor any unit above it allows it.
+    /// An unknown position is reported as not allowed.
+    /// </summary>
+    /// <param name="context">The context to query through.</param>
+    /// <param name="positionId">The referenced position.</param>
+    /// <param name="unitId">The employee's unit.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The reason, or <see langword="null"/> when the position may be given.</returns>
+    public static async Task<string?> PositionProblemAsync(this AppDbContext context, Guid positionId, Guid unitId, CancellationToken cancellationToken)
+    {
+        var isActive = await context.Set<Position>()
+            .Where(position => position.Id == positionId)
+            .Select(position => (bool?)position.IsActive)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (isActive is false)
+        {
+            return "Должность неактивна";
+        }
+
+        var unitIds = context.AncestorIds(unitId);
+        var isAllowed = isActive is true && await context.Set<OrgUnitPosition>()
+            .AnyAsync(link => link.PositionId == positionId && unitIds.Contains(link.OrgUnitId), cancellationToken);
+        return isAllowed ? null : "Должность недоступна в выбранном подразделении";
     }
 }
