@@ -13,7 +13,7 @@ import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { EntryActions, entryColumns } from "./CatalogParts";
 import {
-  ALL_ENTRIES,
+  FIRST_PAGE,
   invalidateCatalogs,
   makeScaleDefault,
   type Scale,
@@ -21,7 +21,7 @@ import {
   type ScalePoint,
   scalesQuery,
 } from "./catalogApi";
-import { choiceFilter, onFilterChange } from "./columnFilters";
+import { choiceFilter, onFilterChange, pageProps } from "./columnFilters";
 import { ScaleModal } from "./ScaleModal";
 import { useCatalogRights } from "./useCatalogRights";
 
@@ -44,8 +44,11 @@ export function ScalesTab() {
     onError: (failure) => message.error(describeApiError(failure)),
     onSettled: () => invalidateCatalogs(queryClient),
   });
-  const [params, setParams] = useState<ScaleListParams>(ALL_ENTRIES);
-  const { data, error, isFetching, refetch } = useQuery(scalesQuery(params));
+  const [params, setParams] = useState<ScaleListParams>(FIRST_PAGE);
+  const { data, error, isFetching, refetch } = useQuery({
+    ...scalesQuery(params),
+    placeholderData: (previous) => previous,
+  });
   const edited = data?.items.find((scale) => scale.id === dialog);
   const columns: TableColumnsType<Scale> = [
     {
@@ -107,7 +110,7 @@ export function ScalesTab() {
         columns={columns}
         dataSource={data?.items}
         loading={isFetching}
-        pagination={false}
+        pagination={pageProps(params, data?.total, setParams)}
         scroll={{ x: "max-content" }}
         onChange={onFilterChange(setParams)}
         expandable={{

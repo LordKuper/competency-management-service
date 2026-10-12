@@ -15,22 +15,21 @@ import { useState } from "react";
 import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { CatalogStatusTag, EntryActions, entryColumns } from "./CatalogParts";
+import { catalogFilter } from "./CatalogSelect";
 import { COMPETENCY_TYPES, CompetencyModal } from "./CompetencyModal";
 import {
   type Competency,
   type CompetencyListParams,
   type CompetencyVersion,
-  categoriesQuery,
   competenciesQuery,
   competencyVersionsQuery,
-  directionsQuery,
   entryQuery,
-  scalesQuery,
+  FIRST_PAGE,
+  useEntryNames,
 } from "./catalogApi";
-import { choiceFilter, entryOptions, onFilterChange } from "./columnFilters";
+import { choiceFilter, onFilterChange, pageProps } from "./columnFilters";
 import { useCatalogRights } from "./useCatalogRights";
 
-const DEFAULT_PAGE_SIZE = 20;
 const SEARCH_LABEL = "Найти компетенцию";
 const DATE_TIME = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "short",
@@ -43,49 +42,49 @@ type Dialog =
   | { kind: "edit"; id: string }
   | { kind: "versions"; id: string };
 
-function namesById(items: readonly { id: string; name: string }[] | undefined) {
-  return new Map(items?.map((item) => [item.id, item.name]));
-}
-
 /** The competency catalogue: search, paging, creation, editing, the status actions and the version history. */
 export function CompetenciesTab() {
   const rights = useCatalogRights();
   const [dialog, setDialog] = useState<Dialog | null>(null);
-  const [params, setParams] = useState<CompetencyListParams>({
-    page: 1,
-    pageSize: DEFAULT_PAGE_SIZE,
-  });
+  const [params, setParams] = useState<CompetencyListParams>(FIRST_PAGE);
   const { data, error, isFetching, refetch } = useQuery({
     ...competenciesQuery(params),
     placeholderData: (previous) => previous,
   });
-  const categoryItems = useQuery(categoriesQuery()).data?.items;
-  const directionItems = useQuery(directionsQuery()).data?.items;
-  const scaleItems = useQuery(scalesQuery()).data?.items;
-  const categories = namesById(categoryItems);
-  const directions = namesById(directionItems);
-  const scales = namesById(scaleItems);
+  const items = data?.items ?? [];
+  const categories = useEntryNames(
+    "categories",
+    items.map((competency) => competency.categoryId),
+  );
+  const directions = useEntryNames(
+    "directions",
+    items.map((competency) => competency.directionId),
+  );
+  const scales = useEntryNames(
+    "scales",
+    items.map((competency) => competency.scaleId),
+  );
   const columns: TableColumnsType<Competency> = [
     { title: "Название", dataIndex: "name" },
     {
       title: "Категория",
       dataIndex: "categoryId",
-      ...choiceFilter(
+      ...catalogFilter(
         "categoryId",
+        "categories",
         params.categoryId,
-        entryOptions(categoryItems),
-        true,
+        "Категория",
       ),
       render: (id: string) => categories.get(id),
     },
     {
       title: "Направление",
       dataIndex: "directionId",
-      ...choiceFilter(
+      ...catalogFilter(
         "directionId",
+        "directions",
         params.directionId,
-        entryOptions(directionItems),
-        true,
+        "Направление",
       ),
       render: (id: string | null) => (id ? directions.get(id) : "Общая"),
     },
@@ -105,12 +104,7 @@ export function CompetenciesTab() {
     {
       title: "Шкала",
       dataIndex: "scaleId",
-      ...choiceFilter(
-        "scaleId",
-        params.scaleId,
-        entryOptions(scaleItems),
-        true,
-      ),
+      ...catalogFilter("scaleId", "scales", params.scaleId, "Шкала"),
       render: (id: string) => scales.get(id),
     },
     ...entryColumns<Competency>(params.status),
@@ -184,14 +178,7 @@ export function CompetenciesTab() {
             />
           ),
         }}
-        pagination={{
-          current: params.page,
-          pageSize: params.pageSize,
-          total: data?.total ?? 0,
-          showSizeChanger: true,
-          onChange: (page, pageSize) =>
-            setParams((previous) => ({ ...previous, page, pageSize })),
-        }}
+        pagination={pageProps(params, data?.total, setParams)}
       />
       {dialog?.kind === "create" && <CompetencyModal onClose={close} />}
       {edited && <CompetencyModal competency={edited} onClose={close} />}

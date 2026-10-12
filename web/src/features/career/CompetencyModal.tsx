@@ -7,14 +7,13 @@ import { unwrap } from "../../api/unwrap";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogModal, FormActions } from "./CatalogModal";
+import { CatalogSelect, IN_WORK } from "./CatalogSelect";
 import { CategorySelect } from "./CategorySelect";
 import {
   type Competency,
   type CompetencyType,
-  directionsQuery,
   invalidateCatalogs,
   scalesQuery,
-  usableEntries,
 } from "./catalogApi";
 
 const NAME_MAX_LENGTH = 200;
@@ -117,11 +116,11 @@ function CompetencyForm({
 }: CompetencyFormProps) {
   const [form] = Form.useForm<CompetencyValues>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
-  const directions = useQuery(directionsQuery());
-  const scales = useQuery(scalesQuery());
-  const defaultScaleId = scales.data?.items.find(
-    (scale) => scale.isDefault,
-  )?.id;
+  const defaultScale = useQuery({
+    ...scalesQuery({ page: 1, pageSize: 1, isDefault: true }),
+    enabled: !competency,
+  });
+  const defaultScaleId = defaultScale.data?.items[0]?.id;
 
   // The scales arrive after the form opens; a new competency starts with the default one unless the user chose first.
   useEffect(() => {
@@ -169,31 +168,18 @@ function CompetencyForm({
         <CategorySelect />
       </Form.Item>
       <Form.Item name="directionId" label="Направление">
-        <Select
+        <CatalogSelect
+          segment="directions"
+          filters={IN_WORK}
           allowClear
           placeholder="Общая"
-          showSearch={{ optionFilterProp: "label" }}
-          loading={directions.isFetching}
-          options={usableEntries(
-            directions.data?.items,
-            competency?.directionId,
-          ).map((direction) => ({
-            value: direction.id,
-            label: direction.name,
-          }))}
         />
       </Form.Item>
       <Form.Item name="type" label="Тип" rules={[{ required: true }]}>
         <Select options={TYPE_OPTIONS} />
       </Form.Item>
       <Form.Item name="scaleId" label="Шкала" rules={[{ required: true }]}>
-        <Select
-          showSearch={{ optionFilterProp: "label" }}
-          loading={scales.isFetching}
-          options={usableEntries(scales.data?.items, competency?.scaleId).map(
-            (scale) => ({ value: scale.id, label: scale.name }),
-          )}
-        />
+        <CatalogSelect segment="scales" filters={IN_WORK} />
       </Form.Item>
       <FormActions isSubmitting={isSubmitting} onCancel={onCancel} />
     </Form>

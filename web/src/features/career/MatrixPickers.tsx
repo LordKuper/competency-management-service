@@ -1,5 +1,6 @@
 import { Button, Form, Select, Space } from "antd";
 import { CatalogModal } from "./CatalogModal";
+import { CatalogSelect, type PickerFilters } from "./CatalogSelect";
 
 interface Option {
   value: string;
@@ -61,18 +62,20 @@ export function AddLevelModal({
 }
 
 interface AddCompetencyModalProps {
-  competencies: readonly Option[];
+  /** The competencies a matrix of this version may use: its scale, its direction or general, in work. */
+  filters: PickerFilters;
+  /** Competencies already in the matrix, which are not offered again. */
+  usedIds: readonly string[];
   blocks: readonly Option[];
-  isLoading: boolean;
   onPick: (competencyId: string, blockId: string) => void;
   onClose: () => void;
 }
 
-/** Dialog that picks a catalogue competency and the block of the matrix it joins. */
+/** Dialog that picks a catalogue competency, searched on the server, and the block of the matrix it joins. */
 export function AddCompetencyModal({
-  competencies,
+  filters,
+  usedIds,
   blocks,
-  isLoading,
   onPick,
   onClose,
 }: AddCompetencyModalProps) {
@@ -96,10 +99,10 @@ export function AddCompetencyModal({
           label="Компетенции"
           rules={[{ required: true }]}
         >
-          <Select
-            showSearch={{ optionFilterProp: "label" }}
-            loading={isLoading}
-            options={[...competencies]}
+          <CatalogSelect
+            segment="competencies"
+            filters={filters}
+            exclude={usedIds}
           />
         </Form.Item>
         <Form.Item

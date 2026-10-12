@@ -1,4 +1,8 @@
-import { type QueryClient, queryOptions } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  queryOptions,
+  useQueries,
+} from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import type { components } from "../../api/schema";
@@ -61,9 +65,9 @@ export interface ScaleListParams extends CatalogListParams {
   isDefault?: boolean;
 }
 
-/** Column filters of the track list: the unit that owns the track matches exactly. */
-export interface TrackFilters {
-  status?: CatalogStatus;
+/** Column filters of the track list: the direction, and the unit that owns the track, match exactly. */
+export interface TrackListParams extends CatalogListParams {
+  directionId?: string;
   ownerOrgUnitId?: string;
 }
 
@@ -73,13 +77,13 @@ export interface DraftListParams {
   orgUnitId?: string;
 }
 
-/**
- * The first page at the server's largest page size, for pickers and lookups of names.
- * ponytail: a catalogue past this many entries is cut off; add server-side search in the pickers if one grows that far.
- */
-export const ALL_ENTRIES: CatalogListParams = { page: 1, pageSize: 200 };
+/** The first page of a catalogue table. */
+export const FIRST_PAGE: CatalogListParams = { page: 1, pageSize: 20 };
 
-export function directionsQuery(params: CatalogListParams = ALL_ENTRIES) {
+/** The server's largest page, by which the levels of a track are read. */
+const LEVEL_PAGE_SIZE = 200;
+
+export function directionsQuery(params: CatalogListParams) {
   return queryOptions({
     queryKey: [...catalogQueryKey, "directions", params],
     queryFn: async () =>
@@ -91,33 +95,38 @@ export function directionsQuery(params: CatalogListParams = ALL_ENTRIES) {
   });
 }
 
-/** The tracks of one direction, or of every direction when none is given. */
-export function tracksQuery(directionId?: string, filters: TrackFilters = {}) {
+export function tracksQuery(params: TrackListParams) {
   return queryOptions({
-    queryKey: [...catalogQueryKey, "tracks", directionId ?? null, filters],
+    queryKey: [...catalogQueryKey, "tracks", params],
     queryFn: async () =>
       unwrap(
-        await api.GET("/api/v1/career/tracks", {
-          params: { query: { ...ALL_ENTRIES, directionId, ...filters } },
-        }),
+        await api.GET("/api/v1/career/tracks", { params: { query: params } }),
       ),
   });
 }
 
-/** The levels of one track, or of every track when none is given. */
-export function levelsQuery(trackId?: string) {
+/** Every level of one track in track order, read page by page, since the track is ordered and edited as a whole. */
+export function levelsQuery(trackId: string) {
   return queryOptions({
-    queryKey: [...catalogQueryKey, "levels", trackId ?? null],
-    queryFn: async () =>
-      unwrap(
-        await api.GET("/api/v1/career/levels", {
-          params: { query: { ...ALL_ENTRIES, trackId } },
-        }),
-      ),
+    queryKey: [...catalogQueryKey, "levels", trackId],
+    queryFn: async () => {
+      const items: CareerLevel[] = [];
+      for (let page = 1; ; page += 1) {
+        const read = unwrap(
+          await api.GET("/api/v1/career/levels", {
+            params: { query: { trackId, page, pageSize: LEVEL_PAGE_SIZE } },
+          }),
+        );
+        items.push(...read.items);
+        if (items.length >= read.total || read.items.length === 0) {
+          return { ...read, items };
+        }
+      }
+    },
   });
 }
 
-export function categoriesQuery(params: CatalogListParams = ALL_ENTRIES) {
+export function categoriesQuery(params: CatalogListParams) {
   return queryOptions({
     queryKey: [...catalogQueryKey, "categories", params],
     queryFn: async () =>
@@ -182,7 +191,7 @@ export function competencyVersionsQuery(competencyId: string) {
   });
 }
 
-export function scalesQuery(params: ScaleListParams = ALL_ENTRIES) {
+export function scalesQuery(params: ScaleListParams) {
   return queryOptions({
     queryKey: [...catalogQueryKey, "scales", params],
     queryFn: async () =>
@@ -210,15 +219,19 @@ export function invalidateCatalogs(queryClient: QueryClient) {
   return queryClient.invalidateQueries({ queryKey: catalogQueryKey });
 }
 
-/**
- * Entries a picker offers: those in work, plus the one already chosen even when it has been deactivated since.
- */
-export function usableEntries<T extends CatalogEntry>(
-  entries: readonly T[] | undefined,
-  chosen: string | null | undefined,
-): T[] {
-  return (entries ?? []).filter(
-    (entry) => entry.status !== "Inactive" || entry.id === chosen,
+/** Names of catalogue entries by id, each read on its own, for the few the rows of one page refer to. */
+export function useEntryNames(
+  segment: CatalogSegment,
+  ids: readonly (string | null | undefined)[],
+): ReadonlyMap<string, string> {
+  const unique = [...new Set(ids)].filter((id): id is string => !!id);
+  const reads = useQueries({
+    queries: unique.map((id) => entryQuery(segment, id)),
+  });
+  return new Map(
+    reads.flatMap((read) =>
+      read.data ? [[read.data.id, read.data.name] as const] : [],
+    ),
   );
 }
 

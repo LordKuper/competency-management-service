@@ -9,7 +9,7 @@ export interface FilterOption {
 
 /**
  * Column props of a one-value filter whose state lives in the query params: `current` is the param, so the filter shows
- * what the server was asked for. The column `key` must be the name of the param. `searchable` adds a search box to a long list.
+ * what the server was asked for. The column `key` must be the name of the param.
  * The dropdown is widened so that long names are not cut.
  *
  */
@@ -17,14 +17,12 @@ export function choiceFilter(
   key: string,
   current: string | boolean | undefined,
   filters: FilterOption[],
-  searchable = false,
 ) {
   return {
     key,
     filters,
     filteredValue: current === undefined ? null : [current],
     filterMultiple: false,
-    filterSearch: searchable,
     filterDropdownProps: { styles: { root: { minWidth: 360 } } },
   };
 }
@@ -53,9 +51,18 @@ export function onFilterChange<P extends object>(
   };
 }
 
-/** Options naming entries by their id. */
-export function entryOptions(
-  items: readonly { id: string; name: string }[] | undefined,
-): FilterOption[] {
-  return (items ?? []).map(({ id, name }) => ({ text: name, value: id }));
+/** The table `pagination` of a list whose page lives in the query params. */
+export function pageProps<P extends { page: number; pageSize: number }>(
+  params: P,
+  total: number | undefined,
+  setParams: Dispatch<SetStateAction<P>>,
+) {
+  return {
+    current: params.page,
+    pageSize: params.pageSize,
+    total: total ?? 0,
+    showSizeChanger: true,
+    onChange: (page: number, pageSize: number) =>
+      setParams((previous) => ({ ...previous, page, pageSize })),
+  };
 }

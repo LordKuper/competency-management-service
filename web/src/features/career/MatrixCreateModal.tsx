@@ -1,17 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Form, Select } from "antd";
 import { useNavigate } from "react-router";
 import { useFormSubmit } from "../../app/useFormSubmit";
-import { orgUnitTreeQuery } from "../org-structure/orgStructureApi";
-import { ancestorIds } from "../org-structure/orgTree";
 import { CatalogModal, FormActions } from "./CatalogModal";
+import { CatalogSelect, IN_WORK } from "./CatalogSelect";
 import { useProcessRoles } from "./careerApi";
-import {
-  directionsQuery,
-  scalesQuery,
-  tracksQuery,
-  usableEntries,
-} from "./catalogApi";
 import { createMatrix, invalidateMatrices, type NewMatrix } from "./matrixApi";
 
 const FIELDS = ["orgUnitId", "directionId", "trackId", "scaleId"] as const;
@@ -27,14 +20,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
   const [form] = Form.useForm<NewMatrix>();
   const directionId = Form.useWatch("directionId", form);
   const orgUnitId = Form.useWatch("orgUnitId", form);
-  const units = useQuery(orgUnitTreeQuery);
   const roles = useProcessRoles();
-  const directions = useQuery(directionsQuery());
-  const tracks = useQuery({
-    ...tracksQuery(directionId ?? ""),
-    enabled: !!directionId,
-  });
-  const scales = useQuery(scalesQuery());
   const create = useMutation({
     mutationFn: createMatrix,
     onSuccess: (created) => {
@@ -44,15 +30,6 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
     onSettled: () => invalidateMatrices(queryClient),
   });
   const { isSubmitting, submit } = useFormSubmit(form, create.mutateAsync);
-  // The server accepts a track of the unit itself or of a unit above it.
-  const trackUnits = new Set(
-    orgUnitId ? [orgUnitId, ...ancestorIds(units.data ?? [], orgUnitId)] : [],
-  );
-  const matrixTracks = (tracks.data?.items ?? []).filter((track) =>
-    trackUnits.has(track.ownerOrgUnitId),
-  );
-  const options = (entries: readonly { id: string; name: string }[]) =>
-    entries.map((entry) => ({ value: entry.id, label: entry.name }));
 
   return (
     <CatalogModal
@@ -73,7 +50,10 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
           rules={[{ required: true }]}
         >
           <Select
-            options={options(roles.data?.headedUnits ?? [])}
+            options={roles.data?.headedUnits.map((unit) => ({
+              value: unit.id,
+              label: unit.name,
+            }))}
             onChange={() => form.resetFields(["trackId"])}
           />
         </Form.Item>
@@ -82,27 +62,21 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
           label="Направление"
           rules={[{ required: true }]}
         >
-          <Select
-            showSearch={{ optionFilterProp: "label" }}
-            loading={directions.isFetching}
-            options={options(usableEntries(directions.data?.items, null))}
+          <CatalogSelect
+            segment="directions"
+            filters={IN_WORK}
             onChange={() => form.resetFields(["trackId"])}
           />
         </Form.Item>
         <Form.Item name="trackId" label="Трек" rules={[{ required: true }]}>
-          <Select
-            showSearch={{ optionFilterProp: "label" }}
+          <CatalogSelect
+            segment="tracks"
+            filters={{ ...IN_WORK, directionId, forOrgUnitId: orgUnitId }}
             disabled={!directionId || !orgUnitId}
-            loading={tracks.isFetching}
-            options={options(usableEntries(matrixTracks, null))}
           />
         </Form.Item>
         <Form.Item name="scaleId" label="Шкала" rules={[{ required: true }]}>
-          <Select
-            showSearch={{ optionFilterProp: "label" }}
-            loading={scales.isFetching}
-            options={options(usableEntries(scales.data?.items, null))}
-          />
+          <CatalogSelect segment="scales" filters={IN_WORK} />
         </Form.Item>
         <FormActions isSubmitting={isSubmitting} onCancel={onClose} />
       </Form>

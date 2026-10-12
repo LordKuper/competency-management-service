@@ -4,15 +4,15 @@ import { useState } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { EntryActions, entryColumns } from "./CatalogParts";
 import {
-  ALL_ENTRIES,
   type CareerTrack,
   type CatalogEntry,
   type CatalogListParams,
   directionsQuery,
-  type TrackFilters,
+  FIRST_PAGE,
+  type TrackListParams,
   tracksQuery,
 } from "./catalogApi";
-import { onFilterChange } from "./columnFilters";
+import { onFilterChange, pageProps } from "./columnFilters";
 import { NameModal } from "./NameModal";
 import { LevelsTable } from "./TrackLevels";
 import { TrackModal } from "./TrackModal";
@@ -28,10 +28,11 @@ const NAME_COLUMN = { title: "Название", dataIndex: "name" };
 export function DirectionsTracksTab() {
   const rights = useCatalogRights();
   const [dialog, setDialog] = useState<Dialog>(null);
-  const [params, setParams] = useState<CatalogListParams>(ALL_ENTRIES);
-  const { data, error, isFetching, refetch } = useQuery(
-    directionsQuery(params),
-  );
+  const [params, setParams] = useState<CatalogListParams>(FIRST_PAGE);
+  const { data, error, isFetching, refetch } = useQuery({
+    ...directionsQuery(params),
+    placeholderData: (previous) => previous,
+  });
   const edited = data?.items.find((direction) => direction.id === dialog);
   const columns: TableColumnsType<CatalogEntry> = [
     NAME_COLUMN,
@@ -70,7 +71,7 @@ export function DirectionsTracksTab() {
         columns={columns}
         dataSource={data?.items}
         loading={isFetching}
-        pagination={false}
+        pagination={pageProps(params, data?.total, setParams)}
         scroll={{ x: "max-content" }}
         onChange={onFilterChange(setParams)}
         expandable={{
@@ -109,20 +110,24 @@ export function DirectionsTracksTab() {
 function TracksTable({ direction }: { direction: CatalogEntry }) {
   const rights = useCatalogRights();
   const [dialog, setDialog] = useState<Dialog>(null);
-  const [filters, setFilters] = useState<TrackFilters>({});
-  const { data, error, isFetching, refetch } = useQuery(
-    tracksQuery(direction.id, filters),
-  );
+  const [params, setParams] = useState<TrackListParams>({
+    ...FIRST_PAGE,
+    directionId: direction.id,
+  });
+  const { data, error, isFetching, refetch } = useQuery({
+    ...tracksQuery(params),
+    placeholderData: (previous) => previous,
+  });
   const edited = data?.items.find((track) => track.id === dialog);
   const columns: TableColumnsType<CareerTrack> = [
     NAME_COLUMN,
     {
       title: "Владелец",
       dataIndex: "ownerOrgUnitName",
-      ...unitFilter("ownerOrgUnitId", filters.ownerOrgUnitId),
+      ...unitFilter("ownerOrgUnitId", params.ownerOrgUnitId),
       render: (name: string) => `Подразделение: ${name}`,
     },
-    ...entryColumns<CareerTrack>(filters.status),
+    ...entryColumns<CareerTrack>(params.status),
     {
       title: "Действия",
       key: "actions",
@@ -156,9 +161,9 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
         columns={columns}
         dataSource={data?.items}
         loading={isFetching}
-        pagination={false}
+        pagination={pageProps(params, data?.total, setParams)}
         scroll={{ x: "max-content" }}
-        onChange={onFilterChange(setFilters)}
+        onChange={onFilterChange(setParams)}
         expandable={{
           expandedRowRender: (track) => <LevelsTable track={track} />,
         }}

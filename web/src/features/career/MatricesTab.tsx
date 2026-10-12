@@ -11,10 +11,9 @@ import {
 import { useState } from "react";
 import { Link } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { catalogFilter } from "./CatalogSelect";
 import { useProcessRoles } from "./careerApi";
-import { directionsQuery, tracksQuery } from "./catalogApi";
-import type { FilterOption } from "./columnFilters";
-import { choiceFilter, entryOptions, onFilterChange } from "./columnFilters";
+import { onFilterChange, pageProps } from "./columnFilters";
 import { MatrixCreateModal } from "./MatrixCreateModal";
 import { MatrixDeleteButton } from "./MatrixDeleteButton";
 import { type Matrix, type MatrixListParams, matricesQuery } from "./matrixApi";
@@ -34,11 +33,7 @@ function versionCell(version: Matrix["inWorkVersion"]) {
   );
 }
 
-function columns(
-  params: MatrixListParams,
-  directions: FilterOption[],
-  tracks: FilterOption[],
-): TableColumnsType<Matrix> {
+function columns(params: MatrixListParams): TableColumnsType<Matrix> {
   return [
     {
       title: "Подразделение",
@@ -48,12 +43,17 @@ function columns(
     {
       title: "Направление",
       dataIndex: "directionName",
-      ...choiceFilter("directionId", params.directionId, directions, true),
+      ...catalogFilter(
+        "directionId",
+        "directions",
+        params.directionId,
+        "Направление",
+      ),
     },
     {
       title: "Трек",
       dataIndex: "trackName",
-      ...choiceFilter("trackId", params.trackId, tracks, true),
+      ...catalogFilter("trackId", "tracks", params.trackId, "Трек"),
       render: (name: string, matrix) => (
         <Link to={`/career/matrices/${matrix.id}`}>{name}</Link>
       ),
@@ -84,8 +84,6 @@ export function MatricesTab() {
     ...matricesQuery(params),
     placeholderData: (previous) => previous,
   });
-  const directions = entryOptions(useQuery(directionsQuery()).data?.items);
-  const tracks = entryOptions(useQuery(tracksQuery()).data?.items);
   const canCreate = (roles.data?.headedUnits.length ?? 0) > 0;
 
   return (
@@ -106,7 +104,7 @@ export function MatricesTab() {
       )}
       <Table<Matrix>
         rowKey="id"
-        columns={columns(params, directions, tracks)}
+        columns={columns(params)}
         dataSource={data?.items}
         loading={isFetching}
         scroll={{ x: "max-content" }}
@@ -119,14 +117,7 @@ export function MatricesTab() {
             />
           ),
         }}
-        pagination={{
-          current: params.page,
-          pageSize: params.pageSize,
-          total: data?.total ?? 0,
-          showSizeChanger: true,
-          onChange: (page, pageSize) =>
-            setParams((previous) => ({ ...previous, page, pageSize })),
-        }}
+        pagination={pageProps(params, data?.total, setParams)}
       />
       {isCreating && <MatrixCreateModal onClose={() => setIsCreating(false)} />}
     </Space>

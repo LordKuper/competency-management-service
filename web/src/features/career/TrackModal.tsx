@@ -52,7 +52,7 @@ export function TrackModal({
   const [order, setOrder] = useState<string[]>();
   const current = saved ?? base;
   const levels = useQuery({
-    ...levelsQuery(current?.id),
+    ...levelsQuery(current?.id ?? ""),
     enabled: current !== undefined,
   });
   const rows = arrangeLevels(

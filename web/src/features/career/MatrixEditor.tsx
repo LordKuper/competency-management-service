@@ -18,11 +18,10 @@ import {
 } from "antd";
 import { useEffect, useState } from "react";
 import { useEditBase } from "../../app/useEditBase";
+import { IN_WORK } from "./CatalogSelect";
 import { COMPETENCY_TYPES } from "./CompetencyModal";
 import {
-  ALL_ENTRIES,
   type CompetencyType,
-  competenciesQuery,
   competencyQuery,
   levelsQuery,
 } from "./catalogApi";
@@ -150,10 +149,6 @@ function MatrixEditorBody({
   const changed = diff ? changedPlaces(diff.changes) : NO_CHANGES;
 
   const catalogLevels = useQuery(levelsQuery(entries.track.id));
-  const catalogCompetencies = useQuery({
-    ...competenciesQuery(ALL_ENTRIES),
-    enabled: isEditable,
-  });
   const save = useMutation({
     mutationFn: () => saveMatrixContent(base, edited),
     onSuccess: (saved) => {
@@ -210,18 +205,12 @@ function MatrixEditorBody({
         !shown.levels.some((used) => used.levelId === level.id),
     )
     .map((level) => ({ value: level.id, label: level.name }));
-  const competencyOptions = (catalogCompetencies.data?.items ?? [])
-    .filter(
-      (competency) =>
-        competency.scaleId === version.scaleId &&
-        !shown.competencies.some(
-          (used) => used.competencyId === competency.id,
-        ) &&
-        (competency.directionId === null ||
-          competency.directionId === entries.direction.id) &&
-        competency.status !== "Inactive",
-    )
-    .map((competency) => ({ value: competency.id, label: competency.name }));
+  const competencyFilters = {
+    ...IN_WORK,
+    scaleId: version.scaleId,
+    directionId: entries.direction.id,
+    withGeneral: true,
+  };
 
   function renderName(row: GridRow) {
     if (row.competencyId === null) return "Минимальный общий порог";
@@ -465,9 +454,9 @@ function MatrixEditorBody({
       )}
       {dialog?.kind === "competency" && (
         <AddCompetencyModal
-          competencies={competencyOptions}
+          filters={competencyFilters}
+          usedIds={shown.competencies.map((item) => item.competencyId)}
           blocks={blockOptions}
-          isLoading={catalogCompetencies.isFetching}
           onPick={(competencyId, blockId) => {
             setEdited(addCompetency(edited, competencyId, blockId));
             setDialog(null);

@@ -4,12 +4,12 @@ import { useState } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { EntryActions, entryColumns } from "./CatalogParts";
 import {
-  ALL_ENTRIES,
   type CatalogEntry,
   type CatalogListParams,
   categoriesQuery,
+  FIRST_PAGE,
 } from "./catalogApi";
-import { onFilterChange } from "./columnFilters";
+import { onFilterChange, pageProps } from "./columnFilters";
 import { NameModal } from "./NameModal";
 import { useCatalogRights } from "./useCatalogRights";
 
@@ -20,10 +20,11 @@ type Dialog = "create" | string | null;
 export function CategoriesTab() {
   const rights = useCatalogRights();
   const [dialog, setDialog] = useState<Dialog>(null);
-  const [params, setParams] = useState<CatalogListParams>(ALL_ENTRIES);
-  const { data, error, isFetching, refetch } = useQuery(
-    categoriesQuery(params),
-  );
+  const [params, setParams] = useState<CatalogListParams>(FIRST_PAGE);
+  const { data, error, isFetching, refetch } = useQuery({
+    ...categoriesQuery(params),
+    placeholderData: (previous) => previous,
+  });
   const edited = data?.items.find((category) => category.id === dialog);
 
   const columns: TableColumnsType<CatalogEntry> = [
@@ -63,7 +64,7 @@ export function CategoriesTab() {
         columns={columns}
         dataSource={data?.items}
         loading={isFetching}
-        pagination={false}
+        pagination={pageProps(params, data?.total, setParams)}
         scroll={{ x: "max-content" }}
         onChange={onFilterChange(setParams)}
         locale={{
