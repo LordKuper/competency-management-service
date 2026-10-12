@@ -367,7 +367,6 @@ export function MatrixPage() {
       <RouteSteps version={version} decisions={history?.decisions ?? []} />
       <MatrixEditor
         key={`${version.id}:${version.status}:${session}`}
-        matrix={matrix}
         version={version}
         diff={diffRead.data}
         onSaved={() => setSession((previous) => previous + 1)}

@@ -32,7 +32,6 @@ import { MatrixErrorAlert } from "./MatrixErrorAlert";
 import { AddCompetencyModal, AddLevelModal } from "./MatrixPickers";
 import {
   invalidateMatrices,
-  type Matrix,
   type MatrixContent,
   type MatrixDiff,
   type MatrixVersion,
@@ -79,7 +78,6 @@ interface CompetencyInfo {
 }
 
 interface MatrixEditorProps {
-  matrix: Matrix;
   /** The version as the cache holds it now; a version without the edit action is shown read-only. */
   version: MatrixVersion;
   /** What the approver changed against the variant before; omitted when there is nothing to show. */
