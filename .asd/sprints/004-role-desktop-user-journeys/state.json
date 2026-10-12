@@ -1,7 +1,7 @@
 {
   "sprint_id": "004-role-desktop-user-journeys",
   "branch": "sprint/004-role-desktop-user-journeys",
-  "phase": "audit",
+  "phase": "design",
   "workflow": "standard",
   "documents": {
     "audit": true,
@@ -62,6 +62,13 @@
       "reason": "audit.md complete; all contradictions and authority ambiguities settled by user; source-resolvable A-5, A-10, A-14 settled from cited sources",
       "evidence": "audit.md",
       "artifact_revision": "audit.md 2026-10-12"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-24..AC-34 added (position-level link model A, publication bans, role checks 1-22 + level without position, no-duplicates absorption, scenarios link positions / catalog order / org order, general publication rule with explicit cascade); AC-2, AC-8, AC-14, AC-20 amended",
+      "reason": "user remarks at PRD review; cost AC-2, AC-8, AC-14, AC-20: 0 iterations / 0 fix rounds (no review yet)",
+      "evidence": "decisions-log.md 2026-10-12 scope amendment position-level link"
     }
   ],
   "task_routing": {},
@@ -85,7 +92,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-12T14:48:10.318Z",
+  "updated_at": "2026-10-12T15:17:05.118Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
