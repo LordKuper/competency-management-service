@@ -91,7 +91,9 @@ interface MatrixEditorProps {
 /**
  * The competency-by-level grid with the blocks and thresholds of a version. It is editable when the version's
  * actions allow, and then keeps the edits in the form until they are saved. While a save is in flight its controls are
- * disabled, so nothing typed then is lost when the saved version replaces the form.
+ * disabled, so nothing typed then is lost when the saved version replaces the form. Levels go in the track order: a
+ * published or archived version keeps the order its entries were frozen in, and puts after them the levels only an
+ * earlier variant has; a version in work follows the catalogue.
  */
 export function MatrixEditor(props: MatrixEditorProps) {
   const { base, noteSaveFailure } = useEditBase(props.version);
@@ -165,16 +167,18 @@ function MatrixEditorBody({
     (save.isPending || JSON.stringify(edited) !== JSON.stringify(base.content));
   useEffect(() => onUnsavedChange?.(isUnsaved), [isUnsaved, onUnsavedChange]);
 
+  const catalogOrder = catalogLevels.data?.items ?? [];
   const levelNames = new Map<string, string>([
-    ...(catalogLevels.data?.items ?? []).map(
-      (level) => [level.id, level.name] as const,
-    ),
+    ...catalogOrder.map((level) => [level.id, level.name] as const),
     ...entries.levels.map((level) => [level.id, level.name] as const),
   ]);
-  const trackOrder = [
-    ...(catalogLevels.data?.items ?? []),
-    ...entries.levels,
-  ].map((level) => level.id);
+  const isFrozen =
+    version.status === "Published" || version.status === "Archived";
+  const trackOrder = (
+    isFrozen
+      ? [...entries.levels, ...catalogOrder]
+      : [...catalogOrder, ...entries.levels]
+  ).map((level) => level.id);
   const rank = (levelId: string) => {
     const index = trackOrder.indexOf(levelId);
     return index === -1 ? trackOrder.length : index;
