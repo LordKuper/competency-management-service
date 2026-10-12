@@ -216,3 +216,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — impl fix for wave-2/iter-01: findings resolved — external 1–6, combined F2–F5, F7 (dev), combined F1 (680d92c, tester); F6 — решение пользователя; gate: Release 0/0, web lint чист
 - 2026-10-12 — route impl-test entry 4: critical, dispatch HEAD 79dc3ab; risk change: workflow state machine (возврат HR, полнота при согласовании, If-Match в Platform)
 - 2026-10-12 — impl-test: impacted set green (полный набор по предохранителю: backend 487/487, web 303/303), 14/0 tests (entry 4)
+- 2026-10-12 — stall: asd-reviewer-combined и asd-external-review wave-2/iter-02 (лимит API, отчётов нет); re-dispatched оба с теми же манифестами

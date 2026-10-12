@@ -377,7 +377,7 @@
       "latched": {}
     },
     "impl": {
-      "wave": 2,
+      "wave": 3,
       "waves": [
         {
           "iteration": 2,
@@ -406,18 +406,27 @@
             "iter-01": {
               "combined": "CONCERNS",
               "external": "CONCERNS"
+            },
+            "iter-02": {
+              "combined": "APPROVE",
+              "external": "APPROVE"
             }
           },
           "iteration_heads": {
             "iter-01": "95d871a1edaaef164ee393349f54316ba66fc866",
             "iter-02": "bd7962247416117bf61adc7274730adf1a334dec"
           },
-          "latched": {}
+          "latched": {
+            "combined": 2,
+            "external": 2
+          }
         },
         {
-          "iteration": 0,
+          "iteration": 1,
           "verdicts": {},
-          "iteration_heads": {},
+          "iteration_heads": {
+            "iter-01": "e89e891a3a8f89cbac6b5b688a6f21d22d9b3dbb"
+          },
           "latched": {}
         }
       ]

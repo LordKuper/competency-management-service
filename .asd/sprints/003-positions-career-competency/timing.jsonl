@@ -220,3 +220,9 @@
 {"op":"close","id":"impl-test entry 4","kind":"dispatch","parent":"impl-test#4","start":"2026-10-11T22:23:03.273Z","end":"2026-10-11T23:02:33.627Z","outcome":"done","attrs":{"agent":"asd-tester-critical","tier":"critical","model":"sonnet"}}
 {"op":"close","id":"impl-test#4","kind":"phase","parent":null,"start":"2026-10-11T22:22:53.561Z","end":"2026-10-11T23:02:33.989Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-review#3","kind":"phase","parent":null,"start":"2026-10-11T23:02:33.989Z","attrs":{}}
+{"op":"open","id":"impl-review wave-2/iter-02","kind":"review-iteration","parent":"impl-review#3","start":"2026-10-11T23:02:35.694Z","attrs":{"wave":"2","iteration":"2"}}
+{"op":"open","id":"combined wave-2/iter-02","kind":"dispatch","parent":"impl-review wave-2/iter-02","start":"2026-10-11T23:02:35.768Z","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
+{"op":"open","id":"external wave-2/iter-02","kind":"external-review","parent":"impl-review wave-2/iter-02","start":"2026-10-11T23:02:35.840Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"combined wave-2/iter-02","kind":"dispatch","parent":"impl-review wave-2/iter-02","start":"2026-10-11T23:02:35.768Z","end":"2026-10-12T06:44:59.734Z","outcome":"done","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
+{"op":"close","id":"external wave-2/iter-02","kind":"external-review","parent":"impl-review wave-2/iter-02","start":"2026-10-11T23:02:35.840Z","end":"2026-10-12T06:48:05.996Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"impl-review wave-2/iter-02","kind":"review-iteration","parent":"impl-review#3","start":"2026-10-11T23:02:35.694Z","end":"2026-10-12T06:48:05.996Z","outcome":"done","attrs":{"wave":"2","iteration":"2"}}
