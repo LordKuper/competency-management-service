@@ -101,6 +101,20 @@ export function matrixHistoryQuery(versionId: string) {
   });
 }
 
+/** The content of one variant of a version, as its author or approver left it. */
+export function matrixVariantQuery(versionId: string, number: number) {
+  return queryOptions({
+    queryKey: [...matrixQueryKey, "variant", versionId, number],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/matrix-versions/{id}/variants/{number}", {
+          params: { path: { id: versionId, number } },
+        }),
+      ),
+    retry: false,
+  });
+}
+
 /** Changes a variant made against the one before it. */
 export function matrixDiffQuery(versionId: string, number: number) {
   return queryOptions({

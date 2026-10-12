@@ -380,7 +380,11 @@ export function MatrixPage() {
         />
       )}
       {dialog === "history" && history && (
-        <MatrixHistoryModal history={history} onClose={() => setDialog(null)} />
+        <MatrixHistoryModal
+          version={version}
+          history={history}
+          onClose={() => setDialog(null)}
+        />
       )}
     </Space>
   );
