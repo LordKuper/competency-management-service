@@ -1,7 +1,7 @@
 {
   "sprint_id": "004-role-desktop-user-journeys",
   "branch": "sprint/004-role-desktop-user-journeys",
-  "phase": "scope",
+  "phase": "audit",
   "workflow": "standard",
   "documents": {
     "audit": true,
@@ -40,6 +40,28 @@
       "reason": "sprint.md AC-1..23; one sprint, split declined; no document skips",
       "evidence": "decisions-log.md 2026-10-12 scope accepted",
       "artifact_revision": "sprint.md 2026-10-12"
+    },
+    {
+      "gate": "audit contradictions C-1..C-3",
+      "decision_actor": "user",
+      "decision": "C-1 draft track allowed for matrix, publication blocked until track active (AC-8 amended); C-2 age only for event kinds (AC-2); C-3 resend button on desktop (AC-6)",
+      "reason": "no canonical side; cost AC-2, AC-6, AC-8: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-12 audit contradictions"
+    },
+    {
+      "gate": "audit ambiguities A-4,A-6..A-9,A-11..A-13,A-15",
+      "decision_actor": "user",
+      "decision": "all recommendations accepted",
+      "reason": "authority/preference-only",
+      "evidence": "audit.md Решения по противоречиям и неоднозначностям"
+    },
+    {
+      "gate": "audit",
+      "decision_actor": "orchestrator",
+      "decision": "accept",
+      "reason": "audit.md complete; all contradictions and authority ambiguities settled by user; source-resolvable A-5, A-10, A-14 settled from cited sources",
+      "evidence": "audit.md",
+      "artifact_revision": "audit.md 2026-10-12"
     }
   ],
   "task_routing": {},
@@ -63,7 +85,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-12T14:08:28.829Z",
+  "updated_at": "2026-10-12T14:48:10.318Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
