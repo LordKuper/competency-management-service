@@ -1,5 +1,10 @@
 import { EditOutlined, WarningOutlined } from "@ant-design/icons";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   Button,
   Flex,
@@ -18,15 +23,18 @@ import {
   ALL_ENTRIES,
   type CompetencyType,
   competenciesQuery,
+  competencyQuery,
   levelsQuery,
 } from "./catalogApi";
 import { MatrixBlocks } from "./MatrixBlocks";
+import { MatrixChanges } from "./MatrixChanges";
 import { MatrixErrorAlert } from "./MatrixErrorAlert";
 import { AddCompetencyModal, AddLevelModal } from "./MatrixPickers";
 import {
   invalidateMatrices,
   type Matrix,
   type MatrixContent,
+  type MatrixDiff,
   type MatrixVersion,
   matrixVersionQuery,
   saveMatrixContent,
@@ -34,8 +42,9 @@ import {
 import {
   addCompetency,
   addLevel,
-  type ChangedPlaces,
   cellKey,
+  changedPlaces,
+  NO_CHANGES,
   removeCompetency,
   removeLevel,
   requirementOf,
@@ -71,13 +80,14 @@ interface CompetencyInfo {
 
 interface MatrixEditorProps {
   matrix: Matrix;
-  /** The version as the cache holds it now. */
+  /** The version as the cache holds it now; a version without the edit action is shown read-only. */
   version: MatrixVersion;
-  changed: ChangedPlaces;
-  /** Called after a save, once the cache holds the saved version. */
-  onSaved: () => void;
-  /** Told whether the form holds edits that are not saved yet or are being saved, so the page holds back the transitions. */
-  onUnsavedChange: (isUnsaved: boolean) => void;
+  /** What the approver changed against the variant before; omitted when there is nothing to show. */
+  diff?: MatrixDiff;
+  /** Called after a save, once the cache holds the saved version; omitted for a read-only view. */
+  onSaved?: () => void;
+  /** Told whether the form holds edits that are not saved yet or are being saved, so the page holds back the transitions; omitted for a read-only view. */
+  onUnsavedChange?: (isUnsaved: boolean) => void;
 }
 
 /**
@@ -101,6 +111,26 @@ interface MatrixEditorBodyProps extends MatrixEditorProps {
   noteSaveFailure: (error: unknown) => void;
 }
 
+/**
+ * Names and kinds of the competencies the grid refers to: the version's entries, and for any other, such as one just
+ * added or one the approver removed, the catalogue entry read by its id.
+ */
+function useCompetencies(
+  entries: MatrixVersion["entries"],
+  ids: readonly string[],
+): Map<string, CompetencyInfo> {
+  const known = new Map<string, CompetencyInfo>(
+    entries.competencies.map((competency) => [competency.id, competency]),
+  );
+  const missing = [...new Set(ids)].filter((id) => !known.has(id));
+  const reads = useQueries({ queries: missing.map(competencyQuery) });
+  for (const read of reads) {
+    if (read.data && !known.has(read.data.id))
+      known.set(read.data.id, read.data);
+  }
+  return known;
+}
+
 function chipLevel(score: number) {
   return Math.min(Math.max(score, 0), MAX_CHIP_LEVEL);
 }
@@ -108,7 +138,7 @@ function chipLevel(score: number) {
 function MatrixEditorBody({
   version,
   base,
-  changed,
+  diff,
   noteSaveFailure,
   onSaved,
   onUnsavedChange,
@@ -119,11 +149,9 @@ function MatrixEditorBody({
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const shown = isEditable ? edited : version.content;
   const { entries } = version;
+  const changed = diff ? changedPlaces(diff.changes) : NO_CHANGES;
 
-  const catalogLevels = useQuery({
-    ...levelsQuery(entries.track.id),
-    enabled: isEditable,
-  });
+  const catalogLevels = useQuery(levelsQuery(entries.track.id));
   const catalogCompetencies = useQuery({
     ...competenciesQuery(ALL_ENTRIES),
     enabled: isEditable,
@@ -132,7 +160,7 @@ function MatrixEditorBody({
     mutationFn: () => saveMatrixContent(base, edited),
     onSuccess: (saved) => {
       queryClient.setQueryData(matrixVersionQuery(saved.id).queryKey, saved);
-      onSaved();
+      onSaved?.();
     },
     onError: noteSaveFailure,
     onSettled: () => invalidateMatrices(queryClient),
@@ -140,7 +168,7 @@ function MatrixEditorBody({
   const isUnsaved =
     isEditable &&
     (save.isPending || JSON.stringify(edited) !== JSON.stringify(base.content));
-  useEffect(() => onUnsavedChange(isUnsaved), [isUnsaved, onUnsavedChange]);
+  useEffect(() => onUnsavedChange?.(isUnsaved), [isUnsaved, onUnsavedChange]);
 
   const levelNames = new Map<string, string>([
     ...(catalogLevels.data?.items ?? []).map(
@@ -159,21 +187,9 @@ function MatrixEditorBody({
   const shownLevelIds = shown.levels
     .map((level) => level.levelId)
     .sort((left, right) => rank(left) - rank(right));
-  const competencies = new Map<string, CompetencyInfo>([
-    ...(catalogCompetencies.data?.items ?? []).map(
-      (competency) => [competency.id, competency] as const,
-    ),
-    ...entries.competencies.map(
-      (competency) =>
-        [
-          competency.id,
-          {
-            name: competency.name,
-            type: competency.type,
-            categoryName: competency.categoryName,
-          },
-        ] as const,
-    ),
+  const competencies = useCompetencies(entries, [
+    ...shown.competencies.map((item) => item.competencyId),
+    ...(diff?.before.competencies ?? []).map((item) => item.competencyId),
   ]);
   const blockOptions = shown.blocks.map((block) => ({
     value: block.id,
@@ -281,7 +297,19 @@ function MatrixEditorBody({
     }
     const competencyId = row.competencyId;
     const requirement = requirementOf(shown, levelId, competencyId);
-    if (!requirement && !isEditable) return NO_VALUE;
+    const changedMark = changed.requirementCells.has(
+      cellKey(levelId, competencyId),
+    ) && (
+      <EditOutlined role="img" aria-label={CHANGED_NOTE} title={CHANGED_NOTE} />
+    );
+    if (!requirement && !isEditable) {
+      return (
+        <>
+          {NO_VALUE}
+          {changedMark}
+        </>
+      );
+    }
     const score = requirement?.requiredScore;
     const label = entries.scale.points.find(
       (point) => point.score === score,
@@ -305,13 +333,7 @@ function MatrixEditorBody({
             {score}
           </span>
         )}
-        {changed.requirementCells.has(cellKey(levelId, competencyId)) && (
-          <EditOutlined
-            role="img"
-            aria-label={CHANGED_NOTE}
-            title={CHANGED_NOTE}
-          />
-        )}
+        {changedMark}
       </button>
     );
   }
@@ -382,6 +404,21 @@ function MatrixEditorBody({
         <MatrixErrorAlert
           title="Не удалось сохранить запись"
           error={save.error}
+        />
+      )}
+      {diff && (
+        <MatrixChanges
+          diff={diff}
+          levelNames={levelNames}
+          competencyNames={
+            new Map(
+              [...competencies].map(([id, competency]) => [
+                id,
+                competency.name,
+              ]),
+            )
+          }
+          scalePoints={entries.scale.points}
         />
       )}
       <ul className="matrix-legend">

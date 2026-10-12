@@ -141,6 +141,20 @@ export function competenciesQuery(params: CompetencyListParams) {
   });
 }
 
+/** One competency by its id, for the name and type of one that no list on the screen holds. */
+export function competencyQuery(id: string) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "competencies", "entry", id],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/competencies/{id}", {
+          params: { path: { id } },
+        }),
+      ),
+    retry: false,
+  });
+}
+
 export function competencyVersionsQuery(competencyId: string) {
   return queryOptions({
     queryKey: [...catalogQueryKey, "competency-versions", competencyId],

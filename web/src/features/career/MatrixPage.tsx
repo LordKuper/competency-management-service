@@ -36,7 +36,6 @@ import {
   returnMatrixVersion,
   transitMatrixVersion,
 } from "./matrixApi";
-import { changedPlaces, NO_CHANGES } from "./matrixContent";
 import {
   DECISION_TEXTS,
   STEP_TITLES,
@@ -227,9 +226,6 @@ export function MatrixPage() {
     ...matrixDiffQuery(versionId, lastVariant?.number ?? 0),
     enabled: lastVariant?.kind === "Approver",
   });
-  const changed = diffRead.data
-    ? changedPlaces(diffRead.data.changes)
-    : NO_CHANGES;
 
   const showVersion = (shown: MatrixVersion) => {
     queryClient.setQueryData(matrixVersionQuery(shown.id).queryKey, shown);
@@ -373,7 +369,7 @@ export function MatrixPage() {
         key={`${version.id}:${version.status}:${session}`}
         matrix={matrix}
         version={version}
-        changed={changed}
+        diff={diffRead.data}
         onSaved={() => setSession((previous) => previous + 1)}
         onUnsavedChange={setHasUnsaved}
       />
