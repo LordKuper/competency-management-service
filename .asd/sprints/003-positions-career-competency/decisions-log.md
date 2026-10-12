@@ -272,3 +272,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — impl-review wave-3/iter-05: порог medium (5 − 3); external пропущен по latch (APPROVE на iter-04)
 - 2026-10-12 — impl-review wave-3/iter-05: combined APPROVE, external APPROVE (latch iter-04) — волна 3 закрыта повторно после Task 22
 - 2026-10-12 — route impl-review wave-3/iter-05 suite: standard, dispatch HEAD e24c5d8; risk none via full suite
+- 2026-10-12 — impl-review terminal full-suite gate green (712169a, HEAD a16759c): backend 511/511, web 369/369, lint, build; green handoff адаптивно → design-promote (продолжение: UX-документы под Task 22)

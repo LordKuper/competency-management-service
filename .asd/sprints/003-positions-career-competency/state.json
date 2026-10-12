@@ -1,7 +1,7 @@
 {
   "sprint_id": "003-positions-career-competency",
   "branch": "sprint/003-positions-career-competency",
-  "phase": "impl-review",
+  "phase": "design-promote",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -200,6 +200,14 @@
       "reason": "Task 22 done (7fe1d74): row actions ≤2 visible + menu, empty-state texts, submenu background; web lint/build clean",
       "evidence": "decisions-log.md 2026-10-12 impl assessment Task 22",
       "artifact_revision": "HEAD 7fe1d74"
+    },
+    {
+      "gate": "impl-review green handoff",
+      "decision_actor": "orchestrator",
+      "decision": "advance to design-promote (resume)",
+      "reason": "wave 3 re-approved after Task 22 (combined iter-05, external iter-04); terminal full suite green (backend 511/511, web 369/369, lint, build); manual rows all pass; no open choices",
+      "evidence": "decisions-log.md 2026-10-12 terminal suite 712169a",
+      "artifact_revision": "HEAD 712169a"
     }
   ],
   "task_routing": {
