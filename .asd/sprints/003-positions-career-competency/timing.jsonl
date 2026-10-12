@@ -252,3 +252,4 @@
 {"op":"close","id":"Task 21","kind":"dispatch","parent":"impl#6","start":"2026-10-12T09:34:31.542Z","end":"2026-10-12T09:35:47.240Z","outcome":"interrupted","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"impl#6","kind":"phase","parent":null,"start":"2026-10-12T09:34:26.831Z","end":"2026-10-12T09:35:47.240Z","outcome":"interrupted","attrs":{}}
 {"op":"open","id":"impl-test#6","kind":"phase","parent":null,"start":"2026-10-12T09:35:47.309Z","attrs":{}}
+{"op":"close","id":"impl-test#6","kind":"phase","parent":null,"start":"2026-10-12T09:35:47.309Z","end":"2026-10-12T09:40:01.006Z","outcome":"done","attrs":{}}

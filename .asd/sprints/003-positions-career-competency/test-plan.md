@@ -15,7 +15,7 @@ responsibility:
 | 2 | 165dc5420ce614ad26d4e615a7919a68b85ce338 | delta since entry 1 |
 | 3 | 637c04f50dea52a8503f5a92524de8eb429ff850 | delta since entry 2 |
 | 4 | e10a343048d0504ad36453b6e7ac12c3c68b6f12 | delta since entry 3 |
-| 5 | c3cb9b3f998c73f137e08d0237caf18adbed8b23 | delta since entry 4 |
+| 5 | 6aa63a8db9b1b99e10c27a6f880763b5f08d5535 | delta since entry 4 |
 
 Строки повествования записи 1 — в `test-plan.entry-01.md`, записи 2 — в `test-plan.entry-02.md`, записи 3 — в `test-plan.entry-03.md`, записи 4 — в `test-plan.entry-04.md`.
 
@@ -111,3 +111,4 @@ result: pass — п.1 матрица с правками согласующег�
 result: pass — п.2 перетаскивание уровней, пользователь 2026-10-12
 result: pass — п.3 фильтр-дерево подразделений, пользователь 2026-10-12
 result: pass — п.4 фокус в окнах, пользователь 2026-10-12
+result: pass — п.5 фильтры-справочники с серверным поиском, пользователь 2026-10-12

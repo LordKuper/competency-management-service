@@ -233,3 +233,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — user decision (new or changed scope): AC-26 — пагинатор виден всегда во всех списках с постраничным выводом (и пустой список, и одна страница); вариант «Только видимость»: «Ждут моего согласования» и «Черновые записи» остаются целиком; Task 21, волна плана 17; floor_base=wave-3/1; latched волны 3 очищен
 - 2026-10-12 — route Task 21: standard, dispatch HEAD c3cb9b3; risk none via npm --prefix web test
 - 2026-10-12 — user decision (new or changed scope): AC-26 отозван до реализации — пагинатор в пустой таблице не показывается; Task 21 удалена из плана, незакоммиченные правки Task 21 откатены (диспатч остановлен); floor_base=wave-3/0 (поправка AC-26 не действует); возврат к impl-test entry 5, шаг 10 (смоук-проверка)
+- 2026-10-12 — impl-test entry 5 smoke check: Manual verification п.5 (AC-24, фильтры-справочники с серверным поиском) — pass, пользователь
+- 2026-10-12 — impl-test: impacted set green (полный набор по предохранителю: backend 509/509, web 343/343), 64/0 tests (entry 5)
