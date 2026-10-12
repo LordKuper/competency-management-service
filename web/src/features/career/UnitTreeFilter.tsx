@@ -20,7 +20,10 @@ function items(nodes: readonly UnitNode[]): TreeItem[] {
   }));
 }
 
-/** Filter dropdown with the unit hierarchy and a search box; choosing a unit applies the filter at once. */
+/**
+ * Filter dropdown with the unit hierarchy and a search box; choosing a unit applies the filter at once. The tree opens
+ * inside the dropdown, because a click in a popup outside it would close the dropdown.
+ */
 function UnitTreeFilter({
   selectedKeys,
   setSelectedKeys,
@@ -42,7 +45,6 @@ function UnitTreeFilter({
         value={selectedKeys[0] as string | undefined}
         style={{ width: token.controlHeight * FILTER_WIDTH_IN_CONTROLS }}
         popupMatchSelectWidth={false}
-        // The tree opens inside the filter dropdown: a click in a popup outside it would close the dropdown.
         getPopupContainer={(node) => node.parentElement ?? document.body}
         onChange={(value: string | undefined) => {
           setSelectedKeys(value ? [value] : []);

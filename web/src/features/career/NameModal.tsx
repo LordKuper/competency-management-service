@@ -21,7 +21,7 @@ interface NameModalProps {
   onClose: () => void;
 }
 
-/** Dialog that creates a direction, track or category, or renames one. */
+/** Dialog that creates a direction or a category, or renames one. */
 export function NameModal({
   segment,
   title,

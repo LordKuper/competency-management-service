@@ -109,6 +109,10 @@ interface CompetencyFormProps {
   onCancel: () => void;
 }
 
+/**
+ * Fields of a competency. The default scale arrives after the form opens, so a new competency gets it then, unless the
+ * user has chosen a scale first.
+ */
 function CompetencyForm({
   competency,
   onSubmit,
@@ -122,7 +126,6 @@ function CompetencyForm({
   });
   const defaultScaleId = defaultScale.data?.items[0]?.id;
 
-  // The scales arrive after the form opens; a new competency starts with the default one unless the user chose first.
   useEffect(() => {
     if (!competency && defaultScaleId && !form.getFieldValue("scaleId")) {
       form.setFieldValue("scaleId", defaultScaleId);
