@@ -35,7 +35,8 @@ interface TrackModalProps {
  * Dialog that creates or edits a track together with its levels. «Сохранить» saves the track first, then each level
  * added here, one after another, and then the order of the levels if it was changed. If a step fails, the steps before
  * it stay saved: the dialog stays open on the track as saved, keeps the order, lists as pending only the levels that are
- * left, and a second «Сохранить» retries the rest.
+ * left, and a second «Сохранить» retries the rest. The track is the newer of the one saved here and the form base, so
+ * after a stale-version refusal the reread track replaces the saved one and the next save sends its version.
  */
 export function TrackModal({
   directionId,
@@ -50,7 +51,7 @@ export function TrackModal({
   const [saved, setSaved] = useState<CareerTrack>();
   const [pending, setPending] = useState<PendingLevel[]>([]);
   const [order, setOrder] = useState<string[]>();
-  const current = saved ?? base;
+  const current = saved && saved.version > (base?.version ?? 0) ? saved : base;
   const levels = useQuery({
     ...levelsQuery(current?.id ?? ""),
     enabled: current !== undefined,
