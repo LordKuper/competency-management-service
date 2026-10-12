@@ -379,6 +379,12 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "impl-test entry 5": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],

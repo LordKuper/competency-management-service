@@ -228,3 +228,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — route review-fix wave-3/iter-01 tester: standard, dispatch HEAD 048a5ec; risk none via npm run lint, npm test
 - 2026-10-12 — review-fix wave-3/iter-01 tester chain (a533b84, память 5c26483): тесты приведены к намеренным изменениям; web lint чист, vitest 301/301
 - 2026-10-12 — impl fix for wave-3/iter-01: findings resolved — combined F1–F7, external F1–F9; gate: Release 0/0, web lint и build чисты
+- 2026-10-12 — route impl-test entry 5: critical, dispatch HEAD bd9e42d; risk change: public contract (аддитивные поля и параметры списков справочников, флаги прав)
