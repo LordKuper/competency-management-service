@@ -15,6 +15,9 @@ On a small UI amendment delta (a new shared row-actions component, `locale.empty
 - Verify theme token names in `web/node_modules/antd/es/<component>/style/index.d.ts`.
 - A shared component with one caller that separates a design-doc layout rule from rights logic and is tested on its own is
   keep-as-is, not "abstraction with no second use case".
+- Re-review of a test-move fix: diff the moved fixture against the target file's base helper (ids, version, pageSize behind
+  `If-Match` and routes) and Grep the moved helper names for local shadows in older tests. A shadow is low only, so it drops
+  under a medium floor; such a delta takes about 10 turns.
 
 **Why:** these were the only defects in such a delta; the rest was clean.
 **How to apply:** right after the diff read; see also [[frontend-wave-probes]].
