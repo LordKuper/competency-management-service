@@ -323,6 +323,13 @@ export async function deleteEntry(
   );
 }
 
+/** Reads a track as it stands now, as after a save refused for a stale version. */
+export async function readTrack(id: string) {
+  return unwrap(
+    await api.GET("/api/v1/career/tracks/{id}", { params: { path: { id } } }),
+  );
+}
+
 /** Puts the track's levels in the given order, the most junior first; the track takes a new version. */
 export async function orderLevels(
   track: { id: string; version: number },

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Form, Input, Select, Typography, theme } from "antd";
 import { useState } from "react";
-import { useEditBase } from "../../app/useEditBase";
+import { isStaleVersion, useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
 import { CatalogModal, FormActions } from "./CatalogModal";
@@ -10,6 +10,7 @@ import {
   invalidateCatalogs,
   levelsQuery,
   orderLevels,
+  readTrack,
   saveNamedEntry,
 } from "./catalogApi";
 import { createLevel } from "./LevelModal";
@@ -36,8 +37,8 @@ interface TrackModalProps {
  * added here, one after another, and then the order of the levels if it was changed. If a step fails, the steps before
  * it stay saved: the dialog stays open on the track as saved, keeps the order, lists as pending only the levels that are
  * left, and a second «Сохранить» retries the rest without creating the track again. The track is the one saved here when
- * the dialog created it, and otherwise the newer of the one saved here and the form base, so after a stale-version refusal
- * the reread track replaces the saved one and the next save sends its version.
+ * the dialog created it, read again after a stale-version refusal, and otherwise the newer of the one saved here and the
+ * form base, which moves to the reread track after such a refusal; either way the next save sends the reread version.
  */
 export function TrackModal({
   directionId,
@@ -66,32 +67,39 @@ export function TrackModal({
   const save = useMutation({
     mutationFn: async (values: TrackValues) => {
       let track = current;
-      if (!track || values.name !== track.name) {
-        track = (await saveNamedEntry(
-          "tracks",
-          { ...values, directionId },
-          track,
-        )) as CareerTrack;
-        setSaved(track);
-      }
-      const createdIds = new Map<string, string>();
-      let rest = pending;
-      for (const level of pending) {
-        const created = await createLevel(track.id, level.values);
-        createdIds.set(level.key, created.id);
-        rest = rest.slice(1);
-        setPending(rest);
-        setOrder((keys) =>
-          keys?.map((key) => (key === level.key ? created.id : key)),
-        );
-      }
-      if (order) {
-        setSaved(
-          await orderLevels(
+      try {
+        if (!track || values.name !== track.name) {
+          track = (await saveNamedEntry(
+            "tracks",
+            { ...values, directionId },
             track,
-            rows.map((row) => createdIds.get(row.key) ?? row.key),
-          ),
-        );
+          )) as CareerTrack;
+          setSaved(track);
+        }
+        const createdIds = new Map<string, string>();
+        let rest = pending;
+        for (const level of pending) {
+          const created = await createLevel(track.id, level.values);
+          createdIds.set(level.key, created.id);
+          rest = rest.slice(1);
+          setPending(rest);
+          setOrder((keys) =>
+            keys?.map((key) => (key === level.key ? created.id : key)),
+          );
+        }
+        if (order) {
+          setSaved(
+            await orderLevels(
+              track,
+              rows.map((row) => createdIds.get(row.key) ?? row.key),
+            ),
+          );
+        }
+      } catch (error) {
+        if (!latest && track && isStaleVersion(error)) {
+          await readTrack(track.id).then(setSaved, () => undefined);
+        }
+        throw error;
       }
     },
     onSuccess: onClose,
