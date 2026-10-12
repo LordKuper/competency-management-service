@@ -58,7 +58,7 @@ const KIND_ACCUSATIVE: Record<CatalogSegment, string> = {
 interface EntryActionsProps {
   segment: CatalogSegment;
   entry: CatalogEntry;
-  /** Unit of the track the entry is or belongs to; omitted for an entry that belongs to no unit. */
+  /** Unit of the track the entry is or belongs to, whose keepers manage its status; omitted for an entry that belongs to no unit. */
   unitId?: string;
   /** Opens the edit dialog; omitted for an entry that cannot be edited here. */
   onEdit?: () => void;
@@ -66,7 +66,10 @@ interface EntryActionsProps {
   children?: ReactNode;
 }
 
-/** The row actions of an entry the rights allow: edit, approve a draft, deactivate, return to work, and delete. */
+/**
+ * The row actions of an entry the rights allow: edit and delete as the server allows them for the entry, and approving a
+ * draft, deactivating and returning to work for the keepers of its unit.
+ */
 export function EntryActions({
   segment,
   entry,
@@ -89,7 +92,7 @@ export function EntryActions({
   return (
     <Space size={0} wrap>
       {children}
-      {onEdit && rights.canEdit(entry, unitId) && (
+      {onEdit && entry.canEdit && (
         <Button type="link" size="small" onClick={onEdit}>
           Изменить
         </Button>
@@ -125,7 +128,7 @@ export function EntryActions({
           Вернуть в работу
         </Button>
       )}
-      {rights.canEdit(entry, unitId) && (
+      {entry.canDelete && (
         <Button
           type="link"
           size="small"

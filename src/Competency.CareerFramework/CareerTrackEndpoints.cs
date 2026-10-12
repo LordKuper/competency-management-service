@@ -98,7 +98,7 @@ internal static class CareerTrackEndpoints
         await store.MoveLevelsAsync(ordered, cancellationToken);
         ifMatch.ApplyTo(context, track);
         context.Entry(track).Property(entry => entry.Version).IsModified = true;
-        return TypedResults.Ok(await CatalogEndpoints.CommitAsync(track, Kind, store, transaction, response, cancellationToken));
+        return TypedResults.Ok(await CatalogEndpoints.CommitAsync(track, Kind, viewer, store, transaction, response, cancellationToken));
     }
 
     /// <summary>
@@ -173,7 +173,7 @@ internal static class CareerTrackEndpoints
         }
 
         context.Add(track);
-        var created = await CatalogEndpoints.CommitAsync(track, Kind, store, transaction, response, cancellationToken);
+        var created = await CatalogEndpoints.CommitAsync(track, Kind, viewer, store, transaction, response, cancellationToken);
         return TypedResults.Created($"{Route}/{track.Id}", created);
     }
 }

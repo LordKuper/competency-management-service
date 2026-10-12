@@ -20,7 +20,7 @@ internal static class CareerLevelEndpoints
 
     internal static readonly CatalogKind<CareerLevel, CareerLevelResponse> Kind = new(
         "CareerLevel",
-        (level, _) => CareerLevelResponse.From(level),
+        (level, _, viewer) => CareerLevelResponse.From(level, viewer),
         level => other => other.TrackId == level.TrackId);
 
     public static void Map(IEndpointRouteBuilder endpoints)
@@ -107,7 +107,7 @@ internal static class CareerLevelEndpoints
 
         context.Add(level);
         await context.Entry(level).Reference(added => added.Track).LoadAsync(cancellationToken);
-        var created = await CatalogEndpoints.CommitAsync(level, Kind, store, transaction, response, cancellationToken);
+        var created = await CatalogEndpoints.CommitAsync(level, Kind, viewer, store, transaction, response, cancellationToken);
         return TypedResults.Created($"{Route}/{level.Id}", created);
     }
 }

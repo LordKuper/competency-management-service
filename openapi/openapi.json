@@ -10938,7 +10938,9 @@
           "trackId",
           "position",
           "status",
-          "version"
+          "version",
+          "canEdit",
+          "canDelete"
         ],
         "type": "object",
         "properties": {
@@ -10967,6 +10969,12 @@
           "version": {
             "type": "integer",
             "format": "int32"
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "canDelete": {
+            "type": "boolean"
           }
         }
       },
@@ -10994,7 +11002,9 @@
           "status",
           "ownerOrgUnitId",
           "ownerOrgUnitName",
-          "version"
+          "version",
+          "canEdit",
+          "canDelete"
         ],
         "type": "object",
         "properties": {
@@ -11022,6 +11032,12 @@
           "version": {
             "type": "integer",
             "format": "int32"
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "canDelete": {
+            "type": "boolean"
           }
         }
       },
@@ -11115,7 +11131,9 @@
           "id",
           "name",
           "status",
-          "version"
+          "version",
+          "canEdit",
+          "canDelete"
         ],
         "type": "object",
         "properties": {
@@ -11132,6 +11150,12 @@
           "version": {
             "type": "integer",
             "format": "int32"
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "canDelete": {
+            "type": "boolean"
           }
         }
       },
@@ -11222,7 +11246,9 @@
           "status",
           "createdAt",
           "versionNumber",
-          "version"
+          "version",
+          "canEdit",
+          "canDelete"
         ],
         "type": "object",
         "properties": {
@@ -11271,6 +11297,12 @@
           "version": {
             "type": "integer",
             "format": "int32"
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "canDelete": {
+            "type": "boolean"
           }
         }
       },
@@ -11299,7 +11331,9 @@
           "points",
           "isDefault",
           "status",
-          "version"
+          "version",
+          "canEdit",
+          "canDelete"
         ],
         "type": "object",
         "properties": {
@@ -11325,6 +11359,12 @@
           "version": {
             "type": "integer",
             "format": "int32"
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "canDelete": {
+            "type": "boolean"
           }
         }
       },

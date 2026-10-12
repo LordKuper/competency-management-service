@@ -165,7 +165,7 @@ internal static class CatalogEndpoints
             .ToPageAsync(query.Page, query.PageSize, cancellationToken);
 
         var unitNames = await store.UnitNamesAsync(page.Items.Select(entry => entry.UnitId), cancellationToken);
-        var items = page.Items.Select(entry => kind.Describe(entry, NameOf(entry.UnitId, unitNames))).ToList();
+        var items = page.Items.Select(entry => kind.Describe(entry, NameOf(entry.UnitId, unitNames), viewer)).ToList();
         return TypedResults.Ok(new PageResponse<TResponse>(items, page.Total, page.Page, page.PageSize));
     }
 
@@ -188,6 +188,7 @@ internal static class CatalogEndpoints
     public static async Task<TResponse> CommitAsync<TEntry, TResponse>(
         TEntry entry,
         CatalogKind<TEntry, TResponse> kind,
+        CatalogViewer viewer,
         CatalogStore store,
         IDbContextTransaction transaction,
         HttpResponse response,
@@ -195,12 +196,13 @@ internal static class CatalogEndpoints
         where TEntry : CatalogEntry
     {
         await store.SaveAsync(entry, transaction, cancellationToken);
-        return await DescribeAsync(entry, kind, store, response, cancellationToken);
+        return await DescribeAsync(entry, kind, viewer, store, response, cancellationToken);
     }
 
     private static async Task<TResponse> DescribeAsync<TEntry, TResponse>(
         TEntry entry,
         CatalogKind<TEntry, TResponse> kind,
+        CatalogViewer viewer,
         CatalogStore store,
         HttpResponse response,
         CancellationToken cancellationToken)
@@ -208,7 +210,7 @@ internal static class CatalogEndpoints
     {
         var unitNames = await store.UnitNamesAsync([entry.UnitId], cancellationToken);
         response.SetETag(entry.Version);
-        return kind.Describe(entry, NameOf(entry.UnitId, unitNames));
+        return kind.Describe(entry, NameOf(entry.UnitId, unitNames), viewer);
     }
 
     private static string? NameOf(Guid? unitId, IReadOnlyDictionary<Guid, string> unitNames) =>
@@ -232,7 +234,7 @@ internal static class CatalogEndpoints
         var entry = await store.FindVisibleAsync<TEntry>(id, viewer, cancellationToken);
         return entry is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok(await DescribeAsync(entry, kind, store, response, cancellationToken));
+            : TypedResults.Ok(await DescribeAsync(entry, kind, viewer, store, response, cancellationToken));
     }
 
     private static async Task<Results<Created<CatalogEntryResponse>, ValidationProblem, ProblemHttpResult>> CreateNamedAsync<TEntry>(
@@ -266,7 +268,7 @@ internal static class CatalogEndpoints
         }
 
         context.Add(entry);
-        var created = await CommitAsync(entry, kind, store, transaction, response, cancellationToken);
+        var created = await CommitAsync(entry, kind, viewer, store, transaction, response, cancellationToken);
         return TypedResults.Created($"{route}/{entry.Id}", created);
     }
 
@@ -306,7 +308,7 @@ internal static class CatalogEndpoints
             return taken;
         }
 
-        return TypedResults.Ok(await CommitAsync(entry, kind, store, transaction, response, cancellationToken));
+        return TypedResults.Ok(await CommitAsync(entry, kind, viewer, store, transaction, response, cancellationToken));
     }
 
     private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> DeleteAsync<TEntry>(
@@ -387,7 +389,7 @@ internal static class CatalogEndpoints
         }
 
         StageApproval(entry, context, audit);
-        return TypedResults.Ok(await CommitAsync(entry, kind, store, transaction, response, cancellationToken));
+        return TypedResults.Ok(await CommitAsync(entry, kind, viewer, store, transaction, response, cancellationToken));
     }
 
     private static async Task<ProblemHttpResult?> ApproveLevelsAsync(
@@ -473,6 +475,6 @@ internal static class CatalogEndpoints
             return levelTaken;
         }
 
-        return TypedResults.Ok(await CommitAsync(entry, kind, store, transaction, response, cancellationToken));
+        return TypedResults.Ok(await CommitAsync(entry, kind, viewer, store, transaction, response, cancellationToken));
     }
 }

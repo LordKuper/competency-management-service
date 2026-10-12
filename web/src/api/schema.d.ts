@@ -1488,6 +1488,8 @@ export interface components {
             status: components["schemas"]["CatalogStatus"];
             /** Format: int32 */
             version: number;
+            canEdit: boolean;
+            canDelete: boolean;
         };
         CareerPersonResponse: {
             /** Format: uuid */
@@ -1506,6 +1508,8 @@ export interface components {
             ownerOrgUnitName: string;
             /** Format: int32 */
             version: number;
+            canEdit: boolean;
+            canDelete: boolean;
         };
         CareerUnitResponse: {
             /** Format: uuid */
@@ -1537,6 +1541,8 @@ export interface components {
             status: components["schemas"]["CatalogStatus"];
             /** Format: int32 */
             version: number;
+            canEdit: boolean;
+            canDelete: boolean;
         };
         CatalogNameRequest: {
             name: string;
@@ -1577,6 +1583,8 @@ export interface components {
             versionNumber: number;
             /** Format: int32 */
             version: number;
+            canEdit: boolean;
+            canDelete: boolean;
         };
         CompetencyScaleRequest: {
             points: components["schemas"]["ScalePoint"][];
@@ -1591,6 +1599,8 @@ export interface components {
             status: components["schemas"]["CatalogStatus"];
             /** Format: int32 */
             version: number;
+            canEdit: boolean;
+            canDelete: boolean;
         };
         /** @enum {unknown} */
         CompetencyType: "Critical" | "Profile" | "Additional";

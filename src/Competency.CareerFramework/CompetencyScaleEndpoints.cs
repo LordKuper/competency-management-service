@@ -22,7 +22,7 @@ internal static class CompetencyScaleEndpoints
     private const string DefaultDeletionMessage = "Шкалу по умолчанию удалить нельзя";
     private const string InUseMessage = "Шкалу используют компетенции или матрицы — удалить нельзя";
 
-    internal static readonly CatalogKind<CompetencyScale, CompetencyScaleResponse> Kind = new("CompetencyScale", (scale, _) => CompetencyScaleResponse.From(scale));
+    internal static readonly CatalogKind<CompetencyScale, CompetencyScaleResponse> Kind = new("CompetencyScale", (scale, _, viewer) => CompetencyScaleResponse.From(scale, viewer));
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -113,7 +113,7 @@ internal static class CompetencyScaleEndpoints
         }
 
         context.Add(scale);
-        var created = await CatalogEndpoints.CommitAsync(scale, Kind, store, transaction, response, cancellationToken);
+        var created = await CatalogEndpoints.CommitAsync(scale, Kind, viewer, store, transaction, response, cancellationToken);
         return TypedResults.Created($"{Route}/{scale.Id}", created);
     }
 
@@ -160,7 +160,7 @@ internal static class CompetencyScaleEndpoints
             return taken;
         }
 
-        return TypedResults.Ok(await CatalogEndpoints.CommitAsync(scale, Kind, store, transaction, response, cancellationToken));
+        return TypedResults.Ok(await CatalogEndpoints.CommitAsync(scale, Kind, viewer, store, transaction, response, cancellationToken));
     }
 
     /// <summary>
@@ -200,6 +200,6 @@ internal static class CompetencyScaleEndpoints
 
         ifMatch.ApplyTo(context, scale);
         scale.IsDefault = true;
-        return TypedResults.Ok(await CatalogEndpoints.CommitAsync(scale, Kind, store, transaction, response, cancellationToken));
+        return TypedResults.Ok(await CatalogEndpoints.CommitAsync(scale, Kind, viewer, store, transaction, response, cancellationToken));
     }
 }

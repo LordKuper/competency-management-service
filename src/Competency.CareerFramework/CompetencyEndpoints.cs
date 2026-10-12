@@ -25,7 +25,7 @@ internal static class CompetencyEndpoints
 
     internal static readonly CatalogKind<CareerCompetency, CompetencyResponse> Kind = new(
         "Competency",
-        (competency, _) => CompetencyResponse.From(competency),
+        (competency, _, viewer) => CompetencyResponse.From(competency, viewer),
         competency => other => other.DirectionId == competency.DirectionId);
 
     public static void Map(IEndpointRouteBuilder endpoints)
@@ -137,7 +137,7 @@ internal static class CompetencyEndpoints
         }
 
         context.Add(competency);
-        var created = await CatalogEndpoints.CommitAsync(competency, Kind, store, transaction, response, cancellationToken);
+        var created = await CatalogEndpoints.CommitAsync(competency, Kind, viewer, store, transaction, response, cancellationToken);
         return TypedResults.Created($"{Route}/{competency.Id}", created);
     }
 
@@ -185,7 +185,7 @@ internal static class CompetencyEndpoints
             return taken;
         }
 
-        return TypedResults.Ok(await CatalogEndpoints.CommitAsync(competency, Kind, store, transaction, response, cancellationToken));
+        return TypedResults.Ok(await CatalogEndpoints.CommitAsync(competency, Kind, viewer, store, transaction, response, cancellationToken));
     }
 
     /// <summary>
