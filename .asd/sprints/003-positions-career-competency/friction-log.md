@@ -24,6 +24,7 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 | F-5 | impl-test | Строки Symptom дефектов содержат traceId и случайные имена — проверка stalemate по идентичности слепа | test-plan.md D-1…D-4 |
 | F-6 | impl | Review-fix: gate impl требует чистый typecheck тестов, а dev в fix mode тесты не трогает — снова понадобилась отдельная tester-цепочка вне находок | reviews/impl/wave-3/iter-01 |
 | F-7 | design-promote | UX при промоуте нашёл расхождения кода с DESIGN.md (действия строк > 2, пустые состояния, фон подменю), пропущенные impl-review по UI conformance | Task 22 |
+| F-8 | retro | Пробелы журнала времени с первого входа impl-test (close_without_open, outside_phase) | timing.jsonl |
 
 ## F-1 — Архитектор записал файл своей памяти, хотя payload аудита требовал только чтение
 
@@ -80,3 +81,11 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **What happened**: Три волны ревью одобрили веб-часть; UX при описании экранов нашёл до 5 видимых действий в строке, «Нет данных» в пустых таблицах и вероятный фон подменю antd по умолчанию.
 - **Impact**: Возврат в impl после закрытого ревью — ещё цикл impl → impl-test → impl-review.
 - **Refs**: Task 22
+
+## F-8 — Пробелы журнала времени с первого входа impl-test
+
+- **Phase**: retro
+- **Surface**: tool — `runtime.js timing` / `timing-summary` (`gaps`), реконструкция после остановки impl-test entry 1
+- **What happened**: `timing-summary` показывает `close_without_open: impl-test` и `outside_phase` для `impl-test entry 1` и `suite impl-test#2…#5`: после остановки по лимиту API операции первого входа закрывались и открывались вне фазовой операции.
+- **Impact**: Длительность impl-test первого входа в сводке искажена; на решения не влияет.
+- **Refs**: timing.jsonl
