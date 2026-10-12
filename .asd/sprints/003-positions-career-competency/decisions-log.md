@@ -264,3 +264,7 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — impl-review wave-3/iter-04: порог low (iteration 4 − A 3 по floor_base=wave-3/3), область — Task 22 и тесты записи 7
 - 2026-10-12 — impl-review wave-3/iter-04: combined CONCERNS (F1 low — JSDoc-пример aria-label в RowActions.tsx; F2 low — тесты справочников в RowActions.test.tsx), external APPROVE (latch); F1 не тестовая → review-fix (правило low test-only не срабатывает)
 - 2026-10-12 — route review-fix wave-3/iter-04: standard, dispatch HEAD 591dceb; risk none via npm --prefix web run lint; dev chain: combined F1; tester chain: combined F2
+- 2026-10-12 — review-fix wave-3/iter-04 dev chain: combined F1 resolved (2344490)
+- 2026-10-12 — review-fix wave-3/iter-04 tester chain: combined F2 resolved (542155f); vitest 369/369
+- 2026-10-12 — impl fix for wave-3/iter-04: findings resolved — combined F1, F2; gate: web lint и build чисты (backend не затронут)
+- 2026-10-12 — route impl-test entry 8: standard, dispatch HEAD 542155f; risk none via npm --prefix web test
