@@ -270,3 +270,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — route impl-test entry 8: standard, dispatch HEAD 542155f; risk none via npm --prefix web test
 - 2026-10-12 — impl-test: impacted set green (2 файла 27/27; полный web 369/369), 0/0 tests (entry 8)
 - 2026-10-12 — impl-review wave-3/iter-05: порог medium (5 − 3); external пропущен по latch (APPROVE на iter-04)
+- 2026-10-12 — impl-review wave-3/iter-05: combined APPROVE, external APPROVE (latch iter-04) — волна 3 закрыта повторно после Task 22
+- 2026-10-12 — route impl-review wave-3/iter-05 suite: standard, dispatch HEAD e24c5d8; risk none via full suite

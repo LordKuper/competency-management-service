@@ -478,6 +478,12 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "impl-review wave-3/iter-05 suite": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -550,6 +556,10 @@
             "iter-04": {
               "combined": "CONCERNS",
               "external": "APPROVE"
+            },
+            "iter-05": {
+              "combined": "APPROVE",
+              "external": "APPROVE"
             }
           },
           "iteration_heads": {
@@ -560,7 +570,8 @@
             "iter-05": "c89e30ab5df12827e8ffe2db82a1481f5f5fc413"
           },
           "latched": {
-            "external": 4
+            "external": 4,
+            "combined": 5
           }
         }
       ]
