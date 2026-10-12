@@ -11,3 +11,4 @@
 {"op":"close","id":"asd-architect audit#1","kind":"dispatch","parent":"audit#1","start":"2026-10-12T14:08:54.403Z","end":"2026-10-12T14:24:31.280Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
 {"op":"open","id":"wait audit contradictions","kind":"user-wait","parent":"audit#1","start":"2026-10-12T14:26:09.777Z","attrs":{"gate":"audit contradictions C-1..C-3"}}
 {"op":"close","id":"wait audit contradictions","kind":"user-wait","parent":"audit#1","start":"2026-10-12T14:26:09.777Z","end":"2026-10-12T14:47:34.897Z","outcome":"done","attrs":{"gate":"audit contradictions C-1..C-3"}}
+{"op":"close","id":"audit#1","kind":"phase","parent":null,"start":"2026-10-12T14:08:41.998Z","end":"2026-10-12T14:48:10.577Z","outcome":"done","attrs":{}}
