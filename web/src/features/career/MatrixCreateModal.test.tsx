@@ -72,7 +72,6 @@ function serve() {
       ]),
     ),
   );
-  // The server offers the tracks of the unit in `forOrgUnitId` and of the units above it.
   fakeApi.on("GET /api/v1/career/tracks", (request) => {
     const forUnit = new URL(request.url).searchParams.get("forOrgUnitId");
     const chain = new Set<string>();
