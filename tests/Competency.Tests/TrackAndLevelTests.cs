@@ -429,6 +429,34 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
         byStatus.Should().Equal(ofTeam.Id.ToString());
     }
 
+    [Fact]
+    public async Task Ac9_Tracks_AreListedAndReadEachWithTheNameOfItsOwnUnit()
+    {
+        var org = await fixture.OrgAsync();
+        var direction = await org.Admin.MakeDirectionAsync();
+        var ofTeam = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
+        var ofSibling = await org.Admin.MakeTrackAsync(org.Sibling.Id, direction.Id);
+        var ofRoot = await org.Admin.MakeTrackAsync(org.Root.Id, direction.Id);
+        var unitOf = new Dictionary<Guid, string>
+        {
+            [ofTeam.Id] = org.Team.Json!["name"]!.GetValue<string>(),
+            [ofSibling.Id] = org.Sibling.Json!["name"]!.GetValue<string>(),
+            [ofRoot.Id] = org.Root.Json!["name"]!.GetValue<string>(),
+        };
+
+        var listed = (await org.Admin.GetAsync($"/api/v1/career/tracks?directionId={direction.Id}&pageSize=200")).Expect(HttpStatusCode.OK);
+        var read = new Dictionary<Guid, string>();
+        foreach (var id in unitOf.Keys)
+        {
+            read[id] = (await org.Admin.GetAsync($"/api/v1/career/tracks/{id}")).Expect(HttpStatusCode.OK).Json!["ownerOrgUnitName"]!.GetValue<string>();
+        }
+
+        listed.Json!["items"]!.AsArray()
+            .ToDictionary(item => item!["id"]!.GetValue<Guid>(), item => item!["ownerOrgUnitName"]!.GetValue<string>())
+            .Should().BeEquivalentTo(unitOf, "each row of the list names the unit of its own track");
+        read.Should().BeEquivalentTo(unitOf, "a track read on its own names its unit the same");
+    }
+
     private static Task<ApiResponse> CreateTrackAsync(ApiClient client, Guid unitId, Guid directionId) =>
         client.PostAsync("/api/v1/career/tracks", new { name = Scenarios.Unique("Трек"), ownerOrgUnitId = unitId, directionId });
 

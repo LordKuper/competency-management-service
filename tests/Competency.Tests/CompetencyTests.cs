@@ -1,5 +1,7 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using AwesomeAssertions;
+using AwesomeAssertions.Execution;
 using Competency.Tests.Infrastructure;
 using Xunit;
 
@@ -183,6 +185,45 @@ public sealed class CompetencyTests(CareerHost fixture) : IClassFixture<CareerHo
     }
 
     [Fact]
+    public async Task Ac24_Competency_NamesItsCategoryItsDirectionAndItsScale_InTheListAndOnItsOwn_AndAfterAChange()
+    {
+        var org = await fixture.OrgAsync();
+        var category = await org.Admin.MakeCategoryAsync();
+        var otherCategory = await org.Admin.MakeCategoryAsync();
+        var draftCategory = (await org.TeamHead.Client.PostAsync("/api/v1/career/categories", new { name = Scenarios.Unique("Своя") })).Expect(HttpStatusCode.Created);
+        var direction = await org.Admin.MakeDirectionAsync();
+        var scale = await org.Admin.MakeScaleAsync();
+        var baseScale = (await org.Admin.GetAsync($"/api/v1/career/scales/{CareerScenarios.BaseScaleId}")).Expect(HttpStatusCode.OK);
+        var token = Scenarios.Unique("ф")[2..];
+        var full = await org.Admin.MakeCompetencyAsync(category.Id, $"Полная {token}", direction.Id, scaleId: scale.Id);
+        var sameNames = await org.Admin.MakeCompetencyAsync(category.Id, $"Те же названия {token}", direction.Id, scaleId: scale.Id);
+        var general = (await org.TeamHead.Client.PostAsync("/api/v1/career/competencies", Body($"Общая {token}", draftCategory.Id, null))).Expect(HttpStatusCode.Created);
+        var expected = new Dictionary<string, string>
+        {
+            [Name(full)] = Names(category, direction, scale),
+            [Name(sameNames)] = Names(category, direction, scale),
+            [Name(general)] = Names(draftCategory, null, baseScale),
+        };
+
+        var listed = (await org.Admin.GetAsync($"/api/v1/career/competencies?q={Uri.EscapeDataString(token)}&pageSize=200")).Expect(HttpStatusCode.OK);
+        var read = new Dictionary<string, string>();
+        foreach (var competency in new[] { full, sameNames, general })
+        {
+            read[Name(competency)] = NamesOf((await org.Admin.GetAsync($"/api/v1/career/competencies/{competency.Id}")).Expect(HttpStatusCode.OK).Json);
+        }
+
+        var moved = (await org.Admin.PutAsync($"/api/v1/career/competencies/{sameNames.Id}", Body(Name(sameNames), otherCategory.Id, null), sameNames.ETag)).Expect(HttpStatusCode.OK);
+        var none = (await org.Admin.GetAsync($"/api/v1/career/competencies?q={Uri.EscapeDataString(Scenarios.Unique("нет"))}&pageSize=200")).Expect(HttpStatusCode.OK);
+
+        using var scope = new AssertionScope();
+        listed.Json!["items"]!.AsArray().ToDictionary(item => item!["name"]!.GetValue<string>(), NamesOf).Should().BeEquivalentTo(expected, "the list names them on one page");
+        read.Should().BeEquivalentTo(expected, "a competency read on its own names them the same");
+        new[] { full, sameNames, general }.ToDictionary(Name, competency => NamesOf(competency.Json)).Should().BeEquivalentTo(expected, "the response to the creation names them");
+        NamesOf(moved.Json).Should().Be(Names(otherCategory, null, baseScale), "the response to a change names what the competency refers to now");
+        none.Json!["items"]!.AsArray().Should().BeEmpty("a page with no competency asks for no names");
+    }
+
+    [Fact]
     public async Task Ac23_Categories_StartWithTheGeneralOnes_ReadableByEveryone()
     {
         var org = await fixture.OrgAsync();
@@ -195,6 +236,16 @@ public sealed class CompetencyTests(CareerHost fixture) : IClassFixture<CareerHo
 
     private static object Body(string name, Guid categoryId, Guid? directionId, string? description = null, object? type = null, Guid? scaleId = null) =>
         new { name, description, categoryId, directionId, type = type ?? "Profile", scaleId };
+
+    private static string Name(ApiResponse entry) => entry.Json!["name"]!.GetValue<string>();
+
+    private static string Names(ApiResponse category, ApiResponse? direction, ApiResponse scale) =>
+        $"{Name(category)} | {(direction is null ? "none" : Name(direction))} | {Name(scale)}";
+
+    private static string NamesOf(JsonNode? competency) => string.Join(
+        " | ",
+        new[] { "categoryName", "directionName", "scaleName" }.Select(field =>
+            competency!.AsObject().TryGetPropertyValue(field, out var value) ? value?.GetValue<string>() ?? "none" : "missing"));
 
     private static async Task<string[]> IdsAsync(ApiClient client, string token, string query) =>
         (await client.GetAsync($"/api/v1/career/competencies?q={Uri.EscapeDataString(token)}&{query}&pageSize=200")).Expect(HttpStatusCode.OK).ItemIds();

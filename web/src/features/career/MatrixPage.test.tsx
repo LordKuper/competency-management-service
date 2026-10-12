@@ -764,6 +764,146 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     ]);
   });
 
+  function editorWithACompetency() {
+    const shown = draft();
+    const content = (minOverallPercent: number | null) => ({
+      levels: [{ levelId: "junior", minOverallPercent }],
+      blocks: [
+        { id: "core", name: "Основные", isMandatory: true },
+        { id: "extra", name: "Дополнительные", isMandatory: false },
+      ],
+      competencies: [{ competencyId: "design", blockId: "core" }],
+      blockWeights: [
+        { levelId: "junior", blockId: "core", percent: 100, minPercent: null },
+      ],
+      requirements: [
+        {
+          levelId: "junior",
+          competencyId: "design",
+          requiredScore: 2,
+          type: "Profile" as const,
+          weight: 1,
+          isMandatory: false,
+          expectedBehavior: null,
+          evidenceExamples: null,
+          validFrom: null,
+        },
+      ],
+    });
+    const opened = {
+      ...shown,
+      content: content(null),
+      entries: {
+        ...shown.entries,
+        competencies: [
+          {
+            id: "design",
+            name: "Проектирование",
+            description: null,
+            categoryId: "category",
+            categoryName: "Профессиональные",
+            directionId: null,
+            type: "Profile" as const,
+            versionNumber: 1,
+            status: "Active" as const,
+          },
+        ],
+      },
+    };
+    const saved = {
+      ...opened,
+      content: content(60),
+      version: VERSION_TAG + 1,
+    };
+    return { opened, saved };
+  }
+
+  it("locks every control of the editor while the content is being saved, so that nothing typed then is lost, and frees them once it is saved", async () => {
+    const held = deferred<Response>();
+    const { opened, saved } = editorWithACompetency();
+    serveEditor(opened);
+    fakeApi.on(CONTENT_ROUTE, () => held.promise);
+    const user = await openPage();
+    const threshold = await screen.findByRole("spinbutton", {
+      name: "Минимальный общий порог: Младший",
+    });
+    await user.type(threshold, "60");
+
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+    await waitFor(() => expect(threshold).toBeDisabled());
+    await user.type(threshold, "7");
+    const controls: [string, HTMLElement[]][] = [
+      ["percent field", screen.getAllByRole("spinbutton")],
+      [
+        "block name",
+        screen.getAllByRole("textbox", { name: "Название блока" }),
+      ],
+      [
+        "mandatory checkbox",
+        screen.getAllByRole("checkbox", { name: "Обязательный блок" }),
+      ],
+      [
+        "block choice",
+        screen.getAllByRole("combobox", { name: "Блок компетенций" }),
+      ],
+      [
+        "requirement cell",
+        [screen.getByRole("button", { name: "Проектирование, Младший" })],
+      ],
+      ["add block", [screen.getByRole("button", { name: /Добавить блок/ })]],
+      [
+        "add competency",
+        [screen.getByRole("button", { name: /Добавить компетенцию/ })],
+      ],
+      ["add level", [screen.getByRole("button", { name: /Добавить уровень/ })]],
+      ["save", [screen.getByRole("button", { name: /Сохранить/ })]],
+      ["delete", screen.getAllByRole("button", { name: /Удалить/ })],
+    ];
+    expect(
+      controls.flatMap(([kind, found]) =>
+        found
+          .filter((control) => !control.hasAttribute("disabled"))
+          .map(() => kind),
+      ),
+    ).toEqual([]);
+    expect(threshold).toHaveValue("60");
+    fakeApi.on(`GET /api/v1/career/matrix-versions/${VERSION_ID}`, () =>
+      Response.json(saved),
+    );
+    held.resolve(Response.json(saved));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Добавить блок/ }),
+      ).toBeEnabled(),
+    );
+    const freed = screen.getByRole("spinbutton", {
+      name: "Минимальный общий порог: Младший",
+    });
+    expect(freed).toBeEnabled();
+    expect(freed).toHaveValue("60");
+  });
+
+  it("frees the editor again, with what was typed still in it, when the save is refused", async () => {
+    serveEditor(editorWithACompetency().opened);
+    fakeApi.on(CONTENT_ROUTE, () => problem(500, { title: "Сбой" }));
+    const user = await openPage();
+    const threshold = await screen.findByRole("spinbutton", {
+      name: "Минимальный общий порог: Младший",
+    });
+    await user.type(threshold, "60");
+
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+    expect(
+      await screen.findByText("Не удалось сохранить запись"),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(threshold).toBeEnabled());
+    expect(threshold).toHaveValue("60");
+    expect(screen.getByRole("button", { name: /Сохранить/ })).toBeEnabled();
+  });
+
   it("offers no editing and no save for a version whose turn is not the user's", async () => {
     serve(version({ status: "OnReview", actions: [] }));
     await openPage();
@@ -1036,5 +1176,82 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe(
       `"${VERSION_TAG}"`,
     );
+  });
+});
+
+describe("the levels of a version in the order of the track (AC-11, AC-17)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
+  const level = (id: string, name: string, position: number) => ({
+    id,
+    name,
+    status: "Active" as const,
+    directionId: "direction",
+    trackId: "track",
+    position,
+    version: 1,
+    canEdit: false,
+    canDelete: false,
+  });
+
+  async function levelColumns(status: MatrixVersion["status"]) {
+    const shown = version({
+      status,
+      step: null,
+      actions: [],
+      content: {
+        levels: [
+          { levelId: "senior", minOverallPercent: null },
+          { levelId: "junior", minOverallPercent: null },
+        ],
+        blocks: [],
+        competencies: [],
+        blockWeights: [],
+        requirements: [],
+      },
+      entries: {
+        ...version().entries,
+        levels: [
+          { id: "junior", name: "Младший", status: "Active" },
+          { id: "senior", name: "Старший", status: "Active" },
+        ],
+      },
+    });
+    serve(shown, { published: true, inWork: false });
+    fakeApi.on("GET /api/v1/career/levels", () =>
+      Response.json({
+        items: [level("senior", "Старший", 1), level("junior", "Младший", 2)],
+        total: 2,
+        page: 1,
+        pageSize: 200,
+      }),
+    );
+    await openPage();
+    const grid = document.querySelector(".matrix-grid") as HTMLElement;
+    await waitFor(() =>
+      expect(within(grid).getAllByRole("columnheader")).toHaveLength(3),
+    );
+    return within(grid)
+      .getAllByRole("columnheader")
+      .map((header) => header.textContent);
+  }
+
+  it.each<[MatrixVersion["status"]]>([["Published"], ["Archived"]])(
+    "shows a %s version's levels in the order they had when it was published, although the track has been put in another order since",
+    async (status) => {
+      expect(await levelColumns(status)).toEqual([
+        "Компетенции",
+        "Младший",
+        "Старший",
+      ]);
+    },
+  );
+
+  it("shows a version that is not published yet in the order the track has now", async () => {
+    expect(await levelColumns("OnReview")).toEqual([
+      "Компетенции",
+      "Старший",
+      "Младший",
+    ]);
   });
 });

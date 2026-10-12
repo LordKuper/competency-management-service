@@ -15,6 +15,9 @@ const DIRECTION_ID = "direction";
 const SALES = "sales";
 const TRACK_ROUTE = "POST /api/v1/career/tracks";
 const LEVEL_ROUTE = "POST /api/v1/career/levels";
+const ORDER_ROUTE = "PUT /api/v1/career/tracks/created/level-order";
+/** The version the server gives a track it has just created: an entry is first saved as version 0. */
+const CREATED_VERSION = 0;
 
 const unit = (id: string, name: string, parentId: string | null) => ({
   id,
@@ -78,7 +81,7 @@ function serve(): Served {
   fakeApi.on(TRACK_ROUTE, async (request) => {
     const body = await request.json();
     served.steps.push(`track ${body.name} in ${body.ownerOrgUnitId}`);
-    return Response.json(track("created", body.name, 1));
+    return Response.json(track("created", body.name, CREATED_VERSION));
   });
   fakeApi.on(LEVEL_ROUTE, async (request) => {
     const body = await request.json();
@@ -91,14 +94,11 @@ function serve(): Served {
     served.levels.push(created);
     return Response.json(created);
   });
-  fakeApi.on(
-    "PUT /api/v1/career/tracks/created/level-order",
-    async (request) => {
-      const body = await request.json();
-      served.steps.push(`order ${body.levelIds.join(",")}`);
-      return Response.json(track("created", "Бэкенд", 2));
-    },
-  );
+  fakeApi.on(ORDER_ROUTE, async (request) => {
+    const body = await request.json();
+    served.steps.push(`order ${body.levelIds.join(",")}`);
+    return Response.json(track("created", "Бэкенд", 2));
+  });
   return served;
 }
 
@@ -197,11 +197,9 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
       "level Старший of created",
       "order level-2,level-1",
     ]);
-    expect(
-      fakeApi
-        .calls("PUT /api/v1/career/tracks/created/level-order")[0]
-        ?.headers.get("If-Match"),
-    ).toBe('"1"');
+    expect(fakeApi.calls(ORDER_ROUTE)[0]?.headers.get("If-Match")).toBe(
+      `"${CREATED_VERSION}"`,
+    );
   });
 
   it("does not send an order the user did not change", async () => {
@@ -273,6 +271,59 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
       "level Старший of created",
     ]);
     expect(fakeApi.calls(TRACK_ROUTE)).toHaveLength(1);
+  });
+
+  it("creates a new track once, and after the order is refused for a stale version reads the track again and sends the version it read", async () => {
+    const served = serve();
+    let refusals = 1;
+    fakeApi.on(ORDER_ROUTE, async (request) => {
+      const body = await request.json();
+      served.steps.push(`order ${body.levelIds.join(",")}`);
+      return refusals-- > 0
+        ? problem(412, { title: "Запись изменена" })
+        : Response.json(track("created", "Бэкенд", 8));
+    });
+    fakeApi.on("GET /api/v1/career/tracks/created", () =>
+      Response.json(track("created", "Бэкенд", 5)),
+    );
+    const onClose = vi.fn();
+    render(
+      <Providers>
+        <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+      </Providers>,
+    );
+    const user = userEvent.setup();
+    await fillNewTrack(user, "Бэкенд");
+    await addLevel(user, "Младший");
+    await addLevel(user, "Старший");
+    restoreLayout = stubRowLayout();
+    screen
+      .getByRole("button", { name: "Перетащить уровень «Старший»" })
+      .focus();
+    await user.keyboard(" ");
+    await user.keyboard("{ArrowUp}");
+    await user.keyboard(" ");
+    await screen.findByText("Уровень «Старший» перемещён на позицию 1 из 2");
+
+    await save(user);
+
+    expect(
+      await screen.findByText("Не удалось сохранить запись"),
+    ).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+    await save(user);
+
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(served.steps).toEqual([
+      `track Бэкенд in ${SALES}`,
+      "level Младший of created",
+      "level Старший of created",
+      "order level-2,level-1",
+      "order level-2,level-1",
+    ]);
+    expect(
+      fakeApi.calls(ORDER_ROUTE).map((call) => call.headers.get("If-Match")),
+    ).toEqual([`"${CREATED_VERSION}"`, '"5"']);
   });
 
   it("renames an existing track against the version it was opened with, and creates nothing else", async () => {
