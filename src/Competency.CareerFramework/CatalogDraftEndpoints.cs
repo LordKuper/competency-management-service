@@ -64,7 +64,8 @@ internal static class CatalogDraftEndpoints
                 draft.UnitId is { } unitId ? unitNames.GetValueOrDefault(unitId) : null,
                 draft.AuthorId,
                 draft.AuthorId is { } authorId ? authorNames.GetValueOrDefault(authorId) : null,
-                draft.CreatedAt))
+                draft.CreatedAt,
+                draft.Version))
             .ToList());
     }
 

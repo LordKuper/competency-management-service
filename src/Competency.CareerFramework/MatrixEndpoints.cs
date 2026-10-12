@@ -330,5 +330,5 @@ internal static class MatrixEndpoints
     }
 
     private static MatrixVersionRef? RefOf(MatrixVersion? version) =>
-        version is null ? null : new MatrixVersionRef(version.Id, version.Number, version.Status);
+        version is null ? null : new MatrixVersionRef(version.Id, version.Number, version.Status, version.Version);
 }

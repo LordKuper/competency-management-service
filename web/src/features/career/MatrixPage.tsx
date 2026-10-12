@@ -344,6 +344,11 @@ export function MatrixPage() {
         )}
         <MatrixDeleteButton
           matrix={matrix}
+          inWorkTag={
+            version.id === matrix.inWorkVersion?.id
+              ? version.version
+              : undefined
+          }
           onDeleted={() => void navigate("/career")}
         />
       </Flex>

@@ -11050,7 +11050,8 @@
           "ownerOrgUnitName",
           "authorId",
           "authorName",
-          "createdAt"
+          "createdAt",
+          "version"
         ],
         "type": "object",
         "properties": {
@@ -11093,6 +11094,10 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -12526,7 +12531,8 @@
         "required": [
           "id",
           "number",
-          "status"
+          "status",
+          "version"
         ],
         "type": "object",
         "properties": {
@@ -12540,6 +12546,10 @@
           },
           "status": {
             "$ref": "#/components/schemas/MatrixVersionStatus"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

@@ -259,16 +259,9 @@ export async function changeCatalogStatus(
   );
 }
 
-/** Approves a draft the drafts list names; the list carries no version, so the entry is read first. */
+/** Approves a draft the drafts list names, under the version the list showed. */
 export async function approveDraft(draft: CatalogDraft) {
-  const segment = SEGMENT_OF_KIND[draft.kind];
-  const current = unwrap(
-    await api.GET(
-      `/api/v1/career/${segment}/{id}` as "/api/v1/career/directions/{id}",
-      { params: { path: { id: draft.id } } },
-    ),
-  );
-  return changeCatalogStatus(segment, current, "approve");
+  return changeCatalogStatus(SEGMENT_OF_KIND[draft.kind], draft, "approve");
 }
 
 /** Values of a form that names an entry of a catalogue with nothing else to it. */

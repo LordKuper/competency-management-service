@@ -1525,6 +1525,8 @@ export interface components {
             authorName: null | string;
             /** Format: date-time */
             createdAt: string;
+            /** Format: int32 */
+            version: number;
         };
         /** @enum {unknown} */
         CatalogEntryKind: "Direction" | "Track" | "Category" | "Competency" | "Scale";
@@ -1902,6 +1904,8 @@ export interface components {
             /** Format: int32 */
             number: number;
             status: components["schemas"]["MatrixVersionStatus"];
+            /** Format: int32 */
+            version: number;
         };
         MatrixVersionResponse: {
             /** Format: uuid */
