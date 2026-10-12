@@ -364,9 +364,12 @@ describe("the competency table and its version history (AC-12, AC-24)", {
     name: `Проектирование ${id}`,
     description: "Описание",
     categoryId: "category",
+    categoryName: "Профессиональные",
     directionId,
+    directionName: directionId ? "Разработка" : null,
     type: "Critical",
     scaleId: "scale",
+    scaleName: "Базовая 0–4",
     createdAt: "2026-10-01T10:00:00Z",
     versionNumber: 2,
     version: 3,
@@ -410,7 +413,7 @@ describe("the competency table and its version history (AC-12, AC-24)", {
     );
   }
 
-  it("names the category, the direction and the scale of each row by reading each once, and calls a competency of no direction «Общая»", async () => {
+  it("names the category, the direction and the scale of each row from the list response without reading each, and calls a competency of no direction «Общая»", async () => {
     serveCompetencies();
     showTable(<CompetenciesTab />);
 
@@ -425,9 +428,13 @@ describe("the competency table and its version history (AC-12, AC-24)", {
     expect(within(first).getByText("Разработка")).toBeVisible();
     expect(within(first).getByText("Базовая 0–4")).toBeVisible();
     expect(within(second).getByText("Общая")).toBeVisible();
-    expect(
-      fakeApi.calls("GET /api/v1/career/categories/category"),
-    ).toHaveLength(1);
+    for (const route of [
+      "categories/category",
+      "directions/direction",
+      "scales/scale",
+    ]) {
+      expect(fakeApi.calls(`GET /api/v1/career/${route}`)).toHaveLength(0);
+    }
   });
 
   it("shows the fields of a saved version read-only, the newest first, and those of the one chosen in «Версия»", async () => {

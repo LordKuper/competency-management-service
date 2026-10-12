@@ -1006,7 +1006,7 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
       withGeneral: "true",
       inWork: "true",
       page: "1",
-      pageSize: "20",
+      pageSize: "21",
     });
   });
 
