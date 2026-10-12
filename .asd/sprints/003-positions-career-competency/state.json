@@ -1,7 +1,7 @@
 {
   "sprint_id": "003-positions-career-competency",
   "branch": "sprint/003-positions-career-competency",
-  "phase": "impl",
+  "phase": "impl-test",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -162,6 +162,13 @@
       "decision": "AC-26: pager always visible in every paged list (empty and single page); approvals, drafts and in-record tables unchanged; Task 21, plan wave 17",
       "reason": "user remark at the impl-test smoke check: no pager on an empty competencies list; option «Только видимость»",
       "evidence": "decisions-log.md 2026-10-12 AC-26; floor_base=wave-3/1"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-26 retired before implementation: no pager for an empty table; Task 21 removed from plan; uncommitted Task 21 edits reverted",
+      "reason": "user: «Для пустых таблиц не надо показывать пагинатор, откати.»",
+      "evidence": "decisions-log.md 2026-10-12 AC-26 retired; floor_base=wave-3/0"
     }
   ],
   "task_routing": {
@@ -391,12 +398,6 @@
       "execution": "agent",
       "tier": "critical",
       "reason": "risk:public contract",
-      "resolved_model": "sonnet"
-    },
-    "Task 21": {
-      "execution": "agent",
-      "tier": "standard",
-      "reason": "normal",
       "resolved_model": "sonnet"
     }
   },

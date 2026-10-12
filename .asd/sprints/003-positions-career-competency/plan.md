@@ -190,11 +190,6 @@ Material risk: change: public contract — поля уровня, порядок
 - [x] AC-11: `web/vite.config.ts` — порог предупреждения о размере бандла 1600 kB после `@dnd-kit` (добавлено оркестратором 2026-10-11)
 Tech reference: efcore-10.0.12, dotnet-ef-10.0.12, microsoft-aspnetcore-openapi-10.0.12, antd-6.6.5, @dnd-kit (новая справка — до диспатча Task 20).
 
-### Task 21: Пагинатор виден всегда
-Material risk: none via npm --prefix web test (тест пустого списка и одной страницы)
-- [ ] AC-26: таблицы с постраничным выводом — `PositionsPage`, `UserListPage`, `AuditPage`, `ScalesTab`, `CategoriesTab`, `DirectionsTracksTab` (направления и вложенные треки), `CompetenciesTab`, `MatricesTab` — показывают пагинатор и при пустом списке, и на одной странице (antd `Table` скрывает его при `total` 0); `ApprovalsSection`, `DraftsSection` и таблицы внутри записи не меняются
-Tech reference: antd-6.6.5.
-
 ## Тексты интерфейса
 
 Утверждаются вместе с планом (правило AC-20). `{…}` — подставляемое значение. Подписи, не перечисленные здесь, повторяют названия полей AC в `sprint.md` дословно.
@@ -263,7 +258,6 @@ Tech reference: antd-6.6.5.
 | 14 | Task 18 |
 | 15 | Task 19 |
 | 16 | Task 20 |
-| 17 | Task 21 |
 
 - Task 3 зависит от Task 2 (общие файлы `src/Competency.OrgStructure/`); Task 10 — от Task 2 (контракт 3.0.0).
 - Task 4 зависит от Task 3 (порты); Task 5 и Task 7 — от Task 4 (модуль, роли процесса); Task 7 — от Task 5 (записи справочников в версии).
