@@ -74,7 +74,10 @@ interface MatrixBlocksProps {
   onChange: (content: MatrixContent) => void;
 }
 
-/** The blocks of competencies with their coefficients and thresholds per level. */
+/**
+ * The blocks of competencies with their coefficients and thresholds per level. A control is disabled here only when it
+ * must be, and otherwise follows the disabled state around it, so the editor can lock them all while it saves.
+ */
 export function MatrixBlocks({
   content,
   levelIds,
@@ -185,7 +188,7 @@ export function MatrixBlocks({
       key: "isMandatory",
       render: (_, block) => (
         <Checkbox
-          disabled={!isEditable}
+          disabled={!isEditable || undefined}
           checked={block.isMandatory}
           onChange={(event) =>
             onChange(
@@ -213,7 +216,7 @@ export function MatrixBlocks({
               type="link"
               size="small"
               danger
-              disabled={isUsed}
+              disabled={isUsed || undefined}
               onClick={() => onChange(removeBlock(content, block.id))}
             >
               Удалить
