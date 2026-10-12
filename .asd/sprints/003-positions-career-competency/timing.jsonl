@@ -226,3 +226,10 @@
 {"op":"close","id":"combined wave-2/iter-02","kind":"dispatch","parent":"impl-review wave-2/iter-02","start":"2026-10-11T23:02:35.768Z","end":"2026-10-12T06:44:59.734Z","outcome":"done","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
 {"op":"close","id":"external wave-2/iter-02","kind":"external-review","parent":"impl-review wave-2/iter-02","start":"2026-10-11T23:02:35.840Z","end":"2026-10-12T06:48:05.996Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
 {"op":"close","id":"impl-review wave-2/iter-02","kind":"review-iteration","parent":"impl-review#3","start":"2026-10-11T23:02:35.694Z","end":"2026-10-12T06:48:05.996Z","outcome":"done","attrs":{"wave":"2","iteration":"2"}}
+{"op":"open","id":"impl-review wave-3/iter-01","kind":"review-iteration","parent":"impl-review#3","start":"2026-10-12T06:49:01.351Z","attrs":{"wave":"3","iteration":"1"}}
+{"op":"open","id":"combined wave-3/iter-01","kind":"dispatch","parent":"impl-review wave-3/iter-01","start":"2026-10-12T06:49:01.447Z","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
+{"op":"open","id":"external wave-3/iter-01","kind":"external-review","parent":"impl-review wave-3/iter-01","start":"2026-10-12T06:49:01.520Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"combined wave-3/iter-01","kind":"dispatch","parent":"impl-review wave-3/iter-01","start":"2026-10-12T06:49:01.447Z","end":"2026-10-12T06:59:01.770Z","outcome":"done","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
+{"op":"close","id":"external wave-3/iter-01","kind":"external-review","parent":"impl-review wave-3/iter-01","start":"2026-10-12T06:49:01.520Z","end":"2026-10-12T07:06:47.116Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"impl-review wave-3/iter-01","kind":"review-iteration","parent":"impl-review#3","start":"2026-10-12T06:49:01.351Z","end":"2026-10-12T07:09:17.460Z","outcome":"done","attrs":{"wave":"3","iteration":"1"}}
+{"op":"close","id":"impl-review#3","kind":"phase","parent":null,"start":"2026-10-11T23:02:33.989Z","end":"2026-10-12T07:09:17.460Z","outcome":"done","attrs":{}}

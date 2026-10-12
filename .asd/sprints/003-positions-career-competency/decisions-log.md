@@ -217,3 +217,7 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — route impl-test entry 4: critical, dispatch HEAD 79dc3ab; risk change: workflow state machine (возврат HR, полнота при согласовании, If-Match в Platform)
 - 2026-10-12 — impl-test: impacted set green (полный набор по предохранителю: backend 487/487, web 303/303), 14/0 tests (entry 4)
 - 2026-10-12 — stall: asd-reviewer-combined и asd-external-review wave-2/iter-02 (лимит API, отчётов нет); re-dispatched оба с теми же манифестами
+- 2026-10-12 — impl-review wave-3/iter-01: combined CONCERNS (F1–F7), external CONCERNS (F1–F9)
+- 2026-10-12 — user decision (combined F5): строки списков матриц и черновых записей получают `version` (аддитивно: `MatrixResponse.inWorkVersion`, `CatalogDraftResponse`); удаление матрицы и согласование черновика отправляют тег, который видел пользователь
+- 2026-10-12 — user decision (external F5): ограничение в 200 записей снимается — таблицы справочников карьерной модели с серверным постраничным выводом, выпадающие списки — с серверным поиском по вводу
+- 2026-10-12 — route impl review-fix: review_fixes_pending = wave-3/iter-01 (combined F1–F7, external F1–F9)
