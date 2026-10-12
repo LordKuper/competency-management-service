@@ -417,6 +417,12 @@
       "tier": "critical",
       "reason": "risk:public contract",
       "resolved_model": "sonnet"
+    },
+    "impl-review wave-3/iter-03 suite": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -481,6 +487,10 @@
             "iter-02": {
               "combined": "CONCERNS",
               "external": "FAIL"
+            },
+            "iter-03": {
+              "combined": "APPROVE",
+              "external": "APPROVE"
             }
           },
           "iteration_heads": {
@@ -488,7 +498,10 @@
             "iter-02": "4b8fc2776f4ee5b26ae56645fc32b77f7289d648",
             "iter-03": "877037fc00c2c7879db0cd59985544ba122cedb9"
           },
-          "latched": {}
+          "latched": {
+            "combined": 3,
+            "external": 3
+          }
         }
       ]
     }
