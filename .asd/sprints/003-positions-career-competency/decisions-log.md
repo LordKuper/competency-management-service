@@ -235,3 +235,7 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — user decision (new or changed scope): AC-26 отозван до реализации — пагинатор в пустой таблице не показывается; Task 21 удалена из плана, незакоммиченные правки Task 21 откатены (диспатч остановлен); floor_base=wave-3/0 (поправка AC-26 не действует); возврат к impl-test entry 5, шаг 10 (смоук-проверка)
 - 2026-10-12 — impl-test entry 5 smoke check: Manual verification п.5 (AC-24, фильтры-справочники с серверным поиском) — pass, пользователь
 - 2026-10-12 — impl-test: impacted set green (полный набор по предохранителю: backend 509/509, web 343/343), 64/0 tests (entry 5)
+- 2026-10-12 — impl-review wave-3/iter-02: combined CONCERNS (F1–F3), external FAIL (1–3)
+- 2026-10-12 — user decision (FAIL escalation): external 1–3 приняты к исправлению (блокировка правки на время сохранения матрицы; повторное сохранение нового трека без повторного создания; порядок уровней из снимка у опубликованной и архивной матрицы)
+- 2026-10-12 — user decision (combined F1): имена категории, направления и шкалы — аддитивно в `CompetencyResponse`, отдельные чтения имён в таблице компетенций убираются
+- 2026-10-12 — route impl review-fix: review_fixes_pending = wave-3/iter-02 (combined F1–F3, external 1–3)

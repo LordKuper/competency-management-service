@@ -257,3 +257,7 @@
 {"op":"open","id":"impl-review wave-3/iter-02","kind":"review-iteration","parent":"impl-review#4","start":"2026-10-12T09:40:18.080Z","attrs":{"wave":"3","iteration":"2"}}
 {"op":"open","id":"combined wave-3/iter-02","kind":"dispatch","parent":"impl-review wave-3/iter-02","start":"2026-10-12T09:40:18.145Z","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
 {"op":"open","id":"external wave-3/iter-02","kind":"external-review","parent":"impl-review wave-3/iter-02","start":"2026-10-12T09:40:18.217Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"combined wave-3/iter-02","kind":"dispatch","parent":"impl-review wave-3/iter-02","start":"2026-10-12T09:40:18.145Z","end":"2026-10-12T09:45:58.119Z","outcome":"done","attrs":{"agent":"asd-reviewer-combined","tier":"default","model":"opus"}}
+{"op":"close","id":"external wave-3/iter-02","kind":"external-review","parent":"impl-review wave-3/iter-02","start":"2026-10-12T09:40:18.217Z","end":"2026-10-12T09:55:58.489Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"impl-review wave-3/iter-02","kind":"review-iteration","parent":"impl-review#4","start":"2026-10-12T09:40:18.080Z","end":"2026-10-12T10:02:42.334Z","outcome":"done","attrs":{"wave":"3","iteration":"2"}}
+{"op":"close","id":"impl-review#4","kind":"phase","parent":null,"start":"2026-10-12T09:40:09.485Z","end":"2026-10-12T10:02:42.334Z","outcome":"done","attrs":{}}
