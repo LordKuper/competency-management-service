@@ -245,3 +245,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — review-fix wave-3/iter-02 tester chain (16d56cc, 0468a6c): combined F3 resolved; тесты приведены к намеренным изменениям; web lint чист, vitest 343/343
 - 2026-10-12 — impl fix for wave-3/iter-02: findings resolved — combined F1–F3, external 1–3; gate: сборка Release 0/0 (Debug заблокирована запущенным у пользователя API), web lint и build чисты
 - 2026-10-12 — route impl-test entry 6: critical, dispatch HEAD 0468a6c; risk change: public contract (имена в CompetencyResponse)
+- 2026-10-12 — impl-test: impacted set green (полный набор по предохранителю: backend 511/511 в Release — Debug заблокирован запущенным у пользователя API, web 354/354), 13/0 tests (entry 6); новых строк Manual verification нет
