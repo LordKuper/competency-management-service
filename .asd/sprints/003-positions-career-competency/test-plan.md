@@ -46,11 +46,10 @@ responsibility:
 
 ## Suite run
 
-- Command: impacted — `npx vitest run src/features/career/RowActions.test.tsx src/features/career/catalogueTables.test.tsx` (из `web/`); затем полный `vitest run` web (половина `test` из `commands.yaml`); бэкенд не запускался: дельта не содержит файлов `src`, `tests`, `openapi`
-- Scope: impacted (запись 8, до и после стратегии) + полный web
-- Result: pass — impacted: exit 0, 2 файла, 27/27; полный web: exit 0, 39 файлов, 369/369 (число не изменилось)
-- Lint / build: не запускались (изменён комментарий и перенос тестов; `2344490` и `542155f` проходили lint в review-fix)
-- HEAD: 2c474cb
+- Command: терминальный полный прогон (unscoped): `dotnet test --solution Competency.slnx`; `npm --prefix web test`; `npm --prefix web run lint`; `dotnet build Competency.slnx --tl:off`; `npm --prefix web run build`
+- Scope: full, Debug (откат на Release не понадобился)
+- Result: pass — backend test: exit 0, 511/511 (сбоев 0, пропущено 0); web test: exit 0, 39 файлов, 369/369; lint: exit 0 (biome 169 файлов, typecheck чист); dotnet build: exit 0, предупреждений 0, ошибок 0; web build: exit 0
+- HEAD: a16759c80753a7e54b3f1cf0f27a80f8d9835b97
 
 ## Defects
 
