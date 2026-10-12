@@ -56,12 +56,11 @@ responsibility:
 
 ## Suite run
 
-- Command: `dotnet test --solution Competency.slnx -c Release` и `npm --prefix web test` — две половины `test` из `commands.yaml`, запущенные раздельно; backend с `-c Release`, потому что API пользователя запущен (`Competency.Api.exe`) и держит выходные файлы Debug
-- Scope: full — предохранитель «Impacted test set» сработал: дельта затрагивает общий сгенерированный контракт (`openapi/openapi.json`, `web/src/api/schema.d.ts`), общий `CatalogKind.Describe` всех шести видов записей и общие модули веба (`useEditBase.ts`, `catalogApi.ts`, `CatalogSelect.tsx`)
-- Result: pass — backend: exit 0, итог 511, успешно 511, сбой 0, пропущено 0; web: exit 0, 38 файлов и 354 теста пройдены, 0 упавших. Первый запуск на `0696c25`: web exit 0, 38/354; backend exit 2, итог 511, сбой 1 — тестовый дефект этой записи: новый тест треков брал общее для класса дерево подразделений (`OrgAsync()`) и добавлял трек соседней команды, который считает прежний `Ac24_Tracks_AreFilteredByDirectionUnitAndStatus` (`Expected byUnit to be equal to {…}, but {…} contains 1 item(s) too many`); тест переведён на собственное дерево (`d92d1bf`), повторный запуск обеих половин на нём зелёный
-- Pre-strategy run: на HEAD `69f4f27`, до новых тестов, тот же запуск — backend exit 0, 509/509; web exit 0, 37 файлов, 343 теста
-- Lint / build: `npm --prefix web run lint` (biome и `tsc` по коду и тестам) — exit 0; `npm --prefix web run build` — exit 0; `npm --prefix web run check:api` — exit 0 (`openapi.json` и `schema.d.ts` совпадают); backend: `dotnet build Competency.slnx --tl:off -c Release` (Debug заблокирован API пользователя) — exit 0, 0 предупреждений, 0 ошибок
-- HEAD: d92d1bf44949d523a73105da2deb9fdabd38dea8 — запуск измеряет дерево этого HEAD (в нём коммиты тестов `0696c25` и `d92d1bf`); коммит с `test-plan.md` и `test-plan.entry-05.md` на результат не влияет
+- Command: `dotnet test --solution Competency.slnx` и `npm --prefix web test` — обе половины `test` из `commands.yaml`, без сужения; backend в Debug (блокировки выходных файлов не было, Release-повтор не понадобился)
+- Scope: full, терминальный запуск impl-review (wave-3/iter-03)
+- Result: pass — backend: exit 0, итог 511, успешно 511, сбой 0, пропущено 0; web: exit 0, 38 файлов и 354 теста пройдены, 0 упавших
+- Lint / build: `npm --prefix web run lint` (biome и `tsc`) — exit 0; `dotnet build Competency.slnx --tl:off` — exit 0, 0 предупреждений, 0 ошибок; `npm --prefix web run build` — exit 0
+- HEAD: f27887207b0e28ce6b97bc5e5ea419f40f3e11ad — запуск измеряет дерево этого HEAD; коммит с `test-plan.md` на результат не влияет
 
 ## Defects
 
