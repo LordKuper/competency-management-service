@@ -285,3 +285,7 @@
 {"op":"close","id":"external wave-3/iter-03","kind":"external-review","parent":"impl-review wave-3/iter-03","start":"2026-10-12T11:08:26.914Z","end":"2026-10-12T11:13:09.753Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
 {"op":"close","id":"impl-review wave-3/iter-03","kind":"review-iteration","parent":"impl-review#5","start":"2026-10-12T11:08:26.782Z","end":"2026-10-12T11:13:09.753Z","outcome":"done","attrs":{"wave":"3","iteration":"3"}}
 {"op":"open","id":"impl-review wave-3/iter-03 suite","kind":"dispatch","parent":"impl-review#5","start":"2026-10-12T11:13:09.948Z","attrs":{"agent":"asd-tester","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"suite impl-review#1","kind":"suite","parent":"impl-review wave-3/iter-03 suite","start":"2026-10-12T11:13:26.234Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-review#1","kind":"suite","parent":"impl-review wave-3/iter-03 suite","start":"2026-10-12T11:13:26.234Z","end":"2026-10-12T11:16:09.057Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-review wave-3/iter-03 suite","kind":"dispatch","parent":"impl-review#5","start":"2026-10-12T11:13:09.948Z","end":"2026-10-12T11:16:28.059Z","outcome":"done","attrs":{"agent":"asd-tester","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"impl-review#5","kind":"phase","parent":null,"start":"2026-10-12T11:08:13.931Z","end":"2026-10-12T11:16:28.059Z","outcome":"done","attrs":{}}

@@ -1,7 +1,7 @@
 {
   "sprint_id": "003-positions-career-competency",
   "branch": "sprint/003-positions-career-competency",
-  "phase": "impl-review",
+  "phase": "design-promote",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -169,6 +169,14 @@
       "decision": "AC-26 retired before implementation: no pager for an empty table; Task 21 removed from plan; uncommitted Task 21 edits reverted",
       "reason": "user: «Для пустых таблиц не надо показывать пагинатор, откати.»",
       "evidence": "decisions-log.md 2026-10-12 AC-26 retired; floor_base=wave-3/0"
+    },
+    {
+      "gate": "impl-review green handoff",
+      "decision_actor": "orchestrator",
+      "decision": "advance to design-promote",
+      "reason": "all 3 review waves approved by combined and external; terminal full suite green (backend 511/511, web 354/354, lint, build); no unresolved findings or flagged choices; manual verification rows all pass",
+      "evidence": "decisions-log.md 2026-10-12 terminal suite green; test-plan.md Suite run",
+      "artifact_revision": "HEAD a748d7c"
     }
   ],
   "task_routing": {
