@@ -10,9 +10,6 @@ export type OrgUnitHr = components["schemas"]["OrgUnitHrResponse"];
 /** The person behind an assignment, with the unit that holds it. */
 export type OrgUnitHrPerson = components["schemas"]["OrgUnitHrPersonResponse"];
 
-/** Units the signed-in user heads or is the responsible HR of. */
-export type ProcessRoles = components["schemas"]["ProcessRolesResponse"];
-
 /** Cache key prefix of every career query. */
 export const careerQueryKey = ["career"] as const;
 

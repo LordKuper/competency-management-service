@@ -39,5 +39,3 @@ export function useCatalogRights() {
     };
   }, [isAdmin, data]);
 }
-
-export type CatalogRights = ReturnType<typeof useCatalogRights>;

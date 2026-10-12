@@ -25,8 +25,6 @@ export async function createLevel(trackId: string, values: LevelValues) {
 }
 
 interface LevelModalProps {
-  /** Track of a level being created and saved at once; omitted when the level waits for its track to be saved. */
-  trackId?: string;
   /** Level being edited as the cache holds it now; omitted when one is created. */
   level?: CareerLevel;
   /** Values of a level that waits for its track; set with `onCollect`. */
@@ -36,9 +34,8 @@ interface LevelModalProps {
   onClose: () => void;
 }
 
-/** Dialog that creates a level of a track or renames one. */
+/** Dialog that takes the name of a level the track will save, or renames a saved level. */
 export function LevelModal({
-  trackId,
   level: latest,
   draft,
   onCollect,
@@ -52,10 +49,7 @@ export function LevelModal({
         onCollect(values);
         return;
       }
-      if (!level) {
-        if (trackId) await createLevel(trackId, values);
-        return;
-      }
+      if (!level) return;
       unwrap(
         await api.PUT("/api/v1/career/levels/{id}", {
           params: {
