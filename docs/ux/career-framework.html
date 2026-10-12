@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<!--
+responsibility:
+  owns: html shell wrap for all asd user-facing html docs
+  excludes: doc content, doc-specific structure
+  delegates_to: fragment templates (t_prd, t_adr, t_ux-spec, t_concept, t_stack, t_design-system, t_accessibility, t_retrospective)
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="ASD workflow">
+  <meta name="doc-type" content="UX-spec">
+  <meta name="subsystem" content="career-framework">
+  <meta name="sprint-id" content="">
+  <meta name="status" content="approved">
+  <meta name="updated" content="2026-10-12">
+  <meta name="responsibility" content="ux flows and ui mockups of career-framework: the career model section (scales, categories, directions and tracks with levels, competencies, matrices, approvals), the matrix page and its approval route">
+  <meta name="provenance" content="original">
+  <title>UX-спецификация — Карьерная модель (career-framework)</title>
+  <style>
+    :root {
+      --fg: #1a1c1e; --bg: #fff; --muted: #5b6770; --accent: #0066cc;
+      --code-bg: #f4f6f8; --border: #d0d7de; --max: 1040px;
+      --card-bg: #fafbfc;
+      --ok: #1a7f37; --warn: #b35900; --danger: #cf222e; --info: #0969da; --neutral: #5b6770;
+      --ok-tint: rgba(31,136,61,0.07); --danger-tint: rgba(207,34,46,0.06);
+      --chip-must-bg: #ffebe9; --chip-must-fg: #cf222e;
+      --chip-should-bg: #fff5e1; --chip-should-fg: #9a6700;
+      --chip-may-bg: #ddf4ff; --chip-may-fg: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e6e6e6; --bg: #0e1116; --muted: #9aa4ad; --code-bg: #161b22; --border: #30363d;
+        --card-bg: #161b22;
+        --accent: #58a6ff; --ok: #3fb950; --warn: #d29922; --danger: #f85149; --info: #79c0ff; --neutral: #8b949e;
+        --ok-tint: rgba(63,185,80,0.12); --danger-tint: rgba(248,81,73,0.10);
+        --chip-must-bg: #3b1416; --chip-must-fg: #ff7b72;
+        --chip-should-bg: #2d2410; --chip-should-fg: #e3b341;
+        --chip-may-bg: #0d2538; --chip-may-fg: #58a6ff;
+      }
+    }
+    html, body { margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100vh; }
+    .layout:has(> nav.toc) { grid-template-columns: 260px minmax(0, 1fr); }
+    nav.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 12px; border-right: 1px solid var(--border); font-size: 0.85rem; }
+    nav.toc .toc-title { font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
+    nav.toc ol { list-style: none; margin: 0; padding: 0; }
+    nav.toc li { margin: 2px 0; }
+    nav.toc a { color: var(--fg); text-decoration: none; display: block; padding: 3px 6px; border-radius: 4px; }
+    nav.toc a:hover { background: var(--code-bg); color: var(--accent); }
+    @media (max-width: 880px) { nav.toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } }
+    @media print { nav.toc { display: none; } }
+    .content { min-width: 0; }
+    header, main, footer { max-width: var(--max); margin: 0 auto; padding: 16px 24px; }
+    header { border-bottom: 1px solid var(--border); }
+    header h1 { margin: 4px 0 8px; font-size: 1.9rem; }
+    .badges span { display: inline-block; padding: 2px 8px; margin-right: 6px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--bg); }
+    .badges .provenance-reverse-engineered, .badges .provenance-migrated { color: var(--warn); border-color: var(--warn); }
+    .badges .status-draft       { color: var(--neutral); border-color: var(--neutral); }
+    .badges .status-in-review   { color: var(--warn);    border-color: var(--warn); }
+    .badges .status-approved    { color: var(--ok);      border-color: var(--ok); }
+    .badges .status-locked      { color: var(--info);    border-color: var(--info); }
+    .stats { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+    .stats .chip { display: inline-block; padding: 1px 8px; margin-right: 6px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); }
+    @media (max-width: 880px) {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+    }
+    h2, h3, h4 { line-height: 1.25; margin-top: 1.6em; }
+    h2 { border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    a { color: var(--accent); }
+    code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: var(--code-bg); padding: 12px; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--code-bg); position: sticky; top: 0; z-index: 1; }
+    tbody tr:nth-child(even) td { background: var(--card-bg); }
+    blockquote { border-left: 3px solid var(--accent); margin: 0; padding: 4px 14px; color: var(--muted); }
+    .mermaid { background: var(--bg); text-align: center; margin: 16px 0; }
+    footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+    /* fragment-shared utilities */
+    .lede { font-size: 1.08rem; color: var(--fg); }
+    section.hero { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+    section.callout { border-left: 4px solid var(--border); padding: 8px 14px; background: var(--card-bg); border-radius: 4px; }
+    section.callout.warn { border-left-color: var(--warn); }
+    section.callout.warn h2::before { content: "⊘ "; color: var(--warn); }
+
+    ol.goal-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    ol.goal-grid li { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; display: flex; gap: 10px; }
+    ol.goal-grid .num { flex: 0 0 auto; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    ol.goal-grid p { margin: 0; }
+
+    details.role-group { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; background: var(--card-bg); }
+    details.role-group > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+    details.role-group > summary .count { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+    details.role-group ul.stories { margin: 0; padding: 4px 16px 12px 28px; }
+    ul.stories li { margin: 4px 0; }
+    ul.stories b { color: var(--accent); font-weight: 600; }
+
+    table.ac-table td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .chip.area { background: var(--code-bg); color: var(--muted); }
+    .chip.prio-must   { background: var(--chip-must-bg);   color: var(--chip-must-fg); border-color: var(--chip-must-fg); }
+    .chip.prio-should { background: var(--chip-should-bg); color: var(--chip-should-fg); border-color: var(--chip-should-fg); }
+    .chip.prio-may    { background: var(--chip-may-bg);    color: var(--chip-may-fg); border-color: var(--chip-may-fg); }
+
+    ul.non-goals { margin: 0; padding-left: 22px; }
+    ul.non-goals li::marker { content: "⊘  "; color: var(--warn); }
+
+    /* definition-list pattern: Purpose / Entry / Exit / Notes */
+    dl.def-list { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0; }
+    dl.def-list dt { font-weight: 600; color: var(--muted); }
+    dl.def-list dd { margin: 0; }
+
+    /* ADR */
+    .adr { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    .adr > .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+    .adr h2 { margin-top: 0.4em; border-bottom: none; font-size: 1.3rem; }
+    .adr h3 { margin-top: 1.1em; border-bottom: none; font-size: 1.15rem; }
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .status-proposed   { color: var(--warn);    border-color: var(--warn); }
+    .status-accepted   { color: var(--ok);      border-color: var(--ok); }
+    .consequences { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .consequences .pros, .consequences .cons { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+    .consequences .pros { background: var(--ok-tint); border-left: 3px solid var(--ok); }
+    .consequences .cons { background: var(--danger-tint); border-left: 3px solid var(--danger); }
+    .consequences h4 { margin: 0 0 4px; font-size: 1rem; color: var(--muted); }
+    .consequences ul { margin: 0; padding-left: 20px; }
+    @media (max-width: 720px) { .consequences { grid-template-columns: 1fr; } }
+    ul.alt-list li { margin: 4px 0; }
+    ul.alt-list li strong { color: var(--fg); }
+
+    /* UX-spec mockup */
+    article.mockup { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    article.mockup > h3 { margin-top: 0; }
+    .mockup-preview { background: var(--bg); border: 1px dashed var(--border); border-radius: 6px; padding: 16px; margin: 10px 0; min-height: 80px; }
+    .screen-meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 6px 0 10px; font-size: 0.92rem; }
+    .screen-meta b { color: var(--muted); font-weight: 600; }
+
+    /* Concept */
+    .pillar-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .pillar-grid li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; }
+    .pillar-grid li strong { display: block; margin-bottom: 4px; color: var(--accent); }
+    .anti-pillar-grid li { border-left-color: var(--danger); }
+    .anti-pillar-grid li strong { color: var(--danger); }
+    ul.user-segments { list-style: none; padding: 0; }
+    ul.user-segments li { padding: 8px 12px; margin: 6px 0; border-left: 3px solid var(--accent); background: var(--card-bg); border-radius: 4px; }
+    ul.user-segments li b { color: var(--accent); }
+    ul.metrics li { margin: 4px 0; }
+    ul.metrics li .target { float: right; color: var(--ok); font-variant-numeric: tabular-nums; }
+
+    /* Stack */
+    table.tech-table .ver { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .principle-list { list-style: none; padding: 0; }
+    .principle-list li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    .principle-list li strong { color: var(--info); }
+
+    /* Accessibility */
+    section.a11y-domain { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; margin: 14px 0; }
+    section.a11y-domain h2 { border-bottom: 1px dashed var(--border); }
+    .limitation { background: var(--chip-should-bg); border-left: 3px solid var(--warn); padding: 8px 12px; margin: 6px 0; border-radius: 4px; }
+    .limitation b { color: var(--warn); }
+
+    /* Design system */
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .swatch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+    .swatch .chip-color { height: 80px; border-radius: 4px; border: 1px solid var(--border); }
+    .swatch code { font-size: 0.78rem; }
+    .swatch small { color: var(--muted); }
+    .spacing-scale { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); }
+    .spacing-scale > div { background: var(--accent); width: 24px; border-radius: 2px 2px 0 0; }
+    article.component-preview { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 14px 0; background: var(--card-bg); }
+    .preview { padding: 16px; border: 1px dashed var(--border); border-radius: 6px; background: var(--bg); }
+
+    @media print {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+      a { color: inherit; text-decoration: none; }
+      footer { page-break-before: always; }
+      details.role-group[open] > summary { list-style: none; }
+      details.role-group { break-inside: avoid; }
+      tr, li { break-inside: avoid; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true });</script>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Содержание</div>
+      <ol>
+        <li><a href="#flows">Сценарии</a></li>
+        <li><a href="#ui-mockups">Макеты</a></li>
+        <li><a href="#interaction-patterns">Паттерны взаимодействия</a></li>
+        <li><a href="#component-usage">Использование компонентов</a></li>
+      </ol>
+    </nav>
+    <div class="content">
+      <header>
+        <div class="badges">
+          <span>UX-spec</span>
+          <span>career-framework</span>
+          <span class="status-approved">approved</span>
+        </div>
+        <h1>UX-спецификация — Карьерная модель (career-framework)</h1>
+        <div class="stats">5 flows · 13 mockups · updated 2026-10-12</div>
+      </header>
+      <main>
+<!--
+responsibility:
+  owns: ux flows and ui mockups of career-framework (career model section, catalogue tables and dialogs, matrix page, approval route)
+  excludes: requirements, accessibility (project-wide), design-system components and tokens, new component proposals
+  delegates_to: docs/product/requirements/career-framework.html (requirements), accessibility.html (a11y), DESIGN.md (components and tokens), org-structure.html (HR and positions dialogs of the unit card)
+provenance: original
+-->
+
+<div class="ds">
+<style>
+.ds{--ds-primary:#2B42E5;--ds-primary-hover:#2338C2;--ds-primary-subtle:#EBF2FD;--ds-accent:#FBAE40;--ds-text-primary:#292929;--ds-text-secondary:#4B4B4C;--ds-text-muted:#5F6670;--ds-text-disabled:#A3A9B1;--ds-text-inverse:#FFFFFF;--ds-surface-page:#F5F6F8;--ds-surface-panel:#FFFFFF;--ds-surface-muted:#EEEEEE;--ds-surface-inverse:#081240;--ds-border-subtle:#DDE1E6;--ds-border-control:#7D8590;--ds-overlay-scrim:#08124073;--ds-success:#197A4A;--ds-success-bg:#E6F4EC;--ds-warning:#A85800;--ds-warning-bg:#FFF4DF;--ds-danger:#C62832;--ds-danger-bg:#FDECEC;--ds-info:#1B64C8;--ds-info-bg:#EBF2FD;--ds-rating-0:#EEEEEE;--ds-rating-1:#C7D0FB;--ds-rating-2:#9BA8F9;--ds-rating-3:#2B42E5;--ds-rating-4:#081240;--ds-xxs:4px;--ds-xs:8px;--ds-sm:12px;--ds-md:16px;--ds-lg:20px;--ds-xl:24px;--ds-xxl:32px;--ds-h-sm:24px;--ds-h-md:32px;--ds-h-lg:40px;--ds-matrix-row:48px;--ds-matrix-cell:72px;--ds-matrix-name:280px;--ds-r-xs:2px;--ds-r-md:4px;--ds-r-lg:8px;--ds-r-full:9999px;--ds-bw:1px;--ds-focus-w:2px;--ds-focus-off:2px;--ds-el-popup:0 4px 12px rgba(8,18,64,0.12);--ds-el-modal:0 8px 24px rgba(8,18,64,0.16);--ds-font-ui:'PT Sans','Segoe UI',Roboto,Arial,sans-serif;--ds-font-narrow:'PT Sans Narrow','Arial Narrow','Segoe UI',Arial,sans-serif;--ds-t-h1:700 30px/38px var(--ds-font-ui);--ds-t-h2:700 24px/32px var(--ds-font-ui);--ds-t-h3:700 20px/28px var(--ds-font-ui);--ds-t-h4:700 16px/24px var(--ds-font-ui);--ds-t-h5:700 14px/22px var(--ds-font-ui);--ds-t-body-md:400 14px/22px var(--ds-font-ui);--ds-t-body-strong:700 14px/22px var(--ds-font-ui);--ds-t-body-sm:400 12px/20px var(--ds-font-ui);--ds-t-data-col:700 14px/20px var(--ds-font-narrow);font:var(--ds-t-body-md);color:var(--ds-text-primary);}
+.ds .pg{background:var(--ds-surface-page);padding:var(--ds-xl);}
+.ds .row{display:flex;align-items:center;gap:var(--ds-xs);flex-wrap:wrap;}
+.ds .between{justify-content:space-between;}
+.ds .stack{display:grid;gap:var(--ds-md);}
+.ds .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(45%,1fr));gap:var(--ds-md);align-items:start;}
+.ds .h1{font:var(--ds-t-h1);margin:0 0 var(--ds-md);}
+.ds .h2{font:var(--ds-t-h2);margin:0 0 var(--ds-md);}
+.ds .h3{font:var(--ds-t-h3);margin:0 0 var(--ds-xs);}
+.ds .h4{font:var(--ds-t-h4);margin:0 0 var(--ds-xs);}
+.ds .h5{font:var(--ds-t-h5);margin:0 0 var(--ds-xs);}
+.ds .cap{font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);}
+.ds .muted{color:var(--ds-text-muted);}
+.ds .sec{color:var(--ds-text-secondary);}
+.ds .sm{font:var(--ds-t-body-sm);}
+.ds .strong{font:var(--ds-t-body-strong);}
+.ds .btn{display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);white-space:nowrap;}
+.ds .btn.pri{background:var(--ds-primary);border-color:var(--ds-primary);color:var(--ds-text-inverse);}
+.ds .btn.dng{background:var(--ds-danger);border-color:var(--ds-danger);color:var(--ds-text-inverse);}
+.ds .btn.off{background:var(--ds-surface-muted);border-color:var(--ds-border-subtle);color:var(--ds-text-disabled);}
+.ds .btn.foc,.ds .inp.foc{outline:var(--ds-focus-w) solid var(--ds-primary);outline-offset:var(--ds-focus-off);}
+.ds .lnk{display:inline-flex;align-items:center;min-height:var(--ds-h-sm);margin-right:var(--ds-sm);color:var(--ds-primary);white-space:nowrap;}
+.ds .lnk.dng{color:var(--ds-danger);}
+.ds .tag{display:inline-block;padding:0 var(--ds-xs);border-radius:var(--ds-r-xs);font:var(--ds-t-body-sm);background:var(--ds-surface-muted);color:var(--ds-text-secondary);white-space:nowrap;}
+.ds .tag.ok{background:var(--ds-success-bg);color:var(--ds-success);}
+.ds .tag.wn{background:var(--ds-warning-bg);color:var(--ds-warning);}
+.ds .tag.er{background:var(--ds-danger-bg);color:var(--ds-danger);}
+.ds .tag.in{background:var(--ds-info-bg);color:var(--ds-info);}
+.ds .card{background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-md);}
+.ds .tabs{display:flex;flex-wrap:wrap;border-bottom:var(--ds-bw) solid var(--ds-border-subtle);margin-bottom:var(--ds-md);}
+.ds .tab{display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-secondary);}
+.ds .tab.on{color:var(--ds-primary);font:var(--ds-t-body-strong);border-bottom:calc(var(--ds-bw) * 2) solid var(--ds-primary);}
+.ds table.t{border-collapse:collapse;width:100%;margin:0;background:var(--ds-surface-panel);}
+.ds table.t th{position:static;background:var(--ds-surface-muted);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);padding:var(--ds-sm) var(--ds-md);text-align:left;border:0;vertical-align:middle;}
+.ds table.t td{background:var(--ds-surface-panel);padding:var(--ds-sm) var(--ds-md);border:0;border-top:var(--ds-bw) solid var(--ds-border-subtle);vertical-align:middle;}
+.ds table.t.sm th,.ds table.t.sm td{padding:var(--ds-xs) var(--ds-sm);}
+.ds table.t td.nest{background:var(--ds-surface-page);padding:var(--ds-md);}
+.ds table.t td.sel{background:var(--ds-primary-subtle);}
+.ds .fi{margin-left:var(--ds-xs);color:var(--ds-text-muted);font-weight:400;}
+.ds .fi.on{color:var(--ds-primary);}
+.ds .pager{display:flex;justify-content:flex-end;align-items:center;gap:var(--ds-xs);padding:var(--ds-sm) 0;}
+.ds .pgi{display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-md);height:var(--ds-h-md);padding:0 var(--ds-xs);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-md);background:var(--ds-surface-panel);}
+.ds .pgi.on{border-color:var(--ds-primary);color:var(--ds-primary);font:var(--ds-t-body-strong);}
+.ds .scrim{background:var(--ds-overlay-scrim);padding:var(--ds-md);}
+.ds .modal{background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);}
+.ds .fld{margin-bottom:var(--ds-md);}
+.ds .lbl{font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);}
+.ds .inp{display:flex;align-items:center;justify-content:space-between;gap:var(--ds-xs);min-height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);background:var(--ds-surface-panel);}
+.ds .inp.on{border-color:var(--ds-primary);}
+.ds .inp.er{border-color:var(--ds-danger);}
+.ds .inp.off{background:var(--ds-surface-muted);border-color:var(--ds-border-subtle);color:var(--ds-text-disabled);}
+.ds .inp.area{align-items:flex-start;padding:var(--ds-xs) var(--ds-sm);}
+.ds .ph{color:var(--ds-text-muted);}
+.ds .help{font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);}
+.ds .ferr{font:var(--ds-t-body-sm);color:var(--ds-danger);margin-top:var(--ds-xxs);}
+.ds .alert{display:flex;gap:var(--ds-xs);align-items:flex-start;padding:var(--ds-sm);border-radius:var(--ds-r-md);margin-bottom:var(--ds-md);}
+.ds .alert.er{background:var(--ds-danger-bg);}
+.ds .alert.wn{background:var(--ds-warning-bg);}
+.ds .alert.in{background:var(--ds-info-bg);}
+.ds .alert.ok{background:var(--ds-success-bg);}
+.ds .alert .ic{flex:none;}
+.ds .alert.er .ic{color:var(--ds-danger);}
+.ds .alert.wn .ic{color:var(--ds-warning);}
+.ds .alert.in .ic{color:var(--ds-info);}
+.ds .alert.ok .ic{color:var(--ds-success);}
+.ds .pop{background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xs);}
+.ds .opt{display:flex;align-items:center;gap:var(--ds-xs);min-height:var(--ds-h-md);padding:0 var(--ds-sm);border-radius:var(--ds-r-md);}
+.ds .opt.sel{background:var(--ds-primary-subtle);font:var(--ds-t-body-strong);}
+.ds .opt.off{color:var(--ds-text-disabled);}
+.ds .div{border-top:var(--ds-bw) solid var(--ds-border-subtle);margin:var(--ds-xxs) 0;}
+.ds .chip{display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);background:var(--ds-rating-0);color:var(--ds-surface-inverse);}
+.ds .chip.r1{background:var(--ds-rating-1);}
+.ds .chip.r2{background:var(--ds-rating-2);}
+.ds .chip.r3{background:var(--ds-rating-3);color:var(--ds-text-inverse);}
+.ds .chip.r4{background:var(--ds-rating-4);color:var(--ds-text-inverse);}
+.ds .legend{display:flex;flex-wrap:wrap;gap:var(--ds-sm);list-style:none;margin:0 0 var(--ds-md);padding:0;}
+.ds .legend li{display:inline-flex;align-items:center;gap:var(--ds-xs);}
+.ds .scroll{overflow-x:auto;}
+.ds table.mx{border-collapse:collapse;margin:0;width:max-content;min-width:100%;background:var(--ds-surface-panel);}
+.ds table.mx th{position:static;background:var(--ds-surface-muted);color:var(--ds-text-primary);font:var(--ds-t-data-col);padding:var(--ds-xs);text-align:center;vertical-align:top;min-width:var(--ds-matrix-cell);border:0;}
+.ds table.mx th.n{text-align:left;width:var(--ds-matrix-name);min-width:var(--ds-matrix-name);max-width:var(--ds-matrix-name);padding:var(--ds-sm);}
+.ds table.mx td{background:var(--ds-surface-panel);border:0;border-top:var(--ds-bw) solid var(--ds-border-subtle);min-width:var(--ds-matrix-cell);height:var(--ds-matrix-row);padding:var(--ds-xs) var(--ds-sm);text-align:center;vertical-align:middle;}
+.ds table.mx td.n{text-align:left;width:var(--ds-matrix-name);min-width:var(--ds-matrix-name);max-width:var(--ds-matrix-name);padding:var(--ds-sm);vertical-align:top;}
+.ds table.mx td.chg{background:var(--ds-warning-bg);}
+.ds .stp{display:grid;gap:var(--ds-sm);}
+.ds .stp div{display:flex;gap:var(--ds-sm);align-items:flex-start;}
+.ds .dot{flex:none;display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-surface-muted);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);}
+.ds .dot.cur{background:var(--ds-primary);color:var(--ds-text-inverse);}
+.ds .dot.done{background:var(--ds-primary-subtle);color:var(--ds-primary);}
+.ds .hint{display:flex;gap:var(--ds-xs);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);}
+.ds .sk{height:var(--ds-h-md);background:var(--ds-surface-muted);border-radius:var(--ds-r-md);margin-bottom:var(--ds-xs);}
+.ds .empty{padding:var(--ds-xxl);text-align:center;color:var(--ds-text-secondary);}
+.ds ul.plain{margin:0;padding-left:var(--ds-xl);}
+</style>
+
+<section id="flows" class="hero">
+  <h2>Сценарии</h2>
+  <p class="lede">Раздел «Карьерная модель» — страница с шестью вкладками справочников и матриц и отдельная страница одной матрицы. Раздел виден всем вошедшим пользователям: действующие записи справочников и опубликованные версии матриц читают все. Что можно делать, зависит от роли процесса. Глобальный администратор и любой HR (ответственный HR хотя бы одного подразделения) ведут шкалы, категории, направления и компетенции, делают черновые записи действующими и деактивируют записи. Руководитель подразделения создаёт черновые записи и ведёт матрицы своего подразделения. Трек принадлежит подразделению: его ведут ответственный HR подразделения и администратор. Вкладка «На согласовании» видна руководителям, HR и администраторам. Кнопка или действие, на которое нет прав, не показываются; решение каждый раз принимает сервер и отвечает отказом на запрещённый запрос.</p>
+
+  <h3>Справочники: список, фильтры, правка, удаление</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Раздел Карьерная модель"] --> B["Вкладка: Шкалы, Категории, Направления и треки, Компетенции, Матрицы, На согласовании"]
+  B --> C["Таблица: страницы по 20, фильтры в заголовках столбцов, у компетенций ещё поиск по названию"]
+  C --> D["Фильтр столбца: выбрать одно значение; применяется сразу, список возвращается на страницу 1"]
+  C --> E["Кнопка Добавить ...: окно Новая ..."]
+  C --> F["Действия строки: Изменить, Согласовать, Деактивировать, Вернуть в работу, Удалить"]
+  E --> G{"Сохранение"}
+  F -- "Изменить" --> G
+  G -- "успех" --> H["Окно закрыто, таблицы перечитаны"]
+  G -- "ошибка поля" --> I["Сообщение под полем"]
+  G -- "конфликт или иная ошибка" --> J["Предупреждение над формой, окно остаётся открытым"]
+  F -- "Деактивировать, Вернуть в работу, Согласовать" --> K["Действие сразу; при отказе сообщение"]
+  F -- "Удалить" --> L["Подтверждение, фокус на Отмена"]
+  L -- "Удалить" --> M{"Ответ сервера"}
+  M -- "успех" --> H
+  M -- "409 есть ссылки" --> N["Окно отказа: перечень мешающих записей"]
+  </pre>
+
+  <h3>Трек с уровнями</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Добавить трек в строке направления или Изменить у трека"] --> B["Окно трека: подразделение при создании, название, блок Уровни"]
+  B --> C["Добавить уровень: окно Новый уровень, имя уровня"]
+  B --> D["Перетащить строку уровня за ручку, с клавиатуры тем же жестом"]
+  B --> E["Изменить сохранённый уровень: окно Изменение уровня, сохраняется сразу"]
+  C --> F["Новый уровень ждёт в списке, статуса нет"]
+  D --> G["Порядок запомнен в окне"]
+  F --> H["Сохранить: трек, затем новые уровни по очереди, затем порядок"]
+  G --> H
+  H -- "шаг не удался" --> I["Окно открыто; сделанное сохранено; ждут только оставшиеся уровни; повторное Сохранить доделывает"]
+  H -- "всё сохранено" --> J["Окно закрыто"]
+  </pre>
+
+  <h3>Матрица: версия, маршрут согласования</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Вкладка Матрицы: Создать матрицу (руководитель)"] --> B["Окно Новая матрица: подразделение, направление, трек, шкала"]
+  B --> C["Страница матрицы, версия 1: Черновик"]
+  C --> D["Автор правит таблицу и блоки, Сохранить"]
+  D --> E["Отправить на согласование (проверка полноты)"]
+  E -- "не полна" --> F["Список проблем над таблицей"]
+  E --> G["На согласовании: шаг Вышестоящий руководитель (нет такого руководителя: шаг пропущен)"]
+  G -- "Согласовать" --> H["Шаг HR (HR является автором: согласован автоматически)"]
+  H -- "Согласовать" --> I["Опубликована; прежняя опубликованная версия уходит в архив"]
+  G -- "Вернуть с правками + комментарий" --> J["Возвращена с правками"]
+  H -- "Вернуть с правками + комментарий" --> J
+  J -- "Принять и доработать" --> C
+  J -- "Откатить правки" --> C
+  I -- "Создать новую версию (руководитель)" --> C
+  J -- "Принять правки" --> K["Следующий шаг маршрута или публикация, без доработки"]
+  </pre>
+
+  <h3>Согласование: очередь и черновые записи</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Вкладка На согласовании"] --> B["Ждут моего согласования: версии матриц, где сейчас мой ход"]
+  A --> C["Черновые записи: записи справочников от руководителей, для HR и администратора"]
+  B -- "ссылка Матрица" --> D["Страница матрицы: Согласовать или Вернуть с правками"]
+  C -- "Согласовать" --> E["Запись становится действующей, строка исчезает"]
+  </pre>
+
+  <h3>Удаление и отказ</h3>
+  <pre class="mermaid">
+flowchart TD
+  A["Удалить в строке записи или на странице матрицы"] --> B["Подтверждение: Удалить вид Название; у трека ещё: Будут удалены и его уровни"]
+  B -- "Отмена, Escape" --> Z["Ничего не изменено"]
+  B -- "Удалить" --> C{"Ответ сервера"}
+  C -- "удалено" --> D["Таблицы перечитаны; со страницы матрицы возврат в раздел"]
+  C -- "409 с перечнем" --> E["Окно с заголовком отказа, список до 5 записей и строка и N других связанных записей"]
+  C -- "409 без перечня или иная ошибка" --> F["Сообщение с причиной"]
+  </pre>
+</section>
+
+<section id="ui-mockups">
+  <h2>Макеты</h2>
+  <p class="lede">Превью собраны только из токенов <a href="DESIGN.md">DESIGN.md</a>; значения токенов заданы один раз на корне блока (переменные <code>--ds-*</code>), как в <a href="design-system.html">design-system.html</a>. Данные на макетах — примеры. Цвет статуса всегда сопровождается словом, цвет уровня — цифрой.</p>
+
+  <article class="mockup">
+    <h3>Раздел «Карьерная модель»: вкладки и таблица справочника (на примере «Шкалы»)</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Просмотреть справочник, найти запись фильтром столбца, добавить, изменить, согласовать, деактивировать или удалить её.</dd>
+      <dt><b>Entry from</b></dt><dd>Пункт «Карьерная модель» шапки; возврат со страницы матрицы по ссылке «Карьерная модель».</dd>
+      <dt><b>Exit to</b></dt><dd>Окна записей; страница матрицы (вкладки «Матрицы» и «На согласовании»).</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="pg">
+        <div class="h1">Карьерная модель</div>
+        <div class="tabs"><span class="tab on">Шкалы</span><span class="tab">Категории</span><span class="tab">Направления и треки</span><span class="tab">Компетенции</span><span class="tab">Матрицы</span><span class="tab">На согласовании</span></div>
+        <div class="row" style="margin-bottom:var(--ds-md);"><span class="btn pri">Добавить шкалу</span></div>
+        <div class="scroll"><table class="t">
+          <thead><tr><th></th><th>Название</th><th>По умолчанию <span class="fi">▼</span></th><th>Статус <span class="fi on">▼</span></th><th>Действия</th></tr></thead>
+          <tbody>
+            <tr><td aria-hidden="true">▾</td><td>Базовая шкала 0–4</td><td><span class="tag in">По умолчанию</span></td><td><span class="tag ok">Действует</span></td><td><span class="lnk">Изменить</span></td></tr>
+            <tr><td colspan="5" class="nest">
+              <table class="t sm"><thead><tr><th>Балл</th><th>Значение</th></tr></thead><tbody>
+                <tr><td>0</td><td>Не подтверждена</td></tr>
+                <tr><td>1</td><td>Работает с поддержкой</td></tr>
+                <tr><td>2</td><td>Самостоятельно на типовых задачах</td></tr>
+              </tbody></table>
+            </td></tr>
+            <tr><td aria-hidden="true">▸</td><td>Шкала 0–3</td><td></td><td><span class="tag ok">Действует</span></td><td><span class="lnk">Сделать по умолчанию</span><span class="lnk">Изменить</span><span class="lnk dng">Деактивировать</span><span class="lnk dng">Удалить</span></td></tr>
+            <tr><td aria-hidden="true">▸</td><td>Расширенная шкала 0–5</td><td></td><td><span class="tag wn">Черновик</span></td><td><span class="lnk">Изменить</span><span class="lnk">Согласовать</span><span class="lnk dng">Деактивировать</span><span class="lnk dng">Удалить</span></td></tr>
+            <tr><td aria-hidden="true">▸</td><td>Шкала 1–3 (прежняя)</td><td></td><td><span class="tag">Неактивна</span></td><td><span class="lnk">Вернуть в работу</span><span class="lnk dng">Удалить</span></td></tr>
+          </tbody>
+        </table></div>
+        <div class="pager"><span class="pgi" aria-hidden="true">‹</span><span class="pgi on">1</span><span class="pgi" aria-hidden="true">›</span><span class="pgi">20 / стр.</span></div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Вкладки идут в порядке создания записей</b>: «Шкалы», «Категории», «Направления и треки», «Компетенции», «Матрицы», «На согласовании». Заголовок «Карьерная модель» — единственный <code>heading-1</code> страницы; текущая вкладка отмечена цветом <code>primary</code>, жирным начертанием и линией (<code>tab-active</code>). «На согласовании» видна только руководителям и HR подразделений и администраторам.</li>
+      <li><b>Одинаковая таблица на всех вкладках</b>: название, нужные столбцы, «Статус», «Действия». Строка раскрывается шевроном: у шкалы — её баллы, у направления — его треки, у трека — его уровни. Таблица прокручивается по горизонтали, а не сжимает столбцы. Выбор страницы и её размер (по умолчанию 20 записей) работают на сервере; пока данные грузятся, прежние остаются на месте под индикатором.</li>
+      <li><b>Статус записи сказан словом</b>: «Черновик» (<code>tag-warning</code>), «Действует» (<code>tag-success</code>), «Неактивна» (<code>tag-neutral</code>). «По умолчанию» у шкалы — <code>tag-info</code>.</li>
+      <li><b>Действия строки зависят от прав и состояния</b>: «Изменить» — если сервер разрешил правку записи; «Согласовать» — для черновика тем, кто ведёт запись (администратор, HR); «Деактивировать» (красная) и «Вернуть в работу» выполняются сразу, без подтверждения, потому что обратимы; «Удалить» (красная) есть только там, где сервер разрешил удаление, и всегда требует подтверждения. «Сделать по умолчанию» — только HR и администратору, только для действующей шкалы, не отмеченной по умолчанию; признак «По умолчанию» всегда у одной шкалы, отметка другой снимает прежнюю. Недоступное действие не показывается, а не блокируется.</li>
+      <li>Кнопка «Добавить …» — главное действие вкладки (<code>button-primary</code>); показана тем, кто может создавать записи, и руководителям (их записи станут черновыми). На вкладке «Направления и треки» «Добавить трек» в строке направления вторична (<code>button-default</code>), чтобы на странице оставалась одна главная кнопка.</li>
+      <li><b>Пустая таблица</b> — без пагинатора, с текстом вкладки («Категорий пока нет» и подобные; у шкал и вложенной таблицы треков — стандартное «Нет данных»); ошибка загрузки — предупреждение «Не удалось загрузить шкалы» с причиной и «Повторить» (см. макет «Состояния»).</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Фильтры столбцов</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Сузить список по значению столбца на сервере, по всем страницам.</dd>
+      <dt><b>Entry from</b></dt><dd>Значок фильтра <span aria-hidden="true">▼</span> в заголовке столбца; значок окрашен <code>primary</code>, пока фильтр включён.</dd>
+      <dt><b>Exit to</b></dt><dd>Та же таблица, страница 1.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="pg"><div class="cols">
+        <div>
+          <div class="cap">Список значений: «Статус»</div>
+          <div class="pop">
+            <div class="opt">○ Черновик</div>
+            <div class="opt sel">● Действует</div>
+            <div class="opt">○ Неактивна</div>
+            <div class="div"></div>
+            <div class="row between" style="padding:var(--ds-xs);"><span class="lnk" style="margin:0;">Сбросить</span><span class="btn pri">OK</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="cap">Запись справочника с поиском: «Категория»</div>
+          <div class="pop">
+            <div class="inp on foc"><span>Анал</span><span aria-hidden="true">⊗</span></div>
+            <div class="opt sel" style="margin-top:var(--ds-xs);">Аналитика</div>
+            <div class="opt">Аналитика данных</div>
+            <div class="help" style="padding:0 var(--ds-sm);">Показаны первые 20 совпадений, поиск идёт на сервере</div>
+          </div>
+        </div>
+        <div>
+          <div class="cap">Дерево подразделений с поиском: «Подразделение»</div>
+          <div class="pop">
+            <div class="inp on foc"><span class="ph">Поиск по дереву</span><span aria-hidden="true">⊗ ▾</span></div>
+            <div style="margin-top:var(--ds-xs);">
+              <div class="opt">▾ Генеральная дирекция</div>
+              <div class="opt sel" style="padding-left:var(--ds-xl);">▾ Департамент разработки</div>
+              <div class="opt" style="padding-left:var(--ds-xxl);">Группа тестирования</div>
+              <div class="opt" style="padding-left:var(--ds-xl);">▾ Департамент продаж</div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Фильтры стоят в заголовках столбцов</b> (<code>dropdown-item</code>, <code>input</code>, <code>button-primary</code>): отдельных блоков фильтров над таблицей нет. Исключение — поиск по названию, он остался над таблицей у компетенций и должностей.</li>
+      <li><b>Одно значение за раз.</b> Список значений (статус, «По умолчанию», тип, шаг маршрута) применяется кнопкой «OK», «Сбросить» снимает фильтр; подписи кнопок — стандартные подписи локали antd. Фильтры по записи справочника (категория, направление, шкала, трек) и по подразделению применяются сразу при выборе, очистка поля («⊗») снимает фильтр. Любое изменение фильтра возвращает список на страницу 1.</li>
+      <li><b>Список выбора внутри выпадающего окна.</b> Поле и его список открываются внутри окна фильтра: щелчок во всплывающем списке снаружи закрыл бы окно. Ширина поля — 11 высот <code>control-height-md</code>. Фильтры по записям ищут на сервере по набранному тексту; выбранная запись остаётся в списке даже если поиск её не вернул.</li>
+      <li><b>Подразделения показаны деревом</b> в порядке иерархии, с поиском по названию (одинаковые названия различимы по месту в дереве); дерево раскрыто целиком. Фильтр точный: выбранное подразделение, без дочерних.</li>
+      <li>Состояние фильтра хранится в параметрах запроса, поэтому значок отражает то, что запросил сервер. Список «Должности» открывается с включённым фильтром «Активна».</li>
+    </ul>
+    <table>
+      <thead><tr><th>Таблица</th><th>Фильтры столбцов</th></tr></thead>
+      <tbody>
+        <tr><td>Должности</td><td>«Статус»</td></tr>
+        <tr><td>Шкалы</td><td>«По умолчанию», «Статус»</td></tr>
+        <tr><td>Категории, направления</td><td>«Статус»</td></tr>
+        <tr><td>Треки (в строке направления)</td><td>«Владелец» (подразделение, дерево), «Статус»</td></tr>
+        <tr><td>Компетенции</td><td>«Категория», «Направление», «Шкала» (запись с поиском), «Тип», «Статус» (список)</td></tr>
+        <tr><td>Матрицы</td><td>«Подразделение» (дерево), «Направление», «Трек» (запись с поиском)</td></tr>
+        <tr><td>Ждут моего согласования</td><td>«Подразделение» (дерево), «Шаг» (список)</td></tr>
+        <tr><td>Черновые записи</td><td>«Тип» (список), «Подразделение» (дерево)</td></tr>
+        <tr><td>Уровни трека</td><td>нет: таблица короткая, читается целиком</td></tr>
+      </tbody>
+    </table>
+  </article>
+
+  <article class="mockup">
+    <h3>Окна справочников: шкала с баллами, название записи</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Создать или изменить запись справочника; для шкалы — вместе с её баллами и значениями.</dd>
+      <dt><b>Entry from</b></dt><dd>Кнопки «Добавить …» и действие «Изменить» в строке.</dd>
+      <dt><b>Exit to</b></dt><dd>Таблица вкладки: окно закрывается при успехе, таблицы перечитываются.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="cols">
+        <div class="scrim"><div class="modal">
+          <div class="h2">Новая шкала</div>
+          <div class="fld"><div class="lbl">Название</div><div class="inp on foc"></div></div>
+          <div class="row" style="align-items:flex-start;flex-wrap:nowrap;">
+            <div class="fld" style="width:calc(var(--ds-h-md) * 3);flex:none;"><div class="lbl">Балл</div><div class="inp"><span>0</span></div></div>
+            <div class="fld" style="flex:1;"><div class="lbl">Значение</div><div class="inp area" style="min-height:var(--ds-h-md);"><span>Не подтверждена</span></div></div>
+            <div class="fld"><div class="lbl">&nbsp;</div><span class="btn">Удалить</span></div>
+          </div>
+          <div class="row" style="align-items:flex-start;flex-wrap:nowrap;">
+            <div class="fld" style="width:calc(var(--ds-h-md) * 3);flex:none;"><div class="lbl">Балл</div><div class="inp er"><span>0</span></div></div>
+            <div class="fld" style="flex:1;"><div class="lbl">Значение</div><div class="inp area" style="min-height:var(--ds-h-md);"></div></div>
+            <div class="fld"><div class="lbl">&nbsp;</div><span class="btn">Удалить</span></div>
+          </div>
+          <div class="fld"><span class="btn">Добавить балл</span><div class="ferr">⊗ Баллы не должны повторяться</div></div>
+          <div class="row"><span class="btn pri">Сохранить</span><span class="btn">Отмена</span></div>
+        </div></div>
+        <div class="scrim"><div class="modal">
+          <div class="h2">Изменение шкалы</div>
+          <div class="alert wn"><span class="ic" aria-hidden="true">⚠</span><span>Используется в опубликованной матрице — изменить нельзя</span></div>
+          <div class="fld"><div class="lbl">Название</div><div class="inp er foc"><span>Базовая шкала 0–4</span></div><div class="ferr">⊗ Запись с таким названием уже есть</div></div>
+          <div class="row"><span class="btn pri">Сохранить</span><span class="btn">Отмена</span></div>
+          <div class="help" style="margin-top:var(--ds-md);">Окна категории, направления и уровня — то же окно с одним полем «Название».</div>
+        </div></div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Заголовки окон</b>: создание — «Новая шкала», «Новая категория», «Новое направление», «Новый трек», «Новый уровень», «Новая компетенция», «Новая матрица»; правка — «Изменение шкалы», «Изменение категории», «Изменение направления», «Изменение трека», «Изменение уровня», «Изменение компетенции». Название записи в заголовок не входит: оно видно в поле.</li>
+      <li><b>Фокус при открытии</b> — в первом поле (название); у окна без полей — на главной кнопке окна (общее правило приложения). Кнопки окна: «Сохранить» (главная, с индикатором, пока идёт сохранение) и «Отмена». Escape и «Отмена» закрывают окно без сохранения; в окне трека Escape сначала отменяет начатое перетаскивание уровня и окно не закрывает.</li>
+      <li><b>Шкала.</b> Название (обязательное, до 200 символов — «Укажите название», «Не длиннее 200 символов»); баллы — строки «Балл» и «Значение» (число и многострочное поле во всю ширину, растёт по тексту, до 500 символов — «Не длиннее 500 символов»), строка удаляется кнопкой «Удалить» в самой строке; повтор балла — «Баллы не должны повторяться» под списком. Признака «По умолчанию» в окне нет: его ставит действие строки «Сделать по умолчанию».</li>
+      <li><b>Шкала, использованная в опубликованной матрице, не меняется</b>: если сервер отказал по этой причине, над формой стоит предупреждение «Используется в опубликованной матрице — изменить нельзя» вместо общего сообщения об ошибке.</li>
+      <li><b>Ошибки.</b> Ошибка поля показана под ним («Запись с таким названием уже есть» — уникальность названия) и не дублируется предупреждением; ошибка без поля — предупреждение «Не удалось сохранить запись» с причиной над формой; окно остаётся открытым, введённое сохраняется. Если запись изменил другой пользователь (412), над формой стоит «Данные изменены другим пользователем. Показаны актуальные данные: проверьте их и повторите действие.» и форма пересобирается по актуальной записи; до такого отказа фоновое обновление списка ввод не затирает.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Категории; направления с треками и уровнями</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Вести категории компетенций и увидеть иерархию «направление → трек → уровни» в одной таблице.</dd>
+      <dt><b>Entry from</b></dt><dd>Вкладки «Категории» и «Направления и треки».</dd>
+      <dt><b>Exit to</b></dt><dd>Окно названия (направление, категория); окно трека; подтверждения удаления.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="pg stack">
+        <div>
+          <div class="cap">Вкладка «Категории»</div>
+          <div class="row" style="margin-bottom:var(--ds-md);"><span class="btn pri">Добавить категорию</span></div>
+          <table class="t">
+            <thead><tr><th>Название</th><th>Статус <span class="fi">▼</span></th><th>Действия</th></tr></thead>
+            <tbody>
+              <tr><td>Аналитика</td><td><span class="tag ok">Действует</span></td><td><span class="lnk">Изменить</span><span class="lnk dng">Деактивировать</span><span class="lnk dng">Удалить</span></td></tr>
+              <tr><td>Безопасность</td><td><span class="tag wn">Черновик</span></td><td><span class="lnk">Изменить</span><span class="lnk">Согласовать</span><span class="lnk dng">Деактивировать</span><span class="lnk dng">Удалить</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <div class="cap">Вкладка «Направления и треки»: направление раскрыто, трек раскрыт</div>
+          <div class="row" style="margin-bottom:var(--ds-md);"><span class="btn pri">Добавить направление</span></div>
+          <table class="t">
+            <thead><tr><th></th><th>Название</th><th>Статус <span class="fi">▼</span></th><th>Действия</th></tr></thead>
+            <tbody>
+              <tr><td aria-hidden="true">▾</td><td>Разработка</td><td><span class="tag ok">Действует</span></td><td><span class="lnk">Изменить</span><span class="lnk dng">Деактивировать</span><span class="lnk dng">Удалить</span></td></tr>
+              <tr><td colspan="4" class="nest">
+                <div class="row" style="margin-bottom:var(--ds-sm);"><span class="btn">Добавить трек</span></div>
+                <table class="t">
+                  <thead><tr><th></th><th>Название</th><th>Владелец <span class="fi on">▼</span></th><th>Статус <span class="fi">▼</span></th><th>Действия</th></tr></thead>
+                  <tbody>
+                    <tr><td aria-hidden="true">▾</td><td>Разработчик</td><td>Подразделение: Департамент разработки</td><td><span class="tag ok">Действует</span></td><td><span class="lnk">Изменить</span><span class="lnk dng">Деактивировать</span><span class="lnk dng">Удалить</span></td></tr>
+                    <tr><td colspan="5" class="nest">
+                      <table class="t sm"><thead><tr><th>Название</th><th>Статус</th></tr></thead><tbody>
+                        <tr><td>Стажёр</td><td><span class="tag ok">Действует</span></td></tr>
+                        <tr><td>Специалист</td><td><span class="tag ok">Действует</span></td></tr>
+                        <tr><td>Ведущий специалист</td><td><span class="tag wn">Черновик</span></td></tr>
+                      </tbody></table>
+                    </td></tr>
+                  </tbody>
+                </table>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Категории.</b> Справочник категорий компетенций: список, добавление, переименование («Изменить»), согласование черновика, деактивация и возврат в работу, удаление. Категорию можно удалить, только если ни одна компетенция (в том числе в истории версий) её не использует; иначе — отказ «Категорию используют компетенции — удалить нельзя». Категорию можно добавить и прямо из формы компетенции (см. «Компетенции»).</li>
+      <li><b>Иерархия — вложенные таблицы.</b> Направление раскрывается в таблицу его треков, трек — в таблицу его уровней в порядке от младшего к старшему. Таблица уровней в строке трека только для чтения и без пагинатора: уровни создаются, переименовываются и упорядочиваются в окне трека (макет ниже); у сохранённого уровня есть собственные действия «Изменить» и «Удалить».</li>
+      <li><b>Владелец трека — подразделение.</b> Столбец «Владелец» показывает «Подразделение: {название}» и фильтруется деревом подразделений. Направления, категории, шкалы и компетенции ни к какому подразделению не привязаны, поэтому столбца владельца у них нет.</li>
+      <li><b>Кто что видит.</b> Администратор и HR подразделения трека ведут его треки, деактивируют и согласуют их; руководитель подразделения создаёт черновые треки и правит свои черновики. «Добавить трек» показывается тем, кому есть в какое подразделение его положить.</li>
+      <li><b>Неактивное направление или трек</b> не предлагается при создании матрицы и в выборах форм; сохранённые ссылки на них остаются читаемыми.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Окно трека: уровни с перетаскиванием</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Создать или изменить трек вместе с упорядоченным списком его уровней.</dd>
+      <dt><b>Entry from</b></dt><dd>«Добавить трек» в строке направления; «Изменить» в строке трека.</dd>
+      <dt><b>Exit to</b></dt><dd>Таблица треков; вложенное окно уровня.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="cols">
+        <div class="scrim"><div class="modal">
+          <div class="h2">Изменение трека</div>
+          <div class="fld"><div class="lbl">Название</div><div class="inp on foc"><span>Разработчик</span></div></div>
+          <div class="h5">Уровни</div>
+          <div class="hint">Уровни идут от младшего к старшему. Перетащите строку, чтобы изменить порядок</div>
+          <table class="t sm">
+            <thead><tr><th></th><th>Название</th><th>Статус</th><th>Действия</th></tr></thead>
+            <tbody>
+              <tr><td aria-label="Перетащить уровень «Стажёр»">⠿</td><td>Стажёр</td><td><span class="tag ok">Действует</span></td><td><span class="lnk">Изменить</span><span class="lnk dng">Деактивировать</span><span class="lnk dng">Удалить</span></td></tr>
+              <tr><td aria-label="Перетащить уровень «Специалист»">⠿</td><td>Специалист</td><td><span class="tag ok">Действует</span></td><td><span class="lnk">Изменить</span><span class="lnk dng">Деактивировать</span><span class="lnk dng">Удалить</span></td></tr>
+              <tr><td aria-label="Перетащить уровень «Ведущий специалист»">⠿</td><td>Ведущий специалист</td><td></td><td><span class="lnk">Изменить</span><span class="lnk dng">Удалить</span></td></tr>
+            </tbody>
+          </table>
+          <div class="row" style="margin:var(--ds-xs) 0 var(--ds-xl);"><span class="btn">Добавить уровень</span></div>
+          <div class="row"><span class="btn pri">Сохранить</span><span class="btn">Отмена</span></div>
+        </div></div>
+        <div class="stack">
+          <div class="scrim"><div class="modal">
+            <div class="h2">Новый уровень</div>
+            <div class="fld"><div class="lbl">Название</div><div class="inp on foc"></div></div>
+            <div class="row"><span class="btn pri">Сохранить</span><span class="btn">Отмена</span></div>
+          </div></div>
+          <div class="card">
+            <div class="cap">Клавиатурное перемещение: объявления диктору</div>
+            <ul class="plain sm">
+              <li>«Взят уровень «Специалист», позиция 2 из 3»</li>
+              <li>«Уровень «Специалист» на позиции 1 из 3»</li>
+              <li>«Уровень «Специалист» перемещён на позицию 1 из 3»</li>
+              <li>«Перемещение отменено. Уровень «Специалист» остался на позиции 2 из 3»</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Поля.</b> «Подразделение» — только при создании трека (администратор выбирает любое активное подразделение деревом, остальные — из своих подразделений: где они руководитель или ответственный HR); у существующего трека поля нет, трек не переносится. «Название» — обязательное, до 200 символов. Блок «Уровни» виден сразу, и в новом треке.</li>
+      <li><b>Порядок — перетаскиванием строки за ручку «⠿» слева.</b> Над списком всегда подсказка «Уровни идут от младшего к старшему. Перетащите строку, чтобы изменить порядок». Строка двигается только по вертикали, остальные расступаются; при reduced-motion без анимации. Порядок уровней трека задаёт порядок уровней в матрице.</li>
+      <li><b>Клавиатура.</b> Ручка — кнопка с названием «Перетащить уровень «{название}»» и ролью «перемещаемый элемент». Пробел или Enter берёт уровень, стрелки вверх и вниз перемещают, пробел или Enter отпускает, Escape отменяет перемещение и окно не закрывает. Диктор слышит инструкцию «Чтобы взять уровень, нажмите пробел или Enter. Перемещайте его стрелками вверх и вниз, отпустите пробелом или Enter, Escape — отмена» и объявления, показанные на макете.</li>
+      <li><b>Что сохраняется сразу, а что кнопкой «Сохранить».</b> Сохранённые уровни правятся и удаляются сразу, их «Изменить» открывает вложенное окно «Изменение уровня». Новые уровни (без статуса в строке) появляются в списке и сохраняются вместе с треком; удалить можно только такой, ещё не сохранённый. «Сохранить» записывает трек, затем новые уровни по очереди, затем порядок. Если шаг не удался, сделанное остаётся сохранённым, окно открыто, в списке ждут только оставшиеся новые уровни; повторное «Сохранить» доделывает остальное и трек заново не создаёт.</li>
+      <li>Пустой список — «В треке пока нет уровней». Ошибка загрузки уровней — предупреждение «Не удалось загрузить уровни» с «Повторить». Уровень состоит только из названия, статуса и места в списке.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Компетенции: каталог, окно, история версий</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Найти компетенцию, создать или изменить её (каждое изменение — новая версия), посмотреть прежние версии.</dd>
+      <dt><b>Entry from</b></dt><dd>Вкладка «Компетенции».</dd>
+      <dt><b>Exit to</b></dt><dd>Окна «Новая компетенция», «Изменение компетенции», «История версий».</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="pg stack">
+        <div>
+          <div class="row between" style="margin-bottom:var(--ds-md);"><span class="inp" style="min-width:calc(var(--ds-h-md) * 10);"><span class="ph">Найти компетенцию</span><span aria-hidden="true">🔍</span></span><span class="btn pri">Добавить компетенцию</span></div>
+          <div class="scroll"><table class="t">
+            <thead><tr><th>Название</th><th>Категория <span class="fi">▼</span></th><th>Направление <span class="fi">▼</span></th><th>Тип <span class="fi">▼</span></th><th>Шкала <span class="fi">▼</span></th><th>Статус <span class="fi">▼</span></th><th>Версия</th><th>Действия</th></tr></thead>
+            <tbody>
+              <tr><td>Безопасная разработка</td><td>Безопасность</td><td>Разработка</td><td>Критическая</td><td>Базовая шкала 0–4</td><td><span class="tag ok">Действует</span></td><td>3</td><td><span class="lnk">История версий</span><span class="lnk">Изменить</span><span class="lnk dng">Деактивировать</span><span class="lnk dng">Удалить</span></td></tr>
+              <tr><td>Командная работа</td><td>Общие</td><td>Общая</td><td>Дополнительная</td><td>Базовая шкала 0–4</td><td><span class="tag wn">Черновик</span></td><td>1</td><td><span class="lnk">История версий</span><span class="lnk">Изменить</span><span class="lnk">Согласовать</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div class="cols">
+          <div class="scrim"><div class="modal">
+            <div class="h2">Новая компетенция</div>
+            <div class="fld"><div class="lbl">Название</div><div class="inp on foc"></div></div>
+            <div class="fld"><div class="lbl">Описание</div><div class="inp area" style="min-height:calc(var(--ds-h-md) * 3);"></div></div>
+            <div class="fld"><div class="lbl">Категория</div><div class="inp"><span class="ph"></span><span aria-hidden="true">▾</span></div>
+              <div class="pop" style="margin-top:var(--ds-xxs);"><div class="opt">Безопасность</div><div class="opt sel">Добавить категорию «Архитектура»</div></div></div>
+            <div class="fld"><div class="lbl">Направление</div><div class="inp"><span class="ph">Общая</span><span aria-hidden="true">⊗ ▾</span></div></div>
+            <div class="fld"><div class="lbl">Тип</div><div class="inp"><span>Профильная</span><span aria-hidden="true">▾</span></div></div>
+            <div class="fld"><div class="lbl">Шкала</div><div class="inp"><span>Базовая шкала 0–4</span><span aria-hidden="true">▾</span></div><div class="help">Подставлена шкала по умолчанию; можно выбрать другую</div></div>
+            <div class="row"><span class="btn pri">Сохранить</span><span class="btn">Отмена</span></div>
+          </div></div>
+          <div class="scrim"><div class="modal">
+            <div class="h2">История версий</div>
+            <div class="fld"><div class="inp on"><span>Версия 2 — 11.10.2026, 14:05, Иванов Иван</span><span aria-hidden="true">▾</span></div></div>
+            <table class="t sm">
+              <tbody>
+                <tr><td class="strong">Название</td><td>Безопасная разработка</td></tr>
+                <tr><td class="strong">Описание</td><td>Применяет практики безопасной разработки</td></tr>
+                <tr><td class="strong">Категория</td><td>Безопасность</td></tr>
+                <tr><td class="strong">Направление</td><td>Разработка</td></tr>
+                <tr><td class="strong">Тип</td><td>Профильная</td></tr>
+                <tr><td class="strong">Шкала</td><td>Базовая шкала 0–4</td></tr>
+                <tr><td class="strong">Статус</td><td><span class="tag ok">Действует</span></td></tr>
+              </tbody>
+            </table>
+          </div></div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Столбцы</b>: «Название», «Категория», «Направление» («Общая», если направление не задано), «Тип» («Критическая», «Профильная», «Дополнительная»), «Шкала», «Статус», «Версия», «Действия». Владельца у компетенции нет; автор версии виден в истории. Поиск по названию «Найти компетенцию» стоит над таблицей, фильтры — в заголовках столбцов.</li>
+      <li><b>Поля окна</b>: «Название» (до 200 символов), «Описание» (многострочное), «Категория» (обязательная; поиск на сервере; если набранного названия нет, последняя опция списка — «Добавить категорию «{текст}»», доступная тем, кто может создавать записи; категория создаётся и сразу выбирается без ухода с формы), «Направление» (необязательное; пусто — «Общая»), «Тип» и «Шкала» (обязательные). Новой компетенции шкала по умолчанию подставляется сама, как только загрузится, если пользователь не выбрал шкалу раньше. Неактивные направления и шкалы не предлагаются.</li>
+      <li><b>Каждое сохранение изменения создаёт новую версию</b> (номер растёт). «История версий» открывает окно только для чтения: выбор «Версия» («Версия {n} — {дата}, {автор}», новая сверху) и поля выбранной версии таблицей без возможности правки.</li>
+      <li>Пустой каталог — «Компетенций пока нет». Компетенцию можно удалить, пока она (с историей версий) не используется в версиях матриц; иначе — окно отказа с перечнем (см. «Подтверждения удаления и отказы»).</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Вкладка «Матрицы» и окно «Новая матрица»</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Найти матрицу подразделения и открыть её; руководитель подразделения начинает матрицу для трека.</dd>
+      <dt><b>Entry from</b></dt><dd>Вкладка «Матрицы».</dd>
+      <dt><b>Exit to</b></dt><dd>Страница матрицы (ссылка в столбце «Трек»; сразу после создания).</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="pg stack">
+        <div>
+          <div class="row" style="margin-bottom:var(--ds-md);"><span class="btn pri">Создать матрицу</span></div>
+          <div class="scroll"><table class="t">
+            <thead><tr><th>Подразделение <span class="fi">▼</span></th><th>Направление <span class="fi">▼</span></th><th>Трек <span class="fi">▼</span></th><th>Опубликована</th><th>В работе</th><th>Действия</th></tr></thead>
+            <tbody>
+              <tr><td>Департамент разработки</td><td>Разработка</td><td><span class="lnk" style="margin:0;">Разработчик</span></td><td>Версия 2 <span class="tag ok">Опубликована</span></td><td>Версия 3 <span class="tag in">На согласовании</span></td><td></td></tr>
+              <tr><td>Департамент продаж</td><td>Продажи</td><td><span class="lnk" style="margin:0;">Менеджер по продажам</span></td><td></td><td>Версия 1 <span class="tag">Черновик</span></td><td><span class="lnk dng">Удалить</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div class="scrim"><div class="modal">
+          <div class="h2">Новая матрица</div>
+          <div class="fld"><div class="lbl">Подразделение</div><div class="inp on foc"><span>Департамент разработки</span><span aria-hidden="true">▾</span></div></div>
+          <div class="fld"><div class="lbl">Направление</div><div class="inp"><span>Разработка</span><span aria-hidden="true">▾</span></div></div>
+          <div class="fld"><div class="lbl">Трек</div><div class="inp off"><span></span><span aria-hidden="true">▾</span></div><div class="help">Сначала выберите подразделение и направление</div></div>
+          <div class="fld"><div class="lbl">Шкала</div><div class="inp"><span>Базовая шкала 0–4</span><span aria-hidden="true">▾</span></div></div>
+          <div class="row"><span class="btn pri">Сохранить</span><span class="btn">Отмена</span></div>
+        </div></div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Столбцы</b>: «Подразделение», «Направление», «Трек» (ссылка на страницу матрицы), «Опубликована» и «В работе» (номер версии и её статус словом тегом; пусто, если такой версии нет), «Действия». Фильтры — в заголовках первых трёх столбцов. У подразделения не больше одной матрицы на трек; опубликованная версия и версия в работе у матрицы одновременно не больше одной.</li>
+      <li><b>«Создать матрицу»</b> видна только руководителю подразделения (непосредственному руководителю из оргструктуры). В окне подразделение выбирается из подразделений, которыми он руководит; направление — из действующих; трек — только по выбранным подразделению и направлению, из треков этого и вышестоящих подразделений; пока подразделение и направление не выбраны, поле «Трек» недоступно, причина написана под ним. Смена подразделения или направления очищает трек. Шкала — действующая; одна на версию.</li>
+      <li>Ошибка «У подразделения уже есть матрица для этого трека» показывается над формой. После создания открывается страница новой матрицы, версия 1 в статусе «Черновик».</li>
+      <li>«Удалить» в строке есть у руководителя подразделения матрицы и администратора, пока ни одна версия не опубликована; опубликованные и архивные версии не удаляются. Удаление уходит с версией «в работе», которую пользователь видел: если её изменили, оно отклоняется.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Страница матрицы: версия, маршрут, таблица «компетенции × уровни», блоки</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Задать и увидеть требуемый уровень для каждой пары «уровень — компетенция», коэффициенты блоков и пороги; провести версию по маршруту согласования.</dd>
+      <dt><b>Entry from</b></dt><dd>Ссылка в столбце «Трек» вкладки «Матрицы»; ссылка в столбце «Матрица» вкладки «На согласовании»; создание матрицы.</dd>
+      <dt><b>Exit to</b></dt><dd>Ссылка «Карьерная модель» над заголовком; окна истории, требования, выбора; после удаления матрицы — раздел «Карьерная модель».</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="pg stack">
+        <div><span class="lnk" style="margin:0;">Карьерная модель</span></div>
+        <div class="h1" style="margin:0;">Матрица «Разработчик» — Департамент разработки</div>
+        <div class="row" style="gap:var(--ds-xl);"><span><span class="sec">Направление:</span> Разработка</span><span><span class="sec">Шкала:</span> Базовая шкала 0–4</span></div>
+        <div class="row">
+          <span class="inp" style="min-width:calc(var(--ds-h-md) * 4);"><span>Версия 3</span><span aria-hidden="true">▾</span></span>
+          <span class="tag">Черновик</span>
+          <span class="btn pri">Отправить на согласование</span>
+          <span class="btn">История</span>
+        </div>
+        <div class="stp">
+          <div><span class="dot cur">1</span><span><b class="strong">Автор</b><br><span class="sec">Петров Пётр Петрович</span></span></div>
+          <div><span class="dot">2</span><span><b class="strong">Вышестоящий руководитель</b><br><span class="sec">Орлов Пётр Сергеевич</span></span></div>
+          <div><span class="dot">3</span><span><b class="strong">HR</b><br><span class="sec">Сидорова Анна Игоревна</span></span></div>
+          <div><span class="dot">4</span><span><b class="strong">Публикация</b></span></div>
+        </div>
+        <div class="row"><span class="btn">Добавить компетенцию</span><span class="btn">Добавить уровень</span><span class="btn pri">Сохранить</span></div>
+        <ul class="legend">
+          <li><span class="chip">0</span>Не подтверждена</li>
+          <li><span class="chip r1">1</span>Работает с поддержкой</li>
+          <li><span class="chip r2">2</span>Самостоятельно на типовых задачах</li>
+          <li><span class="chip r3">3</span>Самостоятельно на сложных задачах</li>
+          <li><span class="chip r4">4</span>Задаёт стандарты, развивает других</li>
+        </ul>
+        <div class="scroll"><table class="mx">
+          <thead><tr>
+            <th class="n">Компетенции</th>
+            <th>Стажёр<br><span class="lnk dng" style="margin:0;font:var(--ds-t-body-md);">Удалить</span></th>
+            <th>Специалист<br><span class="lnk dng" style="margin:0;font:var(--ds-t-body-md);">Удалить</span></th>
+            <th>Ведущий специалист<br><span class="lnk dng" style="margin:0;font:var(--ds-t-body-md);">Удалить</span></th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td class="n"><b class="strong">Требования и анализ</b><br><span class="sec">Аналитика</span><br><span class="inp" style="margin:var(--ds-xxs) 0;">Профильный блок <span aria-hidden="true">▾</span></span><span class="lnk dng" style="margin:0;">Удалить</span></td>
+              <td><span class="chip r1">1</span></td><td><span class="chip r2">2</span></td><td><span class="chip r3">3</span></td>
+            </tr>
+            <tr>
+              <td class="n"><b class="strong">Безопасная разработка</b><br><span class="sec">Безопасность</span><br><span class="tag er">⚠ Критическая</span><br><span class="inp" style="margin:var(--ds-xxs) 0;">Базовый блок <span aria-hidden="true">▾</span></span><span class="lnk dng" style="margin:0;">Удалить</span></td>
+              <td><span class="chip r2">2</span></td><td><span class="chip r3">3</span></td><td><span class="chip r4">4</span></td>
+            </tr>
+            <tr>
+              <td class="n"><b class="strong">Командная работа</b><br><span class="sec">Общие</span><br><span class="inp" style="margin:var(--ds-xxs) 0;">Базовый блок <span aria-hidden="true">▾</span></span><span class="lnk dng" style="margin:0;">Удалить</span></td>
+              <td>—</td><td><span class="chip r2">2</span></td><td><span class="chip r3">3</span></td>
+            </tr>
+            <tr>
+              <td class="n"><b class="strong">Минимальный общий порог</b></td>
+              <td><span class="inp" style="justify-content:center;">60</span></td><td><span class="inp" style="justify-content:center;">70</span></td><td><span class="inp" style="justify-content:center;">80</span></td>
+            </tr>
+          </tbody>
+        </table></div>
+        <div>
+          <div class="h2" style="margin-bottom:var(--ds-sm);">Блоки компетенций</div>
+          <div class="scroll"><table class="t">
+            <thead>
+              <tr><th rowspan="2">Название блока</th><th rowspan="2">Обязательный блок</th><th colspan="2">Стажёр</th><th colspan="2">Специалист</th><th rowspan="2">Действия</th></tr>
+              <tr><th>Коэффициент, %</th><th>Минимальный порог блока</th><th>Коэффициент, %</th><th>Минимальный порог блока</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="inp">Базовый блок</span></td><td>☑ Обязательный блок</td><td><span class="inp">60</span></td><td><span class="inp">50</span></td><td><span class="inp">50</span></td><td><span class="inp">60</span></td><td><span class="lnk dng" style="color:var(--ds-text-disabled);">Удалить</span> <span class="sec sm">Сначала уберите компетенции блока</span></td></tr>
+              <tr><td><span class="inp">Профильный блок</span></td><td>☐ Обязательный блок</td><td><span class="inp">40</span></td><td><span class="inp">30</span></td><td><span class="inp">50</span></td><td><span class="inp">40</span></td><td><span class="lnk dng" style="color:var(--ds-text-disabled);">Удалить</span> <span class="sec sm">Сначала уберите компетенции блока</span></td></tr>
+            </tbody>
+          </table></div>
+          <div class="row" style="margin-top:var(--ds-sm);"><span class="btn">Добавить блок</span></div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Шапка.</b> Заголовок «Матрица «{трек}» — {подразделение}» (<code>heading-1</code>), под ним направление и шкала версии. Выбор «Версия» («Версия {n}», новая сверху) переключает версию; тег рядом называет её статус словом: «Черновик», «На согласовании», «Возвращена с правками», «Согласована», «Опубликована», «В архиве». Показывается версия в работе, иначе опубликованная, иначе последняя.</li>
+      <li><b>Действия зависят от версии и роли.</b> Кнопка показана, только если сервер разрешил именно этот переход текущему пользователю: «Отправить на согласование» (автор, черновик; единственная главная кнопка), «Согласовать» (согласующий на своём шаге), «Вернуть с правками» (согласующий), «Принять правки», «Принять и доработать», «Откатить правки» (автор возвращённой версии), «Создать новую версию» (руководитель подразделения, когда есть опубликованная версия и нет версии в работе). «История» — для всех, кто видит версию. «Удалить» — ссылка у руководителя подразделения и администратора, пока ни одна версия не опубликована.</li>
+      <li><b>Маршрут</b> — вертикальные шаги «Автор», «Вышестоящий руководитель», «HR», «Публикация»; текущий шаг залит <code>primary</code>, пройденные отмечены отдельно от будущих, под названием — имя участника или, для шага «Публикация», дата. Пропущенный или автоматически согласованный шаг называется словами: «Пропущен — нет руководителя с учётной записью», «Согласован автоматически — HR является автором».</li>
+      <li><b>Таблица — редактор требований.</b> Строка — компетенция (название, категория, для критической — тег «Критическая» с иконкой, блок, «Удалить»), столбец — уровень трека в порядке трека (у опубликованной и архивной версии — в порядке, замороженном на момент публикации). Ячейка — чип уровня <code>rating-chip-0…4</code> с цифрой требуемого уровня (подсказка — значение балла шкалы) или «—», если требования нет; вся ячейка — кнопка, открывающая окно требования. Легенда уровней 0–4 над таблицей — шкала версии. Последняя строка «Минимальный общий порог» — проценты 0–100 по уровню. Строка имеет минимальную высоту <code>matrix-row-height</code>, столбцы не уже <code>matrix-cell-min-width</code>, первый столбец (<code>matrix-name-column-width</code>) закреплён слева; таблица прокручивается по горизонтали.</li>
+      <li><b>Блоки компетенций</b> — вторая таблица под заголовком <code>heading-2</code>: название, «Обязательный блок», для каждого уровня «Коэффициент, %» и «Минимальный порог блока», «Действия». Коэффициенты блоков уровня дают в сумме 100 %. «Удалить» блок, в котором остались компетенции, недоступно, и причина написана рядом: «Сначала уберите компетенции блока». Любой блок можно переименовать, отметить обязательным; «Добавить блок» добавляет новый.</li>
+      <li><b>Только чтение.</b> Если сервер не разрешил правку (опубликованная и архивная версии, чужой ход), те же таблицы показывают значения текстом без полей, кнопок «Удалить», «Добавить …» и «Сохранить»; ячейки с требованием по-прежнему открывают окно требования только для чтения.</li>
+      <li><b>Планшет и мобильный.</b> Страница и обе таблицы прокручиваются по горизонтали; первый столбец матрицы остаётся на месте; ни одно действие не убирается.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Редактор: несохранённые правки, сохранение, окна выбора и требования</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Не дать отправить на согласование версию с несохранёнными правками, не потерять ввод при сохранении, быстро задать требование.</dd>
+      <dt><b>Entry from</b></dt><dd>Правка в редакторе версии; нажатие ячейки таблицы; «Добавить компетенцию», «Добавить уровень»; «Вернуть с правками».</dd>
+      <dt><b>Exit to</b></dt><dd>Та же страница; сохранённая версия заменяет форму.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="pg stack">
+        <div class="card stack">
+          <div class="cap">Есть несохранённые правки: переходы недоступны, причина написана</div>
+          <div class="row"><span class="btn off">Отправить на согласование</span><span class="btn off">Вернуть с правками</span><span class="btn">История</span></div>
+          <div class="sec">Сначала сохраните изменения</div>
+        </div>
+        <div class="card stack">
+          <div class="cap">Идёт сохранение: редактор заблокирован целиком</div>
+          <div class="row"><span class="btn off">Добавить компетенцию</span><span class="btn off">Добавить уровень</span><span class="btn pri">⟳ Сохранить</span></div>
+          <div class="row"><span class="btn off" style="padding:0;width:var(--ds-matrix-cell);justify-content:center;">—</span><span class="inp off" style="width:var(--ds-matrix-cell);justify-content:center;">60</span><span class="muted sm">кнопки, ячейки и поля недоступны, пока ответ не пришёл</span></div>
+        </div>
+        <div class="cols">
+          <div class="scrim"><div class="modal">
+            <div class="h2">Безопасная разработка, Специалист</div>
+            <div class="fld"><div class="lbl">Требуемый уровень</div><div class="inp"><span>3 — Самостоятельно на сложных задачах</span><span aria-hidden="true">⊗ ▾</span></div></div>
+            <div class="fld"><div class="lbl">Тип</div><div class="inp"><span>Критическая</span><span aria-hidden="true">▾</span></div></div>
+            <div class="fld"><div class="lbl">Вес</div><div class="inp"><span>1</span></div></div>
+            <div class="fld">☑ Обязательная</div>
+            <div class="fld"><div class="lbl">Ожидаемое поведение</div><div class="inp area" style="min-height:calc(var(--ds-h-md) * 2);"></div></div>
+            <div class="fld"><div class="lbl">Примеры подтверждений</div><div class="inp area" style="min-height:calc(var(--ds-h-md) * 2);"></div></div>
+            <div class="fld"><div class="lbl">Действует с</div><div class="inp"><span class="ph">дд.мм.гггг</span><span aria-hidden="true">📅</span></div></div>
+            <div class="row"><span class="btn pri">Сохранить</span><span class="btn">Отмена</span><span class="btn" style="border-color:var(--ds-danger);color:var(--ds-danger);">Удалить</span></div>
+          </div></div>
+          <div class="stack">
+            <div class="scrim"><div class="modal">
+              <div class="h2">Добавить компетенцию</div>
+              <div class="fld"><div class="lbl">Компетенции</div><div class="inp on foc"><span class="ph"></span><span aria-hidden="true">▾</span></div></div>
+              <div class="fld"><div class="lbl">Блоки компетенций</div><div class="inp"><span>Базовый блок</span><span aria-hidden="true">▾</span></div></div>
+              <div class="row"><span class="btn pri">Добавить</span><span class="btn">Отмена</span></div>
+            </div></div>
+            <div class="scrim"><div class="modal">
+              <div class="h2">Вернуть с правками</div>
+              <div class="fld"><div class="lbl">Комментарий</div><div class="inp area on foc" style="min-height:calc(var(--ds-h-md) * 3);"></div></div>
+              <div class="row"><span class="btn pri">Вернуть с правками</span><span class="btn">Отмена</span></div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Правки копятся в форме, пока их не сохранят.</b> Пока есть несохранённые правки или идёт сохранение, все переходы статуса («Отправить на согласование», «Согласовать», «Вернуть с правками», «Принять …», «Откатить правки») недоступны, а под ними написано «Сначала сохраните изменения». Надпись появляется, только если какой-то переход иначе был бы доступен. «Создать новую версию» и «История» это не касается.</li>
+      <li><b>Пока идёт сохранение, весь редактор заблокирован</b> (кнопки, ячейки, поля порогов и блоков), «Сохранить» показывает индикатор: ввод, сделанный в этот момент, не потерялся бы при замене формы сохранённой версией. Успех заменяет форму сохранённой версией; отказ показывает над таблицей «Не удалось сохранить запись» с причиной, форма остаётся с введённым. Изменение версии другим пользователем (412) подтягивает актуальную версию.</li>
+      <li><b>Окно требования</b> — заголовок «{компетенция}, {уровень}» (имена записей здесь нужны: окно открывается ячейкой). Поля: «Требуемый уровень» (выбор «{балл} — {значение}», очищается), «Тип» (по умолчанию тип компетенции из каталога), «Вес» (число, по умолчанию 1), «Обязательная», «Ожидаемое поведение», «Примеры подтверждений», «Действует с» (дата). Кнопки «Сохранить» и «Отмена»; «Удалить» (контурная красная) — только если требование уже есть. «Сохранить» меняет только форму матрицы, не сервер: на сервер всё уходит кнопкой «Сохранить» страницы. В режиме чтения поля недоступны, кнопок нет.</li>
+      <li><b>Выборы.</b> «Добавить компетенцию»: поиск на сервере среди действующих компетенций шкалы версии, направления матрицы и «общих», без уже добавленных (до 20 за раз); блок выбирается из блоков версии, предлагается первый. «Добавить уровень»: поиск по уровням трека, которых ещё нет в версии, неактивные не предлагаются. «Вернуть с правками»: окно с комментарием (необязательным); главная кнопка окна называется так же, как действие.</li>
+      <li><b>Проверка полноты при отправке.</b> Если версия неполна, над таблицей предупреждение «Не удалось выполнить действие» с причиной и списком: «У уровня «{уровень}» нет требований», «Коэффициенты блоков уровня «{уровень}» дают в сумме {n} %, нужно 100 %», «У критической компетенции «{компетенция}» не задан минимальный уровень», «В версии есть неактивная запись «{название}»», «Нет ответственного HR — обратитесь к администратору», «Сейчас ход другого участника согласования». Слова сервера показываются как написаны.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Согласование: правки согласующего, возврат автору, история и варианты</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Показать автору, что согласующий изменил и почему вернул версию; дать три способа ответа; сохранить всю историю решений и вариантов содержимого.</dd>
+      <dt><b>Entry from</b></dt><dd>Страница матрицы версии «Возвращена с правками» или версии с вариантом согласующего; кнопка «История».</dd>
+      <dt><b>Exit to</b></dt><dd>Версия «Черновик» (доработка, откат) или следующий шаг маршрута (принятие правок).</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="pg stack">
+        <div class="card stack">
+          <div class="cap">Автор: версия возвращена с правками</div>
+          <div class="row"><span class="tag wn">Возвращена с правками</span><span class="btn">Принять правки</span><span class="btn">Принять и доработать</span><span class="btn">Откатить правки</span><span class="btn">История</span></div>
+          <div class="h2" style="margin:0;">Изменено согласующим</div>
+          <ul class="plain">
+            <li>Изменено: требование «Командная работа», уровень «Стажёр»
+              <div class="sec">Было: Требуемый уровень: 1 (Работает с поддержкой); Тип: Дополнительная; Вес: 1</div>
+              <div class="sec">Стало: Требуемый уровень: 2 (Самостоятельно на типовых задачах); Тип: Дополнительная; Вес: 1; Обязательная</div></li>
+            <li>Изменено: коэффициент блока «Базовый блок», уровень «Стажёр»
+              <div class="sec">Было: Коэффициент, %: 60; Минимальный порог блока: 50 %</div>
+              <div class="sec">Стало: Коэффициент, %: 55; Минимальный порог блока: 50 %</div></li>
+            <li>Добавлено: компетенция «Работа с данными»
+              <div class="sec">Стало: Блок «Профильный блок»</div></li>
+            <li>Удалено: уровень «Ведущий специалист»
+              <div class="sec">Было: Минимальный общий порог: 80 %</div></li>
+          </ul>
+          <div class="scroll"><table class="mx">
+            <thead><tr><th class="n">Компетенции</th><th>Стажёр</th><th>Специалист</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="n chg"><b class="strong">Командная работа</b><br><span class="sec">Общие</span><br><span class="tag wn">✎ Изменено согласующим</span></td>
+                <td class="chg"><span class="chip r2">2</span><span aria-label="Изменено согласующим"> ✎</span></td><td><span class="chip r2">2</span></td>
+              </tr>
+              <tr>
+                <td class="n"><b class="strong">Требования и анализ</b><br><span class="sec">Аналитика</span></td>
+                <td><span class="chip r1">1</span></td><td><span class="chip r2">2</span></td>
+              </tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div class="cols">
+          <div class="scrim"><div class="modal">
+            <div class="h2">История</div>
+            <ul class="plain">
+              <li>11.10.2026, 14:05, Петров Пётр: отправил на согласование</li>
+              <li>11.10.2026, 14:05: Пропущен — нет руководителя с учётной записью</li>
+              <li>12.10.2026, 09:10, Сидорова Анна: вернул с правками<div class="sec">Уточните коэффициенты блоков</div></li>
+            </ul>
+            <div class="h3" style="margin-top:var(--ds-md);">Варианты</div>
+            <ul class="plain">
+              <li><span class="lnk" style="margin:0;">11.10.2026, 14:05, Петров Пётр: Автор</span></li>
+              <li><span class="lnk" style="margin:0;">12.10.2026, 09:10, Сидорова Анна: Согласующий</span></li>
+            </ul>
+          </div></div>
+          <div class="scrim"><div class="modal">
+            <div class="h2">Вариант 2</div>
+            <p style="margin:0 0 var(--ds-md);">12.10.2026, 09:10, Сидорова Анна: Согласующий</p>
+            <div class="alert in"><span class="ic" aria-hidden="true">ⓘ</span><span>Содержимое варианта показано только для чтения, с пометками «Изменено согласующим» и списком правок против прежнего варианта (окно на всю доступную ширину)</span></div>
+            <div class="sec sm">Окно закрывается кнопкой закрытия и Escape; поверх окна истории</div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Правки согласующего — список словами, не только отметки в таблице.</b> Раздел «Изменено согласующим» появляется над легендой, когда последний вариант версии сделал согласующий. Каждая строка начинается с типа («Добавлено», «Удалено», «Изменено») и места («уровень «…»», «блок «…»», «компетенция «…»», «коэффициент блока «…», уровень «…»», «требование «…», уровень «…»»); ниже, как вторичный текст, «Было: …» и «Стало: …» (у добавленного только «Стало», у удалённого только «Было»). Так видны и удаления, которых в таблице уже нет. Значения: «Минимальный общий порог: … %»; ««{блок}», обязательный блок»; «Блок «{блок}»»; «Коэффициент, %: …; Минимальный порог блока: …»; для требования «Требуемый уровень: … (…)», «Тип: …», «Вес: …», «Обязательная», «Ожидаемое поведение: …», «Примеры подтверждений: …», «Действует с: …».</li>
+      <li><b>Отметки в таблице</b>: изменённая ячейка залита <code>warning-bg</code> и несёт значок «✎» с подписью «Изменено согласующим»; строка компетенции и заголовок уровня или блока — тег <code>tag-warning</code> с тем же текстом. Цвет не единственный носитель: всегда есть значок или слово.</li>
+      <li><b>Три ответа автора на возвращённую версию</b> (ходит только автор): «Принять правки» — шаг считается согласованным и версия идёт дальше по маршруту; «Принять и доработать» — версия становится черновиком с принятыми правками и после доработки идёт на согласование с первого шага; «Откатить правки» — версия возвращается к варианту автора, становится черновиком и уходит на согласование с первого шага.</li>
+      <li><b>«Вернуть с правками»</b> доступно согласующему на его шаге вместе с «Согласовать». Согласующий сам правит таблицу (редактор доступен ему на его шаге), сохраняет и возвращает версию с необязательным комментарием; комментарий виден в истории.</li>
+      <li><b>История</b> — окно «История»: решения в порядке принятия («{дата}, {кто}: {решение}»: «отправил на согласование», «согласовал», «вернул с правками», «принял правки», «принял и дорабатывает», «откатил правки», «опубликовано»; для шагов без участника — «Пропущен — нет руководителя с учётной записью», «Согласован автоматически — HR является автором»), комментарий — вторичным текстом; под заголовком «Варианты» — ссылки «{дата}, {кто}: Автор / Согласующий». Вариант открывается поверх истории в окне «Вариант {n}» шириной <code>breakpoint-lg</code>: таблицы только для чтения, у варианта согласующего — тот же список правок. Ошибка — «Не удалось загрузить вариант» с «Повторить».</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Вкладка «На согласовании»</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Увидеть, что ждёт моего решения: версии матриц и черновые записи справочников.</dd>
+      <dt><b>Entry from</b></dt><dd>Вкладка «На согласовании» (руководители, HR, администраторы).</dd>
+      <dt><b>Exit to</b></dt><dd>Страница матрицы (ссылка в строке); строка черновика согласуется на месте.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="pg stack">
+        <div>
+          <div class="h2">Ждут моего согласования</div>
+          <div class="scroll"><table class="t">
+            <thead><tr><th>Матрица</th><th>Подразделение <span class="fi">▼</span></th><th>Шаг <span class="fi on">▼</span></th><th>Отправлена</th></tr></thead>
+            <tbody>
+              <tr><td><span class="lnk" style="margin:0;">Разработчик — Версия 3</span></td><td>Департамент разработки</td><td>HR</td><td>12.10.2026, 09:10</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div>
+          <div class="h2">Черновые записи</div>
+          <div class="scroll"><table class="t">
+            <thead><tr><th>Запись</th><th>Тип <span class="fi">▼</span></th><th>Подразделение <span class="fi">▼</span></th><th>Автор</th><th>Действия</th></tr></thead>
+            <tbody>
+              <tr><td>Командная работа</td><td>Компетенция</td><td>Общая</td><td>Петров Пётр Петрович</td><td><span class="lnk">Согласовать</span></td></tr>
+              <tr><td>Тестировщик</td><td>Трек</td><td>Департамент разработки</td><td>Иванов Иван Петрович</td><td><span class="lnk">Согласовать</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div class="row" style="gap:var(--ds-xl);align-items:flex-start;">
+          <div class="empty card" style="flex:1;"><b class="strong">Нет версий на согласовании</b></div>
+          <div class="empty card" style="flex:1;"><b class="strong">Черновых записей нет</b></div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Два раздела на одной вкладке</b>, оба с заголовком <code>heading-2</code>, друг под другом: «Ждут моего согласования» (столбцы «Матрица» — ссылка «{трек} — Версия {n}», «Подразделение», «Шаг» — «Вышестоящий руководитель» или «HR», «Отправлена») и «Черновые записи» (столбцы «Запись», «Тип» — «Направление», «Трек», «Категория», «Компетенция», «Шкала», «Подразделение» — «Общая», если записи без подразделения, «Автор», «Действия»). Списки целиком, без пагинатора; фильтры — в заголовках столбцов.</li>
+      <li>«Черновые записи» показываются только HR и администратору; ссылка «Согласовать» в строке — только тем, кто ведёт подразделение записи (для записей без подразделения — любому HR). После согласования запись становится действующей и из списка пропадает. Записи руководителя, использованные в версии матрицы, согласуются вместе с этой версией, когда HR её публикует.</li>
+      <li>Пусто — «Нет версий на согласовании» и «Черновых записей нет» (<code>empty-state</code>); при ошибке — предупреждение «Не удалось загрузить версии на согласовании» или «Не удалось загрузить черновые записи» с «Повторить».</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Подтверждения удаления и отказы с перечнем</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Перед физическим удалением спросить; при отказе назвать, что мешает, а не просто отказать.</dd>
+      <dt><b>Entry from</b></dt><dd>Действие «Удалить» в строке записи, в строке матрицы, на странице матрицы.</dd>
+      <dt><b>Exit to</b></dt><dd>Таблица (записи перечитаны); со страницы матрицы — раздел «Карьерная модель».</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="cols">
+        <div class="scrim"><div class="modal">
+          <div class="h3">Удалить трек «Разработчик»?</div>
+          <p style="margin:0 0 var(--ds-md);">Будут удалены и его уровни</p>
+          <div class="row" style="justify-content:flex-end;"><span class="btn dng">Удалить</span><span class="btn foc">Отмена</span></div>
+        </div></div>
+        <div class="scrim"><div class="modal">
+          <div class="h3"><span class="ic" style="color:var(--ds-danger);" aria-hidden="true">⊗</span> Направление используют треки, компетенции или матрицы — удалить нельзя</div>
+          <ul class="plain" style="margin-bottom:var(--ds-xs);">
+            <li>Трек «Разработчик» (Департамент разработки)</li>
+            <li>Компетенция «Безопасная разработка»</li>
+            <li>Матрица «Разработчик» — Департамент разработки</li>
+          </ul>
+          <p style="margin:0 0 var(--ds-md);">и 2 других связанных записи</p>
+          <div class="row" style="justify-content:flex-end;"><span class="btn pri foc">OK</span></div>
+        </div></div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Подтверждение.</b> Заголовок называет действие и запись: «Удалить {вид записи} «{название}»?» (виды: «направление», «трек», «уровень», «компетенцию», «шкалу», «матрицу», «категорию»). У трека ниже стоит «Будут удалены и его уровни». Главная кнопка — <code>button-danger</code> «Удалить», безопасная — «Отмена»; <b>фокус при открытии на «Отмене»</b>, чтобы Enter не удалил запись случайно.</li>
+      <li><b>Отказ (409) называет причину и перечисляет мешающие записи</b> — до пяти, вид и название («Трек «…» (подразделение)», «Матрица «…» — подразделение», «Компетенция «…»», «Версия компетенции «…»»; также «Направление», «Шкала», «Категория») — а ниже число остальных по правилам русского языка: «и 1 другая связанная запись», «и 2 других связанных записи», «и 5 других связанных записей». Записи, которых пользователь не видит, учитываются только в числе. Заголовок отказа — слова сервера: «Направление используют треки, компетенции или матрицы — удалить нельзя», «Трек используют матрицы — удалить нельзя», «Уровень используют матрицы — удалить нельзя», «Компетенцию используют матрицы — удалить нельзя», «Шкалу используют компетенции или матрицы — удалить нельзя», «Шкалу по умолчанию удалить нельзя», «Матрицу с опубликованными версиями удалить нельзя», «Категорию используют компетенции — удалить нельзя». Окно закрывается кнопкой «OK»; таблицы после отказа перечитываются, потому что список мог устареть.</li>
+      <li>Отказ без перечня (например, шкала по умолчанию) и любая иная ошибка показываются сообщением с причиной над страницей. Удалить может тот, кто может править запись (черновик — и его автор); матрицу — руководитель её подразделения и администратор; кнопку видят только они.</li>
+    </ul>
+  </article>
+
+  <article class="mockup">
+    <h3>Состояния: загрузка, ошибка, пусто</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Каждое нештатное состояние говорит, что произошло и что делать.</dd>
+      <dt><b>Entry from</b></dt><dd>Открытие вкладки или страницы матрицы; смена фильтра или страницы; сбой сети.</dd>
+      <dt><b>Exit to</b></dt><dd>Повтор запроса; создание первой записи.</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div class="cols">
+        <div class="pg">
+          <div class="cap">Таблица обновляется</div>
+          <table class="t"><thead><tr><th>Название</th><th>Статус</th></tr></thead><tbody>
+            <tr><td>Аналитика</td><td><span class="tag ok">Действует</span></td></tr>
+            <tr><td colspan="2" class="sec sm">Прежние данные остаются на месте, пока идёт запрос; поверх них индикатор</td></tr>
+          </tbody></table>
+        </div>
+        <div class="pg">
+          <div class="cap">Страница матрицы загружается</div>
+          <div class="sk"></div><div class="sk"></div><div class="sk"></div>
+        </div>
+        <div class="pg">
+          <div class="cap">Ошибка загрузки</div>
+          <div class="alert er"><span class="ic" aria-hidden="true">⊗</span><span style="flex:1;"><b class="strong">Не удалось загрузить матрицу</b><br>Нет связи с сервером. Проверьте подключение к сети и повторите попытку.</span><span class="btn">Повторить</span></div>
+        </div>
+        <div class="pg">
+          <div class="cap">Пустая вкладка</div>
+          <div class="empty card"><b class="strong">Категорий пока нет</b></div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>: заголовки ошибок называют, что не загрузилось: «Не удалось загрузить шкалы», «… категории», «… направления», «… треки», «… уровни», «… компетенции», «… матрицы», «… историю версий», «… вариант», «… матрицу», «Не удалось загрузить версии на согласовании», «… черновые записи»; под заголовком — причина, справа «Повторить». Пустые таблицы: «Категорий пока нет», «Направлений пока нет», «В треке пока нет уровней», «Компетенций пока нет», «Матриц пока нет», «Нет версий на согласовании», «Черновых записей нет»; у шкал и у таблицы треков в строке направления текст не задан — стандартное «Нет данных»; пустая таблица пагинатора не показывает. Страница матрицы до ответа — заглушка формы страницы (<code>skeleton</code>). Под reduced-motion заглушка не мерцает (DESIGN.md → Motion).</p>
+  </article>
+</section>
+
+<section id="interaction-patterns">
+  <h2>Паттерны взаимодействия</h2>
+  <ul>
+    <li><b>Один шаблон справочника.</b> Заголовок вкладки → главная кнопка «Добавить …» → таблица с фильтрами в заголовках → действия строки → окно с одним главным действием «Сохранить». Каждая вкладка устроена одинаково, различаются столбцы.</li>
+    <li><b>Права скрывают, сервер решает.</b> Кнопки и ссылки, на которые у пользователя нет прав, не показываются; сервер повторно проверяет каждый запрос.</li>
+    <li><b>Состояние сказано словами</b>: «Черновик», «Действует», «Неактивна», «По умолчанию», статусы версий, «Изменено согласующим», «Критическая»; цвет — только усиление, у чипа уровня всегда цифра.</li>
+    <li><b>Недоступное действие объясняет причину рядом с собой</b>: «Сначала сохраните изменения», «Сначала уберите компетенции блока», «Сначала выберите подразделение и направление». Подсказка-тултип единственным носителем не бывает.</li>
+    <li><b>Фокус окон.</b> При открытии окна фокус в первом поле; в окне без полей — на главной кнопке; в подтверждении необратимого действия — на «Отмене». Заголовок «Новая …» / «Изменение …» не повторяет названия записи.</li>
+    <li><b>Перетаскивание с запасным способом.</b> Порядок уровней меняется перетаскиванием строки и теми же движениями с клавиатуры; Escape отменяет движение и не закрывает окно.</li>
+    <li><b>Правки копятся и сохраняются разом.</b> Содержимое матрицы и уровни нового трека собираются в форме и записываются кнопкой «Сохранить»; пока есть несохранённое, переходы статуса недоступны, а сам редактор на время сохранения заблокирован.</li>
+    <li><b>Отказ называет причину.</b> Отказ удаления перечисляет мешающие записи; ошибка проверки версии перечисляет все недостающие места; ошибка поля стоит под полем.</li>
+    <li><b>Конфликты версий</b> (412): сообщение «Данные изменены другим пользователем. Показаны актуальные данные: проверьте их и повторите действие.», форма пересобирается по актуальной записи.</li>
+    <li><b>Широкие таблицы прокручиваются, не сжимаются</b>; первый столбец матрицы закреплён.</li>
+  </ul>
+</section>
+
+<section id="component-usage">
+  <h2>Использование компонентов</h2>
+  <p class="lede">Все экраны составлены из существующих токенов и компонентов DESIGN.md; новых компонентных токенов раздел не вводит. Значения, которых в DESIGN.md нет как токенов (ширина окна фильтра в 11 высот контрола, ширина поля балла в 3 высоты, ширина окна варианта <code>breakpoint-lg</code>), выводятся из токенов размера и не оформляются отдельными токенами.</p>
+  <table>
+    <thead><tr><th>Компонент</th><th>Где используется</th></tr></thead>
+    <tbody>
+      <tr><td><code>tab</code>, <code>tab-hover</code>, <code>tab-active</code> (antd <code>Tabs</code>)</td><td>Шесть вкладок раздела.</td></tr>
+      <tr><td><code>table-header</code>, <code>table-row</code>, <code>table-row-hover</code>, <code>pagination-item</code> (antd <code>Table</code>), вложенные таблицы <code>size="small"</code></td><td>Все таблицы справочников, вложенные строки (баллы, треки, уровни), «На согласовании».</td></tr>
+      <tr><td><code>tag-success</code>, <code>tag-warning</code>, <code>tag-neutral</code>, <code>tag-info</code>, <code>tag-danger</code></td><td>«Действует», «Черновик», «Неактивна», «По умолчанию», «Изменено согласующим», статусы версий (черновик и архив — нейтральный, на согласовании — информационный, возвращена — предупреждение, согласована и опубликована — успех), «Критическая» (с иконкой).</td></tr>
+      <tr><td><code>button-link</code>, <code>button-link-hover</code></td><td>Действия строк таблиц на <code>control-height-sm</code>.</td></tr>
+      <tr><td><code>modal</code>, <code>scrim</code>, <code>button-primary</code>, <code>button-default</code>, <code>button-danger</code>, <code>field-label</code>, <code>field-help</code>, <code>field-error</code>, <code>input</code></td><td>Окна записей, требования, выбора, возврата, истории; подтверждения удаления (<code>Modal.confirm</code>).</td></tr>
+      <tr><td><code>dropdown-item</code> (antd <code>Dropdown</code>, <code>Select</code>, <code>TreeSelect</code>)</td><td>Выбор записей справочника, окна фильтров столбцов, дерево подразделений.</td></tr>
+      <tr><td><code>matrix-header</code>, <code>matrix-name-cell</code>, <code>matrix-cell</code>, <code>rating-chip-0</code> … <code>rating-chip-4</code>, <code>matrix-row-height</code>, <code>matrix-cell-min-width</code>, <code>matrix-name-column-width</code></td><td>Таблица «компетенции × уровни» страницы матрицы и окна варианта; легенда уровней.</td></tr>
+      <tr><td><code>step-current</code>, <code>step-done</code>, <code>step-upcoming</code> (antd <code>Steps</code>, вертикальный)</td><td>Маршрут согласования версии.</td></tr>
+      <tr><td><code>warning-bg</code> (заливка ячейки), <code>alert-warning</code>, <code>alert-danger</code>, <code>alert-info</code></td><td>Изменённые согласующим ячейки; шкала в опубликованной матрице; ошибки сохранения и проверки версии; ошибки загрузки.</td></tr>
+      <tr><td><code>empty-state</code>, <code>skeleton</code>, <code>tooltip</code></td><td>Пустые таблицы, загрузка страницы матрицы, значение балла в чипе (дополнительно к цифре).</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</div>
+      </main>
+      <footer>by ASD workflow | 2026-10-12</footer>
+    </div>
+  </div>
+</body>
+</html>
