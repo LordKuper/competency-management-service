@@ -103,8 +103,9 @@ function serve() {
   );
 }
 
-async function openModal() {
+async function openModal(override: () => void = () => undefined) {
   serve();
+  override();
   render(
     <Providers>
       <MemoryRouter initialEntries={["/career"]}>
@@ -220,6 +221,75 @@ describe("starting a matrix (AC-14)", { timeout: LONG_FLOW_TIMEOUT }, () => {
       directionId: "direction",
       trackId: "t-department",
       scaleId: "scale",
+    });
+  });
+
+  it("says under the track which choices it waits for, until the unit and the direction are chosen", async () => {
+    const reason = "Сначала выберите подразделение и направление";
+    const user = await openModal();
+    expect(screen.getByText(reason)).toBeInTheDocument();
+
+    await choose(user, "Подразделение", "Команда");
+    expect(screen.getByText(reason)).toBeInTheDocument();
+
+    await choose(user, "Направление", "Разработка");
+    await waitFor(() =>
+      expect(screen.queryByText(reason)).not.toBeInTheDocument(),
+    );
+  });
+
+  it("finds a direction far past the first page by what is typed, since the search runs on the server", async () => {
+    const directions = Array.from({ length: 250 }, (_, index) => ({
+      id: `direction-${index + 1}`,
+      name: `Направление ${String(index + 1).padStart(3, "0")}`,
+      status: "Active",
+      version: 1,
+    }));
+    const user = await openModal(() =>
+      fakeApi.on("GET /api/v1/career/directions", (request) => {
+        const query = new URL(request.url).searchParams;
+        const text = (query.get("q") ?? "").toLowerCase();
+        const number = Number(query.get("page"));
+        const size = Number(query.get("pageSize"));
+        const found = directions.filter((item) =>
+          item.name.toLowerCase().includes(text),
+        );
+        return Response.json({
+          items: found.slice((number - 1) * size, number * size),
+          total: found.length,
+          page: number,
+          pageSize: size,
+        });
+      }),
+    );
+    const combobox = screen.getByRole("combobox", { name: "Направление" });
+
+    await user.click(combobox);
+    await user.keyboard("Направление 230");
+    await user.click(
+      await screen.findByText("Направление 230", {
+        selector: ".ant-select-item-option-content",
+      }),
+    );
+
+    expect(
+      within(combobox.closest(".ant-select") as HTMLElement).getByText(
+        "Направление 230",
+      ),
+    ).toBeInTheDocument();
+    const asked = fakeApi
+      .calls("GET /api/v1/career/directions")
+      .map((call) => Object.fromEntries(new URL(call.url).searchParams));
+    expect(asked[0]).toMatchObject({
+      page: "1",
+      pageSize: "20",
+      inWork: "true",
+    });
+    expect(asked.at(-1)).toMatchObject({
+      q: "Направление 230",
+      page: "1",
+      pageSize: "20",
+      inWork: "true",
     });
   });
 

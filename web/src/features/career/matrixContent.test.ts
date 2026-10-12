@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
   MatrixChange,
   MatrixContent,
   MatrixRequirement,
 } from "./matrixApi";
 import {
+  addBlock,
   cellKey,
   changedPlaces,
   hasCompetencies,
@@ -216,4 +217,24 @@ describe("the places an approver changed (AC-19)", () => {
     expect(places.requirementCells.size).toBe(0);
     expect(places.weightCells.size).toBe(0);
   });
+});
+
+describe("a new block gets an identifier on a page served over plain HTTP (AC-14)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it.each([
+    [0x00, "00000000-0000-4000-8000-000000000000"],
+    [0xff, "ffffffff-ffff-4fff-bfff-ffffffffffff"],
+  ])(
+    "builds a UUID v4 from random values alone, without crypto.randomUUID (bytes of %i)",
+    (byte, expected) => {
+      vi.stubGlobal("crypto", {
+        getRandomValues: (values: Uint8Array) => values.fill(byte),
+      });
+
+      const added = addBlock(content()).blocks.at(-1);
+
+      expect(added?.id).toBe(expected);
+    },
+  );
 });

@@ -158,6 +158,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   Element.prototype.scrollIntoView = originalScrollIntoView;
   restoreLayout();
   restoreLayout = () => undefined;
@@ -301,6 +302,94 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     expect(call?.headers.get("If-Match")).toBe('"3"');
     expect(await call?.json()).toEqual({ name: "Серверная разработка" });
     expect(served.steps).toEqual([]);
+  });
+
+  it("adds two levels to a new track and saves both on a page served over plain HTTP, where crypto.randomUUID does not exist", async () => {
+    const real = globalThis.crypto;
+    vi.stubGlobal("crypto", {
+      getRandomValues: real.getRandomValues.bind(real),
+    });
+    const served = serve();
+    const onClose = vi.fn();
+    render(
+      <Providers>
+        <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+      </Providers>,
+    );
+    const user = userEvent.setup();
+    await fillNewTrack(user, "Бэкенд");
+    await addLevel(user, "Младший");
+    await addLevel(user, "Старший");
+
+    await save(user);
+
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(served.steps).toEqual([
+      `track Бэкенд in ${SALES}`,
+      "level Младший of created",
+      "level Старший of created",
+    ]);
+  });
+
+  it("sends the version of the track it reread after a refusal for a stale version, not the one it saved before", async () => {
+    const served = serve();
+    served.levels.push(
+      savedLevel("level-1", "Младший", "existing"),
+      savedLevel("level-2", "Старший", "existing"),
+    );
+    fakeApi.on("PUT /api/v1/career/tracks/existing", async (request) => {
+      const body = await request.json();
+      return Response.json(track("existing", body.name, 4));
+    });
+    let refusals = 1;
+    fakeApi.on("PUT /api/v1/career/tracks/existing/level-order", () =>
+      refusals-- > 0
+        ? problem(412, { title: "Запись изменена" })
+        : Response.json(track("existing", "Серверная разработка", 7)),
+    );
+    const onClose = vi.fn();
+    const modal = (shown: CareerTrack) => (
+      <Providers>
+        <TrackModal
+          directionId={DIRECTION_ID}
+          track={shown}
+          onClose={onClose}
+        />
+      </Providers>
+    );
+    const view = render(modal(track("existing", "Бэкенд", 3)));
+    const user = userEvent.setup();
+    const name = await screen.findByRole("textbox", { name: "Название" });
+    await user.clear(name);
+    await user.type(name, "Серверная разработка");
+    restoreLayout = stubRowLayout();
+    const handle = await screen.findByRole("button", {
+      name: "Перетащить уровень «Старший»",
+    });
+    handle.focus();
+    await user.keyboard(" ");
+    await user.keyboard("{ArrowUp}");
+    await user.keyboard(" ");
+    await screen.findByText("Уровень «Старший» перемещён на позицию 1 из 2");
+
+    await save(user);
+
+    await screen.findByText("Не удалось сохранить запись");
+    view.rerender(modal(track("existing", "Серверная разработка", 6)));
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: "Название" })).toHaveValue(
+        "Серверная разработка",
+      ),
+    );
+    await save(user);
+
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(
+      fakeApi
+        .calls("PUT /api/v1/career/tracks/existing/level-order")
+        .map((call) => call.headers.get("If-Match")),
+    ).toEqual(['"4"', '"6"']);
+    expect(fakeApi.calls("PUT /api/v1/career/tracks/existing")).toHaveLength(1);
   });
 
   it("saves nothing when a track is opened and saved without a change", async () => {

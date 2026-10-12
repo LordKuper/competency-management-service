@@ -300,6 +300,34 @@ public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<Car
     }
 
     [Fact]
+    public async Task Ac17_TheVersionOnAMatrixRow_IsTheTagOfTheVersionInWork_AndADeleteThatSendsTheTagShownBeforeALaterChange_IsRefused()
+    {
+        var org = await fixture.OrgAsync();
+        var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
+        var path = $"/api/v1/career/matrices/{kit.MatrixId}";
+
+        async Task<int?> ReadAsync() => TagOf((await org.Admin.GetAsync(path)).Expect(HttpStatusCode.OK).Json);
+        async Task<int?> ListedAsync() =>
+            TagOf((await org.Admin.GetAsync($"/api/v1/career/matrices?trackId={kit.Track.Id}&pageSize=200")).Expect(HttpStatusCode.OK).Json!["items"]!.AsArray().Single());
+
+        var shown = await ListedAsync();
+        shown.Should().NotBeNull("the row of the list carries the tag of the version in work");
+        (await ReadAsync()).Should().Be(shown);
+        $"\"{shown}\"".Should().Be(await kit.ETagAsync(), "it is the tag the version is changed and deleted with");
+        (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
+        (await kit.TransitAsync(org.DepartmentHead.Client, "return", new { comment = "Назад" })).Expect(HttpStatusCode.OK);
+
+        var stale = await org.TeamHead.Client.DeleteAsync(path, $"\"{shown}\"");
+
+        stale.Status.Should().Be(HttpStatusCode.PreconditionFailed, stale.Body);
+        (await org.Plain.Client.GetAsync(path)).Status.Should().Be(HttpStatusCode.OK);
+        var current = await ListedAsync();
+        current.Should().BeGreaterThan(shown!.Value);
+        $"\"{current}\"".Should().Be(await kit.ETagAsync());
+        (await org.TeamHead.Client.DeleteAsync(path, $"\"{current}\"")).Expect(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
     public async Task Ac25_TheRefusal_NamesAtMostFiveRecordsInNameOrder_AndCountsTheOthers()
     {
         var org = await fixture.OrgAsync();
@@ -367,6 +395,8 @@ public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<Car
 
         wrong.Should().BeEmpty();
     }
+
+    private static int? TagOf(JsonNode? matrix) => matrix?["inWorkVersion"]?["version"]?.GetValue<int>();
 
     private static string[] Blockers(ApiResponse refusal) =>
         [.. refusal.Json!["blockers"]!.AsArray().Select(blocker => $"{blocker!["kind"]!.GetValue<string>()}:{blocker["name"]!.GetValue<string>()}")];

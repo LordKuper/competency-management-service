@@ -73,8 +73,9 @@ function serve() {
   );
 }
 
-function open(competency?: Competency) {
+function open(competency?: Competency, override: () => void = () => undefined) {
   serve();
+  override();
   render(
     <Providers>
       <CompetencyModal competency={competency} onClose={() => undefined} />
@@ -159,6 +160,57 @@ describe("scale of a new competency (AC-22)", {
     expect(
       await fakeApi.calls("POST /api/v1/career/competencies")[0]?.json(),
     ).toMatchObject({ scaleId: OTHER_SCALE.id });
+  });
+
+  it("asks the server for the default scale, and starts with it even when it is not the first scale on the list", async () => {
+    const user = open(undefined, () =>
+      fakeApi.on("GET /api/v1/career/scales", (request) =>
+        Response.json(
+          page(
+            new URL(request.url).searchParams.get("isDefault") === "true"
+              ? [BASE_SCALE]
+              : [OTHER_SCALE, BASE_SCALE],
+          ),
+        ),
+      ),
+    );
+    await fillRequiredFields(user);
+
+    await waitFor(() =>
+      expect(
+        within(
+          screen
+            .getByRole("combobox", { name: "Шкала" })
+            .closest(".ant-select") as HTMLElement,
+        ).getByText(BASE_SCALE.name),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("shows by name the direction of an existing competency that the first page of directions does not hold", async () => {
+    open({ ...EXISTING, directionId: "far" }, () =>
+      fakeApi.on("GET /api/v1/career/directions/far", () =>
+        Response.json({
+          id: "far",
+          name: "Дальнее направление",
+          status: "Inactive",
+          version: 1,
+          canEdit: false,
+          canDelete: false,
+        }),
+      ),
+    );
+    await screen.findByDisplayValue("Проектирование");
+
+    await waitFor(() =>
+      expect(
+        within(
+          screen
+            .getByRole("combobox", { name: "Направление" })
+            .closest(".ant-select") as HTMLElement,
+        ).getByText("Дальнее направление"),
+      ).toBeInTheDocument(),
+    );
   });
 
   it("leaves the scale of an existing competency alone and saves against its version", async () => {

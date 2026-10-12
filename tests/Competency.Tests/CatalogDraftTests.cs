@@ -76,6 +76,41 @@ public sealed class CatalogDraftTests(CareerHost fixture) : IClassFixture<Career
         listed.Should().NotContain([approved.Id, deleted.Id]);
     }
 
+    [Fact]
+    public async Task Ac17_ARowOfTheDraftList_CarriesTheTagOfTheEntry_AndApprovalThatSendsTheTagShownBeforeALaterChange_IsRefused()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var direction = await org.Admin.MakeDirectionAsync();
+        var head = org.TeamHead.Client;
+        var drafts = new[]
+        {
+            ("directions", (await head.PostAsync("/api/v1/career/directions", new { name = Scenarios.Unique("Направление") })).Expect(HttpStatusCode.Created)),
+            ("tracks", await head.MakeTrackAsync(org.Team.Id, direction.Id)),
+        };
+
+        foreach (var (segment, draft) in drafts)
+        {
+            var path = $"/api/v1/career/{segment}/{draft.Id}";
+
+            async Task<int?> ShownAsync() =>
+                (await org.Hr.Client.GetAsync("/api/v1/career/drafts")).Expect(HttpStatusCode.OK).Json!.AsArray()
+                    .Single(row => row!["id"]!.GetValue<Guid>() == draft.Id)!["version"]?.GetValue<int>();
+
+            var shown = await ShownAsync();
+            shown.Should().NotBeNull(segment);
+            $"\"{shown}\"".Should().Be(draft.ETag, $"{segment}: the row carries the tag the entry is approved with");
+            var renamed = (await head.PutAsync(path, new { name = Scenarios.Unique("Правка") }, draft.ETag)).Expect(HttpStatusCode.OK);
+
+            var stale = await org.Hr.Client.PostAsync($"{path}/approve", ifMatch: $"\"{shown}\"");
+
+            stale.Status.Should().Be(HttpStatusCode.PreconditionFailed, $"{segment}: {stale.Body}");
+            (await org.Admin.GetAsync(path)).Expect(HttpStatusCode.OK).Json!["status"]!.GetValue<string>().Should().Be("Draft", segment);
+            var current = await ShownAsync();
+            $"\"{current}\"".Should().Be(renamed.ETag, segment);
+            (await org.Hr.Client.PostAsync($"{path}/approve", ifMatch: $"\"{current}\"")).Expect(HttpStatusCode.OK);
+        }
+    }
+
     private async Task<Drafts> DraftsAsync(CareerOrg org)
     {
         var direction = await org.Admin.MakeDirectionAsync();

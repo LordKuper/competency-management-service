@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { careerQueryKey } from "./careerApi";
 import { MatrixPage } from "./MatrixPage";
@@ -51,12 +51,18 @@ function version(fields: Partial<MatrixVersion> = {}): MatrixVersion {
 
 function serve(
   shown: MatrixVersion,
-  { heads = false, published = false, inWork = true } = {},
+  {
+    heads = false,
+    published = false,
+    inWork = true,
+    inWorkTag = VERSION_TAG,
+  } = {},
 ) {
   const ref = (status: MatrixVersion["status"]) => ({
     id: shown.id,
     number: shown.number,
     status,
+    version: inWorkTag,
   });
   fakeApi.on("GET /api/v1/career/me", () =>
     Response.json({ headedUnits: heads ? [UNIT] : [], hrUnits: [] }),
@@ -113,6 +119,13 @@ async function openPage() {
   );
   await act(async () => undefined);
   return userEvent.setup();
+}
+
+async function dialogTitled(title: string) {
+  const [heading] = await screen.findAllByText(title, {
+    selector: ".ant-modal-title",
+  });
+  return heading?.closest('[role="dialog"]') as HTMLElement;
 }
 
 const afterAction = () => version({ status: "Published", step: null });
@@ -448,6 +461,243 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
       ),
     ).toHaveLength(0);
   });
+
+  it("lists in words what the approver added, removed and changed, with the value before and after, and names a competency that left the version", async () => {
+    const before = {
+      ...returned().content,
+      levels: [{ levelId: JUNIOR_LEVEL, minOverallPercent: 50 }],
+    };
+    const after = {
+      ...before,
+      levels: [{ levelId: JUNIOR_LEVEL, minOverallPercent: 75 }],
+      blocks: [
+        ...before.blocks,
+        { id: "extra", name: "Дополнительные", isMandatory: false },
+      ],
+      competencies: [],
+      requirements: [],
+    };
+    const shown = returned();
+    serve({
+      ...shown,
+      content: after,
+      entries: { ...shown.entries, competencies: [] },
+    });
+    fakeApi.on(`GET /api/v1/career/matrix-versions/${VERSION_ID}/history`, () =>
+      Response.json({
+        variants: [variant(1, "Author"), variant(2, "Approver")],
+        decisions: [],
+      }),
+    );
+    fakeApi.on(
+      `GET /api/v1/career/matrix-versions/${VERSION_ID}/variants/2/diff`,
+      () =>
+        Response.json({
+          number: 2,
+          previousNumber: 1,
+          before,
+          after,
+          changes: [
+            {
+              kind: "Level",
+              type: "Changed",
+              levelId: JUNIOR_LEVEL,
+              blockId: null,
+              competencyId: null,
+            },
+            {
+              kind: "Block",
+              type: "Added",
+              levelId: null,
+              blockId: "extra",
+              competencyId: null,
+            },
+            {
+              kind: "Competency",
+              type: "Removed",
+              levelId: null,
+              blockId: null,
+              competencyId: DESIGN,
+            },
+            {
+              kind: "Requirement",
+              type: "Removed",
+              levelId: JUNIOR_LEVEL,
+              blockId: null,
+              competencyId: DESIGN,
+            },
+          ],
+        }),
+    );
+    fakeApi.on(`GET /api/v1/career/competencies/${DESIGN}`, () =>
+      Response.json({
+        id: DESIGN,
+        name: "Проектирование",
+        description: null,
+        categoryId: "category",
+        directionId: null,
+        type: "Profile",
+        scaleId: "scale",
+        status: "Active",
+        createdAt: "2026-10-01T10:00:00Z",
+        versionNumber: 1,
+        version: 1,
+        canEdit: false,
+        canDelete: false,
+      }),
+    );
+    await openPage();
+
+    expect(
+      await screen.findByText("Изменено: уровень «Младший»"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Было: Минимальный общий порог: 50 %"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Стало: Минимальный общий порог: 75 %"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Добавлено: блок «Дополнительные»"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Стало: «Дополнительные»")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Удалено: компетенция «Проектирование»"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Было: Блок «Основные»")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Удалено: требование «Проектирование», уровень «Младший»",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Было: Требуемый уровень: 2; Тип: Профильная; Вес: 1"),
+    ).toBeInTheDocument();
+  });
+
+  describe("the history of a version", () => {
+    const earlier = () => {
+      const shown = returned();
+      return {
+        ...shown,
+        content: {
+          ...shown.content,
+          levels: [{ levelId: JUNIOR_LEVEL, minOverallPercent: 40 }],
+        },
+      };
+    };
+
+    function serveHistory() {
+      serve(returned());
+      fakeApi.on(
+        `GET /api/v1/career/matrix-versions/${VERSION_ID}/history`,
+        () =>
+          Response.json({
+            variants: [variant(1, "Author"), variant(2, "Approver")],
+            decisions: [],
+          }),
+      );
+    }
+
+    it("opens a variant read-only, as «Вариант {n}», with what the approver changed in it", async () => {
+      serveHistory();
+      fakeApi.on(
+        `GET /api/v1/career/matrix-versions/${VERSION_ID}/variants/1`,
+        () =>
+          Response.json({
+            ...variant(1, "Author"),
+            content: earlier().content,
+          }),
+      );
+      const user = await openPage();
+
+      await user.click(screen.getByRole("button", { name: "История" }));
+      const history = await dialogTitled("История");
+      await user.click(within(history).getByRole("button", { name: /Автор/ }));
+
+      const opened = await dialogTitled("Вариант 1");
+      expect(
+        await within(opened).findByText("Проектирование"),
+      ).toBeInTheDocument();
+      expect(
+        within(opened).queryByRole("button", { name: "Сохранить" }),
+      ).not.toBeInTheDocument();
+      expect(within(opened).queryByRole("spinbutton")).not.toBeInTheDocument();
+      expect(
+        fakeApi.calls(
+          `GET /api/v1/career/matrix-versions/${VERSION_ID}/variants/1/diff`,
+        ),
+      ).toHaveLength(0);
+    });
+
+    it("shows in an approver's variant what the approver changed in it", async () => {
+      const content = (threshold: number) => ({
+        ...returned().content,
+        levels: [{ levelId: JUNIOR_LEVEL, minOverallPercent: threshold }],
+      });
+      serveHistory();
+      fakeApi.on(
+        `GET /api/v1/career/matrix-versions/${VERSION_ID}/variants/2`,
+        () =>
+          Response.json({ ...variant(2, "Approver"), content: content(60) }),
+      );
+      fakeApi.on(
+        `GET /api/v1/career/matrix-versions/${VERSION_ID}/variants/2/diff`,
+        () =>
+          Response.json({
+            number: 2,
+            previousNumber: 1,
+            before: content(40),
+            after: content(60),
+            changes: [
+              {
+                kind: "Level",
+                type: "Changed",
+                levelId: JUNIOR_LEVEL,
+                blockId: null,
+                competencyId: null,
+              },
+            ],
+          }),
+      );
+      const user = await openPage();
+
+      await user.click(screen.getByRole("button", { name: "История" }));
+      const history = await dialogTitled("История");
+      await user.click(
+        within(history).getByRole("button", { name: /Согласующий/ }),
+      );
+
+      const opened = await dialogTitled("Вариант 2");
+      expect(
+        await within(opened).findByText("Изменено: уровень «Младший»"),
+      ).toBeInTheDocument();
+      expect(
+        within(opened).getByText("Было: Минимальный общий порог: 40 %"),
+      ).toBeInTheDocument();
+      expect(
+        within(opened).getByText("Стало: Минимальный общий порог: 60 %"),
+      ).toBeInTheDocument();
+    });
+
+    it("says when a variant cannot be loaded", async () => {
+      serveHistory();
+      fakeApi.on(
+        `GET /api/v1/career/matrix-versions/${VERSION_ID}/variants/1`,
+        () => problem(500, { title: "Сбой" }),
+      );
+      const user = await openPage();
+
+      await user.click(screen.getByRole("button", { name: "История" }));
+      const history = await dialogTitled("История");
+      await user.click(within(history).getByRole("button", { name: /Автор/ }));
+
+      const opened = await dialogTitled("Вариант 1");
+      expect(
+        await within(opened).findByText("Не удалось загрузить вариант"),
+      ).toBeInTheDocument();
+    });
+  });
 });
 
 describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
@@ -458,8 +708,8 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
   const draft = () =>
     version({ status: "Draft", step: null, actions: ["Edit", "Submit"] });
 
-  function serveEditor() {
-    serve(draft());
+  function serveEditor(shown = draft()) {
+    serve(shown);
     fakeApi.on("GET /api/v1/career/levels", () =>
       Response.json({ items: [], total: 0, page: 1, pageSize: 200 }),
     );
@@ -468,7 +718,7 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     );
     fakeApi.on(CONTENT_ROUTE, async (request) =>
       Response.json({
-        ...draft(),
+        ...shown,
         content: await request.json(),
         version: VERSION_TAG + 1,
       }),
@@ -525,5 +775,266 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
       screen.queryByRole("button", { name: "Добавить блок" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+  });
+
+  describe("while the form has edits that are not saved (AC-15, AC-17)", () => {
+    const UNSAVED_REASON = "Сначала сохраните изменения";
+    const SUBMIT = "Отправить на согласование";
+    const THRESHOLD = "Минимальный общий порог: Младший";
+
+    it("holds the hand-over back, says why, and frees it once the edits are saved", async () => {
+      const submitRoute = `POST /api/v1/career/matrix-versions/${VERSION_ID}/submit`;
+      serveEditor();
+      fakeApi.on(submitRoute, () => Response.json(afterAction()));
+      const user = await openPage();
+      const threshold = await screen.findByRole("spinbutton", {
+        name: THRESHOLD,
+      });
+      expect(screen.getByRole("button", { name: SUBMIT })).toBeEnabled();
+      expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
+
+      await user.type(threshold, "60");
+
+      expect(screen.getByRole("button", { name: SUBMIT })).toBeDisabled();
+      expect(screen.getByText(UNSAVED_REASON)).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: SUBMIT }));
+      expect(fakeApi.calls(submitRoute)).toHaveLength(0);
+
+      await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: SUBMIT })).toBeEnabled(),
+      );
+      expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: SUBMIT }));
+      await waitFor(() => expect(fakeApi.calls(submitRoute)).toHaveLength(1));
+    });
+
+    it("holds the hand-over back while a save is in flight, even when nothing was changed", async () => {
+      const held = deferred<Response>();
+      serveEditor();
+      fakeApi.on(CONTENT_ROUTE, () => held.promise);
+      const user = await openPage();
+      await screen.findByRole("spinbutton", { name: THRESHOLD });
+
+      await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: SUBMIT })).toBeDisabled(),
+      );
+      expect(screen.getByText(UNSAVED_REASON)).toBeInTheDocument();
+      held.resolve(Response.json({ ...draft(), version: VERSION_TAG + 1 }));
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: SUBMIT })).toBeEnabled(),
+      );
+      expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
+    });
+
+    it("holds an approval and a return back too, for an approver who changed the content", async () => {
+      serveEditor(
+        version({
+          status: "OnReview",
+          step: "Superior",
+          actions: ["Edit", "Approve", "Return"],
+        }),
+      );
+      const user = await openPage();
+
+      await user.type(
+        await screen.findByRole("spinbutton", { name: THRESHOLD }),
+        "60",
+      );
+
+      expect(
+        screen.getByRole("button", { name: "Согласовать" }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Вернуть с правками" }),
+      ).toBeDisabled();
+      expect(screen.getByText(UNSAVED_REASON)).toBeInTheDocument();
+    });
+
+    it("gives the reason only where there is a blocked button to explain, not when the user can only edit", async () => {
+      serveEditor(version({ status: "Draft", step: null, actions: ["Edit"] }));
+      const user = await openPage();
+
+      await user.type(
+        await screen.findByRole("spinbutton", { name: THRESHOLD }),
+        "60",
+      );
+
+      expect(screen.getByRole("button", { name: "Сохранить" })).toBeEnabled();
+      expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
+    });
+
+    it("says nothing and holds nothing back for a version the user cannot edit", async () => {
+      serve(version({ status: "OnReview", actions: ["Approve"] }));
+      await openPage();
+
+      expect(screen.getByRole("button", { name: "Согласовать" })).toBeEnabled();
+      expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
+    });
+  });
+
+  it("says why a block that still has competencies cannot be deleted, and only beside that block", async () => {
+    const shown = draft();
+    serveEditor({
+      ...shown,
+      content: {
+        ...shown.content,
+        blocks: [
+          { id: "core", name: "Основные", isMandatory: true },
+          { id: "extra", name: "Дополнительные", isMandatory: false },
+        ],
+        competencies: [{ competencyId: "design", blockId: "core" }],
+      },
+      entries: {
+        ...shown.entries,
+        competencies: [
+          {
+            id: "design",
+            name: "Проектирование",
+            description: null,
+            categoryId: "category",
+            categoryName: "Профессиональные",
+            directionId: null,
+            type: "Profile",
+            versionNumber: 1,
+            status: "Active",
+          },
+        ],
+      },
+    });
+    await openPage();
+
+    await screen.findByText("Сначала уберите компетенции блока");
+    const removals = screen.getAllByLabelText("Название блока").map((name) =>
+      within(name.closest("tr") as HTMLElement).getByRole("button", {
+        name: "Удалить",
+      }),
+    );
+    expect(removals.map((button) => button.hasAttribute("disabled"))).toEqual([
+      true,
+      false,
+    ]);
+    expect(
+      within(removals[0]?.closest("tr") as HTMLElement).getByText(
+        "Сначала уберите компетенции блока",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Сначала уберите компетенции блока"),
+    ).toHaveLength(1);
+  });
+
+  it("offers the competencies a matrix of this version may use, searched on the server, and not those already in it", async () => {
+    const shown = draft();
+    const competency = (id: string, name: string) => ({
+      id,
+      name,
+      description: null,
+      categoryId: "category",
+      directionId: null,
+      type: "Profile",
+      scaleId: "scale",
+      status: "Active",
+      createdAt: "2026-10-01T10:00:00Z",
+      versionNumber: 1,
+      version: 1,
+      canEdit: false,
+      canDelete: false,
+    });
+    serveEditor({
+      ...shown,
+      content: {
+        ...shown.content,
+        blocks: [{ id: "core", name: "Основные", isMandatory: true }],
+        competencies: [{ competencyId: "design", blockId: "core" }],
+      },
+      entries: {
+        ...shown.entries,
+        competencies: [
+          {
+            id: "design",
+            name: "Проектирование",
+            description: null,
+            categoryId: "category",
+            categoryName: "Профессиональные",
+            directionId: null,
+            type: "Profile",
+            versionNumber: 1,
+            status: "Active",
+          },
+        ],
+      },
+    });
+    fakeApi.on("GET /api/v1/career/competencies", () =>
+      Response.json({
+        items: [
+          competency("design", "Проектирование"),
+          competency("testing", "Тестирование"),
+        ],
+        total: 2,
+        page: 1,
+        pageSize: 20,
+      }),
+    );
+    const user = await openPage();
+
+    await user.click(
+      await screen.findByRole("button", { name: "Добавить компетенцию" }),
+    );
+    const dialog = await dialogTitled("Добавить компетенцию");
+    await user.click(
+      within(dialog).getByRole("combobox", { name: "Компетенции" }),
+    );
+
+    expect(
+      await screen.findByText("Тестирование", {
+        selector: ".ant-select-item-option-content",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Проектирование", {
+        selector: ".ant-select-item-option-content",
+      }),
+    ).not.toBeInTheDocument();
+    const asked = fakeApi.calls("GET /api/v1/career/competencies").at(-1);
+    expect(Object.fromEntries(new URL(asked?.url ?? "").searchParams)).toEqual({
+      scaleId: "scale",
+      directionId: "direction",
+      withGeneral: "true",
+      inWork: "true",
+      page: "1",
+      pageSize: "20",
+    });
+  });
+
+  it("deletes the matrix against the tag of the version the page shows, not a fresher one read on the way", async () => {
+    const route = "DELETE /api/v1/career/matrices/matrix";
+    serve(draft(), { heads: true, inWorkTag: VERSION_TAG - 1 });
+    fakeApi.on(route, () => new Response(null, { status: 204 }));
+    fakeApi.on("GET /api/v1/career/matrices", () =>
+      Response.json({ items: [], total: 0, page: 1, pageSize: 20 }),
+    );
+    const user = await openPage();
+    fakeApi.on(`GET /api/v1/career/matrix-versions/${VERSION_ID}`, () =>
+      Response.json({ ...draft(), version: VERSION_TAG + 1 }),
+    );
+
+    const [matrixDeletion] = await screen.findAllByRole("button", {
+      name: "Удалить",
+    });
+    await user.click(matrixDeletion as HTMLElement);
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Удалить",
+      }),
+    );
+
+    await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
+    expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe(
+      `"${VERSION_TAG}"`,
+    );
   });
 });
