@@ -590,6 +590,5 @@
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
-  "archived_at": null,
-  "artifacts": {}
+  "archived_at": null
 }
