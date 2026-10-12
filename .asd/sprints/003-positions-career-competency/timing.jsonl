@@ -348,3 +348,4 @@
 {"op":"close","id":"design-promote#2","kind":"phase","parent":null,"start":"2026-10-12T12:52:42.083Z","end":"2026-10-12T12:54:32.378Z","outcome":"done","attrs":{}}
 {"op":"close","id":"design-promote ux","kind":"dispatch","parent":"design-promote#1","start":"2026-10-12T11:17:07.008Z","end":"2026-10-12T12:55:12.568Z","outcome":"done","attrs":{"agent":"asd-ux"}}
 {"op":"open","id":"pr#1","kind":"phase","parent":null,"start":"2026-10-12T13:07:45.386Z","attrs":{}}
+{"op":"close","id":"pr#1","kind":"phase","parent":null,"start":"2026-10-12T13:07:45.386Z","end":"2026-10-12T13:08:36.115Z","outcome":"done","attrs":{}}

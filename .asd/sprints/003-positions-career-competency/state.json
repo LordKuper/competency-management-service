@@ -208,6 +208,13 @@
       "reason": "wave 3 re-approved after Task 22 (combined iter-05, external iter-04); terminal full suite green (backend 511/511, web 369/369, lint, build); manual rows all pass; no open choices",
       "evidence": "decisions-log.md 2026-10-12 terminal suite 712169a",
       "artifact_revision": "HEAD 712169a"
+    },
+    {
+      "gate": "PR publication",
+      "decision_actor": "user",
+      "decision": "open PR #6 to main",
+      "reason": "user: «Открыть PR»; merge after the user review",
+      "evidence": "decisions-log.md 2026-10-12 PR #6"
     }
   ],
   "task_routing": {
@@ -589,6 +596,10 @@
   "updated_at": "2026-10-11T23:02:34.771Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
-  "pr": null,
+  "pr": {
+    "number": 6,
+    "url": "https://github.com/LordKuper/competency-management-service/pull/6",
+    "state": "open"
+  },
   "archived_at": null
 }
