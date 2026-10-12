@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import {
   Button,
+  ConfigProvider,
   Flex,
   InputNumber,
   Select,
@@ -89,7 +90,8 @@ interface MatrixEditorProps {
 
 /**
  * The competency-by-level grid with the blocks and thresholds of a version. It is editable when the version's
- * actions allow, and then keeps the edits in the form until they are saved.
+ * actions allow, and then keeps the edits in the form until they are saved. While a save is in flight its controls are
+ * disabled, so nothing typed then is lost when the saved version replaces the form.
  */
 export function MatrixEditor(props: MatrixEditorProps) {
   const { base, noteSaveFailure } = useEditBase(props.version);
@@ -305,6 +307,7 @@ function MatrixEditorBody({
       <button
         type="button"
         className="matrix-cell-button"
+        disabled={save.isPending}
         aria-label={`${competencies.get(competencyId)?.name}, ${levelName}`}
         onClick={() =>
           setDialog({ kind: "requirement", levelId, competencyId })
@@ -369,133 +372,135 @@ function MatrixEditorBody({
   const requested = dialog?.kind === "requirement" ? dialog : null;
 
   return (
-    <Space orientation="vertical" size="large" style={{ display: "flex" }}>
-      {isEditable && (
-        <Flex gap="small" wrap>
-          <Button onClick={() => setDialog({ kind: "competency" })}>
-            Добавить компетенцию
-          </Button>
-          <Button onClick={() => setDialog({ kind: "level" })}>
-            Добавить уровень
-          </Button>
-          <Button
-            type="primary"
-            loading={save.isPending}
-            onClick={() => save.mutate()}
-          >
-            Сохранить
-          </Button>
-        </Flex>
-      )}
-      {save.error != null && (
-        <MatrixErrorAlert
-          title="Не удалось сохранить запись"
-          error={save.error}
-        />
-      )}
-      {diff && (
-        <MatrixChanges
-          diff={diff}
-          levelNames={levelNames}
-          competencyNames={
-            new Map(
-              [...competencies].map(([id, competency]) => [
-                id,
-                competency.name,
-              ]),
-            )
-          }
-          scalePoints={entries.scale.points}
-        />
-      )}
-      <ul className="matrix-legend">
-        {entries.scale.points.map((point) => (
-          <li key={point.score}>
-            <span
-              className={`rating-chip rating-chip--${chipLevel(point.score)}`}
+    <ConfigProvider componentDisabled={save.isPending}>
+      <Space orientation="vertical" size="large" style={{ display: "flex" }}>
+        {isEditable && (
+          <Flex gap="small" wrap>
+            <Button onClick={() => setDialog({ kind: "competency" })}>
+              Добавить компетенцию
+            </Button>
+            <Button onClick={() => setDialog({ kind: "level" })}>
+              Добавить уровень
+            </Button>
+            <Button
+              type="primary"
+              loading={save.isPending}
+              onClick={() => save.mutate()}
             >
-              {point.score}
-            </span>
-            {point.label}
-          </li>
-        ))}
-      </ul>
-      <Table<GridRow>
-        className="matrix-grid"
-        rowKey="key"
-        columns={columns}
-        dataSource={rows}
-        pagination={false}
-        scroll={{ x: "max-content" }}
-        rowClassName={(row) =>
-          row.competencyId && changed.competencies.has(row.competencyId)
-            ? "matrix-changed-row"
-            : ""
-        }
-      />
-      <MatrixBlocks
-        content={shown}
-        levelIds={shownLevelIds}
-        levelNames={levelNames}
-        changed={changed}
-        isEditable={isEditable}
-        onChange={setEdited}
-      />
-      {dialog?.kind === "level" && (
-        <AddLevelModal
-          options={levelOptions}
-          isLoading={catalogLevels.isFetching}
-          onPick={(levelId) => {
-            setEdited(addLevel(edited, levelId));
-            setDialog(null);
-          }}
-          onClose={() => setDialog(null)}
-        />
-      )}
-      {dialog?.kind === "competency" && (
-        <AddCompetencyModal
-          filters={competencyFilters}
-          usedIds={shown.competencies.map((item) => item.competencyId)}
-          blocks={blockOptions}
-          onPick={(competencyId, blockId) => {
-            setEdited(addCompetency(edited, competencyId, blockId));
-            setDialog(null);
-          }}
-          onClose={() => setDialog(null)}
-        />
-      )}
-      {requested && (
-        <RequirementModal
-          title={`${competencies.get(requested.competencyId)?.name}, ${levelNames.get(requested.levelId)}`}
-          levelId={requested.levelId}
-          competencyId={requested.competencyId}
-          requirement={requirementOf(
-            shown,
-            requested.levelId,
-            requested.competencyId,
-          )}
-          defaultType={
-            competencies.get(requested.competencyId)?.type ?? "Profile"
+              Сохранить
+            </Button>
+          </Flex>
+        )}
+        {save.error != null && (
+          <MatrixErrorAlert
+            title="Не удалось сохранить запись"
+            error={save.error}
+          />
+        )}
+        {diff && (
+          <MatrixChanges
+            diff={diff}
+            levelNames={levelNames}
+            competencyNames={
+              new Map(
+                [...competencies].map(([id, competency]) => [
+                  id,
+                  competency.name,
+                ]),
+              )
+            }
+            scalePoints={entries.scale.points}
+          />
+        )}
+        <ul className="matrix-legend">
+          {entries.scale.points.map((point) => (
+            <li key={point.score}>
+              <span
+                className={`rating-chip rating-chip--${chipLevel(point.score)}`}
+              >
+                {point.score}
+              </span>
+              {point.label}
+            </li>
+          ))}
+        </ul>
+        <Table<GridRow>
+          className="matrix-grid"
+          rowKey="key"
+          columns={columns}
+          dataSource={rows}
+          pagination={false}
+          scroll={{ x: "max-content" }}
+          rowClassName={(row) =>
+            row.competencyId && changed.competencies.has(row.competencyId)
+              ? "matrix-changed-row"
+              : ""
           }
-          scalePoints={entries.scale.points}
-          isEditable={isEditable}
-          onSave={(requirement) => {
-            setEdited(withRequirement(edited, requirement));
-            setDialog(null);
-          }}
-          onRemove={() => {
-            setEdited(
-              withoutRequirement(
-                edited,
-                requested.levelId,
-                requested.competencyId,
-              ),
-            );
-            setDialog(null);
-          }}
-          onClose={() => setDialog(null)}
         />
-      )}
-    </Space>
+        <MatrixBlocks
+          content={shown}
+          levelIds={shownLevelIds}
+          levelNames={levelNames}
+          changed={changed}
+          isEditable={isEditable}
+          onChange={setEdited}
+        />
+        {dialog?.kind === "level" && (
+          <AddLevelModal
+            options={levelOptions}
+            isLoading={catalogLevels.isFetching}
+            onPick={(levelId) => {
+              setEdited(addLevel(edited, levelId));
+              setDialog(null);
+            }}
+            onClose={() => setDialog(null)}
+          />
+        )}
+        {dialog?.kind === "competency" && (
+          <AddCompetencyModal
+            filters={competencyFilters}
+            usedIds={shown.competencies.map((item) => item.competencyId)}
+            blocks={blockOptions}
+            onPick={(competencyId, blockId) => {
+              setEdited(addCompetency(edited, competencyId, blockId));
+              setDialog(null);
+            }}
+            onClose={() => setDialog(null)}
+          />
+        )}
+        {requested && (
+          <RequirementModal
+            title={`${competencies.get(requested.competencyId)?.name}, ${levelNames.get(requested.levelId)}`}
+            levelId={requested.levelId}
+            competencyId={requested.competencyId}
+            requirement={requirementOf(
+              shown,
+              requested.levelId,
+              requested.competencyId,
+            )}
+            defaultType={
+              competencies.get(requested.competencyId)?.type ?? "Profile"
+            }
+            scalePoints={entries.scale.points}
+            isEditable={isEditable}
+            onSave={(requirement) => {
+              setEdited(withRequirement(edited, requirement));
+              setDialog(null);
+            }}
+            onRemove={() => {
+              setEdited(
+                withoutRequirement(
+                  edited,
+                  requested.levelId,
+                  requested.competencyId,
+                ),
+              );
+              setDialog(null);
+            }}
+            onClose={() => setDialog(null)}
+          />
+        )}
+      </Space>
+    </ConfigProvider>
   );
 }

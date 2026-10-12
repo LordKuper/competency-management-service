@@ -60,8 +60,12 @@
   cursor: pointer;
 }
 
-.matrix-cell-button:hover {
+.matrix-cell-button:hover:not(:disabled) {
   background: var(--ant-color-primary-bg);
+}
+
+.matrix-cell-button:disabled {
+  cursor: not-allowed;
 }
 
 .rating-chip {
