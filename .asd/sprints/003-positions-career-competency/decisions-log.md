@@ -261,3 +261,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — impl-test entry 7: оркестратор уточнил строку Manual verification AC-19 (меню «…» строки — светлый `dropdown-item` по DESIGN.md, тёмное — только подменю «Администрирование» в шапке) и HEAD в Suite run
 - 2026-10-12 — impl-test entry 7 smoke check: Manual verification п.6 (AC-19: меню «…», подменю «Администрирование», пустые таблицы) — pass, пользователь
 - 2026-10-12 — impl-test: impacted set green (полный web-набор по предохранителю: 369/369; backend не затронут), 15/0 tests (entry 7)
+- 2026-10-12 — impl-review wave-3/iter-04: порог low (iteration 4 − A 3 по floor_base=wave-3/3), область — Task 22 и тесты записи 7

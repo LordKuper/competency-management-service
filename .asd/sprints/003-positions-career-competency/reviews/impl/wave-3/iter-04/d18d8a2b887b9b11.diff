@@ -1,0 +1,767 @@
+diff --git a/.claude/agent-memory/asd-tester/MEMORY.md b/.claude/agent-memory/asd-tester/MEMORY.md
+index d1acdf4..43ad0ef 100644
+--- a/.claude/agent-memory/asd-tester/MEMORY.md
++++ b/.claude/agent-memory/asd-tester/MEMORY.md
+@@ -2,3 +2,4 @@
+ 
+ - [ASD self-hosting test-plan conventions](project_asd-self-hosting-testing.md) — this repo IS the ASD framework; `tests/run.js` covers Node sources plus content contracts (rules, templates, skills, workflows, README, agent memory); sweep exemption shape.
+ - [Web test edits keep LF](feedback_web-test-edits-eol.md) — CRLF from scripted rewrites fails biome ci
++- [antd test quirks in web](project_web-antd-test-quirks.md) — duplicate modal title ids, Empty svg title, closed modals stay in DOM
+diff --git a/.claude/agent-memory/asd-tester/project_web-antd-test-quirks.md b/.claude/agent-memory/asd-tester/project_web-antd-test-quirks.md
+new file mode 100644
+index 0000000..eb8b3e9
+--- /dev/null
++++ b/.claude/agent-memory/asd-tester/project_web-antd-test-quirks.md
+@@ -0,0 +1,15 @@
++---
++name: web-antd-test-quirks
++description: antd traps in the web vitest suite - duplicate modal title ids, empty-state text, closed modals staying in the DOM
++metadata:
++  type: project
++---
++
++In `web` component tests with antd:
++- Every modal gets the same title id (`test-id`), so `findByRole("dialog", { name })` finds the wrong dialog or none; find the title text (`.ant-modal-confirm-title`) and `closest('[role="dialog"]')`.
++- A closed modal stays in the DOM (jsdom, no animation end), so a second modal of the same title is ambiguous; split cancel and confirm into separate tests.
++- `Empty` puts "Нет данных" in the SVG `<title>` of its image even with a custom description; assert `.ant-empty-description` text, never `queryByText("Нет данных")` to be null.
++- Dropdown menu items are in the DOM only after the trigger is clicked; they carry `role="menuitem"`.
++
++**Why:** each cost a failed run while writing the row-actions tests.
++**How to apply:** any test of a confirm dialog, an empty table or a «…» menu in `web`.
+diff --git a/.claude/agent-memory/asd-ux/MEMORY.md b/.claude/agent-memory/asd-ux/MEMORY.md
+new file mode 100644
+index 0000000..a44eabe
+--- /dev/null
++++ b/.claude/agent-memory/asd-ux/MEMORY.md
+@@ -0,0 +1 @@
++- [UX docs conventions](project_ux-docs-conventions.md) — a11y scope trap, mockup token style, menu popup color, row-action links
+diff --git a/.claude/agent-memory/asd-ux/project_ux-docs-conventions.md b/.claude/agent-memory/asd-ux/project_ux-docs-conventions.md
+new file mode 100644
+index 0000000..0ebc4e2
+--- /dev/null
++++ b/.claude/agent-memory/asd-ux/project_ux-docs-conventions.md
+@@ -0,0 +1,13 @@
++---
++name: project-ux-docs-conventions
++description: Conventions and traps for persistent docs/ux/*.html in this repo (a11y scope, mockup style, tokens, items to re-verify in code)
++metadata:
++  type: project
++---
++
++- `docs/ux/accessibility.html` declares keyboard behaviour, ARIA and screen readers OUT of scope by customer decision (2026-10-05). Any focus/keyboard rule is a scope extension: return proposed text in Flagged choices, do not edit (asd-ux must not write a11y rules). User decision 2026-10-12: do not extend accessibility.html; focus and keyboard-drag rules live only in the screen UX docs, with no links to accessibility.html.
++- Persistent ux docs wrap content in `<div class="ds">` with `--ds-*` token variables (hex only at that root, primitive layer); mockups reference `var(--ds-*)` only. org-structure.html uses inline styles plus a scoped `o-*` style block; career-framework.html uses a scoped class set. No sprint/task ids; no AC numbers for new subsystems.
++- Re-verify in code before documenting, as these were slated for a code fix: (a) whether `web/src/app/theme.ts` sets `Menu.darkPopupBg` (antd default `#001529` is off-palette; intended is `surface-inverse`) for the "Администрирование" submenu; (b) how many inline row-action links career/positions tables show (DESIGN.md allows at most two visible, the rest in a Dropdown); (c) empty-state text of the scales table and the nested tracks table (should not be antd's default "Нет данных").
++
++**Why:** found during a design-promote; they recur on any later UX promote.
++**How to apply:** check before writing a11y text, new mockups, or reviewing shell/menu visuals; then update `career-framework.html` if the code changed.
+diff --git a/web/src/app/theme.ts b/web/src/app/theme.ts
+index 674b974..f545624 100644
+--- a/web/src/app/theme.ts
++++ b/web/src/app/theme.ts
+@@ -150,6 +150,8 @@ export const theme: ThemeConfig = {
+     },
+     Menu: {
+       darkItemBg: color.surfaceInverse,
++      darkPopupBg: color.surfaceInverse,
++      darkSubMenuItemBg: color.surfaceInverse,
+       darkItemColor: color.textInverseMuted,
+     },
+     Button: {
+diff --git a/web/src/features/career/CatalogParts.tsx b/web/src/features/career/CatalogParts.tsx
+index ffbf087..5025c3d 100644
+--- a/web/src/features/career/CatalogParts.tsx
++++ b/web/src/features/career/CatalogParts.tsx
+@@ -1,6 +1,5 @@
+ import { useMutation, useQueryClient } from "@tanstack/react-query";
+-import { App, Button, Space, type TableColumnsType, Tag } from "antd";
+-import type { ReactNode } from "react";
++import { App, type TableColumnsType, Tag } from "antd";
+ import { describeApiError } from "../../app/apiErrors";
+ import {
+   type CatalogAction,
+@@ -12,6 +11,7 @@ import {
+   invalidateCatalogs,
+ } from "./catalogApi";
+ import { choiceFilter } from "./columnFilters";
++import { type RowAction, RowActions } from "./RowActions";
+ import { useCatalogRights } from "./useCatalogRights";
+ import { useConfirmDeletion } from "./useConfirmDeletion";
+ 
+@@ -62,12 +62,12 @@ interface EntryActionsProps {
+   unitId?: string;
+   /** Opens the edit dialog; omitted for an entry that cannot be edited here. */
+   onEdit?: () => void;
+-  /** Further actions of the row, shown first. */
+-  children?: ReactNode;
++  /** Further actions of the row, placed first. */
++  extra?: RowAction[];
+ }
+ 
+ /**
+- * The row actions of an entry the rights allow: edit and delete as the server allows them for the entry, and approving a
++ * The row actions of an entry the rights allow, beyond two behind a «…» menu: edit and delete as the server allows them for the entry, and approving a
+  * draft, deactivating and returning to work for the keepers of its unit.
+  */
+ export function EntryActions({
+@@ -75,7 +75,7 @@ export function EntryActions({
+   entry,
+   unitId,
+   onEdit,
+-  children,
++  extra = [],
+ }: EntryActionsProps) {
+   const rights = useCatalogRights();
+   const { message } = App.useApp();
+@@ -89,63 +89,64 @@ export function EntryActions({
+   const confirmDeletion = useConfirmDeletion();
+   const canManage = rights.canManage(unitId);
+ 
++  const actions: RowAction[] = [
++    ...extra,
++    ...(onEdit && entry.canEdit
++      ? [{ key: "edit", label: "Изменить", onClick: onEdit }]
++      : []),
++    ...(canManage && entry.status === "Draft"
++      ? [
++          {
++            key: "approve",
++            label: "Согласовать",
++            disabled: isPending,
++            onClick: () => mutate("approve"),
++          },
++        ]
++      : []),
++    ...(canManage && entry.status !== "Inactive"
++      ? [
++          {
++            key: "deactivate",
++            label: "Деактивировать",
++            danger: true,
++            disabled: isPending,
++            onClick: () => mutate("deactivate"),
++          },
++        ]
++      : []),
++    ...(canManage && entry.status === "Inactive"
++      ? [
++          {
++            key: "activate",
++            label: "Вернуть в работу",
++            disabled: isPending,
++            onClick: () => mutate("activate"),
++          },
++        ]
++      : []),
++    ...(entry.canDelete
++      ? [
++          {
++            key: "delete",
++            label: "Удалить",
++            danger: true,
++            onClick: () =>
++              confirmDeletion({
++                kind: KIND_ACCUSATIVE[segment],
++                name: entry.name,
++                content:
++                  segment === "tracks"
++                    ? "Будут удалены и его уровни"
++                    : undefined,
++                run: () => deleteEntry(segment, entry),
++              }),
++          },
++        ]
++      : []),
++  ];
++
+   return (
+-    <Space size={0} wrap>
+-      {children}
+-      {onEdit && entry.canEdit && (
+-        <Button type="link" size="small" onClick={onEdit}>
+-          Изменить
+-        </Button>
+-      )}
+-      {canManage && entry.status === "Draft" && (
+-        <Button
+-          type="link"
+-          size="small"
+-          disabled={isPending}
+-          onClick={() => mutate("approve")}
+-        >
+-          Согласовать
+-        </Button>
+-      )}
+-      {canManage && entry.status !== "Inactive" && (
+-        <Button
+-          type="link"
+-          size="small"
+-          danger
+-          disabled={isPending}
+-          onClick={() => mutate("deactivate")}
+-        >
+-          Деактивировать
+-        </Button>
+-      )}
+-      {canManage && entry.status === "Inactive" && (
+-        <Button
+-          type="link"
+-          size="small"
+-          disabled={isPending}
+-          onClick={() => mutate("activate")}
+-        >
+-          Вернуть в работу
+-        </Button>
+-      )}
+-      {entry.canDelete && (
+-        <Button
+-          type="link"
+-          size="small"
+-          danger
+-          onClick={() =>
+-            confirmDeletion({
+-              kind: KIND_ACCUSATIVE[segment],
+-              name: entry.name,
+-              content:
+-                segment === "tracks" ? "Будут удалены и его уровни" : undefined,
+-              run: () => deleteEntry(segment, entry),
+-            })
+-          }
+-        >
+-          Удалить
+-        </Button>
+-      )}
+-    </Space>
++    <RowActions actions={actions} menuLabel={`Действия с «${entry.name}»`} />
+   );
+ }
+diff --git a/web/src/features/career/CompetenciesTab.tsx b/web/src/features/career/CompetenciesTab.tsx
+index 8368ff2..b1046b7 100644
+--- a/web/src/features/career/CompetenciesTab.tsx
++++ b/web/src/features/career/CompetenciesTab.tsx
+@@ -103,15 +103,14 @@ export function CompetenciesTab() {
+           segment="competencies"
+           entry={competency}
+           onEdit={() => setDialog({ kind: "edit", id: competency.id })}
+-        >
+-          <Button
+-            type="link"
+-            size="small"
+-            onClick={() => setDialog({ kind: "versions", id: competency.id })}
+-          >
+-            История версий
+-          </Button>
+-        </EntryActions>
++          extra={[
++            {
++              key: "versions",
++              label: "История версий",
++              onClick: () => setDialog({ kind: "versions", id: competency.id }),
++            },
++          ]}
++        />
+       ),
+     },
+   ];
+diff --git a/web/src/features/career/DirectionsTracksTab.tsx b/web/src/features/career/DirectionsTracksTab.tsx
+index 93e7280..2658d6c 100644
+--- a/web/src/features/career/DirectionsTracksTab.tsx
++++ b/web/src/features/career/DirectionsTracksTab.tsx
+@@ -167,6 +167,14 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
+         expandable={{
+           expandedRowRender: (track) => <LevelsTable track={track} />,
+         }}
++        locale={{
++          emptyText: (
++            <Empty
++              image={Empty.PRESENTED_IMAGE_SIMPLE}
++              description="Треков пока нет"
++            />
++          ),
++        }}
+       />
+       {dialog === "create" && (
+         <TrackModal
+diff --git a/web/src/features/career/RowActions.test.tsx b/web/src/features/career/RowActions.test.tsx
+new file mode 100644
+index 0000000..0b05625
+--- /dev/null
++++ b/web/src/features/career/RowActions.test.tsx
+@@ -0,0 +1,345 @@
++import { render, screen, waitFor, within } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import type { ReactElement } from "react";
++import { MemoryRouter } from "react-router";
++import { beforeEach, describe, expect, it, vi } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import { CategoriesTab } from "./CategoriesTab";
++import { CompetenciesTab } from "./CompetenciesTab";
++import { DirectionsTracksTab } from "./DirectionsTracksTab";
++import { type RowAction, RowActions } from "./RowActions";
++import { ScalesTab } from "./ScalesTab";
++
++const entry = (fields: object = {}) => ({
++  id: "entry",
++  name: "Запись",
++  status: "Active",
++  version: 3,
++  canEdit: true,
++  canDelete: true,
++  ...fields,
++});
++
++const page = (items: object[]) => ({
++  items,
++  total: items.length,
++  page: 1,
++  pageSize: 20,
++});
++
++function serveRole(role: "GlobalAdmin" | "User") {
++  fakeApi.on("GET /api/v1/auth/me", () =>
++    Response.json({ id: "a", email: "a@test.local", role }),
++  );
++  fakeApi.on("GET /api/v1/career/me", () =>
++    Response.json({ headedUnits: [], hrUnits: [] }),
++  );
++  fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([]));
++}
++
++function show(element: ReactElement) {
++  render(
++    <Providers>
++      <MemoryRouter>{element}</MemoryRouter>
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++/** The visible actions of the row, then (after opening «…», if any) those in the menu. */
++async function actionsOf(
++  user: ReturnType<typeof userEvent.setup>,
++  name: string,
++) {
++  const row = (await screen.findByText(name)).closest("tr") as HTMLElement;
++  const visible = within(row)
++    .queryAllByRole("button")
++    .filter((button) => !button.getAttribute("aria-label"))
++    .map((button) => button.textContent);
++  const trigger = within(row).queryByRole("button", {
++    name: `Действия с «${name}»`,
++  });
++  if (!trigger) return { visible, menu: [] as (string | null)[] };
++  await user.click(trigger);
++  const menu = (await screen.findAllByRole("menuitem")).map(
++    (item) => item.textContent,
++  );
++  return { visible, menu };
++}
++
++/** The confirmation of a deletion: antd gives every modal of the test the same title id, so it is found by its text. */
++async function askedToDelete() {
++  const title = await screen.findByText("Удалить категорию «Черновая»?", {
++    selector: ".ant-modal-confirm-title",
++  });
++  return title.closest('[role="dialog"]') as HTMLElement;
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("RowActions: two visible, the rest behind «…» (AC-19)", () => {
++  const action = (key: string, fields: Partial<RowAction> = {}): RowAction => ({
++    key,
++    label: key,
++    onClick: vi.fn(),
++    ...fields,
++  });
++
++  const visibleLabels = () =>
++    screen
++      .queryAllByRole("button")
++      .filter((button) => !button.getAttribute("aria-label"))
++      .map((button) => button.textContent);
++
++  function showActions(actions: RowAction[]) {
++    render(<RowActions actions={actions} menuLabel="Действия с «Х»" />);
++    return userEvent.setup();
++  }
++
++  it.each([
++    [[]],
++    [[action("a")]],
++    [[action("a"), action("b", { danger: true })]],
++  ])(
++    "shows up to two actions as they are, destructive too, with no «…» (case %#)",
++    (actions) => {
++      showActions(actions);
++
++      expect(
++        screen.queryByRole("button", { name: "Действия с «Х»" }),
++      ).toBeNull();
++      expect(visibleLabels()).toEqual(actions.map((a) => a.label));
++      for (const { label, danger } of actions) {
++        expect(
++          screen
++            .getByRole("button", { name: label })
++            .classList.contains("ant-btn-dangerous"),
++        ).toBe(danger === true);
++      }
++    },
++  );
++
++  it("with more, keeps the first two that are not destructive visible and puts the rest in «…» in their order", async () => {
++    const user = showActions([
++      action("a"),
++      action("rm", { danger: true }),
++      action("b"),
++      action("c"),
++      action("off", { danger: true }),
++    ]);
++
++    expect(visibleLabels()).toEqual(["a", "b"]);
++    expect(screen.queryByRole("menuitem")).toBeNull();
++
++    await user.click(screen.getByRole("button", { name: "Действия с «Х»" }));
++
++    const items = await screen.findAllByRole("menuitem");
++    expect(items.map((item) => item.textContent)).toEqual(["rm", "c", "off"]);
++    expect(
++      items.map((item) =>
++        item.classList.contains("ant-dropdown-menu-item-danger"),
++      ),
++    ).toEqual([true, false, true]);
++  });
++
++  it("runs the action chosen in the menu, and not a disabled one", async () => {
++    const run = vi.fn();
++    const blocked = vi.fn();
++    const user = showActions([
++      action("a"),
++      action("b"),
++      action("blocked", { disabled: true, onClick: blocked }),
++      action("run", { onClick: run }),
++    ]);
++    await user.click(screen.getByRole("button", { name: "Действия с «Х»" }));
++
++    await user.click(await screen.findByRole("menuitem", { name: "blocked" }));
++    expect(blocked).not.toHaveBeenCalled();
++    await user.click(await screen.findByRole("menuitem", { name: "run" }));
++
++    expect(run).toHaveBeenCalledOnce();
++  });
++});
++
++describe("the row actions of the catalogues (AC-19, AC-25)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("a draft category: «Изменить» and «Согласовать» visible, «Деактивировать» and «Удалить» in the menu", async () => {
++    serveRole("GlobalAdmin");
++    fakeApi.on("GET /api/v1/career/categories", () =>
++      Response.json(page([entry({ name: "Черновая", status: "Draft" })])),
++    );
++    const user = show(<CategoriesTab />);
++
++    const { visible, menu } = await actionsOf(user, "Черновая");
++
++    expect(visible).toEqual(["Изменить", "Согласовать"]);
++    expect(menu).toEqual(["Деактивировать", "Удалить"]);
++  });
++
++  it("an inactive category: «Изменить» and «Вернуть в работу» visible, «Удалить» in the menu", async () => {
++    serveRole("GlobalAdmin");
++    fakeApi.on("GET /api/v1/career/categories", () =>
++      Response.json(page([entry({ name: "Старая", status: "Inactive" })])),
++    );
++    const user = show(<CategoriesTab />);
++
++    const { visible, menu } = await actionsOf(user, "Старая");
++
++    expect(visible).toEqual(["Изменить", "Вернуть в работу"]);
++    expect(menu).toEqual(["Удалить"]);
++  });
++
++  it("an active scale that is not the default: «Сделать по умолчанию» and «Изменить» visible", async () => {
++    serveRole("GlobalAdmin");
++    fakeApi.on("GET /api/v1/career/scales", () =>
++      Response.json(
++        page([entry({ name: "Шкала", points: [], isDefault: false })]),
++      ),
++    );
++    const user = show(<ScalesTab />);
++
++    const { visible, menu } = await actionsOf(user, "Шкала");
++
++    expect(visible).toEqual(["Сделать по умолчанию", "Изменить"]);
++    expect(menu).toEqual(["Деактивировать", "Удалить"]);
++  });
++
++  it("a draft competency: «История версий» and «Изменить» visible, «Согласовать» in the menu", async () => {
++    serveRole("GlobalAdmin");
++    fakeApi.on("GET /api/v1/career/competencies", () =>
++      Response.json(
++        page([
++          entry({
++            name: "Проектирование",
++            status: "Draft",
++            description: null,
++            categoryId: "c",
++            directionId: null,
++            type: "Profile",
++            scaleId: "s",
++            createdAt: "2026-10-01T10:00:00Z",
++            versionNumber: 1,
++          }),
++        ]),
++      ),
++    );
++    const user = show(<CompetenciesTab />);
++
++    const { visible, menu } = await actionsOf(user, "Проектирование");
++
++    expect(visible).toEqual(["История версий", "Изменить"]);
++    expect(menu).toEqual(["Согласовать", "Деактивировать", "Удалить"]);
++  });
++
++  it("deactivates from the menu against the version of the row", async () => {
++    const route = "POST /api/v1/career/categories/entry/deactivate";
++    serveRole("GlobalAdmin");
++    fakeApi.on("GET /api/v1/career/categories", () =>
++      Response.json(page([entry({ name: "Черновая", status: "Draft" })])),
++    );
++    fakeApi.on(route, () => Response.json(entry()));
++    const user = show(<CategoriesTab />);
++    await actionsOf(user, "Черновая");
++
++    await user.click(
++      await screen.findByRole("menuitem", { name: "Деактивировать" }),
++    );
++
++    await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
++    expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe('"3"');
++  });
++
++  async function openDeletionFromMenu(route: string) {
++    serveRole("GlobalAdmin");
++    fakeApi.on("GET /api/v1/career/categories", () =>
++      Response.json(page([entry({ name: "Черновая", status: "Draft" })])),
++    );
++    fakeApi.on(route, () => new Response(null, { status: 204 }));
++    const user = show(<CategoriesTab />);
++    await actionsOf(user, "Черновая");
++    await user.click(await screen.findByRole("menuitem", { name: "Удалить" }));
++    return { user, asked: await askedToDelete() };
++  }
++
++  it("«Удалить» in the menu asks first, with the focus on «Отмена», and «Отмена» deletes nothing", async () => {
++    const route = "DELETE /api/v1/career/categories/entry";
++    const { user, asked } = await openDeletionFromMenu(route);
++
++    expect(within(asked).getByRole("button", { name: "Отмена" })).toHaveFocus();
++    await user.click(within(asked).getByRole("button", { name: "Отмена" }));
++
++    expect(fakeApi.calls(route)).toHaveLength(0);
++  });
++
++  it("«Удалить» in the confirmation deletes against the version of the row", async () => {
++    const route = "DELETE /api/v1/career/categories/entry";
++    const { user, asked } = await openDeletionFromMenu(route);
++
++    await user.click(within(asked).getByRole("button", { name: "Удалить" }));
++
++    await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
++    expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe('"3"');
++  });
++
++  it("offers no «…» to a user who may do nothing with the row", async () => {
++    serveRole("User");
++    fakeApi.on("GET /api/v1/career/categories", () =>
++      Response.json(
++        page([entry({ name: "Чужая", canEdit: false, canDelete: false })]),
++      ),
++    );
++    const user = show(<CategoriesTab />);
++
++    const { visible, menu } = await actionsOf(user, "Чужая");
++
++    expect(visible).toEqual([]);
++    expect(menu).toEqual([]);
++  });
++});
++
++describe("the empty tables of the catalogues (AC-19)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("says «Шкал пока нет» for no scales", async () => {
++    serveRole("GlobalAdmin");
++    fakeApi.on("GET /api/v1/career/scales", () => Response.json(page([])));
++    show(<ScalesTab />);
++
++    expect(await screen.findByText("Шкал пока нет")).toBeVisible();
++    expect(
++      Array.from(document.querySelectorAll(".ant-empty-description")).map(
++        (description) => description.textContent,
++      ),
++    ).toEqual(["Шкал пока нет"]);
++  });
++
++  it("says «Треков пока нет» in the tracks of a direction that has none", async () => {
++    serveRole("GlobalAdmin");
++    fakeApi.on("GET /api/v1/career/directions", () =>
++      Response.json(page([entry({ name: "Разработка" })])),
++    );
++    fakeApi.on("GET /api/v1/career/tracks", () => Response.json(page([])));
++    const user = show(<DirectionsTracksTab />);
++
++    await user.click(
++      await waitFor(() => {
++        const expander = document.querySelector(".ant-table-row-expand-icon");
++        expect(expander).not.toBeNull();
++        return expander as HTMLElement;
++      }),
++    );
++
++    expect(await screen.findByText("Треков пока нет")).toBeVisible();
++    expect(
++      Array.from(document.querySelectorAll(".ant-empty-description")).map(
++        (description) => description.textContent,
++      ),
++    ).toEqual(["Треков пока нет"]);
++  });
++});
+diff --git a/web/src/features/career/RowActions.tsx b/web/src/features/career/RowActions.tsx
+new file mode 100644
+index 0000000..1cfe5a7
+--- /dev/null
++++ b/web/src/features/career/RowActions.tsx
+@@ -0,0 +1,68 @@
++import { MoreOutlined } from "@ant-design/icons";
++import { Button, Dropdown, Space } from "antd";
++
++export interface RowAction {
++  key: string;
++  label: string;
++  danger?: boolean;
++  disabled?: boolean;
++  onClick: () => void;
++}
++
++const MAX_VISIBLE = 2;
++
++interface RowActionsProps {
++  actions: RowAction[];
++  /** Accessible name of the «…» trigger, naming the row: «Действия с направлением Разработка». */
++  menuLabel: string;
++}
++
++/**
++ * Row actions of a table: up to two as links, and with more the first two that are not destructive stay visible while
++ * the rest, destructive ones included, go to a «…» menu, in their order.
++ */
++export function RowActions({ actions, menuLabel }: RowActionsProps) {
++  const visible =
++    actions.length <= MAX_VISIBLE
++      ? actions
++      : actions.filter((action) => !action.danger).slice(0, MAX_VISIBLE);
++  const hidden = actions.filter((action) => !visible.includes(action));
++
++  return (
++    <Space size={0} wrap>
++      {visible.map(({ key, label, danger, disabled, onClick }) => (
++        <Button
++          key={key}
++          type="link"
++          size="small"
++          danger={danger}
++          disabled={disabled}
++          onClick={onClick}
++        >
++          {label}
++        </Button>
++      ))}
++      {hidden.length > 0 && (
++        <Dropdown
++          trigger={["click"]}
++          menu={{
++            items: hidden.map(({ key, label, danger, disabled, onClick }) => ({
++              key,
++              label,
++              danger,
++              disabled,
++              onClick,
++            })),
++          }}
++        >
++          <Button
++            type="text"
++            size="small"
++            icon={<MoreOutlined />}
++            aria-label={menuLabel}
++          />
++        </Dropdown>
++      )}
++    </Space>
++  );
++}
+diff --git a/web/src/features/career/ScalesTab.tsx b/web/src/features/career/ScalesTab.tsx
+index 694a51e..1d25041 100644
+--- a/web/src/features/career/ScalesTab.tsx
++++ b/web/src/features/career/ScalesTab.tsx
+@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+ import {
+   App,
+   Button,
++  Empty,
+   Flex,
+   Space,
+   Table,
+@@ -73,18 +74,19 @@ export function ScalesTab() {
+           segment="scales"
+           entry={scale}
+           onEdit={() => setDialog(scale.id)}
+-        >
+-          {rights.isHr && scale.status === "Active" && !scale.isDefault && (
+-            <Button
+-              type="link"
+-              size="small"
+-              disabled={makeDefault.isPending}
+-              onClick={() => makeDefault.mutate(scale)}
+-            >
+-              Сделать по умолчанию
+-            </Button>
+-          )}
+-        </EntryActions>
++          extra={
++            rights.isHr && scale.status === "Active" && !scale.isDefault
++              ? [
++                  {
++                    key: "makeDefault",
++                    label: "Сделать по умолчанию",
++                    disabled: makeDefault.isPending,
++                    onClick: () => makeDefault.mutate(scale),
++                  },
++                ]
++              : []
++          }
++        />
+       ),
+     },
+   ];
+@@ -113,6 +115,14 @@ export function ScalesTab() {
+         pagination={pageProps(params, data?.total, setParams)}
+         scroll={{ x: "max-content" }}
+         onChange={onFilterChange(setParams)}
++        locale={{
++          emptyText: (
++            <Empty
++              image={Empty.PRESENTED_IMAGE_SIMPLE}
++              description="Шкал пока нет"
++            />
++          ),
++        }}
+         expandable={{
+           expandedRowRender: (scale) => (
+             <Table<ScalePoint>
