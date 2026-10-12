@@ -222,3 +222,7 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — user decision (external F5): ограничение в 200 записей снимается — таблицы справочников карьерной модели с серверным постраничным выводом, выпадающие списки — с серверным поиском по вводу
 - 2026-10-12 — route impl review-fix: review_fixes_pending = wave-3/iter-01 (combined F1–F7, external F1–F9)
 - 2026-10-12 — route review-fix wave-3/iter-01: critical, dispatch HEAD 539175a; risk change: public contract (version в строках списков, серверные страницы и поиск справочников), dev chain: combined F1–F7, external F1–F9
+- 2026-10-12 — review-fix wave-3/iter-01 dev chain: combined F1 (кроме типа `MatrixDiff` — используется после F2/F3), F2–F7, external F1–F9 resolved (1008d69 … fa7f598, память 048a5ec); контракт аддитивно: `inWork`, `withGeneral`, `forOrgUnitId` у списков, `version` у строк матриц и черновиков, `canEdit`/`canDelete` у записей справочников; порядок блокировок не менялся
+- 2026-10-12 — user decision: flagged choices review-fix wave-3/iter-01 приняты (блокировка переходов при несохранённых правках, список правок согласующего, окно варианта, версия компетенции, причины неактивности, страницы по 20, ширина 11 × controlHeight); тексты внесены в plan «Тексты интерфейса»
+- 2026-10-12 — impl completion gate: `npm run lint` красный — typecheck тестов, сломанных намеренными изменениями (F-6); tester-цепочка на восстановление тестов
+- 2026-10-12 — route review-fix wave-3/iter-01 tester: standard, dispatch HEAD 048a5ec; risk none via npm run lint, npm test

@@ -22,6 +22,7 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 | F-3 | impl | Gate impl требует чистый typecheck, который ломают тесты при смене контракта | — |
 | F-4 | impl | Dev поднял временную PostgreSQL для проверки, хотя правило проекта запрещает scratch-БД в impl | — |
 | F-5 | impl-test | Строки Symptom дефектов содержат traceId и случайные имена — проверка stalemate по идентичности слепа | test-plan.md D-1…D-4 |
+| F-6 | impl | Review-fix: gate impl требует чистый typecheck тестов, а dev в fix mode тесты не трогает — снова понадобилась отдельная tester-цепочка вне находок | reviews/impl/wave-3/iter-01 |
 
 ## F-1 — Архитектор записал файл своей памяти, хотя payload аудита требовал только чтение
 
@@ -62,3 +63,11 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **What happened**: Tester записал строку раннера дословно; у ответов 500 и у D-4 в ней `traceId` и сгенерированные имена, которые меняются на каждом прогоне.
 - **Impact**: Повтор того же набора дефектов на следующем входе не будет распознан как stalemate.
 - **Refs**: test-plan.md D-1…D-4
+
+## F-6 — Typecheck тестов в gate impl при review-fix
+
+- **Phase**: impl
+- **Surface**: rule — `.asd/workflows/asd-phase-impl.md` step 9 (lint с typecheck тестов) vs step 5 (tester-цепочка только для находок в тест-файлах)
+- **What happened**: Исправления wave-3/iter-01 намеренно сменили API и пропсы; тесты перестали компилироваться, `npm run lint` красный. Находок в тест-файлах нет, но без тестера gate не пройти.
+- **Impact**: Оркестратор запускает tester-цепочку на восстановление тестов вне явного правила (как F-3 в initial mode).
+- **Refs**: reviews/impl/wave-3/iter-01
