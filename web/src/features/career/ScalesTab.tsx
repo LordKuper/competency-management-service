@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   App,
   Button,
+  Empty,
   Flex,
   Space,
   Table,
@@ -73,18 +74,19 @@ export function ScalesTab() {
           segment="scales"
           entry={scale}
           onEdit={() => setDialog(scale.id)}
-        >
-          {rights.isHr && scale.status === "Active" && !scale.isDefault && (
-            <Button
-              type="link"
-              size="small"
-              disabled={makeDefault.isPending}
-              onClick={() => makeDefault.mutate(scale)}
-            >
-              Сделать по умолчанию
-            </Button>
-          )}
-        </EntryActions>
+          extra={
+            rights.isHr && scale.status === "Active" && !scale.isDefault
+              ? [
+                  {
+                    key: "makeDefault",
+                    label: "Сделать по умолчанию",
+                    disabled: makeDefault.isPending,
+                    onClick: () => makeDefault.mutate(scale),
+                  },
+                ]
+              : []
+          }
+        />
       ),
     },
   ];
@@ -113,6 +115,14 @@ export function ScalesTab() {
         pagination={pageProps(params, data?.total, setParams)}
         scroll={{ x: "max-content" }}
         onChange={onFilterChange(setParams)}
+        locale={{
+          emptyText: (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="Шкал пока нет"
+            />
+          ),
+        }}
         expandable={{
           expandedRowRender: (scale) => (
             <Table<ScalePoint>

@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { App, Button, Space, type TableColumnsType, Tag } from "antd";
-import type { ReactNode } from "react";
+import { App, type TableColumnsType, Tag } from "antd";
 import { describeApiError } from "../../app/apiErrors";
 import {
   type CatalogAction,
@@ -12,6 +11,7 @@ import {
   invalidateCatalogs,
 } from "./catalogApi";
 import { choiceFilter } from "./columnFilters";
+import { type RowAction, RowActions } from "./RowActions";
 import { useCatalogRights } from "./useCatalogRights";
 import { useConfirmDeletion } from "./useConfirmDeletion";
 
@@ -62,12 +62,12 @@ interface EntryActionsProps {
   unitId?: string;
   /** Opens the edit dialog; omitted for an entry that cannot be edited here. */
   onEdit?: () => void;
-  /** Further actions of the row, shown first. */
-  children?: ReactNode;
+  /** Further actions of the row, placed first. */
+  extra?: RowAction[];
 }
 
 /**
- * The row actions of an entry the rights allow: edit and delete as the server allows them for the entry, and approving a
+ * The row actions of an entry the rights allow, beyond two behind a «…» menu: edit and delete as the server allows them for the entry, and approving a
  * draft, deactivating and returning to work for the keepers of its unit.
  */
 export function EntryActions({
@@ -75,7 +75,7 @@ export function EntryActions({
   entry,
   unitId,
   onEdit,
-  children,
+  extra = [],
 }: EntryActionsProps) {
   const rights = useCatalogRights();
   const { message } = App.useApp();
@@ -89,63 +89,64 @@ export function EntryActions({
   const confirmDeletion = useConfirmDeletion();
   const canManage = rights.canManage(unitId);
 
+  const actions: RowAction[] = [
+    ...extra,
+    ...(onEdit && entry.canEdit
+      ? [{ key: "edit", label: "Изменить", onClick: onEdit }]
+      : []),
+    ...(canManage && entry.status === "Draft"
+      ? [
+          {
+            key: "approve",
+            label: "Согласовать",
+            disabled: isPending,
+            onClick: () => mutate("approve"),
+          },
+        ]
+      : []),
+    ...(canManage && entry.status !== "Inactive"
+      ? [
+          {
+            key: "deactivate",
+            label: "Деактивировать",
+            danger: true,
+            disabled: isPending,
+            onClick: () => mutate("deactivate"),
+          },
+        ]
+      : []),
+    ...(canManage && entry.status === "Inactive"
+      ? [
+          {
+            key: "activate",
+            label: "Вернуть в работу",
+            disabled: isPending,
+            onClick: () => mutate("activate"),
+          },
+        ]
+      : []),
+    ...(entry.canDelete
+      ? [
+          {
+            key: "delete",
+            label: "Удалить",
+            danger: true,
+            onClick: () =>
+              confirmDeletion({
+                kind: KIND_ACCUSATIVE[segment],
+                name: entry.name,
+                content:
+                  segment === "tracks"
+                    ? "Будут удалены и его уровни"
+                    : undefined,
+                run: () => deleteEntry(segment, entry),
+              }),
+          },
+        ]
+      : []),
+  ];
+
   return (
-    <Space size={0} wrap>
-      {children}
-      {onEdit && entry.canEdit && (
-        <Button type="link" size="small" onClick={onEdit}>
-          Изменить
-        </Button>
-      )}
-      {canManage && entry.status === "Draft" && (
-        <Button
-          type="link"
-          size="small"
-          disabled={isPending}
-          onClick={() => mutate("approve")}
-        >
-          Согласовать
-        </Button>
-      )}
-      {canManage && entry.status !== "Inactive" && (
-        <Button
-          type="link"
-          size="small"
-          danger
-          disabled={isPending}
-          onClick={() => mutate("deactivate")}
-        >
-          Деактивировать
-        </Button>
-      )}
-      {canManage && entry.status === "Inactive" && (
-        <Button
-          type="link"
-          size="small"
-          disabled={isPending}
-          onClick={() => mutate("activate")}
-        >
-          Вернуть в работу
-        </Button>
-      )}
-      {entry.canDelete && (
-        <Button
-          type="link"
-          size="small"
-          danger
-          onClick={() =>
-            confirmDeletion({
-              kind: KIND_ACCUSATIVE[segment],
-              name: entry.name,
-              content:
-                segment === "tracks" ? "Будут удалены и его уровни" : undefined,
-              run: () => deleteEntry(segment, entry),
-            })
-          }
-        >
-          Удалить
-        </Button>
-      )}
-    </Space>
+    <RowActions actions={actions} menuLabel={`Действия с «${entry.name}»`} />
   );
 }

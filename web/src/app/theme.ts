@@ -150,6 +150,8 @@ export const theme: ThemeConfig = {
     },
     Menu: {
       darkItemBg: color.surfaceInverse,
+      darkPopupBg: color.surfaceInverse,
+      darkSubMenuItemBg: color.surfaceInverse,
       darkItemColor: color.textInverseMuted,
     },
     Button: {

@@ -167,6 +167,14 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
         expandable={{
           expandedRowRender: (track) => <LevelsTable track={track} />,
         }}
+        locale={{
+          emptyText: (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="Треков пока нет"
+            />
+          ),
+        }}
       />
       {dialog === "create" && (
         <TrackModal

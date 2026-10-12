@@ -103,15 +103,14 @@ export function CompetenciesTab() {
           segment="competencies"
           entry={competency}
           onEdit={() => setDialog({ kind: "edit", id: competency.id })}
-        >
-          <Button
-            type="link"
-            size="small"
-            onClick={() => setDialog({ kind: "versions", id: competency.id })}
-          >
-            История версий
-          </Button>
-        </EntryActions>
+          extra={[
+            {
+              key: "versions",
+              label: "История версий",
+              onClick: () => setDialog({ kind: "versions", id: competency.id }),
+            },
+          ]}
+        />
       ),
     },
   ];
