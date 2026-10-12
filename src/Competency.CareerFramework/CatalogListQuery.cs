@@ -5,11 +5,12 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// The filters and paging every catalogue list shares. Every filter is optional; pages count from 1. The list holds only the entries
-/// the user can read, so a status filter can only narrow it.
+/// the user can read, so a status filter can only narrow it. <c>inWork=true</c> leaves out the inactive entries, as a picker offers them.
 /// </summary>
 internal sealed record CatalogListQuery(
     [FromQuery(Name = "q")] string? Q = null,
     [FromQuery(Name = "status")] CatalogStatus? Status = null,
+    [FromQuery(Name = "inWork")] bool? InWork = null,
     [FromQuery(Name = "page")] int Page = 1,
     [FromQuery(Name = "pageSize")] int PageSize = ListRequest.DefaultPageSize)
 {

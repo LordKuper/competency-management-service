@@ -18,6 +18,7 @@ internal static class CompetencyEndpoints
     private const string Route = "/api/v1/career/competencies";
     private const string CategoryField = "categoryId";
     private const string DirectionField = "directionId";
+    private const string WithGeneralField = "withGeneral";
     private const string ScaleField = "scaleId";
     private const string TypeField = "type";
     private const string InUseMessage = "Компетенцию используют матрицы — удалить нельзя";
@@ -69,10 +70,14 @@ internal static class CompetencyEndpoints
         return null;
     }
 
+    /// <summary>
+    /// Lists the competencies; <c>withGeneral=true</c> adds the general competencies to those of the direction, as a matrix of the direction may use them.
+    /// </summary>
     private static Task<Results<Ok<PageResponse<CompetencyResponse>>, ValidationProblem>> ListAsync(
         [AsParameters] CatalogListQuery query,
         [FromQuery(Name = CategoryField)] Guid? categoryId,
         [FromQuery(Name = DirectionField)] Guid? directionId,
+        [FromQuery(Name = WithGeneralField)] bool? withGeneral,
         [FromQuery(Name = ScaleField)] Guid? scaleId,
         [FromQuery(Name = TypeField)] CompetencyType? type,
         AppDbContext context,
@@ -81,7 +86,7 @@ internal static class CompetencyEndpoints
         CatalogEndpoints.ListAsync(
             context.Set<CareerCompetency>()
                 .WhereIf(categoryId is not null, competency => competency.CategoryId == categoryId)
-                .WhereIf(directionId is not null, competency => competency.DirectionId == directionId)
+                .WhereIf(directionId is not null, competency => competency.DirectionId == directionId || (withGeneral == true && competency.DirectionId == null))
                 .WhereIf(scaleId is not null, competency => competency.ScaleId == scaleId)
                 .WhereIf(type is not null, competency => competency.Type == type),
             query,

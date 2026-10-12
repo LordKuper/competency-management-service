@@ -158,6 +158,7 @@ internal static class CatalogEndpoints
             .AsNoTracking()
             .Where(viewer.Sees<TEntry>())
             .WhereIf(query.Status is not null, entry => entry.Status == query.Status)
+            .WhereIf(query.InWork == true, entry => entry.Status != CatalogStatus.Inactive)
             .WhereIf(pattern is not null, entry => EF.Functions.ILike(entry.Name, pattern!, ListRequest.LikeEscape));
         var page = await (order?.Invoke(filtered) ?? filtered.OrderBy(entry => entry.Name))
             .ThenBy(entry => entry.Id)

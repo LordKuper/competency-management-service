@@ -5234,6 +5234,7 @@ export interface operations {
             query?: {
                 q?: string;
                 status?: components["schemas"]["CatalogStatus"];
+                inWork?: boolean;
                 page?: number;
                 pageSize?: number;
             };
@@ -5831,10 +5832,12 @@ export interface operations {
             query?: {
                 q?: string;
                 status?: components["schemas"]["CatalogStatus"];
+                inWork?: boolean;
                 page?: number;
                 pageSize?: number;
                 directionId?: string;
                 ownerOrgUnitId?: string;
+                forOrgUnitId?: string;
             };
             header?: never;
             path?: never;
@@ -6515,6 +6518,7 @@ export interface operations {
             query?: {
                 q?: string;
                 status?: components["schemas"]["CatalogStatus"];
+                inWork?: boolean;
                 page?: number;
                 pageSize?: number;
                 trackId?: string;
@@ -7113,6 +7117,7 @@ export interface operations {
             query?: {
                 q?: string;
                 status?: components["schemas"]["CatalogStatus"];
+                inWork?: boolean;
                 page?: number;
                 pageSize?: number;
             };
@@ -7710,10 +7715,12 @@ export interface operations {
             query?: {
                 q?: string;
                 status?: components["schemas"]["CatalogStatus"];
+                inWork?: boolean;
                 page?: number;
                 pageSize?: number;
                 categoryId?: string;
                 directionId?: string;
+                withGeneral?: boolean;
                 scaleId?: string;
                 type?: components["schemas"]["CompetencyType"];
             };
@@ -8351,6 +8358,7 @@ export interface operations {
             query?: {
                 q?: string;
                 status?: components["schemas"]["CatalogStatus"];
+                inWork?: boolean;
                 page?: number;
                 pageSize?: number;
                 isDefault?: boolean;

@@ -18,6 +18,7 @@ internal static class CareerTrackEndpoints
     private const string Route = "/api/v1/career/tracks";
     private const string DirectionField = "directionId";
     private const string OrgUnitField = "ownerOrgUnitId";
+    private const string ForOrgUnitField = "forOrgUnitId";
     private const string LevelsField = "levelIds";
     private const string InUseMessage = "Трек используют матрицы — удалить нельзя";
 
@@ -100,21 +101,32 @@ internal static class CareerTrackEndpoints
         return TypedResults.Ok(await CatalogEndpoints.CommitAsync(track, Kind, store, transaction, response, cancellationToken));
     }
 
-    private static Task<Results<Ok<PageResponse<CareerTrackResponse>>, ValidationProblem>> ListAsync(
+    /// <summary>
+    /// Lists the tracks; <c>forOrgUnitId</c> keeps those a matrix of that unit may be built on: kept by the unit or a unit above it.
+    /// </summary>
+    private static async Task<Results<Ok<PageResponse<CareerTrackResponse>>, ValidationProblem>> ListAsync(
         [AsParameters] CatalogListQuery query,
         [FromQuery(Name = DirectionField)] Guid? directionId,
         [FromQuery(Name = OrgUnitField)] Guid? ownerOrgUnitId,
+        [FromQuery(Name = ForOrgUnitField)] Guid? forOrgUnitId,
         AppDbContext context,
         CatalogStore store,
-        CancellationToken cancellationToken) =>
-        CatalogEndpoints.ListAsync(
+        IEmployeeDirectory employees,
+        CancellationToken cancellationToken)
+    {
+        var ancestry = forOrgUnitId is { } unitId
+            ? (await employees.FindAncestryAsync(unitId, cancellationToken)).Select(unit => unit.Id).ToList()
+            : [];
+        return await CatalogEndpoints.ListAsync(
             context.Set<CareerTrack>()
                 .WhereIf(directionId is not null, track => track.DirectionId == directionId)
-                .WhereIf(ownerOrgUnitId is not null, track => track.OwnerOrgUnitId == ownerOrgUnitId),
+                .WhereIf(ownerOrgUnitId is not null, track => track.OwnerOrgUnitId == ownerOrgUnitId)
+                .WhereIf(forOrgUnitId is not null, track => ancestry.Contains(track.OwnerOrgUnitId)),
             query,
             Kind,
             store,
             cancellationToken);
+    }
 
     private static async Task<Results<Created<CareerTrackResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
         NewCareerTrackRequest request,

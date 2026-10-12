@@ -4025,6 +4025,13 @@
             }
           },
           {
+            "name": "inWork",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "schema": {
@@ -4815,6 +4822,13 @@
             }
           },
           {
+            "name": "inWork",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "schema": {
@@ -4842,6 +4856,14 @@
           },
           {
             "name": "ownerOrgUnitId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "forOrgUnitId",
             "in": "query",
             "schema": {
               "type": "string",
@@ -5739,6 +5761,13 @@
             }
           },
           {
+            "name": "inWork",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "schema": {
@@ -6537,6 +6566,13 @@
             }
           },
           {
+            "name": "inWork",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "schema": {
@@ -7327,6 +7363,13 @@
             }
           },
           {
+            "name": "inWork",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "schema": {
@@ -7358,6 +7401,13 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "withGeneral",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
             }
           },
           {
@@ -8199,6 +8249,13 @@
             "in": "query",
             "schema": {
               "$ref": "#/components/schemas/CatalogStatus"
+            }
+          },
+          {
+            "name": "inWork",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
             }
           },
           {
