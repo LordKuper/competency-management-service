@@ -43,6 +43,14 @@ const page = (items: object[]) => ({
   pageSize: 200,
 });
 
+const TRACKS = [
+  track("t-root", "Трек компании", "root"),
+  track("t-department", "Трек департамента", "department"),
+  track("t-team", "Трек команды", "team"),
+  track("t-sibling", "Трек соседей", "sibling"),
+  track("t-branch", "Трек филиала", "branch"),
+];
+
 function serve() {
   fakeApi.on("GET /api/v1/auth/me", () =>
     Response.json({ id: "account", email: "head@test.local", role: "User" }),
@@ -64,17 +72,21 @@ function serve() {
       ]),
     ),
   );
-  fakeApi.on("GET /api/v1/career/tracks", () =>
-    Response.json(
-      page([
-        track("t-root", "Трек компании", "root"),
-        track("t-department", "Трек департамента", "department"),
-        track("t-team", "Трек команды", "team"),
-        track("t-sibling", "Трек соседей", "sibling"),
-        track("t-branch", "Трек филиала", "branch"),
-      ]),
-    ),
-  );
+  // The server offers the tracks of the unit in `forOrgUnitId` and of the units above it.
+  fakeApi.on("GET /api/v1/career/tracks", (request) => {
+    const forUnit = new URL(request.url).searchParams.get("forOrgUnitId");
+    const chain = new Set<string>();
+    for (
+      let current = UNITS.find((u) => u.id === forUnit);
+      current;
+      current = UNITS.find((u) => u.id === current?.parentId)
+    ) {
+      chain.add(current.id);
+    }
+    return Response.json(
+      page(TRACKS.filter((item) => chain.has(item.ownerOrgUnitId))),
+    );
+  });
   fakeApi.on("GET /api/v1/career/scales", () =>
     Response.json(
       page([
@@ -156,6 +168,16 @@ describe("starting a matrix (AC-14)", { timeout: LONG_FLOW_TIMEOUT }, () => {
       "Трек департамента",
       "Трек команды",
     ]);
+    expect(
+      Object.fromEntries(
+        new URL(fakeApi.calls("GET /api/v1/career/tracks").at(-1)?.url ?? "")
+          .searchParams,
+      ),
+    ).toMatchObject({
+      forOrgUnitId: "team",
+      directionId: "direction",
+      inWork: "true",
+    });
   });
 
   it("changes the tracks when another unit is chosen and clears the track chosen before", async () => {

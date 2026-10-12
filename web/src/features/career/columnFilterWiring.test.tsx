@@ -88,7 +88,7 @@ interface FilterCase {
   show: () => ReactElement;
   route: string;
   column: string;
-  choose: { option: string } | { unit: string };
+  choose: { option: string } | { entry: string } | { unit: string };
   param: string;
   value: string;
   inNestedTable?: boolean;
@@ -156,7 +156,7 @@ const CASES: FilterCase[] = [
     show: () => <CompetenciesTab />,
     route: "GET /api/v1/career/competencies",
     column: "Категория",
-    choose: { option: CATEGORY.name },
+    choose: { entry: CATEGORY.name },
     param: "categoryId",
     value: CATEGORY.id,
   },
@@ -165,7 +165,7 @@ const CASES: FilterCase[] = [
     show: () => <CompetenciesTab />,
     route: "GET /api/v1/career/competencies",
     column: "Направление",
-    choose: { option: DIRECTION.name },
+    choose: { entry: DIRECTION.name },
     param: "directionId",
     value: DIRECTION.id,
   },
@@ -183,7 +183,7 @@ const CASES: FilterCase[] = [
     show: () => <CompetenciesTab />,
     route: "GET /api/v1/career/competencies",
     column: "Шкала",
-    choose: { option: SCALE.name },
+    choose: { entry: SCALE.name },
     param: "scaleId",
     value: SCALE.id,
   },
@@ -210,7 +210,7 @@ const CASES: FilterCase[] = [
     show: () => <MatricesTab />,
     route: "GET /api/v1/career/matrices",
     column: "Направление",
-    choose: { option: DIRECTION.name },
+    choose: { entry: DIRECTION.name },
     param: "directionId",
     value: DIRECTION.id,
   },
@@ -219,7 +219,7 @@ const CASES: FilterCase[] = [
     show: () => <MatricesTab />,
     route: "GET /api/v1/career/matrices",
     column: "Трек",
-    choose: { option: TRACK.name },
+    choose: { entry: TRACK.name },
     param: "trackId",
     value: TRACK.id,
   },
@@ -332,6 +332,13 @@ describe("column filters send their value under the param the server reads (AC-2
         await screen.findByRole("menuitem", { name: filter.choose.option }),
       );
       await user.click(screen.getByRole("button", { name: "OK" }));
+    } else if ("entry" in filter.choose) {
+      await user.click(screen.getByRole("combobox", { name: filter.column }));
+      await user.click(
+        await screen.findByText(filter.choose.entry, {
+          selector: ".ant-select-item-option-content",
+        }),
+      );
     } else {
       await user.click(screen.getByRole("combobox", { name: "Подразделение" }));
       await user.click(

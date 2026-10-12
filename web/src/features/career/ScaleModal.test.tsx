@@ -18,6 +18,8 @@ const EXISTING: Scale = {
   isDefault: false,
   status: "Active",
   version: 6,
+  canEdit: true,
+  canDelete: true,
 };
 
 function open(scale?: Scale) {

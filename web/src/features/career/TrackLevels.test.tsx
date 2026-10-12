@@ -25,6 +25,8 @@ const TRACK: CareerTrack = {
   ownerOrgUnitId: "unit",
   ownerOrgUnitName: "Отдел",
   version: 1,
+  canEdit: true,
+  canDelete: true,
 };
 
 function level(id: string, name: string, position: number): CareerLevel {
@@ -36,6 +38,8 @@ function level(id: string, name: string, position: number): CareerLevel {
     position,
     status: "Active",
     version: 1,
+    canEdit: true,
+    canDelete: true,
   };
 }
 

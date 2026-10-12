@@ -12,7 +12,6 @@ import {
   changeCatalogStatus,
   deleteEntry,
   saveNamedEntry,
-  usableEntries,
 } from "./catalogApi";
 import { type MatrixTransition, transitMatrixVersion } from "./matrixApi";
 
@@ -128,34 +127,5 @@ describe("requests whose path is assembled at run time are routes of the contrac
     ).rejects.toThrow(
       /No fake handler for POST \/api\/v1\/career\/positions\/id\/approve/,
     );
-  });
-});
-
-describe("entries a picker offers (AC-9)", () => {
-  const entry = (id: string, status: "Draft" | "Active" | "Inactive") => ({
-    id,
-    name: id,
-    status,
-    version: 1,
-  });
-
-  it("leaves out the inactive ones, except the one already chosen", () => {
-    const entries = [
-      entry("a", "Active"),
-      entry("b", "Inactive"),
-      entry("c", "Inactive"),
-      entry("d", "Draft"),
-    ];
-
-    expect(usableEntries(entries, "c").map((item) => item.id)).toEqual([
-      "a",
-      "c",
-      "d",
-    ]);
-    expect(usableEntries(entries, undefined).map((item) => item.id)).toEqual([
-      "a",
-      "d",
-    ]);
-    expect(usableEntries(undefined, null)).toEqual([]);
   });
 });

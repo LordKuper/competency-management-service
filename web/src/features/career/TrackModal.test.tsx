@@ -33,6 +33,8 @@ const track = (id: string, name: string, version: number): CareerTrack => ({
   ownerOrgUnitId: SALES,
   ownerOrgUnitName: "Продажи",
   version,
+  canEdit: true,
+  canDelete: true,
 });
 
 const savedLevel = (id: string, name: string, trackId: string) => ({

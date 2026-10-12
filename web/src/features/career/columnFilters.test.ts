@@ -1,26 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
-import { choiceFilter, entryOptions, onFilterChange } from "./columnFilters";
+import { choiceFilter, onFilterChange } from "./columnFilters";
 
 describe("column filters of the career tables (AC-24)", () => {
-  it("shows the filter value the server was asked for, one value at a time, and widens the dropdown for long names", () => {
+  it("shows the filter value the server was asked for and one value at a time", () => {
     const options = [{ text: "Действует", value: "Active" }];
 
     const chosen = choiceFilter("status", "Active", options);
     const none = choiceFilter("status", undefined, options);
-    const searchable = choiceFilter("directionId", undefined, options, true);
 
     expect(chosen).toMatchObject({
       key: "status",
       filters: options,
       filteredValue: ["Active"],
       filterMultiple: false,
-      filterSearch: false,
     });
     expect(none.filteredValue).toBeNull();
-    expect(searchable.filterSearch).toBe(true);
-    expect(
-      chosen.filterDropdownProps.styles.root.minWidth,
-    ).toBeGreaterThanOrEqual(360);
   });
 
   it("keeps a boolean filter value as a boolean", () => {
@@ -69,12 +63,5 @@ describe("column filters of the career tables (AC-24)", () => {
 
     const update = setParams.mock.calls[0]?.[0] as (previous: object) => object;
     expect(update({})).toEqual({ kind: "Track" });
-  });
-
-  it("offers entries by name and picks them by identifier", () => {
-    expect(entryOptions([{ id: "d1", name: "Разработка" }])).toEqual([
-      { text: "Разработка", value: "d1" },
-    ]);
-    expect(entryOptions(undefined)).toEqual([]);
   });
 });

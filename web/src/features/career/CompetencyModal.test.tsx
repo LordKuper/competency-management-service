@@ -49,6 +49,8 @@ const EXISTING: Competency = {
   createdAt: "2026-10-01T00:00:00Z",
   versionNumber: 2,
   version: 7,
+  canEdit: true,
+  canDelete: true,
 };
 
 function serve() {
