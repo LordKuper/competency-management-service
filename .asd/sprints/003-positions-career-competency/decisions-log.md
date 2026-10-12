@@ -226,3 +226,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — user decision: flagged choices review-fix wave-3/iter-01 приняты (блокировка переходов при несохранённых правках, список правок согласующего, окно варианта, версия компетенции, причины неактивности, страницы по 20, ширина 11 × controlHeight); тексты внесены в plan «Тексты интерфейса»
 - 2026-10-12 — impl completion gate: `npm run lint` красный — typecheck тестов, сломанных намеренными изменениями (F-6); tester-цепочка на восстановление тестов
 - 2026-10-12 — route review-fix wave-3/iter-01 tester: standard, dispatch HEAD 048a5ec; risk none via npm run lint, npm test
+- 2026-10-12 — review-fix wave-3/iter-01 tester chain (a533b84, память 5c26483): тесты приведены к намеренным изменениям; web lint чист, vitest 301/301
+- 2026-10-12 — impl fix for wave-3/iter-01: findings resolved — combined F1–F7, external F1–F9; gate: Release 0/0, web lint и build чисты

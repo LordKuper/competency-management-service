@@ -237,3 +237,5 @@
 {"op":"open","id":"review-fix wave-3/iter-01","kind":"dispatch","parent":"impl#5","start":"2026-10-12T07:10:23.101Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
 {"op":"close","id":"review-fix wave-3/iter-01","kind":"dispatch","parent":"impl#5","start":"2026-10-12T07:10:23.101Z","end":"2026-10-12T07:42:31.685Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
 {"op":"open","id":"review-fix wave-3/iter-01 tester","kind":"dispatch","parent":"impl#5","start":"2026-10-12T07:42:31.753Z","attrs":{"agent":"asd-tester","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"review-fix wave-3/iter-01 tester","kind":"dispatch","parent":"impl#5","start":"2026-10-12T07:42:31.753Z","end":"2026-10-12T07:46:41.724Z","outcome":"done","attrs":{"agent":"asd-tester","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"impl#5","kind":"phase","parent":null,"start":"2026-10-12T07:10:23.017Z","end":"2026-10-12T07:46:41.724Z","outcome":"done","attrs":{}}
