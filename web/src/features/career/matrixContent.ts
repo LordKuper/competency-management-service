@@ -43,9 +43,35 @@ export function setOverallMin(
   };
 }
 
+/**
+ * A random UUID v4 from `crypto.getRandomValues`, which, unlike `crypto.randomUUID`, works outside a secure context, as on
+ * a deployment served over plain HTTP.
+ */
+function randomUuid(): string {
+  const bytes = crypto
+    .getRandomValues(new Uint8Array(16))
+    .map((byte, index) =>
+      index === 6
+        ? (byte & 0x0f) | 0x40
+        : index === 8
+          ? (byte & 0x3f) | 0x80
+          : byte,
+    );
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0"));
+  return [
+    hex.slice(0, 4),
+    hex.slice(4, 6),
+    hex.slice(6, 8),
+    hex.slice(8, 10),
+    hex.slice(10),
+  ]
+    .map((part) => part.join(""))
+    .join("-");
+}
+
 export function addBlock(content: MatrixContent) {
   const block: MatrixBlock = {
-    id: crypto.randomUUID(),
+    id: randomUuid(),
     name: "",
     isMandatory: false,
   };

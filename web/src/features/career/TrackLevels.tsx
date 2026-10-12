@@ -46,6 +46,9 @@ import { LevelModal, type LevelValues } from "./LevelModal";
 
 const EMPTY_TEXT = "В треке пока нет уровней";
 
+/** Counts the levels added in this session, so each unsaved level has a key of its own. */
+let pendingCount = 0;
+
 function EmptyLevels() {
   return (
     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={EMPTY_TEXT} />
@@ -317,7 +320,7 @@ export function TrackLevels({
   function collect(values: LevelValues) {
     onPendingChange(
       dialog === "new"
-        ? [...pending, { key: crypto.randomUUID(), values }]
+        ? [...pending, { key: `pending-${++pendingCount}`, values }]
         : pending.map((item) =>
             item.key === dialog ? { ...item, values } : item,
           ),
