@@ -1,7 +1,7 @@
 {
   "sprint_id": "003-positions-career-competency",
   "branch": "sprint/003-positions-career-competency",
-  "phase": "impl-test",
+  "phase": "impl-review",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -533,7 +533,7 @@
           }
         },
         {
-          "iteration": 4,
+          "iteration": 5,
           "verdicts": {
             "iter-01": {
               "combined": "CONCERNS",
@@ -556,7 +556,8 @@
             "iter-01": "e89e891a3a8f89cbac6b5b688a6f21d22d9b3dbb",
             "iter-02": "4b8fc2776f4ee5b26ae56645fc32b77f7289d648",
             "iter-03": "877037fc00c2c7879db0cd59985544ba122cedb9",
-            "iter-04": "758a3225b1ac4d68785d7af0306e1c13da4347b3"
+            "iter-04": "758a3225b1ac4d68785d7af0306e1c13da4347b3",
+            "iter-05": "c89e30ab5df12827e8ffe2db82a1481f5f5fc413"
           },
           "latched": {
             "external": 4
