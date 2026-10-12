@@ -221,3 +221,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — user decision (combined F5): строки списков матриц и черновых записей получают `version` (аддитивно: `MatrixResponse.inWorkVersion`, `CatalogDraftResponse`); удаление матрицы и согласование черновика отправляют тег, который видел пользователь
 - 2026-10-12 — user decision (external F5): ограничение в 200 записей снимается — таблицы справочников карьерной модели с серверным постраничным выводом, выпадающие списки — с серверным поиском по вводу
 - 2026-10-12 — route impl review-fix: review_fixes_pending = wave-3/iter-01 (combined F1–F7, external F1–F9)
+- 2026-10-12 — route review-fix wave-3/iter-01: critical, dispatch HEAD 539175a; risk change: public contract (version в строках списков, серверные страницы и поиск справочников), dev chain: combined F1–F7, external F1–F9
