@@ -25,7 +25,6 @@ import {
   competencyVersionsQuery,
   entryQuery,
   FIRST_PAGE,
-  useEntryNames,
 } from "./catalogApi";
 import { choiceFilter, onFilterChange, pageProps } from "./columnFilters";
 import { useCatalogRights } from "./useCatalogRights";
@@ -51,19 +50,6 @@ export function CompetenciesTab() {
     ...competenciesQuery(params),
     placeholderData: (previous) => previous,
   });
-  const items = data?.items ?? [];
-  const categories = useEntryNames(
-    "categories",
-    items.map((competency) => competency.categoryId),
-  );
-  const directions = useEntryNames(
-    "directions",
-    items.map((competency) => competency.directionId),
-  );
-  const scales = useEntryNames(
-    "scales",
-    items.map((competency) => competency.scaleId),
-  );
   const columns: TableColumnsType<Competency> = [
     { title: "Название", dataIndex: "name" },
     {
@@ -75,7 +61,7 @@ export function CompetenciesTab() {
         params.categoryId,
         "Категория",
       ),
-      render: (id: string) => categories.get(id),
+      render: (_, competency) => competency.categoryName,
     },
     {
       title: "Направление",
@@ -86,7 +72,7 @@ export function CompetenciesTab() {
         params.directionId,
         "Направление",
       ),
-      render: (id: string | null) => (id ? directions.get(id) : "Общая"),
+      render: (_, competency) => competency.directionName ?? "Общая",
     },
     {
       title: "Тип",
@@ -105,7 +91,7 @@ export function CompetenciesTab() {
       title: "Шкала",
       dataIndex: "scaleId",
       ...catalogFilter("scaleId", "scales", params.scaleId, "Шкала"),
-      render: (id: string) => scales.get(id),
+      render: (_, competency) => competency.scaleName,
     },
     ...entryColumns<Competency>(params.status),
     { title: "Версия", dataIndex: "versionNumber" },

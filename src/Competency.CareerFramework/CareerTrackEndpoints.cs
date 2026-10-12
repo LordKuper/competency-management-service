@@ -24,7 +24,7 @@ internal static class CareerTrackEndpoints
 
     private static readonly CatalogKind<CareerTrack, CareerTrackResponse> Kind = new(
         "CareerTrack",
-        CareerTrackResponse.From,
+        (track, names, viewer) => CareerTrackResponse.From(track, names.GetValueOrDefault(track.OwnerOrgUnitId), viewer),
         track => other => other.DirectionId == track.DirectionId);
 
     public static void Map(IEndpointRouteBuilder endpoints)

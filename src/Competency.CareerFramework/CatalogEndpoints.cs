@@ -164,8 +164,8 @@ internal static class CatalogEndpoints
             .ThenBy(entry => entry.Id)
             .ToPageAsync(query.Page, query.PageSize, cancellationToken);
 
-        var unitNames = await store.UnitNamesAsync(page.Items.Select(entry => entry.UnitId), cancellationToken);
-        var items = page.Items.Select(entry => kind.Describe(entry, NameOf(entry.UnitId, unitNames), viewer)).ToList();
+        var names = await NamesAsync(page.Items, kind, store, cancellationToken);
+        var items = page.Items.Select(entry => kind.Describe(entry, names, viewer)).ToList();
         return TypedResults.Ok(new PageResponse<TResponse>(items, page.Total, page.Page, page.PageSize));
     }
 
@@ -208,13 +208,30 @@ internal static class CatalogEndpoints
         CancellationToken cancellationToken)
         where TEntry : CatalogEntry
     {
-        var unitNames = await store.UnitNamesAsync([entry.UnitId], cancellationToken);
+        var names = await NamesAsync([entry], kind, store, cancellationToken);
         response.SetETag(entry.Version);
-        return kind.Describe(entry, NameOf(entry.UnitId, unitNames), viewer);
+        return kind.Describe(entry, names, viewer);
     }
 
-    private static string? NameOf(Guid? unitId, IReadOnlyDictionary<Guid, string> unitNames) =>
-        unitId is { } id ? unitNames.GetValueOrDefault(id) : null;
+    /// <summary>
+    /// The names the responses of the entries carry: of their units, and of the entries the kind says they refer to, read in one query for all of them.
+    /// </summary>
+    private static async Task<IReadOnlyDictionary<Guid, string>> NamesAsync<TEntry, TResponse>(
+        IReadOnlyCollection<TEntry> entries,
+        CatalogKind<TEntry, TResponse> kind,
+        CatalogStore store,
+        CancellationToken cancellationToken)
+        where TEntry : CatalogEntry
+    {
+        var unitNames = await store.UnitNamesAsync(entries.Select(entry => entry.UnitId), cancellationToken);
+        if (kind.References is not { } references)
+        {
+            return unitNames;
+        }
+
+        var entryNames = await store.EntryNamesAsync(entries.SelectMany(references), cancellationToken);
+        return unitNames.Concat(entryNames).ToDictionary();
+    }
 
     private static RouteHandlerBuilder ProducesStatusChange(this RouteHandlerBuilder builder) => builder
         .ProducesETag()

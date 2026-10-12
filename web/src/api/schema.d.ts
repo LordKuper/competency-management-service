@@ -1571,11 +1571,14 @@ export interface components {
             description: null | string;
             /** Format: uuid */
             categoryId: string;
+            categoryName: string;
             /** Format: uuid */
             directionId: null | string;
+            directionName: null | string;
             type: components["schemas"]["CompetencyType"];
             /** Format: uuid */
             scaleId: string;
+            scaleName: string;
             status: components["schemas"]["CatalogStatus"];
             /** Format: date-time */
             createdAt: string;

@@ -11240,9 +11240,12 @@
           "name",
           "description",
           "categoryId",
+          "categoryName",
           "directionId",
+          "directionName",
           "type",
           "scaleId",
+          "scaleName",
           "status",
           "createdAt",
           "versionNumber",
@@ -11269,6 +11272,9 @@
             "type": "string",
             "format": "uuid"
           },
+          "categoryName": {
+            "type": "string"
+          },
           "directionId": {
             "type": [
               "null",
@@ -11276,12 +11282,21 @@
             ],
             "format": "uuid"
           },
+          "directionName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "type": {
             "$ref": "#/components/schemas/CompetencyType"
           },
           "scaleId": {
             "type": "string",
             "format": "uuid"
+          },
+          "scaleName": {
+            "type": "string"
           },
           "status": {
             "$ref": "#/components/schemas/CatalogStatus"

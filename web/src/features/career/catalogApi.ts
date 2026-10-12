@@ -1,8 +1,4 @@
-import {
-  type QueryClient,
-  queryOptions,
-  useQueries,
-} from "@tanstack/react-query";
+import { type QueryClient, queryOptions } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import type { components } from "../../api/schema";
@@ -217,22 +213,6 @@ export function draftsQuery(params: DraftListParams = {}) {
 /** Rereads every catalogue query after a change. */
 export function invalidateCatalogs(queryClient: QueryClient) {
   return queryClient.invalidateQueries({ queryKey: catalogQueryKey });
-}
-
-/** Names of catalogue entries by id, each read on its own, for the few the rows of one page refer to. */
-export function useEntryNames(
-  segment: CatalogSegment,
-  ids: readonly (string | null | undefined)[],
-): ReadonlyMap<string, string> {
-  const unique = [...new Set(ids)].filter((id): id is string => !!id);
-  const reads = useQueries({
-    queries: unique.map((id) => entryQuery(segment, id)),
-  });
-  return new Map(
-    reads.flatMap((read) =>
-      read.data ? [[read.data.id, read.data.name] as const] : [],
-    ),
-  );
 }
 
 export type CatalogAction = "approve" | "deactivate" | "activate";

@@ -8,10 +8,13 @@ namespace Competency.CareerFramework;
 /// <typeparam name="TEntry">The entry type.</typeparam>
 /// <typeparam name="TResponse">The entry as the API returns it.</typeparam>
 /// <param name="Name">The entry type's name in endpoint names, such as <c>CareerTrack</c>.</param>
-/// <param name="Describe">Builds the response from the entry, the name of its unit, null for an entry of no unit, and the signed-in user's rights.</param>
+/// <param name="Describe">Builds the response from the entry, the names of its unit and of the entries it <paramref name="References"/> by
+/// identifier, and the signed-in user's rights.</param>
 /// <param name="SameScope">The entries whose names must differ from the given entry's; null when names are unique across the catalogue.</param>
+/// <param name="References">The categories, directions and scales whose names the response carries; null when it carries none.</param>
 internal sealed record CatalogKind<TEntry, TResponse>(
     string Name,
-    Func<TEntry, string?, CatalogViewer, TResponse> Describe,
-    Func<TEntry, Expression<Func<TEntry, bool>>>? SameScope = null)
+    Func<TEntry, IReadOnlyDictionary<Guid, string>, CatalogViewer, TResponse> Describe,
+    Func<TEntry, Expression<Func<TEntry, bool>>>? SameScope = null,
+    Func<TEntry, IEnumerable<Guid?>>? References = null)
     where TEntry : CatalogEntry;

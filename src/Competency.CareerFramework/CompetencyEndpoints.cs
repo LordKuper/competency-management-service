@@ -25,8 +25,9 @@ internal static class CompetencyEndpoints
 
     internal static readonly CatalogKind<CareerCompetency, CompetencyResponse> Kind = new(
         "Competency",
-        (competency, _, viewer) => CompetencyResponse.From(competency, viewer),
-        competency => other => other.DirectionId == competency.DirectionId);
+        CompetencyResponse.From,
+        competency => other => other.DirectionId == competency.DirectionId,
+        competency => [competency.CategoryId, competency.DirectionId, competency.ScaleId]);
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {

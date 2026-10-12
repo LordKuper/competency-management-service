@@ -218,6 +218,21 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
+    /// The names of categories, directions and scales, for showing which ones a competency refers to; one query for all of them.
+    /// </summary>
+    /// <param name="ids">The entries; nulls are skipped.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The name of each entry that exists, by identifier.</returns>
+    public async Task<IReadOnlyDictionary<Guid, string>> EntryNamesAsync(IEnumerable<Guid?> ids, CancellationToken cancellationToken)
+    {
+        var wanted = ids.OfType<Guid>().Distinct().ToList();
+        return await context.Set<CompetencyCategory>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name })
+            .Concat(context.Set<CareerDirection>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name }))
+            .Concat(context.Set<CompetencyScale>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name }))
+            .ToDictionaryAsync(entry => entry.Id, entry => entry.Name, cancellationToken);
+    }
+
+    /// <summary>
     /// The names of accounts: the full name of the bound employee, or else the e-mail.
     /// </summary>
     /// <param name="userIds">The accounts; nulls are skipped.</param>
