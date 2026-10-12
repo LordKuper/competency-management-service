@@ -1,0 +1,71 @@
+{
+  "sprint_id": "004-role-desktop-user-journeys",
+  "branch": "sprint/004-role-desktop-user-journeys",
+  "phase": "scope",
+  "workflow": "standard",
+  "documents": {
+    "audit": true,
+    "prd": true,
+    "ux_spec": true,
+    "adr": true,
+    "c4": true
+  },
+  "user_gates": "adaptive",
+  "gate_decisions": [
+    {
+      "gate": "workflow choice",
+      "decision_actor": "user",
+      "decision": "standard",
+      "reason": "user chose recommended standard",
+      "evidence": "decisions-log.md 2026-10-12 workflow"
+    },
+    {
+      "gate": "scope clarification",
+      "decision_actor": "user",
+      "decision": "desktop is home, tables secondary; roles manager, HR, admin, employee; orchestrator proposes journeys; header counter plus email",
+      "reason": "ambiguity blocking concrete scope",
+      "evidence": "decisions-log.md 2026-10-12 scope answers"
+    },
+    {
+      "gate": "retro intake dispositions",
+      "decision_actor": "user",
+      "decision": "003#A-6,003#P-2,003#P-1,003#A-4,002#A-2 included (AC-19..23); 001#P-2 rejected",
+      "reason": "cost 0 iterations / 0 fix rounds (new criteria)",
+      "evidence": ".asd/project/retro-backlog.md"
+    },
+    {
+      "gate": "scope",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "sprint.md AC-1..23; one sprint, split declined; no document skips",
+      "evidence": "decisions-log.md 2026-10-12 scope accepted",
+      "artifact_revision": "sprint.md 2026-10-12"
+    }
+  ],
+  "task_routing": {},
+  "skipped_phases": [],
+  "reviews": {
+    "design": {
+      "iteration": 0,
+      "verdicts": {},
+      "latched": {}
+    },
+    "impl": {
+      "wave": 1,
+      "waves": [
+        {
+          "iteration": 0,
+          "verdicts": {},
+          "iteration_heads": {},
+          "latched": {}
+        }
+      ]
+    }
+  },
+  "created_at": "2026-10-12T13:55:09.000Z",
+  "updated_at": "2026-10-12T14:08:28.829Z",
+  "review_fixes_pending": null,
+  "test_defects_pending": null,
+  "pr": null,
+  "archived_at": null
+}
