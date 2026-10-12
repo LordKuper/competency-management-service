@@ -13,7 +13,7 @@ const MAX_VISIBLE = 2;
 
 interface RowActionsProps {
   actions: RowAction[];
-  /** Accessible name of the «…» trigger, naming the row: «Действия с направлением Разработка». */
+  /** Accessible name of the «…» trigger, naming the row: «Действия с «Разработка»». */
   menuLabel: string;
 }
 
