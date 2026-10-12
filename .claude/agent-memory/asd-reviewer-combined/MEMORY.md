@@ -7,4 +7,4 @@
 - [Delta re-review: decisions-log first](feedback_delta-review-decisions-log.md) — read decisions-log for design-promote routing before flagging doc drift; shared-host log waits are vacuous
 - [Wave-review probes](feedback_wave-review-probes.md) — decisions-log Open, "на ревью" and reversed choices, unused test members, per-row lookups, body comments, AcN_ prefixes, eager-guard callers
 - [Doc entries on a code delta](feedback_doc-entries-on-code-delta.md) — memory md files un-gate the Documentation rows; read the doc-comment entry literally, report language follows language.docs, no Edit tool
-- [Frontend wave probes](feedback_frontend-wave-probes.md) — web/ wave: unused exports and props, secure-context APIs, raw px and disabled-without-reason, plurals, antd d.ts deprecations, stale memory
+- [Frontend wave probes](feedback_frontend-wave-probes.md) — web/ wave: unused exports and props, secure-context APIs, raw px, plurals, per-id name reads, picker exclude, antd d.ts, stale memory

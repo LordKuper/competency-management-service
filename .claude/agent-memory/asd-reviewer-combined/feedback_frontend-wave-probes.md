@@ -1,6 +1,6 @@
 ---
 name: frontend-wave-probes
-description: how a 100-120-file web/ plus agent-memory impl-review wave was finished in about 45-60 turns - read ranges, one-Grep probes that found real defects (unused exports and props, secure-context-only browser APIs, raw px and disabled-without-reason against design-system rules, Russian plurals), diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers, JSDoc detached by a new const
+description: how a 100-120-file web/ plus agent-memory impl-review wave was finished in about 45-60 turns - read ranges, one-Grep probes that found real defects (unused exports and props, secure-context-only browser APIs, raw px and disabled-without-reason against design-system rules, Russian plurals, per-id name reads and client-side exclude in server-search pickers), diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers, JSDoc detached by a new const
 metadata:
   type: feedback
 ---
@@ -29,8 +29,14 @@ Grep `^diff --git` over the diff first: its line numbers give every file's range
   features depend on each other both ways; check decisions-log first, the orchestrator may have accepted it ("пока в career").
 - `staleTime|refetchOnWindowFocus|gcTime` over `web/src`: no hit means the TanStack defaults (stale 0, refetch on focus)
   apply to lists of thousands of rows.
+- `useQueries` fed by the ids of a table page (a `useEntryNames`-style hook resolving column names one `GET /{id}` each): an
+  N+1 on the client, repeated on every focus with default staleness. Compare with sibling responses that already carry the
+  names (`ownerOrgUnitName`, `directionName`); the fix is an additive name field, so raise it with a `question:` escalation.
+- A server-search picker with a fixed page size (20) that drops "already used" ids on the client (`exclude`): the visible list
+  shrinks or goes empty while free entries sit on the next pages. The page size has to grow by the excluded count.
 - `web/node_modules/antd/es/<component>/index.d.ts` exists in this repo: grep it for `@deprecated` instead of trusting
-  memory (antd 6 `Alert.message` is deprecated for `title`, `Steps` `description` for `content`, `direction` for `orientation`).
+  memory (antd 6 `Alert.message` is deprecated for `title`, `Steps` `description` for `content`, `direction` for `orientation`;
+  Select's top-level search props are in `@rc-component/select/es/Select.d.ts`, moved into `showSearch`).
 - A component that returns a bare element first and a wrapper (`Dropdown`) around the same element later remounts it:
   keyboard focus is lost; the CDP smokes in memory were mouse-only.
 - Agent-memory files: grep each cited component or constant (`UserCard`, `SEARCH_TEXT_MAX_LENGTH`) in `web/src`, `src` and
@@ -56,6 +62,9 @@ Grep `^diff --git` over the diff first: its line numbers give every file's range
   not a finding.
 - Check each fix against the `decisions-log.md` "review-fix" entry and the code only; never open another iteration's review
   files (`review-policy.md` "Clean-context review iteration" forbids it). Then scan only the new surface (shared hooks, test infra).
+- The plan's UI-text paragraph approved for the review-fix lists every new string; Grep it once and compare instead of
+  reading the whole «Тексты интерфейса» section. The tester's "Added tests" rows name equivalent mutants (e.g. a hand-made
+  id de-duplication that react-query already does): read them before raising a redundancy.
 
 **Line arithmetic without a shell:** for a new-file hunk, file line = diff line minus the line number of its `@@` header; for a
 whole-file replace, subtract the line number of the last `-` line instead. Grep the current file for the line instead when cheap.
