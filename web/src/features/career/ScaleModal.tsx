@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Flex, Form, Input, InputNumber } from "antd";
+import { Button, Flex, Form, Input, InputNumber, theme } from "antd";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
@@ -10,7 +10,7 @@ import { invalidateCatalogs, type Scale, type ScalePoint } from "./catalogApi";
 
 const NAME_MAX_LENGTH = 200;
 const LABEL_MAX_LENGTH = 500;
-const POINT_SCORE_WIDTH = 96;
+const POINT_SCORE_WIDTH_IN_CONTROLS = 3;
 const FIELDS = ["name", "points"] as const;
 const DUPLICATE_SCORES = "Баллы не должны повторяться";
 const USED_NOTICE = "Используется в опубликованной матрице — изменить нельзя";
@@ -85,6 +85,7 @@ interface ScaleFormProps {
 function ScaleForm({ scale, onSubmit, onCancel }: ScaleFormProps) {
   const [form] = Form.useForm<ScaleValues>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
+  const { token } = theme.useToken();
 
   return (
     <Form
@@ -133,7 +134,9 @@ function ScaleForm({ scale, onSubmit, onCancel }: ScaleFormProps) {
                   name={[field.name, "score"]}
                   label="Балл"
                   rules={[{ required: true }]}
-                  style={{ width: POINT_SCORE_WIDTH }}
+                  style={{
+                    width: token.controlHeight * POINT_SCORE_WIDTH_IN_CONTROLS,
+                  }}
                 >
                   <InputNumber style={{ width: "100%" }} />
                 </Form.Item>

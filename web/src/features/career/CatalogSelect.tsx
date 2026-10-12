@@ -9,7 +9,8 @@ import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { type CatalogSegment, catalogQueryKey, entryQuery } from "./catalogApi";
 
 const PICKER_PAGE_SIZE = 20;
-const FILTER_WIDTH_IN_CONTROLS = 11;
+/** Width of a column filter dropdown, in control heights. */
+export const FILTER_WIDTH_IN_CONTROLS = 11;
 
 /** Catalogues a picker chooses from. */
 export type PickedSegment = Exclude<CatalogSegment, "levels">;

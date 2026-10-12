@@ -10,8 +10,6 @@ export interface FilterOption {
 /**
  * Column props of a one-value filter whose state lives in the query params: `current` is the param, so the filter shows
  * what the server was asked for. The column `key` must be the name of the param.
- * The dropdown is widened so that long names are not cut.
- *
  */
 export function choiceFilter(
   key: string,
@@ -23,7 +21,6 @@ export function choiceFilter(
     filters,
     filteredValue: current === undefined ? null : [current],
     filterMultiple: false,
-    filterDropdownProps: { styles: { root: { minWidth: 360 } } },
   };
 }
 

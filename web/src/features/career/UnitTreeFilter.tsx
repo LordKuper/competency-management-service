@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { TreeSelect } from "antd";
+import { TreeSelect, theme } from "antd";
 import type { FilterDropdownProps } from "antd/es/table/interface";
 import { useMemo } from "react";
 import { orgUnitTreeQuery } from "../org-structure/orgStructureApi";
 import { buildUnitTree, type UnitNode } from "../org-structure/orgTree";
+import { FILTER_WIDTH_IN_CONTROLS } from "./CatalogSelect";
 
 interface TreeItem {
   value: string;
@@ -25,10 +26,11 @@ function UnitTreeFilter({
   setSelectedKeys,
   confirm,
 }: FilterDropdownProps) {
+  const { token } = theme.useToken();
   const { data, isFetching } = useQuery(orgUnitTreeQuery);
   const treeData = useMemo(() => items(buildUnitTree(data ?? [])), [data]);
   return (
-    <div style={{ padding: 8 }}>
+    <div style={{ padding: token.paddingXS }}>
       <TreeSelect
         showSearch
         allowClear
@@ -38,7 +40,7 @@ function UnitTreeFilter({
         loading={isFetching}
         treeData={treeData}
         value={selectedKeys[0] as string | undefined}
-        style={{ width: 360 }}
+        style={{ width: token.controlHeight * FILTER_WIDTH_IN_CONTROLS }}
         popupMatchSelectWidth={false}
         // The tree opens inside the filter dropdown: a click in a popup outside it would close the dropdown.
         getPopupContainer={(node) => node.parentElement ?? document.body}

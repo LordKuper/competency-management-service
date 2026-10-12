@@ -205,17 +205,27 @@ export function MatrixBlocks({
     columns.push({
       title: "Действия",
       key: "actions",
-      render: (_, block) => (
-        <Button
-          type="link"
-          size="small"
-          danger
-          disabled={hasCompetencies(content, block.id)}
-          onClick={() => onChange(removeBlock(content, block.id))}
-        >
-          Удалить
-        </Button>
-      ),
+      render: (_, block) => {
+        const isUsed = hasCompetencies(content, block.id);
+        return (
+          <Space size={0} wrap>
+            <Button
+              type="link"
+              size="small"
+              danger
+              disabled={isUsed}
+              onClick={() => onChange(removeBlock(content, block.id))}
+            >
+              Удалить
+            </Button>
+            {isUsed && (
+              <Typography.Text type="secondary">
+                Сначала уберите компетенции блока
+              </Typography.Text>
+            )}
+          </Space>
+        );
+      },
     });
   }
 

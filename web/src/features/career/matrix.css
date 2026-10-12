@@ -9,10 +9,11 @@
   --rating-level-2: #9ba8f9;
   --rating-level-3: var(--ant-color-primary);
   --rating-level-4: var(--ant-color-bg-spotlight);
+  --matrix-header-font: "PT Sans Narrow", var(--ant-font-family);
 }
 
 .matrix-grid .ant-table-thead > tr > th {
-  font-family: "PT Sans Narrow", var(--ant-font-family);
+  font-family: var(--matrix-header-font);
   font-weight: var(--ant-font-weight-strong);
 }
 

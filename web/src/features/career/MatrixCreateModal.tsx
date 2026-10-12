@@ -68,7 +68,16 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
             onChange={() => form.resetFields(["trackId"])}
           />
         </Form.Item>
-        <Form.Item name="trackId" label="Трек" rules={[{ required: true }]}>
+        <Form.Item
+          name="trackId"
+          label="Трек"
+          rules={[{ required: true }]}
+          extra={
+            !directionId || !orgUnitId
+              ? "Сначала выберите подразделение и направление"
+              : undefined
+          }
+        >
           <CatalogSelect
             segment="tracks"
             filters={{ ...IN_WORK, directionId, forOrgUnitId: orgUnitId }}
