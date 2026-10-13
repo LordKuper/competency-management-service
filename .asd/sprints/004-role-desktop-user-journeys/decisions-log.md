@@ -50,3 +50,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-12 — PRD: правки AC-24, AC-25 внесены (asd-ba); AC-25.2 уточнён оркестратором по источнику — «последняя действующая должность» (следует из AC-24.10)
 - 2026-10-13 — ux-spec: замечание пользователя — текст документа использовал шрифт и цвет приложения (тёмный на тёмном в тёмной теме ОС); asd-ux убрал font/color из корня .ds, оставил их только на .mockup-preview; тот же дефект в docs/ux/career-framework.html — исправить на design-promote
 - 2026-10-13 — ux-spec: замечание пользователя — номера в таблицах документа переносились по дефису; оркестратор добавил .ids/.id (white-space: nowrap) для таблицы решений U-N и столбца критериев таблицы покрытия, таблицы превью не затронуты
+
+## 2026-10-13 — `.asd/sprints/004-role-desktop-user-journeys/design/ux-spec.html` accepted
+
+- **Decision**: пользователь принял UX-спецификацию (22 макета, 6 схем потоков, решения U-1…U-23) после двух правок вёрстки; DESIGN.md не меняется, `design-md-delta.yaml` не создан.
+- **Rationale**: write-then-review-accept; материальное UX-направление (рабочий стол — главная, группа «Справочники») утверждено пользователем.
+- **Affected docs**: design/ux-spec.html; на design-promote — docs/ux/app-shell.html, career-framework.html (в т.ч. дефект корня .ds), org-structure.html, user-management.html, строка контраста accent/primary и горизонтальный Steps в DESIGN.md

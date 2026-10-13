@@ -28,3 +28,4 @@
 {"op":"open","id":"wait ux accept","kind":"user-wait","parent":"design#1","start":"2026-10-12T16:02:53.993Z","attrs":{"gate":"UX-spec"}}
 {"op":"open","id":"asd-ux design#2","kind":"dispatch","parent":"design#1","start":"2026-10-13T08:45:32.496Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"asd-ux design#2","kind":"dispatch","parent":"design#1","start":"2026-10-13T08:45:32.496Z","end":"2026-10-13T08:47:00.568Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"wait ux accept","kind":"user-wait","parent":"design#1","start":"2026-10-12T16:02:53.993Z","end":"2026-10-13T08:54:42.121Z","outcome":"done","attrs":{"gate":"UX-spec"}}
