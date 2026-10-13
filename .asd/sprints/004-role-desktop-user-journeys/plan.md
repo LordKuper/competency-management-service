@@ -29,19 +29,19 @@ Standing DoD applies (`sprint-lifecycle.md` "Plan file format") — not restated
 
 ### Task 1: Правила проекта из ретроспектив
 Material risk: none
-- [ ] AC-19 (`003-positions-career-competency#A-6`): в `.asd/project/custom-coding-rules.md` раздел с правилом: перед коммитом UI dev сверяет каждый изменённый экран с таблицей компонентов `docs/ux/DESIGN.md` — не больше двух видимых действий строки, свой текст пустого состояния, токены всплывающих меню темы
-- [ ] AC-20 (`003-positions-career-competency#P-2`): в `.asd/project/custom-coding-rules.md` раздел с правилом: каждый изменяющий UI-поток блокирует правку на время сохранения, не даёт переходов при несохранённых правках, а после 412 перечитывает запись, показывает её пользователю, и следующее сохранение отправляет новую версию; автоматического повтора нет
-- [ ] удалить из `.asd/project/custom-common-rules.md` раздел «User-visible texts approval» (решение пользователя 2026-10-13, AC-21 отозван); в `docs/architecture/tech-reference/dnd-kit-6.3.1.md` ссылку «итоговые тексты — в plan.md «Тексты интерфейса»» заменить на «итоговые тексты — в UX-документе раздела»
-- [ ] AC-23 (`002-mail-invite-password-reset#A-2`): в `.asd/project/custom-common-rules.md` раздел с правилом: агенты меняют существующие файлы своей памяти точечной правкой и никогда не перезаписывают файл памяти целиком
+- [x] AC-19 (`003-positions-career-competency#A-6`): в `.asd/project/custom-coding-rules.md` раздел с правилом: перед коммитом UI dev сверяет каждый изменённый экран с таблицей компонентов `docs/ux/DESIGN.md` — не больше двух видимых действий строки, свой текст пустого состояния, токены всплывающих меню темы
+- [x] AC-20 (`003-positions-career-competency#P-2`): в `.asd/project/custom-coding-rules.md` раздел с правилом: каждый изменяющий UI-поток блокирует правку на время сохранения, не даёт переходов при несохранённых правках, а после 412 перечитывает запись, показывает её пользователю, и следующее сохранение отправляет новую версию; автоматического повтора нет
+- [x] удалить из `.asd/project/custom-common-rules.md` раздел «User-visible texts approval» (решение пользователя 2026-10-13, AC-21 отозван); в `docs/architecture/tech-reference/dnd-kit-6.3.1.md` ссылку «итоговые тексты — в plan.md «Тексты интерфейса»» заменить на «итоговые тексты — в UX-документе раздела»
+- [x] AC-23 (`002-mail-invite-password-reset#A-2`): в `.asd/project/custom-common-rules.md` раздел с правилом: агенты меняют существующие файлы своей памяти точечной правкой и никогда не перезаписывают файл памяти целиком
 
 ### Task 2: Рецепты проверки в памяти dev (исполнитель — asd-dev-critical, владелец памяти)
 Material risk: none
-- [ ] AC-22 (`003-positions-career-competency#A-4`): в `.claude/agent-memory/asd-dev-critical/` рецепты scratch-БД, запуска API и проверки на реальном backend (`project_migration-scratch-verification-recipe.md`, `project_scratch-process-control.md`, `project_scratch-host-without-postgres.md`, `project_docker-spike-recipe.md`, `project_web-cdp-real-backend-smoke-facts.md`, `project_full-verification-cycle-facts.md`, `project_vs-debug-build-lock-and-release-config.md`, `project_typed-problem-extension-facts.md`) пометить «только impl-test / tester» или удалить; в impl проверка ограничена сборкой, линтером и контрактом; строки `MEMORY.md` согласовать; правки точечные (AC-23), без id спринта
+- [x] AC-22 (`003-positions-career-competency#A-4`): в `.claude/agent-memory/asd-dev-critical/` рецепты scratch-БД, запуска API и проверки на реальном backend (`project_migration-scratch-verification-recipe.md`, `project_scratch-process-control.md`, `project_scratch-host-without-postgres.md`, `project_docker-spike-recipe.md`, `project_web-cdp-real-backend-smoke-facts.md`, `project_full-verification-cycle-facts.md`, `project_vs-debug-build-lock-and-release-config.md`, `project_typed-problem-extension-facts.md`) пометить «только impl-test / tester» или удалить; в impl проверка ограничена сборкой, линтером и контрактом; строки `MEMORY.md` согласовать; правки точечные (AC-23), без id спринта
 
 ### Task 3: Снимок оргструктуры для источников стола
 Material risk: change: lock ordering — снимок читается одним набором запросов вне и внутри разделяемой блокировки дерева
-- [ ] `IEmployeeDirectory.FindOrgSnapshotAsync` и `OrgSnapshot` с методами-правилами (`org-structure.md`): дерево действующих подразделений, руководители, работающие сотрудники, перечни должностей — постоянное число запросов; `EmployeeStatus` получает `OrgUnitId`, `PositionId` (AC-16, AC-26…AC-28, AC-4…AC-6)
-- [ ] реализация в `EmployeeDirectory.cs` без изменения публичного API `/api/v1`
+- [x] `IEmployeeDirectory.FindOrgSnapshotAsync` и `OrgSnapshot` с методами-правилами (`org-structure.md`): дерево действующих подразделений, руководители, работающие сотрудники, перечни должностей — постоянное число запросов; `EmployeeStatus` получает `OrgUnitId`, `PositionId` (AC-16, AC-26…AC-28, AC-4…AC-6)
+- [x] реализация в `EmployeeDirectory.cs` без изменения публичного API `/api/v1`
 
 ### Task 4: Связь «должность — уровень», готовность трека, контракт 3.1.0
 Material risk: change: migration — новая таблица `career_level_positions` без заполнения, `ContractVersion` 3.1.0
