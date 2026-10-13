@@ -8,16 +8,17 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// Contributes the CareerFramework tables to the shared model: the <see cref="OrgUnitHr"/> assignments, the career catalogues and the matrices,
+/// Contributes the CareerFramework tables to the shared model: the <see cref="OrgUnitHr"/> assignments, the career catalogues, the links of levels to positions and the matrices,
 /// with snake_case names, statuses and types stored as their names, and foreign keys that never cascade.
 /// </summary>
 internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationContributor
 {
     /// <summary>
-    /// The unit and account entities are named rather than typed because their modules keep them internal; both must be configured before this contributor runs.
+    /// The unit, position and account entities are named rather than typed because their modules keep them internal; all must be configured before this contributor runs.
     /// </summary>
     private const string OrgUnitEntityName = "Competency.OrgStructure.OrgUnit";
 
+    private const string PositionEntityName = "Competency.OrgStructure.Position";
     private const string UserEntityName = "Competency.UserManagement.AppUser";
     private const int EnumMaxLength = 16;
 
@@ -64,6 +65,21 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
         });
 
         ConfigureEntry<CareerLevel>(modelBuilder, "career_levels", ConfigureLevel);
+
+        modelBuilder.Entity<CareerLevelPosition>(entity =>
+        {
+            entity.ToTable("career_level_positions");
+            entity.HasKey(e => new { e.LevelId, e.PositionId });
+            entity.Property(e => e.LevelId).HasColumnName("level_id");
+            entity.Property(e => e.PositionId).HasColumnName("position_id");
+            entity.Property(e => e.TrackId).HasColumnName("track_id");
+            entity.HasIndex(e => new { e.TrackId, e.PositionId }).IsUnique();
+            entity.HasIndex(e => e.PositionId);
+
+            entity.HasOne<CareerLevel>().WithMany().HasForeignKey(e => e.LevelId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<CareerTrack>().WithMany().HasForeignKey(e => e.TrackId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(PositionEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CareerLevelPosition.PositionId)).OnDelete(DeleteBehavior.Restrict);
+        });
 
         ConfigureEntry<CompetencyCategory>(modelBuilder, "competency_categories", _ => { });
 

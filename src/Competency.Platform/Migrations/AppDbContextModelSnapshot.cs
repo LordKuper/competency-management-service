@@ -265,6 +265,30 @@ namespace Competency.Platform.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Competency.CareerFramework.CareerLevelPosition", b =>
+                {
+                    b.Property<Guid>("LevelId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("level_id");
+
+                    b.Property<Guid>("PositionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("position_id");
+
+                    b.Property<Guid>("TrackId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("track_id");
+
+                    b.HasKey("LevelId", "PositionId");
+
+                    b.HasIndex("PositionId");
+
+                    b.HasIndex("TrackId", "PositionId")
+                        .IsUnique();
+
+                    b.ToTable("career_level_positions", (string)null);
+                });
+
             modelBuilder.Entity("Competency.CareerFramework.CareerTrack", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1081,6 +1105,27 @@ namespace Competency.Platform.Migrations
                         .IsRequired();
 
                     b.Navigation("Track");
+                });
+
+            modelBuilder.Entity("Competency.CareerFramework.CareerLevelPosition", b =>
+                {
+                    b.HasOne("Competency.CareerFramework.CareerLevel", null)
+                        .WithMany()
+                        .HasForeignKey("LevelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.OrgStructure.Position", null)
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.CareerFramework.CareerTrack", null)
+                        .WithMany()
+                        .HasForeignKey("TrackId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Competency.CareerFramework.CareerTrack", b =>
