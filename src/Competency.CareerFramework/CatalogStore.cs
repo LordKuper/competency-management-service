@@ -211,6 +211,42 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
+    /// The active entries nothing uses, the one definition every list of them shares: competencies no matrix version, variant or
+    /// published snapshot lists; scales other than the default that no competency and no version is on; categories no competency is of
+    /// and no published snapshot names; directions without tracks.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the queries.</param>
+    /// <returns>The competencies, then the scales, categories and directions, each in name order.</returns>
+    public async Task<List<CatalogEntry>> UnusedEntriesAsync(CancellationToken cancellationToken)
+    {
+        var usedCompetencyIds = context.Database.SqlQuery<Guid>($"""
+            SELECT (item ->> 'competencyId')::uuid AS "Value" FROM matrix_versions, jsonb_array_elements(content -> 'competencies') AS item
+            UNION SELECT (item ->> 'competencyId')::uuid FROM matrix_version_variants, jsonb_array_elements(content -> 'competencies') AS item
+            UNION SELECT (item ->> 'id')::uuid FROM matrix_versions, jsonb_array_elements(snapshot -> 'competencies') AS item
+            """);
+        var snapshotCategoryIds = context.Database.SqlQuery<Guid>($"""
+            SELECT (item ->> 'categoryId')::uuid AS "Value" FROM matrix_versions, jsonb_array_elements(snapshot -> 'competencies') AS item
+            """);
+        var competencies = context.Set<CareerCompetency>();
+        var versions = context.Set<MatrixVersion>();
+        var tracks = context.Set<CareerTrack>();
+        return
+        [
+            .. await ActiveByName(competencies.Where(competency => !usedCompetencyIds.Contains(competency.Id)), cancellationToken),
+            .. await ActiveByName(
+                context.Set<CompetencyScale>().Where(scale => !scale.IsDefault
+                    && !competencies.Any(competency => competency.ScaleId == scale.Id)
+                    && !versions.Any(version => version.ScaleId == scale.Id)),
+                cancellationToken),
+            .. await ActiveByName(
+                context.Set<CompetencyCategory>().Where(category => !competencies.Any(competency => competency.CategoryId == category.Id)
+                    && !snapshotCategoryIds.Contains(category.Id)),
+                cancellationToken),
+            .. await ActiveByName(context.Set<CareerDirection>().Where(direction => !tracks.Any(track => track.DirectionId == direction.Id)), cancellationToken),
+        ];
+    }
+
+    /// <summary>
     /// Numbers the levels of one track from 1 in the given order. The levels that move are first set aside under negative numbers, so the
     /// unique number of a level within its track holds after every single update. Each moved level is then saved on its own: EF orders the
     /// updates of one save by the unique index it knows, from the numbers it read, and refuses two levels that trade places as a cycle,
@@ -265,6 +301,14 @@ internal sealed class CatalogStore(
 
         await transaction.CommitAsync(cancellationToken);
     }
+
+    private static Task<List<T>> ActiveByName<T>(IQueryable<T> entries, CancellationToken cancellationToken)
+        where T : CatalogEntry =>
+        entries.AsNoTracking()
+            .Where(entry => entry.Status == CatalogStatus.Active)
+            .OrderBy(entry => entry.Name)
+            .ThenBy(entry => entry.Id)
+            .ToListAsync(cancellationToken);
 
     /// <summary>
     /// The names of units, for showing which unit keeps a track or a matrix.

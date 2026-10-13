@@ -44,6 +44,7 @@ public static class CareerFrameworkModule
         CompetencyEndpoints.Map(endpoints);
         CompetencyScaleEndpoints.Map(endpoints);
         CatalogDraftEndpoints.Map(endpoints);
+        UnusedEntryEndpoints.Map(endpoints);
         MatrixEndpoints.Map(endpoints);
         MatrixVersionEndpoints.Map(endpoints);
         MatrixApprovalEndpoints.Map(endpoints);
