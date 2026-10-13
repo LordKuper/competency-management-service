@@ -26,6 +26,14 @@ Put here: forbidden libraries/APIs, perf budgets (latency, memory, throughput, r
 
 - Helper types shared across modules (paged list response, ProblemDetails rejections, LIKE escaping, page limits) live in `Competency.Platform`; never copy them per module.
 
+## UI check against DESIGN.md before commit
+
+- Before every commit, UI `asd-dev` checks each changed screen against the component table in `docs/ux/DESIGN.md`: at most two visible row actions, its own empty-state text, theme tokens for popup menus. (`003-positions-career-competency#A-6`)
+
+## Mutating UI flows
+
+- Every UI flow that mutates data locks editing while the save is in flight and blocks navigation while edits are unsaved. After a 412 it rereads the record, shows it to the user, and the next save sends the new version; no automatic retry. (`003-positions-career-competency#P-2`)
+
 ## Comment self-check before commit
 
 - Before every commit, `asd-dev` and `asd-tester` search their own diff for comments inside function bodies and for references to AC or sprint in comments (`.asd/rules/code-style.md` §7, §8), and fix them before review. (`002-mail-invite-password-reset#P-2`)
