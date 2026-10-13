@@ -304,6 +304,18 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "Task 16 assessment-fix 2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 14 assessment-fix 2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
