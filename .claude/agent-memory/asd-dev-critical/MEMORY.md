@@ -14,7 +14,7 @@
 - [.NET build-time host gotchas](project_dotnet-build-time-host-gotchas.md) — GetDocument.Insider runs hosted services; ef skips Program.cs; pin EF Relational; PrivateAssets keeps Design out of publish
 - [ASP.NET platform pipeline gotchas](project_aspnet-platform-pipeline-gotchas.md) — fallback-policy reach, EF categories that log exception text, OriginalValue semantics, no-DB test tricks
 - [Web toolchain Windows notes](project_web-toolchain-windows-notes.md) — slow first vitest, NO_COLOR, --check LF, biome|tail hides diffs, tsc covers tests
-- [EF raw SQL and OpenAPI contract gotchas](project_ef-raw-sql-and-openapi-contract-gotchas.md) — Sql() needs its own `;`, `$$` vs node replace, int `number|string`, AsParameters names, UTC offsets
+- [EF raw SQL and OpenAPI contract gotchas](project_ef-raw-sql-and-openapi-contract-gotchas.md) — Sql() needs its own `;`, `$$` vs node replace, int `number|string`, AsParameters names, UTC offsets, default = optional field
 - [Npgsql search and result-type gotchas](project_npgsql-search-and-result-type-gotchas.md) — 2-arg ILike has no escape, SqlQuery CTE composes, Conflict<T> is not problem+json, required init props
 - [Identity on a plain DbContext](project_identity-efcore-store-gotchas.md) — stock user store marks all columns modified; users table suffices; HasOne(string) is a nav name
 - [Web UI test and form gotchas](project_web-ui-test-and-form-gotchas.md) — jsdom ResizeObserver, router singleton, Form.Item id, biome diff trick, showSearch object
@@ -50,3 +50,4 @@
 - [Level-position links](project_level-position-links-facts.md) — readiness via org snapshot, approve/activate 409 union, refusal before If-Match, draft-only tracks break scenarios
 - [Publication cascade](project_publication-cascade-facts.md) — plan mutates tracked statuses (no save before refusal check), 412 override, tag always for versions, test fallout
 - [TEMP root is shared](project_temp-root-shared.md) — never glob-move `$TEMP/*`; VS logs and other agents' files live there, use the scratchpad
+- [Scenario reads](project_scenario-read-facts.md) — shared rules for desk sources (nearest HR, unused entries, account state), setup/my-place choices, unverified SQL
