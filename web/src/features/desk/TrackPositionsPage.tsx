@@ -33,6 +33,7 @@ import {
   entryQuery,
   invalidateCatalogs,
   linkLevelPosition,
+  MAX_PAGE_SIZE,
   type TrackPositions,
   trackPositionsQuery,
   trackQuery,
@@ -41,23 +42,20 @@ import {
 } from "../career/catalogApi";
 import { employees, PositionsError } from "../career/LevelPositionsModal";
 import { deskPaths } from "./deskTexts";
-import { CompactAlert, ContextLine } from "./ScenarioContext";
+import { CompactAlert, ContextLine, TruncationNote } from "./ScenarioContext";
 import { LoadFailure, ScenarioPage } from "./ScenarioPage";
 
 type Level = TrackPositions["levels"][number];
 type LinkedPosition = Level["positions"][number];
 
 const TITLE = "Связать должности с треком";
-const TRACKS_PAGE_SIZE = 200;
-const FIRST_PAGE_SIZE = 10;
-const PAGE_SIZES = [FIRST_PAGE_SIZE, 20, 50];
 const LINK_MUTATION = ["desk", "track-positions"] as const;
 
 /** «Связать должности с треком»: the choice of a track stays on screen; below it the levels with their positions and the positions that can still be linked. */
 export function TrackPositionsPage() {
   const { trackId } = useParams();
   const navigate = useNavigate();
-  const tracks = useQuery(tracksQuery({ page: 1, pageSize: TRACKS_PAGE_SIZE }));
+  const tracks = useQuery(tracksQuery({ page: 1, pageSize: MAX_PAGE_SIZE }));
   const track = useQuery({
     ...trackQuery(trackId ?? ""),
     enabled: trackId !== undefined,
@@ -335,11 +333,9 @@ function AvailablePositions({
   onLink,
 }: AvailablePositionsProps) {
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(FIRST_PAGE_SIZE);
   const q = useDebouncedValue(search.trim());
   const available = useQuery({
-    ...availablePositionsQuery(trackId, q, page, pageSize),
+    ...availablePositionsQuery(trackId, q, 1, MAX_PAGE_SIZE),
     placeholderData: keepPreviousData,
   });
   const columns: TableColumnsType<AvailablePosition> = [
@@ -381,7 +377,6 @@ function AvailablePositions({
           value={search}
           onChange={(event) => {
             setSearch(event.target.value);
-            setPage(1);
           }}
         />
         <Typography.Text type="secondary">
@@ -401,18 +396,7 @@ function AvailablePositions({
             dataSource={available.data?.items}
             loading={available.isFetching}
             scroll={{ x: "max-content" }}
-            pagination={{
-              current: page,
-              pageSize,
-              pageSizeOptions: PAGE_SIZES,
-              total: available.data?.total,
-              showSizeChanger: true,
-              showTotal: (total) => `Должностей: ${total}`,
-              onChange: (nextPage, nextSize) => {
-                setPage(nextPage);
-                setPageSize(nextSize);
-              },
-            }}
+            pagination={false}
             locale={{
               emptyText: q
                 ? `Должность «${q}» не найдена среди доступных.`
@@ -420,6 +404,10 @@ function AvailablePositions({
             }}
           />
         )}
+        <TruncationNote
+          shown={available.data?.items.length ?? 0}
+          total={available.data?.total}
+        />
       </Flex>
     </section>
   );

@@ -19,6 +19,7 @@ import {
   type Competency,
   competenciesQuery,
   levelsQuery,
+  MAX_PAGE_SIZE,
 } from "../career/catalogApi";
 import { MatrixErrorAlert } from "../career/MatrixErrorAlert";
 import {
@@ -29,9 +30,7 @@ import {
 } from "../career/matrixApi";
 import { competencyIdsOf, withChosenCompetencies } from "./builderContent";
 import type { StepProps } from "./builderStep";
-
-const FIRST_PAGE_SIZE = 10;
-const PAGE_SIZES = [FIRST_PAGE_SIZE, 20, 50];
+import { TruncationNote } from "./ScenarioContext";
 
 /** Step 2: the competencies of the matrix, chosen from the catalogue or created as drafts on the spot. */
 export function BuilderCompetenciesStep(props: StepProps) {
@@ -66,16 +65,14 @@ function CompetenciesBody({
   const savedIds = competencyIdsOf(base.content);
   const [chosen, setChosen] = useState(savedIds);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(FIRST_PAGE_SIZE);
   const [highlightedId, setHighlightedId] = useState<string>();
   const [isCreating, setIsCreating] = useState(false);
   const q = useDebouncedValue(search.trim());
   const list = useQuery(
     competenciesQuery({
       q: q || undefined,
-      page,
-      pageSize,
+      page: 1,
+      pageSize: MAX_PAGE_SIZE,
       scaleId: version.scaleId,
       directionId: version.entries.direction.id,
       withGeneral: true,
@@ -146,7 +143,6 @@ function CompetenciesBody({
             value={search}
             onChange={(event) => {
               setSearch(event.target.value);
-              setPage(1);
             }}
           />
           <Typography.Text strong>{`Выбрано: ${chosen.size}`}</Typography.Text>
@@ -180,17 +176,7 @@ function CompetenciesBody({
                 for (const row of changed) choose(row.id, isChosen);
               },
             }}
-            pagination={{
-              current: page,
-              pageSize,
-              pageSizeOptions: PAGE_SIZES,
-              total: list.data?.total,
-              showSizeChanger: true,
-              onChange: (nextPage, nextSize) => {
-                setPage(nextPage);
-                setPageSize(nextSize);
-              },
-            }}
+            pagination={false}
             locale={{
               emptyText: q
                 ? `Компетенция «${q}» не найдена. Измените запрос или создайте черновую компетенцию кнопкой выше.`
@@ -198,6 +184,10 @@ function CompetenciesBody({
             }}
           />
         )}
+        <TruncationNote
+          shown={list.data?.items.length ?? 0}
+          total={list.data?.total}
+        />
         <Typography.Text type="secondary">
           Черновая компетенция опубликуется вместе с версией, если согласующий
           вправе её утвердить.

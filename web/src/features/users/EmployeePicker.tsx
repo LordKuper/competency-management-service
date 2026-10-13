@@ -8,6 +8,7 @@ import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { employeesQueryKey } from "../org-structure/orgStructureApi";
 
 const PICKER_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 200;
 
 interface EmployeeOption {
   value: string;
@@ -48,7 +49,7 @@ export function EmployeePicker({
               q: text || undefined,
               isActive: true,
               orgUnitId,
-              pageSize: PICKER_PAGE_SIZE,
+              pageSize: orgUnitId ? MAX_PAGE_SIZE : PICKER_PAGE_SIZE,
             },
           },
         }),

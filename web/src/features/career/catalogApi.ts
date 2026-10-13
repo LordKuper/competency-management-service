@@ -88,6 +88,9 @@ export interface DraftListParams {
   orgUnitId?: string;
 }
 
+/** Most records the API returns in one page; a list already scoped by an object is read in one request of this size. */
+export const MAX_PAGE_SIZE = 200;
+
 /** The first page of a catalogue table. */
 export const FIRST_PAGE: CatalogListParams = { page: 1, pageSize: 20 };
 

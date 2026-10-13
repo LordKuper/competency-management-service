@@ -11,6 +11,7 @@ import {
   type CareerTrack,
   invalidateCatalogs,
   linkLevelPosition,
+  MAX_PAGE_SIZE,
   type PublicationBlocker,
   trackPositionsQuery,
   unlinkLevelPosition,
@@ -80,7 +81,9 @@ export function LevelPositionsModal({
   const [chosen, setChosen] = useState<string>();
   const q = useDebouncedValue(search);
   const read = useQuery(trackPositionsQuery(track.id));
-  const available = useQuery(availablePositionsQuery(track.id, q));
+  const available = useQuery(
+    availablePositionsQuery(track.id, q, 1, MAX_PAGE_SIZE),
+  );
   const level = read.data?.levels.find((item) => item.id === levelId);
   const change = useMutation({
     mutationFn: ({
