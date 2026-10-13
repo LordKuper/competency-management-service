@@ -19,6 +19,8 @@ For tech-reference verification (Phase 5-6) the architect has no Bash; use WebFe
 - unpkg `index.d.ts` / `package.json` fetches work for `@types/*` (large files come back partially summarized — say what was not seen).
 - Large learn.microsoft.com pages (e.g. fundamentals/configuration) come back as a persisted tool-result file; Grep that file for the exact sentence instead of re-fetching.
 - Mermaid C4 syntax (mermaid diagram_tool has no CLI to lint): grammar at `raw.githubusercontent.com/mermaid-js/mermaid/develop/packages/mermaid/src/diagrams/c4/parser/c4Diagram.jison` — unquoted alias token is `[^,]+`, so hyphenated registry ids work as aliases; element keywords include `Container_Boundary`, `ContainerDb`, `System_Ext`.
+- TanStack Query docs: `tanstack.com/query/v5/docs/framework/react/guides/*` pages fetch fine; `…/docs/reference/*` (e.g. MutationCache) returned HTTP 500 on 2026-10-13 — use the guide page or raw GitHub docs instead.
+- OWASP cheat sheets (`cheatsheetseries.owasp.org/cheatsheets/*.html`) fetch fine; the redirect sheet does not cover `//` or backslash paths explicitly.
 - Transitive NuGet deps: nuspec groups list framework-inbox packages (e.g. `System.Formats.Asn1` for net10.0) that the .NET 10 lock files omit; state the lock-file graph, not the nuspec list, as what the project ships.
 
 **Why:** WebFetch runs a small summarizer; on GitHub releases pages it rendered 2026 dates as 2024/2025 and invented plausible details. **How to apply:** take dates from CHANGELOG files / registry, cross-check any claim that matters with a second source, and never quote summarizer dates from releases pages.
