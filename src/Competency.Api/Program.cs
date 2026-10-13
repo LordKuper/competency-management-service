@@ -7,7 +7,7 @@ using Competency.Platform;
 using Competency.UserManagement;
 using Microsoft.AspNetCore.DataProtection;
 
-const string ContractVersion = "3.0.0";
+const string ContractVersion = "3.1.0";
 const string SpaFallbackPattern = "{*path:nonfile:regex(^(?!api/).*$)}";
 
 var isToolingRun = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
