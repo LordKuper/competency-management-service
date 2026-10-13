@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { Alert, Button, Card, Flex, Skeleton, Tag, Typography } from "antd";
+import { type UseQueryResult, useQuery } from "@tanstack/react-query";
+import { Button, Card, Flex, Skeleton, Tag, Typography } from "antd";
 import { type ReactNode, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
@@ -10,8 +10,12 @@ import { AccountModal } from "./AccountModal";
 import { AssignHeadModal } from "./AssignHeadModal";
 import { type UnitSetup, unitSetupQuery } from "./deskApi";
 import { deskPaths } from "./deskTexts";
+import { CompactAlert, ContextLine } from "./ScenarioContext";
 import { LoadFailure, ScenarioPage } from "./ScenarioPage";
-import { useResendInvitation } from "./useResendInvitation";
+import {
+  type InvitationResend,
+  useResendInvitation,
+} from "./useResendInvitation";
 
 type Row = UnitSetup["rows"][number];
 type Account = NonNullable<UnitSetup["headAccount"]>;
@@ -41,6 +45,23 @@ const WAITING_TEXTS: Partial<Record<Row["row"], string>> = {
   HrAccount: "Появится после закрепления HR.",
 };
 
+const MISSING_TEXTS: Record<Row["row"], string> = {
+  Head: "руководителя",
+  HeadAccount: "учётной записи руководителя",
+  Hr: "ответственного HR",
+  HrAccount: "учётной записи HR",
+  Positions: "перечня должностей",
+};
+
+/** «Нет руководителя, ответственного HR и перечня должностей.» for the rows that lack something. */
+function missingText(rows: readonly Row[]): string {
+  const names = rows
+    .filter((row) => row.status === "Missing")
+    .map((row) => MISSING_TEXTS[row.row]);
+  const last = names.pop();
+  return `Нет ${names.length > 0 ? `${names.join(", ")} и ` : ""}${last}.`;
+}
+
 const ACCOUNT_STATES: Record<Account["state"], string> = {
   None: "нет учётной записи",
   Invited: "Приглашена: пароль не задан, вход невозможен",
@@ -52,31 +73,54 @@ const ACCOUNT_STATES: Record<Account["state"], string> = {
 export function ConnectUnitPage() {
   const { unitId } = useParams();
   const navigate = useNavigate();
+  const resend = useResendInvitation();
+  const setup = useQuery({
+    ...unitSetupQuery(unitId ?? ""),
+    enabled: unitId !== undefined,
+  });
   return (
     <ScenarioPage title="Подключить подразделение">
-      <Flex vertical gap="small">
+      <ContextLine>
         <Typography.Text strong id="connect-unit-label">
           Подразделение
         </Typography.Text>
-        <OrgUnitSelect
-          value={unitId}
-          placeholder="Выберите подразделение"
-          onChange={(id) => id && void navigate(deskPaths.connectUnitOf(id))}
-        />
-      </Flex>
+        <div className="context-select">
+          <OrgUnitSelect
+            value={unitId}
+            placeholder="Выберите подразделение"
+            disabled={resend.sendingAccountId !== null}
+            onChange={(id) => id && void navigate(deskPaths.connectUnitOf(id))}
+          />
+        </div>
+        {setup.data && (
+          <Typography.Text type="secondary">
+            {setup.data.unit.map((part) => part.name).join(" → ")}
+          </Typography.Text>
+        )}
+      </ContextLine>
       {unitId ? (
-        <SetupScreen key={unitId} unitId={unitId} />
+        <SetupScreen
+          key={unitId}
+          unitId={unitId}
+          setup={setup}
+          resend={resend}
+        />
       ) : (
-        <Typography.Paragraph type="secondary">
+        <Typography.Text type="secondary">
           Выберите подразделение, чтобы увидеть, чего ему не хватает.
-        </Typography.Paragraph>
+        </Typography.Text>
       )}
     </ScenarioPage>
   );
 }
 
-function SetupScreen({ unitId }: { unitId: string }) {
-  const setup = useQuery(unitSetupQuery(unitId));
+interface SetupScreenProps {
+  unitId: string;
+  setup: UseQueryResult<UnitSetup>;
+  resend: InvitationResend;
+}
+
+function SetupScreen({ unitId, setup, resend }: SetupScreenProps) {
   if (setup.error) {
     return (
       <LoadFailure
@@ -87,12 +131,17 @@ function SetupScreen({ unitId }: { unitId: string }) {
     );
   }
   if (!setup.data) return <Skeleton active />;
-  return <SetupRows unitId={unitId} data={setup.data} />;
+  return <SetupRows unitId={unitId} data={setup.data} resend={resend} />;
 }
 
-function SetupRows({ unitId, data }: { unitId: string; data: UnitSetup }) {
+interface SetupRowsProps {
+  unitId: string;
+  data: UnitSetup;
+  resend: InvitationResend;
+}
+
+function SetupRows({ unitId, data, resend }: SetupRowsProps) {
   const [dialog, setDialog] = useState<Dialog>(null);
-  const resend = useResendInvitation();
   const confirmBlock = useBlockUser();
   const unit = { id: unitId, name: data.unit.at(-1)?.name ?? "" };
   const gaps = data.rows.filter((row) => row.status === "Missing").length;
@@ -203,25 +252,20 @@ function SetupRows({ unitId, data }: { unitId: string; data: UnitSetup }) {
 
   return (
     <Flex vertical gap="middle">
-      <Typography.Text type="secondary">
-        {data.unit.map((part) => part.name).join(" → ")}
-      </Typography.Text>
       {gaps === 0 ? (
-        <Alert
+        <CompactAlert
           type="success"
-          showIcon
-          title="Подразделение подключено"
-          description={`Пробелов нет: руководитель, ответственный HR${data.hr && data.hr.orgUnitId !== unitId ? ` (унаследованный из «${data.hr.orgUnitName}»: ${data.hr.name})` : ""}, должности и действующие учётные записи на месте.`}
+          lead="Подразделение подключено."
+          text="Пробелов нет: руководитель, ответственный HR, должности и действующие учётные записи на месте."
         />
       ) : (
-        <Alert
+        <CompactAlert
           type="warning"
-          showIcon
-          title={`Не хватает: ${gaps} из ${data.rows.length}`}
-          description="Закройте пробелы ниже: у каждой строки есть действие."
+          lead={`Не хватает: ${gaps} из ${data.rows.length}.`}
+          text={missingText(data.rows)}
         />
       )}
-      <Card>
+      <Card size="small">
         <Flex vertical>
           {data.rows.map((row, index) => {
             const { value, note, action } = describe(row);
@@ -230,28 +274,29 @@ function SetupRows({ unitId, data }: { unitId: string; data: UnitSetup }) {
               <Flex
                 key={row.row}
                 vertical
-                gap={4}
+                gap="small"
                 style={{
-                  paddingBlock: "var(--ant-padding-sm)",
+                  paddingBlock: "var(--ant-padding-xs)",
                   borderTop:
                     index === 0
                       ? undefined
                       : "var(--ant-line-width) var(--ant-line-type) var(--ant-color-border-secondary)",
                 }}
               >
-                <Flex align="center" gap="small" wrap>
-                  <Typography.Text strong>
-                    {ROW_TITLES[row.row]}
-                  </Typography.Text>
-                  <StatusTag row={row} />
+                <Flex justify="space-between" align="center" gap="small" wrap>
+                  <Flex align="center" gap="small" wrap>
+                    <Typography.Text strong>
+                      {ROW_TITLES[row.row]}
+                    </Typography.Text>
+                    <StatusTag row={row} />
+                  </Flex>
+                  {!isWaiting && action}
                 </Flex>
                 <Typography.Text>
-                  {isWaiting ? WAITING_TEXTS[row.row] : value}
+                  {isWaiting
+                    ? WAITING_TEXTS[row.row]
+                    : [value, note].filter(Boolean).join(" · ")}
                 </Typography.Text>
-                {!isWaiting && note && (
-                  <Typography.Text type="secondary">{note}</Typography.Text>
-                )}
-                {!isWaiting && action && <div>{action}</div>}
               </Flex>
             );
           })}

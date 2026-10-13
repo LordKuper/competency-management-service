@@ -55,6 +55,18 @@
   }
 }
 
+/* The choice of the object of a scenario, in the context line: it grows to fit the names it holds. */
+.context-select {
+  flex: 1 1 var(--context-select-basis);
+  max-width: var(--context-select-max-width);
+  --context-select-basis: 320px;
+  --context-select-max-width: 560px;
+}
+
+.context-select > * {
+  width: 100%;
+}
+
 /* Fields of a scenario form stand closer: the gaps between blocks come from the layout around them. */
 .compact-form .ant-form-item {
   margin-bottom: 0;
@@ -63,4 +75,9 @@
 .queue-row:disabled {
   cursor: not-allowed;
   color: var(--ant-color-text-disabled);
+}
+
+/* A level of a track that has no active position: the tint always goes with the word in the row. */
+.level-row-missing > td {
+  background: var(--ant-color-warning-bg);
 }

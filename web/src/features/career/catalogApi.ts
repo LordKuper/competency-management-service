@@ -462,15 +462,27 @@ export function trackPositionsQuery(trackId: string) {
 }
 
 /** Active positions the track's unit can still link to one of its levels, found by name. */
-export function availablePositionsQuery(trackId: string, q: string, page = 1) {
+export function availablePositionsQuery(
+  trackId: string,
+  q: string,
+  page = 1,
+  pageSize = 20,
+) {
   return queryOptions({
-    queryKey: [...catalogQueryKey, "available-positions", trackId, q, page],
+    queryKey: [
+      ...catalogQueryKey,
+      "available-positions",
+      trackId,
+      q,
+      page,
+      pageSize,
+    ],
     queryFn: async () =>
       unwrap(
         await api.GET("/api/v1/career/tracks/{id}/available-positions", {
           params: {
             path: { id: trackId },
-            query: { q: q || undefined, page, pageSize: 20 },
+            query: { q: q || undefined, page, pageSize },
           },
         }),
       ),

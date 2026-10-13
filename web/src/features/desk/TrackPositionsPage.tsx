@@ -2,6 +2,7 @@ import "./scenario.css";
 import { DownOutlined } from "@ant-design/icons";
 import {
   keepPreviousData,
+  useIsMutating,
   useMutation,
   useQuery,
   useQueryClient,
@@ -10,7 +11,6 @@ import {
   Alert,
   App,
   Button,
-  Card,
   ConfigProvider,
   Dropdown,
   Flex,
@@ -26,7 +26,6 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { CatalogStatusTag } from "../career/CatalogParts";
-import { useProcessRoles } from "../career/careerApi";
 import {
   type AvailablePosition,
   availablePositionsQuery,
@@ -43,6 +42,7 @@ import { employees, PositionsError } from "../career/LevelPositionsModal";
 import { deskPaths } from "./deskTexts";
 import { LinkButton } from "./LinkButton";
 import { useReturnLink } from "./returnLink";
+import { CompactAlert, ContextLine } from "./ScenarioContext";
 import { LoadFailure, ScenarioPage } from "./ScenarioPage";
 
 type Level = TrackPositions["levels"][number];
@@ -50,68 +50,93 @@ type LinkedPosition = Level["positions"][number];
 
 const TITLE = "Связать должности с треком";
 const TRACKS_PAGE_SIZE = 200;
+const FIRST_PAGE_SIZE = 10;
+const PAGE_SIZES = [FIRST_PAGE_SIZE, 20, 50];
+const LINK_MUTATION = ["desk", "track-positions"] as const;
 
-/** «Связать должности с треком»: the levels of a track with their positions, and the positions that can still be linked. */
+/** «Связать должности с треком»: the choice of a track stays on screen; below it the levels with their positions and the positions that can still be linked. */
 export function TrackPositionsPage() {
   const { trackId } = useParams();
+  const navigate = useNavigate();
+  const back = useReturnLink() ?? {
+    to: deskPaths.desk,
+    label: "К рабочему столу",
+  };
+  const tracks = useQuery(tracksQuery({ page: 1, pageSize: TRACKS_PAGE_SIZE }));
+  const track = useQuery({
+    ...trackQuery(trackId ?? ""),
+    enabled: trackId !== undefined,
+  });
+  const direction = useQuery({
+    ...entryQuery("directions", track.data?.directionId ?? ""),
+    enabled: track.data !== undefined,
+  });
+  const isChanging = useIsMutating({ mutationKey: LINK_MUTATION }) > 0;
+  const listed = (tracks.data?.items ?? []).filter(
+    (item) => item.canEdit || item.id === trackId,
+  );
+  const options =
+    track.data && !listed.some((item) => item.id === track.data.id)
+      ? [...listed, track.data]
+      : listed;
+
   return (
     <ScenarioPage title={TITLE}>
-      {trackId ? <TrackScreen trackId={trackId} /> : <TrackChoice />}
+      <ContextLine>
+        <Typography.Text strong>Трек</Typography.Text>
+        <div className="context-select">
+          <Select
+            showSearch={{ optionFilterProp: "label" }}
+            aria-label="Трек"
+            placeholder="Выберите трек"
+            value={trackId}
+            disabled={isChanging}
+            loading={tracks.isPending}
+            options={options.map((item) => ({
+              value: item.id,
+              label: `${item.name} — ${item.ownerOrgUnitName}`,
+              status: item.status,
+            }))}
+            optionRender={(option) => (
+              <Flex justify="space-between" gap="small">
+                <span>{option.label}</span>
+                <CatalogStatusTag status={option.data.status} />
+              </Flex>
+            )}
+            notFoundContent="Треков, связи которых вы вправе править, нет."
+            onChange={(id) => void navigate(deskPaths.trackPositionsOf(id))}
+          />
+        </div>
+        {direction.data && (
+          <Typography.Text type="secondary">{`область «${direction.data.name}»`}</Typography.Text>
+        )}
+        {track.data && <CatalogStatusTag status={track.data.status} />}
+        {trackId && <LinkButton to={back.to}>{back.label}</LinkButton>}
+      </ContextLine>
+      {trackId ? (
+        <TrackScreen trackId={trackId} />
+      ) : tracks.error ? (
+        <LoadFailure
+          title="Не удалось загрузить треки"
+          error={tracks.error}
+          onRetry={() => void tracks.refetch()}
+        />
+      ) : (
+        <Typography.Text type="secondary">
+          Выберите трек, чтобы связать его уровни с должностями.
+        </Typography.Text>
+      )}
     </ScenarioPage>
-  );
-}
-
-/** Opened from the desk without a track: the tracks the user may edit are offered. */
-function TrackChoice() {
-  const navigate = useNavigate();
-  const roles = useProcessRoles();
-  const tracks = useQuery(tracksQuery({ page: 1, pageSize: TRACKS_PAGE_SIZE }));
-  if (tracks.error) {
-    return (
-      <LoadFailure
-        title="Не удалось загрузить треки"
-        error={tracks.error}
-        onRetry={() => void tracks.refetch()}
-      />
-    );
-  }
-  const editable = (tracks.data?.items ?? []).filter((track) => track.canEdit);
-  return (
-    <Flex vertical gap="middle">
-      <Typography.Paragraph>
-        Выберите трек, чтобы связать его уровни с должностями.
-      </Typography.Paragraph>
-      <Select
-        showSearch={{ optionFilterProp: "label" }}
-        aria-label="Трек"
-        placeholder="Трек"
-        style={{ maxWidth: 480 }}
-        loading={tracks.isPending || roles.isPending}
-        options={editable.map((track) => ({
-          value: track.id,
-          label: `${track.name} — ${track.ownerOrgUnitName}`,
-        }))}
-        notFoundContent="Треков, связи которых вы вправе править, нет."
-        onChange={(id) => void navigate(deskPaths.trackPositionsOf(id))}
-      />
-    </Flex>
   );
 }
 
 function TrackScreen({ trackId }: { trackId: string }) {
   const { message } = App.useApp();
   const queryClient = useQueryClient();
-  const back = useReturnLink() ?? {
-    to: deskPaths.desk,
-    label: "К рабочему столу",
-  };
   const track = useQuery(trackQuery(trackId));
-  const direction = useQuery({
-    ...entryQuery("directions", track.data?.directionId ?? ""),
-    enabled: track.data !== undefined,
-  });
   const read = useQuery(trackPositionsQuery(trackId));
   const change = useMutation({
+    mutationKey: LINK_MUTATION,
     mutationFn: ({
       level,
       positionId,
@@ -155,29 +180,12 @@ function TrackScreen({ trackId }: { trackId: string }) {
 
   return (
     <ConfigProvider componentDisabled={change.isPending}>
-      <Flex vertical gap="large">
-        <Flex vertical gap="small">
-          <Flex align="center" gap="small" wrap>
-            <Typography.Title level={2} style={{ margin: 0 }}>
-              {`Трек «${track.data.name}»`}
-            </Typography.Title>
-            <CatalogStatusTag status={track.data.status} />
-          </Flex>
-          <Typography.Text type="secondary">
-            {[
-              track.data.ownerOrgUnitName,
-              direction.data && `область «${direction.data.name}»`,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </Typography.Text>
-        </Flex>
+      <Flex vertical gap="middle">
         {missing > 0 && (
-          <Alert
+          <CompactAlert
             type="warning"
-            showIcon
-            title={`Уровней без действующей должности: ${missing} из ${levels.length}`}
-            description="Пока они есть, нельзя отправить на согласование и опубликовать матрицу по этому треку."
+            lead={`Уровней без действующей должности: ${missing} из ${levels.length}.`}
+            text="Пока они есть, матрицу по этому треку нельзя отправить и опубликовать."
           />
         )}
         {!canEdit && (
@@ -190,25 +198,19 @@ function TrackScreen({ trackId }: { trackId: string }) {
         {change.error != null && <PositionsError error={change.error} />}
         <div className="queue-columns">
           <section>
-            <Typography.Title level={3}>Уровни трека</Typography.Title>
-            <Flex vertical gap="small">
-              {levels.map((level, index) => (
-                <LevelCard
-                  key={level.id}
-                  level={level}
-                  number={index + 1}
-                  canEdit={canEdit}
-                  onUnlink={(position) =>
-                    change.mutate({
-                      level,
-                      positionId: position.id,
-                      positionName: position.name,
-                      action: "unlink",
-                    })
-                  }
-                />
-              ))}
-            </Flex>
+            <Typography.Title level={4}>Уровни трека</Typography.Title>
+            <LevelsTable
+              levels={levels}
+              canEdit={canEdit}
+              onUnlink={(level, position) =>
+                change.mutate({
+                  level,
+                  positionId: position.id,
+                  positionName: position.name,
+                  action: "unlink",
+                })
+              }
+            />
           </section>
           {canEdit && (
             <AvailablePositions
@@ -225,56 +227,63 @@ function TrackScreen({ trackId }: { trackId: string }) {
             />
           )}
         </div>
-        <LinkButton to={back.to}>{back.label}</LinkButton>
       </Flex>
     </ConfigProvider>
   );
 }
 
-interface LevelCardProps {
-  level: Level;
-  number: number;
+interface LevelsTableProps {
+  levels: readonly Level[];
   canEdit: boolean;
-  onUnlink: (position: LinkedPosition) => void;
+  onUnlink: (level: Level, position: LinkedPosition) => void;
 }
 
-function LevelCard({ level, number, canEdit, onUnlink }: LevelCardProps) {
-  const isMissing = !level.hasActivePosition;
-  return (
-    <Card
-      size="small"
-      style={
-        isMissing ? { background: "var(--ant-color-warning-bg)" } : undefined
-      }
-    >
-      <Flex vertical gap="small">
-        <Flex justify="space-between" align="center" gap="small" wrap>
-          <Typography.Text strong>{`${number}. ${level.name}`}</Typography.Text>
-          {isMissing ? (
-            <Tag color="warning">Нет действующей должности</Tag>
-          ) : (
-            <Typography.Text type="secondary">
-              {`Должностей: ${level.positions.length}`}
-            </Typography.Text>
+function LevelsTable({ levels, canEdit, onUnlink }: LevelsTableProps) {
+  const columns: TableColumnsType<Level> = [
+    {
+      title: "Уровень",
+      key: "level",
+      render: (_, level, index) => `${index + 1}. ${level.name}`,
+    },
+    {
+      title: "Должности",
+      key: "positions",
+      render: (_, level) => (
+        <Flex vertical gap="small">
+          {!level.hasActivePosition && (
+            <Flex align="center" gap="small" wrap>
+              <Tag color="warning">Нет действующей должности</Tag>
+              {canEdit && (
+                <Typography.Text type="secondary">
+                  Выберите должность справа
+                </Typography.Text>
+              )}
+            </Flex>
           )}
+          {level.positions.map((position) => (
+            <PositionLine
+              key={position.id}
+              position={position}
+              canEdit={canEdit}
+              onUnlink={() => onUnlink(level, position)}
+            />
+          ))}
         </Flex>
-        {level.positions.length === 0 && (
-          <Typography.Text type="secondary">
-            {canEdit
-              ? "Связанных должностей нет. Выберите должность справа и нажмите «Связать с уровнем»."
-              : "Связанных должностей нет."}
-          </Typography.Text>
-        )}
-        {level.positions.map((position) => (
-          <PositionLine
-            key={position.id}
-            position={position}
-            canEdit={canEdit}
-            onUnlink={() => onUnlink(position)}
-          />
-        ))}
-      </Flex>
-    </Card>
+      ),
+    },
+  ];
+  return (
+    <Table<Level>
+      size="small"
+      rowKey="id"
+      columns={columns}
+      dataSource={[...levels]}
+      pagination={false}
+      scroll={{ x: "max-content" }}
+      rowClassName={(level) =>
+        level.hasActivePosition ? "" : "level-row-missing"
+      }
+    />
   );
 }
 
@@ -286,13 +295,11 @@ interface PositionLineProps {
 
 function PositionLine({ position, canEdit, onUnlink }: PositionLineProps) {
   return (
-    <Flex justify="space-between" align="center" gap="small" wrap>
+    <Flex align="center" gap="small" wrap>
       <Typography.Text>
         {`${position.name} · ${employees(position.employeeCount)}`}
-        {!position.isActive && (
-          <Tag style={{ marginInlineStart: 8 }}>Неактивна</Tag>
-        )}
       </Typography.Text>
+      {!position.isActive && <Tag>Неактивна</Tag>}
       {canEdit &&
         (position.canUnlink ? (
           <Button
@@ -325,9 +332,10 @@ function AvailablePositions({
 }: AvailablePositionsProps) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(FIRST_PAGE_SIZE);
   const q = useDebouncedValue(search.trim());
   const available = useQuery({
-    ...availablePositionsQuery(trackId, q, page),
+    ...availablePositionsQuery(trackId, q, page, pageSize),
     placeholderData: keepPreviousData,
   });
   const columns: TableColumnsType<AvailablePosition> = [
@@ -360,11 +368,7 @@ function AvailablePositions({
   ];
   return (
     <section>
-      <Typography.Title level={3}>Доступные должности</Typography.Title>
-      <Typography.Paragraph type="secondary">
-        Действующие должности, доступные в подразделении трека и дочерних, ещё
-        не связанные ни с одним уровнем этого трека.
-      </Typography.Paragraph>
+      <Typography.Title level={4}>Доступные должности</Typography.Title>
       <Flex vertical gap="small">
         <Input.Search
           aria-label="Найти должность"
@@ -376,6 +380,9 @@ function AvailablePositions({
             setPage(1);
           }}
         />
+        <Typography.Text type="secondary">
+          Ещё не связаны ни с одним уровнем этого трека.
+        </Typography.Text>
         {available.error ? (
           <LoadFailure
             title="Не удалось загрузить должности"
@@ -392,10 +399,15 @@ function AvailablePositions({
             scroll={{ x: "max-content" }}
             pagination={{
               current: page,
-              pageSize: 20,
+              pageSize,
+              pageSizeOptions: PAGE_SIZES,
               total: available.data?.total,
-              showSizeChanger: false,
-              onChange: setPage,
+              showSizeChanger: true,
+              showTotal: (total) => `Должностей: ${total}`,
+              onChange: (nextPage, nextSize) => {
+                setPage(nextPage);
+                setPageSize(nextSize);
+              },
             }}
             locale={{
               emptyText: q
