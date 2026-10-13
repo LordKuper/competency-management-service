@@ -1,1 +1,2 @@
 - [UX docs conventions](project_ux-docs-conventions.md) — a11y scope trap, mockup token style, menu popup color, row-action links
+- [Sprint ux-spec authoring](project_sprint-ux-spec-authoring.md) — class set to reuse, link depth, plain-text letters, sprint 004 counter badge without new token
