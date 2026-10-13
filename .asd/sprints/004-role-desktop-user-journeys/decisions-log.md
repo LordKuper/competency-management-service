@@ -56,3 +56,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: пользователь принял UX-спецификацию (22 макета, 6 схем потоков, решения U-1…U-23) после двух правок вёрстки; DESIGN.md не меняется, `design-md-delta.yaml` не создан.
 - **Rationale**: write-then-review-accept; материальное UX-направление (рабочий стол — главная, группа «Справочники») утверждено пользователем.
 - **Affected docs**: design/ux-spec.html; на design-promote — docs/ux/app-shell.html, career-framework.html (в т.ч. дефект корня .ds), org-structure.html, user-management.html, строка контраста accent/primary и горизонтальный Steps в DESIGN.md
+
+## 2026-10-13 — `.asd/sprints/004-role-desktop-user-journeys/design/adr.html` accepted
+
+- **Decision**: пользователь принял ADR-1…ADR-6 и три hard-решения: новая подсистема `desk` (модуль `Competency.Desk`, контракт `IDeskSource` в Platform, `web/src/features/desk`; реестр и диаграмма — на design-promote); контракт API 3.1.0 как есть (в т.ч. `POST /career/tracks` всегда создаёт черновик); письма — ограниченная очередь в памяти с принятым риском потери при перезапуске. Complication Approval приняты: `IDeskSource` с тремя реализациями, `IEmployeeDirectory.FindOrgSnapshotAsync`, `CareerMailQueue`.
+- **Rationale**: hard gates — новая подсистема, материальная смена поведения публичного контракта, архитектура доставки писем; рекомендации архитектора приняты.
+- **Affected docs**: design/adr.html; на design-promote — docs/architecture/subsystems.md, desk.md, career-framework.md, org-structure.md, user-management.md, audit.md, stack.html, tech-reference TanStack Query
