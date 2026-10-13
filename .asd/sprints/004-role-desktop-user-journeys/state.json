@@ -1,7 +1,7 @@
 {
   "sprint_id": "004-role-desktop-user-journeys",
   "branch": "sprint/004-role-desktop-user-journeys",
-  "phase": "design-review",
+  "phase": "design-promote",
   "workflow": "standard",
   "documents": {
     "audit": true,
@@ -163,6 +163,14 @@
       "decision": "advance to design-promote",
       "reason": "iter-05 all reviewers APPROVE or latched (efficiency 2, documentation 3, external 4, correctness 5); all user questions and the FAIL escalation answered",
       "evidence": "reviews/design/iter-05; decisions-log.md 2026-10-13 design-review DoD"
+    },
+    {
+      "gate": "decomposition",
+      "decision_actor": "orchestrator",
+      "decision": "promote approved subsystem desk (Competency.Desk); career-framework, org-structure, user-management, audit changed (ports, endpoints, mail kinds); platform IDeskSource contract",
+      "reason": "subsystem desk approved by the user (hard gate) 2026-10-13; no further new subsystem or boundary",
+      "evidence": "decisions-log.003.md 2026-10-13 ADR accepted",
+      "artifact_revision": "HEAD 7174e51"
     }
   ],
   "task_routing": {},
@@ -222,7 +230,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-13T12:25:30.811Z",
+  "updated_at": "2026-10-13T12:25:48.636Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
