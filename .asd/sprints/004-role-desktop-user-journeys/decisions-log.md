@@ -92,3 +92,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-14 — route Task 14/15/16 assessment-fix 4: standard, dispatch HEAD b95eea3
 - 2026-10-14 — Task 16 assessment-fix 4 COMPLETED (7c35fbc): DeskScenarios не рисует карточку без пути (в т.ч. до прочтения стола). Flagged choice принят оркестратором: пустое состояние — по ролям (AC-10); у каждой роли есть сценарий со своим экраном, поэтому отфильтрованный список не пуст при непустом по ролям
 - 2026-10-14 — Task 15 assessment-fix 4 COMPLETED (d3dfdf5): AC-10 — AC-56/AC-62 показываются только при пунктах в группах AC-22 / AC-24, AC-27. Task 14 assessment-fix 4 COMPLETED (d22d133): правило «Что можно сделать», заметки структуры страницы, карточек, ролей, «Всё сделано», загрузки и ошибки; макеты без изменений
+- 2026-10-14 — impl assessment: request changes (user, скриншот группы «Связать должности с треками»): тег вида объекта «Должность» вплотную к ссылке — нет отступа; проверить в других местах. Дефект вёрстки, документы не меняются
+- 2026-10-14 — route Task 16 assessment-fix 5: standard, dispatch HEAD 536ab1d
