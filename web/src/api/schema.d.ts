@@ -2094,6 +2094,26 @@ export interface components {
             linkState?: null | components["schemas"]["DeskLinkState"];
             /** @description The other records the reason names, in the order it names them. */
             entries?: null | components["schemas"]["DeskObject"][];
+            /**
+             * Format: int32
+             * @description The number of the matrix version the reason is about.
+             */
+            number?: null | number;
+            /** @description Whether the approver returned the version with changes of their own. */
+            hasChanges?: null | boolean;
+            /** @description Whether the approver returned the version with a comment. */
+            hasComment?: null | boolean;
+            /**
+             * Format: int32
+             * @description The number of levels of the track the reason is about, inactive ones aside.
+             */
+            levelCount?: null | number;
+            /** @description The levels a track gained since its matrix was published, in track order. */
+            addedLevels?: null | components["schemas"]["DeskObject"][];
+            /** @description The levels a published matrix lists that its track no longer has in use, in matrix order. */
+            removedLevels?: null | components["schemas"]["DeskObject"][];
+            /** @description The levels whose place in the track changed since its matrix was published, in track order. */
+            movedLevels?: null | components["schemas"]["DeskObject"][];
         };
         /** @enum {unknown} */
         DeskGroup: "ReturnedVersions" | "VersionsToApprove" | "UnsubmittedVersions" | "DraftsToApprove" | "MatricesToBuild" | "PositionsToLink" | "UnitsToConnect" | "Invitations" | "OrgCleanup" | "UnitsWithoutMatrix" | "VersionsInApproval" | "StuckVersions" | "ChangedCompetencies" | "OwnDrafts" | "PositionLinksInfo" | "UnusedCatalogEntries" | "InactivePositions" | "UnusedPositions" | "EmptyUnits" | "NoTrack";

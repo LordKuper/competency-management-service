@@ -24,6 +24,7 @@ public static class CareerFrameworkModule
         services.AddScoped<MatrixCatalog>();
         services.AddScoped<MatrixWorkflow>();
         services.AddScoped<CareerMail>();
+        services.AddScoped<IDeskSource, CareerDeskSource>();
         services.AddSingleton<CareerMailQueue>();
         services.AddHostedService(provider => provider.GetRequiredService<CareerMailQueue>());
         return services;

@@ -13325,7 +13325,7 @@
                 "type": "null"
               },
               {
-                "description": "The employee the reason names, such as a unit head, a responsible HR or whoever holds the turn.",
+                "description": "The person the reason names, such as a unit head, a responsible HR or whoever holds the turn: their employee, or their account when it is bound to none.",
                 "$ref": "#/components/schemas/DeskObject"
               }
             ]
@@ -13361,6 +13361,66 @@
               "$ref": "#/components/schemas/DeskObject"
             },
             "description": "The other records the reason names, in the order it names them."
+          },
+          "number": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The number of the matrix version the reason is about.",
+            "format": "int32"
+          },
+          "hasChanges": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Whether the approver returned the version with changes of their own."
+          },
+          "hasComment": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Whether the approver returned the version with a comment."
+          },
+          "levelCount": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The number of levels of the track the reason is about, inactive ones aside.",
+            "format": "int32"
+          },
+          "addedLevels": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeskObject"
+            },
+            "description": "The levels a track gained since its matrix was published, in track order."
+          },
+          "removedLevels": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeskObject"
+            },
+            "description": "The levels a published matrix lists that its track no longer has in use, in matrix order."
+          },
+          "movedLevels": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeskObject"
+            },
+            "description": "The levels whose place in the track changed since its matrix was published, in track order."
           }
         },
         "description": "The values a desk finding's reason names; the client words the reason from its kind, so each kind fills only the values it names."
