@@ -1,14 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Alert,
-  App,
-  theme as antdTheme,
-  Button,
-  Flex,
-  Skeleton,
-  Tag,
-  Typography,
-} from "antd";
+import { Alert, App, Button, Flex, Skeleton, Tag, Typography } from "antd";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { MatrixEditor } from "../career/MatrixEditor";
@@ -33,6 +24,7 @@ import { CompletenessBlock } from "./CompletenessBlock";
 import { DecisionError } from "./DecisionError";
 import { deskPaths, formatDate, relativeTime, shortName } from "./deskTexts";
 import { LinkButton } from "./LinkButton";
+import { ActionBar, ContextLine, OtherVersionMenu } from "./ScenarioContext";
 import { LoadFailure, ScenarioPage } from "./ScenarioPage";
 import { outcomeText, remarksText, WAITING_STEP_TEXTS } from "./scenarioTexts";
 import { useVersionTransition } from "./useVersionTransition";
@@ -60,7 +52,6 @@ export function ReviewPage() {
 }
 
 function ReviewContent({ version }: { version: MatrixVersion }) {
-  const { token } = antdTheme.useToken();
   const { message } = App.useApp();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -136,40 +127,44 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
   }
 
   return (
-    <Flex vertical gap={token.marginLG}>
-      <Flex vertical gap={token.marginXS}>
-        <Flex align="center" gap={token.marginXS} wrap>
-          <Typography.Title level={2} style={{ margin: 0 }}>
-            {`Матрица «${trackName}» — ${unitName}`}
-          </Typography.Title>
-          <Tag>{`Версия ${version.number}`}</Tag>
-          <Tag color={isWaitingForUser ? "processing" : undefined}>
-            {isWaitingForUser && version.step
-              ? `Ждёт вас: ${WAITING_STEP_TEXTS[version.step]}`
-              : VERSION_STATUS_LABELS[version.status]}
-          </Tag>
-        </Flex>
+    <Flex vertical gap="middle">
+      <ContextLine>
+        <Typography.Text strong>
+          {`Матрица «${trackName}» — ${unitName}`}
+        </Typography.Text>
+        <Tag>{`Версия ${version.number}`}</Tag>
+        <Tag color={isWaitingForUser ? "processing" : undefined}>
+          {isWaitingForUser && version.step
+            ? `Ждёт вас: ${WAITING_STEP_TEXTS[version.step]}`
+            : VERSION_STATUS_LABELS[version.status]}
+        </Tag>
         <Typography.Text type="secondary">
           {`Автор: ${shortName(version.authorName ?? "")}`}
           {submittedAt &&
             ` · отправлена ${relativeTime(submittedAt)}, ${formatDate(submittedAt)}`}
         </Typography.Text>
-      </Flex>
+        <OtherVersionMenu
+          group="VersionsToApprove"
+          currentId={version.id}
+          pathOf={deskPaths.review}
+          isLocked={transition.isPending || isReturning}
+        />
+      </ContextLine>
       {!isWaitingForUser && (
         <Alert
           type="info"
           showIcon
-          title="Версия уже не ждёт вашего решения"
-          description={
+          title={
             <>
-              {`Сейчас она «${VERSION_STATUS_LABELS[version.status]}». Содержимое доступно для просмотра, решений нет. `}
+              <strong>Версия уже не ждёт вашего решения.</strong>
+              {` Сейчас она «${VERSION_STATUS_LABELS[version.status]}»: содержимое доступно для просмотра, решений нет. `}
               <Link to={deskPaths.desk}>К рабочему столу</Link>
             </>
           }
         />
       )}
       <section>
-        <Typography.Title level={3}>
+        <Typography.Title level={4}>
           {isFirstVersion || !matrix.data?.publishedVersion
             ? "Версия целиком"
             : `Что изменилось относительно опубликованной версии ${matrix.data.publishedVersion.number}`}
@@ -183,13 +178,14 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
         ) : !changes.data ? (
           <Skeleton active />
         ) : isFirstVersion ? (
-          <Flex vertical gap={token.margin}>
+          <Flex vertical gap="middle">
             <Alert
               type="info"
               showIcon
               title="Это первая версия матрицы подразделения: показана вся версия, а не разница."
             />
             <MatrixEditor
+              isCompact
               version={{
                 ...version,
                 actions: version.actions.filter((action) => action !== "Edit"),
@@ -209,7 +205,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
       </section>
       {approverChanges && approverChanges.changes.length > 0 && (
         <section>
-          <Typography.Title level={3}>Изменено вами</Typography.Title>
+          <Typography.Title level={4}>Изменено вами</Typography.Title>
           <ChangesBlock
             diff={approverChanges}
             levelNames={levelNames}
@@ -220,40 +216,35 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
           />
         </section>
       )}
-      <section>
-        <Typography.Title level={3}>Проверка полноты</Typography.Title>
-        <Flex vertical gap={token.marginSM}>
-          <CompletenessBlock
-            problems={problems}
-            trackId={version.entries.track.id}
-            warning={(count) =>
-              isPublishing
-                ? `Опубликовать версию нельзя: ${remarksText(count)}`
-                : `Согласовать версию нельзя: ${remarksText(count)}`
-            }
-            returnLabel="К согласованию"
-          />
-        </Flex>
-      </section>
+      <CompletenessBlock
+        problems={problems}
+        trackId={version.entries.track.id}
+        warning={(count) =>
+          isPublishing
+            ? `Проверка полноты: опубликовать версию нельзя, ${remarksText(count)}`
+            : `Проверка полноты: согласовать версию нельзя, ${remarksText(count)}`
+        }
+        returnLabel="К согласованию"
+      />
       {isPublishing && publication.data && (
         <section>
-          <Typography.Title level={3}>
+          <Typography.Title level={4}>
             Будет опубликовано вместе с версией
           </Typography.Title>
-          <Flex vertical gap={token.marginSM}>
+          <Flex vertical gap="small">
             {entries.length > 0 ? (
               <>
-                <Typography.Paragraph>
+                <Typography.Text>
                   Эти черновые записи станут действующими одновременно с
                   версией. Право утвердить их проверяется у ответственного HR
                   подразделения матрицы; отказать по одной нельзя.
-                </Typography.Paragraph>
+                </Typography.Text>
                 <CascadeTable entries={entries} />
               </>
             ) : (
-              <Typography.Paragraph>
+              <Typography.Text>
                 Черновых записей нет: публикуется только версия.
-              </Typography.Paragraph>
+              </Typography.Text>
             )}
             {(publication.data.blockers.length > 0 ||
               publication.data.moreCount > 0) && (
@@ -279,19 +270,27 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
         />
       )}
       {isWaitingForUser && (
-        <Flex gap={token.marginSM} align="center" wrap>
-          {can("Edit") && (
-            <LinkButton to={`/career/matrices/${version.matrixId}`}>
-              Внести правки
-            </LinkButton>
-          )}
-          {can("Return") && (
-            <Button
-              disabled={transition.isPending}
-              onClick={() => setIsReturning(true)}
-            >
-              Вернуть с правками
-            </Button>
+        <ActionBar
+          start={
+            <>
+              {can("Edit") && (
+                <LinkButton to={`/career/matrices/${version.matrixId}`}>
+                  Внести правки
+                </LinkButton>
+              )}
+              {can("Return") && (
+                <Button
+                  disabled={transition.isPending}
+                  onClick={() => setIsReturning(true)}
+                >
+                  Вернуть с правками
+                </Button>
+              )}
+            </>
+          }
+        >
+          {approveBlock && (
+            <Typography.Text type="secondary">{approveBlock}</Typography.Text>
           )}
           <Button
             type="primary"
@@ -301,10 +300,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
           >
             {isPublishing ? "Согласовать и опубликовать" : "Согласовать"}
           </Button>
-          {approveBlock && (
-            <Typography.Text type="secondary">{approveBlock}</Typography.Text>
-          )}
-        </Flex>
+        </ActionBar>
       )}
       {isReturning && (
         <ReturnModal

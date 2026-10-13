@@ -30,6 +30,7 @@ import { ChangesBlock } from "./ChangesBlock";
 import { CompletenessBlock } from "./CompletenessBlock";
 import { DecisionError } from "./DecisionError";
 import { deskPaths, formatDate, relativeTime, shortName } from "./deskTexts";
+import { ContextLine, OtherVersionMenu } from "./ScenarioContext";
 import { LoadFailure, ScenarioPage } from "./ScenarioPage";
 import { outcomeText, remarksText } from "./scenarioTexts";
 import { useVersionTransition } from "./useVersionTransition";
@@ -77,12 +78,12 @@ function DecisionCard({
   onClick,
 }: DecisionCardProps) {
   return (
-    <Card style={{ flex: 1, minWidth: 0 }}>
+    <Card size="small" style={{ flex: 1, minWidth: 0 }}>
       <Flex vertical gap="small" align="flex-start">
         <Typography.Title level={4} style={{ margin: 0 }}>
           {title}
         </Typography.Title>
-        <Typography.Paragraph>{consequence}</Typography.Paragraph>
+        <Typography.Text>{consequence}</Typography.Text>
         <Button
           danger={isDanger}
           loading={isPending}
@@ -199,29 +200,35 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
   }
 
   return (
-    <Flex vertical gap={token.marginLG}>
-      <Flex align="center" gap={token.marginXS} wrap>
-        <Typography.Title level={2} style={{ margin: 0 }}>
+    <Flex vertical gap="middle">
+      <ContextLine>
+        <Typography.Text strong>
           {`Матрица «${version.entries.track.name}» — ${unitName}`}
-        </Typography.Title>
+        </Typography.Text>
         <Tag>{`Версия ${version.number}`}</Tag>
         <Tag color="warning">{VERSION_STATUS_LABELS[version.status]}</Tag>
-      </Flex>
+        <OtherVersionMenu
+          group="ReturnedVersions"
+          currentId={version.id}
+          pathOf={deskPaths.rework}
+          isLocked={transition.isPending}
+        />
+      </ContextLine>
       {!isWaitingForUser && (
         <Alert
           type="info"
           showIcon
-          title="Версия уже не ждёт вашего решения"
-          description={
+          title={
             <>
-              {`Сейчас она «${VERSION_STATUS_LABELS[version.status]}». `}
+              <strong>Версия уже не ждёт вашего решения.</strong>
+              {` Сейчас она «${VERSION_STATUS_LABELS[version.status]}». `}
               <Link to={deskPaths.desk}>К рабочему столу</Link>
             </>
           }
         />
       )}
       <section>
-        <Typography.Title level={3}>Комментарий согласующего</Typography.Title>
+        <Typography.Title level={4}>Комментарий согласующего</Typography.Title>
         {returned ? (
           <Flex vertical gap={token.marginXXS}>
             <Typography.Text type="secondary">
@@ -242,7 +249,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
         )}
       </section>
       <section>
-        <Typography.Title level={3}>
+        <Typography.Title level={4}>
           Правки согласующего относительно вашего варианта
         </Typography.Title>
         {approverDiff.data ? (
@@ -282,21 +289,14 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
           <Skeleton active />
         )}
       </section>
-      <section>
-        <Typography.Title level={3}>
-          Проверка полноты (с учётом правок)
-        </Typography.Title>
-        <Flex vertical gap={token.marginSM}>
-          <CompletenessBlock
-            problems={problems}
-            trackId={version.entries.track.id}
-            warning={(count) =>
-              `Повторно отправить версию сейчас нельзя: ${remarksText(count)}.`
-            }
-            returnLabel="К доработке"
-          />
-        </Flex>
-      </section>
+      <CompletenessBlock
+        problems={problems}
+        trackId={version.entries.track.id}
+        warning={(count) =>
+          `Проверка полноты с учётом правок: ${remarksText(count)}, повторно отправить версию нельзя.`
+        }
+        returnLabel="К доработке"
+      />
       {transition.error != null && (
         <DecisionError
           title="Не удалось выполнить решение"
@@ -305,7 +305,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
       )}
       {isWaitingForUser && (
         <section>
-          <Typography.Title level={3}>Ваше решение</Typography.Title>
+          <Typography.Title level={4}>Ваше решение</Typography.Title>
           <Flex gap={token.marginSM} wrap>
             {can("AcceptChanges") && (
               <DecisionCard
