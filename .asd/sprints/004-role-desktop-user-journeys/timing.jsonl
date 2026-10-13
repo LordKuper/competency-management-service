@@ -109,3 +109,5 @@
 {"op":"close","id":"design-review iter-05","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T12:22:49.908Z","end":"2026-10-13T12:25:30.752Z","outcome":"done","attrs":{"iteration":"5"}}
 {"op":"close","id":"design-review#1","kind":"phase","parent":null,"start":"2026-10-13T09:59:25.684Z","end":"2026-10-13T12:25:31.071Z","outcome":"done","attrs":{}}
 {"op":"open","id":"design-promote#1","kind":"phase","parent":null,"start":"2026-10-13T12:25:31.331Z","attrs":{}}
+{"op":"open","id":"asd-architect design-promote#1","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:25:48.850Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-architect design-promote#1","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:25:48.850Z","end":"2026-10-13T12:27:40.922Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
