@@ -1,11 +1,18 @@
+import type { ComponentType } from "react";
 import type { RouteObject } from "react-router";
 import type { components } from "../api/schema";
 
 /** Address of the sign-in screen, the one place an unauthenticated session is sent to. */
 export const LOGIN_PATH = "/login";
 
+/** Address the application root and a sign-in without a target open. */
+export const HOME_PATH = "/desk";
+
 /** Account role; screens and navigation adapt to it, while the server alone enforces access. */
 export type UserRole = components["schemas"]["UserRole"];
+
+/** Submenu of the shell navigation an entry may be grouped under. */
+export type NavGroup = "reference" | "admin";
 
 /** One entry of the shell navigation, contributed by a feature. */
 export interface NavItem {
@@ -13,14 +20,16 @@ export interface NavItem {
   key: string;
   /** Russian text shown in the menu. */
   label: string;
-  /** Address the entry opens. */
+  /** Address the entry opens; the entry is current on this address and every address under it. */
   path: string;
   /** Position in the menu, ascending. */
   order: number;
   /** Submenu the entry is grouped under; omitted means a top-level entry. */
-  group?: "admin";
+  group?: NavGroup;
   /** Roles that see the entry; omitted means every signed-in user. */
   roles?: ReadonlyArray<UserRole>;
+  /** Mark shown after the label, such as a count; it renders nothing when there is nothing to show. */
+  badge?: ComponentType;
 }
 
 /** What a feature's `routes.ts` may export. */

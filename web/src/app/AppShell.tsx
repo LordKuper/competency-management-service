@@ -16,7 +16,7 @@ import {
   useCurrentUser,
 } from "../features/auth/useCurrentUser";
 import { ErrorAlert } from "./ErrorAlert";
-import type { NavItem } from "./featureContract";
+import type { NavGroup, NavItem } from "./featureContract";
 import { navItemsFor } from "./features";
 import { PRODUCT_NAME } from "./productName";
 import { UserMenu } from "./UserMenu";
@@ -30,21 +30,47 @@ const productNameStyle: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-/** Entries of the "admin" group form one submenu, placed where its first entry would be. */
+const GROUP_LABELS: Record<NavGroup, string> = {
+  reference: "Справочники",
+  admin: "Администрирование",
+};
+
+interface Submenu {
+  key: string;
+  label: string;
+  children: NonNullable<MenuProps["items"]>;
+}
+
+/** Entries of one group form one submenu, placed where its first entry would be. */
 function menuItems(navItems: NavItem[]): MenuProps["items"] {
   const leaf = (item: NavItem) => ({
     key: item.key,
-    label: <Link to={item.path}>{item.label}</Link>,
+    label: (
+      <Link to={item.path}>
+        {item.label}
+        {item.badge && <item.badge />}
+      </Link>
+    ),
   });
   const items: NonNullable<MenuProps["items"]> = [];
-  const admin: NavItem[] = [];
+  const submenus = new Map<NavGroup, Submenu>();
   for (const item of navItems) {
-    if (!item.group) items.push(leaf(item));
-    else if (admin.push(item) === 1)
-      items.push({ key: "admin", label: "Администрирование", children: [] });
+    if (!item.group) {
+      items.push(leaf(item));
+      continue;
+    }
+    let submenu = submenus.get(item.group);
+    if (!submenu) {
+      submenu = {
+        key: item.group,
+        label: GROUP_LABELS[item.group],
+        children: [],
+      };
+      submenus.set(item.group, submenu);
+      items.push(submenu);
+    }
+    submenu.children.push(leaf(item));
   }
-  const group = items.find((item) => item?.key === "admin");
-  if (group && "children" in group) group.children = admin.map(leaf);
   return items;
 }
 

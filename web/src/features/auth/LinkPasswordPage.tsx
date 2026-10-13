@@ -21,6 +21,12 @@ import { AuthCard, AuthLink } from "./AuthCard";
 import { FORGOT_PASSWORD_PATH } from "./ForgotPasswordPage";
 import { usePasswordHint } from "./passwordPolicy";
 
+/** Address of the invitation link screen, fixed by the e-mails the server sends. */
+export const ACCEPT_INVITATION_PATH = "/accept-invitation";
+
+/** Address of the password reset link screen, fixed by the e-mails the server sends. */
+export const RESET_PASSWORD_PATH = "/reset-password";
+
 interface LinkPasswordValues {
   password: string;
   confirmPassword: string;

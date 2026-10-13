@@ -37,6 +37,9 @@ const customToken = {
   motionEaseIn: "cubic-bezier(0.55, 0.055, 0.675, 0.19)",
 };
 
+/** Widest a card or detail page grows before it centres; antd has no token for it. */
+export const contentMaxWidth = 1440;
+
 const fontFamily = "PT Sans, Segoe UI, Roboto, Arial, sans-serif";
 const fontFamilyCode = "PT Mono, Consolas, Courier New, monospace";
 
