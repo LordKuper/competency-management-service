@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Alert,
   Button,
   ConfigProvider,
   Flex,
@@ -31,7 +30,8 @@ import {
 import { competencyIdsOf, withChosenCompetencies } from "./builderContent";
 import type { StepProps } from "./builderStep";
 
-const PAGE_SIZE = 20;
+const FIRST_PAGE_SIZE = 10;
+const PAGE_SIZES = [FIRST_PAGE_SIZE, 20, 50];
 
 /** Step 2: the competencies of the matrix, chosen from the catalogue or created as drafts on the spot. */
 export function BuilderCompetenciesStep(props: StepProps) {
@@ -67,6 +67,7 @@ function CompetenciesBody({
   const [chosen, setChosen] = useState(savedIds);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(FIRST_PAGE_SIZE);
   const [highlightedId, setHighlightedId] = useState<string>();
   const [isCreating, setIsCreating] = useState(false);
   const q = useDebouncedValue(search.trim());
@@ -74,7 +75,7 @@ function CompetenciesBody({
     competenciesQuery({
       q: q || undefined,
       page,
-      pageSize: PAGE_SIZE,
+      pageSize,
       scaleId: version.scaleId,
       directionId: version.entries.direction.id,
       withGeneral: true,
@@ -136,26 +137,25 @@ function CompetenciesBody({
   return (
     <ConfigProvider componentDisabled={save.isPending}>
       <Flex vertical gap="middle">
-        <Flex justify="space-between" align="center" wrap gap="small">
-          <Typography.Title level={3} style={{ margin: 0 }}>
-            {`Компетенции. Выбрано: ${chosen.size}`}
-          </Typography.Title>
+        <Flex align="center" gap="middle" wrap>
+          <Input.Search
+            aria-label="Найти компетенцию"
+            placeholder="Найти компетенцию"
+            allowClear
+            style={{ flex: 1 }}
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+          />
+          <Typography.Text strong>{`Выбрано: ${chosen.size}`}</Typography.Text>
           {isEditable && (
             <Button onClick={() => setIsCreating(true)}>
               Создать черновую компетенцию
             </Button>
           )}
         </Flex>
-        <Input.Search
-          aria-label="Найти компетенцию"
-          placeholder="Найти компетенцию"
-          allowClear
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPage(1);
-          }}
-        />
         {list.error ? (
           <ErrorAlert
             title="Не удалось загрузить каталог компетенций"
@@ -182,10 +182,14 @@ function CompetenciesBody({
             }}
             pagination={{
               current: page,
-              pageSize: PAGE_SIZE,
+              pageSize,
+              pageSizeOptions: PAGE_SIZES,
               total: list.data?.total,
-              showSizeChanger: false,
-              onChange: setPage,
+              showSizeChanger: true,
+              onChange: (nextPage, nextSize) => {
+                setPage(nextPage);
+                setPageSize(nextSize);
+              },
             }}
             locale={{
               emptyText: q
@@ -194,11 +198,10 @@ function CompetenciesBody({
             }}
           />
         )}
-        <Alert
-          type="info"
-          showIcon
-          title="Черновая компетенция опубликуется вместе с версией, если согласующий вправе её утвердить."
-        />
+        <Typography.Text type="secondary">
+          Черновая компетенция опубликуется вместе с версией, если согласующий
+          вправе её утвердить.
+        </Typography.Text>
         {save.error != null && (
           <MatrixErrorAlert
             title="Не удалось сохранить шаг"

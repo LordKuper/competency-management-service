@@ -1,21 +1,12 @@
 import { CheckCircleOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Alert,
-  App,
-  Button,
-  Descriptions,
-  Flex,
-  Skeleton,
-  Typography,
-} from "antd";
+import { App, Button, Flex, Skeleton, Typography } from "antd";
 import { useNavigate } from "react-router";
 import { trackQuery } from "../career/catalogApi";
 import {
   type MatrixVersion,
   matrixCompletenessQuery,
   matrixPublicationQuery,
-  matrixQuery,
 } from "../career/matrixApi";
 import { SKIPPED_NOTE } from "../career/matrixLabels";
 import { draftRecords } from "../career/usePublishEntry";
@@ -23,6 +14,7 @@ import { CascadeTable } from "./CascadeTable";
 import { CompletenessBlock } from "./CompletenessBlock";
 import { DecisionError } from "./DecisionError";
 import { deskPaths, shortName } from "./deskTexts";
+import { ActionBar, CompactAlert } from "./ScenarioContext";
 import { outcomeText, remarksText } from "./scenarioTexts";
 import { useVersionTransition } from "./useVersionTransition";
 
@@ -35,7 +27,6 @@ interface BuilderSubmitStepProps {
 export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
   const { message } = App.useApp();
   const navigate = useNavigate();
-  const matrix = useQuery(matrixQuery(version.matrixId));
   const track = useQuery(trackQuery(version.entries.track.id));
   const completeness = useQuery({
     ...matrixCompletenessQuery(version.id),
@@ -88,9 +79,6 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
 
   return (
     <Flex vertical gap="middle">
-      <Typography.Title level={3} style={{ margin: 0 }}>
-        Отправка
-      </Typography.Title>
       {problems.length > 0 ? (
         <CompletenessBlock
           problems={problems}
@@ -101,44 +89,25 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
           returnLabel="К построению матрицы"
         />
       ) : (
-        <Alert
+        <CompactAlert
           type="success"
-          showIcon
           icon={<CheckCircleOutlined />}
-          title="Версия полна"
-          description="Замечаний нет: её можно отправить."
+          lead="Версия полна:"
+          text="замечаний нет, можно отправлять на согласование."
         />
       )}
-      <Descriptions
-        column={1}
-        items={[
-          {
-            key: "unit",
-            label: "Подразделение",
-            children: matrix.data?.orgUnitName,
-          },
-          {
-            key: "track",
-            label: "Трек, шкала",
-            children: `${version.entries.track.name}${track.data?.status === "Draft" ? " (черновой)" : ""} · ${version.entries.scale.name}`,
-          },
-          {
-            key: "content",
-            label: "Содержание",
-            children: `Компетенций: ${content.competencies.length} · уровней: ${content.levels.length} · блоков: ${content.blocks.length}`,
-          },
-        ]}
-      />
+      <Typography.Text>
+        {`Содержание: компетенций ${content.competencies.length} · уровней ${content.levels.length} · блоков ${content.blocks.length} · ${version.entries.scale.name}`}
+      </Typography.Text>
       {isPublishing ? (
         <Flex vertical gap="small">
-          <Alert
+          <CompactAlert
             type="warning"
-            showIcon
-            title="Отправка опубликует версию"
-            description={
+            lead="Отправка опубликует версию"
+            text={
               preview.entries.length > 0
-                ? `Вы — ответственный HR этого подразделения, шаг 2 согласуется автоматически. Вместе с версией станут действующими ${draftRecords(preview.entries.length)}.`
-                : "Вы — ответственный HR этого подразделения, шаг 2 согласуется автоматически. Черновых записей нет: публикуется только версия."
+                ? `и вместе с ней ${draftRecords(preview.entries.length)}: вы — ответственный HR этого подразделения, шаг 2 согласуется автоматически.`
+                : "без черновых записей: вы — ответственный HR этого подразделения, шаг 2 согласуется автоматически."
             }
           />
           {preview.entries.length > 0 && (
@@ -164,10 +133,18 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
           error={transition.error}
         />
       )}
-      <Flex gap="small" align="center" wrap>
-        <Button disabled={transition.isPending} onClick={onBack}>
-          Назад
-        </Button>
+      <ActionBar
+        start={
+          <Button disabled={transition.isPending} onClick={onBack}>
+            Назад
+          </Button>
+        }
+      >
+        {problems.length > 0 && (
+          <Typography.Text type="secondary">
+            {`Отправка недоступна: ${remarksText(problems.length)}`}
+          </Typography.Text>
+        )}
         <Button
           type="primary"
           loading={transition.isPending}
@@ -178,12 +155,7 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
             ? "Отправить и опубликовать"
             : "Отправить на согласование"}
         </Button>
-        {problems.length > 0 && (
-          <Typography.Text type="secondary">
-            {`Отправка недоступна: ${remarksText(problems.length)}`}
-          </Typography.Text>
-        )}
-      </Flex>
+      </ActionBar>
     </Flex>
   );
 }

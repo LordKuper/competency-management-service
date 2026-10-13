@@ -9,6 +9,7 @@ import {
 } from "../career/matrixApi";
 import type { StepProps } from "./builderStep";
 import { CompletenessBlock } from "./CompletenessBlock";
+import { ActionBar } from "./ScenarioContext";
 import { LoadFailure } from "./ScenarioPage";
 import { remarksText } from "./scenarioTexts";
 
@@ -51,9 +52,6 @@ export function BuilderCheckStep({
 
   return (
     <Flex vertical gap="middle">
-      <Typography.Title level={3} style={{ margin: 0 }}>
-        Проверка полноты
-      </Typography.Title>
       {completeness.error ? (
         <LoadFailure
           title="Не удалось выполнить проверку"
@@ -68,6 +66,7 @@ export function BuilderCheckStep({
             `Версию пока нельзя отправить: ${remarksText(count)}`
           }
           returnLabel="К построению матрицы"
+          note="Проверка идёт по сохранённому черновику."
           onStep={onGoToStep}
         />
       )}
@@ -77,10 +76,18 @@ export function BuilderCheckStep({
           error={goOn.error}
         />
       )}
-      <Flex gap="small" align="center" wrap>
-        <Button disabled={goOn.isPending} onClick={onBack}>
-          Назад
-        </Button>
+      <ActionBar
+        start={
+          <Button disabled={goOn.isPending} onClick={onBack}>
+            Назад
+          </Button>
+        }
+      >
+        {hasProblems && (
+          <Typography.Text type="secondary">
+            {`Отправка недоступна: ${remarksText(problems.length)}`}
+          </Typography.Text>
+        )}
         <Button
           type="primary"
           loading={goOn.isPending}
@@ -89,12 +96,7 @@ export function BuilderCheckStep({
         >
           Перейти к отправке
         </Button>
-        {hasProblems && (
-          <Typography.Text type="secondary">
-            {`Отправка недоступна: ${remarksText(problems.length)}`}
-          </Typography.Text>
-        )}
-      </Flex>
+      </ActionBar>
     </Flex>
   );
 }

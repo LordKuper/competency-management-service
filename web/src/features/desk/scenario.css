@@ -46,3 +46,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Fields of a scenario form stand closer: the gaps between blocks come from the layout around them. */
+.compact-form .ant-form-item {
+  margin-bottom: 0;
+}

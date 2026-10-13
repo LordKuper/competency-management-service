@@ -42,10 +42,15 @@ export function BuilderFooter({
   onSave,
   onCancelEdits,
 }: BuilderFooterProps) {
+  const back = (
+    <Button disabled={isUnsaved} onClick={onBack}>
+      Назад
+    </Button>
+  );
   if (!isEditable) {
     return (
-      <Flex gap="small">
-        <Button onClick={onBack}>Назад</Button>
+      <Flex justify="space-between" gap="small">
+        {back}
         <Button type="primary" onClick={onSkip}>
           Далее
         </Button>
@@ -53,35 +58,35 @@ export function BuilderFooter({
     );
   }
   return (
-    <Flex gap="small" align="center" wrap>
-      <Button disabled={isUnsaved} onClick={onBack}>
-        Назад
-      </Button>
-      <Button disabled={isSaving} onClick={() => onSave(step, "exit")}>
-        Сохранить и выйти
-      </Button>
-      <Button
-        type="primary"
-        loading={isSaving}
-        disabled={nextBlock !== undefined || undefined}
-        onClick={() => onSave(step + 1, "next")}
-      >
-        Сохранить и далее
-      </Button>
-      {nextBlock && (
-        <Typography.Text type="secondary">{nextBlock}</Typography.Text>
-      )}
-      {isUnsaved && !isSaving && (
-        <>
-          <Typography.Text type="secondary">
-            Есть несохранённые правки. Сохраните их, чтобы перейти на другой
-            шаг.
-          </Typography.Text>
-          <Button type="link" onClick={onCancelEdits}>
-            Отменить правки
-          </Button>
-        </>
-      )}
+    <Flex justify="space-between" align="center" gap="small" wrap>
+      {back}
+      <Flex align="center" gap="small" wrap>
+        {nextBlock && (
+          <Typography.Text type="secondary">{nextBlock}</Typography.Text>
+        )}
+        {isUnsaved && !isSaving && (
+          <>
+            <Typography.Text type="secondary">
+              Есть несохранённые правки. Сохраните их, чтобы перейти на другой
+              шаг.
+            </Typography.Text>
+            <Button type="link" onClick={onCancelEdits}>
+              Отменить правки
+            </Button>
+          </>
+        )}
+        <Button disabled={isSaving} onClick={() => onSave(step, "exit")}>
+          Сохранить и выйти
+        </Button>
+        <Button
+          type="primary"
+          loading={isSaving}
+          disabled={nextBlock !== undefined || undefined}
+          onClick={() => onSave(step + 1, "next")}
+        >
+          Сохранить и далее
+        </Button>
+      </Flex>
     </Flex>
   );
 }

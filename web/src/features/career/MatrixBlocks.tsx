@@ -71,6 +71,8 @@ interface MatrixBlocksProps {
   levelNames: ReadonlyMap<string, string>;
   changed: ChangedPlaces;
   isEditable: boolean;
+  /** Inside a wizard step, where the step's name already stands in the ruler and the table needs no heading. */
+  isCompact?: boolean;
   onChange: (content: MatrixContent) => void;
 }
 
@@ -84,6 +86,7 @@ export function MatrixBlocks({
   levelNames,
   changed,
   isEditable,
+  isCompact = false,
   onChange,
 }: MatrixBlocksProps) {
   const levelColumns: TableColumnsType<MatrixBlock> = levelIds.map(
@@ -234,7 +237,9 @@ export function MatrixBlocks({
 
   return (
     <section>
-      <Typography.Title level={2}>Блоки компетенций</Typography.Title>
+      {!isCompact && (
+        <Typography.Title level={2}>Блоки компетенций</Typography.Title>
+      )}
       <Space orientation="vertical" size="middle" style={{ display: "flex" }}>
         <Table<MatrixBlock>
           className="matrix-grid"

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Button,
+  Flex,
   Skeleton,
   Table,
   type TableColumnsType,
@@ -14,7 +15,8 @@ import { trackQuery } from "../career/catalogApi";
 import type { MatrixProblem } from "../career/matrixApi";
 import { deskPaths } from "./deskTexts";
 import { type ReturnLink, returnState } from "./returnLink";
-import { PROBLEM_STEP, remarksText, stepText } from "./scenarioTexts";
+import { CompactAlert } from "./ScenarioContext";
+import { PROBLEM_STEP, stepText } from "./scenarioTexts";
 
 interface PositionGapActionProps {
   trackId: string;
@@ -63,6 +65,8 @@ export function NoPositionTag() {
   );
 }
 
+const sentence = (text: string) => (text.endsWith(".") ? text : `${text}.`);
+
 interface CompletenessBlockProps {
   /** Null while the check is read. */
   problems: readonly MatrixProblem[] | null;
@@ -73,66 +77,82 @@ interface CompletenessBlockProps {
   returnLabel: string;
   /** Takes the user to the wizard step where a problem is put right; without it the step is only named. */
   onStep?: (step: number) => void;
+  /** One short explanation after the warning, such as what the check was made on. */
+  note?: string;
 }
 
-/** The check of a version: the problems with where to put each right, or the word that there are none. */
+/**
+ * The check of a version: one line when it passes, a warning with the single problem inside it, or a warning over
+ * a table of problems with where to put each right.
+ */
 export function CompletenessBlock({
   problems,
   trackId,
   warning,
   returnLabel,
   onStep,
+  note,
 }: CompletenessBlockProps) {
   if (!problems) return <Skeleton active />;
   if (problems.length === 0) {
     return (
-      <Alert
+      <CompactAlert
         type="success"
-        showIcon
         icon={<CheckCircleOutlined />}
-        title="Версия полна"
-        description="Замечаний нет."
+        lead="Проверка полноты:"
+        text="версия полна, замечаний нет."
+      />
+    );
+  }
+  const what = (problem: MatrixProblem) =>
+    problem.code === "LevelWithoutActivePosition" ? (
+      <>
+        <NoPositionTag /> {problem.message}
+        {" — "}
+        <PositionGapAction trackId={trackId} returnLabel={returnLabel} />
+      </>
+    ) : (
+      problem.message
+    );
+  const where = (problem: MatrixProblem) => {
+    const step = PROBLEM_STEP[problem.code];
+    if (step === null) return null;
+    return onStep ? (
+      <Button type="link" onClick={() => onStep(step)}>
+        {stepText(step)}
+      </Button>
+    ) : (
+      stepText(step)
+    );
+  };
+  const [only] = problems;
+  if (problems.length === 1 && only) {
+    return (
+      <Alert
+        type="warning"
+        showIcon
+        title={
+          <>
+            <strong>{sentence(warning(1))}</strong>
+            {note && ` ${note}`}
+            <div>
+              {what(only)} {where(only)}
+            </div>
+          </>
+        }
       />
     );
   }
   const columns: TableColumnsType<MatrixProblem> = [
-    {
-      title: "Что исправить",
-      key: "message",
-      render: (_, problem) =>
-        problem.code === "LevelWithoutActivePosition" ? (
-          <>
-            <NoPositionTag /> {problem.message}
-            {" — "}
-            <PositionGapAction trackId={trackId} returnLabel={returnLabel} />
-          </>
-        ) : (
-          problem.message
-        ),
-    },
-    {
-      title: "Где",
-      key: "where",
-      render: (_, problem) => {
-        const step = PROBLEM_STEP[problem.code];
-        if (step === null) return null;
-        return onStep ? (
-          <Button type="link" onClick={() => onStep(step)}>
-            {stepText(step)}
-          </Button>
-        ) : (
-          stepText(step)
-        );
-      },
-    },
+    { title: "Что исправить", key: "message", render: (_, p) => what(p) },
+    { title: "Где", key: "where", render: (_, p) => where(p) },
   ];
   return (
-    <>
-      <Alert
+    <Flex vertical gap="middle">
+      <CompactAlert
         type="warning"
-        showIcon
-        title={warning(problems.length)}
-        description={`Исправьте ${remarksText(problems.length)} и вернитесь к проверке. Проверка идёт по сохранённому черновику.`}
+        lead={sentence(warning(problems.length))}
+        text={note}
       />
       <Table<MatrixProblem>
         size="small"
@@ -144,6 +164,6 @@ export function CompletenessBlock({
         pagination={false}
         scroll={{ x: "max-content" }}
       />
-    </>
+    </Flex>
   );
 }

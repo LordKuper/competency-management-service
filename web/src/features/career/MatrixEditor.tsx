@@ -97,6 +97,8 @@ interface MatrixEditorProps {
   onUnsavedChange?: (isUnsaved: boolean) => void;
   /** Shows one step of the matrix wizard instead of the whole editor: its part of the version and its own buttons. */
   builder?: BuilderStepControls;
+  /** Lays the editor out for a scenario screen: closer blocks and headings of the fourth level; a wizard step is always compact. */
+  isCompact?: boolean;
 }
 
 /**
@@ -155,7 +157,9 @@ function MatrixEditorBody({
   onSaved,
   onUnsavedChange,
   builder,
+  isCompact: isCompactRequested = false,
 }: MatrixEditorBodyProps) {
+  const isCompact = isCompactRequested || builder !== undefined;
   const queryClient = useQueryClient();
   const isEditable = version.actions.includes("Edit");
   const [edited, setEdited] = useState<MatrixContent>(base.content);
@@ -400,7 +404,11 @@ function MatrixEditorBody({
 
   return (
     <ConfigProvider componentDisabled={save.isPending}>
-      <Space orientation="vertical" size="large" style={{ display: "flex" }}>
+      <Space
+        orientation="vertical"
+        size={isCompact ? "middle" : "large"}
+        style={{ display: "flex" }}
+      >
         {isEditable && !builder && (
           <Flex gap="small" wrap>
             <Button onClick={() => setDialog({ kind: "competency" })}>
@@ -475,6 +483,7 @@ function MatrixEditorBody({
             levelNames={levelNames}
             changed={changed}
             isEditable={isEditable}
+            isCompact={isCompact}
             onChange={setEdited}
           />
         )}
@@ -484,6 +493,7 @@ function MatrixEditorBody({
             levelIds={shownLevelIds}
             levelNames={levelNames}
             isEditable={isEditable}
+            isCompact={isCompact}
             onChange={setEdited}
           />
         )}

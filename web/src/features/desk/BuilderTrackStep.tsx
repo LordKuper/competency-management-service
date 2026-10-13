@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Alert,
+  theme as antdTheme,
   Button,
+  Col,
   Descriptions,
   Flex,
   Form,
+  Row,
   Select,
   Table,
   type TableColumnsType,
@@ -35,6 +37,8 @@ import {
 import { TrackModal } from "../career/TrackModal";
 import { NoPositionTag, PositionGapAction } from "./CompletenessBlock";
 import { deskPaths } from "./deskTexts";
+import { ActionBar, CompactAlert } from "./ScenarioContext";
+import "./scenario.css";
 
 type LevelRow = TrackPositions["levels"][number];
 
@@ -84,7 +88,7 @@ function LevelsTable({ trackId, trackName, unavailable }: LevelsTableProps) {
   ];
   return (
     <section>
-      <Typography.Title level={3}>
+      <Typography.Title level={4}>
         {`Уровни трека «${trackName}» и их должности`}
       </Typography.Title>
       <Table<LevelRow>
@@ -141,26 +145,30 @@ function CreatedVersion({
   const matrix = useQuery(matrixQuery(version.matrixId));
   const { track, scale } = version.entries;
   return (
-    <Flex vertical gap="large">
+    <Flex vertical gap="middle">
       <Descriptions
-        column={1}
+        size="small"
+        column={{ xs: 1, md: 3 }}
         items={[
           {
             key: "unit",
             label: "Подразделение",
             children: matrix.data?.orgUnitName,
           },
-          { key: "track", label: "Трек", children: track.name },
           { key: "scale", label: "Шкала", children: scale.name },
+          { key: "track", label: "Трек", children: track.name },
         ]}
       />
       <LevelsTable trackId={track.id} trackName={track.name} />
-      <Flex gap="small">
-        <Button onClick={() => void navigate(deskPaths.desk)}>Выйти</Button>
+      <ActionBar
+        start={
+          <Button onClick={() => void navigate(deskPaths.desk)}>Выйти</Button>
+        }
+      >
         <Button type="primary" onClick={onNext}>
           Далее
         </Button>
-      </Flex>
+      </ActionBar>
     </Flex>
   );
 }
@@ -169,6 +177,7 @@ function NewVersionForm({
   preselected,
   onUnsavedChange,
 }: Pick<BuilderTrackStepProps, "preselected" | "onUnsavedChange">) {
+  const { token } = antdTheme.useToken();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form] = Form.useForm<FormValues>();
@@ -246,6 +255,7 @@ function NewVersionForm({
       form={form}
       name="matrix-builder-track"
       layout="vertical"
+      className="compact-form"
       disabled={isLocked}
       initialValues={{
         orgUnitId: preselected.unitId,
@@ -256,48 +266,43 @@ function NewVersionForm({
     >
       <Flex vertical gap="middle">
         {roles.isSuccess && headedUnits.length === 0 && (
-          <Alert
+          <CompactAlert
             type="info"
-            showIcon
-            title="Построить матрицу может руководитель подразделения"
-            description="Вы не руководите ни одним подразделением, поэтому создать матрицу здесь нельзя. Обратитесь к руководителю подразделения."
+            lead="Построить матрицу может руководитель подразделения."
+            text="Вы не руководите ни одним подразделением, поэтому создать матрицу здесь нельзя. Обратитесь к руководителю подразделения."
           />
         )}
-        <Form.Item
-          name="orgUnitId"
-          label="Подразделение"
-          rules={[{ required: true }]}
-          extra="Показаны подразделения, которыми вы руководите."
-        >
-          <Select
-            options={headedUnits.map((item) => ({
-              value: item.id,
-              label: item.name,
-            }))}
-            onChange={() => form.resetFields(["trackId"])}
-          />
-        </Form.Item>
-        <Form.Item
-          name="scaleId"
-          label="Шкала"
-          rules={[{ required: true }]}
-          extra={
-            isScaleFixed
-              ? "Шкала взята из версии, на основе которой строится матрица."
-              : "Подставлена шкала по умолчанию; можно выбрать другую."
-          }
-        >
-          <CatalogSelect
-            segment="scales"
-            filters={IN_WORK}
-            disabled={isScaleFixed}
-          />
-        </Form.Item>
-        <Form.Item
-          label="Трек"
-          required
-          extra="Доступны треки вашего подразделения и вышестоящих. Нужного нет — создайте черновой трек, не выходя из сценария."
-        >
+        <Row gutter={[token.margin, token.margin]}>
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="orgUnitId"
+              label="Подразделение"
+              rules={[{ required: true }]}
+            >
+              <Select
+                options={headedUnits.map((item) => ({
+                  value: item.id,
+                  label: item.name,
+                }))}
+                onChange={() => form.resetFields(["trackId"])}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="scaleId"
+              label="Шкала"
+              rules={[{ required: true }]}
+            >
+              <CatalogSelect
+                segment="scales"
+                filters={IN_WORK}
+                disabled={isScaleFixed}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Form.Item label="Трек" required>
           <Flex gap="small">
             <Form.Item
               name="trackId"
@@ -317,26 +322,26 @@ function NewVersionForm({
             </Button>
           </Flex>
         </Form.Item>
-        {matrix?.publishedVersion && !matrix.inWorkVersion && (
-          <Alert
+        {matrix?.inWorkVersion ? (
+          <CompactAlert
             type="info"
-            showIcon
-            title={`У подразделения по этому треку уже есть опубликованная матрица (версия ${matrix.publishedVersion.number}). Будет создана версия ${matrix.publishedVersion.number + 1} на её основе.`}
+            lead={`По этому треку уже есть версия ${matrix.inWorkVersion.number} в работе.`}
+            text="Продолжим с неё."
           />
-        )}
-        {matrix?.inWorkVersion && (
-          <Alert
+        ) : matrix?.publishedVersion ? (
+          <CompactAlert
             type="info"
-            showIcon
-            title={`По этому треку уже есть версия ${matrix.inWorkVersion.number} в работе. Продолжим с неё.`}
+            lead={`У подразделения по этому треку уже есть опубликованная матрица (версия ${matrix.publishedVersion.number}).`}
+            text={`Будет создана версия ${matrix.publishedVersion.number + 1} на её основе.`}
           />
-        )}
-        {track.data?.status === "Draft" && !matrix?.publishedVersion && (
-          <Alert
-            type="info"
-            showIcon
-            title={`Трек «${track.data.name}» — черновой. Он опубликуется вместе с версией, если ответственный HR подразделения вправе его утвердить; иначе публикацию отклонят с названием трека, а версия останется неопубликованной.`}
-          />
+        ) : (
+          track.data?.status === "Draft" && (
+            <CompactAlert
+              type="info"
+              lead={`Трек «${track.data.name}» — черновой.`}
+              text="Он опубликуется вместе с версией, если ответственный HR подразделения вправе его утвердить; иначе публикацию отклонят, а версия останется неопубликованной."
+            />
+          )
         )}
         {trackId && track.data && (
           <LevelsTable
@@ -357,25 +362,21 @@ function NewVersionForm({
             error={existing.error}
           />
         )}
-        <Flex gap="small" align="center" wrap>
-          <Button
-            disabled={isDirty}
-            onClick={() => void navigate(deskPaths.desk)}
-          >
-            Выйти
-          </Button>
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={isSubmitting}
-            disabled={existing.isFetching}
-          >
-            Сохранить и далее
-          </Button>
+        <ActionBar
+          start={
+            <Button
+              disabled={isDirty}
+              onClick={() => void navigate(deskPaths.desk)}
+            >
+              Выйти
+            </Button>
+          }
+        >
           {isDirty && !isSubmitting && (
             <>
               <Typography.Text type="secondary">
-                Есть несохранённые правки. Сохраните их, чтобы выйти.
+                Есть несохранённые правки. Сохраните их, чтобы перейти на другой
+                шаг или выйти.
               </Typography.Text>
               <Button
                 type="link"
@@ -389,7 +390,15 @@ function NewVersionForm({
               </Button>
             </>
           )}
-        </Flex>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={isSubmitting}
+            disabled={existing.isFetching}
+          >
+            Сохранить и далее
+          </Button>
+        </ActionBar>
       </Flex>
       {isTrackCreating && unit && (
         <TrackModal

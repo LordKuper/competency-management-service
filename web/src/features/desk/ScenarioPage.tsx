@@ -1,4 +1,4 @@
-import { theme as antdTheme, Breadcrumb, Flex, Typography } from "antd";
+import { Breadcrumb, Flex } from "antd";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { ApiError } from "../../api/ApiError";
@@ -8,18 +8,17 @@ import { contentMaxWidth } from "../../app/theme";
 import { deskPaths } from "./deskTexts";
 
 interface ScenarioPageProps {
-  /** Name of the scenario, shown in the breadcrumb and as the page heading. */
+  /** Name of the scenario, shown as the current item of the breadcrumb. */
   title: string;
   children: ReactNode;
 }
 
-/** Frame of a scenario screen: the way back to the desk, the heading and the content. */
+/** Frame of a scenario screen: the breadcrumb back to the desk and the content; the breadcrumb is the only heading. */
 export function ScenarioPage({ title, children }: ScenarioPageProps) {
-  const { token } = antdTheme.useToken();
   return (
     <Flex
       vertical
-      gap={token.marginLG}
+      gap="middle"
       style={{ maxWidth: contentMaxWidth, marginInline: "auto" }}
     >
       <Breadcrumb
@@ -28,9 +27,6 @@ export function ScenarioPage({ title, children }: ScenarioPageProps) {
           { title },
         ]}
       />
-      <Typography.Title level={1} style={{ margin: 0 }}>
-        {title}
-      </Typography.Title>
       {children}
     </Flex>
   );

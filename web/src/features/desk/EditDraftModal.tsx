@@ -73,9 +73,7 @@ function EditNamed({ draft, onSaved, onClose }: EditDraftModalProps) {
     <NameModal
       segment={segment === "directions" ? "directions" : "categories"}
       title={
-        segment === "directions"
-          ? "Изменение области"
-          : "Изменение категории"
+        segment === "directions" ? "Изменение области" : "Изменение категории"
       }
       entry={read.data}
       onSaved={onSaved}

@@ -11,6 +11,8 @@ interface MatrixFormulaTotalsProps {
   levelIds: readonly string[];
   levelNames: ReadonlyMap<string, string>;
   isEditable: boolean;
+  /** Inside a wizard step, where headings are of the fourth level. */
+  isCompact?: boolean;
   onChange: (content: MatrixContent) => void;
 }
 
@@ -31,6 +33,7 @@ export function MatrixFormulaTotals({
   levelIds,
   levelNames,
   isEditable,
+  isCompact = false,
   onChange,
 }: MatrixFormulaTotalsProps) {
   const wrong = levelIds
@@ -44,7 +47,9 @@ export function MatrixFormulaTotals({
           {`Коэффициенты блоков уровня «${levelNames.get(levelId)}» дают в сумме ${sum} %, нужно ${MAX_PERCENT} %.`}
         </Typography.Text>
       ))}
-      <Typography.Title level={2}>Минимальный общий порог, %</Typography.Title>
+      <Typography.Title level={isCompact ? 4 : 2}>
+        Минимальный общий порог, %
+      </Typography.Title>
       <Space size="middle" wrap>
         {levelIds.map((levelId) => {
           const level = content.levels.find((item) => item.levelId === levelId);

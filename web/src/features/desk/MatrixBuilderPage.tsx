@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Alert, App, Flex, Skeleton, Steps, Tag, Typography } from "antd";
+import { Alert, App, Flex, Skeleton, Tag, Typography } from "antd";
 import { useEffect, useState } from "react";
 import {
   useBlocker,
@@ -7,6 +7,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router";
+import { trackQuery } from "../career/catalogApi";
 import { MatrixEditor } from "../career/MatrixEditor";
 import {
   type MatrixVersion,
@@ -21,8 +22,10 @@ import { BuilderSubmitStep } from "./BuilderSubmitStep";
 import { BuilderTrackStep } from "./BuilderTrackStep";
 import type { StepProps } from "./builderStep";
 import { BUILDER_STEPS, deskPaths } from "./deskTexts";
+import { ContextLine } from "./ScenarioContext";
 import { LoadFailure, ScenarioPage } from "./ScenarioPage";
-import { PROBLEM_STEP, remarksText } from "./scenarioTexts";
+import { StepRuler } from "./StepRuler";
+import { PROBLEM_STEP } from "./scenarioTexts";
 
 const FIRST_STEP = 1;
 const COMPETENCIES_STEP = 2;
@@ -82,6 +85,10 @@ function BuilderShell({ version }: { version: MatrixVersion | undefined }) {
     ...matrixQuery(version?.matrixId ?? ""),
     enabled: version !== undefined,
   });
+  const track = useQuery({
+    ...trackQuery(version?.entries.track.id ?? ""),
+    enabled: version !== undefined,
+  });
   const completeness = useQuery({
     ...matrixCompletenessQuery(version?.id ?? ""),
     enabled: version !== undefined && reached >= LAST_STEP - 1,
@@ -123,41 +130,39 @@ function BuilderShell({ version }: { version: MatrixVersion | undefined }) {
   };
 
   return (
-    <Flex vertical gap="large">
+    <Flex vertical gap="middle">
       {version && (
-        <Flex align="center" gap="small" wrap>
+        <ContextLine>
           <Typography.Text>
             {[matrix.data?.orgUnitName, `трек «${version.entries.track.name}»`]
               .filter(Boolean)
               .join(" · ")}
           </Typography.Text>
+          {track.data?.status === "Draft" && <Tag>Трек черновой</Tag>}
           <Tag>{`Версия ${version.number}`}</Tag>
           <Tag>{VERSION_STATUS_LABELS[version.status]}</Tag>
-        </Flex>
+        </ContextLine>
       )}
-      <Steps
-        current={step - 1}
-        onChange={(index) => goTo(index + 1)}
-        items={BUILDER_STEPS.map((title, index) => {
-          const number = index + 1;
-          const remarks = remarksByStep.get(number);
-          return {
-            title,
-            disabled: !version || number > reached || isUnsaved,
-            status:
-              number === step
-                ? "process"
-                : number < step || (version && number <= reached)
-                  ? "finish"
-                  : "wait",
-            subTitle: number === step ? "Сейчас" : undefined,
-            description: remarks ? (
-              <Tag color="warning">{`Замечания: ${remarks}`}</Tag>
-            ) : undefined,
-          };
-        })}
+      <StepRuler
+        steps={BUILDER_STEPS}
+        current={step}
+        reached={version ? reached : FIRST_STEP}
+        isLocked={isUnsaved}
+        remarks={remarksByStep}
+        onChange={goTo}
       />
-      {version &&
+      {version && !isEditable ? (
+        <Alert
+          type="info"
+          showIcon
+          title={
+            version.status === "Draft"
+              ? `Версия сейчас не ваша: править её может ${version.authorName}`
+              : `Версия уже не черновик: сейчас она «${VERSION_STATUS_LABELS[version.status]}»`
+          }
+        />
+      ) : (
+        version &&
         version.builderStep !== null &&
         version.builderStep !== undefined &&
         version.builderStep > COMPETENCIES_STEP &&
@@ -168,24 +173,7 @@ function BuilderShell({ version }: { version: MatrixVersion | undefined }) {
             showIcon
             title={`Продолжаем с шага ${step} «${BUILDER_STEPS[step - 1]}», где вы остановились. Шаги до него сохранены.`}
           />
-        )}
-      {version && !isEditable && (
-        <Alert
-          type="info"
-          showIcon
-          title={
-            version.status === "Draft"
-              ? `Версия сейчас не ваша: править её может ${version.authorName}`
-              : `Версия уже не черновик: сейчас она «${VERSION_STATUS_LABELS[version.status]}»`
-          }
-        />
-      )}
-      {remarksByStep.size > 0 && step < LAST_STEP - 1 && (
-        <Alert
-          type="warning"
-          showIcon
-          title={`В версии ${remarksText([...remarksByStep.values()].reduce((sum, count) => sum + count, 0))}: подробности на шаге «Проверка полноты».`}
-        />
+        )
       )}
       <StepBody
         step={step}
