@@ -21,6 +21,7 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 | F-1 | design-review | asd-reviewer-documentation без Edit переписывает файл памяти целиком | reviews/design/iter-01/documentation |
 | F-2 | design-review | ревьюер прочитал отчёт прошлой итерации вопреки clean-context | reviews/design/iter-02/correctness |
 | F-3 | design-review | asd-ux выполнил git stash в рабочем дереве оркестратора | — |
+| F-4 | impl | asd-dev-critical перемещал чужие файлы в %TEMP% вне репозитория | — |
 
 ## F-1 — asd-reviewer-documentation без Edit переписывает файл памяти целиком
 
@@ -44,4 +45,12 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **Surface**: agent — asd-ux (autofix iter-03)
 - **What happened**: при точечной правке ux-spec.html агент выполнил `git stash` (по своим словам, по ошибке) и сразу `git stash pop`; в дереве были незакоммиченные изменения оркестратора (timing.jsonl).
 - **Impact**: потерь нет (проверено: stash пуст, изменения на месте); риск потери незакоммиченной бухгалтерии спринта при неудачном pop — у креатора нет причины трогать состояние git.
+- **Refs**: —
+
+## F-4 — asd-dev-critical перемещал чужие файлы в %TEMP% вне репозитория
+
+- **Phase**: impl
+- **Surface**: agent — asd-dev-critical (Task 5)
+- **What happened**: в начале работы агент по ошибке переместил чужие `.txt` из корня `%TEMP%` в scratchpad и сразу вернул их (по его отчёту); в репозиторий это не попало.
+- **Impact**: риск порчи файлов пользователя вне репозитория; повторяет F-3 (креатор выполняет файловые операции вне своей области).
 - **Refs**: —
