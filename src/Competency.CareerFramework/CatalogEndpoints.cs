@@ -20,7 +20,7 @@ internal static class CatalogEndpoints
     public const string UnavailableMessage = "Запись не найдена или недоступна";
 
     private const string Tag = "Career";
-    private const string ProblemContentType = "application/problem+json";
+    public const string ProblemContentType = "application/problem+json";
     public const string DuplicateNameMessage = "Запись с таким названием уже есть";
     private const string NotDraftMessage = "Согласовать можно только черновую запись";
     private const string DraftActivationMessage = "Черновую запись нужно согласовать";
@@ -95,7 +95,7 @@ internal static class CatalogEndpoints
                 (Guid id, IfMatch ifMatch, AppDbContext context, CatalogStore store, IAuditWriter audit, HttpResponse response, CancellationToken cancellationToken) =>
                     ApproveAsync(id, ifMatch, kind, context, store, audit, response, cancellationToken))
             .WithName($"Approve{kind.Name}")
-            .ProducesStatusChange();
+            .ProducesPublication();
 
         group.MapPost(
                 "/{id:guid}/deactivate",
@@ -109,7 +109,7 @@ internal static class CatalogEndpoints
                 (Guid id, IfMatch ifMatch, AppDbContext context, CatalogStore store, IAuditWriter audit, HttpResponse response, CancellationToken cancellationToken) =>
                     SetStatusAsync(id, CatalogStatus.Active, ifMatch, kind, context, store, audit, response, cancellationToken))
             .WithName($"Activate{kind.Name}")
-            .ProducesStatusChange();
+            .ProducesPublication();
     }
 
     /// <summary>
@@ -239,6 +239,15 @@ internal static class CatalogEndpoints
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
 
+    /// <summary>
+    /// Declares the responses of a change that makes an entry active, whose 409 may list what keeps it from being active.
+    /// </summary>
+    private static RouteHandlerBuilder ProducesPublication(this RouteHandlerBuilder builder) => builder
+        .ProducesETag()
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .Produces<PublicationRefusal>(StatusCodes.Status409Conflict, ProblemContentType);
+
     private static async Task<Results<Ok<TResponse>, NotFound>> GetAsync<TEntry, TResponse>(
         Guid id,
         CatalogKind<TEntry, TResponse> kind,
@@ -362,7 +371,7 @@ internal static class CatalogEndpoints
     }
 
     /// <summary>
-    /// Makes a draft active and journals the approval as an event of its own; approving a track approves its draft levels with it.
+    /// Makes a draft active and journals the approval as an event of its own; approving a track approves its draft levels with it, and only a ready track is approved.
     /// Names are checked again, because the drafts of other authors did not compete with them while they were drafts.
     /// </summary>
     private static async Task<Results<Ok<TResponse>, NotFound, ProblemHttpResult>> ApproveAsync<TEntry, TResponse>(
@@ -391,6 +400,11 @@ internal static class CatalogEndpoints
         if (entry.Status != CatalogStatus.Draft)
         {
             return Rejection.Conflict(NotDraftMessage);
+        }
+
+        if (entry is CareerTrack draftTrack && await NotReadyAsync(draftTrack, store, cancellationToken) is { } notReady)
+        {
+            return notReady;
         }
 
         ifMatch.ApplyTo(context, entry);
@@ -433,6 +447,12 @@ internal static class CatalogEndpoints
         return null;
     }
 
+    private static async Task<ProblemHttpResult?> NotReadyAsync(CareerTrack track, CatalogStore store, CancellationToken cancellationToken)
+    {
+        var readiness = await store.ReadinessAsync(track.Id, cancellationToken);
+        return readiness.IsReady ? null : readiness.Refuse(track);
+    }
+
     private static void StageApproval(CatalogEntry entry, AppDbContext context, IAuditWriter audit)
     {
         var entityType = entry.GetType().Name;
@@ -443,7 +463,7 @@ internal static class CatalogEndpoints
     /// Deactivates an entry or brings an inactive one back; setting the status an entry already has changes nothing.
     /// A draft becomes active only by approval, and the default scale stays active, because new competencies get it. A deactivated draft
     /// stops being a draft, so its name is checked like an approved one's. A track that left the draft status that way keeps its draft
-    /// levels, and reactivating it approves them as approving the track would have.
+    /// levels, and reactivating it approves them as approving the track would have; only a ready track is reactivated.
     /// </summary>
     private static async Task<Results<Ok<TResponse>, NotFound, ProblemHttpResult>> SetStatusAsync<TEntry, TResponse>(
         Guid id,
@@ -477,6 +497,12 @@ internal static class CatalogEndpoints
         if (status == CatalogStatus.Inactive && entry is CompetencyScale { IsDefault: true })
         {
             return Rejection.Conflict(DefaultScaleDeactivationMessage);
+        }
+
+        if (status == CatalogStatus.Active && entry is CareerTrack { Status: CatalogStatus.Inactive } inactiveTrack
+            && await NotReadyAsync(inactiveTrack, store, cancellationToken) is { } notReady)
+        {
+            return notReady;
         }
 
         var leavesDraft = entry.Status == CatalogStatus.Draft;

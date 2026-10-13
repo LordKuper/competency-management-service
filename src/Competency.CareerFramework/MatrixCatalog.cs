@@ -10,7 +10,7 @@ namespace Competency.CareerFramework;
 /// and the entries it refers to as they stand. A version refers to the levels of its matrix track, to competencies of its scale and of
 /// the matrix direction or general ones, and to entries that are active or drafts whose author heads the matrix unit.
 /// </summary>
-internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory employees, ProcessRoles roles)
+internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory employees, ProcessRoles roles, CatalogStore store)
 {
     private const string ContentField = "content";
     private const string ForeignLevelMessage = "Уровень не из трека матрицы";
@@ -60,8 +60,8 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
 
     /// <summary>
     /// Says what keeps the version from being handed on: a level without requirements, block coefficients of a level that do not add
-    /// up to 100 %, a critical requirement without a required score, an entry that is no longer usable or no longer fits the version,
-    /// or a required score its scale no longer has.
+    /// up to 100 %, a critical requirement without a required score, a level of the matrix track without a linked active position,
+    /// an entry that is no longer usable or no longer fits the version, or a required score its scale no longer has.
     /// </summary>
     /// <param name="version">The version.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
@@ -97,6 +97,8 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             problems.Add($"У критической компетенции «{entries.CompetencyName(requirement.CompetencyId)}» не задан минимальный уровень");
         }
 
+        var readiness = await store.ReadinessAsync(version.Matrix.TrackId, cancellationToken);
+        problems.AddRange(readiness.LevelsWithoutActivePosition.Select(level => $"У уровня «{level.Name}» трека «{level.Track.Name}» нет связанной действующей должности"));
         problems.AddRange(EntryProblems(version, entries, await HeadOfAsync(version.Matrix, cancellationToken)));
         foreach (var requirement in content.Requirements.Where(requirement => !entries.HasScore(requirement.RequiredScore)))
         {

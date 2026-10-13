@@ -37,6 +37,7 @@ public static class CareerFrameworkModule
         CareerDirectionEndpoints.Map(endpoints);
         CareerTrackEndpoints.Map(endpoints);
         CareerLevelEndpoints.Map(endpoints);
+        CareerLevelPositionEndpoints.Map(endpoints);
         CompetencyCategoryEndpoints.Map(endpoints);
         CompetencyEndpoints.Map(endpoints);
         CompetencyScaleEndpoints.Map(endpoints);

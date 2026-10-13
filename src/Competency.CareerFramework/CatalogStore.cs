@@ -129,6 +129,31 @@ internal sealed class CatalogStore(
             cancellationToken);
 
     /// <summary>
+    /// Works out whether the track may be active, the one place that decides it. Positions come from the organization snapshot, which
+    /// the tree lock of a writer keeps current until it commits.
+    /// </summary>
+    /// <param name="trackId">The track.</param>
+    /// <param name="cancellationToken">Cancels the queries.</param>
+    /// <returns>The track's readiness.</returns>
+    public async Task<TrackReadiness> ReadinessAsync(Guid trackId, CancellationToken cancellationToken)
+    {
+        var levels = await context.Set<CareerLevel>()
+            .AsNoTracking()
+            .Where(level => level.TrackId == trackId && level.Status != CatalogStatus.Inactive)
+            .OrderBy(level => level.Position)
+            .ToListAsync(cancellationToken);
+        var links = (await context.Set<CareerLevelPosition>()
+                .AsNoTracking()
+                .Where(link => link.TrackId == trackId)
+                .ToListAsync(cancellationToken))
+            .ToLookup(link => link.LevelId, link => link.PositionId);
+        var positions = (await employees.FindOrgSnapshotAsync(cancellationToken)).Positions;
+        return new TrackReadiness(
+            levels.Count > 0,
+            [.. levels.Where(level => !TrackReadiness.HasActivePosition(links[level.Id], positions))]);
+    }
+
+    /// <summary>
     /// The matrices one of whose versions, a variant of one or the snapshot of a published one lists the level or competency. The
     /// documents are jsonb, so the check is a containment query rather than a foreign key.
     /// </summary>
