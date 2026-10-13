@@ -35,3 +35,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
+- 2026-10-13 — design-review iter-01 вопрос ревьюера correctness #1 (user): при публикации, которую запускает не HR («Принять правки» после возврата от HR; согласование шага 1 при автоматическом шаге 2), право утвердить черновики каскада проверяется у ответственного HR подразделения матрицы, чей шаг засчитывается согласованным; инициатор видит перечень каскада и подтверждает его, в т.ч. на шаге 1 (закрывает и external #1)
+- 2026-10-13 — design-review iter-01: correctness CONCERNS (6), efficiency CONCERNS (2), documentation CONCERNS (6), external CONCERNS (5); FAIL нет → autofix: asd-architect, затем asd-ba, затем asd-ux
