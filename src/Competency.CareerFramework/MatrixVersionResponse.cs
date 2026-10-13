@@ -24,5 +24,5 @@ internal sealed record MatrixVersionResponse(
     CareerPersonResponse? Hr,
     bool ReturnedWithChanges,
     IReadOnlyList<MatrixAction> Actions,
-    int? BuilderStep,
-    int Version);
+    int Version,
+    int? BuilderStep = null);

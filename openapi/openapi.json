@@ -25,6 +25,67 @@
         }
       }
     },
+    "/api/v1/career/org-units/{id}/setup": {
+      "get": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "GetOrgUnitSetup",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitSetupResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/career/me": {
       "get": {
         "tags": [
@@ -38,6 +99,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProcessRolesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/career/me/place": {
+      "get": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "GetMyPlace",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyPlaceResponse"
                 }
               }
             }
@@ -4446,6 +4537,60 @@
         }
       }
     },
+    "/api/v1/career/directions/{id}/matrices": {
+      "get": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "ListCareerDirectionMatrices",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntryMatrixResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/career/directions/{id}/approve": {
       "post": {
         "tags": [
@@ -5331,6 +5476,60 @@
           },
           "428": {
             "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/career/tracks/{id}/matrices": {
+      "get": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "ListCareerTrackMatrices",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntryMatrixResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6329,6 +6528,60 @@
           },
           "428": {
             "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/career/levels/{id}/matrices": {
+      "get": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "ListCareerLevelMatrices",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntryMatrixResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7543,6 +7796,60 @@
         }
       }
     },
+    "/api/v1/career/categories/{id}/matrices": {
+      "get": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "ListCompetencyCategoryMatrices",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntryMatrixResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/career/categories/{id}/approve": {
       "post": {
         "tags": [
@@ -8489,6 +8796,60 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/CompetencyVersionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/career/competencies/{id}/matrices": {
+      "get": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "ListCompetencyMatrices",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntryMatrixResponse"
                   }
                 }
               }
@@ -9504,6 +9865,60 @@
         }
       }
     },
+    "/api/v1/career/scales/{id}/matrices": {
+      "get": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "ListCompetencyScaleMatrices",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntryMatrixResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/career/scales/{id}/approve": {
       "post": {
         "tags": [
@@ -9976,6 +10391,83 @@
                   "items": {
                     "$ref": "#/components/schemas/CatalogDraftResponse"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/career/unused-entries": {
+      "get": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "ListUnusedCatalogEntries",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/CatalogEntryKind"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseOfUnusedEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -10494,6 +10986,14 @@
             }
           },
           {
+            "name": "builderStep",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
             "name": "If-Match",
             "in": "header",
             "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
@@ -10594,6 +11094,108 @@
           },
           "428": {
             "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/career/matrix-versions/{id}/completeness": {
+      "get": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "GetMatrixVersionCompleteness",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatrixCompletenessResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/career/matrix-versions/{id}/changes": {
+      "get": {
+        "tags": [
+          "Career"
+        ],
+        "operationId": "GetMatrixVersionChanges",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatrixDiffResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11804,6 +12406,22 @@
           }
         }
       },
+      "CareerEmployeeResponse": {
+        "required": [
+          "id",
+          "fullName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          }
+        }
+      },
       "CareerLevelResponse": {
         "required": [
           "id",
@@ -11849,6 +12467,22 @@
           },
           "canDelete": {
             "type": "boolean"
+          }
+        }
+      },
+      "CareerNamedResponse": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
           }
         }
       },
@@ -11988,6 +12622,16 @@
           "version": {
             "type": "integer",
             "format": "int32"
+          },
+          "readiness": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrackReadinessResponse"
+              }
+            ]
           }
         }
       },
@@ -12659,6 +13303,50 @@
           }
         }
       },
+      "EntryMatrixResponse": {
+        "required": [
+          "matrixId",
+          "orgUnitId",
+          "orgUnitName",
+          "trackId",
+          "trackName",
+          "versionId",
+          "number",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "matrixId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orgUnitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orgUnitName": {
+            "type": "string"
+          },
+          "trackId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trackName": {
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MatrixVersionStatus"
+          }
+        }
+      },
       "ForgotPasswordRequest": {
         "required": [
           "email"
@@ -12988,6 +13676,20 @@
           }
         }
       },
+      "MatrixCompletenessResponse": {
+        "required": [
+          "problems"
+        ],
+        "type": "object",
+        "properties": {
+          "problems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MatrixProblem"
+            }
+          }
+        }
+      },
       "MatrixContent": {
         "required": [
           "levels",
@@ -13253,6 +13955,47 @@
             "$ref": "#/components/schemas/CatalogStatus"
           }
         }
+      },
+      "MatrixProblem": {
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/MatrixProblemCode"
+          },
+          "message": {
+            "type": "string"
+          },
+          "levelId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "competencyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "MatrixProblemCode": {
+        "enum": [
+          "NoLevels",
+          "LevelWithoutRequirements",
+          "BlockWeights",
+          "CriticalWithoutScore",
+          "InactiveEntry",
+          "ForeignCompetency",
+          "ScoreOutOfScale",
+          "LevelWithoutActivePosition"
+        ]
       },
       "MatrixPublicationResponse": {
         "required": [
@@ -13670,6 +14413,13 @@
           "version": {
             "type": "integer",
             "format": "int32"
+          },
+          "builderStep": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -13741,6 +14491,219 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "MyPlaceLevelResponse": {
+        "required": [
+          "id",
+          "name",
+          "requirements"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "requirements": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MyPlaceRequirementResponse"
+            }
+          }
+        }
+      },
+      "MyPlaceMatrixResponse": {
+        "required": [
+          "matrixId",
+          "trackId",
+          "trackName",
+          "versionId",
+          "number",
+          "publishedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "matrixId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trackId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trackName": {
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "MyPlaceRequirementResponse": {
+        "required": [
+          "competencyId",
+          "competencyName",
+          "requiredScore",
+          "scoreLabel",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "competencyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "competencyName": {
+            "type": "string"
+          },
+          "requiredScore": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "scoreLabel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "$ref": "#/components/schemas/CompetencyType"
+          }
+        }
+      },
+      "MyPlaceResponse": {
+        "required": [
+          "employee",
+          "unit",
+          "position",
+          "head",
+          "responsibleHr",
+          "tracks",
+          "publishedMatrices",
+          "noTrack"
+        ],
+        "type": "object",
+        "properties": {
+          "employee": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CareerEmployeeResponse"
+              }
+            ]
+          },
+          "unit": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CareerUnitResponse"
+            }
+          },
+          "position": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CareerNamedResponse"
+              }
+            ]
+          },
+          "head": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CareerEmployeeResponse"
+              }
+            ]
+          },
+          "responsibleHr": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OrgUnitHrPersonResponse"
+              }
+            ]
+          },
+          "tracks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyPlaceTrackResponse"
+            }
+          },
+          "publishedMatrices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyPlaceMatrixResponse"
+            }
+          },
+          "noTrack": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MyPlaceTrackResponse": {
+        "required": [
+          "track",
+          "direction",
+          "currentLevel",
+          "matrix",
+          "nextLevels"
+        ],
+        "type": "object",
+        "properties": {
+          "track": {
+            "$ref": "#/components/schemas/CareerNamedResponse"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/CareerNamedResponse"
+          },
+          "currentLevel": {
+            "$ref": "#/components/schemas/CareerNamedResponse"
+          },
+          "matrix": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MyPlaceMatrixResponse"
+              }
+            ]
+          },
+          "nextLevels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyPlaceLevelResponse"
+            }
           }
         }
       },
@@ -14327,6 +15290,35 @@
           }
         }
       },
+      "PageResponseOfUnusedEntryResponse": {
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnusedEntryResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PageResponseOfUserResponse": {
         "required": [
           "items",
@@ -14738,6 +15730,259 @@
             "items": {
               "$ref": "#/components/schemas/TrackLevelPositionsResponse"
             }
+          }
+        }
+      },
+      "TrackReadinessResponse": {
+        "required": [
+          "hasLevels",
+          "levelsWithoutActivePosition"
+        ],
+        "type": "object",
+        "properties": {
+          "hasLevels": {
+            "type": "boolean"
+          },
+          "levelsWithoutActivePosition": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CareerNamedResponse"
+            }
+          }
+        }
+      },
+      "UnitAccountResponse": {
+        "required": [
+          "id",
+          "email",
+          "state",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "state": {
+            "$ref": "#/components/schemas/UnitAccountState"
+          },
+          "version": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "UnitAccountState": {
+        "enum": [
+          "None",
+          "Invited",
+          "Blocked",
+          "Active"
+        ]
+      },
+      "UnitPositionResponse": {
+        "required": [
+          "id",
+          "name",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UnitPositionsResponse": {
+        "required": [
+          "own",
+          "inherited"
+        ],
+        "type": "object",
+        "properties": {
+          "own": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitPositionResponse"
+            }
+          },
+          "inherited": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitPositionResponse"
+            }
+          }
+        }
+      },
+      "UnitSetupReason": {
+        "enum": [
+          "NoHead",
+          "NoAccount",
+          "Invited",
+          "Blocked",
+          "NoHr",
+          "HrCannotAct",
+          "NoPositions",
+          null
+        ]
+      },
+      "UnitSetupResponse": {
+        "required": [
+          "unit",
+          "employees",
+          "head",
+          "headAccount",
+          "hr",
+          "hrAccount",
+          "positions",
+          "rows"
+        ],
+        "type": "object",
+        "properties": {
+          "unit": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CareerUnitResponse"
+            }
+          },
+          "employees": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "head": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CareerEmployeeResponse"
+              }
+            ]
+          },
+          "headAccount": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UnitAccountResponse"
+              }
+            ]
+          },
+          "hr": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OrgUnitHrPersonResponse"
+              }
+            ]
+          },
+          "hrAccount": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UnitAccountResponse"
+              }
+            ]
+          },
+          "positions": {
+            "$ref": "#/components/schemas/UnitPositionsResponse"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitSetupRowResponse"
+            }
+          }
+        }
+      },
+      "UnitSetupRow": {
+        "enum": [
+          "Head",
+          "HeadAccount",
+          "Hr",
+          "HrAccount",
+          "Positions"
+        ]
+      },
+      "UnitSetupRowResponse": {
+        "required": [
+          "row",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "row": {
+            "$ref": "#/components/schemas/UnitSetupRow"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UnitSetupStatus"
+          },
+          "reason": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UnitSetupReason"
+              }
+            ]
+          }
+        }
+      },
+      "UnitSetupStatus": {
+        "enum": [
+          "Ready",
+          "Missing",
+          "Waiting"
+        ]
+      },
+      "UnusedEntryResponse": {
+        "required": [
+          "kind",
+          "id",
+          "name",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/CatalogEntryKind"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

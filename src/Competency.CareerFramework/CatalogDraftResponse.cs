@@ -15,4 +15,4 @@ internal sealed record CatalogDraftResponse(
     string? AuthorName,
     DateTimeOffset CreatedAt,
     int Version,
-    TrackReadinessResponse? Readiness);
+    TrackReadinessResponse? Readiness = null);

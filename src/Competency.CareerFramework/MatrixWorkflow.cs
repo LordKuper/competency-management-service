@@ -117,8 +117,8 @@ internal sealed class MatrixWorkflow(
             PersonOf(hrId, names),
             state.ReturnedWithChanges,
             state.Actions,
-            version.BuilderStep,
-            version.Version);
+            version.Version,
+            version.BuilderStep);
     }
 
     /// <summary>
