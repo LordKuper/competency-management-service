@@ -1,0 +1,1 @@
+[{"id":"1","severity":"high","location":".asd/sprints/004-role-desktop-user-journeys/design/prd.html:609 (AC-34.10); adr.html:608 (Context), :632-637 («Создание записи хранителем (AC-34.1)»), :900 (ADR-6, изменения поведения); код: src/Competency.CareerFramework/CompetencyEndpoints.cs:177 → `ReferenceProblemAsync`:240-264 → CatalogStore.cs:124-129 (`IsUsableAsync`)"}]

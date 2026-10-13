@@ -35,4 +35,4 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **Surface**: agent — asd-reviewer-correctness; rule `.asd/rules/review-policy.md` «Clean-context review iteration»
 - **What happened**: на iter-02 ревьюер в начале проверки прочитал `reviews/design/iter-01/correctness.md` (сам указал это в отчёте); payload путей прошлых отчётов не содержал, папка ревью соседняя и доступна чтению.
 - **Impact**: риск смещения вердикта к прошлым находкам; по словам ревьюера, находки выведены из diff и черновиков, повторов нет — итерация принята.
-- **Refs**: reviews/design/iter-02/correctness
+- **Refs**: reviews/design/iter-02/correctness; повторилось на reviews/design/iter-03/correctness
