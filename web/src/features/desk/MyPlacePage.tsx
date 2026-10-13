@@ -1,11 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
+  theme as antdTheme,
   Button,
   Card,
+  Col,
   Descriptions,
   Empty,
   Flex,
+  Row,
   Skeleton,
   Table,
   type TableColumnsType,
@@ -18,6 +21,7 @@ import { COMPETENCY_TYPES } from "../career/CompetencyModal";
 import { type MyPlace, myPlaceQuery } from "./deskApi";
 import { deskPaths, formatDate } from "./deskTexts";
 import { LinkButton } from "./LinkButton";
+import { CompactAlert } from "./ScenarioContext";
 import { LoadFailure, ScenarioPage } from "./ScenarioPage";
 
 type TrackView = MyPlace["tracks"][number];
@@ -48,12 +52,13 @@ export function MyPlacePage() {
 }
 
 function PlaceContent({ place }: { place: MyPlace }) {
+  const { token } = antdTheme.useToken();
   if (!place.employee) {
     return (
       <Empty
         description={
           <>
-            <Typography.Title level={3}>
+            <Typography.Title level={4}>
               Нет данных о вашем месте в компании
             </Typography.Title>
             <Typography.Paragraph>
@@ -73,46 +78,59 @@ function PlaceContent({ place }: { place: MyPlace }) {
   const unitName = place.unit.at(-1)?.name ?? "";
   const hr = place.responsibleHr;
   return (
-    <Flex vertical gap="large">
-      <Card title="Подразделение и должность">
-        <Descriptions
-          column={1}
-          items={[
-            {
-              key: "unit",
-              label: "Подразделение",
-              children: place.unit.map((part) => part.name).join(" → "),
-            },
-            {
-              key: "position",
-              label: "Должность",
-              children: place.position?.name ?? "—",
-            },
-            {
-              key: "head",
-              label: "Руководитель",
-              children: place.head?.fullName ?? "Не назначен",
-            },
-            {
-              key: "hr",
-              label: "Ответственный HR",
-              children: hr
-                ? `${hr.name} · ${hr.orgUnitName === unitName ? "закрепление за вашим подразделением" : `унаследовано из «${hr.orgUnitName}»`}`
-                : "Не назначен",
-            },
-          ]}
-        />
-      </Card>
+    <Flex vertical gap="middle">
+      <section>
+        <Typography.Title level={4}>Подразделение и должность</Typography.Title>
+        <Row gutter={[token.margin, 0]}>
+          <Col xs={24} lg={12}>
+            <Descriptions
+              column={1}
+              size="small"
+              items={[
+                {
+                  key: "unit",
+                  label: "Подразделение",
+                  children: place.unit.map((part) => part.name).join(" → "),
+                },
+                {
+                  key: "position",
+                  label: "Должность",
+                  children: place.position?.name ?? "—",
+                },
+              ]}
+            />
+          </Col>
+          <Col xs={24} lg={12}>
+            <Descriptions
+              column={1}
+              size="small"
+              items={[
+                {
+                  key: "head",
+                  label: "Руководитель",
+                  children: place.head?.fullName ?? "Не назначен",
+                },
+                {
+                  key: "hr",
+                  label: "Ответственный HR",
+                  children: hr
+                    ? `${hr.name} · ${hr.orgUnitName === unitName ? "закрепление за вашим подразделением" : `унаследовано из «${hr.orgUnitName}»`}`
+                    : "Не назначен",
+                },
+              ]}
+            />
+          </Col>
+        </Row>
+      </section>
       <Flex vertical gap="middle">
-        <Typography.Title level={2} style={{ margin: 0 }}>
+        <Typography.Title level={4} style={{ margin: 0 }}>
           Мои карьерные треки
         </Typography.Title>
         {place.noTrack ? (
-          <Alert
+          <CompactAlert
             type="info"
-            showIcon
-            title="Для вашей должности нет карьерного трека"
-            description={`Должность «${place.position?.name ?? ""}» не связана ни с одним уровнем действующего трека, поэтому уровень не определён.${place.head ? ` Обратитесь к руководителю: ${place.head.fullName}.` : ""}`}
+            lead="Для вашей должности нет карьерного трека."
+            text={`Должность «${place.position?.name ?? ""}» не связана ни с одним уровнем действующего трека, поэтому уровень не определён.${place.head ? ` Обратитесь к руководителю: ${place.head.fullName}.` : ""}`}
           />
         ) : (
           place.tracks.map((track) => (
@@ -177,6 +195,7 @@ function TrackPanel({
   ];
   return (
     <Card
+      size="small"
       title={
         <Flex align="center" gap="small" wrap>
           <span>{track.track.name}</span>
@@ -184,7 +203,7 @@ function TrackPanel({
         </Flex>
       }
     >
-      <Flex vertical gap="middle">
+      <Flex vertical gap="small">
         <Flex align="center" gap="small" wrap>
           <Typography.Text strong>Мой уровень:</Typography.Text>
           <Tag color="processing">{track.currentLevel.name}</Tag>
@@ -274,15 +293,14 @@ function PublishedMatrices({
 }) {
   return (
     <Flex vertical gap="middle">
-      <Typography.Title level={2} style={{ margin: 0 }}>
+      <Typography.Title level={4} style={{ margin: 0 }}>
         Опубликованные матрицы моего подразделения
       </Typography.Title>
       {matrices.length === 0 ? (
-        <Alert
+        <CompactAlert
           type="info"
-          showIcon
-          title="Опубликованных матриц пока нет"
-          description={`Для подразделения «${unitName}» ещё не опубликована ни одна матрица, поэтому требований к уровням нет. Матрицу готовит руководитель подразделения, публикует её ответственный HR при согласовании.`}
+          lead="Опубликованных матриц пока нет."
+          text={`Для подразделения «${unitName}» ещё не опубликована ни одна матрица, поэтому требований к уровням нет. Матрицу готовит руководитель подразделения, публикует её ответственный HR при согласовании.`}
         />
       ) : (
         <Table
