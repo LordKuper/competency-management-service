@@ -52,8 +52,8 @@ internal static class CatalogEndpoints
             .WithName(listName);
         group.MapPost(
                 string.Empty,
-                (CatalogNameRequest request, AppDbContext context, CatalogStore store, HttpResponse response, CancellationToken cancellationToken) =>
-                    CreateNamedAsync(request, route, create, kind, context, store, response, cancellationToken))
+                (CatalogNameRequest request, AppDbContext context, CatalogStore store, CareerMail mail, HttpResponse response, CancellationToken cancellationToken) =>
+                    CreateNamedAsync(request, route, create, kind, context, store, mail, response, cancellationToken))
             .WithName($"Create{kind.Name}")
             .ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -292,6 +292,7 @@ internal static class CatalogEndpoints
         CatalogKind<TEntry, CatalogEntryResponse> kind,
         AppDbContext context,
         CatalogStore store,
+        CareerMail mail,
         HttpResponse response,
         CancellationToken cancellationToken)
         where TEntry : CatalogEntry
@@ -317,6 +318,7 @@ internal static class CatalogEndpoints
 
         context.Add(entry);
         var created = await CommitAsync(entry, kind, viewer, store, transaction, response, cancellationToken);
+        await mail.DraftCreatedAsync(entry, viewer, cancellationToken);
         return TypedResults.Created($"{route}/{entry.Id}", created);
     }
 

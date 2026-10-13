@@ -84,6 +84,7 @@ internal static class CompetencyScaleEndpoints
         CompetencyScaleRequest request,
         AppDbContext context,
         CatalogStore store,
+        CareerMail mail,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -114,6 +115,7 @@ internal static class CompetencyScaleEndpoints
 
         context.Add(scale);
         var created = await CatalogEndpoints.CommitAsync(scale, Kind, viewer, store, transaction, response, cancellationToken);
+        await mail.DraftCreatedAsync(scale, viewer, cancellationToken);
         return TypedResults.Created($"{Route}/{scale.Id}", created);
     }
 

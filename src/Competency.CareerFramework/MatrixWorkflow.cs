@@ -18,6 +18,7 @@ internal sealed class MatrixWorkflow(
     MatrixCatalog catalog,
     CatalogPublication publication,
     ProcessRoles roles,
+    CareerMail mail,
     IAuditWriter audit,
     ICurrentActor actor,
     TimeProvider time)
@@ -301,6 +302,7 @@ internal sealed class MatrixWorkflow(
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         var after = await StateAsync(version, viewer, cancellationToken);
+        await mail.VersionTransitedAsync(version, action, after!, comment, cancellationToken);
         return TypedResults.Ok(await DescribeAsync(version, after!, response, cancellationToken));
     }
 

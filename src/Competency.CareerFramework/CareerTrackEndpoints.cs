@@ -137,6 +137,7 @@ internal static class CareerTrackEndpoints
         AppDbContext context,
         CatalogStore store,
         IEmployeeDirectory employees,
+        CareerMail mail,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -178,6 +179,7 @@ internal static class CareerTrackEndpoints
 
         context.Add(track);
         var created = await CatalogEndpoints.CommitAsync(track, Kind, viewer, store, transaction, response, cancellationToken);
+        await mail.DraftCreatedAsync(track, viewer, cancellationToken);
         return TypedResults.Created($"{Route}/{track.Id}", created);
     }
 }

@@ -104,6 +104,7 @@ internal static class CompetencyEndpoints
         AppDbContext context,
         CatalogStore store,
         CatalogPublication publication,
+        CareerMail mail,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -149,6 +150,7 @@ internal static class CompetencyEndpoints
 
         context.Add(competency);
         var created = await CatalogEndpoints.CommitAsync(competency, Kind, viewer, store, transaction, response, cancellationToken);
+        await mail.DraftCreatedAsync(competency, viewer, cancellationToken);
         return TypedResults.Created($"{Route}/{competency.Id}", created);
     }
 
