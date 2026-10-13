@@ -238,7 +238,7 @@ internal static class CareerLevelPositionEndpoints
     /// The active positions a level of a track of the unit may be linked to: those the unit or a unit above it lists, which its employees
     /// may hold, and those a unit below it lists, because a matrix of such a unit may be built on the track.
     /// </summary>
-    private static IEnumerable<PositionStatus> AvailablePositions(OrgSnapshot snapshot, Guid unitId) =>
+    public static IEnumerable<PositionStatus> AvailablePositions(OrgSnapshot snapshot, Guid unitId) =>
         snapshot.Subtree(unitId)
             .SelectMany(unit => snapshot.UnitPositionIds[unit.Id])
             .Concat(snapshot.AvailablePositionIds(unitId))

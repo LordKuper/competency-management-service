@@ -22,16 +22,20 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// <returns>The approver's account, or <see langword="null"/> when no unit above has such a head and the step is skipped.</returns>
     public async Task<Guid?> SuperiorApproverAsync(Guid unitId, CancellationToken cancellationToken)
     {
-        foreach (var unit in (await employees.FindAncestryAsync(unitId, cancellationToken)).Skip(1))
-        {
-            if (await roles.HeadAccountAsync(unit, cancellationToken) is { } accountId)
-            {
-                return accountId;
-            }
-        }
-
-        return null;
+        var ancestry = await employees.FindAncestryAsync(unitId, cancellationToken);
+        return SuperiorApprover(ancestry, await roles.HeadAccountsAsync([.. ancestry.Skip(1)], cancellationToken));
     }
+
+    /// <summary>
+    /// The approver of the superior step over data read beforehand, by the rule of <see cref="SuperiorApproverAsync"/>.
+    /// </summary>
+    /// <param name="ancestry">The matrix unit and the units above it, nearest first.</param>
+    /// <param name="headAccountOf">The account of each unit's head who can act, covering at least the units above the matrix unit.</param>
+    /// <returns>The approver's account, or <see langword="null"/> when the step is skipped.</returns>
+    public static Guid? SuperiorApprover(IReadOnlyList<OrgUnitStatus> ancestry, IReadOnlyDictionary<Guid, Guid> headAccountOf) =>
+        ancestry.Skip(1)
+            .Select(unit => headAccountOf.TryGetValue(unit.Id, out var accountId) ? accountId : (Guid?)null)
+            .FirstOrDefault(accountId => accountId is not null);
 
     /// <summary>
     /// Whose turn it is on a version on review. A superior step whose approver has gone since is passed over to the HR step.
@@ -47,13 +51,24 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
         }
 
         var unitId = version.Matrix.OrgUnitId;
-        if (version.Step == ApprovalStep.Superior && await SuperiorApproverAsync(unitId, cancellationToken) is { } superior)
-        {
-            return new MatrixTurn(ApprovalStep.Superior, superior);
-        }
-
-        return new MatrixTurn(ApprovalStep.Hr, await roles.ResponsibleHrAsync(unitId, cancellationToken));
+        var superior = version.Step == ApprovalStep.Superior ? await SuperiorApproverAsync(unitId, cancellationToken) : null;
+        return Turn(version.Status, version.Step, superior, superior is null ? await roles.ResponsibleHrAsync(unitId, cancellationToken) : null);
     }
+
+    /// <summary>
+    /// Whose turn it is on a version over data read beforehand, by the rule of <see cref="TurnAsync"/>.
+    /// </summary>
+    /// <param name="status">The version's status.</param>
+    /// <param name="step">The step the version waits at.</param>
+    /// <param name="superiorApprover">The approver of the superior step; null when the step is skipped.</param>
+    /// <param name="responsibleHr">The responsible HR of the matrix unit; needed only when the turn is not the superior approver's.</param>
+    /// <returns>The turn, or <see langword="null"/> when the version is not on review.</returns>
+    public static MatrixTurn? Turn(MatrixVersionStatus status, ApprovalStep? step, Guid? superiorApprover, Guid? responsibleHr) => status switch
+    {
+        not MatrixVersionStatus.OnReview => null,
+        _ when step == ApprovalStep.Superior && superiorApprover is { } superior => new MatrixTurn(ApprovalStep.Superior, superior),
+        _ => new MatrixTurn(ApprovalStep.Hr, responsibleHr),
+    };
 
     /// <summary>
     /// Whether the user may read the version, or its approval history: everyone a published or archived version; otherwise, and for the
@@ -182,12 +197,19 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
         return awaiting;
     }
 
-    private static bool ReadsWithoutLookup(CatalogViewer viewer, MatrixVersion version, bool isHistory)
-    {
-        var unitId = version.Matrix.OrgUnitId;
-        return (version.IsPublic && !isHistory) || viewer.IsAdmin || viewer.HeadedUnitIds.Contains(unitId) || viewer.HrUnitIds.Contains(unitId)
-            || version.AuthorId == viewer.UserId;
-    }
+    private static bool ReadsWithoutLookup(CatalogViewer viewer, MatrixVersion version, bool isHistory) =>
+        (version.IsPublic && !isHistory) || ReadsAnyVersion(viewer, version.Matrix.OrgUnitId, version.AuthorId);
+
+    /// <summary>
+    /// Whether the user reads a version of the unit's matrix whatever its status, without looking up who acted on it: global administrators,
+    /// the heads and the responsible HR of the unit, and the version's author. The superior approver and past participants read it too, by a lookup.
+    /// </summary>
+    /// <param name="viewer">The user's rights.</param>
+    /// <param name="unitId">The matrix unit.</param>
+    /// <param name="authorId">The version's author.</param>
+    /// <returns>True when the user reads it.</returns>
+    public static bool ReadsAnyVersion(CatalogViewer viewer, Guid unitId, Guid authorId) =>
+        viewer.IsAdmin || viewer.HeadedUnitIds.Contains(unitId) || viewer.HrUnitIds.Contains(unitId) || authorId == viewer.UserId;
 
     /// <summary>
     /// Whether the user is the superior approver of the unit; the approver heads the unit above, so a user who heads none is not.

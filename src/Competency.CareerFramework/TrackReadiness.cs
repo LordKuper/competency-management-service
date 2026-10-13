@@ -15,6 +15,16 @@ internal sealed record TrackReadiness(bool HasLevels, IReadOnlyList<CareerLevel>
     public bool IsReady => HasLevels && LevelsWithoutActivePosition.Count == 0;
 
     /// <summary>
+    /// Works out the readiness of a track from its levels and their links read beforehand.
+    /// </summary>
+    /// <param name="levels">The track's levels other than inactive ones, in track order.</param>
+    /// <param name="positionsByLevel">The positions linked to each level.</param>
+    /// <param name="positions">The catalogue positions by identifier.</param>
+    /// <returns>The track's readiness.</returns>
+    public static TrackReadiness Of(IReadOnlyList<CareerLevel> levels, ILookup<Guid, Guid> positionsByLevel, IReadOnlyDictionary<Guid, PositionStatus> positions) =>
+        new(levels.Count > 0, [.. levels.Where(level => !HasActivePosition(positionsByLevel[level.Id], positions))]);
+
+    /// <summary>
     /// Whether any of a level's linked positions is active; inactive positions stay linked but do not count.
     /// </summary>
     /// <param name="positionIds">The positions linked to the level.</param>

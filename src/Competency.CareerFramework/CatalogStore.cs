@@ -159,10 +159,7 @@ internal sealed class CatalogStore(
                 .Where(link => link.TrackId == trackId)
                 .ToListAsync(cancellationToken))
             .ToLookup(link => link.LevelId, link => link.PositionId);
-        var positions = (await employees.FindOrgSnapshotAsync(cancellationToken)).Positions;
-        return new TrackReadiness(
-            levels.Count > 0,
-            [.. levels.Where(level => !TrackReadiness.HasActivePosition(links[level.Id], positions))]);
+        return TrackReadiness.Of(levels, links, (await employees.FindOrgSnapshotAsync(cancellationToken)).Positions);
     }
 
     /// <summary>
