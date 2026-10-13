@@ -36,6 +36,7 @@ public static class CareerFrameworkModule
         OrgUnitHrEndpoints.Map(endpoints);
         OrgUnitSetupEndpoints.Map(endpoints);
         ProcessRoleEndpoints.Map(endpoints);
+        MyPlaceEndpoints.Map(endpoints);
         CareerDirectionEndpoints.Map(endpoints);
         CareerTrackEndpoints.Map(endpoints);
         CareerLevelEndpoints.Map(endpoints);
