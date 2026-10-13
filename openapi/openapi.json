@@ -12217,6 +12217,127 @@
           }
         }
       }
+    },
+    "/api/v1/desk": {
+      "get": {
+        "tags": [
+          "Desk"
+        ],
+        "operationId": "GetDesk",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeskResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/desk/items": {
+      "get": {
+        "tags": [
+          "Desk"
+        ],
+        "operationId": "ListDeskItems",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/DeskGroup"
+              }
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeskItemsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/desk/count": {
+      "get": {
+        "tags": [
+          "Desk"
+        ],
+        "operationId": "GetDeskCount",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeskCountResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -13156,6 +13277,374 @@
           "moreCount": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "DeskAccountState": {
+        "enum": [
+          "None",
+          "Invited",
+          "Blocked",
+          null
+        ]
+      },
+      "DeskCountResponse": {
+        "required": [
+          "actionCount"
+        ],
+        "type": "object",
+        "properties": {
+          "actionCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DeskDetails": {
+        "type": "object",
+        "properties": {
+          "employeeCount": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The number of working employees the reason counts.",
+            "format": "int32"
+          },
+          "step": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The step the reason names: of the matrix builder, or of the approval route.",
+            "format": "int32"
+          },
+          "person": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The employee the reason names, such as a unit head, a responsible HR or whoever holds the turn.",
+                "$ref": "#/components/schemas/DeskObject"
+              }
+            ]
+          },
+          "accountState": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Why the account the reason concerns cannot act.",
+                "$ref": "#/components/schemas/DeskAccountState"
+              }
+            ]
+          },
+          "linkState": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Why an invitation link no longer works or soon will not.",
+                "$ref": "#/components/schemas/DeskLinkState"
+              }
+            ]
+          },
+          "entries": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DeskObject"
+            },
+            "description": "The other records the reason names, in the order it names them."
+          }
+        },
+        "description": "The values a desk finding's reason names; the client words the reason from its kind, so each kind fills only the values it names."
+      },
+      "DeskGroup": {
+        "enum": [
+          "ReturnedVersions",
+          "VersionsToApprove",
+          "UnsubmittedVersions",
+          "DraftsToApprove",
+          "MatricesToBuild",
+          "PositionsToLink",
+          "UnitsToConnect",
+          "Invitations",
+          "OrgCleanup",
+          "UnitsWithoutMatrix",
+          "VersionsInApproval",
+          "StuckVersions",
+          "ChangedCompetencies",
+          "OwnDrafts",
+          "PositionLinksInfo",
+          "UnusedCatalogEntries",
+          "InactivePositions",
+          "UnusedPositions",
+          "EmptyUnits",
+          "NoTrack"
+        ]
+      },
+      "DeskGroupResponse": {
+        "required": [
+          "group",
+          "isReference",
+          "total",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "group": {
+            "$ref": "#/components/schemas/DeskGroup"
+          },
+          "isReference": {
+            "type": "boolean"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeskItemResponse"
+            }
+          }
+        }
+      },
+      "DeskInvitation": {
+        "required": [
+          "accountId",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "description": "The invited account.",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "description": "The account's version.",
+            "format": "int32"
+          }
+        },
+        "description": "An invitation the user can send again right from the desk, with the account version the request sends back in `If-Match`."
+      },
+      "DeskItemResponse": {
+        "required": [
+          "object",
+          "group",
+          "isReference",
+          "reasons"
+        ],
+        "type": "object",
+        "properties": {
+          "object": {
+            "$ref": "#/components/schemas/DeskObject"
+          },
+          "group": {
+            "$ref": "#/components/schemas/DeskGroup"
+          },
+          "isReference": {
+            "type": "boolean"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeskReasonResponse"
+            }
+          },
+          "target": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DeskObject"
+              }
+            ]
+          },
+          "invitation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DeskInvitation"
+              }
+            ]
+          }
+        }
+      },
+      "DeskItemsResponse": {
+        "required": [
+          "items",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeskItemResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DeskKind": {
+        "enum": [
+          "VersionReturned",
+          "VersionNotSubmitted",
+          "VersionAwaitsHeadApproval",
+          "VersionAwaitsHrApproval",
+          "MatrixLevelsChanged",
+          "MatrixUsesInactive",
+          "MatrixCompetencyChanged",
+          "OwnVersionInApproval",
+          "VersionStuckAtHead",
+          "UnitWithoutMatrix",
+          "ResponsibleUnitWithoutMatrix",
+          "UnitWithoutHead",
+          "ResponsibleUnitWithoutHead",
+          "UnitWithoutHr",
+          "UnitWithoutPositions",
+          "HeadWithoutAccount",
+          "HeadAccountInvited",
+          "HeadAccountBlocked",
+          "EmptyUnit",
+          "DraftAwaitsApproval",
+          "TrackWithoutLevels",
+          "TrackWithOneLevel",
+          "TrackWithoutPositions",
+          "LevelWithoutPosition",
+          "OwnDraftAwaitsApproval",
+          "UnusedCompetency",
+          "UnusedScale",
+          "UnusedCategory",
+          "DirectionWithoutTracks",
+          "PositionWithoutTrack",
+          "InactivePositionInUse",
+          "UnusedPosition",
+          "PositionOutsideList",
+          "NoTrackForPosition",
+          "AccountWithoutEmployee",
+          "InvitationNotAccepted"
+        ],
+        "description": "What a desk finding is. Variants of one finding that the desk absorbs differently are separate members.\r\nMember names are sent in the API, so renaming one changes it; a new member also needs its place in the desk's rules."
+      },
+      "DeskLinkState": {
+        "enum": [
+          "Expired",
+          "ExpiringSoon",
+          "Revoked",
+          null
+        ]
+      },
+      "DeskObject": {
+        "required": [
+          "type",
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "What kind of record it is.",
+            "$ref": "#/components/schemas/DeskObjectType"
+          },
+          "id": {
+            "type": "string",
+            "description": "The record identifier.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The record's name as shown: a title, a full name or an e-mail address."
+          },
+          "context": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "What places the record, such as the units above a unit from the root down; null when the name is enough."
+          }
+        },
+        "description": "A record a desk finding is about or names, with what the desk shows of it."
+      },
+      "DeskObjectType": {
+        "enum": [
+          "Matrix",
+          "MatrixVersion",
+          "OrgUnit",
+          "Track",
+          "Level",
+          "Direction",
+          "Category",
+          "Competency",
+          "Scale",
+          "Position",
+          "Employee",
+          "UserAccount"
+        ],
+        "description": "The kinds of records desk findings are about or name. Member names are sent in the API, so renaming one changes it."
+      },
+      "DeskReasonResponse": {
+        "required": [
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/DeskKind"
+          },
+          "occurredAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "details": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DeskDetails"
+              }
+            ]
+          }
+        }
+      },
+      "DeskResponse": {
+        "required": [
+          "actionCount",
+          "groups"
+        ],
+        "type": "object",
+        "properties": {
+          "actionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeskGroupResponse"
+            }
           }
         }
       },
@@ -16112,6 +16601,9 @@
     },
     {
       "name": "Users"
+    },
+    {
+      "name": "Desk"
     }
   ]
 }

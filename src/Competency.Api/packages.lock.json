@@ -276,6 +276,12 @@
           "Competency.UserManagement": "[1.0.0, )"
         }
       },
+      "competency.desk": {
+        "type": "Project",
+        "dependencies": {
+          "Competency.Platform": "[1.0.0, )"
+        }
+      },
       "competency.orgstructure": {
         "type": "Project",
         "dependencies": {

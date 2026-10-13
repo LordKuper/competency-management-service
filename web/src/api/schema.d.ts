@@ -1764,6 +1764,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/desk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetDesk"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/desk/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListDeskItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/desk/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetDeskCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2022,6 +2070,103 @@ export interface components {
             blockers: components["schemas"]["DeletionBlocker"][];
             /** Format: int32 */
             moreCount: number;
+        };
+        /** @enum {unknown} */
+        DeskAccountState: "None" | "Invited" | "Blocked" | null;
+        DeskCountResponse: {
+            /** Format: int32 */
+            actionCount: number;
+        };
+        /** @description The values a desk finding's reason names; the client words the reason from its kind, so each kind fills only the values it names. */
+        DeskDetails: {
+            /**
+             * Format: int32
+             * @description The number of working employees the reason counts.
+             */
+            employeeCount?: null | number;
+            /**
+             * Format: int32
+             * @description The step the reason names: of the matrix builder, or of the approval route.
+             */
+            step?: null | number;
+            person?: null | components["schemas"]["DeskObject"];
+            accountState?: null | components["schemas"]["DeskAccountState"];
+            linkState?: null | components["schemas"]["DeskLinkState"];
+            /** @description The other records the reason names, in the order it names them. */
+            entries?: null | components["schemas"]["DeskObject"][];
+        };
+        /** @enum {unknown} */
+        DeskGroup: "ReturnedVersions" | "VersionsToApprove" | "UnsubmittedVersions" | "DraftsToApprove" | "MatricesToBuild" | "PositionsToLink" | "UnitsToConnect" | "Invitations" | "OrgCleanup" | "UnitsWithoutMatrix" | "VersionsInApproval" | "StuckVersions" | "ChangedCompetencies" | "OwnDrafts" | "PositionLinksInfo" | "UnusedCatalogEntries" | "InactivePositions" | "UnusedPositions" | "EmptyUnits" | "NoTrack";
+        DeskGroupResponse: {
+            group: components["schemas"]["DeskGroup"];
+            isReference: boolean;
+            /** Format: int32 */
+            total: number;
+            items: components["schemas"]["DeskItemResponse"][];
+        };
+        /** @description An invitation the user can send again right from the desk, with the account version the request sends back in `If-Match`. */
+        DeskInvitation: {
+            /**
+             * Format: uuid
+             * @description The invited account.
+             */
+            accountId: string;
+            /**
+             * Format: int32
+             * @description The account's version.
+             */
+            version: number;
+        };
+        DeskItemResponse: {
+            object: components["schemas"]["DeskObject"];
+            group: components["schemas"]["DeskGroup"];
+            isReference: boolean;
+            reasons: components["schemas"]["DeskReasonResponse"][];
+            target?: null | components["schemas"]["DeskObject"];
+            invitation?: null | components["schemas"]["DeskInvitation"];
+        };
+        DeskItemsResponse: {
+            items: components["schemas"]["DeskItemResponse"][];
+            /** Format: int32 */
+            total: number;
+        };
+        /**
+         * @description What a desk finding is. Variants of one finding that the desk absorbs differently are separate members.
+         *     Member names are sent in the API, so renaming one changes it; a new member also needs its place in the desk's rules.
+         * @enum {unknown}
+         */
+        DeskKind: "VersionReturned" | "VersionNotSubmitted" | "VersionAwaitsHeadApproval" | "VersionAwaitsHrApproval" | "MatrixLevelsChanged" | "MatrixUsesInactive" | "MatrixCompetencyChanged" | "OwnVersionInApproval" | "VersionStuckAtHead" | "UnitWithoutMatrix" | "ResponsibleUnitWithoutMatrix" | "UnitWithoutHead" | "ResponsibleUnitWithoutHead" | "UnitWithoutHr" | "UnitWithoutPositions" | "HeadWithoutAccount" | "HeadAccountInvited" | "HeadAccountBlocked" | "EmptyUnit" | "DraftAwaitsApproval" | "TrackWithoutLevels" | "TrackWithOneLevel" | "TrackWithoutPositions" | "LevelWithoutPosition" | "OwnDraftAwaitsApproval" | "UnusedCompetency" | "UnusedScale" | "UnusedCategory" | "DirectionWithoutTracks" | "PositionWithoutTrack" | "InactivePositionInUse" | "UnusedPosition" | "PositionOutsideList" | "NoTrackForPosition" | "AccountWithoutEmployee" | "InvitationNotAccepted";
+        /** @enum {unknown} */
+        DeskLinkState: "Expired" | "ExpiringSoon" | "Revoked" | null;
+        /** @description A record a desk finding is about or names, with what the desk shows of it. */
+        DeskObject: {
+            /** @description What kind of record it is. */
+            type: components["schemas"]["DeskObjectType"];
+            /**
+             * Format: uuid
+             * @description The record identifier.
+             */
+            id: string;
+            /** @description The record's name as shown: a title, a full name or an e-mail address. */
+            name: string;
+            /** @description What places the record, such as the units above a unit from the root down; null when the name is enough. */
+            context?: null | string[];
+        };
+        /**
+         * @description The kinds of records desk findings are about or name. Member names are sent in the API, so renaming one changes it.
+         * @enum {unknown}
+         */
+        DeskObjectType: "Matrix" | "MatrixVersion" | "OrgUnit" | "Track" | "Level" | "Direction" | "Category" | "Competency" | "Scale" | "Position" | "Employee" | "UserAccount";
+        DeskReasonResponse: {
+            kind: components["schemas"]["DeskKind"];
+            /** Format: date-time */
+            occurredAt?: null | string;
+            details?: null | components["schemas"]["DeskDetails"];
+        };
+        DeskResponse: {
+            /** Format: int32 */
+            actionCount: number;
+            groups: components["schemas"]["DeskGroupResponse"][];
         };
         EmployeeImpactAccount: {
             email: string;
@@ -11868,6 +12013,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApprovalResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetDesk: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeskResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListDeskItems: {
+        parameters: {
+            query?: {
+                group?: components["schemas"]["DeskGroup"][];
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeskItemsResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetDeskCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeskCountResponse"];
                 };
             };
             /** @description Unauthorized */

@@ -513,6 +513,7 @@
         "dependencies": {
           "Competency.Audit": "[1.0.0, )",
           "Competency.CareerFramework": "[1.0.0, )",
+          "Competency.Desk": "[1.0.0, )",
           "Competency.OrgStructure": "[1.0.0, )",
           "Competency.Platform": "[1.0.0, )",
           "Competency.UserManagement": "[1.0.0, )",
@@ -531,6 +532,12 @@
           "Competency.OrgStructure": "[1.0.0, )",
           "Competency.Platform": "[1.0.0, )",
           "Competency.UserManagement": "[1.0.0, )"
+        }
+      },
+      "competency.desk": {
+        "type": "Project",
+        "dependencies": {
+          "Competency.Platform": "[1.0.0, )"
         }
       },
       "competency.orgstructure": {

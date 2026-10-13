@@ -2,6 +2,7 @@ using System.Reflection;
 using Competency.Api;
 using Competency.Audit;
 using Competency.CareerFramework;
+using Competency.Desk;
 using Competency.OrgStructure;
 using Competency.Platform;
 using Competency.UserManagement;
@@ -55,6 +56,7 @@ app.MapAuditEndpoints();
 app.MapOrgStructureEndpoints();
 app.MapUserManagementEndpoints();
 app.MapCareerFrameworkEndpoints();
+app.MapDeskEndpoints();
 app.MapFallbackToFile(SpaFallbackPattern, "index.html").AllowAnonymous();
 
 await app.RunAsync();
