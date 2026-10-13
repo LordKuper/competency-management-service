@@ -156,6 +156,13 @@
       "decision": "existing MatrixPage loses submit/approve/accept-changes buttons; links to desk scenarios instead; page keeps view, content edit and non-publishing actions",
       "reason": "correctness iter-04 question 1; cost AC-34: 4 iterations (lower bound) / 3 fix rounds",
       "evidence": "decisions-log.md 2026-10-13 design-review iter-04 answer"
+    },
+    {
+      "gate": "design-review green handoff",
+      "decision_actor": "orchestrator",
+      "decision": "advance to design-promote",
+      "reason": "iter-05 all reviewers APPROVE or latched (efficiency 2, documentation 3, external 4, correctness 5); all user questions and the FAIL escalation answered",
+      "evidence": "reviews/design/iter-05; decisions-log.md 2026-10-13 design-review DoD"
     }
   ],
   "task_routing": {},
@@ -187,12 +194,19 @@
           "efficiency": "APPROVE",
           "documentation": "APPROVE",
           "external": "APPROVE"
+        },
+        "iter-05": {
+          "correctness": "APPROVE",
+          "efficiency": "APPROVE",
+          "documentation": "APPROVE",
+          "external": "APPROVE"
         }
       },
       "latched": {
         "efficiency": 2,
         "documentation": 3,
-        "external": 4
+        "external": 4,
+        "correctness": 5
       }
     },
     "impl": {
@@ -208,7 +222,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-13T12:22:49.377Z",
+  "updated_at": "2026-10-13T12:25:30.811Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
