@@ -55,7 +55,7 @@ internal sealed class CareerDeskScan(
     private readonly Dictionary<Guid, Guid?> superiorApproverOf = [];
 
     /// <summary>
-    /// The entries nothing uses, for an HR to clear away.
+    /// The entries nothing uses, for an HR or a global administrator to clear away.
     /// </summary>
     /// <param name="unused">The unused entries.</param>
     /// <returns>One finding per entry, for reference.</returns>
