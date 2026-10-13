@@ -53,6 +53,12 @@ internal static class CatalogDraftEndpoints
         var drafts = all.Where(draft => (kind is null || KindOf(draft) == kind) && (orgUnitId is null || draft.UnitId == orgUnitId)).ToList();
         var unitNames = await store.UnitNamesAsync(drafts.Select(draft => draft.UnitId), cancellationToken);
         var authorNames = await store.UserNamesAsync(drafts.Select(draft => draft.AuthorId), cancellationToken);
+        var readiness = new Dictionary<Guid, TrackReadinessResponse?>();
+        foreach (var track in drafts.OfType<CareerTrack>())
+        {
+            readiness[track.Id] = TrackReadinessResponse.Of(await store.ReadinessAsync(track.Id, cancellationToken));
+        }
+
         return TypedResults.Ok(drafts
             .OrderBy(draft => draft.CreatedAt)
             .ThenBy(draft => draft.Id)
@@ -65,7 +71,8 @@ internal static class CatalogDraftEndpoints
                 draft.AuthorId,
                 draft.AuthorId is { } authorId ? authorNames.GetValueOrDefault(authorId) : null,
                 draft.CreatedAt,
-                draft.Version))
+                draft.Version,
+                readiness.GetValueOrDefault(draft.Id)))
             .ToList());
     }
 
@@ -73,7 +80,7 @@ internal static class CatalogDraftEndpoints
         where T : CatalogEntry =>
         source.AsNoTracking().Where(entry => entry.Status == CatalogStatus.Draft).ToListAsync(cancellationToken);
 
-    private static CatalogEntryKind KindOf(CatalogEntry entry) => entry switch
+    internal static CatalogEntryKind KindOf(CatalogEntry entry) => entry switch
     {
         CareerDirection => CatalogEntryKind.Direction,
         CareerTrack => CatalogEntryKind.Track,

@@ -187,6 +187,30 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
+    /// The matrices that list a competency of the category, as <see cref="MatricesUsing"/> finds the matrices of one competency; a
+    /// published snapshot counts by the category the competency had then.
+    /// </summary>
+    /// <param name="category">The category.</param>
+    /// <returns>The matrices, a query to compose with others.</returns>
+    public IQueryable<CompetencyMatrix> MatricesUsingCategory(CompetencyCategory category)
+    {
+        var id = category.Id;
+        var matrixIds = context.Database.SqlQuery<Guid>($"""
+            SELECT v.matrix_id AS "Value" FROM matrix_versions v
+            WHERE v.snapshot -> 'competencies' @> jsonb_build_array(jsonb_build_object('categoryId', {id}::text))
+                OR EXISTS (
+                    SELECT 1 FROM competencies c
+                    WHERE c.category_id = {id}
+                        AND (v.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', c.id::text))
+                            OR EXISTS (
+                                SELECT 1 FROM matrix_version_variants variant
+                                WHERE variant.version_id = v.id
+                                    AND variant.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', c.id::text)))))
+            """);
+        return context.Set<CompetencyMatrix>().Where(matrix => matrixIds.Contains(matrix.Id));
+    }
+
+    /// <summary>
     /// Numbers the levels of one track from 1 in the given order. The levels that move are first set aside under negative numbers, so the
     /// unique number of a level within its track holds after every single update. Each moved level is then saved on its own: EF orders the
     /// updates of one save by the unique index it knows, from the numbers it read, and refuses two levels that trade places as a cycle,

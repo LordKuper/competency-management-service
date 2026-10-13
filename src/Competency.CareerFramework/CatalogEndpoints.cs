@@ -63,7 +63,7 @@ internal static class CatalogEndpoints
     }
 
     /// <summary>
-    /// Maps reading one entry, renaming it when <paramref name="mapRename"/> is set, its status changes: approving a draft,
+    /// Maps reading one entry and the matrix versions using it, renaming it when <paramref name="mapRename"/> is set, its status changes: approving a draft,
     /// deactivating and reactivating, and the preview of what approving or reactivating it would publish when <paramref name="mapPublication"/> is set.
     /// </summary>
     public static void MapEntryEndpoints<TEntry, TResponse>(
@@ -81,6 +81,8 @@ internal static class CatalogEndpoints
             .WithName($"Get{kind.Name}")
             .ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapEntryMatrices(kind);
 
         if (mapRename)
         {
