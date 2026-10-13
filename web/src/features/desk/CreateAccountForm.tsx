@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Space } from "antd";
+import type { ComponentProps } from "react";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
 import { ErrorAlert } from "../../app/ErrorAlert";
@@ -14,7 +15,9 @@ interface CreateAccountFormProps {
   cancelLabel?: string;
   /** Receives the created account, with whether the invitation was sent. */
   onCreated: (account: UserResponse) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
+  onDirtyChange?: ComponentProps<typeof UserForm>["onDirtyChange"];
+  scenarioActions?: ComponentProps<typeof UserForm>["scenarioActions"];
 }
 
 /**
@@ -27,6 +30,8 @@ export function CreateAccountForm({
   cancelLabel,
   onCreated,
   onCancel,
+  onDirtyChange,
+  scenarioActions,
 }: CreateAccountFormProps) {
   const queryClient = useQueryClient();
   const create = useMutation({
@@ -52,6 +57,8 @@ export function CreateAccountForm({
         cancelLabel={cancelLabel}
         onSubmit={(input) => create.mutateAsync(input)}
         onCancel={onCancel}
+        onDirtyChange={onDirtyChange}
+        scenarioActions={scenarioActions}
       />
     </Space>
   );

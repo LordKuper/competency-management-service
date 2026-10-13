@@ -1,4 +1,5 @@
-import { Button, Form, Input, Select, Space } from "antd";
+import { Button, Col, Flex, Form, Input, Row, Select, Space } from "antd";
+import type { ReactNode } from "react";
 import type { UserRole } from "../../app/featureContract";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { EmployeePicker } from "./EmployeePicker";
@@ -30,7 +31,12 @@ interface UserFormProps {
   cancelLabel?: string;
   /** Saves the input; a rejection is shown on the fields it names and by the caller. */
   onSubmit: (input: UserInput) => Promise<unknown>;
-  onCancel: () => void;
+  /** Leaves the form; omitted when `scenarioActions` carries the buttons. */
+  onCancel?: () => void;
+  /** Told whether the form holds input that was not saved, so a screen can refuse to be left. */
+  onDirtyChange?: (isDirty: boolean) => void;
+  /** Puts the buttons of a scenario step into one row, `start` at the left and `end` before the submit button at the right, in place of the cancel button. */
+  scenarioActions?: { start?: ReactNode; end?: ReactNode };
 }
 
 const NEW_ACCOUNT_VALUES: UserFormValues = { email: "", role: "User" };
@@ -47,6 +53,8 @@ export function UserForm({
   cancelLabel = "Отмена",
   onSubmit,
   onCancel,
+  onDirtyChange,
+  scenarioActions,
 }: UserFormProps) {
   const [form] = Form.useForm<UserFormValues>();
   const { isSubmitting, submit } = useFormSubmit(form, (values) =>
@@ -57,6 +65,21 @@ export function UserForm({
     ),
   );
 
+  const emailField = (
+    <Form.Item
+      name="email"
+      label="E-mail"
+      extra={
+        isNew
+          ? "На этот адрес придёт приглашение со ссылкой, по которой пользователь сам задаст пароль."
+          : undefined
+      }
+      rules={[{ required: true, whitespace: true, message: "Введите e-mail" }]}
+    >
+      <Input type="email" autoComplete="off" placeholder="name@example.com" />
+    </Form.Item>
+  );
+
   return (
     <Form
       form={form}
@@ -65,21 +88,17 @@ export function UserForm({
       noValidate
       initialValues={initialValues}
       onFinish={submit}
+      onValuesChange={() => onDirtyChange?.(form.isFieldsTouched())}
     >
-      <Form.Item
-        name="email"
-        label="E-mail"
-        extra={
-          isNew
-            ? "На этот адрес придёт приглашение со ссылкой, по которой пользователь сам задаст пароль."
-            : undefined
-        }
-        rules={[
-          { required: true, whitespace: true, message: "Введите e-mail" },
-        ]}
-      >
-        <Input type="email" autoComplete="off" placeholder="name@example.com" />
-      </Form.Item>
+      {scenarioActions ? (
+        <Row>
+          <Col xs={24} md={12}>
+            {emailField}
+          </Col>
+        </Row>
+      ) : (
+        emailField
+      )}
       {!lockedTo && (
         <>
           <Form.Item
@@ -94,12 +113,26 @@ export function UserForm({
           </Form.Item>
         </>
       )}
-      <Space>
-        <Button type="primary" htmlType="submit" loading={isSubmitting}>
-          {submitLabel}
-        </Button>
-        <Button onClick={onCancel}>{cancelLabel}</Button>
-      </Space>
+      {scenarioActions ? (
+        <Flex justify="space-between" align="center" gap="small" wrap>
+          <Flex align="center" gap="small" wrap>
+            {scenarioActions.start}
+          </Flex>
+          <Flex align="center" gap="small" wrap>
+            {scenarioActions.end}
+            <Button type="primary" htmlType="submit" loading={isSubmitting}>
+              {submitLabel}
+            </Button>
+          </Flex>
+        </Flex>
+      ) : (
+        <Space>
+          <Button type="primary" htmlType="submit" loading={isSubmitting}>
+            {submitLabel}
+          </Button>
+          <Button onClick={onCancel}>{cancelLabel}</Button>
+        </Space>
+      )}
     </Form>
   );
 }

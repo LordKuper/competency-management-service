@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Alert, App, Button, Flex, Steps, Table, Tag, Typography } from "antd";
+import { App, Button, Flex, Table, Tag, Typography } from "antd";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useBlocker, useNavigate, useSearchParams } from "react-router";
 import { api } from "../../api/client";
+import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { EmployeeForm } from "../org-structure/EmployeeForm";
@@ -16,7 +17,9 @@ import { CreateAccountForm } from "./CreateAccountForm";
 import { deskPaths } from "./deskTexts";
 import { LinkButton } from "./LinkButton";
 import { useReturnLink } from "./returnLink";
+import { ActionBar, CompactAlert } from "./ScenarioContext";
 import { ScenarioPage } from "./ScenarioPage";
+import { StepRuler } from "./StepRuler";
 
 interface AddedPosition {
   id: string;
@@ -30,6 +33,11 @@ interface Outcome {
   account?: UserResponse | null;
 }
 
+const STEPS = ["Сотрудник", "Учётная запись", "Итог"] as const;
+const EMPLOYEE_STEP = 1;
+const ACCOUNT_STEP = 2;
+const SUMMARY_STEP = 3;
+
 const UNSAVED_MESSAGE =
   "Есть несохранённые правки. Сохраните их или нажмите «Отмена», чтобы перейти на другой экран.";
 
@@ -37,32 +45,73 @@ const UNSAVED_MESSAGE =
 export function OnboardEmployeePage() {
   const [searchParams] = useSearchParams();
   const unitId = searchParams.get("unitId") ?? undefined;
+  const { message } = App.useApp();
+  const navigate = useNavigate();
   const [outcome, setOutcome] = useState<Outcome>();
+  const [step, setStep] = useState(EMPLOYEE_STEP);
   const [round, setRound] = useState(0);
-  const step = !outcome ? 0 : outcome.account === undefined ? 1 : 2;
+  const [isUnsaved, setIsUnsaved] = useState(false);
+  const isLeaving = useRef(false);
+  const blocker = useBlocker(() => isUnsaved && !isLeaving.current);
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      message.warning(UNSAVED_MESSAGE);
+      blocker.reset();
+    }
+  }, [blocker, message]);
+  const reached = outcome?.account === undefined ? EMPLOYEE_STEP : SUMMARY_STEP;
+
+  function goTo(next: number) {
+    setIsUnsaved(false);
+    setStep(next);
+  }
+
+  function leave() {
+    isLeaving.current = true;
+    void navigate(deskPaths.desk);
+  }
 
   return (
     <ScenarioPage title="Принять сотрудника">
-      <Steps
+      <StepRuler
+        steps={STEPS}
         current={step}
-        items={[
-          { title: "Сотрудник" },
-          { title: "Учётная запись" },
-          { title: "Итог" },
-        ]}
+        reached={reached}
+        isLocked={isUnsaved}
+        onChange={goTo}
       />
-      {!outcome && (
-        <EmployeeStep key={round} unitId={unitId} onCreated={setOutcome} />
+      {step === EMPLOYEE_STEP && (
+        <EmployeeStep
+          key={round}
+          unitId={unitId}
+          outcome={outcome}
+          onSaved={(saved) => {
+            setOutcome(saved);
+            goTo(ACCOUNT_STEP);
+          }}
+          onUnsavedChange={setIsUnsaved}
+          onLeave={leave}
+        />
       )}
-      {outcome && outcome.account === undefined && (
-        <AccountStep outcome={outcome} onDone={setOutcome} />
+      {step === ACCOUNT_STEP && outcome && (
+        <AccountStep
+          outcome={outcome}
+          onDone={(done) => {
+            setOutcome(done);
+            goTo(SUMMARY_STEP);
+          }}
+          onBack={() => goTo(EMPLOYEE_STEP)}
+          onUnsavedChange={setIsUnsaved}
+        />
       )}
-      {outcome && outcome.account !== undefined && (
+      {step === SUMMARY_STEP && outcome && (
         <SummaryStep
           outcome={outcome}
+          onBack={() => goTo(ACCOUNT_STEP)}
           onAnother={() => {
             setOutcome(undefined);
             setRound((count) => count + 1);
+            goTo(EMPLOYEE_STEP);
           }}
         />
       )}
@@ -70,92 +119,198 @@ export function OnboardEmployeePage() {
   );
 }
 
-interface EmployeeStepProps {
-  unitId?: string;
-  onCreated: (outcome: Outcome) => void;
+function isChanged(employee: Employee, input: EmployeeInput): boolean {
+  return (
+    employee.lastName !== input.lastName ||
+    employee.firstName !== input.firstName ||
+    (employee.middleName ?? "") !== (input.middleName ?? "") ||
+    employee.orgUnitId !== input.orgUnitId ||
+    employee.positionId !== input.positionId
+  );
 }
 
-function EmployeeStep({ unitId, onCreated }: EmployeeStepProps) {
+interface EmployeeStepProps {
+  unitId?: string;
+  /** The employee already created; the step then shows their saved values and saves a change to the same card. */
+  outcome?: Outcome;
+  onSaved: (outcome: Outcome) => void;
+  onUnsavedChange: (isUnsaved: boolean) => void;
+  onLeave: () => void;
+}
+
+function EmployeeStep({
+  unitId,
+  outcome,
+  onSaved,
+  onUnsavedChange,
+  onLeave,
+}: EmployeeStepProps) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const { message } = App.useApp();
   const added = useRef<AddedPosition>(undefined);
-  const create = useMutation({
-    mutationFn: async (input: EmployeeInput) =>
-      unwrap(await api.POST("/api/v1/employees", { body: input })),
+  const [isDirty, setIsDirty] = useState(false);
+  const save = useMutation({
+    mutationFn: async (input: EmployeeInput) => {
+      if (!outcome) {
+        return unwrap(await api.POST("/api/v1/employees", { body: input }));
+      }
+      const { employee } = outcome;
+      if (!isChanged(employee, input)) return employee;
+      return unwrap(
+        await api.PUT("/api/v1/employees/{id}", {
+          params: {
+            path: { id: employee.id },
+            header: { "If-Match": ifMatchOf(employee.version ?? 0) },
+          },
+          body: input,
+        }),
+      );
+    },
     onSettled: () => invalidateOrgStructure(queryClient),
   });
-  const [isDirty, setIsDirty] = useState(false);
-  const isLeaving = useRef(false);
-  const blocker = useBlocker(
-    () => (isDirty || create.isPending) && !isLeaving.current,
+  useEffect(
+    () => onUnsavedChange(isDirty || save.isPending),
+    [isDirty, save.isPending, onUnsavedChange],
   );
-  useEffect(() => {
-    if (blocker.state === "blocked") {
-      message.warning(UNSAVED_MESSAGE);
-      blocker.reset();
-    }
-  }, [blocker, message]);
+
+  const employee = outcome?.employee;
+  const positionOf = (positionId: string) =>
+    added.current?.id === positionId
+      ? added.current
+      : outcome?.position?.id === positionId
+        ? outcome.position
+        : undefined;
 
   return (
     <Flex vertical gap="middle">
-      {create.isError && (
-        <ErrorAlert title="Сотрудник не создан" error={create.error} />
+      {employee && (
+        <CompactAlert
+          type="info"
+          lead="Сотрудник уже создан:"
+          text="«Сохранить и далее» обновит его карточку, второго сотрудника не будет."
+        />
+      )}
+      {save.isError && (
+        <ErrorAlert
+          title={
+            employee
+              ? "Карточка сотрудника не обновлена"
+              : "Сотрудник не создан"
+          }
+          error={save.error}
+        />
       )}
       <EmployeeForm
-        initialValues={{ orgUnitId: unitId }}
+        initialValues={
+          employee
+            ? {
+                lastName: employee.lastName,
+                firstName: employee.firstName,
+                middleName: employee.middleName ?? undefined,
+                orgUnitId: employee.orgUnitId,
+                positionId: employee.positionId,
+              }
+            : { orgUnitId: unitId }
+        }
+        position={
+          employee && { id: employee.positionId, name: employee.position }
+        }
         onDirtyChange={setIsDirty}
         onPositionAdded={(position) => {
           added.current = position;
         }}
-        submitLabel="Создать сотрудника и продолжить"
+        submitLabel={
+          employee ? "Сохранить и далее" : "Создать сотрудника и продолжить"
+        }
         onSubmit={async (input) => {
-          const employee = await create.mutateAsync(input);
-          onCreated({
-            employee,
-            position:
-              added.current?.id === input.positionId
-                ? added.current
-                : undefined,
+          const saved = await save.mutateAsync(input);
+          onSaved({
+            employee: saved,
+            position: positionOf(input.positionId),
+            account: outcome?.account,
           });
         }}
-        onCancel={() => {
-          isLeaving.current = true;
-          void navigate(deskPaths.desk);
+        scenarioActions={{
+          start: (
+            <Button disabled={save.isPending} onClick={onLeave}>
+              {employee ? "К рабочему столу" : "Отмена"}
+            </Button>
+          ),
+          end: employee && isDirty && !save.isPending && (
+            <Typography.Text type="secondary">
+              Есть несохранённые правки. Сохраните их, чтобы перейти на другой
+              шаг.
+            </Typography.Text>
+          ),
         }}
       />
     </Flex>
   );
 }
 
+interface AccountStepProps {
+  outcome: Outcome;
+  onDone: (outcome: Outcome) => void;
+  onBack: () => void;
+  onUnsavedChange: (isUnsaved: boolean) => void;
+}
+
 function AccountStep({
   outcome,
   onDone,
-}: {
-  outcome: Outcome;
-  onDone: (outcome: Outcome) => void;
-}) {
-  const { employee } = outcome;
+  onBack,
+  onUnsavedChange,
+}: AccountStepProps) {
+  const { employee, account } = outcome;
+  const [isDirty, setIsDirty] = useState(false);
+  useEffect(() => onUnsavedChange(isDirty), [isDirty, onUnsavedChange]);
+
   return (
     <Flex vertical gap="middle">
-      <Alert
+      <CompactAlert
         type="success"
-        showIcon
-        title={`Сотрудник создан: ${employee.fullName}, ${employee.orgUnitName}, ${employee.position}.`}
-        description="Выход из сценария сотрудника не отменяет: он уже в оргструктуре."
+        lead="Сотрудник создан:"
+        text={`${employee.fullName}, ${employee.orgUnitName}, ${employee.position}. Выход из сценария его не отменяет.`}
       />
-      <Typography.Paragraph>
-        Учётная запись нужна, чтобы сотрудник входил в систему. Роль —
-        «Пользователь»; роль администратора назначается в разделе
-        «Пользователи». Шаг можно пропустить и создать запись позже.
-      </Typography.Paragraph>
-      <CreateAccountForm
-        employeeId={employee.id}
-        submitLabel="Создать учётную запись и отправить приглашение"
-        cancelLabel="Пропустить"
-        onCreated={(account) => onDone({ ...outcome, account })}
-        onCancel={() => onDone({ ...outcome, account: null })}
-      />
+      {account ? (
+        <>
+          <ResultTable rows={accountRows(account)} />
+          <ActionBar start={<Button onClick={onBack}>Назад</Button>}>
+            <Button
+              type="primary"
+              onClick={() => onDone({ ...outcome, account })}
+            >
+              Далее
+            </Button>
+          </ActionBar>
+        </>
+      ) : (
+        <CreateAccountForm
+          employeeId={employee.id}
+          submitLabel="Создать учётную запись и отправить приглашение"
+          onDirtyChange={setIsDirty}
+          onCreated={(created) => onDone({ ...outcome, account: created })}
+          scenarioActions={{
+            start: (
+              <Button disabled={isDirty} onClick={onBack}>
+                Назад
+              </Button>
+            ),
+            end: (
+              <>
+                {isDirty && (
+                  <Typography.Text type="secondary">
+                    Есть несохранённые правки. Создайте учётную запись или
+                    пропустите шаг, чтобы вернуться.
+                  </Typography.Text>
+                )}
+                <Button onClick={() => onDone({ ...outcome, account: null })}>
+                  Пропустить
+                </Button>
+              </>
+            ),
+          }}
+        />
+      )}
     </Flex>
   );
 }
@@ -164,6 +319,40 @@ interface ResultRow {
   key: string;
   tag: ReactNode;
   text: string;
+}
+
+function ResultTable({ rows }: { rows: ResultRow[] }) {
+  return (
+    <Table
+      size="small"
+      pagination={false}
+      showHeader={false}
+      rowKey="key"
+      dataSource={rows}
+      columns={[{ dataIndex: "tag", width: 160 }, { dataIndex: "text" }]}
+    />
+  );
+}
+
+function accountRows(account: UserResponse): ResultRow[] {
+  return [
+    {
+      key: "account",
+      tag: <Tag color="success">Создана</Tag>,
+      text: `Учётная запись: ${account.email}`,
+    },
+    account.mailSent === false
+      ? {
+          key: "mail",
+          tag: <Tag color="warning">Не отправлено</Tag>,
+          text: "Почтовый сервер не принял письмо. Сотрудник приглашения не получил. Отправьте приглашение повторно из «Администрирование → Пользователи» или с рабочего стола, когда там появится пункт «Приглашение не принято».",
+        }
+      : {
+          key: "mail",
+          tag: <Tag color="success">Отправлено</Tag>,
+          text: `Письмо с приглашением ушло на ${account.email}`,
+        },
+  ];
 }
 
 function resultRows({ employee, position, account }: Outcome): ResultRow[] {
@@ -189,55 +378,27 @@ function resultRows({ employee, position, account }: Outcome): ResultRow[] {
     });
     return rows;
   }
-  rows.push({
-    key: "account",
-    tag: <Tag color="success">Создана</Tag>,
-    text: `Учётная запись: ${account.email}`,
-  });
-  rows.push(
-    account.mailSent === false
-      ? {
-          key: "mail",
-          tag: <Tag color="warning">Не отправлено</Tag>,
-          text: "Почтовый сервер не принял письмо. Сотрудник приглашения не получил. Отправьте приглашение повторно из «Администрирование → Пользователи» или с рабочего стола, когда там появится пункт «Приглашение не принято».",
-        }
-      : {
-          key: "mail",
-          tag: <Tag color="success">Отправлено</Tag>,
-          text: `Письмо с приглашением ушло на ${account.email}`,
-        },
-  );
-  return rows;
+  return [...rows, ...accountRows(account)];
 }
 
-function SummaryStep({
-  outcome,
-  onAnother,
-}: {
+interface SummaryStepProps {
   outcome: Outcome;
+  onBack: () => void;
   onAnother: () => void;
-}) {
+}
+
+function SummaryStep({ outcome, onBack, onAnother }: SummaryStepProps) {
   const back = useReturnLink();
   return (
     <Flex vertical gap="middle">
-      <Typography.Title level={2} style={{ margin: 0 }}>
-        Итог
-      </Typography.Title>
-      <Table
-        size="small"
-        pagination={false}
-        showHeader={false}
-        rowKey="key"
-        dataSource={resultRows(outcome)}
-        columns={[{ dataIndex: "tag", width: 160 }, { dataIndex: "text" }]}
-      />
-      <Flex gap="small" wrap>
+      <ResultTable rows={resultRows(outcome)} />
+      <ActionBar start={<Button onClick={onBack}>Назад</Button>}>
+        {back && <LinkButton to={back.to}>{back.label}</LinkButton>}
+        <Button onClick={onAnother}>Принять ещё одного сотрудника</Button>
         <LinkButton to={deskPaths.desk} type="primary">
           К рабочему столу
         </LinkButton>
-        {back && <LinkButton to={back.to}>{back.label}</LinkButton>}
-        <Button onClick={onAnother}>Принять ещё одного сотрудника</Button>
-      </Flex>
+      </ActionBar>
     </Flex>
   );
 }
