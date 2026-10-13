@@ -48,3 +48,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: write-then-review-accept; поправка AC-24, AC-25 — hard `new or changed scope`, стоимость 0 итераций / 0 раундов исправлений. Принят и побочный эффект AC-25: после выката новые версии матриц по существующим трекам не отправляются, пока не заведены связи.
 - **Affected docs**: sprint.md, design/prd.html
 - 2026-10-12 — PRD: правки AC-24, AC-25 внесены (asd-ba); AC-25.2 уточнён оркестратором по источнику — «последняя действующая должность» (следует из AC-24.10)
+- 2026-10-13 — ux-spec: замечание пользователя — текст документа использовал шрифт и цвет приложения (тёмный на тёмном в тёмной теме ОС); asd-ux убрал font/color из корня .ds, оставил их только на .mockup-preview; тот же дефект в docs/ux/career-framework.html — исправить на design-promote
