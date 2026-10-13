@@ -1,4 +1,5 @@
 - [Codex agent config docs](reference_codex-agent-config-docs.md) — docs moved to learn.chatgpt.com; agent TOML accepts config keys; web_search modes, default cached
 - [Host agent liveness](reference_host-agent-liveness.md) — Claude transcript jsonl growth, Monitor/Cron/TaskStop limits, Codex wait_agent hang bug
 - [Tech-reference verification sources](reference_techref-verification-sources.md) — WebFetch-only npm/NuGet/changelog endpoints; summarizer garbles dates
+- [ADR authoring review traps](feedback_adr-authoring-review-traps.md) — no hard-gate fallback branches, purpose only in ADR not c4-full, no count numerals, cite norms, ListRequest 200 cap
 - [Audit contradiction classification](feedback_audit-contradiction-classification.md) — superseded canonical wording -> Gaps; Постановка vs decided scope -> cite decisions-log; AC conflicts -> user

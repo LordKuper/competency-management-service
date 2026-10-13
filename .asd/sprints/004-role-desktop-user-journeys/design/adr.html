@@ -13,7 +13,7 @@ responsibility:
   <meta name="doc-type" content="ADR">
   <meta name="subsystem" content="project">
   <meta name="sprint-id" content="004-role-desktop-user-journeys">
-  <meta name="status" content="draft">
+  <meta name="status" content="in-review">
   <meta name="updated" content="2026-10-13">
   <meta name="responsibility" content="architecture decisions for this sprint only (sprint-scoped; never a standalone persistent document — folded at design-promote per sprint-lifecycle.md &quot;Design-promote phase&quot;)">
   <meta name="provenance" content="original">
@@ -207,7 +207,7 @@ responsibility:
         <div class="badges">
           <span>ADR</span>
           <span>project</span>
-          <span class="status-draft">draft</span>
+          <span class="status-in-review">in-review</span>
         </div>
         <h1>ADRs — Sprint 004 · role-desktop-user-journeys</h1>
         <div class="stats">6 decisions · desk, career-framework, org-structure, user-management, audit · updated 2026-10-13</div>
@@ -224,7 +224,7 @@ source: ""
 
 <article class="adr" id="adr-1">
   <div class="meta">
-    <span class="status-chip status-proposed">proposed</span>
+    <span class="status-chip status-accepted">accepted</span>
     <span class="chip area">subsystem: desk</span>
     <span class="chip">ADR-1</span>
   </div>
@@ -233,7 +233,7 @@ source: ""
 
   <h3 id="adr-1-context">Context</h3>
   <p>Стол (AC-2, AC-3, AC-30) собирает находки трёх модулей. Данные <code>career-framework</code> дают виды AC-4, AC-5, 6.1, 6.3/6.4, AC-26, AC-27, AC-29; данные <code>org-structure</code> — 6.2, 28.1–28.4, 28.7; данные <code>user-management</code> — 6.5, 28.5 и состояние учётной записи руководителя из 28.6. Правило «один объект — один пункт» и поглощение работают поперёк модулей (таблица 1 PRD): 6.2 ⊃ 5.3; 28.7 ⊃ 6.2, 6.3, 5.3, 27.3; 28.1 ⊃ 29; 6.5 по учётной записи поглощает причину «приглашена» из 28.6 в пункте подразделения; действие поглощает справочное по тому же объекту. Счётчик равен числу пунктов-действий <em>после</em> слияния, поэтому по модулям отдельно его не посчитать.</p>
-  <p>Ограничения (<code>stack.html</code>, «Архитектурные принципы»): Platform не ссылается на модули; OrgStructure → Platform; UserManagement → OrgStructure; CareerFramework → OrgStructure, UserManagement; обратных ссылок нет. Наружу модуль выставляет только <code>Add…Module</code>, <code>Map…Endpoints</code> и опубликованные порты; у <code>career-framework</code> опубликованных портов нет. Образец «контракт в Platform, реализация в модуле» уже есть: <code>IAuditWriter</code>. Варианты размещения перечислены в <code>audit.md</code> («Subsystems map», (а)–(г)); новая подсистема — отдельный hard gate (<code>sprint.md</code>, допущение 3).</p>
+  <p>Ограничения (<code>stack.html</code>, «Архитектурные принципы»): Platform не ссылается на модули; OrgStructure → Platform; UserManagement → OrgStructure; CareerFramework → OrgStructure, UserManagement; обратных ссылок нет. Наружу модуль выставляет только <code>Add…Module</code>, <code>Map…Endpoints</code> и опубликованные порты; у <code>career-framework</code> опубликованных портов нет. Образец «контракт в Platform, реализация в модуле» уже есть: <code>IAuditWriter</code>. Варианты размещения перечислены в <code>audit.md</code> («Subsystems map», (а)–(г)); новая подсистема — отдельный hard gate (<code>sprint.md</code>, допущение 3), принят пользователем 2026-10-13.</p>
 
   <h3 id="adr-1-decision">Decision</h3>
   <p class="lede">Каждый модуль вычисляет находки своих видов по своим данным и отдаёт их через контракт в Platform (<code>IDeskSource</code>). Слияние, поглощение, порядок причин, группы и счётчик живут в новой подсистеме <code>desk</code> (модуль <code>Competency.Desk</code>, зависит только от Platform). Она владеет правилами AC-2, AC-3, AC-30 и API стола (ADR-2).</p>
@@ -265,16 +265,17 @@ source: ""
         <li>считает пункты-действия.</li>
       </ol>
       Таблицы 1 и 2 занимают одно место в коде <code>desk</code>. Таблиц БД и миграций у <code>desk</code> нет.</li>
-    <li><strong>Регистрация и запасной вариант.</strong> Хост регистрирует модуль <code>desk</code> вместе с остальными. Если новую подсистему не одобрят, применяется вариант В2: тот же контракт и те же источники, а слияние и API стола переезжают в <code>career-framework</code>. Отличаются только место файлов и строка реестра.</li>
+    <li><strong>Регистрация.</strong> Хост регистрирует модуль <code>desk</code> вместе с остальными.</li>
   </ul>
 
-  <h4>Hard gate: новая подсистема (рекомендация — одобрить)</h4>
+  <h4>Новая подсистема <code>desk</code> — принята пользователем 2026-10-13</h4>
+  <p>Из этого блока на design-promote пишется <code>docs/architecture/desk.md</code> (<code>t_subsystem.md</code>).</p>
   <dl class="def-list">
     <dt>id</dt><dd><code>desk</code> (не зарезервирован; совпадает с префиксом маршрутов <code>/desk/…</code>)</dd>
     <dt>Название</dt><dd>Рабочий стол</dd>
-    <dt>Назначение</dt><dd>Ожидаемые действия пользователя из всех подсистем: сбор находок, «один объект — один пункт», поглощение и порядок причин, группы, счётчик, API стола. Собственных данных не хранит.</dd>
-    <dt>Key paths</dt><dd><code>src/Competency.Desk/</code>; контракт <code>IDeskSource</code>, <code>DeskFinding</code>, <code>DeskKind</code> в <code>src/Competency.Platform/</code>; <code>web/src/features/desk/</code> — стол и экраны сценариев <code>/desk/…</code> (ADR-6)</dd>
-    <dt>Связи на диаграмме</dt><dd><code>desk → platform-core</code> «Собирает находки модулей» (<code>IDeskSource</code>); <code>org-structure</code>, <code>user-management</code>, <code>career-framework → platform-core</code> «Отдают находки стола» (<code>IDeskSource</code>)</dd>
+    <dt>Назначение</dt><dd>Ожидаемые действия пользователя из всех подсистем: сбор находок, «один объект — один пункт», поглощение и порядок причин, группы, счётчик, API стола (ADR-2). Стол вычисляется на сервере при каждом запросе; собственных таблиц, миграций и кэша нет. Зависит только от Platform, модули о нём не знают.</dd>
+    <dt>Key paths</dt><dd><code>src/Competency.Desk/</code> — слияние, таблицы 1–2, группы, счётчик, методы <code>/api/v1/desk*</code>; наружу только <code>Add…Module</code> и <code>Map…Endpoints</code>. Контракт <code>IDeskSource</code>, <code>DeskFinding</code>, <code>DeskKind</code>, <code>DeskObjectType</code> — в <code>src/Competency.Platform/</code>; реализации — внутренние классы <code>org-structure</code>, <code>user-management</code>, <code>career-framework</code>. <code>web/src/features/desk/</code> — стол и экраны сценариев <code>/desk/…</code>, маршруты в <code>routes.ts</code> (ADR-6)</dd>
+    <dt>Диаграмма</dt><dd><a href="c4-full/subsystems.md">c4-full/subsystems.md</a></dd>
   </dl>
 
   <h4>Complication Approval</h4>
@@ -310,7 +311,7 @@ source: ""
 
   <h3 id="adr-1-alternatives">Alternatives considered (optional)</h3>
   <ul class="alt-list">
-    <li><strong>В2 — слияние и API стола в <code>career-framework</code>, тот же контракт Platform</strong> — отклонён: модуль карьерной модели получил бы правила о находках оргструктуры и учётных записей и их поглощении. Остаётся запасным вариантом, если новую подсистему не одобрят.</li>
+    <li><strong>В2 — слияние и API стола в <code>career-framework</code>, тот же контракт Platform</strong> — отклонён: модуль карьерной модели получил бы правила о находках оргструктуры и учётных записей и их поглощении.</li>
     <li><strong>(б) всё в <code>career-framework</code> через расширение портов <code>IEmployeeDirectory</code>/<code>IUserDirectory</code> сырыми данными</strong> — отклонён: предикаты оргструктуры и учётных записей (должность вне перечня, приглашение не принято) переехали бы в чужой модуль и дублировали его правила.</li>
     <li><strong>(г) свой endpoint «мои находки» в каждом модуле, SPA сливает</strong> — отклонён: поглощение и счётчик оказались бы в браузере, а на каждый переход шли бы три запроса | binding — «Сервер — единственный источник истины» (<code>stack.html</code>).</li>
     <li><strong>Слияние в хосте <code>Competency.Api</code></strong> — отклонён: хост только собирает модули, продуктовым правилам там не место.</li>
@@ -324,12 +325,12 @@ source: ""
   </ul>
 
   <h3 id="adr-1-fold-target">Fold target (optional)</h3>
-  <p><code>docs/architecture/subsystems.md</code> — justified by its <code>responsibility.owns</code> clause: "which subsystems exist and their ids (sole subsystem registry); diagram_tool mermaid: the subsystem diagram". После одобрения подсистемы — новый <code>docs/architecture/desk.md</code> (<code>t_subsystem.md</code>); правило зависимостей модулей — <code>docs/architecture/stack.html</code>, «Архитектурные принципы».</p>
+  <p><code>docs/architecture/subsystems.md</code> — justified by its <code>responsibility.owns</code> clause: "which subsystems exist and their ids (sole subsystem registry); diagram_tool mermaid: the subsystem diagram". Новый <code>docs/architecture/desk.md</code> (<code>t_subsystem.md</code>) — из блока «Новая подсистема <code>desk</code>»; правило зависимостей модулей — <code>docs/architecture/stack.html</code>, «Архитектурные принципы».</p>
 </article>
 
 <article class="adr" id="adr-2">
   <div class="meta">
-    <span class="status-chip status-proposed">proposed</span>
+    <span class="status-chip status-accepted">accepted</span>
     <span class="chip area">subsystem: desk</span>
     <span class="chip">ADR-2</span>
   </div>
@@ -350,7 +351,12 @@ source: ""
   <h4>API (все методы — только аутентифицированному и только про себя)</h4>
   <ul>
     <li><code>GET /api/v1/desk</code> → <code>{ actionCount, groups: [{ group, isReference, total, items }] }</code>. Только непустые группы; в <code>items</code> — первые 10 пунктов (константа U-4).</li>
-    <li><code>GET /api/v1/desk/items?group=…&amp;group=…&amp;page=&amp;pageSize=</code> → <code>PageResponse&lt;DeskItem&gt;</code> из Platform, пределы <code>ListRequest</code>. «Показать ещё» перечитывает группу с начала на нужное число строк (10 + 20·k). Пункты исчезают по мере выполнения, но пропусков и повторов строк при этом не будет. Очередь «Навести порядок в оргструктуре» (AC-33) — та же выборка по её группам.</li>
+    <li><code>GET /api/v1/desk/items?group=…&amp;group=…&amp;limit=</code> → <code>{ items, total }</code>. <code>limit</code> — число строк с начала выборки; «Показать ещё» перечитывает группу с начала на 10 + 20·k строк. <code>total</code> — полное число пунктов выборки. Пункты исчезают по мере выполнения, но пропусков и повторов строк при этом не будет. Очередь «Навести порядок в оргструктуре» (AC-33) — та же выборка по её группам.
+      <ul>
+        <li>Предел <code>limit</code> — собственная константа <code>desk</code>, 2 000 строк, а не <code>ListRequest</code> (там 200 — хвост большой группы был бы недостижим). <code>limit</code> меньше 1 — 400 с ошибкой поля; больше предела — сервер отдаёт предел строк.</li>
+        <li>Perf-Task проверяет на сиде, что самая большая группа каждого из четырёх пользователей замера меньше предела.</li>
+        <li>Если строк пришло меньше и запрошенного, и <code>total</code>, группа усечена пределом: SPA пишет об этом под таблицей и прячет «Показать ещё».</li>
+      </ul></li>
     <li><code>GET /api/v1/desk/count</code> → <code>{ actionCount }</code>.</li>
     <li><strong><code>DeskItem</code></strong> несёт:
       <ul>
@@ -432,10 +438,11 @@ source: ""
         <li>Вынос правил <code>ProcessRoles</code>/<code>MatrixRoute</code> в чистые функции затрагивает пути действий. Риск регрессии закрывают существующие тесты маршрута и ролей.</li>
         <li>Снимок читает всю оргструктуру на запрос. Для 10 000 сотрудников это приемлемо; при росте на порядок нужна загрузка по поддереву.</li>
         <li>«Показать ещё» пересчитывает весь стол ради одной группы.</li>
+        <li>Группа длиннее предела <code>desk</code> показывается не до конца. Хвост группы действий открывается по мере выполнения пунктов, хвост справочной группы недостижим, пока она длиннее предела.</li>
       </ul>
     </div>
   </div>
-  <p><strong>Обратимость:</strong> лёгкая — контракт аддитивный; кэш или режим «только число» добавляются без смены контракта. <strong>Пересмотр:</strong> бюджет не выполнен на сиде — тогда короткая память результата на пользователя со сбросом после его мутаций; либо рост организации на порядок.</p>
+  <p><strong>Обратимость:</strong> лёгкая — контракт аддитивный; кэш или режим «только число» добавляются без смены контракта. <strong>Пересмотр:</strong> бюджет не выполнен на сиде — тогда короткая память результата на пользователя со сбросом после его мутаций; либо рост организации на порядок; либо группа на сиде или в эксплуатации упирается в предел <code>desk</code>.</p>
 
   <h3 id="adr-2-alternatives">Alternatives considered (optional)</h3>
   <ul class="alt-list">
@@ -443,6 +450,7 @@ source: ""
     <li><strong>Отдельный упрощённый подсчёт для счётчика</strong> — отклонено: без поглощения между модулями число разошлось бы со списком (AC-3.2, AC-30.6).</li>
     <li><strong>Весь стол одним ответом</strong> — отклонено: сотни и тысячи справочных строк; <code>stack.html</code> разрешает отдавать целиком только короткие личные списки.</li>
     <li><strong>Страницы со смещением</strong> — отклонено: строки исчезают по мере выполнения (U-4), поэтому группа перечитывается с начала.</li>
+    <li><strong><code>PageResponse</code> с пределами <code>ListRequest</code> (200 строк) и ссылка «Открыть очередь» у каждой большой группы</strong> — отклонено: меняет принятый U-4, а справочные строки не исчезают, и без ссылки до хвоста группы не добраться.</li>
     <li><strong>Готовые фразы причин с сервера</strong> — отклонено: тексты жили бы в двух местах; SPA уже рисует статусы и метки по коду.</li>
   </ul>
 
@@ -453,12 +461,12 @@ source: ""
   </ul>
 
   <h3 id="adr-2-fold-target">Fold target (optional)</h3>
-  <p><code>docs/architecture/desk.md</code> (после одобрения подсистемы; при варианте В2 — <code>docs/architecture/career-framework.md</code>) — justified by its <code>responsibility.owns</code> clause: "one subsystem's purpose and the paths holding its key parts"; метод снимка — <code>docs/architecture/org-structure.md</code> по тому же clause.</p>
+  <p><code>docs/architecture/desk.md</code> — justified by its <code>responsibility.owns</code> clause: "one subsystem's purpose and the paths holding its key parts"; метод снимка — <code>docs/architecture/org-structure.md</code> по тому же clause.</p>
 </article>
 
 <article class="adr" id="adr-3">
   <div class="meta">
-    <span class="status-chip status-proposed">proposed</span>
+    <span class="status-chip status-accepted">accepted</span>
     <span class="chip area">subsystem: career-framework</span>
     <span class="chip">ADR-3</span>
   </div>
@@ -503,7 +511,7 @@ source: ""
     <li><code>GET /api/v1/career/tracks/{id}/positions</code> — уровни в порядке трека, у каждого:
       <ul>
         <li><code>version</code>;</li>
-        <li>связанные должности: название, активность, число работающих сотрудников в поддереве подразделения трека, признак <code>canUnlink</code>, вычисленный сервером (U-16);</li>
+        <li>связанные должности: название, активность, число работающих сотрудников в поддереве подразделения трека, признак <code>canUnlink</code>, вычисленный сервером по тому же правилу AC-25.2, что и <code>DELETE</code> (U-16);</li>
         <li>признак «нет действующей должности».</li>
       </ul>
       Плюс <code>canEdit</code> трека. Читать может тот, кто видит трек; остальным — 404.</li>
@@ -513,7 +521,7 @@ source: ""
         <li>400 с ошибкой поля <code>positionId</code> — должность неактивна или недоступна треку;</li>
         <li>409 — должность уже связана с другим уровнем трека (AC-24.2).</li>
       </ul></li>
-    <li><code>DELETE /api/v1/career/levels/{id}/positions/{positionId}</code>, <code>If-Match</code> уровня. 409 по AC-25.2 — если трек и уровень действующие и снимается последняя действующая должность уровня. Тело отказа — <code>PublicationRefusal</code> (ADR-4) с этим уровнем (AC-25.4).</li>
+    <li><code>DELETE /api/v1/career/levels/{id}/positions/{positionId}</code>, <code>If-Match</code> уровня. 409 по AC-25.2 — если трек действующий и снимается последняя действующая должность уровня; статус самого уровня (черновой, действующий, неактивный) не важен. Тело отказа — <code>PublicationRefusal</code> (ADR-4) с этим уровнем (AC-25.4).</li>
     <li><strong>Ответ и <code>If-Match</code>.</strong> Изменение связи увеличивает <code>Version</code> уровня — так же, как перестановка уровней увеличивает <code>Version</code> трека. Ответ — строка уровня с новым <code>ETag</code>. На 412 действует правило AC-20: перечитать, без автоповтора. Окно трека и сценарий AC-31 вызывают одни и те же методы (AC-24.6).</li>
     <li><strong>Права</strong> — права правки трека (<code>CatalogViewer.CanEdit</code>): хранители всегда, руководитель — черновой трек своего подразделения (AC-24.5). Остальным — 403.</li>
     <li><strong>Удаление уровня или трека</strong> удаляет их связи построчно в той же транзакции; каждая строка — событие журнала.</li>
@@ -523,7 +531,7 @@ source: ""
   <ul>
     <li>утверждение и «Вернуть в работу» трека — 409 <code>PublicationRefusal</code> со списком уровней (AC-25.1, AC-25.4, AC-25.6);</li>
     <li><code>POST /career/tracks</code> — трек теперь всегда создаётся черновым, у хранителей тоже: у нового трека нет уровней (AC-25.6). Хранитель утверждает его после уровней и связей. Это изменение поведения существующего метода, см. ADR-6;</li>
-    <li>снятие связи — запрет AC-25.2;</li>
+    <li>снятие связи — запрет AC-25.2: её проверка «нет связанной действующей должности» применяется к снимаемому уровню любого статуса;</li>
     <li>проверка полноты версии: «у уровня «X» трека «Y» нет связанной действующей должности» по уровням трека матрицы (AC-25.7, AC-8.15). Значит, запрет действует во всех местах, где полнота проверяется сейчас: отправка, согласование обоих шагов, возврат с правками, принятие правок; и при публикации (AC-25.3, AC-10.9);</li>
     <li>стол: виды 26.2, 26.3 и пометка 27.2; очередь черновиков (поле <code>readiness</code>, ADR-6); экраны AC-31; шаги 1 и 5 мастера.</li>
   </ul>
@@ -583,7 +591,7 @@ source: ""
 
 <article class="adr" id="adr-4">
   <div class="meta">
-    <span class="status-chip status-proposed">proposed</span>
+    <span class="status-chip status-accepted">accepted</span>
     <span class="chip area">subsystem: career-framework</span>
     <span class="chip">ADR-4</span>
   </div>
@@ -609,13 +617,19 @@ source: ""
     <li><strong>Ссылки каскада (AC-34.3):</strong>
       <ul>
         <li>версия → трек матрицы и все его уровни; уровни и компетенции содержимого; шкала версии;</li>
-        <li>трек → направление;</li>
+        <li>трек → направление и черновые уровни трека: утверждение трека утверждает их и сейчас (канон <code>career-framework</code> AC-19), правило сохраняется;</li>
         <li>компетенция → категория, направление, шкала.</li>
       </ul>
-      Каскад идёт транзитивно и только по черновым сущностям. Действующие и неактивные ссылки не публикуются; неактивная запись в версии остаётся проблемой полноты, как сейчас.</li>
+      Каскад идёт транзитивно и только по черновым сущностям. Действующие и неактивные ссылки не публикуются; неактивная запись в версии остаётся проблемой полноты, как сейчас. Черновые уровни трека, который утверждается сам, входят в замыкание, перечень, проверки, <code>cascadeTag</code> и исполнение так же, как уровни трека версии.</li>
+    <li><strong>Чьё право «вправе утвердить» (AC-34.4)</strong> — решение пользователя 2026-10-13:
+      <ul>
+        <li>публикация записи (утверждение, «Вернуть в работу», создание сразу действующей) — право действующего пользователя;</li>
+        <li>публикация версии — право ответственного HR подразделения матрицы (<code>ProcessRoles.ResponsibleHrAsync</code>, согласующий шага HR), чей шаг засчитывается согласованным, кто бы ни запустил публикацию. Это HR при согласовании шага 2; автор, он же HR, при отправке; вышестоящий руководитель при согласовании шага 1 с автоматическим шагом HR; автор при «Принять правки» после возврата с шага HR.</li>
+      </ul>
+      Права этого HR строит тот же <code>CatalogViewer</code> по его учётной записи. Если ответственного HR нет, каждая черновая сущность каскада получает <code>NoRight</code>.</li>
     <li><strong>Проверки каждой сущности каскада:</strong>
       <ul>
-        <li><code>viewer.CanManage</code> — «вправе утвердить» (AC-34.4);</li>
+        <li><code>CanManage</code> того, чьё право проверяется (выше);</li>
         <li>повтор названия с учётом всего, что публикуется вместе, — через <code>ChangeTracker</code>, как сейчас;</li>
         <li>у трека — готовность по ADR-3 (AC-25.1, AC-25.6);</li>
         <li>если корень — версия, сначала проверяется полнота (существующий 409 со строками; он уже включает AC-25.3 и AC-25.7), затем каскад.</li>
@@ -630,7 +644,7 @@ source: ""
       Видимых — не больше 5, невидимые пользователю учитываются только в числе, как в <code>DeletionRefusal</code>. <code>detail</code> — русская фраза для заголовка отказа (UX, «Общие состояния», п. 4).</li>
     <li><strong>Предпросмотр — только чтение, без блокировок:</strong>
       <ul>
-        <li><code>GET /api/v1/career/matrix-versions/{id}/publication</code> → <code>{ publishingActions, entries, blockers, moreCount, cascadeTag }</code>. <code>publishingActions</code> — какие из доступных пользователю сейчас <code>actions</code> версии её опубликуют: <code>approve</code> на шаге HR; <code>approve</code> шага 1 и <code>submit</code>, если следующим шагом будет автосогласование HR (автор и есть ответственный HR); <code>accept-changes</code>, если версию вернул шаг HR. SPA этого сама не вычисляет (AC-34.7). Читать может тот, кто читает версию; иначе 404.</li>
+        <li><code>GET /api/v1/career/matrix-versions/{id}/publication</code> → <code>{ publishingActions, entries, blockers, moreCount, cascadeTag }</code>. <code>publishingActions</code> — какие из доступных пользователю сейчас <code>actions</code> версии её опубликуют: <code>approve</code> на шаге HR; <code>approve</code> шага 1 и <code>submit</code>, если следующим шагом будет автосогласование HR (автор и есть ответственный HR); <code>accept-changes</code>, если версию вернул шаг HR. SPA этого сама не вычисляет (AC-34.7). Мешающие <code>NoRight</code> считаются по правам ответственного HR, поэтому предпросмотр одинаков для любого публикующего действия версии. Читать может тот, кто читает версию; иначе 404.</li>
         <li><code>GET /api/v1/career/{directions|tracks|categories|competencies|scales}/{id}/publication</code> → <code>{ entries, blockers, moreCount, cascadeTag }</code>. Невидимая запись — 404; без права утверждать — 403.</li>
       </ul></li>
     <li><strong>Совпадение показанного и выполненного.</strong> <code>cascadeTag</code> — хэш корня (id, version) и упорядоченных пар (id, version) сущностей перечня. Публикующие методы (<code>approve</code> и <code>activate</code> записей; <code>submit</code>, <code>approve</code>, <code>accept-changes</code> версии) принимают необязательный параметр <code>?cascade=&lt;tag&gt;</code>. Если тег передан и пересчитанный под блокировками отличается, ответ — 412: SPA перечитывает перечень и показывает его заново, без автоповтора (правило AC-20). Без параметра всё работает как раньше — для старых клиентов. <code>If-Match</code> корня ловит изменения самого корня, тег — изменения вокруг него: новый черновой уровень трека, другую категорию у компетенции.</li>
@@ -641,6 +655,7 @@ source: ""
         <li>Черновые уровни трека матрицы пригодны для содержимого независимо от автора: уровни этого трека правит и HR.</li>
         <li>При публикации такой версии каскад делает трек и его уровни действующими либо отказывает с названием трека и его уровнями без должностей.</li>
       </ul></li>
+    <li><strong>Подтверждение у версии (AC-34.5, AC-34.7).</strong> Перед каждым действием из <code>publishingActions</code> SPA показывает перечень и просит подтвердить его — в том числе инициатору на шаге 1 и автору при «Принять правки». Действие, которого нет в <code>publishingActions</code>, ничего не публикует и перечня не показывает.</li>
     <li><strong>Существующие разделы (AC-34.6, U-21).</strong> Перед утверждением SPA вызывает предпросмотр. Если перечень пуст и мешающих нет — утверждает сразу; иначе показывает окно с перечнем.</li>
   </ul>
 
@@ -660,6 +675,7 @@ source: ""
         <li>Перед каждым утверждением в разделах — лишний GET предпросмотра (U-21).</li>
         <li>Утверждение записи теперь может опубликовать больше, чем раньше. Это изменение поведения существующих методов, оно описано в ADR-6.</li>
         <li>Пять методов получают необязательный параметр <code>cascade</code>.</li>
+        <li>При «Принять правки» и согласовании шага 1 с автоматическим шагом HR черновики публикуются правом HR, хотя сам HR в этот момент ничего не делает. Права HR загружаются отдельно от прав действующего пользователя.</li>
         <li>Замыкание читает черновики по цепочке; глубина ограничена тремя ссылками (версия → компетенция → категория).</li>
       </ul>
     </div>
@@ -669,6 +685,7 @@ source: ""
   <h3 id="adr-4-alternatives">Alternatives considered (optional)</h3>
   <ul class="alt-list">
     <li><strong>Без каскада — просто запрет публикации со ссылками на черновики</strong> — отклонено | binding — AC-34.2 (принятый скоуп).</li>
+    <li><strong>Право действующего пользователя и при публикации версии</strong> — отклонено: руководитель черновики не утверждает (канон AC-19), поэтому «Принять правки» и согласование шага 1 с автоматическим шагом HR при любом черновике в каскаде отвечали бы 409 <code>NoRight</code> вопреки AC-9.4 | binding — решение пользователя 2026-10-13.</li>
     <li><strong>Отдельные форматы 409 для прав, уровней и названий</strong> — отклонено: SPA разбирала бы три вида отказа ради одного окна.</li>
     <li><strong>Обобщить <code>DeletionRefusal</code> в общий тип</strong> — отклонено: переименование схемы контракта ради экономии одного класса.</li>
     <li><strong>Без тега — публиковать текущее замыкание</strong> — отклонено: допускает публикацию того, что пользователь не видел (AC-34.5).</li>
@@ -688,7 +705,7 @@ source: ""
 
 <article class="adr" id="adr-5">
   <div class="meta">
-    <span class="status-chip status-proposed">proposed</span>
+    <span class="status-chip status-accepted">accepted</span>
     <span class="chip area">subsystem: career-framework</span>
     <span class="chip">ADR-5</span>
   </div>
@@ -736,7 +753,7 @@ source: ""
         <li>Обработчик 401 переводит на <code>/login?returnTo=&lt;pathname+search&gt;</code> текущего адреса, кроме страниц входа.</li>
         <li><code>LoginPage</code> после входа переходит на цель, если она прошла проверку, иначе на <code>/desk</code>. Подсказка на экране входа показывается, только когда цель есть (U-19).</li>
         <li>Проверка цели: разобрать <code>new URL(value, location.origin)</code>. Принимается только тот же origin и путь, который начинается с одного «/» — не «//», без «\» и управляющих символов. Страницы входа (<code>/login</code>, <code>/forgot-password</code>, <code>/accept-invitation</code>, <code>/reset-password</code>) целью быть не могут.</li>
-        <li>Переход идёт по разобранным <code>pathname + search</code>, а не по исходной строке. Это рекомендация OWASP: сравнивать разобранный URL и перенаправлять по проверенному значению (AC-15.13, AC-15.14).</li>
+        <li>Переход идёт по разобранным <code>pathname + search</code>, а не по исходной строке. Основание — OWASP Cheat Sheet Series, <a href="https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html">Unvalidated Redirects and Forwards Cheat Sheet</a>, раздел «Validating URLs» (проверено 2026-10-13): сравнивать разобранные схему, хост и порт с разрешённым значением, отклонять неоднозначный ввод, перенаправлять по проверенному URL (AC-15.13, AC-15.14). Запрет «//», «\» и управляющих символов — решение проекта.</li>
       </ul></li>
   </ul>
 
@@ -790,7 +807,7 @@ source: ""
 
 <article class="adr" id="adr-6">
   <div class="meta">
-    <span class="status-chip status-proposed">proposed</span>
+    <span class="status-chip status-accepted">accepted</span>
     <span class="chip area">subsystem: N/A</span>
     <span class="chip">ADR-6</span>
   </div>
@@ -809,7 +826,7 @@ source: ""
   <p>Ограничения: AC-18 и <code>backward_compat: migration</code> — существующие методы не ломаются, новые описаны в документе подсистемы и в OpenAPI. Сейчас <code>ContractVersion</code> = 3.0.0 (<code>Program.cs</code>); прежние переходы описаны разделами «Переход на контракт API N» в документах подсистем. Маршруты <code>/desk/…</code> в UX предварительные (U-22), а письма (ADR-5) делают их публичными.</p>
 
   <h3 id="adr-6-decision">Decision</h3>
-  <p class="lede">Сценарии собираются из существующих методов, девяти новых методов чтения <code>career-framework</code> и методов ADR-2–ADR-4. Форма существующих методов меняется только аддитивно. Изменения поведения следуют из принятых AC и описываются в документах подсистем. Контракт — 3.1.0. Маршруты сценариев — под <code>/desk/…</code>; адреса из писем — часть публичного контракта.</p>
+  <p class="lede">Сценарии собираются из существующих методов, новых методов чтения <code>career-framework</code> (список ниже) и методов ADR-2–ADR-4. Форма существующих методов меняется только аддитивно. Изменения поведения следуют из принятых AC и описываются в документах подсистем. Контракт — 3.1.0. Маршруты сценариев — под <code>/desk/…</code>; адреса из писем — часть публичного контракта.</p>
   <table>
     <thead><tr><th>Сценарий</th><th>Методы (новые — <strong>жирным</strong>)</th></tr></thead>
     <tbody>
@@ -915,7 +932,7 @@ source: ""
     <div class="cons">
       <h4>Negative</h4>
       <ul>
-        <li><code>career-framework</code> получает девять методов чтения. Метод <code>/org-units/{id}/setup</code> описывает готовность подразделения, но живёт в <code>career-framework</code>: только этот модуль видит закрепление HR, оргструктуру и учётные записи.</li>
+        <li><code>career-framework</code> получает новые методы чтения (список в Decision). Метод <code>/org-units/{id}/setup</code> описывает готовность подразделения, но живёт в <code>career-framework</code>: только этот модуль видит закрепление HR, оргструктуру и учётные записи.</li>
         <li>Колонка <code>builder_step</code> хранит состояние сценария в таблице модели.</li>
         <li>Изменения поведения существующих методов нужно описать в документах подсистемы, а разделы «Карьерная модель» должны вызывать предпросмотр.</li>
         <li>Адреса из писем трудно менять: старые ссылки остаются в почтовых ящиках.</li>
@@ -926,7 +943,7 @@ source: ""
 
   <h3 id="adr-6-alternatives">Alternatives considered (optional)</h3>
   <ul class="alt-list">
-    <li><strong>Контракт 4.0.0 из-за изменения поведения <code>POST /career/tracks</code> и новых 409</strong> — не рекомендован: форма запросов и ответов не меняется, 409 у этих методов уже объявлен, единственный клиент — своя SPA. Решает пользователь (hard gate).</li>
+    <li><strong>Контракт 4.0.0 из-за изменения поведения <code>POST /career/tracks</code> и новых 409</strong> — отклонено: форма запросов и ответов не меняется, 409 у этих методов уже объявлен, единственный клиент — своя SPA. Контракт 3.1.0 принят пользователем 2026-10-13.</li>
     <li><strong>Шаг мастера в <code>localStorage</code></strong> — отклонено: не переживает смену устройства и не даёт столу текста «остановились на шаге N». <strong>Отдельная таблица прогресса</strong> — лишняя сущность ради одного числа. <strong>Отдельный метод <code>PUT …/builder-step</code></strong> — два запроса на одно «Сохранить и далее».</li>
     <li><strong>Экран AC-12 из четырёх запросов в SPA</strong> — отклонено: статусы строк считались бы в браузере | binding — «Сервер — единственный источник истины» (<code>stack.html</code>).</li>
     <li><strong>Очередь AC-32 через <code>/desk/items</code></strong> — отклонено: администратору стол не выводит 27.5–27.8 (AC-28.9).</li>
@@ -942,7 +959,7 @@ source: ""
   </ul>
 
   <h3 id="adr-6-fold-target">Fold target (optional)</h3>
-  <p><code>docs/architecture/career-framework.md</code> — justified by its <code>responsibility.owns</code> clause: "one subsystem's purpose and the paths holding its key parts" (key paths и раздел «Переход на контракт API 3.1.0»); маршруты и <code>web/src/features/desk/</code> — <code>docs/architecture/desk.md</code> (тот же clause; при В2 — <code>career-framework.md</code>); описание методов — <code>openapi/openapi.json</code>, project-generated OpenAPI artifact.</p>
+  <p><code>docs/architecture/career-framework.md</code> — justified by its <code>responsibility.owns</code> clause: "one subsystem's purpose and the paths holding its key parts" (key paths и раздел «Переход на контракт API 3.1.0»); маршруты и <code>web/src/features/desk/</code> — <code>docs/architecture/desk.md</code> (тот же clause); описание методов — <code>openapi/openapi.json</code>, project-generated OpenAPI artifact.</p>
 </article>
 
       </main>

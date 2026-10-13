@@ -48,3 +48,5 @@
 {"op":"close","id":"documentation iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","end":"2026-10-13T10:14:32.020Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
 {"op":"open","id":"wait cascade right","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T10:14:56.360Z","attrs":{"gate":"cascade approver right"}}
 {"op":"close","id":"wait cascade right","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T10:14:56.360Z","end":"2026-10-13T10:57:10.153Z","outcome":"done","attrs":{"gate":"cascade approver right"}}
+{"op":"open","id":"asd-architect design-review#1","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:57:18.094Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-architect design-review#1","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:57:18.094Z","end":"2026-10-13T11:03:50.232Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
