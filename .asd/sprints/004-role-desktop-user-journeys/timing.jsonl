@@ -64,3 +64,5 @@
 {"op":"close","id":"correctness iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","end":"2026-10-13T11:16:13.422Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
 {"op":"close","id":"external iter-02","kind":"external-review","parent":"design-review iter-02","start":"2026-10-13T11:10:29.804Z","end":"2026-10-13T11:17:49.393Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
 {"op":"close","id":"documentation iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","end":"2026-10-13T11:20:06.976Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"wait iter-02 questions","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T11:20:07.331Z","attrs":{"gate":"design-review iter-02 questions"}}
+{"op":"close","id":"wait iter-02 questions","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T11:20:07.331Z","end":"2026-10-13T11:39:28.572Z","outcome":"done","attrs":{"gate":"design-review iter-02 questions"}}
