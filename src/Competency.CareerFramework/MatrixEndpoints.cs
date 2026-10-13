@@ -96,8 +96,9 @@ internal static class MatrixEndpoints
     }
 
     /// <summary>
-    /// Creates a unit's matrix for an active track of an active direction, the track kept by the unit or a unit above it, with an empty
-    /// first version as a draft. A unit has one matrix per track, which the catalogue lock and a unique index keep so.
+    /// Creates a unit's matrix for a track of an active direction, either an active track kept by the unit or a unit above it, or a draft
+    /// track of the unit itself whoever wrote it, which publishing the version then makes active; the first version is an empty draft.
+    /// A unit has one matrix per track, which the catalogue lock and a unique index keep so.
     /// </summary>
     private static async Task<Results<Created<MatrixResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
         NewMatrixRequest request,
@@ -246,8 +247,8 @@ internal static class MatrixEndpoints
         workflow.CreateVersionAsync(id, response, cancellationToken);
 
     /// <summary>
-    /// Says why the direction, track or scale cannot be used: a new matrix needs an active direction, an active track of it kept by the
-    /// matrix unit or a unit above it, and a scale that is active or a draft of the matrix author.
+    /// Says why the direction, track or scale cannot be used: a new matrix needs an active direction, a track of it that is active and kept
+    /// by the matrix unit or a unit above it or is a draft of the matrix unit, and a scale that is active or a draft of the matrix author.
     /// </summary>
     private static async Task<ValidationProblem?> ReferenceProblemAsync(
         NewMatrixRequest request,
@@ -268,8 +269,8 @@ internal static class MatrixEndpoints
         if (!await context.Set<CareerTrack>().AnyAsync(
                 track => track.Id == request.TrackId
                     && track.DirectionId == request.DirectionId
-                    && track.Status == CatalogStatus.Active
-                    && unitIds.Contains(track.OwnerOrgUnitId),
+                    && ((track.Status == CatalogStatus.Active && unitIds.Contains(track.OwnerOrgUnitId))
+                        || (track.Status == CatalogStatus.Draft && track.OwnerOrgUnitId == request.OrgUnitId)),
                 cancellationToken))
         {
             return Rejection.Invalid(TrackField, CatalogEndpoints.UnavailableMessage);

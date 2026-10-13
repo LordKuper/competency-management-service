@@ -8,7 +8,8 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The catalogue side of matrix versions: which entries a version may refer to, whether a version is complete enough to be handed on,
 /// and the entries it refers to as they stand. A version refers to the levels of its matrix track, to competencies of its scale and of
-/// the matrix direction or general ones, and to entries that are active or drafts whose author heads the matrix unit.
+/// the matrix direction or general ones, and to entries that are active or drafts whose author heads the matrix unit. Draft levels of
+/// the matrix track are usable whoever wrote them, because a matrix may be built on a draft track of its unit, which its HR edits too.
 /// </summary>
 internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory employees, ProcessRoles roles, CatalogStore store)
 {
@@ -149,36 +150,6 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
                     competency.Status))]);
     }
 
-    /// <summary>
-    /// The draft entries the version refers to and the draft categories of its competencies, tracked, so publishing the version can make
-    /// them active.
-    /// </summary>
-    /// <param name="version">The version.</param>
-    /// <param name="cancellationToken">Cancels the queries.</param>
-    /// <returns>The drafts.</returns>
-    public async Task<List<CatalogEntry>> DraftsAsync(MatrixVersion version, CancellationToken cancellationToken)
-    {
-        var levelIds = version.Content.Levels.Select(level => level.LevelId).ToList();
-        var competencyIds = version.Content.Competencies.Select(competency => competency.CompetencyId).ToList();
-        List<CatalogEntry> drafts =
-        [
-            .. await context.Set<CompetencyCategory>()
-                .Where(category => category.Status == CatalogStatus.Draft
-                    && context.Set<CareerCompetency>().Any(competency => competencyIds.Contains(competency.Id) && competency.CategoryId == category.Id))
-                .ToListAsync(cancellationToken),
-            .. await context.Set<CompetencyScale>()
-                .Where(scale => scale.Id == version.ScaleId && scale.Status == CatalogStatus.Draft)
-                .ToListAsync(cancellationToken),
-            .. await context.Set<CareerLevel>()
-                .Where(level => levelIds.Contains(level.Id) && level.Status == CatalogStatus.Draft)
-                .ToListAsync(cancellationToken),
-            .. await context.Set<CareerCompetency>()
-                .Where(competency => competencyIds.Contains(competency.Id) && competency.Status == CatalogStatus.Draft)
-                .ToListAsync(cancellationToken),
-        ];
-        return drafts;
-    }
-
     private static IEnumerable<string> EntryProblems(MatrixVersion version, LoadedEntries entries, Guid? headId)
     {
         IEnumerable<CatalogEntry> all = [entries.Scale, .. entries.Levels.Values, .. entries.Competencies.Values];
@@ -194,7 +165,8 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     }
 
     private static bool IsUsable(CatalogEntry entry, Guid? headId) =>
-        entry.Status == CatalogStatus.Active || (entry.Status == CatalogStatus.Draft && headId is not null && entry.AuthorId == headId);
+        entry.Status == CatalogStatus.Active
+        || (entry.Status == CatalogStatus.Draft && (entry is CareerLevel || (headId is not null && entry.AuthorId == headId)));
 
     /// <summary>
     /// The account of the matrix unit's head, whose drafts the matrix may use; null when the unit has no head who can act.

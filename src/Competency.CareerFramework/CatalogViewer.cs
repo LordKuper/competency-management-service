@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq.Expressions;
 using Competency.Platform;
 
@@ -34,14 +35,24 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Gui
     /// <param name="roles">The process roles service.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
     /// <returns>The user's rights.</returns>
-    public static async Task<CatalogViewer> LoadAsync(ICurrentActor actor, ProcessRoles roles, CancellationToken cancellationToken)
+    public static Task<CatalogViewer> LoadAsync(ICurrentActor actor, ProcessRoles roles, CancellationToken cancellationToken) =>
+        LoadAsync(actor.UserId ?? Guid.Empty, actor.Role == PlatformClaims.GlobalAdminRole, roles, cancellationToken);
+
+    /// <summary>
+    /// Works out the rights of an account other than the signed-in one, such as the responsible HR whose right publishes a matrix version.
+    /// </summary>
+    /// <param name="userId">The account.</param>
+    /// <param name="isAdmin">Whether the account is a global administrator.</param>
+    /// <param name="roles">The process roles service.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    /// <returns>The account's rights.</returns>
+    public static async Task<CatalogViewer> LoadAsync(Guid userId, bool isAdmin, ProcessRoles roles, CancellationToken cancellationToken)
     {
-        var userId = actor.UserId ?? Guid.Empty;
         var headedUnits = await roles.HeadedUnitsAsync(userId, cancellationToken);
         var hrUnits = await roles.HrUnitsAsync(userId, cancellationToken);
         return new CatalogViewer(
             userId,
-            actor.Role == PlatformClaims.GlobalAdminRole,
+            isAdmin,
             headedUnits.Select(unit => unit.Id).ToHashSet(),
             hrUnits.Select(unit => unit.Id).ToHashSet());
     }
@@ -73,6 +84,22 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Gui
                     || (entry.Status == CatalogStatus.Draft && (seesInactive || entry.AuthorId == userId || routeEntryIds.Contains(entry.Id))));
         return (Expression<Func<T, bool>>)sees;
     }
+
+    /// <summary>
+    /// Whether the user may read an entry already loaded, by the same filter as <see cref="Sees{T}"/>.
+    /// </summary>
+    /// <param name="entry">The entry; a level with its track loaded.</param>
+    /// <returns>True when the user may read it.</returns>
+    public bool CanSee(CatalogEntry entry) => entry switch
+    {
+        CareerDirection direction => SeesEntry(direction),
+        CareerTrack track => SeesEntry(track),
+        CareerLevel level => SeesEntry(level),
+        CompetencyCategory category => SeesEntry(category),
+        CareerCompetency competency => SeesEntry(competency),
+        CompetencyScale scale => SeesEntry(scale),
+        _ => throw new UnreachableException($"Unknown catalogue entry type {entry.GetType().Name}."),
+    };
 
     /// <summary>
     /// Whether the user may change the entry's fields: its keepers, and while it is a draft the head of its unit, or for an entry of no unit
@@ -107,6 +134,9 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Gui
     public CatalogStatus? StatusOfNew(Guid? unitId) => Keeps(unitId)
         ? CatalogStatus.Active
         : Heads(unitId) ? CatalogStatus.Draft : null;
+
+    private bool SeesEntry<T>(T entry)
+        where T : CatalogEntry => Sees<T>().Compile()(entry);
 
     private bool Keeps(Guid? unitId) => IsAdmin || (unitId is { } id ? HrUnitIds.Contains(id) : IsHr);
 

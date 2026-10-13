@@ -39,7 +39,7 @@ internal static class CompetencyScaleEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        group.MapEntryEndpoints(Kind);
+        group.MapEntryEndpoints(Kind, Route);
         group.MapDeleteEntry(Kind, InUseAsync);
     }
 

@@ -7,5 +7,5 @@ namespace Competency.CareerFramework;
 /// <param name="Id">The entry.</param>
 /// <param name="Name">The entry's name.</param>
 /// <param name="Reason">Why it is in the way.</param>
-/// <param name="Context">Where the entry sits: a level's track name; null for a track.</param>
-internal sealed record PublicationBlocker(PublicationBlockerKind Kind, Guid Id, string Name, PublicationBlockerReason Reason, string? Context);
+/// <param name="Context">Where the entry sits: a level's track name; null for the other kinds.</param>
+internal sealed record PublicationBlocker(PublicationEntryKind Kind, Guid Id, string Name, PublicationBlockerReason Reason, string? Context);

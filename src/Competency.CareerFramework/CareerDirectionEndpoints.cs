@@ -11,7 +11,7 @@ internal static class CareerDirectionEndpoints
 {
     private const string InUseMessage = "Направление используют треки, компетенции или матрицы — удалить нельзя";
 
-    private static readonly CatalogKind<CareerDirection, CatalogEntryResponse> Kind = new("CareerDirection", (entry, _, viewer) => CatalogEntryResponse.From(entry, viewer));
+    internal static readonly CatalogKind<CareerDirection, CatalogEntryResponse> Kind = new("CareerDirection", (entry, _, viewer) => CatalogEntryResponse.From(entry, viewer));
 
     public static void Map(IEndpointRouteBuilder endpoints) => endpoints.MapNamedCatalog(
             "/api/v1/career/directions",

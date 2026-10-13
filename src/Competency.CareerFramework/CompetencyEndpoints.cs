@@ -22,6 +22,7 @@ internal static class CompetencyEndpoints
     private const string ScaleField = "scaleId";
     private const string TypeField = "type";
     private const string InUseMessage = "Компетенцию используют матрицы — удалить нельзя";
+    private const string DraftReferenceMessage = "Выбрана черновая запись — сначала утвердите её";
 
     internal static readonly CatalogKind<CareerCompetency, CompetencyResponse> Kind = new(
         "Competency",
@@ -42,7 +43,7 @@ internal static class CompetencyEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict);
         group.MapGet("/{id:guid}/versions", VersionsAsync).WithName("ListCompetencyVersions")
             .ProducesProblem(StatusCodes.Status404NotFound);
-        group.MapEntryEndpoints(Kind);
+        group.MapEntryEndpoints(Kind, Route);
         group.MapDeleteEntry(Kind, RemoveVersionsAsync);
     }
 
@@ -95,10 +96,14 @@ internal static class CompetencyEndpoints
             store,
             cancellationToken);
 
+    /// <summary>
+    /// Creates a competency: active from its keepers unless it refers to drafts, which only approving it publishes, so then it is a draft.
+    /// </summary>
     private static async Task<Results<Created<CompetencyResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
         CompetencyRequest request,
         AppDbContext context,
         CatalogStore store,
+        CatalogPublication publication,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -132,6 +137,11 @@ internal static class CompetencyEndpoints
             AuthorId = viewer.UserId,
         };
         request.ApplyTo(competency, scaleId);
+        if (competency.Status == CatalogStatus.Active && await publication.HasDraftReferencesAsync(competency, cancellationToken))
+        {
+            competency.Status = CatalogStatus.Draft;
+        }
+
         if (await CatalogEndpoints.NameProblemAsync(competency, Kind, store, cancellationToken) is { } taken)
         {
             return taken;
@@ -174,7 +184,8 @@ internal static class CompetencyEndpoints
             return Rejection.Invalid(ScaleField, CatalogEndpoints.UnavailableMessage);
         }
 
-        if (await ReferenceProblemAsync(request, scaleId, competency.AuthorId, competency, store, cancellationToken) is { } invalid)
+        var draftAuthorId = competency.Status == CatalogStatus.Active ? null : competency.AuthorId;
+        if (await ReferenceProblemAsync(request, scaleId, draftAuthorId, competency, store, cancellationToken) is { } invalid)
         {
             return invalid;
         }
@@ -234,35 +245,52 @@ internal static class CompetencyEndpoints
             .FirstOrDefaultAsync(cancellationToken);
 
     /// <summary>
-    /// Says why the category, direction or scale cannot be used: an entry may refer to active entries and to its author's drafts.
-    /// Only references the change sets anew are checked, so an entry that has since been deactivated may stay where it was.
+    /// Says why the category, direction or scale cannot be used: an entry may refer to active entries, and a draft or inactive one also to
+    /// its author's drafts, so an active competency never gets a draft reference past publication. Only references the change sets anew are
+    /// checked, so an entry that has since been deactivated may stay where it was.
     /// </summary>
     private static async Task<ValidationProblem?> ReferenceProblemAsync(
         CompetencyRequest request,
         Guid scaleId,
-        Guid? authorId,
+        Guid? draftAuthorId,
         CareerCompetency? current,
         CatalogStore store,
         CancellationToken cancellationToken)
     {
         if (request.CategoryId != current?.CategoryId
-            && !await store.IsUsableAsync<CompetencyCategory>(request.CategoryId, authorId, cancellationToken))
+            && await UnusableAsync<CompetencyCategory>(CategoryField, request.CategoryId, draftAuthorId, store, cancellationToken) is { } category)
         {
-            return Rejection.Invalid(CategoryField, CatalogEndpoints.UnavailableMessage);
+            return category;
         }
 
         if (request.DirectionId is { } directionId && directionId != current?.DirectionId
-            && !await store.IsUsableAsync<CareerDirection>(directionId, authorId, cancellationToken))
+            && await UnusableAsync<CareerDirection>(DirectionField, directionId, draftAuthorId, store, cancellationToken) is { } direction)
         {
-            return Rejection.Invalid(DirectionField, CatalogEndpoints.UnavailableMessage);
+            return direction;
         }
 
-        if (scaleId != current?.ScaleId
-            && !await store.IsUsableAsync<CompetencyScale>(scaleId, authorId, cancellationToken))
+        return scaleId != current?.ScaleId
+            ? await UnusableAsync<CompetencyScale>(ScaleField, scaleId, draftAuthorId, store, cancellationToken)
+            : null;
+    }
+
+    /// <summary>
+    /// Rejects a reference the competency may not have; a draft where only an active entry may stand gets a reason of its own.
+    /// </summary>
+    private static async Task<ValidationProblem?> UnusableAsync<T>(
+        string field,
+        Guid id,
+        Guid? draftAuthorId,
+        CatalogStore store,
+        CancellationToken cancellationToken)
+        where T : CatalogEntry
+    {
+        if (await store.IsUsableAsync<T>(id, draftAuthorId, cancellationToken))
         {
-            return Rejection.Invalid(ScaleField, CatalogEndpoints.UnavailableMessage);
+            return null;
         }
 
-        return null;
+        var isDraft = draftAuthorId is null && await store.IsDraftAsync<T>(id, cancellationToken);
+        return Rejection.Invalid(field, isDraft ? DraftReferenceMessage : CatalogEndpoints.UnavailableMessage);
     }
 }

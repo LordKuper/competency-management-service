@@ -31,7 +31,7 @@ internal static class CareerLevelEndpoints
         group.MapPost(string.Empty, CreateAsync).WithName("CreateCareerLevel").ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        group.MapEntryEndpoints(Kind, mapRename: true);
+        group.MapEntryEndpoints(Kind, Route, mapRename: true, mapPublication: false);
         group.MapDeleteEntry(Kind, RemoveLinksAsync);
     }
 

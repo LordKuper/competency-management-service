@@ -114,19 +114,31 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
-    /// Whether an entry of the given author may refer to the entry: an active one, or a draft of the same author.
+    /// Whether an entry may refer to the entry: an active one, or a draft of the given author.
     /// </summary>
     /// <typeparam name="T">The referenced entry type.</typeparam>
     /// <param name="id">The referenced entry.</param>
-    /// <param name="authorId">The author of the referring entry.</param>
+    /// <param name="draftAuthorId">The author whose drafts may be referred to; null when only an active entry may, as for a referring entry that is active.</param>
     /// <param name="cancellationToken">Cancels the query.</param>
     /// <returns>True when the reference is allowed; false also when the entry does not exist.</returns>
-    public Task<bool> IsUsableAsync<T>(Guid id, Guid? authorId, CancellationToken cancellationToken)
+    public Task<bool> IsUsableAsync<T>(Guid id, Guid? draftAuthorId, CancellationToken cancellationToken)
         where T : CatalogEntry =>
         context.Set<T>().AnyAsync(
             entry => entry.Id == id
-                && (entry.Status == CatalogStatus.Active || (entry.Status == CatalogStatus.Draft && entry.AuthorId == authorId)),
+                && (entry.Status == CatalogStatus.Active
+                    || (draftAuthorId != null && entry.Status == CatalogStatus.Draft && entry.AuthorId == draftAuthorId)),
             cancellationToken);
+
+    /// <summary>
+    /// Whether the entry is a draft, to tell a draft reference from a missing or inactive one.
+    /// </summary>
+    /// <typeparam name="T">The entry type.</typeparam>
+    /// <param name="id">The entry.</param>
+    /// <param name="cancellationToken">Cancels the query.</param>
+    /// <returns>True when the entry exists and is a draft.</returns>
+    public Task<bool> IsDraftAsync<T>(Guid id, CancellationToken cancellationToken)
+        where T : CatalogEntry =>
+        context.Set<T>().AnyAsync(entry => entry.Id == id && entry.Status == CatalogStatus.Draft, cancellationToken);
 
     /// <summary>
     /// Works out whether the track may be active, the one place that decides it. Positions come from the organization snapshot, which

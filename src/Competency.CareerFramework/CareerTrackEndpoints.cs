@@ -22,7 +22,7 @@ internal static class CareerTrackEndpoints
     private const string LevelsField = "levelIds";
     private const string InUseMessage = "Трек используют матрицы — удалить нельзя";
 
-    private static readonly CatalogKind<CareerTrack, CareerTrackResponse> Kind = new(
+    internal static readonly CatalogKind<CareerTrack, CareerTrackResponse> Kind = new(
         "CareerTrack",
         (track, names, viewer) => CareerTrackResponse.From(track, names.GetValueOrDefault(track.OwnerOrgUnitId), viewer),
         track => other => other.DirectionId == track.DirectionId);
@@ -34,7 +34,7 @@ internal static class CareerTrackEndpoints
         group.MapPost(string.Empty, CreateAsync).WithName("CreateCareerTrack").ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        group.MapEntryEndpoints(Kind, mapRename: true);
+        group.MapEntryEndpoints(Kind, Route, mapRename: true);
         group.MapPut("/{id:guid}/level-order", OrderLevelsAsync).WithName("OrderCareerTrackLevels").ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);

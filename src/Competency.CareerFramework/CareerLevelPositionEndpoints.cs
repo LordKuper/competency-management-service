@@ -213,7 +213,7 @@ internal static class CareerLevelPositionEndpoints
         {
             return PublicationRefusal.Refuse(
                 $"Нельзя снять последнюю действующую должность уровня «{level.Name}» действующего трека",
-                [new PublicationBlocker(PublicationBlockerKind.Level, level.Id, level.Name, PublicationBlockerReason.NoActivePosition, level.Track.Name)]);
+                [new PublicationBlocker(PublicationEntryKind.Level, level.Id, level.Name, PublicationBlockerReason.NoActivePosition, level.Track.Name)]);
         }
 
         ifMatch.ApplyTo(context, level);

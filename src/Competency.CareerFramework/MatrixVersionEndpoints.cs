@@ -2,43 +2,53 @@ using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of one matrix version: reading it, editing its content, its approval route steps and its history. A version the user cannot
-/// read answers 404; a step that is not the user's turn answers 403.
+/// The API of one matrix version: reading it, editing its content, its approval route steps, the preview of its publication and its
+/// history. A version the user cannot read answers 404; a step that is not the user's turn answers 403. The steps that may publish the
+/// version take the tag of the confirmed publication list in <c>?cascade=</c>.
 /// </summary>
 internal static class MatrixVersionEndpoints
 {
-    private const string Route = "/api/v1/career/matrix-versions";
+    public const string Route = "/api/v1/career/matrix-versions";
+    private const string CascadeParameter = "cascade";
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapCatalogGroup(Route);
         group.MapGet("/{id:guid}", GetAsync).WithName("GetMatrixVersion").ProducesETag().ProducesProblem(StatusCodes.Status404NotFound);
         group.MapPut("/{id:guid}/content", EditAsync).WithName("UpdateMatrixVersionContent").ProducesTransition();
-        group.MapPost("/{id:guid}/submit", (Guid id, IfMatch ifMatch, MatrixWorkflow workflow, HttpResponse response, CancellationToken cancellationToken) =>
-                workflow.TransitAsync(id, MatrixAction.Submit, ifMatch, comment: null, response, cancellationToken))
+        group.MapGet("/{id:guid}/publication", (Guid id, MatrixWorkflow workflow, CancellationToken cancellationToken) =>
+                workflow.PreviewAsync(id, cancellationToken))
+            .WithName("GetMatrixVersionPublication")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+        group.MapPost("/{id:guid}/submit", (Guid id, IfMatch ifMatch, [FromQuery(Name = CascadeParameter)] string? cascade, MatrixWorkflow workflow,
+                    HttpResponse response, CancellationToken cancellationToken) =>
+                workflow.TransitAsync(id, MatrixAction.Submit, ifMatch, comment: null, cascade, response, cancellationToken))
             .WithName("SubmitMatrixVersion")
-            .ProducesTransition();
-        group.MapPost("/{id:guid}/approve", (Guid id, IfMatch ifMatch, MatrixWorkflow workflow, HttpResponse response, CancellationToken cancellationToken) =>
-                workflow.TransitAsync(id, MatrixAction.Approve, ifMatch, comment: null, response, cancellationToken))
+            .ProducesPublishingTransition();
+        group.MapPost("/{id:guid}/approve", (Guid id, IfMatch ifMatch, [FromQuery(Name = CascadeParameter)] string? cascade, MatrixWorkflow workflow,
+                    HttpResponse response, CancellationToken cancellationToken) =>
+                workflow.TransitAsync(id, MatrixAction.Approve, ifMatch, comment: null, cascade, response, cancellationToken))
             .WithName("ApproveMatrixVersion")
-            .ProducesTransition();
+            .ProducesPublishingTransition();
         group.MapPost("/{id:guid}/return", ReturnAsync).WithName("ReturnMatrixVersion").ProducesTransition();
-        group.MapPost("/{id:guid}/accept-changes", (Guid id, IfMatch ifMatch, MatrixWorkflow workflow, HttpResponse response, CancellationToken cancellationToken) =>
-                workflow.TransitAsync(id, MatrixAction.AcceptChanges, ifMatch, comment: null, response, cancellationToken))
+        group.MapPost("/{id:guid}/accept-changes", (Guid id, IfMatch ifMatch, [FromQuery(Name = CascadeParameter)] string? cascade, MatrixWorkflow workflow,
+                    HttpResponse response, CancellationToken cancellationToken) =>
+                workflow.TransitAsync(id, MatrixAction.AcceptChanges, ifMatch, comment: null, cascade, response, cancellationToken))
             .WithName("AcceptMatrixVersionChanges")
-            .ProducesTransition();
+            .ProducesPublishingTransition();
         group.MapPost("/{id:guid}/accept-and-revise", (Guid id, IfMatch ifMatch, MatrixWorkflow workflow, HttpResponse response, CancellationToken cancellationToken) =>
-                workflow.TransitAsync(id, MatrixAction.AcceptAndRevise, ifMatch, comment: null, response, cancellationToken))
+                workflow.TransitAsync(id, MatrixAction.AcceptAndRevise, ifMatch, comment: null, cascade: null, response, cancellationToken))
             .WithName("AcceptAndReviseMatrixVersion")
             .ProducesTransition();
         group.MapPost("/{id:guid}/rollback-changes", (Guid id, IfMatch ifMatch, MatrixWorkflow workflow, HttpResponse response, CancellationToken cancellationToken) =>
-                workflow.TransitAsync(id, MatrixAction.RollbackChanges, ifMatch, comment: null, response, cancellationToken))
+                workflow.TransitAsync(id, MatrixAction.RollbackChanges, ifMatch, comment: null, cascade: null, response, cancellationToken))
             .WithName("RollbackMatrixVersionChanges")
             .ProducesTransition();
         group.MapGet("/{id:guid}/history", HistoryAsync).WithName("GetMatrixVersionHistory").ProducesProblem(StatusCodes.Status404NotFound);
@@ -51,6 +61,13 @@ internal static class MatrixVersionEndpoints
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
+
+    /// <summary>
+    /// Declares the responses of a step that may publish the version: its 412 may point to the fresh publication preview.
+    /// </summary>
+    private static RouteHandlerBuilder ProducesPublishingTransition(this RouteHandlerBuilder builder) => builder
+        .ProducesTransition()
+        .Produces<PublicationChanged>(StatusCodes.Status412PreconditionFailed, CatalogEndpoints.ProblemContentType);
 
     private static async Task<Results<Ok<MatrixVersionResponse>, NotFound>> GetAsync(
         Guid id,
@@ -92,7 +109,7 @@ internal static class MatrixVersionEndpoints
             return TypedResults.ValidationProblem(errors);
         }
 
-        return await workflow.TransitAsync(id, MatrixAction.Return, ifMatch, request.TrimmedComment(), response, cancellationToken);
+        return await workflow.TransitAsync(id, MatrixAction.Return, ifMatch, request.TrimmedComment(), cascade: null, response, cancellationToken);
     }
 
     /// <summary>

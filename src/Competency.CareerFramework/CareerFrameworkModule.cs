@@ -20,6 +20,7 @@ public static class CareerFrameworkModule
         services.AddScoped<ProcessRoles>();
         services.AddScoped<CatalogStore>();
         services.AddScoped<MatrixRoute>();
+        services.AddScoped<CatalogPublication>();
         services.AddScoped<MatrixCatalog>();
         services.AddScoped<MatrixWorkflow>();
         return services;

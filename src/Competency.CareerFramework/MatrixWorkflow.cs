@@ -16,6 +16,7 @@ internal sealed class MatrixWorkflow(
     CatalogStore store,
     MatrixRoute route,
     MatrixCatalog catalog,
+    CatalogPublication publication,
     ProcessRoles roles,
     IAuditWriter audit,
     ICurrentActor actor,
@@ -30,6 +31,7 @@ internal sealed class MatrixWorkflow(
     private const string ChangedByApproverMessage = "Версия изменена согласующим — верните её с правками";
     private const string NothingToReturnMessage = "Укажите комментарий или внесите правки";
     private const string InWorkExistsMessage = "У матрицы уже есть версия в работе";
+    private const string NotPublishedMessage = "Версию нельзя опубликовать";
 
     public Task<CatalogViewer> ViewerAsync(CancellationToken cancellationToken) => CatalogViewer.LoadAsync(actor, roles, cancellationToken);
 
@@ -214,13 +216,32 @@ internal sealed class MatrixWorkflow(
     }
 
     /// <summary>
-    /// Performs one step of the approval route on the version, if it is the user's turn and the step is open to them.
+    /// What publishing the version would make active now, which of the user's open actions would publish it, and what is in the way; for
+    /// whoever reads the version. Nothing is locked or saved.
+    /// </summary>
+    public async Task<Results<Ok<MatrixPublicationResponse>, NotFound>> PreviewAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var viewer = await store.ViewerAsync(cancellationToken);
+        if (await context.Set<MatrixVersion>().FirstOrDefaultAsync(version => version.Id == id, cancellationToken) is not { } version
+            || await StateAsync(version, viewer, cancellationToken) is not { } state)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var plan = await publication.PlanAsync(version, cancellationToken);
+        return TypedResults.Ok(plan.Describe(await PublishingActionsAsync(version, state, viewer.UserId, cancellationToken), viewer));
+    }
+
+    /// <summary>
+    /// Performs one step of the approval route on the version, if it is the user's turn and the step is open to them. A step that
+    /// publishes the version needs the tag of the list the user confirmed; whether it publishes is decided here, under the locks.
     /// </summary>
     public async Task<Results<Ok<MatrixVersionResponse>, NotFound, ValidationProblem, ProblemHttpResult>> TransitAsync(
         Guid id,
         MatrixAction action,
         IfMatch ifMatch,
         string? comment,
+        string? cascade,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -247,7 +268,7 @@ internal sealed class MatrixWorkflow(
         }
 
         ifMatch.ApplyTo(context, version);
-        var progress = await ProgressAsync(version, cancellationToken);
+        var progress = await ProgressAsync(version, cascade, cancellationToken);
         var problem = action switch
         {
             MatrixAction.Submit => await SubmitAsync(progress, cancellationToken),
@@ -308,10 +329,11 @@ internal sealed class MatrixWorkflow(
 
     private static bool HasApproverChanges(Progress progress) => !progress.Version.Content.SameAs(progress.Variants[^1].Content);
 
-    private async Task<Progress> ProgressAsync(MatrixVersion version, CancellationToken cancellationToken) => new(
+    private async Task<Progress> ProgressAsync(MatrixVersion version, string? cascade, CancellationToken cancellationToken) => new(
         version,
         actor.UserId ?? Guid.Empty,
         time.GetUtcNow(),
+        cascade,
         await context.Set<MatrixVariant>().Where(variant => variant.VersionId == version.Id).OrderBy(variant => variant.Number).ToListAsync(cancellationToken),
         await context.Set<MatrixDecision>().Where(decision => decision.VersionId == version.Id).MaxAsync(decision => (int?)decision.Sequence, cancellationToken) ?? 0);
 
@@ -446,26 +468,25 @@ internal sealed class MatrixWorkflow(
     }
 
     /// <summary>
-    /// Publishes the approved version: makes the drafts it uses and the draft categories of its competencies active, after checking
-    /// their names again as approving a draft does, archives the previously published version in a save of its own, so the
-    /// published-version index never sees two, and freezes the entries the version refers to into its snapshot.
+    /// Publishes the approved version by the one publication rule: the drafts it refers to become active with it, or nothing does, and
+    /// only with the tag of the list the user confirmed. The previously published version is archived in a save of its own, so the
+    /// published-version index never sees two, and the entries the version refers to are frozen into its snapshot.
     /// </summary>
     private async Task<ProblemHttpResult?> PublishAsync(Progress progress, CancellationToken cancellationToken)
     {
         var version = progress.Version;
-        var drafts = await catalog.DraftsAsync(version, cancellationToken);
-        foreach (var draft in drafts)
+        var plan = await publication.PlanAsync(version, cancellationToken);
+        if (plan.IsRefused)
         {
-            draft.Status = CatalogStatus.Active;
-            if (await IsNameTakenAsync(draft, cancellationToken))
-            {
-                return Rejection.Conflict($"{CatalogEndpoints.DuplicateNameMessage}: «{draft.Name}»");
-            }
-
-            var draftType = draft.GetType().Name;
-            audit.Stage(new AuditEntry($"{draftType}.Approved", draftType, draft.Id.ToString()), context);
+            return plan.Refuse(NotPublishedMessage, await store.ViewerAsync(cancellationToken));
         }
 
+        if (!plan.IsConfirmedBy(progress.Cascade))
+        {
+            return PublicationChanged.Refuse($"{MatrixVersionEndpoints.Route}/{version.Id}/publication");
+        }
+
+        publication.Apply(plan, EntityType, version.Id);
         var previous = await context.Set<MatrixVersion>()
             .FirstOrDefaultAsync(candidate => candidate.MatrixId == version.MatrixId && candidate.Status == MatrixVersionStatus.Published, cancellationToken);
         if (previous is not null)
@@ -475,7 +496,7 @@ internal sealed class MatrixWorkflow(
         }
 
         await context.SaveChangesAsync(cancellationToken);
-        context.AddRange(drafts.OfType<CareerCompetency>().Select(competency => CompetencyVersion.Of(competency, progress.ActorId, progress.Now)));
+        context.AddRange(plan.Entries.OfType<CareerCompetency>().Select(competency => CompetencyVersion.Of(competency, progress.ActorId, progress.Now)));
 
         version.Snapshot = await catalog.EntriesAsync(version, cancellationToken);
         version.Status = MatrixVersionStatus.Published;
@@ -485,14 +506,36 @@ internal sealed class MatrixWorkflow(
         return null;
     }
 
-    private Task<bool> IsNameTakenAsync(CatalogEntry entry, CancellationToken cancellationToken) => entry switch
+    /// <summary>
+    /// The user's open actions that would publish the version, as the steps decide it: the approval of the HR step or the acceptance of
+    /// its changes, and a submission, a superior approval or the acceptance of the superior's changes after which the HR step approves
+    /// itself, because the responsible HR wrote the version.
+    /// </summary>
+    private async Task<List<MatrixAction>> PublishingActionsAsync(MatrixVersion version, MatrixVersionState state, Guid userId, CancellationToken cancellationToken)
     {
-        CareerLevel level => store.IsNameTakenAsync(level, CareerLevelEndpoints.Kind.SameScope?.Invoke(level), cancellationToken),
-        CareerCompetency competency => store.IsNameTakenAsync(competency, CompetencyEndpoints.Kind.SameScope?.Invoke(competency), cancellationToken),
-        CompetencyScale scale => store.IsNameTakenAsync(scale, CompetencyScaleEndpoints.Kind.SameScope?.Invoke(scale), cancellationToken),
-        CompetencyCategory category => store.IsNameTakenAsync(category, CompetencyCategoryEndpoints.Kind.SameScope?.Invoke(category), cancellationToken),
-        _ => Task.FromResult(false),
-    };
+        var unitId = version.Matrix.OrgUnitId;
+        if (state.Actions.Count == 0 || await roles.ResponsibleHrAsync(unitId, cancellationToken) is not { } hrId)
+        {
+            return [];
+        }
+
+        var authorId = await context.Set<MatrixVariant>()
+            .Where(variant => variant.VersionId == version.Id && variant.Kind == MatrixVariantKind.Author)
+            .OrderByDescending(variant => variant.Number)
+            .Select(variant => (Guid?)variant.CreatedById)
+            .FirstOrDefaultAsync(cancellationToken);
+        var isHrStepAutoApproved = hrId == authorId;
+        var submissionPublishes = state.Actions.Contains(MatrixAction.Submit)
+            && hrId == userId
+            && await route.SuperiorApproverAsync(unitId, cancellationToken) is null;
+        return [.. state.Actions.Where(action => action switch
+        {
+            MatrixAction.Submit => submissionPublishes,
+            MatrixAction.Approve => state.Turn?.Step == ApprovalStep.Hr || isHrStepAutoApproved,
+            MatrixAction.AcceptChanges => version.Step != ApprovalStep.Superior || isHrStepAutoApproved,
+            _ => false,
+        })];
+    }
 
     /// <summary>
     /// Rejects an incomplete version with every problem found, the first as the detail.
@@ -564,15 +607,18 @@ internal sealed class MatrixWorkflow(
     }
 
     /// <summary>
-    /// One transition in progress: the version, who acts and when, the version's variants so far and its last history position.
+    /// One transition in progress: the version, who acts and when, the tag of the publication list the user confirmed, the version's
+    /// variants so far and its last history position.
     /// </summary>
-    private sealed class Progress(MatrixVersion version, Guid actorId, DateTimeOffset now, List<MatrixVariant> variants, int lastSequence)
+    private sealed class Progress(MatrixVersion version, Guid actorId, DateTimeOffset now, string? cascade, List<MatrixVariant> variants, int lastSequence)
     {
         public MatrixVersion Version { get; } = version;
 
         public Guid ActorId { get; } = actorId;
 
         public DateTimeOffset Now { get; } = now;
+
+        public string? Cascade { get; } = cascade;
 
         public List<MatrixVariant> Variants { get; } = variants;
 

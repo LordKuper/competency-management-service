@@ -9,6 +9,11 @@ namespace Competency.CareerFramework;
 internal enum PublicationBlockerReason
 {
     /// <summary>
+    /// A draft the one whose right counts may not approve.
+    /// </summary>
+    NoRight,
+
+    /// <summary>
     /// A track without levels.
     /// </summary>
     NoLevels,
@@ -17,4 +22,9 @@ internal enum PublicationBlockerReason
     /// A level without a linked active position.
     /// </summary>
     NoActivePosition,
+
+    /// <summary>
+    /// An entry whose name another active entry, or another entry published with it, already has.
+    /// </summary>
+    NameTaken,
 }

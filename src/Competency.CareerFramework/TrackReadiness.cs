@@ -1,5 +1,4 @@
 using Competency.OrgStructure;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Competency.CareerFramework;
 
@@ -25,16 +24,12 @@ internal sealed record TrackReadiness(bool HasLevels, IReadOnlyList<CareerLevel>
         positionIds.Any(id => positions.GetValueOrDefault(id)?.IsActive == true);
 
     /// <summary>
-    /// The refusal to make the track active, listing what keeps it from being ready.
+    /// What keeps the track from being ready, each with the entry it is about: the track without levels, or else its levels without an active position.
     /// </summary>
     /// <param name="track">The track.</param>
-    /// <returns>A 409 response.</returns>
-    public ProblemHttpResult Refuse(CareerTrack track) => HasLevels
-        ? PublicationRefusal.Refuse(
-            $"Трек «{track.Name}» нельзя сделать действующим: у уровней нет связанной действующей должности",
-            [.. LevelsWithoutActivePosition.Select(level => new PublicationBlocker(
-                PublicationBlockerKind.Level, level.Id, level.Name, PublicationBlockerReason.NoActivePosition, track.Name))])
-        : PublicationRefusal.Refuse(
-            $"Трек «{track.Name}» нельзя сделать действующим: у него нет уровней",
-            [new PublicationBlocker(PublicationBlockerKind.Track, track.Id, track.Name, PublicationBlockerReason.NoLevels, null)]);
+    /// <returns>The entries in the way; empty when the track is ready.</returns>
+    public IEnumerable<(CatalogEntry Entry, PublicationBlocker Blocker)> Blockers(CareerTrack track) => HasLevels
+        ? LevelsWithoutActivePosition.Select(level => ((CatalogEntry)level, new PublicationBlocker(
+            PublicationEntryKind.Level, level.Id, level.Name, PublicationBlockerReason.NoActivePosition, track.Name)))
+        : [(track, new PublicationBlocker(PublicationEntryKind.Track, track.Id, track.Name, PublicationBlockerReason.NoLevels, null))];
 }
