@@ -1,0 +1,29 @@
+# proposed changes to docs/ux/DESIGN.md
+# applied in design-promote phase after approval under checkpoints.md
+#
+# Sprint 004: documentation/usage notes ONLY. No new token and no token value change
+# (every new_value below equals the current one). Routine mechanical design-system update;
+# docs/ux/design-system.html is regenerated from the patched DESIGN.md (design-system.md §10).
+
+add: []
+
+update:
+  # Header count badge on the "Рабочий стол" nav item (ux-spec "Использование компонентов", mockup m-shell).
+  # DESIGN.md: Colors > Contrast table gets one row; the `accent` comment gets the badge note.
+  - path: colors.accent
+    new_value: "#FBAE40"        # unchanged
+    usage: "brand highlight FILLS only (progress, badge fill incl. the header count badge: accent fill, surface-inverse text 9.6:1, on nav-item-active primary 3.7:1 non-text) and the keyboard focus ring on the dark header; never text on light surfaces"
+    reason: "Contrast table row to add: `accent` fill on `primary` (count badge on the active nav item) | 3.73 | AA non-text (>= 3:1), badge text is `surface-inverse` on `accent` 9.6:1. Composite element from existing tokens (accent, surface-inverse, rounded-full, body-strong, control-height-sm); no component token."
+    affects_components: [nav-item-active]
+    breaking: false
+
+  # Horizontal Steps in the wizards "Построить матрицу" (6 steps) and "Принять сотрудника" (3 steps).
+  # DESIGN.md: Components > Steps row (line "Steps (step-current, -done, -upcoming)") gets a note.
+  - path: components.step-current
+    new_value: "unchanged"
+    usage: "wave stage in progress; also the current step of a horizontal wizard (titles always visible)"
+    reason: "Steps row note to add: Steps may also be laid out horizontally for wizards (above the form, titles always visible, current = filled number, done = check icon). Same step-current/-done/-upcoming tokens and contrast (7.0 / 6.2 / 7.5), no new token; the vertical layout stays for wave stages on detail pages."
+    affects_components: [step-current, step-done, step-upcoming]
+    breaking: false
+
+remove: []

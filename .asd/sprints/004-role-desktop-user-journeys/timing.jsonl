@@ -55,3 +55,12 @@
 {"op":"open","id":"asd-ux design-review#1","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T11:04:54.208Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"asd-ux design-review#1","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T11:04:54.208Z","end":"2026-10-13T11:10:17.041Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"design-review iter-01","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T10:00:04.457Z","end":"2026-10-13T11:10:17.109Z","outcome":"done","attrs":{"iteration":"1"}}
+{"op":"open","id":"design-review iter-02","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T11:10:29.673Z","attrs":{"iteration":"2"}}
+{"op":"open","id":"documentation iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"efficiency iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"correctness iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"external iter-02","kind":"external-review","parent":"design-review iter-02","start":"2026-10-13T11:10:29.804Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"efficiency iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","end":"2026-10-13T11:14:35.408Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"close","id":"correctness iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","end":"2026-10-13T11:16:13.422Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"close","id":"external iter-02","kind":"external-review","parent":"design-review iter-02","start":"2026-10-13T11:10:29.804Z","end":"2026-10-13T11:17:49.393Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"documentation iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","end":"2026-10-13T11:20:06.976Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
