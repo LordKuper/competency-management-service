@@ -35,3 +35,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
+- 2026-10-13 — route Task 1: standard, dispatch HEAD d54507c
+- 2026-10-13 — route Task 2: critical (owner asd-dev-critical — память агента правит только её владелец, artifact-layout.md «Agent memory»), dispatch HEAD d54507c
+- 2026-10-13 — route Task 3: critical, dispatch HEAD d54507c
