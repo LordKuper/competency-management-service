@@ -1,4 +1,8 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  queryOptions,
+  useQuery,
+} from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { deskQueryKey } from "../../api/queryClient";
 import type { components } from "../../api/schema";
@@ -58,6 +62,58 @@ export function useDeskGroupItems(group: DeskGroup, limit: number) {
         }),
       ),
     enabled: limit > FIRST_ITEMS,
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** What a unit lacks to work, row by row. */
+export type UnitSetup = components["schemas"]["UnitSetupResponse"];
+/** The signed-in employee's place in the company. */
+export type MyPlace = components["schemas"]["MyPlaceResponse"];
+
+/**
+ * What a unit lacks to work. It lives under the desk key, so it is reread after any successful change, which is how
+ * every action on the screen recounts the rows.
+ */
+export function unitSetupQuery(unitId: string) {
+  return queryOptions({
+    queryKey: [...deskQueryKey, "unit-setup", unitId],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/org-units/{id}/setup", {
+          params: { path: { id: unitId } },
+        }),
+      ),
+  });
+}
+
+/** The signed-in employee's unit, position, head, HR, tracks and requirements of the levels above. */
+export const myPlaceQuery = queryOptions({
+  queryKey: ["career", "my-place"],
+  queryFn: async () => unwrap(await api.GET("/api/v1/career/me/place")),
+});
+
+/** The groups of findings the organisation structure queue works through. */
+export const ORG_QUEUE_GROUPS = [
+  "OrgCleanup",
+  "UnitsToConnect",
+  "InactivePositions",
+  "UnusedPositions",
+  "EmptyUnits",
+] as const satisfies readonly DeskGroup[];
+
+/** The first `limit` findings of one group, or of all the groups of the queue; items leave as they are done, so it is read from the start. */
+export function orgQueueQuery(limit: number, group?: DeskGroup) {
+  return queryOptions({
+    queryKey: [...deskQueryKey, "org-queue", group ?? "all", limit],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/desk/items", {
+          params: {
+            query: { group: group ? [group] : [...ORG_QUEUE_GROUPS], limit },
+          },
+        }),
+      ),
     placeholderData: keepPreviousData,
   });
 }

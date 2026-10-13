@@ -34,6 +34,8 @@ interface PositionSelectProps {
   orgUnitId?: string;
   /** The position the employee holds now, listed by name even when it is no longer allowed or active, so an unrelated edit keeps it; the caller passes it only while the unit is unchanged. */
   current?: { id: string; name: string };
+  /** Told when the form adds a position to the unit's list, so a scenario can report it. */
+  onAdded?: (position: { id: string; name: string }) => void;
 }
 
 /** The server's reason a name was refused, which belongs to the name field the dialog does not show. */
@@ -55,6 +57,7 @@ export function PositionSelect({
   onChange,
   orgUnitId,
   current,
+  onAdded,
 }: PositionSelectProps) {
   const queryClient = useQueryClient();
   const { message } = App.useApp();
@@ -75,6 +78,7 @@ export function PositionSelect({
     onSuccess: (position, { unitId }) => {
       setAdded({ value: position.id, label: position.name, orgUnitId: unitId });
       onChange?.(position.id);
+      onAdded?.({ id: position.id, name: position.name });
     },
     onError: (failure) => {
       message.error(describeAddFailure(failure));

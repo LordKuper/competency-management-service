@@ -31,6 +31,18 @@ export const employeesQueryKey = ["employees"] as const;
  */
 const LIST_REREAD = { staleTime: 60_000, refetchOnWindowFocus: false } as const;
 
+/** One unit by id, never kept once nothing shows it, so a change made from it always starts from the current version. */
+export function orgUnitQuery(id: string) {
+  return queryOptions({
+    queryKey: [...orgUnitsQueryKey, "detail", id],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/org-units/{id}", { params: { path: { id } } }),
+      ),
+    gcTime: 0,
+  });
+}
+
 /** Every unit visible to the signed-in user as a flat list; the tree is assembled from the parent links. */
 export const orgUnitTreeQuery = queryOptions({
   queryKey: [...orgUnitsQueryKey, "tree"],

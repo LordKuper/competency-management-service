@@ -12,6 +12,8 @@ interface EmployeeFormProps {
   position?: { id: string; name: string };
   /** E-mail of the employee's account, shown without a way to change it; null means no account, omitted hides the row. */
   email?: string | null;
+  /** Told when the position field adds a new position to the unit's list. */
+  onPositionAdded?: (position: { id: string; name: string }) => void;
   submitLabel: string;
   /** Saves the input; a rejection is shown on the fields it names and by the caller. */
   onSubmit: (input: EmployeeInput) => Promise<unknown>;
@@ -26,6 +28,7 @@ export function EmployeeForm({
   initialValues,
   position,
   email,
+  onPositionAdded,
   submitLabel,
   onSubmit,
   onCancel,
@@ -76,6 +79,7 @@ export function EmployeeForm({
       >
         <PositionSelect
           orgUnitId={orgUnitId}
+          onAdded={onPositionAdded}
           current={orgUnitId === initialValues.orgUnitId ? position : undefined}
         />
       </Form.Item>

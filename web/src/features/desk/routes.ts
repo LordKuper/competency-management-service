@@ -1,4 +1,5 @@
 import type { RouteObject } from "react-router";
+import { AdminOnly } from "../../app/AdminOnly";
 import type { NavItem } from "../../app/featureContract";
 import { DeskCounter } from "./DeskCounter";
 import { DeskPage } from "./DeskPage";
@@ -22,6 +23,10 @@ const builder = () =>
 const drafts = () =>
   import("./DraftsQueuePage").then((page) => ({
     Component: page.DraftsQueuePage,
+  }));
+const connectUnit = () =>
+  import("./ConnectUnitPage").then((page) => ({
+    Component: page.ConnectUnitPage,
   }));
 const trackPositions = () =>
   import("./TrackPositionsPage").then((page) => ({
@@ -56,5 +61,31 @@ export const routes: RouteObject[] = [
       import("./CatalogCleanupPage").then((page) => ({
         Component: page.CatalogCleanupPage,
       })),
+  },
+  {
+    path: deskPaths.myPlace,
+    lazy: () =>
+      import("./MyPlacePage").then((page) => ({ Component: page.MyPlacePage })),
+  },
+  {
+    Component: AdminOnly,
+    children: [
+      { path: deskPaths.connectUnit, lazy: connectUnit },
+      { path: "/desk/connect-unit/:unitId", lazy: connectUnit },
+      {
+        path: deskPaths.onboardEmployee,
+        lazy: () =>
+          import("./OnboardEmployeePage").then((page) => ({
+            Component: page.OnboardEmployeePage,
+          })),
+      },
+      {
+        path: deskPaths.orgCleanup,
+        lazy: () =>
+          import("./OrgCleanupPage").then((page) => ({
+            Component: page.OrgCleanupPage,
+          })),
+      },
+    ],
   },
 ];

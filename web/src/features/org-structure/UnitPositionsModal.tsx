@@ -33,7 +33,8 @@ import type { OrgUnit } from "./orgStructureApi";
 const PICKER_PAGE_SIZE = 20;
 
 interface UnitPositionsModalProps {
-  unit: OrgUnit;
+  /** The unit; only its identifier and name are used. */
+  unit: Pick<OrgUnit, "id" | "name">;
   onClose: () => void;
 }
 

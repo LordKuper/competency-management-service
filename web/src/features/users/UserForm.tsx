@@ -24,7 +24,10 @@ interface UserFormProps {
   employee?: { id: string; name: string };
   /** Whether the form creates an account, which is then invited by e-mail to set its own password. */
   isNew?: boolean;
+  /** Fixes the role and the employee, as when an account is created for a given employee: their fields are not shown. */
+  lockedTo?: { role: UserRole; employeeId: string };
   submitLabel: string;
+  cancelLabel?: string;
   /** Saves the input; a rejection is shown on the fields it names and by the caller. */
   onSubmit: (input: UserInput) => Promise<unknown>;
   onCancel: () => void;
@@ -39,13 +42,19 @@ export function UserForm({
   initialValues = NEW_ACCOUNT_VALUES,
   employee,
   isNew = false,
+  lockedTo,
   submitLabel,
+  cancelLabel = "Отмена",
   onSubmit,
   onCancel,
 }: UserFormProps) {
   const [form] = Form.useForm<UserFormValues>();
   const { isSubmitting, submit } = useFormSubmit(form, (values) =>
-    onSubmit({ ...values, employeeId: values.employeeId ?? null }),
+    onSubmit(
+      lockedTo
+        ? { email: values.email, ...lockedTo }
+        : { ...values, employeeId: values.employeeId ?? null },
+    ),
   );
 
   return (
@@ -71,21 +80,25 @@ export function UserForm({
       >
         <Input type="email" autoComplete="off" placeholder="name@example.com" />
       </Form.Item>
-      <Form.Item
-        name="role"
-        label="Роль"
-        rules={[{ required: true, message: "Выберите роль" }]}
-      >
-        <Select options={ROLE_OPTIONS} />
-      </Form.Item>
-      <Form.Item name="employeeId" label="Сотрудник">
-        <EmployeePicker current={employee} />
-      </Form.Item>
+      {!lockedTo && (
+        <>
+          <Form.Item
+            name="role"
+            label="Роль"
+            rules={[{ required: true, message: "Выберите роль" }]}
+          >
+            <Select options={ROLE_OPTIONS} />
+          </Form.Item>
+          <Form.Item name="employeeId" label="Сотрудник">
+            <EmployeePicker current={employee} />
+          </Form.Item>
+        </>
+      )}
       <Space>
         <Button type="primary" htmlType="submit" loading={isSubmitting}>
           {submitLabel}
         </Button>
-        <Button onClick={onCancel}>Отмена</Button>
+        <Button onClick={onCancel}>{cancelLabel}</Button>
       </Space>
     </Form>
   );
