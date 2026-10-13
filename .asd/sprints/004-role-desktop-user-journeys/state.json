@@ -186,6 +186,13 @@
       "reason": "plan.md Task 1-13, 9 waves; plan decisions P-1 (draft track of own unit for matrix regardless of track author) and P-2 (scenario availability from server actions)",
       "evidence": "decisions-log.md 2026-10-13 plan accepted",
       "artifact_revision": "plan.md 2131768"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-35 compact scenario screens, AC-36 back to previous step / reselect object in every scenario, AC-37 rename professional direction to professional area (UI «Область»); Task 14 (UX docs), Task 15 (requirements) wave 10, Task 16 (SPA + mail texts) wave 11",
+      "reason": "user remarks at impl assessment; cost AC-35..37: 0 iterations / 0 fix rounds (new criteria, no impl review yet)",
+      "evidence": "decisions-log.md 2026-10-13 scope amendment at impl assessment"
     }
   ],
   "task_routing": {
@@ -324,7 +331,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-13T16:21:53.964Z",
+  "updated_at": "2026-10-13T18:06:37.679Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

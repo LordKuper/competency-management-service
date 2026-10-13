@@ -153,3 +153,5 @@
 {"op":"close","id":"Task 12","kind":"dispatch","parent":"impl#1","start":"2026-10-13T15:58:21.761Z","end":"2026-10-13T16:21:53.424Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
 {"op":"open","id":"Task 13","kind":"dispatch","parent":"impl#1","start":"2026-10-13T16:21:54.206Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"Task 13","kind":"dispatch","parent":"impl#1","start":"2026-10-13T16:21:54.206Z","end":"2026-10-13T16:31:41.249Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-13T16:32:58.737Z","attrs":{"gate":"impl assessment"}}
+{"op":"close","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-13T16:32:58.737Z","end":"2026-10-13T18:06:37.594Z","outcome":"done","attrs":{"gate":"impl assessment"}}
