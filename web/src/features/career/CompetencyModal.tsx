@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Form, Input, Select } from "antd";
 import { useEffect } from "react";
+import { ApiError } from "../../api/ApiError";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
@@ -15,6 +16,7 @@ import {
   invalidateCatalogs,
   scalesQuery,
 } from "./catalogApi";
+import { usePublishEntry } from "./usePublishEntry";
 
 const NAME_MAX_LENGTH = 200;
 const FIELDS = [
@@ -58,6 +60,7 @@ export function CompetencyModal({
   onClose,
 }: CompetencyModalProps) {
   const queryClient = useQueryClient();
+  const { offerApproval } = usePublishEntry();
   const { base: competency, noteSaveFailure } = useEditBase(latest);
   const save = useMutation({
     mutationFn: async (values: CompetencyValues) => {
@@ -81,7 +84,15 @@ export function CompetencyModal({
           : await api.POST("/api/v1/career/competencies", { body }),
       );
     },
-    onSuccess: onClose,
+    onSuccess: (saved) => {
+      onClose();
+      if (!competency) {
+        void offerApproval(
+          { segment: "competencies", entry: saved },
+          saved.status,
+        );
+      }
+    },
     onError: noteSaveFailure,
     onSettled: () => invalidateCatalogs(queryClient),
   });
@@ -119,7 +130,20 @@ function CompetencyForm({
   onCancel,
 }: CompetencyFormProps) {
   const [form] = Form.useForm<CompetencyValues>();
-  const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
+  const { isSubmitting, submit } = useFormSubmit(form, async (values) => {
+    try {
+      return await onSubmit(values);
+    } catch (error) {
+      const field =
+        error instanceof ApiError &&
+        error.errors &&
+        Object.keys(error.errors)[0];
+      // The messages are put under the fields right after this rethrow, so the focus waits for them.
+      if (field)
+        queueMicrotask(() => form.scrollToField(field, { focus: true }));
+      throw error;
+    }
+  });
   const defaultScale = useQuery({
     ...scalesQuery({ page: 1, pageSize: 1, isDefault: true }),
     enabled: !competency,

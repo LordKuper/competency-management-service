@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Button,
   Descriptions,
   Flex,
   Form,
@@ -17,14 +16,13 @@ import { Link, useNavigate, useParams } from "react-router";
 import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useProcessRoles } from "./careerApi";
-import { MatrixDeleteButton } from "./MatrixDeleteButton";
+import { MatrixActions, RETURN_LABEL } from "./MatrixActions";
 import { MatrixEditor } from "./MatrixEditor";
 import { MatrixErrorAlert } from "./MatrixErrorAlert";
 import { MatrixHistoryModal } from "./MatrixHistory";
 import {
   createMatrixVersion,
   invalidateMatrices,
-  type MatrixAction,
   type MatrixDecision,
   type MatrixTransition,
   type MatrixVersion,
@@ -42,8 +40,6 @@ import {
   VERSION_STATUS_LABELS,
 } from "./matrixLabels";
 
-const RETURN_LABEL = "Вернуть с правками";
-
 const STATUS_COLORS: Record<MatrixVersion["status"], string | undefined> = {
   Draft: undefined,
   OnReview: "processing",
@@ -52,44 +48,6 @@ const STATUS_COLORS: Record<MatrixVersion["status"], string | undefined> = {
   Published: "success",
   Archived: undefined,
 };
-
-const TRANSITION_BUTTONS: readonly {
-  action: MatrixAction;
-  transition: MatrixTransition;
-  label: string;
-  isPrimary: boolean;
-}[] = [
-  {
-    action: "Submit",
-    transition: "submit",
-    label: "Отправить на согласование",
-    isPrimary: true,
-  },
-  {
-    action: "Approve",
-    transition: "approve",
-    label: "Согласовать",
-    isPrimary: true,
-  },
-  {
-    action: "AcceptChanges",
-    transition: "accept-changes",
-    label: "Принять правки",
-    isPrimary: false,
-  },
-  {
-    action: "AcceptAndRevise",
-    transition: "accept-and-revise",
-    label: "Принять и доработать",
-    isPrimary: false,
-  },
-  {
-    action: "RollbackChanges",
-    transition: "rollback-changes",
-    label: "Откатить правки",
-    isPrimary: false,
-  },
-];
 
 const DATE_TIME = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "short",
@@ -273,11 +231,8 @@ export function MatrixPage() {
   const isNextVersionOffered =
     isHead && !!matrix.publishedVersion && !matrix.inWorkVersion;
   const isBusy = transit.isPending || startVersion.isPending;
-  const transitions = TRANSITION_BUTTONS.filter((button) =>
-    version.actions.includes(button.action),
-  );
-  const canReturn = version.actions.includes("Return");
-  const isHeldBack = hasUnsaved && (transitions.length > 0 || canReturn);
+  const isHeldBack =
+    hasUnsaved && version.actions.some((action) => action !== "Edit");
 
   return (
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>
@@ -314,41 +269,17 @@ export function MatrixPage() {
         <Tag color={STATUS_COLORS[version.status]}>
           {VERSION_STATUS_LABELS[version.status]}
         </Tag>
-        {transitions.map((button) => (
-          <Button
-            key={button.action}
-            type={button.isPrimary ? "primary" : "default"}
-            disabled={isBusy || hasUnsaved}
-            onClick={() =>
-              transit.mutate({ version, transition: button.transition })
-            }
-          >
-            {button.label}
-          </Button>
-        ))}
-        {canReturn && (
-          <Button
-            disabled={isBusy || hasUnsaved}
-            onClick={() => setDialog("return")}
-          >
-            {RETURN_LABEL}
-          </Button>
-        )}
-        {isNextVersionOffered && (
-          <Button disabled={isBusy} onClick={() => startVersion.mutate()}>
-            Создать новую версию
-          </Button>
-        )}
-        {history && (
-          <Button onClick={() => setDialog("history")}>История</Button>
-        )}
-        <MatrixDeleteButton
+        <MatrixActions
           matrix={matrix}
-          inWorkTag={
-            version.id === matrix.inWorkVersion?.id
-              ? version.version
-              : undefined
-          }
+          version={version}
+          hasHistory={!!history}
+          isNextVersionOffered={isNextVersionOffered}
+          isBusy={isBusy}
+          hasUnsaved={hasUnsaved}
+          onTransit={(transition) => transit.mutate({ version, transition })}
+          onReturn={() => setDialog("return")}
+          onNewVersion={() => startVersion.mutate()}
+          onHistory={() => setDialog("history")}
           onDeleted={() => void navigate("/career")}
         />
       </Flex>

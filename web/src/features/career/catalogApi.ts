@@ -19,6 +19,11 @@ export type Scale = Schemas["CompetencyScaleResponse"];
 export type ScalePoint = Schemas["ScalePoint"];
 export type CatalogDraft = Schemas["CatalogDraftResponse"];
 export type CatalogKind = Schemas["CatalogEntryKind"];
+export type PublicationPreview = Schemas["PublicationPreviewResponse"];
+export type PublicationBlocker = Schemas["PublicationBlocker"];
+export type PublicationEntry = Schemas["PublicationEntry"];
+export type TrackPositions = Schemas["TrackPositionsResponse"];
+export type AvailablePosition = Schemas["AvailablePositionResponse"];
 
 /** Cache key prefix of every catalogue query, so one invalidation rereads whatever a change touched. */
 export const catalogQueryKey = [...careerQueryKey, "catalog"] as const;
@@ -32,7 +37,7 @@ export type CatalogSegment =
   | "competencies"
   | "scales";
 
-const SEGMENT_OF_KIND: Record<CatalogKind, CatalogSegment> = {
+export const SEGMENT_OF_KIND: Record<CatalogKind, PublishableSegment> = {
   Direction: "directions",
   Track: "tracks",
   Category: "categories",
@@ -217,14 +222,31 @@ export function invalidateCatalogs(queryClient: QueryClient) {
 
 export type CatalogAction = "approve" | "deactivate" | "activate";
 
+/** Catalogues whose entries publish others with them, so they have a publication preview. */
+export type PublishableSegment = Exclude<CatalogSegment, "levels">;
+
+/** What approving or returning to work an entry would publish with it; read-only, takes no lock. */
+export async function publicationPreview(
+  segment: PublishableSegment,
+  id: string,
+) {
+  return unwrap(
+    await api.GET(
+      `/api/v1/career/${segment}/{id}/publication` as "/api/v1/career/directions/{id}/publication",
+      { params: { path: { id } } },
+    ),
+  );
+}
+
 /**
  * Approves, deactivates or reactivates an entry of any catalogue: the three endpoints have one shape in every catalogue,
- * so the path is typed by the first catalogue's.
+ * so the path is typed by the first catalogue's. `cascade` is the tag of the publication list the user confirmed.
  */
 export async function changeCatalogStatus(
   segment: CatalogSegment,
   entry: { id: string; version: number },
   action: CatalogAction,
+  cascade?: string,
 ) {
   return unwrap(
     await api.POST(
@@ -233,6 +255,7 @@ export async function changeCatalogStatus(
         params: {
           path: { id: entry.id },
           header: { "If-Match": ifMatchOf(entry.version) },
+          ...(cascade === undefined ? {} : { query: { cascade } }),
         },
       },
     ),
@@ -342,6 +365,66 @@ export async function orderLevels(
         header: { "If-Match": ifMatchOf(track.version) },
       },
       body: { levelIds },
+    }),
+  );
+}
+
+/** Levels of a track with their linked positions and the track version rights; the level `version` is the `If-Match` of its links. */
+export function trackPositionsQuery(trackId: string) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "track-positions", trackId],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/tracks/{id}/positions", {
+          params: { path: { id: trackId } },
+        }),
+      ),
+  });
+}
+
+/** Active positions the track's unit can still link to one of its levels, found by name. */
+export function availablePositionsQuery(trackId: string, q: string) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "available-positions", trackId, q],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/tracks/{id}/available-positions", {
+          params: {
+            path: { id: trackId },
+            query: { q: q || undefined, page: 1, pageSize: 20 },
+          },
+        }),
+      ),
+  });
+}
+
+/** Links a position to a level under the level version the dialog showed; repeating a pair changes nothing. */
+export async function linkLevelPosition(
+  level: { id: string; version: number },
+  positionId: string,
+) {
+  return unwrap(
+    await api.POST("/api/v1/career/levels/{id}/positions", {
+      params: {
+        path: { id: level.id },
+        header: { "If-Match": ifMatchOf(level.version) },
+      },
+      body: { positionId },
+    }),
+  );
+}
+
+/** Unlinks a position from a level; the server refuses with the level named when it was the last active one of an active track. */
+export async function unlinkLevelPosition(
+  level: { id: string; version: number },
+  positionId: string,
+) {
+  return unwrap(
+    await api.DELETE("/api/v1/career/levels/{id}/positions/{positionId}", {
+      params: {
+        path: { id: level.id, positionId },
+        header: { "If-Match": ifMatchOf(level.version) },
+      },
     }),
   );
 }

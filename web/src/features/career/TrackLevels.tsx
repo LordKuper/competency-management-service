@@ -28,6 +28,7 @@ import {
   Space,
   Table,
   type TableColumnsType,
+  Tag,
   Typography,
   theme,
 } from "antd";
@@ -39,12 +40,23 @@ import {
   useMemo,
   useState,
 } from "react";
+import { Link } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { CatalogStatusTag, EntryActions, entryColumns } from "./CatalogParts";
-import { type CareerLevel, type CareerTrack, levelsQuery } from "./catalogApi";
+import {
+  type CareerLevel,
+  type CareerTrack,
+  levelsQuery,
+  trackPositionsQuery,
+} from "./catalogApi";
 import { LevelModal, type LevelValues } from "./LevelModal";
+import { LevelPositionsModal } from "./LevelPositionsModal";
+import { RowActions } from "./RowActions";
 
 const EMPTY_TEXT = "В треке пока нет уровней";
+const VISIBLE_POSITIONS = 3;
+const SAVE_TRACK_FIRST = "Сначала сохраните трек";
+const SAVE_CHANGES_FIRST = "Сначала сохраните изменения";
 
 /** Counts the levels added in this session, so each unsaved level has a key of its own. */
 let pendingCount = 0;
@@ -248,6 +260,8 @@ interface TrackLevelsProps {
   pending: readonly PendingLevel[];
   onPendingChange: (pending: PendingLevel[]) => void;
   onOrderChange: (order: string[]) => void;
+  /** Whether the dialog holds edits not saved yet, which keep the link to the positions screen from being followed. */
+  hasUnsaved?: boolean;
 }
 
 /**
@@ -263,9 +277,16 @@ export function TrackLevels({
   pending,
   onPendingChange,
   onOrderChange,
+  hasUnsaved = false,
 }: TrackLevelsProps) {
   const { token } = theme.useToken();
   const [dialog, setDialog] = useState<string | null>(null);
+  const [positionsOf, setPositionsOf] = useState<string | null>(null);
+  const positions = useQuery({
+    ...trackPositionsQuery(track?.id ?? ""),
+    enabled: track !== undefined,
+  });
+  const canEditPositions = positions.data?.canEdit === true;
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -287,6 +308,32 @@ export function TrackLevels({
         row.level && <CatalogStatusTag status={row.level.status} />,
     },
     {
+      title: "Должности",
+      key: "positions",
+      render: (_, row) => {
+        if (!row.level) {
+          return (
+            <Typography.Text type="secondary">
+              {SAVE_TRACK_FIRST}
+            </Typography.Text>
+          );
+        }
+        const linked = positions.data?.levels.find(
+          (item) => item.id === row.level?.id,
+        );
+        if (!linked) return null;
+        if (!linked.hasActivePosition) {
+          return <Tag color="warning">Нет действующей должности</Tag>;
+        }
+        const names = linked.positions.map((position) => position.name);
+        const rest = names.length - VISIBLE_POSITIONS;
+        return [
+          ...names.slice(0, VISIBLE_POSITIONS),
+          ...(rest > 0 ? [`+${rest}`] : []),
+        ].join(", ");
+      },
+    },
+    {
       title: "Действия",
       key: "actions",
       render: (_, row) =>
@@ -296,23 +343,44 @@ export function TrackLevels({
             entry={row.level}
             unitId={track?.ownerOrgUnitId}
             onEdit={() => setDialog(row.key)}
+            afterEdit={
+              canEditPositions
+                ? [
+                    {
+                      key: "positions",
+                      label: "Должности",
+                      onClick: () => setPositionsOf(row.key),
+                    },
+                  ]
+                : []
+            }
           />
         ) : (
-          <Space size={0}>
-            <Button type="link" size="small" onClick={() => setDialog(row.key)}>
-              Изменить
-            </Button>
-            <Button
-              type="link"
-              size="small"
-              danger
-              onClick={() =>
-                onPendingChange(pending.filter((item) => item.key !== row.key))
-              }
-            >
-              Удалить
-            </Button>
-          </Space>
+          <RowActions
+            menuLabel={`Действия с «${row.name}»`}
+            actions={[
+              {
+                key: "edit",
+                label: "Изменить",
+                onClick: () => setDialog(row.key),
+              },
+              {
+                key: "positions",
+                label: "Должности",
+                disabled: true,
+                onClick: () => undefined,
+              },
+              {
+                key: "delete",
+                label: "Удалить",
+                danger: true,
+                onClick: () =>
+                  onPendingChange(
+                    pending.filter((item) => item.key !== row.key),
+                  ),
+              },
+            ]}
+          />
         ),
     },
   ];
@@ -329,10 +397,21 @@ export function TrackLevels({
 
   return (
     <Space orientation="vertical" size="small" style={{ display: "flex" }}>
-      <Typography.Text type="secondary">
-        Уровни идут от младшего к старшему. Перетащите строку, чтобы изменить
-        порядок
-      </Typography.Text>
+      <Flex justify="space-between" align="center" gap="middle" wrap>
+        <Typography.Text type="secondary">
+          Уровни идут от младшего к старшему. Перетащите строку, чтобы изменить
+          порядок
+        </Typography.Text>
+        {track && !hasUnsaved ? (
+          <Link to={`/desk/track-positions/${track.id}`}>
+            Связать должности на отдельном экране
+          </Link>
+        ) : (
+          <Typography.Text type="secondary">
+            {`Связать должности на отдельном экране: ${(track ? SAVE_CHANGES_FIRST : SAVE_TRACK_FIRST).toLowerCase()}`}
+          </Typography.Text>
+        )}
+      </Flex>
       {error != null && (
         <ErrorAlert
           title="Не удалось загрузить уровни"
@@ -375,6 +454,13 @@ export function TrackLevels({
       </Flex>
       {edited?.level && (
         <LevelModal level={edited.level} onClose={() => setDialog(null)} />
+      )}
+      {track && positionsOf && (
+        <LevelPositionsModal
+          track={track}
+          levelId={positionsOf}
+          onClose={() => setPositionsOf(null)}
+        />
       )}
       {(dialog === "new" || edited?.pending) && (
         <LevelModal

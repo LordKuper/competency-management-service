@@ -50,6 +50,7 @@ export function TrackModal({
   const rights = useCatalogRights();
   const [form] = Form.useForm<TrackValues>();
   const { base, noteSaveFailure } = useEditBase(latest);
+  const name = Form.useWatch("name", form);
   const [saved, setSaved] = useState<CareerTrack>();
   const [pending, setPending] = useState<PendingLevel[]>([]);
   const [order, setOrder] = useState<string[]>();
@@ -165,6 +166,11 @@ export function TrackModal({
             pending={pending}
             onPendingChange={setPending}
             onOrderChange={setOrder}
+            hasUnsaved={
+              pending.length > 0 ||
+              order !== undefined ||
+              (name !== undefined && name !== current?.name)
+            }
           />
         </section>
         <FormActions isSubmitting={isSubmitting} onCancel={onClose} />

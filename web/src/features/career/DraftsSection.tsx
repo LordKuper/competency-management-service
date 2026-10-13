@@ -1,26 +1,18 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  App,
-  Button,
-  Empty,
-  Table,
-  type TableColumnsType,
-  Typography,
-} from "antd";
+import { useQuery } from "@tanstack/react-query";
+import { Button, Empty, Table, type TableColumnsType, Typography } from "antd";
 import { useState } from "react";
-import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import {
-  approveDraft,
   type CatalogDraft,
   type CatalogKind,
   type DraftListParams,
   draftsQuery,
-  invalidateCatalogs,
+  SEGMENT_OF_KIND,
 } from "./catalogApi";
 import { choiceFilter, onFilterChange } from "./columnFilters";
 import { unitFilter } from "./UnitTreeFilter";
 import { useCatalogRights } from "./useCatalogRights";
+import { usePublishEntry } from "./usePublishEntry";
 
 const KIND_LABELS: Record<CatalogKind, string> = {
   Direction: "Направление",
@@ -33,18 +25,12 @@ const KIND_LABELS: Record<CatalogKind, string> = {
 /** Draft entries waiting for the signed-in HR, each approved from the row. Nothing is shown to a user who is no HR. */
 export function DraftsSection() {
   const rights = useCatalogRights();
-  const { message } = App.useApp();
-  const queryClient = useQueryClient();
   const [params, setParams] = useState<DraftListParams>({});
   const { data, error, isFetching, refetch } = useQuery({
     ...draftsQuery(params),
     enabled: rights.isHr,
   });
-  const approve = useMutation({
-    mutationFn: approveDraft,
-    onError: (failure) => message.error(describeApiError(failure)),
-    onSettled: () => invalidateCatalogs(queryClient),
-  });
+  const { publish, isBusy } = usePublishEntry();
 
   if (!rights.isHr) return null;
 
@@ -75,8 +61,16 @@ export function DraftsSection() {
           <Button
             type="link"
             size="small"
-            disabled={approve.isPending}
-            onClick={() => approve.mutate(draft)}
+            disabled={isBusy}
+            onClick={() =>
+              void publish(
+                {
+                  segment: SEGMENT_OF_KIND[draft.kind],
+                  entry: draft,
+                },
+                "approve",
+              )
+            }
           >
             Согласовать
           </Button>

@@ -14,6 +14,7 @@ import { choiceFilter } from "./columnFilters";
 import { type RowAction, RowActions } from "./RowActions";
 import { useCatalogRights } from "./useCatalogRights";
 import { useConfirmDeletion } from "./useConfirmDeletion";
+import { KIND_ACCUSATIVE, usePublishEntry } from "./usePublishEntry";
 
 const STATUS_TAGS: Record<CatalogStatus, { label: string; color?: string }> = {
   Draft: { label: "Черновик", color: "warning" },
@@ -45,16 +46,6 @@ export function entryColumns<T extends CatalogEntry>(
   ];
 }
 
-/** What each catalogue's record is called in the deletion question, in the accusative. */
-const KIND_ACCUSATIVE: Record<CatalogSegment, string> = {
-  directions: "направление",
-  tracks: "трек",
-  levels: "уровень",
-  categories: "категорию",
-  competencies: "компетенцию",
-  scales: "шкалу",
-};
-
 interface EntryActionsProps {
   segment: CatalogSegment;
   entry: CatalogEntry;
@@ -64,6 +55,8 @@ interface EntryActionsProps {
   onEdit?: () => void;
   /** Further actions of the row, placed first. */
   extra?: RowAction[];
+  /** Further actions of the row, placed after «Изменить». */
+  afterEdit?: RowAction[];
 }
 
 /**
@@ -76,6 +69,7 @@ export function EntryActions({
   unitId,
   onEdit,
   extra = [],
+  afterEdit = [],
 }: EntryActionsProps) {
   const rights = useCatalogRights();
   const { message } = App.useApp();
@@ -87,20 +81,28 @@ export function EntryActions({
     onSettled: () => invalidateCatalogs(queryClient),
   });
   const confirmDeletion = useConfirmDeletion();
+  const { publish, isBusy } = usePublishEntry();
   const canManage = rights.canManage(unitId);
+
+  /** Approving and returning to work go through the publication preview, but a level publishes nothing with it. */
+  const approveOrActivate = (action: "approve" | "activate") =>
+    segment === "levels"
+      ? mutate(action)
+      : void publish({ segment, entry }, action);
 
   const actions: RowAction[] = [
     ...extra,
     ...(onEdit && entry.canEdit
       ? [{ key: "edit", label: "Изменить", onClick: onEdit }]
       : []),
+    ...afterEdit,
     ...(canManage && entry.status === "Draft"
       ? [
           {
             key: "approve",
             label: "Согласовать",
-            disabled: isPending,
-            onClick: () => mutate("approve"),
+            disabled: isPending || isBusy,
+            onClick: () => approveOrActivate("approve"),
           },
         ]
       : []),
@@ -120,8 +122,8 @@ export function EntryActions({
           {
             key: "activate",
             label: "Вернуть в работу",
-            disabled: isPending,
-            onClick: () => mutate("activate"),
+            disabled: isPending || isBusy,
+            onClick: () => approveOrActivate("activate"),
           },
         ]
       : []),

@@ -7,6 +7,7 @@ import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogModal, FormActions } from "./CatalogModal";
 import { invalidateCatalogs, type Scale, type ScalePoint } from "./catalogApi";
+import { usePublishEntry } from "./usePublishEntry";
 
 const NAME_MAX_LENGTH = 200;
 const LABEL_MAX_LENGTH = 500;
@@ -29,6 +30,7 @@ interface ScaleModalProps {
 /** Dialog that creates a scale with its points or edits one. */
 export function ScaleModal({ scale: latest, onClose }: ScaleModalProps) {
   const queryClient = useQueryClient();
+  const { offerApproval } = usePublishEntry();
   const { base: scale, noteSaveFailure } = useEditBase(latest);
   const save = useMutation({
     mutationFn: async (values: ScaleValues) => {
@@ -53,7 +55,12 @@ export function ScaleModal({ scale: latest, onClose }: ScaleModalProps) {
             }),
       );
     },
-    onSuccess: onClose,
+    onSuccess: (saved) => {
+      onClose();
+      if (!scale) {
+        void offerApproval({ segment: "scales", entry: saved }, saved.status);
+      }
+    },
     onError: noteSaveFailure,
     onSettled: () => invalidateCatalogs(queryClient),
   });

@@ -9,6 +9,7 @@ import {
   type NamedEntryValues,
   saveNamedEntry,
 } from "./catalogApi";
+import { usePublishEntry } from "./usePublishEntry";
 
 const NAME_MAX_LENGTH = 200;
 const FIELDS = ["name"] as const;
@@ -29,11 +30,15 @@ export function NameModal({
   onClose,
 }: NameModalProps) {
   const queryClient = useQueryClient();
+  const { offerApproval } = usePublishEntry();
   const { base: entry, noteSaveFailure } = useEditBase(latest);
   const save = useMutation({
     mutationFn: (values: NamedEntryValues) =>
       saveNamedEntry(segment, values, entry),
-    onSuccess: onClose,
+    onSuccess: (saved) => {
+      onClose();
+      if (!entry) void offerApproval({ segment, entry: saved }, saved.status);
+    },
     onError: noteSaveFailure,
     onSettled: () => invalidateCatalogs(queryClient),
   });
