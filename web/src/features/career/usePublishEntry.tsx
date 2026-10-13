@@ -44,7 +44,8 @@ const CREATED_ENDING: Record<PublishableSegment, string> = {
   scales: "создана",
 };
 
-const KIND_LABELS: Record<PublicationEntry["kind"], string> = {
+/** What each kind of record of a publication list is called. */
+export const KIND_LABELS: Record<PublicationEntry["kind"], string> = {
   Direction: "Направление",
   Track: "Трек",
   Level: "Уровень",
@@ -63,7 +64,7 @@ const REASON_TEXTS: Record<PublicationBlocker["reason"], string> = {
 const PLURAL = new Intl.PluralRules("ru-RU");
 
 /** «1 черновая запись» / «2 черновые записи» / «5 черновых записей». */
-function draftRecords(count: number): string {
+export function draftRecords(count: number): string {
   const forms: Record<string, string> = {
     one: "черновая запись",
     few: "черновые записи",
@@ -72,7 +73,7 @@ function draftRecords(count: number): string {
 }
 
 /** «1 записью» / «2 записями»: the tail of «Утвердить вместе с …». */
-function recordsInstrumental(count: number): string {
+export function recordsInstrumental(count: number): string {
   return `${count} ${PLURAL.select(count) === "one" ? "записью" : "записями"}`;
 }
 
@@ -85,14 +86,28 @@ export interface PublishTarget {
 type PublishAction = "approve" | "activate";
 
 /** Why the list is shown again: it was there and changed, or the action looked harmless and was not. */
-type ChangedNotice = "changed" | "appeared";
+export type ChangedNotice = "changed" | "appeared" | "published";
 
 const NOTICE_TEXTS: Record<ChangedNotice, string> = {
   changed:
     "Пока вы подтверждали, состав публикуемого изменился. Ничего не опубликовано. Проверьте актуальный перечень.",
   appeared:
     "Пока вы подтверждали, у записи появились черновые связанные записи. Ничего не опубликовано. Проверьте актуальный перечень.",
+  published:
+    "Это действие теперь публикует записи, которых вы не видели. Ничего не опубликовано. Проверьте актуальный перечень.",
 };
+
+/** The warning shown over a publication list that has to be confirmed again. */
+export function ChangedNoticeAlert({ notice }: { notice: ChangedNotice }) {
+  return (
+    <Alert
+      type="warning"
+      showIcon
+      title="Перечень изменился — подтвердите заново"
+      description={NOTICE_TEXTS[notice]}
+    />
+  );
+}
 
 function EntryList({ entries }: { entries: readonly PublicationEntry[] }) {
   return (
@@ -127,14 +142,7 @@ function ConfirmContent({
     : "";
   return (
     <Space orientation="vertical" size="small" style={{ display: "flex" }}>
-      {notice && (
-        <Alert
-          type="warning"
-          showIcon
-          title="Перечень изменился — подтвердите заново"
-          description={NOTICE_TEXTS[notice]}
-        />
-      )}
+      {notice && <ChangedNoticeAlert notice={notice} />}
       {entries.length === 0 ? (
         <p>
           {action === "approve"
@@ -162,19 +170,26 @@ function ConfirmContent({
   );
 }
 
-function blockerText({ kind, name, reason, context }: PublicationBlocker) {
+/** One record that stops a publication, with the reason in words. */
+export function blockerText({
+  kind,
+  name,
+  reason,
+  context,
+}: PublicationBlocker) {
   return `${KIND_LABELS[kind]} «${name}»: ${REASON_TEXTS[reason]}${context ? ` (${context})` : ""}`;
 }
 
 interface RefusalContentProps {
-  target: PublishTarget;
+  /** The entry the refusal is about; omitted when the refused action is a version's. */
+  target?: PublishTarget;
   blockers: readonly PublicationBlocker[];
   moreCount: number;
-  onNavigate: () => void;
+  onNavigate?: () => void;
 }
 
 /** The refusal in its parts: what blocks, then what to do next. */
-function RefusalContent({
+export function RefusalContent({
   target,
   blockers,
   moreCount,
@@ -183,7 +198,7 @@ function RefusalContent({
   const reasons = new Set(blockers.map((blocker) => blocker.reason));
   const trackId =
     blockers.find((blocker) => blocker.kind === "Track")?.id ??
-    (target.segment === "tracks" ? target.entry.id : undefined);
+    (target?.segment === "tracks" ? target.entry.id : undefined);
   return (
     <>
       {blockers.length > 0 && (
@@ -385,6 +400,23 @@ export function usePublishEntry() {
   }
 
   /**
+   * Approves an entry under the list the user is looking at, which the caller shows; a list that changed meanwhile is
+   * confirmed again, with the new list, before anything is done.
+   */
+  async function approveShown(
+    target: PublishTarget,
+    preview: PublicationPreview,
+  ) {
+    setIsBusy(true);
+    try {
+      const again = await execute(target, "approve", preview);
+      if (again) await publish(target, "approve", again);
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  /**
    * After an entry was created: one made a draft only for lack of the right to approve it, or not referring to drafts,
    * gets no offer; one the user may approve is offered the approval with the list of what goes with it.
    */
@@ -402,5 +434,5 @@ export function usePublishEntry() {
     }
   }
 
-  return { publish, offerApproval, isBusy };
+  return { publish, approveShown, offerApproval, isBusy };
 }

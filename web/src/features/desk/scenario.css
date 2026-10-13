@@ -1,0 +1,48 @@
+/* Rows of a table of changes: the tint comes from the status tokens and always goes with a word. */
+.change-row-added > td {
+  background: var(--ant-color-success-bg);
+}
+
+.change-row-changed > td {
+  background: var(--ant-color-warning-bg);
+}
+
+.change-row-removed > td {
+  background: var(--ant-color-error-bg);
+}
+
+/* The list of a queue: the chosen record stands out by the primary subtle tone and keeps its text colour. */
+.queue-row-selected {
+  background: var(--ant-color-primary-bg);
+}
+
+.queue-row {
+  display: block;
+  width: 100%;
+  padding: var(--ant-padding-sm) var(--ant-padding);
+  border: 0;
+  border-bottom: var(--ant-line-width) var(--ant-line-type)
+    var(--ant-color-border-secondary);
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.queue-row:hover {
+  background: var(--ant-color-primary-bg-hover);
+}
+
+.queue-columns {
+  display: grid;
+  grid-template-columns: minmax(var(--queue-list-min-width), 2fr) 3fr;
+  gap: var(--ant-margin-lg);
+  align-items: start;
+  --queue-list-min-width: 320px;
+}
+
+@media (width < 992px) {
+  .queue-columns {
+    grid-template-columns: 1fr;
+  }
+}

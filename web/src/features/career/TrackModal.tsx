@@ -5,6 +5,7 @@ import { isStaleVersion, useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
 import { CatalogModal, FormActions } from "./CatalogModal";
+import { CatalogSelect, IN_WORK } from "./CatalogSelect";
 import {
   type CareerTrack,
   invalidateCatalogs,
@@ -18,17 +19,23 @@ import { arrangeLevels, type PendingLevel, TrackLevels } from "./TrackLevels";
 import { useCatalogRights } from "./useCatalogRights";
 
 const NAME_MAX_LENGTH = 200;
-const FIELDS = ["name", "ownerOrgUnitId"] as const;
+const FIELDS = ["name", "ownerOrgUnitId", "directionId"] as const;
 
 interface TrackValues {
   name: string;
   ownerOrgUnitId?: string;
+  directionId?: string;
 }
 
 interface TrackModalProps {
-  directionId: string;
+  /** Direction of the track; omitted when the dialog asks for it. */
+  directionId?: string;
   /** Track being edited as the cache holds it now; omitted when one is created. */
   track?: CareerTrack;
+  /** The unit a new track is created in, when the user has no choice of it. */
+  fixedOwner?: { id: string; name: string };
+  /** Called with the track a save produced, as the dialog closes. */
+  onSaved?: (track: CareerTrack) => void;
   onClose: () => void;
 }
 
@@ -43,6 +50,8 @@ interface TrackModalProps {
 export function TrackModal({
   directionId,
   track: latest,
+  fixedOwner,
+  onSaved,
   onClose,
 }: TrackModalProps) {
   const queryClient = useQueryClient();
@@ -72,7 +81,7 @@ export function TrackModal({
         if (!track || values.name !== track.name) {
           track = (await saveNamedEntry(
             "tracks",
-            { ...values, directionId },
+            { ...values, directionId: values.directionId ?? directionId },
             track,
           )) as CareerTrack;
           setSaved(track);
@@ -89,13 +98,13 @@ export function TrackModal({
           );
         }
         if (order) {
-          setSaved(
-            await orderLevels(
-              track,
-              rows.map((row) => createdIds.get(row.key) ?? row.key),
-            ),
+          track = await orderLevels(
+            track,
+            rows.map((row) => createdIds.get(row.key) ?? row.key),
           );
+          setSaved(track);
         }
+        return track;
       } catch (error) {
         if (!latest && track && isStaleVersion(error)) {
           await readTrack(track.id).then(setSaved, () => undefined);
@@ -103,7 +112,10 @@ export function TrackModal({
         throw error;
       }
     },
-    onSuccess: onClose,
+    onSuccess: (saved) => {
+      onSaved?.(saved);
+      onClose();
+    },
     onError: noteSaveFailure,
     onSettled: () => invalidateCatalogs(queryClient),
   });
@@ -121,16 +133,34 @@ export function TrackModal({
         form={form}
         name="career-track"
         layout="vertical"
-        initialValues={{ name: current?.name ?? "" }}
+        initialValues={{
+          name: current?.name ?? "",
+          ownerOrgUnitId: fixedOwner?.id,
+        }}
         onFinish={submit}
       >
+        {!current && !directionId && (
+          <Form.Item
+            name="directionId"
+            label="Направление"
+            rules={[{ required: true }]}
+          >
+            <CatalogSelect segment="directions" filters={IN_WORK} />
+          </Form.Item>
+        )}
         {!current && (
           <Form.Item
             name="ownerOrgUnitId"
             label="Подразделение"
             rules={[{ required: true }]}
+            extra={fixedOwner && "Трек создаётся в вашем подразделении."}
           >
-            {rights.isAdmin ? (
+            {fixedOwner ? (
+              <Select
+                disabled
+                options={[{ value: fixedOwner.id, label: fixedOwner.name }]}
+              />
+            ) : rights.isAdmin ? (
               <OrgUnitSelect isActiveRequired />
             ) : (
               <Select

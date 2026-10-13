@@ -15,7 +15,8 @@ const DATE = new Intl.DateTimeFormat("ru-RU", {
   timeZone: "UTC",
 });
 
-const CHANGE_TYPES: Record<MatrixChange["type"], string> = {
+/** How each kind of change is called. */
+export const CHANGE_TYPES: Record<MatrixChange["type"], string> = {
   Added: "Добавлено",
   Removed: "Удалено",
   Changed: "Изменено",
@@ -36,18 +37,20 @@ function percent(value: number | null) {
   return value == null ? NO_VALUE : `${value} %`;
 }
 
-/**
- * The approver's changes in words, one line per added, removed or changed item, with the value before and after, so a
- * removal is seen as well as an addition or a change.
- */
-export function MatrixChanges({
-  diff,
-  levelNames,
-  competencyNames,
-  scalePoints,
-}: MatrixChangesProps) {
-  if (diff.changes.length === 0) return null;
+/** One change in words: where it is, and the value there before and after it. */
+export interface ChangeDescription {
+  place: string;
+  before: string | undefined;
+  after: string | undefined;
+}
 
+/** Words for the changes of a diff; a removal is described by its value before, an addition by its value after. */
+export function describeChanges(
+  diff: MatrixDiff,
+  levelNames: ReadonlyMap<string, string>,
+  competencyNames: ReadonlyMap<string, string>,
+  scalePoints: MatrixVersion["entries"]["scale"]["points"],
+): (change: MatrixChange) => ChangeDescription {
   const blockName = (content: MatrixContent, blockId: string | null) =>
     content.blocks.find((block) => block.id === blockId)?.name;
   const levelName = (levelId: string | null) =>
@@ -130,18 +133,42 @@ export function MatrixChanges({
     }
   }
 
+  return (change) => ({
+    place: place(change),
+    before: value(diff.before, change),
+    after: value(diff.after, change),
+  });
+}
+
+/**
+ * The approver's changes in words, one line per added, removed or changed item, with the value before and after, so a
+ * removal is seen as well as an addition or a change.
+ */
+export function MatrixChanges({
+  diff,
+  levelNames,
+  competencyNames,
+  scalePoints,
+}: MatrixChangesProps) {
+  if (diff.changes.length === 0) return null;
+
+  const describe = describeChanges(
+    diff,
+    levelNames,
+    competencyNames,
+    scalePoints,
+  );
   return (
     <section>
       <Typography.Title level={2}>{CHANGED_NOTE}</Typography.Title>
       <ul>
         {diff.changes.map((change) => {
-          const before = value(diff.before, change);
-          const after = value(diff.after, change);
+          const { place, before, after } = describe(change);
           return (
             <li
               key={`${change.kind}:${change.levelId}:${change.blockId}:${change.competencyId}`}
             >
-              {`${CHANGE_TYPES[change.type]}: ${place(change)}`}
+              {`${CHANGE_TYPES[change.type]}: ${place}`}
               {before && (
                 <Typography.Paragraph type="secondary">{`Было: ${before}`}</Typography.Paragraph>
               )}

@@ -19,6 +19,7 @@ import {
 } from "antd";
 import { useEffect, useState } from "react";
 import { useEditBase } from "../../app/useEditBase";
+import { BuilderFooter, type BuilderStepControls } from "./BuilderFooter";
 import { IN_WORK } from "./CatalogSelect";
 import { COMPETENCY_TYPES } from "./CompetencyModal";
 import {
@@ -29,6 +30,7 @@ import {
 import { MatrixBlocks } from "./MatrixBlocks";
 import { MatrixChanges } from "./MatrixChanges";
 import { MatrixErrorAlert } from "./MatrixErrorAlert";
+import { MatrixFormulaTotals } from "./MatrixFormulaTotals";
 import { AddCompetencyModal, AddLevelModal } from "./MatrixPickers";
 import {
   invalidateMatrices,
@@ -61,6 +63,12 @@ const MAX_CHIP_LEVEL = 4;
 const MAX_PERCENT = 100;
 const UNNAMED_BLOCK = "Название блока";
 
+interface BuilderSave {
+  /** The step the wizard records as the one to open next time. */
+  step: number;
+  then: "next" | "exit";
+}
+
 type Dialog =
   | { kind: "level" }
   | { kind: "competency" }
@@ -71,7 +79,8 @@ interface GridRow {
   competencyId: string | null;
 }
 
-interface CompetencyInfo {
+/** What a grid shows of a competency. */
+export interface CompetencyInfo {
   name: string;
   type: CompetencyType;
   categoryName?: string;
@@ -86,6 +95,8 @@ interface MatrixEditorProps {
   onSaved?: () => void;
   /** Told whether the form holds edits that are not saved yet or are being saved, so the page holds back the transitions; omitted for a read-only view. */
   onUnsavedChange?: (isUnsaved: boolean) => void;
+  /** Shows one step of the matrix wizard instead of the whole editor: its part of the version and its own buttons. */
+  builder?: BuilderStepControls;
 }
 
 /**
@@ -116,7 +127,7 @@ interface MatrixEditorBodyProps extends MatrixEditorProps {
  * Names and kinds of the competencies the grid refers to: the version's entries, and for any other, such as one just
  * added or one the approver removed, the catalogue entry read by its id.
  */
-function useCompetencies(
+export function useCompetencies(
   entries: MatrixVersion["entries"],
   ids: readonly string[],
 ): Map<string, CompetencyInfo> {
@@ -143,6 +154,7 @@ function MatrixEditorBody({
   noteSaveFailure,
   onSaved,
   onUnsavedChange,
+  builder,
 }: MatrixEditorBodyProps) {
   const queryClient = useQueryClient();
   const isEditable = version.actions.includes("Edit");
@@ -154,10 +166,16 @@ function MatrixEditorBody({
 
   const catalogLevels = useQuery(levelsQuery(entries.track.id));
   const save = useMutation({
-    mutationFn: () => saveMatrixContent(base, edited),
-    onSuccess: (saved) => {
+    mutationFn: (request: BuilderSave | undefined) =>
+      saveMatrixContent(
+        base,
+        edited,
+        request && Math.max(base.builderStep ?? 0, request.step),
+      ),
+    onSuccess: (saved, request) => {
       queryClient.setQueryData(matrixVersionQuery(saved.id).queryKey, saved);
       onSaved?.();
+      if (request) builder?.onSaved(request.then);
     },
     onError: noteSaveFailure,
     onSettled: () => invalidateMatrices(queryClient),
@@ -197,12 +215,15 @@ function MatrixEditorBody({
   const blockNames = new Map(
     blockOptions.map((option) => [option.value, option.label]),
   );
+  const isOverallMinimumShown = builder === undefined;
   const rows: GridRow[] = [
     ...shown.competencies.map(({ competencyId }) => ({
       key: competencyId,
       competencyId,
     })),
-    { key: "overall-minimum", competencyId: null },
+    ...(isOverallMinimumShown
+      ? [{ key: "overall-minimum", competencyId: null }]
+      : []),
   ];
   const levelOptions = (catalogLevels.data?.items ?? [])
     .filter(
@@ -265,7 +286,7 @@ function MatrixEditorBody({
             danger
             onClick={() => setEdited(removeCompetency(edited, competencyId))}
           >
-            Удалить
+            {builder ? "Убрать" : "Удалить"}
           </Button>
         )}
       </Space>
@@ -351,7 +372,7 @@ function MatrixEditorBody({
               {CHANGED_NOTE}
             </Tag>
           )}
-          {isEditable && (
+          {isEditable && !builder && (
             <Button
               type="link"
               size="small"
@@ -374,11 +395,13 @@ function MatrixEditorBody({
     })),
   ];
   const requested = dialog?.kind === "requirement" ? dialog : null;
+  const isGridShown = builder === undefined || builder.part === "requirements";
+  const isBlocksShown = builder === undefined || builder.part === "formula";
 
   return (
     <ConfigProvider componentDisabled={save.isPending}>
       <Space orientation="vertical" size="large" style={{ display: "flex" }}>
-        {isEditable && (
+        {isEditable && !builder && (
           <Flex gap="small" wrap>
             <Button onClick={() => setDialog({ kind: "competency" })}>
               Добавить компетенцию
@@ -389,7 +412,7 @@ function MatrixEditorBody({
             <Button
               type="primary"
               loading={save.isPending}
-              onClick={() => save.mutate()}
+              onClick={() => save.mutate(undefined)}
             >
               Сохранить
             </Button>
@@ -416,39 +439,66 @@ function MatrixEditorBody({
             scalePoints={entries.scale.points}
           />
         )}
-        <ul className="matrix-legend">
-          {entries.scale.points.map((point) => (
-            <li key={point.score}>
-              <span
-                className={`rating-chip rating-chip--${chipLevel(point.score)}`}
-              >
-                {point.score}
-              </span>
-              {point.label}
-            </li>
-          ))}
-        </ul>
-        <Table<GridRow>
-          className="matrix-grid"
-          rowKey="key"
-          columns={columns}
-          dataSource={rows}
-          pagination={false}
-          scroll={{ x: "max-content" }}
-          rowClassName={(row) =>
-            row.competencyId && changed.competencies.has(row.competencyId)
-              ? "matrix-changed-row"
-              : ""
-          }
-        />
-        <MatrixBlocks
-          content={shown}
-          levelIds={shownLevelIds}
-          levelNames={levelNames}
-          changed={changed}
-          isEditable={isEditable}
-          onChange={setEdited}
-        />
+        {isGridShown && (
+          <>
+            <ul className="matrix-legend">
+              {entries.scale.points.map((point) => (
+                <li key={point.score}>
+                  <span
+                    className={`rating-chip rating-chip--${chipLevel(point.score)}`}
+                  >
+                    {point.score}
+                  </span>
+                  {point.label}
+                </li>
+              ))}
+            </ul>
+            <Table<GridRow>
+              className="matrix-grid"
+              rowKey="key"
+              columns={columns}
+              dataSource={rows}
+              pagination={false}
+              scroll={{ x: "max-content" }}
+              rowClassName={(row) =>
+                row.competencyId && changed.competencies.has(row.competencyId)
+                  ? "matrix-changed-row"
+                  : ""
+              }
+            />
+          </>
+        )}
+        {isBlocksShown && (
+          <MatrixBlocks
+            content={shown}
+            levelIds={shownLevelIds}
+            levelNames={levelNames}
+            changed={changed}
+            isEditable={isEditable}
+            onChange={setEdited}
+          />
+        )}
+        {builder?.part === "formula" && (
+          <MatrixFormulaTotals
+            content={shown}
+            levelIds={shownLevelIds}
+            levelNames={levelNames}
+            isEditable={isEditable}
+            onChange={setEdited}
+          />
+        )}
+        {builder && (
+          <BuilderFooter
+            step={builder.step}
+            onBack={builder.onBack}
+            onSkip={builder.onSkip}
+            isEditable={isEditable}
+            isUnsaved={isUnsaved}
+            isSaving={save.isPending}
+            onSave={(step, then) => save.mutate({ step, then })}
+            onCancelEdits={() => setEdited(base.content)}
+          />
+        )}
         {dialog?.kind === "level" && (
           <AddLevelModal
             options={levelOptions}

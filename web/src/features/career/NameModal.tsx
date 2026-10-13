@@ -19,6 +19,8 @@ interface NameModalProps {
   title: string;
   /** Entry being renamed as the cache holds it now; omitted when one is created. */
   entry?: CatalogEntry;
+  /** Called with the entry a save produced, as the dialog closes. */
+  onSaved?: (saved: CatalogEntry) => void;
   onClose: () => void;
 }
 
@@ -27,6 +29,7 @@ export function NameModal({
   segment,
   title,
   entry: latest,
+  onSaved,
   onClose,
 }: NameModalProps) {
   const queryClient = useQueryClient();
@@ -37,6 +40,7 @@ export function NameModal({
       saveNamedEntry(segment, values, entry),
     onSuccess: (saved) => {
       onClose();
+      onSaved?.(saved);
       if (!entry) void offerApproval({ segment, entry: saved }, saved.status);
     },
     onError: noteSaveFailure,

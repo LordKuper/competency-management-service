@@ -14,7 +14,8 @@ import { unitFilter } from "./UnitTreeFilter";
 import { useCatalogRights } from "./useCatalogRights";
 import { usePublishEntry } from "./usePublishEntry";
 
-const KIND_LABELS: Record<CatalogKind, string> = {
+/** What each kind of draft entry is called. */
+export const KIND_LABELS: Record<CatalogKind, string> = {
   Direction: "Направление",
   Track: "Трек",
   Category: "Категория",

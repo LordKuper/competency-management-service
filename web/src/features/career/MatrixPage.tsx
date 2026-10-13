@@ -114,11 +114,19 @@ function RouteSteps({ version, decisions }: RouteStepsProps) {
 
 interface ReturnModalProps {
   isPending: boolean;
+  /** Why the last attempt failed, shown over the field. */
+  error?: unknown;
   onReturn: (comment: string) => void;
   onClose: () => void;
 }
 
-function ReturnModal({ isPending, onReturn, onClose }: ReturnModalProps) {
+/** Dialog that asks for the comment a version is returned with. */
+export function ReturnModal({
+  isPending,
+  error,
+  onReturn,
+  onClose,
+}: ReturnModalProps) {
   const [form] = Form.useForm<{ comment?: string }>();
   return (
     <AppModal
@@ -130,6 +138,9 @@ function ReturnModal({ isPending, onReturn, onClose }: ReturnModalProps) {
       onOk={() => form.submit()}
       onCancel={onClose}
     >
+      {error != null && (
+        <MatrixErrorAlert title="Версию не удалось вернуть" error={error} />
+      )}
       <Form
         form={form}
         name="matrix-return"

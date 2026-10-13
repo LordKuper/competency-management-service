@@ -24,11 +24,17 @@ interface ScaleValues {
 interface ScaleModalProps {
   /** Scale being edited as the cache holds it now; omitted when one is created. */
   scale?: Scale;
+  /** Called with the scale a save produced, as the dialog closes. */
+  onSaved?: (saved: Scale) => void;
   onClose: () => void;
 }
 
 /** Dialog that creates a scale with its points or edits one. */
-export function ScaleModal({ scale: latest, onClose }: ScaleModalProps) {
+export function ScaleModal({
+  scale: latest,
+  onSaved,
+  onClose,
+}: ScaleModalProps) {
   const queryClient = useQueryClient();
   const { offerApproval } = usePublishEntry();
   const { base: scale, noteSaveFailure } = useEditBase(latest);
@@ -57,6 +63,7 @@ export function ScaleModal({ scale: latest, onClose }: ScaleModalProps) {
     },
     onSuccess: (saved) => {
       onClose();
+      onSaved?.(saved);
       if (!scale) {
         void offerApproval({ segment: "scales", entry: saved }, saved.status);
       }

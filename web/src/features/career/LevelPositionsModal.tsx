@@ -23,12 +23,13 @@ const EMPLOYEE_FORMS: Record<string, string> = {
   few: "сотрудника",
 };
 
-function employees(count: number) {
+/** «3 сотрудника»: the number of employees with the word in the right form. */
+export function employees(count: number) {
   return `${count} ${EMPLOYEE_FORMS[PLURAL.select(count)] ?? "сотрудников"}`;
 }
 
 /** The server's own explanation of a refusal that names levels, or the common one for any other failure. */
-function PositionsError({ error }: { error: unknown }) {
+export function PositionsError({ error }: { error: unknown }) {
   if (
     error instanceof ApiError &&
     error.status === 409 &&

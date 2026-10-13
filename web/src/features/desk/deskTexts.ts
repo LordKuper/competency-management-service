@@ -164,6 +164,21 @@ const DRAFT_KINDS: Partial<Record<DeskObject["type"], string>> = {
 
 const DATE = new Intl.DateTimeFormat("ru-RU");
 
+const RELATIVE = new Intl.RelativeTimeFormat("ru", { numeric: "always" });
+const MINUTE = 60_000;
+const MINUTES_PER_HOUR = 60;
+const HOURS_PER_DAY = 24;
+
+/** How far a moment is from now in words, such as "3 дня назад" or "через 2 дня". */
+export function relativeTime(value: string): string {
+  const minutes = Math.trunc((new Date(value).getTime() - Date.now()) / MINUTE);
+  if (Math.abs(minutes) < MINUTES_PER_HOUR)
+    return RELATIVE.format(minutes, "minute");
+  const hours = Math.trunc(minutes / MINUTES_PER_HOUR);
+  if (Math.abs(hours) < HOURS_PER_DAY) return RELATIVE.format(hours, "hour");
+  return RELATIVE.format(Math.trunc(hours / HOURS_PER_DAY), "day");
+}
+
 /** A date as the desk writes it, such as 09.10.2026. */
 export function formatDate(value: string): string {
   return DATE.format(new Date(value));
