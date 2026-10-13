@@ -149,6 +149,13 @@
       "decision": "AC-34: editing an active record to reference a draft is rejected 400 (field error); version closure walks through active competencies to their draft references",
       "reason": "correctness iter-03 question 1; cost AC-34: 3 iterations (lower bound) / 2 fix rounds",
       "evidence": "decisions-log.md 2026-10-13 design-review iter-03 answers"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "existing MatrixPage loses submit/approve/accept-changes buttons; links to desk scenarios instead; page keeps view, content edit and non-publishing actions",
+      "reason": "correctness iter-04 question 1; cost AC-34: 4 iterations (lower bound) / 3 fix rounds",
+      "evidence": "decisions-log.md 2026-10-13 design-review iter-04 answer"
     }
   ],
   "task_routing": {},
@@ -201,7 +208,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-13T12:14:35.785Z",
+  "updated_at": "2026-10-13T12:15:50.489Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

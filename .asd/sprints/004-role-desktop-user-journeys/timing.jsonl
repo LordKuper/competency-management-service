@@ -94,3 +94,5 @@
 {"op":"open","id":"external iter-04","kind":"external-review","parent":"design-review iter-04","start":"2026-10-13T12:08:18.254Z","attrs":{"model":"gpt-6.1-sol"}}
 {"op":"close","id":"external iter-04","kind":"external-review","parent":"design-review iter-04","start":"2026-10-13T12:08:18.254Z","end":"2026-10-13T12:13:53.122Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
 {"op":"close","id":"correctness iter-04","kind":"dispatch","parent":"design-review iter-04","start":"2026-10-13T12:08:18.189Z","end":"2026-10-13T12:14:35.728Z","outcome":"done","attrs":{"tier":"standard","model":"opus"}}
+{"op":"open","id":"wait iter-04 question","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T12:14:36.052Z","attrs":{"gate":"design-review iter-04 question"}}
+{"op":"close","id":"wait iter-04 question","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T12:14:36.052Z","end":"2026-10-13T12:15:50.349Z","outcome":"done","attrs":{"gate":"design-review iter-04 question"}}
