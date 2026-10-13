@@ -84,3 +84,5 @@
 {"op":"close","id":"wait iter-03 escalation","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T11:55:31.367Z","end":"2026-10-13T11:58:21.675Z","outcome":"done","attrs":{"gate":"design-review iter-03 FAIL and question"}}
 {"op":"open","id":"asd-architect design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T11:58:22.120Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
 {"op":"close","id":"asd-architect design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T11:58:22.120Z","end":"2026-10-13T12:04:45.057Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"open","id":"asd-ba design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T12:04:45.275Z","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ba design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T12:04:45.275Z","end":"2026-10-13T12:05:21.510Z","outcome":"done","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
