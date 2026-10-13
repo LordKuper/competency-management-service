@@ -30,8 +30,8 @@ interface Outcome {
   account?: UserResponse | null;
 }
 
-const SAVING_MESSAGE =
-  "Идёт сохранение сотрудника. Дождитесь ответа, чтобы перейти на другой экран.";
+const UNSAVED_MESSAGE =
+  "Есть несохранённые правки. Сохраните их или нажмите «Отмена», чтобы перейти на другой экран.";
 
 /** «Принять сотрудника»: the employee card, then an account with an invitation if wanted, then what was created. */
 export function OnboardEmployeePage() {
@@ -85,10 +85,14 @@ function EmployeeStep({ unitId, onCreated }: EmployeeStepProps) {
       unwrap(await api.POST("/api/v1/employees", { body: input })),
     onSettled: () => invalidateOrgStructure(queryClient),
   });
-  const blocker = useBlocker(create.isPending);
+  const [isDirty, setIsDirty] = useState(false);
+  const isLeaving = useRef(false);
+  const blocker = useBlocker(
+    () => (isDirty || create.isPending) && !isLeaving.current,
+  );
   useEffect(() => {
     if (blocker.state === "blocked") {
-      message.warning(SAVING_MESSAGE);
+      message.warning(UNSAVED_MESSAGE);
       blocker.reset();
     }
   }, [blocker, message]);
@@ -100,6 +104,7 @@ function EmployeeStep({ unitId, onCreated }: EmployeeStepProps) {
       )}
       <EmployeeForm
         initialValues={{ orgUnitId: unitId }}
+        onDirtyChange={setIsDirty}
         onPositionAdded={(position) => {
           added.current = position;
         }}
@@ -114,7 +119,10 @@ function EmployeeStep({ unitId, onCreated }: EmployeeStepProps) {
                 : undefined,
           });
         }}
-        onCancel={() => void navigate(deskPaths.desk)}
+        onCancel={() => {
+          isLeaving.current = true;
+          void navigate(deskPaths.desk);
+        }}
       />
     </Flex>
   );

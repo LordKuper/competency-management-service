@@ -95,7 +95,7 @@ function SetupRows({ unitId, data }: { unitId: string; data: UnitSetup }) {
   const resend = useResendInvitation();
   const confirmBlock = useBlockUser();
   const unit = { id: unitId, name: data.unit.at(-1)?.name ?? "" };
-  const gaps = data.rows.filter((row) => row.status !== "Ready").length;
+  const gaps = data.rows.filter((row) => row.status === "Missing").length;
   const close = () => setDialog(null);
   const open = (target: Dialog, label: string) => (
     <Button onClick={() => setDialog(target)}>{label}</Button>

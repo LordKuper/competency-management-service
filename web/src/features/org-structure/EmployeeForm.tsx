@@ -14,6 +14,8 @@ interface EmployeeFormProps {
   email?: string | null;
   /** Told when the position field adds a new position to the unit's list. */
   onPositionAdded?: (position: { id: string; name: string }) => void;
+  /** Told whether the form holds input that was not saved, so a screen can refuse to be left. */
+  onDirtyChange?: (isDirty: boolean) => void;
   submitLabel: string;
   /** Saves the input; a rejection is shown on the fields it names and by the caller. */
   onSubmit: (input: EmployeeInput) => Promise<unknown>;
@@ -29,6 +31,7 @@ export function EmployeeForm({
   position,
   email,
   onPositionAdded,
+  onDirtyChange,
   submitLabel,
   onSubmit,
   onCancel,
@@ -44,6 +47,7 @@ export function EmployeeForm({
       layout="vertical"
       initialValues={initialValues}
       onFinish={submit}
+      onValuesChange={() => onDirtyChange?.(form.isFieldsTouched())}
     >
       <Form.Item
         name="lastName"
