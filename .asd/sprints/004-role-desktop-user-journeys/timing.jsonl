@@ -89,3 +89,8 @@
 {"op":"open","id":"asd-ux design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T12:05:21.715Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"asd-ux design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T12:05:21.715Z","end":"2026-10-13T12:08:17.151Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"design-review iter-03","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T11:47:36.309Z","end":"2026-10-13T12:08:17.211Z","outcome":"done","attrs":{"iteration":"3"}}
+{"op":"open","id":"design-review iter-04","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T12:08:18.127Z","attrs":{"iteration":"4"}}
+{"op":"open","id":"correctness iter-04","kind":"dispatch","parent":"design-review iter-04","start":"2026-10-13T12:08:18.189Z","attrs":{"tier":"standard","model":"opus"}}
+{"op":"open","id":"external iter-04","kind":"external-review","parent":"design-review iter-04","start":"2026-10-13T12:08:18.254Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"external iter-04","kind":"external-review","parent":"design-review iter-04","start":"2026-10-13T12:08:18.254Z","end":"2026-10-13T12:13:53.122Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"correctness iter-04","kind":"dispatch","parent":"design-review iter-04","start":"2026-10-13T12:08:18.189Z","end":"2026-10-13T12:14:35.728Z","outcome":"done","attrs":{"tier":"standard","model":"opus"}}
