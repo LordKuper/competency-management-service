@@ -51,3 +51,5 @@
 - [Publication cascade](project_publication-cascade-facts.md) — plan mutates tracked statuses (no save before refusal check), 412 override, tag always for versions, test fallout
 - [TEMP root is shared](project_temp-root-shared.md) — never glob-move `$TEMP/*`; VS logs and other agents' files live there, use the scratchpad
 - [Scenario reads](project_scenario-read-facts.md) — shared rules for desk sources (nearest HR, unused entries, account state), setup/my-place choices, unverified SQL
+- [Career reminder mail](project_career-reminder-mail-facts.md) — CareerMail/CareerMailQueue call sites, turn-based awaiting rule, no e-mail in From line, Audit has no kind list
+- [Desk merge and contract](project_desk-merge-contract-facts.md) — one unit-naming helper, subject absorption, one finding per kind per object, Dockerfile COPY per project

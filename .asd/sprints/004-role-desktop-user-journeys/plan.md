@@ -77,18 +77,18 @@ Material risk: change: security — `/org-units/{id}/setup` только адм�
 
 ### Task 7: Письма-напоминания
 Material risk: change: lock ordering — получатели и отправка только после `CommitAsync`, вне блокировок
-- [ ] `CareerMailQueue` (ограниченный `Channel` на 1 000, фоновый обработчик, отбрасывание с предупреждением в лог) и получатели по таблице `career-framework.md` (`submit`, согласование шага 1, `accept-changes`, `return`, черновая запись руководителя); не тому, кто совершил действие; проверка `UserStatus.IsActive` и работающего сотрудника при отправке (AC-15.1…AC-15.12)
-- [ ] тексты писем — константы по `docs/ux/desk.html` (письма m-mail, «Каталог текстов»); ссылки `App:PublicBaseUrl` + `/desk/review/{versionId}`, `/desk/rework/{versionId}`, `/desk/drafts/{kind}/{entryId}` (AC-15)
-- [ ] `Mail.SendFailed` с видами `MatrixAwaitingApproval`, `MatrixReturned`, `DraftAwaitingApproval` (`audit.md`; требования audit AC-15)
+- [x] `CareerMailQueue` (ограниченный `Channel` на 1 000, фоновый обработчик, отбрасывание с предупреждением в лог) и получатели по таблице `career-framework.md` (`submit`, согласование шага 1, `accept-changes`, `return`, черновая запись руководителя); не тому, кто совершил действие; проверка `UserStatus.IsActive` и работающего сотрудника при отправке (AC-15.1…AC-15.12)
+- [x] тексты писем — константы по `docs/ux/desk.html` (письма m-mail, «Каталог текстов»); ссылки `App:PublicBaseUrl` + `/desk/review/{versionId}`, `/desk/rework/{versionId}`, `/desk/drafts/{kind}/{entryId}` (AC-15)
+- [x] `Mail.SendFailed` с видами `MatrixAwaitingApproval`, `MatrixReturned`, `DraftAwaitingApproval` (`audit.md`; требования audit AC-15)
 
 ### Task 8: Модуль `desk` и источники оргструктуры и учётных записей
 Material risk: change: public contract — новые методы `/api/v1/desk*`
 Material risk: change: security — стол только о себе, источники ограничивают видимость ролями
-- [ ] контракт в `src/Competency.Platform/`: `IDeskSource`, `DeskFinding`, `DeskKind` (по члену на вид AC-4…AC-7, AC-26…AC-29), `DeskObjectType` (`desk.md`)
-- [ ] модуль `src/Competency.Desk/` (проект в `Competency.slnx`, регистрация в хосте): слияние находок в шесть шагов, таблицы поглощения и порядка причин (PRD таблицы 1–2, AC-30), группы, счётчик; `GET /api/v1/desk`, `GET /api/v1/desk/items?group=&limit=` (потолок 2 000), `GET /api/v1/desk/count`; предупреждение в лог при вычислении дольше 1 с (AC-2, AC-3, AC-16, AC-30)
-- [ ] источник org-structure (только администратору): подразделение без руководителя, пустой перечень при сотрудниках, должность сотрудника вне перечня, неактивная должность у работающих, должность без перечней и сотрудников, пустое подразделение (AC-6.2, AC-28.1…AC-28.4, AC-28.7)
-- [ ] источник user-management (только администратору): приглашение не принято (истекла, отменена, очищена, меньше 2 суток), учётная запись «пользователь» без привязки, руководитель или HR без действующей учётной записи (AC-6.5…AC-6.8, AC-28.5, AC-28.6)
-- [ ] перегенерация `openapi/openapi.json` и `web/src/api/schema.d.ts`
+- [x] контракт в `src/Competency.Platform/`: `IDeskSource`, `DeskFinding`, `DeskKind` (по члену на вид AC-4…AC-7, AC-26…AC-29), `DeskObjectType` (`desk.md`)
+- [x] модуль `src/Competency.Desk/` (проект в `Competency.slnx`, регистрация в хосте): слияние находок в шесть шагов, таблицы поглощения и порядка причин (PRD таблицы 1–2, AC-30), группы, счётчик; `GET /api/v1/desk`, `GET /api/v1/desk/items?group=&limit=` (потолок 2 000), `GET /api/v1/desk/count`; предупреждение в лог при вычислении дольше 1 с (AC-2, AC-3, AC-16, AC-30)
+- [x] источник org-structure (только администратору): подразделение без руководителя, пустой перечень при сотрудниках, должность сотрудника вне перечня, неактивная должность у работающих, должность без перечней и сотрудников, пустое подразделение (AC-6.2, AC-28.1…AC-28.4, AC-28.7)
+- [x] источник user-management (только администратору): приглашение не принято (истекла, отменена, очищена, меньше 2 суток), учётная запись «пользователь» без привязки, руководитель или HR без действующей учётной записи (AC-6.5…AC-6.8, AC-28.5, AC-28.6)
+- [x] перегенерация `openapi/openapi.json` и `web/src/api/schema.d.ts`
 
 ### Task 9: Источник стола карьерной модели и замер на сиде 10 000
 Material risk: change: perf — вычисление стола на каждый запрос, бюджет p95 и число SQL-команд
