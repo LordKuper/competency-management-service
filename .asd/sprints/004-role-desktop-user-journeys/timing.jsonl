@@ -107,3 +107,4 @@
 {"op":"open","id":"correctness iter-05","kind":"dispatch","parent":"design-review iter-05","start":"2026-10-13T12:22:49.986Z","attrs":{"tier":"standard","model":"opus"}}
 {"op":"close","id":"correctness iter-05","kind":"dispatch","parent":"design-review iter-05","start":"2026-10-13T12:22:49.986Z","end":"2026-10-13T12:25:30.687Z","outcome":"done","attrs":{"tier":"standard","model":"opus"}}
 {"op":"close","id":"design-review iter-05","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T12:22:49.908Z","end":"2026-10-13T12:25:30.752Z","outcome":"done","attrs":{"iteration":"5"}}
+{"op":"close","id":"design-review#1","kind":"phase","parent":null,"start":"2026-10-13T09:59:25.684Z","end":"2026-10-13T12:25:31.071Z","outcome":"done","attrs":{}}
