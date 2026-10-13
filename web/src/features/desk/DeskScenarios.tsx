@@ -114,9 +114,19 @@ const SCENARIOS: Scenario[] = [
   },
 ];
 
+/** The screen a scenario opens: its own, or that of the first item waiting in its groups; null when it needs an object and none waits. */
+function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
+  if (scenario.path) return scenario.path;
+  const firstItem = desk?.groups.find((group) =>
+    scenario.groups?.includes(group.group),
+  )?.items[0];
+  return (firstItem && itemAction(firstItem)?.path) ?? null;
+}
+
 /**
- * "Что можно сделать": a card for every scenario the user's roles allow, never a disabled one. A card counts what
- * waits in its groups once the desk is read; the cards themselves do not wait for it.
+ * "Что можно сделать": a card for every scenario the user's roles allow that can be opened now. A scenario that works
+ * on one object from a desk group has no card until something waits, so there is never an inert card; the empty
+ * state follows the roles, since a role always allows a scenario with its own screen.
  */
 export function DeskScenarios({
   roles,
@@ -156,18 +166,30 @@ export function DeskScenarios({
         gap: token.margin,
       }}
     >
-      {scenarios.map((scenario) => (
-        <ScenarioCard key={scenario.key} scenario={scenario} desk={desk} />
-      ))}
+      {scenarios.flatMap((scenario) => {
+        const path = entryPath(scenario, desk);
+        return path
+          ? [
+              <ScenarioCard
+                key={scenario.key}
+                scenario={scenario}
+                path={path}
+                desk={desk}
+              />,
+            ]
+          : [];
+      })}
     </div>
   );
 }
 
 function ScenarioCard({
   scenario,
+  path,
   desk,
 }: {
   scenario: Scenario;
+  path: string;
   desk: Desk | undefined;
 }) {
   const { token } = antdTheme.useToken();
@@ -175,13 +197,10 @@ function ScenarioCard({
     scenario.groups?.includes(group.group),
   );
   const waiting = groups?.reduce((sum, group) => sum + group.total, 0);
-  const firstItem = groups?.[0]?.items[0];
-  const path =
-    scenario.path ?? (firstItem && itemAction(firstItem)?.path) ?? null;
   return (
     <Card styles={{ body: { padding: token.padding } }}>
       <Typography.Title level={4} style={{ marginTop: 0 }}>
-        {path ? <Link to={path}>{scenario.title}</Link> : scenario.title}
+        <Link to={path}>{scenario.title}</Link>
       </Typography.Title>
       <Typography.Paragraph type="secondary">
         {scenario.description}
