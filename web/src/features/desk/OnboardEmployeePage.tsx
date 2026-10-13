@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { App, Button, Flex, Table, Tag, Typography } from "antd";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { useBlocker, useNavigate, useSearchParams } from "react-router";
+import { useBlocker, useSearchParams } from "react-router";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
@@ -16,7 +16,6 @@ import type { UserResponse } from "../users/usersApi";
 import { CreateAccountForm } from "./CreateAccountForm";
 import { deskPaths } from "./deskTexts";
 import { LinkButton } from "./LinkButton";
-import { useReturnLink } from "./returnLink";
 import { ActionBar, CompactAlert } from "./ScenarioContext";
 import { ScenarioPage } from "./ScenarioPage";
 import { StepRuler } from "./StepRuler";
@@ -39,20 +38,18 @@ const ACCOUNT_STEP = 2;
 const SUMMARY_STEP = 3;
 
 const UNSAVED_MESSAGE =
-  "Есть несохранённые правки. Сохраните их или нажмите «Отмена», чтобы перейти на другой экран.";
+  "Есть несохранённые правки. Сохраните их, чтобы перейти на другой экран.";
 
 /** «Принять сотрудника»: the employee card, then an account with an invitation if wanted, then what was created. */
 export function OnboardEmployeePage() {
   const [searchParams] = useSearchParams();
   const unitId = searchParams.get("unitId") ?? undefined;
   const { message } = App.useApp();
-  const navigate = useNavigate();
   const [outcome, setOutcome] = useState<Outcome>();
   const [step, setStep] = useState(EMPLOYEE_STEP);
   const [round, setRound] = useState(0);
   const [isUnsaved, setIsUnsaved] = useState(false);
-  const isLeaving = useRef(false);
-  const blocker = useBlocker(() => isUnsaved && !isLeaving.current);
+  const blocker = useBlocker(() => isUnsaved);
   useEffect(() => {
     if (blocker.state === "blocked") {
       message.warning(UNSAVED_MESSAGE);
@@ -64,11 +61,6 @@ export function OnboardEmployeePage() {
   function goTo(next: number) {
     setIsUnsaved(false);
     setStep(next);
-  }
-
-  function leave() {
-    isLeaving.current = true;
-    void navigate(deskPaths.desk);
   }
 
   return (
@@ -90,7 +82,6 @@ export function OnboardEmployeePage() {
             goTo(ACCOUNT_STEP);
           }}
           onUnsavedChange={setIsUnsaved}
-          onLeave={leave}
         />
       )}
       {step === ACCOUNT_STEP && outcome && (
@@ -135,7 +126,6 @@ interface EmployeeStepProps {
   outcome?: Outcome;
   onSaved: (outcome: Outcome) => void;
   onUnsavedChange: (isUnsaved: boolean) => void;
-  onLeave: () => void;
 }
 
 function EmployeeStep({
@@ -143,7 +133,6 @@ function EmployeeStep({
   outcome,
   onSaved,
   onUnsavedChange,
-  onLeave,
 }: EmployeeStepProps) {
   const queryClient = useQueryClient();
   const added = useRef<AddedPosition>(undefined);
@@ -230,11 +219,6 @@ function EmployeeStep({
           });
         }}
         scenarioActions={{
-          start: (
-            <Button disabled={save.isPending} onClick={onLeave}>
-              {employee ? "К рабочему столу" : "Отмена"}
-            </Button>
-          ),
           end: employee && isDirty && !save.isPending && (
             <Typography.Text type="secondary">
               Есть несохранённые правки. Сохраните их, чтобы перейти на другой
@@ -388,12 +372,10 @@ interface SummaryStepProps {
 }
 
 function SummaryStep({ outcome, onBack, onAnother }: SummaryStepProps) {
-  const back = useReturnLink();
   return (
     <Flex vertical gap="middle">
       <ResultTable rows={resultRows(outcome)} />
       <ActionBar start={<Button onClick={onBack}>Назад</Button>}>
-        {back && <LinkButton to={back.to}>{back.label}</LinkButton>}
         <Button onClick={onAnother}>Принять ещё одного сотрудника</Button>
         <LinkButton to={deskPaths.desk} type="primary">
           К рабочему столу

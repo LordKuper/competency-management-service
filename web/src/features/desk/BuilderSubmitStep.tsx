@@ -86,7 +86,7 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
           warning={(count) =>
             `Версию пока нельзя отправить: ${remarksText(count)}`
           }
-          returnLabel="К построению матрицы"
+          originName="Построить матрицу компетенций"
         />
       ) : (
         <CompactAlert

@@ -224,7 +224,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
             ? `Проверка полноты: опубликовать версию нельзя, ${remarksText(count)}`
             : `Проверка полноты: согласовать версию нельзя, ${remarksText(count)}`
         }
-        returnLabel="К согласованию"
+        originName="Согласовать версию"
       />
       {isPublishing && publication.data && (
         <section>

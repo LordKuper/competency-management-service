@@ -101,7 +101,7 @@ export function AssignHeadModal({ unitId, onClose }: AssignHeadModalProps) {
                 to={`${deskPaths.onboardEmployee}?${new URLSearchParams({ unitId: unit.id })}`}
                 state={returnState({
                   to: deskPaths.connectUnitOf(unit.id),
-                  label: "К подключению подразделения",
+                  crumb: "Подключить подразделение",
                 })}
               >
                 примите сотрудника

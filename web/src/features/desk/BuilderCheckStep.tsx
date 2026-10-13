@@ -65,7 +65,7 @@ export function BuilderCheckStep({
           warning={(count) =>
             `Версию пока нельзя отправить: ${remarksText(count)}`
           }
-          returnLabel="К построению матрицы"
+          originName="Построить матрицу компетенций"
           note="Проверка идёт по сохранённому черновику."
           onStep={onGoToStep}
         />

@@ -41,8 +41,6 @@ import {
 } from "../career/catalogApi";
 import { employees, PositionsError } from "../career/LevelPositionsModal";
 import { deskPaths } from "./deskTexts";
-import { LinkButton } from "./LinkButton";
-import { useReturnLink } from "./returnLink";
 import { CompactAlert, ContextLine } from "./ScenarioContext";
 import { LoadFailure, ScenarioPage } from "./ScenarioPage";
 
@@ -59,10 +57,6 @@ const LINK_MUTATION = ["desk", "track-positions"] as const;
 export function TrackPositionsPage() {
   const { trackId } = useParams();
   const navigate = useNavigate();
-  const back = useReturnLink() ?? {
-    to: deskPaths.desk,
-    label: "К рабочему столу",
-  };
   const tracks = useQuery(tracksQuery({ page: 1, pageSize: TRACKS_PAGE_SIZE }));
   const track = useQuery({
     ...trackQuery(trackId ?? ""),
@@ -122,7 +116,6 @@ export function TrackPositionsPage() {
         {direction.data && (
           <Typography.Text type="secondary">{`область «${direction.data.name}»`}</Typography.Text>
         )}
-        {trackId && <LinkButton to={back.to}>{back.label}</LinkButton>}
       </ContextLine>
       {trackId ? (
         <TrackScreen trackId={trackId} />

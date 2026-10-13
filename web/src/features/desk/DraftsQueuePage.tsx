@@ -231,7 +231,7 @@ function DraftRecord({ draft, position, total, headingRef }: DraftRecordProps) {
       : "Утвердить";
   const back = {
     to: location.pathname + location.search,
-    label: "К очереди черновиков",
+    crumb: "Утвердить черновые записи",
   };
 
   return (

@@ -80,7 +80,7 @@ function LevelsTable({ trackId, trackName, unavailable }: LevelsTableProps) {
         !level.hasActivePosition && (
           <PositionGapAction
             trackId={trackId}
-            returnLabel="К построению матрицы"
+            originName="Построить матрицу компетенций"
             unavailable={unavailable}
           />
         ),
@@ -141,7 +141,6 @@ function CreatedVersion({
   version: MatrixVersion;
   onNext: () => void;
 }) {
-  const navigate = useNavigate();
   const matrix = useQuery(matrixQuery(version.matrixId));
   const { track, scale } = version.entries;
   return (
@@ -160,11 +159,7 @@ function CreatedVersion({
         ]}
       />
       <LevelsTable trackId={track.id} trackName={track.name} />
-      <ActionBar
-        start={
-          <Button onClick={() => void navigate(deskPaths.desk)}>Выйти</Button>
-        }
-      >
+      <ActionBar>
         <Button type="primary" onClick={onNext}>
           Далее
         </Button>
@@ -362,21 +357,12 @@ function NewVersionForm({
             error={existing.error}
           />
         )}
-        <ActionBar
-          start={
-            <Button
-              disabled={isDirty}
-              onClick={() => void navigate(deskPaths.desk)}
-            >
-              Выйти
-            </Button>
-          }
-        >
+        <ActionBar>
           {isDirty && !isSubmitting && (
             <>
               <Typography.Text type="secondary">
                 Есть несохранённые правки. Сохраните их, чтобы перейти на другой
-                шаг или выйти.
+                шаг.
               </Typography.Text>
               <Button
                 type="link"

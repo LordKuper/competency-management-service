@@ -6,6 +6,7 @@ import { ErrorAlert } from "../../app/ErrorAlert";
 import { NotFoundPage } from "../../app/NotFoundPage";
 import { contentMaxWidth } from "../../app/theme";
 import { deskPaths } from "./deskTexts";
+import { useReturnLink } from "./returnLink";
 
 interface ScenarioPageProps {
   /** Name of the scenario, shown as the current item of the breadcrumb. */
@@ -13,8 +14,9 @@ interface ScenarioPageProps {
   children: ReactNode;
 }
 
-/** Frame of a scenario screen: the breadcrumb back to the desk and the content; the breadcrumb is the only heading. */
+/** Frame of a scenario screen: the breadcrumb back to the desk (through the scenario it was opened from) and the content; the breadcrumb is the only heading. */
 export function ScenarioPage({ title, children }: ScenarioPageProps) {
+  const origin = useReturnLink();
   return (
     <Flex
       vertical
@@ -24,6 +26,9 @@ export function ScenarioPage({ title, children }: ScenarioPageProps) {
       <Breadcrumb
         items={[
           { title: <Link to={deskPaths.desk}>Рабочий стол</Link> },
+          ...(origin
+            ? [{ title: <Link to={origin.to}>{origin.crumb}</Link> }]
+            : []),
           { title },
         ]}
       />

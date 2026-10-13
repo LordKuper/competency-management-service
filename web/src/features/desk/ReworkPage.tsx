@@ -295,7 +295,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
         warning={(count) =>
           `Проверка полноты с учётом правок: ${remarksText(count)}, повторно отправить версию нельзя.`
         }
-        returnLabel="К доработке"
+        originName="Доработать возвращённую версию"
       />
       {transition.error != null && (
         <DecisionError

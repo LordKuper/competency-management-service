@@ -20,8 +20,8 @@ import { PROBLEM_STEP, stepText } from "./scenarioTexts";
 
 interface PositionGapActionProps {
   trackId: string;
-  /** Name of the button that brings the user back from linking positions. */
-  returnLabel: string;
+  /** Name of the scenario the linking screen is reached from. */
+  originName: string;
   /** Why linking is not possible now; the link is replaced by this text. */
   unavailable?: string;
 }
@@ -29,7 +29,7 @@ interface PositionGapActionProps {
 /** What can be done about a level without an active position: the link to put it right, or who can. */
 export function PositionGapAction({
   trackId,
-  returnLabel,
+  originName,
   unavailable,
 }: PositionGapActionProps) {
   const location = useLocation();
@@ -42,7 +42,7 @@ export function PositionGapAction({
   const hr = unitHr.data && effectiveHr(unitHr.data);
   const back: ReturnLink = {
     to: location.pathname + location.search,
-    label: returnLabel,
+    crumb: originName,
   };
   if (track.data?.canEdit !== true) {
     return hr ? `Обратитесь к ответственному HR: ${hr.name}` : null;
@@ -73,8 +73,8 @@ interface CompletenessBlockProps {
   trackId: string;
   /** Title of the warning over the problems, given their number. */
   warning: (count: number) => string;
-  /** Name of the button that brings the user back from linking positions. */
-  returnLabel: string;
+  /** Name of the scenario the user links positions from. */
+  originName: string;
   /** Takes the user to the wizard step where a problem is put right; without it the step is only named. */
   onStep?: (step: number) => void;
   /** One short explanation after the warning, such as what the check was made on. */
@@ -89,7 +89,7 @@ export function CompletenessBlock({
   problems,
   trackId,
   warning,
-  returnLabel,
+  originName,
   onStep,
   note,
 }: CompletenessBlockProps) {
@@ -109,7 +109,7 @@ export function CompletenessBlock({
       <>
         <NoPositionTag /> {problem.message}
         {" — "}
-        <PositionGapAction trackId={trackId} returnLabel={returnLabel} />
+        <PositionGapAction trackId={trackId} originName={originName} />
       </>
     ) : (
       problem.message
