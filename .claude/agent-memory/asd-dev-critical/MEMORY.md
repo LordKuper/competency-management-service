@@ -48,3 +48,5 @@
 - [EF save-batch ordering](project_ef-save-batch-ordering-facts.md) — unique-index swap cycle, FK error before 412, name check blind to tracked drafts, enum ceilings, trailer -m
 - [Scripted insert orphans a summary](project_scripted-insert-doc-orphan.md) — inserting before a signature moves its XML doc onto the new member; anchor on `}` or `/// <summary>`
 - [Level-position links](project_level-position-links-facts.md) — readiness via org snapshot, approve/activate 409 union, refusal before If-Match, draft-only tracks break scenarios
+- [Publication cascade](project_publication-cascade-facts.md) — plan mutates tracked statuses (no save before refusal check), 412 override, tag always for versions, test fallout
+- [TEMP root is shared](project_temp-root-shared.md) — never glob-move `$TEMP/*`; VS logs and other agents' files live there, use the scratchpad
