@@ -35,3 +35,4 @@
 {"op":"close","id":"wait adr accept","kind":"user-wait","parent":"design#1","start":"2026-10-13T09:22:35.599Z","end":"2026-10-13T09:56:42.371Z","outcome":"done","attrs":{"gate":"ADR"}}
 {"op":"open","id":"asd-architect design#2","kind":"dispatch","parent":"design#1","start":"2026-10-13T09:56:42.679Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
 {"op":"close","id":"asd-architect design#2","kind":"dispatch","parent":"design#1","start":"2026-10-13T09:56:42.679Z","end":"2026-10-13T09:59:25.151Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"design#1","kind":"phase","parent":null,"start":"2026-10-12T14:48:17.244Z","end":"2026-10-13T09:59:25.417Z","outcome":"done","attrs":{}}
