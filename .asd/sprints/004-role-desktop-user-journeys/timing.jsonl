@@ -86,3 +86,6 @@
 {"op":"close","id":"asd-architect design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T11:58:22.120Z","end":"2026-10-13T12:04:45.057Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
 {"op":"open","id":"asd-ba design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T12:04:45.275Z","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"asd-ba design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T12:04:45.275Z","end":"2026-10-13T12:05:21.510Z","outcome":"done","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"asd-ux design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T12:05:21.715Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ux design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T12:05:21.715Z","end":"2026-10-13T12:08:17.151Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"design-review iter-03","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T11:47:36.309Z","end":"2026-10-13T12:08:17.211Z","outcome":"done","attrs":{"iteration":"3"}}

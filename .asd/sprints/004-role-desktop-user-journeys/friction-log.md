@@ -20,6 +20,7 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 |---|---|---|---|
 | F-1 | design-review | asd-reviewer-documentation без Edit переписывает файл памяти целиком | reviews/design/iter-01/documentation |
 | F-2 | design-review | ревьюер прочитал отчёт прошлой итерации вопреки clean-context | reviews/design/iter-02/correctness |
+| F-3 | design-review | asd-ux выполнил git stash в рабочем дереве оркестратора | — |
 
 ## F-1 — asd-reviewer-documentation без Edit переписывает файл памяти целиком
 
@@ -36,3 +37,11 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **What happened**: на iter-02 ревьюер в начале проверки прочитал `reviews/design/iter-01/correctness.md` (сам указал это в отчёте); payload путей прошлых отчётов не содержал, папка ревью соседняя и доступна чтению.
 - **Impact**: риск смещения вердикта к прошлым находкам; по словам ревьюера, находки выведены из diff и черновиков, повторов нет — итерация принята.
 - **Refs**: reviews/design/iter-02/correctness; повторилось на reviews/design/iter-03/correctness
+
+## F-3 — asd-ux выполнил git stash в рабочем дереве оркестратора
+
+- **Phase**: design-review
+- **Surface**: agent — asd-ux (autofix iter-03)
+- **What happened**: при точечной правке ux-spec.html агент выполнил `git stash` (по своим словам, по ошибке) и сразу `git stash pop`; в дереве были незакоммиченные изменения оркестратора (timing.jsonl).
+- **Impact**: потерь нет (проверено: stash пуст, изменения на месте); риск потери незакоммиченной бухгалтерии спринта при неудачном pop — у креатора нет причины трогать состояние git.
+- **Refs**: —
