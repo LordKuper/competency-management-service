@@ -263,3 +263,9 @@ body {
 .option-with-tag__tag {
   flex: none;
 }
+
+/* A tag has no trailing margin of its own: one placed inline before text or a link keeps a gap, while a tag in a flex row or a space gets its gap from the row. */
+:not(.ant-flex, .ant-space-item, .org-employee__title, .option-with-tag__tag)
+> .ant-tag {
+  margin-inline-end: var(--ant-margin-xs);
+}
