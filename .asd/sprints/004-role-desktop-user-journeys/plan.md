@@ -47,11 +47,11 @@ Material risk: change: lock ordering — снимок читается одни�
 Material risk: change: migration — новая таблица `career_level_positions` без заполнения, `ContractVersion` 3.1.0
 Material risk: change: public contract — методы связей, `POST /tracks` всегда черновик, проблема полноты `LevelWithoutActivePosition`
 Material risk: change: lock ordering — связи под блокировкой справочников 5003001 после разделяемой блокировки дерева, гонки снятия последней должности
-- [ ] `CareerLevelPosition.cs`, конфигурация EF, миграция `CareerLevelPositions` (только схема, `Down` удаляет таблицу); ключ `(level_id, position_id)`, уникальный `(track_id, position_id)`, FK `RESTRICT` (AC-24.1…AC-24.10)
-- [ ] `GET /tracks/{id}/positions`, `GET /tracks/{id}/available-positions`, `POST /levels/{id}/positions`, `DELETE /levels/{id}/positions/{positionId}` с `If-Match` уровня, правами правки трека и событиями журнала `CareerLevelPosition` (AC-24, AC-31 сервер; `career-framework.md` «Методы связей»)
-- [ ] одна функция готовности трека (`career-framework.md` «Готовность трека»): утверждение и «Вернуть в работу» трека, запрет снятия последней действующей должности уровня действующего трека, проблема полноты `LevelWithoutActivePosition` при отправке, согласовании и принятии правок (AC-25.1…AC-25.7)
-- [ ] `POST /tracks` всегда создаёт черновик; удаление уровня или трека удаляет их связи (`career-framework.md` «Переход на контракт API 3.1.0»)
-- [ ] `ContractVersion` = `3.1.0` в `src/Competency.Api/Program.cs`; перегенерация `openapi/openapi.json` и `web/src/api/schema.d.ts` (`gen-api`, `check-api`)
+- [x] `CareerLevelPosition.cs`, конфигурация EF, миграция `CareerLevelPositions` (только схема, `Down` удаляет таблицу); ключ `(level_id, position_id)`, уникальный `(track_id, position_id)`, FK `RESTRICT` (AC-24.1…AC-24.10)
+- [x] `GET /tracks/{id}/positions`, `GET /tracks/{id}/available-positions`, `POST /levels/{id}/positions`, `DELETE /levels/{id}/positions/{positionId}` с `If-Match` уровня, правами правки трека и событиями журнала `CareerLevelPosition` (AC-24, AC-31 сервер; `career-framework.md` «Методы связей»)
+- [x] одна функция готовности трека (`career-framework.md` «Готовность трека»): утверждение и «Вернуть в работу» трека, запрет снятия последней действующей должности уровня действующего трека, проблема полноты `LevelWithoutActivePosition` при отправке, согласовании и принятии правок (AC-25.1…AC-25.7)
+- [x] `POST /tracks` всегда создаёт черновик; удаление уровня или трека удаляет их связи (`career-framework.md` «Переход на контракт API 3.1.0»)
+- [x] `ContractVersion` = `3.1.0` в `src/Competency.Api/Program.cs`; перегенерация `openapi/openapi.json` и `web/src/api/schema.d.ts` (`gen-api`, `check-api`)
 
 ### Task 5: Общее правило публикации с каскадом
 Material risk: change: workflow state machine — каскадная публикация записей и версий, публикующие действия, автосогласование HR
