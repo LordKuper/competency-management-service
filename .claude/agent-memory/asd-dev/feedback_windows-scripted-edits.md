@@ -12,3 +12,5 @@ When editing web sources with a Python heredoc, open with `newline=''` for both 
 **How to apply:** use the Edit tool for any replacement whose search string holds Cyrillic (one such `python -I -` assert failed to match text that was plainly in the file); use scripts only for ASCII anchors. After a batch of edits run `npx biome check --write src/features/<name>` from `web/` (import order, line width), then `npm run lint`, then `npm run build` and look for the "chunk larger than" warning.
 
 Creating a large new `.tsx` file through a Bash `cat <<'EOF'` heredoc once failed with "unexpected EOF while looking for matching `''" (Cyrillic text with apostrophes and backticks); use the Write tool for whole new files, and run `npx biome check --write src/features` afterwards — it fixes line width in one pass.
+
+For a long multi-hunk patch, write the Python script to `.asd/tmp/*.py` with the Write tool and run it (`assert old in s` per hunk); the same heredoc failure hit a patch with `"""` strings, and a docstring-quote trick (`\"` before a closing `"""`) is fragile.

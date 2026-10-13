@@ -15,7 +15,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
 {
     private const string ContentField = "content";
     private const string ForeignLevelMessage = "Уровень не из трека матрицы";
-    private const string ForeignCompetencyMessage = "Компетенция не на шкале версии или не из направления матрицы";
+    private const string ForeignCompetencyMessage = "Компетенция не на шкале версии или не из области матрицы";
 
     private static readonly NumberFormatInfo DecimalComma = new() { NumberDecimalSeparator = "," };
 
