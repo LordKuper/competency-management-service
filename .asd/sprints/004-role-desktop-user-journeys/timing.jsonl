@@ -117,3 +117,5 @@
 {"op":"close","id":"asd-ba design-promote#1","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:27:41.137Z","end":"2026-10-13T12:44:44.792Z","outcome":"done","attrs":{"tier":"standard"}}
 {"op":"close","id":"asd-architect design-promote#2","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:27:41.137Z","end":"2026-10-13T12:44:44.792Z","outcome":"done","attrs":{"tier":"standard"}}
 {"op":"close","id":"asd-ux design-promote#1","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:27:41.137Z","end":"2026-10-13T12:44:44.857Z","outcome":"interrupted","attrs":{"tier":"standard"}}
+{"op":"open","id":"asd-ux design-promote#2","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:44:45.188Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ux design-promote#2","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:44:45.188Z","end":"2026-10-13T12:45:26.617Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
