@@ -123,3 +123,5 @@
 {"op":"open","id":"plan#1","kind":"phase","parent":null,"start":"2026-10-13T12:45:32.970Z","attrs":{}}
 {"op":"open","id":"wait plan accept","kind":"user-wait","parent":"plan#1","start":"2026-10-13T12:48:39.510Z","attrs":{"gate":"plan"}}
 {"op":"close","id":"wait plan accept","kind":"user-wait","parent":"plan#1","start":"2026-10-13T12:48:39.510Z","end":"2026-10-13T14:05:43.267Z","outcome":"done","attrs":{"gate":"plan"}}
+{"op":"open","id":"wait plan accept 2","kind":"user-wait","parent":"plan#1","start":"2026-10-13T14:05:43.635Z","attrs":{"gate":"plan"}}
+{"op":"close","id":"wait plan accept 2","kind":"user-wait","parent":"plan#1","start":"2026-10-13T14:05:43.635Z","end":"2026-10-13T14:06:31.424Z","outcome":"done","attrs":{"gate":"plan"}}
