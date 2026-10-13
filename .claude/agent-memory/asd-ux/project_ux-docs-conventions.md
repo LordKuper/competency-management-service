@@ -11,3 +11,5 @@ metadata:
 
 **Why:** found during a design-promote; they recur on any later UX promote.
 **How to apply:** check before writing a11y text, new mockups, or reviewing shell/menu visuals; then update `career-framework.html` if the code changed.
+
+- Sprint 004 promote (2026-10-13): `docs/ux/desk.html` is the desk subsystem doc (scenario screens, desk, letters, states; no AC/U ids, no coverage table); header/counter/login-return live in `app-shell.html` (ids `m-shell`, `m-counter`, `m-login`); matrix bar, track window, publish-confirm window in `career-framework.html` (ids `m-matrix`, `m-track-form`, `m-publish-confirm`). Every doc with `.mockup-preview` carries a dark-scheme rule keeping the preview surface light; `.ds` root must never set app font/color. Working-tree EOL is mixed per file (career-framework/user-management LF, others CRLF): preserve each file's EOL; bash heredocs here halve backslashes, so write node scripts with the Write tool; `sed -i` can strip CRs.

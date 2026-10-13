@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<!--
+responsibility:
+  owns: html shell wrap for all asd user-facing html docs
+  excludes: doc content, doc-specific structure
+  delegates_to: fragment templates (t_prd, t_adr, t_ux-spec, t_concept, t_stack, t_design-system, t_accessibility, t_retrospective)
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="ASD workflow">
+  <meta name="doc-type" content="PRD">
+  <meta name="subsystem" content="desk">
+  <meta name="sprint-id" content="">
+  <meta name="status" content="approved">
+  <meta name="updated" content="2026-10-13">
+  <meta name="responsibility" content="product requirements of the desk subsystem: role desktop as the home page, expected actions and integrity checks per role, counter, user-journey scenarios, reminder e-mails, one-object-one-item rule with absorption and cause order">
+  <meta name="provenance" content="original">
+  <meta name="source" content="">
+  <title>Требования — Рабочий стол</title>
+  <style>
+    :root {
+      --fg: #1a1c1e; --bg: #fff; --muted: #5b6770; --accent: #0066cc;
+      --code-bg: #f4f6f8; --border: #d0d7de; --max: 1040px;
+      --card-bg: #fafbfc;
+      --ok: #1a7f37; --warn: #b35900; --danger: #cf222e; --info: #0969da; --neutral: #5b6770;
+      --ok-tint: rgba(31,136,61,0.07); --danger-tint: rgba(207,34,46,0.06);
+      --chip-must-bg: #ffebe9; --chip-must-fg: #cf222e;
+      --chip-should-bg: #fff5e1; --chip-should-fg: #9a6700;
+      --chip-may-bg: #ddf4ff; --chip-may-fg: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e6e6e6; --bg: #0e1116; --muted: #9aa4ad; --code-bg: #161b22; --border: #30363d;
+        --card-bg: #161b22;
+        --accent: #58a6ff; --ok: #3fb950; --warn: #d29922; --danger: #f85149; --info: #79c0ff; --neutral: #8b949e;
+        --ok-tint: rgba(63,185,80,0.12); --danger-tint: rgba(248,81,73,0.10);
+        --chip-must-bg: #3b1416; --chip-must-fg: #ff7b72;
+        --chip-should-bg: #2d2410; --chip-should-fg: #e3b341;
+        --chip-may-bg: #0d2538; --chip-may-fg: #58a6ff;
+      }
+    }
+    html, body { margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100vh; }
+    .layout:has(> nav.toc) { grid-template-columns: 260px minmax(0, 1fr); }
+    nav.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 12px; border-right: 1px solid var(--border); font-size: 0.85rem; }
+    nav.toc .toc-title { font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
+    nav.toc ol { list-style: none; margin: 0; padding: 0; }
+    nav.toc li { margin: 2px 0; }
+    nav.toc a { color: var(--fg); text-decoration: none; display: block; padding: 3px 6px; border-radius: 4px; }
+    nav.toc a:hover { background: var(--code-bg); color: var(--accent); }
+    @media (max-width: 880px) { nav.toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } }
+    @media print { nav.toc { display: none; } }
+    .content { min-width: 0; }
+    header, main, footer { max-width: var(--max); margin: 0 auto; padding: 16px 24px; }
+    header { border-bottom: 1px solid var(--border); }
+    header h1 { margin: 4px 0 8px; font-size: 1.9rem; }
+    .badges span { display: inline-block; padding: 2px 8px; margin-right: 6px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--bg); }
+    .badges .provenance-reverse-engineered, .badges .provenance-migrated { color: var(--warn); border-color: var(--warn); }
+    .badges .status-draft       { color: var(--neutral); border-color: var(--neutral); }
+    .badges .status-in-review   { color: var(--warn);    border-color: var(--warn); }
+    .badges .status-approved    { color: var(--ok);      border-color: var(--ok); }
+    .badges .status-locked      { color: var(--info);    border-color: var(--info); }
+    .stats { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+    .stats .chip { display: inline-block; padding: 1px 8px; margin-right: 6px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); }
+    @media (max-width: 880px) {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+    }
+    h2, h3, h4 { line-height: 1.25; margin-top: 1.6em; }
+    h2 { border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    a { color: var(--accent); }
+    code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: var(--code-bg); padding: 12px; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--code-bg); position: sticky; top: 0; z-index: 1; }
+    tbody tr:nth-child(even) td { background: var(--card-bg); }
+    blockquote { border-left: 3px solid var(--accent); margin: 0; padding: 4px 14px; color: var(--muted); }
+    .mermaid { background: var(--bg); text-align: center; margin: 16px 0; }
+    footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+    /* fragment-shared utilities */
+    .lede { font-size: 1.08rem; color: var(--fg); }
+    section.hero { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+    section.callout { border-left: 4px solid var(--border); padding: 8px 14px; background: var(--card-bg); border-radius: 4px; }
+    section.callout.warn { border-left-color: var(--warn); }
+    section.callout.warn h2::before { content: "⊘ "; color: var(--warn); }
+
+    ol.goal-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    ol.goal-grid li { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; display: flex; gap: 10px; }
+    ol.goal-grid .num { flex: 0 0 auto; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    ol.goal-grid p { margin: 0; }
+
+    details.role-group { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; background: var(--card-bg); }
+    details.role-group > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+    details.role-group > summary .count { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+    details.role-group ul.stories { margin: 0; padding: 4px 16px 12px 28px; }
+    ul.stories li { margin: 4px 0; }
+    ul.stories b { color: var(--accent); font-weight: 600; }
+
+    table.ac-table td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .chip.area { background: var(--code-bg); color: var(--muted); }
+    .chip.prio-must   { background: var(--chip-must-bg);   color: var(--chip-must-fg); border-color: var(--chip-must-fg); }
+    .chip.prio-should { background: var(--chip-should-bg); color: var(--chip-should-fg); border-color: var(--chip-should-fg); }
+    .chip.prio-may    { background: var(--chip-may-bg);    color: var(--chip-may-fg); border-color: var(--chip-may-fg); }
+
+    ul.non-goals { margin: 0; padding-left: 22px; }
+    ul.non-goals li::marker { content: "⊘  "; color: var(--warn); }
+
+    /* definition-list pattern: Purpose / Entry / Exit / Notes */
+    dl.def-list { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0; }
+    dl.def-list dt { font-weight: 600; color: var(--muted); }
+    dl.def-list dd { margin: 0; }
+
+    /* ADR */
+    .adr { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    .adr > .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+    .adr h2 { margin-top: 0.4em; border-bottom: none; font-size: 1.3rem; }
+    .adr h3 { margin-top: 1.1em; border-bottom: none; font-size: 1.15rem; }
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .status-proposed   { color: var(--warn);    border-color: var(--warn); }
+    .status-accepted   { color: var(--ok);      border-color: var(--ok); }
+    .consequences { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .consequences .pros, .consequences .cons { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+    .consequences .pros { background: var(--ok-tint); border-left: 3px solid var(--ok); }
+    .consequences .cons { background: var(--danger-tint); border-left: 3px solid var(--danger); }
+    .consequences h4 { margin: 0 0 4px; font-size: 1rem; color: var(--muted); }
+    .consequences ul { margin: 0; padding-left: 20px; }
+    @media (max-width: 720px) { .consequences { grid-template-columns: 1fr; } }
+    ul.alt-list li { margin: 4px 0; }
+    ul.alt-list li strong { color: var(--fg); }
+
+    /* UX-spec mockup */
+    article.mockup { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    article.mockup > h3 { margin-top: 0; }
+    .mockup-preview { background: var(--bg); border: 1px dashed var(--border); border-radius: 6px; padding: 16px; margin: 10px 0; min-height: 80px; }
+    .screen-meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 6px 0 10px; font-size: 0.92rem; }
+    .screen-meta b { color: var(--muted); font-weight: 600; }
+
+    /* Concept */
+    .pillar-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .pillar-grid li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; }
+    .pillar-grid li strong { display: block; margin-bottom: 4px; color: var(--accent); }
+    .anti-pillar-grid li { border-left-color: var(--danger); }
+    .anti-pillar-grid li strong { color: var(--danger); }
+    ul.user-segments { list-style: none; padding: 0; }
+    ul.user-segments li { padding: 8px 12px; margin: 6px 0; border-left: 3px solid var(--accent); background: var(--card-bg); border-radius: 4px; }
+    ul.user-segments li b { color: var(--accent); }
+    ul.metrics li { margin: 4px 0; }
+    ul.metrics li .target { float: right; color: var(--ok); font-variant-numeric: tabular-nums; }
+
+    /* Stack */
+    table.tech-table .ver { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .principle-list { list-style: none; padding: 0; }
+    .principle-list li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    .principle-list li strong { color: var(--info); }
+
+    /* Accessibility */
+    section.a11y-domain { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; margin: 14px 0; }
+    section.a11y-domain h2 { border-bottom: 1px dashed var(--border); }
+    .limitation { background: var(--chip-should-bg); border-left: 3px solid var(--warn); padding: 8px 12px; margin: 6px 0; border-radius: 4px; }
+    .limitation b { color: var(--warn); }
+
+    /* Design system */
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .swatch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+    .swatch .chip-color { height: 80px; border-radius: 4px; border: 1px solid var(--border); }
+    .swatch code { font-size: 0.78rem; }
+    .swatch small { color: var(--muted); }
+    .spacing-scale { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); }
+    .spacing-scale > div { background: var(--accent); width: 24px; border-radius: 2px 2px 0 0; }
+    article.component-preview { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 14px 0; background: var(--card-bg); }
+    .preview { padding: 16px; border: 1px dashed var(--border); border-radius: 6px; background: var(--bg); }
+
+    @media print {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+      a { color: inherit; text-decoration: none; }
+      footer { page-break-before: always; }
+      details.role-group[open] > summary { list-style: none; }
+      details.role-group { break-inside: avoid; }
+      tr, li { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Содержание</div>
+      <ol>
+        <li><a href="#problem">Проблема</a></li>
+        <li><a href="#goals">Цели</a></li>
+        <li><a href="#user-stories">Пользовательские истории</a></li>
+        <li><a href="#acceptance-criteria">Критерии приёмки</a></li>
+        <li><a href="#table-absorption">Таблица 1 — объекты и поглощение</a></li>
+        <li><a href="#table-order">Таблица 2 — порядок причин</a></li>
+        <li><a href="#non-goals">Вне рамок</a></li>
+      </ol>
+    </nav>
+    <div class="content">
+      <header>
+        <div class="badges">
+          <span>PRD</span>
+          <span>desk</span>
+          <span class="status-approved">approved</span>
+        </div>
+        <h1>Требования — Рабочий стол</h1>
+        <div class="stats">5 goals · 27 stories · 181 AC · 8 non-goals · updated 2026-10-13</div>
+      </header>
+      <main>
+<!--
+responsibility:
+  owns: product requirements of the desk subsystem: role desktop as the home page, expected actions and integrity checks per role, counter, user-journey scenarios, reminder e-mails, one-object-one-item rule with absorption and cause order
+  excludes: ui mockups, design decisions, code, ux flows, career-model rules (career-framework.html), shell, navigation and sign-in (user-management.html), units and positions (org-structure.html), the journal (audit.html)
+  delegates_to: career-framework.html (matrix, track, publication rules, position-to-level link), user-management.html (header, menu, return after sign-in, invitations), org-structure.html (units, employees, positions), audit.html (journaling), ux-spec.html (ui + flows), adr.html (decisions)
+provenance: original
+-->
+
+<section id="problem" class="hero">
+  <h2>Проблема</h2>
+  <p class="lede">Пользователь работает с набором табличных разделов по сущностям и сам должен понять, что от него ждёт система. Нужен рабочий стол — домашняя страница, которая для каждой роли показывает ожидаемые действия, напоминает о новых, ведёт по шагам через основные сценарии и превращает пробелы целостности карьерной модели и оргструктуры (должность без трека, уровень без должности, брошенные записи) в понятные пункты без дублей.</p>
+</section>
+
+<section id="goals">
+  <h2>Цели</h2>
+  <ol class="goal-grid">
+    <li><span class="num">G1</span><p>Показывать каждому пользователю на рабочем столе — домашней странице — то, чего ждёт от него система, и то, что он может сделать, без отдельного хранилища задач: ожидаемые действия вычисляются из текущего состояния данных.</p></li>
+    <li><span class="num">G2</span><p>Вести пользователя по основным сценариям собственными экранами по шагам — построить матрицу, доработать и согласовать версию, утвердить черновики, подключить подразделение, принять сотрудника, увидеть своё место в компании, связать должности с треком, навести порядок в каталоге и оргструктуре; табличные разделы остаются вторичным доступом для точечной правки.</p></li>
+    <li><span class="num">G3</span><p>Напоминать о новых ожидаемых действиях: счётчик в шапке и письмо о событиях согласования и о черновых записях справочников.</p></li>
+    <li><span class="num">G4</span><p>Превращать пробелы целостности карьерной модели и оргструктуры (должность без трека, уровень без должности, брошенные записи) в понятные пункты по правилу «один объект — один пункт».</p></li>
+    <li><span class="num">G5</span><p>Не раскрывать лишнего: стол, сценарии и письма показывают только то, что пользователь вправе видеть; сервер проверяет права при каждом действии.</p></li>
+  </ol>
+</section>
+
+<section id="user-stories">
+  <h2>Пользовательские истории</h2>
+  <details class="role-group" open>
+    <summary>Любой пользователь <span class="count">6</span></summary>
+    <ul class="stories">
+      <li><b>as</b> пользователь любой роли, <b>I want</b> после входа попадать на рабочий стол — первый пункт меню, <b>so that</b> начинать работу с того, что ждёт от меня система, а не с таблиц сущностей (AC-1…AC-8, AC-10, AC-14, AC-15; <a href="user-management.html#AC-46">user-management AC-46</a>).</li>
+      <li><b>as</b> пользователь с несколькими ролями, <b>I want</b> один объединённый стол без повторов одного и того же действия, <b>so that</b> не разбираться, по какой роли пришло действие (AC-2, AC-10…AC-13, AC-157).</li>
+      <li><b>as</b> пользователь, <b>I want</b> видеть в шапке счётчик ожидаемых действий и получать письмо о новом, <b>so that</b> замечать новое, не открывая стол (AC-16…AC-21, AC-107…AC-112; <a href="user-management.html#AC-44">user-management AC-44</a>, <a href="user-management.html#AC-45">user-management AC-45</a>).</li>
+      <li><b>as</b> пользователь, <b>I want</b> видеть на столе и в сценариях только то, что мне положено, и чтобы мои данные стола не были доступны другим, <b>so that</b> стол не раскрывал чужое и неопубликованное (AC-73, AC-113…AC-118; <a href="user-management.html#AC-45">user-management AC-45</a>).</li>
+      <li><b>as</b> пользователь настольного компьютера или планшета, <b>I want</b> экраны в едином стиле интерфейса, <b>so that</b> новые экраны не отличались от остального приложения (AC-119, AC-120).</li>
+      <li><b>as</b> пользователь, <b>I want</b>, чтобы один объект был на столе одним пунктом, а несколько находок по нему — причинами внутри пункта, самая важная первой, <b>so that</b> стол не повторял одно и то же разными словами и не раздувал счётчик (AC-12, AC-17, AC-84, AC-153…AC-161).</li>
+    </ul>
+  </details>
+  <details class="role-group" open>
+    <summary>Руководитель подразделения <span class="count">6</span></summary>
+    <ul class="stories">
+      <li><b>as</b> руководитель подразделения, <b>I want</b> видеть ожидаемые от меня действия: возвращённую версию, неотправленный черновик, версию подчинённого подразделения на согласовании, подразделение без опубликованной матрицы, <b>so that</b> не пропустить то, что стоит на мне (AC-22…AC-26).</li>
+      <li><b>as</b> руководитель подразделения, <b>I want</b> построить матрицу компетенций пошаговым сценарием, создавая недостающий трек и компетенцию, не уходя из него, <b>so that</b> довести матрицу до отправки на согласование без поиска по разделам (AC-43…AC-55; <a href="career-framework.html#AC-103">career-framework AC-103…AC-105</a>).</li>
+      <li><b>as</b> руководитель подразделения (автор версии), <b>I want</b> доработать возвращённую версию на одном экране с понятными последствиями трёх решений, <b>so that</b> осознанно принять, доработать или откатить правки согласующего (AC-56…AC-61).</li>
+      <li><b>as</b> руководитель подразделения (согласующий шага 1), <b>I want</b> экран рассмотрения версии подчинённого подразделения с разницей и проверкой полноты, <b>so that</b> принять решение без поиска контекста (AC-62…AC-64, AC-66…AC-68, AC-70; <a href="career-framework.html#AC-105">career-framework AC-105</a>).</li>
+      <li><b>as</b> руководитель подразделения, <b>I want</b> получить письмо, когда моя версия возвращена или версия пришла мне на согласование, <b>so that</b> узнать об этом без захода в систему (AC-102, AC-103).</li>
+      <li><b>as</b> руководитель подразделения, <b>I want</b> видеть проверки целостности моих должностей, треков и матриц — должность без трека, трек без должностей или уровней, матрица, не покрывающая уровни трека, — <b>so that</b> вовремя исправить пробелы или передать их ответственному HR (AC-30, AC-122…AC-132, AC-167).</li>
+    </ul>
+  </details>
+  <details class="role-group" open>
+    <summary>HR <span class="count">4</span></summary>
+    <ul class="stories">
+      <li><b>as</b> HR, <b>I want</b> видеть версии, ждущие моего согласования (шаг 2), черновые записи справочников на утверждение и — справочно — подразделения моей ответственности без опубликованной матрицы, <b>so that</b> различать то, что я должен сделать сам, и то, о чём стоит знать (AC-27…AC-31, AC-62, AC-65).</li>
+      <li><b>as</b> HR, <b>I want</b> утверждать черновые записи справочников из одной очереди, не выходя из неё, <b>so that</b> быстро разобрать накопившееся (AC-71…AC-77, AC-79).</li>
+      <li><b>as</b> HR, <b>I want</b> получать письмо, когда версия пришла на мой шаг согласования или появилась черновая запись справочника на утверждение, <b>so that</b> реагировать вовремя (AC-102, AC-104…AC-106).</li>
+      <li><b>as</b> HR, <b>I want</b> видеть проверки по подразделениям моей ответственности — связи должностей с треками, подразделения без руководителя, версии, задержавшиеся на шаге 1, неиспользуемые записи каталога, — <b>so that</b> держать карьерную модель в порядке (AC-30, AC-133…AC-141, AC-167).</li>
+    </ul>
+  </details>
+  <details class="role-group" open>
+    <summary>Глобальный администратор <span class="count">6</span></summary>
+    <ul class="stories">
+      <li><b>as</b> глобальный администратор, <b>I want</b> видеть черновые записи на утверждение, подразделения без руководителя или без ответственного HR и непринятые приглашения, <b>so that</b> довести оргструктуру и учётные записи до рабочего состояния (AC-32…AC-38, AC-71).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> отправить приглашение повторно прямо со стола и увидеть итог отправки письма, <b>so that</b> не искать учётную запись в списке пользователей (AC-39, AC-40).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> подключить подразделение на одном экране — руководитель, HR, должности, учётные записи — с отметкой пробелов, <b>so that</b> закрывать пробелы на месте (AC-80…AC-84).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> принять сотрудника одним сценарием: карточка, должность, по желанию учётная запись с приглашением, <b>so that</b> не переключаться между разделами (AC-85…AC-89).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> видеть проверки оргструктуры и учётных записей — должность сотрудника вне перечня подразделения, пустой перечень, учётная запись без сотрудника, руководитель или HR без действующей учётной записи, — <b>so that</b> замечать расхождения, не просматривая справочники (AC-30, AC-142…AC-150).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> разобрать находки оргструктуры одной очередью с действием на месте, <b>so that</b> навести порядок без поиска по разделам (AC-174…AC-181).</li>
+    </ul>
+  </details>
+  <details class="role-group" open>
+    <summary>HR и глобальный администратор <span class="count">1</span></summary>
+    <ul class="stories">
+      <li><b>as</b> HR или глобальный администратор, <b>I want</b> привести каталог в порядок очередью неиспользуемых записей — удалить или деактивировать на месте, <b>so that</b> справочники не накапливали брошенное (AC-137…AC-140, AC-169…AC-173).</li>
+    </ul>
+  </details>
+  <details class="role-group" open>
+    <summary>Сотрудник <span class="count">3</span></summary>
+    <ul class="stories">
+      <li><b>as</b> сотрудник без ролей процесса, <b>I want</b> стол, который честно показывает, что действий для меня нет, и предлагает доступные сценарии, <b>so that</b> знать, что от меня ничего не ждут (AC-2, AC-9, AC-41, AC-42).</li>
+      <li><b>as</b> пользователь, привязанный к сотруднику, <b>I want</b> видеть своё место в компании — подразделение, должность, руководителя, ответственного HR и опубликованные матрицы моего подразделения, <b>so that</b> понимать, какие требования ко мне действуют (AC-90…AC-95).</li>
+      <li><b>as</b> сотрудник, <b>I want</b> видеть карьерные треки моей должности, мой текущий уровень и следующие уровни с требованиями — или честное сообщение, что для моей должности трека нет, <b>so that</b> понимать, куда расти (AC-30, AC-96…AC-101, AC-151, AC-152).</li>
+    </ul>
+  </details>
+  <details class="role-group" open>
+    <summary>Потребитель API <span class="count">1</span></summary>
+    <ul class="stories">
+      <li><b>as</b> потребитель API, <b>I want</b>, чтобы существующие методы не ломались, а новые были описаны в документации, <b>so that</b> обновление не нарушило работу клиентов (AC-121).</li>
+    </ul>
+  </details>
+</section>
+
+<section id="acceptance-criteria">
+  <h2>Критерии приёмки</h2>
+  <p>Каждый вид ожидаемого действия описан по схеме: условие, причина, давность (только у событийных видов), переход, входит ли в счётчик (действие) или нет (справочно). Объекты, поглощение и порядок причин (AC-153…AC-161) — таблицы 1 и 2 ниже. Правила карьерной модели, публикации и связи «должность — уровень» — <a href="career-framework.html">career-framework</a>; меню, вход и возврат по ссылке из письма — <a href="user-management.html">user-management</a>. Формулировки текстов интерфейса и писем описывают смысл; точные тексты и раскладка экранов — UX-спецификация.</p>
+  <table class="ac-table">
+    <thead>
+      <tr><th>ID</th><th>Критерий</th><th>Область</th><th>Приоритет</th></tr>
+    </thead>
+    <tbody>
+      <tr id="AC-1"><td><a href="#AC-1">AC-1</a></td><td>После входа пользователь попадает на рабочий стол.</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-2"><td><a href="#AC-2">AC-2</a></td><td>Рабочий стол есть у каждой роли: руководителя подразделения, HR, глобального администратора и сотрудника (пользователя без роли процесса).</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-3"><td><a href="#AC-3">AC-3</a></td><td>Рабочий стол показывает два блока: «Ожидают вашего действия» и «Что можно сделать».</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-4"><td><a href="#AC-4">AC-4</a></td><td>В блоке «Ожидают вашего действия» пункты сгруппированы по виду (виды — AC-22…AC-42 и AC-122…AC-152).</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-5"><td><a href="#AC-5">AC-5</a></td><td>Каждый пункт показывает объект и причину, по которой действие ожидается от пользователя (или по которой пункт справочный).</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-6"><td><a href="#AC-6">AC-6</a></td><td>Каждый пункт содержит переход прямо в экран сценария, где действие выполняется (исключение — приглашение, AC-39: действие выполняется на самом столе); переход справочного пункта — тот, что задан в критерии его вида (просмотр объекта или сценарий-очередь).</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-7"><td><a href="#AC-7">AC-7</a></td><td>Давность показывается только у пунктов, порождённых событием с датой: решение по версии матрицы (AC-22, AC-24, AC-27, AC-130, AC-136), создание черновика версии или записи справочника (AC-23, AC-28, AC-32, AC-129), срок ссылки приглашения (AC-36).</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-8"><td><a href="#AC-8">AC-8</a></td><td>У остальных пунктов — порождённых состоянием данных без даты события (в частности подразделение без руководителя, без ответственного HR, без опубликованной матрицы и все проверки AC-122…AC-152, кроме перечисленных в AC-7) — давность не показывается.</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-9"><td><a href="#AC-9">AC-9</a></td><td>Если ожидаемых действий нет, блок «Ожидают вашего действия» показывает понятное состояние «Всё сделано».</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-10"><td><a href="#AC-10">AC-10</a></td><td>Блок «Что можно сделать» содержит сценарии AC-43…AC-101 и AC-162…AC-181, доступные пользователю по его ролям (доступность по ролям — AC-43, AC-56, AC-62, AC-71, AC-80, AC-85, AC-90, AC-162, AC-169, AC-174); недоступные по роли сценарии не показываются.</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-11"><td><a href="#AC-11">AC-11</a></td><td>У пользователя с несколькими ролями стол объединённый: действия и сценарии всех его ролей показаны на одном столе.</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-12"><td><a href="#AC-12">AC-12</a></td><td>Один объект даёт один пункт, даже если находок по нему несколько или действие ожидается от пользователя по нескольким ролям (правила — AC-153…AC-161).</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-13"><td><a href="#AC-13">AC-13</a></td><td>Если по одному объекту есть и пункт «ожидает вашего действия», и справочный пункт (например, AC-29), показывается только пункт «ожидает вашего действия» (общее правило — AC-156).</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-14"><td><a href="#AC-14">AC-14</a></td><td>Ожидаемое действие определяется текущим состоянием данных в момент запроса: пункт исчезает, как только действие выполнено или перестало относиться к пользователю (сменился руководитель, снято закрепление HR, заблокирована учётная запись).</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-15"><td><a href="#AC-15">AC-15</a></td><td>Ожидаемые действия нельзя назначить пользователю, отметить выполненными или закрыть вручную.</td><td><span class="chip area">стол</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-16"><td><a href="#AC-16">AC-16</a></td><td>В шапке на пункте «Рабочий стол» показан счётчик ожидаемых действий пользователя.</td><td><span class="chip area">счётчик</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-17"><td><a href="#AC-17">AC-17</a></td><td>Счётчик равен числу пунктов блока «Ожидают вашего действия» без справочной группы: считаются только действия, которые пользователь может выполнить сам; пункт с несколькими причинами считается один раз (AC-158).</td><td><span class="chip area">счётчик</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-18"><td><a href="#AC-18">AC-18</a></td><td>При значении 0 счётчик не показывается.</td><td><span class="chip area">счётчик</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-19"><td><a href="#AC-19">AC-19</a></td><td>Счётчик обновляется без перезагрузки страницы после каждого успешного действия пользователя в приложении.</td><td><span class="chip area">счётчик</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-20"><td><a href="#AC-20">AC-20</a></td><td>Счётчик обновляется без перезагрузки страницы при переходе между экранами и при возврате фокуса в окно приложения.</td><td><span class="chip area">счётчик</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-21"><td><a href="#AC-21">AC-21</a></td><td>Счётчик не обновляется по таймеру и не получает push: действия других пользователей становятся видны при следующем переходе или возврате фокуса.</td><td><span class="chip area">счётчик</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-22"><td><a href="#AC-22">AC-22</a></td><td>Вид «Версия возвращена»: у руководителя подразделения есть версия матрицы его подразделения в статусе «Возвращена» (он — её автор как текущий руководитель подразделения). Причина: версия возвращена вам согласующим — с правками или с комментарием. Давность: от возврата. Переход: сценарий «Доработать возвращённую версию». Входит в счётчик.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-23"><td><a href="#AC-23">AC-23</a></td><td>Вид «Продолжить построение матрицы»: у руководителя есть версия матрицы его подразделения в статусе «Черновик» (любая, сразу, не отправленная на согласование). Причина: черновик версии не отправлен на согласование. Давность: от создания черновика. Переход: сценарий «Построить матрицу компетенций». Входит в счётчик.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-24"><td><a href="#AC-24">AC-24</a></td><td>Вид «Версия подчинённого ждёт согласования»: версия матрицы подчинённого подразделения ждёт согласования руководителя на шаге 1 маршрута. Причина: версия ждёт вашего согласования (шаг 1). Давность: от решения по версии, приведшего её к руководителю (отправка). Переход: сценарий «Согласовать версию». Входит в счётчик.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-25"><td><a href="#AC-25">AC-25</a></td><td>Вид «Нет опубликованной матрицы»: у подразделения, которым пользователь руководит, нет ни одной опубликованной матрицы, есть действующий трек этого или вышестоящего подразделения и нет версии в работе. Причина: у подразделения нет опубликованной матрицы, хотя есть действующий трек. Давность не показывается. Переход: сценарий «Построить матрицу компетенций». Входит в счётчик.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-26"><td><a href="#AC-26">AC-26</a></td><td>Если у подразделения есть версия в работе (черновик, на согласовании или возвращённая), пункт «Нет опубликованной матрицы» по нему не показывается.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-27"><td><a href="#AC-27">AC-27</a></td><td>Вид «Версия ждёт согласования HR»: версия матрицы ждёт согласования этого HR на шаге 2 маршрута. Причина: версия ждёт вашего согласования (шаг 2). Давность: от решения по версии, приведшего её к HR (отправка или согласование шага 1). Переход: сценарий «Согласовать версию». Входит в счётчик.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-28"><td><a href="#AC-28">AC-28</a></td><td>Вид «Черновая запись справочника на утверждение» у HR: показываются черновые записи, которые этот HR вправе утвердить (черновые записи без подразделения и черновые треки подразделений его ответственности; черновые уровни отдельными пунктами не показываются). Причина: черновая запись ждёт утверждения; у черновика трека действует отметка «утверждать рано» (AC-134). Давность: от создания записи. Переход: сценарий «Утвердить черновые записи». Входит в счётчик.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-29"><td><a href="#AC-29">AC-29</a></td><td>Вид «Подразделение без опубликованной матрицы» (справочный): у подразделения ответственности HR нет опубликованной матрицы и нет версии в работе. Причина показывается со ссылкой на руководителя подразделения. Давность не показывается. Не входит в счётчик.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-30"><td><a href="#AC-30">AC-30</a></td><td>Справочные пункты любого вида (AC-29, справочные виды AC-122…AC-152) показываются в блоке «Ожидают вашего действия» отдельной группой, не входят в счётчик и не меняют состояние «Всё сделано» блока.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-31"><td><a href="#AC-31">AC-31</a></td><td>Справочная группа не считается ожидаемым действием: у пользователя без других ожидаемых действий блок показывает «Всё сделано» и справочную группу под ним, а счётчик равен 0.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-32"><td><a href="#AC-32">AC-32</a></td><td>Вид «Черновая запись справочника на утверждение» у глобального администратора: показываются все черновые записи справочников. Причина и давность — как в AC-28 (включая отметку «утверждать рано» у черновика трека, AC-134). Переход: сценарий «Утвердить черновые записи». Входит в счётчик.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-33"><td><a href="#AC-33">AC-33</a></td><td>Вид «Подразделение без руководителя»: действующее подразделение, у которого нет руководителя. Причина: у подразделения нет руководителя. Давность не показывается. Переход: сценарий «Подключить подразделение». Входит в счётчик.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-34"><td><a href="#AC-34">AC-34</a></td><td>Вид «Подразделение без ответственного HR»: у подразделения нет ни своего, ни унаследованного закрепления HR. Причина: у подразделения нет ответственного HR. Давность не показывается. Переход: сценарий «Подключить подразделение». Входит в счётчик.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-35"><td><a href="#AC-35">AC-35</a></td><td>Закрепление HR за учётной записью, которая не может действовать (например, заблокированной), считается отсутствием ответственного HR; причина в пункте указывает, что закреплённая учётная запись не может действовать. Эта же ситуация — часть проверки «ответственный HR без действующей учётной записи» из AC-147: отдельным видом она не выводится.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-36"><td><a href="#AC-36">AC-36</a></td><td>Вид «Приглашение не принято»: учётная запись приглашена (пароль не задан), не заблокирована, и ссылка приглашения истекла либо истекает менее чем через 2 суток (при сроке приглашения 7 дней). Причина: приглашение не принято, ссылка истекла или скоро истечёт. Давность — срок ссылки (AC-38). Переход: нет, действие выполняется на столе (AC-39). Входит в счётчик.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-37"><td><a href="#AC-37">AC-37</a></td><td>К «истекла» относятся также ссылка, отменённая сменой защитного штампа (блокировка, смена роли, привязки или пароля), и ссылка, очищенная сменой e-mail.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-38"><td><a href="#AC-38">AC-38</a></td><td>У пункта «Приглашение не принято» давность выражена сроком ссылки приглашения (когда истекла или истечёт).</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-39"><td><a href="#AC-39">AC-39</a></td><td>В пункте «Приглашение не принято» есть кнопка «Отправить приглашение повторно»; действие выполняется прямо на столе, без перехода в другой экран, по существующему правилу повторного приглашения.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-40"><td><a href="#AC-40">AC-40</a></td><td>После нажатия «Отправить приглашение повторно» пользователю показан итог отправки письма: ушло или не ушло.</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-41"><td><a href="#AC-41">AC-41</a></td><td>Для сотрудника (и любого пользователя, привязанного к сотруднику) собственных ожидаемых действий нет: ему показываются только действия, которые дают роли AC-22…AC-40, и проверки AC-122…AC-150 этих ролей; собственная проверка сотрудника — справочная (AC-151, AC-152).</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-42"><td><a href="#AC-42">AC-42</a></td><td>Если у пользователя нет ролей процесса и роли администратора, блок «Ожидают вашего действия» показывает «Всё сделано», счётчик не показан; справочный пункт AC-151, AC-152, если он применим, показан отдельной группой (AC-30).</td><td><span class="chip area">действия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-43"><td><a href="#AC-43">AC-43</a></td><td>Сценарий «Построить матрицу компетенций» доступен руководителю подразделения и открывается с рабочего стола.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-44"><td><a href="#AC-44">AC-44</a></td><td>Сценарий — пошаговый экран из шагов: выбор трека; подбор компетенций из каталога; требования по паре «уровень — компетенция»; формула рейтинга и пороги; проверка полноты; отправка на согласование.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-45"><td><a href="#AC-45">AC-45</a></td><td>На шаге выбора трека можно выбрать трек своего или вышестоящего подразделения.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-46"><td><a href="#AC-46">AC-46</a></td><td>Если нужного трека нет, можно создать черновой трек с уровнями, не покидая сценарий, и выбрать его.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-47"><td><a href="#AC-47">AC-47</a></td><td>На шаге подбора компетенций можно выбрать компетенции из каталога.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-48"><td><a href="#AC-48">AC-48</a></td><td>Если нужной компетенции нет, можно создать черновую компетенцию, не покидая сценарий, и выбрать её.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-49"><td><a href="#AC-49">AC-49</a></td><td>Для каждой пары «уровень — компетенция» можно задать требования.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-50"><td><a href="#AC-50">AC-50</a></td><td>На соответствующем шаге можно задать формулу рейтинга и пороги.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-51"><td><a href="#AC-51">AC-51</a></td><td>Шаг проверки полноты показывает результат проверки с указанием, что исправить, без отправки версии на согласование.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-52"><td><a href="#AC-52">AC-52</a></td><td>Последний шаг отправляет версию на согласование.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-53"><td><a href="#AC-53">AC-53</a></td><td>Сценарий можно прервать и продолжить с того же шага; введённое содержимое версии сохраняется как черновик.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-54"><td><a href="#AC-54">AC-54</a></td><td>Правила и права построения матрицы, проверки полноты и маршрута согласования — действующие требования карьерной модели (<a href="career-framework.html#AC-36">career-framework AC-36…AC-58</a>); сценарий их не меняет, кроме изменений <a href="career-framework.html#AC-103">career-framework AC-103…AC-105</a>.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-55"><td><a href="#AC-55">AC-55</a></td><td>Шаг проверки полноты показывает уровни трека без связанной действующей должности с указанием, что исправить: связать должности с этими уровнями — через сценарий AC-162…AC-168, если пользователь вправе править трек (<a href="career-framework.html#AC-91">career-framework AC-91</a>), иначе обратиться к ответственному HR; последний шаг (AC-52) при таких уровнях отправку не выполняет и показывает ту же ошибку (<a href="career-framework.html#AC-100">career-framework AC-100</a>).</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-56"><td><a href="#AC-56">AC-56</a></td><td>Сценарий «Доработать возвращённую версию» доступен автору версии (руководителю подразделения матрицы), чья версия возвращена, и открывается одним экраном.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-57"><td><a href="#AC-57">AC-57</a></td><td>Экран показывает комментарий согласующего и его правки относительно варианта автора.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-58"><td><a href="#AC-58">AC-58</a></td><td>Экран предлагает три решения: «Принять правки», «Принять и доработать», «Откатить правки».</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-59"><td><a href="#AC-59">AC-59</a></td><td>Рядом с каждым решением объяснены его последствия: «Принять правки» — шаг, вернувший версию, считается согласованным, версия идёт дальше по маршруту; если после этого версия публикуется (действие входит в перечень <a href="career-framework.html#AC-109">career-framework AC-109</a>), автор до подтверждения видит перечень сущностей, которые станут действующими (<a href="career-framework.html#AC-110">career-framework AC-110</a>), и подтверждает его, а право утвердить каждую черновую сущность проверяется у ответственного HR подразделения матрицы (<a href="career-framework.html#AC-109">career-framework AC-109</a>); «Принять и доработать» — версия становится черновиком с принятыми правками и после доработки снова идёт на согласование с первого шага; «Откатить правки» — версия возвращается к последнему варианту автора, становится черновиком и снова идёт на согласование с первого шага.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-60"><td><a href="#AC-60">AC-60</a></td><td>Если версия возвращена с одним комментарием (без правок), решение «Принять правки» недоступно; остальные два решения доступны.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-61"><td><a href="#AC-61">AC-61</a></td><td>Повторная отправка доработанной версии на согласование («Принять и доработать», «Откатить правки») подчиняется запрету <a href="career-framework.html#AC-103">career-framework AC-103</a>; экран показывает проверку полноты, включая уровни трека без связанной действующей должности, с указанием, что исправить (AC-55).</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-62"><td><a href="#AC-62">AC-62</a></td><td>Сценарий «Согласовать версию» доступен согласующему шага 1 или шага 2 (руководителю или HR, чей сейчас ход) и открывается экраном рассмотрения.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-63"><td><a href="#AC-63">AC-63</a></td><td>Экран показывает, что изменилось относительно действующей опубликованной версии; для первой версии матрицы подразделения показывается вся версия.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-64"><td><a href="#AC-64">AC-64</a></td><td>Экран показывает результат проверки полноты версии.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-65"><td><a href="#AC-65">AC-65</a></td><td>Для согласующего, чьё действие публикует версию (перечень <a href="career-framework.html#AC-109">career-framework AC-109</a>), экран до подтверждения показывает явный перечень всех сущностей, которые станут действующими вместе с версией (каскад <a href="career-framework.html#AC-108">career-framework AC-108</a>): трек и его уровни, компетенции, их категории и направления, шкала — с видом и названием каждой; в перечень входят только черновые сущности.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-66"><td><a href="#AC-66">AC-66</a></td><td>Экран предлагает решение «Согласовать».</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-67"><td><a href="#AC-67">AC-67</a></td><td>Экран предлагает решение «Вернуть с правками»: согласующий возвращает версию с правками и/или комментарием.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-68"><td><a href="#AC-68">AC-68</a></td><td>Действующие правила возврата и согласования сохраняются: возврат без правок и без комментария отклоняется; версию, в которую согласующий внёс правки, можно только вернуть, но не согласовать.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-69"><td><a href="#AC-69">AC-69</a></td><td>Если публикация невозможна (<a href="career-framework.html#AC-97">career-framework AC-97…AC-103</a>, <a href="career-framework.html#AC-109">career-framework AC-109</a>), инициатор публикующего действия (<a href="career-framework.html#AC-109">career-framework AC-109</a>) получает понятную ошибку со списком мешающих сущностей или уровней без должностей; версия остаётся неопубликованной.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-70"><td><a href="#AC-70">AC-70</a></td><td>Результат проверки полноты на экране рассмотрения (AC-64) включает уровни трека без связанной действующей должности (<a href="career-framework.html#AC-103">career-framework AC-103</a>); если должность стала неактивной после отправки, согласующий видит такой уровень, а публикация отклоняется по <a href="career-framework.html#AC-99">career-framework AC-99</a>.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-71"><td><a href="#AC-71">AC-71</a></td><td>Сценарий «Утвердить черновые записи» доступен HR и глобальному администратору и показывает очередь черновиков, набор которой соответствует AC-28 (HR) и AC-32 (администратор).</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-72"><td><a href="#AC-72">AC-72</a></td><td>Каждый черновик в очереди показан с автором, подразделением и матрицами, которые его используют.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-73"><td><a href="#AC-73">AC-73</a></td><td>В списке матриц, использующих черновик, показываются только матрицы и версии, которые пользователь вправе читать.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-74"><td><a href="#AC-74">AC-74</a></td><td>Черновик можно утвердить, не уходя из очереди.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-75"><td><a href="#AC-75">AC-75</a></td><td>Черновик можно поправить и утвердить, не уходя из очереди.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-76"><td><a href="#AC-76">AC-76</a></td><td>После решения по черновику следующий черновик очереди открывается сам.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-77"><td><a href="#AC-77">AC-77</a></td><td>Перед утверждением черновика, которое публикует вместе с ним другие черновые сущности (<a href="career-framework.html#AC-108">career-framework AC-108</a>), показан явный перечень этих сущностей с видом и названием каждой.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-78"><td><a href="#AC-78">AC-78</a></td><td>Если утверждение невозможно (<a href="career-framework.html#AC-97">career-framework AC-97…AC-103</a>, <a href="career-framework.html#AC-109">career-framework AC-109</a>), пользователь получает понятную ошибку со списком мешающих сущностей или уровней без должностей; черновик остаётся в очереди.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-79"><td><a href="#AC-79">AC-79</a></td><td>Сущности, опубликованные каскадом, пропадают из очереди; следующим открывается следующая неопубликованная запись.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-80"><td><a href="#AC-80">AC-80</a></td><td>Сценарий «Подключить подразделение» доступен глобальному администратору и открывается одним экраном для выбранного подразделения.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-81"><td><a href="#AC-81">AC-81</a></td><td>Экран показывает руководителя подразделения, ответственного HR (свой или унаследованный, с указанием, какой именно), перечень должностей и учётные записи руководителя и HR.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-82"><td><a href="#AC-82">AC-82</a></td><td>Экран отмечает, чего не хватает: руководителя, ответственного HR, должностей, учётной записи руководителя, учётной записи HR; учётная запись, не способная действовать, отмечается как пробел с указанием причины.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-83"><td><a href="#AC-83">AC-83</a></td><td>Для каждого отмеченного пробела на экране есть действие, закрывающее его на месте, без ухода в другой раздел.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-84"><td><a href="#AC-84">AC-84</a></td><td>Пробелы экрана соответствуют причинам пункта «Подключить подразделение» на столе (AC-159): нет руководителя (AC-33), учётная запись руководителя (AC-147), нет ответственного HR (AC-34, включая учётную запись HR, не способную действовать), пустой перечень должностей при наличии сотрудников (AC-143). На экране пустой перечень отмечается и у подразделения без сотрудников.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-85"><td><a href="#AC-85">AC-85</a></td><td>Сценарий «Принять сотрудника» доступен глобальному администратору и ведёт по шагам в одном сценарии.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-86"><td><a href="#AC-86">AC-86</a></td><td>Первый шаг — карточка сотрудника: подразделение и должность; если нужной должности нет, есть действие «Добавить должность».</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-87"><td><a href="#AC-87">AC-87</a></td><td>Второй шаг по желанию администратора — создание учётной записи с приглашением, привязанной к только что созданному сотруднику.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-88"><td><a href="#AC-88">AC-88</a></td><td>Шаг с учётной записью можно пропустить: сотрудник создаётся без учётной записи.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-89"><td><a href="#AC-89">AC-89</a></td><td>Итог сценария показывает, что создано (сотрудник, должность, учётная запись), и ушло ли письмо с приглашением.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-90"><td><a href="#AC-90">AC-90</a></td><td>Сценарий «Моё место в компании» доступен любому пользователю, привязанному к сотруднику.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-91"><td><a href="#AC-91">AC-91</a></td><td>Экран показывает подразделение пользователя, его должность, руководителя и ответственного HR.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-92"><td><a href="#AC-92">AC-92</a></td><td>Экран показывает опубликованные матрицы только собственного подразделения пользователя, по трекам и уровням; матрицы вышестоящих подразделений и неопубликованные версии не показываются.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-93"><td><a href="#AC-93">AC-93</a></td><td>Из экрана есть переход к просмотру требований опубликованной матрицы.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-94"><td><a href="#AC-94">AC-94</a></td><td>Если у подразделения пользователя нет опубликованных матриц, экран показывает понятное пустое состояние.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-95"><td><a href="#AC-95">AC-95</a></td><td>Пользователю без привязки к сотруднику экран показывает понятное объяснение, почему данных нет.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-96"><td><a href="#AC-96">AC-96</a></td><td>По связи «должность — уровень» (<a href="career-framework.html#AC-87">career-framework AC-87…AC-96</a>) экран показывает все действующие треки, в которых есть должность пользователя.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-97"><td><a href="#AC-97">AC-97</a></td><td>Для каждого такого трека экран показывает текущий уровень пользователя — уровень, с которым связана его должность.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-98"><td><a href="#AC-98">AC-98</a></td><td>Для каждого такого трека экран показывает следующие уровни трека (старше текущего) с требованиями опубликованной матрицы.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-99"><td><a href="#AC-99">AC-99</a></td><td>Требования к уровням берутся из опубликованной матрицы подразделения самого пользователя по этому треку (AC-92); если такой матрицы нет, уровни показываются без требований.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-100"><td><a href="#AC-100">AC-100</a></td><td>Если должность пользователя не связана ни с одним уровнем действующего трека, экран показывает справочный пункт AC-151, AC-152.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-101"><td><a href="#AC-101">AC-101</a></td><td>Уровень пользователя выводится только из его должности; прямой связи сотрудника с треком и уровнем нет.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-102"><td><a href="#AC-102">AC-102</a></td><td>Когда версия матрицы приходит на шаг согласования пользователя (отправка на согласование, согласование шага 1, «Принять правки» автором), этому пользователю уходит письмо.</td><td><span class="chip area">письма</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-103"><td><a href="#AC-103">AC-103</a></td><td>Когда версия возвращена с правками или комментарием, письмо уходит её автору — текущему руководителю подразделения матрицы.</td><td><span class="chip area">письма</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-104"><td><a href="#AC-104">AC-104</a></td><td>Когда создана черновая запись справочника, письмо о ней уходит ответственным HR всех подразделений, которыми автор записи руководит сейчас (для трека — HR подразделения трека), без повторов: одно письмо на запись каждому получателю.</td><td><span class="chip area">письма</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-105"><td><a href="#AC-105">AC-105</a></td><td>Создание черновых уровней письма не порождает.</td><td><span class="chip area">письма</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-106"><td><a href="#AC-106">AC-106</a></td><td>Если у подразделений автора нет ответственного HR или автор больше не руководит подразделением, письмо о черновой записи не уходит.</td><td><span class="chip area">письма</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-107"><td><a href="#AC-107">AC-107</a></td><td>Других писем стол не отправляет: «Принять и доработать», «Откатить правки», согласование шага 2 (публикация, в том числе каскадная), связь «должность — уровень», проверки AC-122…AC-152 и изменения оргструктуры писем не порождают и отражаются только на столе и в счётчике.</td><td><span class="chip area">письма</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-108"><td><a href="#AC-108">AC-108</a></td><td>Письмо не уходит пользователю, если он сам совершил действие, породившее письмо.</td><td><span class="chip area">письма</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-109"><td><a href="#AC-109">AC-109</a></td><td>Письмо не уходит заблокированной учётной записи, приглашённой (без пароля) учётной записи и учётной записи уволенного сотрудника.</td><td><span class="chip area">письма</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-110"><td><a href="#AC-110">AC-110</a></td><td>Письмо содержит: что ждёт пользователя, от кого и ссылку прямо в экран сценария, где действие выполняется.</td><td><span class="chip area">письма</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-111"><td><a href="#AC-111">AC-111</a></td><td>Отказ SMTP не откатывает действие, породившее письмо.</td><td><span class="chip area">письма</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-112"><td><a href="#AC-112">AC-112</a></td><td>Отказ отправки письма фиксируется в журнале с указанием вида письма и без адреса получателя.</td><td><span class="chip area">письма</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-113"><td><a href="#AC-113">AC-113</a></td><td>Стол, счётчик и сценарии показывают пользователю только то, что он вправе видеть по правилам подсистем.</td><td><span class="chip area">доступ</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-114"><td><a href="#AC-114">AC-114</a></td><td>Сервер проверяет права при каждом действии сценария, как и сейчас; действие, недоступное пользователю, отклоняется независимо от того, что показал интерфейс.</td><td><span class="chip area">доступ</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-115"><td><a href="#AC-115">AC-115</a></td><td>Данные стола одного пользователя другому недоступны (403/404 по правилам подсистем).</td><td><span class="chip area">доступ</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-116"><td><a href="#AC-116">AC-116</a></td><td>Рабочий стол и сценарии не вводят новых прав и ролей: они используют существующие правила и права подсистем.</td><td><span class="chip area">доступ</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-117"><td><a href="#AC-117">AC-117</a></td><td>Неопубликованное содержимое (версии в работе, их разница, списки матриц) показывается на столе, в сценариях и в письмах только тем, кто вправе читать его по правилам career-framework.</td><td><span class="chip area">доступ</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-118"><td><a href="#AC-118">AC-118</a></td><td>Находки AC-122…AC-152 вычисляются только по объектам, за которые пользователь отвечает или которые вправе видеть (руководитель — подразделения, которыми руководит; HR — подразделения ответственности; администратор — вся оргструктура; сотрудник — своя должность), и не раскрывают объекты вне этой области.</td><td><span class="chip area">доступ</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-119"><td><a href="#AC-119">AC-119</a></td><td>Экраны стола и сценариев выполнены в стиле <code>docs/ux/DESIGN.md</code>.</td><td><span class="chip area">UI</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-120"><td><a href="#AC-120">AC-120</a></td><td>Экраны адаптивны для desktop и tablet.</td><td><span class="chip area">UI</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-121"><td><a href="#AC-121">AC-121</a></td><td>Контракт API меняется только аддитивно (версия 3.1.0): существующие методы не ломаются, а методы стола и сценариев описаны в документации подсистемы и в OpenAPI.</td><td><span class="chip area">контракт</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-122"><td><a href="#AC-122">AC-122</a></td><td>Вид «Должность без трека»: действующая должность из перечня подразделения, которым пользователь руководит, не связана ни с одним уровнем действующего трека этого или вышестоящего подразделения. Причина: должность не связана с карьерным треком; указано число сотрудников на ней. Давность не показывается. Переход: сценарий «Связать должности с треком» (AC-162…AC-168). Действие или справочно — по AC-132.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-123"><td><a href="#AC-123">AC-123</a></td><td>Вид «Трек без должностей»: у трека подразделения, которым пользователь руководит, нет ни одной связанной действующей должности (<a href="career-framework.html#AC-96">career-framework AC-96</a>). Причина: у трека нет связанных действующих должностей. Давность не показывается. Переход: сценарий «Связать должности с треком» (AC-162…AC-168). Действие или справочно — по AC-132.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-124"><td><a href="#AC-124">AC-124</a></td><td>Вид «Уровень без должности»: у уровня трека подразделения нет связанной действующей должности (<a href="career-framework.html#AC-96">career-framework AC-96</a>). Причина называет трек и уровень. Давность не показывается. Переход: сценарий «Связать должности с треком» (AC-162…AC-168). Действие или справочно — по AC-132.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-125"><td><a href="#AC-125">AC-125</a></td><td>Вид «Трек без уровней или с одним уровнем»: у трека подразделения нет уровней либо только один уровень. Причина называет трек и число уровней. Давность не показывается. Переход: окно трека (правка уровней). Действие или справочно — по AC-132.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-126"><td><a href="#AC-126">AC-126</a></td><td>Вид «Матрица не покрывает уровни трека»: опубликованная матрица подразделения, которым пользователь руководит, не покрывает текущие уровни своего трека — после публикации уровни добавлены, удалены или переставлены; версии в работе у матрицы нет. Причина называет матрицу и расхождение. Давность не показывается. Переход: сценарий «Построить матрицу компетенций» (новая версия матрицы). Действие, входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-127"><td><a href="#AC-127">AC-127</a></td><td>Вид «Матрица опирается на неактивное»: опубликованная матрица подразделения, которым пользователь руководит, опирается на неактивный трек, неактивное направление или неактивную компетенцию; версии в работе у матрицы нет. Причина называет неактивную сущность. Давность не показывается. Переход: сценарий «Построить матрицу компетенций» (новая версия матрицы). Действие, входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-128"><td><a href="#AC-128">AC-128</a></td><td>Вид «Компетенция изменилась» (справочно): компетенция опубликованной матрицы изменена (новая версия компетенции) после публикации матрицы. Причина называет компетенцию. Давность не показывается. Переход: просмотр компетенции с историей версий. Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-129"><td><a href="#AC-129">AC-129</a></td><td>Вид «Ваши черновые записи ждут утверждения» (справочно): черновая запись справочника, созданная пользователем, ждёт утверждения HR. Причина: запись ждёт утверждения HR. Давность: от создания записи. Переход: просмотр записи. Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-130"><td><a href="#AC-130">AC-130</a></td><td>Вид «Ваша версия на согласовании» (справочно): версия матрицы подразделения, которым пользователь руководит, находится на согласовании. Причина: у кого сейчас ход и на каком шаге. Давность: от решения по версии, приведшего её на текущий шаг. Переход: просмотр версии. Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-131"><td><a href="#AC-131">AC-131</a></td><td>Проверки AC-122…AC-132 вычисляются по подразделениям, которыми пользователь руководит; «действие» входит в счётчик, «справочно» показывается отдельной группой вне счётчика (AC-30).</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-132"><td><a href="#AC-132">AC-132</a></td><td>Для видов AC-122…AC-125 пункт — действие, если пользователь вправе править соответствующий трек (<a href="career-framework.html#AC-91">career-framework AC-91</a>; для AC-122 — существующий трек, которому доступна эта должность по <a href="career-framework.html#AC-90">career-framework AC-90</a>); иначе пункт справочный, со ссылкой на ответственного HR, и в счётчик не входит.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-133"><td><a href="#AC-133">AC-133</a></td><td>Проверки связей у HR: по подразделениям своей ответственности HR получает виды AC-122…AC-125 (должность без трека, трек без должностей, уровень без должности, трек без уровней или с одним уровнем) с теми же условием, причиной, переходом (AC-162…AC-168 или окно трека) и правилом «действие или справочно» (AC-132); как правило, HR правит такие треки сам (<a href="career-framework.html#AC-91">career-framework AC-91</a>), и пункты — действия, входящие в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-134"><td><a href="#AC-134">AC-134</a></td><td>Черновой трек на утверждении (AC-28, AC-32) без уровней или с уровнем без должности (<a href="career-framework.html#AC-96">career-framework AC-96</a>) отмечается в своём пункте утверждения пометкой «утверждать рано» с причиной (<a href="career-framework.html#AC-97">career-framework AC-97</a>, <a href="career-framework.html#AC-102">career-framework AC-102</a>); отдельным пунктом проверки AC-123…AC-125 по такому треку не выводятся.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-135"><td><a href="#AC-135">AC-135</a></td><td>Вид «Подразделение без руководителя» (справочно): у подразделения ответственности HR нет руководителя. Причина указывает, что назначить руководителя вправе глобальный администратор (со ссылкой на администратора). Давность не показывается. Переход: просмотр карточки подразделения. Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-136"><td><a href="#AC-136">AC-136</a></td><td>Вид «Версия задержалась на шаге 1» (справочно): версия матрицы подразделения ответственности HR находится на шаге 1 маршрута дольше 7 дней. Причина: у кого ход и сколько версия там находится. Давность: от решения по версии, приведшего её на шаг 1 (отправка). Переход: просмотр версии. Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-137"><td><a href="#AC-137">AC-137</a></td><td>Вид «Неиспользуемая компетенция» (справочно): действующая компетенция не входит ни в одну версию матриц. Причина: компетенция нигде не используется. Давность не показывается. Переход: сценарий «Привести каталог в порядок» (AC-169…AC-173). Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-138"><td><a href="#AC-138">AC-138</a></td><td>Вид «Неиспользуемая шкала» (справочно): действующая шкала, не являющаяся шкалой по умолчанию, не используется ни компетенциями, ни версиями матриц. Причина: шкала нигде не используется. Давность не показывается. Переход: AC-169…AC-173. Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-139"><td><a href="#AC-139">AC-139</a></td><td>Вид «Неиспользуемая категория» (справочно): действующая категория компетенций вне любых версий матриц и компетенций. Причина: категория нигде не используется. Давность не показывается. Переход: AC-169…AC-173. Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-140"><td><a href="#AC-140">AC-140</a></td><td>Вид «Направление без треков» (справочно): у действующего направления нет ни одного трека. Причина: у направления нет треков. Давность не показывается. Переход: AC-169…AC-173. Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-141"><td><a href="#AC-141">AC-141</a></td><td>Проверки AC-133, AC-135, AC-136 вычисляются по подразделениям ответственности HR; проверки AC-137…AC-140 — по всему каталогу, поскольку записи каталога не привязаны к подразделениям.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-142"><td><a href="#AC-142">AC-142</a></td><td>Вид «Должность сотрудника вне перечня»: должность работающего сотрудника не входит в перечень должностей, доступный его подразделению. Причина называет сотрудника, должность и подразделение. Давность не показывается. Переход: сценарий «Навести порядок в оргструктуре» (AC-174…AC-181). Действие, входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-143"><td><a href="#AC-143">AC-143</a></td><td>Вид «Пустой перечень должностей»: у действующего подразделения есть сотрудники, но перечень должностей пуст. Причина: у подразделения нет должностей при наличии сотрудников. Давность не показывается. Переход: сценарий «Подключить подразделение» (AC-80…AC-84). Действие, входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-144"><td><a href="#AC-144">AC-144</a></td><td>Вид «Неактивная должность у работающих сотрудников» (справочно): неактивная должность занята работающими сотрудниками. Причина называет должность и число сотрудников. Давность не показывается. Переход: AC-174…AC-181. Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-145"><td><a href="#AC-145">AC-145</a></td><td>Вид «Неиспользуемая должность» (справочно): действующая должность не входит ни в один перечень и не занята сотрудниками. Причина: должность нигде не используется. Давность не показывается. Переход: AC-174…AC-181. Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-146"><td><a href="#AC-146">AC-146</a></td><td>Вид «Учётная запись без сотрудника»: учётная запись роли «пользователь» не привязана к сотруднику. Причина называет учётную запись. Давность не показывается. Переход: AC-174…AC-181. Действие, входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-147"><td><a href="#AC-147">AC-147</a></td><td>Вид «Руководитель или HR без действующей учётной записи»: у руководителя действующего подразделения нет учётной записи, она приглашена (пароль не задан) или заблокирована. Для ответственного HR та же ситуация — это AC-34 по AC-35 и отдельным видом не выводится. Причина называет роль, сотрудника и состояние учётной записи. Давность не показывается. Переход: сценарий «Подключить подразделение» (AC-80…AC-84). Действие, входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-148"><td><a href="#AC-148">AC-148</a></td><td>Вид «Пустое подразделение» (справочно): действующее подразделение без сотрудников и без дочерних подразделений. Причина: подразделение пусто. Давность не показывается. Переход: AC-174…AC-181. Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-149"><td><a href="#AC-149">AC-149</a></td><td>Проверки AC-142…AC-150 вычисляются по всей оргструктуре; действия проверок ведут в «Подключить подразделение» (AC-80…AC-84) или «Навести порядок в оргструктуре» (AC-174…AC-181).</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-150"><td><a href="#AC-150">AC-150</a></td><td>Проверки AC-122…AC-132 и AC-133…AC-141 администратору не выводятся: его проверки — AC-32…AC-40 и AC-142…AC-150.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-151"><td><a href="#AC-151">AC-151</a></td><td>Вид «Для вашей должности нет трека» (справочно): должность пользователя не связана ни с одним уровнем действующего трека. Причина: «Для вашей должности нет карьерного трека — обратитесь к руководителю». Давность не показывается. Переход: сценарий «Моё место в компании». Не входит в счётчик.</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-152"><td><a href="#AC-152">AC-152</a></td><td>Пункт AC-151 показывается пользователю, привязанному к сотруднику, на столе в справочной группе (AC-30) и на экране «Моё место в компании» (AC-100).</td><td><span class="chip area">проверки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-153"><td><a href="#AC-153">AC-153</a></td><td>Один объект — один пункт. Типы объектов и находки каждого — таблица 1.</td><td><span class="chip area">без дублей</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-154"><td><a href="#AC-154">AC-154</a></td><td>Несколько находок по одному объекту показываются причинами внутри его пункта, самая важная первой; порядок причин для каждого типа объекта — таблица 2.</td><td><span class="chip area">без дублей</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-155"><td><a href="#AC-155">AC-155</a></td><td>Поглощаемая находка не показывается (ни пунктом, ни причиной), пока видна поглощающая ей пользователя; пары поглощения — таблица 1. Если поглощающая находка пользователю не видна (другая роль, иной вариант), поглощаемая показывается.</td><td><span class="chip area">без дублей</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-156"><td><a href="#AC-156">AC-156</a></td><td>Справочная находка не показывается, если по тому же объекту есть находка-действие. Общее правило: справочная находка не поглощает справочную (две справочные находки одного объекта — две причины одного пункта); исключения заданы таблицей 1 и имеют приоритет над общим правилом (например, AC-135 ⊃ AC-29).</td><td><span class="chip area">без дублей</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-157"><td><a href="#AC-157">AC-157</a></td><td>Одна и та же находка, доступная пользователю по нескольким его ролям, показывается один раз.</td><td><span class="chip area">без дублей</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-158"><td><a href="#AC-158">AC-158</a></td><td>Пункт с несколькими причинами считается в счётчике один раз; пункт — либо действие (все его видимые причины — действия), либо справочный (все — справочные), поскольку справочные причины при наличии действия не показываются (AC-156).</td><td><span class="chip area">без дублей</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-159"><td><a href="#AC-159">AC-159</a></td><td>Находки одного подразделения, ведущие в AC-80…AC-84 (нет руководителя — AC-33; учётная запись руководителя — AC-147; нет ответственного HR — AC-34; пустой перечень при сотрудниках — AC-143), показываются одним пунктом «Подключить подразделение» со списком пробелов.</td><td><span class="chip area">без дублей</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-160"><td><a href="#AC-160">AC-160</a></td><td>Переход пункта с несколькими причинами определяется первой видимой причиной (по таблице 2); действия остальных причин, выполняемые на самом столе (AC-39), остаются в пункте, пока в нём есть соответствующая причина.</td><td><span class="chip area">без дублей</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-161"><td><a href="#AC-161">AC-161</a></td><td>Наличие версии матрицы в работе (черновик, на согласовании, возвращённая) подавляет находки «Нет опубликованной матрицы» (AC-25, AC-29) и находки об опубликованной матрице (AC-126, AC-127, AC-128), независимо от того, показана ли самой версии находка этому пользователю.</td><td><span class="chip area">без дублей</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-162"><td><a href="#AC-162">AC-162</a></td><td>Сценарий «Связать должности с треком» доступен тому, кто вправе править трек (<a href="career-framework.html#AC-91">career-framework AC-91</a>): руководителю — для чернового трека его подразделения, ответственному HR и глобальному администратору — для треков; для остальных трек открывается только на просмотр или недоступен.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-163"><td><a href="#AC-163">AC-163</a></td><td>Экран трека показывает уровни трека в порядке трека и у каждого уровня — связанные должности.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-164"><td><a href="#AC-164">AC-164</a></td><td>Экран показывает должности, доступные треку (<a href="career-framework.html#AC-90">career-framework AC-90</a>) и ещё не связанные ни с одним уровнем этого трека, с числом сотрудников на каждой; должность, уже связанная с одним из уровней, для связывания с другим не предлагается (перенос — снять и связать заново).</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-165"><td><a href="#AC-165">AC-165</a></td><td>Связать должность с уровнем и снять связь можно на месте, без ухода с экрана.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-166"><td><a href="#AC-166">AC-166</a></td><td>Уровни без должности (<a href="career-framework.html#AC-96">career-framework AC-96</a>, в том числе с одними неактивными должностями) и запреты <a href="career-framework.html#AC-97">career-framework AC-97…AC-103</a> подсвечены на экране; отказ по <a href="career-framework.html#AC-98">career-framework AC-98</a> (последняя должность действующего трека) показан понятной ошибкой.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-167"><td><a href="#AC-167">AC-167</a></td><td>Переход в сценарий есть из пунктов AC-122…AC-124 и AC-133 (когда пункт — действие по AC-132).</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-168"><td><a href="#AC-168">AC-168</a></td><td>Изменения связей из сценария выполняются по <a href="career-framework.html#AC-93">career-framework AC-93</a> (<code>If-Match</code>, событие журнала <code>audit</code>); после ответа 412 запись перечитывается и показывается пользователю, следующее сохранение отправляет новую версию, автоматического повтора нет (<a href="career-framework.html#AC-73">career-framework AC-73</a>).</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-169"><td><a href="#AC-169">AC-169</a></td><td>Сценарий «Привести каталог в порядок» доступен HR и глобальному администратору и показывает очередь неиспользуемых записей каталога (AC-137…AC-140).</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-170"><td><a href="#AC-170">AC-170</a></td><td>Запись очереди можно удалить на месте по правилам удаления записей карьерной модели (<a href="career-framework.html#AC-63">career-framework AC-63…AC-72</a>).</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-171"><td><a href="#AC-171">AC-171</a></td><td>Запись очереди можно деактивировать на месте.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-172"><td><a href="#AC-172">AC-172</a></td><td>Если удаление невозможно, пользователь получает отказ с перечнем того, что мешает, по правилам <a href="career-framework.html#AC-63">career-framework AC-63…AC-72</a>; запись остаётся в очереди.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-173"><td><a href="#AC-173">AC-173</a></td><td>После решения по записи следующая запись очереди открывается сама.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-174"><td><a href="#AC-174">AC-174</a></td><td>Сценарий «Навести порядок в оргструктуре» доступен глобальному администратору и показывает очередь находок AC-142…AC-150.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-175"><td><a href="#AC-175">AC-175</a></td><td>По находке «Должность сотрудника вне перечня» (AC-142) на месте можно добавить должность в перечень подразделения или сменить должность сотрудника.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-176"><td><a href="#AC-176">AC-176</a></td><td>По находке «Неактивная должность у работающих сотрудников» (AC-144) на месте можно сменить должность сотрудникам.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-177"><td><a href="#AC-177">AC-177</a></td><td>По находке «Неиспользуемая должность» (AC-145) на месте можно деактивировать должность.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-178"><td><a href="#AC-178">AC-178</a></td><td>По находке «Учётная запись без сотрудника» (AC-146) на месте можно привязать учётную запись к сотруднику.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-179"><td><a href="#AC-179">AC-179</a></td><td>По находке «Пустое подразделение» (AC-148) на месте можно деактивировать подразделение.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-180"><td><a href="#AC-180">AC-180</a></td><td>Находки подразделения из AC-80…AC-84 (AC-33, AC-34, AC-143, AC-147) в очереди ведут в сценарий «Подключить подразделение».</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-181"><td><a href="#AC-181">AC-181</a></td><td>После решения по находке следующая находка очереди открывается сама.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="table-absorption">Таблица 1 — объекты и поглощение (AC-153, AC-155, AC-156)</h3>
+  <p>«А ⊃ Б» — находка А поглощает находку Б: Б не показывается, пока видна А (AC-155). Виды названы номерами критериев; «AC-122…AC-125 (у HR — AC-133)» — одни и те же виды. «Основание»: <b>постановка</b> — прямо в требованиях к столу; <b>AC-156</b> — справочное не показывается при действии по тому же объекту; <b>вывод</b> — следует из канона career-framework/org-structure либо из «один объект — один пункт». Пары «постановка» работают в любом варианте находки (действие или справочно); пары «AC-156» — только когда поглощающая находка является действием. Каждый вид AC-22…AC-42 и AC-122…AC-152 присутствует в столбце «Находки типа» хотя бы одной строки (AC-122 — «Должность», AC-123…AC-125 — «Трек»; AC-28 и AC-32 — «Трек» для черновых треков и «Запись справочника (черновая)» для остальных черновиков).</p>
+  <table>
+    <thead>
+      <tr><th>Тип объекта</th><th>Находки типа</th><th>Поглощение (А ⊃ Б)</th><th>Основание</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Матрица подразделения (версия в работе и опубликованная)</td>
+        <td>AC-22, AC-23, AC-24, AC-27, AC-126, AC-127, AC-128, AC-130, AC-136</td>
+        <td>
+          Факт «у матрицы есть версия в работе» (любая из AC-22, AC-23, AC-24, AC-27, AC-130 или версия, по которой пользователю ничего не показано) ⊃ AC-126, AC-127, AC-128 (и подавляет AC-25, AC-29 по AC-26, AC-29) — AC-161<br>
+          AC-24 ⊃ AC-130, AC-136 (та же версия, ход пользователя)<br>
+          AC-27 ⊃ AC-130 (автор — он же ответственный HR)<br>
+          AC-126 ⊃ AC-128; AC-127 ⊃ AC-128<br>
+          AC-130 и AC-136 друг друга не поглощают — две причины одного пункта
+        </td>
+        <td>постановка (AC-26, AC-161: «нет опубликованной матрицы» при версии в работе); вывод (новую версию при версии в работе создать нельзя — <a href="career-framework.html#AC-46">career-framework AC-46</a>; AC-24/AC-27 — действие над той же версией); AC-156</td>
+      </tr>
+      <tr>
+        <td>Подразделение</td>
+        <td>AC-25, AC-29, AC-33, AC-34, AC-135, AC-143, AC-147, AC-148</td>
+        <td>
+          AC-33 ⊃ AC-29; AC-135 ⊃ AC-29 («подразделение без руководителя поглощает «нет опубликованной матрицы»»)<br>
+          AC-33, AC-34, AC-143, AC-147, AC-25 ⊃ AC-29, AC-135 (действие над подразделением поглощает справочные находки о нём)<br>
+          AC-148 ⊃ AC-33, AC-34, AC-29, AC-135 (исключение из AC-156: руководитель — работающий сотрудник подразделения, поэтому пустое подразделение всегда «без руководителя»; иначе AC-148 не показывалась бы никогда)<br>
+          AC-33, AC-147, AC-34, AC-143 — причины одного пункта «Подключить подразделение» (AC-159); «ответственный HR без действующей учётной записи» из AC-147 — это AC-34 (AC-35), не отдельная находка
+        </td>
+        <td>постановка (AC-33 ⊃ AC-29; один пункт AC-80…AC-84); AC-156; вывод (AC-148, AC-34 ≡ часть AC-147)</td>
+      </tr>
+      <tr>
+        <td>Трек</td>
+        <td>AC-123, AC-124, AC-125 (у HR — AC-133); утверждение чернового трека (AC-28, AC-32) с пометкой AC-134; AC-129 (для черновых записей)</td>
+        <td>
+          AC-125 («нет уровней») ⊃ AC-123, AC-124<br>
+          AC-123 ⊃ AC-124<br>
+          AC-28, AC-32 (черновой трек) ⊃ AC-123, AC-124, AC-125 («нет уровней»): показываются пометкой «утверждать рано» в пункте утверждения (AC-134); AC-125 в варианте «один уровень» не поглощается — вторая причина того же пункта<br>
+          AC-123, AC-124, AC-125 (в варианте «действие»), AC-28, AC-32 ⊃ AC-129 (тот же черновой трек)
+        </td>
+        <td>постановка (AC-125 ⊃ AC-123, AC-124; AC-123 ⊃ AC-124; пометка вместо отдельного пункта); AC-156 (AC-129); вывод («один уровень» не блокирует утверждение по <a href="career-framework.html#AC-97"><a href="career-framework.html#AC-97">career-framework AC-97</a>…AC-103</a>, пометка к нему не относится)</td>
+      </tr>
+      <tr>
+        <td>Запись справочника (черновая)</td>
+        <td>AC-28, AC-32, AC-129</td>
+        <td>AC-28 ⊃ AC-129; AC-32 ⊃ AC-129 (пользователь — автор-руководитель и одновременно утверждающий HR или администратор)</td>
+        <td>AC-156; вывод (одна запись — один пункт)</td>
+      </tr>
+      <tr>
+        <td>Запись справочника (неиспользуемая, «Действует»)</td>
+        <td>AC-137, AC-138, AC-139, AC-140</td>
+        <td>Поглощений нет: по одной находке на запись; черновые записи — предыдущий тип, неактивные в проверку не входят</td>
+        <td>вывод</td>
+      </tr>
+      <tr>
+        <td>Должность в перечне подразделения</td>
+        <td>AC-122 (у HR — AC-133), AC-144, AC-145</td>
+        <td>AC-122 ⊃ AC-151 («должность без трека поглощает «сотрудники на должности без трека»»: пользователь, занимающий эту должность, не видит дублирующий AC-151)<br>AC-122, AC-144, AC-145 друг друга не поглощают: AC-122 — действующая должность в перечне, AC-144 — неактивная, AC-145 — вне перечней; виды не пересекаются</td>
+        <td>постановка (AC-122 ⊃ «сотрудники на должности без трека» — прочитано как AC-151); вывод</td>
+      </tr>
+      <tr>
+        <td>Сотрудник</td>
+        <td>AC-142, AC-151</td>
+        <td>AC-142 ⊃ AC-151 (администратор — сам сотрудник со своей должностью вне перечня)</td>
+        <td>AC-156</td>
+      </tr>
+      <tr>
+        <td>Учётная запись</td>
+        <td>AC-36, AC-146</td>
+        <td>
+          AC-36 ⊃ причина «учётная запись приглашена» из AC-147 в пункте подразделения (приглашение переотправляется прямо на столе)<br>
+          AC-146 и AC-36 друг друга не поглощают — две причины одного пункта учётной записи
+        </td>
+        <td>вывод (одна и та же учётная запись — два объекта-пункта без поглощения дублировались бы)</td>
+      </tr>    </tbody>
+  </table>
+
+  <h3 id="table-order">Таблица 2 — порядок причин в пункте (AC-154)</h3>
+  <p>Принципы порядка: 1) действие раньше справочного; 2) среди действий — то, что стоит на ходу пользователя сейчас или блокирует процесс, раньше расхождений опубликованного; 3) корень цепочки раньше следствия (нет руководителя → его учётная запись → нет HR → пустой перечень; учётная запись без сотрудника → приглашение, так как привязка отменяет ссылку приглашения). Порядок выведен по этим принципам и принят вместе с требованиями.</p>
+  <table>
+    <thead>
+      <tr><th>Тип объекта</th><th>Порядок причин (самая важная первой)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Матрица подразделения</td><td>AC-22 → AC-23 → AC-24 → AC-27 → AC-127 → AC-126 → AC-136 → AC-130 → AC-128 (AC-22, AC-23, AC-24, AC-27 взаимоисключающи: версия в один момент в одном статусе и на одном шаге)</td></tr>
+      <tr><td>Подразделение</td><td>AC-33 → AC-147 → AC-34 → AC-143 → AC-25 → AC-148 → AC-135 → AC-29</td></tr>
+      <tr><td>Трек</td><td>утверждение черновика (AC-28, AC-32) → AC-125 → AC-123 → AC-124 → AC-129</td></tr>
+      <tr><td>Запись справочника (черновая)</td><td>AC-28, AC-32 → AC-129</td></tr>
+      <tr><td>Запись справочника (неиспользуемая)</td><td>одна находка: AC-137, AC-138, AC-139 или AC-140</td></tr>
+      <tr><td>Должность в перечне подразделения</td><td>AC-122 → AC-144 → AC-145 (на практике — одна)</td></tr>
+      <tr><td>Сотрудник</td><td>AC-142 → AC-151</td></tr>
+      <tr><td>Учётная запись</td><td>AC-146 → AC-36</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="non-goals" class="callout warn">
+  <h2>Вне рамок</h2>
+  <ul class="non-goals">
+    <li>Волны повышения, заявки, оценки, комиссии, кадровые решения и dashboard'ы по ним (показатели волн, рейтинги, статистика): в системе их нет; стол устроен так, чтобы их действия добавлялись новыми видами.</li>
+    <li>Прямая связь сотрудника с треком и уровнем: уровень сотрудника выводится из его должности; оценок готовности к следующему уровню по реальным оценкам нет.</li>
+    <li>Сценарии «Пересмотреть матрицу» (отдельный экран) и «Моё подразделение»: пересмотр идёт через «Создать новую версию» и сценарий «Построить матрицу компетенций».</li>
+    <li>Настройка пользователем состава стола, отключение писем, дайджесты, push и уведомления в браузере, напоминания о просроченных действиях: сроков у ожидаемых действий нет.</li>
+    <li>Хранилище задач: назначение, закрытие вручную и учёт выполнения ожидаемых действий.</li>
+    <li>Гарантированная доставка писем-напоминаний (outbox): письма ставятся в очередь в памяти и теряются при перезапуске; источник правды — стол и счётчик, потерянное письмо не теряет действие.</li>
+    <li>Новые роли и права: используются две роли учётной записи и роли процесса карьерной модели.</li>
+    <li>Удаление табличных разделов: они остаются вторичным доступом.</li>
+  </ul>
+</section>
+      </main>
+      <footer>by ASD workflow | 2026-10-13</footer>
+    </div>
+  </div>
+</body>
+</html>

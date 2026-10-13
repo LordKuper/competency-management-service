@@ -36,3 +36,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 
 <!-- entries appended below this line -->
 - 2026-10-13 — design-promote decomposition (оркестратор, адаптивно): подсистема desk одобрена пользователем 2026-10-13 (hard gate) — регистрируется; изменены career-framework, org-structure, user-management, audit; новых подсистем и границ нет
+- 2026-10-13 — design-promote: asd-ba и asd-architect COMPLETED; asd-ux остановлен по лимиту 100 ходов (interrupted) с частичным результатом на диске — закоммичено как промежуточное, продолжение тем же агентом

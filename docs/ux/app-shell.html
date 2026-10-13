@@ -14,8 +14,8 @@ responsibility:
   <meta name="subsystem" content="project">
   <meta name="sprint-id" content="">
   <meta name="status" content="approved">
-  <meta name="updated" content="2026-10-12">
-  <meta name="responsibility" content="ux flows and ui mockups of the application frame: sign-in session gate, header (brand, navigation, user menu), service pages">
+  <meta name="updated" content="2026-10-13">
+  <meta name="responsibility" content="ux flows and ui mockups of the application frame: sign-in session gate and return to the target page, header (brand, navigation with the desk item and counter, user menu), service pages">
   <meta name="provenance" content="original">
   <title>UX-спецификация — Каркас приложения и шапка</title>
   <style>
@@ -208,22 +208,26 @@ responsibility:
           <span class="status-approved">approved</span>
         </div>
         <h1>UX-спецификация — Каркас приложения и шапка</h1>
-        <div class="stats">1 flows · 5 mockups · updated 2026-10-12</div>
+        <div class="stats">1 flows · 7 mockups · updated 2026-10-13</div>
       </header>
       <main>
 <!--
 responsibility:
-  owns: ux flows and ui mockups of the application frame (session gate, header, navigation, user menu, service pages)
+  owns: ux flows and ui mockups of the application frame (session gate, return to the target page after sign-in, header, navigation, desk counter badge, user menu, service pages)
   excludes: requirements, accessibility (project-wide), design-system components and tokens, new component proposals
   delegates_to: docs/product/requirements (requirements), accessibility.html (a11y), DESIGN.md (components and tokens)
 provenance: original
 -->
 
-<div class="ds" style="--ds-primary:#2B42E5;--ds-primary-hover:#2338C2;--ds-primary-active:#182CC2;--ds-primary-subtle:#EBF2FD;--ds-accent:#FBAE40;--ds-text-primary:#292929;--ds-text-secondary:#4B4B4C;--ds-text-muted:#5F6670;--ds-text-disabled:#A3A9B1;--ds-text-inverse:#FFFFFF;--ds-text-inverse-muted:#9BA8F9;--ds-surface-page:#F5F6F8;--ds-surface-panel:#FFFFFF;--ds-surface-muted:#EEEEEE;--ds-surface-inverse:#081240;--ds-border-subtle:#DDE1E6;--ds-border-control:#7D8590;--ds-overlay-scrim:#08124073;--ds-overlay-inverse-hover:#FFFFFF1F;--ds-overlay-inverse-pressed:#FFFFFF33;--ds-success:#197A4A;--ds-success-bg:#E6F4EC;--ds-warning:#A85800;--ds-warning-bg:#FFF4DF;--ds-danger:#C62832;--ds-danger-bg:#FDECEC;--ds-info:#1B64C8;--ds-info-bg:#EBF2FD;--ds-xxs:4px;--ds-xs:8px;--ds-sm:12px;--ds-md:16px;--ds-lg:20px;--ds-xl:24px;--ds-xxl:32px;--ds-xxxl:48px;--ds-header-h:56px;--ds-h-sm:24px;--ds-h-md:32px;--ds-h-lg:40px;--ds-r-xs:2px;--ds-r-md:4px;--ds-r-lg:8px;--ds-r-full:9999px;--ds-bw:1px;--ds-el-popup:0 4px 12px rgba(8,18,64,0.12);--ds-el-modal:0 8px 24px rgba(8,18,64,0.16);--ds-font-ui:'PT Sans','Segoe UI',Roboto,Arial,sans-serif;--ds-font-mono:'PT Mono',Consolas,'Courier New',monospace;--ds-t-h1:700 30px/38px var(--ds-font-ui);--ds-t-h2:700 24px/32px var(--ds-font-ui);--ds-t-h3:700 20px/28px var(--ds-font-ui);--ds-t-body-md:400 14px/22px var(--ds-font-ui);--ds-t-body-strong:700 14px/22px var(--ds-font-ui);--ds-t-body-sm:400 12px/20px var(--ds-font-ui);--ds-t-code:400 13px/20px var(--ds-font-mono);">
+<div class="ds" style="--ds-primary:#2B42E5;--ds-primary-hover:#2338C2;--ds-primary-active:#182CC2;--ds-primary-subtle:#EBF2FD;--ds-accent:#FBAE40;--ds-text-primary:#292929;--ds-text-secondary:#4B4B4C;--ds-text-muted:#5F6670;--ds-text-disabled:#A3A9B1;--ds-text-inverse:#FFFFFF;--ds-text-inverse-muted:#9BA8F9;--ds-surface-page:#F5F6F8;--ds-surface-panel:#FFFFFF;--ds-surface-muted:#EEEEEE;--ds-surface-inverse:#081240;--ds-border-subtle:#DDE1E6;--ds-border-control:#7D8590;--ds-overlay-scrim:#08124073;--ds-overlay-inverse-hover:#FFFFFF1F;--ds-overlay-inverse-pressed:#FFFFFF33;--ds-success:#197A4A;--ds-success-bg:#E6F4EC;--ds-warning:#A85800;--ds-warning-bg:#FFF4DF;--ds-danger:#C62832;--ds-danger-bg:#FDECEC;--ds-info:#1B64C8;--ds-info-bg:#EBF2FD;--ds-xxs:4px;--ds-xs:8px;--ds-sm:12px;--ds-md:16px;--ds-lg:20px;--ds-xl:24px;--ds-xxl:32px;--ds-xxxl:48px;--ds-header-h:56px;--ds-h-sm:24px;--ds-h-md:32px;--ds-h-lg:40px;--ds-r-xs:2px;--ds-r-md:4px;--ds-r-lg:8px;--ds-r-full:9999px;--ds-bw:1px;--ds-el-popup:0 4px 12px rgba(8,18,64,0.12);--ds-el-modal:0 8px 24px rgba(8,18,64,0.16);--ds-font-ui:'PT Sans','Segoe UI',Roboto,Arial,sans-serif;--ds-font-mono:'PT Mono',Consolas,'Courier New',monospace;--ds-t-h1:700 30px/38px var(--ds-font-ui);--ds-t-h2:700 24px/32px var(--ds-font-ui);--ds-t-h3:700 20px/28px var(--ds-font-ui);--ds-t-body-md:400 14px/22px var(--ds-font-ui);--ds-t-body-strong:700 14px/22px var(--ds-font-ui);--ds-t-body-sm:400 12px/20px var(--ds-font-ui);--ds-t-code:400 13px/20px var(--ds-font-mono);--ds-t-brand-wordmark:700 45px/71px var(--ds-font-ui);--ds-brand-logo-auth:80px;">
+<style>
+/* previews keep the light app surface in the OS dark scheme; document text keeps shell colours */
+@media (prefers-color-scheme:dark){.ds .mockup-preview{background:var(--ds-surface-page);}}
+</style>
 
 <section id="flows" class="hero">
   <h2>Сценарии</h2>
-  <p class="lede">Каркас приложения — всё, что окружает разделы: проверка сессии, шапка с брендом, навигацией и меню пользователя, служебные страницы. Охватывает UI-часть AC-13 (шапка: инициалы и фамилия, аватарка), AC-6 (редирект на вход при потере сессии) и AC-12 (раздел, недоступный роли, выглядит как «Страница не найдена»; все проверки прав — на backend). Экран входа, экраны без сессии («Не помню пароль», «Задание пароля», «Новый пароль») и смена пароля описаны в <a href="user-management.html">user-management.html</a>.</p>
+  <p class="lede">Каркас приложения — всё, что окружает разделы: проверка сессии, шапка с брендом, навигацией и меню пользователя, служебные страницы. Охватывает шапку (инициалы и фамилия, аватарка, первый пункт «Рабочий стол» со счётчиком ожидаемых действий и список «Справочники»), редирект на вход при потере сессии с возвратом на нужную страницу и правило «раздел, недоступный роли, выглядит как «Страница не найдена»» (все проверки прав — на backend). Сам рабочий стол и экраны сценариев — в <a href="desk.html">desk.html</a>. Экран входа, экраны без сессии («Не помню пароль», «Задание пароля», «Новый пароль») и смена пароля описаны в <a href="user-management.html">user-management.html</a>.</p>
   <pre class="mermaid">
 flowchart TD
   A["Открытие приложения"] --> C["Полноэкранный индикатор, пока запрашивается текущий пользователь"]
@@ -233,13 +237,14 @@ flowchart TD
   D -- "сеть или 5xx" --> G["Ошибка: Не удалось загрузить данные учётной записи, кнопка Повторить"]
   G -- "Повторить" --> C
   E --> H{"Адрес"}
-  H -- "корень" --> I["Переход в первый доступный раздел роли"]
-  I -- "разделов нет" --> L["Заглушка Добро пожаловать"]
+  H -- "корень" --> I["Переход на Рабочий стол"]
   H -- "раздел роли" --> J["Страница раздела"]
   H -- "неизвестный адрес или раздел другой роли" --> K["Страница не найдена"]
   E -- "Меню пользователя: Сменить пароль" --> M["Модальное окно смены пароля"]
   E -- "Меню пользователя: Выйти" --> N["Сессия завершена на сервере, кэш очищен"]
   N --> F
+  F -- "вход выполнен, цель — путь внутри приложения" --> J
+  F -- "вход выполнен, цели нет или адрес чужой" --> I
   J -- "401 в любой момент" --> F
   E -- "Непредвиденная ошибка отрисовки" --> R["Предупреждение: Не удалось открыть страницу"]
   </pre>
@@ -255,19 +260,19 @@ flowchart TD
     </tbody>
   </table>
   <p>Ключ ссылки читается из фрагмента адреса и сразу убирается из адресной строки. Описание каждого экрана — в <a href="user-management.html">user-management.html</a>.</p>
-  <p>Редирект на вход при 401 выполняет единый обработчик: он очищает кэш ответов и ведёт на <code>/login</code> без возможности вернуться назад. Если выход не удался (нет связи), пользователь остаётся на месте, а причина показывается всплывающим сообщением.</p>
+  <p>Редирект на вход при 401 выполняет единый обработчик: он очищает кэш ответов, запоминает путь внутри приложения, на котором потеряна сессия, и ведёт на <code>/login</code> без возможности вернуться назад. Так же поступает открытие ссылки из письма без сессии; после входа открывается запомненная страница, а если её нет, — «Рабочий стол» (макет «Вход по ссылке из письма»). Если выход не удался (нет связи), пользователь остаётся на месте, а причина показывается всплывающим сообщением.</p>
 </section>
 
 <section id="ui-mockups">
   <h2>Макеты</h2>
   <p class="lede">Превью собраны только из токенов <a href="DESIGN.md">DESIGN.md</a>; значения токенов заданы один раз на корневом элементе блока (переменные <code>--ds-*</code>), как в <a href="design-system.html">design-system.html</a>. Состояния hover, pressed и focus нарисованы там, где они нужны; токены шапки и кнопки пользователя — в разделе «Использование компонентов».</p>
 
-  <article class="mockup">
+  <article class="mockup" id="m-shell">
     <h3>Каркас и шапка (десктоп, от 992 пикселей)</h3>
     <dl class="screen-meta">
       <dt><b>Purpose</b></dt><dd>Постоянная рамка всех экранов: узнаваемый бренд, переход между разделами, имя текущего пользователя и выход.</dd>
       <dt><b>Entry from</b></dt><dd>Любой вход в приложение при действующей сессии.</dd>
-      <dt><b>Exit to</b></dt><dd>Разделы «Оргструктура», «Карьерная модель», «Администрирование» → «Пользователи», «Должности», «Журнал» (по роли); меню пользователя.</dd>
+      <dt><b>Exit to</b></dt><dd>«Рабочий стол»; список «Справочники» → «Оргструктура», «Карьерная модель»; «Администрирование» → «Пользователи», «Должности», «Журнал» (по роли); меню пользователя.</dd>
     </dl>
     <div class="mockup-preview">
       <div style="background:var(--ds-surface-page);font:var(--ds-t-body-md);color:var(--ds-text-primary);border:var(--ds-bw) solid var(--ds-border-subtle);">
@@ -276,18 +281,14 @@ flowchart TD
             <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-surface-panel);"><img src="../../web/public/brand/logo-64.png" alt="" style="width:var(--ds-h-md);height:var(--ds-h-md);"></span>
             <b style="font:var(--ds-t-body-strong);">Калибр</b>
           </span>
-          <span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);">
-            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);">Оргструктура</span>
-            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Карьерная модель</span>
-            <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Администрирование <span aria-hidden="true">▾</span></span>
-          </span>
+          <span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;background:var(--ds-primary);color:var(--ds-text-inverse);">Рабочий стол <span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-sm);height:var(--ds-h-sm);padding:0 var(--ds-xs);border-radius:var(--ds-r-full);background:var(--ds-accent);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">24</span></span><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;color:var(--ds-text-inverse-muted);">Справочники <span aria-hidden="true">▾</span></span><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;color:var(--ds-text-inverse-muted);">Администрирование <span aria-hidden="true">▾</span></span></span>
           <span style="margin-left:auto;display:inline-flex;align-items:center;gap:var(--ds-xs);padding:0 var(--ds-xs);color:var(--ds-text-inverse);">
             <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АИ</span>
             <span>А.&nbsp;Б.&nbsp;Иванов</span>
           </span>
         </div>
         <div style="padding:var(--ds-xl);">
-          <div style="font:var(--ds-t-h1);color:var(--ds-text-primary);">Оргструктура</div>
+          <div style="font:var(--ds-t-h1);color:var(--ds-text-primary);">Рабочий стол</div>
           <div style="margin-top:var(--ds-md);padding:var(--ds-xxl);background:var(--ds-surface-panel);border:var(--ds-bw) dashed var(--ds-border-subtle);border-radius:var(--ds-r-lg);color:var(--ds-text-muted);text-align:center;">Область содержимого раздела</div>
         </div>
       </div>
@@ -295,8 +296,9 @@ flowchart TD
     <p><b>Notes</b>:</p>
     <ul>
       <li><b>Бренд.</b> Название «Калибр» рядом с логотипом; подзаголовка нет нигде. Шапка не изменилась: логотип на круглой светлой плитке (его тёмная часть на тёмно-синей шапке сливается, контраст 1.44:1) и название <code>body-strong</code>; оно сжимается с многоточием, при обрезке полное название — в <code>title</code>. На карточке экранов без сессии (вход, «Не помню пароль», «Задание пароля», «Новый пароль») логотип (<code>brand-logo-size-auth</code>, 80 пикселей) стоит без плитки, а название «Калибр» набрано токеном <code>brand-wordmark</code> (45/71, жирный, <code>text-primary</code>), соразмерно логотипу; токены описаны в <a href="DESIGN.md">DESIGN.md</a>; ранее на экране входа стоял подзаголовок «Компетенции и карьерный рост», теперь он убран. Подробности и макет — <a href="user-management.html">user-management.html</a>, «Экран входа».</li>
-      <li><b>Навигация — горизонтальное меню в шапке</b> (тёмная тема меню), боковой панели нет: это решение закреплено в <a href="DESIGN.md">DESIGN.md</a> («Shell and navigation»). Порядок и состав: «Оргструктура» (первый пункт), «Карьерная модель» — оба видят все роли; «Администрирование» — только администратор, это пункт-список с вложенными «Пользователи», «Должности», «Журнал» (макет «Пункт «Администрирование»» ниже); пользователь без вложенных пунктов этого пункта не видит. Меню занимает всю свободную ширину шапки и не прячет пункты под «…». Текущий раздел залит <code>primary</code> с белым текстом (7.0:1, <code>nav-item-active</code>); остальные пункты — <code>text-inverse-muted</code> на <code>surface-inverse</code> (8.0:1, <code>nav-item</code>); при наведении пункт без заливки светлеет до <code>text-inverse</code> (17.9:1, <code>nav-item-hover</code>). Раздел определяется по началу адреса.</li>
+      <li><b>Навигация — горизонтальное меню в шапке</b> (тёмная тема меню), боковой панели нет: это решение закреплено в <a href="DESIGN.md">DESIGN.md</a> («Shell and navigation»). Порядок и состав: «Рабочий стол» (первый пункт; на нём метка с числом ожидаемых действий, макет «Пункты «Рабочий стол» и «Справочники»» ниже; сам стол — <a href="desk.html">desk.html</a>) и «Справочники» — пункт-список с вложенными «Оргструктура» и «Карьерная модель» — оба видят все роли; «Администрирование» — только администратор, это пункт-список с вложенными «Пользователи», «Должности», «Журнал» (макет «Пункт «Администрирование»» ниже); пользователь без вложенных пунктов этого пункта не видит. Прежние условия видимости разделов не меняются, прямые адреса «Оргструктура» и «Карьерная модель» работают. Меню занимает всю свободную ширину шапки и не прячет пункты под «…». Текущий раздел залит <code>primary</code> с белым текстом (7.0:1, <code>nav-item-active</code>); остальные пункты — <code>text-inverse-muted</code> на <code>surface-inverse</code> (8.0:1, <code>nav-item</code>); при наведении пункт без заливки светлеет до <code>text-inverse</code> (17.9:1, <code>nav-item-hover</code>). Раздел определяется по началу адреса: пункт «Рабочий стол» подсвечивается на всех адресах <code>/desk…</code>, пункт «Справочники» — когда текущий раздел внутри него.</li>
       <li><b>Имя пользователя.</b> Привязанная учётная запись: «И.&nbsp;О.&nbsp;Фамилия» (инициалы имени и отчества и фамилия; пробелы между частями неразрывные), без отчества — «И.&nbsp;Фамилия»; непривязанная: e-mail. Аватарка — первые буквы имени и фамилии («АИ»), у непривязанной — первая буква e-mail. Имя видно от 992 пикселей; на планшете остаётся только аватарка, а доступное имя кнопки совпадает с видимой подписью.</li>
+      <li><b>Корень приложения</b> перенаправляет на «Рабочий стол» и в историю переходов не попадает. Отдельной заглушки «Добро пожаловать» нет: пользователь без разделов и ролей процесса видит пустые состояния самого стола (<a href="desk.html">desk.html</a>).</li>
       <li><b>Область содержимого.</b> Фон <code>surface-page</code>, поля <code>page-gutter</code> (24) на десктопе. Заголовок страницы — <code>heading-1</code>, один на экран.</li>
       <li><b>Фокус.</b> Клавиатурный фокус всегда виден: кольцо 2 пикселя с отступом 2 пикселя, цвет <code>primary</code> на светлых поверхностях и <code>accent</code> на тёмной шапке (<code>focus-ring-inverse</code>, 9.6:1).</li>
     </ul>
@@ -305,7 +307,7 @@ flowchart TD
   <article class="mockup">
     <h3>Пункт «Администрирование»</h3>
     <dl class="screen-meta">
-      <dt><b>Purpose</b></dt><dd>Собрать административные разделы под одним пунктом, чтобы шапка оставалась короткой и не прятала пункты.</dd>
+      <dt><b>Purpose</b></dt><dd>Собрать административные разделы под одним пунктом, чтобы шапка оставалась короткой и не прятала пункты. Пункт стоит последним, после «Рабочего стола» и «Справочников».</dd>
       <dt><b>Entry from</b></dt><dd>Пункт «Администрирование» в шапке (глобальный администратор).</dd>
       <dt><b>Exit to</b></dt><dd>Разделы «Пользователи», «Должности», «Журнал».</dd>
     </dl>
@@ -313,13 +315,9 @@ flowchart TD
       <div style="background:var(--ds-surface-page);font:var(--ds-t-body-md);color:var(--ds-text-primary);border:var(--ds-bw) solid var(--ds-border-subtle);padding-bottom:var(--ds-xxl);">
         <div style="display:flex;align-items:center;gap:var(--ds-xl);height:var(--ds-header-h);padding:0 var(--ds-xl);background:var(--ds-surface-inverse);color:var(--ds-text-inverse);">
           <b style="font:var(--ds-t-body-strong);">Калибр</b>
-          <span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);">
-            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Оргструктура</span>
-            <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Карьерная модель</span>
-            <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);">Администрирование <span aria-hidden="true">▴</span></span>
-          </span>
+          <span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;color:var(--ds-text-inverse-muted);">Рабочий стол <span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-sm);height:var(--ds-h-sm);padding:0 var(--ds-xs);border-radius:var(--ds-r-full);background:var(--ds-accent);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">24</span></span><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;color:var(--ds-text-inverse-muted);">Справочники <span aria-hidden="true">▾</span></span><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;background:var(--ds-primary);color:var(--ds-text-inverse);">Администрирование <span aria-hidden="true">▴</span></span></span>
         </div>
-        <div style="margin:var(--ds-xxs) 0 0 calc(var(--ds-xl) + var(--ds-xxxl) * 4);display:inline-block;background:var(--ds-surface-inverse);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);">
+        <div style="margin:var(--ds-xxs) 0 0 calc(var(--ds-xl) + var(--ds-xxxl) * 6);display:inline-block;background:var(--ds-surface-inverse);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);">
           <div style="display:flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);">Пользователи</div>
           <div style="display:flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);">Должности</div>
           <div style="display:flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);">Журнал</div>
@@ -331,6 +329,35 @@ flowchart TD
       <li><b>Состав и порядок вложенных пунктов</b>: «Пользователи», «Должности», «Журнал»; все видны только глобальному администратору. Остальные роли пункта «Администрирование» не видят, и адреса этих разделов для них открывают «Страница не найдена» (проверки прав — на сервере).</li>
       <li><b>Текущий раздел внутри списка</b> отмечается в самом пункте «Администрирование» (залит <code>primary</code>, как любой текущий раздел) и в раскрытом списке. Список открывается под пунктом, остаётся в тёмной теме шапки (<code>surface-inverse</code>, текст <code>text-inverse-muted</code> 8.0:1, текущий — <code>text-inverse</code> на <code>primary</code> 7.0:1) и управляется с клавиатуры как обычное меню (открыть, стрелки, закрыть Escape). Фокус — <code>focus-ring-inverse</code>.</li>
       <li><b>Меню не сжимается в «…».</b> Горизонтальное меню занимает всю свободную ширину между брендом и кнопкой пользователя; если места не хватает, первым сжимается название бренда (многоточие).</li>
+    </ul>
+  </article>
+
+  <article class="mockup" id="m-counter">
+    <h3>Пункты «Рабочий стол» и «Справочники»: метка счётчика</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Сделать рабочий стол первым пунктом меню и показать на нём число ожидаемых действий; нынешние разделы оставить вторичным доступом.</dd>
+      <dt><b>Entry from</b></dt><dd>Любой экран при действующей сессии; после входа — рабочий стол.</dd>
+      <dt><b>Exit to</b></dt><dd>«Рабочий стол»; список «Справочники» → «Оргструктура», «Карьерная модель».</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="display:grid;gap:var(--ds-md);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Администратор на рабочем столе: пункт текущий, метка с числом</div><div style="display:flex;align-items:center;gap:var(--ds-xl);height:var(--ds-header-h);padding:0 var(--ds-xl);background:var(--ds-surface-inverse);color:var(--ds-text-inverse);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-surface-panel);"><img src="../../web/public/brand/logo-64.png" alt="" style="width:var(--ds-h-md);height:var(--ds-h-md);"></span><b style="font:var(--ds-t-body-strong);">Калибр</b></span><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;background:var(--ds-primary);color:var(--ds-text-inverse);">Рабочий стол <span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-sm);height:var(--ds-h-sm);padding:0 var(--ds-xs);border-radius:var(--ds-r-full);background:var(--ds-accent);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">24</span></span><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;color:var(--ds-text-inverse-muted);">Справочники <span aria-hidden="true">▾</span></span><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;color:var(--ds-text-inverse-muted);">Администрирование <span aria-hidden="true">▾</span></span></span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АИ</span>А.&nbsp;Б.&nbsp;Иванов</span></div></div>
+        <div><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Руководитель в разделе «Оргструктура»: пункт «Справочники» залит, метка на «Рабочем столе» остаётся на тёмном фоне</div><div style="display:flex;align-items:center;gap:var(--ds-xl);height:var(--ds-header-h);padding:0 var(--ds-xl);background:var(--ds-surface-inverse);color:var(--ds-text-inverse);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-surface-panel);"><img src="../../web/public/brand/logo-64.png" alt="" style="width:var(--ds-h-md);height:var(--ds-h-md);"></span><b style="font:var(--ds-t-body-strong);">Калибр</b></span><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;color:var(--ds-text-inverse);">Рабочий стол <span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-sm);height:var(--ds-h-sm);padding:0 var(--ds-xs);border-radius:var(--ds-r-full);background:var(--ds-accent);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">7</span></span><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;background:var(--ds-primary);color:var(--ds-text-inverse);">Справочники <span aria-hidden="true">▴</span></span></span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">ПП</span>П.&nbsp;П.&nbsp;Петров</span></div>
+          <div style="margin:var(--ds-xxs) 0 0 calc(var(--ds-xl) + var(--ds-xxxl) * 3 + var(--ds-xxl));"><div style="display:inline-block;background:var(--ds-surface-inverse);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-popup);padding:var(--ds-xxs);"><div style="display:flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);">Оргструктура</div><div style="display:flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);color:var(--ds-text-inverse-muted);border-radius:var(--ds-r-md);">Карьерная модель</div></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(45%,1fr));gap:var(--ds-md);">
+          <div><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Действий нет (0): метки нет</div><div style="display:flex;align-items:center;gap:var(--ds-xl);height:var(--ds-header-h);padding:0 var(--ds-xl);background:var(--ds-surface-inverse);color:var(--ds-text-inverse);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;background:var(--ds-primary);color:var(--ds-text-inverse);">Рабочий стол</span><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;color:var(--ds-text-inverse-muted);">Справочники <span aria-hidden="true">▾</span></span></span></div></div>
+          <div><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Больше 99: «99+»</div><div style="display:flex;align-items:center;gap:var(--ds-xl);height:var(--ds-header-h);padding:0 var(--ds-xl);background:var(--ds-surface-inverse);color:var(--ds-text-inverse);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xxs);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;color:var(--ds-text-inverse-muted);">Рабочий стол <span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-sm);height:var(--ds-h-sm);padding:0 var(--ds-xs);border-radius:var(--ds-r-full);background:var(--ds-accent);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">99+</span></span><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;background:var(--ds-primary);color:var(--ds-text-inverse);">Справочники <span aria-hidden="true">▾</span></span></span></div></div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Состав меню</b> (роль → пункты): все роли — «Рабочий стол», «Справочники» (внутри «Оргструктура», «Карьерная модель»); администратор дополнительно — «Администрирование» («Пользователи», «Должности», «Журнал»). Корень приложения перенаправляет на «Рабочий стол».</li>
+      <li><b>Метка счётчика</b> — составной элемент из существующих токенов: заливка <code>accent</code>, цифры <code>surface-inverse</code> (9.6:1), <code>rounded-full</code>, текст <code>body-strong</code> (14 пикселей: число — критичные данные, <code>body-sm</code> для него мал), высота и минимальная ширина <code>control-height-sm</code>. Отдельного компонентного токена нет (как у плитки логотипа). Она стоит после подписи пункта в любом его состоянии (обычное, наведение, текущий); на текущем пункте (<code>primary</code>) заливка <code>accent</code> отделяется от фона контрастом 3.73:1 (не-текстовый элемент, норма ≥ 3:1; строка есть в таблице контраста <a href="DESIGN.md">DESIGN.md</a>). Число читается и без цвета — это текст. Метка показывает число пунктов-действий блока «Ожидают вашего действия»; при числе больше 99 — «99+», при 0, во время первой загрузки и при ошибке запроса метки нет (ошибку счётчик не показывает — её покажет сам стол).</li>
+      <li><b>Когда число обновляется:</b> после каждого успешного действия пользователя, при переходе между экранами и при возврате фокуса в окно; таймера и push нет. При обновлении старое число остаётся на месте, пока не придёт новое.</li>
+      <li><b>«Справочники»</b> — пункт-список в той же тёмной теме, что и «Администрирование»: список на <code>surface-inverse</code>, текст <code>text-inverse-muted</code> (8.0:1), текущий раздел — <code>primary</code> с белым текстом (7.0:1). Пункт «Справочники» залит, когда текущий раздел внутри него. Меню по-прежнему не сжимается в «…».</li>
+      <li><b>Планшет</b> (меньше 992 пикселей): имя скрыто, метка и пункты остаются (макет ниже).</li>
     </ul>
   </article>
 
@@ -348,7 +375,8 @@ flowchart TD
             <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-surface-panel);"><img src="../../web/public/brand/logo-64.png" alt="" style="width:var(--ds-h-md);height:var(--ds-h-md);"></span>
             <b style="font:var(--ds-t-body-strong);">Калибр</b>
           </span>
-          <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);">Оргструктура</span>
+          <span style="display:inline-flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);gap:var(--ds-xs);">Рабочий стол <span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-sm);height:var(--ds-h-sm);padding:0 var(--ds-xs);border-radius:var(--ds-r-full);background:var(--ds-accent);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">7</span></span>
+          <span style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);white-space:nowrap;color:var(--ds-text-inverse-muted);">Справочники <span aria-hidden="true">▾</span></span>
           <span style="margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-lg);height:var(--ds-h-lg);">
             <span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АИ</span>
           </span>
@@ -419,11 +447,6 @@ flowchart TD
           <p style="margin:var(--ds-xs) 0 var(--ds-md);">Адрес указан неверно, либо раздел недоступен для вашей учётной записи.</p>
           <span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Перейти на главную</span>
         </div>
-        <div style="background:var(--ds-surface-page);padding:var(--ds-xl);text-align:center;color:var(--ds-text-secondary);">
-          <div style="font:var(--ds-t-body-strong);margin-bottom:var(--ds-xs);text-align:left;">Нет доступных разделов</div>
-          <div style="font:var(--ds-t-h3);color:var(--ds-text-primary);">Добро пожаловать</div>
-          <p style="margin:var(--ds-xs) 0 0;">Для вашей учётной записи пока нет доступных разделов. Обратитесь к администратору.</p>
-        </div>
         <div style="background:var(--ds-surface-page);padding:var(--ds-xl);">
           <div style="font:var(--ds-t-body-strong);margin-bottom:var(--ds-xs);">Ошибка маршрута</div>
           <div style="display:flex;align-items:flex-start;gap:var(--ds-xs);padding:var(--ds-sm);background:var(--ds-danger-bg);border-radius:var(--ds-r-md);">
@@ -433,7 +456,41 @@ flowchart TD
         </div>
       </div>
     </div>
-    <p><b>Notes</b>: пока сессия неизвестна, вместо рамки показывается индикатор по центру экрана (спиннер <code>primary</code>); раздел до ответа сервера не отрисовывается. «Страница не найдена» служит и ответом на раздел, закрытый для роли (запросы всё равно отклоняет backend, AC-12). Корневой адрес сразу перенаправляет на первый доступный раздел и в историю переходов не попадает. Тексты ошибок — см. паттерны ниже.</p>
+    <p><b>Notes</b>: пока сессия неизвестна, вместо рамки показывается индикатор по центру экрана (спиннер <code>primary</code>); раздел до ответа сервера не отрисовывается. «Страница не найдена» служит и ответом на раздел, закрытый для роли (запросы всё равно отклоняет backend, AC-12). Корневой адрес сразу перенаправляет на «Рабочий стол» и в историю переходов не попадает; пользователь без разделов видит пустые состояния самого стола. Тексты ошибок — см. паттерны ниже.</p>
+  </article>
+
+  <article class="mockup" id="m-login">
+    <h3>Вход по ссылке из письма: возврат на нужную страницу</h3>
+    <dl class="screen-meta">
+      <dt><b>Purpose</b></dt><dd>Привести пользователя без сессии после входа на страницу, на которую вела ссылка, и не терять эту цель.</dd>
+      <dt><b>Entry from</b></dt><dd>Ссылка из письма или закладка на экран сценария при отсутствии сессии; 401 в любой момент работы.</dd>
+      <dt><b>Exit to</b></dt><dd>Цель (путь внутри приложения) или «Рабочий стол».</dd>
+    </dl>
+    <div class="mockup-preview">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(45%,1fr));gap:var(--ds-md);font:var(--ds-t-body-md);color:var(--ds-text-primary);">
+        <div style="background:var(--ds-surface-page);padding:var(--ds-xl);">
+          <div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Экран входа при наличии цели</div>
+          <div style="background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-xl);display:grid;gap:var(--ds-md);">
+            <div style="display:flex;justify-content:center;align-items:center;gap:var(--ds-sm);flex-wrap:wrap;"><img src="../../web/public/brand/logo-256.png" alt="" style="width:var(--ds-brand-logo-auth);height:var(--ds-brand-logo-auth);"><span style="font:var(--ds-t-brand-wordmark);">Калибр</span></div>
+            <div style="font:var(--ds-t-h1);text-align:center;">Вход в систему</div>
+            <div style="display:flex;gap:var(--ds-xs);align-items:flex-start;padding:var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-info-bg);"><span style="color:var(--ds-info);" aria-hidden="true">ℹ</span><span style="flex:1;min-width:0;">После входа откроется страница, на которую вела ссылка.</span></div>
+            <div><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">E-mail</div><div style="display:flex;align-items:center;min-height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">name@example.com</div></div>
+            <div><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Пароль</div><div style="display:flex;align-items:center;min-height:var(--ds-h-md);padding:0 var(--ds-sm);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);"></div></div>
+            <div style="display:flex;justify-content:center;align-items:center;height:var(--ds-h-lg);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Войти</div>
+            <div style="text-align:center;color:var(--ds-primary);">Не помню пароль</div>
+          </div>
+        </div>
+        <div style="background:var(--ds-surface-page);padding:var(--ds-xl);display:grid;gap:var(--ds-md);align-content:start;">
+          <div><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Цель потеряла смысл: решение уже принято</div><div style="display:flex;gap:var(--ds-xs);align-items:flex-start;padding:var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-info-bg);"><span style="color:var(--ds-info);" aria-hidden="true">ℹ</span><span style="flex:1;min-width:0;"><b style="font:var(--ds-t-body-strong);">Версия уже не ждёт вашего решения</b><br>Пока вы входили, решение по версии принял другой согласующий; сейчас она «Опубликована». Содержимое доступно для просмотра. <span style="color:var(--ds-primary);">К рабочему столу</span></span></div></div>
+          <div><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Цель недоступна пользователю</div><div style="background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-subtle);border-radius:var(--ds-r-lg);padding:var(--ds-xxl);text-align:center;color:var(--ds-text-secondary);"><div style="font:var(--ds-t-h3);color:var(--ds-text-primary);margin-bottom:var(--ds-xs);">Страница не найдена</div><p style="margin:0 0 var(--ds-md);">Адрес указан неверно, либо раздел недоступен для вашей учётной записи.</p><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Перейти на главную</span></div></div>
+        </div>
+      </div>
+    </div>
+    <p><b>Notes</b>:</p>
+    <ul>
+      <li><b>Возврат на цель.</b> Единый обработчик 401 запоминает путь внутри приложения, на котором была потеряна сессия; экран входа после успеха ведёт на него. Любая цель вне приложения (абсолютный адрес, другой хост, пустая) отбрасывается молча — открывается «Рабочий стол». Если цель известна, на экране входа стоит <code>alert-info</code> «После входа откроется страница, на которую вела ссылка.»; без цели его нет, остальное в экране входа не меняется (<a href="user-management.html">user-management.html</a>).</li>
+      <li><b>Цель после входа.</b> Что бы ни показал экран цели, он следует правилам сценария: объект не читается — «Страница не найдена», действие уже не нужно — <code>alert-info</code> с текущим статусом и ссылкой на стол (<a href="desk.html">desk.html</a>, «Согласовать версию»). Отдельного экрана «ссылка недействительна» нет.</li>
+    </ul>
   </article>
 </section>
 
@@ -441,6 +498,7 @@ flowchart TD
   <h2>Паттерны взаимодействия</h2>
   <ul>
     <li><b>Сообщения об ошибках</b> отвечают на три вопроса: что не получилось (заголовок), почему и что делать (текст). Для кодов ответа действуют фиксированные русские тексты: нет связи, сессия завершена, недостаточно прав, запись не найдена, данные изменены другим пользователем (412), слишком много попыток (429), ошибка сервиса. Содержательные тексты бизнес-отказов (400, 409) приходят с сервера на русском.</li>
+    <li><b>Возврат на цель после входа.</b> Потеря сессии на странице приложения или открытие ссылки из письма без сессии ведёт на вход с подсказкой; после входа открывается запомненная страница (только путь внутри приложения), иначе — «Рабочий стол».</li>
     <li><b>Временные сообщения</b> (toast) сообщают о завершённом действии и ошибке выхода; всё, что требует решения или объяснения, показывается в окне или рядом с полем и остаётся, пока пользователь его не закроет.</li>
     <li><b>Подтверждения</b> деструктивных действий — окно с названием действия и объекта, последствиями и красной кнопкой с глаголом; безопасное действие — «Отмена». Кнопка подтверждения реагирует сразу и не ждёт закрытия временного сообщения.</li>
     <li><b>Движение.</b> Переходы нужны только для открытия и закрытия всплывающих элементов; при настройке системы «уменьшить движение» переходы отключаются, заполнитель загрузки перестаёт мерцать (<code>DESIGN.md → Motion</code>). Движение данные не оживляет.</li>
@@ -456,19 +514,20 @@ flowchart TD
     <thead><tr><th>Компонент</th><th>Где используется</th></tr></thead>
     <tbody>
       <tr><td><code>app-header</code> (antd <code>Layout.Header</code>)</td><td>Шапка: <code>surface-inverse</code>, <code>text-inverse</code>, высота <code>header-height</code>; внутри бренд, меню, кнопка пользователя.</td></tr>
-      <tr><td><code>nav-item</code>, <code>nav-item-hover</code>, <code>nav-item-active</code> (antd <code>Menu</code>, тема dark, горизонтальный)</td><td>Навигация между разделами; пункт текущего раздела залит <code>primary</code>, при наведении текст светлеет до <code>text-inverse</code> без заливки. Пункт-список «Администрирование» — те же токены, вложенные пункты в раскрывающемся тёмном списке (<code>surface-inverse</code>, тень <code>elevation-popup</code>).</td></tr>
+      <tr><td><code>nav-item</code>, <code>nav-item-hover</code>, <code>nav-item-active</code> (antd <code>Menu</code>, тема dark, горизонтальный)</td><td>Навигация между разделами; пункт текущего раздела залит <code>primary</code>, при наведении текст светлеет до <code>text-inverse</code> без заливки. Пункты-списки «Справочники» и «Администрирование» — те же токены, вложенные пункты в раскрывающемся тёмном списке (<code>surface-inverse</code>, тень <code>elevation-popup</code>).</td></tr>
+      <tr><td>Метка счётчика (составной элемент: <code>accent</code>, <code>surface-inverse</code>, <code>rounded-full</code>, <code>body-strong</code>, <code>control-height-sm</code>)</td><td>Пункт «Рабочий стол» в шапке. Отдельного компонентного токена нет (как у плитки логотипа). Пара <code>accent</code> — <code>surface-inverse</code> описана в DESIGN.md («accent … badge fill»); пара заливки <code>accent</code> с залитым <code>primary</code> текущим пунктом (3.73:1) записана в таблице контраста DESIGN.md.</td></tr>
       <tr><td><code>header-button-hover</code>, <code>header-button-pressed</code> (antd <code>Button type="text"</code>)</td><td>Кнопка пользователя на тёмной шапке: белая заливка 12% при наведении и 20% при нажатии, текст <code>text-inverse</code>.</td></tr>
       <tr><td><code>avatar</code> (antd <code>Avatar</code>)</td><td>Кнопка пользователя: <code>primary</code> на <code>primary-subtle</code>, две буквы; на тёмной шапке контраст 6.2:1.</td></tr>
       <tr><td>Плитка логотипа (составная: <code>surface-panel</code>, <code>rounded-full</code>, <code>control-height-md</code>)</td><td>Подложка логотипа на тёмной шапке. Отдельного компонентного токена нет.</td></tr>
       <tr><td><code>dropdown-item</code> (antd <code>Dropdown</code>)</td><td>Меню пользователя.</td></tr>
-      <tr><td><code>alert-danger</code>, <code>empty-state</code>, <code>button-primary</code></td><td>Служебные состояния: ошибка учётной записи, «Страница не найдена», «Добро пожаловать».</td></tr>
+      <tr><td><code>alert-danger</code>, <code>alert-info</code>, <code>empty-state</code>, <code>button-primary</code></td><td>Служебные состояния: ошибка учётной записи, «Страница не найдена»; подсказка на экране входа при возврате на цель.</td></tr>
     </tbody>
   </table>
 </section>
 
 </div>
       </main>
-      <footer>by ASD workflow | 2026-10-12</footer>
+      <footer>by ASD workflow | 2026-10-13</footer>
     </div>
   </div>
 </body>

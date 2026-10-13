@@ -14,7 +14,7 @@ responsibility:
   <meta name="subsystem" content="project">
   <meta name="sprint-id" content="">
   <meta name="status" content="draft">
-  <meta name="updated" content="2026-10-08">
+  <meta name="updated" content="2026-10-13">
   <meta name="responsibility" content="interactive visual reference of DESIGN.md tokens and components with live previews">
   <meta name="provenance" content="original">
   <title>Дизайн-система — Сервис управления матрицами компетенций и повышением сотрудников</title>
@@ -217,7 +217,7 @@ responsibility:
           <span class="status-draft">draft</span>
         </div>
         <h1>Дизайн-система — Сервис управления матрицами компетенций и повышением сотрудников</h1>
-        <div class="stats">34 цвета · 13 типографических стилей · 7 радиусов и границ · 25 spacing · 76 компонентов · updated 2026-10-08</div>
+        <div class="stats">34 цвета · 13 типографических стилей · 7 радиусов и границ · 25 spacing · 76 компонентов · updated 2026-10-13</div>
       </header>
       <main>
 <!--
@@ -250,7 +250,7 @@ provenance: original
     <div class="swatch"><div class="chip-color" style="background:var(--ds-primary-hover);"></div><code>colors.primary-hover</code><br><small>#2338C2 · hover</small></div>
     <div class="swatch"><div class="chip-color" style="background:var(--ds-primary-active);"></div><code>colors.primary-active</code><br><small>#182CC2 · pressed</small></div>
     <div class="swatch"><div class="chip-color" style="background:var(--ds-primary-subtle);"></div><code>colors.primary-subtle</code><br><small>#EBF2FD · выбранная строка, подсветка</small></div>
-    <div class="swatch"><div class="chip-color" style="background:var(--ds-accent);"></div><code>colors.accent</code><br><small>#FBAE40 · заливка и кольцо фокуса на шапке; не текст (1.9:1)</small></div>
+    <div class="swatch"><div class="chip-color" style="background:var(--ds-accent);"></div><code>colors.accent</code><br><small>#FBAE40 · заливка (в том числе метка счётчика на шапке) и кольцо фокуса на шапке; не текст (1.9:1)</small></div>
   </div>
 
   <h3>Текст</h3>
@@ -316,6 +316,7 @@ provenance: original
       <tr><td>Статусный цвет на своём <code>-bg</code>: success / warning / danger / info</td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-success-bg);color:var(--ds-success);font:var(--ds-t-body-md)">Аа 123</span></td><td>4.7 / 4.7 / 4.9 / 5.0</td><td>AA</td></tr>
       <tr><td><code>surface-inverse</code> на <code>rating-level-0</code> / <code>-1</code> / <code>-2</code>; <code>text-inverse</code> на <code>-3</code> / <code>-4</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-rating-2);color:var(--ds-surface-inverse);font:var(--ds-t-body-md)">2</span></td><td>15.5 / 11.8 / 8.0; 7.0 / 17.9</td><td>AA, AAA</td></tr>
       <tr><td><code>surface-inverse</code> / <code>text-primary</code> на <code>accent</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-accent);color:var(--ds-surface-inverse);font:var(--ds-t-body-md)">Аа 123</span></td><td>9.6 / 7.8</td><td>AA, AAA</td></tr>
+      <tr><td>Заливка <code>accent</code> на <code>primary</code> (метка счётчика на текущем пункте меню; текст метки — <code>surface-inverse</code> на <code>accent</code>, 9.6)</td><td><span style="display:inline-block;padding:4px 8px;background:var(--ds-primary);"><span style="display:inline-block;width:32px;height:16px;border-radius:var(--ds-r-full);background:var(--ds-accent);"></span></span></td><td>3.73</td><td>AA (нетекстовый, ≥3:1)</td></tr>
       <tr><td><code>border-control</code> на <code>surface-panel</code> / <code>surface-page</code> (нетекстовый)</td><td><span style="display:inline-block;width:64px;height:20px;background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control)"></span></td><td>3.7 / 3.5</td><td>AA (нетекстовый, ≥3:1)</td></tr>
       <tr><td>Кольцо фокуса: <code>primary</code> на <code>surface-panel</code>; <code>accent</code> на <code>surface-inverse</code></td><td><span style="display:inline-block;width:64px;height:20px;background:var(--ds-surface-panel);outline:var(--ds-ring-w) solid var(--ds-primary);outline-offset:var(--ds-ring-o)"></span></td><td>7.0 / 9.6</td><td>AA (нетекстовый)</td></tr>
       <tr><td><code>accent</code> как текст или иконка на <code>surface-panel</code>; <code>text-inverse</code> на <code>accent</code></td><td><span style="display:inline-block;padding:2px 8px;background:var(--ds-surface-panel);color:var(--ds-accent);font:var(--ds-t-body-md)">Аа 123</span></td><td>1.9</td><td>НЕ проходит: запрещено</td></tr>
@@ -513,6 +514,10 @@ provenance: original
       <figure data-component="nav-item-active" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
         <div style="padding:var(--ds-xs);background:var(--ds-surface-inverse);"><div style="display:flex;align-items:center;height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-md);background:var(--ds-primary);color:var(--ds-text-inverse);">Оргструктура</div></div>
         <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">nav-item-active</b> · текущий раздел: заливка primary / text-inverse (7.0:1)</figcaption>
+      </figure>
+      <figure data-component="count-badge-note" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="padding:var(--ds-xs);background:var(--ds-surface-inverse);"><div style="display:flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-md);border-radius:var(--ds-r-md);font:var(--ds-t-body-md);background:var(--ds-primary);color:var(--ds-text-inverse);">Рабочий стол <span style="display:inline-flex;align-items:center;justify-content:center;min-width:var(--ds-h-sm);height:var(--ds-h-sm);padding:0 var(--ds-xs);border-radius:var(--ds-r-full);background:var(--ds-accent);color:var(--ds-surface-inverse);font:var(--ds-t-body-strong);">24</span></div></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);max-width:360px;"><b style="font:var(--ds-t-code);">count badge</b> · составной элемент без компонентного токена: заливка accent, цифры surface-inverse (9.6:1), rounded-full, body-strong, control-height-sm; на текущем пункте (primary) заливка отделяется контрастом 3.73:1 (нетекстовый)</figcaption>
       </figure>
       <figure data-component="header-button-hover" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
         <div style="padding:var(--ds-xs);background:var(--ds-surface-inverse);"><div style="display:inline-flex;align-items:center;gap:var(--ds-xs);height:var(--ds-h-lg);padding:0 var(--ds-xs);border-radius:var(--ds-r-md);font:var(--ds-t-body-md);background:var(--ds-overlay-inverse-hover);color:var(--ds-text-inverse);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">АИ</span>А.&nbsp;Б.&nbsp;Иванов</div></div>
@@ -759,6 +764,10 @@ provenance: original
         <div style="display:flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-surface-muted);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);">5</span><span style="font:var(--ds-t-body-md);color:var(--ds-text-secondary);">Комиссия</span></div>
         <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">step-upcoming</b> · surface-muted / text-secondary (7.5:1)</figcaption>
       </figure>
+      <figure data-component="steps-horizontal-note" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
+        <div style="display:flex;align-items:center;gap:var(--ds-md);"><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary-subtle);color:var(--ds-primary);font:var(--ds-t-body-strong);">✓</span><span style="font:var(--ds-t-body-md);">Трек</span></span><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-primary);color:var(--ds-text-inverse);font:var(--ds-t-body-strong);">2</span><span style="font:var(--ds-t-body-strong);">Компетенции</span></span><span style="display:inline-flex;align-items:center;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;justify-content:center;width:var(--ds-h-md);height:var(--ds-h-md);border-radius:var(--ds-r-full);background:var(--ds-surface-muted);color:var(--ds-text-secondary);font:var(--ds-t-body-strong);">3</span><span style="font:var(--ds-t-body-md);color:var(--ds-text-secondary);">Требования</span></span></div>
+        <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);max-width:360px;"><b style="font:var(--ds-t-code);">Steps</b> · горизонтальное исполнение для мастеров: над формой, названия всегда видны, текущий — заполненный номер, пройденный — галочка; те же токены и контрасты (7.0 / 6.2 / 7.5)</figcaption>
+      </figure>
       <figure data-component="breadcrumb" style="margin:0 20px 20px 0;display:inline-flex;flex-direction:column;gap:6px;vertical-align:top;">
         <div style="background:var(--ds-surface-page);color:var(--ds-text-secondary);font:var(--ds-t-body-md);">Волны / Волна 2026-1 /</div>
         <figcaption style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);"><b style="font:var(--ds-t-code);">breadcrumb</b> · text-secondary на surface-page (8.1:1)</figcaption>
@@ -913,7 +922,7 @@ provenance: original
 
 <section id="token-reference">
   <h2>Справочник токенов</h2>
-  <p class="lede">Полный перечень токенов DESIGN.md: 34 цвета, 12 типографических стилей, 7 радиусов и геометрии границ, 24 токена spacing, 76 компонентов.</p>
+  <p class="lede">Полный перечень токенов DESIGN.md: 34 цвета, 13 типографических стилей, 7 радиусов и геометрии границ, 25 токенов spacing, 76 компонентов.</p>
 
   <h3>colors (34)</h3>
   <table>
@@ -1143,7 +1152,7 @@ provenance: original
 
 </div>
       </main>
-      <footer>by ASD workflow | 2026-10-08</footer>
+      <footer>by ASD workflow | 2026-10-13</footer>
     </div>
   </div>
 </body>

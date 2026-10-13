@@ -14,7 +14,7 @@ responsibility:
   <meta name="subsystem" content="org-structure">
   <meta name="sprint-id" content="">
   <meta name="status" content="approved">
-  <meta name="updated" content="2026-10-12">
+  <meta name="updated" content="2026-10-13">
   <meta name="responsibility" content="product requirements of the org-structure subsystem: unit tree, employees, dismissal and deletion cascade, structure reading and search, the positions catalogue and unit position lists, the Org structure section">
   <meta name="provenance" content="original">
   <meta name="source" content="">
@@ -208,14 +208,14 @@ responsibility:
           <span class="status-approved">approved</span>
         </div>
         <h1>Требования — Оргструктура</h1>
-        <div class="stats">6 goals · 10 stories · 45 AC · 8 non-goals · updated 2026-10-12</div>
+        <div class="stats">6 goals · 10 stories · 46 AC · 8 non-goals · updated 2026-10-13</div>
       </header>
       <main>
 <!--
 responsibility:
   owns: product requirements of the org-structure subsystem: unit tree, employees, dismissal and deletion cascade, structure reading and search, the positions catalogue and unit position lists, the Org structure section
-  excludes: ui mockups, design decisions, code, ux flows, accounts and roles (user-management.html), the journal (audit.html), career catalogues, matrices and process roles (career-framework.html)
-  delegates_to: user-management.html (accounts bound to employees), career-framework.html (HR assignment, process roles), audit.html (journaling), ux-spec.html (ui + flows), adr.html (decisions)
+  excludes: ui mockups, design decisions, code, ux flows, accounts and roles (user-management.html), the journal (audit.html), career catalogues, position-to-level link, matrices and process roles (career-framework.html), role desktop and its integrity checks of units and positions (desk.html)
+  delegates_to: user-management.html (accounts bound to employees), career-framework.html (HR assignment, process roles, position-to-level link), desk.html (checks and scenarios over units, employees and positions), audit.html (journaling), ux-spec.html (ui + flows), adr.html (decisions)
 provenance: original
 -->
 
@@ -245,7 +245,7 @@ provenance: original
       <li><b>as</b> глобальный администратор, <b>I want</b> назначать руководителем подразделения работающего сотрудника этого подразделения, <b>so that</b> у каждого подразделения был ответственный из его состава (AC-8, AC-9).</li>
       <li><b>as</b> глобальный администратор, <b>I want</b> заводить и править сотрудников — фамилию, имя, отчество, должность и подразделение, <b>so that</b> данные о людях и их месте в структуре были актуальны (AC-10…AC-13).</li>
       <li><b>as</b> глобальный администратор, <b>I want</b> уволить сотрудника, вернуть его на работу или удалить, увидев перед этим список связанных изменений, <b>so that</b> руководство подразделений и учётные записи не оставались в несогласованном состоянии (AC-14…AC-18).</li>
-      <li><b>as</b> глобальный администратор, <b>I want</b> вести справочник должностей и перечни допустимых должностей подразделений, а при необходимости добавлять должность прямо в форме сотрудника, <b>so that</b> должности не расходились по написанию и не вводились свободным текстом (AC-35, AC-37…AC-40, AC-44).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> вести справочник должностей и перечни допустимых должностей подразделений, а при необходимости добавлять должность прямо в форме сотрудника, <b>so that</b> должности не расходились по написанию и не вводились свободным текстом (AC-35, AC-37…AC-40, AC-44, AC-46).</li>
       <li><b>as</b> глобальный администратор, <b>I want</b> видеть неактивные подразделения и не работающих сотрудников и управлять ими с карточек раздела «Оргструктура», <b>so that</b> вся история структуры была под рукой (AC-7, AC-22, AC-29, AC-30).</li>
     </ul>
   </details>
@@ -312,6 +312,7 @@ provenance: original
       <tr id="AC-43"><td><a href="#AC-43">AC-43</a></td><td>Журнал фиксирует создание и изменение должностей и добавление и исключение должностей в перечнях подразделений (<a href="audit.html#AC-3">audit AC-3</a>).</td><td><span class="chip area">журнал</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-44"><td><a href="#AC-44">AC-44</a></td><td>Страница «Должности» (меню «Администрирование», только администратору): постраничный (по 20) список с поиском и фильтром статуса в столбце (по умолчанию — «Активна»), создание, переименование, деактивация (с подтверждением и числом затронутых сотрудников) и возврат в работу.</td><td><span class="chip area">раздел «Должности»</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-45"><td><a href="#AC-45">AC-45</a></td><td>С карточки подразделения всем открываются окно «Должности подразделения» (собственные и унаследованные должности; администратор добавляет должность из справочника и исключает её после подтверждения с числом затронутых сотрудников) и окно «HR подразделения» (закреплённый и унаследованный HR; закрепляет и снимает администратор, <a href="career-framework.html#AC-6">career-framework AC-6</a>). На карточке показана строка «HR: {имя}» ответственного HR; если HR нет, строки нет.</td><td><span class="chip area">карточка подразделения</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-46"><td><a href="#AC-46">AC-46</a></td><td>Деактивация должности (AC-35, AC-44) и исключение её из перечня подразделения (AC-37, AC-45) не блокируются тем, что должность связана с уровнем карьерного трека, и не снимают эту связь (<a href="career-framework.html#AC-95">career-framework AC-95</a>); уровень, у которого остались только неактивные должности, считается уровнем без должности (<a href="career-framework.html#AC-96">career-framework AC-96</a>).</td><td><span class="chip area">справочник должностей</span></td><td><span class="chip prio-must">must</span></td></tr>
     </tbody>
   </table>
 </section>
@@ -320,7 +321,7 @@ provenance: original
   <h2>Вне рамок</h2>
   <ul class="non-goals">
     <li>Типы подразделений, даты действия подразделений, штатные единицы, ставки, назначения сотрудников с историей и датами, вакансии.</li>
-    <li>Физическое удаление должностей справочника (только деактивация) и связь должности справочника с карьерным уровнем трека; карьерная модель — <a href="career-framework.html">career-framework</a>.</li>
+    <li>Физическое удаление должностей справочника (только деактивация).</li>
     <li>Набор профессиональных направлений и настройки процесса на уровне подразделения.</li>
     <li>Табельный номер и собственный e-mail сотрудника.</li>
     <li>Физическое удаление подразделений.</li>
@@ -330,7 +331,7 @@ provenance: original
   </ul>
 </section>
       </main>
-      <footer>by ASD workflow | 2026-10-12</footer>
+      <footer>by ASD workflow | 2026-10-13</footer>
     </div>
   </div>
 </body>
