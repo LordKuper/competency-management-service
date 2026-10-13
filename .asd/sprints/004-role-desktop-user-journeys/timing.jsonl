@@ -121,3 +121,5 @@
 {"op":"close","id":"asd-ux design-promote#2","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:44:45.188Z","end":"2026-10-13T12:45:26.617Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"design-promote#1","kind":"phase","parent":null,"start":"2026-10-13T12:25:31.331Z","end":"2026-10-13T12:45:26.909Z","outcome":"done","attrs":{}}
 {"op":"open","id":"plan#1","kind":"phase","parent":null,"start":"2026-10-13T12:45:32.970Z","attrs":{}}
+{"op":"open","id":"wait plan accept","kind":"user-wait","parent":"plan#1","start":"2026-10-13T12:48:39.510Z","attrs":{"gate":"plan"}}
+{"op":"close","id":"wait plan accept","kind":"user-wait","parent":"plan#1","start":"2026-10-13T12:48:39.510Z","end":"2026-10-13T14:05:43.267Z","outcome":"done","attrs":{"gate":"plan"}}

@@ -171,6 +171,13 @@
       "reason": "subsystem desk approved by the user (hard gate) 2026-10-13; no further new subsystem or boundary",
       "evidence": "decisions-log.003.md 2026-10-13 ADR accepted",
       "artifact_revision": "HEAD 7174e51"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-21 retired; rule User-visible texts approval removed from custom-common-rules.md (Task 1); AC-15/AC-17 plan-approval clauses dropped; retro 002#P-1 and 003#P-1 rejected",
+      "reason": "user instruction at plan gate; cost AC-15, AC-17, AC-21: 0 iterations (design-review findings did not cite them) / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-13 plan gate: texts approval rule removed"
     }
   ],
   "task_routing": {},
@@ -230,7 +237,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-13T12:45:46.741Z",
+  "updated_at": "2026-10-13T14:05:43.369Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
