@@ -140,7 +140,16 @@ internal static class OrgUnitHrEndpoints
         return TypedResults.NoContent();
     }
 
-    private static async Task<OrgUnitHrPersonResponse?> DescribeAsync(
+    /// <summary>
+    /// Describes the assignment of a unit with the flag whether its account can act.
+    /// </summary>
+    /// <param name="source">The unit whose assignment it is; null for none.</param>
+    /// <param name="assigneeOf">The assigned account by unit.</param>
+    /// <param name="employees">The employee directory, for the account's name.</param>
+    /// <param name="users">The account directory.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    /// <returns>The assignment, or <see langword="null"/> when the unit has none.</returns>
+    public static async Task<OrgUnitHrPersonResponse?> DescribeAsync(
         OrgUnitStatus? source,
         IReadOnlyDictionary<Guid, Guid> assigneeOf,
         IEmployeeDirectory employees,

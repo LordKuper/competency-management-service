@@ -34,6 +34,7 @@ public static class CareerFrameworkModule
     public static IEndpointRouteBuilder MapCareerFrameworkEndpoints(this IEndpointRouteBuilder endpoints)
     {
         OrgUnitHrEndpoints.Map(endpoints);
+        OrgUnitSetupEndpoints.Map(endpoints);
         ProcessRoleEndpoints.Map(endpoints);
         CareerDirectionEndpoints.Map(endpoints);
         CareerTrackEndpoints.Map(endpoints);

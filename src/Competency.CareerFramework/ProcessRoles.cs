@@ -80,18 +80,38 @@ internal sealed class ProcessRoles(AppDbContext context, IEmployeeDirectory empl
     public async Task<Guid?> ResponsibleHrAsync(Guid unitId, CancellationToken cancellationToken)
     {
         var ancestry = await employees.FindAncestryAsync(unitId, cancellationToken);
-        var ancestryIds = ancestry.Select(unit => unit.Id).ToList();
-        var assigneeOf = await context.Set<OrgUnitHr>()
-            .Where(assignment => ancestryIds.Contains(assignment.OrgUnitId))
-            .ToDictionaryAsync(assignment => assignment.OrgUnitId, assignment => assignment.UserId, cancellationToken);
-        var nearest = ancestry.FirstOrDefault(unit => assigneeOf.ContainsKey(unit.Id));
-        if (nearest is null)
+        var assigneeOf = await AssigneesAsync([.. ancestry.Select(unit => unit.Id)], cancellationToken);
+        if (NearestAssigned(ancestry, assigneeOf) is not { } nearest)
         {
             return null;
         }
 
         var userId = assigneeOf[nearest.Id];
         return await users.FindAsync(userId, cancellationToken) is { IsActive: true } ? userId : null;
+    }
+
+    /// <summary>
+    /// The unit whose HR assignment applies to the first unit of a chain: that unit itself or else the nearest unit above it with an
+    /// assignment, whether or not the assigned account can act. The one rule for a chain read from the tree or from an organization snapshot.
+    /// </summary>
+    /// <param name="ancestry">A unit and the units above it, nearest first.</param>
+    /// <param name="assigneeOf">The assigned account by unit, covering at least the units of the chain.</param>
+    /// <returns>The assigned unit, or <see langword="null"/> when no unit of the chain has an assignment.</returns>
+    public static OrgUnitStatus? NearestAssigned(IReadOnlyList<OrgUnitStatus> ancestry, IReadOnlyDictionary<Guid, Guid> assigneeOf) =>
+        ancestry.FirstOrDefault(unit => assigneeOf.ContainsKey(unit.Id));
+
+    /// <summary>
+    /// The HR assignments of the given units in one query.
+    /// </summary>
+    /// <param name="unitIds">The units.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The assigned account by unit; units without an assignment are absent.</returns>
+    public async Task<IReadOnlyDictionary<Guid, Guid>> AssigneesAsync(IReadOnlyCollection<Guid> unitIds, CancellationToken cancellationToken)
+    {
+        var ids = unitIds.ToArray();
+        return await context.Set<OrgUnitHr>()
+            .Where(assignment => ids.Contains(assignment.OrgUnitId))
+            .ToDictionaryAsync(assignment => assignment.OrgUnitId, assignment => assignment.UserId, cancellationToken);
     }
 
     /// <summary>

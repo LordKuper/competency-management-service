@@ -10,7 +10,7 @@ namespace Competency.UserManagement;
 internal sealed class UserDirectory(AppDbContext context) : IUserDirectory
 {
     private static readonly Expression<Func<AppUser, UserStatus>> StatusProjection = user => new UserStatus(
-        user.Id, user.Email!, user.EmployeeId, user.IsBlocked, user.PasswordHash != null);
+        user.Id, user.Email!, user.EmployeeId, user.IsBlocked, user.PasswordHash != null, user.Version);
 
     public Task<UserStatus?> FindAsync(Guid userId, CancellationToken cancellationToken = default) => context
         .Set<AppUser>()
