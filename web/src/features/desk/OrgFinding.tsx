@@ -1,5 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, App, Button, Flex, Form, Table, Typography } from "antd";
+import {
+  App,
+  theme as antdTheme,
+  Button,
+  Col,
+  Flex,
+  Form,
+  Row,
+  Table,
+  Typography,
+} from "antd";
 import type { ReactNode, RefObject } from "react";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
@@ -23,6 +33,7 @@ import type { DeskItem } from "./deskApi";
 import { deskPaths, objectTitle, reasonLines, typeLabelOf } from "./deskTexts";
 import { ORG_FINDING_MUTATION, useIsFindingBusy } from "./findingBusy";
 import { LinkButton } from "./LinkButton";
+import { CompactAlert } from "./ScenarioContext";
 
 interface OrgFindingProps {
   item: DeskItem;
@@ -37,28 +48,21 @@ export function OrgFinding({ item, headingRef }: OrgFindingProps) {
   return (
     <Flex vertical gap="middle">
       <Typography.Title
-        level={2}
+        level={4}
         tabIndex={-1}
         ref={headingRef}
         style={{ margin: 0 }}
       >
         {label ? `${label} ${item.object.name}` : objectTitle(item.object)}
       </Typography.Title>
-      <Alert
-        type={item.isReference ? "info" : "warning"}
-        showIcon
-        title={first?.text}
-        description={
-          rest.length > 0 && (
-            <ul style={{ margin: 0 }}>
-              {rest.map((line) => (
-                <li key={line.text}>{line.text}</li>
-              ))}
-            </ul>
-          )
-        }
-      />
-      <Typography.Title level={3} style={{ margin: 0 }}>
+      {first && (
+        <CompactAlert
+          type={item.isReference ? "info" : "warning"}
+          lead={first.text}
+          text={rest.map((line) => line.text).join(" · ") || undefined}
+        />
+      )}
+      <Typography.Title level={4} style={{ margin: 0 }}>
         Как исправить
       </Typography.Title>
       <FindingAction item={item} />
@@ -88,6 +92,7 @@ function FindingAction({ item }: { item: DeskItem }) {
 }
 
 function OutsideList({ item }: { item: DeskItem }) {
+  const { token } = antdTheme.useToken();
   const queryClient = useQueryClient();
   const { message } = App.useApp();
   const isBusy = useIsFindingBusy();
@@ -112,49 +117,58 @@ function OutsideList({ item }: { item: DeskItem }) {
   });
 
   return (
-    <Flex vertical gap="large">
+    <Flex vertical gap="middle">
       {add.isError && (
         <DecisionError title="Должность не добавлена" error={add.error} />
       )}
-      <Flex
-        vertical
-        gap="small"
-        style={{
-          padding: "var(--ant-padding)",
-          border:
-            "var(--ant-line-width) var(--ant-line-type) var(--ant-color-primary)",
-          borderRadius: "var(--ant-border-radius)",
-          background: "var(--ant-color-primary-bg)",
-        }}
-      >
-        <Typography.Text strong>
-          {`Добавить должность «${position?.name}» в перечень подразделения «${unit?.name}»`}
-        </Typography.Text>
-        <div>
-          <Button
-            type="primary"
-            loading={add.isPending}
-            disabled={isBusy && !add.isPending}
-            onClick={() => add.mutate()}
+      <Row gutter={[token.margin, token.margin]}>
+        <Col xs={24} lg={12}>
+          <Flex
+            vertical
+            gap="small"
+            style={{
+              height: "100%",
+              padding: "var(--ant-padding-sm)",
+              border:
+                "var(--ant-line-width) var(--ant-line-type) var(--ant-color-primary)",
+              borderRadius: "var(--ant-border-radius)",
+              background: "var(--ant-color-primary-bg)",
+            }}
           >
-            Добавить в перечень
-          </Button>
-        </div>
-      </Flex>
-      <Flex vertical gap="small">
-        <Typography.Text strong>Сменить должность сотрудника</Typography.Text>
-        {employee.error ? (
-          <ErrorAlert
-            title="Не удалось загрузить сотрудника"
-            error={employee.error}
-            onRetry={() => void employee.refetch()}
-          />
-        ) : employee.data?.version == null ? (
-          <Typography.Text type="secondary">Загрузка…</Typography.Text>
-        ) : (
-          <ChangePositionForm employee={employee.data} />
-        )}
-      </Flex>
+            <Typography.Text strong>
+              {`Добавить должность «${position?.name}» в перечень подразделения «${unit?.name}»`}
+            </Typography.Text>
+            <div>
+              <Button
+                type="primary"
+                loading={add.isPending}
+                disabled={isBusy && !add.isPending}
+                onClick={() => add.mutate()}
+              >
+                Добавить в перечень
+              </Button>
+            </div>
+          </Flex>
+        </Col>
+        <Col xs={24} lg={12}>
+          <Flex vertical gap="small">
+            <Typography.Text strong>
+              Сменить должность сотрудника
+            </Typography.Text>
+            {employee.error ? (
+              <ErrorAlert
+                title="Не удалось загрузить сотрудника"
+                error={employee.error}
+                onRetry={() => void employee.refetch()}
+              />
+            ) : employee.data?.version == null ? (
+              <Typography.Text type="secondary">Загрузка…</Typography.Text>
+            ) : (
+              <ChangePositionForm employee={employee.data} />
+            )}
+          </Flex>
+        </Col>
+      </Row>
     </Flex>
   );
 }

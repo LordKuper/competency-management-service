@@ -3,6 +3,7 @@ import { Flex, Skeleton, Tag, Typography } from "antd";
 import { useState } from "react";
 import { type DeskGroup, type DeskItem, orgQueueQuery } from "./deskApi";
 import { reasonLines, typeLabelOf } from "./deskTexts";
+import { useIsFindingBusy } from "./findingBusy";
 import { OrgFinding } from "./OrgFinding";
 import {
   QueueLayout,
@@ -48,6 +49,7 @@ export function OrgCleanupPage() {
   );
   const current = items.find((item) => keyOf(item) === selection.selectedKey);
   const headingRef = useRecordFocus(selection.selectedKey);
+  const isBusy = useIsFindingBusy();
 
   return (
     <ScenarioPage title="Навести порядок в оргструктуре">
@@ -84,6 +86,11 @@ export function OrgCleanupPage() {
           onShowMore={showMore}
           moreCount={MORE_COUNT}
           isLoading={list.isPending}
+          lockedReason={
+            isBusy
+              ? "Идёт сохранение: другую находку можно выбрать после него."
+              : undefined
+          }
           emptyText="Расхождений в оргструктуре нет: должности, подразделения и учётные записи согласованы. Если они появятся, пункт вернётся на рабочий стол."
         >
           {list.isPending ? (

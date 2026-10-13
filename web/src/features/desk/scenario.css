@@ -33,6 +33,10 @@
   background: var(--ant-color-primary-bg-hover);
 }
 
+.queue-back {
+  display: none;
+}
+
 .queue-columns {
   display: grid;
   grid-template-columns: minmax(var(--queue-list-min-width), 2fr) 3fr;
@@ -45,9 +49,18 @@
   .queue-columns {
     grid-template-columns: 1fr;
   }
+
+  .queue-back {
+    display: inline-flex;
+  }
 }
 
 /* Fields of a scenario form stand closer: the gaps between blocks come from the layout around them. */
 .compact-form .ant-form-item {
   margin-bottom: 0;
+}
+
+.queue-row:disabled {
+  cursor: not-allowed;
+  color: var(--ant-color-text-disabled);
 }

@@ -78,6 +78,8 @@ interface QueueLayoutProps<T> {
   isLoading: boolean;
   /** Text of an empty queue: what it means and what comes next. */
   emptyText: string;
+  /** Why another record cannot be chosen now, such as a change being saved; the list is off while this is given. */
+  lockedReason?: string;
   /** The open record. */
   children: ReactNode;
 }
@@ -95,14 +97,16 @@ export function QueueLayout<T>({
   moreCount,
   isLoading,
   emptyText,
+  lockedReason,
   children,
 }: QueueLayoutProps<T>) {
+  const listRef = useRef<HTMLDivElement>(null);
   if (!isLoading && total === 0 && filter.value === undefined) {
     return (
       <Empty
         description={
           <>
-            <Typography.Title level={3}>Очередь пуста</Typography.Title>
+            <Typography.Title level={4}>Очередь пуста</Typography.Title>
             <Typography.Paragraph>{emptyText}</Typography.Paragraph>
           </>
         }
@@ -116,6 +120,7 @@ export function QueueLayout<T>({
   return (
     <div className="queue-columns">
       <Flex vertical gap="small">
+        <div ref={listRef} tabIndex={-1} />
         <Flex justify="space-between" align="center" gap="small" wrap>
           <Typography.Text strong>{`В очереди: ${total}`}</Typography.Text>
           <Select
@@ -128,6 +133,9 @@ export function QueueLayout<T>({
             onChange={(value) => filter.onChange(value ?? undefined)}
           />
         </Flex>
+        {lockedReason && (
+          <Typography.Text type="secondary">{lockedReason}</Typography.Text>
+        )}
         <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
           {items.map((item) => {
             const key = getKey(item);
@@ -138,6 +146,7 @@ export function QueueLayout<T>({
                   type="button"
                   className={`queue-row${isSelected ? " queue-row-selected" : ""}`}
                   aria-current={isSelected ? "true" : undefined}
+                  disabled={lockedReason !== undefined}
                   onClick={() => onSelect(key)}
                 >
                   {renderItem(item)}
@@ -159,7 +168,19 @@ export function QueueLayout<T>({
           </Flex>
         )}
       </Flex>
-      <div>{children}</div>
+      <div>
+        <Button
+          type="link"
+          className="queue-back"
+          onClick={() => {
+            listRef.current?.scrollIntoView();
+            listRef.current?.focus();
+          }}
+        >
+          К списку
+        </Button>
+        {children}
+      </div>
     </div>
   );
 }

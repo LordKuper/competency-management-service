@@ -145,19 +145,14 @@ function UnusedRecord({ entry, headingRef }: UnusedRecordProps) {
   return (
     <Flex vertical gap="middle">
       <Typography.Title
-        level={2}
+        level={4}
         tabIndex={-1}
         ref={headingRef}
         style={{ margin: 0 }}
       >
         {`${KIND_LABELS[entry.kind]} ${entry.name}`}
       </Typography.Title>
-      <Alert
-        type="info"
-        showIcon
-        title={REASONS[entry.kind]}
-        description="Можно удалить запись или деактивировать её, чтобы она не предлагалась при построении матриц."
-      />
+      <Alert type="info" showIcon title={REASONS[entry.kind]} />
       <Flex gap="small" wrap>
         <Button
           loading={deactivate.isPending}
@@ -183,6 +178,10 @@ function UnusedRecord({ entry, headingRef }: UnusedRecordProps) {
           Удалить
         </Button>
       </Flex>
+      <Typography.Text type="secondary">
+        «Деактивировать» — запись перестанет предлагаться при построении матриц;
+        «Удалить» — вместе с историей версий.
+      </Typography.Text>
     </Flex>
   );
 }

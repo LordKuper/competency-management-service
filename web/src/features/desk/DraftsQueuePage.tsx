@@ -42,6 +42,7 @@ import {
   useShownCount,
 } from "./QueueLayout";
 import { returnState } from "./returnLink";
+import { ActionBar, CompactAlert } from "./ScenarioContext";
 import { LoadFailure, ScenarioPage } from "./ScenarioPage";
 
 const FIRST_COUNT = 20;
@@ -62,15 +63,18 @@ const KIND_OPTIONS = Object.entries(KIND_LABELS).map(([value, label]) => ({
 
 const keyOf = (draft: CatalogDraft) => `${draft.kind}:${draft.id}`;
 
-/** What stops a draft track from being approved: no levels, or levels no active position is linked to. */
-function earlyReasons(draft: CatalogDraft): string[] {
+/** Why a draft track cannot be approved yet, in a sentence: it has no levels, or levels no active position is linked to; null when nothing stops it. */
+function earlyReason(draft: CatalogDraft): string | null {
   const { readiness } = draft;
-  if (draft.kind !== "Track" || !readiness) return [];
-  return readiness.hasLevels
-    ? readiness.levelsWithoutActivePosition.map(
-        (level) => `Уровень «${level.name}»: нет действующей должности`,
-      )
-    : ["У трека нет уровней"];
+  if (draft.kind !== "Track" || !readiness) return null;
+  if (!readiness.hasLevels) {
+    return "у трека нет уровней — его нельзя сделать действующим.";
+  }
+  const levels = readiness.levelsWithoutActivePosition.map(
+    (level) => `«${level.name}»`,
+  );
+  if (levels.length === 0) return null;
+  return `${levels.length === 1 ? "у уровня" : "у уровней"} ${levels.join(", ")} нет действующей должности — трек нельзя сделать действующим.`;
 }
 
 /** «Утвердить черновые записи»: the drafts the user may approve, one record at a time. */
@@ -158,7 +162,7 @@ export function DraftsQueuePage() {
 }
 
 function DraftRow({ draft }: { draft: CatalogDraft }) {
-  const isEarly = earlyReasons(draft).length > 0;
+  const isEarly = earlyReason(draft) !== null;
   return (
     <Flex vertical gap={2}>
       <Flex align="center" gap="small" wrap>
@@ -217,8 +221,8 @@ function DraftRecord({ draft, position, total, headingRef }: DraftRecordProps) {
   const preview = useQuery(publicationPreviewQuery(segment, draft));
   const matrices = useQuery(entryMatricesQuery(segment, draft.id));
   const { approveShown, publish, isBusy } = usePublishEntry();
-  const reasons = earlyReasons(draft);
-  const isEarly = reasons.length > 0;
+  const reason = earlyReason(draft);
+  const isEarly = reason !== null;
   const canApprove = rights.canManage(draft.ownerOrgUnitId ?? undefined);
   const entries = preview.data?.entries ?? [];
   const label =
@@ -232,37 +236,22 @@ function DraftRecord({ draft, position, total, headingRef }: DraftRecordProps) {
 
   return (
     <Flex vertical gap="middle">
-      <Typography.Title
-        level={2}
-        tabIndex={-1}
-        ref={headingRef}
-        style={{ margin: 0 }}
-      >
-        {`${KIND_LABELS[draft.kind]} ${draft.name}`}
-      </Typography.Title>
-      <Typography.Text type="secondary">{`Запись ${position} из ${total}`}</Typography.Text>
-      {isEarly && (
-        <Alert
-          type="warning"
-          showIcon
-          title="Утверждать рано"
-          description={
-            <>
-              <p>
-                Трек нельзя сделать действующим, пока у его уровней нет
-                связанных действующих должностей.
-              </p>
-              <ul>
-                {reasons.map((reason) => (
-                  <li key={reason}>{reason}</li>
-                ))}
-              </ul>
-            </>
-          }
-        />
+      <Flex align="baseline" gap="small" wrap>
+        <Typography.Title
+          level={4}
+          tabIndex={-1}
+          ref={headingRef}
+          style={{ margin: 0 }}
+        >
+          {`${KIND_LABELS[draft.kind]} ${draft.name}`}
+        </Typography.Title>
+        <Typography.Text type="secondary">{`Запись ${position} из ${total}`}</Typography.Text>
+      </Flex>
+      {reason && (
+        <CompactAlert type="warning" lead="Утверждать рано:" text={reason} />
       )}
       <Descriptions
-        column={1}
+        column={{ xs: 1, xl: 3 }}
         size="small"
         items={[
           {
@@ -351,7 +340,31 @@ function DraftRecord({ draft, position, total, headingRef }: DraftRecordProps) {
         )}
       </section>
       {canApprove && (
-        <Flex gap="small" align="center" wrap>
+        <ActionBar
+          start={
+            isEarly &&
+            (draft.readiness?.hasLevels ? (
+              <Link
+                to={deskPaths.trackPositionsOf(draft.id)}
+                state={returnState(back)}
+              >
+                Связать должности с треком
+              </Link>
+            ) : (
+              <Link to="/career">Править трек</Link>
+            ))
+          }
+        >
+          {isEarly && (
+            <Typography.Text type="secondary">
+              {draft.readiness?.hasLevels
+                ? "Утвердить недоступно: свяжите должности с уровнями трека."
+                : "Утвердить недоступно: добавьте уровни трека."}
+            </Typography.Text>
+          )}
+          <Button disabled={isBusy} onClick={() => setIsEditing(true)}>
+            Поправить и утвердить
+          </Button>
           <Button
             type="primary"
             loading={isBusy}
@@ -362,28 +375,7 @@ function DraftRecord({ draft, position, total, headingRef }: DraftRecordProps) {
           >
             {label}
           </Button>
-          <Button disabled={isBusy} onClick={() => setIsEditing(true)}>
-            Поправить и утвердить
-          </Button>
-          {isEarly &&
-            (draft.readiness?.hasLevels ? (
-              <Link
-                to={deskPaths.trackPositionsOf(draft.id)}
-                state={returnState(back)}
-              >
-                Связать должности с треком
-              </Link>
-            ) : (
-              <Link to="/career">Править трек</Link>
-            ))}
-          {isEarly && (
-            <Typography.Text type="secondary">
-              {draft.readiness?.hasLevels
-                ? "Утвердить недоступно: у трека есть уровни без действующих должностей. Свяжите должности — и вернитесь в очередь."
-                : "Утвердить недоступно: у трека нет уровней. Добавьте их — и вернитесь в очередь."}
-            </Typography.Text>
-          )}
-        </Flex>
+        </ActionBar>
       )}
       {isEditing && (
         <EditDraftModal
