@@ -236,6 +236,12 @@
       "tier": "critical",
       "reason": "risk:public contract",
       "resolved_model": "opus"
+    },
+    "Task 9": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:perf",
+      "resolved_model": "opus"
     }
   },
   "skipped_phases": [],
@@ -294,7 +300,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-13T14:58:07.475Z",
+  "updated_at": "2026-10-13T15:14:19.394Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
