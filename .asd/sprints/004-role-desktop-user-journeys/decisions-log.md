@@ -69,3 +69,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: sprint.md, plan.md
 - 2026-10-13 — route Task 14: standard (owner asd-ux — docs/ux), dispatch HEAD a56dd3c
 - 2026-10-13 — route Task 15: standard (owner asd-ba — docs/product), dispatch HEAD a56dd3c
+- 2026-10-13 — поправка скоупа (user): AC-38 — линейка шагов в каждом многошаговом мастере (всего шагов, названия, текущий, пройденные и оставшиеся, переход на пройденный шаг); добавлена в Task 14, 15, 16 до их диспатча; стоимость AC-38: 0 итераций / 0 раундов исправлений

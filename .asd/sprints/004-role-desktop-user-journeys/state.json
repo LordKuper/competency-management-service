@@ -193,6 +193,13 @@
       "decision": "AC-35 compact scenario screens, AC-36 back to previous step / reselect object in every scenario, AC-37 rename professional direction to professional area (UI «Область»); Task 14 (UX docs), Task 15 (requirements) wave 10, Task 16 (SPA + mail texts) wave 11",
       "reason": "user remarks at impl assessment; cost AC-35..37: 0 iterations / 0 fix rounds (new criteria, no impl review yet)",
       "evidence": "decisions-log.md 2026-10-13 scope amendment at impl assessment"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-38 step ruler in every multi-step wizard (total, names, current, done/remaining, jump to done step); folded into Task 14, 15, 16",
+      "reason": "user instruction at impl assessment; cost AC-38: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-13 AC-38 step ruler"
     }
   ],
   "task_routing": {
@@ -343,7 +350,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-13T18:06:45.424Z",
+  "updated_at": "2026-10-13T18:07:11.352Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
