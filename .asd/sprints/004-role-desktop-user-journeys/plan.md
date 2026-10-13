@@ -67,13 +67,13 @@ Material risk: change: security — право ответственного HR �
 ### Task 6: Методы чтения сценариев и шаг мастера
 Material risk: change: migration — колонка `matrix_versions.builder_step`
 Material risk: change: security — `/org-units/{id}/setup` только администратору, `/me/place` только о себе, `/matrices` записи — только читаемые версии
-- [ ] миграция `matrix_versions.builder_step` (`smallint`, NULL, без журнала); `PUT …/content?builderStep=2..6`, `MatrixVersionResponse.builderStep` (AC-8.11)
-- [ ] `GET /matrix-versions/{id}/completeness` (коды проблем, та же функция, что у переходов) и `GET /matrix-versions/{id}/changes` (разница с действующей опубликованной версией) (AC-8.9, AC-10.2, AC-10.3)
-- [ ] `GET /{directions|tracks|levels|categories|competencies|scales}/{id}/matrices` — только читаемые (`MatrixRoute.ReadableAsync`); `readiness` у `/drafts` («утверждать рано») (AC-11.2, AC-11.3, AC-27.2)
-- [ ] `GET /unused-entries?kind=` — неиспользуемые записи каталога, HR и администратор (AC-27.5…AC-27.8, AC-32)
-- [ ] `GET /org-units/{id}/setup` (руководитель, HR свой/унаследованный, учётные записи с состоянием и `version`, перечень, строки «готово / не хватает / ждёт») — `IUserDirectory`: `UserStatus.Version`, состояние приглашения (AC-12.1…AC-12.5)
-- [ ] `GET /me/place` (подразделение, должность, руководитель, ответственный HR, треки должности, текущий и следующие уровни с требованиями из `snapshot` опубликованной матрицы своего подразделения, `noTrack`) (AC-14.1…AC-14.12, AC-29)
-- [ ] перегенерация `openapi/openapi.json` и `web/src/api/schema.d.ts`
+- [x] миграция `matrix_versions.builder_step` (`smallint`, NULL, без журнала); `PUT …/content?builderStep=2..6`, `MatrixVersionResponse.builderStep` (AC-8.11)
+- [x] `GET /matrix-versions/{id}/completeness` (коды проблем, та же функция, что у переходов) и `GET /matrix-versions/{id}/changes` (разница с действующей опубликованной версией) (AC-8.9, AC-10.2, AC-10.3)
+- [x] `GET /{directions|tracks|levels|categories|competencies|scales}/{id}/matrices` — только читаемые (`MatrixRoute.ReadableAsync`); `readiness` у `/drafts` («утверждать рано») (AC-11.2, AC-11.3, AC-27.2)
+- [x] `GET /unused-entries?kind=` — неиспользуемые записи каталога, HR и администратор (AC-27.5…AC-27.8, AC-32)
+- [x] `GET /org-units/{id}/setup` (руководитель, HR свой/унаследованный, учётные записи с состоянием и `version`, перечень, строки «готово / не хватает / ждёт») — `IUserDirectory`: `UserStatus.Version`, состояние приглашения (AC-12.1…AC-12.5)
+- [x] `GET /me/place` (подразделение, должность, руководитель, ответственный HR, треки должности, текущий и следующие уровни с требованиями из `snapshot` опубликованной матрицы своего подразделения, `noTrack`) (AC-14.1…AC-14.12, AC-29)
+- [x] перегенерация `openapi/openapi.json` и `web/src/api/schema.d.ts`
 
 ### Task 7: Письма-напоминания
 Material risk: change: lock ordering — получатели и отправка только после `CommitAsync`, вне блокировок
