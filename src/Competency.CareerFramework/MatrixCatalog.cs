@@ -67,43 +67,57 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     /// <param name="version">The version.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
     /// <returns>The problems; empty when the version is complete.</returns>
-    public async Task<List<string>> CompletenessProblemsAsync(MatrixVersion version, CancellationToken cancellationToken)
+    public async Task<List<MatrixProblem>> CompletenessProblemsAsync(MatrixVersion version, CancellationToken cancellationToken)
     {
         var content = version.Content;
         if (content.Levels.Count == 0)
         {
-            return ["В версии нет уровней"];
+            return [new MatrixProblem(MatrixProblemCode.NoLevels, "В версии нет уровней")];
         }
 
         var entries = await LoadAsync(version.ScaleId, content, cancellationToken);
-        var problems = new List<string>();
+        var problems = new List<MatrixProblem>();
         foreach (var level in content.Levels)
         {
-            var name = entries.Levels.GetValueOrDefault(level.LevelId)?.Name ?? level.LevelId.ToString();
-            if (!content.Requirements.Any(requirement => requirement.LevelId == level.LevelId))
+            var levelId = level.LevelId;
+            var name = entries.Levels.GetValueOrDefault(levelId)?.Name ?? levelId.ToString();
+            if (!content.Requirements.Any(requirement => requirement.LevelId == levelId))
             {
-                problems.Add($"У уровня «{name}» нет требований");
+                problems.Add(new MatrixProblem(MatrixProblemCode.LevelWithoutRequirements, $"У уровня «{name}» нет требований", levelId));
             }
 
-            var sum = content.BlockWeights.Where(weight => weight.LevelId == level.LevelId).Sum(weight => weight.Percent);
+            var sum = content.BlockWeights.Where(weight => weight.LevelId == levelId).Sum(weight => weight.Percent);
             if (sum != MatrixContent.MaxPercent)
             {
-                problems.Add($"Коэффициенты блоков уровня «{name}» дают в сумме {sum.ToString("0.##", DecimalComma)} %, нужно 100 %");
+                problems.Add(new MatrixProblem(
+                    MatrixProblemCode.BlockWeights,
+                    $"Коэффициенты блоков уровня «{name}» дают в сумме {sum.ToString("0.##", DecimalComma)} %, нужно 100 %",
+                    levelId));
             }
         }
 
         foreach (var requirement in content.Requirements.Where(requirement => requirement.Type == CompetencyType.Critical && requirement.RequiredScore is null)
                      .DistinctBy(requirement => requirement.CompetencyId))
         {
-            problems.Add($"У критической компетенции «{entries.CompetencyName(requirement.CompetencyId)}» не задан минимальный уровень");
+            problems.Add(new MatrixProblem(
+                MatrixProblemCode.CriticalWithoutScore,
+                $"У критической компетенции «{entries.CompetencyName(requirement.CompetencyId)}» не задан минимальный уровень",
+                CompetencyId: requirement.CompetencyId));
         }
 
         var readiness = await store.ReadinessAsync(version.Matrix.TrackId, cancellationToken);
-        problems.AddRange(readiness.LevelsWithoutActivePosition.Select(level => $"У уровня «{level.Name}» трека «{level.Track.Name}» нет связанной действующей должности"));
+        problems.AddRange(readiness.LevelsWithoutActivePosition.Select(level => new MatrixProblem(
+            MatrixProblemCode.LevelWithoutActivePosition,
+            $"У уровня «{level.Name}» трека «{level.Track.Name}» нет связанной действующей должности",
+            level.Id)));
         problems.AddRange(EntryProblems(version, entries, await HeadOfAsync(version.Matrix, cancellationToken)));
         foreach (var requirement in content.Requirements.Where(requirement => !entries.HasScore(requirement.RequiredScore)))
         {
-            problems.Add($"Требуемого уровня {requirement.RequiredScore} компетенции «{entries.CompetencyName(requirement.CompetencyId)}» нет в шкале версии");
+            problems.Add(new MatrixProblem(
+                MatrixProblemCode.ScoreOutOfScale,
+                $"Требуемого уровня {requirement.RequiredScore} компетенции «{entries.CompetencyName(requirement.CompetencyId)}» нет в шкале версии",
+                requirement.LevelId,
+                requirement.CompetencyId));
         }
 
         return problems;
@@ -150,17 +164,21 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
                     competency.Status))]);
     }
 
-    private static IEnumerable<string> EntryProblems(MatrixVersion version, LoadedEntries entries, Guid? headId)
+    private static IEnumerable<MatrixProblem> EntryProblems(MatrixVersion version, LoadedEntries entries, Guid? headId)
     {
         IEnumerable<CatalogEntry> all = [entries.Scale, .. entries.Levels.Values, .. entries.Competencies.Values];
         foreach (var entry in all.Where(entry => !IsUsable(entry, headId)))
         {
-            yield return $"В версии есть неактивная запись «{entry.Name}»";
+            yield return new MatrixProblem(
+                MatrixProblemCode.InactiveEntry,
+                $"В версии есть неактивная запись «{entry.Name}»",
+                entry is CareerLevel ? entry.Id : null,
+                entry is CareerCompetency ? entry.Id : null);
         }
 
         foreach (var competency in entries.Competencies.Values.Where(competency => !Fits(competency, version)))
         {
-            yield return $"{ForeignCompetencyMessage}: «{competency.Name}»";
+            yield return new MatrixProblem(MatrixProblemCode.ForeignCompetency, $"{ForeignCompetencyMessage}: «{competency.Name}»", CompetencyId: competency.Id);
         }
     }
 

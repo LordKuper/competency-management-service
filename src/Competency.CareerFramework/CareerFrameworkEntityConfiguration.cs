@@ -165,6 +165,7 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
                 snapshot => JsonSerializer.Serialize(snapshot, DocumentJson),
                 json => JsonSerializer.Deserialize<MatrixEntries>(json, DocumentJson));
             entity.Property(e => e.PublishedAt).HasColumnName("published_at");
+            entity.Property(e => e.BuilderStep).HasColumnName("builder_step");
             entity.HasIndex(e => new { e.MatrixId, e.Number }).IsUnique();
             entity.HasIndex(e => e.MatrixId, "ux_matrix_versions_published").IsUnique().HasFilter("status = 'Published'");
             entity.HasIndex(e => e.MatrixId, "ux_matrix_versions_in_work").IsUnique().HasFilter("status IN ('Draft', 'OnReview', 'Returned')");

@@ -26,6 +26,7 @@ internal sealed class MatrixWorkflow(
     private const string EntityType = nameof(MatrixVersion);
     private const string ContentField = "content";
     private const string CommentField = "comment";
+    private const string BuilderStepField = "builderStep";
     private const string TurnMessage = "Сейчас ход другого участника согласования";
     private const string NoHrMessage = "Нет ответственного HR — обратитесь к администратору";
     private const string ChangedByApproverMessage = "Версия изменена согласующим — верните её с правками";
@@ -116,21 +117,29 @@ internal sealed class MatrixWorkflow(
             PersonOf(hrId, names),
             state.ReturnedWithChanges,
             state.Actions,
+            version.BuilderStep,
             version.Version);
     }
 
     /// <summary>
     /// Replaces the content of a version: by a unit head while it is a draft, and by the current approver while it is on review.
+    /// The builder step, when given, is saved with it, even when the content stays the same.
     /// The catalogue lock is held shared, so an entry the content refers to cannot be deleted between the reference check and the save.
     /// </summary>
     public async Task<Results<Ok<MatrixVersionResponse>, NotFound, ValidationProblem, ProblemHttpResult>> EditAsync(
         Guid id,
         MatrixContent content,
+        int? builderStep,
         IfMatch ifMatch,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
         var errors = content.Validate();
+        if (builderStep is < MatrixVersion.FirstBuilderStep or > MatrixVersion.LastBuilderStep)
+        {
+            errors[BuilderStepField] = [$"Шаг мастера — от {MatrixVersion.FirstBuilderStep} до {MatrixVersion.LastBuilderStep}"];
+        }
+
         if (errors.Count > 0)
         {
             return TypedResults.ValidationProblem(errors);
@@ -160,9 +169,14 @@ internal sealed class MatrixWorkflow(
         {
             version.Content = stored;
             audit.Stage(new AuditEntry($"{EntityType}.ContentUpdated", EntityType, version.Id.ToString()), context);
-            await context.SaveChangesAsync(cancellationToken);
         }
 
+        if (builderStep is { } step)
+        {
+            version.BuilderStep = (short)step;
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return TypedResults.Ok(await DescribeAsync(version, state, response, cancellationToken));
     }
@@ -545,11 +559,11 @@ internal sealed class MatrixWorkflow(
         var problems = await catalog.CompletenessProblemsAsync(version, cancellationToken);
         return problems.Count == 0
             ? null
-            : TypedResults.Problem(new HttpValidationProblemDetails(new Dictionary<string, string[]> { [ContentField] = [.. problems] })
+            : TypedResults.Problem(new HttpValidationProblemDetails(new Dictionary<string, string[]> { [ContentField] = [.. problems.Select(problem => problem.Message)] })
             {
                 Status = StatusCodes.Status409Conflict,
                 Title = Rejection.ConflictTitle,
-                Detail = problems[0],
+                Detail = problems[0].Message,
             });
     }
 

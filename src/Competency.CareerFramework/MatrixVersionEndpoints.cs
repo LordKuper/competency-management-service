@@ -9,8 +9,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of one matrix version: reading it, editing its content, its approval route steps, the preview of its publication and its
-/// history. A version the user cannot read answers 404; a step that is not the user's turn answers 403. The steps that may publish the
+/// The API of one matrix version: reading it, its completeness and its changes against the published version, editing its content,
+/// its approval route steps, the preview of its publication and its history. A version the user cannot read answers 404; a step that is not the user's turn answers 403. The steps that may publish the
 /// version take the tag of the confirmed publication list in <c>?cascade=</c>.
 /// </summary>
 internal static class MatrixVersionEndpoints
@@ -23,6 +23,8 @@ internal static class MatrixVersionEndpoints
         var group = endpoints.MapCatalogGroup(Route);
         group.MapGet("/{id:guid}", GetAsync).WithName("GetMatrixVersion").ProducesETag().ProducesProblem(StatusCodes.Status404NotFound);
         group.MapPut("/{id:guid}/content", EditAsync).WithName("UpdateMatrixVersionContent").ProducesTransition();
+        group.MapGet("/{id:guid}/completeness", CompletenessAsync).WithName("GetMatrixVersionCompleteness").ProducesProblem(StatusCodes.Status404NotFound);
+        group.MapGet("/{id:guid}/changes", ChangesAsync).WithName("GetMatrixVersionChanges").ProducesProblem(StatusCodes.Status404NotFound);
         group.MapGet("/{id:guid}/publication", (Guid id, MatrixWorkflow workflow, CancellationToken cancellationToken) =>
                 workflow.PreviewAsync(id, cancellationToken))
             .WithName("GetMatrixVersionPublication")
@@ -89,11 +91,72 @@ internal static class MatrixVersionEndpoints
     private static Task<Results<Ok<MatrixVersionResponse>, NotFound, ValidationProblem, ProblemHttpResult>> EditAsync(
         Guid id,
         MatrixContent request,
+        [FromQuery(Name = "builderStep")] int? builderStep,
         IfMatch ifMatch,
         MatrixWorkflow workflow,
         HttpResponse response,
         CancellationToken cancellationToken) =>
-        workflow.EditAsync(id, request, ifMatch, response, cancellationToken);
+        workflow.EditAsync(id, request, builderStep, ifMatch, response, cancellationToken);
+
+    /// <summary>
+    /// The completeness check the transitions run, without acting on the version.
+    /// </summary>
+    private static async Task<Results<Ok<MatrixCompletenessResponse>, NotFound>> CompletenessAsync(
+        Guid id,
+        AppDbContext context,
+        MatrixWorkflow workflow,
+        MatrixRoute route,
+        MatrixCatalog catalog,
+        CancellationToken cancellationToken)
+    {
+        if (await FindReadableAsync(id, context, workflow, route, cancellationToken) is not { } version)
+        {
+            return TypedResults.NotFound();
+        }
+
+        return TypedResults.Ok(new MatrixCompletenessResponse(await catalog.CompletenessProblemsAsync(version, cancellationToken)));
+    }
+
+    /// <summary>
+    /// What the version changes against the published version of its matrix, or against an empty document when none is published.
+    /// </summary>
+    private static async Task<Results<Ok<MatrixDiffResponse>, NotFound>> ChangesAsync(
+        Guid id,
+        AppDbContext context,
+        MatrixWorkflow workflow,
+        MatrixRoute route,
+        CancellationToken cancellationToken)
+    {
+        if (await FindReadableAsync(id, context, workflow, route, cancellationToken) is not { } version)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var published = await context.Set<MatrixVersion>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(candidate => candidate.MatrixId == version.MatrixId && candidate.Status == MatrixVersionStatus.Published, cancellationToken);
+        var before = published?.Content ?? MatrixContent.Empty;
+        return TypedResults.Ok(new MatrixDiffResponse(
+            version.Number,
+            published?.Number,
+            before,
+            version.Content,
+            MatrixChange.Between(before, version.Content)));
+    }
+
+    private static async Task<MatrixVersion?> FindReadableAsync(
+        Guid id,
+        AppDbContext context,
+        MatrixWorkflow workflow,
+        MatrixRoute route,
+        CancellationToken cancellationToken)
+    {
+        var viewer = await workflow.ViewerAsync(cancellationToken);
+        return await context.Set<MatrixVersion>().AsNoTracking().FirstOrDefaultAsync(version => version.Id == id, cancellationToken) is { } version
+            && await route.CanReadAsync(viewer, version, isHistory: false, cancellationToken)
+            ? version
+            : null;
+    }
 
     private static async Task<Results<Ok<MatrixVersionResponse>, NotFound, ValidationProblem, ProblemHttpResult>> ReturnAsync(
         Guid id,

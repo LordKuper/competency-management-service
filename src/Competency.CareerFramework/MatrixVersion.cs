@@ -9,6 +9,13 @@ namespace Competency.CareerFramework;
 [Audited]
 internal sealed class MatrixVersion : EntityBase
 {
+    /// <summary>
+    /// The first builder step a version can be saved at; the step before it chooses the track, before the version exists.
+    /// </summary>
+    public const int FirstBuilderStep = 2;
+
+    public const int LastBuilderStep = 6;
+
     [Audited]
     public Guid MatrixId { get; init; }
 
@@ -50,6 +57,12 @@ internal sealed class MatrixVersion : EntityBase
 
     [Audited]
     public DateTimeOffset? PublishedAt { get; set; }
+
+    /// <summary>
+    /// The matrix builder step the version was last saved at, so the builder resumes there; null for a version made outside the builder.
+    /// Left out of the journal, because it records where a user stopped rather than anything about the matrix.
+    /// </summary>
+    public short? BuilderStep { get; set; }
 
     /// <summary>
     /// Whether the version counts as the one in work of its matrix, of which there is at most one.

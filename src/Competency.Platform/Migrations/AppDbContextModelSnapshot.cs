@@ -640,6 +640,10 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("author_id");
 
+                    b.Property<short?>("BuilderStep")
+                        .HasColumnType("smallint")
+                        .HasColumnName("builder_step");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("jsonb")
