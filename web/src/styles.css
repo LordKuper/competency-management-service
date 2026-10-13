@@ -236,3 +236,30 @@ body {
   margin-block: 0;
   padding-inline-start: var(--ant-margin-lg);
 }
+
+/* A long option may outgrow a narrow field, but not the window; what still does not fit is cut with an ellipsis. */
+.ant-select-dropdown {
+  max-width: min(90ch, 90vw);
+}
+
+.option-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A name with a status tag: the name gives way, the tag is always shown whole. */
+.option-with-tag {
+  display: flex;
+  align-items: center;
+  gap: var(--ant-margin-xs);
+  min-width: 0;
+}
+
+.option-with-tag__name {
+  min-width: 0;
+}
+
+.option-with-tag__tag {
+  flex: none;
+}

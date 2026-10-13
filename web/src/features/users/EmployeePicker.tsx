@@ -84,9 +84,15 @@ export function EmployeePicker({
       }
       optionRender={(option) => (
         <Flex vertical>
-          <span>{option.label}</span>
+          <span className="option-truncate" title={String(option.label)}>
+            {option.label}
+          </span>
           {option.data.detail && (
-            <Typography.Text type="secondary">
+            <Typography.Text
+              type="secondary"
+              className="option-truncate"
+              title={option.data.detail}
+            >
               {option.data.detail}
             </Typography.Text>
           )}

@@ -24,6 +24,7 @@ import {
 } from "antd";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
+import { OptionWithTag } from "../../app/OptionWithTag";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { CatalogStatusTag } from "../career/CatalogParts";
 import {
@@ -98,11 +99,22 @@ export function TrackPositionsPage() {
               status: item.status,
             }))}
             optionRender={(option) => (
-              <Flex justify="space-between" gap="small">
-                <span>{option.label}</span>
-                <CatalogStatusTag status={option.data.status} />
-              </Flex>
+              <OptionWithTag
+                label={String(option.label)}
+                tag={<CatalogStatusTag status={option.data.status} />}
+              />
             )}
+            labelRender={({ label, value }) => {
+              const chosen = options.find((item) => item.id === value);
+              return chosen ? (
+                <OptionWithTag
+                  label={String(label)}
+                  tag={<CatalogStatusTag status={chosen.status} />}
+                />
+              ) : (
+                label
+              );
+            }}
             notFoundContent="Треков, связи которых вы вправе править, нет."
             onChange={(id) => void navigate(deskPaths.trackPositionsOf(id))}
           />
@@ -110,7 +122,6 @@ export function TrackPositionsPage() {
         {direction.data && (
           <Typography.Text type="secondary">{`область «${direction.data.name}»`}</Typography.Text>
         )}
-        {track.data && <CatalogStatusTag status={track.data.status} />}
         {trackId && <LinkButton to={back.to}>{back.label}</LinkButton>}
       </ContextLine>
       {trackId ? (
