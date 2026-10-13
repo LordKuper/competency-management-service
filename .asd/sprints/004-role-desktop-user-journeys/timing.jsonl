@@ -80,3 +80,5 @@
 {"op":"close","id":"correctness iter-03","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T11:47:36.374Z","end":"2026-10-13T11:51:58.815Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
 {"op":"close","id":"documentation iter-03","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T11:47:36.374Z","end":"2026-10-13T11:55:08.755Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
 {"op":"close","id":"external iter-03","kind":"external-review","parent":"design-review iter-03","start":"2026-10-13T11:47:36.444Z","end":"2026-10-13T11:55:31.005Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"open","id":"wait iter-03 escalation","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T11:55:31.367Z","attrs":{"gate":"design-review iter-03 FAIL and question"}}
+{"op":"close","id":"wait iter-03 escalation","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T11:55:31.367Z","end":"2026-10-13T11:58:21.675Z","outcome":"done","attrs":{"gate":"design-review iter-03 FAIL and question"}}

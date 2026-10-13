@@ -135,6 +135,20 @@
       "decision": "AC-34: a record created directly active that references drafts is created as a draft and offered for approval with the cascade list; accept-changes publishes and shows the cascade when the HR step auto-approves (author is responsible HR)",
       "reason": "design-review iter-02 documentation question 1 and external #1; cost AC-34: 2 iterations (lower bound) / 1 fix round",
       "evidence": "decisions-log.md 2026-10-13 design-review iter-02 answers"
+    },
+    {
+      "gate": "design-review FAIL escalation (external iter-03 #1)",
+      "decision_actor": "user",
+      "decision": "accept fix: a transition that actually publishes without a matching cascade tag returns 412 and the screen re-previews for confirmation; listed in 3.1.0 behaviour changes",
+      "reason": "Complication Approval presented; tag-with-route and accept-risk rejected",
+      "evidence": "decisions-log.md 2026-10-13 design-review iter-03 answers"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-34: editing an active record to reference a draft is rejected 400 (field error); version closure walks through active competencies to their draft references",
+      "reason": "correctness iter-03 question 1; cost AC-34: 3 iterations (lower bound) / 2 fix rounds",
+      "evidence": "decisions-log.md 2026-10-13 design-review iter-03 answers"
     }
   ],
   "task_routing": {},
@@ -180,7 +194,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-13T11:55:31.064Z",
+  "updated_at": "2026-10-13T11:58:21.821Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
