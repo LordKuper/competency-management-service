@@ -64,13 +64,13 @@ export function CompetenciesTab() {
       render: (_, competency) => competency.categoryName,
     },
     {
-      title: "Направление",
+      title: "Область",
       dataIndex: "directionId",
       ...catalogFilter(
         "directionId",
         "directions",
         params.directionId,
-        "Направление",
+        "Область",
       ),
       render: (_, competency) => competency.directionName ?? "Общая",
     },
@@ -243,7 +243,7 @@ function VersionsModal({
               },
               {
                 key: "direction",
-                label: "Направление",
+                label: "Область",
                 children: chosen.directionId ? direction.data?.name : "Общая",
               },
               {

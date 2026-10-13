@@ -16,7 +16,7 @@ import { usePublishEntry } from "./usePublishEntry";
 
 /** What each kind of draft entry is called. */
 export const KIND_LABELS: Record<CatalogKind, string> = {
-  Direction: "Направление",
+  Direction: "Область",
   Track: "Трек",
   Category: "Категория",
   Competency: "Компетенция",

@@ -20,7 +20,7 @@ import { moreBlockersText } from "./useConfirmDeletion";
 
 /** What each catalogue's record is called in a question about it, in the accusative. */
 export const KIND_ACCUSATIVE: Record<CatalogSegment, string> = {
-  directions: "направление",
+  directions: "область",
   tracks: "трек",
   levels: "уровень",
   categories: "категорию",
@@ -29,7 +29,7 @@ export const KIND_ACCUSATIVE: Record<CatalogSegment, string> = {
 };
 
 const CREATED_AS_DRAFT: Record<PublishableSegment, string> = {
-  directions: "Направление",
+  directions: "Область",
   tracks: "Трек",
   categories: "Категория",
   competencies: "Компетенция",
@@ -37,7 +37,7 @@ const CREATED_AS_DRAFT: Record<PublishableSegment, string> = {
 };
 
 const CREATED_ENDING: Record<PublishableSegment, string> = {
-  directions: "создано",
+  directions: "создана",
   tracks: "создан",
   categories: "создана",
   competencies: "создана",
@@ -46,7 +46,7 @@ const CREATED_ENDING: Record<PublishableSegment, string> = {
 
 /** What each kind of record of a publication list is called. */
 export const KIND_LABELS: Record<PublicationEntry["kind"], string> = {
-  Direction: "Направление",
+  Direction: "Область",
   Track: "Трек",
   Level: "Уровень",
   Category: "Категория",

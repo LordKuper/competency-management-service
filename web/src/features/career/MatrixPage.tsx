@@ -255,7 +255,7 @@ export function MatrixPage() {
         items={[
           {
             key: "direction",
-            label: "Направление",
+            label: "Область",
             children: matrix.directionName,
           },
           {

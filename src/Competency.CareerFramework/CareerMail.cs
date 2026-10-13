@@ -118,7 +118,7 @@ internal sealed class CareerMail(
 
     private static string KindWord(CatalogEntryKind kind) => kind switch
     {
-        CatalogEntryKind.Direction => "направление",
+        CatalogEntryKind.Direction => "область",
         CatalogEntryKind.Track => "трек",
         CatalogEntryKind.Category => "категория",
         CatalogEntryKind.Competency => "компетенция",

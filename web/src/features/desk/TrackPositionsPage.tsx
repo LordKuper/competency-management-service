@@ -166,7 +166,7 @@ function TrackScreen({ trackId }: { trackId: string }) {
           <Typography.Text type="secondary">
             {[
               track.data.ownerOrgUnitName,
-              direction.data && `направление «${direction.data.name}»`,
+              direction.data && `область «${direction.data.name}»`,
             ]
               .filter(Boolean)
               .join(" · ")}

@@ -145,7 +145,7 @@ const TYPE_LABELS: Record<DeskObject["type"], string> = {
   OrgUnit: "Подразделение",
   Track: "Трек",
   Level: "Уровень",
-  Direction: "Направление",
+  Direction: "Область",
   Category: "Категория",
   Competency: "Компетенция",
   Scale: "Шкала",
@@ -407,7 +407,7 @@ function reasonOf(reason: DeskReason, item: DeskItem): ReasonLine[] {
     case "UnusedCategory":
       return [{ text: "Категория нигде не используется" }];
     case "DirectionWithoutTracks":
-      return [{ text: "У направления нет треков" }];
+      return [{ text: "У области нет треков" }];
     case "InactivePositionInUse":
       return [
         {
@@ -463,7 +463,7 @@ function returnedWith(details: NonNullable<DeskReason["details"]>): string {
 
 const INACTIVE_FORMS: Partial<Record<DeskObject["type"], string>> = {
   Track: "неактивен",
-  Direction: "неактивно",
+  Direction: "неактивна",
   Competency: "неактивна",
 };
 

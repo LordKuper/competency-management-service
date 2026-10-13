@@ -13,7 +13,7 @@ const TABS = [
   { key: "categories", label: "Категории", children: <CategoriesTab /> },
   {
     key: "tracks",
-    label: "Направления и треки",
+    label: "Области и треки",
     children: <DirectionsTracksTab />,
   },
   { key: "competencies", label: "Компетенции", children: <CompetenciesTab /> },

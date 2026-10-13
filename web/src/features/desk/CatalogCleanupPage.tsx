@@ -38,7 +38,7 @@ const REASONS: Partial<Record<CatalogKind, string>> = {
   Competency: "Компетенция нигде не используется",
   Scale: "Шкала нигде не используется",
   Category: "Категория вне любых версий матриц и компетенций",
-  Direction: "У направления нет треков",
+  Direction: "У области нет треков",
 };
 
 const keyOf = (entry: UnusedEntry) => `${entry.kind}:${entry.id}`;

@@ -204,7 +204,7 @@ function CompetencyForm({
       >
         <CategorySelect />
       </Form.Item>
-      <Form.Item name="directionId" label="Направление">
+      <Form.Item name="directionId" label="Область">
         <CatalogSelect
           segment="directions"
           filters={IN_WORK}

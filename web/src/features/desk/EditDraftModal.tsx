@@ -74,7 +74,7 @@ function EditNamed({ draft, onSaved, onClose }: EditDraftModalProps) {
       segment={segment === "directions" ? "directions" : "categories"}
       title={
         segment === "directions"
-          ? "Изменение направления"
+          ? "Изменение области"
           : "Изменение категории"
       }
       entry={read.data}

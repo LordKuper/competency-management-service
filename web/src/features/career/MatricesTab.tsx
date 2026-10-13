@@ -41,13 +41,13 @@ function columns(params: MatrixListParams): TableColumnsType<Matrix> {
       ...unitFilter("orgUnitId", params.orgUnitId),
     },
     {
-      title: "Направление",
+      title: "Область",
       dataIndex: "directionName",
       ...catalogFilter(
         "directionId",
         "directions",
         params.directionId,
-        "Направление",
+        "Область",
       ),
     },
     {

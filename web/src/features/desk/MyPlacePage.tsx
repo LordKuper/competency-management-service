@@ -180,7 +180,7 @@ function TrackPanel({
       title={
         <Flex align="center" gap="small" wrap>
           <span>{track.track.name}</span>
-          <Tag>{`Направление: ${track.direction.name}`}</Tag>
+          <Tag>{`Область: ${track.direction.name}`}</Tag>
         </Flex>
       }
     >

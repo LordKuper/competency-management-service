@@ -55,13 +55,13 @@ export function DirectionsTracksTab() {
       {rights.canCreate && (
         <Flex>
           <Button type="primary" onClick={() => setDialog("create")}>
-            Добавить направление
+            Добавить область
           </Button>
         </Flex>
       )}
       {error && (
         <ErrorAlert
-          title="Не удалось загрузить направления"
+          title="Не удалось загрузить области"
           error={error}
           onRetry={() => void refetch()}
         />
@@ -83,7 +83,7 @@ export function DirectionsTracksTab() {
           emptyText: (
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Направлений пока нет"
+              description="Областей пока нет"
             />
           ),
         }}
@@ -91,14 +91,14 @@ export function DirectionsTracksTab() {
       {dialog === "create" && (
         <NameModal
           segment="directions"
-          title="Новое направление"
+          title="Новая область"
           onClose={() => setDialog(null)}
         />
       )}
       {edited && (
         <NameModal
           segment="directions"
-          title="Изменение направления"
+          title="Изменение области"
           entry={edited}
           onClose={() => setDialog(null)}
         />

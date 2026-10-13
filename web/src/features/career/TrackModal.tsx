@@ -142,7 +142,7 @@ export function TrackModal({
         {!current && !directionId && (
           <Form.Item
             name="directionId"
-            label="Направление"
+            label="Область"
             rules={[{ required: true }]}
           >
             <CatalogSelect segment="directions" filters={IN_WORK} />

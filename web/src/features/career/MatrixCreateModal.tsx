@@ -59,7 +59,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
         </Form.Item>
         <Form.Item
           name="directionId"
-          label="Направление"
+          label="Область"
           rules={[{ required: true }]}
         >
           <CatalogSelect
@@ -74,7 +74,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
           rules={[{ required: true }]}
           extra={
             !directionId || !orgUnitId
-              ? "Сначала выберите подразделение и направление"
+              ? "Сначала выберите подразделение и область"
               : undefined
           }
         >
