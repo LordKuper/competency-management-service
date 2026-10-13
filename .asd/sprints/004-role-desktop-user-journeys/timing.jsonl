@@ -33,3 +33,5 @@
 {"op":"close","id":"asd-architect design#1","kind":"dispatch","parent":"design#1","start":"2026-10-13T08:54:42.428Z","end":"2026-10-13T09:22:35.527Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
 {"op":"open","id":"wait adr accept","kind":"user-wait","parent":"design#1","start":"2026-10-13T09:22:35.599Z","attrs":{"gate":"ADR"}}
 {"op":"close","id":"wait adr accept","kind":"user-wait","parent":"design#1","start":"2026-10-13T09:22:35.599Z","end":"2026-10-13T09:56:42.371Z","outcome":"done","attrs":{"gate":"ADR"}}
+{"op":"open","id":"asd-architect design#2","kind":"dispatch","parent":"design#1","start":"2026-10-13T09:56:42.679Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-architect design#2","kind":"dispatch","parent":"design#1","start":"2026-10-13T09:56:42.679Z","end":"2026-10-13T09:59:25.151Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
