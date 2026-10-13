@@ -36,3 +36,13 @@
 {"op":"open","id":"asd-architect design#2","kind":"dispatch","parent":"design#1","start":"2026-10-13T09:56:42.679Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
 {"op":"close","id":"asd-architect design#2","kind":"dispatch","parent":"design#1","start":"2026-10-13T09:56:42.679Z","end":"2026-10-13T09:59:25.151Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
 {"op":"close","id":"design#1","kind":"phase","parent":null,"start":"2026-10-12T14:48:17.244Z","end":"2026-10-13T09:59:25.417Z","outcome":"done","attrs":{}}
+{"op":"open","id":"design-review#1","kind":"phase","parent":null,"start":"2026-10-13T09:59:25.684Z","attrs":{}}
+{"op":"open","id":"design-review iter-01","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T10:00:04.457Z","attrs":{"iteration":"1"}}
+{"op":"open","id":"documentation iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"efficiency iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"correctness iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"external iter-01","kind":"external-review","parent":"design-review iter-01","start":"2026-10-13T10:00:04.584Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"external iter-01","kind":"external-review","parent":"design-review iter-01","start":"2026-10-13T10:00:04.584Z","end":"2026-10-13T10:08:16.852Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"correctness iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","end":"2026-10-13T10:08:31.305Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"close","id":"efficiency iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","end":"2026-10-13T10:10:06.322Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"close","id":"documentation iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","end":"2026-10-13T10:14:32.020Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}

@@ -7,3 +7,4 @@
 - [Check host claims against own dispatch](feedback_check-host-claims-against-own-dispatch.md) — host-capability canon claims: compare with your own tool list + host docs, not just the retro row
 - [Read deferred gaps in sprint logs](feedback_read-deferred-gaps-in-sprint-logs.md) — grep decisions-log/friction-log for gaps "left for impl-review" before the verdict
 - [persist-review return shape](reference_persist-review-return-shape.md) — write return verbatim to payload's `.asd/tmp/` file; first table parsed by column; bare APPROVE keeps only `—` row
+- [Product design-review: derived actor paths](feedback_design-review-derived-actor-paths.md) — actor-keyed rights on indirect paths, ux-vs-canon triggers, mockup samples showing forbidden states
