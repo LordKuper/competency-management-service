@@ -40,3 +40,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-13 — route Task 3: critical, dispatch HEAD d54507c
 - 2026-10-13 — Task 2 flagged choices приняты оркестратором (в границах AC-22/AC-23 и правил памяти): удалены ссылки на историю (Task/Sprint/MS/AC) в правленых файлах; project_web-cdp-real-backend-smoke-facts.md и project_scratch-process-control.md оставлены с пометкой (на первый ссылаются 6 файлов, во втором — запрет down -v); висячая ссылка [[scratch-host-without-postgres]] допустима правилами памяти
 - 2026-10-13 — Task 3 flagged choices приняты оркестратором (в границах ADR-2/org-structure.md): OrgSnapshot — sealed class; отдельная запись PositionStatus; OrgUnitStatus с названием; сброс запомненного снимка при взятии блокировки дерева через порт; WorkingEmployeeCounts/UnitPositionIds; волна 1 завершена (777d50e, f9d2d7e, 746bbe6)
+- 2026-10-13 — route Task 4: critical, dispatch HEAD f8a7f56
