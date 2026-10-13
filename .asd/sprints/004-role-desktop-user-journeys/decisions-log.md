@@ -94,3 +94,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-14 — Task 15 assessment-fix 4 COMPLETED (d3dfdf5): AC-10 — AC-56/AC-62 показываются только при пунктах в группах AC-22 / AC-24, AC-27. Task 14 assessment-fix 4 COMPLETED (d22d133): правило «Что можно сделать», заметки структуры страницы, карточек, ролей, «Всё сделано», загрузки и ошибки; макеты без изменений
 - 2026-10-14 — impl assessment: request changes (user, скриншот группы «Связать должности с треками»): тег вида объекта «Должность» вплотную к ссылке — нет отступа; проверить в других местах. Дефект вёрстки, документы не меняются
 - 2026-10-14 — route Task 16 assessment-fix 5: standard, dispatch HEAD 536ab1d
+- 2026-10-14 — Task 16 assessment-fix 5 COMPLETED (c0e1884): глобальное правило styles.css — .ant-tag margin-inline-end: var(--ant-margin-xs), кроме элементов Flex/Space с промежутком и option-with-tag; проверка headless
