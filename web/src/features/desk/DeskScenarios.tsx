@@ -1,6 +1,6 @@
 import { theme as antdTheme, Card, Empty, Typography } from "antd";
 import { Link } from "react-router";
-import type { Desk, DeskGroup } from "./deskApi";
+import { type Desk, type DeskGroup, ORG_QUEUE_GROUPS } from "./deskApi";
 import { deskPaths, itemAction } from "./deskTexts";
 
 /** The roles the scenario cards follow; process roles come from the units the user heads or answers for as HR. */
@@ -114,7 +114,8 @@ const SCENARIOS: Scenario[] = [
       "Расхождения оргструктуры и учётных записей: должности вне перечня, учётные записи без сотрудника.",
     isFor: (roles) => roles.isAdmin,
     path: deskPaths.orgCleanup,
-    groups: ["OrgCleanup"],
+    groups: [...ORG_QUEUE_GROUPS],
+    isQueue: true,
     isShownWhenWaiting: true,
   },
 ];
