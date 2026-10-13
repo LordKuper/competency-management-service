@@ -23,9 +23,19 @@ interface Scenario {
   groups?: DeskGroup[];
   /** Reference queues are counted as waiting in the queue, not waiting for the user. */
   isQueue?: boolean;
+  /** A queue with its own screen that has a card only while its groups hold items. */
+  isShownWhenWaiting?: boolean;
 }
 
 const SCENARIOS: Scenario[] = [
+  {
+    key: "my-place",
+    title: "Моё место в компании",
+    description:
+      "Ваше подразделение, должность, руководитель, ответственный HR, карьерные треки и требования.",
+    isFor: (roles) => roles.isBound,
+    path: deskPaths.myPlace,
+  },
   {
     key: "build",
     title: "Построить матрицу компетенций",
@@ -59,6 +69,7 @@ const SCENARIOS: Scenario[] = [
     isFor: (roles) => roles.isHr || roles.isAdmin,
     path: deskPaths.drafts,
     groups: ["DraftsToApprove"],
+    isShownWhenWaiting: true,
   },
   {
     key: "connect",
@@ -93,6 +104,7 @@ const SCENARIOS: Scenario[] = [
     isFor: (roles) => roles.isHr || roles.isAdmin,
     path: deskPaths.catalogCleanup,
     groups: ["UnusedCatalogEntries"],
+    isShownWhenWaiting: true,
     isQueue: true,
   },
   {
@@ -103,30 +115,31 @@ const SCENARIOS: Scenario[] = [
     isFor: (roles) => roles.isAdmin,
     path: deskPaths.orgCleanup,
     groups: ["OrgCleanup"],
-  },
-  {
-    key: "my-place",
-    title: "Моё место в компании",
-    description:
-      "Ваше подразделение, должность, руководитель, ответственный HR, карьерные треки и требования.",
-    isFor: (roles) => roles.isBound,
-    path: deskPaths.myPlace,
+    isShownWhenWaiting: true,
   },
 ];
 
-/** The screen a scenario opens: its own, or that of the first item waiting in its groups; null when it needs an object and none waits. */
+/** The screen a scenario opens: its own, or that of the first item waiting in its groups; null when it needs an object or a queue and nothing waits. */
 function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
-  if (scenario.path) return scenario.path;
-  const firstItem = desk?.groups.find((group) =>
+  const groups = desk?.groups.filter((group) =>
     scenario.groups?.includes(group.group),
-  )?.items[0];
+  );
+  if (
+    scenario.isShownWhenWaiting &&
+    !groups?.some((group) => group.total > 0)
+  ) {
+    return null;
+  }
+  if (scenario.path) return scenario.path;
+  const firstItem = groups?.[0]?.items[0];
   return (firstItem && itemAction(firstItem)?.path) ?? null;
 }
 
 /**
- * "Что можно сделать": a card for every scenario the user's roles allow that can be opened now. A scenario that works
- * on one object from a desk group has no card until something waits, so there is never an inert card; the empty
- * state follows the roles, since a role always allows a scenario with its own screen.
+ * "Что можно сделать": a card for every scenario the user's roles allow that can be opened now, «Моё место в компании»
+ * first. A scenario that works on one object from a desk group, and a queue, have no card until something waits, so
+ * there is never an inert card. The empty state follows the roles: every role keeps a scenario that is always shown
+ * («Моё место в компании», «Связать должности с треком», «Принять сотрудника» or «Построить матрицу»).
  */
 export function DeskScenarios({
   roles,
