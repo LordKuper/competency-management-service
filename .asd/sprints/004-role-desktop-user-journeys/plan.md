@@ -218,7 +218,7 @@ Material risk: none
 
 ### Task 31: Архитектура — блок без шкалы
 Material risk: change: public contract, change: migration
-- [ ] `docs/architecture/career-framework.md`: удаление шкалы блока из модели, контракта (3.1.0), снимка и проверок; миграция (AC-50)
+- [x] `docs/architecture/career-framework.md`: удаление шкалы блока из модели, контракта (3.1.0), снимка и проверок; миграция (AC-50)
 
 ### Task 32: UX — блок без шкалы
 Material risk: none
