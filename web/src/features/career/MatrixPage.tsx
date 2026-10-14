@@ -253,24 +253,17 @@ export function MatrixPage() {
           ? `Матрица должности «${matrix.positionName}» — ${matrix.orgUnitName}`
           : `Матрица «${matrix.trackName}» — ${matrix.orgUnitName}`}
       </Typography.Title>
-      <Descriptions
-        items={[
-          ...(matrix.positionId
-            ? []
-            : [
-                {
-                  key: "direction",
-                  label: "Область",
-                  children: matrix.directionName,
-                },
-              ]),
-          {
-            key: "scale",
-            label: matrix.positionId ? "Шкала версии" : "Шкала",
-            children: version.entries.scale?.name,
-          },
-        ]}
-      />
+      {!matrix.positionId && (
+        <Descriptions
+          items={[
+            {
+              key: "direction",
+              label: "Область",
+              children: matrix.directionName,
+            },
+          ]}
+        />
+      )}
       <Flex gap="middle" align="center" wrap>
         <Select
           aria-label="Версия"

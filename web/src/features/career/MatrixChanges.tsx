@@ -1,11 +1,7 @@
 import { Typography } from "antd";
 import { COMPETENCY_TYPES } from "./CompetencyModal";
-import type {
-  MatrixChange,
-  MatrixContent,
-  MatrixDiff,
-  MatrixVersion,
-} from "./matrixApi";
+import type { MatrixChange, MatrixContent, MatrixDiff } from "./matrixApi";
+import { OUTSIDE_LABEL } from "./matrixGroups";
 import { CHANGED_NOTE } from "./matrixLabels";
 
 const NO_VALUE = "—";
@@ -26,7 +22,9 @@ interface MatrixChangesProps {
   diff: MatrixDiff;
   levelNames: ReadonlyMap<string, string>;
   competencyNames: ReadonlyMap<string, string>;
-  scalePoints: NonNullable<MatrixVersion["entries"]["scale"]>["points"];
+  pointsOf: (
+    competencyId: string,
+  ) => readonly { score: number; label: string }[];
 }
 
 function quoted(name: string | undefined) {
@@ -49,10 +47,14 @@ export function describeChanges(
   diff: MatrixDiff,
   levelNames: ReadonlyMap<string, string>,
   competencyNames: ReadonlyMap<string, string>,
-  scalePoints: NonNullable<MatrixVersion["entries"]["scale"]>["points"],
+  pointsOf: (
+    competencyId: string,
+  ) => readonly { score: number; label: string }[],
 ): (change: MatrixChange) => ChangeDescription {
   const blockName = (content: MatrixContent, blockId: string | null) =>
-    content.blocks.find((block) => block.id === blockId)?.name;
+    blockId === null
+      ? OUTSIDE_LABEL
+      : content.blocks.find((block) => block.id === blockId)?.name;
   const levelName = (levelId: string | null) =>
     quoted(levelId ? levelNames.get(levelId) : undefined);
   const competencyName = (competencyId: string | null) =>
@@ -114,7 +116,9 @@ export function describeChanges(
         );
         if (!requirement) return undefined;
         const score = requirement.requiredScore;
-        const label = scalePoints.find((point) => point.score === score)?.label;
+        const label = pointsOf(competencyId ?? "").find(
+          (point) => point.score === score,
+        )?.label;
         return [
           `Требуемый уровень: ${score == null ? NO_VALUE : label ? `${score} (${label})` : score}`,
           `Тип: ${COMPETENCY_TYPES[requirement.type]}`,
@@ -148,16 +152,11 @@ export function MatrixChanges({
   diff,
   levelNames,
   competencyNames,
-  scalePoints,
+  pointsOf,
 }: MatrixChangesProps) {
   if (diff.changes.length === 0) return null;
 
-  const describe = describeChanges(
-    diff,
-    levelNames,
-    competencyNames,
-    scalePoints,
-  );
+  const describe = describeChanges(diff, levelNames, competencyNames, pointsOf);
   return (
     <section>
       <Typography.Title level={2}>{CHANGED_NOTE}</Typography.Title>

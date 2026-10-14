@@ -323,7 +323,6 @@ function MatrixEditorBody({
     .map((level) => ({ value: level.id, label: level.name }));
   const competencyFilters = {
     ...IN_WORK,
-    scaleId: version.scaleId ?? undefined,
     directionId: entries.direction?.id,
     withGeneral: true,
   };
@@ -681,7 +680,7 @@ function MatrixEditorBody({
                 ]),
               )
             }
-            scalePoints={entries.scale?.points ?? []}
+            pointsOf={(id) => scaleOfCompetency(version, id).points}
           />
         )}
         {isGridShown &&

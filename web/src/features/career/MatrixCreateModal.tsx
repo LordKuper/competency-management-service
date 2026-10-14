@@ -8,15 +8,8 @@ import { CatalogSelect, IN_WORK } from "./CatalogSelect";
 import { useProcessRoles } from "./careerApi";
 import { MatrixPositionSelect } from "./MatrixPositionSelect";
 import { createMatrix, invalidateMatrices, type NewMatrix } from "./matrixApi";
-import { ScaleSelect } from "./ScaleSelect";
 
-const FIELDS = [
-  "orgUnitId",
-  "directionId",
-  "trackId",
-  "positionId",
-  "scaleId",
-] as const;
+const FIELDS = ["orgUnitId", "directionId", "trackId", "positionId"] as const;
 const POSITION_HINT =
   "Матрица должности обычно нужна для управленческих должностей, которые не связаны напрямую с карьерными треками специалистов.";
 
@@ -135,9 +128,6 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
             </Form.Item>
           </>
         )}
-        <Form.Item name="scaleId" label="Шкала" rules={[{ required: true }]}>
-          <ScaleSelect />
-        </Form.Item>
         <FormActions isSubmitting={isSubmitting} onCancel={onClose} />
       </Form>
     </CatalogModal>

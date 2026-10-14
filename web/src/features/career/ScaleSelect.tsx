@@ -10,10 +10,7 @@ interface ScaleSelectProps
   extends Pick<
     SelectProps<string, PickerOption>,
     "id" | "value" | "onChange" | "disabled" | "style" | "aria-label"
-  > {
-  /** The scale's name to show until the scale is read, when the caller knows it. */
-  known?: { id: string; name: string };
-}
+  > {}
 
 function ScaleRow({
   option,
@@ -43,7 +40,6 @@ export function ScaleSelect({
   value,
   disabled,
   style,
-  known,
   ...props
 }: ScaleSelectProps) {
   const { setSearch, options, isFetching, error } = useCatalogSearch(
@@ -54,10 +50,6 @@ export function ScaleSelect({
   );
   const [activeValue, setActiveValue] = useState<string>();
   const isKeyboard = useRef(false);
-  const choices =
-    known && known.id === value && !options.some((o) => o.value === value)
-      ? [{ value: known.id, label: known.name }, ...options]
-      : options;
 
   return (
     <div
@@ -85,12 +77,12 @@ export function ScaleSelect({
           setActiveValue(isKeyboard.current ? next : undefined)
         }
         loading={isFetching}
-        options={choices}
+        options={options}
         optionRender={({ data, value: optionValue }) => (
           <ScaleRow option={data} isActive={optionValue === activeValue} />
         )}
         labelRender={({ value: chosen }) => {
-          const option = choices.find((item) => item.value === chosen);
+          const option = options.find((item) => item.value === chosen);
           return option ? <ScaleRow option={option} /> : chosen;
         }}
         notFoundContent={error ? describeApiError(error) : undefined}

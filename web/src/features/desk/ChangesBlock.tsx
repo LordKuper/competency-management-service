@@ -1,10 +1,6 @@
 import { Empty, Table, type TableColumnsType, Tag } from "antd";
 import { CHANGE_TYPES, describeChanges } from "../career/MatrixChanges";
-import type {
-  MatrixChange,
-  MatrixDiff,
-  MatrixVersion,
-} from "../career/matrixApi";
+import type { MatrixChange, MatrixDiff } from "../career/matrixApi";
 import "./scenario.css";
 
 const NO_VALUE = "—";
@@ -19,7 +15,9 @@ interface ChangesBlockProps {
   diff: MatrixDiff;
   levelNames: ReadonlyMap<string, string>;
   competencyNames: ReadonlyMap<string, string>;
-  scalePoints: NonNullable<MatrixVersion["entries"]["scale"]>["points"];
+  pointsOf: (
+    competencyId: string,
+  ) => readonly { score: number; label: string }[];
   /** Heads of the columns with the values before and after. */
   columns: { before: string; after: string };
   /** What the table says when nothing changed. */
@@ -39,16 +37,11 @@ export function ChangesBlock({
   diff,
   levelNames,
   competencyNames,
-  scalePoints,
+  pointsOf,
   columns: heads,
   emptyText,
 }: ChangesBlockProps) {
-  const describe = describeChanges(
-    diff,
-    levelNames,
-    competencyNames,
-    scalePoints,
-  );
+  const describe = describeChanges(diff, levelNames, competencyNames, pointsOf);
   const rows: Row[] = diff.changes.map((change) => ({
     key: `${change.kind}:${change.levelId}:${change.blockId}:${change.competencyId}`,
     change,

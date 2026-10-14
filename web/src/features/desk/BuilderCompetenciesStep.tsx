@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Alert,
   Button,
   Card,
   ConfigProvider,
@@ -12,14 +13,18 @@ import {
   Typography,
 } from "antd";
 import { useEffect, useState } from "react";
+import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { TruncationNote } from "../../app/TruncationNote";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { useEditBase } from "../../app/useEditBase";
+import { BlockModal } from "../career/BlockModal";
 import { BuilderFooter } from "../career/BuilderFooter";
 import { CatalogStatusTag } from "../career/CatalogParts";
 import { COMPETENCY_TYPES, CompetencyModal } from "../career/CompetencyModal";
+import { useProcessRoles } from "../career/careerApi";
 import {
+  blockQuery,
   type Competency,
   type CompetencyBlock,
   competenciesQuery,
@@ -33,6 +38,7 @@ import {
   invalidateMatrices,
   type MatrixVersion,
   matrixChangesQuery,
+  matrixQuery,
   matrixVersionQuery,
   saveMatrixContent,
 } from "../career/matrixApi";
@@ -54,24 +60,59 @@ import type { StepProps } from "./builderStep";
 /** Step 2: the shared blocks and competencies of the matrix, chosen from the catalogues or created as drafts on the spot. */
 export function BuilderCompetenciesStep(props: StepProps) {
   const { base, noteSaveFailure } = useEditBase(props.version);
+  const [highlightedBlockId, setHighlightedBlockId] = useState<string>();
+  const [leftover, setLeftover] = useState<AttachFailure>();
   return (
-    <CompetenciesBody
-      key={base?.version}
-      {...props}
-      base={base ?? props.version}
-      noteSaveFailure={noteSaveFailure}
-    />
+    <Flex vertical gap="middle">
+      {leftover && (
+        <Alert
+          type="warning"
+          showIcon
+          closable
+          onClose={() => setLeftover(undefined)}
+          title={`Блок «${leftover.block.name}» создан черновиком, но к версии не подключён`}
+          description={`${describeApiError(leftover.error)} Подключите его кнопкой «Добавить общий блок».`}
+        />
+      )}
+      <CompetenciesBody
+        key={base?.version}
+        {...props}
+        base={base ?? props.version}
+        noteSaveFailure={noteSaveFailure}
+        highlightedBlockId={highlightedBlockId}
+        onBlockAttached={(id) => {
+          setLeftover(undefined);
+          setHighlightedBlockId(id);
+        }}
+        onAttachFailed={(block, error) => setLeftover({ block, error })}
+      />
+    </Flex>
   );
+}
+
+/** A block created in the wizard that the version could not take, kept so the user is told where it stands. */
+interface AttachFailure {
+  block: CompetencyBlock;
+  error: unknown;
 }
 
 interface CompetenciesBodyProps extends StepProps {
   base: MatrixVersion;
   noteSaveFailure: (error: unknown) => void;
+  /** The block created last, whose row stands out. */
+  highlightedBlockId?: string;
+  onBlockAttached: (blockId: string) => void;
+  onAttachFailed: (block: CompetencyBlock, error: unknown) => void;
 }
+
+const FOR_ALL = "Для всех";
 
 /** A shared block of the version as the step lists it, saved or just picked. */
 interface BlockLine {
   id: string;
+  /** Just picked, so its details are known here and not yet in the version. */
+  isPicked?: boolean;
+  scopeName?: string | null;
   name: string;
   status: "Draft" | "Active" | "Inactive";
   scaleId: string;
@@ -88,6 +129,9 @@ function CompetenciesBody({
   base,
   step,
   noteSaveFailure,
+  highlightedBlockId,
+  onBlockAttached,
+  onAttachFailed,
   onBack,
   onSaved,
   onSkip,
@@ -106,6 +150,7 @@ function CompetenciesBody({
   const [highlightedId, setHighlightedId] = useState<string>();
   const [isCreating, setIsCreating] = useState(false);
   const [isPickingBlock, setIsPickingBlock] = useState(false);
+  const [isCreatingBlock, setIsCreatingBlock] = useState(false);
   const q = useDebouncedValue(search.trim());
   const { entries } = version;
   const list = useQuery(
@@ -113,7 +158,6 @@ function CompetenciesBody({
       q: q || undefined,
       page: 1,
       pageSize: MAX_PAGE_SIZE,
-      scaleId: version.scaleId ?? undefined,
       directionId: entries.direction?.id,
       withGeneral: true,
       inWork: true,
@@ -133,6 +177,16 @@ function CompetenciesBody({
     allowed.data && allowed.data.total <= MAX_PAGE_SIZE
       ? new Set(allowed.data.items.map((item) => item.id))
       : undefined;
+  const matrix = useQuery(matrixQuery(version.matrixId));
+  const roles = useProcessRoles();
+  const unit = matrix.data && {
+    id: matrix.data.orgUnitId,
+    name: matrix.data.orgUnitName,
+  };
+  const canCreateBlock =
+    isEditable &&
+    unit !== undefined &&
+    roles.data?.headedUnits.some((item) => item.id === unit.id) === true;
   const changes = useQuery(matrixChangesQuery(version.id));
   const compositionChange = compositionChanges(changes.data);
   const trackLevels = useQuery({
@@ -167,6 +221,8 @@ function CompetenciesBody({
             id,
             name: block.name,
             status: block.status,
+            isPicked: true,
+            scopeName: block.scopeUnitName,
             scaleId: block.scaleId,
             scaleName: block.scaleName,
             competencyIds: block.competencies.map((item) => item.id),
@@ -202,9 +258,37 @@ function CompetenciesBody({
     onError: noteSaveFailure,
     onSettled: () => invalidateMatrices(queryClient),
   });
+  const attach = useMutation({
+    mutationFn: (block: CompetencyBlock) =>
+      saveMatrixContent(
+        base,
+        withSharedBlocks(
+          withChosenCompetencies(
+            base.content,
+            chosen,
+            trackLevels.data?.items ?? [],
+          ),
+          [...blockIds, block.id],
+          new Map([
+            ...compositions,
+            [block.id, block.competencies.map((item) => item.id)],
+          ]),
+        ),
+      ),
+    onSuccess: (saved, block) => {
+      queryClient.setQueryData(matrixVersionQuery(saved.id).queryKey, saved);
+      onBlockAttached(block.id);
+    },
+    onError: (error, block) => {
+      noteSaveFailure(error);
+      onAttachFailed(block, error);
+    },
+    onSettled: () => invalidateMatrices(queryClient),
+  });
   const isUnsaved =
     isEditable &&
     (save.isPending ||
+      attach.isPending ||
       chosen.size !== savedIds.size ||
       [...chosen].some((id) => !savedIds.has(id)) ||
       !sameIds(blockIds, savedBlockIds));
@@ -242,6 +326,7 @@ function CompetenciesBody({
       dataIndex: "type",
       render: (type: Competency["type"]) => COMPETENCY_TYPES[type],
     },
+    { title: "Шкала", dataIndex: "scaleName" },
     {
       title: "Статус",
       dataIndex: "status",
@@ -252,16 +337,23 @@ function CompetenciesBody({
   ];
 
   return (
-    <ConfigProvider componentDisabled={save.isPending}>
+    <ConfigProvider componentDisabled={save.isPending || attach.isPending}>
       <Flex vertical gap="middle">
         <Card
           size="small"
-          title="Общие блоки версии"
+          title="Блоки компетенций"
           extra={
             isEditable && (
-              <Button onClick={() => setIsPickingBlock(true)}>
-                Добавить общий блок
-              </Button>
+              <Space>
+                <Button onClick={() => setIsPickingBlock(true)}>
+                  Добавить общий блок
+                </Button>
+                {canCreateBlock && (
+                  <Button onClick={() => setIsCreatingBlock(true)}>
+                    Создать блок
+                  </Button>
+                )}
+              </Space>
             )
           }
         >
@@ -269,6 +361,7 @@ function CompetenciesBody({
             version={version}
             lines={lines}
             isEditable={isEditable}
+            highlightedId={highlightedBlockId}
             compositionChange={compositionChange}
             onRemove={(id) =>
               setBlockIds((previous) => previous.filter((item) => item !== id))
@@ -284,9 +377,6 @@ function CompetenciesBody({
           <Typography.Title level={4} style={{ margin: 0 }}>
             Компетенции вне блоков
           </Typography.Title>
-          <Typography.Text type="secondary">
-            {`Показаны компетенции шкалы версии «${entries.scale?.name ?? ""}»`}
-          </Typography.Text>
           <Flex align="center" gap="middle" wrap>
             <Input.Search
               aria-label="Найти компетенцию"
@@ -303,7 +393,7 @@ function CompetenciesBody({
             >{`Выбрано: ${chosen.size}`}</Typography.Text>
             {isEditable && (
               <Button onClick={() => setIsCreating(true)}>
-                Создать черновую компетенцию
+                Создать компетенцию
               </Button>
             )}
           </Flex>
@@ -339,8 +429,8 @@ function CompetenciesBody({
             pagination={false}
             locale={{
               emptyText: q
-                ? `Компетенция «${q}» не найдена. Измените запрос или создайте черновую компетенцию кнопкой выше.`
-                : "Компетенции не найдены. В каталоге нет компетенций этой шкалы и области: создайте черновую компетенцию кнопкой выше.",
+                ? `Компетенция «${q}» не найдена. Измените запрос или создайте компетенцию кнопкой выше.`
+                : "Компетенции не найдены. В каталоге нет подходящих компетенций: создайте компетенцию кнопкой выше.",
             }}
           />
         )}
@@ -349,8 +439,7 @@ function CompetenciesBody({
           total={list.data?.total}
         />
         <Typography.Text type="secondary">
-          Черновая компетенция опубликуется вместе с версией, если согласующий
-          вправе её утвердить.
+          Черновые компетенции опубликуются вместе с матрицей компетенций.
         </Typography.Text>
         {save.error != null && (
           <MatrixErrorAlert
@@ -380,7 +469,6 @@ function CompetenciesBody({
       </Flex>
       {isCreating && (
         <CompetencyModal
-          fixedScale={entries.scale ?? undefined}
           onSaved={(created) => {
             choose(created.id, true);
             setHighlightedId(created.id);
@@ -388,11 +476,19 @@ function CompetenciesBody({
           onClose={() => setIsCreating(false)}
         />
       )}
+      {isCreatingBlock && unit && (
+        <BlockModal
+          fixedScope={unit}
+          onSaved={(created) => attach.mutate(created)}
+          onClose={() => setIsCreatingBlock(false)}
+        />
+      )}
       {isPickingBlock && (
         <AddBlockModal
           entries={entries}
           reasonOf={reasonOf}
           allowedIds={allowedIds}
+          availableFor={unit?.id}
           onPick={(block) => {
             setPicked((previous) => new Map(previous).set(block.id, block));
             setBlockIds((previous) => [...previous, block.id]);
@@ -409,6 +505,7 @@ interface BlocksTableProps {
   version: MatrixVersion;
   lines: readonly BlockLine[];
   isEditable: boolean;
+  highlightedId?: string;
   compositionChange: ReturnType<typeof compositionChanges>;
   onRemove: (id: string) => void;
 }
@@ -418,6 +515,7 @@ function BlocksTable({
   version,
   lines,
   isEditable,
+  highlightedId,
   compositionChange,
   onRemove,
 }: BlocksTableProps) {
@@ -431,6 +529,11 @@ function BlocksTable({
           {line.status === "Draft" && <CatalogStatusTag status="Draft" />}
         </Space>
       ),
+    },
+    {
+      title: "Действует для",
+      key: "scope",
+      render: (_, line) => <ScopeCell line={line} />,
     },
     {
       title: "Шкала",
@@ -471,6 +574,9 @@ function BlocksTable({
       columns={columns}
       dataSource={[...lines]}
       pagination={false}
+      rowClassName={(line) =>
+        line.id === highlightedId ? "queue-row-selected" : ""
+      }
       locale={{ emptyText: "Общих блоков в версии нет" }}
       expandable={{
         defaultExpandedRowKeys: lines
@@ -486,6 +592,12 @@ function BlocksTable({
       }}
     />
   );
+}
+
+/** Where the block applies, in words: the unit it is for, or «Для всех». */
+function ScopeCell({ line }: { line: BlockLine }) {
+  const read = useQuery({ ...blockQuery(line.id), enabled: !line.isPicked });
+  return (line.isPicked ? line.scopeName : read.data?.scopeUnitName) ?? FOR_ALL;
 }
 
 /** The «ⓘ» of a block's scale: from the entries when the version holds the block, else read by the scale's id. */

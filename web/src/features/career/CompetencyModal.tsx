@@ -54,8 +54,6 @@ interface CompetencyValues {
 interface CompetencyModalProps {
   /** Competency being edited as the cache holds it now; omitted when one is created. */
   competency?: Competency;
-  /** The scale a new competency takes, which the user may not change. */
-  fixedScale?: { id: string; name: string };
   /** Called with the competency a save produced, as the dialog closes. */
   onSaved?: (competency: Competency) => void;
   onClose: () => void;
@@ -64,7 +62,6 @@ interface CompetencyModalProps {
 /** Dialog that creates a competency or edits one; every saved change becomes a new version. */
 export function CompetencyModal({
   competency: latest,
-  fixedScale,
   onSaved,
   onClose,
 }: CompetencyModalProps) {
@@ -117,7 +114,6 @@ export function CompetencyModal({
       <CompetencyForm
         key={competency?.version}
         competency={competency}
-        fixedScale={fixedScale}
         onSubmit={(values) => save.mutateAsync(values)}
         onCancel={onClose}
       />
@@ -127,7 +123,6 @@ export function CompetencyModal({
 
 interface CompetencyFormProps {
   competency?: Competency;
-  fixedScale?: { id: string; name: string };
   onSubmit: (values: CompetencyValues) => Promise<unknown>;
   onCancel: () => void;
 }
@@ -138,7 +133,6 @@ interface CompetencyFormProps {
  */
 function CompetencyForm({
   competency,
-  fixedScale,
   onSubmit,
   onCancel,
 }: CompetencyFormProps) {
@@ -159,7 +153,7 @@ function CompetencyForm({
   });
   const defaultScale = useQuery({
     ...scalesQuery({ page: 1, pageSize: 1, isDefault: true }),
-    enabled: !competency && !fixedScale,
+    enabled: !competency,
   });
   const defaultScaleId = defaultScale.data?.items[0]?.id;
   const blocks = useQuery({
@@ -191,7 +185,7 @@ function CompetencyForm({
         categoryId: competency?.categoryId,
         directionId: competency?.directionId ?? undefined,
         type: competency?.type,
-        scaleId: competency?.scaleId ?? fixedScale?.id,
+        scaleId: competency?.scaleId,
       }}
       onFinish={submit}
     >
@@ -236,13 +230,10 @@ function CompetencyForm({
         extra={
           holder
             ? `Входит в общий блок «${holder.name}»: шкала не меняется`
-            : fixedScale && "Шкала версии, выбранная на шаге 1."
+            : undefined
         }
       >
-        <ScaleSelect
-          disabled={fixedScale !== undefined || holder !== undefined}
-          known={fixedScale}
-        />
+        <ScaleSelect disabled={holder !== undefined} />
       </Form.Item>
       <FormActions isSubmitting={isSubmitting} onCancel={onCancel} />
     </Form>

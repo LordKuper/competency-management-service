@@ -36,7 +36,7 @@ export const deskPaths = {
 
 /** Titles of the matrix builder steps, in order. */
 export const BUILDER_STEPS = [
-  "Трек и шкала",
+  "Трек",
   "Компетенции",
   "Требования",
   "Формула и пороги",
@@ -46,9 +46,7 @@ export const BUILDER_STEPS = [
 
 /** The step names for a matrix built on a track or, when `isPosition`, on a position, whose first step is named for it. */
 export function builderSteps(isPosition: boolean): readonly string[] {
-  return isPosition
-    ? ["Должность и шкала", ...BUILDER_STEPS.slice(1)]
-    : BUILDER_STEPS;
+  return isPosition ? ["Должность", ...BUILDER_STEPS.slice(1)] : BUILDER_STEPS;
 }
 
 const CAREER_SECTION = "Карьерная модель";

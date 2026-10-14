@@ -18,7 +18,6 @@ import { useProcessRoles } from "../career/careerApi";
 import {
   MAX_PAGE_SIZE,
   readTrack,
-  scalesQuery,
   type TrackPositions,
   trackPositionsQuery,
   trackQuery,
@@ -35,10 +34,7 @@ import {
   matrixPositionsQuery,
   matrixQuery,
 } from "../career/matrixApi";
-import { ScaleModal } from "../career/ScaleModal";
-import { ScaleSelect } from "../career/ScaleSelect";
 import { TrackModal } from "../career/TrackModal";
-import { useCatalogRights } from "../career/useCatalogRights";
 import { NoPositionTag, PositionGapAction } from "./CompletenessBlock";
 import { deskPaths } from "./deskTexts";
 import { ActionBar, CompactAlert, FormColumn } from "./ScenarioContext";
@@ -109,7 +105,6 @@ function LevelsTable({ trackId, trackName, unavailable }: LevelsTableProps) {
 
 interface FormValues {
   orgUnitId?: string;
-  scaleId?: string;
   trackId?: string;
   positionId?: string;
 }
@@ -137,7 +132,7 @@ interface BuilderTrackStepProps {
   onUnsavedChange: (isUnsaved: boolean) => void;
 }
 
-/** Step 1: the basis, the unit, the track or the position, and the scale. Saving it creates the draft version, or the next version of a published matrix. */
+/** Step 1: the basis, the unit, and the track or the position. Saving it creates the draft version, or the next version of a published matrix. */
 export function BuilderTrackStep({
   version,
   preselected,
@@ -165,7 +160,7 @@ function CreatedVersion({
   onNext: () => void;
 }) {
   const matrix = useQuery(matrixQuery(version.matrixId));
-  const { track, position, scale } = version.entries;
+  const { track, position } = version.entries;
   return (
     <FormColumn>
       <Form layout="vertical" disabled className="compact-form">
@@ -181,13 +176,6 @@ function CreatedVersion({
           </Form.Item>
           <Form.Item label={position ? "Должность" : "Трек"}>
             <Input value={position?.name ?? track?.name} />
-          </Form.Item>
-          <Form.Item label="Шкала">
-            <ScaleSelect
-              value={scale?.id}
-              known={scale ?? undefined}
-              disabled
-            />
           </Form.Item>
         </Flex>
       </Form>
@@ -215,12 +203,7 @@ function NewVersionForm({
   const [form] = Form.useForm<FormValues>();
   const [isDirty, setIsDirty] = useState(false);
   const [isTrackCreating, setIsTrackCreating] = useState(false);
-  const [isScaleCreating, setIsScaleCreating] = useState(false);
-  const rights = useCatalogRights();
   const roles = useProcessRoles();
-  const defaultScale = useQuery(
-    scalesQuery({ page: 1, pageSize: 1, isDefault: true }),
-  );
   const orgUnitId = Form.useWatch("orgUnitId", form);
   const trackId = Form.useWatch("trackId", form);
   const positionId = Form.useWatch("positionId", form);
@@ -250,14 +233,8 @@ function NewVersionForm({
     positions.data.total <= MAX_PAGE_SIZE &&
     positions.data.items.every((item) => item.isLinked);
   const matrix = existing.data?.items[0];
-  const defaultScaleId = defaultScale.data?.items[0]?.id;
 
   useEffect(() => onUnsavedChange(isDirty), [isDirty, onUnsavedChange]);
-  useEffect(() => {
-    if (defaultScaleId && !form.getFieldValue("scaleId")) {
-      form.setFieldValue("scaleId", defaultScaleId);
-    }
-  }, [defaultScaleId, form]);
   useEffect(() => {
     if (headedUnits.length === 1 && !form.getFieldValue("orgUnitId")) {
       form.setFieldValue("orgUnitId", headedUnits[0]?.id);
@@ -274,7 +251,6 @@ function NewVersionForm({
       if (matrix?.publishedVersion) {
         return (await createMatrixVersion(matrix.id)).id;
       }
-      if (!values.scaleId) throw new Error("The scale is required");
       const basisFields = isPosition
         ? { positionId: subjectId }
         : {
@@ -284,7 +260,6 @@ function NewVersionForm({
       const created = await createMatrix({
         orgUnitId: values.orgUnitId,
         ...basisFields,
-        scaleId: values.scaleId,
       });
       if (!created.inWorkVersion)
         throw new Error("The version was not created");
@@ -298,7 +273,6 @@ function NewVersionForm({
   });
   const { isSubmitting, submit } = useFormSubmit(form, create.mutateAsync);
   const isLocked = isSubmitting;
-  const isScaleFixed = matrix !== undefined;
 
   return (
     <Form
@@ -402,29 +376,6 @@ function NewVersionForm({
             </Flex>
           </Form.Item>
         )}
-        <Form.Item label="Шкала" required>
-          <Flex gap="small">
-            <Form.Item
-              name="scaleId"
-              noStyle
-              rules={[{ required: true, message: "Выберите шкалу" }]}
-            >
-              <ScaleSelect
-                aria-label="Шкала"
-                style={{ flex: 1, minWidth: 0 }}
-                disabled={isScaleFixed}
-              />
-            </Form.Item>
-            {rights.canCreate && (
-              <Button
-                disabled={isScaleFixed}
-                onClick={() => setIsScaleCreating(true)}
-              >
-                Добавить шкалу
-              </Button>
-            )}
-          </Flex>
-        </Form.Item>
         {matrix?.inWorkVersion ? (
           <CompactAlert
             type="info"
@@ -479,7 +430,6 @@ function NewVersionForm({
                 type="link"
                 onClick={() => {
                   form.resetFields();
-                  form.setFieldValue("scaleId", defaultScaleId);
                   setIsDirty(false);
                 }}
               >
@@ -497,15 +447,6 @@ function NewVersionForm({
           </Button>
         </ActionBar>
       </FormColumn>
-      {isScaleCreating && (
-        <ScaleModal
-          onSaved={(created) => {
-            form.setFieldValue("scaleId", created.id);
-            setIsDirty(true);
-          }}
-          onClose={() => setIsScaleCreating(false)}
-        />
-      )}
       {isTrackCreating && unit && (
         <TrackModal
           fixedOwner={unit}

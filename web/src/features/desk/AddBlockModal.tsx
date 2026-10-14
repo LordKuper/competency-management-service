@@ -50,7 +50,7 @@ function BlockPreview({ block, entries }: BlockPreviewProps) {
         {scale.data && <ScalePointsHint scale={scale.data} />}
       </Space>
       <Typography.Text type="secondary">
-        Состав на сегодня; в мастере он не правится.
+        {`Действует для: ${block.scopeUnitName ?? "Для всех"} · состав на сегодня; в мастере он не правится.`}
       </Typography.Text>
       <Table
         size="small"
@@ -83,6 +83,8 @@ interface AddBlockModalProps {
   entries: MatrixVersion["entries"];
   /** Why a block cannot be added for what the version holds already, in words; undefined for one that can. */
   reasonOf: (block: CompetencyBlock) => string | undefined;
+  /** The unit of the matrix: only blocks that apply to it are offered. */
+  availableFor?: string;
   /** In a track matrix, the competencies of its direction or of none; a block with another one is not offered. */
   allowedIds?: ReadonlySet<string>;
   onPick: (block: CompetencyBlock) => void;
@@ -97,6 +99,7 @@ export function AddBlockModal({
   entries,
   reasonOf,
   allowedIds,
+  availableFor,
   onPick,
   onClose,
 }: AddBlockModalProps) {
@@ -108,6 +111,7 @@ export function AddBlockModal({
     blocksQuery({
       q: q || undefined,
       inWork: true,
+      availableFor,
       page: 1,
       pageSize: MAX_PAGE_SIZE,
     }),

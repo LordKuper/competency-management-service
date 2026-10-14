@@ -16,6 +16,7 @@ import {
   matrixVersionQuery,
   returnMatrixVersion,
 } from "../career/matrixApi";
+import { scaleOfCompetency } from "../career/matrixGroups";
 import { matrixName, VERSION_STATUS_LABELS } from "../career/matrixLabels";
 import { draftRecords, RefusalContent } from "../career/usePublishEntry";
 import { CascadeTable } from "./CascadeTable";
@@ -198,7 +199,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
             diff={changes.data}
             levelNames={levelNames}
             competencyNames={competencyNames}
-            scalePoints={version.entries.scale?.points ?? []}
+            pointsOf={(id) => scaleOfCompetency(version, id).points}
             columns={{ before: "Действует", after: "В этой версии" }}
             emptyText="Отличий от опубликованной версии нет."
           />
@@ -211,7 +212,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
             diff={approverChanges}
             levelNames={levelNames}
             competencyNames={competencyNames}
-            scalePoints={version.entries.scale?.points ?? []}
+            pointsOf={(id) => scaleOfCompetency(version, id).points}
             columns={{ before: "Было", after: "Стало" }}
             emptyText="Правок нет."
           />

@@ -21,6 +21,7 @@ import {
   matrixQuery,
   matrixVersionQuery,
 } from "../career/matrixApi";
+import { scaleOfCompetency } from "../career/matrixGroups";
 import {
   APPROVAL_STEP_LABELS,
   matrixName,
@@ -266,7 +267,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
                 diff={approverDiff.data}
                 levelNames={levelNames}
                 competencyNames={competencyNames}
-                scalePoints={version.entries.scale?.points ?? []}
+                pointsOf={(id) => scaleOfCompetency(version, id).points}
                 columns={{
                   before: "Ваш вариант",
                   after: "Правка согласующего",
