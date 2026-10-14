@@ -121,3 +121,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-14 — route Task 19 assessment-fix 2: standard, dispatch HEAD c6e105b
 - 2026-10-14 — Task 19 assessment-fix 2 COMPLETED (65d3519): FormColumn (576 px) — шаг 1 мастера и шаги 1–3 «Принять сотрудника»; порядок подразделение → трек → шкала; легенда шага 3 — карточка 288 px. Flagged choices приняты оркестратором: ActionBar/EmployeeForm/UserForm — главная кнопка справа и без «Назад» (margin-inline-start: auto, затрагивает и другие экраны — согласуется с К4); легенда — подписи баллов шкалы; ширина через --ant-size-xxl. Gate: web lint/build/check:api чисто
 - 2026-10-14 — impl assessment (user): убрать подсказку под полем «Трек» на шаге 1 мастера — d593805 (код, макет m-wiz-1, примечание К7)
+- 2026-10-14 — impl assessment (user): колонка формы ~700 px → 720 px (--ant-size-xxl × 15), К7 и заметки m-wiz-1/m-onboard — 51ab5c4
