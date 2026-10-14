@@ -183,3 +183,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-15 — Task 32 COMPLETED (720c977): окно и вкладка блоков без шкалы, состав со шкалой каждой компетенции, сняты блокировки шкалы; мастер шаг 2 и шаги 3–4 — шкала у компетенции
 - 2026-10-15 — Task 33 COMPLETED (9f9784b, 96e3198, 22c947b, 7cb73f4): миграция SharedBlockWithoutScale, поля шкалы блока удалены из контракта, правила шкалы блока сняты; все gate зелёные. Flagged choices приняты оркестратором: минимальные правки web убрали отображение шкалы блока; BlockModal фильтрует состав по шкале до Task 34
 - 2026-10-15 — route Task 34: standard, dispatch HEAD (после этого коммита)
+- 2026-10-15 — Task 34 COMPLETED (eec34ef): окно блока без шкалы, состав любых шкал со столбцом «Шкала», CompetencyModal без блокировки шкалы, шкала у каждой компетенции в редакторе и мастере (scaleNameOf). Flagged choices приняты оркестратором: шкала рядом с категорией у всех строк редактора, полным названием шкалы
+- 2026-10-15 — impl completion gate (после Task 30–34): dotnet build Release 0/0, web lint/build/check:api чисто; все задачи плана отмечены
