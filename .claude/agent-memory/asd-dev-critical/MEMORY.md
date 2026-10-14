@@ -54,4 +54,4 @@
 - [Career reminder mail](project_career-reminder-mail-facts.md) — CareerMail/CareerMailQueue call sites, turn-based awaiting rule, no e-mail in From line, Audit has no kind list
 - [Desk merge and contract](project_desk-merge-contract-facts.md) — one unit-naming helper, subject absorption, one finding per kind per object, Dockerfile COPY per project
 - [Career desk source](project_career-desk-source-facts.md) — 25-command budget incl. 2 auth, rule functions on snapshot, HrUnitsAsync reads snapshot, seed run order
-- [Position matrix + shared blocks](project_position-matrix-shared-block-facts.md) — one composition rule (CompositionsOf), legacy sharedBlocks default, position column = positionId, unrun SQL, catalogRoutes test pin
+- [Position matrix + shared blocks](project_position-matrix-shared-block-facts.md) — CompositionsOf, per-competency ScaleOf (no version scale), HeadedSubtreeIds only via ViewerAsync, unrun SQL, test pin
