@@ -140,6 +140,39 @@ export function levelsQuery(trackId: string) {
   });
 }
 
+/** How many level names the name field of a level offers. */
+const LEVEL_NAME_SUGGESTIONS = 10;
+
+/**
+ * The names of levels already made in any track that contain the text, each once whatever its case, the first ten; with
+ * no text, the first ten names. Offered as suggestions only: any name may still be typed.
+ */
+export function levelNamesQuery(text: string) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "levels", "names", text],
+    queryFn: async () => {
+      const read = unwrap(
+        await api.GET("/api/v1/career/levels", {
+          params: {
+            query: { q: text || undefined, page: 1, pageSize: MAX_PAGE_SIZE },
+          },
+        }),
+      );
+      const seen = new Set<string>();
+      return read.items
+        .map((level) => level.name)
+        .filter((name) => {
+          const key = name.toLocaleLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, LEVEL_NAME_SUGGESTIONS);
+    },
+    placeholderData: keepPreviousData,
+  });
+}
+
 export function categoriesQuery(params: CatalogListParams) {
   return queryOptions({
     queryKey: [...catalogQueryKey, "categories", params],

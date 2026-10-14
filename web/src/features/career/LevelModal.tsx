@@ -1,12 +1,17 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Form, Input } from "antd";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AutoComplete, Form } from "antd";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
+import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogModal, FormActions } from "./CatalogModal";
-import { type CareerLevel, invalidateCatalogs } from "./catalogApi";
+import {
+  type CareerLevel,
+  invalidateCatalogs,
+  levelNamesQuery,
+} from "./catalogApi";
 
 const NAME_MAX_LENGTH = 200;
 const FIELDS = ["name"] as const;
@@ -91,6 +96,8 @@ interface LevelFormProps {
 function LevelForm({ initialName, onSubmit, onCancel }: LevelFormProps) {
   const [form] = Form.useForm<LevelValues>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
+  const typed = useDebouncedValue(Form.useWatch("name", form)?.trim() ?? "");
+  const suggestions = useQuery(levelNamesQuery(typed));
 
   return (
     <Form
@@ -111,7 +118,9 @@ function LevelForm({ initialName, onSubmit, onCancel }: LevelFormProps) {
           },
         ]}
       >
-        <Input autoComplete="off" />
+        <AutoComplete
+          options={suggestions.data?.map((name) => ({ value: name }))}
+        />
       </Form.Item>
       <FormActions isSubmitting={isSubmitting} onCancel={onCancel} />
     </Form>
