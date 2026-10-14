@@ -20,6 +20,7 @@ export type Competency = Schemas["CompetencyResponse"];
 export type CompetencyType = Schemas["CompetencyType"];
 export type CompetencyVersion = Schemas["CompetencyVersionResponse"];
 export type Scale = Schemas["CompetencyScaleResponse"];
+export type CompetencyBlock = Schemas["CompetencyBlockResponse"];
 export type ScalePoint = Schemas["ScalePoint"];
 export type CatalogDraft = Schemas["CatalogDraftResponse"];
 export type CatalogKind = Schemas["CatalogEntryKind"];
@@ -76,6 +77,13 @@ export interface CompetencyListParams extends CatalogListParams {
 /** Column filters of the scale list. */
 export interface ScaleListParams extends CatalogListParams {
   isDefault?: boolean;
+}
+
+/** Column filters of the shared block list. */
+export interface BlockListParams extends CatalogListParams {
+  scaleId?: string;
+  /** Leaves out the inactive entries. */
+  inWork?: boolean;
 }
 
 /** Column filters of the track list: the direction, and the unit that owns the track, match exactly. */
@@ -250,6 +258,55 @@ export function scalesQuery(params: ScaleListParams) {
         }),
       ),
   });
+}
+
+export function blocksQuery(params: BlockListParams) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "blocks", params],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/blocks", { params: { query: params } }),
+      ),
+  });
+}
+
+/** A shared block as it stands now, with its composition. */
+export function blockQuery(id: string) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "blocks", "block", id],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/blocks/{id}", {
+          params: { path: { id } },
+        }),
+      ),
+    retry: false,
+  });
+}
+
+/** The fields of a shared block a form saves. */
+export interface BlockValues {
+  name: string;
+  scaleId: string;
+  competencyIds: string[];
+}
+
+/** Creates a shared block, or with `base` changes it under the version the form was built from. */
+export async function saveBlock(
+  values: BlockValues,
+  base: { id: string; version: number } | undefined,
+) {
+  return unwrap(
+    base
+      ? await api.PUT("/api/v1/career/blocks/{id}", {
+          params: {
+            path: { id: base.id },
+            header: { "If-Match": ifMatchOf(base.version) },
+          },
+          body: values,
+        })
+      : await api.POST("/api/v1/career/blocks", { body: values }),
+  );
 }
 
 /** Draft entries waiting for the signed-in HR. */

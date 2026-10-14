@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { BlockModal } from "../career/BlockModal";
 import { CatalogModal } from "../career/CatalogModal";
 import { CompetencyModal } from "../career/CompetencyModal";
 import {
+  blockQuery,
   type CatalogDraft,
   competencyQuery,
   entryQuery,
@@ -61,6 +63,9 @@ export function EditDraftModal({
   if (kind === "Track") {
     return <EditTrack draft={draft} onSaved={onSaved} onClose={onClose} />;
   }
+  if (kind === "Block") {
+    return <EditBlock draft={draft} onSaved={onSaved} onClose={onClose} />;
+  }
   return <EditNamed draft={draft} onSaved={onSaved} onClose={onClose} />;
 }
 
@@ -100,6 +105,13 @@ function EditScale({ draft, onSaved, onClose }: EditDraftModalProps) {
   if (read.error) return <ReadFailure error={read.error} onClose={onClose} />;
   if (!read.data) return null;
   return <ScaleModal scale={read.data} onSaved={onSaved} onClose={onClose} />;
+}
+
+function EditBlock({ draft, onSaved, onClose }: EditDraftModalProps) {
+  const read = useQuery(blockQuery(draft.id));
+  if (read.error) return <ReadFailure error={read.error} onClose={onClose} />;
+  if (!read.data) return null;
+  return <BlockModal block={read.data} onSaved={onSaved} onClose={onClose} />;
 }
 
 function EditTrack({ draft, onSaved, onClose }: EditDraftModalProps) {

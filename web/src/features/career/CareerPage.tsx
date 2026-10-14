@@ -1,5 +1,6 @@
 import { Space, Tabs, Typography } from "antd";
 import { ApprovalsSection } from "./ApprovalsSection";
+import { BlocksTab } from "./BlocksTab";
 import { CategoriesTab } from "./CategoriesTab";
 import { CompetenciesTab } from "./CompetenciesTab";
 import { useCanApprove } from "./careerApi";
@@ -17,6 +18,7 @@ const TABS = [
     children: <DirectionsTracksTab />,
   },
   { key: "competencies", label: "Компетенции", children: <CompetenciesTab /> },
+  { key: "blocks", label: "Общие блоки", children: <BlocksTab /> },
   { key: "matrices", label: "Матрицы", children: <MatricesTab /> },
 ];
 

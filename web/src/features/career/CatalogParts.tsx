@@ -72,7 +72,7 @@ export function EntryActions({
   afterEdit = [],
 }: EntryActionsProps) {
   const rights = useCatalogRights();
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const queryClient = useQueryClient();
   const { mutate, isPending } = useMutation({
     mutationFn: (action: CatalogAction) =>
@@ -83,6 +83,19 @@ export function EntryActions({
   const confirmDeletion = useConfirmDeletion();
   const { publish, isBusy } = usePublishEntry();
   const canManage = rights.canManage(unitId);
+
+  /** Deactivating a shared block leaves unpublished versions that use it incomplete, which the confirmation says first. */
+  const deactivate = () =>
+    segment === "blocks"
+      ? modal.confirm({
+          title: `Деактивировать общий блок «${entry.name}»?`,
+          content:
+            "Опубликованные и архивные версии не изменятся. Неопубликованные версии матриц с этим блоком станут неполными: блок нужно заменить или вернуть в работу.",
+          okText: "Деактивировать",
+          cancelText: "Отмена",
+          onOk: () => mutate("deactivate"),
+        })
+      : mutate("deactivate");
 
   /** Approving and returning to work go through the publication preview, but a level publishes nothing with it. */
   const approveOrActivate = (action: "approve" | "activate") =>
@@ -113,7 +126,7 @@ export function EntryActions({
             label: "Деактивировать",
             danger: true,
             disabled: isPending,
-            onClick: () => mutate("deactivate"),
+            onClick: deactivate,
           },
         ]
       : []),

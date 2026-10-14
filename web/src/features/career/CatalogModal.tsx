@@ -14,6 +14,8 @@ interface CatalogModalProps {
   fields: readonly string[];
   /** Shown instead of the generic alert when the save is refused as a conflict with no field to blame. */
   conflictNotice?: string;
+  /** Width of the dialog when its content needs more than the usual one. */
+  width?: number;
   onClose: () => void;
   children: ReactNode;
 }
@@ -35,6 +37,7 @@ export function CatalogModal({
   error,
   fields,
   conflictNotice,
+  width,
   onClose,
   children,
 }: CatalogModalProps) {
@@ -47,6 +50,7 @@ export function CatalogModal({
     <AppModal
       open
       title={title}
+      width={width}
       onCancel={(event) => {
         if (!event.defaultPrevented) onClose();
       }}

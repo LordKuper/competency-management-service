@@ -25,7 +25,7 @@ import {
   SEGMENT_OF_KIND,
 } from "../career/catalogApi";
 import { KIND_LABELS } from "../career/DraftsSection";
-import { VERSION_STATUS_LABELS } from "../career/matrixLabels";
+import { matrixName, VERSION_STATUS_LABELS } from "../career/matrixLabels";
 import { useCatalogRights } from "../career/useCatalogRights";
 import {
   RefusalContent,
@@ -54,6 +54,7 @@ const KIND_OF_URL: Record<string, CatalogKind> = {
   category: "Category",
   competency: "Competency",
   scale: "Scale",
+  block: "Block",
 };
 
 const KIND_OPTIONS = Object.entries(KIND_LABELS).map(([value, label]) => ({
@@ -193,7 +194,7 @@ const MATRIX_COLUMNS: TableColumnsType<EntryMatrix> = [
     key: "matrix",
     render: (_, matrix) => (
       <Link to={`/career/matrices/${matrix.matrixId}`}>
-        {`${matrix.trackName} — ${matrix.orgUnitName}`}
+        {`${matrixName(matrix)} — ${matrix.orgUnitName}`}
       </Link>
     ),
   },
