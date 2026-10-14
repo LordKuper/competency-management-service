@@ -151,7 +151,7 @@ Material risk: none
 
 ### Task 18: Требования — мастер матрицы, шкала, область, уровень
 Material risk: none
-- [ ] `docs/product/requirements/desk.html` и `career-framework.html`: критерии AC-39…AC-43
+- [x] `docs/product/requirements/desk.html` и `career-framework.html`: критерии AC-39…AC-43
 
 ### Task 19: Мастер матрицы, шкала, область, уровень в SPA
 Material risk: none

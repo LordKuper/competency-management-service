@@ -14,7 +14,7 @@ responsibility:
   <meta name="subsystem" content="career-framework">
   <meta name="sprint-id" content="">
   <meta name="status" content="approved">
-  <meta name="updated" content="2026-10-13">
+  <meta name="updated" content="2026-10-14">
   <meta name="responsibility" content="product requirements of the career-framework subsystem: process roles and HR assignment, career catalogues, position-to-level link with its bans, general publication rule with cascade, competency matrices with versions and approval route, deletion rules, lists and filters, the Career model section">
   <meta name="provenance" content="migrated">
   <meta name="source" content="docs/Постановка.md §3.1, §5–§7, §21, §22, §30, §46 (accepted subset)">
@@ -208,7 +208,7 @@ responsibility:
           <span class="status-approved">approved</span>
         </div>
         <h1>Требования — Карьерная модель</h1>
-        <div class="stats">7 goals · 16 stories · 117 AC · 8 non-goals · updated 2026-10-13</div>
+        <div class="stats">7 goals · 17 stories · 120 AC · 8 non-goals · updated 2026-10-14</div>
       </header>
       <main>
 <!--
@@ -279,11 +279,12 @@ source: docs/Постановка.md §3.1, §5–§7, §21, §22, §30, §46 (a
     </ul>
   </details>
   <details class="role-group" open>
-    <summary>Ведущие карьерную модель (руководитель, HR, администратор) <span class="count">3</span></summary>
+    <summary>Ведущие карьерную модель (руководитель, HR, администратор) <span class="count">4</span></summary>
     <ul class="stories">
       <li><b>as</b> тот, кто вправе править трек, <b>I want</b> связать должности с уровнями трека на одном экране, видя доступные должности с числом сотрудников и уровни без должностей, <b>so that</b> уровень сотрудника определялся по его должности (AC-87…AC-93, AC-95, AC-96; <a href="desk.html#AC-162">desk AC-162…AC-166</a>, <a href="desk.html#AC-168">desk AC-168</a>).</li>
       <li><b>as</b> владелец карьерной модели, <b>I want</b>, чтобы трек не становился действующим, версия матрицы не отправлялась на согласование и не публиковалась, пока у уровня нет связанной действующей должности, <b>so that</b> в опубликованной модели каждый уровень был достижим по должности (AC-87, AC-94…AC-103, AC-106, AC-109; <a href="desk.html#AC-55">desk AC-55</a>, <a href="desk.html#AC-61">desk AC-61</a>, <a href="desk.html#AC-69">desk AC-69</a>, <a href="desk.html#AC-70">desk AC-70</a>, <a href="desk.html#AC-78">desk AC-78</a>, <a href="desk.html#AC-134">desk AC-134</a>, <a href="desk.html#AC-166">desk AC-166</a>).</li>
       <li><b>as</b> HR или глобальный администратор, <b>I want</b> перед подтверждением публикации видеть явный перечень всего, что опубликуется вместе с ней, <b>so that</b> не опубликовать лишнего вслепую и понимать причину отказа (AC-105…AC-117; <a href="desk.html#AC-65">desk AC-65</a>, <a href="desk.html#AC-69">desk AC-69</a>, <a href="desk.html#AC-77">desk AC-77</a>, <a href="desk.html#AC-78">desk AC-78</a>).</li>
+      <li><b>as</b> тот, кто вправе править трек, <b>I want</b> создать профессиональную область прямо в окне трека, подобрать название уровня из уже заведённых и посмотреть баллы шкалы при её выборе, <b>so that</b> не уходить в другие разделы и не вводить заново привычные названия (AC-118…AC-120; <a href="desk.html#AC-189">desk AC-189</a>, <a href="desk.html#AC-190">desk AC-190</a>).</li>
     </ul>
   </details>
 </section>
@@ -412,6 +413,9 @@ source: docs/Постановка.md §3.1, §5–§7, §21, §22, §30, §46 (a
       <tr id="AC-115"><td><a href="#AC-115">AC-115</a></td><td>Запись справочника (область, категория, компетенция, шкала), которую HR или глобальный администратор создаёт и которая по прежним правилам стала бы сразу действующей, но ссылается на черновые сущности (AC-108), создаётся черновиком, и интерфейс предлагает «Утвердить» с перечнем AC-110; запись без черновых ссылок создаётся действующей, как раньше. Само создание каскадом ничего не публикует.</td><td><span class="chip area">публикация</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-116"><td><a href="#AC-116">AC-116</a></td><td>Изменение действующей записи так, что она начинает ссылаться на черновую сущность (AC-108), отклоняется ошибкой в поле со ссылкой («выбрана черновая запись — сначала утвердите её»); запись остаётся действующей и неизменной, каскад при этом ничего не публикует.</td><td><span class="chip area">публикация</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-117"><td><a href="#AC-117">AC-117</a></td><td>На существующей странице матрицы нет публикующих переходов версии — «Отправить на согласование», «Согласовать», «Принять правки»: вместо них страница показывает ссылку на сценарий, где действие выполняется, — «Согласовать версию» (<a href="desk.html#AC-62">desk AC-62</a>), «Доработать возвращённую версию» (<a href="desk.html#AC-56">desk AC-56</a>) или последний шаг мастера построения матрицы (<a href="desk.html#AC-52">desk AC-52</a>), — по состоянию версии и правам пользователя. Страница по-прежнему позволяет просматривать версию, редактировать её содержимое и выполнять не публикующие действия: «Вернуть с правками», «Принять и доработать», «Откатить правки», «Создать новую версию». Публикующее действие над версией выполняется только на экране сценария, с показом и подтверждением перечня AC-110 в окне подтверждения (AC-111, AC-112).</td><td><span class="chip area">публикация</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-118"><td><a href="#AC-118">AC-118</a></td><td>В окне трека при добавлении трека профессиональную область можно создать, не покидая окно; область создаётся по правилам областей (AC-13, AC-21, AC-30) и сразу выбирается в окне трека.</td><td><span class="chip area">области и треки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-119"><td><a href="#AC-119">AC-119</a></td><td>Название уровня в окне трека при добавлении вводится с автодополнением по названиям ранее заведённых уровней (уникальные названия, без учёта регистра); ввод нового названия не ограничивается, уникальность названия в пределах трека — AC-21.</td><td><span class="chip area">области и треки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-120"><td><a href="#AC-120">AC-120</a></td><td>Везде, где пользователь выбирает шкалу (форма компетенции, мастер матрицы —<a href="desk.html#AC-190">desk AC-190</a>), содержимое шкалы — баллы и значения баллов (AC-24) — можно посмотреть во всплывающей подсказке, не открывая справочник шкал.</td><td><span class="chip area">шкалы</span></td><td><span class="chip prio-must">must</span></td></tr>
     </tbody>
   </table>
 </section>

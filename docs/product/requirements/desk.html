@@ -14,7 +14,7 @@ responsibility:
   <meta name="subsystem" content="desk">
   <meta name="sprint-id" content="">
   <meta name="status" content="approved">
-  <meta name="updated" content="2026-10-13">
+  <meta name="updated" content="2026-10-14">
   <meta name="responsibility" content="product requirements of the desk subsystem: role desktop as the home page, expected actions and integrity checks per role, counter, user-journey scenarios, reminder e-mails, one-object-one-item rule with absorption and cause order">
   <meta name="provenance" content="original">
   <meta name="source" content="">
@@ -210,7 +210,7 @@ responsibility:
           <span class="status-approved">approved</span>
         </div>
         <h1>Требования — Рабочий стол</h1>
-        <div class="stats">5 goals · 29 stories · 188 AC · 8 non-goals · updated 2026-10-13</div>
+        <div class="stats">5 goals · 30 stories · 190 AC · 8 non-goals · updated 2026-10-14</div>
       </header>
       <main>
 <!--
@@ -253,7 +253,7 @@ provenance: original
     </ul>
   </details>
   <details class="role-group" open>
-    <summary>Руководитель подразделения <span class="count">6</span></summary>
+    <summary>Руководитель подразделения <span class="count">7</span></summary>
     <ul class="stories">
       <li><b>as</b> руководитель подразделения, <b>I want</b> видеть ожидаемые от меня действия: возвращённую версию, неотправленный черновик, версию подчинённого подразделения на согласовании, подразделение без опубликованной матрицы, <b>so that</b> не пропустить то, что стоит на мне (AC-22…AC-26).</li>
       <li><b>as</b> руководитель подразделения, <b>I want</b> построить матрицу компетенций пошаговым сценарием, создавая недостающий трек и компетенцию, не уходя из него, <b>so that</b> довести матрицу до отправки на согласование без поиска по разделам (AC-43…AC-55; <a href="career-framework.html#AC-103">career-framework AC-103…AC-105</a>).</li>
@@ -261,6 +261,7 @@ provenance: original
       <li><b>as</b> руководитель подразделения (согласующий шага 1), <b>I want</b> экран рассмотрения версии подчинённого подразделения с разницей и проверкой полноты, <b>so that</b> принять решение без поиска контекста (AC-62…AC-64, AC-66…AC-68, AC-70; <a href="career-framework.html#AC-105">career-framework AC-105</a>).</li>
       <li><b>as</b> руководитель подразделения, <b>I want</b> получить письмо, когда моя версия возвращена или версия пришла мне на согласование, <b>so that</b> узнать об этом без захода в систему (AC-102, AC-103).</li>
       <li><b>as</b> руководитель подразделения, <b>I want</b> видеть проверки целостности моих должностей, треков и матриц — должность без трека, трек без должностей или уровней, матрица, не покрывающая уровни трека, — <b>so that</b> вовремя исправить пробелы или передать их ответственному HR (AC-30, AC-122…AC-132, AC-167).</li>
+      <li><b>as</b> руководитель подразделения, <b>I want</b> на шаге выбора трека и шкалы мастера матрицы создать недостающую шкалу и посмотреть баллы шкалы с их значениями, <b>so that</b> выбрать шкалу осознанно, не покидая сценарий (AC-189, AC-190; <a href="career-framework.html#AC-120">career-framework AC-120</a>).</li>
     </ul>
   </details>
   <details class="role-group" open>
@@ -499,8 +500,10 @@ provenance: original
       <tr id="AC-184"><td><a href="#AC-184">AC-184</a></td><td>Типичный объём данных сценария помещается на один экран без прокрутки на desktop; лишняя информация убрана без потери информативности.</td><td><span class="chip area">UI</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-185"><td><a href="#AC-185">AC-185</a></td><td>В многошаговых сценариях («Построить матрицу компетенций», «Принять сотрудника») с любого шага, кроме первого, можно вернуться на предыдущий кнопкой «Назад»; введённое не теряется.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-186"><td><a href="#AC-186">AC-186</a></td><td>В сценариях с выбором объекта («Связать должности с треком», «Подключить подразделение», очереди, «Согласовать версию», «Доработать возвращённую версию») можно вернуться к выбору другого объекта.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
-      <tr id="AC-187"><td><a href="#AC-187">AC-187</a></td><td>В каждом многошаговом сценарии («Построить матрицу компетенций», «Принять сотрудника») показана линейка шагов: сколько шагов всего, их названия, текущий шаг, пройденные и оставшиеся.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-187"><td><a href="#AC-187">AC-187</a></td><td>В каждом многошаговом сценарии («Построить матрицу компетенций», «Принять сотрудника») показана линейка шагов: сколько шагов всего, их названия, текущий шаг, пройденные и оставшиеся; отдельной подписи «Шаг n из N» рядом с линейкой нет — число шагов и текущий шаг видны на самой линейке.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-188"><td><a href="#AC-188">AC-188</a></td><td>Пройденный шаг открывается щелчком по линейке шагов.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-189"><td><a href="#AC-189">AC-189</a></td><td>На шаге 1 «Трек и шкала» сценария «Построить матрицу компетенций» рядом с выбором шкалы есть действие «Добавить шкалу» (по аналогии с созданием недостающего трека, AC-46): шкала создаётся на месте, не покидая сценарий, по правилам создания шкал (<a href="career-framework.html#AC-13">career-framework AC-13</a>, <a href="career-framework.html#AC-24">career-framework AC-24</a>) и сразу выбирается в сценарии.</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-190"><td><a href="#AC-190">AC-190</a></td><td>При выборе шкалы на шаге 1 «Трек и шкала» её содержимое — баллы и значения баллов — можно посмотреть во всплывающей подсказке, не открывая справочник (общее правило — <a href="career-framework.html#AC-120">career-framework AC-120</a>).</td><td><span class="chip area">сценарий</span></td><td><span class="chip prio-must">must</span></td></tr>
     </tbody>
   </table>
 
