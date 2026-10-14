@@ -10,6 +10,9 @@ export function cellKey(levelId: string, rowId: string) {
   return `${levelId}:${rowId}`;
 }
 
+/** The id a competency outside every block carries in `blockId`; the group is implicit. */
+export const OUTSIDE_BLOCK = null;
+
 export function addLevel(content: MatrixContent, levelId: string) {
   return {
     ...content,
@@ -112,7 +115,7 @@ export function removeBlock(content: MatrixContent, blockId: string) {
 export function setBlockWeight(
   content: MatrixContent,
   levelId: string,
-  blockId: string,
+  blockId: string | null,
   field: "percent" | "minPercent",
   value: number | null,
 ) {
@@ -136,7 +139,7 @@ export function setBlockWeight(
 export function addCompetency(
   content: MatrixContent,
   competencyId: string,
-  blockId: string,
+  blockId: string | null,
 ) {
   return {
     ...content,
@@ -144,8 +147,23 @@ export function addCompetency(
   };
 }
 
+/** Drops the coefficients of the «Вне блоков» group once no competency stands in it. */
+function withoutEmptyOutsideGroup(content: MatrixContent): MatrixContent {
+  const isOutsideUsed = content.competencies.some(
+    (competency) => competency.blockId === OUTSIDE_BLOCK,
+  );
+  return isOutsideUsed
+    ? content
+    : {
+        ...content,
+        blockWeights: content.blockWeights.filter(
+          (weight) => weight.blockId !== OUTSIDE_BLOCK,
+        ),
+      };
+}
+
 export function removeCompetency(content: MatrixContent, competencyId: string) {
-  return {
+  return withoutEmptyOutsideGroup({
     ...content,
     competencies: content.competencies.filter(
       (competency) => competency.competencyId !== competencyId,
@@ -153,20 +171,76 @@ export function removeCompetency(content: MatrixContent, competencyId: string) {
     requirements: content.requirements.filter(
       (requirement) => requirement.competencyId !== competencyId,
     ),
-  };
+  });
 }
 
 export function setCompetencyBlock(
   content: MatrixContent,
   competencyId: string,
-  blockId: string,
+  blockId: string | null,
 ) {
-  return {
+  return withoutEmptyOutsideGroup({
     ...content,
     competencies: content.competencies.map((competency) =>
       competency.competencyId === competencyId
         ? { ...competency, blockId }
         : competency,
+    ),
+  });
+}
+
+/** The shared blocks of a version; a document written before they existed has none. */
+export function sharedBlocksOf(content: MatrixContent) {
+  return content.sharedBlocks ?? [];
+}
+
+export function addSharedBlock(content: MatrixContent, blockId: string) {
+  return {
+    ...content,
+    sharedBlocks: [...sharedBlocksOf(content), { blockId, isMandatory: false }],
+  };
+}
+
+export function setSharedBlockMandatory(
+  content: MatrixContent,
+  blockId: string,
+  isMandatory: boolean,
+) {
+  return {
+    ...content,
+    sharedBlocks: sharedBlocksOf(content).map((block) =>
+      block.blockId === blockId ? { ...block, isMandatory } : block,
+    ),
+  };
+}
+
+/**
+ * Takes a shared block out of a version with its coefficients and the requirements of the competencies only it
+ * brought; `compositions` holds the composition of every shared block of the version, this one included.
+ */
+export function removeSharedBlock(
+  content: MatrixContent,
+  blockId: string,
+  compositions: ReadonlyMap<string, readonly string[]>,
+) {
+  const remaining = sharedBlocksOf(content).filter(
+    (block) => block.blockId !== blockId,
+  );
+  const kept = new Set<string>([
+    ...content.competencies.map((competency) => competency.competencyId),
+    ...remaining.flatMap((block) => compositions.get(block.blockId) ?? []),
+  ]);
+  const dropped = new Set(
+    (compositions.get(blockId) ?? []).filter((id) => !kept.has(id)),
+  );
+  return {
+    ...content,
+    sharedBlocks: remaining,
+    blockWeights: content.blockWeights.filter(
+      (weight) => weight.blockId !== blockId,
+    ),
+    requirements: content.requirements.filter(
+      (requirement) => !dropped.has(requirement.competencyId),
     ),
   };
 }
@@ -251,4 +325,23 @@ export function changedPlaces(changes: readonly MatrixChange[]): ChangedPlaces {
     }
   }
   return places;
+}
+
+/** Number of shades the rating chip has: `rating-chip-0` … `rating-chip-4`. */
+const MAX_CHIP_LEVEL = 4;
+
+/**
+ * The shade of the chip of a score: by the share of the largest score of its scale, rounded to the nearest of the five
+ * shades, so a scale of 0–5 needs no shade of its own. The digit on the chip is always the score.
+ */
+export function chipLevel(
+  score: number,
+  points: ReadonlyArray<{ score: number }>,
+) {
+  const largest = Math.max(0, ...points.map((point) => point.score));
+  if (largest === 0) return 0;
+  return Math.min(
+    Math.max(Math.round((score / largest) * MAX_CHIP_LEVEL), 0),
+    MAX_CHIP_LEVEL,
+  );
 }

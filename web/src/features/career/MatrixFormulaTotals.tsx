@@ -10,6 +10,8 @@ interface MatrixFormulaTotalsProps {
   content: MatrixContent;
   levelIds: readonly string[];
   levelNames: ReadonlyMap<string, string>;
+  /** The version has one column of requirements: the sum and the threshold are one for the whole version. */
+  isSingleLevel?: boolean;
   isEditable: boolean;
   /** Inside a wizard step, where headings are of the fourth level. */
   isCompact?: boolean;
@@ -32,6 +34,7 @@ export function MatrixFormulaTotals({
   content,
   levelIds,
   levelNames,
+  isSingleLevel = false,
   isEditable,
   isCompact = false,
   onChange,
@@ -44,7 +47,9 @@ export function MatrixFormulaTotals({
       {wrong.map(({ levelId, sum }) => (
         <Typography.Text key={levelId} type="danger">
           <CloseCircleOutlined />{" "}
-          {`Коэффициенты блоков уровня «${levelNames.get(levelId)}» дают в сумме ${sum} %, нужно ${MAX_PERCENT} %.`}
+          {isSingleLevel
+            ? `Коэффициенты блоков дают в сумме ${sum} %, нужно ${MAX_PERCENT} %.`
+            : `Коэффициенты блоков уровня «${levelNames.get(levelId)}» дают в сумме ${sum} %, нужно ${MAX_PERCENT} %.`}
         </Typography.Text>
       ))}
       <Typography.Title level={isCompact ? 4 : 2}>
@@ -55,11 +60,16 @@ export function MatrixFormulaTotals({
           const level = content.levels.find((item) => item.levelId === levelId);
           return (
             <Space key={levelId} orientation="vertical" size={0}>
-              <label htmlFor={`overall-min-${levelId}`}>
-                {levelNames.get(levelId)}
-              </label>
+              {!isSingleLevel && (
+                <label htmlFor={`overall-min-${levelId}`}>
+                  {levelNames.get(levelId)}
+                </label>
+              )}
               <InputNumber
                 id={`overall-min-${levelId}`}
+                aria-label={
+                  isSingleLevel ? "Минимальный общий порог, %" : undefined
+                }
                 min={0}
                 max={MAX_PERCENT}
                 disabled={!isEditable || undefined}

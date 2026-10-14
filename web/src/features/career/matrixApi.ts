@@ -13,6 +13,8 @@ export type MatrixVersionStatus = Schemas["MatrixVersionStatus"];
 export type MatrixContent = Schemas["MatrixContent"];
 export type MatrixRequirement = Schemas["MatrixRequirement"];
 export type MatrixBlock = Schemas["MatrixBlock"];
+export type MatrixPosition = Schemas["MatrixPositionResponse"];
+export type MatrixSharedBlockEntry = Schemas["MatrixSharedBlockEntry"];
 export type MatrixAction = Schemas["MatrixAction"];
 export type MatrixHistory = Schemas["MatrixHistoryResponse"];
 export type MatrixDecision = Schemas["MatrixDecisionResponse"];
@@ -39,6 +41,7 @@ export interface MatrixListParams {
   orgUnitId?: string;
   directionId?: string;
   trackId?: string;
+  positionId?: string;
   page: number;
   pageSize: number;
 }
@@ -49,6 +52,27 @@ export function matricesQuery(params: MatrixListParams) {
     queryFn: async () =>
       unwrap(
         await api.GET("/api/v1/career/matrices", { params: { query: params } }),
+      ),
+  });
+}
+
+/** The positions a unit may build a position matrix for, with the track each is already linked to; searched on the server. */
+export function matrixPositionsQuery(
+  orgUnitId: string,
+  q: string,
+  page = 1,
+  pageSize = 20,
+) {
+  return queryOptions({
+    queryKey: [...matrixQueryKey, "positions", orgUnitId, q, page, pageSize],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/org-units/{id}/matrix-positions", {
+          params: {
+            path: { id: orgUnitId },
+            query: { q: q || undefined, page, pageSize },
+          },
+        }),
       ),
   });
 }

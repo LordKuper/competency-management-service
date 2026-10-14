@@ -131,3 +131,7 @@
   align-items: center;
   gap: var(--ant-margin-xs);
 }
+
+.matrix-grid .matrix-group-row > td {
+  background: var(--ant-color-fill-tertiary);
+}

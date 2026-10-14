@@ -3,15 +3,25 @@ import {
   Button,
   Empty,
   Flex,
+  Select,
   Space,
   Table,
   type TableColumnsType,
   Tag,
+  theme,
 } from "antd";
-import { useState } from "react";
+import type { FilterDropdownProps } from "antd/es/table/interface";
+import { type Dispatch, type SetStateAction, useState } from "react";
 import { Link } from "react-router";
+import { api } from "../../api/client";
+import { unwrap } from "../../api/unwrap";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { catalogFilter } from "./CatalogSelect";
+import { useDebouncedValue } from "../../app/useDebouncedValue";
+import {
+  CatalogSelect,
+  catalogFilter,
+  FILTER_WIDTH_IN_CONTROLS,
+} from "./CatalogSelect";
 import { useProcessRoles } from "./careerApi";
 import { onFilterChange, pageProps } from "./columnFilters";
 import { MatrixCreateModal } from "./MatrixCreateModal";
@@ -19,6 +29,8 @@ import { MatrixDeleteButton } from "./MatrixDeleteButton";
 import { type Matrix, type MatrixListParams, matricesQuery } from "./matrixApi";
 import { VERSION_STATUS_LABELS } from "./matrixLabels";
 import { unitFilter } from "./UnitTreeFilter";
+
+const POSITION_SEARCH_PAGE = 20;
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -33,12 +45,101 @@ function versionCell(version: Matrix["inWorkVersion"]) {
   );
 }
 
-function columns(params: MatrixListParams): TableColumnsType<Matrix> {
+interface TrackOrPositionFilterProps extends FilterDropdownProps {
+  params: MatrixListParams;
+  setParams: Dispatch<SetStateAction<MatrixListParams>>;
+}
+
+/** The filter of the «Трек или должность» column: a track like any column filter, or a position searched on the server. */
+function TrackOrPositionFilter({
+  params,
+  setParams,
+  setSelectedKeys,
+  confirm,
+}: TrackOrPositionFilterProps) {
+  const { token } = theme.useToken();
+  const [search, setSearch] = useState("");
+  const q = useDebouncedValue(search.trim());
+  const positions = useQuery({
+    queryKey: ["career", "matrices", "position-filter", q],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/positions", {
+          params: {
+            query: {
+              q: q || undefined,
+              isActive: true,
+              page: 1,
+              pageSize: POSITION_SEARCH_PAGE,
+            },
+          },
+        }),
+      ),
+  });
+  const width = token.controlHeight * FILTER_WIDTH_IN_CONTROLS;
+  const container = (node: HTMLElement) => node.parentElement ?? document.body;
+  return (
+    <Flex vertical gap="small" style={{ padding: token.paddingXS }}>
+      <CatalogSelect
+        segment="tracks"
+        aria-label="Трек"
+        placeholder="Трек"
+        allowClear
+        value={params.trackId}
+        style={{ width }}
+        getPopupContainer={container}
+        onChange={(value) => {
+          setSelectedKeys(value ? [value] : []);
+          setParams((previous) => ({ ...previous, positionId: undefined }));
+          confirm();
+        }}
+      />
+      <Select
+        showSearch={{ filterOption: false, onSearch: setSearch }}
+        allowClear
+        aria-label="Должность"
+        placeholder="Должность"
+        value={params.positionId}
+        loading={positions.isFetching}
+        style={{ width }}
+        getPopupContainer={container}
+        options={(positions.data?.items ?? []).map((position) => ({
+          value: position.id,
+          label: position.name,
+        }))}
+        onChange={(value: string | undefined) => {
+          setParams((previous) => ({
+            ...previous,
+            positionId: value,
+            trackId: undefined,
+            page: 1,
+          }));
+          confirm();
+        }}
+      />
+    </Flex>
+  );
+}
+
+function columns(
+  params: MatrixListParams,
+  setParams: Dispatch<SetStateAction<MatrixListParams>>,
+): TableColumnsType<Matrix> {
   return [
     {
       title: "Подразделение",
       dataIndex: "orgUnitName",
       ...unitFilter("orgUnitId", params.orgUnitId),
+    },
+    {
+      title: "Вид",
+      key: "kind",
+      render: (_, matrix) =>
+        matrix.positionId ? (
+          <Tag color="processing">Должность</Tag>
+        ) : (
+          <Tag>Трек</Tag>
+        ),
     },
     {
       title: "Область",
@@ -49,13 +150,25 @@ function columns(params: MatrixListParams): TableColumnsType<Matrix> {
         params.directionId,
         "Область",
       ),
+      render: (name: string | null) => name ?? "—",
     },
     {
-      title: "Трек",
-      dataIndex: "trackName",
-      ...catalogFilter("trackId", "tracks", params.trackId, "Трек"),
-      render: (name: string, matrix) => (
-        <Link to={`/career/matrices/${matrix.id}`}>{name}</Link>
+      title: "Трек или должность",
+      key: "trackId",
+      filtered: params.trackId !== undefined || params.positionId !== undefined,
+      filteredValue: params.trackId === undefined ? null : [params.trackId],
+      filterMultiple: false,
+      filterDropdown: (props) => (
+        <TrackOrPositionFilter
+          {...props}
+          params={params}
+          setParams={setParams}
+        />
+      ),
+      render: (_, matrix) => (
+        <Link to={`/career/matrices/${matrix.id}`}>
+          {matrix.trackName ?? matrix.positionName}
+        </Link>
       ),
     },
     {
@@ -72,7 +185,7 @@ function columns(params: MatrixListParams): TableColumnsType<Matrix> {
   ];
 }
 
-/** The matrices of the units, filtered by unit, direction and track in the column headers; a unit head may start one. */
+/** The matrices of the units, filtered by unit, direction, track and position in the column headers; a unit head may start one. */
 export function MatricesTab() {
   const roles = useProcessRoles();
   const [isCreating, setIsCreating] = useState(false);
@@ -104,7 +217,7 @@ export function MatricesTab() {
       )}
       <Table<Matrix>
         rowKey="id"
-        columns={columns(params)}
+        columns={columns(params, setParams)}
         dataSource={data?.items}
         loading={isFetching}
         scroll={{ x: "max-content" }}

@@ -249,18 +249,24 @@ export function MatrixPage() {
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>
       <Link to="/career">Карьерная модель</Link>
       <Typography.Title level={1}>
-        {`Матрица «${matrix.trackName}» — ${matrix.orgUnitName}`}
+        {matrix.positionId
+          ? `Матрица должности «${matrix.positionName}» — ${matrix.orgUnitName}`
+          : `Матрица «${matrix.trackName}» — ${matrix.orgUnitName}`}
       </Typography.Title>
       <Descriptions
         items={[
-          {
-            key: "direction",
-            label: "Область",
-            children: matrix.directionName,
-          },
+          ...(matrix.positionId
+            ? []
+            : [
+                {
+                  key: "direction",
+                  label: "Область",
+                  children: matrix.directionName,
+                },
+              ]),
           {
             key: "scale",
-            label: "Шкала",
+            label: matrix.positionId ? "Шкала версии" : "Шкала",
             children: version.entries.scale.name,
           },
         ]}
