@@ -10481,14 +10481,6 @@
             }
           },
           {
-            "name": "scaleId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
             "name": "scopeUnitId",
             "in": "query",
             "schema": {
@@ -13904,16 +13896,11 @@
       },
       "CompetencyBlockRequest": {
         "required": [
-          "scaleId",
           "competencyIds",
           "name"
         ],
         "type": "object",
         "properties": {
-          "scaleId": {
-            "type": "string",
-            "format": "uuid"
-          },
           "scopeUnitId": {
             "type": [
               "null",
@@ -13937,8 +13924,6 @@
         "required": [
           "id",
           "name",
-          "scaleId",
-          "scaleName",
           "competencies",
           "status",
           "version",
@@ -13952,13 +13937,6 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string"
-          },
-          "scaleId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "scaleName": {
             "type": "string"
           },
           "competencies": {
@@ -16091,7 +16069,6 @@
           "id",
           "name",
           "status",
-          "scale",
           "competencyIds"
         ],
         "type": "object",
@@ -16105,9 +16082,6 @@
           },
           "status": {
             "$ref": "#/components/schemas/CatalogStatus"
-          },
-          "scale": {
-            "$ref": "#/components/schemas/MatrixScaleEntry"
           },
           "competencyIds": {
             "type": "array",

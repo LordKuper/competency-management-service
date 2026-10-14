@@ -22,21 +22,18 @@ import {
   type CompetencyBlock,
   competencyQuery,
   MAX_PAGE_SIZE,
-  scaleQuery,
 } from "../career/catalogApi";
 import { useCompetencies } from "../career/MatrixEditor";
 import type { MatrixVersion } from "../career/matrixApi";
 import { competenciesText } from "../career/matrixGroups";
-import { ScalePointsHint } from "../career/ScalePointsHint";
 
 interface BlockPreviewProps {
   block: CompetencyBlock;
   entries: MatrixVersion["entries"];
 }
 
-/** The scale of the block with its points on hover, and the composition as it stands today. */
+/** The block with the composition as it stands today. */
 function BlockPreview({ block, entries }: BlockPreviewProps) {
-  const scale = useQuery(scaleQuery(block.scaleId));
   const competencies = useCompetencies(
     entries,
     block.competencies.map((item) => item.id),
@@ -46,8 +43,6 @@ function BlockPreview({ block, entries }: BlockPreviewProps) {
       <Space size="small" wrap>
         <Typography.Text strong>{block.name}</Typography.Text>
         {block.status === "Draft" && <CatalogStatusTag status="Draft" />}
-        <Typography.Text type="secondary">{block.scaleName}</Typography.Text>
-        {scale.data && <ScalePointsHint scale={scale.data} />}
       </Space>
       <Typography.Text type="secondary">
         {`Действует для: ${block.scopeUnitName ?? "Для всех"} · состав на сегодня; в мастере он не правится.`}
@@ -208,7 +203,7 @@ export function AddBlockModal({
                       <Typography.Text type="secondary">
                         {reason
                           ? `Недоступен: ${reason}`
-                          : `${block.scaleName} · ${competenciesText(block.competencies.length)}${block.status === "Draft" ? " · опубликуется вместе с версией" : ""}`}
+                          : `${competenciesText(block.competencies.length)}${block.status === "Draft" ? " · опубликуется вместе с версией" : ""}`}
                       </Typography.Text>
                     </Flex>
                   </Button>

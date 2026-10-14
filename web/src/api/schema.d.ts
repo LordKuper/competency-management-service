@@ -2088,8 +2088,6 @@ export interface components {
         };
         CompetencyBlockRequest: {
             /** Format: uuid */
-            scaleId: string;
-            /** Format: uuid */
             scopeUnitId?: null | string;
             competencyIds: string[];
             name: string;
@@ -2098,9 +2096,6 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
-            /** Format: uuid */
-            scaleId: string;
-            scaleName: string;
             competencies: components["schemas"]["CareerNamedResponse"][];
             status: components["schemas"]["CatalogStatus"];
             /** Format: int32 */
@@ -2641,7 +2636,6 @@ export interface components {
             id: string;
             name: string;
             status: components["schemas"]["CatalogStatus"];
-            scale: components["schemas"]["MatrixScaleEntry"];
             competencyIds: string[];
         };
         /** @enum {unknown} */
@@ -10959,7 +10953,6 @@ export interface operations {
                 inWork?: boolean;
                 page?: number;
                 pageSize?: number;
-                scaleId?: string;
                 scopeUnitId?: string;
                 forAll?: boolean;
                 availableFor?: string;

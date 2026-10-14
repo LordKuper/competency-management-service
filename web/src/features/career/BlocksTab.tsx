@@ -19,7 +19,7 @@ import { ErrorAlert } from "../../app/ErrorAlert";
 import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
 import { BlockModal } from "./BlockModal";
 import { EntryActions, entryColumns } from "./CatalogParts";
-import { catalogFilter, FILTER_WIDTH_IN_CONTROLS } from "./CatalogSelect";
+import { FILTER_WIDTH_IN_CONTROLS } from "./CatalogSelect";
 import {
   type BlockListParams,
   blocksQuery,
@@ -168,12 +168,6 @@ export function BlocksTab() {
   const edited = data?.items.find((block) => block.id === dialog);
   const columns: TableColumnsType<CompetencyBlock> = [
     { title: "Название", dataIndex: "name" },
-    {
-      title: "Шкала",
-      dataIndex: "scaleId",
-      ...catalogFilter("scaleId", "scales", params.scaleId, "Шкала"),
-      render: (_, block) => block.scaleName,
-    },
     {
       title: "Действует для",
       key: "scopeUnitId",

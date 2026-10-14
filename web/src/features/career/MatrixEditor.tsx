@@ -77,7 +77,6 @@ import {
 } from "./matrixGroups";
 import { CHANGED_NOTE } from "./matrixLabels";
 import { RequirementModal } from "./RequirementModal";
-import { ScalePointsHint } from "./ScalePointsHint";
 import "./matrix.css";
 
 const NO_VALUE = "—";
@@ -355,8 +354,6 @@ function MatrixEditorBody({
         <Typography.Text strong>{block.name}</Typography.Text>
         <Tag>Общий блок</Tag>
         {block.status === "Draft" && <CatalogStatusTag status="Draft" />}
-        <Typography.Text type="secondary">{block.scale.name}</Typography.Text>
-        <ScalePointsHint scale={block.scale} />
         {change && (
           <Tag icon={<WarningOutlined />} color="warning">
             Состав изменился
@@ -385,9 +382,6 @@ function MatrixEditorBody({
       return (
         <Space size="small" wrap>
           <Tag>{`Общий блок «${shared.name}»`}</Tag>
-          <Typography.Text type="secondary">
-            {shared.scale.name}
-          </Typography.Text>
         </Space>
       );
     }
@@ -581,7 +575,6 @@ function MatrixEditorBody({
   const usedScales = [
     ...(entries.scales ?? []),
     ...(entries.scale ? [entries.scale] : []),
-    ...sharedEntries.map((block) => block.scale),
   ].filter(
     (scale, index, all) =>
       all.findIndex((other) => other.id === scale.id) === index,

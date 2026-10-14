@@ -41,7 +41,7 @@ export function sharedBlockOf(
   );
 }
 
-/** The scale a requirement for the competency is a score of: its shared block's, else its own, else the scale of a version published with one. */
+/** The scale a requirement for the competency is a score of: its own, else the scale of a version published with one. */
 export function scaleOfCompetency(
   version: Pick<MatrixVersion, "entries">,
   competencyId: string,
@@ -51,7 +51,6 @@ export function scaleOfCompetency(
     (competency) => competency.id === competencyId,
   )?.scaleId;
   return (
-    sharedBlockOf(version, competencyId)?.scale ??
     entries.scales?.find((scale) => scale.id === scaleId) ??
     entries.scale ??
     NO_SCALE

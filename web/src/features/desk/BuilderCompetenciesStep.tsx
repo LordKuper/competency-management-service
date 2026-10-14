@@ -30,7 +30,6 @@ import {
   competenciesQuery,
   levelsQuery,
   MAX_PAGE_SIZE,
-  scaleQuery,
 } from "../career/catalogApi";
 import { useCompetencies } from "../career/MatrixEditor";
 import { MatrixErrorAlert } from "../career/MatrixErrorAlert";
@@ -47,7 +46,6 @@ import {
   compositionChanges,
   compositionsOf,
 } from "../career/matrixGroups";
-import { ScalePointsHint } from "../career/ScalePointsHint";
 import { AddBlockModal } from "./AddBlockModal";
 import {
   competencyIdsOf,
@@ -115,8 +113,6 @@ interface BlockLine {
   scopeName?: string | null;
   name: string;
   status: "Draft" | "Active" | "Inactive";
-  scaleId: string;
-  scaleName: string;
   competencyIds: readonly string[];
 }
 
@@ -208,8 +204,6 @@ function CompetenciesBody({
           id,
           name: entry.name,
           status: entry.status,
-          scaleId: entry.scale.id,
-          scaleName: entry.scale.name,
           competencyIds: entry.competencyIds,
         },
       ];
@@ -223,8 +217,6 @@ function CompetenciesBody({
             status: block.status,
             isPicked: true,
             scopeName: block.scopeUnitName,
-            scaleId: block.scaleId,
-            scaleName: block.scaleName,
             competencyIds: block.competencies.map((item) => item.id),
           },
         ]
@@ -536,16 +528,6 @@ function BlocksTable({
       render: (_, line) => <ScopeCell line={line} />,
     },
     {
-      title: "Шкала",
-      key: "scale",
-      render: (_, line) => (
-        <Space size="small">
-          {line.scaleName}
-          <LineScaleHint version={version} line={line} />
-        </Space>
-      ),
-    },
-    {
       title: "Состав",
       key: "count",
       render: (_, line) => competenciesText(line.competencyIds.length),
@@ -598,22 +580,6 @@ function BlocksTable({
 function ScopeCell({ line }: { line: BlockLine }) {
   const read = useQuery({ ...blockQuery(line.id), enabled: !line.isPicked });
   return (line.isPicked ? line.scopeName : read.data?.scopeUnitName) ?? FOR_ALL;
-}
-
-/** The «ⓘ» of a block's scale: from the entries when the version holds the block, else read by the scale's id. */
-function LineScaleHint({
-  version,
-  line,
-}: {
-  version: MatrixVersion;
-  line: BlockLine;
-}) {
-  const entry = version.entries.sharedBlocks?.find(
-    (item) => item.id === line.id,
-  );
-  const read = useQuery({ ...scaleQuery(line.scaleId), enabled: !entry });
-  const scale = entry?.scale ?? read.data;
-  return scale ? <ScalePointsHint scale={scale} /> : null;
 }
 
 interface CompositionProps {

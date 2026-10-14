@@ -157,7 +157,6 @@ function BlockForm({ block, fixedScope, onSubmit, onCancel }: BlockFormProps) {
       layout="vertical"
       initialValues={{
         name: block?.name ?? "",
-        scaleId: block?.scaleId,
         scopeUnitId: block?.scopeUnitId ?? undefined,
         competencyIds: block?.competencies.map((item) => item.id) ?? [],
       }}

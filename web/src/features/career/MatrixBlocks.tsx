@@ -29,7 +29,6 @@ import {
 } from "./matrixContent";
 import { OUTSIDE_LABEL } from "./matrixGroups";
 import { CHANGED_NOTE } from "./matrixLabels";
-import { ScalePointsHint } from "./ScalePointsHint";
 
 const MAX_PERCENT = 100;
 const NO_VALUE = "—";
@@ -227,10 +226,6 @@ export function MatrixBlocks({
               {row.entry.status === "Draft" && (
                 <CatalogStatusTag status="Draft" />
               )}
-              <Typography.Text type="secondary">
-                {row.entry.scale.name}
-              </Typography.Text>
-              <ScalePointsHint scale={row.entry.scale} />
             </Space>
           );
         }
