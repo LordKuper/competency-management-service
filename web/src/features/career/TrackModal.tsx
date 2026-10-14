@@ -5,7 +5,6 @@ import { isStaleVersion, useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
 import { CatalogModal, FormActions } from "./CatalogModal";
-import { CatalogSelect, IN_WORK } from "./CatalogSelect";
 import {
   type CareerTrack,
   invalidateCatalogs,
@@ -14,6 +13,7 @@ import {
   readTrack,
   saveNamedEntry,
 } from "./catalogApi";
+import { DirectionSelect } from "./DirectionSelect";
 import { createLevel } from "./LevelModal";
 import { arrangeLevels, type PendingLevel, TrackLevels } from "./TrackLevels";
 import { useCatalogRights } from "./useCatalogRights";
@@ -28,7 +28,7 @@ interface TrackValues {
 }
 
 interface TrackModalProps {
-  /** Direction of the track; omitted when the dialog asks for it. */
+  /** Direction a new track starts with, which the user may change; omitted when the dialog asks for it. */
   directionId?: string;
   /** Track being edited as the cache holds it now; omitted when one is created. */
   track?: CareerTrack;
@@ -81,7 +81,7 @@ export function TrackModal({
         if (!track || values.name !== track.name) {
           track = (await saveNamedEntry(
             "tracks",
-            { ...values, directionId: values.directionId ?? directionId },
+            values,
             track,
           )) as CareerTrack;
           setSaved(track);
@@ -136,18 +136,10 @@ export function TrackModal({
         initialValues={{
           name: current?.name ?? "",
           ownerOrgUnitId: fixedOwner?.id,
+          directionId,
         }}
         onFinish={submit}
       >
-        {!current && !directionId && (
-          <Form.Item
-            name="directionId"
-            label="Область"
-            rules={[{ required: true }]}
-          >
-            <CatalogSelect segment="directions" filters={IN_WORK} />
-          </Form.Item>
-        )}
         {!current && (
           <Form.Item
             name="ownerOrgUnitId"
@@ -170,6 +162,15 @@ export function TrackModal({
                 }))}
               />
             )}
+          </Form.Item>
+        )}
+        {!current && (
+          <Form.Item
+            name="directionId"
+            label="Область"
+            rules={[{ required: true }]}
+          >
+            <DirectionSelect />
           </Form.Item>
         )}
         <Form.Item
