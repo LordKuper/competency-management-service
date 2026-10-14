@@ -1,5 +1,9 @@
 import type { ThemeConfig } from "antd";
 
+const Z_INDEX_POPUP_BASE = 1000;
+/** One above antd's Select dropdown (popup base + 50), so a panel opened from an option shows over its list. */
+const POPOVER_Z_INDEX = Z_INDEX_POPUP_BASE + 51;
+
 const color = {
   primary: "#2B42E5",
   primaryHover: "#2338C2",
@@ -126,6 +130,7 @@ export const theme: ThemeConfig = {
     controlHeight: 32,
     controlHeightLG: 40,
 
+    zIndexPopupBase: Z_INDEX_POPUP_BASE,
     borderRadius: 4,
     borderRadiusSM: 2,
     borderRadiusXS: 2,
@@ -192,6 +197,9 @@ export const theme: ThemeConfig = {
       itemHoverColor: color.textPrimary,
       itemSelectedColor: color.primary,
       inkBarColor: color.primary,
+    },
+    Popover: {
+      zIndexPopup: POPOVER_Z_INDEX,
     },
     Modal: {
       titleFontSize: 24,
