@@ -7,7 +7,10 @@ import {
   type MatrixVersion,
   matrixCompletenessQuery,
   matrixPublicationQuery,
+  matrixQuery,
 } from "../career/matrixApi";
+import { sharedBlocksOf } from "../career/matrixContent";
+import { versionCompetencyIds } from "../career/matrixGroups";
 import { SKIPPED_NOTE } from "../career/matrixLabels";
 import { draftRecords } from "../career/usePublishEntry";
 import { CascadeTable } from "./CascadeTable";
@@ -31,6 +34,7 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
     ...trackQuery(version.entries.track?.id ?? ""),
     enabled: version.entries.track !== null,
   });
+  const matrix = useQuery(matrixQuery(version.matrixId));
   const completeness = useQuery({
     ...matrixCompletenessQuery(version.id),
     refetchOnMount: "always",
@@ -99,8 +103,20 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
           text="замечаний нет, можно отправлять на согласование."
         />
       )}
+      {version.entries.position && (
+        <Typography.Text strong>
+          {`Матрица должности «${version.entries.position.name}» — ${matrix.data?.orgUnitName ?? ""}`}
+        </Typography.Text>
+      )}
       <Typography.Text>
-        {`Содержание: компетенций ${content.competencies.length} · уровней ${content.levels.length} · блоков ${content.blocks.length} · ${version.entries.scale.name}`}
+        {[
+          `Содержание: компетенций ${versionCompetencyIds(version).length}`,
+          version.entries.position ? null : `уровней ${content.levels.length}`,
+          `блоков ${content.blocks.length + sharedBlocksOf(content).length}`,
+          version.entries.scale.name,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
       </Typography.Text>
       {isPublishing ? (
         <Flex vertical gap="small">

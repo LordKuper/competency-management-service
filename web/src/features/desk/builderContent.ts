@@ -1,19 +1,18 @@
 import type { CareerLevel } from "../career/catalogApi";
 import type { MatrixContent } from "../career/matrixApi";
 import {
-  addBlock,
   addCompetency,
   addLevel,
+  addSharedBlock,
   removeCompetency,
-  updateBlock,
+  removeSharedBlock,
+  sharedBlocksOf,
 } from "../career/matrixContent";
 
-const DEFAULT_BLOCK_NAME = "Основной блок";
-
 /**
- * The content of a version once its competencies are chosen: the chosen ones are in, the others are out with their
- * requirements. A version still empty also gets the levels of the track and one block to put the competencies in,
- * since a competency cannot be in a version without a block.
+ * The content of a version once its own and outside competencies are chosen: the chosen ones are in, the others are out
+ * with their requirements. A new one stands outside every block until the author puts it in one. A version still empty
+ * also gets the levels of the track.
  */
 export function withChosenCompetencies(
   content: MatrixContent,
@@ -31,24 +30,43 @@ export function withChosenCompetencies(
       if (level.status !== "Inactive") next = addLevel(next, level.id);
     }
   }
-  if (next.blocks.length === 0) {
-    next = addBlock(next);
-    const [block] = next.blocks;
-    if (block) {
-      next = updateBlock(next, block.id, { name: DEFAULT_BLOCK_NAME });
-    }
-  }
-  const blockId = next.blocks[0]?.id;
-  if (blockId === undefined) return next;
   for (const competencyId of chosenIds) {
     if (!next.competencies.some((item) => item.competencyId === competencyId)) {
-      next = addCompetency(next, competencyId, blockId);
+      next = addCompetency(next, competencyId, null);
     }
   }
   return next;
 }
 
-/** The ids of the competencies a version holds. */
+/**
+ * The content with exactly the given shared blocks included: new ones by reference, removed ones with their coefficients
+ * and the requirements only they brought. `compositions` holds the composition of every block named here or in the content.
+ */
+export function withSharedBlocks(
+  content: MatrixContent,
+  blockIds: readonly string[],
+  compositions: ReadonlyMap<string, readonly string[]>,
+): MatrixContent {
+  let next = content;
+  for (const { blockId } of sharedBlocksOf(content)) {
+    if (!blockIds.includes(blockId)) {
+      next = removeSharedBlock(next, blockId, compositions);
+    }
+  }
+  for (const blockId of blockIds) {
+    if (!sharedBlocksOf(next).some((item) => item.blockId === blockId)) {
+      next = addSharedBlock(next, blockId);
+    }
+  }
+  return next;
+}
+
+/** The ids of the competencies a version holds of its own, in blocks of its own or outside every block. */
 export function competencyIdsOf(content: MatrixContent): Set<string> {
   return new Set(content.competencies.map((item) => item.competencyId));
+}
+
+/** The ids of the shared blocks a version includes, in order. */
+export function sharedBlockIdsOf(content: MatrixContent): string[] {
+  return sharedBlocksOf(content).map((item) => item.blockId);
 }

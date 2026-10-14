@@ -44,6 +44,13 @@ export const BUILDER_STEPS = [
   "Отправка",
 ] as const;
 
+/** The step names for a matrix built on a track or, when `isPosition`, on a position, whose first step is named for it. */
+export function builderSteps(isPosition: boolean): readonly string[] {
+  return isPosition
+    ? ["Должность и шкала", ...BUILDER_STEPS.slice(1)]
+    : BUILDER_STEPS;
+}
+
 const CAREER_SECTION = "Карьерная модель";
 const ORG_SECTION = "Оргструктура";
 
@@ -161,6 +168,7 @@ const DRAFT_KINDS: Partial<Record<DeskObject["type"], string>> = {
   Category: "category",
   Competency: "competency",
   Scale: "scale",
+  Block: "block",
 };
 
 const DATE = new Intl.DateTimeFormat("ru-RU");
@@ -267,6 +275,7 @@ function matrixContext(reason: DeskReason | undefined): string | null {
         .join(" · ");
     case "MatrixUsesInactive":
     case "MatrixLevelsChanged":
+    case "MatrixSharedBlockChanged":
     case "MatrixCompetencyChanged":
       return `Опубликована, версия ${number}`;
     default:
@@ -470,6 +479,8 @@ const INACTIVE_FORMS: Partial<Record<DeskObject["type"], string>> = {
   Track: "неактивен",
   Direction: "неактивна",
   Competency: "неактивна",
+  Block: "неактивен",
+  Position: "неактивна",
 };
 
 function inactiveEntries(entries: ReadonlyArray<DeskObject>): string {
@@ -575,6 +586,11 @@ export function itemAction(item: DeskItem): DeskLink | null {
       return {
         title: "Создать новую версию",
         path: `/career/matrices/${object.id}`,
+      };
+    case "MatrixSharedBlockChanged":
+      return {
+        title: "Создать новую версию",
+        path: `${deskPaths.matrixBuilder}?${new URLSearchParams({ matrixId: object.id })}`,
       };
     case "TrackWithoutLevels":
     case "TrackWithOneLevel":

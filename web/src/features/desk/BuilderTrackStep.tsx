@@ -4,6 +4,7 @@ import {
   Flex,
   Form,
   Input,
+  Radio,
   Select,
   Table,
   type TableColumnsType,
@@ -15,6 +16,7 @@ import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogSelect, IN_WORK } from "../career/CatalogSelect";
 import { useProcessRoles } from "../career/careerApi";
 import {
+  MAX_PAGE_SIZE,
   readTrack,
   scalesQuery,
   type TrackPositions,
@@ -23,12 +25,14 @@ import {
 } from "../career/catalogApi";
 import { employees } from "../career/LevelPositionsModal";
 import { MatrixErrorAlert } from "../career/MatrixErrorAlert";
+import { MatrixPositionSelect } from "../career/MatrixPositionSelect";
 import {
   createMatrix,
   createMatrixVersion,
   invalidateMatrices,
   type MatrixVersion,
   matricesQuery,
+  matrixPositionsQuery,
   matrixQuery,
 } from "../career/matrixApi";
 import { ScaleModal } from "../career/ScaleModal";
@@ -107,20 +111,38 @@ interface FormValues {
   orgUnitId?: string;
   scaleId?: string;
   trackId?: string;
+  positionId?: string;
 }
 
+/** What a matrix is built on: a career track, or a position that has no track. */
+export type Basis = "track" | "position";
+
+const BASIS_OPTIONS = [
+  { value: "track", label: "По треку" },
+  { value: "position", label: "По должности" },
+] as const;
+
 interface BuilderTrackStepProps {
-  /** The version already created; its unit, track and scale can no longer be changed. */
+  /** The version already created; its basis, unit and scale can no longer be changed. */
   version?: MatrixVersion;
-  preselected: { unitId?: string; trackId?: string };
+  preselected: {
+    unitId?: string;
+    trackId?: string;
+    positionId?: string;
+    positionName?: string;
+  };
+  basis: Basis;
+  onBasisChange: (basis: Basis) => void;
   onNext: () => void;
   onUnsavedChange: (isUnsaved: boolean) => void;
 }
 
-/** Step 1: the unit, the track and the scale. Saving it creates the draft version, or the next version of a published matrix. */
+/** Step 1: the basis, the unit, the track or the position, and the scale. Saving it creates the draft version, or the next version of a published matrix. */
 export function BuilderTrackStep({
   version,
   preselected,
+  basis,
+  onBasisChange,
   onNext,
   onUnsavedChange,
 }: BuilderTrackStepProps) {
@@ -128,6 +150,8 @@ export function BuilderTrackStep({
   return (
     <NewVersionForm
       preselected={preselected}
+      basis={basis}
+      onBasisChange={onBasisChange}
       onUnsavedChange={onUnsavedChange}
     />
   );
@@ -141,16 +165,22 @@ function CreatedVersion({
   onNext: () => void;
 }) {
   const matrix = useQuery(matrixQuery(version.matrixId));
-  const { track, scale } = version.entries;
+  const { track, position, scale } = version.entries;
   return (
     <FormColumn>
       <Form layout="vertical" disabled className="compact-form">
         <Flex vertical gap="middle">
+          <Form.Item label="Основа матрицы">
+            <Radio.Group
+              value={position ? "position" : "track"}
+              options={[...BASIS_OPTIONS]}
+            />
+          </Form.Item>
           <Form.Item label="Подразделение">
             <Input value={matrix.data?.orgUnitName} />
           </Form.Item>
-          <Form.Item label="Трек">
-            <Input value={track?.name} />
+          <Form.Item label={position ? "Должность" : "Трек"}>
+            <Input value={position?.name ?? track?.name} />
           </Form.Item>
           <Form.Item label="Шкала">
             <ScaleSelect value={scale.id} known={scale} disabled />
@@ -169,8 +199,13 @@ function CreatedVersion({
 
 function NewVersionForm({
   preselected,
+  basis,
+  onBasisChange,
   onUnsavedChange,
-}: Pick<BuilderTrackStepProps, "preselected" | "onUnsavedChange">) {
+}: Pick<
+  BuilderTrackStepProps,
+  "preselected" | "basis" | "onBasisChange" | "onUnsavedChange"
+>) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form] = Form.useForm<FormValues>();
@@ -184,21 +219,32 @@ function NewVersionForm({
   );
   const orgUnitId = Form.useWatch("orgUnitId", form);
   const trackId = Form.useWatch("trackId", form);
+  const positionId = Form.useWatch("positionId", form);
+  const isPosition = basis === "position";
   const headedUnits = roles.data?.headedUnits ?? [];
   const unit = headedUnits.find((item) => item.id === orgUnitId);
   const track = useQuery({
     ...trackQuery(trackId ?? ""),
-    enabled: trackId !== undefined,
+    enabled: !isPosition && trackId !== undefined,
   });
+  const subject = isPosition ? positionId : trackId;
   const existing = useQuery({
     ...matricesQuery({
       orgUnitId: orgUnitId ?? "",
-      trackId: trackId ?? "",
+      ...(isPosition ? { positionId } : { trackId }),
       page: 1,
       pageSize: 1,
     }),
-    enabled: orgUnitId !== undefined && trackId !== undefined,
+    enabled: orgUnitId !== undefined && subject !== undefined,
   });
+  const positions = useQuery({
+    ...matrixPositionsQuery(orgUnitId ?? "", "", 1, MAX_PAGE_SIZE),
+    enabled: isPosition && orgUnitId !== undefined,
+  });
+  const isNoPositionAvailable =
+    positions.data !== undefined &&
+    positions.data.total <= MAX_PAGE_SIZE &&
+    positions.data.items.every((item) => item.isLinked);
   const matrix = existing.data?.items[0];
   const defaultScaleId = defaultScale.data?.items[0]?.id;
 
@@ -216,19 +262,24 @@ function NewVersionForm({
 
   const create = useMutation({
     mutationFn: async (values: FormValues) => {
-      if (!values.orgUnitId || !values.trackId) {
-        throw new Error("The unit and the track are required");
+      const subjectId = isPosition ? values.positionId : values.trackId;
+      if (!values.orgUnitId || !subjectId) {
+        throw new Error("The unit and the track or position are required");
       }
       if (matrix?.inWorkVersion) return matrix.inWorkVersion.id;
       if (matrix?.publishedVersion) {
         return (await createMatrixVersion(matrix.id)).id;
       }
       if (!values.scaleId) throw new Error("The scale is required");
-      const { directionId } = await readTrack(values.trackId);
+      const basisFields = isPosition
+        ? { positionId: subjectId }
+        : {
+            directionId: (await readTrack(subjectId)).directionId,
+            trackId: subjectId,
+          };
       const created = await createMatrix({
         orgUnitId: values.orgUnitId,
-        directionId,
-        trackId: values.trackId,
+        ...basisFields,
         scaleId: values.scaleId,
       });
       if (!created.inWorkVersion)
@@ -255,6 +306,7 @@ function NewVersionForm({
       initialValues={{
         orgUnitId: preselected.unitId,
         trackId: preselected.trackId,
+        positionId: preselected.positionId,
       }}
       onValuesChange={() => setIsDirty(true)}
       onFinish={submit}
@@ -267,6 +319,29 @@ function NewVersionForm({
             text="Вы не руководите ни одним подразделением, поэтому создать матрицу здесь нельзя. Обратитесь к руководителю подразделения."
           />
         )}
+        {create.error != null && (
+          <MatrixErrorAlert
+            title="Не удалось сохранить шаг"
+            error={create.error}
+          />
+        )}
+        <Form.Item label="Основа матрицы">
+          <Radio.Group
+            value={basis}
+            options={[...BASIS_OPTIONS]}
+            onChange={(event) => {
+              onBasisChange(event.target.value as Basis);
+              form.resetFields(["trackId", "positionId"]);
+              setIsDirty(true);
+            }}
+          />
+        </Form.Item>
+        {isPosition && (
+          <CompactAlert
+            type="info"
+            lead="Матрица должности обычно нужна для управленческих должностей, которые не связаны напрямую с карьерными треками специалистов."
+          />
+        )}
         <Form.Item
           name="orgUnitId"
           label="Подразделение"
@@ -277,29 +352,52 @@ function NewVersionForm({
               value: item.id,
               label: item.name,
             }))}
-            onChange={() => form.resetFields(["trackId"])}
+            onChange={() => form.resetFields(["trackId", "positionId"])}
           />
         </Form.Item>
-        <Form.Item label="Трек" required>
-          <Flex gap="small">
-            <Form.Item
-              name="trackId"
-              noStyle
-              rules={[{ required: true, message: "Выберите трек" }]}
-            >
-              <CatalogSelect
-                segment="tracks"
-                aria-label="Трек"
-                style={{ flex: 1, minWidth: 0 }}
-                filters={{ ...IN_WORK, forOrgUnitId: orgUnitId }}
-                disabled={!orgUnitId}
+        {isPosition ? (
+          isNoPositionAvailable ? (
+            <Form.Item label="Должность">
+              <CompactAlert
+                type="warning"
+                lead={`Все должности подразделения «${unit?.name ?? ""}» и вышестоящих связаны с уровнями треков или не входят в перечень.`}
+                text="Добавьте должность в перечень в «Справочники → Оргструктура»."
               />
             </Form.Item>
-            <Button disabled={!unit} onClick={() => setIsTrackCreating(true)}>
-              Добавить трек
-            </Button>
-          </Flex>
-        </Form.Item>
+          ) : (
+            <Form.Item
+              name="positionId"
+              label="Должность"
+              rules={[{ required: true, message: "Выберите должность" }]}
+            >
+              <MatrixPositionSelect
+                orgUnitId={orgUnitId}
+                knownName={preselected.positionName}
+              />
+            </Form.Item>
+          )
+        ) : (
+          <Form.Item label="Трек" required>
+            <Flex gap="small">
+              <Form.Item
+                name="trackId"
+                noStyle
+                rules={[{ required: true, message: "Выберите трек" }]}
+              >
+                <CatalogSelect
+                  segment="tracks"
+                  aria-label="Трек"
+                  style={{ flex: 1, minWidth: 0 }}
+                  filters={{ ...IN_WORK, forOrgUnitId: orgUnitId }}
+                  disabled={!orgUnitId}
+                />
+              </Form.Item>
+              <Button disabled={!unit} onClick={() => setIsTrackCreating(true)}>
+                Добавить трек
+              </Button>
+            </Flex>
+          </Form.Item>
+        )}
         <Form.Item label="Шкала" required>
           <Flex gap="small">
             <Form.Item
@@ -326,16 +424,25 @@ function NewVersionForm({
         {matrix?.inWorkVersion ? (
           <CompactAlert
             type="info"
-            lead={`По этому треку уже есть версия ${matrix.inWorkVersion.number} в работе.`}
+            lead={
+              isPosition
+                ? `У подразделения уже есть матрица на должность «${matrix.positionName}»: версия ${matrix.inWorkVersion.number} в работе.`
+                : `По этому треку уже есть версия ${matrix.inWorkVersion.number} в работе.`
+            }
             text="Продолжим с неё."
           />
         ) : matrix?.publishedVersion ? (
           <CompactAlert
             type="info"
-            lead={`У подразделения по этому треку уже есть опубликованная матрица (версия ${matrix.publishedVersion.number}).`}
+            lead={
+              isPosition
+                ? `У подразделения уже есть матрица на должность «${matrix.positionName}»: версия ${matrix.publishedVersion.number} опубликована.`
+                : `У подразделения по этому треку уже есть опубликованная матрица (версия ${matrix.publishedVersion.number}).`
+            }
             text={`Будет создана версия ${matrix.publishedVersion.number + 1} на её основе.`}
           />
         ) : (
+          !isPosition &&
           track.data?.status === "Draft" && (
             <CompactAlert
               type="info"
@@ -344,17 +451,11 @@ function NewVersionForm({
             />
           )
         )}
-        {trackId && track.data && (
+        {!isPosition && trackId && track.data && (
           <LevelsTable
             trackId={trackId}
             trackName={track.data.name}
             unavailable="Сохраните шаг, чтобы связать должности"
-          />
-        )}
-        {create.error != null && (
-          <MatrixErrorAlert
-            title="Не удалось сохранить шаг"
-            error={create.error}
           />
         )}
         {existing.error != null && (
