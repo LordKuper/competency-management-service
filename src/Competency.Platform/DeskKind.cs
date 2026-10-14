@@ -35,7 +35,7 @@ public enum DeskKind
     MatrixLevelsChanged,
 
     /// <summary>
-    /// A published matrix of a unit the user heads relies on an inactive track, direction or competency.
+    /// A published matrix of a unit the user heads relies on an inactive track, direction, position, shared block or competency.
     /// </summary>
     MatrixUsesInactive,
 
@@ -43,6 +43,11 @@ public enum DeskKind
     /// A competency of a published matrix changed after the matrix was published; for reference.
     /// </summary>
     MatrixCompetencyChanged,
+
+    /// <summary>
+    /// The composition of a shared block a published matrix of a unit the user heads includes now differs from the one the matrix was published with.
+    /// </summary>
+    MatrixSharedBlockChanged,
 
     /// <summary>
     /// A version of the matrix of a unit the user heads is under approval; for reference, dated by the decision that brought it to its step.
@@ -55,12 +60,12 @@ public enum DeskKind
     VersionStuckAtHead,
 
     /// <summary>
-    /// A unit the user heads has no published matrix although an active track applies to it.
+    /// A unit the user heads has no published track matrix although an active track applies to it.
     /// </summary>
     UnitWithoutMatrix,
 
     /// <summary>
-    /// A unit the user is the responsible HR of has no published matrix; for reference.
+    /// A unit the user is the responsible HR of has no published track matrix; for reference.
     /// </summary>
     ResponsibleUnitWithoutMatrix,
 

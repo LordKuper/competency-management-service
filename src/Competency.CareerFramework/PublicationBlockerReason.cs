@@ -27,4 +27,9 @@ internal enum PublicationBlockerReason
     /// An entry whose name another active entry, or another entry published with it, already has.
     /// </summary>
     NameTaken,
+
+    /// <summary>
+    /// A shared block without competencies.
+    /// </summary>
+    EmptyBlock,
 }

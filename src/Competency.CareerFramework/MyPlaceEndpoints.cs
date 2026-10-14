@@ -10,9 +10,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API that tells the signed-in user where they stand in the company and on their career tracks. It answers only about the user
-/// and shows only what every employee of their unit reads: the published matrix versions of that unit, never of other units or unpublished.
-/// The user's level comes from their position alone.
+/// The API that tells the signed-in user where they stand in the company and on their career tracks, or what the position matrix of their
+/// position requires. It answers only about the user and shows only what every employee of their unit reads: the published matrix
+/// versions of that unit, never of other units or unpublished. The user's level comes from their position alone.
 /// </summary>
 internal static class MyPlaceEndpoints
 {
@@ -41,7 +41,7 @@ internal static class MyPlaceEndpoints
         if (await users.FindAsync(userId, cancellationToken) is not { EmployeeId: { } employeeId }
             || await employees.FindAsync(employeeId, cancellationToken) is not { } employee)
         {
-            return TypedResults.Ok(new MyPlaceResponse(null, [], null, null, null, [], [], NoTrack: false));
+            return TypedResults.Ok(new MyPlaceResponse(null, [], null, null, null, [], [], NoTrack: false, PositionMatrix: null));
         }
 
         var snapshot = await employees.FindOrgSnapshotAsync(cancellationToken);
@@ -57,6 +57,9 @@ internal static class MyPlaceEndpoints
             .Where(version => version.Status == MatrixVersionStatus.Published && version.Matrix.OrgUnitId == employee.OrgUnitId)
             .ToListAsync(cancellationToken);
         var tracks = await TracksAsync(employee.PositionId, published, context, cancellationToken);
+        var positionMatrix = published.FirstOrDefault(version => version.Matrix.PositionId == employee.PositionId) is { } positionVersion
+            ? PositionMatrixOf(positionVersion, employee.PositionId)
+            : null;
 
         return TypedResults.Ok(new MyPlaceResponse(
             new CareerEmployeeResponse(employee.Id, employee.FullName),
@@ -65,8 +68,13 @@ internal static class MyPlaceEndpoints
             head,
             hr is { IsActive: true } ? hr with { IsActive = null } : null,
             tracks,
-            [.. published.Select(MatrixOf).OrderBy(matrix => matrix.TrackName, StringComparer.OrdinalIgnoreCase).ThenBy(matrix => matrix.MatrixId)],
-            NoTrack: tracks.Count == 0));
+            [.. published
+                .Select(version => version.Matrix.TrackId is { } trackId ? MatrixOf(version, trackId) : null)
+                .OfType<MyPlaceMatrixResponse>()
+                .OrderBy(matrix => matrix.TrackName, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(matrix => matrix.MatrixId)],
+            NoTrack: tracks.Count == 0 && positionMatrix is null,
+            positionMatrix));
     }
 
     /// <summary>
@@ -109,32 +117,51 @@ internal static class MyPlaceEndpoints
                     new CareerNamedResponse(track.Id, track.Name),
                     new CareerNamedResponse(track.DirectionId, directionNames.GetValueOrDefault(track.DirectionId, string.Empty)),
                     new CareerNamedResponse(current.Id, current.Name),
-                    version is null ? null : MatrixOf(version),
+                    version is null ? null : MatrixOf(version, track.Id),
                     [.. trackLevels[track.Id]
                         .Where(level => level.Position > current.Position)
                         .Select(level => new MyPlaceLevelResponse(level.Id, level.Name, version is null ? null : RequirementsOf(version, level.Id)))]);
             })];
     }
 
+    /// <summary>
+    /// What the published version requires in one column, of the competencies it counts, each score labelled by the competency's own
+    /// scale: its shared block's, or else the version's, as frozen in the snapshot.
+    /// </summary>
     private static List<MyPlaceRequirementResponse> RequirementsOf(MatrixVersion version, Guid levelId)
     {
-        var competencyNames = version.Snapshot?.Competencies.ToDictionary(competency => competency.Id, competency => competency.Name) ?? [];
-        var points = version.Snapshot?.Scale.Points ?? [];
+        var snapshot = version.Snapshot;
+        var competencyNames = snapshot?.Competencies.ToDictionary(competency => competency.Id, competency => competency.Name) ?? [];
+        var blockPoints = snapshot?.SharedBlocks.ToDictionary(block => block.Id, block => block.Scale.Points) ?? [];
+        var versionPoints = snapshot?.Scale.Points ?? [];
+        var pointsOf = version.Content.CompetenciesWith(version.CompositionsOf(new Dictionary<Guid, IReadOnlyList<Guid>>()))
+            .DistinctBy(item => item.CompetencyId)
+            .ToDictionary(
+                item => item.CompetencyId,
+                item => item.BlockId is { } blockId && blockPoints.TryGetValue(blockId, out var points) ? points : versionPoints);
         return [.. version.Content.Requirements
-            .Where(requirement => requirement.LevelId == levelId)
+            .Where(requirement => requirement.LevelId == levelId && pointsOf.ContainsKey(requirement.CompetencyId))
             .Select(requirement => new MyPlaceRequirementResponse(
                 requirement.CompetencyId,
                 competencyNames.GetValueOrDefault(requirement.CompetencyId, string.Empty),
                 requirement.RequiredScore,
-                points.FirstOrDefault(point => point.Score == requirement.RequiredScore)?.Label,
+                pointsOf[requirement.CompetencyId].FirstOrDefault(point => point.Score == requirement.RequiredScore)?.Label,
                 requirement.Type))];
     }
 
-    private static MyPlaceMatrixResponse MatrixOf(MatrixVersion version) => new(
+    private static MyPlaceMatrixResponse MatrixOf(MatrixVersion version, Guid trackId) => new(
         version.MatrixId,
-        version.Matrix.TrackId,
-        version.Snapshot?.Track.Name ?? string.Empty,
+        trackId,
+        version.Snapshot?.Track?.Name ?? string.Empty,
         version.Id,
         version.Number,
         version.PublishedAt);
+
+    private static MyPlacePositionMatrixResponse PositionMatrixOf(MatrixVersion version, Guid positionId) => new(
+        version.MatrixId,
+        version.Snapshot?.Position?.Name ?? string.Empty,
+        version.Id,
+        version.Number,
+        version.PublishedAt,
+        RequirementsOf(version, positionId));
 }

@@ -21,7 +21,11 @@ internal static class MatrixEndpoints
     private const string DirectionField = "directionId";
     private const string TrackField = "trackId";
     private const string ScaleField = "scaleId";
+    private const string PositionField = "positionId";
     private const string DuplicateMatrixMessage = "У подразделения уже есть матрица для этого трека";
+    private const string DuplicatePositionMatrixMessage = "У подразделения уже есть матрица для этой должности";
+    private const string BasisMessage = "Укажите либо область и трек, либо должность";
+    private const string UnavailablePositionMessage = "Должность неактивна или недоступна подразделению матрицы";
     private const string PublishedMessage = "Матрицу с опубликованными версиями удалить нельзя";
 
     public static void Map(IEndpointRouteBuilder endpoints)
@@ -44,12 +48,13 @@ internal static class MatrixEndpoints
     }
 
     /// <summary>
-    /// One page of matrices, oldest first, optionally of one unit, direction or track.
+    /// One page of matrices, oldest first, optionally of one unit, direction, track or position.
     /// </summary>
     private static async Task<Results<Ok<PageResponse<MatrixResponse>>, ValidationProblem>> ListAsync(
         [FromQuery(Name = OrgUnitField)] Guid? orgUnitId,
         [FromQuery(Name = DirectionField)] Guid? directionId,
         [FromQuery(Name = TrackField)] Guid? trackId,
+        [FromQuery(Name = PositionField)] Guid? positionId,
         AppDbContext context,
         CatalogStore store,
         MatrixWorkflow workflow,
@@ -69,6 +74,7 @@ internal static class MatrixEndpoints
             .WhereIf(orgUnitId is not null, matrix => matrix.OrgUnitId == orgUnitId)
             .WhereIf(directionId is not null, matrix => matrix.DirectionId == directionId)
             .WhereIf(trackId is not null, matrix => matrix.TrackId == trackId)
+            .WhereIf(positionId is not null, matrix => matrix.PositionId == positionId)
             .OrderBy(matrix => matrix.CreatedAt)
             .ThenBy(matrix => matrix.Id)
             .ToPageAsync(page, pageSize, cancellationToken);
@@ -96,9 +102,11 @@ internal static class MatrixEndpoints
     }
 
     /// <summary>
-    /// Creates a unit's matrix for a track of an active direction, either an active track kept by the unit or a unit above it, or a draft
-    /// track of the unit itself whoever wrote it, which publishing the version then makes active; the first version is an empty draft.
-    /// A unit has one matrix per track, which the catalogue lock and a unique index keep so.
+    /// Creates a unit's matrix, for a track or for a position. A track matrix takes a track of an active direction, either an active track
+    /// kept by the unit or a unit above it, or a draft track of the unit itself whoever wrote it, which publishing the version then makes
+    /// active. A position matrix takes an active position the unit or a unit above it lists that no level of any track stands for; its
+    /// first version gets its one column. The first version is otherwise an empty draft. A unit has one matrix per track and one per
+    /// position, which the catalogue lock and unique indexes keep so; the same lock keeps a position from being linked to a level meanwhile.
     /// </summary>
     private static async Task<Results<Created<MatrixResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
         NewMatrixRequest request,
@@ -109,6 +117,11 @@ internal static class MatrixEndpoints
         MatrixRoute route,
         CancellationToken cancellationToken)
     {
+        if ((request.PositionId is not null) == (request.DirectionId is not null || request.TrackId is not null))
+        {
+            return Rejection.Invalid(PositionField, BasisMessage);
+        }
+
         await using var transaction = await store.BeginWriteAsync(cancellationToken);
         var viewer = await workflow.ViewerAsync(cancellationToken);
         if (!viewer.HeadedUnitIds.Contains(request.OrgUnitId))
@@ -116,19 +129,59 @@ internal static class MatrixEndpoints
             return Rejection.Forbidden();
         }
 
-        if (await ReferenceProblemAsync(request, viewer.UserId, context, store, employees, cancellationToken) is { } invalid)
+        var content = MatrixContent.Empty;
+        if (request.PositionId is { } positionId)
         {
-            return invalid;
+            var snapshot = await employees.FindOrgSnapshotAsync(cancellationToken);
+            if (snapshot.Positions.GetValueOrDefault(positionId) is not { IsActive: true } || !snapshot.AvailablePositionIds(request.OrgUnitId).Contains(positionId))
+            {
+                return Rejection.Invalid(PositionField, UnavailablePositionMessage);
+            }
+
+            if (!await store.IsUsableAsync<CompetencyScale>(request.ScaleId, viewer.UserId, cancellationToken))
+            {
+                return Rejection.Invalid(ScaleField, CatalogEndpoints.UnavailableMessage);
+            }
+
+            if ((await store.LinkedTracksAsync([positionId], cancellationToken))[positionId].ToList() is { Count: > 0 } linkedTracks)
+            {
+                var positionName = snapshot.Positions[positionId].Name;
+                return Rejection.Conflict(linkedTracks.FirstOrDefault(viewer.CanSee) is { } track
+                    ? $"Должность «{positionName}» связана с уровнем трека «{track.Name}» — матрица должности для неё невозможна"
+                    : $"Должность «{positionName}» связана с уровнем трека — матрица должности для неё невозможна");
+            }
+
+            if (await context.Set<CompetencyMatrix>().AnyAsync(
+                    matrix => matrix.OrgUnitId == request.OrgUnitId && matrix.PositionId == positionId,
+                    cancellationToken))
+            {
+                return Rejection.Taken(PositionField, DuplicatePositionMatrixMessage);
+            }
+
+            content = content with { Levels = [new MatrixLevel(positionId, null)] };
+        }
+        else
+        {
+            if (await ReferenceProblemAsync(request, viewer.UserId, context, store, employees, cancellationToken) is { } invalid)
+            {
+                return invalid;
+            }
+
+            if (await context.Set<CompetencyMatrix>().AnyAsync(
+                    matrix => matrix.OrgUnitId == request.OrgUnitId && matrix.TrackId == request.TrackId,
+                    cancellationToken))
+            {
+                return Rejection.Taken(TrackField, DuplicateMatrixMessage);
+            }
         }
 
-        if (await context.Set<CompetencyMatrix>().AnyAsync(
-                matrix => matrix.OrgUnitId == request.OrgUnitId && matrix.TrackId == request.TrackId,
-                cancellationToken))
+        var created = new CompetencyMatrix
         {
-            return Rejection.Taken(TrackField, DuplicateMatrixMessage);
-        }
-
-        var created = new CompetencyMatrix { OrgUnitId = request.OrgUnitId, DirectionId = request.DirectionId, TrackId = request.TrackId };
+            OrgUnitId = request.OrgUnitId,
+            DirectionId = request.DirectionId,
+            TrackId = request.TrackId,
+            PositionId = request.PositionId,
+        };
         context.Add(created);
         context.Add(new MatrixVersion
         {
@@ -137,6 +190,7 @@ internal static class MatrixEndpoints
             Status = MatrixVersionStatus.Draft,
             ScaleId = request.ScaleId,
             AuthorId = viewer.UserId,
+            Content = content,
         });
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -282,8 +336,8 @@ internal static class MatrixEndpoints
     }
 
     /// <summary>
-    /// Describes matrices with the names of their units, directions and tracks, their published versions, and their versions in work
-    /// for those who may read them.
+    /// Describes matrices with the names of their units, directions and tracks or positions, their published versions, and their versions
+    /// in work for those who may read them.
     /// </summary>
     private static async Task<List<MatrixResponse>> DescribeAsync(
         IReadOnlyList<CompetencyMatrix> matrices,
@@ -298,8 +352,8 @@ internal static class MatrixEndpoints
             .AsNoTracking()
             .Where(version => matrixIds.Contains(version.MatrixId) && version.Status != MatrixVersionStatus.Archived)
             .ToListAsync(cancellationToken);
-        var directionIds = matrices.Select(matrix => matrix.DirectionId).Distinct().ToList();
-        var trackIds = matrices.Select(matrix => matrix.TrackId).Distinct().ToList();
+        var directionIds = matrices.Select(matrix => matrix.DirectionId).OfType<Guid>().Distinct().ToList();
+        var trackIds = matrices.Select(matrix => matrix.TrackId).OfType<Guid>().Distinct().ToList();
         var directionNames = await context.Set<CareerDirection>().AsNoTracking()
             .Where(direction => directionIds.Contains(direction.Id))
             .ToDictionaryAsync(direction => direction.Id, direction => direction.Name, cancellationToken);
@@ -307,6 +361,7 @@ internal static class MatrixEndpoints
             .Where(track => trackIds.Contains(track.Id))
             .ToDictionaryAsync(track => track.Id, track => track.Name, cancellationToken);
         var unitNames = await store.UnitNamesAsync(matrices.Select(matrix => (Guid?)matrix.OrgUnitId), cancellationToken);
+        var positionNames = await store.PositionNamesAsync(matrices.Select(matrix => matrix.PositionId), cancellationToken);
         var readableInWork = await route.ReadableAsync(viewer, [.. versions.Where(version => version.IsInWork)], cancellationToken);
 
         var described = new List<MatrixResponse>();
@@ -319,12 +374,14 @@ internal static class MatrixEndpoints
                 matrix.OrgUnitId,
                 unitNames.GetValueOrDefault(matrix.OrgUnitId, string.Empty),
                 matrix.DirectionId,
-                directionNames.GetValueOrDefault(matrix.DirectionId, string.Empty),
+                matrix.DirectionId is { } directionId ? directionNames.GetValueOrDefault(directionId, string.Empty) : null,
                 matrix.TrackId,
-                trackNames.GetValueOrDefault(matrix.TrackId, string.Empty),
+                matrix.TrackId is { } trackId ? trackNames.GetValueOrDefault(trackId, string.Empty) : null,
                 RefOf(published),
                 RefOf(inWork),
-                matrix.CreatedAt));
+                matrix.CreatedAt,
+                matrix.PositionId,
+                matrix.PositionId is { } positionId ? positionNames.GetValueOrDefault(positionId, string.Empty) : null));
         }
 
         return described;

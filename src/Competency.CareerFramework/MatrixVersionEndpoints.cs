@@ -118,11 +118,13 @@ internal static class MatrixVersionEndpoints
     }
 
     /// <summary>
-    /// What the version changes against the published version of its matrix, or against an empty document when none is published.
+    /// What the version changes against the published version of its matrix, or against an empty document when none is published. Both
+    /// documents come with the compositions of their shared blocks: the published one's from its snapshot, the other's as it counts them.
     /// </summary>
     private static async Task<Results<Ok<MatrixDiffResponse>, NotFound>> ChangesAsync(
         Guid id,
         AppDbContext context,
+        CatalogStore store,
         MatrixWorkflow workflow,
         MatrixRoute route,
         CancellationToken cancellationToken)
@@ -135,13 +137,10 @@ internal static class MatrixVersionEndpoints
         var published = await context.Set<MatrixVersion>()
             .AsNoTracking()
             .FirstOrDefaultAsync(candidate => candidate.MatrixId == version.MatrixId && candidate.Status == MatrixVersionStatus.Published, cancellationToken);
-        var before = published?.Content ?? MatrixContent.Empty;
-        return TypedResults.Ok(new MatrixDiffResponse(
-            version.Number,
-            published?.Number,
-            before,
-            version.Content,
-            MatrixChange.Between(before, version.Content)));
+        var current = await store.CompositionsAsync([version.Content], cancellationToken);
+        var before = published is null ? MatrixContent.Empty : published.Content.Expanded(published.CompositionsOf(current));
+        var after = version.Content.Expanded(version.CompositionsOf(current));
+        return TypedResults.Ok(new MatrixDiffResponse(version.Number, published?.Number, before, after, MatrixChange.Between(before, after)));
     }
 
     private static async Task<MatrixVersion?> FindReadableAsync(
@@ -241,33 +240,40 @@ internal static class MatrixVersionEndpoints
     }
 
     /// <summary>
-    /// What a variant changed against the variant before it.
+    /// What a variant changed against the variant before it, both with the compositions of their shared blocks as the version counts them.
     /// </summary>
     private static async Task<Results<Ok<MatrixDiffResponse>, NotFound>> DiffAsync(
         Guid id,
         int number,
         AppDbContext context,
+        CatalogStore store,
         MatrixWorkflow workflow,
         MatrixRoute route,
         CancellationToken cancellationToken)
     {
-        if (!await CanReadHistoryAsync(id, context, workflow, route, cancellationToken)
+        if (await FindHistoryReadableAsync(id, context, workflow, route, cancellationToken) is not { } version
             || await FindVariantAsync(id, number, context, cancellationToken) is not { } variant)
         {
             return TypedResults.NotFound();
         }
 
         var previous = await FindVariantAsync(id, number - 1, context, cancellationToken);
-        var before = previous?.Content ?? MatrixContent.Empty;
-        return TypedResults.Ok(new MatrixDiffResponse(
-            variant.Number,
-            previous?.Number,
-            before,
-            variant.Content,
-            MatrixChange.Between(before, variant.Content)));
+        MatrixContent[] contents = previous is null ? [variant.Content] : [variant.Content, previous.Content];
+        var compositions = version.CompositionsOf(await store.CompositionsAsync(contents, cancellationToken));
+        var before = previous?.Content.Expanded(compositions) ?? MatrixContent.Empty;
+        var after = variant.Content.Expanded(compositions);
+        return TypedResults.Ok(new MatrixDiffResponse(variant.Number, previous?.Number, before, after, MatrixChange.Between(before, after)));
     }
 
     private static async Task<bool> CanReadHistoryAsync(
+        Guid id,
+        AppDbContext context,
+        MatrixWorkflow workflow,
+        MatrixRoute route,
+        CancellationToken cancellationToken) =>
+        await FindHistoryReadableAsync(id, context, workflow, route, cancellationToken) is not null;
+
+    private static async Task<MatrixVersion?> FindHistoryReadableAsync(
         Guid id,
         AppDbContext context,
         MatrixWorkflow workflow,
@@ -276,7 +282,9 @@ internal static class MatrixVersionEndpoints
     {
         var viewer = await workflow.ViewerAsync(cancellationToken);
         return await context.Set<MatrixVersion>().AsNoTracking().FirstOrDefaultAsync(version => version.Id == id, cancellationToken) is { } version
-            && await route.CanReadAsync(viewer, version, isHistory: true, cancellationToken);
+            && await route.CanReadAsync(viewer, version, isHistory: true, cancellationToken)
+            ? version
+            : null;
     }
 
     private static Task<MatrixVariant?> FindVariantAsync(Guid id, int number, AppDbContext context, CancellationToken cancellationToken) =>

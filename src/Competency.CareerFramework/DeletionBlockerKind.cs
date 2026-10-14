@@ -17,4 +17,9 @@ internal enum DeletionBlockerKind
     CompetencyVersion,
 
     Matrix,
+
+    /// <summary>
+    /// A shared block whose composition holds the entry.
+    /// </summary>
+    Block,
 }

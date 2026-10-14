@@ -16,10 +16,10 @@ internal static class DeskRules
     /// </summary>
     private static readonly HashSet<(DeskKind Absorbing, DeskKind Absorbed)> Absorptions = Pairs(
         ([VersionReturned, VersionNotSubmitted, VersionAwaitsHeadApproval, VersionAwaitsHrApproval, OwnVersionInApproval, VersionStuckAtHead],
-            [MatrixLevelsChanged, MatrixUsesInactive, MatrixCompetencyChanged]),
+            [MatrixLevelsChanged, MatrixUsesInactive, MatrixSharedBlockChanged, MatrixCompetencyChanged]),
         ([VersionAwaitsHeadApproval], [OwnVersionInApproval, VersionStuckAtHead]),
         ([VersionAwaitsHrApproval], [OwnVersionInApproval]),
-        ([MatrixLevelsChanged, MatrixUsesInactive], [MatrixCompetencyChanged]),
+        ([MatrixLevelsChanged, MatrixUsesInactive, MatrixSharedBlockChanged], [MatrixCompetencyChanged]),
         ([UnitWithoutHead, ResponsibleUnitWithoutHead], [ResponsibleUnitWithoutMatrix]),
         ([EmptyUnit], [UnitWithoutHead, UnitWithoutHr, ResponsibleUnitWithoutMatrix, ResponsibleUnitWithoutHead]),
         ([TrackWithoutLevels], [TrackWithoutPositions, LevelWithoutPosition]),
@@ -35,7 +35,7 @@ internal static class DeskRules
     private static readonly DeskKind[] ReasonOrder =
     [
         VersionReturned, VersionNotSubmitted, VersionAwaitsHeadApproval, VersionAwaitsHrApproval,
-        MatrixUsesInactive, MatrixLevelsChanged, VersionStuckAtHead, OwnVersionInApproval, MatrixCompetencyChanged,
+        MatrixUsesInactive, MatrixLevelsChanged, MatrixSharedBlockChanged, VersionStuckAtHead, OwnVersionInApproval, MatrixCompetencyChanged,
         UnitWithoutHead, HeadWithoutAccount, HeadAccountInvited, HeadAccountBlocked, UnitWithoutHr, UnitWithoutPositions,
         UnitWithoutMatrix, EmptyUnit, ResponsibleUnitWithoutHead, ResponsibleUnitWithoutMatrix,
         DraftAwaitsApproval, TrackWithoutLevels, TrackWithOneLevel, TrackWithoutPositions, LevelWithoutPosition, OwnDraftAwaitsApproval,
@@ -131,7 +131,7 @@ internal static class DeskRules
         VersionAwaitsHeadApproval or VersionAwaitsHrApproval => DeskGroup.VersionsToApprove,
         VersionNotSubmitted => DeskGroup.UnsubmittedVersions,
         DraftAwaitsApproval => DeskGroup.DraftsToApprove,
-        MatrixUsesInactive or MatrixLevelsChanged or UnitWithoutMatrix => DeskGroup.MatricesToBuild,
+        MatrixUsesInactive or MatrixLevelsChanged or MatrixSharedBlockChanged or UnitWithoutMatrix => DeskGroup.MatricesToBuild,
         TrackWithoutLevels or TrackWithOneLevel or TrackWithoutPositions or LevelWithoutPosition or PositionWithoutTrack =>
             first.IsAction ? DeskGroup.PositionsToLink : DeskGroup.PositionLinksInfo,
         UnitWithoutHead or HeadWithoutAccount or HeadAccountInvited or HeadAccountBlocked or UnitWithoutHr or UnitWithoutPositions =>

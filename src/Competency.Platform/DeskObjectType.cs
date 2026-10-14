@@ -54,6 +54,11 @@ public enum DeskObjectType
     Scale,
 
     /// <summary>
+    /// A shared block of competencies.
+    /// </summary>
+    Block,
+
+    /// <summary>
     /// A position from the position catalogue.
     /// </summary>
     Position,

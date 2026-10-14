@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -48,6 +49,7 @@ internal static class CatalogDraftEndpoints
             .. await DraftsAsync(context.Set<CompetencyCategory>(), cancellationToken),
             .. await DraftsAsync(context.Set<CareerCompetency>(), cancellationToken),
             .. await DraftsAsync(context.Set<CompetencyScale>(), cancellationToken),
+            .. await DraftsAsync(context.Set<CompetencyBlock>(), cancellationToken),
         ];
 
         var drafts = all.Where(draft => (kind is null || KindOf(draft) == kind) && (orgUnitId is null || draft.UnitId == orgUnitId)).ToList();
@@ -86,6 +88,8 @@ internal static class CatalogDraftEndpoints
         CareerTrack => CatalogEntryKind.Track,
         CompetencyCategory => CatalogEntryKind.Category,
         CareerCompetency => CatalogEntryKind.Competency,
-        _ => CatalogEntryKind.Scale,
+        CompetencyScale => CatalogEntryKind.Scale,
+        CompetencyBlock => CatalogEntryKind.Block,
+        _ => throw new UnreachableException($"No catalogue kind lists entries of type {entry.GetType().Name}."),
     };
 }

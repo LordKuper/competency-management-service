@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Competency.OrgStructure;
 using Competency.Platform;
 using Competency.UserManagement;
@@ -122,7 +123,9 @@ internal sealed class CareerMail(
         CatalogEntryKind.Track => "трек",
         CatalogEntryKind.Category => "категория",
         CatalogEntryKind.Competency => "компетенция",
-        _ => "шкала",
+        CatalogEntryKind.Scale => "шкала",
+        CatalogEntryKind.Block => "общий блок",
+        _ => throw new UnreachableException($"No draft letter names entries of kind {kind}."),
     };
 
     private static string ReturnedWith(bool hasChanges, bool hasComment) => (hasChanges, hasComment) switch
@@ -181,12 +184,14 @@ internal sealed class CareerMail(
     private async Task<string> VersionTextAsync(MatrixVersion version, CancellationToken cancellationToken)
     {
         var matrix = version.Matrix;
-        var trackName = await context.Set<CareerTrack>()
-            .Where(track => track.Id == matrix.TrackId)
-            .Select(track => track.Name)
-            .FirstAsync(cancellationToken);
+        var matrixName = matrix.PositionId is { } positionId
+            ? (await store.PositionNamesAsync([positionId], cancellationToken)).GetValueOrDefault(positionId)
+            : await context.Set<CareerTrack>()
+                .Where(track => track.Id == matrix.TrackId)
+                .Select(track => track.Name)
+                .FirstAsync(cancellationToken);
         var unitNames = await store.UnitNamesAsync([matrix.OrgUnitId], cancellationToken);
-        return $"версия матрицы «{trackName}» подразделения «{unitNames.GetValueOrDefault(matrix.OrgUnitId)}» (версия {version.Number})";
+        return $"версия матрицы «{matrixName}» подразделения «{unitNames.GetValueOrDefault(matrix.OrgUnitId)}» (версия {version.Number})";
     }
 
     /// <summary>

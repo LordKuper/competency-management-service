@@ -10,7 +10,7 @@ namespace Competency.CareerFramework;
 internal sealed class MatrixVersion : EntityBase
 {
     /// <summary>
-    /// The first builder step a version can be saved at; the step before it chooses the track, before the version exists.
+    /// The first builder step a version can be saved at; the step before it chooses the track or the position, before the version exists.
     /// </summary>
     public const int FirstBuilderStep = 2;
 
@@ -37,7 +37,7 @@ internal sealed class MatrixVersion : EntityBase
     public ApprovalStep? Step { get; set; }
 
     /// <summary>
-    /// The one scale of the version; every competency of the version is on it.
+    /// The scale of the competencies of the version's own blocks and outside blocks; a shared block brings its own.
     /// </summary>
     [Audited]
     public Guid ScaleId { get; init; }
@@ -73,4 +73,13 @@ internal sealed class MatrixVersion : EntityBase
     /// Whether the version is readable by every signed-in user.
     /// </summary>
     public bool IsPublic => Status is MatrixVersionStatus.Published or MatrixVersionStatus.Archived;
+
+    /// <summary>
+    /// The compositions of the shared blocks the version counts with: frozen into the snapshot of a published or archived version, and
+    /// the blocks as they stand now otherwise, so a version in work sees a block's change at once.
+    /// </summary>
+    /// <param name="current">The current composition of each block, covering at least the version's blocks unless it has a snapshot.</param>
+    /// <returns>The compositions by block.</returns>
+    public IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> CompositionsOf(IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> current) =>
+        Snapshot?.Compositions() ?? current;
 }

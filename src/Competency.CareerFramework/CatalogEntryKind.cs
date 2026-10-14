@@ -14,4 +14,5 @@ internal enum CatalogEntryKind
     Category,
     Competency,
     Scale,
+    Block,
 }

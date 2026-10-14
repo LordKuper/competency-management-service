@@ -67,13 +67,40 @@ internal sealed class CareerDeskSource(
         [
             .. scan.UnitFindings(),
             .. scan.VersionFindings(),
-            .. scan.PublishedFindings(published, catalog.Directions, catalog.Competencies),
+            .. scan.PublishedFindings(published, catalog.Directions, catalog.Competencies, catalog.Blocks),
             .. scan.TrackFindings(),
             .. scan.PositionFindings(),
             .. scan.DraftFindings(catalog.Drafts),
             .. viewer.IsHr || viewer.IsAdmin ? CareerDeskScan.UnusedFindings(await store.UnusedEntriesAsync(cancellationToken)) : [],
-            .. self is null ? [] : scan.NoTrackFindings(self),
+            .. self is null ? [] : await NoTrackFindingsAsync(scan, self, versions, isInvolved, cancellationToken),
         ];
+    }
+
+    /// <summary>
+    /// The finding that the user's position has no track, unless their unit has a published position matrix for it. The matrix is looked
+    /// up only when the position has no track, in the versions already read when the user's roles called for them, and otherwise by one query.
+    /// </summary>
+    private async Task<IEnumerable<DeskFinding>> NoTrackFindingsAsync(
+        CareerDeskScan scan,
+        EmployeeStatus self,
+        IReadOnlyList<CareerDeskVersion> versions,
+        bool isInvolved,
+        CancellationToken cancellationToken)
+    {
+        var findings = scan.NoTrackFindings(self).ToList();
+        if (findings.Count == 0)
+        {
+            return findings;
+        }
+
+        var hasPositionMatrix = isInvolved
+            ? versions.Any(version => version.Status == MatrixVersionStatus.Published && version.UnitId == self.OrgUnitId && version.PositionId == self.PositionId)
+            : await context.Set<MatrixVersion>().AnyAsync(
+                version => version.Status == MatrixVersionStatus.Published
+                    && version.Matrix.OrgUnitId == self.OrgUnitId
+                    && version.Matrix.PositionId == self.PositionId,
+                cancellationToken);
+        return hasPositionMatrix ? [] : findings;
     }
 
     private static IEnumerable<T> Visible<T>(IEnumerable<T> entries, CatalogViewer viewer)
@@ -128,6 +155,7 @@ internal sealed class CareerDeskSource(
             version.MatrixId,
             version.Matrix.OrgUnitId,
             version.Matrix.TrackId,
+            version.Matrix.PositionId,
             version.Number,
             version.Status,
             version.Step,
@@ -170,7 +198,8 @@ internal sealed class CareerDeskSource(
     }
 
     /// <summary>
-    /// The drafts the user can read, levels aside, with the directions and the competencies the published versions name.
+    /// The drafts the user can read, levels aside, with the directions, the competencies the published versions name and the shared blocks
+    /// they include, read as they stand now in one query with the draft blocks.
     /// </summary>
     private async Task<CareerDeskCatalog> CatalogAsync(
         CatalogViewer viewer,
@@ -179,6 +208,7 @@ internal sealed class CareerDeskSource(
         CancellationToken cancellationToken)
     {
         var competencyIds = published.SelectMany(version => version.Snapshot?.Competencies ?? []).Select(entry => entry.Id).Distinct().ToList();
+        var blockIds = published.SelectMany(version => version.Snapshot?.SharedBlocks ?? []).Select(entry => entry.Id).Distinct().ToList();
         var directions = await context.Set<CareerDirection>().AsNoTracking().ToDictionaryAsync(direction => direction.Id, cancellationToken);
         var competencies = await context.Set<CareerCompetency>()
             .AsNoTracking()
@@ -186,6 +216,10 @@ internal sealed class CareerDeskSource(
             .ToDictionaryAsync(competency => competency.Id, cancellationToken);
         var categories = await context.Set<CompetencyCategory>().AsNoTracking().Where(category => category.Status == CatalogStatus.Draft).ToListAsync(cancellationToken);
         var scales = await context.Set<CompetencyScale>().AsNoTracking().Where(scale => scale.Status == CatalogStatus.Draft).ToListAsync(cancellationToken);
+        var blocks = await context.Set<CompetencyBlock>()
+            .AsNoTracking()
+            .Where(block => block.Status == CatalogStatus.Draft || blockIds.Contains(block.Id))
+            .ToDictionaryAsync(block => block.Id, cancellationToken);
         return new CareerDeskCatalog(
             [
                 .. Visible(directions.Values.Where(IsDraft), viewer),
@@ -193,9 +227,11 @@ internal sealed class CareerDeskSource(
                 .. Visible(categories, viewer),
                 .. Visible(competencies.Values.Where(IsDraft), viewer),
                 .. Visible(scales, viewer),
+                .. Visible(blocks.Values.Where(IsDraft), viewer),
             ],
             directions,
-            competencies);
+            competencies,
+            blocks);
     }
 
     /// <summary>

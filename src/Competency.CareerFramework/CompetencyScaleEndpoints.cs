@@ -9,10 +9,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of competency scales. Scale names are unique across the catalogue. A scale a published matrix version has used never changes,
-/// so the version keeps meaning what it meant; the catalogue lock, which publication also takes, keeps the check and a publication apart.
-/// Exactly one scale is the default; making another active scale the default takes the flag from the previous one. A scale other than
-/// the default that no competency, version in a competency's history or matrix version is on can be deleted.
+/// The API of competency scales. Scale names are unique across the catalogue. A scale a published matrix version has used, as its own
+/// or as the scale of a shared block, never changes, so the version keeps meaning what it meant; the catalogue lock, which publication
+/// also takes, keeps the check and a publication apart. Exactly one scale is the default; making another active scale the default takes
+/// the flag from the previous one. A scale other than the default that no competency, version in a competency's history, shared block or
+/// matrix version is on can be deleted.
 /// </summary>
 internal static class CompetencyScaleEndpoints
 {
@@ -20,7 +21,7 @@ internal static class CompetencyScaleEndpoints
     private const string PublishedMessage = "Используется в опубликованной матрице — изменить нельзя";
     private const string InactiveDefaultMessage = "По умолчанию может быть только действующая шкала";
     private const string DefaultDeletionMessage = "Шкалу по умолчанию удалить нельзя";
-    private const string InUseMessage = "Шкалу используют компетенции или матрицы — удалить нельзя";
+    private const string InUseMessage = "Шкалу используют компетенции, общие блоки или матрицы — удалить нельзя";
 
     internal static readonly CatalogKind<CompetencyScale, CompetencyScaleResponse> Kind = new("CompetencyScale", (scale, _, viewer) => CompetencyScaleResponse.From(scale, viewer));
 
@@ -62,6 +63,7 @@ internal static class CompetencyScaleEndpoints
             competencies.Where(competency => competency.ScaleId != id
                 && context.Set<CompetencyVersion>().Any(version => version.CompetencyId == competency.Id && version.ScaleId == id)),
             DeletionBlockerKind.CompetencyVersion);
+        await blockers.AddAsync(context.Set<CompetencyBlock>().Where(block => block.ScaleId == id), DeletionBlockerKind.Block);
         await blockers.AddMatricesAsync(context.Set<CompetencyMatrix>()
             .Where(matrix => context.Set<MatrixVersion>().Any(version => version.MatrixId == matrix.Id && version.ScaleId == id)));
         return blockers.Any ? InUseMessage : null;
@@ -146,10 +148,10 @@ internal static class CompetencyScaleEndpoints
             return Rejection.Forbidden();
         }
 
-        if (await context.Set<MatrixVersion>().AnyAsync(
-                version => version.ScaleId == scale.Id
-                    && (version.Status == MatrixVersionStatus.Published || version.Status == MatrixVersionStatus.Archived),
+        if (await store.VersionsOn(scale).AnyAsync(
+                version => version.Status == MatrixVersionStatus.Published || version.Status == MatrixVersionStatus.Archived,
                 cancellationToken))
+
         {
             return Rejection.Conflict(PublishedMessage);
         }

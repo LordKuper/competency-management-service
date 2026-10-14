@@ -9,9 +9,10 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The one rule of making career entries active. Approving or reactivating a catalogue entry, and publishing a matrix version, make
 /// active with the root every draft it refers to, directly or through other entries, or nothing at all: a track takes its direction and
-/// draft levels, a competency its category, direction and scale, a version its track with the track's levels, its competencies and,
-/// through the active ones too, their drafts, and its scale. Each draft must be one the right that counts may approve, have a name
-/// nothing published already has, and as a track be ready. The plan runs under the caller's locks for an action, and without locks
+/// draft levels, a competency its category, direction and scale, a shared block its scale and the competencies of its composition, a
+/// version the track of a track matrix with the track's levels, its shared blocks, its competencies and, through the active ones too,
+/// their drafts, and its scale. Each draft must be one the right that counts may approve, have a name nothing published already has, as
+/// a track be ready, and as a shared block have competencies. The plan runs under the caller's locks for an action, and without locks
 /// for a preview, which then changes nothing because nobody saves it.
 /// </summary>
 internal sealed class CatalogPublication(AppDbContext context, CatalogStore store, ProcessRoles roles, IAuditWriter audit, ICurrentActor actor)
@@ -31,6 +32,7 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
         CompetencyCategory => PublicationEntryKind.Category,
         CareerCompetency => PublicationEntryKind.Competency,
         CompetencyScale => PublicationEntryKind.Scale,
+        CompetencyBlock => PublicationEntryKind.Block,
         _ => throw new UnreachableException($"Unknown catalogue entry type {entry.GetType().Name}."),
     };
 
@@ -60,6 +62,7 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
         {
             CareerTrack track => await TrackDraftsAsync(track, cancellationToken),
             CareerCompetency competency => await ReferenceDraftsAsync([competency], cancellationToken),
+            CompetencyBlock block => await BlockDraftsAsync([block], cancellationToken),
             _ => [],
         };
         return await CheckAsync(root.Id, root.Version, root, drafts, approver, cancellationToken);
@@ -79,15 +82,14 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
             ? await CatalogViewer.LoadAsync(id, id == actor.UserId && actor.Role == PlatformClaims.GlobalAdminRole, roles, cancellationToken)
             : null;
 
-        var track = await context.Set<CareerTrack>().FirstAsync(entry => entry.Id == version.Matrix.TrackId, cancellationToken);
-        var competencyIds = version.Content.Competencies.Select(competency => competency.CompetencyId).ToList();
-        var competencies = await context.Set<CareerCompetency>()
-            .Where(competency => competencyIds.Contains(competency.Id) && competency.Status != CatalogStatus.Inactive)
-            .ToListAsync(cancellationToken);
+        var blocks = await NotInactiveAsync<CompetencyBlock>([.. version.Content.SharedBlocks.Select(block => block.BlockId)], cancellationToken);
+        var competencies = await NotInactiveAsync<CareerCompetency>([.. version.Content.Competencies.Select(competency => competency.CompetencyId)], cancellationToken);
         List<CatalogEntry> drafts =
         [
-            .. track.Status == CatalogStatus.Draft ? [track, .. await TrackDraftsAsync(track, cancellationToken)] : await DraftLevelsAsync(track.Id, cancellationToken),
-            .. competencies.Where(competency => competency.Status == CatalogStatus.Draft),
+            .. await MatrixTrackDraftsAsync(version.Matrix, cancellationToken),
+            .. blocks.Where(IsDraft),
+            .. await BlockDraftsAsync(blocks, cancellationToken),
+            .. competencies.Where(IsDraft),
             .. await ReferenceDraftsAsync(competencies, cancellationToken),
             .. await DraftsAsync<CompetencyScale>([version.ScaleId], cancellationToken),
         ];
@@ -95,13 +97,21 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
     }
 
     /// <summary>
-    /// Whether a new competency refers to drafts it would publish, so a keeper creates it as a draft rather than active.
+    /// Whether a new competency or shared block refers to drafts it would publish, so a keeper creates it as a draft rather than active.
     /// </summary>
-    /// <param name="competency">The competency about to be created.</param>
+    /// <param name="entry">The competency or shared block about to be created.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
-    /// <returns>True when its category, direction or scale is a draft.</returns>
-    public async Task<bool> HasDraftReferencesAsync(CareerCompetency competency, CancellationToken cancellationToken) =>
-        (await ReferenceDraftsAsync([competency], cancellationToken)).Count > 0;
+    /// <returns>True when an entry it refers to, directly or through the competencies of a block, is a draft.</returns>
+    public async Task<bool> HasDraftReferencesAsync(CatalogEntry entry, CancellationToken cancellationToken)
+    {
+        List<CatalogEntry> drafts = entry switch
+        {
+            CareerCompetency competency => await ReferenceDraftsAsync([competency], cancellationToken),
+            CompetencyBlock block => await BlockDraftsAsync([block], cancellationToken),
+            _ => throw new UnreachableException($"Entries of type {entry.GetType().Name} refer to no drafts on creation."),
+        };
+        return drafts.Count > 0;
+    }
 
     /// <summary>
     /// Journals each draft of the plan as approved together with the root; the caller saves them with its own change.
@@ -135,12 +145,14 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
         return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
     }
 
+    private static bool IsDraft(CatalogEntry entry) => entry.Status == CatalogStatus.Draft;
+
     private static (CatalogEntry Entry, PublicationBlocker Blocker) BlockerOf(CatalogEntry entry, PublicationBlockerReason reason) =>
         (entry, new PublicationBlocker(KindOf(entry), entry.Id, entry.Name, reason, ContextOf(entry)));
 
     /// <summary>
     /// Sets the root and its drafts active and finds what is in the way: drafts the approver may not approve, tracks that are not ready,
-    /// and names taken, the root's only when it leaves the draft status. The tag is taken from the versions as read.
+    /// shared blocks without competencies, and names taken, the root's only when it leaves the draft status. The tag is taken from the versions as read.
     /// </summary>
     private async Task<PublicationPlan> CheckAsync(
         Guid rootId,
@@ -169,6 +181,10 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
             blockers.AddRange((await store.ReadinessAsync(track.Id, cancellationToken)).Blockers(track));
         }
 
+        blockers.AddRange(published.OfType<CompetencyBlock>()
+            .Where(block => block.CompetencyIds.Count == 0)
+            .Select(block => BlockerOf(block, PublicationBlockerReason.EmptyBlock)));
+
         foreach (var entry in named)
         {
             if (await IsNameTakenAsync(entry, cancellationToken))
@@ -178,6 +194,35 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
         }
 
         return new PublicationPlan(entries, blockers, TagOf(rootId, rootVersion, entries));
+    }
+
+    /// <summary>
+    /// The drafts of the matrix track: the track with its direction and draft levels when it is a draft, its draft levels otherwise; none for a position matrix.
+    /// </summary>
+    private async Task<List<CatalogEntry>> MatrixTrackDraftsAsync(CompetencyMatrix matrix, CancellationToken cancellationToken)
+    {
+        if (matrix.TrackId is not { } trackId)
+        {
+            return [];
+        }
+
+        var track = await context.Set<CareerTrack>().FirstAsync(entry => entry.Id == trackId, cancellationToken);
+        return track.Status == CatalogStatus.Draft ? [track, .. await TrackDraftsAsync(track, cancellationToken)] : await DraftLevelsAsync(trackId, cancellationToken);
+    }
+
+    /// <summary>
+    /// The drafts of shared blocks: their scales and the draft competencies of their compositions, and through those competencies other
+    /// than inactive ones their own drafts.
+    /// </summary>
+    private async Task<List<CatalogEntry>> BlockDraftsAsync(IReadOnlyCollection<CompetencyBlock> blocks, CancellationToken cancellationToken)
+    {
+        var competencies = await NotInactiveAsync<CareerCompetency>([.. blocks.SelectMany(block => block.CompetencyIds).Distinct()], cancellationToken);
+        return
+        [
+            .. await DraftsAsync<CompetencyScale>([.. blocks.Select(block => block.ScaleId)], cancellationToken),
+            .. competencies.Where(IsDraft),
+            .. await ReferenceDraftsAsync(competencies, cancellationToken),
+        ];
     }
 
     private async Task<List<CatalogEntry>> TrackDraftsAsync(CareerTrack track, CancellationToken cancellationToken) =>
@@ -206,6 +251,12 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
             ? []
             : await context.Set<T>().Where(entry => ids.Contains(entry.Id) && entry.Status == CatalogStatus.Draft).ToListAsync(cancellationToken);
 
+    private async Task<List<T>> NotInactiveAsync<T>(List<Guid> ids, CancellationToken cancellationToken)
+        where T : CatalogEntry =>
+        ids.Count == 0
+            ? []
+            : await context.Set<T>().Where(entry => ids.Contains(entry.Id) && entry.Status != CatalogStatus.Inactive).ToListAsync(cancellationToken);
+
     private Task<bool> IsNameTakenAsync(CatalogEntry entry, CancellationToken cancellationToken) => entry switch
     {
         CareerDirection direction => store.IsNameTakenAsync(direction, CareerDirectionEndpoints.Kind.SameScope?.Invoke(direction), cancellationToken),
@@ -214,6 +265,7 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
         CompetencyCategory category => store.IsNameTakenAsync(category, CompetencyCategoryEndpoints.Kind.SameScope?.Invoke(category), cancellationToken),
         CareerCompetency competency => store.IsNameTakenAsync(competency, CompetencyEndpoints.Kind.SameScope?.Invoke(competency), cancellationToken),
         CompetencyScale scale => store.IsNameTakenAsync(scale, CompetencyScaleEndpoints.Kind.SameScope?.Invoke(scale), cancellationToken),
+        CompetencyBlock block => store.IsNameTakenAsync(block, CompetencyBlockEndpoints.Kind.SameScope?.Invoke(block), cancellationToken),
         _ => throw new UnreachableException($"Unknown catalogue entry type {entry.GetType().Name}."),
     };
 }

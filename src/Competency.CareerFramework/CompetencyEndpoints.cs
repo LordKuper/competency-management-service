@@ -11,7 +11,8 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The API of the competency catalogue. Competency names are unique within their direction, and among general competencies.
 /// Every change adds a version to the competency's history, which anyone who can read the competency can read. A request that names no
-/// scale gets the default scale. A competency no matrix uses can be deleted with its history.
+/// scale gets the default scale. A competency a shared block holds keeps its scale, as the block's competencies share the block's. A
+/// competency no matrix and no shared block uses can be deleted with its history.
 /// </summary>
 internal static class CompetencyEndpoints
 {
@@ -22,6 +23,8 @@ internal static class CompetencyEndpoints
     private const string ScaleField = "scaleId";
     private const string TypeField = "type";
     private const string InUseMessage = "Компетенцию используют матрицы — удалить нельзя";
+    private const string BlockInUseMessage = "Компетенцию используют общие блоки — удалить нельзя";
+    private const string BlockScaleMessage = "Компетенцию используют общие блоки — сменить шкалу нельзя";
     private const string DraftReferenceMessage = "Выбрана черновая запись — сначала утвердите её";
 
     internal static readonly CatalogKind<CareerCompetency, CompetencyResponse> Kind = new(
@@ -48,7 +51,7 @@ internal static class CompetencyEndpoints
     }
 
     /// <summary>
-    /// A competency goes with its history, unless a matrix uses it.
+    /// A competency goes with its history, unless a matrix uses it, directly or through a shared block, or a shared block holds it.
     /// </summary>
     private static async Task<string?> RemoveVersionsAsync(
         CareerCompetency competency,
@@ -58,9 +61,11 @@ internal static class CompetencyEndpoints
         CancellationToken cancellationToken)
     {
         await blockers.AddMatricesAsync(store.MatricesUsing(competency));
+        var isUsedByMatrices = blockers.Any;
+        await blockers.AddAsync(store.BlocksHolding(competency), DeletionBlockerKind.Block);
         if (blockers.Any)
         {
-            return InUseMessage;
+            return isUsedByMatrices ? InUseMessage : BlockInUseMessage;
         }
 
         var id = competency.Id;
@@ -190,6 +195,11 @@ internal static class CompetencyEndpoints
         if (await ReferenceProblemAsync(request, scaleId, draftAuthorId, competency, store, cancellationToken) is { } invalid)
         {
             return invalid;
+        }
+
+        if (scaleId != competency.ScaleId && await store.BlocksHolding(competency).AnyAsync(cancellationToken))
+        {
+            return Rejection.Conflict(BlockScaleMessage);
         }
 
         ifMatch.ApplyTo(context, competency);

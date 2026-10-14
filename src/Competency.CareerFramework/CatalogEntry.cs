@@ -3,7 +3,7 @@ using Competency.Platform;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// An entry of a career catalogue: a direction, track, level, competency category, competency or scale. Only a track belongs to a unit,
+/// An entry of a career catalogue: a direction, track, level, competency category, competency, scale or shared block. Only a track belongs to a unit,
 /// and a level to its track's; every other entry belongs to no unit. Names are stored trimmed. An entry still in use is deactivated rather than deleted.
 /// </summary>
 internal abstract class CatalogEntry : EntityBase

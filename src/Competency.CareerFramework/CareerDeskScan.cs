@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Competency.OrgStructure;
 using Competency.Platform;
 using Competency.UserManagement;
@@ -37,9 +38,22 @@ internal sealed class CareerDeskScan(
 
     private readonly Dictionary<Guid, CareerDeskTrack> trackOf = tracks.ToDictionary(row => row.Track.Id);
 
-    private readonly HashSet<Guid> inWorkUnitIds = [.. versions.Where(version => version.Status != MatrixVersionStatus.Published).Select(version => version.UnitId)];
+    /// <summary>
+    /// The units with a track matrix version in work; a position matrix does not count as a unit's matrix.
+    /// </summary>
+    private readonly HashSet<Guid> inWorkUnitIds =
+        [.. versions.Where(version => version.TrackId is not null && version.Status != MatrixVersionStatus.Published).Select(version => version.UnitId)];
 
-    private readonly HashSet<Guid> publishedUnitIds = [.. versions.Where(version => version.Status == MatrixVersionStatus.Published).Select(version => version.UnitId)];
+    /// <summary>
+    /// The units with a published track matrix.
+    /// </summary>
+    private readonly HashSet<Guid> publishedUnitIds =
+        [.. versions.Where(version => version.TrackId is not null && version.Status == MatrixVersionStatus.Published).Select(version => version.UnitId)];
+
+    /// <summary>
+    /// The positions with a position matrix of any unit, each of which has a version in work or a published one; no track can take them.
+    /// </summary>
+    private readonly HashSet<Guid> matrixPositionIds = [.. versions.Select(version => version.PositionId).OfType<Guid>()];
 
     /// <summary>
     /// The positions linked to an active level of an active track, each with the track's unit.
@@ -65,15 +79,16 @@ internal sealed class CareerDeskScan(
             CareerCompetency => DeskKind.UnusedCompetency,
             CompetencyScale => DeskKind.UnusedScale,
             CompetencyCategory => DeskKind.UnusedCategory,
-            _ => DeskKind.DirectionWithoutTracks,
+            CareerDirection => DeskKind.DirectionWithoutTracks,
+            _ => throw new UnreachableException($"Unused entries are never of type {entry.GetType().Name}."),
         },
         new DeskObject(TypeOf(entry), entry.Id, entry.Name),
         IsAction: false));
 
     /// <summary>
-    /// Units without a responsible HR who can act, for a global administrator; units the user heads that have no matrix in force although
-    /// an active track applies to them; and, for their responsible HR, units without a matrix in force or without a head. A version in work
-    /// counts as a matrix on its way, whether or not the user is told about the version.
+    /// Units without a responsible HR who can act, for a global administrator; units the user heads that have no track matrix in force
+    /// although an active track applies to them; and, for their responsible HR, units without a track matrix in force or without a head. A
+    /// version in work of a track matrix counts as a matrix on its way, whether or not the user is told about the version.
     /// </summary>
     /// <returns>The findings about units.</returns>
     public IEnumerable<DeskFinding> UnitFindings()
@@ -132,17 +147,20 @@ internal sealed class CareerDeskScan(
     }
 
     /// <summary>
-    /// The published matrices of the units the user heads that need a new version: their track's levels changed, or they rely on an inactive
-    /// track, direction or competency; and, for reference, their competencies changed since. Only matrices without a version in work are given.
+    /// The published matrices of the units the user heads that need a new version: their track's levels changed, they rely on an inactive
+    /// track, direction, position, shared block or competency, or the composition of a shared block changed since; and, for reference,
+    /// their competencies changed since. Only matrices without a version in work are given.
     /// </summary>
     /// <param name="published">The published versions, each with its matrix.</param>
     /// <param name="directions">The directions by identifier, covering at least those of the matrices.</param>
     /// <param name="competencies">The competencies by identifier, covering at least those of the versions.</param>
+    /// <param name="blocks">The shared blocks as they stand now, covering at least those of the versions.</param>
     /// <returns>The findings about published matrices.</returns>
     public IEnumerable<DeskFinding> PublishedFindings(
         IReadOnlyList<MatrixVersion> published,
         IReadOnlyDictionary<Guid, CareerDirection> directions,
-        IReadOnlyDictionary<Guid, CareerCompetency> competencies)
+        IReadOnlyDictionary<Guid, CareerCompetency> competencies,
+        IReadOnlyDictionary<Guid, CompetencyBlock> blocks)
     {
         foreach (var version in published.Where(version => viewer.HeadedUnitIds.Contains(version.Matrix.OrgUnitId)))
         {
@@ -151,17 +169,29 @@ internal sealed class CareerDeskScan(
                 continue;
             }
 
-            var matrix = MatrixObject(version.MatrixId, version.Matrix.TrackId, version.Matrix.OrgUnitId);
-            var target = VersionObject(version.Id, version.Matrix.TrackId);
+            var matrix = MatrixObject(version.MatrixId, version.Matrix.TrackId, version.Matrix.PositionId, version.Matrix.OrgUnitId);
+            var target = VersionObject(version.Id, version.Matrix.TrackId, version.Matrix.PositionId);
             var details = new DeskDetails(Number: version.Number);
-            if (InactiveEntries(version, entries, directions, competencies) is { Count: > 0 } inactive)
+            if (InactiveEntries(version, entries, directions, competencies, blocks) is { Count: > 0 } inactive)
             {
                 yield return new DeskFinding(DeskKind.MatrixUsesInactive, matrix, IsAction: true, Details: details with { Entries = inactive }, Target: target);
             }
 
-            if (trackOf.TryGetValue(version.Matrix.TrackId, out var row) && LevelChanges(entries.Levels, row.Levels) is { } changes)
+            if (version.Matrix.TrackId is { } trackId && trackOf.TryGetValue(trackId, out var row) && LevelChanges(entries.Levels, row.Levels) is { } changes)
             {
                 yield return new DeskFinding(DeskKind.MatrixLevelsChanged, matrix, IsAction: true, Details: changes with { Number = version.Number }, Target: target);
+            }
+
+            List<DeskObject> changedBlocks =
+            [
+                .. entries.SharedBlocks
+                    .Select(entry => (Entry: entry, Current: blocks.GetValueOrDefault(entry.Id)))
+                    .Where(pair => pair.Current is { } current && !current.CompetencyIds.ToHashSet().SetEquals(pair.Entry.CompetencyIds))
+                    .Select(pair => new DeskObject(DeskObjectType.Block, pair.Entry.Id, pair.Current!.Name)),
+            ];
+            if (changedBlocks.Count > 0)
+            {
+                yield return new DeskFinding(DeskKind.MatrixSharedBlockChanged, matrix, IsAction: true, Details: details with { Entries = changedBlocks }, Target: target);
             }
 
             List<DeskObject> changed =
@@ -206,7 +236,8 @@ internal sealed class CareerDeskScan(
 
     /// <summary>
     /// The active positions on the lists of the units the user heads or is the responsible HR of that no active level of an active track of
-    /// the unit or a unit above it stands for. An action when a track the user may edit can take the position; for reference otherwise.
+    /// the unit or a unit above it stands for and that have no position matrix of any unit, which no track could take. An action when a
+    /// track the user may edit can take the position; for reference otherwise.
     /// </summary>
     /// <returns>One finding per position, counting the working employees who hold it under the units concerned.</returns>
     public IEnumerable<DeskFinding> PositionFindings()
@@ -215,7 +246,8 @@ internal sealed class CareerDeskScan(
         foreach (var unitId in viewer.HeadedUnitIds.Union(viewer.HrUnitIds))
         {
             var ancestorIds = snapshot.Ancestry(unitId).Select(unit => unit.Id).ToList();
-            foreach (var positionId in snapshot.UnitPositionIds[unitId].Where(id => snapshot.Positions.GetValueOrDefault(id)?.IsActive == true))
+            foreach (var positionId in snapshot.UnitPositionIds[unitId]
+                         .Where(id => snapshot.Positions.GetValueOrDefault(id)?.IsActive == true && !matrixPositionIds.Contains(id)))
             {
                 if (!ancestorIds.Any(ancestorId => trackedPositions.Contains((ancestorId, positionId))))
                 {
@@ -348,7 +380,9 @@ internal sealed class CareerDeskScan(
         CareerLevel => DeskObjectType.Level,
         CompetencyCategory => DeskObjectType.Category,
         CareerCompetency => DeskObjectType.Competency,
-        _ => DeskObjectType.Scale,
+        CompetencyScale => DeskObjectType.Scale,
+        CompetencyBlock => DeskObjectType.Block,
+        _ => throw new UnreachableException($"Unknown catalogue entry type {entry.GetType().Name}."),
     };
 
     private static DeskObject LevelObject(CareerLevel level) => new(DeskObjectType.Level, level.Id, level.Name);
@@ -359,8 +393,8 @@ internal sealed class CareerDeskScan(
     {
         var last = lastDecisionOf.GetValueOrDefault(version.Id);
         var decidedAt = last?.At ?? version.CreatedAt;
-        var matrix = MatrixObject(version.MatrixId, version.TrackId, version.UnitId);
-        var target = VersionObject(version.Id, version.TrackId);
+        var matrix = MatrixObject(version.MatrixId, version.TrackId, version.PositionId, version.UnitId);
+        var target = VersionObject(version.Id, version.TrackId, version.PositionId);
         var details = new DeskDetails(Number: version.Number);
         var isHead = viewer.HeadedUnitIds.Contains(version.UnitId);
         if (version.Status == MatrixVersionStatus.Returned && isHead)
@@ -429,19 +463,28 @@ internal sealed class CareerDeskScan(
         MatrixVersion version,
         MatrixEntries entries,
         IReadOnlyDictionary<Guid, CareerDirection> directions,
-        IReadOnlyDictionary<Guid, CareerCompetency> competencies)
+        IReadOnlyDictionary<Guid, CareerCompetency> competencies,
+        IReadOnlyDictionary<Guid, CompetencyBlock> blocks)
     {
         List<DeskObject> inactive = [];
-        if (trackOf.GetValueOrDefault(version.Matrix.TrackId)?.Track.Status == CatalogStatus.Inactive)
+        if (version.Matrix.TrackId is { } trackId && trackOf.GetValueOrDefault(trackId)?.Track.Status == CatalogStatus.Inactive)
         {
-            inactive.Add(new DeskObject(DeskObjectType.Track, entries.Track.Id, entries.Track.Name));
+            inactive.Add(new DeskObject(DeskObjectType.Track, trackId, entries.Track?.Name ?? TrackName(trackId)));
         }
 
-        if (directions.GetValueOrDefault(version.Matrix.DirectionId)?.Status == CatalogStatus.Inactive)
+        if (version.Matrix.DirectionId is { } directionId && directions.GetValueOrDefault(directionId) is { Status: CatalogStatus.Inactive } direction)
         {
-            inactive.Add(new DeskObject(DeskObjectType.Direction, entries.Direction.Id, entries.Direction.Name));
+            inactive.Add(new DeskObject(DeskObjectType.Direction, directionId, entries.Direction?.Name ?? direction.Name));
         }
 
+        if (version.Matrix.PositionId is { } positionId && snapshot.Positions.GetValueOrDefault(positionId) is { IsActive: false } position)
+        {
+            inactive.Add(new DeskObject(DeskObjectType.Position, positionId, entries.Position?.Name ?? position.Name));
+        }
+
+        inactive.AddRange(entries.SharedBlocks
+            .Where(entry => blocks.GetValueOrDefault(entry.Id)?.Status == CatalogStatus.Inactive)
+            .Select(entry => new DeskObject(DeskObjectType.Block, entry.Id, entry.Name)));
         inactive.AddRange(entries.Competencies
             .Where(entry => competencies.GetValueOrDefault(entry.Id)?.Status == CatalogStatus.Inactive)
             .Select(entry => new DeskObject(DeskObjectType.Competency, entry.Id, entry.Name)));
@@ -503,9 +546,17 @@ internal sealed class CareerDeskScan(
         ? new DeskObject(DeskObjectType.Employee, head.Id, head.FullName)
         : null;
 
-    private DeskObject MatrixObject(Guid matrixId, Guid trackId, Guid unitId) => new(DeskObjectType.Matrix, matrixId, TrackName(trackId), UnitPath(unitId));
+    private DeskObject MatrixObject(Guid matrixId, Guid? trackId, Guid? positionId, Guid unitId) =>
+        new(DeskObjectType.Matrix, matrixId, MatrixName(trackId, positionId), UnitPath(unitId));
 
-    private DeskObject VersionObject(Guid versionId, Guid trackId) => new(DeskObjectType.MatrixVersion, versionId, TrackName(trackId));
+    private DeskObject VersionObject(Guid versionId, Guid? trackId, Guid? positionId) => new(DeskObjectType.MatrixVersion, versionId, MatrixName(trackId, positionId));
+
+    /// <summary>
+    /// A matrix goes by its track's name or, for a position matrix, its position's.
+    /// </summary>
+    private string MatrixName(Guid? trackId, Guid? positionId) => trackId is { } id
+        ? TrackName(id)
+        : positionId is { } position ? snapshot.Positions.GetValueOrDefault(position)?.Name ?? string.Empty : string.Empty;
 
     private DeskObject TrackObject(CareerTrack track) => new(DeskObjectType.Track, track.Id, track.Name, UnitPath(track.OwnerOrgUnitId));
 

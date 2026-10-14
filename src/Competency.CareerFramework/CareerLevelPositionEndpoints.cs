@@ -11,13 +11,15 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The API of the links of track levels to positions. Whoever reads a track reads its links; whoever may edit the track links and unlinks
 /// positions. A link changes the level's version, so it needs the level's <c>If-Match</c>, and the level comes back with its new version.
-/// A level may be linked to an active position its track's unit, a unit below it or a unit above it lists. A level of an active track
-/// keeps at least one active position.
+/// A level may be linked to an active position its track's unit, a unit below it or a unit above it lists, unless the position has a
+/// position matrix. A level of an active track keeps at least one active position. The positions a unit may build a position matrix
+/// for are listed here too, with the tracks that rule them out.
 /// </summary>
 internal static class CareerLevelPositionEndpoints
 {
     private const string TrackRoute = "/api/v1/career/tracks";
     private const string LevelRoute = "/api/v1/career/levels";
+    private const string OrgUnitRoute = "/api/v1/career/org-units";
     private const string PositionField = "positionId";
     private const string UnavailablePositionMessage = "Должность неактивна или недоступна подразделению трека";
     private const string LinkedElsewhereMessage = "Должность уже связана с другим уровнем трека";
@@ -39,6 +41,58 @@ internal static class CareerLevelPositionEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .Produces<PublicationRefusal>(StatusCodes.Status409Conflict, CatalogEndpoints.ProblemContentType);
+
+        endpoints.MapCatalogGroup(OrgUnitRoute)
+            .MapGet("/{id:guid}/matrix-positions", ListMatrixPositionsAsync)
+            .WithName("ListOrgUnitMatrixPositions")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+    }
+
+    /// <summary>
+    /// Lists, a page at a time in name order, the active positions the unit and the units above it list, for choosing the position of a
+    /// position matrix: each says whether a level of a track in any status stands for it, which rules the matrix out, and names the first
+    /// such track by name the user can read.
+    /// </summary>
+    private static async Task<Results<Ok<PageResponse<MatrixPositionResponse>>, NotFound, ValidationProblem>> ListMatrixPositionsAsync(
+        Guid id,
+        string? q,
+        CatalogStore store,
+        IEmployeeDirectory employees,
+        CancellationToken cancellationToken,
+        int page = 1,
+        int pageSize = ListRequest.DefaultPageSize)
+    {
+        var errors = ListRequest.Validate(page, pageSize, q);
+        if (errors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
+
+        var snapshot = await employees.FindOrgSnapshotAsync(cancellationToken);
+        if (!snapshot.Units.ContainsKey(id))
+        {
+            return TypedResults.NotFound();
+        }
+
+        var search = q?.Trim() ?? string.Empty;
+        var matching = snapshot.AvailablePositionIds(id)
+            .Select(snapshot.Positions.GetValueOrDefault)
+            .OfType<PositionStatus>()
+            .Where(position => position.IsActive && position.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(position => position.Name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(position => position.Id)
+            .ToList();
+        var shown = matching.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        var viewer = await store.ViewerAsync(cancellationToken);
+        var tracks = await store.LinkedTracksAsync([.. shown.Select(position => position.Id)], cancellationToken);
+        var items = shown
+            .Select(position => new MatrixPositionResponse(
+                position.Id,
+                position.Name,
+                tracks[position.Id].Any(),
+                tracks[position.Id].FirstOrDefault(viewer.CanSee) is { } track ? new CareerNamedResponse(track.Id, track.Name) : null))
+            .ToList();
+        return TypedResults.Ok(new PageResponse<MatrixPositionResponse>(items, matching.Count, page, pageSize));
     }
 
     private static async Task<Results<Ok<TrackPositionsResponse>, NotFound>> ListLinkedAsync(
@@ -85,7 +139,7 @@ internal static class CareerLevelPositionEndpoints
     }
 
     /// <summary>
-    /// Lists, a page at a time, the positions a level of the track may be linked to that no level of the track is linked to yet.
+    /// Lists, a page at a time, the positions a level of the track may be linked to that no level of the track is linked to yet and that have no position matrix.
     /// </summary>
     private static async Task<Results<Ok<PageResponse<AvailablePositionResponse>>, NotFound, ValidationProblem>> ListAvailableAsync(
         Guid id,
@@ -109,12 +163,14 @@ internal static class CareerLevelPositionEndpoints
             return TypedResults.NotFound();
         }
 
-        var linked = await context.Set<CareerLevelPosition>().Where(link => link.TrackId == id).Select(link => link.PositionId).ToListAsync(cancellationToken);
+        var taken = await context.Set<CareerLevelPosition>().Where(link => link.TrackId == id).Select(link => link.PositionId)
+            .Concat(context.Set<CompetencyMatrix>().Where(matrix => matrix.PositionId != null).Select(matrix => matrix.PositionId!.Value))
+            .ToListAsync(cancellationToken);
         var snapshot = await employees.FindOrgSnapshotAsync(cancellationToken);
         var headcount = Headcount(snapshot, track.OwnerOrgUnitId);
         var search = q?.Trim() ?? string.Empty;
         var matching = AvailablePositions(snapshot, track.OwnerOrgUnitId)
-            .Where(position => !linked.Contains(position.Id) && position.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+            .Where(position => !taken.Contains(position.Id) && position.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
             .OrderBy(position => position.Name, StringComparer.OrdinalIgnoreCase)
             .ThenBy(position => position.Id)
             .ToList();
@@ -155,6 +211,15 @@ internal static class CareerLevelPositionEndpoints
         if (AvailablePositions(snapshot, level.Track.OwnerOrgUnitId).All(position => position.Id != request.PositionId))
         {
             return Rejection.Invalid(PositionField, UnavailablePositionMessage);
+        }
+
+        if (await context.Set<CompetencyMatrix>()
+                .Where(matrix => matrix.PositionId == request.PositionId)
+                .Select(matrix => (Guid?)matrix.OrgUnitId)
+                .FirstOrDefaultAsync(cancellationToken) is { } matrixUnitId)
+        {
+            return Rejection.Conflict(
+                $"У должности «{snapshot.Positions[request.PositionId].Name}» есть матрица должности подразделения «{snapshot.Units.GetValueOrDefault(matrixUnitId)?.Name}» — связать с уровнем нельзя");
         }
 
         var linkedLevelId = await context.Set<CareerLevelPosition>()

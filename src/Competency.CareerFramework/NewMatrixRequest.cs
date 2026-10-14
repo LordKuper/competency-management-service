@@ -1,15 +1,27 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// A new matrix of a unit for a track, with the scale of its first version; none of them changes afterwards.
+/// A new matrix of a unit, for a track of a direction or for a position, with the scale of its first version; none of them changes
+/// afterwards. A track matrix names the direction and the track, a position matrix the position alone.
 /// </summary>
 internal sealed record NewMatrixRequest
 {
     public required Guid OrgUnitId { get; init; }
 
-    public required Guid DirectionId { get; init; }
+    /// <summary>
+    /// The direction of a track matrix; absent for a position matrix.
+    /// </summary>
+    public Guid? DirectionId { get; init; }
 
-    public required Guid TrackId { get; init; }
+    /// <summary>
+    /// The track of a track matrix; absent for a position matrix.
+    /// </summary>
+    public Guid? TrackId { get; init; }
+
+    /// <summary>
+    /// The position of a position matrix; absent for a track matrix.
+    /// </summary>
+    public Guid? PositionId { get; init; }
 
     public required Guid ScaleId { get; init; }
 }

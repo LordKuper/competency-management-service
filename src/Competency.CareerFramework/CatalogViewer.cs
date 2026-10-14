@@ -98,6 +98,7 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Gui
         CompetencyCategory category => SeesEntry(category),
         CareerCompetency competency => SeesEntry(competency),
         CompetencyScale scale => SeesEntry(scale),
+        CompetencyBlock block => SeesEntry(block),
         _ => throw new UnreachableException($"Unknown catalogue entry type {entry.GetType().Name}."),
     };
 

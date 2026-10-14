@@ -3,16 +3,18 @@ using System.Text.Json;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The content of a matrix version as one document: its levels with their readiness thresholds, the named competency blocks, the
-/// competencies with the block each belongs to, the block coefficients of each level, and the requirements of each level and competency.
-/// Stored whole, so a version, a variant and a published version each hold a copy, and two copies compare item by item.
+/// The content of a matrix version as one document: its levels with their readiness thresholds, the named blocks of its own, the
+/// competencies of those blocks and outside blocks with the block each belongs to, the shared blocks it includes by reference, the
+/// coefficients of each level and group, and the requirements of each level and competency. A position matrix has one level, keyed by its
+/// position. Stored whole, so a version, a variant and a published version each hold a copy, and two copies compare item by item.
 /// </summary>
 internal sealed record MatrixContent(
     IReadOnlyList<MatrixLevel> Levels,
     IReadOnlyList<MatrixBlock> Blocks,
     IReadOnlyList<MatrixCompetency> Competencies,
     IReadOnlyList<MatrixBlockWeight> BlockWeights,
-    IReadOnlyList<MatrixRequirement> Requirements)
+    IReadOnlyList<MatrixRequirement> Requirements,
+    IReadOnlyList<MatrixSharedBlock>? SharedBlocks = null)
 {
     public const int TextMaxLength = 4000;
     public const decimal MaxPercent = 100;
@@ -22,6 +24,11 @@ internal sealed record MatrixContent(
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public static MatrixContent Empty { get; } = new([], [], [], [], []);
+
+    /// <summary>
+    /// The shared blocks the version includes by reference; empty in a document written before shared blocks existed or sent without them.
+    /// </summary>
+    public IReadOnlyList<MatrixSharedBlock> SharedBlocks { get; init; } = SharedBlocks ?? [];
 
     public static MatrixContent FromJson(string json) => JsonSerializer.Deserialize<MatrixContent>(json, Json) ?? Empty;
 
@@ -35,8 +42,29 @@ internal sealed record MatrixContent(
     public bool SameAs(MatrixContent other) => ToJson() == other.ToJson();
 
     /// <summary>
-    /// Checks the document on its own: no missing lists or items, no repeated keys, items refer to levels, blocks and competencies of
-    /// the document, and numbers, requirement types and texts within their limits. What the document refers to outside itself is checked against the catalogues.
+    /// The competencies of the version: its own and those outside blocks, then the composition of each shared block under that block.
+    /// A competency in two groups is listed twice, so completeness can tell.
+    /// </summary>
+    /// <param name="compositions">The composition of each shared block, as <see cref="MatrixVersion.CompositionsOf"/> chooses it.</param>
+    /// <returns>The competencies with their groups.</returns>
+    public List<MatrixCompetency> CompetenciesWith(IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> compositions) =>
+    [
+        .. Competencies,
+        .. SharedBlocks.SelectMany(block => compositions.GetValueOrDefault(block.BlockId, [])
+            .Select(competencyId => new MatrixCompetency(competencyId, block.BlockId))),
+    ];
+
+    /// <summary>
+    /// The document with the compositions of its shared blocks written into its competencies, as two documents are compared.
+    /// </summary>
+    /// <param name="compositions">The composition of each shared block, as <see cref="MatrixVersion.CompositionsOf"/> chooses it.</param>
+    /// <returns>The expanded document.</returns>
+    public MatrixContent Expanded(IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> compositions) => this with { Competencies = CompetenciesWith(compositions) };
+
+    /// <summary>
+    /// Checks the document on its own: no missing lists or items, no repeated keys, items refer to levels and blocks of the document, and
+    /// numbers, requirement types and texts within their limits. What the document refers to outside itself, the competencies of shared
+    /// blocks that requirements may name among them, is checked against the catalogues.
     /// </summary>
     /// <returns>The problems found by field name; empty when the document is valid.</returns>
     public Dictionary<string, string[]> Validate()
@@ -49,13 +77,13 @@ internal sealed record MatrixContent(
     {
         if (Levels is null || Blocks is null || Competencies is null || BlockWeights is null || Requirements is null
             || Levels.Any(item => item is null) || Blocks.Any(item => item is null) || Competencies.Any(item => item is null)
-            || BlockWeights.Any(item => item is null) || Requirements.Any(item => item is null))
+            || BlockWeights.Any(item => item is null) || Requirements.Any(item => item is null) || SharedBlocks.Any(item => item is null))
         {
             return "Документ версии заполнен не полностью";
         }
 
         var isUnique = Levels.DistinctBy(item => item.LevelId).Count() == Levels.Count
-            && Blocks.DistinctBy(item => item.Id).Count() == Blocks.Count
+            && Blocks.Select(item => item.Id).Concat(SharedBlocks.Select(item => item.BlockId)).Distinct().Count() == Blocks.Count + SharedBlocks.Count
             && Competencies.DistinctBy(item => item.CompetencyId).Count() == Competencies.Count
             && BlockWeights.DistinctBy(item => (item.LevelId, item.BlockId)).Count() == BlockWeights.Count
             && Requirements.DistinctBy(item => (item.LevelId, item.CompetencyId)).Count() == Requirements.Count;
@@ -66,19 +94,19 @@ internal sealed record MatrixContent(
     {
         var levelIds = Levels.Select(item => item.LevelId).ToHashSet();
         var blockIds = Blocks.Select(item => item.Id).ToHashSet();
-        var competencyIds = Competencies.Select(item => item.CompetencyId).ToHashSet();
-        if (Competencies.Any(item => !blockIds.Contains(item.BlockId)))
+        var groupIds = blockIds.Concat(SharedBlocks.Select(item => item.BlockId)).ToHashSet();
+        if (Competencies.Any(item => item.BlockId is { } blockId && !blockIds.Contains(blockId)))
         {
-            return "Каждая компетенция должна входить в блок версии";
+            return "Компетенция относится к блоку не из версии";
         }
 
-        if (BlockWeights.Any(item => !levelIds.Contains(item.LevelId) || !blockIds.Contains(item.BlockId)))
+        if (BlockWeights.Any(item => !levelIds.Contains(item.LevelId) || (item.BlockId is { } blockId && !groupIds.Contains(blockId))))
         {
             return "Коэффициент относится к уровню или блоку не из версии";
         }
 
-        return Requirements.Any(item => !levelIds.Contains(item.LevelId) || !competencyIds.Contains(item.CompetencyId))
-            ? "Требование относится к уровню или компетенции не из версии"
+        return Requirements.Any(item => !levelIds.Contains(item.LevelId))
+            ? "Требование относится к уровню не из версии"
             : null;
     }
 

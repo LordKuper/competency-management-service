@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// Contributes the CareerFramework tables to the shared model: the <see cref="OrgUnitHr"/> assignments, the career catalogues, the links of levels to positions and the matrices,
+/// Contributes the CareerFramework tables to the shared model: the <see cref="OrgUnitHr"/> assignments, the career catalogues with the shared blocks, the links of levels to positions and the matrices,
 /// with snake_case names, statuses and types stored as their names, and foreign keys that never cascade.
 /// </summary>
 internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationContributor
@@ -85,6 +85,8 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
 
         ConfigureEntry<CompetencyScale>(modelBuilder, "competency_scales", ConfigureScale);
 
+        ConfigureEntry<CompetencyBlock>(modelBuilder, "competency_blocks", ConfigureBlock);
+
         ConfigureEntry<CareerCompetency>(modelBuilder, "competencies", entity =>
         {
             entity.ToTable(table => table.HasCheckConstraint("ck_competencies_type", TypeCheckSql));
@@ -130,18 +132,23 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
     {
         modelBuilder.Entity<CompetencyMatrix>(entity =>
         {
-            entity.ToTable("competency_matrices");
+            entity.ToTable("competency_matrices", table => table.HasCheckConstraint(
+                "ck_competency_matrices_kind",
+                "(direction_id IS NOT NULL AND track_id IS NOT NULL AND position_id IS NULL) OR (direction_id IS NULL AND track_id IS NULL AND position_id IS NOT NULL)"));
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Version).HasColumnName("version");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at");
             entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
             entity.Property(e => e.DirectionId).HasColumnName("direction_id");
             entity.Property(e => e.TrackId).HasColumnName("track_id");
+            entity.Property(e => e.PositionId).HasColumnName("position_id");
             entity.HasIndex(e => new { e.OrgUnitId, e.TrackId }).IsUnique();
+            entity.HasIndex(e => new { e.OrgUnitId, e.PositionId }).IsUnique();
 
             entity.HasOne(OrgUnitEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CompetencyMatrix.OrgUnitId)).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<CareerDirection>().WithMany().HasForeignKey(e => e.DirectionId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<CareerTrack>().WithMany().HasForeignKey(e => e.TrackId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(PositionEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CompetencyMatrix.PositionId)).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<MatrixVersion>(entity =>
@@ -242,6 +249,27 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
                     points => points.ToList()));
         entity.Property(e => e.IsDefault).HasColumnName("is_default");
         entity.HasIndex(e => e.IsDefault, "ux_competency_scales_default").IsUnique().HasFilter("is_default");
+    }
+
+    /// <summary>
+    /// Maps a shared block's scale and its composition, a jsonb array of competency identifiers on the block's row, so a change of the
+    /// composition is one change of the block and one journal event.
+    /// </summary>
+    private static void ConfigureBlock(EntityTypeBuilder<CompetencyBlock> entity)
+    {
+        entity.Property(e => e.ScaleId).HasColumnName("scale_id");
+        entity.Property(e => e.CompetencyIds)
+            .HasColumnName("competency_ids")
+            .HasColumnType("jsonb")
+            .HasConversion(
+                ids => JsonSerializer.Serialize(ids, DocumentJson),
+                json => JsonSerializer.Deserialize<List<Guid>>(json, DocumentJson) ?? new List<Guid>(),
+                new ValueComparer<List<Guid>>(
+                    (left, right) => left!.SequenceEqual(right!),
+                    ids => ids.Aggregate(0, (hash, id) => HashCode.Combine(hash, id)),
+                    ids => ids.ToList()));
+
+        entity.HasOne<CompetencyScale>().WithMany().HasForeignKey(e => e.ScaleId).OnDelete(DeleteBehavior.Restrict);
     }
 
     /// <summary>

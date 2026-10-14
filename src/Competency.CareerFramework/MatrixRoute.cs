@@ -136,7 +136,7 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// </summary>
     /// <param name="viewer">The user's rights.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    /// <returns>The identifiers of the levels, competencies, categories of those competencies and scales of those versions.</returns>
+    /// <returns>The identifiers of the levels, shared blocks, competencies with those of the blocks, categories of those competencies and scales of those versions and blocks.</returns>
     public async Task<IReadOnlySet<Guid>> RouteEntryIdsAsync(CatalogViewer viewer, CancellationToken cancellationToken)
     {
         var userId = viewer.UserId;
@@ -154,7 +154,18 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
         {
             ids.Add(version.ScaleId);
             ids.UnionWith(version.Content.Levels.Select(level => level.LevelId));
+            ids.UnionWith(version.Content.SharedBlocks.Select(block => block.BlockId));
             competencyIds.UnionWith(version.Content.Competencies.Select(competency => competency.CompetencyId));
+        }
+
+        var blockIds = versions.SelectMany(version => version.Content.SharedBlocks).Select(block => block.BlockId).Distinct().ToList();
+        if (blockIds.Count > 0)
+        {
+            foreach (var block in await context.Set<CompetencyBlock>().AsNoTracking().Where(block => blockIds.Contains(block.Id)).ToListAsync(cancellationToken))
+            {
+                ids.Add(block.ScaleId);
+                competencyIds.UnionWith(block.CompetencyIds);
+            }
         }
 
         if (competencyIds.Count > 0)

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq.Expressions;
 using Competency.OrgStructure;
 using Competency.Platform;
@@ -163,25 +164,108 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
-    /// The matrices one of whose versions, a variant of one or the snapshot of a published one lists the level or competency. The
-    /// documents are jsonb, so the check is a containment query rather than a foreign key.
+    /// The matrices one of whose versions, a variant of one or the snapshot of a published one lists the level, competency or shared
+    /// block; a competency also counts when it is in the composition of a shared block a version or a variant includes. The documents are
+    /// jsonb, so the check is a containment query rather than a foreign key.
     /// </summary>
-    /// <param name="entry">A level or a competency.</param>
+    /// <param name="entry">A level, a competency or a shared block.</param>
     /// <returns>The matrices, a query to compose with others.</returns>
     public IQueryable<CompetencyMatrix> MatricesUsing(CatalogEntry entry)
     {
-        var (list, field) = entry is CareerLevel ? ("levels", "levelId") : ("competencies", "competencyId");
         var id = entry.Id;
-        var matrixIds = context.Database.SqlQuery<Guid>($"""
-            SELECT matrix_id AS "Value" FROM matrix_versions
-            WHERE content -> {list} @> jsonb_build_array(jsonb_build_object({field}, {id}::text))
-                OR snapshot -> {list} @> jsonb_build_array(jsonb_build_object('id', {id}::text))
-                OR id IN (
-                    SELECT version_id FROM matrix_version_variants
-                    WHERE content -> {list} @> jsonb_build_array(jsonb_build_object({field}, {id}::text)))
-            """);
+        var matrixIds = entry switch
+        {
+            CareerLevel => DocumentsListing("levels", "levelId", id),
+            CompetencyBlock => DocumentsListing("sharedBlocks", "blockId", id),
+            CareerCompetency => context.Database.SqlQuery<Guid>($"""
+                SELECT v.matrix_id AS "Value" FROM matrix_versions v
+                WHERE v.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', {id}::text))
+                    OR v.snapshot -> 'competencies' @> jsonb_build_array(jsonb_build_object('id', {id}::text))
+                    OR EXISTS (
+                        SELECT 1 FROM matrix_version_variants variant
+                        WHERE variant.version_id = v.id
+                            AND variant.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', {id}::text)))
+                    OR EXISTS (
+                        SELECT 1 FROM competency_blocks b
+                        WHERE b.competency_ids @> jsonb_build_array({id}::text)
+                            AND (v.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text))
+                                OR EXISTS (
+                                    SELECT 1 FROM matrix_version_variants variant
+                                    WHERE variant.version_id = v.id
+                                        AND variant.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text)))))
+                """),
+            _ => throw new UnreachableException($"Matrix documents do not list entries of type {entry.GetType().Name}."),
+        };
         return context.Set<CompetencyMatrix>().Where(matrix => matrixIds.Contains(matrix.Id));
     }
+
+    /// <summary>
+    /// The shared blocks whose composition holds the competency; the composition is jsonb, so the check is a containment query.
+    /// </summary>
+    /// <param name="competency">The competency.</param>
+    /// <returns>The blocks, a query to compose with others.</returns>
+    public IQueryable<CompetencyBlock> BlocksHolding(CareerCompetency competency)
+    {
+        var id = competency.Id;
+        var blockIds = context.Database.SqlQuery<Guid>($"""
+            SELECT id AS "Value" FROM competency_blocks WHERE competency_ids @> jsonb_build_array({id}::text)
+            """);
+        return context.Set<CompetencyBlock>().Where(block => blockIds.Contains(block.Id));
+    }
+
+    /// <summary>
+    /// The matrix versions on the scale: those whose own scale it is, and those including a shared block on it, the published and archived
+    /// ones by the block's scale in their snapshot.
+    /// </summary>
+    /// <param name="scale">The scale.</param>
+    /// <returns>The versions, a query to compose with others.</returns>
+    public IQueryable<MatrixVersion> VersionsOn(CompetencyScale scale)
+    {
+        var id = scale.Id;
+        var versionIds = context.Database.SqlQuery<Guid>($"""
+            SELECT v.id AS "Value" FROM matrix_versions v
+            WHERE v.scale_id = {id}
+                OR v.snapshot -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('scale', jsonb_build_object('id', {id}::text)))
+                OR EXISTS (
+                    SELECT 1 FROM competency_blocks b
+                    WHERE b.scale_id = {id}
+                        AND (v.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text))
+                            OR EXISTS (
+                                SELECT 1 FROM matrix_version_variants variant
+                                WHERE variant.version_id = v.id
+                                    AND variant.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text)))))
+            """);
+        return context.Set<MatrixVersion>().Where(version => versionIds.Contains(version.Id));
+    }
+
+    /// <summary>
+    /// The current composition of each shared block the documents include, read in one query.
+    /// </summary>
+    /// <param name="contents">The documents.</param>
+    /// <param name="cancellationToken">Cancels the query.</param>
+    /// <returns>The compositions by block; empty when the documents include no shared block.</returns>
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<Guid>>> CompositionsAsync(IEnumerable<MatrixContent> contents, CancellationToken cancellationToken)
+    {
+        var ids = contents.SelectMany(content => content.SharedBlocks).Select(block => block.BlockId).Distinct().ToList();
+        return ids.Count == 0
+            ? new Dictionary<Guid, IReadOnlyList<Guid>>()
+            : await context.Set<CompetencyBlock>()
+                .AsNoTracking()
+                .Where(block => ids.Contains(block.Id))
+                .ToDictionaryAsync(block => block.Id, block => (IReadOnlyList<Guid>)block.CompetencyIds, cancellationToken);
+    }
+
+    /// <summary>
+    /// The matrices one of whose versions, a variant of one or the snapshot of a published one lists the item of a document list.
+    /// </summary>
+    private IQueryable<Guid> DocumentsListing(string list, string field, Guid id) => context.Database.SqlQuery<Guid>($"""
+        SELECT matrix_id AS "Value" FROM matrix_versions
+        WHERE content -> {list} @> jsonb_build_array(jsonb_build_object({field}, {id}::text))
+            OR snapshot -> {list} @> jsonb_build_array(jsonb_build_object('id', {id}::text))
+            OR id IN (
+                SELECT version_id FROM matrix_version_variants
+                WHERE content -> {list} @> jsonb_build_array(jsonb_build_object({field}, {id}::text)))
+        """);
 
     /// <summary>
     /// The matrices that list a competency of the category, as <see cref="MatricesUsing"/> finds the matrices of one competency; a
@@ -203,14 +287,24 @@ internal sealed class CatalogStore(
                                 SELECT 1 FROM matrix_version_variants variant
                                 WHERE variant.version_id = v.id
                                     AND variant.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', c.id::text)))))
+                OR EXISTS (
+                    SELECT 1 FROM competencies c
+                    JOIN competency_blocks b ON b.competency_ids @> jsonb_build_array(c.id::text)
+                    WHERE c.category_id = {id}
+                        AND (v.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text))
+                            OR EXISTS (
+                                SELECT 1 FROM matrix_version_variants variant
+                                WHERE variant.version_id = v.id
+                                    AND variant.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text)))))
             """);
         return context.Set<CompetencyMatrix>().Where(matrix => matrixIds.Contains(matrix.Id));
     }
 
     /// <summary>
     /// The active entries nothing uses, the one definition every list of them shares: competencies no matrix version, variant or
-    /// published snapshot lists; scales other than the default that no competency and no version is on; categories no competency is of
-    /// and no published snapshot names; directions without tracks.
+    /// published snapshot lists, directly or in the composition of a shared block a version or variant includes; scales other than the
+    /// default that no competency, shared block and version is on; categories no competency is of and no published snapshot names;
+    /// directions without tracks.
     /// </summary>
     /// <param name="cancellationToken">Cancels the queries.</param>
     /// <returns>The competencies, then the scales, categories and directions, each in name order.</returns>
@@ -220,6 +314,13 @@ internal sealed class CatalogStore(
             SELECT (item ->> 'competencyId')::uuid AS "Value" FROM matrix_versions, jsonb_array_elements(content -> 'competencies') AS item
             UNION SELECT (item ->> 'competencyId')::uuid FROM matrix_version_variants, jsonb_array_elements(content -> 'competencies') AS item
             UNION SELECT (item ->> 'id')::uuid FROM matrix_versions, jsonb_array_elements(snapshot -> 'competencies') AS item
+            UNION SELECT member::uuid FROM competency_blocks b, jsonb_array_elements_text(b.competency_ids) AS member
+            WHERE EXISTS (
+                    SELECT 1 FROM matrix_versions v
+                    WHERE v.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text)))
+                OR EXISTS (
+                    SELECT 1 FROM matrix_version_variants variant
+                    WHERE variant.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text)))
             """);
         var snapshotCategoryIds = context.Database.SqlQuery<Guid>($"""
             SELECT (item ->> 'categoryId')::uuid AS "Value" FROM matrix_versions, jsonb_array_elements(snapshot -> 'competencies') AS item
@@ -227,12 +328,14 @@ internal sealed class CatalogStore(
         var competencies = context.Set<CareerCompetency>();
         var versions = context.Set<MatrixVersion>();
         var tracks = context.Set<CareerTrack>();
+        var blocks = context.Set<CompetencyBlock>();
         return
         [
             .. await ActiveByName(competencies.Where(competency => !usedCompetencyIds.Contains(competency.Id)), cancellationToken),
             .. await ActiveByName(
                 context.Set<CompetencyScale>().Where(scale => !scale.IsDefault
                     && !competencies.Any(competency => competency.ScaleId == scale.Id)
+                    && !blocks.Any(block => block.ScaleId == scale.Id)
                     && !versions.Any(version => version.ScaleId == scale.Id)),
                 cancellationToken),
             .. await ActiveByName(
@@ -320,7 +423,8 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
-    /// The names of categories, directions and scales, for showing which ones a competency refers to; one query for all of them.
+    /// The names of categories, directions, scales and competencies, for showing which ones a competency or a shared block refers to;
+    /// one query for all of them.
     /// </summary>
     /// <param name="ids">The entries; nulls are skipped.</param>
     /// <param name="cancellationToken">Cancels the lookup.</param>
@@ -331,7 +435,46 @@ internal sealed class CatalogStore(
         return await context.Set<CompetencyCategory>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name })
             .Concat(context.Set<CareerDirection>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name }))
             .Concat(context.Set<CompetencyScale>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name }))
+            .Concat(context.Set<CareerCompetency>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name }))
             .ToDictionaryAsync(entry => entry.Id, entry => entry.Name, cancellationToken);
+    }
+
+    /// <summary>
+    /// The tracks, in any status, a level of which each position is linked to, in name order; a position linked to a level cannot have a
+    /// position matrix. One query for all of them.
+    /// </summary>
+    /// <param name="positionIds">The positions.</param>
+    /// <param name="cancellationToken">Cancels the query.</param>
+    /// <returns>The tracks by position.</returns>
+    public async Task<ILookup<Guid, CareerTrack>> LinkedTracksAsync(IReadOnlyCollection<Guid> positionIds, CancellationToken cancellationToken)
+    {
+        var rows = await context.Set<CareerLevelPosition>()
+            .AsNoTracking()
+            .Where(link => positionIds.Contains(link.PositionId))
+            .Join(context.Set<CareerTrack>().AsNoTracking(), link => link.TrackId, track => track.Id, (link, track) => new { link.PositionId, Track = track })
+            .ToListAsync(cancellationToken);
+        return rows
+            .OrderBy(row => row.Track.Name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(row => row.Track.Id)
+            .ToLookup(row => row.PositionId, row => row.Track);
+    }
+
+    /// <summary>
+    /// The names of positions, for naming position matrices; read from the organization snapshot, the one way this module reads positions.
+    /// </summary>
+    /// <param name="positionIds">The positions; nulls are skipped.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The name of each position that exists, by identifier.</returns>
+    public async Task<IReadOnlyDictionary<Guid, string>> PositionNamesAsync(IEnumerable<Guid?> positionIds, CancellationToken cancellationToken)
+    {
+        var wanted = positionIds.OfType<Guid>().ToHashSet();
+        if (wanted.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+
+        var positions = (await employees.FindOrgSnapshotAsync(cancellationToken)).Positions;
+        return wanted.Where(positions.ContainsKey).ToDictionary(id => id, id => positions[id].Name);
     }
 
     /// <summary>

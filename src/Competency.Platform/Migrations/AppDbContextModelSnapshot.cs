@@ -343,6 +343,59 @@ namespace Competency.Platform.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Competency.CareerFramework.CompetencyBlock", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<string>("CompetencyIds")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("competency_ids");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("ScaleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scale_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("ScaleId");
+
+                    b.ToTable("competency_blocks", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_competency_blocks_status", "status IN ('Draft', 'Active', 'Inactive')");
+                        });
+                });
+
             modelBuilder.Entity("Competency.CareerFramework.CompetencyCategory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -396,7 +449,7 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<Guid>("DirectionId")
+                    b.Property<Guid?>("DirectionId")
                         .HasColumnType("uuid")
                         .HasColumnName("direction_id");
 
@@ -404,7 +457,11 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("org_unit_id");
 
-                    b.Property<Guid>("TrackId")
+                    b.Property<Guid?>("PositionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("position_id");
+
+                    b.Property<Guid?>("TrackId")
                         .HasColumnType("uuid")
                         .HasColumnName("track_id");
 
@@ -417,12 +474,20 @@ namespace Competency.Platform.Migrations
 
                     b.HasIndex("DirectionId");
 
+                    b.HasIndex("PositionId");
+
                     b.HasIndex("TrackId");
+
+                    b.HasIndex("OrgUnitId", "PositionId")
+                        .IsUnique();
 
                     b.HasIndex("OrgUnitId", "TrackId")
                         .IsUnique();
 
-                    b.ToTable("competency_matrices", (string)null);
+                    b.ToTable("competency_matrices", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_competency_matrices_kind", "(direction_id IS NOT NULL AND track_id IS NOT NULL AND position_id IS NULL) OR (direction_id IS NULL AND track_id IS NULL AND position_id IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("Competency.CareerFramework.CompetencyScale", b =>
@@ -1152,6 +1217,20 @@ namespace Competency.Platform.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Competency.CareerFramework.CompetencyBlock", b =>
+                {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Competency.CareerFramework.CompetencyScale", null)
+                        .WithMany()
+                        .HasForeignKey("ScaleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Competency.CareerFramework.CompetencyCategory", b =>
                 {
                     b.HasOne("Competency.UserManagement.AppUser", null)
@@ -1165,8 +1244,7 @@ namespace Competency.Platform.Migrations
                     b.HasOne("Competency.CareerFramework.CareerDirection", null)
                         .WithMany()
                         .HasForeignKey("DirectionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Competency.OrgStructure.OrgUnit", null)
                         .WithMany()
@@ -1174,11 +1252,15 @@ namespace Competency.Platform.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Competency.OrgStructure.Position", null)
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Competency.CareerFramework.CareerTrack", null)
                         .WithMany()
                         .HasForeignKey("TrackId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Competency.CareerFramework.CompetencyScale", b =>

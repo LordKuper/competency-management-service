@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -9,7 +10,8 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// The API that lists the matrix versions using a catalogue entry: of the matrices of a direction or track, of the matrices listing a
-/// level, a competency or a competency of a category, and the versions on a scale. Archived versions are left out. Only the versions the
+/// level, a shared block, a competency, directly or through a shared block, or a competency of a category, and the versions on a scale,
+/// their own or a shared block's. Archived versions are left out. Only the versions the
 /// user may read are listed, so a hidden version is neither named nor counted; an entry the user cannot read answers 404.
 /// </summary>
 internal static class EntryMatrixEndpoints
@@ -47,22 +49,25 @@ internal static class EntryMatrixEndpoints
             .ToListAsync(cancellationToken);
         var readable = await route.ReadableAsync(viewer, versions, cancellationToken);
 
-        var trackIds = readable.Select(version => version.Matrix.TrackId).Distinct().ToList();
+        var trackIds = readable.Select(version => version.Matrix.TrackId).OfType<Guid>().Distinct().ToList();
         var trackNames = await context.Set<CareerTrack>()
             .Where(track => trackIds.Contains(track.Id))
             .ToDictionaryAsync(track => track.Id, track => track.Name, cancellationToken);
         var unitNames = await store.UnitNamesAsync(readable.Select(version => (Guid?)version.Matrix.OrgUnitId), cancellationToken);
+        var positionNames = await store.PositionNamesAsync(readable.Select(version => version.Matrix.PositionId), cancellationToken);
         return TypedResults.Ok(readable
             .Select(version => new EntryMatrixResponse(
                 version.MatrixId,
                 version.Matrix.OrgUnitId,
                 unitNames.GetValueOrDefault(version.Matrix.OrgUnitId, string.Empty),
                 version.Matrix.TrackId,
-                trackNames.GetValueOrDefault(version.Matrix.TrackId, string.Empty),
+                version.Matrix.TrackId is { } trackId ? trackNames.GetValueOrDefault(trackId, string.Empty) : null,
                 version.Id,
                 version.Number,
-                version.Status))
-            .OrderBy(row => row.TrackName, StringComparer.OrdinalIgnoreCase)
+                version.Status,
+                version.Matrix.PositionId,
+                version.Matrix.PositionId is { } positionId ? positionNames.GetValueOrDefault(positionId, string.Empty) : null))
+            .OrderBy(row => row.TrackName ?? row.PositionName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(row => row.OrgUnitName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(row => row.MatrixId)
             .ThenByDescending(row => row.Number)
@@ -77,9 +82,10 @@ internal static class EntryMatrixEndpoints
         {
             CareerDirection => versions.Where(version => version.Matrix.DirectionId == id),
             CareerTrack => versions.Where(version => version.Matrix.TrackId == id),
-            CompetencyScale => versions.Where(version => version.ScaleId == id),
+            CompetencyScale scale => store.VersionsOn(scale),
             CompetencyCategory category => InMatrices(versions, store.MatricesUsingCategory(category)),
-            _ => InMatrices(versions, store.MatricesUsing(entry)),
+            CareerLevel or CareerCompetency or CompetencyBlock => InMatrices(versions, store.MatricesUsing(entry)),
+            _ => throw new UnreachableException($"No matrix versions use entries of type {entry.GetType().Name}."),
         };
     }
 

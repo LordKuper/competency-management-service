@@ -34,12 +34,12 @@ internal enum MatrixProblemCode
     InactiveEntry,
 
     /// <summary>
-    /// A competency is not on the version's scale or not of the matrix direction.
+    /// A competency outside shared blocks is not on the version's scale, or a competency of a track matrix is not of the matrix direction.
     /// </summary>
     ForeignCompetency,
 
     /// <summary>
-    /// A required score is not a point of the version's scale.
+    /// A required score is not a point of the competency's scale: its shared block's, or else the version's.
     /// </summary>
     ScoreOutOfScale,
 
@@ -47,4 +47,29 @@ internal enum MatrixProblemCode
     /// A level of the matrix track has no linked active position.
     /// </summary>
     LevelWithoutActivePosition,
+
+    /// <summary>
+    /// A position matrix version has no competencies.
+    /// </summary>
+    NoCompetencies,
+
+    /// <summary>
+    /// A competency of a position matrix version has no required score.
+    /// </summary>
+    CompetencyWithoutScore,
+
+    /// <summary>
+    /// A competency of a shared block or outside blocks has no requirement in the version.
+    /// </summary>
+    CompetencyWithoutRequirements,
+
+    /// <summary>
+    /// A competency is in the version twice, in two of its groups.
+    /// </summary>
+    DuplicateCompetency,
+
+    /// <summary>
+    /// The position of a position matrix is no longer on the lists of the matrix unit and the units above it.
+    /// </summary>
+    PositionUnavailable,
 }

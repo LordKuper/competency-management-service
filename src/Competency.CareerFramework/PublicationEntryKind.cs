@@ -15,4 +15,5 @@ internal enum PublicationEntryKind
     Category,
     Competency,
     Scale,
+    Block,
 }
