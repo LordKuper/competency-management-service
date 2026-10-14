@@ -200,6 +200,27 @@
       "decision": "AC-38 step ruler in every multi-step wizard (total, names, current, done/remaining, jump to done step); folded into Task 14, 15, 16",
       "reason": "user instruction at impl assessment; cost AC-38: 0 iterations / 0 fix rounds",
       "evidence": "decisions-log.md 2026-10-13 AC-38 step ruler"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-39 no «Шаг n из N», AC-40 «Добавить шкалу», AC-41 scale points popover, AC-42 area on the spot in track form, AC-43 level name autocomplete; Task 17, 18 wave 12, Task 19 wave 13",
+      "reason": "user remarks at impl assessment; cost: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-14 scope amendment: wizard scale, area, level"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "impl-review of this sprint by the combined reviewer (lite roster) while workflow stays standard",
+      "reason": "user decision; frozen workflow cannot change (F-5)",
+      "evidence": "decisions-log.md 2026-10-14 impl-review по схеме lite"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-44 position matrix (unit + position, one column), AC-45 shared competency block (composition only), AC-46 block change: drafts at once, published via desk item, AC-47 competencies outside blocks; Task 20 wave 14, Task 21-22 wave 15, Task 23 wave 16, Task 24 wave 17; material architecture, public contract and migration change accepted",
+      "reason": "user decision at impl assessment (options 3 and 4 of the head-of-unit matrix discussion), in this sprint; cost AC-44..47: 0 iterations / 0 fix rounds (no impl review yet)",
+      "evidence": "decisions-log.md 2026-10-14 scope amendment: position matrix, shared blocks"
     }
   ],
   "task_routing": {
@@ -417,6 +438,12 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 20": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
       "resolved_model": "sonnet"
     }
   },
