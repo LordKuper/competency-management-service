@@ -41,7 +41,8 @@ export type CatalogSegment =
   | "levels"
   | "categories"
   | "competencies"
-  | "scales";
+  | "scales"
+  | "blocks";
 
 export const SEGMENT_OF_KIND: Record<CatalogKind, PublishableSegment> = {
   Direction: "directions",
@@ -49,6 +50,7 @@ export const SEGMENT_OF_KIND: Record<CatalogKind, PublishableSegment> = {
   Category: "categories",
   Competency: "competencies",
   Scale: "scales",
+  Block: "blocks",
 };
 
 /** Paging and search of a catalogue list; pages count from 1. */

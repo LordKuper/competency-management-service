@@ -203,7 +203,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
     <Flex vertical gap="middle">
       <ContextLine>
         <Typography.Text strong>
-          {`Матрица «${version.entries.track.name}» — ${unitName}`}
+          {`Матрица «${version.entries.track?.name ?? version.entries.position?.name}» — ${unitName}`}
         </Typography.Text>
         <Tag>{`Версия ${version.number}`}</Tag>
         <Tag color="warning">{VERSION_STATUS_LABELS[version.status]}</Tag>
@@ -291,7 +291,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
       </section>
       <CompletenessBlock
         problems={problems}
-        trackId={version.entries.track.id}
+        trackId={version.entries.track?.id ?? ""}
         warning={(count) =>
           `Проверка полноты с учётом правок: ${remarksText(count)}, повторно отправить версию нельзя.`
         }

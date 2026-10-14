@@ -169,7 +169,10 @@ function MatrixEditorBody({
   const { entries } = version;
   const changed = diff ? changedPlaces(diff.changes) : NO_CHANGES;
 
-  const catalogLevels = useQuery(levelsQuery(entries.track.id));
+  const catalogLevels = useQuery({
+    ...levelsQuery(entries.track?.id ?? ""),
+    enabled: entries.track !== null,
+  });
   const save = useMutation({
     mutationFn: (request: BuilderSave | undefined) =>
       saveMatrixContent(
@@ -240,7 +243,7 @@ function MatrixEditorBody({
   const competencyFilters = {
     ...IN_WORK,
     scaleId: version.scaleId,
-    directionId: entries.direction.id,
+    directionId: entries.direction?.id,
     withGeneral: true,
   };
 
@@ -276,7 +279,7 @@ function MatrixEditorBody({
           />
         ) : (
           <Typography.Text type="secondary">
-            {block && blockNames.get(block.blockId)}
+            {block?.blockId && blockNames.get(block.blockId)}
           </Typography.Text>
         )}
         {changed.competencies.has(competencyId) && (

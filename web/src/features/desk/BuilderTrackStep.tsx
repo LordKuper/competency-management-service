@@ -150,14 +150,14 @@ function CreatedVersion({
             <Input value={matrix.data?.orgUnitName} />
           </Form.Item>
           <Form.Item label="Трек">
-            <Input value={track.name} />
+            <Input value={track?.name} />
           </Form.Item>
           <Form.Item label="Шкала">
             <ScaleSelect value={scale.id} known={scale} disabled />
           </Form.Item>
         </Flex>
       </Form>
-      <LevelsTable trackId={track.id} trackName={track.name} />
+      {track && <LevelsTable trackId={track.id} trackName={track.name} />}
       <ActionBar>
         <Button type="primary" onClick={onNext}>
           Далее

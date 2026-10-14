@@ -21,6 +21,7 @@ export const KIND_LABELS: Record<CatalogKind, string> = {
   Category: "Категория",
   Competency: "Компетенция",
   Scale: "Шкала",
+  Block: "Общий блок",
 };
 
 /** Draft entries waiting for the signed-in HR, each approved from the row. Nothing is shown to a user who is no HR. */

@@ -86,8 +86,8 @@ function BuilderShell({ version }: { version: MatrixVersion | undefined }) {
     enabled: version !== undefined,
   });
   const track = useQuery({
-    ...trackQuery(version?.entries.track.id ?? ""),
-    enabled: version !== undefined,
+    ...trackQuery(version?.entries.track?.id ?? ""),
+    enabled: !!version?.entries.track,
   });
   const completeness = useQuery({
     ...matrixCompletenessQuery(version?.id ?? ""),
@@ -134,7 +134,10 @@ function BuilderShell({ version }: { version: MatrixVersion | undefined }) {
       {version && (
         <ContextLine>
           <Typography.Text>
-            {[matrix.data?.orgUnitName, `трек «${version.entries.track.name}»`]
+            {[
+              matrix.data?.orgUnitName,
+              `трек «${version.entries.track?.name ?? version.entries.position?.name}»`,
+            ]
               .filter(Boolean)
               .join(" · ")}
           </Typography.Text>

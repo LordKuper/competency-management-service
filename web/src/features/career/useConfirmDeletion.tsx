@@ -24,6 +24,7 @@ const KIND_LABELS: Record<Blocker["kind"], string> = {
   Competency: "Компетенция",
   CompetencyVersion: "Версия компетенции",
   Matrix: "Матрица",
+  Block: "Общий блок",
 };
 
 const PLURAL = new Intl.PluralRules("ru-RU");

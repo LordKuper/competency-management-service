@@ -81,7 +81,11 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
         >
           <CatalogSelect
             segment="tracks"
-            filters={{ ...IN_WORK, directionId, forOrgUnitId: orgUnitId }}
+            filters={{
+              ...IN_WORK,
+              directionId: directionId ?? undefined,
+              forOrgUnitId: orgUnitId,
+            }}
             disabled={!directionId || !orgUnitId}
           />
         </Form.Item>

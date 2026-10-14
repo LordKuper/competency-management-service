@@ -24,6 +24,11 @@ export const PROBLEM_STEP: Record<MatrixProblem["code"], number | null> = {
   ForeignCompetency: 2,
   ScoreOutOfScale: 3,
   LevelWithoutActivePosition: null,
+  NoCompetencies: 2,
+  CompetencyWithoutScore: 3,
+  CompetencyWithoutRequirements: 3,
+  DuplicateCompetency: 2,
+  PositionUnavailable: null,
 };
 
 /** «Шаг 3 «Требования»». */

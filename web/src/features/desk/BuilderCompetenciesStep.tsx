@@ -74,12 +74,15 @@ function CompetenciesBody({
       page: 1,
       pageSize: MAX_PAGE_SIZE,
       scaleId: version.scaleId,
-      directionId: version.entries.direction.id,
+      directionId: version.entries.direction?.id,
       withGeneral: true,
       inWork: true,
     }),
   );
-  const trackLevels = useQuery(levelsQuery(version.entries.track.id));
+  const trackLevels = useQuery({
+    ...levelsQuery(version.entries.track?.id ?? ""),
+    enabled: version.entries.track !== null,
+  });
   const save = useMutation({
     mutationFn: (request: { step: number; then: "next" | "exit" }) =>
       saveMatrixContent(

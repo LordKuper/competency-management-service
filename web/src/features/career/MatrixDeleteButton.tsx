@@ -34,7 +34,7 @@ export function useMatrixDeletion({
   return () =>
     confirmDeletion({
       kind: "матрицу",
-      name: matrix.trackName,
+      name: matrix.trackName ?? matrix.positionName ?? "",
       run: () => deleteMatrix(matrix.id, inWorkTag ?? inWorkVersion.version),
       onDeleted,
     });

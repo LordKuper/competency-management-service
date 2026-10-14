@@ -27,7 +27,10 @@ interface BuilderSubmitStepProps {
 export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
   const { message } = App.useApp();
   const navigate = useNavigate();
-  const track = useQuery(trackQuery(version.entries.track.id));
+  const track = useQuery({
+    ...trackQuery(version.entries.track?.id ?? ""),
+    enabled: version.entries.track !== null,
+  });
   const completeness = useQuery({
     ...matrixCompletenessQuery(version.id),
     refetchOnMount: "always",
@@ -82,7 +85,7 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
       {problems.length > 0 ? (
         <CompletenessBlock
           problems={problems}
-          trackId={version.entries.track.id}
+          trackId={version.entries.track?.id ?? ""}
           warning={(count) =>
             `Версию пока нельзя отправить: ${remarksText(count)}`
           }
@@ -122,7 +125,7 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
             <Typography.Paragraph type="secondary">
               {`Версия уйдёт ${shortName(receiver.name)}; ему и далее HR придёт письмо.`}
               {track.data?.status === "Draft" &&
-                ` Трек «${version.entries.track.name}» — черновой: он опубликуется вместе с версией, если HR вправе его утвердить.`}
+                ` Трек «${version.entries.track?.name}» — черновой: он опубликуется вместе с версией, если HR вправе его утвердить.`}
             </Typography.Paragraph>
           )}
         </section>

@@ -26,6 +26,7 @@ export const KIND_ACCUSATIVE: Record<CatalogSegment, string> = {
   categories: "категорию",
   competencies: "компетенцию",
   scales: "шкалу",
+  blocks: "общий блок",
 };
 
 const CREATED_AS_DRAFT: Record<PublishableSegment, string> = {
@@ -34,6 +35,7 @@ const CREATED_AS_DRAFT: Record<PublishableSegment, string> = {
   categories: "Категория",
   competencies: "Компетенция",
   scales: "Шкала",
+  blocks: "Общий блок",
 };
 
 const CREATED_ENDING: Record<PublishableSegment, string> = {
@@ -42,6 +44,7 @@ const CREATED_ENDING: Record<PublishableSegment, string> = {
   categories: "создана",
   competencies: "создана",
   scales: "создана",
+  blocks: "создан",
 };
 
 /** What each kind of record of a publication list is called. */
@@ -52,6 +55,7 @@ export const KIND_LABELS: Record<PublicationEntry["kind"], string> = {
   Category: "Категория",
   Competency: "Компетенция",
   Scale: "Шкала",
+  Block: "Общий блок",
 };
 
 const REASON_TEXTS: Record<PublicationBlocker["reason"], string> = {
@@ -59,6 +63,7 @@ const REASON_TEXTS: Record<PublicationBlocker["reason"], string> = {
   NoLevels: "у трека нет уровней",
   NoActivePosition: "нет действующей должности",
   NameTaken: "такое название уже занято",
+  EmptyBlock: "состав блока пуст",
 };
 
 const PLURAL = new Intl.PluralRules("ru-RU");

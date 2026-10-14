@@ -11,7 +11,10 @@ export function useVersionNames(
   version: MatrixVersion,
   extraCompetencyIds: readonly string[] = [],
 ) {
-  const catalogLevels = useQuery(levelsQuery(version.entries.track.id));
+  const catalogLevels = useQuery({
+    ...levelsQuery(version.entries.track?.id ?? ""),
+    enabled: version.entries.track !== null,
+  });
   const levelNames = new Map<string, string>([
     ...(catalogLevels.data?.items ?? []).map(
       (level) => [level.id, level.name] as const,

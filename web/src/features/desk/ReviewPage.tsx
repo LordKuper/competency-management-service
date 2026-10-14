@@ -101,7 +101,8 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
       ? `Согласовать недоступно: ${remarksText(problems.length)} полноты`
       : null;
   const unitName = matrix.data?.orgUnitName ?? "";
-  const trackName = version.entries.track.name;
+  const trackName =
+    version.entries.track?.name ?? version.entries.position?.name ?? "";
 
   function approve() {
     void transition.decide({
@@ -218,7 +219,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
       )}
       <CompletenessBlock
         problems={problems}
-        trackId={version.entries.track.id}
+        trackId={version.entries.track?.id ?? ""}
         warning={(count) =>
           isPublishing
             ? `Проверка полноты: опубликовать версию нельзя, ${remarksText(count)}`

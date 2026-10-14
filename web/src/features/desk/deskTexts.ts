@@ -149,6 +149,7 @@ const TYPE_LABELS: Record<DeskObject["type"], string> = {
   Category: "Категория",
   Competency: "Компетенция",
   Scale: "Шкала",
+  Block: "Общий блок",
   Position: "Должность",
   Employee: "Сотрудник",
   UserAccount: "Учётная запись",
@@ -315,6 +316,10 @@ function reasonOf(reason: DeskReason, item: DeskItem): ReasonLine[] {
       return [{ text: `Опирается на неактивное: ${inactiveEntries(entries)}` }];
     case "MatrixLevelsChanged":
       return [{ text: `Не покрывает уровни трека: ${levelChanges(details)}` }];
+    case "MatrixSharedBlockChanged":
+      return entries.map((block) => ({
+        text: `Общий блок изменился: «${block.name}» — состав отличается от опубликованной версии`,
+      }));
     case "MatrixCompetencyChanged":
       return [
         {

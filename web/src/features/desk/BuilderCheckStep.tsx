@@ -61,7 +61,7 @@ export function BuilderCheckStep({
       ) : (
         <CompletenessBlock
           problems={problems}
-          trackId={version.entries.track.id}
+          trackId={version.entries.track?.id ?? ""}
           warning={(count) =>
             `Версию пока нельзя отправить: ${remarksText(count)}`
           }
