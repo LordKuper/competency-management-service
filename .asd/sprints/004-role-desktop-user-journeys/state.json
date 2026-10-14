@@ -394,6 +394,12 @@
       "tier": "standard",
       "reason": "owner asd-ba (docs/product)",
       "resolved_model": "sonnet"
+    },
+    "Task 19": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],

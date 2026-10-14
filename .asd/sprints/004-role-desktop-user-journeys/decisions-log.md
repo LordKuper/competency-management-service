@@ -109,3 +109,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: sprint.md, plan.md
 - 2026-10-14 — route Task 17: standard (owner asd-ux — docs/ux), dispatch HEAD 8193490
 - 2026-10-14 — route Task 18: standard (owner asd-ba — docs/product), dispatch HEAD 8193490
+- 2026-10-14 — Task 18 COMPLETED (301690a): desk AC-187 (изм.), AC-189, AC-190; career-framework AC-118…AC-120
+- 2026-10-14 — Task 17 COMPLETED (e9904df). Flagged choices приняты оркестратором: поле «Область» в окне трека при создании (из строки области — заполнено, из мастера — пусто), при правке нет; автодополнение уровня — до 10 уникальных названий, первые 10 при пустом фокусе; кнопка мастера «Создать трек» переименовывается в «Добавить трек» — пользователь называет её так, и «Добавить шкалу» по аналогии (правка desk.html — в Task 19 по согласованию с asd-ux)
+- 2026-10-14 — route Task 19: standard, dispatch HEAD e9904df
