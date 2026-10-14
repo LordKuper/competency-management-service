@@ -2089,6 +2089,8 @@ export interface components {
         CompetencyBlockRequest: {
             /** Format: uuid */
             scaleId: string;
+            /** Format: uuid */
+            scopeUnitId?: null | string;
             competencyIds: string[];
             name: string;
         };
@@ -2105,6 +2107,9 @@ export interface components {
             version: number;
             canEdit: boolean;
             canDelete: boolean;
+            /** Format: uuid */
+            scopeUnitId?: null | string;
+            scopeUnitName?: null | string;
         };
         CompetencyRequest: {
             description: null | string;
@@ -2484,6 +2489,8 @@ export interface components {
             /** Format: int32 */
             versionNumber: number;
             status: components["schemas"]["CatalogStatus"];
+            /** Format: uuid */
+            scaleId?: null | string;
         };
         MatrixCompletenessResponse: {
             problems: components["schemas"]["MatrixProblem"][];
@@ -2524,11 +2531,12 @@ export interface components {
         MatrixEntries: {
             direction: null | components["schemas"]["MatrixNamedEntry"];
             track: null | components["schemas"]["MatrixNamedEntry"];
-            scale: components["schemas"]["MatrixScaleEntry"];
+            scale: null | components["schemas"]["MatrixScaleEntry"];
             levels: components["schemas"]["MatrixLevelEntry"][];
             competencies: components["schemas"]["MatrixCompetencyEntry"][];
             position?: null | components["schemas"]["MatrixNamedEntry"];
             sharedBlocks?: null | components["schemas"]["MatrixSharedBlockEntry"][];
+            scales?: null | components["schemas"]["MatrixScaleEntry"][];
         };
         MatrixHistoryResponse: {
             variants: components["schemas"]["MatrixVariantSummaryResponse"][];
@@ -2568,7 +2576,7 @@ export interface components {
             competencyId?: null | string;
         };
         /** @enum {unknown} */
-        MatrixProblemCode: "NoLevels" | "LevelWithoutRequirements" | "BlockWeights" | "CriticalWithoutScore" | "InactiveEntry" | "ForeignCompetency" | "ScoreOutOfScale" | "LevelWithoutActivePosition" | "NoCompetencies" | "CompetencyWithoutScore" | "CompetencyWithoutRequirements" | "DuplicateCompetency" | "PositionUnavailable";
+        MatrixProblemCode: "NoLevels" | "LevelWithoutRequirements" | "BlockWeights" | "CriticalWithoutScore" | "InactiveEntry" | "ForeignCompetency" | "ScoreOutOfScale" | "LevelWithoutActivePosition" | "NoCompetencies" | "CompetencyWithoutScore" | "CompetencyWithoutRequirements" | "DuplicateCompetency" | "PositionUnavailable" | "SharedBlockUnavailable";
         MatrixPublicationResponse: {
             publishingActions: components["schemas"]["MatrixAction"][];
             entries: components["schemas"]["PublicationEntry"][];
@@ -2677,8 +2685,11 @@ export interface components {
             number: number;
             status: components["schemas"]["MatrixVersionStatus"];
             step: null | components["schemas"]["ApprovalStep"];
-            /** Format: uuid */
-            scaleId: string;
+            /**
+             * Format: uuid
+             * @description Deprecated, removed in the next major version: the one scale of a version published before matrices lost their scale; null otherwise. Use competencies[].scaleId and scales.
+             */
+            scaleId: null | string;
             /** Format: uuid */
             authorId: string;
             authorName: null | string;
@@ -2796,8 +2807,11 @@ export interface components {
             trackId?: null | string;
             /** Format: uuid */
             positionId?: null | string;
-            /** Format: uuid */
-            scaleId: string;
+            /**
+             * Format: uuid
+             * @description Deprecated, removed in the next major version: accepted and ignored, a matrix has no scale.
+             */
+            scaleId?: null | string;
         };
         OrgUnitHrPersonResponse: {
             /** Format: uuid */
@@ -10946,6 +10960,9 @@ export interface operations {
                 page?: number;
                 pageSize?: number;
                 scaleId?: string;
+                scopeUnitId?: string;
+                forAll?: boolean;
+                availableFor?: string;
             };
             header?: never;
             path?: never;

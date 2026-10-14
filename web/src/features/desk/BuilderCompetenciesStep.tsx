@@ -113,7 +113,7 @@ function CompetenciesBody({
       q: q || undefined,
       page: 1,
       pageSize: MAX_PAGE_SIZE,
-      scaleId: version.scaleId,
+      scaleId: version.scaleId ?? undefined,
       directionId: entries.direction?.id,
       withGeneral: true,
       inWork: true,
@@ -285,7 +285,7 @@ function CompetenciesBody({
             Компетенции вне блоков
           </Typography.Title>
           <Typography.Text type="secondary">
-            {`Показаны компетенции шкалы версии «${entries.scale.name}»`}
+            {`Показаны компетенции шкалы версии «${entries.scale?.name ?? ""}»`}
           </Typography.Text>
           <Flex align="center" gap="middle" wrap>
             <Input.Search
@@ -380,7 +380,7 @@ function CompetenciesBody({
       </Flex>
       {isCreating && (
         <CompetencyModal
-          fixedScale={entries.scale}
+          fixedScale={entries.scale ?? undefined}
           onSaved={(created) => {
             choose(created.id, true);
             setHighlightedId(created.id);

@@ -183,7 +183,11 @@ function CreatedVersion({
             <Input value={position?.name ?? track?.name} />
           </Form.Item>
           <Form.Item label="Шкала">
-            <ScaleSelect value={scale.id} known={scale} disabled />
+            <ScaleSelect
+              value={scale?.id}
+              known={scale ?? undefined}
+              disabled
+            />
           </Form.Item>
         </Flex>
       </Form>

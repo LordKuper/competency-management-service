@@ -198,7 +198,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
             diff={changes.data}
             levelNames={levelNames}
             competencyNames={competencyNames}
-            scalePoints={version.entries.scale.points}
+            scalePoints={version.entries.scale?.points ?? []}
             columns={{ before: "Действует", after: "В этой версии" }}
             emptyText="Отличий от опубликованной версии нет."
           />
@@ -211,7 +211,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
             diff={approverChanges}
             levelNames={levelNames}
             competencyNames={competencyNames}
-            scalePoints={version.entries.scale.points}
+            scalePoints={version.entries.scale?.points ?? []}
             columns={{ before: "Было", after: "Стало" }}
             emptyText="Правок нет."
           />

@@ -26,7 +26,7 @@ interface MatrixChangesProps {
   diff: MatrixDiff;
   levelNames: ReadonlyMap<string, string>;
   competencyNames: ReadonlyMap<string, string>;
-  scalePoints: MatrixVersion["entries"]["scale"]["points"];
+  scalePoints: NonNullable<MatrixVersion["entries"]["scale"]>["points"];
 }
 
 function quoted(name: string | undefined) {
@@ -49,7 +49,7 @@ export function describeChanges(
   diff: MatrixDiff,
   levelNames: ReadonlyMap<string, string>,
   competencyNames: ReadonlyMap<string, string>,
-  scalePoints: MatrixVersion["entries"]["scale"]["points"],
+  scalePoints: NonNullable<MatrixVersion["entries"]["scale"]>["points"],
 ): (change: MatrixChange) => ChangeDescription {
   const blockName = (content: MatrixContent, blockId: string | null) =>
     content.blocks.find((block) => block.id === blockId)?.name;

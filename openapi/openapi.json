@@ -10487,6 +10487,29 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "scopeUnitId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "forAll",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "availableFor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -13891,6 +13914,13 @@
             "type": "string",
             "format": "uuid"
           },
+          "scopeUnitId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
           "competencyIds": {
             "type": "array",
             "items": {
@@ -13949,6 +13979,19 @@
           },
           "canDelete": {
             "type": "boolean"
+          },
+          "scopeUnitId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "scopeUnitName": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -15371,6 +15414,13 @@
           },
           "status": {
             "$ref": "#/components/schemas/CatalogStatus"
+          },
+          "scaleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -15580,7 +15630,15 @@
             ]
           },
           "scale": {
-            "$ref": "#/components/schemas/MatrixScaleEntry"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Deprecated, removed in the next major version: the one scale of a version published before matrices lost their scale; null otherwise. Use competencies[].scaleId and scales.",
+                "$ref": "#/components/schemas/MatrixScaleEntry"
+              }
+            ]
           },
           "levels": {
             "type": "array",
@@ -15611,6 +15669,15 @@
             ],
             "items": {
               "$ref": "#/components/schemas/MatrixSharedBlockEntry"
+            }
+          },
+          "scales": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MatrixScaleEntry"
             }
           }
         }
@@ -15770,7 +15837,8 @@
           "CompetencyWithoutScore",
           "CompetencyWithoutRequirements",
           "DuplicateCompetency",
-          "PositionUnavailable"
+          "PositionUnavailable",
+          "SharedBlockUnavailable"
         ]
       },
       "MatrixPublicationResponse": {
@@ -16200,7 +16268,11 @@
             ]
           },
           "scaleId": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Deprecated, removed in the next major version: the one scale of a version published before matrices lost their scale; null otherwise. Use competencies[].scaleId and scales.",
             "format": "uuid"
           },
           "authorId": {
@@ -16646,8 +16718,7 @@
       },
       "NewMatrixRequest": {
         "required": [
-          "orgUnitId",
-          "scaleId"
+          "orgUnitId"
         ],
         "type": "object",
         "properties": {
@@ -16677,7 +16748,11 @@
             "format": "uuid"
           },
           "scaleId": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Deprecated, removed in the next major version: accepted and ignored, a matrix has no scale.",
             "format": "uuid"
           }
         }

@@ -266,7 +266,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
                 diff={approverDiff.data}
                 levelNames={levelNames}
                 competencyNames={competencyNames}
-                scalePoints={version.entries.scale.points}
+                scalePoints={version.entries.scale?.points ?? []}
                 columns={{
                   before: "Ваш вариант",
                   after: "Правка согласующего",

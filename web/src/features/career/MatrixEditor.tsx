@@ -323,7 +323,7 @@ function MatrixEditorBody({
     .map((level) => ({ value: level.id, label: level.name }));
   const competencyFilters = {
     ...IN_WORK,
-    scaleId: version.scaleId,
+    scaleId: version.scaleId ?? undefined,
     directionId: entries.direction?.id,
     withGeneral: true,
   };
@@ -580,10 +580,9 @@ function MatrixEditorBody({
   const isBlocksShown = builder === undefined || builder.part === "formula";
 
   const usedScales = [
-    entries.scale,
-    ...sharedEntries
-      .map((block) => block.scale)
-      .filter((scale) => scale.id !== entries.scale.id),
+    ...(entries.scales ?? []),
+    ...(entries.scale ? [entries.scale] : []),
+    ...sharedEntries.map((block) => block.scale),
   ].filter(
     (scale, index, all) =>
       all.findIndex((other) => other.id === scale.id) === index,
@@ -682,7 +681,7 @@ function MatrixEditorBody({
                 ]),
               )
             }
-            scalePoints={entries.scale.points}
+            scalePoints={entries.scale?.points ?? []}
           />
         )}
         {isGridShown &&

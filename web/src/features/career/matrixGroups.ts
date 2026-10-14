@@ -11,7 +11,9 @@ export const OUTSIDE_LABEL = "Вне блоков";
 /** The name of the single requirements column of a position matrix. */
 export const POSITION_COLUMN_LABEL = "Требуемый балл";
 
-type Scale = MatrixVersion["entries"]["scale"];
+type Scale = NonNullable<MatrixVersion["entries"]["scale"]>;
+
+const NO_SCALE: Scale = { id: "", name: "", points: [], status: "Active" };
 
 /** The shared blocks of a version as its entries describe them: their scale and the composition they have now. */
 export function sharedEntriesOf(
@@ -39,12 +41,21 @@ export function sharedBlockOf(
   );
 }
 
-/** The scale a requirement for the competency is a score of: its shared block's, else the version's. */
+/** The scale a requirement for the competency is a score of: its shared block's, else its own, else the scale of a version published with one. */
 export function scaleOfCompetency(
   version: Pick<MatrixVersion, "entries">,
   competencyId: string,
 ): Scale {
-  return sharedBlockOf(version, competencyId)?.scale ?? version.entries.scale;
+  const { entries } = version;
+  const scaleId = entries.competencies.find(
+    (competency) => competency.id === competencyId,
+  )?.scaleId;
+  return (
+    sharedBlockOf(version, competencyId)?.scale ??
+    entries.scales?.find((scale) => scale.id === scaleId) ??
+    entries.scale ??
+    NO_SCALE
+  );
 }
 
 /** Every competency a version holds: its own and outside ones in content order, then those its shared blocks bring. */

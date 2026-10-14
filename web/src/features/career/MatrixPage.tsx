@@ -267,7 +267,7 @@ export function MatrixPage() {
           {
             key: "scale",
             label: matrix.positionId ? "Шкала версии" : "Шкала",
-            children: version.entries.scale.name,
+            children: version.entries.scale?.name,
           },
         ]}
       />

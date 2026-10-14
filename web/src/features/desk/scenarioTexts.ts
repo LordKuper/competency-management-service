@@ -29,6 +29,7 @@ export const PROBLEM_STEP: Record<MatrixProblem["code"], number | null> = {
   CompetencyWithoutRequirements: 3,
   DuplicateCompetency: 2,
   PositionUnavailable: null,
+  SharedBlockUnavailable: 2,
 };
 
 /** «Шаг 3 «Требования»». */

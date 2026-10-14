@@ -19,7 +19,7 @@ interface ChangesBlockProps {
   diff: MatrixDiff;
   levelNames: ReadonlyMap<string, string>;
   competencyNames: ReadonlyMap<string, string>;
-  scalePoints: MatrixVersion["entries"]["scale"]["points"];
+  scalePoints: NonNullable<MatrixVersion["entries"]["scale"]>["points"];
   /** Heads of the columns with the values before and after. */
   columns: { before: string; after: string };
   /** What the table says when nothing changed. */
