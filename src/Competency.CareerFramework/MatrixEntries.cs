@@ -6,7 +6,7 @@ namespace Competency.CareerFramework;
 /// The catalogue entries a matrix version refers to, as they stand: read live for a version in work, and frozen into a published
 /// version at publication, so later renames and edits of the entries never change a published version. A track matrix names its
 /// direction and track, a position matrix its position. The competencies include those of the shared blocks, each with its scale, and
-/// the scales are those of the competencies and blocks; a matrix has no scale of its own.
+/// the scales are those of the competencies; neither a matrix nor a shared block has a scale of its own.
 /// </summary>
 internal sealed record MatrixEntries(
     MatrixNamedEntry? Direction,
@@ -30,7 +30,7 @@ internal sealed record MatrixEntries(
     public IReadOnlyList<MatrixSharedBlockEntry> SharedBlocks { get; init; } = SharedBlocks ?? [];
 
     /// <summary>
-    /// The scales of the version's competencies and shared blocks with their points, one entry per scale.
+    /// The scales of the version's competencies with their points, one entry per scale.
     /// </summary>
     public IReadOnlyList<MatrixScaleEntry> Scales { get; init; } = Scales ?? [];
 

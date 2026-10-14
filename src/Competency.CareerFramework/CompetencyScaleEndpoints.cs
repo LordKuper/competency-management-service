@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of competency scales. Scale names are unique across the catalogue. A scale a competency or a shared block of a published or
-/// archived matrix version was on never changes, so the version keeps meaning what it meant; the catalogue lock, which publication also
+/// The API of competency scales. Scale names are unique across the catalogue. A scale a competency of a published or archived matrix
+/// version was on never changes, so the version keeps meaning what it meant; the catalogue lock, which publication also
 /// takes, keeps the check and a publication apart. Exactly one scale is the default; making another active scale the default takes the
-/// flag from the previous one. A scale other than the default that no competency, version in a competency's history or shared block is on
-/// can be deleted; matrices have no scale of their own.
+/// flag from the previous one. A scale other than the default that no competency or version in a competency's history is on can be
+/// deleted; matrices and shared blocks have no scale of their own.
 /// </summary>
 internal static class CompetencyScaleEndpoints
 {
@@ -21,7 +21,7 @@ internal static class CompetencyScaleEndpoints
     private const string PublishedMessage = "Используется в опубликованной матрице — изменить нельзя";
     private const string InactiveDefaultMessage = "По умолчанию может быть только действующая шкала";
     private const string DefaultDeletionMessage = "Шкалу по умолчанию удалить нельзя";
-    private const string InUseMessage = "Шкалу используют компетенции или общие блоки — удалить нельзя";
+    private const string InUseMessage = "Шкалу используют компетенции — удалить нельзя";
 
     internal static readonly CatalogKind<CompetencyScale, CompetencyScaleResponse> Kind = new("CompetencyScale", (scale, _, viewer) => CompetencyScaleResponse.From(scale, viewer));
 
@@ -63,7 +63,6 @@ internal static class CompetencyScaleEndpoints
             competencies.Where(competency => competency.ScaleId != id
                 && context.Set<CompetencyVersion>().Any(version => version.CompetencyId == competency.Id && version.ScaleId == id)),
             DeletionBlockerKind.CompetencyVersion);
-        await blockers.AddAsync(context.Set<CompetencyBlock>().Where(block => block.ScaleId == id), DeletionBlockerKind.Block);
         return blockers.Any ? InUseMessage : null;
     }
 

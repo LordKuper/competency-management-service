@@ -9,7 +9,7 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The one rule of making career entries active. Approving or reactivating a catalogue entry, and publishing a matrix version, make
 /// active with the root every draft it refers to, directly or through other entries, or nothing at all: a track takes its direction and
-/// draft levels, a competency its category, direction and scale, a shared block its scale and the competencies of its composition, a
+/// draft levels, a competency its category, direction and scale, a shared block the competencies of its composition, a
 /// version the track of a track matrix with the track's levels, its shared blocks, its competencies and, through the active ones too,
 /// their drafts. Each draft must be one the right that counts may approve with it, have a name nothing published already has, as
 /// a track be ready, and as a shared block have competencies. The plan runs under the caller's locks for an action, and without locks
@@ -210,15 +210,14 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
     }
 
     /// <summary>
-    /// The drafts of shared blocks: their scales and the draft competencies of their compositions, and through those competencies other
-    /// than inactive ones their own drafts.
+    /// The drafts of shared blocks: the draft competencies of their compositions, and through those competencies other than inactive ones
+    /// their own drafts, scales among them.
     /// </summary>
     private async Task<List<CatalogEntry>> BlockDraftsAsync(IReadOnlyCollection<CompetencyBlock> blocks, CancellationToken cancellationToken)
     {
         var competencies = await NotInactiveAsync<CareerCompetency>([.. blocks.SelectMany(block => block.CompetencyIds).Distinct()], cancellationToken);
         return
         [
-            .. await DraftsAsync<CompetencyScale>([.. blocks.Select(block => block.ScaleId)], cancellationToken),
             .. competencies.Where(IsDraft),
             .. await ReferenceDraftsAsync(competencies, cancellationToken),
         ];

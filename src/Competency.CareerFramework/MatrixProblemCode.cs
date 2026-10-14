@@ -39,7 +39,7 @@ internal enum MatrixProblemCode
     ForeignCompetency,
 
     /// <summary>
-    /// A required score is not a point of the competency's scale: its shared block's, or else its own.
+    /// A required score is not a point of the competency's own scale.
     /// </summary>
     ScoreOutOfScale,
 

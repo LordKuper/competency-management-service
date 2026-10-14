@@ -369,10 +369,6 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
-                    b.Property<Guid>("ScaleId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("scale_id");
-
                     b.Property<Guid?>("ScopeUnitId")
                         .HasColumnType("uuid")
                         .HasColumnName("scope_unit_id");
@@ -391,8 +387,6 @@ namespace Competency.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");
-
-                    b.HasIndex("ScaleId");
 
                     b.HasIndex("ScopeUnitId");
 
@@ -1223,12 +1217,6 @@ namespace Competency.Platform.Migrations
                         .WithMany()
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Competency.CareerFramework.CompetencyScale", null)
-                        .WithMany()
-                        .HasForeignKey("ScaleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
 
                     b.HasOne("Competency.OrgStructure.OrgUnit", null)
                         .WithMany()

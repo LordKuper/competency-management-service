@@ -225,8 +225,8 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
-    /// The matrix versions with a competency or a shared block on the scale: a published or archived one by the scales frozen in its
-    /// snapshot, any other by the competencies and blocks of its document and variants as they stand now.
+    /// The matrix versions with a competency on the scale, outside blocks or in the composition of a shared block: a published or archived
+    /// one by the scales frozen in its snapshot, any other by the competencies and blocks of its document and variants as they stand now.
     /// </summary>
     /// <param name="scale">The scale.</param>
     /// <returns>The versions, a query to compose with others.</returns>
@@ -236,23 +236,22 @@ internal sealed class CatalogStore(
         var versionIds = context.Database.SqlQuery<Guid>($"""
             SELECT v.id AS "Value" FROM matrix_versions v
             WHERE v.snapshot -> 'scales' @> jsonb_build_array(jsonb_build_object('id', {id}::text))
-                OR (v.snapshot IS NULL AND (
-                    EXISTS (
-                        SELECT 1 FROM competencies c
-                        WHERE c.scale_id = {id}
-                            AND (v.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', c.id::text))
-                                OR EXISTS (
-                                    SELECT 1 FROM matrix_version_variants variant
-                                    WHERE variant.version_id = v.id
-                                        AND variant.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', c.id::text)))))
-                    OR EXISTS (
-                        SELECT 1 FROM competency_blocks b
-                        WHERE b.scale_id = {id}
-                            AND (v.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text))
-                                OR EXISTS (
-                                    SELECT 1 FROM matrix_version_variants variant
-                                    WHERE variant.version_id = v.id
-                                        AND variant.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text)))))))
+                OR (v.snapshot IS NULL AND EXISTS (
+                    SELECT 1 FROM competencies c
+                    WHERE c.scale_id = {id}
+                        AND (v.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', c.id::text))
+                            OR EXISTS (
+                                SELECT 1 FROM matrix_version_variants variant
+                                WHERE variant.version_id = v.id
+                                    AND variant.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', c.id::text)))
+                            OR EXISTS (
+                                SELECT 1 FROM competency_blocks b
+                                WHERE b.competency_ids @> jsonb_build_array(c.id::text)
+                                    AND (v.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text))
+                                        OR EXISTS (
+                                            SELECT 1 FROM matrix_version_variants variant
+                                            WHERE variant.version_id = v.id
+                                                AND variant.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text))))))))
             """);
         return context.Set<MatrixVersion>().Where(version => versionIds.Contains(version.Id));
     }
@@ -322,8 +321,8 @@ internal sealed class CatalogStore(
     /// <summary>
     /// The active entries nothing uses, the one definition every list of them shares: competencies no matrix version, variant or
     /// published snapshot lists, directly or in the composition of a shared block a version or variant includes; scales other than the
-    /// default that no competency and no shared block is on; categories no competency is of and no published snapshot names; directions
-    /// without tracks.
+    /// default that no competency is on, in its current version or in its history; categories no competency is of and no published
+    /// snapshot names; directions without tracks.
     /// </summary>
     /// <param name="cancellationToken">Cancels the queries.</param>
     /// <returns>The competencies, then the scales, categories and directions, each in name order.</returns>
@@ -346,14 +345,14 @@ internal sealed class CatalogStore(
             """);
         var competencies = context.Set<CareerCompetency>();
         var tracks = context.Set<CareerTrack>();
-        var blocks = context.Set<CompetencyBlock>();
+        var competencyVersions = context.Set<CompetencyVersion>();
         return
         [
             .. await ActiveByName(competencies.Where(competency => !usedCompetencyIds.Contains(competency.Id)), cancellationToken),
             .. await ActiveByName(
                 context.Set<CompetencyScale>().Where(scale => !scale.IsDefault
                     && !competencies.Any(competency => competency.ScaleId == scale.Id)
-                    && !blocks.Any(block => block.ScaleId == scale.Id)),
+                    && !competencyVersions.Any(version => version.ScaleId == scale.Id)),
                 cancellationToken),
             .. await ActiveByName(
                 context.Set<CompetencyCategory>().Where(category => !competencies.Any(competency => competency.CategoryId == category.Id)

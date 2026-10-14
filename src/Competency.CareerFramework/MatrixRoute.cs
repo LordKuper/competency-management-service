@@ -138,7 +138,7 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// <param name="below">The units strictly below the user's headed units, as <see cref="UnitsBelowHeadedAsync"/> finds them.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
     /// <returns>The identifiers of the levels, shared blocks, competencies with those of the blocks, categories of those competencies and
-    /// scales of those competencies and blocks.</returns>
+    /// scales of those competencies.</returns>
     public async Task<IReadOnlySet<Guid>> RouteEntryIdsAsync(
         CatalogViewer viewer,
         IReadOnlyDictionary<Guid, OrgUnitStatus> below,
@@ -167,7 +167,6 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
         {
             foreach (var block in await context.Set<CompetencyBlock>().AsNoTracking().Where(block => blockIds.Contains(block.Id)).ToListAsync(cancellationToken))
             {
-                ids.Add(block.ScaleId);
                 competencyIds.UnionWith(block.CompetencyIds);
             }
         }

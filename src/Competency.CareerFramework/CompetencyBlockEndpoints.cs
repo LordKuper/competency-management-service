@@ -10,25 +10,23 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of shared blocks of competencies. Block names are unique across the catalogue. A block holds competencies of its own scale,
-/// each once; an active block needs at least one and refers to active competencies only. Its scale changes only while no matrix version
-/// includes it. A block applies to all matrices or to those of one active unit and the units below it; a unit head proposes and edits
-/// only drafts that apply to a unit of the subtrees they head. A block no matrix version, variant or snapshot includes can be deleted.
+/// The API of shared blocks of competencies. Block names are unique across the catalogue. A block has no scale: it holds competencies of
+/// any scales, each once; an active block needs at least one and refers to active competencies only. A block applies to all matrices or
+/// to those of one active unit and the units below it; a unit head proposes and edits only drafts that apply to a unit of the subtrees
+/// they head. A block no matrix version, variant or snapshot includes can be deleted.
 /// </summary>
 internal static class CompetencyBlockEndpoints
 {
     private const string Route = "/api/v1/career/blocks";
-    private const string ScaleField = "scaleId";
     private const string ScopeField = "scopeUnitId";
     private const string EmptyMessage = "Состав блока пуст";
-    private const string ScaleInUseMessage = "Шкалу блока используют матрицы — изменить нельзя";
     private const string InUseMessage = "Общий блок используют матрицы — удалить нельзя";
     private const string DraftReferenceMessage = "Выбрана черновая запись — сначала утвердите её";
 
     internal static readonly CatalogKind<CompetencyBlock, CompetencyBlockResponse> Kind = new(
         "CompetencyBlock",
         CompetencyBlockResponse.From,
-        References: block => [block.ScaleId, .. block.CompetencyIds.Select(id => (Guid?)id)]);
+        References: block => [.. block.CompetencyIds.Select(id => (Guid?)id)]);
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -57,13 +55,12 @@ internal static class CompetencyBlockEndpoints
     }
 
     /// <summary>
-    /// Lists the blocks the user can read: optionally on one scale, applying to one unit, applying to all (<c>forAll=true</c>) or to a
+    /// Lists the blocks the user can read: optionally applying to one unit, applying to all (<c>forAll=true</c>) or to a
     /// unit (<c>forAll=false</c>), and available to the matrices of a unit (<c>availableFor</c>): those applying to all, to the unit or to a
     /// unit above it.
     /// </summary>
     private static async Task<Results<Ok<PageResponse<CompetencyBlockResponse>>, ValidationProblem>> ListAsync(
         [AsParameters] CatalogListQuery query,
-        [FromQuery(Name = ScaleField)] Guid? scaleId,
         [FromQuery(Name = ScopeField)] Guid? scopeUnitId,
         [FromQuery(Name = "forAll")] bool? forAll,
         [FromQuery(Name = "availableFor")] Guid? availableFor,
@@ -77,7 +74,6 @@ internal static class CompetencyBlockEndpoints
             : [];
         return await CatalogEndpoints.ListAsync(
             context.Set<CompetencyBlock>()
-                .WhereIf(scaleId is not null, block => block.ScaleId == scaleId)
                 .WhereIf(scopeUnitId is not null, block => block.ScopeUnitId == scopeUnitId)
                 .WhereIf(forAll is not null, block => (block.ScopeUnitId == null) == forAll)
                 .WhereIf(availableFor is not null, block => block.ScopeUnitId == null || availableScopeIds.Contains(block.ScopeUnitId.Value)),
@@ -119,28 +115,17 @@ internal static class CompetencyBlockEndpoints
             return invalidScope;
         }
 
-        if (!await store.IsUsableAsync<CompetencyScale>(request.ScaleId, viewer.UserId, cancellationToken))
-        {
-            return Rejection.Invalid(ScaleField, CatalogEndpoints.UnavailableMessage);
-        }
-
         var block = new CompetencyBlock
         {
             Name = request.TrimmedName(),
             Status = status,
             AuthorId = viewer.UserId,
-            ScaleId = request.ScaleId,
             ScopeUnitId = request.ScopeUnitId,
             CompetencyIds = request.StoredCompetencyIds(),
         };
         if (await UnusableAsync(block.CompetencyIds, new HashSet<Guid>(), viewer.UserId, store, cancellationToken) is { } unusable)
         {
             return unusable;
-        }
-
-        if (await ForeignNameAsync(block.CompetencyIds, block.ScaleId, context, cancellationToken) is { } foreign)
-        {
-            return Rejection.Invalid(CompetencyBlockRequest.CompetenciesField, $"Компетенция «{foreign}» на другой шкале, чем блок");
         }
 
         if (block.Status == CatalogStatus.Active && await publication.HasDraftReferencesAsync(block, cancellationToken))
@@ -165,10 +150,9 @@ internal static class CompetencyBlockEndpoints
     }
 
     /// <summary>
-    /// Changes a block's name, scale, unit and composition. Versions in work see the new composition at once; published ones keep theirs in
-    /// their snapshot. The scale changes only while no matrix version includes the block, and only to the scale of every competency it
-    /// holds. The unit changes whoever uses the block, because a version in work that can no longer include it is stopped by completeness;
-    /// a unit head moves their draft only within the subtrees they head.
+    /// Changes a block's name, unit and composition. Versions in work see the new composition at once; published ones keep theirs in their
+    /// snapshot. The unit changes whoever uses the block, because a version in work that can no longer include it is stopped by
+    /// completeness; a unit head moves their draft only within the subtrees they head.
     /// </summary>
     private static async Task<Results<Ok<CompetencyBlockResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateAsync(
         Guid id,
@@ -204,28 +188,10 @@ internal static class CompetencyBlockEndpoints
         }
 
         var draftAuthorId = block.Status == CatalogStatus.Active ? null : block.AuthorId;
-        var isScaleChanged = request.ScaleId != block.ScaleId;
-        if (isScaleChanged && !await store.IsUsableAsync<CompetencyScale>(request.ScaleId, draftAuthorId, cancellationToken))
-        {
-            return Rejection.Invalid(ScaleField, CatalogEndpoints.UnavailableMessage);
-        }
-
         var competencyIds = request.StoredCompetencyIds();
         if (await UnusableAsync(competencyIds, block.CompetencyIds.ToHashSet(), draftAuthorId, store, cancellationToken) is { } unusable)
         {
             return unusable;
-        }
-
-        if (isScaleChanged && await store.MatricesUsing(block).AnyAsync(cancellationToken))
-        {
-            return Rejection.Conflict(ScaleInUseMessage);
-        }
-
-        if (await ForeignNameAsync(competencyIds, request.ScaleId, context, cancellationToken) is { } foreign)
-        {
-            return isScaleChanged
-                ? Rejection.Conflict($"Компетенция «{foreign}» не на новой шкале")
-                : Rejection.Invalid(CompetencyBlockRequest.CompetenciesField, $"Компетенция «{foreign}» на другой шкале, чем блок");
         }
 
         if (block.Status == CatalogStatus.Active && competencyIds.Count == 0)
@@ -235,7 +201,6 @@ internal static class CompetencyBlockEndpoints
 
         ifMatch.ApplyTo(context, block);
         block.Name = request.TrimmedName();
-        block.ScaleId = request.ScaleId;
         block.ScopeUnitId = request.ScopeUnitId;
         block.CompetencyIds = competencyIds;
         if (await CatalogEndpoints.NameProblemAsync(block, Kind, store, cancellationToken) is { } taken)
@@ -276,15 +241,4 @@ internal static class CompetencyBlockEndpoints
 
         return null;
     }
-
-    /// <summary>
-    /// The name of the first competency of the composition, by name, that is not on the scale; null when all are.
-    /// </summary>
-    private static Task<string?> ForeignNameAsync(List<Guid> competencyIds, Guid scaleId, AppDbContext context, CancellationToken cancellationToken) =>
-        context.Set<CareerCompetency>()
-            .AsNoTracking()
-            .Where(competency => competencyIds.Contains(competency.Id) && competency.ScaleId != scaleId)
-            .OrderBy(competency => competency.Name)
-            .Select(competency => competency.Name)
-            .FirstOrDefaultAsync(cancellationToken);
 }

@@ -11,7 +11,7 @@ namespace Competency.CareerFramework;
 /// one column, its position. A version refers to shared blocks available to the matrix unit and to competencies of any scale, for a track
 /// matrix of the matrix direction or general ones, and to entries that are active or drafts whose author heads the matrix unit. Draft
 /// levels of the matrix track are usable whoever wrote them, because a matrix may be built on a draft track of its unit, which its HR edits
-/// too. A version has no scale: a required score is a point of the competency's own scale, its shared block's for a competency of a block.
+/// too. Neither a version nor a shared block has a scale: a required score is a point of the competency's own scale.
 /// The competencies of a version include the compositions of its shared blocks; a requirement of a competency that has left its block
 /// counts nowhere.
 /// </summary>
@@ -187,10 +187,9 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             [.. version.Content.SharedBlocks
                 .Select(item => entries.Blocks.GetValueOrDefault(item.BlockId))
                 .OfType<CompetencyBlock>()
-                .Select(block => new MatrixSharedBlockEntry(block.Id, block.Name, block.Status, ScaleEntryOf(entries.Scales[block.ScaleId]), block.CompetencyIds))],
+                .Select(block => new MatrixSharedBlockEntry(block.Id, block.Name, block.Status, block.CompetencyIds))],
             [.. entries.Set
                 .Select(item => entries.ScaleOf(item.CompetencyId))
-                .Concat(entries.Blocks.Values.Select(block => entries.Scales.GetValueOrDefault(block.ScaleId)))
                 .OfType<CompetencyScale>()
                 .DistinctBy(scale => scale.Id)
                 .Select(ScaleEntryOf)]);
@@ -355,7 +354,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
 
     /// <summary>
     /// Reads what the content refers to: the levels of a track matrix, the shared blocks, every competency of the version with the
-    /// compositions of the blocks as the version counts them, the scales of those competencies and blocks, and, when a block applies to a
+    /// compositions of the blocks as the version counts them, the scales of those competencies, and, when a block applies to a
     /// unit, the matrix unit with the units above it, which decide what blocks are available.
     /// </summary>
     private async Task<LoadedEntries> LoadAsync(MatrixVersion version, MatrixContent content, CancellationToken cancellationToken)
@@ -371,7 +370,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             .AsNoTracking()
             .Where(competency => competencyIds.Contains(competency.Id))
             .ToDictionaryAsync(competency => competency.Id, cancellationToken);
-        List<Guid> scaleIds = [.. competencies.Values.Select(competency => competency.ScaleId), .. blocks.Values.Select(block => block.ScaleId)];
+        var scaleIds = competencies.Values.Select(competency => competency.ScaleId).Distinct().ToList();
         var scales = await context.Set<CompetencyScale>().AsNoTracking().Where(scale => scaleIds.Contains(scale.Id)).ToDictionaryAsync(scale => scale.Id, cancellationToken);
         var availableScopeIds = blocks.Values.Any(block => block.ScopeUnitId is not null)
             ? (await employees.FindAncestryAsync(version.Matrix.OrgUnitId, cancellationToken)).Select(unit => unit.Id).ToHashSet()
@@ -390,7 +389,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     /// <summary>
     /// What a version refers to, read once for its checks.
     /// </summary>
-    /// <param name="Scales">The scales of the version's competencies and shared blocks, by identifier.</param>
+    /// <param name="Scales">The scales of the version's competencies, by identifier.</param>
     /// <param name="Levels">The levels of a track matrix the content lists, by identifier.</param>
     /// <param name="Competencies">Every competency of the version, by identifier.</param>
     /// <param name="Blocks">The shared blocks the content includes, by identifier.</param>
@@ -425,13 +424,9 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         public string CompetencyName(Guid competencyId) => Competencies.GetValueOrDefault(competencyId)?.Name ?? competencyId.ToString();
 
         /// <summary>
-        /// The scale the competency's scores are points of: its shared block's, by its first group, or else its own; null for a competency not read.
+        /// The scale the competency's scores are points of, its own; null for a competency not read.
         /// </summary>
-        public CompetencyScale? ScaleOf(Guid competencyId) => BlockOf(competencyId) is { } block
-            ? Scales.GetValueOrDefault(block.ScaleId)
-            : Competencies.GetValueOrDefault(competencyId) is { } competency ? Scales.GetValueOrDefault(competency.ScaleId) : null;
-
-        private CompetencyBlock? BlockOf(Guid competencyId) =>
-            Set.Find(item => item.CompetencyId == competencyId) is { BlockId: { } blockId } ? Blocks.GetValueOrDefault(blockId) : null;
+        public CompetencyScale? ScaleOf(Guid competencyId) =>
+            Competencies.GetValueOrDefault(competencyId) is { } competency ? Scales.GetValueOrDefault(competency.ScaleId) : null;
     }
 }

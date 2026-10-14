@@ -249,12 +249,11 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
     }
 
     /// <summary>
-    /// Maps a shared block's scale, the unit it applies to and its composition, a jsonb array of competency identifiers on the block's row,
+    /// Maps the unit a shared block applies to and its composition, a jsonb array of competency identifiers on the block's row,
     /// so a change of the composition is one change of the block and one journal event.
     /// </summary>
     private static void ConfigureBlock(EntityTypeBuilder<CompetencyBlock> entity)
     {
-        entity.Property(e => e.ScaleId).HasColumnName("scale_id");
         entity.Property(e => e.ScopeUnitId).HasColumnName("scope_unit_id");
         entity.Property(e => e.CompetencyIds)
             .HasColumnName("competency_ids")
@@ -267,7 +266,6 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
                     ids => ids.Aggregate(0, (hash, id) => HashCode.Combine(hash, id)),
                     ids => ids.ToList()));
 
-        entity.HasOne<CompetencyScale>().WithMany().HasForeignKey(e => e.ScaleId).OnDelete(DeleteBehavior.Restrict);
         entity.HasOne(OrgUnitEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CompetencyBlock.ScopeUnitId)).OnDelete(DeleteBehavior.Restrict);
     }
 
