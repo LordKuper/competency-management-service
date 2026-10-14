@@ -222,7 +222,7 @@ Material risk: change: public contract, change: migration
 
 ### Task 32: UX — блок без шкалы
 Material risk: none
-- [ ] `docs/ux/desk.html`, `docs/ux/career-framework.html`: окно блока без шкалы, состав из компетенций любых шкал (шкала у каждой), вкладка «Общие блоки» и выбор блока без шкалы (AC-50)
+- [x] `docs/ux/desk.html`, `docs/ux/career-framework.html`: окно блока без шкалы, состав из компетенций любых шкал (шкала у каждой), вкладка «Общие блоки» и выбор блока без шкалы (AC-50)
 
 ### Task 33: Бэкенд — блок без шкалы
 Material risk: change: public contract, change: migration
