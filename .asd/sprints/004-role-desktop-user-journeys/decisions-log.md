@@ -157,3 +157,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: hard `new or changed scope` + public contract / migration — указание пользователя; стоимость AC-48, AC-49: 0 итераций / 0 раундов исправлений.
 - **Affected docs**: sprint.md, plan.md
 - 2026-10-15 — route Task 25: standard (owner asd-ba — docs/product), dispatch HEAD (после этого коммита)
+- 2026-10-15 — Task 25 COMPLETED (46086dd): career-framework AC-142…AC-144 + правки AC-13, 26, 38, 48, 68, 77, 108, 120, 128, 129, 131, 132, 138, 139; desk AC-199, AC-200, AC-189 отозван, правки AC-44, 138, 190, 193, 195. Решения аналитика — на подтверждение пользователя
