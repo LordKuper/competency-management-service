@@ -130,3 +130,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: hard `new or changed scope` + material architecture / public contract / migration change — решение пользователя; стоимость AC-44…AC-47: 0 итераций / 0 раундов исправлений (impl-review ещё не было); impl assessment повторится после Task 20–24. Аудит не перезапускается: Task 21 (asd-architect) разбирает затронутый код модели матрицы.
 - **Affected docs**: sprint.md, plan.md
 - 2026-10-14 — route Task 20: standard (owner asd-ba — docs/product), dispatch HEAD (после этого коммита)
+- 2026-10-14 — Task 20 COMPLETED (fc4861b): career-framework AC-121…AC-138, desk AC-191…AC-198, точечные правки существующих AC. 16 решений аналитика вынесены на подтверждение пользователя до Task 21–22
