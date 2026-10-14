@@ -208,3 +208,7 @@
 {"op":"close","id":"Task 20 decisions","kind":"user-wait","parent":"impl#1","start":"2026-10-14T19:18:05.251Z","end":"2026-10-14T19:32:50.563Z","outcome":"done","attrs":{}}
 {"op":"open","id":"Task 20 decisions-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:32:50.700Z","attrs":{}}
 {"op":"close","id":"Task 20 decisions-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:32:50.700Z","end":"2026-10-14T19:35:53.219Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 20 decisions 2","kind":"user-wait","parent":"impl#1","start":"2026-10-14T19:35:53.433Z","attrs":{}}
+{"op":"close","id":"Task 20 decisions 2","kind":"user-wait","parent":"impl#1","start":"2026-10-14T19:35:53.433Z","end":"2026-10-14T19:37:38.160Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 21","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:37:38.296Z","attrs":{}}
+{"op":"open","id":"Task 22","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:37:38.357Z","attrs":{}}

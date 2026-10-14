@@ -451,6 +451,18 @@
       "tier": "standard",
       "reason": "owner asd-ba (docs/product)",
       "resolved_model": "sonnet"
+    },
+    "Task 21": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 22": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
