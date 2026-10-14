@@ -82,6 +82,12 @@ export interface ScaleListParams extends CatalogListParams {
 /** Column filters of the shared block list. */
 export interface BlockListParams extends CatalogListParams {
   scaleId?: string;
+  /** Blocks of this unit. */
+  scopeUnitId?: string;
+  /** Blocks for every unit. */
+  forAll?: boolean;
+  /** Blocks a matrix of this unit may include. */
+  availableFor?: string;
   /** Leaves out the inactive entries. */
   inWork?: boolean;
 }
@@ -288,6 +294,8 @@ export function blockQuery(id: string) {
 export interface BlockValues {
   name: string;
   scaleId: string;
+  /** The unit the block is for; null for every unit. */
+  scopeUnitId: string | null;
   competencyIds: string[];
 }
 

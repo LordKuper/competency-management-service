@@ -15,8 +15,12 @@ import { ErrorAlert } from "../../app/ErrorAlert";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
+import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
+import { orgUnitTreeQuery } from "../org-structure/orgStructureApi";
+import { unitsWithin } from "../org-structure/orgTree";
 import { CatalogModal, FormActions } from "./CatalogModal";
 import { CatalogStatusTag } from "./CatalogParts";
+import { useProcessRoles } from "./careerApi";
 import {
   type Competency,
   type CompetencyBlock,
@@ -31,26 +35,35 @@ import { useCatalogRights } from "./useCatalogRights";
 import { usePublishEntry } from "./usePublishEntry";
 
 const NAME_MAX_LENGTH = 200;
-const FIELDS = ["name", "scaleId", "competencyIds"] as const;
+const FIELDS = ["name", "scaleId", "scopeUnitId", "competencyIds"] as const;
 const LIST_HEIGHT_IN_CONTROLS = 8;
 const SCALE_FIRST = "Сначала выберите шкалу";
 const SCALE_USED =
   "Шкалу блока используют матрицы — изменить нельзя. Для другой шкалы создайте новый блок.";
 const IN_USE_NOTICE =
   "Блок используют матрицы: черновые версии сразу увидят новый состав, опубликованные и архивные не изменятся.";
-const MANAGER_NOTICE = "Блок будет создан черновиком: его утвердит HR.";
+const MANAGER_NOTICE =
+  "Блок будет создан черновиком: его утвердит HR. «Действует для» — подразделение, которое вы возглавляете, или нижестоящее.";
+const SCENARIO_NOTICE =
+  "Блок будет черновиком, сразу подключится к версии и опубликуется вместе с матрицей компетенций.";
+const SCOPE_CHANGE_NOTICE =
+  "Если после смены подразделение матрицы окажется вне «Действует для», неопубликованная версия с этим блоком станет неполной; опубликованные и архивные не меняются.";
+const FOR_ALL = "Для всех";
 const DRAFT_MEMBER_NOTICE =
   "В составе есть черновая компетенция: блок будет создан черновиком.";
 
 interface BlockFormValues {
   name: string;
   scaleId?: string;
+  scopeUnitId?: string | null;
   competencyIds?: string[];
 }
 
 interface BlockModalProps {
   /** Block being edited as the cache holds it now; omitted when one is created. */
   block?: CompetencyBlock;
+  /** The unit a new block is for when the user has no choice of it, as in the wizard; the block is then a draft for it. */
+  fixedScope?: { id: string; name: string };
   /** Called with the block a save produced, as the dialog closes. */
   onSaved?: (saved: CompetencyBlock) => void;
   onClose: () => void;
@@ -59,6 +72,7 @@ interface BlockModalProps {
 /** Dialog that creates a shared block with its scale and composition or changes one. */
 export function BlockModal({
   block: latest,
+  fixedScope,
   onSaved,
   onClose,
 }: BlockModalProps) {
@@ -71,6 +85,7 @@ export function BlockModal({
         {
           name: values.name,
           scaleId: values.scaleId ?? "",
+          scopeUnitId: values.scopeUnitId ?? fixedScope?.id ?? null,
           competencyIds: values.competencyIds ?? [],
         },
         block,
@@ -96,6 +111,7 @@ export function BlockModal({
       <BlockForm
         key={block?.version}
         block={block}
+        fixedScope={fixedScope}
         onSubmit={(values) => save.mutateAsync(values)}
         onCancel={onClose}
       />
@@ -105,14 +121,21 @@ export function BlockModal({
 
 interface BlockFormProps {
   block?: CompetencyBlock;
+  fixedScope?: { id: string; name: string };
   onSubmit: (values: BlockFormValues) => Promise<unknown>;
   onCancel: () => void;
 }
 
-function BlockForm({ block, onSubmit, onCancel }: BlockFormProps) {
+function BlockForm({ block, fixedScope, onSubmit, onCancel }: BlockFormProps) {
   const [form] = Form.useForm<BlockFormValues>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
   const rights = useCatalogRights();
+  const roles = useProcessRoles();
+  const units = useQuery(orgUnitTreeQuery);
+  const headedSubtree = unitsWithin(
+    units.data ?? [],
+    roles.data?.headedUnits.map((unit) => unit.id) ?? [],
+  );
   const scaleId = Form.useWatch("scaleId", form);
   const [draftIds, setDraftIds] = useState<ReadonlySet<string>>(new Set());
   const noteDrafts = (ids: readonly string[]) =>
@@ -135,15 +158,16 @@ function BlockForm({ block, onSubmit, onCancel }: BlockFormProps) {
       initialValues={{
         name: block?.name ?? "",
         scaleId: block?.scaleId,
+        scopeUnitId: block?.scopeUnitId ?? undefined,
         competencyIds: block?.competencies.map((item) => item.id) ?? [],
       }}
       onFinish={submit}
     >
-      {!block && !rights.isHr && (
+      {!block && (fixedScope || !rights.isHr) && (
         <Alert
           type="info"
           showIcon
-          title={MANAGER_NOTICE}
+          title={fixedScope ? SCENARIO_NOTICE : MANAGER_NOTICE}
           style={{ marginBottom: "var(--ant-margin)" }}
         />
       )}
@@ -183,6 +207,38 @@ function BlockForm({ block, onSubmit, onCancel }: BlockFormProps) {
           onChange={() => form.setFieldValue("competencyIds", [])}
         />
       </Form.Item>
+      {fixedScope ? (
+        <Form.Item
+          label="Действует для"
+          extra="Блок действует для подразделения матрицы и нижестоящих; руководитель это поле не меняет."
+        >
+          <Input disabled value={fixedScope.name} />
+        </Form.Item>
+      ) : (
+        <Form.Item
+          name="scopeUnitId"
+          label="Действует для"
+          rules={
+            rights.isHr
+              ? []
+              : [{ required: true, message: "Выберите подразделение" }]
+          }
+          extra={
+            isUsed
+              ? SCOPE_CHANGE_NOTICE
+              : rights.isHr
+                ? "Подразделение, для которого действует блок; пусто — «Для всех». Блок доступен матрицам этого подразделения и нижестоящих."
+                : undefined
+          }
+        >
+          <OrgUnitSelect
+            isActiveRequired
+            allowClear={rights.isHr}
+            placeholder={rights.isHr ? FOR_ALL : undefined}
+            allowedIds={rights.isHr ? undefined : headedSubtree}
+          />
+        </Form.Item>
+      )}
       <Form.Item name="competencyIds" label="Состав">
         <CompetencyPicker scaleId={scaleId} onDraftsSeen={noteDrafts} />
       </Form.Item>

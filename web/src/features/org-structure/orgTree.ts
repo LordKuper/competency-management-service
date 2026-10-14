@@ -37,6 +37,29 @@ export function buildUnitTree(units: readonly OrgUnitTreeNode[]): UnitNode[] {
   return roots;
 }
 
+/** The given units and every unit below any of them. */
+export function unitsWithin(
+  units: readonly OrgUnitTreeNode[],
+  rootIds: readonly string[],
+): Set<string> {
+  const within = new Set(rootIds);
+  let isGrowing = true;
+  while (isGrowing) {
+    isGrowing = false;
+    for (const unit of units) {
+      if (
+        unit.parentId !== null &&
+        within.has(unit.parentId) &&
+        !within.has(unit.id)
+      ) {
+        within.add(unit.id);
+        isGrowing = true;
+      }
+    }
+  }
+  return within;
+}
+
 /** Ids of the units above the given one, nearest first; empty for a root or an unknown unit. */
 export function ancestorIds(units: readonly OrgUnit[], id: string): string[] {
   const byId = indexById(units);

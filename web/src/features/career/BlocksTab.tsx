@@ -1,6 +1,7 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   Button,
+  Checkbox,
   Empty,
   Flex,
   Input,
@@ -9,13 +10,16 @@ import {
   type TableColumnsType,
   Tag,
   Typography,
+  theme,
 } from "antd";
-import { useState } from "react";
+import type { FilterDropdownProps } from "antd/es/table/interface";
+import { type Dispatch, type SetStateAction, useState } from "react";
 import { Link } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
 import { BlockModal } from "./BlockModal";
 import { EntryActions, entryColumns } from "./CatalogParts";
-import { catalogFilter } from "./CatalogSelect";
+import { catalogFilter, FILTER_WIDTH_IN_CONTROLS } from "./CatalogSelect";
 import {
   type BlockListParams,
   blocksQuery,
@@ -30,6 +34,7 @@ import { VERSION_STATUS_LABELS } from "./matrixLabels";
 import { useCatalogRights } from "./useCatalogRights";
 
 const SEARCH_LABEL = "Найти по названию";
+const FOR_ALL = "Для всех";
 const SHOWN_MATRICES = 5;
 
 /** Dialog of the tab: creating (`"create"`) or editing the block with that id; null when closed. */
@@ -108,6 +113,49 @@ function Usage({ block }: { block: CompetencyBlock }) {
   );
 }
 
+interface ScopeFilterProps extends FilterDropdownProps {
+  params: BlockListParams;
+  setParams: Dispatch<SetStateAction<BlockListParams>>;
+}
+
+/** The filter of the «Действует для» column: the blocks of one unit, or the blocks for every unit. */
+function ScopeFilter({ params, setParams, confirm }: ScopeFilterProps) {
+  const { token } = theme.useToken();
+  return (
+    <Flex vertical gap="small" style={{ padding: token.paddingXS }}>
+      <OrgUnitSelect
+        allowClear
+        placeholder="Подразделение"
+        value={params.scopeUnitId}
+        onChange={(unitId) => {
+          setParams((previous) => ({
+            ...previous,
+            scopeUnitId: unitId,
+            forAll: undefined,
+            page: 1,
+          }));
+          confirm();
+        }}
+      />
+      <Checkbox
+        checked={params.forAll === true}
+        style={{ width: token.controlHeight * FILTER_WIDTH_IN_CONTROLS }}
+        onChange={(event) => {
+          setParams((previous) => ({
+            ...previous,
+            forAll: event.target.checked || undefined,
+            scopeUnitId: undefined,
+            page: 1,
+          }));
+          confirm();
+        }}
+      >
+        {FOR_ALL}
+      </Checkbox>
+    </Flex>
+  );
+}
+
 /** The shared blocks of competencies: search, paging, creation, editing and the status actions; a row opens to its composition and where it is used. */
 export function BlocksTab() {
   const rights = useCatalogRights();
@@ -125,6 +173,18 @@ export function BlocksTab() {
       dataIndex: "scaleId",
       ...catalogFilter("scaleId", "scales", params.scaleId, "Шкала"),
       render: (_, block) => block.scaleName,
+    },
+    {
+      title: "Действует для",
+      key: "scopeUnitId",
+      filtered: params.scopeUnitId !== undefined || params.forAll === true,
+      filteredValue:
+        params.scopeUnitId === undefined ? null : [params.scopeUnitId],
+      filterMultiple: false,
+      filterDropdown: (props) => (
+        <ScopeFilter {...props} params={params} setParams={setParams} />
+      ),
+      render: (_, block) => block.scopeUnitName ?? FOR_ALL,
     },
     {
       title: "Состав",

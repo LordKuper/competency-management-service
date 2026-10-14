@@ -20,20 +20,25 @@ type OrgUnitSelectProps = Pick<
   excludedSubtreeRoot?: string;
   /** Whether inactive units are listed but cannot be chosen, for fields that need a working unit. */
   isActiveRequired?: boolean;
+  /** When given, only these units can be chosen; the others stay listed, off, so the tree keeps its shape. */
+  allowedIds?: ReadonlySet<string>;
 };
 
 function toOptions(
   nodes: readonly UnitNode[],
   excludedId: string | undefined,
   isActiveRequired: boolean,
+  allowedIds: ReadonlySet<string> | undefined,
 ): UnitOption[] {
   return nodes
     .filter(({ unit }) => unit.id !== excludedId)
     .map(({ unit, children }) => ({
       value: unit.id,
       title: unit.isActive ? unit.name : `${unit.name} (неактивно)`,
-      disabled: isActiveRequired && !unit.isActive,
-      children: toOptions(children, excludedId, isActiveRequired),
+      disabled:
+        (isActiveRequired && !unit.isActive) ||
+        (allowedIds !== undefined && !allowedIds.has(unit.id)),
+      children: toOptions(children, excludedId, isActiveRequired, allowedIds),
     }));
 }
 
@@ -41,6 +46,7 @@ function toOptions(
 export function OrgUnitSelect({
   excludedSubtreeRoot,
   isActiveRequired = false,
+  allowedIds,
   ...selectProps
 }: OrgUnitSelectProps) {
   const { data: units, error, isPending } = useQuery(orgUnitTreeQuery);
@@ -50,8 +56,9 @@ export function OrgUnitSelect({
         buildUnitTree(units ?? []),
         excludedSubtreeRoot,
         isActiveRequired,
+        allowedIds,
       ),
-    [units, excludedSubtreeRoot, isActiveRequired],
+    [units, excludedSubtreeRoot, isActiveRequired, allowedIds],
   );
 
   return (
