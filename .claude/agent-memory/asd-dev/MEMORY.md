@@ -3,3 +3,5 @@
 - [Mirror-heavy repo, strict file ownership per wave](feedback_asd-mirror-ownership.md) — in multi-wave review-fix tasks, only touch assigned files even when a stale reference lives in an unowned file.
 - [antd button state specificity](feedback_antd-button-state-specificity.md) — override --ant-btn-* vars, not selectors; verify computed styles.
 - [Scripted edits on Windows](feedback_windows-scripted-edits.md) — Python text mode writes CRLF; use newline='' and the Edit tool for Cyrillic anchors.
+
+- [No screenshots, keep user browser](feedback_no-screenshots-keep-user-browser.md) — no headless renders; never kill chrome/msedge.
