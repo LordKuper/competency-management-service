@@ -107,7 +107,7 @@ internal sealed class MatrixWorkflow(
             version.Number,
             version.Status,
             state.Turn?.Step ?? version.Step,
-            version.ScaleId,
+            version.Snapshot?.Scale?.Id,
             version.AuthorId,
             names.GetValueOrDefault(version.AuthorId),
             version.CreatedAt,
@@ -218,7 +218,6 @@ internal sealed class MatrixWorkflow(
             MatrixId = matrixId,
             Number = versions.Max(version => version.Number) + 1,
             Status = MatrixVersionStatus.Draft,
-            ScaleId = published.ScaleId,
             AuthorId = viewer.UserId,
             Content = published.Content,
         };

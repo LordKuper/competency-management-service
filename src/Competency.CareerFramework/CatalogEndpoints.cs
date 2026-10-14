@@ -243,7 +243,7 @@ internal static class CatalogEndpoints
         CancellationToken cancellationToken)
         where TEntry : CatalogEntry
     {
-        var unitNames = await store.UnitNamesAsync(entries.Select(entry => entry.UnitId), cancellationToken);
+        var unitNames = await store.UnitNamesAsync(entries.Select(entry => entry.ListedUnitId), cancellationToken);
         if (kind.References is not { } references)
         {
             return unitNames;

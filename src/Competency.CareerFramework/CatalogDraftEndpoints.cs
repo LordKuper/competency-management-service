@@ -23,8 +23,8 @@ internal static class CatalogDraftEndpoints
         .WithName("ListCatalogDrafts");
 
     /// <summary>
-    /// The drafts, oldest first, optionally of one kind or of one unit; only a track has a unit. The filters apply after every draft is
-    /// loaded, because drafts wait for approval and the list stays short.
+    /// The drafts, oldest first, optionally of one kind or of one unit; only a track and a shared block that applies to a unit have one.
+    /// The filters apply after every draft is loaded, because drafts wait for approval and the list stays short.
     /// </summary>
     private static async Task<Ok<List<CatalogDraftResponse>>> ListAsync(
         [FromQuery(Name = "kind")] CatalogEntryKind? kind,
@@ -52,8 +52,8 @@ internal static class CatalogDraftEndpoints
             .. await DraftsAsync(context.Set<CompetencyBlock>(), cancellationToken),
         ];
 
-        var drafts = all.Where(draft => (kind is null || KindOf(draft) == kind) && (orgUnitId is null || draft.UnitId == orgUnitId)).ToList();
-        var unitNames = await store.UnitNamesAsync(drafts.Select(draft => draft.UnitId), cancellationToken);
+        var drafts = all.Where(draft => (kind is null || KindOf(draft) == kind) && (orgUnitId is null || draft.ListedUnitId == orgUnitId)).ToList();
+        var unitNames = await store.UnitNamesAsync(drafts.Select(draft => draft.ListedUnitId), cancellationToken);
         var authorNames = await store.UserNamesAsync(drafts.Select(draft => draft.AuthorId), cancellationToken);
         var readiness = new Dictionary<Guid, TrackReadinessResponse?>();
         foreach (var track in drafts.OfType<CareerTrack>())
@@ -68,8 +68,8 @@ internal static class CatalogDraftEndpoints
                 KindOf(draft),
                 draft.Id,
                 draft.Name,
-                draft.UnitId,
-                draft.UnitId is { } unitId ? unitNames.GetValueOrDefault(unitId) : null,
+                draft.ListedUnitId,
+                draft.ListedUnitId is { } unitId ? unitNames.GetValueOrDefault(unitId) : null,
                 draft.AuthorId,
                 draft.AuthorId is { } authorId ? authorNames.GetValueOrDefault(authorId) : null,
                 draft.CreatedAt,

@@ -165,7 +165,6 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
             entity.Property(e => e.Number).HasColumnName("number");
             entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.Step).HasColumnName("step").HasConversion<string>().HasMaxLength(EnumMaxLength);
-            entity.Property(e => e.ScaleId).HasColumnName("scale_id");
             entity.Property(e => e.AuthorId).HasColumnName("author_id");
             entity.Property(e => e.Content).HasColumnName("content").HasColumnType("jsonb").HasConversion(ContentConverter, ContentComparer);
             entity.Property(e => e.Snapshot).HasColumnName("snapshot").HasColumnType("jsonb").HasConversion(
@@ -176,11 +175,9 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
             entity.HasIndex(e => new { e.MatrixId, e.Number }).IsUnique();
             entity.HasIndex(e => e.MatrixId, "ux_matrix_versions_published").IsUnique().HasFilter("status = 'Published'");
             entity.HasIndex(e => e.MatrixId, "ux_matrix_versions_in_work").IsUnique().HasFilter("status IN ('Draft', 'OnReview', 'Returned')");
-            entity.HasIndex(e => e.ScaleId);
 
             entity.HasOne(e => e.Matrix).WithMany().HasForeignKey(e => e.MatrixId).OnDelete(DeleteBehavior.Restrict);
             entity.Navigation(e => e.Matrix).AutoInclude();
-            entity.HasOne<CompetencyScale>().WithMany().HasForeignKey(e => e.ScaleId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(UserEntityName, navigationName: null).WithMany().HasForeignKey(nameof(MatrixVersion.AuthorId)).OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -252,12 +249,13 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
     }
 
     /// <summary>
-    /// Maps a shared block's scale and its composition, a jsonb array of competency identifiers on the block's row, so a change of the
-    /// composition is one change of the block and one journal event.
+    /// Maps a shared block's scale, the unit it applies to and its composition, a jsonb array of competency identifiers on the block's row,
+    /// so a change of the composition is one change of the block and one journal event.
     /// </summary>
     private static void ConfigureBlock(EntityTypeBuilder<CompetencyBlock> entity)
     {
         entity.Property(e => e.ScaleId).HasColumnName("scale_id");
+        entity.Property(e => e.ScopeUnitId).HasColumnName("scope_unit_id");
         entity.Property(e => e.CompetencyIds)
             .HasColumnName("competency_ids")
             .HasColumnType("jsonb")
@@ -270,6 +268,7 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
                     ids => ids.ToList()));
 
         entity.HasOne<CompetencyScale>().WithMany().HasForeignKey(e => e.ScaleId).OnDelete(DeleteBehavior.Restrict);
+        entity.HasOne(OrgUnitEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CompetencyBlock.ScopeUnitId)).OnDelete(DeleteBehavior.Restrict);
     }
 
     /// <summary>

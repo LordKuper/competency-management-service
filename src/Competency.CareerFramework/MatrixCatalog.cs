@@ -8,18 +8,19 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The catalogue side of matrix versions: which entries a version may refer to, whether a version is complete enough to be handed on,
 /// and the entries it refers to as they stand. A track matrix version refers to the levels of its track; a position matrix version has
-/// one column, its position. A version refers to shared blocks and to competencies of its scale, for a track matrix of the matrix
-/// direction or general ones, and to entries that are active or drafts whose author heads the matrix unit. Draft levels of the matrix
-/// track are usable whoever wrote them, because a matrix may be built on a draft track of its unit, which its HR edits too. The
-/// competencies of a version include the compositions of its shared blocks, which keep their own scales; a requirement of a competency
-/// that has left its block counts nowhere.
+/// one column, its position. A version refers to shared blocks available to the matrix unit and to competencies of any scale, for a track
+/// matrix of the matrix direction or general ones, and to entries that are active or drafts whose author heads the matrix unit. Draft
+/// levels of the matrix track are usable whoever wrote them, because a matrix may be built on a draft track of its unit, which its HR edits
+/// too. A version has no scale: a required score is a point of the competency's own scale, its shared block's for a competency of a block.
+/// The competencies of a version include the compositions of its shared blocks; a requirement of a competency that has left its block
+/// counts nowhere.
 /// </summary>
 internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory employees, ProcessRoles roles, CatalogStore store)
 {
     private const string ContentField = "content";
     private const string ForeignLevelMessage = "Уровень не из трека матрицы";
     private const string PositionColumnMessage = "У матрицы должности один столбец требований — её должность";
-    private const string ForeignCompetencyMessage = "Компетенция не на шкале версии или не из области матрицы";
+    private const string ForeignCompetencyMessage = "Компетенция не из области матрицы";
 
     private static readonly NumberFormatInfo DecimalComma = new() { NumberDecimalSeparator = "," };
 
@@ -53,13 +54,17 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         {
             problem = levelProblem;
         }
-        else if (competencies.Any(competency => competency is null || !IsOnScale(competency, version) || !IsOfDirection(competency, matrix)))
+        else if (competencies.Any(competency => competency is not null && !IsOfDirection(competency, matrix)))
         {
             problem = ForeignCompetencyMessage;
         }
         else if (referenced.Any(entry => entry is null || (!previousIds.Contains(entry.Id) && !IsUsable(entry, headId))))
         {
             problem = CatalogEndpoints.UnavailableMessage;
+        }
+        else if (blocks.FirstOrDefault(block => !previousIds.Contains(block!.Id) && !entries.IsAvailable(block)) is { } unavailable)
+        {
+            problem = UnavailableBlockMessage(unavailable);
         }
         else if (content.Requirements.Any(requirement => !entries.Includes(requirement.CompetencyId)
                      && !previousRequirements.Contains((requirement.LevelId, requirement.CompetencyId))))
@@ -79,8 +84,9 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     /// that do not add up to 100 %, a level of the matrix track without a linked active position. For a position matrix: no competencies,
     /// a competency without a required score, coefficients that do not add up to 100 %, a position no longer available to the matrix
     /// unit. For both: a competency of a shared block or outside blocks without requirements, a competency in two groups, a critical
-    /// requirement without a required score, an entry that is no longer usable or no longer fits the version, or a required score the
-    /// competency's scale no longer has.
+    /// requirement without a required score, an entry that is no longer usable or no longer fits the version, a shared block no longer
+    /// available to the matrix unit, or a required score the competency's scale no longer has. An inactive scale is no problem, as an
+    /// inactive category is none.
     /// </summary>
     /// <param name="version">The version.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
@@ -157,7 +163,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         return new MatrixEntries(
             direction is null ? null : new MatrixNamedEntry(direction.Id, direction.Name, direction.Status),
             track is null ? null : new MatrixNamedEntry(track.Id, track.Name, track.Status),
-            ScaleEntryOf(entries.Scale),
+            Scale: null,
             [.. entries.Levels.Values
                 .OrderBy(level => level.Position)
                 .Select(level => new MatrixLevelEntry(level.Id, level.Name, level.Status))],
@@ -175,13 +181,22 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
                     competency.DirectionId,
                     competency.Type,
                     CompetencyVersion.NumberOf(competency),
-                    competency.Status))],
+                    competency.Status,
+                    entries.ScaleOf(competency.Id)?.Id))],
             position is null ? null : new MatrixNamedEntry(position.Id, position.Name, position.IsActive ? CatalogStatus.Active : CatalogStatus.Inactive),
             [.. version.Content.SharedBlocks
                 .Select(item => entries.Blocks.GetValueOrDefault(item.BlockId))
                 .OfType<CompetencyBlock>()
-                .Select(block => new MatrixSharedBlockEntry(block.Id, block.Name, block.Status, ScaleEntryOf(entries.Scales[block.ScaleId]), block.CompetencyIds))]);
+                .Select(block => new MatrixSharedBlockEntry(block.Id, block.Name, block.Status, ScaleEntryOf(entries.Scales[block.ScaleId]), block.CompetencyIds))],
+            [.. entries.Set
+                .Select(item => entries.ScaleOf(item.CompetencyId))
+                .Concat(entries.Blocks.Values.Select(block => entries.Scales.GetValueOrDefault(block.ScaleId)))
+                .OfType<CompetencyScale>()
+                .DistinctBy(scale => scale.Id)
+                .Select(ScaleEntryOf)]);
     }
+
+    private static string UnavailableBlockMessage(CompetencyBlock block) => $"Общий блок «{block.Name}» недоступен подразделению матрицы";
 
     private static MatrixScaleEntry ScaleEntryOf(CompetencyScale scale) => new(scale.Id, scale.Name, scale.Points, scale.Status);
 
@@ -191,7 +206,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
 
     private static IEnumerable<MatrixProblem> EntryProblems(MatrixVersion version, LoadedEntries entries, Guid? headId)
     {
-        IEnumerable<CatalogEntry> all = [entries.Scale, .. entries.Levels.Values, .. entries.Competencies.Values, .. entries.Blocks.Values];
+        IEnumerable<CatalogEntry> all = [.. entries.Levels.Values, .. entries.Competencies.Values, .. entries.Blocks.Values];
         foreach (var entry in all.Where(entry => !IsUsable(entry, headId)))
         {
             yield return new MatrixProblem(
@@ -201,24 +216,20 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
                 entry is CareerCompetency ? entry.Id : null);
         }
 
-        foreach (var (competency, isOwn) in entries.Competencies.Values.Select(competency => (competency, entries.IsOnVersionScale(competency.Id))))
+        foreach (var competency in entries.Competencies.Values.Where(competency => !IsOfDirection(competency, version.Matrix)))
         {
-            if (isOwn && !IsOnScale(competency, version))
-            {
-                yield return new MatrixProblem(MatrixProblemCode.ForeignCompetency, $"Компетенция «{competency.Name}» на другой шкале, чем версия", CompetencyId: competency.Id);
-            }
-            else if (!IsOfDirection(competency, version.Matrix))
-            {
-                yield return new MatrixProblem(MatrixProblemCode.ForeignCompetency, $"Компетенция «{competency.Name}» не из области матрицы", CompetencyId: competency.Id);
-            }
+            yield return new MatrixProblem(MatrixProblemCode.ForeignCompetency, $"Компетенция «{competency.Name}» не из области матрицы", CompetencyId: competency.Id);
+        }
+
+        foreach (var block in entries.Blocks.Values.Where(block => !entries.IsAvailable(block)))
+        {
+            yield return new MatrixProblem(MatrixProblemCode.SharedBlockUnavailable, UnavailableBlockMessage(block));
         }
     }
 
     private static bool IsUsable(CatalogEntry entry, Guid? headId) =>
         entry.Status == CatalogStatus.Active
         || (entry.Status == CatalogStatus.Draft && (entry is CareerLevel || (headId is not null && entry.AuthorId == headId)));
-
-    private static bool IsOnScale(CareerCompetency competency, MatrixVersion version) => competency.ScaleId == version.ScaleId;
 
     private static bool IsOfDirection(CareerCompetency competency, CompetencyMatrix matrix) =>
         matrix.DirectionId is null || competency.DirectionId is null || competency.DirectionId == matrix.DirectionId;
@@ -343,8 +354,9 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         (await employees.FindOrgSnapshotAsync(cancellationToken)).Positions.GetValueOrDefault(positionId);
 
     /// <summary>
-    /// Reads what the content refers to: the version's scale and the scales of its shared blocks, the levels of a track matrix, the shared
-    /// blocks, and every competency of the version with the compositions of the blocks as the version counts them.
+    /// Reads what the content refers to: the levels of a track matrix, the shared blocks, every competency of the version with the
+    /// compositions of the blocks as the version counts them, the scales of those competencies and blocks, and, when a block applies to a
+    /// unit, the matrix unit with the units above it, which decide what blocks are available.
     /// </summary>
     private async Task<LoadedEntries> LoadAsync(MatrixVersion version, MatrixContent content, CancellationToken cancellationToken)
     {
@@ -354,37 +366,49 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             : await context.Set<CompetencyBlock>().AsNoTracking().Where(block => blockIds.Contains(block.Id)).ToDictionaryAsync(block => block.Id, cancellationToken);
         var set = content.CompetenciesWith(version.CompositionsOf(blocks.ToDictionary(pair => pair.Key, pair => (IReadOnlyList<Guid>)pair.Value.CompetencyIds)));
         var competencyIds = set.Select(item => item.CompetencyId).Distinct().ToList();
-        List<Guid> scaleIds = [version.ScaleId, .. blocks.Values.Select(block => block.ScaleId)];
         var levelIds = version.Matrix.TrackId is null ? [] : content.Levels.Select(level => level.LevelId).ToList();
+        var competencies = await context.Set<CareerCompetency>()
+            .AsNoTracking()
+            .Where(competency => competencyIds.Contains(competency.Id))
+            .ToDictionaryAsync(competency => competency.Id, cancellationToken);
+        List<Guid> scaleIds = [.. competencies.Values.Select(competency => competency.ScaleId), .. blocks.Values.Select(block => block.ScaleId)];
         var scales = await context.Set<CompetencyScale>().AsNoTracking().Where(scale => scaleIds.Contains(scale.Id)).ToDictionaryAsync(scale => scale.Id, cancellationToken);
+        var availableScopeIds = blocks.Values.Any(block => block.ScopeUnitId is not null)
+            ? (await employees.FindAncestryAsync(version.Matrix.OrgUnitId, cancellationToken)).Select(unit => unit.Id).ToHashSet()
+            : [];
         return new LoadedEntries(
-            scales[version.ScaleId],
             scales,
             levelIds.Count == 0
                 ? new Dictionary<Guid, CareerLevel>()
                 : await context.Set<CareerLevel>().AsNoTracking().Where(level => levelIds.Contains(level.Id)).ToDictionaryAsync(level => level.Id, cancellationToken),
-            await context.Set<CareerCompetency>().AsNoTracking().Where(competency => competencyIds.Contains(competency.Id)).ToDictionaryAsync(competency => competency.Id, cancellationToken),
+            competencies,
             blocks,
-            set);
+            set,
+            availableScopeIds);
     }
 
     /// <summary>
     /// What a version refers to, read once for its checks.
     /// </summary>
-    /// <param name="Scale">The version's scale.</param>
-    /// <param name="Scales">The version's scale and the scales of its shared blocks, by identifier.</param>
+    /// <param name="Scales">The scales of the version's competencies and shared blocks, by identifier.</param>
     /// <param name="Levels">The levels of a track matrix the content lists, by identifier.</param>
     /// <param name="Competencies">Every competency of the version, by identifier.</param>
     /// <param name="Blocks">The shared blocks the content includes, by identifier.</param>
     /// <param name="Set">Every competency of the version with its group, in content order, a competency in two groups twice.</param>
+    /// <param name="AvailableScopeIds">The matrix unit and the units above it, read when a shared block applies to a unit.</param>
     private sealed record LoadedEntries(
-        CompetencyScale Scale,
         Dictionary<Guid, CompetencyScale> Scales,
         Dictionary<Guid, CareerLevel> Levels,
         Dictionary<Guid, CareerCompetency> Competencies,
         Dictionary<Guid, CompetencyBlock> Blocks,
-        List<MatrixCompetency> Set)
+        List<MatrixCompetency> Set,
+        HashSet<Guid> AvailableScopeIds)
     {
+        /// <summary>
+        /// Whether a matrix of the unit may include the block: one that applies to all, or to the matrix unit or a unit above it.
+        /// </summary>
+        public bool IsAvailable(CompetencyBlock block) => block.ScopeUnitId is not { } scopeUnitId || AvailableScopeIds.Contains(scopeUnitId);
+
         public bool Includes(Guid competencyId) => Set.Exists(item => item.CompetencyId == competencyId);
 
         /// <summary>
@@ -393,19 +417,19 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         public IEnumerable<MatrixRequirement> Counted(IEnumerable<MatrixRequirement> requirements) =>
             requirements.Where(requirement => Includes(requirement.CompetencyId));
 
-        /// <summary>
-        /// Whether the competency counts on the version's scale rather than on the scale of a shared block, by its first group.
-        /// </summary>
-        public bool IsOnVersionScale(Guid competencyId) => BlockOf(competencyId) is null;
-
         public bool HasScore(MatrixRequirement requirement) =>
-            requirement.RequiredScore is not { } score || ScaleOf(requirement.CompetencyId).Points.Any(point => point.Score == score);
+            requirement.RequiredScore is not { } score || ScaleOf(requirement.CompetencyId)?.Points.Any(point => point.Score == score) != false;
 
-        public string ScaleWords(Guid competencyId) => BlockOf(competencyId) is { } block ? $"шкале блока «{block.Name}»" : "шкале версии";
+        public string ScaleWords(Guid competencyId) => $"шкале «{ScaleOf(competencyId)?.Name}»";
 
         public string CompetencyName(Guid competencyId) => Competencies.GetValueOrDefault(competencyId)?.Name ?? competencyId.ToString();
 
-        private CompetencyScale ScaleOf(Guid competencyId) => BlockOf(competencyId) is { } block ? Scales[block.ScaleId] : Scale;
+        /// <summary>
+        /// The scale the competency's scores are points of: its shared block's, by its first group, or else its own; null for a competency not read.
+        /// </summary>
+        public CompetencyScale? ScaleOf(Guid competencyId) => BlockOf(competencyId) is { } block
+            ? Scales.GetValueOrDefault(block.ScaleId)
+            : Competencies.GetValueOrDefault(competencyId) is { } competency ? Scales.GetValueOrDefault(competency.ScaleId) : null;
 
         private CompetencyBlock? BlockOf(Guid competencyId) =>
             Set.Find(item => item.CompetencyId == competencyId) is { BlockId: { } blockId } ? Blocks.GetValueOrDefault(blockId) : null;

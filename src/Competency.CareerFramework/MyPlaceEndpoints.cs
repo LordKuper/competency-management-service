@@ -125,28 +125,28 @@ internal static class MyPlaceEndpoints
     }
 
     /// <summary>
-    /// What the published version requires in one column, of the competencies it counts, each score labelled by the competency's own
-    /// scale: its shared block's, or else the version's, as frozen in the snapshot.
+    /// What the published version requires in one column, of the competencies it counts, each score labelled by the scale the snapshot
+    /// froze for the competency.
     /// </summary>
     private static List<MyPlaceRequirementResponse> RequirementsOf(MatrixVersion version, Guid levelId)
     {
         var snapshot = version.Snapshot;
-        var competencyNames = snapshot?.Competencies.ToDictionary(competency => competency.Id, competency => competency.Name) ?? [];
-        var blockPoints = snapshot?.SharedBlocks.ToDictionary(block => block.Id, block => block.Scale.Points) ?? [];
-        var versionPoints = snapshot?.Scale.Points ?? [];
-        var pointsOf = version.Content.CompetenciesWith(version.CompositionsOf(new Dictionary<Guid, IReadOnlyList<Guid>>()))
-            .DistinctBy(item => item.CompetencyId)
-            .ToDictionary(
-                item => item.CompetencyId,
-                item => item.BlockId is { } blockId && blockPoints.TryGetValue(blockId, out var points) ? points : versionPoints);
+        var competencies = snapshot?.Competencies.ToDictionary(competency => competency.Id) ?? [];
+        var scalePoints = snapshot?.Scales.ToDictionary(scale => scale.Id, scale => scale.Points) ?? [];
+        var counted = version.Content.CompetenciesWith(version.CompositionsOf(new Dictionary<Guid, IReadOnlyList<Guid>>()))
+            .Select(item => item.CompetencyId)
+            .ToHashSet();
         return [.. version.Content.Requirements
-            .Where(requirement => requirement.LevelId == levelId && pointsOf.ContainsKey(requirement.CompetencyId))
-            .Select(requirement => new MyPlaceRequirementResponse(
-                requirement.CompetencyId,
-                competencyNames.GetValueOrDefault(requirement.CompetencyId, string.Empty),
-                requirement.RequiredScore,
-                pointsOf[requirement.CompetencyId].FirstOrDefault(point => point.Score == requirement.RequiredScore)?.Label,
-                requirement.Type))];
+            .Where(requirement => requirement.LevelId == levelId && counted.Contains(requirement.CompetencyId))
+            .Select(requirement => (Requirement: requirement, Competency: competencies.GetValueOrDefault(requirement.CompetencyId)))
+            .Select(pair => new MyPlaceRequirementResponse(
+                pair.Requirement.CompetencyId,
+                pair.Competency?.Name ?? string.Empty,
+                pair.Requirement.RequiredScore,
+                pair.Competency?.ScaleId is { } scaleId && scalePoints.TryGetValue(scaleId, out var points)
+                    ? points.FirstOrDefault(point => point.Score == pair.Requirement.RequiredScore)?.Label
+                    : null,
+                pair.Requirement.Type))];
     }
 
     private static MyPlaceMatrixResponse MatrixOf(MatrixVersion version, Guid trackId) => new(

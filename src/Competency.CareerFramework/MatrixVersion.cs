@@ -37,12 +37,6 @@ internal sealed class MatrixVersion : EntityBase
     public ApprovalStep? Step { get; set; }
 
     /// <summary>
-    /// The scale of the competencies of the version's own blocks and outside blocks; a shared block brings its own.
-    /// </summary>
-    [Audited]
-    public Guid ScaleId { get; init; }
-
-    /// <summary>
     /// The account that created the version.
     /// </summary>
     [Audited]

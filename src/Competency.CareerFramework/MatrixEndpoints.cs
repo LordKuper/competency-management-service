@@ -20,7 +20,6 @@ internal static class MatrixEndpoints
     private const string OrgUnitField = "orgUnitId";
     private const string DirectionField = "directionId";
     private const string TrackField = "trackId";
-    private const string ScaleField = "scaleId";
     private const string PositionField = "positionId";
     private const string DuplicateMatrixMessage = "У подразделения уже есть матрица для этого трека";
     private const string DuplicatePositionMatrixMessage = "У подразделения уже есть матрица для этой должности";
@@ -138,11 +137,6 @@ internal static class MatrixEndpoints
                 return Rejection.Invalid(PositionField, UnavailablePositionMessage);
             }
 
-            if (!await store.IsUsableAsync<CompetencyScale>(request.ScaleId, viewer.UserId, cancellationToken))
-            {
-                return Rejection.Invalid(ScaleField, CatalogEndpoints.UnavailableMessage);
-            }
-
             if ((await store.LinkedTracksAsync([positionId], cancellationToken))[positionId].ToList() is { Count: > 0 } linkedTracks)
             {
                 var positionName = snapshot.Positions[positionId].Name;
@@ -162,7 +156,7 @@ internal static class MatrixEndpoints
         }
         else
         {
-            if (await ReferenceProblemAsync(request, viewer.UserId, context, store, employees, cancellationToken) is { } invalid)
+            if (await ReferenceProblemAsync(request, context, employees, cancellationToken) is { } invalid)
             {
                 return invalid;
             }
@@ -188,7 +182,6 @@ internal static class MatrixEndpoints
             MatrixId = created.Id,
             Number = 1,
             Status = MatrixVersionStatus.Draft,
-            ScaleId = request.ScaleId,
             AuthorId = viewer.UserId,
             Content = content,
         });
@@ -301,14 +294,12 @@ internal static class MatrixEndpoints
         workflow.CreateVersionAsync(id, response, cancellationToken);
 
     /// <summary>
-    /// Says why the direction, track or scale cannot be used: a new matrix needs an active direction, a track of it that is active and kept
-    /// by the matrix unit or a unit above it or is a draft of the matrix unit, and a scale that is active or a draft of the matrix author.
+    /// Says why the direction or track cannot be used: a new matrix needs an active direction and a track of it that is active and kept
+    /// by the matrix unit or a unit above it or is a draft of the matrix unit.
     /// </summary>
     private static async Task<ValidationProblem?> ReferenceProblemAsync(
         NewMatrixRequest request,
-        Guid authorId,
         AppDbContext context,
-        CatalogStore store,
         IEmployeeDirectory employees,
         CancellationToken cancellationToken)
     {
@@ -330,9 +321,7 @@ internal static class MatrixEndpoints
             return Rejection.Invalid(TrackField, CatalogEndpoints.UnavailableMessage);
         }
 
-        return await store.IsUsableAsync<CompetencyScale>(request.ScaleId, authorId, cancellationToken)
-            ? null
-            : Rejection.Invalid(ScaleField, CatalogEndpoints.UnavailableMessage);
+        return null;
     }
 
     /// <summary>

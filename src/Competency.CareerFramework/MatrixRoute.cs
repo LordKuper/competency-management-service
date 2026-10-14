@@ -135,9 +135,14 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// so the drafts among them are readable to the user along with the version.
     /// </summary>
     /// <param name="viewer">The user's rights.</param>
+    /// <param name="below">The units strictly below the user's headed units, as <see cref="UnitsBelowHeadedAsync"/> finds them.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    /// <returns>The identifiers of the levels, shared blocks, competencies with those of the blocks, categories of those competencies and scales of those versions and blocks.</returns>
-    public async Task<IReadOnlySet<Guid>> RouteEntryIdsAsync(CatalogViewer viewer, CancellationToken cancellationToken)
+    /// <returns>The identifiers of the levels, shared blocks, competencies with those of the blocks, categories of those competencies and
+    /// scales of those competencies and blocks.</returns>
+    public async Task<IReadOnlySet<Guid>> RouteEntryIdsAsync(
+        CatalogViewer viewer,
+        IReadOnlyDictionary<Guid, OrgUnitStatus> below,
+        CancellationToken cancellationToken)
     {
         var userId = viewer.UserId;
         var versions = await context.Set<MatrixVersion>()
@@ -146,13 +151,12 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
             .Where(version => version.AuthorId == userId
                 || context.Set<MatrixDecision>().Any(decision => decision.VersionId == version.Id && decision.ActorId == userId))
             .ToListAsync(cancellationToken);
-        versions.AddRange(await SuperiorOfAsync(viewer, cancellationToken));
+        versions.AddRange(await SuperiorOfAsync(viewer, below, cancellationToken));
 
         var ids = new HashSet<Guid>();
         var competencyIds = new HashSet<Guid>();
         foreach (var version in versions)
         {
-            ids.Add(version.ScaleId);
             ids.UnionWith(version.Content.Levels.Select(level => level.LevelId));
             ids.UnionWith(version.Content.SharedBlocks.Select(block => block.BlockId));
             competencyIds.UnionWith(version.Content.Competencies.Select(competency => competency.CompetencyId));
@@ -172,10 +176,14 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
         {
             var used = competencyIds.ToList();
             ids.UnionWith(used);
-            ids.UnionWith(await context.Set<CareerCompetency>()
-                .Where(competency => used.Contains(competency.Id))
-                .Select(competency => competency.CategoryId)
-                .ToListAsync(cancellationToken));
+            foreach (var competency in await context.Set<CareerCompetency>()
+                         .Where(competency => used.Contains(competency.Id))
+                         .Select(competency => new { competency.CategoryId, competency.ScaleId })
+                         .ToListAsync(cancellationToken))
+            {
+                ids.Add(competency.CategoryId);
+                ids.Add(competency.ScaleId);
+            }
         }
 
         return ids;
@@ -233,9 +241,11 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// unit's parent, the first unit whose head can act is one the user heads. The walk stays inside the headed subtrees, so no ancestry
     /// is read, and the head of each unit on the way is looked up once.
     /// </summary>
-    private async Task<List<MatrixVersion>> SuperiorOfAsync(CatalogViewer viewer, CancellationToken cancellationToken)
+    private async Task<List<MatrixVersion>> SuperiorOfAsync(
+        CatalogViewer viewer,
+        IReadOnlyDictionary<Guid, OrgUnitStatus> below,
+        CancellationToken cancellationToken)
     {
-        var below = await UnitsBelowHeadedAsync(viewer, cancellationToken);
         if (below.Count == 0)
         {
             return [];
@@ -290,7 +300,10 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// <summary>
     /// The units strictly below the user's headed units, by identifier.
     /// </summary>
-    private async Task<Dictionary<Guid, OrgUnitStatus>> UnitsBelowHeadedAsync(CatalogViewer viewer, CancellationToken cancellationToken)
+    /// <param name="viewer">The user's rights.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    /// <returns>The units by identifier.</returns>
+    public async Task<Dictionary<Guid, OrgUnitStatus>> UnitsBelowHeadedAsync(CatalogViewer viewer, CancellationToken cancellationToken)
     {
         var below = new Dictionary<Guid, OrgUnitStatus>();
         foreach (var headedId in viewer.HeadedUnitIds)

@@ -11,7 +11,7 @@ namespace Competency.CareerFramework;
 /// active with the root every draft it refers to, directly or through other entries, or nothing at all: a track takes its direction and
 /// draft levels, a competency its category, direction and scale, a shared block its scale and the competencies of its composition, a
 /// version the track of a track matrix with the track's levels, its shared blocks, its competencies and, through the active ones too,
-/// their drafts, and its scale. Each draft must be one the right that counts may approve, have a name nothing published already has, as
+/// their drafts. Each draft must be one the right that counts may approve with it, have a name nothing published already has, as
 /// a track be ready, and as a shared block have competencies. The plan runs under the caller's locks for an action, and without locks
 /// for a preview, which then changes nothing because nobody saves it.
 /// </summary>
@@ -91,7 +91,6 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
             .. await BlockDraftsAsync(blocks, cancellationToken),
             .. competencies.Where(IsDraft),
             .. await ReferenceDraftsAsync(competencies, cancellationToken),
-            .. await DraftsAsync<CompetencyScale>([version.ScaleId], cancellationToken),
         ];
         return await CheckAsync(version.Id, version.Version, root: null, drafts, approver, cancellationToken);
     }
@@ -175,7 +174,7 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
         }
 
         List<(CatalogEntry Entry, PublicationBlocker Blocker)> blockers =
-            [.. entries.Where(entry => approver?.CanManage(entry) != true).Select(entry => BlockerOf(entry, PublicationBlockerReason.NoRight))];
+            [.. entries.Where(entry => approver?.MayPublishWith(entry) != true).Select(entry => BlockerOf(entry, PublicationBlockerReason.NoRight))];
         foreach (var track in published.OfType<CareerTrack>())
         {
             blockers.AddRange((await store.ReadinessAsync(track.Id, cancellationToken)).Blockers(track));

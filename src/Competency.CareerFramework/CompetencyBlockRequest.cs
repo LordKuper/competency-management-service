@@ -1,13 +1,18 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The name, scale and composition of a new shared block or of a change of one; the composition replaces the block's as a whole.
+/// The name, scale, unit and composition of a new shared block or of a change of one; the composition replaces the block's as a whole.
 /// </summary>
 internal sealed record CompetencyBlockRequest : CatalogNameRequest
 {
     public const string CompetenciesField = "competencyIds";
 
     public required Guid ScaleId { get; init; }
+
+    /// <summary>
+    /// The active unit the block applies to, with the units below it; absent or null for a block that applies to all.
+    /// </summary>
+    public Guid? ScopeUnitId { get; init; }
 
     public required IReadOnlyList<Guid> CompetencyIds { get; init; }
 

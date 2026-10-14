@@ -57,7 +57,8 @@ internal sealed class CareerMail(
 
     /// <summary>
     /// Tells the responsible HR of the units the author heads, each once, about a draft entry a unit head who does not keep it has just
-    /// created; for a track, the HR of its unit. A draft level and a draft its keeper created tell nobody.
+    /// created; for a track, the HR of its unit, and for a shared block that applies to a unit, the HR of that unit. A draft level and a
+    /// draft its keeper created tell nobody.
     /// </summary>
     /// <param name="entry">The created entry.</param>
     /// <param name="viewer">The author's rights at the moment of creating it.</param>
@@ -70,7 +71,7 @@ internal sealed class CareerMail(
         }
 
         var unitNames = await store.UnitNamesAsync(
-            viewer.HeadedUnitIds.Where(unitId => entry.UnitId is null || unitId == entry.UnitId).Select(unitId => (Guid?)unitId),
+            entry.ListedUnitId is { } listedUnitId ? [listedUnitId] : viewer.HeadedUnitIds.Select(unitId => (Guid?)unitId),
             cancellationToken);
         var unitNameOfHr = new Dictionary<Guid, string>();
         foreach (var (unitId, unitName) in unitNames.OrderBy(unit => unit.Value).ThenBy(unit => unit.Key))
@@ -87,7 +88,7 @@ internal sealed class CareerMail(
         }
 
         var kind = CatalogDraftEndpoints.KindOf(entry);
-        var scope = entry.UnitId is { } trackUnitId ? $"подразделение «{unitNames[trackUnitId]}»" : "общая запись";
+        var scope = entry.ListedUnitId is { } unitOfEntry ? $"подразделение «{unitNames[unitOfEntry]}»" : "общая запись";
         var authorName = await ActorNameAsync(HeadWord, cancellationToken);
         var link = Link(DraftsRoute, $"{kind.ToString().ToLowerInvariant()}/{entry.Id}");
         foreach (var (hrId, unitName) in unitNameOfHr)

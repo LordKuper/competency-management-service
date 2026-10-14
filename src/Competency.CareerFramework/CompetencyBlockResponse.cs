@@ -1,9 +1,9 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// A shared block as the API returns it, with its scale and its competencies by name in the order of the composition. The version equals
-/// the <c>ETag</c> a change returns and is sent back in <c>If-Match</c>. <c>CanEdit</c> and <c>CanDelete</c> say whether the signed-in user
-/// may change and delete the block now, so a client offers only what the server allows.
+/// A shared block as the API returns it, with its scale, the unit it applies to, null for all, and its competencies by name in the order
+/// of the composition. The version equals the <c>ETag</c> a change returns and is sent back in <c>If-Match</c>. <c>CanEdit</c> and
+/// <c>CanDelete</c> say whether the signed-in user may change and delete the block now, so a client offers only what the server allows.
 /// </summary>
 internal sealed record CompetencyBlockResponse(
     Guid Id,
@@ -14,7 +14,9 @@ internal sealed record CompetencyBlockResponse(
     CatalogStatus Status,
     int Version,
     bool CanEdit,
-    bool CanDelete)
+    bool CanDelete,
+    Guid? ScopeUnitId = null,
+    string? ScopeUnitName = null)
 {
     public static CompetencyBlockResponse From(CompetencyBlock block, IReadOnlyDictionary<Guid, string> names, CatalogViewer viewer) => new(
         block.Id,
@@ -25,5 +27,7 @@ internal sealed record CompetencyBlockResponse(
         block.Status,
         block.Version,
         viewer.CanEdit(block),
-        viewer.CanDelete(block));
+        viewer.CanDelete(block),
+        block.ScopeUnitId,
+        block.ScopeUnitId is { } scopeUnitId ? names.GetValueOrDefault(scopeUnitId, string.Empty) : null);
 }

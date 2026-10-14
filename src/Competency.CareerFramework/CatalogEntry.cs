@@ -26,4 +26,9 @@ internal abstract class CatalogEntry : EntityBase
     /// The unit whose head and responsible HR keep the entry; null for an entry no unit keeps, which global administrators and every HR keep.
     /// </summary>
     public virtual Guid? UnitId => null;
+
+    /// <summary>
+    /// The unit lists name and filter the entry by: the unit that keeps it, or the unit a shared block applies to; null for none.
+    /// </summary>
+    public virtual Guid? ListedUnitId => UnitId;
 }

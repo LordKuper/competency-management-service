@@ -52,16 +52,27 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
-    /// Works out the signed-in user's rights in the catalogues, including the drafts they read through the matrix versions they take part in.
-    /// Those are not worked out for global administrators and HR, who read every draft a matrix version can use: the drafts of no unit
-    /// anyway, and draft levels belong to draft tracks, which no matrix uses.
+    /// Works out the signed-in user's rights in the catalogues, including the drafts they read through the matrix versions they take part in
+    /// and the subtrees of the units they head, which bound their rights over shared blocks; both come from one walk of those subtrees.
+    /// Neither is worked out for global administrators and HR, who read every draft a matrix version can use, the drafts of no unit anyway
+    /// and draft levels belonging to draft tracks, which no matrix uses, and who keep every shared block.
     /// </summary>
     /// <param name="cancellationToken">Cancels the lookups.</param>
     /// <returns>The user's rights.</returns>
     public async Task<CatalogViewer> ViewerAsync(CancellationToken cancellationToken)
     {
         var viewer = await CatalogViewer.LoadAsync(actor, roles, cancellationToken);
-        return viewer.IsAdmin || viewer.IsHr ? viewer : viewer with { RouteEntryIds = await route.RouteEntryIdsAsync(viewer, cancellationToken) };
+        if (viewer.IsAdmin || viewer.IsHr)
+        {
+            return viewer;
+        }
+
+        var below = await route.UnitsBelowHeadedAsync(viewer, cancellationToken);
+        return viewer with
+        {
+            RouteEntryIds = await route.RouteEntryIdsAsync(viewer, below, cancellationToken),
+            HeadedSubtreeIds = viewer.HeadedUnitIds.Concat(below.Keys).ToHashSet(),
+        };
     }
 
     /// <summary>
@@ -214,8 +225,8 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
-    /// The matrix versions on the scale: those whose own scale it is, and those including a shared block on it, the published and archived
-    /// ones by the block's scale in their snapshot.
+    /// The matrix versions with a competency or a shared block on the scale: a published or archived one by the scales frozen in its
+    /// snapshot, any other by the competencies and blocks of its document and variants as they stand now.
     /// </summary>
     /// <param name="scale">The scale.</param>
     /// <returns>The versions, a query to compose with others.</returns>
@@ -224,16 +235,24 @@ internal sealed class CatalogStore(
         var id = scale.Id;
         var versionIds = context.Database.SqlQuery<Guid>($"""
             SELECT v.id AS "Value" FROM matrix_versions v
-            WHERE v.scale_id = {id}
-                OR v.snapshot -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('scale', jsonb_build_object('id', {id}::text)))
-                OR EXISTS (
-                    SELECT 1 FROM competency_blocks b
-                    WHERE b.scale_id = {id}
-                        AND (v.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text))
-                            OR EXISTS (
-                                SELECT 1 FROM matrix_version_variants variant
-                                WHERE variant.version_id = v.id
-                                    AND variant.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text)))))
+            WHERE v.snapshot -> 'scales' @> jsonb_build_array(jsonb_build_object('id', {id}::text))
+                OR (v.snapshot IS NULL AND (
+                    EXISTS (
+                        SELECT 1 FROM competencies c
+                        WHERE c.scale_id = {id}
+                            AND (v.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', c.id::text))
+                                OR EXISTS (
+                                    SELECT 1 FROM matrix_version_variants variant
+                                    WHERE variant.version_id = v.id
+                                        AND variant.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', c.id::text)))))
+                    OR EXISTS (
+                        SELECT 1 FROM competency_blocks b
+                        WHERE b.scale_id = {id}
+                            AND (v.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text))
+                                OR EXISTS (
+                                    SELECT 1 FROM matrix_version_variants variant
+                                    WHERE variant.version_id = v.id
+                                        AND variant.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text)))))))
             """);
         return context.Set<MatrixVersion>().Where(version => versionIds.Contains(version.Id));
     }
@@ -303,8 +322,8 @@ internal sealed class CatalogStore(
     /// <summary>
     /// The active entries nothing uses, the one definition every list of them shares: competencies no matrix version, variant or
     /// published snapshot lists, directly or in the composition of a shared block a version or variant includes; scales other than the
-    /// default that no competency, shared block and version is on; categories no competency is of and no published snapshot names;
-    /// directions without tracks.
+    /// default that no competency and no shared block is on; categories no competency is of and no published snapshot names; directions
+    /// without tracks.
     /// </summary>
     /// <param name="cancellationToken">Cancels the queries.</param>
     /// <returns>The competencies, then the scales, categories and directions, each in name order.</returns>
@@ -326,7 +345,6 @@ internal sealed class CatalogStore(
             SELECT (item ->> 'categoryId')::uuid AS "Value" FROM matrix_versions, jsonb_array_elements(snapshot -> 'competencies') AS item
             """);
         var competencies = context.Set<CareerCompetency>();
-        var versions = context.Set<MatrixVersion>();
         var tracks = context.Set<CareerTrack>();
         var blocks = context.Set<CompetencyBlock>();
         return
@@ -335,8 +353,7 @@ internal sealed class CatalogStore(
             .. await ActiveByName(
                 context.Set<CompetencyScale>().Where(scale => !scale.IsDefault
                     && !competencies.Any(competency => competency.ScaleId == scale.Id)
-                    && !blocks.Any(block => block.ScaleId == scale.Id)
-                    && !versions.Any(version => version.ScaleId == scale.Id)),
+                    && !blocks.Any(block => block.ScaleId == scale.Id)),
                 cancellationToken),
             .. await ActiveByName(
                 context.Set<CompetencyCategory>().Where(category => !competencies.Any(competency => competency.CategoryId == category.Id)

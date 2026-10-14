@@ -1,3 +1,4 @@
+using Competency.OrgStructure;
 using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -11,12 +12,14 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The API of shared blocks of competencies. Block names are unique across the catalogue. A block holds competencies of its own scale,
 /// each once; an active block needs at least one and refers to active competencies only. Its scale changes only while no matrix version
-/// includes it. A block no matrix version, variant or snapshot includes can be deleted.
+/// includes it. A block applies to all matrices or to those of one active unit and the units below it; a unit head proposes and edits
+/// only drafts that apply to a unit of the subtrees they head. A block no matrix version, variant or snapshot includes can be deleted.
 /// </summary>
 internal static class CompetencyBlockEndpoints
 {
     private const string Route = "/api/v1/career/blocks";
     private const string ScaleField = "scaleId";
+    private const string ScopeField = "scopeUnitId";
     private const string EmptyMessage = "Состав блока пуст";
     private const string ScaleInUseMessage = "Шкалу блока используют матрицы — изменить нельзя";
     private const string InUseMessage = "Общий блок используют матрицы — удалить нельзя";
@@ -53,22 +56,40 @@ internal static class CompetencyBlockEndpoints
         return blockers.Any ? InUseMessage : null;
     }
 
-    private static Task<Results<Ok<PageResponse<CompetencyBlockResponse>>, ValidationProblem>> ListAsync(
+    /// <summary>
+    /// Lists the blocks the user can read: optionally on one scale, applying to one unit, applying to all (<c>forAll=true</c>) or to a
+    /// unit (<c>forAll=false</c>), and available to the matrices of a unit (<c>availableFor</c>): those applying to all, to the unit or to a
+    /// unit above it.
+    /// </summary>
+    private static async Task<Results<Ok<PageResponse<CompetencyBlockResponse>>, ValidationProblem>> ListAsync(
         [AsParameters] CatalogListQuery query,
         [FromQuery(Name = ScaleField)] Guid? scaleId,
+        [FromQuery(Name = ScopeField)] Guid? scopeUnitId,
+        [FromQuery(Name = "forAll")] bool? forAll,
+        [FromQuery(Name = "availableFor")] Guid? availableFor,
         AppDbContext context,
         CatalogStore store,
-        CancellationToken cancellationToken) =>
-        CatalogEndpoints.ListAsync(
-            context.Set<CompetencyBlock>().WhereIf(scaleId is not null, block => block.ScaleId == scaleId),
+        IEmployeeDirectory employees,
+        CancellationToken cancellationToken)
+    {
+        List<Guid> availableScopeIds = availableFor is { } unitId
+            ? [.. (await employees.FindAncestryAsync(unitId, cancellationToken)).Select(unit => unit.Id)]
+            : [];
+        return await CatalogEndpoints.ListAsync(
+            context.Set<CompetencyBlock>()
+                .WhereIf(scaleId is not null, block => block.ScaleId == scaleId)
+                .WhereIf(scopeUnitId is not null, block => block.ScopeUnitId == scopeUnitId)
+                .WhereIf(forAll is not null, block => (block.ScopeUnitId == null) == forAll)
+                .WhereIf(availableFor is not null, block => block.ScopeUnitId == null || availableScopeIds.Contains(block.ScopeUnitId.Value)),
             query,
             Kind,
             store,
             cancellationToken);
+    }
 
     /// <summary>
-    /// Creates a block: active from its keepers unless it refers to drafts, which only approving it publishes, so then it is a draft.
-    /// A draft may be empty; an active block may not.
+    /// Creates a block: active from its keepers unless it refers to drafts, which only approving it publishes, so then it is a draft, and
+    /// a draft from a unit head, for a unit of the subtrees they head. A draft may be empty; an active block may not.
     /// </summary>
     private static async Task<Results<Created<CompetencyBlockResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
         CompetencyBlockRequest request,
@@ -76,6 +97,7 @@ internal static class CompetencyBlockEndpoints
         CatalogStore store,
         CatalogPublication publication,
         CareerMail mail,
+        IEmployeeDirectory employees,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -87,9 +109,14 @@ internal static class CompetencyBlockEndpoints
 
         await using var transaction = await store.BeginWriteAsync(cancellationToken);
         var viewer = await store.ViewerAsync(cancellationToken);
-        if (viewer.StatusOfNew(unitId: null) is not { } status)
+        if (viewer.StatusOfNewBlock(request.ScopeUnitId) is not { } status)
         {
             return Rejection.Forbidden();
+        }
+
+        if (await ScopeProblemAsync(request.ScopeUnitId, employees, cancellationToken) is { } invalidScope)
+        {
+            return invalidScope;
         }
 
         if (!await store.IsUsableAsync<CompetencyScale>(request.ScaleId, viewer.UserId, cancellationToken))
@@ -103,6 +130,7 @@ internal static class CompetencyBlockEndpoints
             Status = status,
             AuthorId = viewer.UserId,
             ScaleId = request.ScaleId,
+            ScopeUnitId = request.ScopeUnitId,
             CompetencyIds = request.StoredCompetencyIds(),
         };
         if (await UnusableAsync(block.CompetencyIds, new HashSet<Guid>(), viewer.UserId, store, cancellationToken) is { } unusable)
@@ -137,8 +165,10 @@ internal static class CompetencyBlockEndpoints
     }
 
     /// <summary>
-    /// Changes a block's name, scale and composition. Versions in work see the new composition at once; published ones keep theirs in their
-    /// snapshot. The scale changes only while no matrix version includes the block, and only to the scale of every competency it holds.
+    /// Changes a block's name, scale, unit and composition. Versions in work see the new composition at once; published ones keep theirs in
+    /// their snapshot. The scale changes only while no matrix version includes the block, and only to the scale of every competency it
+    /// holds. The unit changes whoever uses the block, because a version in work that can no longer include it is stopped by completeness;
+    /// a unit head moves their draft only within the subtrees they head.
     /// </summary>
     private static async Task<Results<Ok<CompetencyBlockResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateAsync(
         Guid id,
@@ -146,6 +176,7 @@ internal static class CompetencyBlockEndpoints
         IfMatch ifMatch,
         AppDbContext context,
         CatalogStore store,
+        IEmployeeDirectory employees,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -162,9 +193,14 @@ internal static class CompetencyBlockEndpoints
             return TypedResults.NotFound();
         }
 
-        if (!viewer.CanEdit(block))
+        if (!viewer.CanEdit(block) || (!viewer.CanManage(block) && !viewer.HeadsSubtreeOf(request.ScopeUnitId)))
         {
             return Rejection.Forbidden();
+        }
+
+        if (request.ScopeUnitId != block.ScopeUnitId && await ScopeProblemAsync(request.ScopeUnitId, employees, cancellationToken) is { } invalidScope)
+        {
+            return invalidScope;
         }
 
         var draftAuthorId = block.Status == CatalogStatus.Active ? null : block.AuthorId;
@@ -200,6 +236,7 @@ internal static class CompetencyBlockEndpoints
         ifMatch.ApplyTo(context, block);
         block.Name = request.TrimmedName();
         block.ScaleId = request.ScaleId;
+        block.ScopeUnitId = request.ScopeUnitId;
         block.CompetencyIds = competencyIds;
         if (await CatalogEndpoints.NameProblemAsync(block, Kind, store, cancellationToken) is { } taken)
         {
@@ -208,6 +245,14 @@ internal static class CompetencyBlockEndpoints
 
         return TypedResults.Ok(await CatalogEndpoints.CommitAsync(block, Kind, viewer, store, transaction, response, cancellationToken));
     }
+
+    /// <summary>
+    /// Rejects a unit a block cannot apply to: one that does not exist or is no longer active.
+    /// </summary>
+    private static async Task<ValidationProblem?> ScopeProblemAsync(Guid? scopeUnitId, IEmployeeDirectory employees, CancellationToken cancellationToken) =>
+        scopeUnitId is { } unitId && await employees.FindUnitAsync(unitId, cancellationToken) is not { IsActive: true }
+            ? Rejection.Invalid(ScopeField, CatalogEndpoints.UnavailableMessage)
+            : null;
 
     /// <summary>
     /// Rejects a competency the change adds that the block may not refer to: an active block only active ones, a draft or inactive one also

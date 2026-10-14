@@ -373,6 +373,10 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("scale_id");
 
+                    b.Property<Guid?>("ScopeUnitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scope_unit_id");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(16)
@@ -389,6 +393,8 @@ namespace Competency.Platform.Migrations
                     b.HasIndex("AuthorId");
 
                     b.HasIndex("ScaleId");
+
+                    b.HasIndex("ScopeUnitId");
 
                     b.ToTable("competency_blocks", null, t =>
                         {
@@ -730,10 +736,6 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("published_at");
 
-                    b.Property<Guid>("ScaleId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("scale_id");
-
                     b.Property<string>("Snapshot")
                         .HasColumnType("jsonb")
                         .HasColumnName("snapshot");
@@ -757,8 +759,6 @@ namespace Competency.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");
-
-                    b.HasIndex("ScaleId");
 
                     b.HasIndex("MatrixId", "Number")
                         .IsUnique();
@@ -1229,6 +1229,11 @@ namespace Competency.Platform.Migrations
                         .HasForeignKey("ScaleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
+                        .WithMany()
+                        .HasForeignKey("ScopeUnitId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Competency.CareerFramework.CompetencyCategory", b =>
@@ -1325,12 +1330,6 @@ namespace Competency.Platform.Migrations
                     b.HasOne("Competency.CareerFramework.CompetencyMatrix", "Matrix")
                         .WithMany()
                         .HasForeignKey("MatrixId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Competency.CareerFramework.CompetencyScale", null)
-                        .WithMany()
-                        .HasForeignKey("ScaleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
