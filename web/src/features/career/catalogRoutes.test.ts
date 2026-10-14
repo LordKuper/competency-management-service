@@ -28,6 +28,7 @@ const SEGMENTS = Object.keys({
   categories: true,
   competencies: true,
   scales: true,
+  blocks: true,
 } satisfies Record<CatalogSegment, true>) as CatalogSegment[];
 
 const ACTIONS = Object.keys({
@@ -42,6 +43,7 @@ const DRAFT_KINDS = Object.keys({
   Category: true,
   Competency: true,
   Scale: true,
+  Block: true,
 } satisfies Record<CatalogKind, true>) as CatalogKind[];
 
 const TRANSITIONS = Object.keys({
