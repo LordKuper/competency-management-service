@@ -226,3 +226,6 @@
 {"op":"close","id":"Task 24 assessment-fix 1","kind":"dispatch","parent":"impl#1","start":"2026-10-14T21:10:42.591Z","end":"2026-10-14T21:13:21.307Z","outcome":"done","attrs":{}}
 {"op":"open","id":"Task 25","kind":"dispatch","parent":"impl#1","start":"2026-10-14T21:24:52.906Z","attrs":{}}
 {"op":"close","id":"Task 25","kind":"dispatch","parent":"impl#1","start":"2026-10-14T21:24:52.906Z","end":"2026-10-14T21:27:59.970Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 25 decisions","kind":"user-wait","parent":"impl#1","start":"2026-10-14T21:28:00.361Z","attrs":{}}
+{"op":"close","id":"Task 25 decisions","kind":"user-wait","parent":"impl#1","start":"2026-10-14T21:28:00.361Z","end":"2026-10-14T21:42:53.070Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 25 decisions-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-14T21:42:53.197Z","attrs":{}}
