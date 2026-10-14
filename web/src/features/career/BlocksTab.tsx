@@ -52,10 +52,12 @@ function Composition({ block }: { block: CompetencyBlock }) {
       dataSource={block.competencies.map((item, index) => ({
         ...item,
         categoryName: reads[index]?.data?.categoryName,
+        scaleName: reads[index]?.data?.scaleName,
       }))}
       columns={[
         { title: "Компетенция", dataIndex: "name" },
         { title: "Категория", dataIndex: "categoryName" },
+        { title: "Шкала", dataIndex: "scaleName" },
       ]}
     />
   );

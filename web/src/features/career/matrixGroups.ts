@@ -15,7 +15,7 @@ type Scale = NonNullable<MatrixVersion["entries"]["scale"]>;
 
 const NO_SCALE: Scale = { id: "", name: "", points: [], status: "Active" };
 
-/** The shared blocks of a version as its entries describe them: their scale and the composition they have now. */
+/** The shared blocks of a version as its entries describe them: their composition as it stands now. */
 export function sharedEntriesOf(
   version: Pick<MatrixVersion, "entries">,
 ): readonly MatrixSharedBlockEntry[] {
@@ -38,6 +38,19 @@ export function sharedBlockOf(
 ) {
   return sharedEntriesOf(version).find((block) =>
     block.competencyIds.includes(competencyId),
+  );
+}
+
+/** The name of the scale a competency of the version is on, from what the entry or the catalogue record of it says. */
+export function scaleNameOf(
+  version: Pick<MatrixVersion, "entries">,
+  competencyId: string,
+  info?: { scaleId?: string | null; scaleName?: string },
+): string | undefined {
+  return (
+    info?.scaleName ??
+    version.entries.scales?.find((scale) => scale.id === info?.scaleId)?.name ??
+    scaleOfCompetency(version, competencyId).name
   );
 }
 

@@ -25,7 +25,7 @@ import {
 } from "../career/catalogApi";
 import { useCompetencies } from "../career/MatrixEditor";
 import type { MatrixVersion } from "../career/matrixApi";
-import { competenciesText } from "../career/matrixGroups";
+import { competenciesText, scaleNameOf } from "../career/matrixGroups";
 
 interface BlockPreviewProps {
   block: CompetencyBlock;
@@ -58,6 +58,12 @@ function BlockPreview({ block, entries }: BlockPreviewProps) {
             title: "Категория",
             key: "category",
             render: (_, item) => competencies.get(item.id)?.categoryName,
+          },
+          {
+            title: "Шкала",
+            key: "scale",
+            render: (_, item) =>
+              scaleNameOf({ entries }, item.id, competencies.get(item.id)),
           },
           {
             title: "Тип",

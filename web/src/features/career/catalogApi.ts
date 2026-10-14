@@ -293,7 +293,6 @@ export function blockQuery(id: string) {
 /** The fields of a shared block a form saves. */
 export interface BlockValues {
   name: string;
-  scaleId: string;
   /** The unit the block is for; null for every unit. */
   scopeUnitId: string | null;
   competencyIds: string[];

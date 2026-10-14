@@ -30,16 +30,12 @@ import {
   MAX_PAGE_SIZE,
   saveBlock,
 } from "./catalogApi";
-import { ScaleSelect } from "./ScaleSelect";
 import { useCatalogRights } from "./useCatalogRights";
 import { usePublishEntry } from "./usePublishEntry";
 
 const NAME_MAX_LENGTH = 200;
-const FIELDS = ["name", "scaleId", "scopeUnitId", "competencyIds"] as const;
+const FIELDS = ["name", "scopeUnitId", "competencyIds"] as const;
 const LIST_HEIGHT_IN_CONTROLS = 8;
-const SCALE_FIRST = "Сначала выберите шкалу";
-const SCALE_USED =
-  "Шкалу блока используют матрицы — изменить нельзя. Для другой шкалы создайте новый блок.";
 const IN_USE_NOTICE =
   "Блок используют матрицы: черновые версии сразу увидят новый состав, опубликованные и архивные не изменятся.";
 const MANAGER_NOTICE =
@@ -54,7 +50,6 @@ const DRAFT_MEMBER_NOTICE =
 
 interface BlockFormValues {
   name: string;
-  scaleId?: string;
   scopeUnitId?: string | null;
   competencyIds?: string[];
 }
@@ -69,7 +64,7 @@ interface BlockModalProps {
   onClose: () => void;
 }
 
-/** Dialog that creates a shared block with its scale and composition or changes one. */
+/** Dialog that creates a shared block with its composition or changes one. */
 export function BlockModal({
   block: latest,
   fixedScope,
@@ -84,7 +79,6 @@ export function BlockModal({
       saveBlock(
         {
           name: values.name,
-          scaleId: values.scaleId ?? "",
           scopeUnitId: values.scopeUnitId ?? fixedScope?.id ?? null,
           competencyIds: values.competencyIds ?? [],
         },
@@ -136,7 +130,6 @@ function BlockForm({ block, fixedScope, onSubmit, onCancel }: BlockFormProps) {
     units.data ?? [],
     roles.data?.headedUnits.map((unit) => unit.id) ?? [],
   );
-  const scaleId = Form.useWatch("scaleId", form);
   const [draftIds, setDraftIds] = useState<ReadonlySet<string>>(new Set());
   const noteDrafts = (ids: readonly string[]) =>
     setDraftIds((previous) =>
@@ -191,21 +184,6 @@ function BlockForm({ block, fixedScope, onSubmit, onCancel }: BlockFormProps) {
       >
         <Input autoComplete="off" />
       </Form.Item>
-      <Form.Item
-        name="scaleId"
-        label="Шкала"
-        rules={[{ required: true, message: "Выберите шкалу" }]}
-        extra={
-          isUsed
-            ? SCALE_USED
-            : "Шкала обязательна и определяет, какие компетенции можно включить."
-        }
-      >
-        <ScaleSelect
-          disabled={isUsed}
-          onChange={() => form.setFieldValue("competencyIds", [])}
-        />
-      </Form.Item>
       {fixedScope ? (
         <Form.Item
           label="Действует для"
@@ -239,7 +217,7 @@ function BlockForm({ block, fixedScope, onSubmit, onCancel }: BlockFormProps) {
         </Form.Item>
       )}
       <Form.Item name="competencyIds" label="Состав">
-        <CompetencyPicker scaleId={scaleId} onDraftsSeen={noteDrafts} />
+        <CompetencyPicker onDraftsSeen={noteDrafts} />
       </Form.Item>
       <DraftMemberNotice form={form} draftIds={draftIds} />
       <FormActions isSubmitting={isSubmitting} onCancel={onCancel} />
@@ -270,19 +248,17 @@ interface CompetencyPickerProps {
   /** Supplied by the form item. */
   value?: string[];
   onChange?: (value: string[]) => void;
-  scaleId?: string;
   /** Told which of the competencies listed are drafts. */
   onDraftsSeen: (ids: readonly string[]) => void;
 }
 
 /**
- * The composition of a block: the active and draft competencies of the block's scale, searched on the server, with a
- * checkbox each. What was ticked stays ticked while the search changes.
+ * The composition of a block: the active and draft competencies of any scale, searched on the server, with a checkbox
+ * each. What was ticked stays ticked while the search changes.
  */
 function CompetencyPicker({
   value = [],
   onChange,
-  scaleId,
   onDraftsSeen,
 }: CompetencyPickerProps) {
   const { token } = theme.useToken();
@@ -293,10 +269,8 @@ function CompetencyPicker({
       q: q || undefined,
       page: 1,
       pageSize: MAX_PAGE_SIZE,
-      scaleId,
       inWork: true,
     }),
-    enabled: scaleId !== undefined,
   });
   const items = list.data?.items ?? [];
   useEffect(() => {
@@ -316,6 +290,7 @@ function CompetencyPicker({
   const columns: TableColumnsType<Competency> = [
     { title: "Компетенция", dataIndex: "name" },
     { title: "Категория", dataIndex: "categoryName" },
+    { title: "Шкала", dataIndex: "scaleName" },
     {
       title: "Статус",
       dataIndex: "status",
@@ -324,9 +299,6 @@ function CompetencyPicker({
       ),
     },
   ];
-  if (scaleId === undefined) {
-    return <Typography.Text type="secondary">{SCALE_FIRST}</Typography.Text>;
-  }
   return (
     <Flex vertical gap="small">
       <Flex align="center" gap="middle" wrap>
@@ -341,7 +313,7 @@ function CompetencyPicker({
         <Typography.Text strong>{`Выбрано: ${value.length}`}</Typography.Text>
       </Flex>
       <Typography.Text type="secondary">
-        Показаны действующие и черновые компетенции выбранной шкалы.
+        Показаны действующие и черновые компетенции любых шкал.
       </Typography.Text>
       {list.error ? (
         <ErrorAlert

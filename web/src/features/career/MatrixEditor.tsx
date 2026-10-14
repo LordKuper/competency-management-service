@@ -70,6 +70,7 @@ import {
   compositionChanges,
   OUTSIDE_LABEL,
   POSITION_COLUMN_LABEL,
+  scaleNameOf,
   scaleOfCompetency,
   sharedBlockOf,
   sharedEntriesOf,
@@ -114,6 +115,8 @@ export interface CompetencyInfo {
   name: string;
   type: CompetencyType;
   categoryName?: string;
+  scaleId?: string | null;
+  scaleName?: string;
 }
 
 interface MatrixEditorProps {
@@ -428,7 +431,12 @@ function MatrixEditorBody({
         <Typography.Text strong>{competency?.name}</Typography.Text>
         {competency?.categoryName && (
           <Typography.Text type="secondary">
-            {competency.categoryName}
+            {[
+              competency.categoryName,
+              scaleNameOf(version, competencyId, competency),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </Typography.Text>
         )}
         {competency?.type === "Critical" && (

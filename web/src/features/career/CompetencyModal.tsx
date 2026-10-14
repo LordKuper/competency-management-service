@@ -11,11 +11,9 @@ import { CatalogModal, FormActions } from "./CatalogModal";
 import { CatalogSelect, IN_WORK } from "./CatalogSelect";
 import { CategorySelect } from "./CategorySelect";
 import {
-  blocksQuery,
   type Competency,
   type CompetencyType,
   invalidateCatalogs,
-  MAX_PAGE_SIZE,
   scalesQuery,
 } from "./catalogApi";
 import { ScaleSelect } from "./ScaleSelect";
@@ -156,17 +154,6 @@ function CompetencyForm({
     enabled: !competency,
   });
   const defaultScaleId = defaultScale.data?.items[0]?.id;
-  const blocks = useQuery({
-    ...blocksQuery({
-      scaleId: competency?.scaleId,
-      page: 1,
-      pageSize: MAX_PAGE_SIZE,
-    }),
-    enabled: competency !== undefined,
-  });
-  const holder = blocks.data?.items.find((block) =>
-    block.competencies.some((member) => member.id === competency?.id),
-  );
 
   useEffect(() => {
     if (!competency && defaultScaleId && !form.getFieldValue("scaleId")) {
@@ -223,17 +210,8 @@ function CompetencyForm({
       <Form.Item name="type" label="Тип" rules={[{ required: true }]}>
         <Select options={TYPE_OPTIONS} />
       </Form.Item>
-      <Form.Item
-        name="scaleId"
-        label="Шкала"
-        rules={[{ required: true }]}
-        extra={
-          holder
-            ? `Входит в общий блок «${holder.name}»: шкала не меняется`
-            : undefined
-        }
-      >
-        <ScaleSelect disabled={holder !== undefined} />
+      <Form.Item name="scaleId" label="Шкала" rules={[{ required: true }]}>
+        <ScaleSelect />
       </Form.Item>
       <FormActions isSubmitting={isSubmitting} onCancel={onCancel} />
     </Form>

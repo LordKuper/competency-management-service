@@ -45,6 +45,7 @@ import {
   competenciesText,
   compositionChanges,
   compositionsOf,
+  scaleNameOf,
 } from "../career/matrixGroups";
 import { AddBlockModal } from "./AddBlockModal";
 import {
@@ -618,6 +619,12 @@ function Composition({ version, line, change }: CompositionProps) {
             title: "Категория",
             key: "category",
             render: (_, { id }) => competencies.get(id)?.categoryName,
+          },
+          {
+            title: "Шкала",
+            key: "scale",
+            render: (_, { id }) =>
+              scaleNameOf(version, id, competencies.get(id)),
           },
           {
             title: "Тип",
