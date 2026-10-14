@@ -19,6 +19,11 @@ internal sealed record MatrixContent(
     public const int TextMaxLength = 4000;
     public const decimal MaxPercent = 100;
 
+    /// <summary>
+    /// The refusal of a requirement of a level or competency the version does not have.
+    /// </summary>
+    public const string ForeignRequirementMessage = "Требование относится к уровню или компетенции не из версии";
+
     private const string Field = "content";
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
@@ -106,7 +111,7 @@ internal sealed record MatrixContent(
         }
 
         return Requirements.Any(item => !levelIds.Contains(item.LevelId))
-            ? "Требование относится к уровню не из версии"
+            ? ForeignRequirementMessage
             : null;
     }
 

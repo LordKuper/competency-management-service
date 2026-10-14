@@ -20,7 +20,6 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     private const string ForeignLevelMessage = "Уровень не из трека матрицы";
     private const string PositionColumnMessage = "У матрицы должности один столбец требований — её должность";
     private const string ForeignCompetencyMessage = "Компетенция не на шкале версии или не из области матрицы";
-    private const string ForeignRequirementMessage = "Требование относится к компетенции не из версии";
 
     private static readonly NumberFormatInfo DecimalComma = new() { NumberDecimalSeparator = "," };
 
@@ -65,7 +64,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         else if (content.Requirements.Any(requirement => !entries.Includes(requirement.CompetencyId)
                      && !previousRequirements.Contains((requirement.LevelId, requirement.CompetencyId))))
         {
-            problem = ForeignRequirementMessage;
+            problem = MatrixContent.ForeignRequirementMessage;
         }
         else if (entries.Counted(content.Requirements).FirstOrDefault(requirement => !entries.HasScore(requirement)) is { } outOfScale)
         {
