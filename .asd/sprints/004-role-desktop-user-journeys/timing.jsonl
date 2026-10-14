@@ -213,3 +213,6 @@
 {"op":"open","id":"Task 21","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:37:38.296Z","attrs":{}}
 {"op":"open","id":"Task 22","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:37:38.357Z","attrs":{}}
 {"op":"close","id":"Task 22","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:37:38.357Z","end":"2026-10-14T19:47:10.521Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 21","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:37:38.296Z","end":"2026-10-14T20:05:22.830Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 23","kind":"dispatch","parent":"impl#1","start":"2026-10-14T20:05:33.104Z","attrs":{}}
+{"op":"open","id":"Task 22 arch-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-14T20:05:33.177Z","attrs":{}}
