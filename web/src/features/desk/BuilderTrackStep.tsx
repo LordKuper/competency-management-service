@@ -1,12 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  theme as antdTheme,
   Button,
-  Col,
-  Descriptions,
   Flex,
   Form,
-  Row,
+  Input,
   Select,
   Table,
   type TableColumnsType,
@@ -40,7 +37,7 @@ import { TrackModal } from "../career/TrackModal";
 import { useCatalogRights } from "../career/useCatalogRights";
 import { NoPositionTag, PositionGapAction } from "./CompletenessBlock";
 import { deskPaths } from "./deskTexts";
-import { ActionBar, CompactAlert } from "./ScenarioContext";
+import { ActionBar, CompactAlert, FormColumn } from "./ScenarioContext";
 import "./scenario.css";
 
 type LevelRow = TrackPositions["levels"][number];
@@ -101,7 +98,6 @@ function LevelsTable({ trackId, trackName, unavailable }: LevelsTableProps) {
         dataSource={read.data?.levels}
         loading={read.isFetching}
         pagination={false}
-        scroll={{ x: "max-content" }}
       />
     </section>
   );
@@ -147,27 +143,27 @@ function CreatedVersion({
   const matrix = useQuery(matrixQuery(version.matrixId));
   const { track, scale } = version.entries;
   return (
-    <Flex vertical gap="middle">
-      <Descriptions
-        size="small"
-        column={{ xs: 1, md: 3 }}
-        items={[
-          {
-            key: "unit",
-            label: "Подразделение",
-            children: matrix.data?.orgUnitName,
-          },
-          { key: "scale", label: "Шкала", children: scale.name },
-          { key: "track", label: "Трек", children: track.name },
-        ]}
-      />
+    <FormColumn>
+      <Form layout="vertical" disabled className="compact-form">
+        <Flex vertical gap="middle">
+          <Form.Item label="Подразделение">
+            <Input value={matrix.data?.orgUnitName} />
+          </Form.Item>
+          <Form.Item label="Трек">
+            <Input value={track.name} />
+          </Form.Item>
+          <Form.Item label="Шкала">
+            <ScaleSelect value={scale.id} known={scale} disabled />
+          </Form.Item>
+        </Flex>
+      </Form>
       <LevelsTable trackId={track.id} trackName={track.name} />
       <ActionBar>
         <Button type="primary" onClick={onNext}>
           Далее
         </Button>
       </ActionBar>
-    </Flex>
+    </FormColumn>
   );
 }
 
@@ -175,7 +171,6 @@ function NewVersionForm({
   preselected,
   onUnsavedChange,
 }: Pick<BuilderTrackStepProps, "preselected" | "onUnsavedChange">) {
-  const { token } = antdTheme.useToken();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form] = Form.useForm<FormValues>();
@@ -264,7 +259,7 @@ function NewVersionForm({
       onValuesChange={() => setIsDirty(true)}
       onFinish={submit}
     >
-      <Flex vertical gap="middle">
+      <FormColumn>
         {roles.isSuccess && headedUnits.length === 0 && (
           <CompactAlert
             type="info"
@@ -272,49 +267,24 @@ function NewVersionForm({
             text="Вы не руководите ни одним подразделением, поэтому создать матрицу здесь нельзя. Обратитесь к руководителю подразделения."
           />
         )}
-        <Row gutter={[token.margin, token.margin]}>
-          <Col xs={24} md={12}>
-            <Form.Item
-              name="orgUnitId"
-              label="Подразделение"
-              rules={[{ required: true }]}
-            >
-              <Select
-                options={headedUnits.map((item) => ({
-                  value: item.id,
-                  label: item.name,
-                }))}
-                onChange={() => form.resetFields(["trackId"])}
-              />
-            </Form.Item>
-          </Col>
-          <Col xs={24} md={12}>
-            <Form.Item label="Шкала" required>
-              <Flex gap="small">
-                <Form.Item
-                  name="scaleId"
-                  noStyle
-                  rules={[{ required: true, message: "Выберите шкалу" }]}
-                >
-                  <ScaleSelect
-                    aria-label="Шкала"
-                    style={{ flex: 1, minWidth: 0 }}
-                    disabled={isScaleFixed}
-                  />
-                </Form.Item>
-                {rights.canCreate && (
-                  <Button
-                    disabled={isScaleFixed}
-                    onClick={() => setIsScaleCreating(true)}
-                  >
-                    Добавить шкалу
-                  </Button>
-                )}
-              </Flex>
-            </Form.Item>
-          </Col>
-        </Row>
-        <Form.Item label="Трек" required>
+        <Form.Item
+          name="orgUnitId"
+          label="Подразделение"
+          rules={[{ required: true }]}
+        >
+          <Select
+            options={headedUnits.map((item) => ({
+              value: item.id,
+              label: item.name,
+            }))}
+            onChange={() => form.resetFields(["trackId"])}
+          />
+        </Form.Item>
+        <Form.Item
+          label="Трек"
+          required
+          extra="Треки вашего подразделения и вышестоящих. Нужного нет — «Добавить трек»: черновой трек создаётся, не выходя из сценария."
+        >
           <Flex gap="small">
             <Form.Item
               name="trackId"
@@ -324,7 +294,7 @@ function NewVersionForm({
               <CatalogSelect
                 segment="tracks"
                 aria-label="Трек"
-                style={{ flex: 1 }}
+                style={{ flex: 1, minWidth: 0 }}
                 filters={{ ...IN_WORK, forOrgUnitId: orgUnitId }}
                 disabled={!orgUnitId}
               />
@@ -332,6 +302,29 @@ function NewVersionForm({
             <Button disabled={!unit} onClick={() => setIsTrackCreating(true)}>
               Добавить трек
             </Button>
+          </Flex>
+        </Form.Item>
+        <Form.Item label="Шкала" required>
+          <Flex gap="small">
+            <Form.Item
+              name="scaleId"
+              noStyle
+              rules={[{ required: true, message: "Выберите шкалу" }]}
+            >
+              <ScaleSelect
+                aria-label="Шкала"
+                style={{ flex: 1, minWidth: 0 }}
+                disabled={isScaleFixed}
+              />
+            </Form.Item>
+            {rights.canCreate && (
+              <Button
+                disabled={isScaleFixed}
+                onClick={() => setIsScaleCreating(true)}
+              >
+                Добавить шкалу
+              </Button>
+            )}
           </Flex>
         </Form.Item>
         {matrix?.inWorkVersion ? (
@@ -402,7 +395,7 @@ function NewVersionForm({
             Сохранить и далее
           </Button>
         </ActionBar>
-      </Flex>
+      </FormColumn>
       {isScaleCreating && (
         <ScaleModal
           onSaved={(created) => {

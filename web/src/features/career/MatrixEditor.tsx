@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import {
   Button,
+  Card,
   ConfigProvider,
   Flex,
   InputNumber,
@@ -402,6 +403,36 @@ function MatrixEditorBody({
   const isGridShown = builder === undefined || builder.part === "requirements";
   const isBlocksShown = builder === undefined || builder.part === "formula";
 
+  const legend = (
+    <ul className={`matrix-legend${builder ? " matrix-legend--vertical" : ""}`}>
+      {entries.scale.points.map((point) => (
+        <li key={point.score}>
+          <span
+            className={`rating-chip rating-chip--${chipLevel(point.score)}`}
+          >
+            {point.score}
+          </span>
+          {point.label}
+        </li>
+      ))}
+    </ul>
+  );
+  const grid = (
+    <Table<GridRow>
+      className="matrix-grid"
+      rowKey="key"
+      columns={columns}
+      dataSource={rows}
+      pagination={false}
+      scroll={{ x: "max-content" }}
+      rowClassName={(row) =>
+        row.competencyId && changed.competencies.has(row.competencyId)
+          ? "matrix-changed-row"
+          : ""
+      }
+    />
+  );
+
   return (
     <ConfigProvider componentDisabled={save.isPending}>
       <Space
@@ -447,35 +478,26 @@ function MatrixEditorBody({
             scalePoints={entries.scale.points}
           />
         )}
-        {isGridShown && (
-          <>
-            <ul className="matrix-legend">
-              {entries.scale.points.map((point) => (
-                <li key={point.score}>
-                  <span
-                    className={`rating-chip rating-chip--${chipLevel(point.score)}`}
-                  >
-                    {point.score}
-                  </span>
-                  {point.label}
-                </li>
-              ))}
-            </ul>
-            <Table<GridRow>
-              className="matrix-grid"
-              rowKey="key"
-              columns={columns}
-              dataSource={rows}
-              pagination={false}
-              scroll={{ x: "max-content" }}
-              rowClassName={(row) =>
-                row.competencyId && changed.competencies.has(row.competencyId)
-                  ? "matrix-changed-row"
-                  : ""
-              }
-            />
-          </>
-        )}
+        {isGridShown &&
+          (builder ? (
+            <div className="matrix-step-columns">
+              {grid}
+              <Card size="small" title="Требуемый уровень">
+                <Space orientation="vertical" size="small">
+                  <Typography.Text type="secondary">
+                    Нажмите ячейку, чтобы задать уровень. Блок выбирается в
+                    строке компетенции.
+                  </Typography.Text>
+                  {legend}
+                </Space>
+              </Card>
+            </div>
+          ) : (
+            <>
+              {legend}
+              {grid}
+            </>
+          ))}
         {isBlocksShown && (
           <MatrixBlocks
             content={shown}

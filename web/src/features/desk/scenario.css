@@ -81,3 +81,13 @@
 .level-row-missing > td {
   background: var(--ant-color-warning-bg);
 }
+
+/* The column of a form step: it does not stretch, and on a narrow screen it takes the whole width. */
+.form-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ant-margin);
+  width: calc(var(--ant-size-xxl) * 12);
+  max-width: 100%;
+  margin-inline: auto;
+}

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { App, Button, Flex, Table, Tag, Typography } from "antd";
+import { App, Button, Table, Tag, Typography } from "antd";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useBlocker, useSearchParams } from "react-router";
 import { api } from "../../api/client";
@@ -16,7 +16,7 @@ import type { UserResponse } from "../users/usersApi";
 import { CreateAccountForm } from "./CreateAccountForm";
 import { deskPaths } from "./deskTexts";
 import { LinkButton } from "./LinkButton";
-import { ActionBar, CompactAlert } from "./ScenarioContext";
+import { ActionBar, CompactAlert, FormColumn } from "./ScenarioContext";
 import { ScenarioPage } from "./ScenarioPage";
 import { StepRuler } from "./StepRuler";
 
@@ -170,7 +170,7 @@ function EmployeeStep({
         : undefined;
 
   return (
-    <Flex vertical gap="middle">
+    <FormColumn>
       {employee && (
         <CompactAlert
           type="info"
@@ -227,7 +227,7 @@ function EmployeeStep({
           ),
         }}
       />
-    </Flex>
+    </FormColumn>
   );
 }
 
@@ -249,7 +249,7 @@ function AccountStep({
   useEffect(() => onUnsavedChange(isDirty), [isDirty, onUnsavedChange]);
 
   return (
-    <Flex vertical gap="middle">
+    <FormColumn>
       <CompactAlert
         type="success"
         lead="Сотрудник создан:"
@@ -295,7 +295,7 @@ function AccountStep({
           }}
         />
       )}
-    </Flex>
+    </FormColumn>
   );
 }
 
@@ -373,7 +373,7 @@ interface SummaryStepProps {
 
 function SummaryStep({ outcome, onBack, onAnother }: SummaryStepProps) {
   return (
-    <Flex vertical gap="middle">
+    <FormColumn>
       <ResultTable rows={resultRows(outcome)} />
       <ActionBar start={<Button onClick={onBack}>Назад</Button>}>
         <Button onClick={onAnother}>Принять ещё одного сотрудника</Button>
@@ -381,6 +381,6 @@ function SummaryStep({ outcome, onBack, onAnother }: SummaryStepProps) {
           К рабочему столу
         </LinkButton>
       </ActionBar>
-    </Flex>
+    </FormColumn>
   );
 }

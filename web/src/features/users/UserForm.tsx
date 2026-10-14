@@ -1,4 +1,4 @@
-import { Button, Col, Flex, Form, Input, Row, Select, Space } from "antd";
+import { Button, Flex, Form, Input, Select, Space } from "antd";
 import type { ReactNode } from "react";
 import type { UserRole } from "../../app/featureContract";
 import { useFormSubmit } from "../../app/useFormSubmit";
@@ -90,15 +90,7 @@ export function UserForm({
       onFinish={submit}
       onValuesChange={() => onDirtyChange?.(form.isFieldsTouched())}
     >
-      {scenarioActions ? (
-        <Row>
-          <Col xs={24} md={12}>
-            {emailField}
-          </Col>
-        </Row>
-      ) : (
-        emailField
-      )}
+      {emailField}
       {!lockedTo && (
         <>
           <Form.Item
@@ -118,7 +110,12 @@ export function UserForm({
           <Flex align="center" gap="small" wrap>
             {scenarioActions.start}
           </Flex>
-          <Flex align="center" gap="small" wrap>
+          <Flex
+            align="center"
+            gap="small"
+            wrap
+            style={{ marginInlineStart: "auto" }}
+          >
             {scenarioActions.end}
             <Button type="primary" htmlType="submit" loading={isSubmitting}>
               {submitLabel}

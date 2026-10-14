@@ -34,7 +34,7 @@ interface EmployeeFormProps {
   /** Leaves the form; omitted when `scenarioActions` carries the buttons. */
   onCancel?: () => void;
   /**
-   * Lays the form out as a step of a scenario: short fields side by side and one row of buttons, `start` at the left and
+   * Lays the form out as a step of a scenario: one field to a row, the three name fields as one row, and one row of buttons, `start` at the left and
    * `end` before the submit button at the right, in place of the cancel button.
    */
   scenarioActions?: { start?: ReactNode; end?: ReactNode };
@@ -141,19 +141,18 @@ export function EmployeeForm({
                 {middleName}
               </Col>
             </Row>
-            <Row gutter={[token.margin, token.margin]}>
-              <Col xs={24} md={12}>
-                {unit}
-              </Col>
-              <Col xs={24} md={12}>
-                {positionField}
-              </Col>
-            </Row>
+            {unit}
+            {positionField}
             <Flex justify="space-between" align="center" gap="small" wrap>
               <Flex align="center" gap="small" wrap>
                 {scenarioActions.start}
               </Flex>
-              <Flex align="center" gap="small" wrap>
+              <Flex
+                align="center"
+                gap="small"
+                wrap
+                style={{ marginInlineStart: "auto" }}
+              >
                 {scenarioActions.end}
                 {submitButton}
               </Flex>

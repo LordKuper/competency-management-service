@@ -107,6 +107,25 @@
   list-style: none;
 }
 
+.matrix-legend--vertical {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: var(--ant-margin-xs);
+}
+
+.matrix-step-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(var(--ant-size-xxl) * 6);
+  gap: var(--ant-margin);
+  align-items: start;
+}
+
+@media (width < 992px) {
+  .matrix-step-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .matrix-legend li {
   display: inline-flex;
   align-items: center;

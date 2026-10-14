@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { type DeskGroup, useDesk } from "./deskApi";
 import { objectContext } from "./deskTexts";
+import "./scenario.css";
 
 /** The line under the breadcrumb: the object of the scenario, its tags, the choice of another object and the way back. */
 export function ContextLine({ children }: { children: ReactNode }) {
@@ -68,6 +69,11 @@ export function OtherVersionMenu({
   );
 }
 
+/** The one column a form step stands in, centred under the full-width ruler; its action bar and tables stay inside it. */
+export function FormColumn({ children }: { children: ReactNode }) {
+  return <div className="form-column">{children}</div>;
+}
+
 interface ActionBarProps {
   /** Buttons at the start of the row, such as «Назад». */
   start?: ReactNode;
@@ -82,7 +88,12 @@ export function ActionBar({ start, children }: ActionBarProps) {
       <Flex align="center" gap="small" wrap>
         {start}
       </Flex>
-      <Flex align="center" gap="small" wrap>
+      <Flex
+        align="center"
+        gap="small"
+        wrap
+        style={{ marginInlineStart: "auto" }}
+      >
         {children}
       </Flex>
     </Flex>
