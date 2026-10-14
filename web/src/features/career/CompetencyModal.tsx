@@ -16,6 +16,7 @@ import {
   invalidateCatalogs,
   scalesQuery,
 } from "./catalogApi";
+import { ScaleSelect } from "./ScaleSelect";
 import { usePublishEntry } from "./usePublishEntry";
 
 const NAME_MAX_LENGTH = 200;
@@ -221,14 +222,7 @@ function CompetencyForm({
         rules={[{ required: true }]}
         extra={fixedScale && "Шкала версии, выбранная на шаге 1."}
       >
-        {fixedScale ? (
-          <Select
-            disabled
-            options={[{ value: fixedScale.id, label: fixedScale.name }]}
-          />
-        ) : (
-          <CatalogSelect segment="scales" filters={IN_WORK} />
-        )}
+        <ScaleSelect disabled={fixedScale !== undefined} known={fixedScale} />
       </Form.Item>
       <FormActions isSubmitting={isSubmitting} onCancel={onCancel} />
     </Form>

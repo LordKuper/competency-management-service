@@ -6,6 +6,7 @@ import { CatalogModal, FormActions } from "./CatalogModal";
 import { CatalogSelect, IN_WORK } from "./CatalogSelect";
 import { useProcessRoles } from "./careerApi";
 import { createMatrix, invalidateMatrices, type NewMatrix } from "./matrixApi";
+import { ScaleSelect } from "./ScaleSelect";
 
 const FIELDS = ["orgUnitId", "directionId", "trackId", "scaleId"] as const;
 
@@ -85,7 +86,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
           />
         </Form.Item>
         <Form.Item name="scaleId" label="Шкала" rules={[{ required: true }]}>
-          <CatalogSelect segment="scales" filters={IN_WORK} />
+          <ScaleSelect />
         </Form.Item>
         <FormActions isSubmitting={isSubmitting} onCancel={onClose} />
       </Form>

@@ -34,7 +34,10 @@ import {
   matricesQuery,
   matrixQuery,
 } from "../career/matrixApi";
+import { ScaleModal } from "../career/ScaleModal";
+import { ScaleSelect } from "../career/ScaleSelect";
 import { TrackModal } from "../career/TrackModal";
+import { useCatalogRights } from "../career/useCatalogRights";
 import { NoPositionTag, PositionGapAction } from "./CompletenessBlock";
 import { deskPaths } from "./deskTexts";
 import { ActionBar, CompactAlert } from "./ScenarioContext";
@@ -178,6 +181,8 @@ function NewVersionForm({
   const [form] = Form.useForm<FormValues>();
   const [isDirty, setIsDirty] = useState(false);
   const [isTrackCreating, setIsTrackCreating] = useState(false);
+  const [isScaleCreating, setIsScaleCreating] = useState(false);
+  const rights = useCatalogRights();
   const roles = useProcessRoles();
   const defaultScale = useQuery(
     scalesQuery({ page: 1, pageSize: 1, isDefault: true }),
@@ -284,16 +289,28 @@ function NewVersionForm({
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
-            <Form.Item
-              name="scaleId"
-              label="Шкала"
-              rules={[{ required: true }]}
-            >
-              <CatalogSelect
-                segment="scales"
-                filters={IN_WORK}
-                disabled={isScaleFixed}
-              />
+            <Form.Item label="Шкала" required>
+              <Flex gap="small">
+                <Form.Item
+                  name="scaleId"
+                  noStyle
+                  rules={[{ required: true, message: "Выберите шкалу" }]}
+                >
+                  <ScaleSelect
+                    aria-label="Шкала"
+                    style={{ flex: 1, minWidth: 0 }}
+                    disabled={isScaleFixed}
+                  />
+                </Form.Item>
+                {rights.canCreate && (
+                  <Button
+                    disabled={isScaleFixed}
+                    onClick={() => setIsScaleCreating(true)}
+                  >
+                    Добавить шкалу
+                  </Button>
+                )}
+              </Flex>
             </Form.Item>
           </Col>
         </Row>
@@ -313,7 +330,7 @@ function NewVersionForm({
               />
             </Form.Item>
             <Button disabled={!unit} onClick={() => setIsTrackCreating(true)}>
-              Создать трек
+              Добавить трек
             </Button>
           </Flex>
         </Form.Item>
@@ -386,6 +403,15 @@ function NewVersionForm({
           </Button>
         </ActionBar>
       </Flex>
+      {isScaleCreating && (
+        <ScaleModal
+          onSaved={(created) => {
+            form.setFieldValue("scaleId", created.id);
+            setIsDirty(true);
+          }}
+          onClose={() => setIsScaleCreating(false)}
+        />
+      )}
       {isTrackCreating && unit && (
         <TrackModal
           fixedOwner={unit}
