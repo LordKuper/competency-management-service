@@ -170,3 +170,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-15 — route Task 29: standard, dispatch HEAD (после этого коммита)
 - 2026-10-15 — Task 29 COMPLETED (ddc9fdb, 7e3ee7f). Flagged choices приняты оркестратором: создание блока в мастере сохраняет состояние шага целиком; «Создать блок» — только руководителю подразделения матрицы; «Действует для» подключённых блоков — GET /blocks/{id} на строку (sharedBlocks без scope; кандидат на impl-review по эффективности); легенда учитывает устаревший entries.scale старых версий
 - 2026-10-15 — impl completion gate (после Task 25–29): dotnet build Release 0/0, web lint/build/check:api чисто; все задачи плана отмечены
+
+## 2026-10-15 — поправка скоупа на приёмке реализации: блок без шкалы
+
+- **Decision**: пользователь: у общего блока шкала не нужна — она указана у каждой компетенции; в блоке могут быть компетенции разных шкал без ограничений (AC-50). Отменяет решение 2026-10-14 (2) «одна шкала у блока» и следствия: AC-131 (одна шкала блока), AC-141 (смена шкалы блока), запрет смены шкалы компетенции из блока (AC-33), шкала в окне и вкладке блока. Task 30–32 — волна 22 (требования, архитектура, UX параллельно — решение однозначное), Task 33 — 23, Task 34 — 24.
+- **Rationale**: hard `new or changed scope` + public contract / migration — указание пользователя; стоимость AC-50: 0 итераций / 0 раундов исправлений.
+- **Affected docs**: sprint.md, plan.md
+- 2026-10-15 — route Task 30, 31, 32: standard (owners asd-ba, asd-architect, asd-ux), dispatch HEAD (после этого коммита)

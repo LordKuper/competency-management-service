@@ -228,6 +228,13 @@
       "decision": "AC-48 unit-owned shared block created by the unit head on wizard step 2 + step 2 texts; AC-49 matrix has no scale (AC-40 retired); Task 25 wave 18, Task 26-27 wave 19, Task 28 wave 20, Task 29 wave 21; contract and migration change accepted",
       "reason": "user remarks at impl assessment; block ownership modelled like tracks (owner unit, available to owner and descendant units) — orchestrator default, open to user correction; cost: 0 iterations / 0 fix rounds",
       "evidence": "decisions-log.md 2026-10-15 scope amendment: unit block, matrix without scale"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-50 shared block without a scale, mixed scales allowed (reverses one-scale-per-block); Task 30-32 wave 22, Task 33 wave 23, Task 34 wave 24; contract and migration change accepted",
+      "reason": "user remark at impl assessment; cost: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-15 scope amendment: block without scale"
     }
   ],
   "task_routing": {
@@ -541,6 +548,24 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 30": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 31": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 32": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
       "resolved_model": "sonnet"
     }
   },
