@@ -87,7 +87,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--ant-margin);
-  width: calc(var(--ant-size-xxl) * 12);
+  width: calc(var(--ant-size-xxl) * 15);
   max-width: 100%;
   margin-inline: auto;
 }
