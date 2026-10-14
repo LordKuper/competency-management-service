@@ -25,6 +25,7 @@ import {
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { OptionWithTag } from "../../app/OptionWithTag";
+import { TruncationNote } from "../../app/TruncationNote";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { CatalogStatusTag } from "../career/CatalogParts";
 import {
@@ -42,7 +43,7 @@ import {
 } from "../career/catalogApi";
 import { employees, PositionsError } from "../career/LevelPositionsModal";
 import { deskPaths } from "./deskTexts";
-import { CompactAlert, ContextLine, TruncationNote } from "./ScenarioContext";
+import { CompactAlert, ContextLine } from "./ScenarioContext";
 import { LoadFailure, ScenarioPage } from "./ScenarioPage";
 
 type Level = TrackPositions["levels"][number];

@@ -13,6 +13,7 @@ import {
 } from "antd";
 import { useEffect, useState } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { TruncationNote } from "../../app/TruncationNote";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { useEditBase } from "../../app/useEditBase";
 import { BuilderFooter } from "../career/BuilderFooter";
@@ -49,7 +50,6 @@ import {
   withSharedBlocks,
 } from "./builderContent";
 import type { StepProps } from "./builderStep";
-import { TruncationNote } from "./ScenarioContext";
 
 /** Step 2: the shared blocks and competencies of the matrix, chosen from the catalogues or created as drafts on the spot. */
 export function BuilderCompetenciesStep(props: StepProps) {
