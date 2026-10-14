@@ -280,11 +280,7 @@ function NewVersionForm({
             onChange={() => form.resetFields(["trackId"])}
           />
         </Form.Item>
-        <Form.Item
-          label="Трек"
-          required
-          extra="Треки вашего подразделения и вышестоящих. Нужного нет — «Добавить трек»: черновой трек создаётся, не выходя из сценария."
-        >
+        <Form.Item label="Трек" required>
           <Flex gap="small">
             <Form.Item
               name="trackId"
