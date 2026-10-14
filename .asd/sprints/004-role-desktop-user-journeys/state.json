@@ -512,6 +512,24 @@
       "tier": "standard",
       "reason": "owner asd-ba (docs/product)",
       "resolved_model": "sonnet"
+    },
+    "Task 25 rename": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 26": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 27": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
