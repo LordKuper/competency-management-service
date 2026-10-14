@@ -475,6 +475,12 @@
       "tier": "standard",
       "reason": "owner asd-ux (docs/ux)",
       "resolved_model": "sonnet"
+    },
+    "Task 23 test-compile": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
