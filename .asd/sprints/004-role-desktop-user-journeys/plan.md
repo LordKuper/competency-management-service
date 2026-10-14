@@ -214,7 +214,7 @@ Material risk: none
 
 ### Task 30: Требования — блок без шкалы
 Material risk: none
-- [ ] `docs/product/requirements/career-framework.html`, `desk.html`: общий блок без шкалы, компетенции разных шкал в блоке; отмена правил одной шкалы блока, смены шкалы блока и запрета смены шкалы компетенции из блока (AC-50)
+- [x] `docs/product/requirements/career-framework.html`, `desk.html`: общий блок без шкалы, компетенции разных шкал в блоке; отмена правил одной шкалы блока, смены шкалы блока и запрета смены шкалы компетенции из блока (AC-50)
 
 ### Task 31: Архитектура — блок без шкалы
 Material risk: change: public contract, change: migration
