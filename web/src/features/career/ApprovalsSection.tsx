@@ -9,7 +9,7 @@ import {
   type ApprovalListParams,
   approvalsQuery,
 } from "./matrixApi";
-import { APPROVAL_STEP_LABELS } from "./matrixLabels";
+import { APPROVAL_STEP_LABELS, matrixName } from "./matrixLabels";
 import { unitFilter } from "./UnitTreeFilter";
 
 const DATE_TIME = new Intl.DateTimeFormat("ru-RU", {
@@ -24,7 +24,7 @@ function columns(params: ApprovalListParams): TableColumnsType<Approval> {
       key: "matrix",
       render: (_, approval) => (
         <Link to={`/career/matrices/${approval.matrixId}`}>
-          {`${approval.trackName} — Версия ${approval.number}`}
+          {`${matrixName(approval)} — Версия ${approval.number}`}
         </Link>
       ),
     },

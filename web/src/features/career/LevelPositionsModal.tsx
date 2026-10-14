@@ -29,7 +29,10 @@ export function employees(count: number) {
   return `${count} ${EMPLOYEE_FORMS[PLURAL.select(count)] ?? "сотрудников"}`;
 }
 
-/** The server's own explanation of a refusal that names levels, or the common one for any other failure. */
+/**
+ * The server's own explanation of a refusal that names levels, the warning for a stale version or for a refusal that
+ * names no level, such as a position that has a position matrix, or the common alert for any other failure.
+ */
 export function PositionsError({ error }: { error: unknown }) {
   if (
     error instanceof ApiError &&
@@ -55,7 +58,10 @@ export function PositionsError({ error }: { error: unknown }) {
       />
     );
   }
-  if (error instanceof ApiError && error.status === 412) {
+  if (
+    error instanceof ApiError &&
+    (error.status === 412 || error.status === 409)
+  ) {
     return <Alert type="warning" showIcon title={describeApiError(error)} />;
   }
   return <ErrorAlert title="Не удалось сохранить связь" error={error} />;

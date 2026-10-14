@@ -18,6 +18,10 @@ import {
 import { useState } from "react";
 import { Link } from "react-router";
 import { COMPETENCY_TYPES } from "../career/CompetencyModal";
+import { matrixVersionQuery } from "../career/matrixApi";
+import { chipLevel } from "../career/matrixContent";
+import { scaleOfCompetency, sharedBlockOf } from "../career/matrixGroups";
+import "../career/matrix.css";
 import { type MyPlace, myPlaceQuery } from "./deskApi";
 import { deskPaths, formatDate } from "./deskTexts";
 import { LinkButton } from "./LinkButton";
@@ -28,6 +32,8 @@ type TrackView = MyPlace["tracks"][number];
 type LevelView = TrackView["nextLevels"][number];
 type Requirement = NonNullable<LevelView["requirements"]>[number];
 type MatrixView = MyPlace["publishedMatrices"][number];
+type PositionMatrix = NonNullable<MyPlace["positionMatrix"]>;
+type PositionRequirement = PositionMatrix["requirements"][number];
 
 const matrixPath = (matrixId: string) => `/career/matrices/${matrixId}`;
 
@@ -122,31 +128,129 @@ function PlaceContent({ place }: { place: MyPlace }) {
           </Col>
         </Row>
       </section>
-      <Flex vertical gap="middle">
-        <Typography.Title level={4} style={{ margin: 0 }}>
-          Мои карьерные треки
-        </Typography.Title>
-        {place.noTrack ? (
-          <CompactAlert
-            type="info"
-            lead="Для вашей должности нет карьерного трека."
-            text={`Должность «${place.position?.name ?? ""}» не связана ни с одним уровнем действующего трека, поэтому уровень не определён.${place.head ? ` Обратитесь к руководителю: ${place.head.fullName}.` : ""}`}
-          />
-        ) : (
-          place.tracks.map((track) => (
-            <TrackPanel
-              key={track.track.id}
-              track={track}
-              positionName={place.position?.name ?? ""}
-              unitName={unitName}
+      {place.positionMatrix ? (
+        <PositionMatrixPanel
+          matrix={place.positionMatrix}
+          unitName={unitName}
+        />
+      ) : (
+        <Flex vertical gap="middle">
+          <Typography.Title level={4} style={{ margin: 0 }}>
+            Мои карьерные треки
+          </Typography.Title>
+          {place.noTrack ? (
+            <CompactAlert
+              type="info"
+              lead="Для вашей должности нет карьерного трека."
+              text={`Должность «${place.position?.name ?? ""}» не связана ни с одним уровнем действующего трека, поэтому уровень не определён.${place.head ? ` Обратитесь к руководителю: ${place.head.fullName}.` : ""}`}
             />
-          ))
-        )}
-      </Flex>
+          ) : (
+            place.tracks.map((track) => (
+              <TrackPanel
+                key={track.track.id}
+                track={track}
+                positionName={place.position?.name ?? ""}
+                unitName={unitName}
+              />
+            ))
+          )}
+        </Flex>
+      )}
       <PublishedMatrices
         matrices={place.publishedMatrices}
         unitName={unitName}
       />
+    </Flex>
+  );
+}
+
+/** The requirements of the published position matrix of the user's unit for their position, as one column of scores. */
+function PositionMatrixPanel({
+  matrix,
+  unitName,
+}: {
+  matrix: PositionMatrix;
+  unitName: string;
+}) {
+  const version = useQuery(matrixVersionQuery(matrix.versionId));
+  const blockOf = (competencyId: string) => {
+    const shared = version.data && sharedBlockOf(version.data, competencyId);
+    if (shared) return `Общий блок «${shared.name}»`;
+    const own = version.data?.content.competencies.find(
+      (item) => item.competencyId === competencyId,
+    );
+    return own?.blockId
+      ? version.data?.content.blocks.find((block) => block.id === own.blockId)
+          ?.name
+      : undefined;
+  };
+  const columns: TableColumnsType<PositionRequirement> = [
+    { title: "Компетенция", dataIndex: "competencyName" },
+    {
+      title: "Требуемый балл",
+      key: "score",
+      render: (_, item) => {
+        if (item.requiredScore === null) return "—";
+        const scale =
+          version.data && scaleOfCompetency(version.data, item.competencyId);
+        return (
+          <Flex align="center" gap="small" wrap>
+            <span
+              className={`rating-chip rating-chip--${scale ? chipLevel(item.requiredScore, scale.points) : 0}`}
+            >
+              {item.requiredScore}
+            </span>
+            {[item.scoreLabel, scale && `шкала ${scale.name}`]
+              .filter(Boolean)
+              .join(" · ")}
+          </Flex>
+        );
+      },
+    },
+    {
+      title: "Тип",
+      key: "type",
+      render: (_, item) =>
+        item.type === "Critical" ? (
+          <Tag color="warning">{COMPETENCY_TYPES.Critical}</Tag>
+        ) : (
+          COMPETENCY_TYPES[item.type]
+        ),
+    },
+    {
+      title: "Блок",
+      key: "block",
+      render: (_, item) => blockOf(item.competencyId),
+    },
+  ];
+  return (
+    <Flex vertical gap="middle">
+      <Typography.Title level={4} style={{ margin: 0 }}>
+        Требования моей должности
+      </Typography.Title>
+      <Card
+        size="small"
+        title={
+          <Flex align="center" gap="small" wrap>
+            <span>{matrix.positionName}</span>
+            <Tag>Матрица должности</Tag>
+          </Flex>
+        }
+      >
+        <Flex vertical gap="small">
+          <Typography.Text>
+            {`Требования взяты из опубликованной матрицы должности подразделения «${unitName}», версия ${matrix.number}. `}
+            <Link to={matrixPath(matrix.matrixId)}>Смотреть матрицу</Link>
+          </Typography.Text>
+          <Table
+            size="small"
+            rowKey="competencyId"
+            pagination={false}
+            columns={columns}
+            dataSource={[...matrix.requirements]}
+          />
+        </Flex>
+      </Card>
     </Flex>
   );
 }

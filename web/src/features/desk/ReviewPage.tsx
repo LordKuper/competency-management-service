@@ -16,7 +16,7 @@ import {
   matrixVersionQuery,
   returnMatrixVersion,
 } from "../career/matrixApi";
-import { VERSION_STATUS_LABELS } from "../career/matrixLabels";
+import { matrixName, VERSION_STATUS_LABELS } from "../career/matrixLabels";
 import { draftRecords, RefusalContent } from "../career/usePublishEntry";
 import { CascadeTable } from "./CascadeTable";
 import { ChangesBlock } from "./ChangesBlock";
@@ -101,8 +101,10 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
       ? `Согласовать недоступно: ${remarksText(problems.length)} полноты`
       : null;
   const unitName = matrix.data?.orgUnitName ?? "";
-  const trackName =
-    version.entries.track?.name ?? version.entries.position?.name ?? "";
+  const title = matrixName({
+    trackName: version.entries.track?.name,
+    positionName: version.entries.position?.name,
+  });
 
   function approve() {
     void transition.decide({
@@ -130,9 +132,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
   return (
     <Flex vertical gap="middle">
       <ContextLine>
-        <Typography.Text strong>
-          {`Матрица «${trackName}» — ${unitName}`}
-        </Typography.Text>
+        <Typography.Text strong>{`${title} — ${unitName}`}</Typography.Text>
         <Tag>{`Версия ${version.number}`}</Tag>
         <Tag color={isWaitingForUser ? "processing" : undefined}>
           {isWaitingForUser && version.step

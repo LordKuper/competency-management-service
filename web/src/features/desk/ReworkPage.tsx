@@ -23,6 +23,7 @@ import {
 } from "../career/matrixApi";
 import {
   APPROVAL_STEP_LABELS,
+  matrixName,
   VERSION_STATUS_LABELS,
 } from "../career/matrixLabels";
 import { draftRecords } from "../career/usePublishEntry";
@@ -203,7 +204,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
     <Flex vertical gap="middle">
       <ContextLine>
         <Typography.Text strong>
-          {`Матрица «${version.entries.track?.name ?? version.entries.position?.name}» — ${unitName}`}
+          {`${matrixName({ trackName: version.entries.track?.name, positionName: version.entries.position?.name })} — ${unitName}`}
         </Typography.Text>
         <Tag>{`Версия ${version.number}`}</Tag>
         <Tag color="warning">{VERSION_STATUS_LABELS[version.status]}</Tag>
