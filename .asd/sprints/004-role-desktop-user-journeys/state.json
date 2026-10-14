@@ -221,6 +221,13 @@
       "decision": "AC-44 position matrix (unit + position, one column), AC-45 shared competency block (composition only), AC-46 block change: drafts at once, published via desk item, AC-47 competencies outside blocks; Task 20 wave 14, Task 21-22 wave 15, Task 23 wave 16, Task 24 wave 17; material architecture, public contract and migration change accepted",
       "reason": "user decision at impl assessment (options 3 and 4 of the head-of-unit matrix discussion), in this sprint; cost AC-44..47: 0 iterations / 0 fix rounds (no impl review yet)",
       "evidence": "decisions-log.md 2026-10-14 scope amendment: position matrix, shared blocks"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-48 unit-owned shared block created by the unit head on wizard step 2 + step 2 texts; AC-49 matrix has no scale (AC-40 retired); Task 25 wave 18, Task 26-27 wave 19, Task 28 wave 20, Task 29 wave 21; contract and migration change accepted",
+      "reason": "user remarks at impl assessment; block ownership modelled like tracks (owner unit, available to owner and descendant units) — orchestrator default, open to user correction; cost: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-15 scope amendment: unit block, matrix without scale"
     }
   ],
   "task_routing": {
@@ -492,6 +499,12 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 25": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
       "resolved_model": "sonnet"
     }
   },
