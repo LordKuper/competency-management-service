@@ -3,3 +3,4 @@
 - [Tech-reference verification sources](reference_techref-verification-sources.md) — WebFetch-only npm/NuGet/changelog endpoints; summarizer garbles dates
 - [ADR authoring review traps](feedback_adr-authoring-review-traps.md) — hard-gate fallbacks, count numerals, cited norms, paging, one list home, server-enforced gates, old callers of gated methods, POST+PUT
 - [Audit contradiction classification](feedback_audit-contradiction-classification.md) — superseded canonical wording -> Gaps; Постановка vs decided scope -> cite decisions-log; AC conflicts -> user
+- [Parallel-wave requirement drift](feedback_parallel-wave-requirement-drift.md) — re-check git log for docs/product, docs/ux commits before committing an architecture fold
