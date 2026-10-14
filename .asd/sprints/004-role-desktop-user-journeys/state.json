@@ -382,6 +382,18 @@
       "tier": "standard",
       "reason": "owner asd-ba (docs/product)",
       "resolved_model": "sonnet"
+    },
+    "Task 17": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 18": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],

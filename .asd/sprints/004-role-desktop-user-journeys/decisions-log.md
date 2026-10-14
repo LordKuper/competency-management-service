@@ -101,3 +101,11 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-14 — расхождение «Привести каталог в порядок»: экран доступен администратору и HR, а находки AC-137…AC-140 строятся только для HR (CareerDeskSource viewer.IsHr; ранее принято «неиспользуемые — роль HR», Task 9 (8)) — администратор без зоны HR видит записи на экране, но не карточку. Решение оркестратора (пересматривает Task 9 (8)): находки AC-137…AC-140 (справочно, вне счётчика) строятся и для глобального администратора; AC-137…AC-140 — аудитория HR и администратор (Task 15 assessment-fix 7), CareerDeskSource (Task 16 assessment-fix 7, путь вне задачи допущен)
 - 2026-10-14 — route Task 15/16 assessment-fix 7: standard, dispatch HEAD (после этого коммита)
 - 2026-10-14 — Task 16 assessment-fix 7 COMPLETED (a0040e1): CareerDeskSource — находки неиспользуемых записей для viewer.IsHr || viewer.IsAdmin, бюджет запросов без изменений. Task 15 assessment-fix 7 COMPLETED (c1b9ca0): AC-141, AC-150, история администратора. Gate: dotnet build Release 0/0, web lint/build/check:api чисто
+
+## 2026-10-14 — поправка скоупа на приёмке реализации: мастер матрицы, шкала, область, уровень
+
+- **Decision**: пользователь на impl assessment по сценарию «Построить матрицу компетенций»: убрать «Шаг 1 из 6» (линейка уже показывает) (AC-39); «Добавить шкалу» по аналогии с «Добавить трек» (AC-40); всплывающая подсказка с баллами и значениями шкалы при выборе (AC-41); создание профессиональной области сразу при добавлении трека (AC-42); автодополнение названия уровня по ранее заведённым (AC-43). Task 17 (UX) и Task 18 (требования) — волна 12, Task 19 (SPA) — волна 13. Контракт API не меняется: CompetencyScaleResponse.points, GET /career/levels?q=, создание области — существующие методы.
+- **Rationale**: hard `new or changed scope`, указание пользователя; стоимость AC-39…AC-43: 0 итераций / 0 раундов исправлений (impl-review ещё не было); impl assessment повторится после Task 17–19.
+- **Affected docs**: sprint.md, plan.md
+- 2026-10-14 — route Task 17: standard (owner asd-ux — docs/ux), dispatch HEAD 8193490
+- 2026-10-14 — route Task 18: standard (owner asd-ba — docs/product), dispatch HEAD 8193490
