@@ -226,7 +226,7 @@ Material risk: none
 
 ### Task 33: Бэкенд — блок без шкалы
 Material risk: change: public contract, change: migration
-- [ ] модель, миграция, контракт и проверки по Task 31 (AC-50); OpenAPI и `web/src/api/schema.d.ts`
+- [x] модель, миграция, контракт и проверки по Task 31 (AC-50); OpenAPI и `web/src/api/schema.d.ts`
 
 ### Task 34: SPA — блок без шкалы
 Material risk: none
