@@ -282,7 +282,7 @@ Material risk: none
 
 ### Task 47: Бэкенд — тип компетенции в матрице
 Material risk: change: public contract, change: migration
-- [ ] модель, миграция, контракт и проверки по Task 45 (AC-55); OpenAPI и `web/src/api/schema.d.ts`
+- [x] модель, миграция, контракт и проверки по Task 45 (AC-55); OpenAPI и `web/src/api/schema.d.ts`
 
 ### Task 48: SPA — тип компетенции в матрице
 Material risk: none
