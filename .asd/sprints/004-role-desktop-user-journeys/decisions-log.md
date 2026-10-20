@@ -222,3 +222,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-20 — Task 44 migration-fix COMPLETED (832ad6c): AC-149 — источник типа при миграции из требований версии
 - 2026-10-20 — Task 47 COMPLETED (05f3a99, 7efd5b4, 311401f, f573f03): тип в версии матрицы, миграция CompetencyTypePerMatrix, deprecated поверхность 3.0.0; все gate зелёные. Flagged choices приняты оркестратором
 - 2026-10-20 — route Task 48: standard, dispatch HEAD (после этого коммита)
+- 2026-10-20 — Task 48 COMPLETED (23bb7ec): тип убран из справочника, выбор типа в строках матрицы, «Профильная» по умолчанию, тип в разнице версий, «Тип в матрице» в «Моём месте». Flagged choices приняты оркестратором
+- 2026-10-20 — impl completion gate (после Task 44–48): dotnet 0/0, web lint/build/check:api чисто; все задачи плана отмечены
