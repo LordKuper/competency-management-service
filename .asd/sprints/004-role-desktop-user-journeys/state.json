@@ -256,6 +256,13 @@
       "decision": "AC-54 create a professional area from the competency window; Task 42, Task 43 wave 29",
       "reason": "user remark at impl assessment; cost 0",
       "evidence": "decisions-log.md 2026-10-20 AC-54"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-55 competency type moves from the catalog record to the matrix version; Task 44-46 wave 30, Task 47 wave 31, Task 48 wave 32; contract and migration change accepted",
+      "reason": "user remark at impl assessment; cost 0",
+      "evidence": "decisions-log.md 2026-10-20 AC-55"
     }
   ],
   "task_routing": {
@@ -677,6 +684,24 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 44": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 45": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 46": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
       "resolved_model": "sonnet"
     }
   },
