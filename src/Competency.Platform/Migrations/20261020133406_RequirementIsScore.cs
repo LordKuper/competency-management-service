@@ -19,7 +19,6 @@ namespace Competency.Platform.Migrations
                     merged text;
                     candidate text;
                     dropped integer;
-                    base_name text;
                     unit_name text;
                     suffix integer;
                 BEGIN
@@ -89,20 +88,43 @@ namespace Competency.Platform.Migrations
                     FROM migration_own_blocks
                     GROUP BY unit_id, name, competency_ids;
 
+                    CREATE FUNCTION pg_temp.migration_block_name(name text, unit text, suffix text) RETURNS text
+                    LANGUAGE plpgsql AS $fit$
+                    DECLARE
+                        room integer;
+                    BEGIN
+                        IF unit IS NULL THEN
+                            room := 200 - char_length(suffix);
+                            RETURN CASE WHEN char_length(name) <= room THEN name ELSE left(name, room - 1) || '…' END || suffix;
+                        END IF;
+
+                        room := 200 - char_length(name) - 3 - char_length(suffix);
+                        IF char_length(unit) > room THEN
+                            unit := CASE WHEN room >= 2 THEN left(unit, room - 1) || '…' ELSE '…' END;
+                        END IF;
+
+                        room := 200 - 3 - char_length(unit) - char_length(suffix);
+                        IF char_length(name) > room THEN
+                            name := left(name, room - 1) || '…';
+                        END IF;
+
+                        RETURN name || ' (' || unit || ')' || suffix;
+                    END
+                    $fit$;
+
                     FOR block_target IN
                         SELECT * FROM migration_block_targets ORDER BY first_at, unit_id, name, competency_ids::text
                     LOOP
-                        candidate := block_target.name;
+                        unit_name := NULL;
                         IF EXISTS (
                                 SELECT 1 FROM migration_block_targets other
                                 WHERE other.block_id <> block_target.block_id AND lower(other.name) = lower(block_target.name))
                             OR EXISTS (SELECT 1 FROM competency_blocks existing WHERE lower(existing.name) = lower(block_target.name)) THEN
                             SELECT u.name INTO unit_name FROM org_units u WHERE u.id = block_target.unit_id;
-                            candidate := block_target.name || ' (' || unit_name || ')';
                         END IF;
 
-                        base_name := candidate;
                         suffix := 1;
+                        candidate := pg_temp.migration_block_name(block_target.name, unit_name, '');
                         WHILE EXISTS (SELECT 1 FROM competency_blocks existing WHERE lower(existing.name) = lower(candidate))
                             OR EXISTS (
                                 SELECT 1 FROM migration_block_targets other
@@ -110,7 +132,7 @@ namespace Competency.Platform.Migrations
                                     AND (lower(other.block_name) = lower(candidate) OR lower(other.name) = lower(candidate)))
                         LOOP
                             suffix := suffix + 1;
-                            candidate := base_name || ' ' || suffix;
+                            candidate := pg_temp.migration_block_name(block_target.name, unit_name, ' ' || suffix);
                         END LOOP;
 
                         UPDATE migration_block_targets SET block_name = candidate WHERE block_id = block_target.block_id;
@@ -245,6 +267,7 @@ namespace Competency.Platform.Migrations
 
                     DROP FUNCTION pg_temp.migration_without_own_blocks(jsonb, jsonb);
                     DROP FUNCTION pg_temp.migration_scores_only(jsonb);
+                    DROP FUNCTION pg_temp.migration_block_name(text, text, text);
                 END
                 $migration$;
                 """);
