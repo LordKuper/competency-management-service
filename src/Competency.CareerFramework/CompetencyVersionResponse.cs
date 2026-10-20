@@ -12,7 +12,7 @@ internal sealed record CompetencyVersionResponse(
     string? Description,
     [property: Description(CompetencyResponse.DeprecatedCategory)] Guid? CategoryId,
     Guid? DirectionId,
-    CompetencyType Type,
+    [property: Description(CompetencyResponse.DeprecatedType)] CompetencyType? Type,
     Guid ScaleId,
     CatalogStatus Status,
     Guid? ChangedById,

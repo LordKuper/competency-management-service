@@ -19,8 +19,6 @@ internal sealed class CompetencyVersion
 
     public Guid? DirectionId { get; init; }
 
-    public CompetencyType Type { get; init; }
-
     public Guid ScaleId { get; init; }
 
     public CatalogStatus Status { get; init; }
@@ -36,7 +34,6 @@ internal sealed class CompetencyVersion
         Name = competency.Name,
         Description = competency.Description,
         DirectionId = competency.DirectionId,
-        Type = competency.Type,
         ScaleId = competency.ScaleId,
         Status = competency.Status,
         ChangedById = changedById,

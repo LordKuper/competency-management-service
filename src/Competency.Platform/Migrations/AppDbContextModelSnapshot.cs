@@ -137,12 +137,6 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("status");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)")
-                        .HasColumnName("type");
-
                     b.Property<int>("Version")
                         .IsConcurrencyToken()
                         .HasColumnType("integer")
@@ -159,8 +153,6 @@ namespace Competency.Platform.Migrations
                     b.ToTable("competencies", null, t =>
                         {
                             t.HasCheckConstraint("ck_competencies_status", "status IN ('Draft', 'Active', 'Inactive')");
-
-                            t.HasCheckConstraint("ck_competencies_type", "type IN ('Critical', 'Profile', 'Additional')");
                         });
                 });
 
@@ -539,12 +531,6 @@ namespace Competency.Platform.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)")
                         .HasColumnName("status");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)")
-                        .HasColumnName("type");
 
                     b.HasKey("CompetencyId", "Number");
 

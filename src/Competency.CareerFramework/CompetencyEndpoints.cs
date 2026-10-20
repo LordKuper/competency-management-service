@@ -78,7 +78,7 @@ internal static class CompetencyEndpoints
 
     /// <summary>
     /// Lists the competencies; <c>withGeneral=true</c> adds the general competencies to those of the direction, as a matrix of the direction may use them.
-    /// A category filter, left from the contract that had categories, matches no competency.
+    /// A category or type filter, left from the contract that had them, matches no competency.
     /// </summary>
     private static Task<Results<Ok<PageResponse<CompetencyResponse>>, ValidationProblem>> ListAsync(
         [AsParameters] CatalogListQuery query,
@@ -86,7 +86,7 @@ internal static class CompetencyEndpoints
         [FromQuery(Name = DirectionField)] Guid? directionId,
         [FromQuery(Name = WithGeneralField)] bool? withGeneral,
         [FromQuery(Name = ScaleField)] Guid? scaleId,
-        [FromQuery(Name = TypeField)] CompetencyType? type,
+        [FromQuery(Name = TypeField)][Description(CompetencyResponse.DeprecatedType)] CompetencyType? type,
         AppDbContext context,
         CatalogStore store,
         CancellationToken cancellationToken) =>
@@ -95,7 +95,7 @@ internal static class CompetencyEndpoints
                 .WhereIf(categoryId is not null, _ => false)
                 .WhereIf(directionId is not null, competency => competency.DirectionId == directionId || (withGeneral == true && competency.DirectionId == null))
                 .WhereIf(scaleId is not null, competency => competency.ScaleId == scaleId)
-                .WhereIf(type is not null, competency => competency.Type == type),
+                .WhereIf(type is not null, _ => false),
             query,
             Kind,
             store,
@@ -234,7 +234,7 @@ internal static class CompetencyEndpoints
             version.Description,
             CategoryId: null,
             version.DirectionId,
-            version.Type,
+            Type: null,
             version.ScaleId,
             version.Status,
             version.ChangedById,

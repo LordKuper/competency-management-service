@@ -3,7 +3,8 @@ using System.ComponentModel;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The fields of a new competency or of a change of one; every field but the scale and the category must be sent, an absent value as null.
+/// The fields of a new competency or of a change of one; every field but the scale, the category and the type must be sent, an absent
+/// value as null.
 /// </summary>
 internal record CompetencyRequest : CatalogNameRequest
 {
@@ -20,7 +21,11 @@ internal record CompetencyRequest : CatalogNameRequest
     /// </summary>
     public required Guid? DirectionId { get; init; }
 
-    public required CompetencyType Type { get; init; }
+    /// <summary>
+    /// Accepted and not read: a competency's type is set in each matrix version.
+    /// </summary>
+    [Description(CompetencyResponse.DeprecatedType)]
+    public CompetencyType? Type { get; init; }
 
     /// <summary>
     /// The scale; absent or null for the default scale.
@@ -32,10 +37,6 @@ internal record CompetencyRequest : CatalogNameRequest
     {
         var errors = base.Validate();
         CheckText(errors, "description", Description, CareerCompetency.DescriptionMaxLength, missingMessage: null);
-        if (!Enum.IsDefined(Type))
-        {
-            errors["type"] = ["Укажите допустимый тип"];
-        }
 
         return errors;
     }
@@ -50,7 +51,6 @@ internal record CompetencyRequest : CatalogNameRequest
         competency.Name = TrimmedName();
         competency.Description = OptionalText(Description);
         competency.DirectionId = DirectionId;
-        competency.Type = Type;
         competency.ScaleId = scaleId;
     }
 }

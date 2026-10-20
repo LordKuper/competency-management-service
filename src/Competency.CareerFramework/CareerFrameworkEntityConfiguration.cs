@@ -28,7 +28,6 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
     private const int DecisionKindMaxLength = 32;
 
     private static readonly string StatusCheckSql = EnumCheckSql<CatalogStatus>("status");
-    private static readonly string TypeCheckSql = EnumCheckSql<CompetencyType>("type");
     private static readonly JsonSerializerOptions PointsJson = new(JsonSerializerDefaults.Web);
     private static readonly JsonSerializerOptions DocumentJson = new(JsonSerializerDefaults.Web);
 
@@ -87,10 +86,8 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
 
         ConfigureEntry<CareerCompetency>(modelBuilder, "competencies", entity =>
         {
-            entity.ToTable(table => table.HasCheckConstraint("ck_competencies_type", TypeCheckSql));
             entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(CareerCompetency.DescriptionMaxLength);
             entity.Property(e => e.DirectionId).HasColumnName("direction_id");
-            entity.Property(e => e.Type).HasColumnName("type").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.ScaleId).HasColumnName("scale_id");
 
             entity.HasOne<CareerDirection>().WithMany().HasForeignKey(e => e.DirectionId).OnDelete(DeleteBehavior.Restrict);
@@ -106,7 +103,6 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(CatalogEntry.NameMaxLength);
             entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(CareerCompetency.DescriptionMaxLength);
             entity.Property(e => e.DirectionId).HasColumnName("direction_id");
-            entity.Property(e => e.Type).HasColumnName("type").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.ScaleId).HasColumnName("scale_id");
             entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.ChangedById).HasColumnName("changed_by_id");

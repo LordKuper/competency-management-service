@@ -16,7 +16,7 @@ internal sealed record CompetencyResponse(
     [property: Description(CompetencyResponse.DeprecatedCategory)] string? CategoryName,
     Guid? DirectionId,
     string? DirectionName,
-    CompetencyType Type,
+    [property: Description(CompetencyResponse.DeprecatedType)] CompetencyType? Type,
     Guid ScaleId,
     string ScaleName,
     CatalogStatus Status,
@@ -26,6 +26,11 @@ internal sealed record CompetencyResponse(
     bool CanEdit,
     bool CanDelete)
 {
+    /// <summary>
+    /// What the contract says of the category fields of a competency, which competencies no longer have.
+    /// </summary>
+    public const string DeprecatedType = "Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses.";
+
     /// <summary>
     /// What the contract says of the category fields of a competency, which competencies no longer have.
     /// </summary>
@@ -39,7 +44,7 @@ internal sealed record CompetencyResponse(
         CategoryName: null,
         competency.DirectionId,
         competency.DirectionId is { } directionId ? names.GetValueOrDefault(directionId, string.Empty) : null,
-        competency.Type,
+        Type: null,
         competency.ScaleId,
         names.GetValueOrDefault(competency.ScaleId, string.Empty),
         competency.Status,

@@ -20,8 +20,5 @@ internal sealed class CareerCompetency : CatalogEntry
     public Guid? DirectionId { get; set; }
 
     [Audited]
-    public CompetencyType Type { get; set; }
-
-    [Audited]
     public Guid ScaleId { get; set; }
 }

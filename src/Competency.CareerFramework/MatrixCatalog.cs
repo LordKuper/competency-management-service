@@ -109,7 +109,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             ? await PositionProblemsAsync(matrix, positionId, content, entries, requirements, cancellationToken)
             : await TrackProblemsAsync(matrix, content, entries, requirements, cancellationToken);
 
-        foreach (var requirement in requirements.Where(requirement => requirement.Type == CompetencyType.Critical && requirement.RequiredScore is null)
+        foreach (var requirement in requirements.Where(requirement => entries.TypeOf(requirement.CompetencyId) == CompetencyType.Critical && requirement.RequiredScore is null)
                      .DistinctBy(requirement => requirement.CompetencyId))
         {
             problems.Add(new MatrixProblem(
@@ -177,7 +177,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
                     CategoryId: null,
                     CategoryName: null,
                     competency.DirectionId,
-                    competency.Type,
+                    entries.TypeOf(competency.Id),
                     CompetencyVersion.NumberOf(competency),
                     competency.Status,
                     entries.ScaleOf(competency.Id)?.Id))],
@@ -440,6 +440,11 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         public string ScaleWords(Guid competencyId) => $"шкале «{ScaleOf(competencyId)?.Name}»";
 
         public string CompetencyName(Guid competencyId) => Competencies.GetValueOrDefault(competencyId)?.Name ?? competencyId.ToString();
+
+        /// <summary>
+        /// The competency's type in the version, by its first group.
+        /// </summary>
+        public CompetencyType TypeOf(Guid competencyId) => Set.Find(item => item.CompetencyId == competencyId)?.Type ?? CompetencyType.Profile;
 
         /// <summary>
         /// The scale the competency's scores are points of, its own; null for a competency not read.

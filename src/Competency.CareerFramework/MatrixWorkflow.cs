@@ -124,7 +124,8 @@ internal sealed class MatrixWorkflow(
 
     /// <summary>
     /// Replaces the content of a version: by a unit head while it is a draft, and by the current approver while it is on review.
-    /// The builder step, when given, is saved with it, even when the content stays the same.
+    /// Every competency gets its type stored, the one sent or else the one it had. The builder step, when given, is saved with it, even
+    /// when the content stays the same.
     /// The catalogue lock is held shared, so an entry the content refers to cannot be deleted between the reference check and the save.
     /// </summary>
     public async Task<Results<Ok<MatrixVersionResponse>, NotFound, ValidationProblem, ProblemHttpResult>> EditAsync(
@@ -159,7 +160,7 @@ internal sealed class MatrixWorkflow(
             return refusal;
         }
 
-        var stored = content.Stored();
+        var stored = content.Stored().WithTypes(version.Content, version.CompositionsOf(await store.CompositionsAsync([content], cancellationToken)));
         if (await catalog.ReferenceProblemAsync(version, stored, cancellationToken) is { } problem)
         {
             return TypedResults.ValidationProblem(problem);
