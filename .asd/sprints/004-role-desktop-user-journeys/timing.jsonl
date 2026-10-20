@@ -294,3 +294,5 @@
 {"op":"close","id":"Task 16 assessment-fix 7","kind":"dispatch","parent":"impl#1","start":"2026-10-20T11:15:01.505Z","end":"2026-10-20T11:16:15.097Z","outcome":"done","attrs":{}}
 {"op":"open","id":"Task 49","kind":"dispatch","parent":"impl#1","start":"2026-10-20T12:44:20.715Z","attrs":{}}
 {"op":"close","id":"Task 49","kind":"dispatch","parent":"impl#1","start":"2026-10-20T12:44:20.715Z","end":"2026-10-20T12:47:10.799Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 49 decisions","kind":"user-wait","parent":"impl#1","start":"2026-10-20T12:47:10.973Z","attrs":{}}
+{"op":"close","id":"Task 49 decisions","kind":"user-wait","parent":"impl#1","start":"2026-10-20T12:47:10.973Z","end":"2026-10-20T13:03:54.253Z","outcome":"done","attrs":{}}
