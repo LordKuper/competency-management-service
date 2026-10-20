@@ -208,3 +208,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-20 — поправка скоупа (user): AC-54 — создание профессиональной области из окна компетенции, созданная выбирается; Task 42 (asd-ba), Task 43 (asd-dev, SPA + заметки макетов) — волна 28→29; стоимость 0; route Task 42, 43: standard
 - 2026-10-20 — Task 42 COMPLETED (3e7a1fc): career-framework AC-147
 - 2026-10-20 — Task 43 COMPLETED (3efeda7): DirectionSelect с «+ Создать область…» в CompetencyModal, «Общая» сохраняется; gate web чисто, все задачи плана отмечены
+- 2026-10-20 — impl assessment: дефект (user): при создании блока компетенций в мастере — DbUpdateConcurrencyException «The If-Match version is not the current version» в MatrixWorkflow.EditAsync (PUT …/content после POST /blocks) — устаревшая версия в If-Match. route Task 29 assessment-fix 1: standard, dispatch HEAD 015562e
