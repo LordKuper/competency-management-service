@@ -249,6 +249,13 @@
       "decision": "AC-53 create a competency from the shared block window; Task 40, Task 41 wave 28",
       "reason": "user remark at impl assessment; cost 0",
       "evidence": "decisions-log.md 2026-10-20 AC-53"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-54 create a professional area from the competency window; Task 42, Task 43 wave 29",
+      "reason": "user remark at impl assessment; cost 0",
+      "evidence": "decisions-log.md 2026-10-20 AC-54"
     }
   ],
   "task_routing": {
@@ -637,6 +644,18 @@
       "resolved_model": "sonnet"
     },
     "Task 41": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 42": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 43": {
       "execution": "agent",
       "tier": "standard",
       "reason": "normal",
