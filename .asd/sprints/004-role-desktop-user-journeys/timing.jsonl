@@ -299,3 +299,4 @@
 {"op":"open","id":"Task 49 blocks-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:17:03.152Z","attrs":{}}
 {"op":"open","id":"Task 50","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:17:03.295Z","attrs":{}}
 {"op":"open","id":"Task 51","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:17:03.365Z","attrs":{}}
+{"op":"close","id":"Task 49 blocks-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:17:03.152Z","end":"2026-10-20T13:18:04.537Z","outcome":"done","attrs":{}}
