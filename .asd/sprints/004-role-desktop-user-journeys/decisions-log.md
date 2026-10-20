@@ -238,3 +238,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-20 — route Task 53: standard; Task 52 name-fix: critical
 - 2026-10-20 — Task 52 name-fix COMPLETED (ce167b7): имена мигрированных блоков укладываются в 200 символов с сохранением уникальности
 - 2026-10-20 — Task 53 код COMPLETED (5ffa365): таблица «Компетенция | Тип | баллы», группы общих блоков и «Вне блоков», шаг 4 — коэффициенты, сумма и общий порог, примеры подтверждений в окне компетенции. Flagged choices приняты оркестратором (примеры в «Моём месте» — только для матрицы должности, т. к. ответ трека их не несёт — кандидат на impl-review). Gate: typecheck красный только в matrixContent.test.ts — tester-цепочка; route Task 53 test-compile: standard
+- 2026-10-20 — Task 53 test-compile COMPLETED (6765441): matrixContent.test.ts — удалены тесты собственных блоков и порогов, адаптирован setBlockWeight
+- 2026-10-20 — impl completion gate (после Task 49–53): dotnet 0/0, web lint/build/check:api чисто; все задачи плана отмечены
