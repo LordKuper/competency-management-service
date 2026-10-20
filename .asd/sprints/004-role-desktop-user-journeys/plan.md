@@ -274,7 +274,7 @@ Material risk: none
 
 ### Task 45: Архитектура — тип компетенции в матрице
 Material risk: change: public contract, change: migration
-- [ ] `docs/architecture/career-framework.md`: тип в содержимом версии и снимке, удаление из компетенции и её истории, контракт (тип был в 3.0.0 — deprecated), миграция существующих типов в версии и снимки (AC-55)
+- [x] `docs/architecture/career-framework.md`: тип в содержимом версии и снимке, удаление из компетенции и её истории, контракт (тип был в 3.0.0 — deprecated), миграция существующих типов в версии и снимки (AC-55)
 
 ### Task 46: UX — тип компетенции в матрице
 Material risk: none
