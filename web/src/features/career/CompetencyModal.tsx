@@ -8,13 +8,13 @@ import { unwrap } from "../../api/unwrap";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogModal, FormActions } from "./CatalogModal";
-import { CatalogSelect, IN_WORK } from "./CatalogSelect";
 import {
   type Competency,
   type CompetencyType,
   invalidateCatalogs,
   scalesQuery,
 } from "./catalogApi";
+import { DirectionSelect } from "./DirectionSelect";
 import { ScaleSelect } from "./ScaleSelect";
 import { usePublishEntry } from "./usePublishEntry";
 
@@ -188,12 +188,7 @@ function CompetencyForm({
         <Input.TextArea autoSize={{ minRows: 3 }} />
       </Form.Item>
       <Form.Item name="directionId" label="Область">
-        <CatalogSelect
-          segment="directions"
-          filters={IN_WORK}
-          allowClear
-          placeholder="Общая"
-        />
+        <DirectionSelect allowClear placeholder="Общая" />
       </Form.Item>
       <Form.Item name="type" label="Тип" rules={[{ required: true }]}>
         <Select options={TYPE_OPTIONS} />

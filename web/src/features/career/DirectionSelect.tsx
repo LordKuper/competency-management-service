@@ -12,7 +12,11 @@ const CREATE_VALUE = "__create__";
 interface DirectionSelectProps {
   id?: string;
   value?: string;
-  onChange?: (value: string) => void;
+  /** Called with undefined when the choice is cleared, which only a field that allows it can do. */
+  onChange?: (value: string | undefined) => void;
+  /** Lets the field be emptied, as a competency that belongs to no direction. */
+  allowClear?: boolean;
+  placeholder?: string;
 }
 
 function DirectionRow({ option }: { option: PickerOption }) {
@@ -28,7 +32,13 @@ function DirectionRow({ option }: { option: PickerOption }) {
  * Choice of a direction with server search as the user types. For users who may add directions, the last option opens
  * the «Новая область» dialog, and the direction it creates is chosen; the dialog and the form around it stay as they are.
  */
-export function DirectionSelect({ id, value, onChange }: DirectionSelectProps) {
+export function DirectionSelect({
+  id,
+  value,
+  onChange,
+  allowClear,
+  placeholder,
+}: DirectionSelectProps) {
   const rights = useCatalogRights();
   const { setSearch, options, isFetching, error } = useCatalogSearch(
     "directions",
@@ -47,6 +57,8 @@ export function DirectionSelect({ id, value, onChange }: DirectionSelectProps) {
         id={id}
         ref={field}
         value={value}
+        allowClear={allowClear}
+        placeholder={placeholder}
         onChange={(next) => {
           if (next === CREATE_VALUE) setIsCreating(true);
           else onChange?.(next);
