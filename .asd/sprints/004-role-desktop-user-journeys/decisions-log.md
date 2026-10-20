@@ -193,3 +193,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: sprint.md, plan.md
 - 2026-10-20 — route Task 35, 36, 37: standard (owners asd-ba, asd-architect, asd-ux), dispatch HEAD (после этого коммита)
 - 2026-10-20 — Task 35 COMPLETED (9e260a2): отозваны career-framework AC-29, AC-69, desk AC-139; правки AC-11, 13, 20, 21, 33, 72, 77, 81, 107, 108, 111, 115, 138, desk AC-65, 141, 150, 169, 170, 199; новый AC-145 (ширина окна блока). docs/Постановка.md — исходный документ, не меняется
+- 2026-10-20 — Task 37 COMPLETED (844281e): без категорий в career-framework.html и desk.html; окно блока calc(xxxl × 16) = 768 px. Flagged choices приняты оркестратором: убрана карточка отказа «категория перенесена»; примеры каскада заменены блоком / областью / шкалой
