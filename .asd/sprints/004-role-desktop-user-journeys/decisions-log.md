@@ -198,3 +198,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-20 — route Task 38: critical, dispatch HEAD (после этого коммита)
 - 2026-10-20 — Task 38 COMPLETED (ba069de, 17109e4, 04cf28f, c14fd4a): категории удалены из модели, БД и контракта (поверхность 3.0.0 deprecated); все gate зелёные. Flagged choices приняты оркестратором; перенаправление /desk/drafts/category/… — в Task 39
 - 2026-10-20 — route Task 39: standard, dispatch HEAD (после этого коммита)
+- 2026-10-20 — Task 39 код COMPLETED (3078f03): без категорий в SPA, перенаправление /desk/drafts/category/:id, окно блока 768 px. Flagged choices приняты оркестратором (CatalogKind без Category; отступ 2 × token.margin). Gate: typecheck web красный только в тестах (catalogRoutes.test.ts, catalogueTables.test.tsx, columnFilterWiring.test.tsx) — по риску плана tester-цепочка восстановления компиляции
+- 2026-10-20 — route Task 39 test-compile: standard (asd-tester, только тесты), dispatch HEAD 3078f03

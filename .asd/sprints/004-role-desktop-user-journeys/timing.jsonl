@@ -261,3 +261,5 @@
 {"op":"open","id":"Task 38","kind":"dispatch","parent":"impl#1","start":"2026-10-20T08:58:12.895Z","attrs":{}}
 {"op":"close","id":"Task 38","kind":"dispatch","parent":"impl#1","start":"2026-10-20T08:58:12.895Z","end":"2026-10-20T09:07:36.102Z","outcome":"done","attrs":{}}
 {"op":"open","id":"Task 39","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:07:36.219Z","attrs":{}}
+{"op":"close","id":"Task 39","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:07:36.219Z","end":"2026-10-20T09:10:00.238Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 39 test-compile","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:10:00.367Z","attrs":{}}
