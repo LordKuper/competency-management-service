@@ -202,3 +202,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-20 — route Task 39 test-compile: standard (asd-tester, только тесты), dispatch HEAD 3078f03
 - 2026-10-20 — Task 39 test-compile COMPLETED (ee0b793): компиляция тестов восстановлена, удалены тесты, чьим предметом была таблица категорий; 8 падений во время выполнения (переименование «Область», страницы треков, категории) — на impl-test
 - 2026-10-20 — impl completion gate (после Task 35–39): dotnet build Release 0/0, web lint/build/check:api чисто; все задачи плана отмечены
+- 2026-10-20 — поправка скоупа (user): AC-53 — создание компетенции из окна общего блока, созданная сразу в составе; Task 40 (требования, asd-ba) и Task 41 (SPA + заметки макетов, asd-dev — UX-заметки точечные, без новых правил) — волна 28; стоимость 0; route Task 40, 41: standard, dispatch HEAD (после этого коммита)

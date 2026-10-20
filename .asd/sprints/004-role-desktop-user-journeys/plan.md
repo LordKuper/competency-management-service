@@ -252,6 +252,14 @@ Material risk: change: public contract, change: migration
 Material risk: none
 - [x] удаление категорий из интерфейса по макетам Task 37 (AC-51); ширина окна блока (AC-52)
 
+### Task 40: Требования — компетенция из окна блока
+Material risk: none
+- [ ] `docs/product/requirements/career-framework.html` (и `desk.html`, если окно блока в мастере описано там): создание компетенции из окна блока (AC-53)
+
+### Task 41: SPA и макеты — компетенция из окна блока
+Material risk: none
+- [ ] окно блока (вкладка и мастер): «Создать компетенцию» — вложенное окно компетенции, созданная компетенция добавляется в состав (AC-53); заметки `docs/ux/career-framework.html` и `docs/ux/desk.html`
+
 ## Risks
 - Контракт 3.1.0 меняет поведение существующих методов (`POST /tracks`, каскад, обязательный тег, полнота с должностями): после выката отправка новых версий по существующим трекам невозможна, пока HR не свяжет должности с уровнями — принято пользователем (AC-25).
 - Правки контракта ломают типы тестовых данных web и тестов backend: если gate impl красный только из-за тестов, сломанных намеренной правкой, оркестратор сразу запускает tester-цепочку их восстановления (ретро 003#A-3).
@@ -289,6 +297,7 @@ Material risk: none
 | 25 | Task 35, Task 36, Task 37 |
 | 26 | Task 38 |
 | 27 | Task 39 |
+| 28 | Task 40, Task 41 |
 
 - Task 4, 5, 6 — каждая меняет `src/Competency.CareerFramework/`, миграции и перегенерирует `openapi/openapi.json` / `web/src/api/schema.d.ts`, поэтому по одной в волне; Task 5 опирается на готовность трека Task 4, Task 6 — на полноту и публикацию Task 4–5.
 - Task 7 (career-framework, Audit) и Task 8 (Platform, Desk, Api, источники org-structure и user-management, OpenAPI) не пересекаются по путям; Task 8 опирается на снимок Task 3 и `UserStatus.Version` Task 6.

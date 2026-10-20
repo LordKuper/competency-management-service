@@ -242,6 +242,13 @@
       "decision": "AC-51 remove competency categories entirely (data dropped by migration), AC-52 wider block window; Task 35-37 wave 25, Task 38 wave 26, Task 39 wave 27; contract and migration change accepted",
       "reason": "user remark at impl assessment; cost: 0 iterations / 0 fix rounds",
       "evidence": "decisions-log.md 2026-10-20 scope amendment: no categories"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-53 create a competency from the shared block window; Task 40, Task 41 wave 28",
+      "reason": "user remark at impl assessment; cost 0",
+      "evidence": "decisions-log.md 2026-10-20 AC-53"
     }
   ],
   "task_routing": {
@@ -618,6 +625,18 @@
       "resolved_model": "sonnet"
     },
     "Task 39 test-compile": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 40": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 41": {
       "execution": "agent",
       "tier": "standard",
       "reason": "normal",
