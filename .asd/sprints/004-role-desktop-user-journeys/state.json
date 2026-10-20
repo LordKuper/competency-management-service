@@ -776,6 +776,12 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "Task 53 assessment-fix 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
