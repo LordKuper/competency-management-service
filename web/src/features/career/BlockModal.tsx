@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
+  Button,
   Flex,
   Form,
   type FormInstance,
@@ -20,6 +21,7 @@ import { orgUnitTreeQuery } from "../org-structure/orgStructureApi";
 import { unitsWithin } from "../org-structure/orgTree";
 import { CatalogModal, FormActions } from "./CatalogModal";
 import { CatalogStatusTag } from "./CatalogParts";
+import { CompetencyModal } from "./CompetencyModal";
 import { useProcessRoles } from "./careerApi";
 import {
   type Competency,
@@ -48,6 +50,8 @@ const SCOPE_CHANGE_NOTICE =
 const FOR_ALL = "Для всех";
 const DRAFT_MEMBER_NOTICE =
   "В составе есть черновая компетенция: блок будет создан черновиком.";
+const DRAFT_MEMBER_IN_ACTIVE_NOTICE =
+  "В составе есть черновая компетенция: действующий блок с ней сохранить нельзя — сначала утвердите компетенцию.";
 
 interface BlockFormValues {
   name: string;
@@ -222,7 +226,11 @@ function BlockForm({ block, fixedScope, onSubmit, onCancel }: BlockFormProps) {
       <Form.Item name="competencyIds" label="Состав">
         <CompetencyPicker onDraftsSeen={noteDrafts} />
       </Form.Item>
-      <DraftMemberNotice form={form} draftIds={draftIds} />
+      <DraftMemberNotice
+        form={form}
+        draftIds={draftIds}
+        isActiveBlock={block?.status === "Active"}
+      />
       <FormActions isSubmitting={isSubmitting} onCancel={onCancel} />
     </Form>
   );
@@ -231,9 +239,11 @@ function BlockForm({ block, fixedScope, onSubmit, onCancel }: BlockFormProps) {
 function DraftMemberNotice({
   form,
   draftIds,
+  isActiveBlock,
 }: {
   form: FormInstance<BlockFormValues>;
   draftIds: ReadonlySet<string>;
+  isActiveBlock: boolean;
 }) {
   const chosen = Form.useWatch("competencyIds", form) ?? [];
   if (!chosen.some((id) => draftIds.has(id))) return null;
@@ -241,7 +251,9 @@ function DraftMemberNotice({
     <Alert
       type="info"
       showIcon
-      title={DRAFT_MEMBER_NOTICE}
+      title={
+        isActiveBlock ? DRAFT_MEMBER_IN_ACTIVE_NOTICE : DRAFT_MEMBER_NOTICE
+      }
       style={{ marginBottom: "var(--ant-margin)" }}
     />
   );
@@ -266,6 +278,8 @@ function CompetencyPicker({
 }: CompetencyPickerProps) {
   const { token } = theme.useToken();
   const [search, setSearch] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<string>();
   const q = useDebouncedValue(search.trim());
   const list = useQuery({
     ...competenciesQuery({
@@ -313,6 +327,7 @@ function CompetencyPicker({
           onChange={(event) => setSearch(event.target.value)}
         />
         <Typography.Text strong>{`Выбрано: ${value.length}`}</Typography.Text>
+        <Button onClick={() => setIsCreating(true)}>Создать компетенцию</Button>
       </Flex>
       <Typography.Text type="secondary">
         Показаны действующие и черновые компетенции любых шкал.
@@ -331,6 +346,9 @@ function CompetencyPicker({
           dataSource={items}
           loading={list.isFetching}
           pagination={false}
+          rowClassName={(row) =>
+            row.id === highlightedId ? "queue-row-selected" : ""
+          }
           scroll={{ y: token.controlHeight * LIST_HEIGHT_IN_CONTROLS }}
           rowSelection={{
             selectedRowKeys: value,
@@ -344,7 +362,17 @@ function CompetencyPicker({
               );
             },
           }}
-          locale={{ emptyText: "Компетенции этой шкалы не найдены" }}
+          locale={{ emptyText: "Компетенции не найдены" }}
+        />
+      )}
+      {isCreating && (
+        <CompetencyModal
+          onSaved={(created) => {
+            onChange?.([...new Set([...value, created.id])]);
+            setHighlightedId(created.id);
+            if (created.status === "Draft") onDraftsSeen([created.id]);
+          }}
+          onClose={() => setIsCreating(false)}
         />
       )}
     </Flex>
