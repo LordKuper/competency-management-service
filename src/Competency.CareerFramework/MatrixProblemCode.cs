@@ -14,7 +14,7 @@ internal enum MatrixProblemCode
     NoLevels,
 
     /// <summary>
-    /// A level has no requirements.
+    /// A level has no required score.
     /// </summary>
     LevelWithoutRequirements,
 
@@ -22,11 +22,6 @@ internal enum MatrixProblemCode
     /// The block coefficients of a level do not add up to 100 %.
     /// </summary>
     BlockWeights,
-
-    /// <summary>
-    /// A critical competency has no minimum score.
-    /// </summary>
-    CriticalWithoutScore,
 
     /// <summary>
     /// The version refers to an entry it may no longer use.
@@ -59,7 +54,7 @@ internal enum MatrixProblemCode
     CompetencyWithoutScore,
 
     /// <summary>
-    /// A competency of a shared block or outside blocks has no requirement in the version.
+    /// A competency of a track matrix version has no required score at any level.
     /// </summary>
     CompetencyWithoutRequirements,
 

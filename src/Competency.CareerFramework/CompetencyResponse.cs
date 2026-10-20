@@ -24,10 +24,11 @@ internal sealed record CompetencyResponse(
     int VersionNumber,
     int Version,
     bool CanEdit,
-    bool CanDelete)
+    bool CanDelete,
+    string? EvidenceExamples = null)
 {
     /// <summary>
-    /// What the contract says of the category fields of a competency, which competencies no longer have.
+    /// What the contract says of the type of a competency, which competencies no longer have.
     /// </summary>
     public const string DeprecatedType = "Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses.";
 
@@ -52,5 +53,6 @@ internal sealed record CompetencyResponse(
         CompetencyVersion.NumberOf(competency),
         competency.Version,
         viewer.CanEdit(competency),
-        viewer.CanDelete(competency));
+        viewer.CanDelete(competency),
+        competency.EvidenceExamples);
 }

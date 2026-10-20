@@ -84,12 +84,12 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     }
 
     /// <summary>
-    /// Says what keeps the version from being handed on. For a track matrix: a level without requirements, block coefficients of a level
-    /// that do not add up to 100 %, a level of the matrix track without a linked active position. For a position matrix: no competencies,
-    /// a competency without a required score, coefficients that do not add up to 100 %, a position no longer available to the matrix
-    /// unit. For both: a competency of a shared block or outside blocks without requirements, a competency in two groups, a critical
-    /// requirement without a required score, an entry that is no longer usable or no longer fits the version, a shared block no longer
-    /// available to the matrix unit, or a required score the competency's scale no longer has. An inactive scale is no problem.
+    /// Says what keeps the version from being handed on. For a track matrix: a level without a required score, a competency without a
+    /// required score at any level, block coefficients of a level that do not add up to 100 %, a level of the matrix track without a linked
+    /// active position. For a position matrix: no competencies, a competency without a required score, coefficients that do not add up to
+    /// 100 %, a position no longer available to the matrix unit. For both: a competency in two groups, an entry that is no longer usable or
+    /// no longer fits the version, a shared block no longer available to the matrix unit, or a required score the competency's scale no
+    /// longer has. An inactive scale is no problem; a critical competency needs no score of its own, its required score is its threshold.
     /// </summary>
     /// <param name="version">The version.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
@@ -108,15 +108,6 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         var problems = matrix.PositionId is { } positionId
             ? await PositionProblemsAsync(matrix, positionId, content, entries, requirements, cancellationToken)
             : await TrackProblemsAsync(matrix, content, entries, requirements, cancellationToken);
-
-        foreach (var requirement in requirements.Where(requirement => entries.TypeOf(requirement.CompetencyId) == CompetencyType.Critical && requirement.RequiredScore is null)
-                     .DistinctBy(requirement => requirement.CompetencyId))
-        {
-            problems.Add(new MatrixProblem(
-                MatrixProblemCode.CriticalWithoutScore,
-                $"У критической компетенции «{entries.CompetencyName(requirement.CompetencyId)}» не задан минимальный уровень",
-                CompetencyId: requirement.CompetencyId));
-        }
 
         foreach (var competencyId in entries.Set.GroupBy(item => item.CompetencyId).Where(group => group.Count() > 1).Select(group => group.Key))
         {
@@ -180,7 +171,8 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
                     entries.TypeOf(competency.Id),
                     CompetencyVersion.NumberOf(competency),
                     competency.Status,
-                    entries.ScaleOf(competency.Id)?.Id))],
+                    entries.ScaleOf(competency.Id)?.Id,
+                    competency.EvidenceExamples))],
             position is null ? null : new MatrixNamedEntry(position.Id, position.Name, position.IsActive ? CatalogStatus.Active : CatalogStatus.Inactive),
             [.. version.Content.SharedBlocks
                 .Select(item => entries.Blocks.GetValueOrDefault(item.BlockId))
@@ -252,8 +244,8 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         matrix.DirectionId is null || competency.DirectionId is null || competency.DirectionId == matrix.DirectionId;
 
     /// <summary>
-    /// What keeps a track matrix version from being handed on by its levels and groups: levels without requirements, coefficients of a
-    /// level not adding up to 100 %, competencies of shared blocks and outside blocks without requirements, levels without an active position.
+    /// What keeps a track matrix version from being handed on by its levels and competencies: levels without a required score, coefficients
+    /// of a level not adding up to 100 %, competencies without a required score, levels without an active position.
     /// </summary>
     private async Task<List<MatrixProblem>> TrackProblemsAsync(
         CompetencyMatrix matrix,
@@ -267,7 +259,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         {
             var levelId = level.LevelId;
             var name = entries.Levels.GetValueOrDefault(levelId)?.Name ?? levelId.ToString();
-            if (!requirements.Any(requirement => requirement.LevelId == levelId))
+            if (!requirements.Any(requirement => requirement.LevelId == levelId && requirement.RequiredScore is not null))
             {
                 problems.Add(new MatrixProblem(MatrixProblemCode.LevelWithoutRequirements, $"У уровня «{name}» нет требований", levelId));
             }
@@ -282,16 +274,14 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             }
         }
 
-        var ownBlockIds = content.Blocks.Select(block => block.Id).ToHashSet();
         foreach (var competencyId in entries.Set
-                     .Where(item => item.BlockId is not { } blockId || !ownBlockIds.Contains(blockId))
                      .Select(item => item.CompetencyId)
                      .Distinct()
-                     .Where(competencyId => !requirements.Any(requirement => requirement.CompetencyId == competencyId)))
+                     .Where(competencyId => !requirements.Any(requirement => requirement.CompetencyId == competencyId && requirement.RequiredScore is not null)))
         {
             problems.Add(new MatrixProblem(
                 MatrixProblemCode.CompetencyWithoutRequirements,
-                $"У компетенции «{entries.CompetencyName(competencyId)}» нет требований",
+                $"У компетенции «{entries.CompetencyName(competencyId)}» нет требуемого балла",
                 CompetencyId: competencyId));
         }
 

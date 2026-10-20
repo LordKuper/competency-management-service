@@ -3,12 +3,17 @@ using System.ComponentModel;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The fields of a new competency or of a change of one; every field but the scale, the category and the type must be sent, an absent
-/// value as null.
+/// The fields of a new competency or of a change of one; every field but the scale, the evidence examples, the category and the type must
+/// be sent, an absent value as null.
 /// </summary>
 internal record CompetencyRequest : CatalogNameRequest
 {
     public required string? Description { get; init; }
+
+    /// <summary>
+    /// Examples of what shows the competency; absent or null keeps the examples the competency has, an empty text clears them.
+    /// </summary>
+    public string? EvidenceExamples { get; init; }
 
     /// <summary>
     /// Accepted and not read: competencies have no category.
@@ -37,6 +42,7 @@ internal record CompetencyRequest : CatalogNameRequest
     {
         var errors = base.Validate();
         CheckText(errors, "description", Description, CareerCompetency.DescriptionMaxLength, missingMessage: null);
+        CheckText(errors, "evidenceExamples", EvidenceExamples, CareerCompetency.DescriptionMaxLength, missingMessage: null);
 
         return errors;
     }
@@ -50,6 +56,11 @@ internal record CompetencyRequest : CatalogNameRequest
     {
         competency.Name = TrimmedName();
         competency.Description = OptionalText(Description);
+        if (EvidenceExamples is not null)
+        {
+            competency.EvidenceExamples = OptionalText(EvidenceExamples);
+        }
+
         competency.DirectionId = DirectionId;
         competency.ScaleId = scaleId;
     }

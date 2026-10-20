@@ -17,4 +17,5 @@ internal sealed record CompetencyVersionResponse(
     CatalogStatus Status,
     Guid? ChangedById,
     string? ChangedByName,
-    DateTimeOffset ChangedAt);
+    DateTimeOffset ChangedAt,
+    string? EvidenceExamples = null);

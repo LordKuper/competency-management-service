@@ -239,7 +239,8 @@ internal static class CompetencyEndpoints
             version.Status,
             version.ChangedById,
             version.ChangedById is { } userId ? names.GetValueOrDefault(userId) : null,
-            version.ChangedAt)).ToList());
+            version.ChangedAt,
+            version.EvidenceExamples)).ToList());
     }
 
     /// <summary>

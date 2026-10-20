@@ -121,6 +121,11 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("direction_id");
 
+                    b.Property<string>("EvidenceExamples")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("evidence_examples");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -515,6 +520,11 @@ namespace Competency.Platform.Migrations
                     b.Property<Guid?>("DirectionId")
                         .HasColumnType("uuid")
                         .HasColumnName("direction_id");
+
+                    b.Property<string>("EvidenceExamples")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("evidence_examples");
 
                     b.Property<string>("Name")
                         .IsRequired()

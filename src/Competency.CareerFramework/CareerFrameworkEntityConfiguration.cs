@@ -87,6 +87,7 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
         ConfigureEntry<CareerCompetency>(modelBuilder, "competencies", entity =>
         {
             entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(CareerCompetency.DescriptionMaxLength);
+            entity.Property(e => e.EvidenceExamples).HasColumnName("evidence_examples").HasMaxLength(CareerCompetency.DescriptionMaxLength);
             entity.Property(e => e.DirectionId).HasColumnName("direction_id");
             entity.Property(e => e.ScaleId).HasColumnName("scale_id");
 
@@ -102,6 +103,7 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
             entity.Property(e => e.Number).HasColumnName("number");
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(CatalogEntry.NameMaxLength);
             entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(CareerCompetency.DescriptionMaxLength);
+            entity.Property(e => e.EvidenceExamples).HasColumnName("evidence_examples").HasMaxLength(CareerCompetency.DescriptionMaxLength);
             entity.Property(e => e.DirectionId).HasColumnName("direction_id");
             entity.Property(e => e.ScaleId).HasColumnName("scale_id");
             entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(EnumMaxLength);

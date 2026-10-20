@@ -17,12 +17,16 @@ internal sealed record MatrixChange(MatrixChangeKind Kind, MatrixChangeType Type
     public static List<MatrixChange> Between(MatrixContent before, MatrixContent after) =>
     [
         .. Compare(before.Levels, after.Levels, item => item.LevelId, key => new(MatrixChangeKind.Level, default, key, null, null)),
-        .. Compare(before.Blocks, after.Blocks, item => item.Id, key => new(MatrixChangeKind.Block, default, null, key, null)),
-        .. Compare(before.SharedBlocks, after.SharedBlocks, item => item.BlockId, key => new(MatrixChangeKind.Block, default, null, key, null)),
+        .. Compare(IdsOf(before.SharedBlocks), IdsOf(after.SharedBlocks), id => id, key => new(MatrixChangeKind.Block, default, null, key, null)),
         .. Compare(before.Competencies, after.Competencies, item => item.CompetencyId, key => new(MatrixChangeKind.Competency, default, null, null, key)),
         .. Compare(before.BlockWeights, after.BlockWeights, item => (item.LevelId, item.BlockId), key => new(MatrixChangeKind.BlockWeight, default, key.LevelId, key.BlockId, null)),
         .. Compare(before.Requirements, after.Requirements, item => (item.LevelId, item.CompetencyId), key => new(MatrixChangeKind.Requirement, default, key.LevelId, null, key.CompetencyId)),
     ];
+
+    /// <summary>
+    /// The shared blocks a document includes, compared by reference alone: the types of their competencies show as changed competencies.
+    /// </summary>
+    private static List<Guid> IdsOf(IReadOnlyList<MatrixSharedBlock> blocks) => [.. blocks.Select(block => block.BlockId)];
 
     private static IEnumerable<MatrixChange> Compare<TItem, TKey>(
         IReadOnlyList<TItem> before,
