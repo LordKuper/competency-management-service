@@ -224,3 +224,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-20 — route Task 48: standard, dispatch HEAD (после этого коммита)
 - 2026-10-20 — Task 48 COMPLETED (23bb7ec): тип убран из справочника, выбор типа в строках матрицы, «Профильная» по умолчанию, тип в разнице версий, «Тип в матрице» в «Моём месте». Flagged choices приняты оркестратором
 - 2026-10-20 — impl completion gate (после Task 44–48): dotnet 0/0, web lint/build/check:api чисто; все задачи плана отмечены
+- 2026-10-20 — impl assessment (user, скриншот стола): в группах рабочего стола не должно быть горизонтальной прокрутки (длинный объект и причина растягивают таблицу «Продолжить построение матрицы»). Дефект вёрстки; route Task 16 assessment-fix 7: standard
