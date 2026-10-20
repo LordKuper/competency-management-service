@@ -20,5 +20,7 @@ Sprint 004 Task 23 (2026-10-14), commits da17b1c, ffddd1b, a7c471c. Nothing was 
 
 - Task 38 (2026-10-20, ba069de): there are no competency categories. Released 3.0.0 surface is kept as deprecated stubs: `CompetencyCategoryEndpoints` serves an empty list and a 410, and category fields are null. Surface that never shipped was simply deleted. `NoCompetencyCategories` Down adds the columns with a placeholder default, then drops the default via `AlterColumn(oldDefaultValue:)`. That drop has never been seen to run.
 
+- Task 47 (2026-10-20, 05f3a99): a competency's type is per version. It lives in `content.competencies[].type` and `sharedBlocks[].competencyTypes`. `MatrixContent.WithTypes` (called in `EditAsync`) stores each type explicitly; `CompetenciesWith` fills in Profile when none is set. `MatrixRequirement.Type` is deprecated and moved last, so it is optional in the schema. The migration's helper SQL functions (`migration_*`) are created and then dropped inside it, and have never run.
+
 **Why:** Task 24 (SPA) and impl-test build on these choices.
 **How to apply:** read before touching matrix documents, snapshots, blocks or the career desk source. See [[career-desk-source-facts]], [[publication-cascade-facts]], [[career-record-deletion-facts]].
