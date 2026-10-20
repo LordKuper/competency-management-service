@@ -342,7 +342,8 @@ function CompetenciesBody({
     {
       title: "Тип",
       dataIndex: "type",
-      render: (type: Competency["type"]) => COMPETENCY_TYPES[type],
+      render: (type: Competency["type"]) =>
+        type ? COMPETENCY_TYPES[type] : null,
     },
     { title: "Шкала", dataIndex: "scaleName" },
     {

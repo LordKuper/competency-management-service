@@ -113,7 +113,7 @@ interface GridRow {
 /** What a grid shows of a competency. */
 export interface CompetencyInfo {
   name: string;
-  type: CompetencyType;
+  type: CompetencyType | null;
   scaleId?: string | null;
   scaleName?: string;
 }

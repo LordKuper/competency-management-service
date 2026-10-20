@@ -121,7 +121,7 @@ export function describeChanges(
         )?.label;
         return [
           `Требуемый уровень: ${score == null ? NO_VALUE : label ? `${score} (${label})` : score}`,
-          `Тип: ${COMPETENCY_TYPES[requirement.type]}`,
+          requirement.type && `Тип: ${COMPETENCY_TYPES[requirement.type]}`,
           `Вес: ${requirement.weight}`,
           requirement.isMandatory && "Обязательная",
           requirement.expectedBehavior &&

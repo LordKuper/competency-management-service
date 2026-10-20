@@ -74,7 +74,8 @@ export function CompetenciesTab() {
           value,
         })),
       ),
-      render: (type) => COMPETENCY_TYPES[type as Competency["type"]],
+      render: (type: Competency["type"]) =>
+        type ? COMPETENCY_TYPES[type] : null,
     },
     {
       title: "Шкала",
@@ -229,7 +230,7 @@ function VersionsModal({
               {
                 key: "type",
                 label: "Тип",
-                children: COMPETENCY_TYPES[chosen.type],
+                children: chosen.type ? COMPETENCY_TYPES[chosen.type] : null,
               },
               { key: "scale", label: "Шкала", children: scale.data?.name },
               {

@@ -2024,7 +2024,7 @@ export interface components {
             categoryId?: null | string;
             /** Format: uuid */
             directionId: null | string;
-            type: components["schemas"]["CompetencyType"];
+            type?: null | components["schemas"]["CompetencyType"];
             /** Format: uuid */
             scaleId?: null | string;
             name: string;
@@ -2044,7 +2044,7 @@ export interface components {
             /** Format: uuid */
             directionId: null | string;
             directionName: null | string;
-            type: components["schemas"]["CompetencyType"];
+            type: null | components["schemas"]["CompetencyType"];
             /** Format: uuid */
             scaleId: string;
             scaleName: string;
@@ -2088,7 +2088,7 @@ export interface components {
             categoryId: null | string;
             /** Format: uuid */
             directionId: null | string;
-            type: components["schemas"]["CompetencyType"];
+            type: null | components["schemas"]["CompetencyType"];
             /** Format: uuid */
             scaleId: string;
             status: components["schemas"]["CatalogStatus"];
@@ -2388,6 +2388,7 @@ export interface components {
             competencyId: string;
             /** Format: uuid */
             blockId: null | string;
+            type?: null | components["schemas"]["CompetencyType"];
         };
         MatrixCompetencyEntry: {
             /** Format: uuid */
@@ -2409,6 +2410,11 @@ export interface components {
             status: components["schemas"]["CatalogStatus"];
             /** Format: uuid */
             scaleId?: null | string;
+        };
+        MatrixCompetencyType: {
+            /** Format: uuid */
+            competencyId: string;
+            type: components["schemas"]["CompetencyType"];
         };
         MatrixCompletenessResponse: {
             problems: components["schemas"]["MatrixProblem"][];
@@ -2510,7 +2516,6 @@ export interface components {
             competencyId: string;
             /** Format: int32 */
             requiredScore: null | number;
-            type: components["schemas"]["CompetencyType"];
             /** Format: double */
             weight: number;
             isMandatory: boolean;
@@ -2518,6 +2523,7 @@ export interface components {
             evidenceExamples: null | string;
             /** Format: date */
             validFrom: null | string;
+            type?: null | components["schemas"]["CompetencyType"];
         };
         MatrixResponse: {
             /** Format: uuid */
@@ -2553,6 +2559,7 @@ export interface components {
             /** Format: uuid */
             blockId: string;
             isMandatory: boolean;
+            competencyTypes?: null | components["schemas"]["MatrixCompetencyType"][];
         };
         MatrixSharedBlockEntry: {
             /** Format: uuid */
@@ -8745,6 +8752,7 @@ export interface operations {
                 directionId?: string;
                 withGeneral?: boolean;
                 scaleId?: string;
+                /** @description Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses. */
                 type?: components["schemas"]["CompetencyType"];
             };
             header?: never;

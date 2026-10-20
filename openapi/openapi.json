@@ -7631,6 +7631,7 @@
           {
             "name": "type",
             "in": "query",
+            "description": "Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses.",
             "schema": {
               "$ref": "#/components/schemas/CompetencyType"
             }
@@ -13164,7 +13165,6 @@
         "required": [
           "description",
           "directionId",
-          "type",
           "name"
         ],
         "type": "object",
@@ -13191,7 +13191,15 @@
             "format": "uuid"
           },
           "type": {
-            "$ref": "#/components/schemas/CompetencyType"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses.",
+                "$ref": "#/components/schemas/CompetencyType"
+              }
+            ]
           },
           "scaleId": {
             "type": [
@@ -13268,7 +13276,15 @@
             ]
           },
           "type": {
-            "$ref": "#/components/schemas/CompetencyType"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses.",
+                "$ref": "#/components/schemas/CompetencyType"
+              }
+            ]
           },
           "scaleId": {
             "type": "string",
@@ -13414,7 +13430,15 @@
             "format": "uuid"
           },
           "type": {
-            "$ref": "#/components/schemas/CompetencyType"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses.",
+                "$ref": "#/components/schemas/CompetencyType"
+              }
+            ]
           },
           "scaleId": {
             "type": "string",
@@ -14539,6 +14563,16 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "type": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CompetencyType"
+              }
+            ]
           }
         }
       },
@@ -14607,6 +14641,22 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "MatrixCompetencyType": {
+        "required": [
+          "competencyId",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "competencyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CompetencyType"
           }
         }
       },
@@ -15069,7 +15119,6 @@
           "levelId",
           "competencyId",
           "requiredScore",
-          "type",
           "weight",
           "isMandatory",
           "expectedBehavior",
@@ -15092,9 +15141,6 @@
               "integer"
             ],
             "format": "int32"
-          },
-          "type": {
-            "$ref": "#/components/schemas/CompetencyType"
           },
           "weight": {
             "type": "number",
@@ -15121,6 +15167,17 @@
               "string"
             ],
             "format": "date"
+          },
+          "type": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Deprecated, removed in the next major version: a competency's type is set once per version in competencies[].type or sharedBlocks[].competencyTypes; ignored in requests, always null in responses.",
+                "$ref": "#/components/schemas/CompetencyType"
+              }
+            ]
           }
         }
       },
@@ -15269,6 +15326,15 @@
           },
           "isMandatory": {
             "type": "boolean"
+          },
+          "competencyTypes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MatrixCompetencyType"
+            }
           }
         }
       },
