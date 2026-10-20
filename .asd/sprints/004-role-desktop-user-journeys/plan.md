@@ -234,7 +234,7 @@ Material risk: none
 
 ### Task 35: Требования — без категорий компетенций
 Material risk: none
-- [ ] `docs/product/requirements/*.html`, `docs/product/concept.html`: удаление категорий компетенций — отзыв и правка критериев (AC-51); ширина окна блока (AC-52)
+- [x] `docs/product/requirements/*.html`, `docs/product/concept.html`: удаление категорий компетенций — отзыв и правка критериев (AC-51); ширина окна блока (AC-52)
 
 ### Task 36: Архитектура — без категорий компетенций
 Material risk: change: public contract, change: migration
