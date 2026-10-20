@@ -185,3 +185,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-15 — route Task 34: standard, dispatch HEAD (после этого коммита)
 - 2026-10-15 — Task 34 COMPLETED (eec34ef): окно блока без шкалы, состав любых шкал со столбцом «Шкала», CompetencyModal без блокировки шкалы, шкала у каждой компетенции в редакторе и мастере (scaleNameOf). Flagged choices приняты оркестратором: шкала рядом с категорией у всех строк редактора, полным названием шкалы
 - 2026-10-15 — impl completion gate (после Task 30–34): dotnet build Release 0/0, web lint/build/check:api чисто; все задачи плана отмечены
+
+## 2026-10-20 — поправка скоупа на приёмке реализации: без категорий компетенций, окно блока
+
+- **Decision**: пользователь: убрать категории компетенций полностью (AC-51); окно создания блока шире — таблица компетенций не помещается (AC-52). Категории существуют с 3.0.0 — удаление меняет опубликованный контракт и удаляет данные; архитектор определяет форму (deprecated-поля или удаление). Task 35–37 — волна 25, Task 38 — 26, Task 39 — 27.
+- **Rationale**: hard `new or changed scope` + public contract / migration — указание пользователя; стоимость AC-51, AC-52: 0 итераций / 0 раундов исправлений.
+- **Affected docs**: sprint.md, plan.md
+- 2026-10-20 — route Task 35, 36, 37: standard (owners asd-ba, asd-architect, asd-ux), dispatch HEAD (после этого коммита)
