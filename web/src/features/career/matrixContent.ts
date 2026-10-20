@@ -1,3 +1,5 @@
+import type { CompetencyType } from "./catalogApi";
+import { DEFAULT_COMPETENCY_TYPE } from "./competencyType";
 import type {
   MatrixBlock,
   MatrixChange,
@@ -143,7 +145,64 @@ export function addCompetency(
 ) {
   return {
     ...content,
-    competencies: [...content.competencies, { competencyId, blockId }],
+    competencies: [
+      ...content.competencies,
+      { competencyId, blockId, type: DEFAULT_COMPETENCY_TYPE },
+    ],
+  };
+}
+
+/** The type the competency has in the version: set on its row or in its shared block, else the default. */
+export function typeOfCompetency(
+  content: MatrixContent,
+  competencyId: string,
+): CompetencyType {
+  const own = content.competencies.find(
+    (item) => item.competencyId === competencyId,
+  );
+  if (own) return own.type ?? DEFAULT_COMPETENCY_TYPE;
+  for (const block of sharedBlocksOf(content)) {
+    const set = block.competencyTypes?.find(
+      (item) => item.competencyId === competencyId,
+    );
+    if (set) return set.type;
+  }
+  return DEFAULT_COMPETENCY_TYPE;
+}
+
+/**
+ * Sets the type of a competency of the version: on its row, or, for a member of a shared block, in that block's list;
+ * `compositions` says which block a member belongs to.
+ */
+export function setCompetencyType(
+  content: MatrixContent,
+  competencyId: string,
+  type: CompetencyType,
+  compositions: ReadonlyMap<string, readonly string[]>,
+): MatrixContent {
+  if (content.competencies.some((item) => item.competencyId === competencyId)) {
+    return {
+      ...content,
+      competencies: content.competencies.map((item) =>
+        item.competencyId === competencyId ? { ...item, type } : item,
+      ),
+    };
+  }
+  return {
+    ...content,
+    sharedBlocks: sharedBlocksOf(content).map((block) =>
+      compositions.get(block.blockId)?.includes(competencyId)
+        ? {
+            ...block,
+            competencyTypes: [
+              ...(block.competencyTypes ?? []).filter(
+                (item) => item.competencyId !== competencyId,
+              ),
+              { competencyId, type },
+            ],
+          }
+        : block,
+    ),
   };
 }
 
@@ -194,10 +253,25 @@ export function sharedBlocksOf(content: MatrixContent) {
   return content.sharedBlocks ?? [];
 }
 
-export function addSharedBlock(content: MatrixContent, blockId: string) {
+/** Includes a shared block; each of its members starts with the default type. */
+export function addSharedBlock(
+  content: MatrixContent,
+  blockId: string,
+  memberIds: readonly string[] = [],
+) {
   return {
     ...content,
-    sharedBlocks: [...sharedBlocksOf(content), { blockId, isMandatory: false }],
+    sharedBlocks: [
+      ...sharedBlocksOf(content),
+      {
+        blockId,
+        isMandatory: false,
+        competencyTypes: memberIds.map((competencyId) => ({
+          competencyId,
+          type: DEFAULT_COMPETENCY_TYPE,
+        })),
+      },
+    ],
   };
 }
 

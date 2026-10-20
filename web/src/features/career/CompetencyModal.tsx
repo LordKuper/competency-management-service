@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Form, Input, Select } from "antd";
+import { Form, Input } from "antd";
 import { useEffect } from "react";
 import { ApiError } from "../../api/ApiError";
 import { api } from "../../api/client";
@@ -8,41 +8,18 @@ import { unwrap } from "../../api/unwrap";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogModal, FormActions } from "./CatalogModal";
-import {
-  type Competency,
-  type CompetencyType,
-  invalidateCatalogs,
-  scalesQuery,
-} from "./catalogApi";
+import { type Competency, invalidateCatalogs, scalesQuery } from "./catalogApi";
 import { DirectionSelect } from "./DirectionSelect";
 import { ScaleSelect } from "./ScaleSelect";
 import { usePublishEntry } from "./usePublishEntry";
 
 const NAME_MAX_LENGTH = 200;
-const FIELDS = [
-  "name",
-  "description",
-  "directionId",
-  "type",
-  "scaleId",
-] as const;
-
-export const COMPETENCY_TYPES: Record<CompetencyType, string> = {
-  Critical: "Критическая",
-  Profile: "Профильная",
-  Additional: "Дополнительная",
-};
-
-const TYPE_OPTIONS = Object.entries(COMPETENCY_TYPES).map(([value, label]) => ({
-  value: value as CompetencyType,
-  label,
-}));
+const FIELDS = ["name", "description", "directionId", "scaleId"] as const;
 
 interface CompetencyValues {
   name: string;
   description?: string | null;
   directionId?: string | null;
-  type: CompetencyType;
   scaleId?: string;
 }
 
@@ -69,7 +46,6 @@ export function CompetencyModal({
         name: values.name,
         description: values.description?.trim() || null,
         directionId: values.directionId ?? null,
-        type: values.type,
         scaleId: values.scaleId ?? null,
       };
       return unwrap(
@@ -166,7 +142,6 @@ function CompetencyForm({
         name: competency?.name ?? "",
         description: competency?.description ?? "",
         directionId: competency?.directionId ?? undefined,
-        type: competency?.type,
         scaleId: competency?.scaleId,
       }}
       onFinish={submit}
@@ -189,9 +164,6 @@ function CompetencyForm({
       </Form.Item>
       <Form.Item name="directionId" label="Область">
         <DirectionSelect allowClear placeholder="Общая" />
-      </Form.Item>
-      <Form.Item name="type" label="Тип" rules={[{ required: true }]}>
-        <Select options={TYPE_OPTIONS} />
       </Form.Item>
       <Form.Item name="scaleId" label="Шкала" rules={[{ required: true }]}>
         <ScaleSelect />

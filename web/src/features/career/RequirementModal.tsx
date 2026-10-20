@@ -8,19 +8,12 @@ import {
   Space,
 } from "antd";
 import { CatalogModal, FormActions } from "./CatalogModal";
-import { COMPETENCY_TYPES } from "./CompetencyModal";
-import type { CompetencyType, ScalePoint } from "./catalogApi";
+import type { ScalePoint } from "./catalogApi";
 import type { MatrixRequirement } from "./matrixApi";
 
 const DEFAULT_WEIGHT = 1;
-const TYPE_OPTIONS = Object.entries(COMPETENCY_TYPES).map(([value, label]) => ({
-  value: value as CompetencyType,
-  label,
-}));
-
 interface RequirementValues {
   requiredScore?: number | null;
-  type: CompetencyType;
   weight: number;
   isMandatory?: boolean;
   expectedBehavior?: string | null;
@@ -34,8 +27,6 @@ interface RequirementModalProps {
   competencyId: string;
   /** The requirement as it stands; omitted when the cell has none yet. */
   requirement?: MatrixRequirement;
-  /** The type the competency has in the catalogue, offered for a new requirement. */
-  defaultType: CompetencyType;
   scalePoints: readonly ScalePoint[];
   /** Whether the version may be edited; otherwise the requirement is shown and cannot be changed. */
   isEditable: boolean;
@@ -50,7 +41,6 @@ export function RequirementModal({
   levelId,
   competencyId,
   requirement,
-  defaultType,
   scalePoints,
   isEditable,
   onSave,
@@ -64,7 +54,6 @@ export function RequirementModal({
       levelId,
       competencyId,
       requiredScore: values.requiredScore ?? null,
-      type: values.type,
       weight: values.weight,
       isMandatory: values.isMandatory ?? false,
       expectedBehavior: values.expectedBehavior?.trim() || null,
@@ -82,7 +71,6 @@ export function RequirementModal({
         disabled={!isEditable}
         initialValues={{
           requiredScore: requirement?.requiredScore ?? undefined,
-          type: requirement?.type ?? defaultType,
           weight: requirement?.weight ?? DEFAULT_WEIGHT,
           isMandatory: requirement?.isMandatory ?? false,
           expectedBehavior: requirement?.expectedBehavior ?? "",
@@ -99,9 +87,6 @@ export function RequirementModal({
               label: `${point.score} — ${point.label}`,
             }))}
           />
-        </Form.Item>
-        <Form.Item name="type" label="Тип" rules={[{ required: true }]}>
-          <Select options={TYPE_OPTIONS} />
         </Form.Item>
         <Form.Item name="weight" label="Вес" rules={[{ required: true }]}>
           <InputNumber min={0} style={{ width: "100%" }} />

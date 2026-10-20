@@ -16,7 +16,6 @@ import { ErrorAlert } from "../../app/ErrorAlert";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { CatalogModal } from "../career/CatalogModal";
 import { CatalogStatusTag } from "../career/CatalogParts";
-import { COMPETENCY_TYPES } from "../career/CompetencyModal";
 import {
   blocksQuery,
   type CompetencyBlock,
@@ -59,14 +58,6 @@ function BlockPreview({ block, entries }: BlockPreviewProps) {
             key: "scale",
             render: (_, item) =>
               scaleNameOf({ entries }, item.id, competencies.get(item.id)),
-          },
-          {
-            title: "Тип",
-            key: "type",
-            render: (_, item) => {
-              const type = competencies.get(item.id)?.type;
-              return type && COMPETENCY_TYPES[type];
-            },
           },
         ]}
       />

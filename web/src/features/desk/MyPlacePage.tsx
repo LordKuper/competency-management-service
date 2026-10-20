@@ -17,7 +17,7 @@ import {
 } from "antd";
 import { useState } from "react";
 import { Link } from "react-router";
-import { COMPETENCY_TYPES } from "../career/CompetencyModal";
+import { COMPETENCY_TYPES } from "../career/competencyType";
 import { matrixVersionQuery } from "../career/matrixApi";
 import { chipLevel } from "../career/matrixContent";
 import { scaleOfCompetency, sharedBlockOf } from "../career/matrixGroups";
@@ -208,7 +208,7 @@ function PositionMatrixPanel({
       },
     },
     {
-      title: "Тип",
+      title: "Тип в матрице",
       key: "type",
       render: (_, item) =>
         item.type === "Critical" ? (
@@ -374,7 +374,7 @@ function RequirementsTable({
               : [item.requiredScore, item.scoreLabel].filter(Boolean).join(" "),
         },
         {
-          title: "Тип",
+          title: "Тип в матрице",
           key: "type",
           render: (_, item: Requirement) =>
             item.type === "Critical" ? (

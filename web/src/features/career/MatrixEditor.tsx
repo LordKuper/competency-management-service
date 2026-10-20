@@ -23,12 +23,8 @@ import { useEditBase } from "../../app/useEditBase";
 import { BuilderFooter, type BuilderStepControls } from "./BuilderFooter";
 import { CatalogStatusTag } from "./CatalogParts";
 import { IN_WORK } from "./CatalogSelect";
-import { COMPETENCY_TYPES } from "./CompetencyModal";
-import {
-  type CompetencyType,
-  competencyQuery,
-  levelsQuery,
-} from "./catalogApi";
+import { competencyQuery, levelsQuery } from "./catalogApi";
+import { CompetencyTypeLabel, CompetencyTypeSelect } from "./competencyType";
 import { MatrixBlocks } from "./MatrixBlocks";
 import { MatrixChanges } from "./MatrixChanges";
 import { MatrixErrorAlert } from "./MatrixErrorAlert";
@@ -61,13 +57,16 @@ import {
   removeLevel,
   requirementOf,
   setCompetencyBlock,
+  setCompetencyType,
   setOverallMin,
+  typeOfCompetency,
   updateBlock,
   withoutRequirement,
   withRequirement,
 } from "./matrixContent";
 import {
   compositionChanges,
+  compositionsOf,
   OUTSIDE_LABEL,
   POSITION_COLUMN_LABEL,
   scaleNameOf,
@@ -113,7 +112,6 @@ interface GridRow {
 /** What a grid shows of a competency. */
 export interface CompetencyInfo {
   name: string;
-  type: CompetencyType | null;
   scaleId?: string | null;
   scaleName?: string;
 }
@@ -431,10 +429,23 @@ function MatrixEditorBody({
         <Typography.Text type="secondary">
           {scaleNameOf(version, competencyId, competency)}
         </Typography.Text>
-        {competency?.type === "Critical" && (
-          <Tag icon={<WarningOutlined />} color="error">
-            {COMPETENCY_TYPES.Critical}
-          </Tag>
+        {isEditable ? (
+          <CompetencyTypeSelect
+            label={`Тип компетенции «${competency?.name ?? ""}»`}
+            value={typeOfCompetency(shown, competencyId)}
+            onChange={(type) =>
+              setEdited(
+                setCompetencyType(
+                  edited,
+                  competencyId,
+                  type,
+                  compositionsOf(version),
+                ),
+              )
+            }
+          />
+        ) : (
+          <CompetencyTypeLabel type={typeOfCompetency(shown, competencyId)} />
         )}
         {(builder || (isEditable && !isShared)) &&
           renderBlockControl(competencyId)}
@@ -791,9 +802,6 @@ function MatrixEditorBody({
               requested.levelId,
               requested.competencyId,
             )}
-            defaultType={
-              competencies.get(requested.competencyId)?.type ?? "Profile"
-            }
             scalePoints={
               scaleOfCompetency(version, requested.competencyId).points
             }

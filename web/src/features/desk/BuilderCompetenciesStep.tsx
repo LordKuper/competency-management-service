@@ -22,7 +22,7 @@ import { useEditBase } from "../../app/useEditBase";
 import { BlockModal } from "../career/BlockModal";
 import { BuilderFooter } from "../career/BuilderFooter";
 import { CatalogStatusTag } from "../career/CatalogParts";
-import { COMPETENCY_TYPES, CompetencyModal } from "../career/CompetencyModal";
+import { CompetencyModal } from "../career/CompetencyModal";
 import { useProcessRoles } from "../career/careerApi";
 import {
   blockQuery,
@@ -339,12 +339,6 @@ function CompetenciesBody({
           ? `${competency.name} · уже в версии: общий блок «${brought.get(competency.id)}»`
           : competency.name,
     },
-    {
-      title: "Тип",
-      dataIndex: "type",
-      render: (type: Competency["type"]) =>
-        type ? COMPETENCY_TYPES[type] : null,
-    },
     { title: "Шкала", dataIndex: "scaleName" },
     {
       title: "Статус",
@@ -647,14 +641,6 @@ function Composition({ version, line, change }: CompositionProps) {
             key: "scale",
             render: (_, { id }) =>
               scaleNameOf(version, id, competencies.get(id)),
-          },
-          {
-            title: "Тип",
-            key: "type",
-            render: (_, { id }) => {
-              const type = competencies.get(id)?.type;
-              return type && COMPETENCY_TYPES[type];
-            },
           },
         ]}
       />

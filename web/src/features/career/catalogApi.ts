@@ -68,7 +68,6 @@ export interface CatalogListParams {
 export interface CompetencyListParams extends CatalogListParams {
   directionId?: string;
   scaleId?: string;
-  type?: CompetencyType;
   /** Leaves out the inactive entries. */
   inWork?: boolean;
   /** Adds the competencies that belong to no direction to those of `directionId`. */

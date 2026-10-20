@@ -1,6 +1,7 @@
 import { Typography } from "antd";
-import { COMPETENCY_TYPES } from "./CompetencyModal";
+import { COMPETENCY_TYPES } from "./competencyType";
 import type { MatrixChange, MatrixContent, MatrixDiff } from "./matrixApi";
+import { typeOfCompetency } from "./matrixContent";
 import { OUTSIDE_LABEL } from "./matrixGroups";
 import { CHANGED_NOTE } from "./matrixLabels";
 
@@ -60,6 +61,20 @@ export function describeChanges(
   const competencyName = (competencyId: string | null) =>
     quoted(competencyId ? competencyNames.get(competencyId) : undefined);
 
+  const blockOf = (content: MatrixContent, competencyId: string | null) =>
+    content.competencies.find((item) => item.competencyId === competencyId)
+      ?.blockId;
+
+  function isOnlyTypeChange(change: MatrixChange) {
+    const id = change.competencyId;
+    return (
+      change.type === "Changed" &&
+      id !== null &&
+      blockOf(diff.before, id) === blockOf(diff.after, id) &&
+      typeOfCompetency(diff.before, id) !== typeOfCompetency(diff.after, id)
+    );
+  }
+
   function place(change: MatrixChange) {
     switch (change.kind) {
       case "Level":
@@ -67,7 +82,9 @@ export function describeChanges(
       case "Block":
         return `блок ${quoted(blockName(diff.after, change.blockId) ?? blockName(diff.before, change.blockId))}`;
       case "Competency":
-        return `компетенция ${competencyName(change.competencyId)}`;
+        return isOnlyTypeChange(change)
+          ? `Тип компетенции ${competencyName(change.competencyId)}`
+          : `компетенция ${competencyName(change.competencyId)}`;
       case "BlockWeight":
         return `коэффициент блока ${quoted(blockName(diff.after, change.blockId) ?? blockName(diff.before, change.blockId))}, уровень ${levelName(change.levelId)}`;
       case "Requirement":
@@ -96,8 +113,14 @@ export function describeChanges(
         const competency = content.competencies.find(
           (item) => item.competencyId === competencyId,
         );
+        if (isOnlyTypeChange(change)) {
+          return COMPETENCY_TYPES[
+            typeOfCompetency(content, competencyId ?? "")
+          ];
+        }
         return (
-          competency && `Блок ${quoted(blockName(content, competency.blockId))}`
+          competency &&
+          `Блок ${quoted(blockName(content, competency.blockId))}; Тип: ${COMPETENCY_TYPES[typeOfCompetency(content, competency.competencyId)]}`
         );
       }
       case "BlockWeight": {
@@ -121,7 +144,6 @@ export function describeChanges(
         )?.label;
         return [
           `Требуемый уровень: ${score == null ? NO_VALUE : label ? `${score} (${label})` : score}`,
-          requirement.type && `Тип: ${COMPETENCY_TYPES[requirement.type]}`,
           `Вес: ${requirement.weight}`,
           requirement.isMandatory && "Обязательная",
           requirement.expectedBehavior &&

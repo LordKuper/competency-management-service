@@ -55,7 +55,7 @@ export function withSharedBlocks(
   }
   for (const blockId of blockIds) {
     if (!sharedBlocksOf(next).some((item) => item.blockId === blockId)) {
-      next = addSharedBlock(next, blockId);
+      next = addSharedBlock(next, blockId, compositions.get(blockId));
     }
   }
   return next;
