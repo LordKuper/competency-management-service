@@ -302,7 +302,7 @@ Material risk: none
 
 ### Task 52: Бэкенд — упрощённое требование матрицы
 Material risk: change: public contract, change: migration
-- [ ] модель, миграция, контракт, формула и проверки по Task 50 (AC-56); OpenAPI и `web/src/api/schema.d.ts`
+- [x] модель, миграция, контракт, формула и проверки по Task 50 (AC-56); OpenAPI и `web/src/api/schema.d.ts`
 
 ### Task 53: SPA — шаг «Требования» и редактор матрицы
 Material risk: none
