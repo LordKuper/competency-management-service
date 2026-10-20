@@ -207,3 +207,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-20 — Task 41 COMPLETED (86e2c9e): «Создать компетенцию» в окне блока (вкладка и мастер), заметки макетов; gate web lint/build/check:api чисто, все задачи плана отмечены
 - 2026-10-20 — поправка скоупа (user): AC-54 — создание профессиональной области из окна компетенции, созданная выбирается; Task 42 (asd-ba), Task 43 (asd-dev, SPA + заметки макетов) — волна 28→29; стоимость 0; route Task 42, 43: standard
 - 2026-10-20 — Task 42 COMPLETED (3e7a1fc): career-framework AC-147
+- 2026-10-20 — Task 43 COMPLETED (3efeda7): DirectionSelect с «+ Создать область…» в CompetencyModal, «Общая» сохраняется; gate web чисто, все задачи плана отмечены
