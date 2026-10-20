@@ -209,3 +209,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-20 — Task 42 COMPLETED (3e7a1fc): career-framework AC-147
 - 2026-10-20 — Task 43 COMPLETED (3efeda7): DirectionSelect с «+ Создать область…» в CompetencyModal, «Общая» сохраняется; gate web чисто, все задачи плана отмечены
 - 2026-10-20 — impl assessment: дефект (user): при создании блока компетенций в мастере — DbUpdateConcurrencyException «The If-Match version is not the current version» в MatrixWorkflow.EditAsync (PUT …/content после POST /blocks) — устаревшая версия в If-Match. route Task 29 assessment-fix 1: standard, dispatch HEAD 015562e
+- 2026-10-20 — Task 29 assessment-fix 1 COMPLETED (acf961a): причина — useEditBase шага 2 не переносил базу после успешного подключения блока; rebase на сохранённую версию; сервер отвечал 412 (ProblemExceptionHandler), не 500. Сбой самой первой попытки в свежем шаге кодом не объясняется — уточнить у пользователя при повторе
