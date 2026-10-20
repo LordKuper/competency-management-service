@@ -254,7 +254,7 @@ Material risk: none
 
 ### Task 40: Требования — компетенция из окна блока
 Material risk: none
-- [ ] `docs/product/requirements/career-framework.html` (и `desk.html`, если окно блока в мастере описано там): создание компетенции из окна блока (AC-53)
+- [x] `docs/product/requirements/career-framework.html` (и `desk.html`, если окно блока в мастере описано там): создание компетенции из окна блока (AC-53)
 
 ### Task 41: SPA и макеты — компетенция из окна блока
 Material risk: none
