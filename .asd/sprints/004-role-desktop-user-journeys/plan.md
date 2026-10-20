@@ -262,7 +262,7 @@ Material risk: none
 
 ### Task 42: Требования — область из окна компетенции
 Material risk: none
-- [ ] `docs/product/requirements/career-framework.html`: создание области из окна компетенции (AC-54)
+- [x] `docs/product/requirements/career-framework.html`: создание области из окна компетенции (AC-54)
 
 ### Task 43: SPA и макеты — область из окна компетенции
 Material risk: none
