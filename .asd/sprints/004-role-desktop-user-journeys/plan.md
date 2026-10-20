@@ -246,7 +246,7 @@ Material risk: none
 
 ### Task 38: Бэкенд — без категорий компетенций
 Material risk: change: public contract, change: migration
-- [ ] модель, миграция, контракт, каскад, стол по Task 36 (AC-51); OpenAPI и `web/src/api/schema.d.ts`
+- [x] модель, миграция, контракт, каскад, стол по Task 36 (AC-51); OpenAPI и `web/src/api/schema.d.ts`
 
 ### Task 39: SPA — без категорий компетенций, окно блока
 Material risk: none
