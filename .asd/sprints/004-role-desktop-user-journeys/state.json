@@ -604,6 +604,12 @@
       "tier": "standard",
       "reason": "owner asd-ux (docs/ux)",
       "resolved_model": "sonnet"
+    },
+    "Task 38": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
     }
   },
   "skipped_phases": [],
