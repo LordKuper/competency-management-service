@@ -25,7 +25,6 @@ const SEGMENTS = Object.keys({
   directions: true,
   tracks: true,
   levels: true,
-  categories: true,
   competencies: true,
   scales: true,
   blocks: true,
@@ -40,7 +39,6 @@ const ACTIONS = Object.keys({
 const DRAFT_KINDS = Object.keys({
   Direction: true,
   Track: true,
-  Category: true,
   Competency: true,
   Scale: true,
   Block: true,
@@ -87,7 +85,7 @@ describe("requests whose path is assembled at run time are routes of the contrac
     await expect(deleteEntry(segment, ENTRY)).resolves.toBeDefined();
   });
 
-  it.each(["directions", "tracks", "categories"] as const)(
+  it.each(["directions", "tracks"] as const)(
     "creates and renames a record of %s",
     async (segment) => {
       const values = {

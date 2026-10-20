@@ -8,7 +8,6 @@ import { Providers } from "../../app/Providers";
 import { fakeApi } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { ApprovalsSection } from "./ApprovalsSection";
-import { CategoriesTab } from "./CategoriesTab";
 import { CompetenciesTab } from "./CompetenciesTab";
 import { DirectionsTracksTab } from "./DirectionsTracksTab";
 import { DraftsSection } from "./DraftsSection";
@@ -112,15 +111,6 @@ const CASES: FilterCase[] = [
     choose: { option: "По умолчанию" },
     param: "isDefault",
     value: "true",
-  },
-  {
-    table: "categories by status",
-    show: () => <CategoriesTab />,
-    route: "GET /api/v1/career/categories",
-    column: "Статус",
-    choose: { option: "Неактивна" },
-    param: "status",
-    value: "Inactive",
   },
   {
     table: "directions by status",

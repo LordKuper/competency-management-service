@@ -7,7 +7,6 @@ import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
-import { CategoriesTab } from "./CategoriesTab";
 import { CompetenciesTab } from "./CompetenciesTab";
 import { DirectionsTracksTab } from "./DirectionsTracksTab";
 import { DraftsSection } from "./DraftsSection";
@@ -53,12 +52,6 @@ const TABLES: PagedTable[] = [
       ownerOrgUnitName: "Отдел",
     }),
     isNested: true,
-  },
-  {
-    table: "categories",
-    show: () => <CategoriesTab />,
-    route: "GET /api/v1/career/categories",
-    row: entry,
   },
   {
     table: "scales",
@@ -194,80 +187,6 @@ describe("a catalogue table pages on the server (AC-24)", {
       });
     },
   );
-});
-
-describe("the page size of a catalogue table (AC-24)", {
-  timeout: LONG_FLOW_TIMEOUT,
-}, () => {
-  it("is asked from the server as chosen, from the first page", async () => {
-    serveRole("GlobalAdmin");
-    fakeApi.on("GET /api/v1/career/categories", (request) => {
-      const query = new URL(request.url).searchParams;
-      return Response.json({
-        items: Array.from({ length: PAGE_SIZE }, (_, index) =>
-          entry(index + 1),
-        ),
-        total: TOTAL,
-        page: Number(query.get("page")),
-        pageSize: Number(query.get("pageSize")),
-      });
-    });
-    const user = showTable(<CategoriesTab />);
-    await screen.findByText("Запись 1");
-
-    await user.click(screen.getByTitle("2"));
-    await user.click(
-      document.querySelector(
-        ".ant-pagination-options .ant-select",
-      ) as HTMLElement,
-    );
-    await user.click(
-      await screen.findByText(/^50/, {
-        selector: ".ant-select-item-option-content",
-      }),
-    );
-
-    await waitFor(() =>
-      expect(queries("GET /api/v1/career/categories").at(-1)).toMatchObject({
-        page: "1",
-        pageSize: "50",
-      }),
-    );
-  });
-});
-
-describe("the actions of a catalogue row follow what the server says the user may do (AC-19, AC-25)", {
-  timeout: LONG_FLOW_TIMEOUT,
-}, () => {
-  it("offers «Изменить» and «Удалить» by canEdit and canDelete of each entry, whatever the roles of the user", async () => {
-    serveRole("User");
-    fakeApi.on("GET /api/v1/career/categories", () =>
-      Response.json(
-        page([
-          { ...entry(1), name: "Своя", canEdit: true, canDelete: true },
-          {
-            ...entry(2),
-            name: "Только удаление",
-            canEdit: false,
-            canDelete: true,
-          },
-          { ...entry(3), name: "Чужая", canEdit: false, canDelete: false },
-        ]),
-      ),
-    );
-    showTable(<CategoriesTab />);
-
-    const actionsOf = async (name: string) => {
-      const row = (await screen.findByText(name)).closest("tr") as HTMLElement;
-      return within(row)
-        .queryAllByRole("button")
-        .map((button) => button.textContent);
-    };
-
-    expect(await actionsOf("Своя")).toEqual(["Изменить", "Удалить"]);
-    expect(await actionsOf("Только удаление")).toEqual(["Удалить"]);
-    expect(await actionsOf("Чужая")).toEqual([]);
-  });
 });
 
 describe("an action taken from a list row carries the tag of the row the user saw (AC-17)", {
@@ -522,43 +441,9 @@ async function actionsOf(
   return { visible, menu };
 }
 
-/** The confirmation of a deletion: antd gives every modal of the test the same title id, so it is found by its text. */
-async function askedToDelete() {
-  const title = await screen.findByText("Удалить категорию «Черновая»?", {
-    selector: ".ant-modal-confirm-title",
-  });
-  return title.closest('[role="dialog"]') as HTMLElement;
-}
-
 describe("the row actions of the catalogues (AC-19, AC-25)", {
   timeout: LONG_FLOW_TIMEOUT,
 }, () => {
-  it("a draft category: «Изменить» and «Согласовать» visible, «Деактивировать» and «Удалить» in the menu", async () => {
-    serveRole("GlobalAdmin");
-    fakeApi.on("GET /api/v1/career/categories", () =>
-      Response.json(page([editable({ name: "Черновая", status: "Draft" })])),
-    );
-    const user = showTable(<CategoriesTab />);
-
-    const { visible, menu } = await actionsOf(user, "Черновая");
-
-    expect(visible).toEqual(["Изменить", "Согласовать"]);
-    expect(menu).toEqual(["Деактивировать", "Удалить"]);
-  });
-
-  it("an inactive category: «Изменить» and «Вернуть в работу» visible, «Удалить» in the menu", async () => {
-    serveRole("GlobalAdmin");
-    fakeApi.on("GET /api/v1/career/categories", () =>
-      Response.json(page([editable({ name: "Старая", status: "Inactive" })])),
-    );
-    const user = showTable(<CategoriesTab />);
-
-    const { visible, menu } = await actionsOf(user, "Старая");
-
-    expect(visible).toEqual(["Изменить", "Вернуть в работу"]);
-    expect(menu).toEqual(["Удалить"]);
-  });
-
   it("an active scale that is not the default: «Сделать по умолчанию» and «Изменить» visible", async () => {
     serveRole("GlobalAdmin");
     fakeApi.on("GET /api/v1/career/scales", () =>
@@ -599,71 +484,6 @@ describe("the row actions of the catalogues (AC-19, AC-25)", {
 
     expect(visible).toEqual(["История версий", "Изменить"]);
     expect(menu).toEqual(["Согласовать", "Деактивировать", "Удалить"]);
-  });
-
-  it("deactivates from the menu against the version of the row", async () => {
-    const route = "POST /api/v1/career/categories/entry/deactivate";
-    serveRole("GlobalAdmin");
-    fakeApi.on("GET /api/v1/career/categories", () =>
-      Response.json(page([editable({ name: "Черновая", status: "Draft" })])),
-    );
-    fakeApi.on(route, () => Response.json(editable()));
-    const user = showTable(<CategoriesTab />);
-    await actionsOf(user, "Черновая");
-
-    await user.click(
-      await screen.findByRole("menuitem", { name: "Деактивировать" }),
-    );
-
-    await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
-    expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe('"3"');
-  });
-
-  async function openDeletionFromMenu(route: string) {
-    serveRole("GlobalAdmin");
-    fakeApi.on("GET /api/v1/career/categories", () =>
-      Response.json(page([editable({ name: "Черновая", status: "Draft" })])),
-    );
-    fakeApi.on(route, () => new Response(null, { status: 204 }));
-    const user = showTable(<CategoriesTab />);
-    await actionsOf(user, "Черновая");
-    await user.click(await screen.findByRole("menuitem", { name: "Удалить" }));
-    return { user, asked: await askedToDelete() };
-  }
-
-  it("«Удалить» in the menu asks first, with the focus on «Отмена», and «Отмена» deletes nothing", async () => {
-    const route = "DELETE /api/v1/career/categories/entry";
-    const { user, asked } = await openDeletionFromMenu(route);
-
-    expect(within(asked).getByRole("button", { name: "Отмена" })).toHaveFocus();
-    await user.click(within(asked).getByRole("button", { name: "Отмена" }));
-
-    expect(fakeApi.calls(route)).toHaveLength(0);
-  });
-
-  it("«Удалить» in the confirmation deletes against the version of the row", async () => {
-    const route = "DELETE /api/v1/career/categories/entry";
-    const { user, asked } = await openDeletionFromMenu(route);
-
-    await user.click(within(asked).getByRole("button", { name: "Удалить" }));
-
-    await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
-    expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe('"3"');
-  });
-
-  it("offers no «…» to a user who may do nothing with the row", async () => {
-    serveRole("User");
-    fakeApi.on("GET /api/v1/career/categories", () =>
-      Response.json(
-        page([editable({ name: "Чужая", canEdit: false, canDelete: false })]),
-      ),
-    );
-    const user = showTable(<CategoriesTab />);
-
-    const { visible, menu } = await actionsOf(user, "Чужая");
-
-    expect(visible).toEqual([]);
-    expect(menu).toEqual([]);
   });
 });
 
