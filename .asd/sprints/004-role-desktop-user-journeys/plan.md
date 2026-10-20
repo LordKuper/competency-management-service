@@ -294,7 +294,7 @@ Material risk: none
 
 ### Task 50: Архитектура — упрощённое требование матрицы
 Material risk: change: public contract, change: migration
-- [ ] `docs/architecture/career-framework.md`: поля требования, формула (среднее в блоке), правило критических, примеры подтверждений у компетенции, контракт (3.0.0 — deprecated), миграция данных (AC-56)
+- [x] `docs/architecture/career-framework.md`: поля требования, формула (среднее в блоке), правило критических, примеры подтверждений у компетенции, контракт (3.0.0 — deprecated), миграция данных (AC-56)
 
 ### Task 51: UX — шаг «Требования» и редактор матрицы
 Material risk: none
