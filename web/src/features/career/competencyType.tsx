@@ -42,6 +42,7 @@ export function CompetencyTypeSelect({
   return (
     <Select<CompetencyType>
       size="small"
+      status={value === "Critical" ? "error" : undefined}
       aria-label={label}
       value={value}
       options={OPTIONS}

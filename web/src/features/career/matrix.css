@@ -30,9 +30,6 @@
 }
 
 .matrix-grid .matrix-name-cell {
-  width: var(--matrix-name-column-width);
-  min-width: var(--matrix-name-column-width);
-  max-width: var(--matrix-name-column-width);
   padding: var(--ant-padding-sm);
 }
 
@@ -142,7 +139,11 @@
 }
 
 .matrix-score-select {
-  min-width: calc(var(--ant-control-height) * 3);
+  width: 100%;
+}
+
+.matrix-mark {
+  color: var(--ant-color-warning);
 }
 
 .matrix-legend--vertical li {

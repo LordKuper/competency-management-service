@@ -1,4 +1,8 @@
-import { EditOutlined, WarningOutlined } from "@ant-design/icons";
+import {
+  EditOutlined,
+  PlusCircleOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
 import {
   useMutation,
   useQueries,
@@ -15,6 +19,7 @@ import {
   Table,
   type TableColumnsType,
   Tag,
+  Tooltip,
   Typography,
   theme,
 } from "antd";
@@ -68,7 +73,8 @@ import "./matrix.css";
 const NO_VALUE = "—";
 const NO_SCORE = "none";
 const TYPE_COLUMN_WIDTH_IN_CONTROLS = 6;
-const CRITICAL_CAPTION = "Балл — порог уровня";
+const NAME_COLUMN_WIDTH_IN_CONTROLS = 9;
+const LEVEL_COLUMN_WIDTH_IN_CONTROLS = 4;
 
 interface BuilderSave {
   /** The step the wizard records as the one to open next time. */
@@ -325,24 +331,38 @@ function MatrixEditorBody({
             <CatalogStatusTag status="Draft" />
           )}
         </Space>
-        <Typography.Text type="secondary">
-          {scaleNameOf(version, competencyId, competency)}
-        </Typography.Text>
-        {isAdded && (
-          <Tag icon={<WarningOutlined />} color="warning">
-            Добавлена в блок
-          </Tag>
-        )}
-        {!isFrozen && !hasRequirement(competencyId) && (
-          <Tag icon={<WarningOutlined />} color="warning">
-            Нет требований
-          </Tag>
-        )}
-        {changed.competencies.has(competencyId) && (
-          <Tag icon={<EditOutlined />} color="warning">
-            {CHANGED_NOTE}
-          </Tag>
-        )}
+        <Space size="small">
+          <Typography.Text type="secondary">
+            {scaleNameOf(version, competencyId, competency)}
+          </Typography.Text>
+          {isAdded && (
+            <Tooltip title="Добавлена в блок">
+              <PlusCircleOutlined
+                role="img"
+                aria-label="Добавлена в блок"
+                className="matrix-mark"
+              />
+            </Tooltip>
+          )}
+          {!isFrozen && !hasRequirement(competencyId) && (
+            <Tooltip title="Нет требований">
+              <WarningOutlined
+                role="img"
+                aria-label="Нет требований"
+                className="matrix-mark"
+              />
+            </Tooltip>
+          )}
+          {changed.competencies.has(competencyId) && (
+            <Tooltip title={CHANGED_NOTE}>
+              <EditOutlined
+                role="img"
+                aria-label={CHANGED_NOTE}
+                className="matrix-mark"
+              />
+            </Tooltip>
+          )}
+        </Space>
       </Space>
     );
   }
@@ -370,9 +390,6 @@ function MatrixEditorBody({
           />
         ) : (
           <CompetencyTypeLabel type={type} />
-        )}
-        {type === "Critical" && (
-          <Typography.Text type="secondary">{CRITICAL_CAPTION}</Typography.Text>
         )}
       </Space>
     );
@@ -447,6 +464,7 @@ function MatrixEditorBody({
       title: "Компетенция",
       key: "competency",
       fixed: "left",
+      width: token.controlHeight * NAME_COLUMN_WIDTH_IN_CONTROLS,
       className: "matrix-name-cell",
       render: (_, row) => renderName(row),
     },
@@ -460,15 +478,21 @@ function MatrixEditorBody({
     },
     ...shownLevelIds.map((levelId) => ({
       key: levelId,
+      width: token.controlHeight * LEVEL_COLUMN_WIDTH_IN_CONTROLS,
       className: "matrix-cell",
       title: (
         <Space orientation="vertical" size={0}>
-          {levelNames.get(levelId)}
-          {changed.levels.has(levelId) && (
-            <Tag icon={<EditOutlined />} color="warning">
-              {CHANGED_NOTE}
-            </Tag>
-          )}
+          <span>
+            {levelNames.get(levelId)}
+            {changed.levels.has(levelId) && (
+              <EditOutlined
+                role="img"
+                aria-label={CHANGED_NOTE}
+                title={CHANGED_NOTE}
+                className="matrix-mark"
+              />
+            )}
+          </span>
           {isEditable && !builder && !isPosition && (
             <Button
               type="link"
@@ -491,6 +515,11 @@ function MatrixEditorBody({
       render: (_: unknown, row: GridRow) => renderCell(levelId, row),
     })),
   ];
+  const tableWidth =
+    token.controlHeight *
+    (NAME_COLUMN_WIDTH_IN_CONTROLS +
+      TYPE_COLUMN_WIDTH_IN_CONTROLS +
+      LEVEL_COLUMN_WIDTH_IN_CONTROLS * shownLevelIds.length);
   const isGridShown = builder === undefined || builder.part === "requirements";
   const isBlocksShown = builder === undefined || builder.part === "formula";
 
@@ -535,7 +564,8 @@ function MatrixEditorBody({
       columns={columns}
       dataSource={rows}
       pagination={false}
-      scroll={{ x: "max-content" }}
+      tableLayout="fixed"
+      scroll={{ x: tableWidth }}
       rowClassName={(row) =>
         row.group
           ? "matrix-group-row"
