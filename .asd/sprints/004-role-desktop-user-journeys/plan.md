@@ -242,7 +242,7 @@ Material risk: change: public contract, change: migration
 
 ### Task 37: UX — без категорий компетенций, окно блока
 Material risk: none
-- [ ] `docs/ux/career-framework.html`, `docs/ux/desk.html`: без вкладки и поля категории, столбцы и группировки без категории; ширина окна блока (AC-51, AC-52)
+- [x] `docs/ux/career-framework.html`, `docs/ux/desk.html`: без вкладки и поля категории, столбцы и группировки без категории; ширина окна блока (AC-51, AC-52)
 
 ### Task 38: Бэкенд — без категорий компетенций
 Material risk: change: public contract, change: migration
