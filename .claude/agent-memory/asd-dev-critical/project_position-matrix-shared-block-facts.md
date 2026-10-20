@@ -18,5 +18,7 @@ Sprint 004 Task 23 (2026-10-14), commits da17b1c, ffddd1b, a7c471c. Nothing was 
 - Block scope: `CatalogViewer.HeadedSubtreeIds` is filled only by `CatalogStore.ViewerAsync` (from the walk `MatrixRoute.UnitsBelowHeadedAsync` does). Any other viewer gives a head no block rights. `CatalogEntry.ListedUnitId` (a block's scope) feeds unit names in responses and the drafts unit filter. The cascade right is `MayPublishWith`.
 - `[Description]` (`[property: Description]` on record parameters) becomes the OpenAPI `description`; that is how deprecations are marked here.
 
+- Task 38 (2026-10-20, ba069de): there are no competency categories. Released 3.0.0 surface is kept as deprecated stubs: `CompetencyCategoryEndpoints` serves an empty list and a 410, and category fields are null. Surface that never shipped was simply deleted. `NoCompetencyCategories` Down adds the columns with a placeholder default, then drops the default via `AlterColumn(oldDefaultValue:)`. That drop has never been seen to run.
+
 **Why:** Task 24 (SPA) and impl-test build on these choices.
 **How to apply:** read before touching matrix documents, snapshots, blocks or the career desk source. See [[career-desk-source-facts]], [[publication-cascade-facts]], [[career-record-deletion-facts]].
