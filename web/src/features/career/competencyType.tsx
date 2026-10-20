@@ -1,5 +1,4 @@
-import { WarningOutlined } from "@ant-design/icons";
-import { Select, Tag } from "antd";
+import { Select } from "antd";
 import type { CompetencyType } from "./catalogApi";
 
 /** What each type of a competency in a matrix is called. */
@@ -12,15 +11,9 @@ export const COMPETENCY_TYPES: Record<CompetencyType, string> = {
 /** The type a competency has in a matrix until the author changes it. */
 export const DEFAULT_COMPETENCY_TYPE: CompetencyType = "Profile";
 
-/** The type in words; a critical one with the warning sign, so it never stands on colour alone. */
+/** The type in words; every type looks the same. */
 export function CompetencyTypeLabel({ type }: { type: CompetencyType }) {
-  return type === "Critical" ? (
-    <Tag icon={<WarningOutlined />} color="error">
-      {COMPETENCY_TYPES.Critical}
-    </Tag>
-  ) : (
-    COMPETENCY_TYPES[type]
-  );
+  return COMPETENCY_TYPES[type];
 }
 
 const OPTIONS = (Object.keys(COMPETENCY_TYPES) as CompetencyType[]).map(
@@ -42,7 +35,6 @@ export function CompetencyTypeSelect({
   return (
     <Select<CompetencyType>
       size="small"
-      status={value === "Critical" ? "error" : undefined}
       aria-label={label}
       value={value}
       options={OPTIONS}

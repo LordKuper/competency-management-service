@@ -224,12 +224,7 @@ function PositionMatrixPanel({
     {
       title: "Тип в матрице",
       key: "type",
-      render: (_, item) =>
-        item.type === "Critical" ? (
-          <Tag color="warning">{COMPETENCY_TYPES.Critical}</Tag>
-        ) : (
-          COMPETENCY_TYPES[item.type]
-        ),
+      render: (_, item) => COMPETENCY_TYPES[item.type],
     },
     {
       title: "Блок",
@@ -390,12 +385,7 @@ function RequirementsTable({
         {
           title: "Тип в матрице",
           key: "type",
-          render: (_, item: Requirement) =>
-            item.type === "Critical" ? (
-              <Tag color="warning">{COMPETENCY_TYPES.Critical}</Tag>
-            ) : (
-              COMPETENCY_TYPES[item.type]
-            ),
+          render: (_, item: Requirement) => COMPETENCY_TYPES[item.type],
         },
       ]}
     />
