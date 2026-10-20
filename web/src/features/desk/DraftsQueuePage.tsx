@@ -51,7 +51,6 @@ const MORE_COUNT = 20;
 const KIND_OF_URL: Record<string, CatalogKind> = {
   direction: "Direction",
   track: "Track",
-  category: "Category",
   competency: "Competency",
   scale: "Scale",
   block: "Block",

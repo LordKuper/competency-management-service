@@ -15,7 +15,7 @@ interface CatalogModalProps {
   /** Shown instead of the generic alert when the save is refused as a conflict with no field to blame. */
   conflictNotice?: string;
   /** Width of the dialog when its content needs more than the usual one. */
-  width?: number;
+  width?: number | string;
   onClose: () => void;
   children: ReactNode;
 }

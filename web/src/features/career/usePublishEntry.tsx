@@ -23,7 +23,6 @@ export const KIND_ACCUSATIVE: Record<CatalogSegment, string> = {
   directions: "область",
   tracks: "трек",
   levels: "уровень",
-  categories: "категорию",
   competencies: "компетенцию",
   scales: "шкалу",
   blocks: "общий блок",
@@ -32,7 +31,6 @@ export const KIND_ACCUSATIVE: Record<CatalogSegment, string> = {
 const CREATED_AS_DRAFT: Record<PublishableSegment, string> = {
   directions: "Область",
   tracks: "Трек",
-  categories: "Категория",
   competencies: "Компетенция",
   scales: "Шкала",
   blocks: "Общий блок",
@@ -41,7 +39,6 @@ const CREATED_AS_DRAFT: Record<PublishableSegment, string> = {
 const CREATED_ENDING: Record<PublishableSegment, string> = {
   directions: "создана",
   tracks: "создан",
-  categories: "создана",
   competencies: "создана",
   scales: "создана",
   blocks: "создан",

@@ -53,17 +53,6 @@ export function CompetenciesTab() {
   const columns: TableColumnsType<Competency> = [
     { title: "Название", dataIndex: "name" },
     {
-      title: "Категория",
-      dataIndex: "categoryId",
-      ...catalogFilter(
-        "categoryId",
-        "categories",
-        params.categoryId,
-        "Категория",
-      ),
-      render: (_, competency) => competency.categoryName,
-    },
-    {
       title: "Область",
       dataIndex: "directionId",
       ...catalogFilter(
@@ -193,10 +182,6 @@ function VersionsModal({
   const [number, setNumber] = useState<number>();
   const chosen =
     data?.find((version) => version.number === number) ?? data?.[0];
-  const category = useQuery({
-    ...entryQuery("categories", chosen?.categoryId ?? ""),
-    enabled: chosen !== undefined,
-  });
   const direction = useQuery({
     ...entryQuery("directions", chosen?.directionId ?? ""),
     enabled: !!chosen?.directionId,
@@ -235,11 +220,6 @@ function VersionsModal({
                 key: "description",
                 label: "Описание",
                 children: chosen.description,
-              },
-              {
-                key: "category",
-                label: "Категория",
-                children: category.data?.name,
               },
               {
                 key: "direction",

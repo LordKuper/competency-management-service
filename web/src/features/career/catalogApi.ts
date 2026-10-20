@@ -11,7 +11,7 @@ import { careerQueryKey } from "./careerApi";
 
 type Schemas = components["schemas"];
 
-/** The fields every career catalogue entry has: directions and categories carry no more. */
+/** The fields every career catalogue entry has: directions carry no more. */
 export type CatalogEntry = Schemas["CatalogEntryResponse"];
 export type CatalogStatus = Schemas["CatalogStatus"];
 export type CareerTrack = Schemas["CareerTrackResponse"];
@@ -22,14 +22,18 @@ export type CompetencyVersion = Schemas["CompetencyVersionResponse"];
 export type Scale = Schemas["CompetencyScaleResponse"];
 export type CompetencyBlock = Schemas["CompetencyBlockResponse"];
 export type ScalePoint = Schemas["ScalePoint"];
-export type CatalogDraft = Schemas["CatalogDraftResponse"];
-export type CatalogKind = Schemas["CatalogEntryKind"];
+export type CatalogDraft = Omit<Schemas["CatalogDraftResponse"], "kind"> & {
+  kind: CatalogKind;
+};
+export type CatalogKind = Exclude<Schemas["CatalogEntryKind"], "Category">;
 export type PublicationPreview = Schemas["PublicationPreviewResponse"];
 export type PublicationBlocker = Schemas["PublicationBlocker"];
 export type PublicationEntry = Schemas["PublicationEntry"];
 export type TrackPositions = Schemas["TrackPositionsResponse"];
 export type AvailablePosition = Schemas["AvailablePositionResponse"];
-export type UnusedEntry = Schemas["UnusedEntryResponse"];
+export type UnusedEntry = Omit<Schemas["UnusedEntryResponse"], "kind"> & {
+  kind: CatalogKind;
+};
 export type EntryMatrix = Schemas["EntryMatrixResponse"];
 
 /** Cache key prefix of every catalogue query, so one invalidation rereads whatever a change touched. */
@@ -40,7 +44,6 @@ export type CatalogSegment =
   | "directions"
   | "tracks"
   | "levels"
-  | "categories"
   | "competencies"
   | "scales"
   | "blocks";
@@ -48,7 +51,6 @@ export type CatalogSegment =
 export const SEGMENT_OF_KIND: Record<CatalogKind, PublishableSegment> = {
   Direction: "directions",
   Track: "tracks",
-  Category: "categories",
   Competency: "competencies",
   Scale: "scales",
   Block: "blocks",
@@ -64,7 +66,6 @@ export interface CatalogListParams {
 
 /** Column filters of the competency list. */
 export interface CompetencyListParams extends CatalogListParams {
-  categoryId?: string;
   directionId?: string;
   scaleId?: string;
   type?: CompetencyType;
@@ -189,18 +190,6 @@ export function levelNamesQuery(text: string) {
   });
 }
 
-export function categoriesQuery(params: CatalogListParams) {
-  return queryOptions({
-    queryKey: [...catalogQueryKey, "categories", params],
-    queryFn: async () =>
-      unwrap(
-        await api.GET("/api/v1/career/categories", {
-          params: { query: params },
-        }),
-      ),
-  });
-}
-
 export function competenciesQuery(params: CompetencyListParams) {
   return queryOptions({
     queryKey: [...catalogQueryKey, "competencies", params],
@@ -317,13 +306,24 @@ export async function saveBlock(
 }
 
 /** Draft entries waiting for the signed-in HR. */
+/** Leaves out the entries of the removed «Категория» kind, which the server no longer sends but the schema still names. */
+function withoutCategories<T extends { kind: Schemas["CatalogEntryKind"] }>(
+  items: readonly T[],
+) {
+  return items.filter(
+    (item): item is T & { kind: CatalogKind } => item.kind !== "Category",
+  );
+}
+
 export function draftsQuery(params: DraftListParams = {}) {
   return queryOptions({
     queryKey: [...catalogQueryKey, "drafts", params],
-    queryFn: async () =>
-      unwrap(
+    queryFn: async () => {
+      const read = unwrap(
         await api.GET("/api/v1/career/drafts", { params: { query: params } }),
-      ),
+      );
+      return withoutCategories(read);
+    },
   });
 }
 
@@ -331,12 +331,14 @@ export function draftsQuery(params: DraftListParams = {}) {
 export function unusedEntriesQuery(limit: number, kind?: CatalogKind) {
   return queryOptions({
     queryKey: [...catalogQueryKey, "unused", kind, limit],
-    queryFn: async () =>
-      unwrap(
+    queryFn: async () => {
+      const read = unwrap(
         await api.GET("/api/v1/career/unused-entries", {
           params: { query: { kind, page: 1, pageSize: limit } },
         }),
-      ),
+      );
+      return { ...read, items: withoutCategories(read.items) };
+    },
     placeholderData: keepPreviousData,
   });
 }
@@ -434,11 +436,11 @@ export interface NamedEntryValues {
 }
 
 /**
- * Creates (no `base`) or renames a direction, track or category. A track is created in a unit and a direction; the
- * three catalogues share the rename endpoint's shape and a direction and a category the creation's.
+ * Creates (no `base`) or renames a direction or a track. A track is created in a unit and a direction; the two
+ * catalogues share the rename endpoint's shape.
  */
 export async function saveNamedEntry(
-  segment: "directions" | "tracks" | "categories",
+  segment: "directions" | "tracks",
   values: NamedEntryValues,
   base: { id: string; version: number } | undefined,
 ) {

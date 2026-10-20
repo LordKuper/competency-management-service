@@ -1,7 +1,6 @@
 import { Space, Tabs, Typography } from "antd";
 import { ApprovalsSection } from "./ApprovalsSection";
 import { BlocksTab } from "./BlocksTab";
-import { CategoriesTab } from "./CategoriesTab";
 import { CompetenciesTab } from "./CompetenciesTab";
 import { useCanApprove } from "./careerApi";
 import { DirectionsTracksTab } from "./DirectionsTracksTab";
@@ -11,7 +10,6 @@ import { ScalesTab } from "./ScalesTab";
 
 const TABS = [
   { key: "scales", label: "Шкалы", children: <ScalesTab /> },
-  { key: "categories", label: "Категории", children: <CategoriesTab /> },
   {
     key: "tracks",
     label: "Области и треки",

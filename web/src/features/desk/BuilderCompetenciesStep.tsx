@@ -313,7 +313,6 @@ function CompetenciesBody({
           ? `${competency.name} · уже в версии: общий блок «${brought.get(competency.id)}»`
           : competency.name,
     },
-    { title: "Категория", dataIndex: "categoryName" },
     {
       title: "Тип",
       dataIndex: "type",
@@ -614,11 +613,6 @@ function Composition({ version, line, change }: CompositionProps) {
                 )}
               </Space>
             ),
-          },
-          {
-            title: "Категория",
-            key: "category",
-            render: (_, { id }) => competencies.get(id)?.categoryName,
           },
           {
             title: "Шкала",

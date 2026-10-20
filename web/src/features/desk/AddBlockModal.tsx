@@ -55,11 +55,6 @@ function BlockPreview({ block, entries }: BlockPreviewProps) {
         columns={[
           { title: "Компетенция", dataIndex: "name" },
           {
-            title: "Категория",
-            key: "category",
-            render: (_, item) => competencies.get(item.id)?.categoryName,
-          },
-          {
             title: "Шкала",
             key: "scale",
             render: (_, item) =>

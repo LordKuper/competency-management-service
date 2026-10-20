@@ -15,7 +15,7 @@ const NAME_MAX_LENGTH = 200;
 const FIELDS = ["name"] as const;
 
 interface NameModalProps {
-  segment: "directions" | "categories";
+  segment: "directions";
   title: string;
   /** Entry being renamed as the cache holds it now; omitted when one is created. */
   entry?: CatalogEntry;
@@ -24,7 +24,7 @@ interface NameModalProps {
   onClose: () => void;
 }
 
-/** Dialog that creates a direction or a category, or renames one. */
+/** Dialog that creates a direction or renames one. */
 export function NameModal({
   segment,
   title,

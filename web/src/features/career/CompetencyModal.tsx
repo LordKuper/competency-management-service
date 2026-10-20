@@ -9,7 +9,6 @@ import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogModal, FormActions } from "./CatalogModal";
 import { CatalogSelect, IN_WORK } from "./CatalogSelect";
-import { CategorySelect } from "./CategorySelect";
 import {
   type Competency,
   type CompetencyType,
@@ -23,7 +22,6 @@ const NAME_MAX_LENGTH = 200;
 const FIELDS = [
   "name",
   "description",
-  "categoryId",
   "directionId",
   "type",
   "scaleId",
@@ -43,7 +41,6 @@ const TYPE_OPTIONS = Object.entries(COMPETENCY_TYPES).map(([value, label]) => ({
 interface CompetencyValues {
   name: string;
   description?: string | null;
-  categoryId: string;
   directionId?: string | null;
   type: CompetencyType;
   scaleId?: string;
@@ -71,7 +68,6 @@ export function CompetencyModal({
       const body = {
         name: values.name,
         description: values.description?.trim() || null,
-        categoryId: values.categoryId,
         directionId: values.directionId ?? null,
         type: values.type,
         scaleId: values.scaleId ?? null,
@@ -169,7 +165,6 @@ function CompetencyForm({
       initialValues={{
         name: competency?.name ?? "",
         description: competency?.description ?? "",
-        categoryId: competency?.categoryId,
         directionId: competency?.directionId ?? undefined,
         type: competency?.type,
         scaleId: competency?.scaleId,
@@ -191,13 +186,6 @@ function CompetencyForm({
       </Form.Item>
       <Form.Item name="description" label="Описание">
         <Input.TextArea autoSize={{ minRows: 3 }} />
-      </Form.Item>
-      <Form.Item
-        name="categoryId"
-        label="Категория"
-        rules={[{ required: true }]}
-      >
-        <CategorySelect />
       </Form.Item>
       <Form.Item name="directionId" label="Область">
         <CatalogSelect

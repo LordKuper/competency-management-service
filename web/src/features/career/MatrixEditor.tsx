@@ -114,7 +114,6 @@ interface GridRow {
 export interface CompetencyInfo {
   name: string;
   type: CompetencyType;
-  categoryName?: string | null;
   scaleId?: string | null;
   scaleName?: string;
 }
@@ -429,16 +428,9 @@ function MatrixEditorBody({
     return (
       <Space orientation="vertical" size={0}>
         <Typography.Text strong>{competency?.name}</Typography.Text>
-        {competency?.categoryName && (
-          <Typography.Text type="secondary">
-            {[
-              competency.categoryName,
-              scaleNameOf(version, competencyId, competency),
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </Typography.Text>
-        )}
+        <Typography.Text type="secondary">
+          {scaleNameOf(version, competencyId, competency)}
+        </Typography.Text>
         {competency?.type === "Critical" && (
           <Tag icon={<WarningOutlined />} color="error">
             {COMPETENCY_TYPES.Critical}

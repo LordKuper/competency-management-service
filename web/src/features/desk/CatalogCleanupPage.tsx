@@ -30,14 +30,13 @@ const FIRST_COUNT = 20;
 const MORE_COUNT = 20;
 const STALE_STATUS = 412;
 
-const KIND_OPTIONS = (
-  ["Competency", "Scale", "Category", "Direction"] as const
-).map((kind) => ({ value: kind, label: KIND_LABELS[kind] }));
+const KIND_OPTIONS = (["Competency", "Scale", "Direction"] as const).map(
+  (kind) => ({ value: kind, label: KIND_LABELS[kind] }),
+);
 
 const REASONS: Partial<Record<CatalogKind, string>> = {
   Competency: "Компетенция нигде не используется",
   Scale: "Шкала нигде не используется",
-  Category: "Категория вне любых версий матриц и компетенций",
   Direction: "У области нет треков",
 };
 

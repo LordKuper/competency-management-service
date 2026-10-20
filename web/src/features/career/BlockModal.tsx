@@ -36,6 +36,7 @@ import { usePublishEntry } from "./usePublishEntry";
 const NAME_MAX_LENGTH = 200;
 const FIELDS = ["name", "scopeUnitId", "competencyIds"] as const;
 const LIST_HEIGHT_IN_CONTROLS = 8;
+const WIDTH_IN_XXL = 16;
 const IN_USE_NOTICE =
   "Блок используют матрицы: черновые версии сразу увидят новый состав, опубликованные и архивные не изменятся.";
 const MANAGER_NOTICE =
@@ -72,6 +73,7 @@ export function BlockModal({
   onClose,
 }: BlockModalProps) {
   const queryClient = useQueryClient();
+  const { token } = theme.useToken();
   const { offerApproval } = usePublishEntry();
   const { base: block, noteSaveFailure } = useEditBase(latest);
   const save = useMutation({
@@ -100,6 +102,7 @@ export function BlockModal({
       title={block ? "Изменение общего блока" : "Новый общий блок"}
       error={save.error}
       fields={FIELDS}
+      width={`min(${token.sizeXXL * WIDTH_IN_XXL}px, calc(100vw - ${token.margin * 2}px))`}
       onClose={onClose}
     >
       <BlockForm
@@ -289,7 +292,6 @@ function CompetencyPicker({
 
   const columns: TableColumnsType<Competency> = [
     { title: "Компетенция", dataIndex: "name" },
-    { title: "Категория", dataIndex: "categoryName" },
     { title: "Шкала", dataIndex: "scaleName" },
     {
       title: "Статус",

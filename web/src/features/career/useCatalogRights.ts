@@ -6,7 +6,7 @@ import { useProcessRoles } from "./careerApi";
  * What the signed-in user may do with catalogue entries, from the account role and the process roles. It only decides
  * which actions are offered; the server decides each request again and answers 403 to one that is not allowed. Whether an
  * entry may be edited or deleted the server tells with the entry itself.
- * Directions, categories, competencies and scales belong to no unit: administrators and any HR keep them and heads of
+ * Directions, competencies and scales belong to no unit: administrators and any HR keep them and heads of
  * units add drafts. A track and its levels belong to the track's unit: its HR and administrators keep them, its head edits drafts.
  */
 export function useCatalogRights() {
@@ -29,7 +29,7 @@ export function useCatalogRights() {
       isAdmin,
       isHr,
       ownerUnits,
-      /** Whether the user may add a direction, category, competency or scale. */
+      /** Whether the user may add a direction, competency or scale. */
       canCreate: isHr || headed.size > 0,
       /** Whether the user may add a track: they need a unit to put it in. */
       canCreateTrack: isAdmin || ownerUnits.length > 0,

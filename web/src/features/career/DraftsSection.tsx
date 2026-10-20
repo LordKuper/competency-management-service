@@ -18,7 +18,6 @@ import { usePublishEntry } from "./usePublishEntry";
 export const KIND_LABELS: Record<CatalogKind, string> = {
   Direction: "Область",
   Track: "Трек",
-  Category: "Категория",
   Competency: "Компетенция",
   Scale: "Шкала",
   Block: "Общий блок",
