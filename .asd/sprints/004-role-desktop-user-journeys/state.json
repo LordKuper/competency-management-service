@@ -263,6 +263,13 @@
       "decision": "AC-55 competency type moves from the catalog record to the matrix version; Task 44-46 wave 30, Task 47 wave 31, Task 48 wave 32; contract and migration change accepted",
       "reason": "user remark at impl assessment; cost 0",
       "evidence": "decisions-log.md 2026-10-20 AC-55"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-56 requirements step redesign: type column, inline scores, grouping by blocks without assignment (assignment on step 2), requirement = score only (no weight, mandatory, behaviour, date, min level; critical score is the threshold), evidence examples on the competency; Task 49 wave 33, Task 50-51 wave 34, Task 52 wave 35, Task 53 wave 36",
+      "reason": "user decisions at impl assessment (inline, equal weights, merge with type, blocks assigned on step 2); cost 0",
+      "evidence": "decisions-log.md 2026-10-20 AC-56"
     }
   ],
   "task_routing": {
@@ -720,6 +727,12 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 49": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
       "resolved_model": "sonnet"
     }
   },

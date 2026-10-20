@@ -288,6 +288,26 @@ Material risk: change: public contract, change: migration
 Material risk: none
 - [x] окно и таблица компетенций без типа; выбор типа в мастере и редакторе матрицы по макетам Task 46 (AC-55)
 
+### Task 49: Требования — упрощённое требование матрицы, шаг 3
+Material risk: none
+- [ ] `docs/product/requirements/career-framework.html`, `desk.html`: требование = балл; без веса, обязательности, поведения, даты, минимального уровня; критическая — балл как порог; примеры подтверждений у компетенции; блоки назначаются только на шаге 2 (AC-56)
+
+### Task 50: Архитектура — упрощённое требование матрицы
+Material risk: change: public contract, change: migration
+- [ ] `docs/architecture/career-framework.md`: поля требования, формула (среднее в блоке), правило критических, примеры подтверждений у компетенции, контракт (3.0.0 — deprecated), миграция данных (AC-56)
+
+### Task 51: UX — шаг «Требования» и редактор матрицы
+Material risk: none
+- [ ] `docs/ux/desk.html`, `docs/ux/career-framework.html`: таблица со столбцом «Тип», баллы в ячейках, группировка по блокам без назначения, назначение блоков на шаге 2, легенда с ровными подложками, окно компетенции с примерами подтверждений (AC-56)
+
+### Task 52: Бэкенд — упрощённое требование матрицы
+Material risk: change: public contract, change: migration
+- [ ] модель, миграция, контракт, формула и проверки по Task 50 (AC-56); OpenAPI и `web/src/api/schema.d.ts`
+
+### Task 53: SPA — шаг «Требования» и редактор матрицы
+Material risk: none
+- [ ] по макетам Task 51 (AC-56)
+
 ## Risks
 - Контракт 3.1.0 меняет поведение существующих методов (`POST /tracks`, каскад, обязательный тег, полнота с должностями): после выката отправка новых версий по существующим трекам невозможна, пока HR не свяжет должности с уровнями — принято пользователем (AC-25).
 - Правки контракта ломают типы тестовых данных web и тестов backend: если gate impl красный только из-за тестов, сломанных намеренной правкой, оркестратор сразу запускает tester-цепочку их восстановления (ретро 003#A-3).
@@ -330,6 +350,10 @@ Material risk: none
 | 30 | Task 44, Task 45, Task 46 |
 | 31 | Task 47 |
 | 32 | Task 48 |
+| 33 | Task 49 |
+| 34 | Task 50, Task 51 |
+| 35 | Task 52 |
+| 36 | Task 53 |
 
 - Task 4, 5, 6 — каждая меняет `src/Competency.CareerFramework/`, миграции и перегенерирует `openapi/openapi.json` / `web/src/api/schema.d.ts`, поэтому по одной в волне; Task 5 опирается на готовность трека Task 4, Task 6 — на полноту и публикацию Task 4–5.
 - Task 7 (career-framework, Audit) и Task 8 (Platform, Desk, Api, источники org-structure и user-management, OpenAPI) не пересекаются по путям; Task 8 опирается на снимок Task 3 и `UserStatus.Version` Task 6.
