@@ -26,7 +26,7 @@ responsibility:
   - `/desk` — рабочий стол;
   - `/desk/review/:versionId` — «Согласовать версию», ссылка в письме;
   - `/desk/rework/:versionId` — «Доработать возвращённую версию», ссылка в письме;
-  - `/desk/drafts`, `/desk/drafts/:kind/:entryId` — «Утвердить черновые записи», `kind` ∈ `direction`, `track`, `category`, `competency`, `scale`, `block`; ссылка в письме;
+  - `/desk/drafts`, `/desk/drafts/:kind/:entryId` — «Утвердить черновые записи», `kind` ∈ `direction`, `track`, `competency`, `scale`, `block`; ссылка в письме; адрес `/desk/drafts/category/…` из писем, отправленных до удаления категорий, перенаправляется на `/desk/drafts`;
   - `/desk/matrix-builder` — «Построить матрицу», новая матрица; `?unitId=&trackId=` — предвыбор из пункта стола;
   - `/desk/matrix-builder/:versionId` — продолжение: `?step=3` или `?step=5` — вход из «Доработать», иначе шаг `builderStep` версии (так открывают и мастер, и ссылка «Перейти к отправке в мастере» со страницы матрицы);
   - `/desk/connect-unit`, `/desk/connect-unit/:unitId` — «Подключить подразделение»;

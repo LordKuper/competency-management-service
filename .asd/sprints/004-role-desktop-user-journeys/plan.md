@@ -238,7 +238,7 @@ Material risk: none
 
 ### Task 36: Архитектура — без категорий компетенций
 Material risk: change: public contract, change: migration
-- [ ] `docs/architecture/career-framework.md`, `desk.md`, `stack.html`: удаление категорий из модели, контракта (3.1.0 — категории были в 3.0.0), снимков, каскада, стола; миграция с удалением данных (AC-51)
+- [x] `docs/architecture/career-framework.md`, `desk.md`, `stack.html`: удаление категорий из модели, контракта (3.1.0 — категории были в 3.0.0), снимков, каскада, стола; миграция с удалением данных (AC-51)
 
 ### Task 37: UX — без категорий компетенций, окно блока
 Material risk: none
