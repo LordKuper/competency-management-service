@@ -11,6 +11,8 @@ export interface BuilderStepControls {
   onSaved: (then: "next" | "exit") => void;
   /** Goes on without saving, for a version the user may not edit. */
   onSkip: () => void;
+  /** Opens the step that assigns the competencies and blocks. */
+  onEditComposition: () => void;
 }
 
 interface BuilderFooterProps {

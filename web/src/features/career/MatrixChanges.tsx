@@ -7,7 +7,7 @@ import { CHANGED_NOTE } from "./matrixLabels";
 
 const NO_VALUE = "—";
 
-const DATE = new Intl.DateTimeFormat("ru-RU", {
+const _DATE = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "short",
   timeZone: "UTC",
 });
@@ -88,7 +88,7 @@ export function describeChanges(
       case "BlockWeight":
         return `коэффициент блока ${quoted(blockName(diff.after, change.blockId) ?? blockName(diff.before, change.blockId))}, уровень ${levelName(change.levelId)}`;
       case "Requirement":
-        return `требование ${competencyName(change.competencyId)}, уровень ${levelName(change.levelId)}`;
+        return `требуемый балл ${competencyName(change.competencyId)}, уровень ${levelName(change.levelId)}`;
     }
   }
 
@@ -106,10 +106,7 @@ export function describeChanges(
         const block = (content.blocks ?? []).find(
           (item) => item.id === blockId,
         );
-        return (
-          block &&
-          `${quoted(block.name)}${block.isMandatory ? ", обязательный блок" : ""}`
-        );
+        return block && quoted(block.name);
       }
       case "Competency": {
         const competency = content.competencies.find(
@@ -129,10 +126,7 @@ export function describeChanges(
         const weight = content.blockWeights.find(
           (item) => item.levelId === levelId && item.blockId === blockId,
         );
-        return (
-          weight &&
-          `Коэффициент, %: ${weight.percent}; Минимальный порог блока: ${percent(weight.minPercent ?? null)}`
-        );
+        return weight && `Коэффициент, %: ${weight.percent}`;
       }
       case "Requirement": {
         const requirement = content.requirements.find(
@@ -144,19 +138,7 @@ export function describeChanges(
         const label = pointsOf(competencyId ?? "").find(
           (point) => point.score === score,
         )?.label;
-        return [
-          `Требуемый уровень: ${score == null ? NO_VALUE : label ? `${score} (${label})` : score}`,
-          `Вес: ${requirement.weight}`,
-          requirement.isMandatory && "Обязательная",
-          requirement.expectedBehavior &&
-            `Ожидаемое поведение: ${requirement.expectedBehavior}`,
-          requirement.evidenceExamples &&
-            `Примеры подтверждений: ${requirement.evidenceExamples}`,
-          requirement.validFrom &&
-            `Действует с: ${DATE.format(new Date(requirement.validFrom))}`,
-        ]
-          .filter(Boolean)
-          .join("; ");
+        return `Требуемый балл: ${score == null ? NO_VALUE : label ? `${score} (${label})` : score}`;
       }
     }
   }

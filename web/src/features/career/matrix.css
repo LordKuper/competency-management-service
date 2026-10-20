@@ -135,3 +135,19 @@
 .matrix-grid .matrix-group-row > td {
   background: var(--ant-color-fill-tertiary);
 }
+
+.matrix-grid .matrix-type-cell {
+  min-width: calc(var(--ant-control-height) * 6);
+  vertical-align: middle;
+}
+
+.matrix-score-select {
+  min-width: calc(var(--ant-control-height) * 3);
+}
+
+.matrix-legend--vertical li {
+  display: grid;
+  grid-template-columns: var(--ant-control-height) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--ant-margin-xs);
+}

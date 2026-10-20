@@ -20,7 +20,11 @@ import { Link } from "react-router";
 import { COMPETENCY_TYPES } from "../career/competencyType";
 import { matrixVersionQuery } from "../career/matrixApi";
 import { chipLevel } from "../career/matrixContent";
-import { scaleOfCompetency, sharedBlockOf } from "../career/matrixGroups";
+import {
+  OUTSIDE_LABEL,
+  scaleOfCompetency,
+  sharedBlockOf,
+} from "../career/matrixGroups";
 import "../career/matrix.css";
 import { type MyPlace, myPlaceQuery } from "./deskApi";
 import { deskPaths, formatDate } from "./deskTexts";
@@ -176,16 +180,26 @@ function PositionMatrixPanel({
   const blockOf = (competencyId: string) => {
     const shared = version.data && sharedBlockOf(version.data, competencyId);
     if (shared) return `Общий блок «${shared.name}»`;
-    const own = version.data?.content.competencies.find(
-      (item) => item.competencyId === competencyId,
-    );
-    return own?.blockId
-      ? version.data?.content.blocks?.find((block) => block.id === own.blockId)
-          ?.name
-      : undefined;
+    return version.data ? OUTSIDE_LABEL : undefined;
   };
+  const examplesOf = (competencyId: string) =>
+    version.data?.entries.competencies.find((item) => item.id === competencyId)
+      ?.evidenceExamples;
   const columns: TableColumnsType<PositionRequirement> = [
-    { title: "Компетенция", dataIndex: "competencyName" },
+    {
+      title: "Компетенция",
+      key: "name",
+      render: (_, item) => (
+        <Flex vertical>
+          {item.competencyName}
+          {examplesOf(item.competencyId) && (
+            <Typography.Text type="secondary">
+              {`Примеры подтверждений: ${examplesOf(item.competencyId)}`}
+            </Typography.Text>
+          )}
+        </Flex>
+      ),
+    },
     {
       title: "Требуемый балл",
       key: "score",

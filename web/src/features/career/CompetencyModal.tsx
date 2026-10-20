@@ -14,11 +14,19 @@ import { ScaleSelect } from "./ScaleSelect";
 import { usePublishEntry } from "./usePublishEntry";
 
 const NAME_MAX_LENGTH = 200;
-const FIELDS = ["name", "description", "directionId", "scaleId"] as const;
+const EVIDENCE_MAX_LENGTH = 4000;
+const FIELDS = [
+  "name",
+  "description",
+  "evidenceExamples",
+  "directionId",
+  "scaleId",
+] as const;
 
 interface CompetencyValues {
   name: string;
   description?: string | null;
+  evidenceExamples?: string | null;
   directionId?: string | null;
   scaleId?: string;
 }
@@ -45,6 +53,7 @@ export function CompetencyModal({
       const body = {
         name: values.name,
         description: values.description?.trim() || null,
+        evidenceExamples: values.evidenceExamples?.trim() || null,
         directionId: values.directionId ?? null,
         scaleId: values.scaleId ?? null,
       };
@@ -141,6 +150,7 @@ function CompetencyForm({
       initialValues={{
         name: competency?.name ?? "",
         description: competency?.description ?? "",
+        evidenceExamples: competency?.evidenceExamples ?? "",
         directionId: competency?.directionId ?? undefined,
         scaleId: competency?.scaleId,
       }}
@@ -160,6 +170,19 @@ function CompetencyForm({
         <Input autoComplete="off" />
       </Form.Item>
       <Form.Item name="description" label="Описание">
+        <Input.TextArea autoSize={{ minRows: 3 }} />
+      </Form.Item>
+      <Form.Item
+        name="evidenceExamples"
+        label="Примеры подтверждений"
+        extra="Необязательно: чем можно подтвердить компетенцию; показывается рядом с требованиями матриц."
+        rules={[
+          {
+            max: EVIDENCE_MAX_LENGTH,
+            message: `Не длиннее ${EVIDENCE_MAX_LENGTH} символов`,
+          },
+        ]}
+      >
         <Input.TextArea autoSize={{ minRows: 3 }} />
       </Form.Item>
       <Form.Item name="directionId" label="Область">

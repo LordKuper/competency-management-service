@@ -1,7 +1,6 @@
 import type { CompetencyType } from "./catalogApi";
 import { DEFAULT_COMPETENCY_TYPE } from "./competencyType";
 import type {
-  MatrixBlock,
   MatrixChange,
   MatrixContent,
   MatrixRequirement,
@@ -48,93 +47,19 @@ export function setOverallMin(
   };
 }
 
-/**
- * A random UUID v4 from `crypto.getRandomValues`, which, unlike `crypto.randomUUID`, works outside a secure context, as on
- * a deployment served over plain HTTP.
- */
-function randomUuid(): string {
-  const bytes = crypto
-    .getRandomValues(new Uint8Array(16))
-    .map((byte, index) =>
-      index === 6
-        ? (byte & 0x0f) | 0x40
-        : index === 8
-          ? (byte & 0x3f) | 0x80
-          : byte,
-    );
-  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0"));
-  return [
-    hex.slice(0, 4),
-    hex.slice(4, 6),
-    hex.slice(6, 8),
-    hex.slice(8, 10),
-    hex.slice(10),
-  ]
-    .map((part) => part.join(""))
-    .join("-");
-}
-
-export function addBlock(content: MatrixContent) {
-  const block: MatrixBlock = {
-    id: randomUuid(),
-    name: "",
-    isMandatory: false,
-  };
-  return { ...content, blocks: [...(content.blocks ?? []), block] };
-}
-
-export function updateBlock(
-  content: MatrixContent,
-  blockId: string,
-  patch: Partial<Omit<MatrixBlock, "id">>,
-) {
-  return {
-    ...content,
-    blocks: (content.blocks ?? []).map((block) =>
-      block.id === blockId ? { ...block, ...patch } : block,
-    ),
-  };
-}
-
-export function hasCompetencies(content: MatrixContent, blockId: string) {
-  return content.competencies.some(
-    (competency) => competency.blockId === blockId,
-  );
-}
-
-/** Removes a block with its coefficients; the caller offers it only for a block no competency belongs to. */
-export function removeBlock(content: MatrixContent, blockId: string) {
-  return {
-    ...content,
-    blocks: (content.blocks ?? []).filter((block) => block.id !== blockId),
-    blockWeights: content.blockWeights.filter(
-      (weight) => weight.blockId !== blockId,
-    ),
-  };
-}
-
-/** Sets the coefficient or the block threshold of a level; the pair disappears once both are cleared. */
+/** Sets the coefficient of a group at a level; a zero coefficient leaves no entry. */
 export function setBlockWeight(
   content: MatrixContent,
   levelId: string,
   blockId: string | null,
-  field: "percent" | "minPercent",
-  value: number | null,
+  percent: number | null,
 ) {
   const rest = content.blockWeights.filter(
     (weight) => weight.levelId !== levelId || weight.blockId !== blockId,
   );
-  const current = content.blockWeights.find(
-    (weight) => weight.levelId === levelId && weight.blockId === blockId,
-  ) ?? { levelId, blockId, percent: 0, minPercent: null };
-  const next =
-    field === "percent"
-      ? { ...current, percent: value ?? 0 }
-      : { ...current, minPercent: value };
-  const isCleared = next.percent === 0 && next.minPercent === null;
   return {
     ...content,
-    blockWeights: isCleared ? rest : [...rest, next],
+    blockWeights: percent ? [...rest, { levelId, blockId, percent }] : rest,
   };
 }
 
@@ -233,21 +158,6 @@ export function removeCompetency(content: MatrixContent, competencyId: string) {
   });
 }
 
-export function setCompetencyBlock(
-  content: MatrixContent,
-  competencyId: string,
-  blockId: string | null,
-) {
-  return withoutEmptyOutsideGroup({
-    ...content,
-    competencies: content.competencies.map((competency) =>
-      competency.competencyId === competencyId
-        ? { ...competency, blockId }
-        : competency,
-    ),
-  });
-}
-
 /** The shared blocks of a version; a document written before they existed has none. */
 export function sharedBlocksOf(content: MatrixContent) {
   return content.sharedBlocks ?? [];
@@ -265,26 +175,12 @@ export function addSharedBlock(
       ...sharedBlocksOf(content),
       {
         blockId,
-        isMandatory: false,
         competencyTypes: memberIds.map((competencyId) => ({
           competencyId,
           type: DEFAULT_COMPETENCY_TYPE,
         })),
       },
     ],
-  };
-}
-
-export function setSharedBlockMandatory(
-  content: MatrixContent,
-  blockId: string,
-  isMandatory: boolean,
-) {
-  return {
-    ...content,
-    sharedBlocks: sharedBlocksOf(content).map((block) =>
-      block.blockId === blockId ? { ...block, isMandatory } : block,
-    ),
   };
 }
 

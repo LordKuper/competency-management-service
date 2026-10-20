@@ -290,6 +290,7 @@ function StepBody({
             onBack: stepProps.onBack,
             onSaved: stepProps.onSaved,
             onSkip: stepProps.onSkip,
+            onEditComposition: () => onGoToStep(COMPETENCIES_STEP),
           }}
         />
       );

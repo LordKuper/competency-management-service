@@ -10,33 +10,27 @@ import {
   Card,
   ConfigProvider,
   Flex,
-  InputNumber,
   Select,
   Space,
   Table,
   type TableColumnsType,
   Tag,
   Typography,
+  theme,
 } from "antd";
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { useEditBase } from "../../app/useEditBase";
 import { BuilderFooter, type BuilderStepControls } from "./BuilderFooter";
 import { CatalogStatusTag } from "./CatalogParts";
-import { IN_WORK } from "./CatalogSelect";
-import { competencyQuery, levelsQuery } from "./catalogApi";
+import { type CatalogStatus, competencyQuery, levelsQuery } from "./catalogApi";
 import { CompetencyTypeLabel, CompetencyTypeSelect } from "./competencyType";
 import { MatrixBlocks } from "./MatrixBlocks";
 import { MatrixChanges } from "./MatrixChanges";
 import { MatrixErrorAlert } from "./MatrixErrorAlert";
-import { MatrixFormulaTotals } from "./MatrixFormulaTotals";
-import {
-  AddCompetencyModal,
-  AddLevelModal,
-  AddOwnBlockModal,
-} from "./MatrixPickers";
+import { AddLevelModal } from "./MatrixPickers";
 import {
   invalidateMatrices,
-  type MatrixBlock,
   type MatrixContent,
   type MatrixDiff,
   type MatrixSharedBlockEntry,
@@ -46,21 +40,15 @@ import {
   storeSavedVersion,
 } from "./matrixApi";
 import {
-  addBlock,
-  addCompetency,
   addLevel,
   cellKey,
   changedPlaces,
   chipLevel,
   NO_CHANGES,
-  removeCompetency,
   removeLevel,
   requirementOf,
-  setCompetencyBlock,
   setCompetencyType,
-  setOverallMin,
   typeOfCompetency,
-  updateBlock,
   withoutRequirement,
   withRequirement,
 } from "./matrixContent";
@@ -71,18 +59,16 @@ import {
   POSITION_COLUMN_LABEL,
   scaleNameOf,
   scaleOfCompetency,
-  sharedBlockOf,
   sharedEntriesOf,
   versionCompetencyIds,
 } from "./matrixGroups";
 import { CHANGED_NOTE } from "./matrixLabels";
-import { RequirementModal } from "./RequirementModal";
 import "./matrix.css";
 
 const NO_VALUE = "—";
-const MAX_PERCENT = 100;
-const UNNAMED_BLOCK = "Название блока";
-const OUTSIDE_VALUE = "__outside__";
+const NO_SCORE = "none";
+const TYPE_COLUMN_WIDTH_IN_CONTROLS = 6;
+const CRITICAL_CAPTION = "Балл — порог уровня";
 
 interface BuilderSave {
   /** The step the wizard records as the one to open next time. */
@@ -90,21 +76,16 @@ interface BuilderSave {
   then: "next" | "exit";
 }
 
-type Dialog =
-  | { kind: "level" }
-  | { kind: "competency" }
-  | { kind: "block" }
-  | { kind: "requirement"; levelId: string; competencyId: string };
+type Dialog = { kind: "level" };
 
 /** A row that opens a group of competencies; its cell spans the table. */
 type GroupHeader =
   | { kind: "shared"; block: MatrixSharedBlockEntry }
-  | { kind: "own"; block: MatrixBlock }
   | { kind: "outside" };
 
 interface GridRow {
   key: string;
-  /** The competency the row is for; null for the row of the minimum overall threshold and for a group header. */
+  /** The competency the row is for; null for a group header. */
   competencyId: string | null;
   group?: GroupHeader;
 }
@@ -112,6 +93,7 @@ interface GridRow {
 /** What a grid shows of a competency. */
 export interface CompetencyInfo {
   name: string;
+  status?: CatalogStatus;
   scaleId?: string | null;
   scaleName?: string;
 }
@@ -132,11 +114,11 @@ interface MatrixEditorProps {
 }
 
 /**
- * The competency-by-level grid with the blocks and thresholds of a version. It is editable when the version's
- * actions allow, and then keeps the edits in the form until they are saved. While a save is in flight its controls are
- * disabled, so nothing typed then is lost when the saved version replaces the form. Levels go in the track order: a
- * published or archived version keeps the order its entries were frozen in, and puts after them the levels only an
- * earlier variant has; a version in work follows the catalogue.
+ * The competency-by-level grid of a version with the type and score of each competency, and the coefficients of its
+ * groups. It is editable when the version's actions allow, and then keeps the edits in the form until they are saved.
+ * While a save is in flight its controls are disabled, so nothing typed then is lost when the saved version replaces the
+ * form. Levels go in the track order: a published or archived version keeps the order its entries were frozen in, and
+ * puts after them the levels only an earlier variant has; a version in work follows the catalogue.
  */
 export function MatrixEditor(props: MatrixEditorProps) {
   const { base, noteSaveFailure } = useEditBase(props.version);
@@ -185,6 +167,7 @@ function MatrixEditorBody({
   builder,
   isCompact: isCompactRequested = false,
 }: MatrixEditorBodyProps) {
+  const { token } = theme.useToken();
   const isCompact = isCompactRequested || builder !== undefined;
   const queryClient = useQueryClient();
   const isEditable = version.actions.includes("Edit");
@@ -254,16 +237,11 @@ function MatrixEditorBody({
     ...shownCompetencyIds,
     ...(diff?.before.competencies ?? []).map((item) => item.competencyId),
   ]);
-  const ownBlockOptions = (shown.blocks ?? []).map((block) => ({
-    value: block.id,
-    label: block.name || UNNAMED_BLOCK,
-  }));
-  const blockOptions = [
-    ...ownBlockOptions,
-    { value: OUTSIDE_VALUE, label: OUTSIDE_LABEL },
-  ];
   const hasRequirement = (competencyId: string) =>
-    shown.requirements.some((item) => item.competencyId === competencyId);
+    shown.requirements.some(
+      (item) =>
+        item.competencyId === competencyId && item.requiredScore != null,
+    );
   const outsideIds = shown.competencies
     .filter((item) => item.blockId === null)
     .map((item) => item.competencyId);
@@ -271,7 +249,7 @@ function MatrixEditorBody({
     key: competencyId,
     competencyId,
   });
-  const groupedRows = (): GridRow[] => [
+  const rows: GridRow[] = [
     ...sharedEntries.flatMap((block) => [
       {
         key: `group:${block.id}`,
@@ -280,21 +258,6 @@ function MatrixEditorBody({
       },
       ...block.competencyIds.map(rowOf),
     ]),
-    ...(shown.blocks ?? []).flatMap((block) => {
-      const ids = shown.competencies
-        .filter((item) => item.blockId === block.id)
-        .map((item) => item.competencyId);
-      return ids.length === 0
-        ? []
-        : [
-            {
-              key: `group:${block.id}`,
-              competencyId: null,
-              group: { kind: "own", block } as const,
-            },
-            ...ids.map(rowOf),
-          ];
-    }),
     ...(outsideIds.length === 0
       ? []
       : [
@@ -306,13 +269,6 @@ function MatrixEditorBody({
           ...outsideIds.map(rowOf),
         ]),
   ];
-  const isOverallMinimumShown = builder === undefined;
-  const rows: GridRow[] = [
-    ...(builder ? shownCompetencyIds.map(rowOf) : groupedRows()),
-    ...(isOverallMinimumShown
-      ? [{ key: "overall-minimum", competencyId: null }]
-      : []),
-  ];
   const levelOptions = (catalogLevels.data?.items ?? [])
     .filter(
       (level) =>
@@ -320,32 +276,10 @@ function MatrixEditorBody({
         !shown.levels.some((used) => used.levelId === level.id),
     )
     .map((level) => ({ value: level.id, label: level.name }));
-  const competencyFilters = {
-    ...IN_WORK,
-    directionId: entries.direction?.id,
-    withGeneral: true,
-  };
 
   function renderGroupHeader(group: GroupHeader) {
-    if (group.kind === "own") {
-      return (
-        <Space size="small" wrap>
-          <Typography.Text strong>
-            {group.block.name || UNNAMED_BLOCK}
-          </Typography.Text>
-          <Typography.Text type="secondary">
-            собственный блок версии · шкала версии
-          </Typography.Text>
-        </Space>
-      );
-    }
     if (group.kind === "outside") {
-      return (
-        <Space size="small" wrap>
-          <Typography.Text strong>{OUTSIDE_LABEL}</Typography.Text>
-          <Typography.Text type="secondary">шкала версии</Typography.Text>
-        </Space>
-      );
+      return <Typography.Text strong>{OUTSIDE_LABEL}</Typography.Text>;
     }
     const { block } = group;
     const change = compositionChange.get(block.id);
@@ -376,79 +310,24 @@ function MatrixEditorBody({
     );
   }
 
-  function renderBlockControl(competencyId: string) {
-    const shared = sharedBlockOf(version, competencyId);
-    if (shared) {
-      return (
-        <Space size="small" wrap>
-          <Tag>{`Общий блок «${shared.name}»`}</Tag>
-        </Space>
-      );
-    }
-    const block = shown.competencies.find(
-      (item) => item.competencyId === competencyId,
-    );
-    const value = block?.blockId ?? OUTSIDE_VALUE;
-    return isEditable ? (
-      <Select
-        size="small"
-        aria-label="Блок компетенций"
-        value={value}
-        options={blockOptions}
-        onChange={(next) =>
-          setEdited(
-            setCompetencyBlock(
-              edited,
-              competencyId,
-              next === OUTSIDE_VALUE ? null : next,
-            ),
-          )
-        }
-      />
-    ) : (
-      <Typography.Text type="secondary">
-        {value === OUTSIDE_VALUE
-          ? OUTSIDE_LABEL
-          : ownBlockOptions.find((option) => option.value === value)?.label}
-      </Typography.Text>
-    );
-  }
-
   function renderName(row: GridRow) {
     if (row.group) return renderGroupHeader(row.group);
-    if (row.competencyId === null) return "Минимальный общий порог";
-    const competency = competencies.get(row.competencyId);
-    const competencyId = row.competencyId;
-    const isShared = sharedBlockOf(version, competencyId) !== undefined;
+    const competencyId = row.competencyId ?? "";
+    const competency = competencies.get(competencyId);
     const isAdded = [...compositionChange.values()].some((change) =>
       change.added.includes(competencyId),
     );
     return (
       <Space orientation="vertical" size={0}>
-        <Typography.Text strong>{competency?.name}</Typography.Text>
+        <Space size="small" wrap>
+          <Typography.Text strong>{competency?.name}</Typography.Text>
+          {competency?.status === "Draft" && (
+            <CatalogStatusTag status="Draft" />
+          )}
+        </Space>
         <Typography.Text type="secondary">
           {scaleNameOf(version, competencyId, competency)}
         </Typography.Text>
-        {isEditable ? (
-          <CompetencyTypeSelect
-            label={`Тип компетенции «${competency?.name ?? ""}»`}
-            value={typeOfCompetency(shown, competencyId)}
-            onChange={(type) =>
-              setEdited(
-                setCompetencyType(
-                  edited,
-                  competencyId,
-                  type,
-                  compositionsOf(version),
-                ),
-              )
-            }
-          />
-        ) : (
-          <CompetencyTypeLabel type={typeOfCompetency(shown, competencyId)} />
-        )}
-        {(builder || (isEditable && !isShared)) &&
-          renderBlockControl(competencyId)}
         {isAdded && (
           <Tag icon={<WarningOutlined />} color="warning">
             Добавлена в блок
@@ -464,87 +343,120 @@ function MatrixEditorBody({
             {CHANGED_NOTE}
           </Tag>
         )}
-        {isEditable && !isShared && (
-          <Button
-            type="link"
-            size="small"
-            danger
-            onClick={() => setEdited(removeCompetency(edited, competencyId))}
-          >
-            {builder ? "Убрать" : "Удалить"}
-          </Button>
+      </Space>
+    );
+  }
+
+  function renderType(row: GridRow) {
+    if (row.group) return null;
+    const competencyId = row.competencyId ?? "";
+    const type = typeOfCompetency(shown, competencyId);
+    return (
+      <Space orientation="vertical" size={0}>
+        {isEditable ? (
+          <CompetencyTypeSelect
+            label={`Тип компетенции «${competencies.get(competencyId)?.name ?? ""}»`}
+            value={type}
+            onChange={(next) =>
+              setEdited(
+                setCompetencyType(
+                  edited,
+                  competencyId,
+                  next,
+                  compositionsOf(version),
+                ),
+              )
+            }
+          />
+        ) : (
+          <CompetencyTypeLabel type={type} />
+        )}
+        {type === "Critical" && (
+          <Typography.Text type="secondary">{CRITICAL_CAPTION}</Typography.Text>
         )}
       </Space>
     );
   }
 
   function renderCell(levelId: string, row: GridRow) {
-    const levelName = levelNames.get(levelId) ?? "";
-    if (row.group) return null;
-    if (row.competencyId === null) {
-      const level = shown.levels.find((item) => item.levelId === levelId);
-      return isEditable ? (
-        <InputNumber
-          aria-label={`Минимальный общий порог: ${levelName}`}
-          min={0}
-          max={MAX_PERCENT}
-          value={level?.minOverallPercent ?? null}
-          onChange={(value) => setEdited(setOverallMin(edited, levelId, value))}
-        />
-      ) : (
-        (level?.minOverallPercent ?? NO_VALUE)
-      );
-    }
+    if (row.group || row.competencyId === null) return null;
     const competencyId = row.competencyId;
-    const requirement = requirementOf(shown, levelId, competencyId);
+    const levelName = levelNames.get(levelId) ?? "";
+    const score = requirementOf(shown, levelId, competencyId)?.requiredScore;
+    const { points } = scaleOfCompetency(version, competencyId);
     const changedMark = changed.requirementCells.has(
       cellKey(levelId, competencyId),
     ) && (
       <EditOutlined role="img" aria-label={CHANGED_NOTE} title={CHANGED_NOTE} />
     );
-    if (!requirement && !isEditable) {
+    const chip =
+      score == null ? (
+        NO_VALUE
+      ) : (
+        <span
+          className={`rating-chip rating-chip--${chipLevel(score, points)}`}
+          title={points.find((point) => point.score === score)?.label}
+        >
+          {score}
+        </span>
+      );
+    if (!isEditable) {
       return (
         <>
-          {NO_VALUE}
+          {chip}
           {changedMark}
         </>
       );
     }
-    const score = requirement?.requiredScore;
-    const { points } = scaleOfCompetency(version, competencyId);
-    const label = points.find((point) => point.score === score)?.label;
     return (
-      <button
-        type="button"
-        className="matrix-cell-button"
-        disabled={save.isPending}
-        aria-label={`${competencies.get(competencyId)?.name}, ${levelName}`}
-        onClick={() =>
-          setDialog({ kind: "requirement", levelId, competencyId })
-        }
-      >
-        {score == null ? (
-          NO_VALUE
-        ) : (
-          <span
-            className={`rating-chip rating-chip--${chipLevel(score, points)}`}
-            title={label}
-          >
-            {score}
-          </span>
-        )}
+      <Space size="small">
+        <Select<number | typeof NO_SCORE>
+          size="small"
+          className="matrix-score-select"
+          aria-label={`${competencies.get(competencyId)?.name}, ${levelName}`}
+          value={score ?? NO_SCORE}
+          labelRender={() => chip}
+          options={[
+            { value: NO_SCORE, label: "— Не задан" },
+            ...[...points]
+              .sort((left, right) => left.score - right.score)
+              .map((point) => ({
+                value: point.score,
+                label: `${point.score} — ${point.label}`,
+              })),
+          ]}
+          onChange={(next) =>
+            setEdited(
+              next === NO_SCORE
+                ? withoutRequirement(edited, levelId, competencyId)
+                : withRequirement(edited, {
+                    levelId,
+                    competencyId,
+                    requiredScore: next,
+                  }),
+            )
+          }
+        />
         {changedMark}
-      </button>
+      </Space>
     );
   }
 
   const columns: TableColumnsType<GridRow> = [
     {
-      title: "Компетенции",
+      title: "Компетенция",
       key: "competency",
       fixed: "left",
       className: "matrix-name-cell",
       render: (_, row) => renderName(row),
+    },
+    {
+      title: "Тип",
+      key: "type",
+      fixed: "left",
+      width: token.controlHeight * TYPE_COLUMN_WIDTH_IN_CONTROLS,
+      className: "matrix-type-cell",
+      render: (_, row) => renderType(row),
     },
     ...shownLevelIds.map((levelId) => ({
       key: levelId,
@@ -579,7 +491,6 @@ function MatrixEditorBody({
       render: (_: unknown, row: GridRow) => renderCell(levelId, row),
     })),
   ];
-  const requested = dialog?.kind === "requirement" ? dialog : null;
   const isGridShown = builder === undefined || builder.part === "requirements";
   const isBlocksShown = builder === undefined || builder.part === "formula";
 
@@ -600,16 +511,18 @@ function MatrixEditorBody({
           <ul
             className={`matrix-legend${builder ? " matrix-legend--vertical" : ""}`}
           >
-            {scale.points.map((point) => (
-              <li key={point.score}>
-                <span
-                  className={`rating-chip rating-chip--${chipLevel(point.score, scale.points)}`}
-                >
-                  {point.score}
-                </span>
-                {point.label}
-              </li>
-            ))}
+            {[...scale.points]
+              .sort((left, right) => left.score - right.score)
+              .map((point) => (
+                <li key={point.score}>
+                  <span
+                    className={`rating-chip rating-chip--${chipLevel(point.score, scale.points)}`}
+                  >
+                    {point.score}
+                  </span>
+                  <span>{point.label}</span>
+                </li>
+              ))}
           </ul>
         </Space>
       ))}
@@ -632,6 +545,24 @@ function MatrixEditorBody({
       }
     />
   );
+  const compositionLink = builder ? (
+    <Typography.Text type="secondary">
+      Состав и блоки меняются на шаге 2.{" "}
+      <Button
+        type="link"
+        size="small"
+        disabled={isUnsaved}
+        onClick={builder.onEditComposition}
+      >
+        Изменить состав на шаге 2
+      </Button>
+      {isUnsaved && " Сначала сохраните правки."}
+    </Typography.Text>
+  ) : (
+    <Link to={`/desk/matrix-builder/${version.id}?step=2`}>
+      Изменить состав и блоки в мастере, шаг 2
+    </Link>
+  );
 
   return (
     <ConfigProvider componentDisabled={save.isPending}>
@@ -641,10 +572,7 @@ function MatrixEditorBody({
         style={{ display: "flex" }}
       >
         {isEditable && !builder && (
-          <Flex gap="small" wrap>
-            <Button onClick={() => setDialog({ kind: "competency" })}>
-              Добавить компетенцию
-            </Button>
+          <Flex gap="small" align="center" wrap>
             {!isPosition && (
               <Button onClick={() => setDialog({ kind: "level" })}>
                 Добавить уровень
@@ -657,15 +585,10 @@ function MatrixEditorBody({
             >
               Сохранить
             </Button>
+            {compositionLink}
           </Flex>
         )}
-        {isEditable && builder?.part === "requirements" && (
-          <Flex>
-            <Button onClick={() => setDialog({ kind: "block" })}>
-              Добавить блок
-            </Button>
-          </Flex>
-        )}
+        {isEditable && builder?.part === "requirements" && compositionLink}
         {save.error != null && (
           <MatrixErrorAlert
             title="Не удалось сохранить запись"
@@ -690,14 +613,14 @@ function MatrixEditorBody({
         {isGridShown &&
           (builder ? (
             <div className="matrix-step-columns">
-              {grid}
-              <Card
-                size="small"
-                title={isPosition ? "Требуемый балл" : "Требуемый уровень"}
-              >
+              <Card size="small" styles={{ body: { padding: 0 } }}>
+                {grid}
+              </Card>
+              <Card size="small" title="Требуемый балл">
                 <Space orientation="vertical" size="small">
                   <Typography.Text type="secondary">
-                    {`Нажмите ячейку, чтобы задать ${isPosition ? "балл" : "уровень"}. Блок выбирается в строке компетенции; у компетенции общего блока блок и шкала не меняются.`}
+                    Выберите балл в клетке. Баллы — шкалы самой компетенции; для
+                    критической балл — порог уровня.
                   </Typography.Text>
                   {legend}
                 </Space>
@@ -722,17 +645,6 @@ function MatrixEditorBody({
             onChange={setEdited}
           />
         )}
-        {builder?.part === "formula" && (
-          <MatrixFormulaTotals
-            content={shown}
-            isSingleLevel={isPosition}
-            levelIds={shownLevelIds}
-            levelNames={levelNames}
-            isEditable={isEditable}
-            isCompact={isCompact}
-            onChange={setEdited}
-          />
-        )}
         {builder && (
           <BuilderFooter
             step={builder.step}
@@ -751,73 +663,6 @@ function MatrixEditorBody({
             isLoading={catalogLevels.isFetching}
             onPick={(levelId) => {
               setEdited(addLevel(edited, levelId));
-              setDialog(null);
-            }}
-            onClose={() => setDialog(null)}
-          />
-        )}
-        {dialog?.kind === "block" && (
-          <AddOwnBlockModal
-            onPick={(name) => {
-              const added = addBlock(edited);
-              const created = added.blocks.at(-1);
-              setEdited(
-                created ? updateBlock(added, created.id, { name }) : added,
-              );
-              setDialog(null);
-            }}
-            onClose={() => setDialog(null)}
-          />
-        )}
-        {dialog?.kind === "competency" && (
-          <AddCompetencyModal
-            filters={competencyFilters}
-            usedIds={shownCompetencyIds}
-            blocks={blockOptions}
-            defaultBlock={OUTSIDE_VALUE}
-            onPick={(competencyId, blockId) => {
-              setEdited(
-                addCompetency(
-                  edited,
-                  competencyId,
-                  blockId === OUTSIDE_VALUE ? null : blockId,
-                ),
-              );
-              setDialog(null);
-            }}
-            onClose={() => setDialog(null)}
-          />
-        )}
-        {requested && (
-          <RequirementModal
-            title={
-              isPosition
-                ? (competencies.get(requested.competencyId)?.name ?? "")
-                : `${competencies.get(requested.competencyId)?.name}, ${levelNames.get(requested.levelId)}`
-            }
-            levelId={requested.levelId}
-            competencyId={requested.competencyId}
-            requirement={requirementOf(
-              shown,
-              requested.levelId,
-              requested.competencyId,
-            )}
-            scalePoints={
-              scaleOfCompetency(version, requested.competencyId).points
-            }
-            isEditable={isEditable}
-            onSave={(requirement) => {
-              setEdited(withRequirement(edited, requirement));
-              setDialog(null);
-            }}
-            onRemove={() => {
-              setEdited(
-                withoutRequirement(
-                  edited,
-                  requested.levelId,
-                  requested.competencyId,
-                ),
-              );
               setDialog(null);
             }}
             onClose={() => setDialog(null)}
