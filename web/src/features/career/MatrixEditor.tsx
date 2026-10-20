@@ -46,8 +46,8 @@ import {
   type MatrixSharedBlockEntry,
   type MatrixVersion,
   matrixChangesQuery,
-  matrixVersionQuery,
   saveMatrixContent,
+  storeSavedVersion,
 } from "./matrixApi";
 import {
   addBlock,
@@ -216,8 +216,8 @@ function MatrixEditorBody({
         edited,
         request && Math.max(base.builderStep ?? 0, request.step),
       ),
-    onSuccess: (saved, request) => {
-      queryClient.setQueryData(matrixVersionQuery(saved.id).queryKey, saved);
+    onSuccess: async (saved, request) => {
+      await storeSavedVersion(queryClient, saved);
       onSaved?.();
       if (request) builder?.onSaved(request.then);
     },

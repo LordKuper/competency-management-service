@@ -39,8 +39,8 @@ import {
   type MatrixVersion,
   matrixChangesQuery,
   matrixQuery,
-  matrixVersionQuery,
   saveMatrixContent,
+  storeSavedVersion,
 } from "../career/matrixApi";
 import {
   competenciesText,
@@ -260,8 +260,8 @@ function CompetenciesBody({
         ),
         Math.max(base.builderStep ?? 0, request.step),
       ),
-    onSuccess: (saved, request) => {
-      queryClient.setQueryData(matrixVersionQuery(saved.id).queryKey, saved);
+    onSuccess: async (saved, request) => {
+      await storeSavedVersion(queryClient, saved);
       onSaved(request.then);
     },
     onError: noteSaveFailure,
@@ -294,8 +294,8 @@ function CompetenciesBody({
         ),
       );
     },
-    onSuccess: (saved, block) => {
-      queryClient.setQueryData(matrixVersionQuery(saved.id).queryKey, saved);
+    onSuccess: async (saved, block) => {
+      await storeSavedVersion(queryClient, saved);
       onBlockAttached(block.id, saved);
     },
     onError: (error, block) => {

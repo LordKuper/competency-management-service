@@ -217,6 +217,19 @@ export function approvalsQuery(params: ApprovalListParams = {}) {
   });
 }
 
+/**
+ * Puts a version a save returned into the cache as the one every screen reads. A read of the version still in flight is
+ * cancelled first, so a response from before the save cannot land after it and bring an older version back.
+ */
+export async function storeSavedVersion(
+  queryClient: QueryClient,
+  saved: MatrixVersion,
+) {
+  const { queryKey } = matrixVersionQuery(saved.id);
+  await queryClient.cancelQueries({ queryKey });
+  queryClient.setQueryData(queryKey, saved);
+}
+
 /** Rereads every matrix query after a change. */
 export function invalidateMatrices(queryClient: QueryClient) {
   return queryClient.invalidateQueries({ queryKey: matrixQueryKey });

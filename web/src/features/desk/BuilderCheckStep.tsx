@@ -4,8 +4,8 @@ import { MatrixErrorAlert } from "../career/MatrixErrorAlert";
 import {
   invalidateMatrices,
   matrixCompletenessQuery,
-  matrixVersionQuery,
   saveMatrixContent,
+  storeSavedVersion,
 } from "../career/matrixApi";
 import type { StepProps } from "./builderStep";
 import { CompletenessBlock } from "./CompletenessBlock";
@@ -41,8 +41,8 @@ export function BuilderCheckStep({
         version.content,
         Math.max(version.builderStep ?? 0, SUBMIT_STEP),
       ),
-    onSuccess: (saved) => {
-      queryClient.setQueryData(matrixVersionQuery(saved.id).queryKey, saved);
+    onSuccess: async (saved) => {
+      await storeSavedVersion(queryClient, saved);
       onSaved("next");
     },
     onSettled: () => invalidateMatrices(queryClient),

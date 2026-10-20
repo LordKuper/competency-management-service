@@ -281,6 +281,7 @@ function StepBody({
     case 4:
       return (
         <MatrixEditor
+          key={step}
           version={version}
           onUnsavedChange={onUnsavedChange}
           builder={{
