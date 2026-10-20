@@ -112,7 +112,7 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
         {[
           `Содержание: компетенций ${versionCompetencyIds(version).length}`,
           version.entries.position ? null : `уровней ${content.levels.length}`,
-          `блоков ${content.blocks.length + sharedBlocksOf(content).length}`,
+          `блоков ${(content.blocks ?? []).length + sharedBlocksOf(content).length}`,
         ]
           .filter(Boolean)
           .join(" · ")}

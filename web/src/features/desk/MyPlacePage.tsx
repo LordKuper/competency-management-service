@@ -180,7 +180,7 @@ function PositionMatrixPanel({
       (item) => item.competencyId === competencyId,
     );
     return own?.blockId
-      ? version.data?.content.blocks.find((block) => block.id === own.blockId)
+      ? version.data?.content.blocks?.find((block) => block.id === own.blockId)
           ?.name
       : undefined;
   };

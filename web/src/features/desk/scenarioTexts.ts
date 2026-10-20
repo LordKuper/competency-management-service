@@ -19,7 +19,6 @@ export const PROBLEM_STEP: Record<MatrixProblem["code"], number | null> = {
   NoLevels: 1,
   LevelWithoutRequirements: 3,
   BlockWeights: 4,
-  CriticalWithoutScore: 3,
   InactiveEntry: 2,
   ForeignCompetency: 2,
   ScoreOutOfScale: 3,

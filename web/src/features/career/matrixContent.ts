@@ -80,7 +80,7 @@ export function addBlock(content: MatrixContent) {
     name: "",
     isMandatory: false,
   };
-  return { ...content, blocks: [...content.blocks, block] };
+  return { ...content, blocks: [...(content.blocks ?? []), block] };
 }
 
 export function updateBlock(
@@ -90,7 +90,7 @@ export function updateBlock(
 ) {
   return {
     ...content,
-    blocks: content.blocks.map((block) =>
+    blocks: (content.blocks ?? []).map((block) =>
       block.id === blockId ? { ...block, ...patch } : block,
     ),
   };
@@ -106,7 +106,7 @@ export function hasCompetencies(content: MatrixContent, blockId: string) {
 export function removeBlock(content: MatrixContent, blockId: string) {
   return {
     ...content,
-    blocks: content.blocks.filter((block) => block.id !== blockId),
+    blocks: (content.blocks ?? []).filter((block) => block.id !== blockId),
     blockWeights: content.blockWeights.filter(
       (weight) => weight.blockId !== blockId,
     ),

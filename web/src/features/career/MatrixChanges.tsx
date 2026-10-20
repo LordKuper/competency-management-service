@@ -55,7 +55,7 @@ export function describeChanges(
   const blockName = (content: MatrixContent, blockId: string | null) =>
     blockId === null
       ? OUTSIDE_LABEL
-      : content.blocks.find((block) => block.id === blockId)?.name;
+      : (content.blocks ?? []).find((block) => block.id === blockId)?.name;
   const levelName = (levelId: string | null) =>
     quoted(levelId ? levelNames.get(levelId) : undefined);
   const competencyName = (competencyId: string | null) =>
@@ -103,7 +103,9 @@ export function describeChanges(
         );
       }
       case "Block": {
-        const block = content.blocks.find((item) => item.id === blockId);
+        const block = (content.blocks ?? []).find(
+          (item) => item.id === blockId,
+        );
         return (
           block &&
           `${quoted(block.name)}${block.isMandatory ? ", обязательный блок" : ""}`
@@ -129,7 +131,7 @@ export function describeChanges(
         );
         return (
           weight &&
-          `Коэффициент, %: ${weight.percent}; Минимальный порог блока: ${percent(weight.minPercent)}`
+          `Коэффициент, %: ${weight.percent}; Минимальный порог блока: ${percent(weight.minPercent ?? null)}`
         );
       }
       case "Requirement": {

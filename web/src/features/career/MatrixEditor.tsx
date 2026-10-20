@@ -254,7 +254,7 @@ function MatrixEditorBody({
     ...shownCompetencyIds,
     ...(diff?.before.competencies ?? []).map((item) => item.competencyId),
   ]);
-  const ownBlockOptions = shown.blocks.map((block) => ({
+  const ownBlockOptions = (shown.blocks ?? []).map((block) => ({
     value: block.id,
     label: block.name || UNNAMED_BLOCK,
   }));
@@ -280,7 +280,7 @@ function MatrixEditorBody({
       },
       ...block.competencyIds.map(rowOf),
     ]),
-    ...shown.blocks.flatMap((block) => {
+    ...(shown.blocks ?? []).flatMap((block) => {
       const ids = shown.competencies
         .filter((item) => item.blockId === block.id)
         .map((item) => item.competencyId);

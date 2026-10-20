@@ -2017,6 +2017,7 @@ export interface components {
         };
         CompetencyRequest: {
             description: null | string;
+            evidenceExamples?: null | string;
             /**
              * Format: uuid
              * @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.
@@ -2057,6 +2058,7 @@ export interface components {
             version: number;
             canEdit: boolean;
             canDelete: boolean;
+            evidenceExamples?: null | string;
         };
         CompetencyScaleRequest: {
             points: components["schemas"]["ScalePoint"][];
@@ -2097,6 +2099,7 @@ export interface components {
             changedByName: null | string;
             /** Format: date-time */
             changedAt: string;
+            evidenceExamples?: null | string;
         };
         CreateOrgUnitRequest: {
             name: string;
@@ -2366,8 +2369,11 @@ export interface components {
             blockId: null | string;
             /** Format: double */
             percent: number;
-            /** Format: double */
-            minPercent: null | number;
+            /**
+             * Format: double
+             * @description Deprecated, removed in the next major version: groups have no threshold; ignored in requests, always null in responses.
+             */
+            minPercent?: null | number;
         };
         MatrixChange: {
             kind: components["schemas"]["MatrixChangeKind"];
@@ -2410,6 +2416,7 @@ export interface components {
             status: components["schemas"]["CatalogStatus"];
             /** Format: uuid */
             scaleId?: null | string;
+            evidenceExamples?: null | string;
         };
         MatrixCompetencyType: {
             /** Format: uuid */
@@ -2421,11 +2428,12 @@ export interface components {
         };
         MatrixContent: {
             levels: components["schemas"]["MatrixLevel"][];
-            blocks: components["schemas"]["MatrixBlock"][];
             competencies: components["schemas"]["MatrixCompetency"][];
             blockWeights: components["schemas"]["MatrixBlockWeight"][];
             requirements: components["schemas"]["MatrixRequirement"][];
             sharedBlocks?: null | components["schemas"]["MatrixSharedBlock"][];
+            /** @description Deprecated, removed in the next major version: a version has no blocks of its own; ignored in requests, always empty in responses. */
+            blocks?: null | components["schemas"]["MatrixBlock"][];
         };
         /** @enum {unknown} */
         MatrixDecisionKind: "Submitted" | "Skipped" | "Approved" | "AutoApproved" | "Returned" | "AcceptedChanges" | "AcceptedAndRevising" | "RolledBack" | "Published";
@@ -2500,7 +2508,7 @@ export interface components {
             competencyId?: null | string;
         };
         /** @enum {unknown} */
-        MatrixProblemCode: "NoLevels" | "LevelWithoutRequirements" | "BlockWeights" | "CriticalWithoutScore" | "InactiveEntry" | "ForeignCompetency" | "ScoreOutOfScale" | "LevelWithoutActivePosition" | "NoCompetencies" | "CompetencyWithoutScore" | "CompetencyWithoutRequirements" | "DuplicateCompetency" | "PositionUnavailable" | "SharedBlockUnavailable";
+        MatrixProblemCode: "NoLevels" | "LevelWithoutRequirements" | "BlockWeights" | "InactiveEntry" | "ForeignCompetency" | "ScoreOutOfScale" | "LevelWithoutActivePosition" | "NoCompetencies" | "CompetencyWithoutScore" | "CompetencyWithoutRequirements" | "DuplicateCompetency" | "PositionUnavailable" | "SharedBlockUnavailable";
         MatrixPublicationResponse: {
             publishingActions: components["schemas"]["MatrixAction"][];
             entries: components["schemas"]["PublicationEntry"][];
@@ -2516,13 +2524,22 @@ export interface components {
             competencyId: string;
             /** Format: int32 */
             requiredScore: null | number;
-            /** Format: double */
-            weight: number;
-            isMandatory: boolean;
-            expectedBehavior: null | string;
-            evidenceExamples: null | string;
-            /** Format: date */
-            validFrom: null | string;
+            /**
+             * Format: double
+             * @description Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses.
+             */
+            weight?: null | number;
+            /** @description Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses. */
+            isMandatory?: null | boolean;
+            /** @description Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses. */
+            expectedBehavior?: null | string;
+            /** @description Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses. */
+            evidenceExamples?: null | string;
+            /**
+             * Format: date
+             * @description Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses.
+             */
+            validFrom?: null | string;
             type?: null | components["schemas"]["CompetencyType"];
         };
         MatrixResponse: {
@@ -2558,7 +2575,6 @@ export interface components {
         MatrixSharedBlock: {
             /** Format: uuid */
             blockId: string;
-            isMandatory: boolean;
             competencyTypes?: null | components["schemas"]["MatrixCompetencyType"][];
         };
         MatrixSharedBlockEntry: {

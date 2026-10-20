@@ -24,7 +24,6 @@ import {
   removeBlock,
   setBlockWeight,
   setSharedBlockMandatory,
-  sharedBlocksOf,
   updateBlock,
 } from "./matrixContent";
 import { OUTSIDE_LABEL } from "./matrixGroups";
@@ -122,7 +121,6 @@ export function MatrixBlocks({
   isCompact = false,
   onChange,
 }: MatrixBlocksProps) {
-  const sharedFlags = sharedBlocksOf(content);
   const hasOutside = content.competencies.some((item) => item.blockId === null);
   const rows: BlockRow[] = [
     ...sharedBlocks.map((entry) => ({
@@ -131,7 +129,7 @@ export function MatrixBlocks({
       blockId: entry.id,
       entry,
     })),
-    ...content.blocks.map((block) => ({
+    ...(content.blocks ?? []).map((block) => ({
       kind: "own" as const,
       key: `own:${block.id}`,
       blockId: block.id,
@@ -262,11 +260,7 @@ export function MatrixBlocks({
       key: "isMandatory",
       render: (_, row) => {
         if (row.kind === "outside") return NO_VALUE;
-        const isMandatory =
-          row.kind === "own"
-            ? row.block.isMandatory
-            : (sharedFlags.find((item) => item.blockId === row.blockId)
-                ?.isMandatory ?? false);
+        const isMandatory = row.kind === "own" ? row.block.isMandatory : false;
         return (
           <Checkbox
             disabled={!isEditable || undefined}

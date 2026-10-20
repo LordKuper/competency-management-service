@@ -13175,6 +13175,12 @@
               "string"
             ]
           },
+          "evidenceExamples": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "categoryId": {
             "type": [
               "null",
@@ -13313,6 +13319,12 @@
           },
           "canDelete": {
             "type": "boolean"
+          },
+          "evidenceExamples": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -13463,6 +13475,12 @@
           "changedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "evidenceExamples": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -14462,8 +14480,7 @@
         "required": [
           "levelId",
           "blockId",
-          "percent",
-          "minPercent"
+          "percent"
         ],
         "type": "object",
         "properties": {
@@ -14487,6 +14504,7 @@
               "null",
               "number"
             ],
+            "description": "Deprecated, removed in the next major version: groups have no threshold; ignored in requests, always null in responses.",
             "format": "double"
           }
         }
@@ -14641,6 +14659,12 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "evidenceExamples": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -14677,7 +14701,6 @@
       "MatrixContent": {
         "required": [
           "levels",
-          "blocks",
           "competencies",
           "blockWeights",
           "requirements"
@@ -14688,12 +14711,6 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/MatrixLevel"
-            }
-          },
-          "blocks": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MatrixBlock"
             }
           },
           "competencies": {
@@ -14722,6 +14739,16 @@
             "items": {
               "$ref": "#/components/schemas/MatrixSharedBlock"
             }
+          },
+          "blocks": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MatrixBlock"
+            },
+            "description": "Deprecated, removed in the next major version: a version has no blocks of its own; ignored in requests, always empty in responses."
           }
         }
       },
@@ -15064,7 +15091,6 @@
           "NoLevels",
           "LevelWithoutRequirements",
           "BlockWeights",
-          "CriticalWithoutScore",
           "InactiveEntry",
           "ForeignCompetency",
           "ScoreOutOfScale",
@@ -15118,12 +15144,7 @@
         "required": [
           "levelId",
           "competencyId",
-          "requiredScore",
-          "weight",
-          "isMandatory",
-          "expectedBehavior",
-          "evidenceExamples",
-          "validFrom"
+          "requiredScore"
         ],
         "type": "object",
         "properties": {
@@ -15143,29 +15164,40 @@
             "format": "int32"
           },
           "weight": {
-            "type": "number",
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses.",
             "format": "double"
           },
           "isMandatory": {
-            "type": "boolean"
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses."
           },
           "expectedBehavior": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses."
           },
           "evidenceExamples": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses."
           },
           "validFrom": {
             "type": [
               "null",
               "string"
             ],
+            "description": "Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses.",
             "format": "date"
           },
           "type": {
@@ -15315,17 +15347,13 @@
       },
       "MatrixSharedBlock": {
         "required": [
-          "blockId",
-          "isMandatory"
+          "blockId"
         ],
         "type": "object",
         "properties": {
           "blockId": {
             "type": "string",
             "format": "uuid"
-          },
-          "isMandatory": {
-            "type": "boolean"
           },
           "competencyTypes": {
             "type": [
