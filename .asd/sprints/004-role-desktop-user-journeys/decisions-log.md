@@ -200,3 +200,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-20 — route Task 39: standard, dispatch HEAD (после этого коммита)
 - 2026-10-20 — Task 39 код COMPLETED (3078f03): без категорий в SPA, перенаправление /desk/drafts/category/:id, окно блока 768 px. Flagged choices приняты оркестратором (CatalogKind без Category; отступ 2 × token.margin). Gate: typecheck web красный только в тестах (catalogRoutes.test.ts, catalogueTables.test.tsx, columnFilterWiring.test.tsx) — по риску плана tester-цепочка восстановления компиляции
 - 2026-10-20 — route Task 39 test-compile: standard (asd-tester, только тесты), dispatch HEAD 3078f03
+- 2026-10-20 — Task 39 test-compile COMPLETED (ee0b793): компиляция тестов восстановлена, удалены тесты, чьим предметом была таблица категорий; 8 падений во время выполнения (переименование «Область», страницы треков, категории) — на impl-test
+- 2026-10-20 — impl completion gate (после Task 35–39): dotnet build Release 0/0, web lint/build/check:api чисто; все задачи плана отмечены
