@@ -35,8 +35,12 @@ import {
   typeLabelOf,
 } from "./deskTexts";
 import type { InvitationResend } from "./useResendInvitation";
+import "./scenario.css";
 
 const NUMBER = new Intl.NumberFormat("ru-RU");
+const AGE_WIDTH = "calc(var(--ant-control-height) * 4)";
+const LINK_TERM_WIDTH = "calc(var(--ant-control-height) * 5)";
+const ACTIONS_WIDTH = "calc(var(--ant-control-height) * 6)";
 function usePanelStyle(): CSSProperties {
   const { token } = antdTheme.useToken();
   return {
@@ -207,7 +211,8 @@ function GroupRows({
         columns={columnsOf(group, resend)}
         dataSource={items}
         pagination={false}
-        scroll={{ x: "max-content" }}
+        tableLayout="fixed"
+        className="desk-table"
       />
       {more.isError && !more.data && (
         <div style={footerStyle}>
@@ -292,6 +297,8 @@ function columnsOf(
     columns.push({
       key: "age",
       title: "Давность",
+      width: AGE_WIDTH,
+      className: "desk-nowrap",
       render: (_, item) => <AgeCell item={item} />,
     });
   }
@@ -299,6 +306,8 @@ function columnsOf(
     columns.push({
       key: "link",
       title: "Срок ссылки",
+      width: LINK_TERM_WIDTH,
+      className: "desk-nowrap",
       render: (_, item) => <LinkTermCell item={item} />,
     });
   }
@@ -306,6 +315,8 @@ function columnsOf(
     columns.push({
       key: "actions",
       title: "Действия",
+      width: ACTIONS_WIDTH,
+      className: "desk-nowrap",
       render: (_, item) => <ActionsCell item={item} resend={resend} />,
     });
   }

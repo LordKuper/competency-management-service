@@ -31,7 +31,7 @@ export function CascadeTable({ entries }: CascadeTableProps) {
       columns={COLUMNS}
       dataSource={[...entries]}
       pagination={false}
-      scroll={{ x: "max-content" }}
+      className="desk-table"
     />
   );
 }

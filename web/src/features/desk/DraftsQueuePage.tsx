@@ -288,7 +288,7 @@ function DraftRecord({ draft, position, total, headingRef }: DraftRecordProps) {
               dataSource={matrices.data}
               loading={matrices.isFetching}
               pagination={false}
-              scroll={{ x: "max-content" }}
+              className="desk-table"
               locale={{
                 emptyText:
                   "Записью пока не пользуется ни одна матрица, доступная вам.",

@@ -423,7 +423,7 @@ function CompetenciesBody({
             columns={columns}
             dataSource={list.data?.items}
             loading={list.isFetching}
-            scroll={{ x: "max-content" }}
+            className="desk-table"
             rowClassName={(row) =>
               row.id === highlightedId ? "queue-row-selected" : ""
             }

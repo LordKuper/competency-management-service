@@ -91,3 +91,13 @@
   max-width: 100%;
   margin-inline: auto;
 }
+
+/* Desk tables never scroll sideways: long names and reasons wrap, the narrow columns stay on one line. */
+.desk-table .ant-table-cell {
+  overflow-wrap: anywhere;
+}
+
+.desk-table .desk-nowrap {
+  overflow-wrap: normal;
+  white-space: nowrap;
+}

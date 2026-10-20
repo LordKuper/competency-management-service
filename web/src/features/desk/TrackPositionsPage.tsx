@@ -282,7 +282,7 @@ function LevelsTable({ levels, canEdit, onUnlink }: LevelsTableProps) {
       columns={columns}
       dataSource={[...levels]}
       pagination={false}
-      scroll={{ x: "max-content" }}
+      className="desk-table"
       rowClassName={(level) =>
         level.hasActivePosition ? "" : "level-row-missing"
       }
@@ -396,7 +396,7 @@ function AvailablePositions({
             columns={columns}
             dataSource={available.data?.items}
             loading={available.isFetching}
-            scroll={{ x: "max-content" }}
+            className="desk-table"
             pagination={false}
             locale={{
               emptyText: q

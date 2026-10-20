@@ -162,7 +162,7 @@ export function CompletenessBlock({
         columns={columns}
         dataSource={[...problems]}
         pagination={false}
-        scroll={{ x: "max-content" }}
+        className="desk-table"
       />
     </Flex>
   );

@@ -74,7 +74,7 @@ export function ChangesBlock({
       columns={columns}
       dataSource={rows}
       pagination={false}
-      scroll={{ x: "max-content" }}
+      className="desk-table"
       rowClassName={({ change }) => `change-row-${change.type.toLowerCase()}`}
       locale={{
         emptyText: (
