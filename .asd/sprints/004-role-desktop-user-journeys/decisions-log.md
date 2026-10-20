@@ -236,3 +236,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-20 — route Task 52: critical, dispatch HEAD (после этого коммита)
 - 2026-10-20 — Task 52 COMPLETED (5b3c19b, ab77d84, 6d1d362, 4905adb): требование = балл, без собственных блоков, evidenceExamples у компетенции, миграция RequirementIsScore; все gate зелёные. Flagged choices приняты оркестратором, кроме (5): имя блока при миграции длиннее 200 символов роняет миграцию — укоротить с сохранением уникальности (Task 52 name-fix, critical: migration)
 - 2026-10-20 — route Task 53: standard; Task 52 name-fix: critical
+- 2026-10-20 — Task 52 name-fix COMPLETED (ce167b7): имена мигрированных блоков укладываются в 200 символов с сохранением уникальности
