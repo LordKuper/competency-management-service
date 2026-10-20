@@ -58,7 +58,7 @@ import type { StepProps } from "./builderStep";
 
 /** Step 2: the shared blocks and competencies of the matrix, chosen from the catalogues or created as drafts on the spot. */
 export function BuilderCompetenciesStep(props: StepProps) {
-  const { base, noteSaveFailure } = useEditBase(props.version);
+  const { base, noteSaveFailure, rebase } = useEditBase(props.version);
   const [highlightedBlockId, setHighlightedBlockId] = useState<string>();
   const [leftover, setLeftover] = useState<AttachFailure>();
   return (
@@ -79,7 +79,8 @@ export function BuilderCompetenciesStep(props: StepProps) {
         base={base ?? props.version}
         noteSaveFailure={noteSaveFailure}
         highlightedBlockId={highlightedBlockId}
-        onBlockAttached={(id) => {
+        onBlockAttached={(id, saved) => {
+          rebase(saved);
           setLeftover(undefined);
           setHighlightedBlockId(id);
         }}
@@ -100,7 +101,8 @@ interface CompetenciesBodyProps extends StepProps {
   noteSaveFailure: (error: unknown) => void;
   /** The block created last, whose row stands out. */
   highlightedBlockId?: string;
-  onBlockAttached: (blockId: string) => void;
+  /** Called once the block is in the saved version, which the step is then based on. */
+  onBlockAttached: (blockId: string, saved: MatrixVersion) => void;
   onAttachFailed: (block: CompetencyBlock, error: unknown) => void;
 }
 
@@ -270,7 +272,7 @@ function CompetenciesBody({
       ),
     onSuccess: (saved, block) => {
       queryClient.setQueryData(matrixVersionQuery(saved.id).queryKey, saved);
-      onBlockAttached(block.id);
+      onBlockAttached(block.id, saved);
     },
     onError: (error, block) => {
       noteSaveFailure(error);

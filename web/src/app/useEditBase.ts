@@ -12,7 +12,8 @@ export function isStaleVersion(error: unknown) {
  * The record an edit form is based on. It stays as it was when the dialog opened, whatever the cache refetches in the
  * background, so unsaved input is never replaced and the version sent with a save is the one the form was built from.
  * It moves to the latest record only after a save was refused for a stale version and the cache then delivered a
- * newer one; the caller reports each failed save through `noteSaveFailure`.
+ * newer one; the caller reports each failed save through `noteSaveFailure`. A save that keeps the form open moves the
+ * base to the record it returned through `rebase`, so the next save does not send the version before it.
  */
 export function useEditBase<TRecord extends { version: number }>(
   latest: TRecord | undefined,
@@ -31,5 +32,5 @@ export function useEditBase<TRecord extends { version: number }>(
     }
   }
 
-  return { base, noteSaveFailure };
+  return { base, noteSaveFailure, rebase: setBase };
 }
