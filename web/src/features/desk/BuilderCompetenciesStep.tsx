@@ -13,6 +13,7 @@ import {
   Typography,
 } from "antd";
 import { useEffect, useState } from "react";
+import { ApiError } from "../../api/ApiError";
 import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { TruncationNote } from "../../app/TruncationNote";
@@ -46,6 +47,7 @@ import {
   compositionChanges,
   compositionsOf,
   scaleNameOf,
+  versionCompetencyIds,
 } from "../career/matrixGroups";
 import { AddBlockModal } from "./AddBlockModal";
 import {
@@ -70,7 +72,7 @@ export function BuilderCompetenciesStep(props: StepProps) {
           closable
           onClose={() => setLeftover(undefined)}
           title={`Блок «${leftover.block.name}» создан черновиком, но к версии не подключён`}
-          description={`${describeApiError(leftover.error)} Подключите его кнопкой «Добавить общий блок».`}
+          description={`${failureText(leftover.error)} Подключите его кнопкой «Добавить общий блок».`}
         />
       )}
       <CompetenciesBody
@@ -88,6 +90,18 @@ export function BuilderCompetenciesStep(props: StepProps) {
       />
     </Flex>
   );
+}
+
+/** A created block whose competencies the version already holds, found before it was attached. */
+class BlockOverlapError extends Error {}
+
+/** The reason an attach failed, in words: the server's own for a refused content, else the common explanation. */
+function failureText(error: unknown): string {
+  if (error instanceof BlockOverlapError) return error.message;
+  const reasons = error instanceof ApiError ? error.errors?.content : undefined;
+  return reasons && reasons.length > 0
+    ? reasons.join(" ")
+    : describeApiError(error);
 }
 
 /** A block created in the wizard that the version could not take, kept so the user is told where it stands. */
@@ -254,8 +268,17 @@ function CompetenciesBody({
     onSettled: () => invalidateMatrices(queryClient),
   });
   const attach = useMutation({
-    mutationFn: (block: CompetencyBlock) =>
-      saveMatrixContent(
+    mutationFn: (block: CompetencyBlock) => {
+      const held = new Set([...versionCompetencyIds(version), ...chosen]);
+      const repeated = block.competencies.find((item) => held.has(item.id));
+      if (repeated) {
+        return Promise.reject(
+          new BlockOverlapError(
+            `Компетенция «${repeated.name}» уже входит в версию.`,
+          ),
+        );
+      }
+      return saveMatrixContent(
         base,
         withSharedBlocks(
           withChosenCompetencies(
@@ -269,7 +292,8 @@ function CompetenciesBody({
             [block.id, block.competencies.map((item) => item.id)],
           ]),
         ),
-      ),
+      );
+    },
     onSuccess: (saved, block) => {
       queryClient.setQueryData(matrixVersionQuery(saved.id).queryKey, saved);
       onBlockAttached(block.id, saved);
@@ -473,6 +497,7 @@ function CompetenciesBody({
       {isCreatingBlock && unit && (
         <BlockModal
           fixedScope={unit}
+          takenIds={new Set([...chosen, ...brought.keys()])}
           onSaved={(created) => attach.mutate(created)}
           onClose={() => setIsCreatingBlock(false)}
         />

@@ -64,6 +64,8 @@ interface BlockModalProps {
   block?: CompetencyBlock;
   /** The unit a new block is for when the user has no choice of it, as in the wizard; the block is then a draft for it. */
   fixedScope?: { id: string; name: string };
+  /** Competencies that cannot join the block because the version it is made for holds them already. */
+  takenIds?: ReadonlySet<string>;
   /** Called with the block a save produced, as the dialog closes. */
   onSaved?: (saved: CompetencyBlock) => void;
   onClose: () => void;
@@ -73,6 +75,7 @@ interface BlockModalProps {
 export function BlockModal({
   block: latest,
   fixedScope,
+  takenIds,
   onSaved,
   onClose,
 }: BlockModalProps) {
@@ -113,6 +116,7 @@ export function BlockModal({
         key={block?.version}
         block={block}
         fixedScope={fixedScope}
+        takenIds={takenIds}
         onSubmit={(values) => save.mutateAsync(values)}
         onCancel={onClose}
       />
@@ -123,11 +127,18 @@ export function BlockModal({
 interface BlockFormProps {
   block?: CompetencyBlock;
   fixedScope?: { id: string; name: string };
+  takenIds?: ReadonlySet<string>;
   onSubmit: (values: BlockFormValues) => Promise<unknown>;
   onCancel: () => void;
 }
 
-function BlockForm({ block, fixedScope, onSubmit, onCancel }: BlockFormProps) {
+function BlockForm({
+  block,
+  fixedScope,
+  takenIds,
+  onSubmit,
+  onCancel,
+}: BlockFormProps) {
   const [form] = Form.useForm<BlockFormValues>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
   const rights = useCatalogRights();
@@ -224,7 +235,7 @@ function BlockForm({ block, fixedScope, onSubmit, onCancel }: BlockFormProps) {
         </Form.Item>
       )}
       <Form.Item name="competencyIds" label="Состав">
-        <CompetencyPicker onDraftsSeen={noteDrafts} />
+        <CompetencyPicker onDraftsSeen={noteDrafts} takenIds={takenIds} />
       </Form.Item>
       <DraftMemberNotice
         form={form}
@@ -263,6 +274,8 @@ interface CompetencyPickerProps {
   /** Supplied by the form item. */
   value?: string[];
   onChange?: (value: string[]) => void;
+  /** Competencies the version holds already: listed, off, with the reason. */
+  takenIds?: ReadonlySet<string>;
   /** Told which of the competencies listed are drafts. */
   onDraftsSeen: (ids: readonly string[]) => void;
 }
@@ -274,6 +287,7 @@ interface CompetencyPickerProps {
 function CompetencyPicker({
   value = [],
   onChange,
+  takenIds,
   onDraftsSeen,
 }: CompetencyPickerProps) {
   const { token } = theme.useToken();
@@ -305,7 +319,14 @@ function CompetencyPicker({
   }
 
   const columns: TableColumnsType<Competency> = [
-    { title: "Компетенция", dataIndex: "name" },
+    {
+      title: "Компетенция",
+      key: "name",
+      render: (_, competency) =>
+        takenIds?.has(competency.id)
+          ? `${competency.name} · уже в версии`
+          : competency.name,
+    },
     { title: "Шкала", dataIndex: "scaleName" },
     {
       title: "Статус",
@@ -352,9 +373,14 @@ function CompetencyPicker({
           scroll={{ y: token.controlHeight * LIST_HEIGHT_IN_CONTROLS }}
           rowSelection={{
             selectedRowKeys: value,
+            getCheckboxProps: (row) => ({
+              disabled: takenIds?.has(row.id) === true,
+            }),
             onSelect: (row, isChosen) => toggle(row.id, isChosen),
             onSelectAll: (isChosen, _rows, changed) => {
-              const ids = changed.map((row) => row.id);
+              const ids = changed
+                .map((row) => row.id)
+                .filter((id) => !takenIds?.has(id));
               onChange?.(
                 isChosen
                   ? [...new Set([...value, ...ids])]

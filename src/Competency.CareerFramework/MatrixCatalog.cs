@@ -66,6 +66,10 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         {
             problem = UnavailableBlockMessage(unavailable);
         }
+        else if (NewDuplicate(content, previous, entries) is { } duplicate)
+        {
+            problem = $"Компетенция «{entries.CompetencyName(duplicate)}» уже входит в версию";
+        }
         else if (content.Requirements.Any(requirement => !entries.Includes(requirement.CompetencyId)
                      && !previousRequirements.Contains((requirement.LevelId, requirement.CompetencyId))))
         {
@@ -187,6 +191,26 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
                 .OfType<CompetencyScale>()
                 .DistinctBy(scale => scale.Id)
                 .Select(ScaleEntryOf)]);
+    }
+
+    /// <summary>
+    /// A competency the saved content holds twice where at least one of the two places is new: an own or outside competency not in the
+    /// previous content, or a shared block it did not include. A duplicate already there stays a completeness problem.
+    /// </summary>
+    private static Guid? NewDuplicate(MatrixContent content, MatrixContent previous, LoadedEntries entries)
+    {
+        var sharedNow = content.SharedBlocks.Select(block => block.BlockId).ToHashSet();
+        var sharedBefore = previous.SharedBlocks.Select(block => block.BlockId).ToHashSet();
+        var ownBefore = previous.Competencies.Select(item => item.CompetencyId).ToHashSet();
+        bool IsNew(MatrixCompetency item) => item.BlockId is { } blockId && sharedNow.Contains(blockId)
+            ? !sharedBefore.Contains(blockId)
+            : !ownBefore.Contains(item.CompetencyId);
+
+        return entries.Set
+            .GroupBy(item => item.CompetencyId)
+            .Where(group => group.Count() > 1 && group.Any(IsNew))
+            .Select(group => (Guid?)group.Key)
+            .FirstOrDefault();
     }
 
     private static string UnavailableBlockMessage(CompetencyBlock block) => $"Общий блок «{block.Name}» недоступен подразделению матрицы";
