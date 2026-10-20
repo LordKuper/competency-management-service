@@ -493,7 +493,7 @@ export async function deleteEntry(
 ) {
   return unwrap(
     await api.DELETE(
-      `/api/v1/career/${segment}/{id}` as "/api/v1/career/categories/{id}",
+      `/api/v1/career/${segment}/{id}` as "/api/v1/career/directions/{id}",
       {
         params: {
           path: { id: entry.id },

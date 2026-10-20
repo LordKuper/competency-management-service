@@ -114,7 +114,7 @@ interface GridRow {
 export interface CompetencyInfo {
   name: string;
   type: CompetencyType;
-  categoryName?: string;
+  categoryName?: string | null;
   scaleId?: string | null;
   scaleName?: string;
 }

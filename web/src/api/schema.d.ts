@@ -1099,105 +1099,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Deprecated, removed in the next major version: competencies have no category. */
         get: operations["ListCompetencyCategories"];
         put?: never;
+        /** @description Deprecated, removed in the next major version: competencies have no category. */
         post: operations["CreateCompetencyCategory"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/career/categories/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["GetCompetencyCategory"];
-        put: operations["UpdateCompetencyCategory"];
-        post?: never;
-        delete: operations["DeleteCompetencyCategory"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/career/categories/{id}/matrices": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["ListCompetencyCategoryMatrices"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/career/categories/{id}/approve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["ApproveCompetencyCategory"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/career/categories/{id}/deactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["DeactivateCompetencyCategory"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/career/categories/{id}/activate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["ActivateCompetencyCategory"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/career/categories/{id}/publication": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["GetCompetencyCategoryPublication"];
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2065,7 +1971,10 @@ export interface components {
             version: number;
             readiness?: null | components["schemas"]["TrackReadinessResponse"];
         };
-        /** @enum {unknown} */
+        /**
+         * @description Category is deprecated and removed in the next major version: competencies have no category, so no entry is of that kind.
+         * @enum {unknown}
+         */
         CatalogEntryKind: "Direction" | "Track" | "Category" | "Competency" | "Scale" | "Block";
         CatalogEntryResponse: {
             /** Format: uuid */
@@ -2108,8 +2017,11 @@ export interface components {
         };
         CompetencyRequest: {
             description: null | string;
-            /** Format: uuid */
-            categoryId: string;
+            /**
+             * Format: uuid
+             * @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.
+             */
+            categoryId?: null | string;
             /** Format: uuid */
             directionId: null | string;
             type: components["schemas"]["CompetencyType"];
@@ -2122,9 +2034,13 @@ export interface components {
             id: string;
             name: string;
             description: null | string;
-            /** Format: uuid */
-            categoryId: string;
-            categoryName: string;
+            /**
+             * Format: uuid
+             * @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.
+             */
+            categoryId: null | string;
+            /** @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses. */
+            categoryName: null | string;
             /** Format: uuid */
             directionId: null | string;
             directionName: null | string;
@@ -2165,8 +2081,11 @@ export interface components {
             number: number;
             name: string;
             description: null | string;
-            /** Format: uuid */
-            categoryId: string;
+            /**
+             * Format: uuid
+             * @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.
+             */
+            categoryId: null | string;
             /** Format: uuid */
             directionId: null | string;
             type: components["schemas"]["CompetencyType"];
@@ -2306,7 +2225,7 @@ export interface components {
          *     Member names are sent in the API, so renaming one changes it; a new member also needs its place in the desk's rules.
          * @enum {unknown}
          */
-        DeskKind: "VersionReturned" | "VersionNotSubmitted" | "VersionAwaitsHeadApproval" | "VersionAwaitsHrApproval" | "MatrixLevelsChanged" | "MatrixUsesInactive" | "MatrixCompetencyChanged" | "MatrixSharedBlockChanged" | "OwnVersionInApproval" | "VersionStuckAtHead" | "UnitWithoutMatrix" | "ResponsibleUnitWithoutMatrix" | "UnitWithoutHead" | "ResponsibleUnitWithoutHead" | "UnitWithoutHr" | "UnitWithoutPositions" | "HeadWithoutAccount" | "HeadAccountInvited" | "HeadAccountBlocked" | "EmptyUnit" | "DraftAwaitsApproval" | "TrackWithoutLevels" | "TrackWithOneLevel" | "TrackWithoutPositions" | "LevelWithoutPosition" | "OwnDraftAwaitsApproval" | "UnusedCompetency" | "UnusedScale" | "UnusedCategory" | "DirectionWithoutTracks" | "PositionWithoutTrack" | "InactivePositionInUse" | "UnusedPosition" | "PositionOutsideList" | "NoTrackForPosition" | "AccountWithoutEmployee" | "InvitationNotAccepted";
+        DeskKind: "VersionReturned" | "VersionNotSubmitted" | "VersionAwaitsHeadApproval" | "VersionAwaitsHrApproval" | "MatrixLevelsChanged" | "MatrixUsesInactive" | "MatrixCompetencyChanged" | "MatrixSharedBlockChanged" | "OwnVersionInApproval" | "VersionStuckAtHead" | "UnitWithoutMatrix" | "ResponsibleUnitWithoutMatrix" | "UnitWithoutHead" | "ResponsibleUnitWithoutHead" | "UnitWithoutHr" | "UnitWithoutPositions" | "HeadWithoutAccount" | "HeadAccountInvited" | "HeadAccountBlocked" | "EmptyUnit" | "DraftAwaitsApproval" | "TrackWithoutLevels" | "TrackWithOneLevel" | "TrackWithoutPositions" | "LevelWithoutPosition" | "OwnDraftAwaitsApproval" | "UnusedCompetency" | "UnusedScale" | "DirectionWithoutTracks" | "PositionWithoutTrack" | "InactivePositionInUse" | "UnusedPosition" | "PositionOutsideList" | "NoTrackForPosition" | "AccountWithoutEmployee" | "InvitationNotAccepted";
         /** @enum {unknown} */
         DeskLinkState: "Expired" | "ExpiringSoon" | "Revoked" | null;
         /** @description A record a desk finding is about or names, with what the desk shows of it. */
@@ -2327,7 +2246,7 @@ export interface components {
          * @description The kinds of records desk findings are about or name. Member names are sent in the API, so renaming one changes it.
          * @enum {unknown}
          */
-        DeskObjectType: "Matrix" | "MatrixVersion" | "OrgUnit" | "Track" | "Level" | "Direction" | "Category" | "Competency" | "Scale" | "Block" | "Position" | "Employee" | "UserAccount";
+        DeskObjectType: "Matrix" | "MatrixVersion" | "OrgUnit" | "Track" | "Level" | "Direction" | "Competency" | "Scale" | "Block" | "Position" | "Employee" | "UserAccount";
         DeskReasonResponse: {
             kind: components["schemas"]["DeskKind"];
             /** Format: date-time */
@@ -2475,9 +2394,13 @@ export interface components {
             id: string;
             name: string;
             description: null | string;
-            /** Format: uuid */
-            categoryId: string;
-            categoryName: string;
+            /**
+             * Format: uuid
+             * @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.
+             */
+            categoryId: null | string;
+            /** @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses. */
+            categoryName: null | string;
             /** Format: uuid */
             directionId: null | string;
             type: components["schemas"]["CompetencyType"];
@@ -3056,7 +2979,7 @@ export interface components {
             context: null | string;
         };
         /** @enum {unknown} */
-        PublicationEntryKind: "Direction" | "Track" | "Level" | "Category" | "Competency" | "Scale" | "Block";
+        PublicationEntryKind: "Direction" | "Track" | "Level" | "Competency" | "Scale" | "Block";
         PublicationPreviewResponse: {
             entries: components["schemas"]["PublicationEntry"][];
             blockers: components["schemas"]["PublicationBlocker"][];
@@ -8787,83 +8710,8 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CatalogNameRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CatalogEntryResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    GetCompetencyCategory: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CatalogEntryResponse"];
-                };
-            };
             /** @description Unauthorized */
             401: {
                 headers: {
@@ -8873,551 +8721,8 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    UpdateCompetencyCategory: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
-                "If-Match": string;
-            };
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CatalogNameRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CatalogEntryResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Precondition Failed */
-            412: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Precondition Required */
-            428: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    DeleteCompetencyCategory: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
-                "If-Match": string;
-            };
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["DeletionRefusal"];
-                };
-            };
-            /** @description Precondition Failed */
-            412: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Precondition Required */
-            428: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    ListCompetencyCategoryMatrices: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EntryMatrixResponse"][];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    ApproveCompetencyCategory: {
-        parameters: {
-            query?: {
-                cascade?: string;
-            };
-            header: {
-                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
-                "If-Match": string;
-            };
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CatalogEntryResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["PublicationRefusal"];
-                };
-            };
-            /** @description Precondition Failed */
-            412: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["PublicationChanged"];
-                };
-            };
-            /** @description Precondition Required */
-            428: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    DeactivateCompetencyCategory: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
-                "If-Match": string;
-            };
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CatalogEntryResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Precondition Failed */
-            412: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Precondition Required */
-            428: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    ActivateCompetencyCategory: {
-        parameters: {
-            query?: {
-                cascade?: string;
-            };
-            header: {
-                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
-                "If-Match": string;
-            };
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CatalogEntryResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["PublicationRefusal"];
-                };
-            };
-            /** @description Precondition Failed */
-            412: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["PublicationChanged"];
-                };
-            };
-            /** @description Precondition Required */
-            428: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    GetCompetencyCategoryPublication: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PublicationPreviewResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
+            /** @description Gone */
+            410: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9435,6 +8740,7 @@ export interface operations {
                 inWork?: boolean;
                 page?: number;
                 pageSize?: number;
+                /** @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses. */
                 categoryId?: string;
                 directionId?: string;
                 withGeneral?: boolean;

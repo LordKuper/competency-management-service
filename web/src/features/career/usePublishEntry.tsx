@@ -52,7 +52,6 @@ export const KIND_LABELS: Record<PublicationEntry["kind"], string> = {
   Direction: "Область",
   Track: "Трек",
   Level: "Уровень",
-  Category: "Категория",
   Competency: "Компетенция",
   Scale: "Шкала",
   Block: "Общий блок",

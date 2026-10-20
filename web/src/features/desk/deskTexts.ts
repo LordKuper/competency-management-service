@@ -151,7 +151,6 @@ const TYPE_LABELS: Record<DeskObject["type"], string> = {
   Track: "Трек",
   Level: "Уровень",
   Direction: "Область",
-  Category: "Категория",
   Competency: "Компетенция",
   Scale: "Шкала",
   Block: "Общий блок",
@@ -163,7 +162,6 @@ const TYPE_LABELS: Record<DeskObject["type"], string> = {
 const DRAFT_KINDS: Partial<Record<DeskObject["type"], string>> = {
   Direction: "direction",
   Track: "track",
-  Category: "category",
   Competency: "competency",
   Scale: "scale",
   Block: "block",
@@ -416,8 +414,6 @@ function reasonOf(reason: DeskReason, item: DeskItem): ReasonLine[] {
       return [{ text: "Компетенция нигде не используется" }];
     case "UnusedScale":
       return [{ text: "Шкала нигде не используется" }];
-    case "UnusedCategory":
-      return [{ text: "Категория нигде не используется" }];
     case "DirectionWithoutTracks":
       return [{ text: "У области нет треков" }];
     case "InactivePositionInUse":
