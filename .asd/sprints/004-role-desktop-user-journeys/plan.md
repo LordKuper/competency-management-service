@@ -278,7 +278,7 @@ Material risk: change: public contract, change: migration
 
 ### Task 46: UX — тип компетенции в матрице
 Material risk: none
-- [ ] `docs/ux/career-framework.html`, `docs/ux/desk.html`: окно и таблица компетенций без типа; тип в мастере и редакторе матрицы для каждой компетенции, включая общие блоки (AC-55)
+- [x] `docs/ux/career-framework.html`, `docs/ux/desk.html`: окно и таблица компетенций без типа; тип в мастере и редакторе матрицы для каждой компетенции, включая общие блоки (AC-55)
 
 ### Task 47: Бэкенд — тип компетенции в матрице
 Material risk: change: public contract, change: migration
