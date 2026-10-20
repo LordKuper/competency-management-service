@@ -1,13 +1,19 @@
+using System.ComponentModel;
+
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The fields of a new competency or of a change of one; every field but the scale must be sent, an absent value as null.
+/// The fields of a new competency or of a change of one; every field but the scale and the category must be sent, an absent value as null.
 /// </summary>
 internal record CompetencyRequest : CatalogNameRequest
 {
     public required string? Description { get; init; }
 
-    public required Guid CategoryId { get; init; }
+    /// <summary>
+    /// Accepted and not read: competencies have no category.
+    /// </summary>
+    [Description(CompetencyResponse.DeprecatedCategory)]
+    public Guid? CategoryId { get; init; }
 
     /// <summary>
     /// The direction whose matrices may use the competency; null for a general competency.
@@ -43,7 +49,6 @@ internal record CompetencyRequest : CatalogNameRequest
     {
         competency.Name = TrimmedName();
         competency.Description = OptionalText(Description);
-        competency.CategoryId = CategoryId;
         competency.DirectionId = DirectionId;
         competency.Type = Type;
         competency.ScaleId = scaleId;

@@ -10,9 +10,8 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// The API that lists the matrix versions using a catalogue entry: of the matrices of a direction or track, of the matrices listing a
-/// level, a shared block, a competency, directly or through a shared block, or a competency of a category, and the versions on a scale,
-/// their own or a shared block's. Archived versions are left out. Only the versions the
-/// user may read are listed, so a hidden version is neither named nor counted; an entry the user cannot read answers 404.
+/// level, a shared block or a competency, directly or through a shared block, and the versions with a competency on a scale. Archived
+/// versions are left out. Only the versions the user may read are listed, so a hidden version is neither named nor counted; an entry the user cannot read answers 404.
 /// </summary>
 internal static class EntryMatrixEndpoints
 {
@@ -83,7 +82,6 @@ internal static class EntryMatrixEndpoints
             CareerDirection => versions.Where(version => version.Matrix.DirectionId == id),
             CareerTrack => versions.Where(version => version.Matrix.TrackId == id),
             CompetencyScale scale => store.VersionsOn(scale),
-            CompetencyCategory category => InMatrices(versions, store.MatricesUsingCategory(category)),
             CareerLevel or CareerCompetency or CompetencyBlock => InMatrices(versions, store.MatricesUsing(entry)),
             _ => throw new UnreachableException($"No matrix versions use entries of type {entry.GetType().Name}."),
         };

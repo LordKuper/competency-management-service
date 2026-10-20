@@ -122,7 +122,6 @@ internal sealed class CareerMail(
     {
         CatalogEntryKind.Direction => "область",
         CatalogEntryKind.Track => "трек",
-        CatalogEntryKind.Category => "категория",
         CatalogEntryKind.Competency => "компетенция",
         CatalogEntryKind.Scale => "шкала",
         CatalogEntryKind.Block => "общий блок",

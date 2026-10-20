@@ -12,7 +12,6 @@ internal enum PublicationEntryKind
     Direction,
     Track,
     Level,
-    Category,
     Competency,
     Scale,
     Block,

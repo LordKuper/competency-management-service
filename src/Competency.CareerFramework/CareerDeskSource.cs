@@ -214,7 +214,6 @@ internal sealed class CareerDeskSource(
             .AsNoTracking()
             .Where(competency => competency.Status == CatalogStatus.Draft || competencyIds.Contains(competency.Id))
             .ToDictionaryAsync(competency => competency.Id, cancellationToken);
-        var categories = await context.Set<CompetencyCategory>().AsNoTracking().Where(category => category.Status == CatalogStatus.Draft).ToListAsync(cancellationToken);
         var scales = await context.Set<CompetencyScale>().AsNoTracking().Where(scale => scale.Status == CatalogStatus.Draft).ToListAsync(cancellationToken);
         var blocks = await context.Set<CompetencyBlock>()
             .AsNoTracking()
@@ -224,7 +223,6 @@ internal sealed class CareerDeskSource(
             [
                 .. Visible(directions.Values.Where(IsDraft), viewer),
                 .. Visible(tracks.Select(row => row.Track).Where(IsDraft), viewer),
-                .. Visible(categories, viewer),
                 .. Visible(competencies.Values.Where(IsDraft), viewer),
                 .. Visible(scales, viewer),
                 .. Visible(blocks.Values.Where(IsDraft), viewer),

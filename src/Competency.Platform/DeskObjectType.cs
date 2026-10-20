@@ -39,11 +39,6 @@ public enum DeskObjectType
     Direction,
 
     /// <summary>
-    /// A competency category.
-    /// </summary>
-    Category,
-
-    /// <summary>
     /// A competency.
     /// </summary>
     Competency,

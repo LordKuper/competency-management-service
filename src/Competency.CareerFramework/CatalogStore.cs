@@ -286,46 +286,12 @@ internal sealed class CatalogStore(
         """);
 
     /// <summary>
-    /// The matrices that list a competency of the category, as <see cref="MatricesUsing"/> finds the matrices of one competency; a
-    /// published snapshot counts by the category the competency had then.
-    /// </summary>
-    /// <param name="category">The category.</param>
-    /// <returns>The matrices, a query to compose with others.</returns>
-    public IQueryable<CompetencyMatrix> MatricesUsingCategory(CompetencyCategory category)
-    {
-        var id = category.Id;
-        var matrixIds = context.Database.SqlQuery<Guid>($"""
-            SELECT v.matrix_id AS "Value" FROM matrix_versions v
-            WHERE v.snapshot -> 'competencies' @> jsonb_build_array(jsonb_build_object('categoryId', {id}::text))
-                OR EXISTS (
-                    SELECT 1 FROM competencies c
-                    WHERE c.category_id = {id}
-                        AND (v.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', c.id::text))
-                            OR EXISTS (
-                                SELECT 1 FROM matrix_version_variants variant
-                                WHERE variant.version_id = v.id
-                                    AND variant.content -> 'competencies' @> jsonb_build_array(jsonb_build_object('competencyId', c.id::text)))))
-                OR EXISTS (
-                    SELECT 1 FROM competencies c
-                    JOIN competency_blocks b ON b.competency_ids @> jsonb_build_array(c.id::text)
-                    WHERE c.category_id = {id}
-                        AND (v.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text))
-                            OR EXISTS (
-                                SELECT 1 FROM matrix_version_variants variant
-                                WHERE variant.version_id = v.id
-                                    AND variant.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text)))))
-            """);
-        return context.Set<CompetencyMatrix>().Where(matrix => matrixIds.Contains(matrix.Id));
-    }
-
-    /// <summary>
     /// The active entries nothing uses, the one definition every list of them shares: competencies no matrix version, variant or
     /// published snapshot lists, directly or in the composition of a shared block a version or variant includes; scales other than the
-    /// default that no competency is on, in its current version or in its history; categories no competency is of and no published
-    /// snapshot names; directions without tracks.
+    /// default that no competency is on, in its current version or in its history; directions without tracks.
     /// </summary>
     /// <param name="cancellationToken">Cancels the queries.</param>
-    /// <returns>The competencies, then the scales, categories and directions, each in name order.</returns>
+    /// <returns>The competencies, then the scales and directions, each in name order.</returns>
     public async Task<List<CatalogEntry>> UnusedEntriesAsync(CancellationToken cancellationToken)
     {
         var usedCompetencyIds = context.Database.SqlQuery<Guid>($"""
@@ -340,9 +306,6 @@ internal sealed class CatalogStore(
                     SELECT 1 FROM matrix_version_variants variant
                     WHERE variant.content -> 'sharedBlocks' @> jsonb_build_array(jsonb_build_object('blockId', b.id::text)))
             """);
-        var snapshotCategoryIds = context.Database.SqlQuery<Guid>($"""
-            SELECT (item ->> 'categoryId')::uuid AS "Value" FROM matrix_versions, jsonb_array_elements(snapshot -> 'competencies') AS item
-            """);
         var competencies = context.Set<CareerCompetency>();
         var tracks = context.Set<CareerTrack>();
         var competencyVersions = context.Set<CompetencyVersion>();
@@ -353,10 +316,6 @@ internal sealed class CatalogStore(
                 context.Set<CompetencyScale>().Where(scale => !scale.IsDefault
                     && !competencies.Any(competency => competency.ScaleId == scale.Id)
                     && !competencyVersions.Any(version => version.ScaleId == scale.Id)),
-                cancellationToken),
-            .. await ActiveByName(
-                context.Set<CompetencyCategory>().Where(category => !competencies.Any(competency => competency.CategoryId == category.Id)
-                    && !snapshotCategoryIds.Contains(category.Id)),
                 cancellationToken),
             .. await ActiveByName(context.Set<CareerDirection>().Where(direction => !tracks.Any(track => track.DirectionId == direction.Id)), cancellationToken),
         ];
@@ -439,8 +398,8 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
-    /// The names of categories, directions, scales and competencies, for showing which ones a competency or a shared block refers to;
-    /// one query for all of them.
+    /// The names of directions, scales and competencies, for showing which ones a competency or a shared block refers to; one query for
+    /// all of them.
     /// </summary>
     /// <param name="ids">The entries; nulls are skipped.</param>
     /// <param name="cancellationToken">Cancels the lookup.</param>
@@ -448,8 +407,7 @@ internal sealed class CatalogStore(
     public async Task<IReadOnlyDictionary<Guid, string>> EntryNamesAsync(IEnumerable<Guid?> ids, CancellationToken cancellationToken)
     {
         var wanted = ids.OfType<Guid>().Distinct().ToList();
-        return await context.Set<CompetencyCategory>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name })
-            .Concat(context.Set<CareerDirection>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name }))
+        return await context.Set<CareerDirection>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name })
             .Concat(context.Set<CompetencyScale>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name }))
             .Concat(context.Set<CareerCompetency>().Where(entry => wanted.Contains(entry.Id)).Select(entry => new { entry.Id, entry.Name }))
             .ToDictionaryAsync(entry => entry.Id, entry => entry.Name, cancellationToken);

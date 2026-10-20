@@ -108,7 +108,6 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Gui
         CareerDirection direction => SeesEntry(direction),
         CareerTrack track => SeesEntry(track),
         CareerLevel level => SeesEntry(level),
-        CompetencyCategory category => SeesEntry(category),
         CareerCompetency competency => SeesEntry(competency),
         CompetencyScale scale => SeesEntry(scale),
         CompetencyBlock block => SeesEntry(block),

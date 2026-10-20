@@ -85,8 +85,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     /// a competency without a required score, coefficients that do not add up to 100 %, a position no longer available to the matrix
     /// unit. For both: a competency of a shared block or outside blocks without requirements, a competency in two groups, a critical
     /// requirement without a required score, an entry that is no longer usable or no longer fits the version, a shared block no longer
-    /// available to the matrix unit, or a required score the competency's scale no longer has. An inactive scale is no problem, as an
-    /// inactive category is none.
+    /// available to the matrix unit, or a required score the competency's scale no longer has. An inactive scale is no problem.
     /// </summary>
     /// <param name="version">The version.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
@@ -154,11 +153,6 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             ? await context.Set<CareerTrack>().AsNoTracking().FirstAsync(entry => entry.Id == trackId, cancellationToken)
             : null;
         var position = matrix.PositionId is { } positionId ? await PositionAsync(positionId, cancellationToken) : null;
-        var categoryIds = entries.Competencies.Values.Select(competency => competency.CategoryId).Distinct().ToList();
-        var categoryNames = await context.Set<CompetencyCategory>()
-            .AsNoTracking()
-            .Where(category => categoryIds.Contains(category.Id))
-            .ToDictionaryAsync(category => category.Id, category => category.Name, cancellationToken);
 
         return new MatrixEntries(
             direction is null ? null : new MatrixNamedEntry(direction.Id, direction.Name, direction.Status),
@@ -176,8 +170,8 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
                     competency.Id,
                     competency.Name,
                     competency.Description,
-                    competency.CategoryId,
-                    categoryNames.GetValueOrDefault(competency.CategoryId, string.Empty),
+                    CategoryId: null,
+                    CategoryName: null,
                     competency.DirectionId,
                     competency.Type,
                     CompetencyVersion.NumberOf(competency),

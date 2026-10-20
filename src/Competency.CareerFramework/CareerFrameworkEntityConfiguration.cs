@@ -81,8 +81,6 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
             entity.HasOne(PositionEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CareerLevelPosition.PositionId)).OnDelete(DeleteBehavior.Restrict);
         });
 
-        ConfigureEntry<CompetencyCategory>(modelBuilder, "competency_categories", _ => { });
-
         ConfigureEntry<CompetencyScale>(modelBuilder, "competency_scales", ConfigureScale);
 
         ConfigureEntry<CompetencyBlock>(modelBuilder, "competency_blocks", ConfigureBlock);
@@ -91,12 +89,10 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
         {
             entity.ToTable(table => table.HasCheckConstraint("ck_competencies_type", TypeCheckSql));
             entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(CareerCompetency.DescriptionMaxLength);
-            entity.Property(e => e.CategoryId).HasColumnName("category_id");
             entity.Property(e => e.DirectionId).HasColumnName("direction_id");
             entity.Property(e => e.Type).HasColumnName("type").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.ScaleId).HasColumnName("scale_id");
 
-            entity.HasOne<CompetencyCategory>().WithMany().HasForeignKey(e => e.CategoryId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<CareerDirection>().WithMany().HasForeignKey(e => e.DirectionId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<CompetencyScale>().WithMany().HasForeignKey(e => e.ScaleId).OnDelete(DeleteBehavior.Restrict);
         });
@@ -109,7 +105,6 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
             entity.Property(e => e.Number).HasColumnName("number");
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(CatalogEntry.NameMaxLength);
             entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(CareerCompetency.DescriptionMaxLength);
-            entity.Property(e => e.CategoryId).HasColumnName("category_id");
             entity.Property(e => e.DirectionId).HasColumnName("direction_id");
             entity.Property(e => e.Type).HasColumnName("type").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.ScaleId).HasColumnName("scale_id");

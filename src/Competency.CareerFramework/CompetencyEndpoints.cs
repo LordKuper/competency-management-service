@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -29,7 +30,7 @@ internal static class CompetencyEndpoints
         "Competency",
         CompetencyResponse.From,
         competency => other => other.DirectionId == competency.DirectionId,
-        competency => [competency.CategoryId, competency.DirectionId, competency.ScaleId]);
+        competency => [competency.DirectionId, competency.ScaleId]);
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -77,10 +78,11 @@ internal static class CompetencyEndpoints
 
     /// <summary>
     /// Lists the competencies; <c>withGeneral=true</c> adds the general competencies to those of the direction, as a matrix of the direction may use them.
+    /// A category filter, left from the contract that had categories, matches no competency.
     /// </summary>
     private static Task<Results<Ok<PageResponse<CompetencyResponse>>, ValidationProblem>> ListAsync(
         [AsParameters] CatalogListQuery query,
-        [FromQuery(Name = CategoryField)] Guid? categoryId,
+        [FromQuery(Name = CategoryField)][Description(CompetencyResponse.DeprecatedCategory)] Guid? categoryId,
         [FromQuery(Name = DirectionField)] Guid? directionId,
         [FromQuery(Name = WithGeneralField)] bool? withGeneral,
         [FromQuery(Name = ScaleField)] Guid? scaleId,
@@ -90,7 +92,7 @@ internal static class CompetencyEndpoints
         CancellationToken cancellationToken) =>
         CatalogEndpoints.ListAsync(
             context.Set<CareerCompetency>()
-                .WhereIf(categoryId is not null, competency => competency.CategoryId == categoryId)
+                .WhereIf(categoryId is not null, _ => false)
                 .WhereIf(directionId is not null, competency => competency.DirectionId == directionId || (withGeneral == true && competency.DirectionId == null))
                 .WhereIf(scaleId is not null, competency => competency.ScaleId == scaleId)
                 .WhereIf(type is not null, competency => competency.Type == type),
@@ -230,7 +232,7 @@ internal static class CompetencyEndpoints
             version.Number,
             version.Name,
             version.Description,
-            version.CategoryId,
+            CategoryId: null,
             version.DirectionId,
             version.Type,
             version.ScaleId,
@@ -250,7 +252,7 @@ internal static class CompetencyEndpoints
             .FirstOrDefaultAsync(cancellationToken);
 
     /// <summary>
-    /// Says why the category, direction or scale cannot be used: an entry may refer to active entries, and a draft or inactive one also to
+    /// Says why the direction or scale cannot be used: an entry may refer to active entries, and a draft or inactive one also to
     /// its author's drafts, so an active competency never gets a draft reference past publication. Only references the change sets anew are
     /// checked, so an entry that has since been deactivated may stay where it was.
     /// </summary>
@@ -262,12 +264,6 @@ internal static class CompetencyEndpoints
         CatalogStore store,
         CancellationToken cancellationToken)
     {
-        if (request.CategoryId != current?.CategoryId
-            && await UnusableAsync<CompetencyCategory>(CategoryField, request.CategoryId, draftAuthorId, store, cancellationToken) is { } category)
-        {
-            return category;
-        }
-
         if (request.DirectionId is { } directionId && directionId != current?.DirectionId
             && await UnusableAsync<CareerDirection>(DirectionField, directionId, draftAuthorId, store, cancellationToken) is { } direction)
         {

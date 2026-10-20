@@ -46,7 +46,6 @@ internal static class CatalogDraftEndpoints
             .. await DraftsAsync(
                 context.Set<CareerTrack>().WhereIf(!viewer.IsAdmin, track => hrUnitIds.Contains(track.OwnerOrgUnitId)),
                 cancellationToken),
-            .. await DraftsAsync(context.Set<CompetencyCategory>(), cancellationToken),
             .. await DraftsAsync(context.Set<CareerCompetency>(), cancellationToken),
             .. await DraftsAsync(context.Set<CompetencyScale>(), cancellationToken),
             .. await DraftsAsync(context.Set<CompetencyBlock>(), cancellationToken),
@@ -86,7 +85,6 @@ internal static class CatalogDraftEndpoints
     {
         CareerDirection => CatalogEntryKind.Direction,
         CareerTrack => CatalogEntryKind.Track,
-        CompetencyCategory => CatalogEntryKind.Category,
         CareerCompetency => CatalogEntryKind.Competency,
         CompetencyScale => CatalogEntryKind.Scale,
         CompetencyBlock => CatalogEntryKind.Block,

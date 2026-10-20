@@ -78,7 +78,6 @@ internal sealed class CareerDeskScan(
         {
             CareerCompetency => DeskKind.UnusedCompetency,
             CompetencyScale => DeskKind.UnusedScale,
-            CompetencyCategory => DeskKind.UnusedCategory,
             CareerDirection => DeskKind.DirectionWithoutTracks,
             _ => throw new UnreachableException($"Unused entries are never of type {entry.GetType().Name}."),
         },
@@ -378,7 +377,6 @@ internal sealed class CareerDeskScan(
         CareerDirection => DeskObjectType.Direction,
         CareerTrack => DeskObjectType.Track,
         CareerLevel => DeskObjectType.Level,
-        CompetencyCategory => DeskObjectType.Category,
         CareerCompetency => DeskObjectType.Competency,
         CompetencyScale => DeskObjectType.Scale,
         CompetencyBlock => DeskObjectType.Block,

@@ -9,7 +9,7 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The one rule of making career entries active. Approving or reactivating a catalogue entry, and publishing a matrix version, make
 /// active with the root every draft it refers to, directly or through other entries, or nothing at all: a track takes its direction and
-/// draft levels, a competency its category, direction and scale, a shared block the competencies of its composition, a
+/// draft levels, a competency its direction and scale, a shared block the competencies of its composition, a
 /// version the track of a track matrix with the track's levels, its shared blocks, its competencies and, through the active ones too,
 /// their drafts. Each draft must be one the right that counts may approve with it, have a name nothing published already has, as
 /// a track be ready, and as a shared block have competencies. The plan runs under the caller's locks for an action, and without locks
@@ -29,7 +29,6 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
         CareerDirection => PublicationEntryKind.Direction,
         CareerTrack => PublicationEntryKind.Track,
         CareerLevel => PublicationEntryKind.Level,
-        CompetencyCategory => PublicationEntryKind.Category,
         CareerCompetency => PublicationEntryKind.Competency,
         CompetencyScale => PublicationEntryKind.Scale,
         CompetencyBlock => PublicationEntryKind.Block,
@@ -238,7 +237,6 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
 
     private async Task<List<CatalogEntry>> ReferenceDraftsAsync(IReadOnlyCollection<CareerCompetency> competencies, CancellationToken cancellationToken) =>
     [
-        .. await DraftsAsync<CompetencyCategory>([.. competencies.Select(competency => competency.CategoryId)], cancellationToken),
         .. await DraftsAsync<CareerDirection>([.. competencies.Select(competency => competency.DirectionId).OfType<Guid>()], cancellationToken),
         .. await DraftsAsync<CompetencyScale>([.. competencies.Select(competency => competency.ScaleId)], cancellationToken),
     ];
@@ -260,7 +258,6 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
         CareerDirection direction => store.IsNameTakenAsync(direction, CareerDirectionEndpoints.Kind.SameScope?.Invoke(direction), cancellationToken),
         CareerTrack track => store.IsNameTakenAsync(track, CareerTrackEndpoints.Kind.SameScope?.Invoke(track), cancellationToken),
         CareerLevel level => store.IsNameTakenAsync(level, CareerLevelEndpoints.Kind.SameScope?.Invoke(level), cancellationToken),
-        CompetencyCategory category => store.IsNameTakenAsync(category, CompetencyCategoryEndpoints.Kind.SameScope?.Invoke(category), cancellationToken),
         CareerCompetency competency => store.IsNameTakenAsync(competency, CompetencyEndpoints.Kind.SameScope?.Invoke(competency), cancellationToken),
         CompetencyScale scale => store.IsNameTakenAsync(scale, CompetencyScaleEndpoints.Kind.SameScope?.Invoke(scale), cancellationToken),
         CompetencyBlock block => store.IsNameTakenAsync(block, CompetencyBlockEndpoints.Kind.SameScope?.Invoke(block), cancellationToken),

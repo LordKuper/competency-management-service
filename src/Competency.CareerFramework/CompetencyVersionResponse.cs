@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace Competency.CareerFramework;
 
 /// <summary>
@@ -8,7 +10,7 @@ internal sealed record CompetencyVersionResponse(
     int Number,
     string Name,
     string? Description,
-    Guid CategoryId,
+    [property: Description(CompetencyResponse.DeprecatedCategory)] Guid? CategoryId,
     Guid? DirectionId,
     CompetencyType Type,
     Guid ScaleId,

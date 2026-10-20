@@ -137,8 +137,7 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// <param name="viewer">The user's rights.</param>
     /// <param name="below">The units strictly below the user's headed units, as <see cref="UnitsBelowHeadedAsync"/> finds them.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    /// <returns>The identifiers of the levels, shared blocks, competencies with those of the blocks, categories of those competencies and
-    /// scales of those competencies.</returns>
+    /// <returns>The identifiers of the levels, shared blocks, competencies with those of the blocks and scales of those competencies.</returns>
     public async Task<IReadOnlySet<Guid>> RouteEntryIdsAsync(
         CatalogViewer viewer,
         IReadOnlyDictionary<Guid, OrgUnitStatus> below,
@@ -175,14 +174,10 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
         {
             var used = competencyIds.ToList();
             ids.UnionWith(used);
-            foreach (var competency in await context.Set<CareerCompetency>()
-                         .Where(competency => used.Contains(competency.Id))
-                         .Select(competency => new { competency.CategoryId, competency.ScaleId })
-                         .ToListAsync(cancellationToken))
-            {
-                ids.Add(competency.CategoryId);
-                ids.Add(competency.ScaleId);
-            }
+            ids.UnionWith(await context.Set<CareerCompetency>()
+                .Where(competency => used.Contains(competency.Id))
+                .Select(competency => competency.ScaleId)
+                .ToListAsync(cancellationToken));
         }
 
         return ids;

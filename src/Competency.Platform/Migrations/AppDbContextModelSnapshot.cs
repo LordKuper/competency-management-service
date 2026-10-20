@@ -108,10 +108,6 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("author_id");
 
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("category_id");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -155,8 +151,6 @@ namespace Competency.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");
-
-                    b.HasIndex("CategoryId");
 
                     b.HasIndex("DirectionId");
 
@@ -396,48 +390,6 @@ namespace Competency.Platform.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Competency.CareerFramework.CompetencyCategory", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid?>("AuthorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("author_id");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)")
-                        .HasColumnName("status");
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer")
-                        .HasColumnName("version");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthorId");
-
-                    b.ToTable("competency_categories", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_competency_categories_status", "status IN ('Draft', 'Active', 'Inactive')");
-                        });
-                });
-
             modelBuilder.Entity("Competency.CareerFramework.CompetencyMatrix", b =>
                 {
                     b.Property<Guid>("Id")
@@ -554,10 +506,6 @@ namespace Competency.Platform.Migrations
                     b.Property<int>("Number")
                         .HasColumnType("integer")
                         .HasColumnName("number");
-
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("category_id");
 
                     b.Property<DateTimeOffset>("ChangedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1128,12 +1076,6 @@ namespace Competency.Platform.Migrations
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Competency.CareerFramework.CompetencyCategory", null)
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Competency.CareerFramework.CareerDirection", null)
                         .WithMany()
                         .HasForeignKey("DirectionId")
@@ -1221,14 +1163,6 @@ namespace Competency.Platform.Migrations
                     b.HasOne("Competency.OrgStructure.OrgUnit", null)
                         .WithMany()
                         .HasForeignKey("ScopeUnitId")
-                        .OnDelete(DeleteBehavior.Restrict);
-                });
-
-            modelBuilder.Entity("Competency.CareerFramework.CompetencyCategory", b =>
-                {
-                    b.HasOne("Competency.UserManagement.AppUser", null)
-                        .WithMany()
-                        .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 

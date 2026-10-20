@@ -150,11 +150,6 @@ public enum DeskKind
     UnusedScale,
 
     /// <summary>
-    /// An active competency category is used by no competency and no matrix version; for reference.
-    /// </summary>
-    UnusedCategory,
-
-    /// <summary>
     /// An active career direction has no tracks; for reference.
     /// </summary>
     DirectionWithoutTracks,
