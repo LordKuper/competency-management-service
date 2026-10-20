@@ -758,6 +758,18 @@
       "tier": "critical",
       "reason": "risk:public contract",
       "resolved_model": "opus"
+    },
+    "Task 53": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 52 name-fix": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:migration",
+      "resolved_model": "opus"
     }
   },
   "skipped_phases": [],
