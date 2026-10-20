@@ -297,6 +297,13 @@ provenance: original
 .ds .rg{display:flex;flex-wrap:wrap;gap:var(--ds-xs) var(--ds-xl);align-items:center;}
 .ds .rg>span{display:inline-flex;align-items:center;gap:var(--ds-xs);}
 .ds table.mx tr.gh td{background:var(--ds-surface-muted);text-align:left;height:auto;font:var(--ds-t-body-strong);}
+.ds .legend.vert{flex-direction:column;flex-wrap:nowrap;gap:var(--ds-xs);}
+.ds .legend.vert li{display:grid;grid-template-columns:var(--ds-h-md) minmax(0,1fr);align-items:start;gap:var(--ds-xs);}
+.ds table.mx th.n,.ds table.mx td.n{position:sticky;left:0;z-index:1;}
+.ds table.mx th.ty,.ds table.mx td.ty{position:sticky;left:var(--ds-matrix-name);z-index:1;text-align:left;min-width:calc(var(--ds-h-md) * 6);vertical-align:middle;}
+.ds table.mx td.ty{background:var(--ds-surface-panel);}
+.ds .sc{display:inline-flex;align-items:center;justify-content:center;gap:var(--ds-xxs);min-width:calc(var(--ds-h-md) * 3);height:var(--ds-h-md);padding:0 var(--ds-xs);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);background:var(--ds-surface-panel);}
+.ds .m3{display:grid;grid-template-columns:minmax(0,1fr) calc(var(--ds-xxxl) * 6);gap:var(--ds-md);align-items:start;}
 .ds .opt.hov{background:var(--ds-surface-page);}
 .ds .opt{display:flex;align-items:center;gap:var(--ds-xs);min-height:var(--ds-h-md);padding:0 var(--ds-sm);border-radius:var(--ds-r-md);}
 .ds .opt.sel{background:var(--ds-primary-subtle);font:var(--ds-t-body-strong);}
@@ -779,6 +786,7 @@ flowchart TD
             <div class="h2">Новая компетенция</div>
             <div class="fld"><div class="lbl">Название</div><div class="inp on foc"></div></div>
             <div class="fld"><div class="lbl">Описание</div><div class="inp area" style="min-height:calc(var(--ds-h-md) * 3);"></div></div>
+            <div class="fld"><div class="lbl">Примеры подтверждений</div><div class="inp area" style="min-height:calc(var(--ds-h-md) * 2);"></div><div class="help">Необязательно: чем можно подтвердить компетенцию; показывается рядом с требованиями матриц.</div></div>
             <div class="fld"><div class="lbl">Область</div><div class="inp"><span class="ph">Общая</span><span aria-hidden="true">⊗ ▾</span></div><div class="help">Последний вариант списка — «+ Создать область…»</div></div>
             <div class="fld"><div class="lbl">Шкала</div><div class="inp"><span>Базовая шкала 0–4</span><span class="row" style="flex-wrap:nowrap;"><span class="inf" role="img" aria-label="Баллы шкалы «Базовая шкала 0–4»">ⓘ</span><span aria-hidden="true">▾</span></span></div><div class="help">Подставлена шкала по умолчанию; можно выбрать другую</div></div>
             <div class="row"><span class="btn pri">Сохранить</span><span class="btn">Отмена</span></div>
@@ -790,6 +798,7 @@ flowchart TD
               <tbody>
                 <tr><td class="strong">Название</td><td>Безопасная разработка</td></tr>
                 <tr><td class="strong">Описание</td><td>Применяет практики безопасной разработки</td></tr>
+                <tr><td class="strong">Примеры подтверждений</td><td>Сертификат по безопасной разработке; результаты ревью кода</td></tr>
                 <tr><td class="strong">Область</td><td>Разработка</td></tr>
                 <tr><td class="strong">Шкала</td><td>Базовая шкала 0–4</td></tr>
                 <tr><td class="strong">Статус</td><td><span class="tag ok">Действует</span></td></tr>
@@ -802,7 +811,7 @@ flowchart TD
     <p><b>Notes</b>:</p>
     <ul>
       <li><b>Столбцы</b>: «Название», «Область» («Общая», если область не задана), «Шкала», «Статус», «Версия», «Действия». Владельца у компетенции нет; автор версии виден в истории. Поиск по названию «Найти компетенцию» стоит над таблицей, фильтры — в заголовках столбцов.</li>
-      <li><b>Поля окна</b>: «Название» (до 200 символов), «Описание» (многострочное), «Область» (необязательное; пусто — «Общая») и «Шкала» (обязательная; рядом со значением и у вариантов списка значок «ⓘ» с баллами шкалы — макет «Подсказка со шкалой»). Новой компетенции шкала по умолчанию подставляется сама, как только загрузится, если пользователь не выбрал шкалу раньше. Неактивные области и шкалы не предлагаются. Последний вариант списка «Область» — «+ Создать область…» (у тех, кто вправе создавать области): он открывает поверх окна компетенции окно «Новая область» (то же, что в окне трека); Escape и «Отмена» закрывают только его, введённое в окне компетенции сохраняется, созданная область (черновая — с тегом «Черновик») выбирается в поле, фокус возвращается на него. «Общая» (поле пусто) остаётся.</li>
+      <li><b>Поля окна</b>: «Название» (до 200 символов), «Описание» (многострочное), «Примеры подтверждений» (многострочное, необязательное; это атрибут компетенции, а не требования матрицы, и его правка — новая версия компетенции, как у любого поля), «Область» (необязательное; пусто — «Общая») и «Шкала» (обязательная; рядом со значением и у вариантов списка значок «ⓘ» с баллами шкалы — макет «Подсказка со шкалой»). Новой компетенции шкала по умолчанию подставляется сама, как только загрузится, если пользователь не выбрал шкалу раньше. Неактивные области и шкалы не предлагаются. Последний вариант списка «Область» — «+ Создать область…» (у тех, кто вправе создавать области): он открывает поверх окна компетенции окно «Новая область» (то же, что в окне трека); Escape и «Отмена» закрывают только его, введённое в окне компетенции сохраняется, созданная область (черновая — с тегом «Черновик») выбирается в поле, фокус возвращается на него. «Общая» (поле пусто) остаётся.</li>
       <li><b>Типа у компетенции нет.</b> Тип («Критическая», «Профильная», «Дополнительная») — характеристика компетенции в матрице, а не записи справочника: одна и та же компетенция может быть критической в одной матрице и дополнительной в другой. Тип задаётся в строке матрицы (макеты «Страница матрицы…»), в окне компетенции, таблице, фильтрах и истории версий его нет.</li>
       <li><b>Компетенция в составе общего блока.</b> Шкала компетенции правится как любое поле (у блока шкалы нет, в блоке могут быть компетенции разных шкал). Удаление компетенции из состава общего блока отказывает 409 «Компетенцию используют общие блоки — удалить нельзя» (окно отказа с перечнем блоков).</li>
       <li><b>Каждое сохранение изменения создаёт новую версию</b> (номер растёт). «История версий» открывает окно только для чтения: выбор «Версия» («Версия {n} — {дата}, {автор}», новая сверху) и поля выбранной версии таблицей без возможности правки.</li>
@@ -952,9 +961,9 @@ flowchart TD
   <article class="mockup">
     <h3>Страница матрицы: версия, маршрут, таблица «компетенции × уровни», блоки</h3>
     <dl class="screen-meta">
-      <dt><b>Purpose</b></dt><dd>Задать и увидеть требуемый уровень для каждой пары «уровень — компетенция», коэффициенты блоков и пороги; увидеть, где версия в маршруте согласования. Публикующие переходы со страницы убраны: на них ведут ссылки панели действий (макет «Панель действий» ниже).</dd>
+      <dt><b>Purpose</b></dt><dd>Задать и увидеть требуемый балл для каждой пары «уровень — компетенция» и тип компетенции, коэффициенты блоков и общие пороги; увидеть, где версия в маршруте согласования. Публикующие переходы со страницы убраны: на них ведут ссылки панели действий (макет «Панель действий» ниже).</dd>
       <dt><b>Entry from</b></dt><dd>Ссылка в столбце «Трек» вкладки «Матрицы»; ссылка в столбце «Матрица» вкладки «На согласовании»; создание матрицы; «Внести правки» на экране «Согласовать версию» (<a href="desk.html#m-review">desk.html</a>); «Моё место в компании» (только чтение).</dd>
-      <dt><b>Exit to</b></dt><dd>Ссылка «Карьерная модель» над заголовком; окна истории, требования, выбора; сценарии «Согласовать версию», «Доработать возвращённую версию» и мастер «Построить матрицу» (ссылки панели); после удаления матрицы — раздел «Карьерная модель».</dd>
+      <dt><b>Exit to</b></dt><dd>Ссылка «Карьерная модель» над заголовком; окна истории и выбора; мастер, шаг 2 (состав и блоки); сценарии «Согласовать версию», «Доработать возвращённую версию» и мастер «Построить матрицу» (ссылки панели); после удаления матрицы — раздел «Карьерная модель».</dd>
     </dl>
     <div class="mockup-preview">
       <div class="pg stack">
@@ -973,53 +982,50 @@ flowchart TD
           <div><span class="dot">3</span><span><b class="strong">HR</b><br><span class="sec">Сидорова Анна Игоревна</span></span></div>
           <div><span class="dot">4</span><span><b class="strong">Публикация</b></span></div>
         </div>
-        <div class="row"><span class="btn">Добавить компетенцию</span><span class="btn">Добавить уровень</span><span class="btn pri">Сохранить</span></div>
-        <ul class="legend">
-          <li><span class="chip">0</span>Не подтверждена</li>
-          <li><span class="chip r1">1</span>Работает с поддержкой</li>
-          <li><span class="chip r2">2</span>Самостоятельно на типовых задачах</li>
-          <li><span class="chip r3">3</span>Самостоятельно на сложных задачах</li>
-          <li><span class="chip r4">4</span>Задаёт стандарты, развивает других</li>
-        </ul>
-        <div class="scroll"><table class="mx">
-          <thead><tr>
-            <th class="n">Компетенции</th>
-            <th>Стажёр<br><span class="lnk dng" style="margin:0;font:var(--ds-t-body-md);">Удалить</span></th>
-            <th>Специалист<br><span class="lnk dng" style="margin:0;font:var(--ds-t-body-md);">Удалить</span></th>
-            <th>Ведущий специалист<br><span class="lnk dng" style="margin:0;font:var(--ds-t-body-md);">Удалить</span></th>
-          </tr></thead>
-          <tbody>
-            <tr>
-              <td class="n"><b class="strong">Требования и анализ</b><br><span class="sec">шкала 0–4</span><br><span class="inp" style="margin:var(--ds-xxs) 0;width:max-content;">Профильная <span aria-hidden="true">▾</span></span><br><span class="inp" style="margin:var(--ds-xxs) 0;">Профильный блок <span aria-hidden="true">▾</span></span><span class="lnk dng" style="margin:0;">Удалить</span></td>
-              <td><span class="chip r1">1</span></td><td><span class="chip r2">2</span></td><td><span class="chip r3">3</span></td>
-            </tr>
-            <tr>
-              <td class="n"><b class="strong">Безопасная разработка</b><br><span class="sec">шкала 0–4</span><br><span class="inp" style="margin:var(--ds-xxs) 0;width:max-content;"><span class="tag er">⚠ Критическая</span> <span aria-hidden="true">▾</span></span><br><span class="inp" style="margin:var(--ds-xxs) 0;">Базовый блок <span aria-hidden="true">▾</span></span><span class="lnk dng" style="margin:0;">Удалить</span></td>
-              <td><span class="chip r2">2</span></td><td><span class="chip r3">3</span></td><td><span class="chip r4">4</span></td>
-            </tr>
-            <tr>
-              <td class="n"><b class="strong">Командная работа</b><br><span class="sec">шкала 0–4</span><br><span class="inp" style="margin:var(--ds-xxs) 0;width:max-content;">Дополнительная <span aria-hidden="true">▾</span></span><br><span class="inp" style="margin:var(--ds-xxs) 0;">Базовый блок <span aria-hidden="true">▾</span></span><span class="lnk dng" style="margin:0;">Удалить</span></td>
-              <td>—</td><td><span class="chip r2">2</span></td><td><span class="chip r3">3</span></td>
-            </tr>
-            <tr>
-              <td class="n"><b class="strong">Минимальный общий порог</b></td>
-              <td><span class="inp" style="justify-content:center;">60</span></td><td><span class="inp" style="justify-content:center;">70</span></td><td><span class="inp" style="justify-content:center;">80</span></td>
-            </tr>
-          </tbody>
-        </table></div>
-        <div>
-          <div class="h2" style="margin-bottom:var(--ds-sm);">Блоки компетенций</div>
-          <div class="scroll"><table class="t">
-            <thead>
-              <tr><th rowspan="2">Название блока</th><th rowspan="2">Обязательный блок</th><th colspan="2">Стажёр</th><th colspan="2">Специалист</th><th rowspan="2">Действия</th></tr>
-              <tr><th>Коэффициент, %</th><th>Минимальный порог блока</th><th>Коэффициент, %</th><th>Минимальный порог блока</th></tr>
-            </thead>
+        <div class="row"><span class="btn">Добавить уровень</span><span class="btn pri">Сохранить</span><span class="lnk" style="margin:0;">Изменить состав и блоки в мастере, шаг 2</span></div>
+        <div class="m3">
+          <div class="card"><div class="scroll"><table class="mx">
+            <thead><tr><th class="n">Компетенция</th><th class="ty">Тип</th><th>Стажёр</th><th>Специалист</th><th>Ведущий специалист</th></tr></thead>
             <tbody>
-              <tr><td><span class="inp">Базовый блок</span></td><td>☑ Обязательный блок</td><td><span class="inp">60</span></td><td><span class="inp">50</span></td><td><span class="inp">50</span></td><td><span class="inp">60</span></td><td><span class="lnk dng" style="color:var(--ds-text-disabled);">Удалить</span> <span class="sec sm">Сначала уберите компетенции блока</span></td></tr>
-              <tr><td><span class="inp">Профильный блок</span></td><td>☐ Обязательный блок</td><td><span class="inp">40</span></td><td><span class="inp">30</span></td><td><span class="inp">50</span></td><td><span class="inp">40</span></td><td><span class="lnk dng" style="color:var(--ds-text-disabled);">Удалить</span> <span class="sec sm">Сначала уберите компетенции блока</span></td></tr>
+            <tr class="gh"><td colspan="5"><span class="lnk" style="margin:0;">Базовые навыки</span> <span class="tag in">Общий блок</span> <span class="sec sm">Для всех</span></td></tr>
+            <tr><td class="n"><b class="strong">Коммуникация</b><br><span class="sec">шкала 0–5</span></td><td class="ty"><span class="inp" style="width:max-content;">Дополнительная <span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r2">2</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r2">3</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r4">5</span><span aria-hidden="true">▾</span></span></td></tr>
+            <tr class="gh"><td colspan="5"><span class="lnk" style="margin:0;">Безопасность и качество</span> <span class="tag in">Общий блок</span> <span class="sec sm">Департамент разработки</span></td></tr>
+            <tr><td class="n"><b class="strong">Безопасная разработка</b><br><span class="sec">шкала 0–4</span></td><td class="ty"><span class="inp" style="width:max-content;"><span class="tag er">⚠ Критическая</span> <span aria-hidden="true">▾</span></span><br><span class="sec sm">Балл — порог уровня</span></td><td><span class="sc"><span class="chip r2">2</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r3">3</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r4">4</span><span aria-hidden="true">▾</span></span></td></tr>
+            <tr><td class="n"><b class="strong">Тестирование</b><br><span class="sec">шкала 0–4</span></td><td class="ty"><span class="inp" style="width:max-content;">Профильная <span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r1">1</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r2">2</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r3">3</span><span aria-hidden="true">▾</span></span></td></tr>
+            <tr class="gh"><td colspan="5">Вне блоков</td></tr>
+            <tr><td class="n"><b class="strong">Требования и анализ</b><br><span class="sec">шкала 0–4</span></td><td class="ty"><span class="inp" style="width:max-content;">Профильная <span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r1">1</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r2">2</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r3">3</span><span aria-hidden="true">▾</span></span></td></tr>
+            <tr><td class="n"><b class="strong">Командная работа</b><br><span class="sec">шкала 0–4</span></td><td class="ty"><span class="inp" style="width:max-content;">Дополнительная <span aria-hidden="true">▾</span></span></td><td><span class="sc" style=""><span class="sec">—</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r2">2</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r3">3</span><span aria-hidden="true">▾</span></span></td></tr>
+            </tbody>
+          </table></div></div>
+          <div class="card stack" style="align-content:start;">
+          <div class="h5" style="margin:0;">Требуемый балл</div>
+          <div class="cap" style="margin:0;">Базовая шкала 0–4</div>
+          <ul class="legend vert">
+            <li><span class="chip">0</span><span>Не подтверждена</span></li>
+            <li><span class="chip r1">1</span><span>Работает с поддержкой</span></li>
+            <li><span class="chip r2">2</span><span>Самостоятельно на типовых задачах</span></li>
+            <li><span class="chip r3">3</span><span>Самостоятельно на сложных задачах</span></li>
+            <li><span class="chip r4">4</span><span>Задаёт стандарты, развивает других</span></li>
+          </ul>
+          <div class="cap" style="margin:0;">Шкала 0–5</div>
+          <ul class="legend vert">
+            <li><span class="chip">0</span><span>Не проявляется</span></li>
+            <li><span class="chip r1">1</span><span>Начальный</span></li>
+            <li><span class="chip r2">3</span><span>Уверенный</span></li>
+            <li><span class="chip r4">5</span><span>Образцовый</span></li>
+          </ul>
+        </div>
+        </div>
+        <div>
+          <div class="h2" style="margin-bottom:var(--ds-sm);">Коэффициенты блоков</div>
+          <div class="scroll"><table class="t">
+            <thead><tr><th>Блок</th><th>Стажёр: коэффициент, %</th><th>Специалист: коэффициент, %</th><th>Ведущий специалист: коэффициент, %</th></tr></thead>
+            <tbody>
+              <tr><td><span class="strong">Базовые навыки</span> <span class="tag in">Общий блок</span> <span class="sec sm">1 компетенция</span></td><td class="num"><span class="inp">30</span></td><td class="num"><span class="inp">30</span></td><td class="num"><span class="inp">30</span></td></tr><tr><td><span class="strong">Безопасность и качество</span> <span class="tag in">Общий блок</span> <span class="sec sm">2 компетенции</span></td><td class="num"><span class="inp">40</span></td><td class="num"><span class="inp">40</span></td><td class="num"><span class="inp">40</span></td></tr><tr><td><span class="strong">Вне блоков</span> <span class="sec sm">2 компетенции</span></td><td class="num"><span class="inp">30</span></td><td class="num"><span class="inp">30</span></td><td class="num"><span class="inp">30</span></td></tr>
+              <tr><td class="strong">Сумма коэффициентов</td><td class="num strong">100</td><td class="num strong">100</td><td class="num strong">100</td></tr>
+              <tr><td class="strong">Минимальный общий порог, %</td><td class="num"><span class="inp">60</span></td><td class="num"><span class="inp">70</span></td><td class="num"><span class="inp">80</span></td></tr>
             </tbody>
           </table></div>
-          <div class="row" style="margin-top:var(--ds-sm);"><span class="btn">Добавить блок</span></div>
         </div>
       </div>
     </div>
@@ -1029,10 +1035,10 @@ flowchart TD
       <li><b>Шапка.</b> Заголовок «Матрица «{трек}» — {подразделение}» (<code>heading-1</code>), под ним область (шкалы у матрицы нет). Выбор «Версия» («Версия {n}», новая сверху) переключает версию; тег рядом называет её статус словом: «Черновик», «На согласовании», «Возвращена с правками», «Согласована», «Опубликована», «В архиве». Показывается версия в работе, иначе опубликованная, иначе последняя.</li>
       <li><b>Действия зависят от версии и роли.</b> Показано только то, что сервер разрешил текущему пользователю. Публикующие переходы — «Отправить на согласование», «Согласовать» и «Принять правки» — на странице не выполняются: вместо них ссылки на сценарии рабочего стола («Перейти к отправке в мастере», «Согласовать версию», «Доработать возвращённую версию»). Остаются «Вернуть с правками» (согласующий), «Принять и доработать», «Откатить правки» (автор возвращённой версии), «Создать новую версию» (руководитель подразделения, когда есть опубликованная версия и нет версии в работе), «История» (для всех, кто видит версию) и «Удалить» (ссылка у руководителя подразделения и администратора, пока ни одна версия не опубликована). Видимых действий не больше двух, остальные — в меню «…».</li>
       <li><b>Маршрут</b> — вертикальные шаги «Автор», «Вышестоящий руководитель», «HR», «Публикация»; текущий шаг залит <code>primary</code>, пройденные отмечены отдельно от будущих, под названием — имя участника или, для шага «Публикация», дата. Пропущенный или автоматически согласованный шаг называется словами: «Пропущен — нет руководителя с учётной записью», «Согласован автоматически — HR является автором».</li>
-      <li><b>Тип компетенции в матрице.</b> В каждой строке (собственный блок, «Вне блоков», член общего блока) — компактный список «Тип» (<code>Select</code> <code>control-height-md</code>): «Критическая», «Профильная», «Дополнительная»; для критической в списке стоит <code>tag-danger</code> «⚠ Критическая» (значок и слово). Тип правится вместе с остальным в форме, сохраняется кнопкой «Сохранить» и входит в разницу версий и в историю («Изменено: тип компетенции «{…}»»). Тип одна на компетенцию версии (не на уровень): у только что добавленной компетенции и у всех компетенций добавленного общего блока он «Профильная» (значение по умолчанию; у записи справочника типа нет), значение всегда задано, отдельной проверки полноты на тип нет; два использования одного общего блока в разных матрицах задают типы независимо; у матрицы должности тип — у её единственного столбца. От типа зависит проверка полноты: у критической компетенции должен быть задан минимальный уровень («У критической компетенции «{…}» не задан минимальный уровень»). У опубликованной и архивной версии тип показан текстом.</li>
-      <li><b>Таблица — редактор требований.</b> Строка — компетенция (название, шкала словами, компактный выбор типа, блок, «Удалить»), столбец — уровень трека в порядке трека (у опубликованной и архивной версии — в порядке, замороженном на момент публикации). Ячейка — чип уровня <code>rating-chip-0…4</code> с цифрой требуемого уровня (подсказка — значение балла шкалы) или «—», если требования нет; вся ячейка — кнопка, открывающая окно требования. Легенда уровней над таблицей — по одному списку на каждую шкалу, использованную в версии (у матрицы шкалы нет). Последняя строка «Минимальный общий порог» — проценты 0–100 по уровню. Строка имеет минимальную высоту <code>matrix-row-height</code>, столбцы не уже <code>matrix-cell-min-width</code>, первый столбец (<code>matrix-name-column-width</code>) закреплён слева; таблица прокручивается по горизонтали.</li>
-      <li><b>Блоки компетенций</b> — вторая таблица под заголовком <code>heading-2</code>: название, «Обязательный блок», для каждого уровня «Коэффициент, %» и «Минимальный порог блока», «Действия». Коэффициенты блоков уровня дают в сумме 100 %. «Удалить» блок, в котором остались компетенции, недоступно, и причина написана рядом: «Сначала уберите компетенции блока». Любой блок можно переименовать, отметить обязательным; «Добавить блок» добавляет новый.</li>
-      <li><b>Только чтение.</b> Если сервер не разрешил правку (опубликованная и архивная версии, чужой ход), те же таблицы показывают значения текстом без полей, кнопок «Удалить», «Добавить …» и «Сохранить»; ячейки с требованием по-прежнему открывают окно требования только для чтения.</li>
+      <li><b>Тип компетенции в матрице.</b> Отдельный столбец «Тип» (закреплён рядом с названием): компактный список (<code>Select</code>, <code>control-height-md</code>) «Критическая», «Профильная», «Дополнительная»; у критической — <code>tag-danger</code> «⚠ Критическая» (значок и слово) и подпись «Балл — порог уровня». Одно значение на компетенцию версии (не на уровень), по умолчанию «Профильная»; два использования одного общего блока в разных матрицах задают типы независимо; тип входит в разницу версий и в историю («Изменено: тип компетенции «{…}»»), у опубликованной и архивной версии показан текстом. Проверка полноты: у критической компетенции должен быть задан требуемый балл («У критической компетенции «{…}» не задан минимальный уровень»).</li>
+      <li><b>Таблица — редактор требований.</b> Строка — компетенция: название, шкала словами; столбец «Тип»; затем по столбцу на уровень трека в порядке трека (у опубликованной и архивной версии — в порядке, замороженном на момент публикации). Строки собраны под строками-заголовками групп (<code>surface-muted</code>): общие блоки (название ссылкой в справочник, тег «Общий блок», «Для всех» или подразделение «Действует для») и «Вне блоков»; собственных блоков у версии нет. Клетка — компактный список баллов шкалы самой компетенции (подложка <code>rating-chip-0…4</code> с цифрой и стрелка; пустая — «—»), выбор записывается в форму; отдельного окна требования нет, и у требования только балл (веса, «обязательной», ожидаемого поведения, даты действия нет). Компетенции и блоки на странице не добавляются, не переносятся и не удаляются: ссылка «Изменить состав и блоки в мастере, шаг 2». Таблица вмещает до 4 уровней без прокрутки на 1366 пикселей; при 5 и более прокручивается внутри карточки, колонки «Компетенция» и «Тип» закреплены. Легенда «Требуемый балл» — справа: подложки в колонке фиксированной ширины, текст переносится рядом. Последняя строка прежней таблицы «Минимальный общий порог» теперь в таблице коэффициентов.</li>
+      <li><b>Коэффициенты блоков</b> — вторая таблица под заголовком <code>heading-2</code>: строки — общие блоки версии и «Вне блоков», для каждого уровня одно поле «Коэффициент, %» (сумма по уровню — 100 %), под ними «Минимальный общий порог, %» по уровню. Названия блоков только для чтения; признака «обязательный блок», порогов по блокам, «Удалить» и «Добавить блок» нет — блоки назначаются в мастере (шаг 2). Балл блока — простое среднее долей его компетенций.</li>
+      <li><b>Только чтение.</b> Если сервер не разрешил правку (опубликованная и архивная версии, чужой ход), таблицы показывают баллы, типы и коэффициенты текстом без списков и полей и без «Сохранить» и «Добавить уровень».</li>
       <li><b>Планшет и мобильный.</b> Страница и обе таблицы прокручиваются по горизонтали; первый столбец матрицы остаётся на месте; ни одно действие не убирается.</li>
     </ul>
   </article>
@@ -1040,9 +1046,9 @@ flowchart TD
   <article class="mockup" id="m-matrix-blocks">
     <h3>Страница матрицы с общими блоками и компетенциями вне блоков</h3>
     <dl class="screen-meta">
-      <dt><b>Purpose</b></dt><dd>Показать в редакторе версии, какие компетенции пришли из общих блоков (состав только для чтения), какие — из собственных блоков версии и какие стоят вне блоков; заметить изменение состава блока в неопубликованной версии.</dd>
+      <dt><b>Purpose</b></dt><dd>Показать в редакторе версии, какие компетенции пришли из общих блоков (состав только для чтения), какие стоят вне блоков (собственных блоков у версии нет); заметить изменение состава блока в неопубликованной версии.</dd>
       <dt><b>Entry from</b></dt><dd>Страница матрицы любой версии с общим блоком или компетенциями вне блоков.</dd>
-      <dt><b>Exit to</b></dt><dd>Справочник «Общие блоки» (ссылка на название блока); окно требования; мастер «Построить матрицу компетенций» (шаг 2 — добавить или убрать блок).</dd>
+      <dt><b>Exit to</b></dt><dd>Справочник «Общие блоки» (ссылка на название блока); мастер «Построить матрицу компетенций» (шаг 2 — добавить или убрать блок).</dd>
     </dl>
     <div class="mockup-preview">
       <div class="pg stack">
@@ -1051,29 +1057,24 @@ flowchart TD
         <div class="row" style="gap:var(--ds-xl);"><span><span class="sec">Область:</span> Разработка</span></div>
         <div class="row"><span class="inp" style="min-width:calc(var(--ds-h-md) * 4);"><span>Версия 3</span><span aria-hidden="true">▾</span></span><span class="tag">Черновик</span></div>
         <div class="scroll"><table class="mx">
-          <thead><tr><th class="n">Компетенции</th><th>Стажёр</th><th>Специалист</th><th>Ведущий специалист</th></tr></thead>
+          <thead><tr><th class="n">Компетенция</th><th class="ty">Тип</th><th>Стажёр</th><th>Специалист</th><th>Ведущий специалист</th></tr></thead>
           <tbody>
-            <tr class="gh"><td colspan="4"><span class="lnk" style="margin:0;">Базовые навыки</span> <span class="tag in">Общий блок</span> <span class="tag wn">⚠ Состав изменился</span> <span class="sec sm">Добавлена компетенция «Обратная связь»; состав правится в справочнике</span></td></tr>
-            <tr><td class="n"><b class="strong">Коммуникация</b><br><span class="sec">шкала 0–5</span><br><span class="inp" style="margin:var(--ds-xxs) 0;width:max-content;">Дополнительная <span aria-hidden="true">▾</span></span><br><span class="tag in">Общий блок «Базовые навыки»</span></td><td><span class="chip r2">2</span></td><td><span class="chip r2">3</span></td><td><span class="chip r4">5</span></td></tr>
-            <tr><td class="n"><b class="strong">Обратная связь</b> <span class="tag wn">⚠ Нет требований</span><br><span class="sec">шкала 0–4</span><br><span class="inp" style="margin:var(--ds-xxs) 0;width:max-content;">Дополнительная <span aria-hidden="true">▾</span></span><br><span class="tag in">Общий блок «Базовые навыки»</span></td><td>—</td><td>—</td><td>—</td></tr>
-            <tr class="gh"><td colspan="4">Профильный блок <span class="sec sm">собственный блок версии</span></td></tr>
-            <tr><td class="n"><b class="strong">Требования и анализ</b><br><span class="sec">шкала 0–4</span><br><span class="inp" style="margin:var(--ds-xxs) 0;width:max-content;">Профильная <span aria-hidden="true">▾</span></span><br><span class="inp" style="margin:var(--ds-xxs) 0;">Профильный блок <span aria-hidden="true">▾</span></span><span class="lnk dng" style="margin:0;">Удалить</span></td><td><span class="chip r1">1</span></td><td><span class="chip r2">2</span></td><td><span class="chip r3">3</span></td></tr>
-            <tr class="gh"><td colspan="4">Вне блоков</td></tr>
-            <tr><td class="n"><b class="strong">Командная работа</b><br><span class="sec">шкала 0–4</span><br><span class="inp" style="margin:var(--ds-xxs) 0;width:max-content;">Дополнительная <span aria-hidden="true">▾</span></span><br><span class="inp" style="margin:var(--ds-xxs) 0;">Вне блоков <span aria-hidden="true">▾</span></span><span class="lnk dng" style="margin:0;">Удалить</span></td><td>—</td><td><span class="chip r2">2</span></td><td><span class="chip r3">3</span></td></tr>
-            <tr><td class="n"><b class="strong">Минимальный общий порог</b></td><td><span class="inp" style="justify-content:center;">60</span></td><td><span class="inp" style="justify-content:center;">70</span></td><td><span class="inp" style="justify-content:center;">80</span></td></tr>
+          <tr class="gh"><td colspan="5"><span class="lnk" style="margin:0;">Базовые навыки</span> <span class="tag in">Общий блок</span> <span class="tag wn">⚠ Состав изменился</span> <span class="sec sm">Добавлена компетенция «Обратная связь»; состав правится в справочнике</span></td></tr>
+            <tr><td class="n"><b class="strong">Коммуникация</b><br><span class="sec">шкала 0–5</span></td><td class="ty"><span class="inp" style="width:max-content;">Дополнительная <span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r2">2</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r2">3</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r4">5</span><span aria-hidden="true">▾</span></span></td></tr>
+            <tr><td class="n"><b class="strong">Обратная связь</b> <span class="tag wn">⚠ Добавлена в блок</span> <span class="tag wn">⚠ Нет требований</span><br><span class="sec">шкала 0–4</span></td><td class="ty"><span class="inp" style="width:max-content;">Профильная <span aria-hidden="true">▾</span></span></td><td><span class="sc" style=""><span class="sec">—</span><span aria-hidden="true">▾</span></span></td><td><span class="sc" style=""><span class="sec">—</span><span aria-hidden="true">▾</span></span></td><td><span class="sc" style=""><span class="sec">—</span><span aria-hidden="true">▾</span></span></td></tr>
+            <tr class="gh"><td colspan="5">Вне блоков</td></tr>
+            <tr><td class="n"><b class="strong">Требования и анализ</b><br><span class="sec">шкала 0–4</span></td><td class="ty"><span class="inp" style="width:max-content;">Профильная <span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r1">1</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r2">2</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r3">3</span><span aria-hidden="true">▾</span></span></td></tr>
+            <tr><td class="n"><b class="strong">Командная работа</b><br><span class="sec">шкала 0–4</span></td><td class="ty"><span class="inp" style="width:max-content;">Дополнительная <span aria-hidden="true">▾</span></span></td><td><span class="sc" style=""><span class="sec">—</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r2">2</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r3">3</span><span aria-hidden="true">▾</span></span></td></tr>
           </tbody>
         </table></div>
         <div>
-          <div class="h2" style="margin-bottom:var(--ds-sm);">Блоки компетенций</div>
+          <div class="h2" style="margin-bottom:var(--ds-sm);">Коэффициенты блоков</div>
           <div class="scroll"><table class="t">
-            <thead>
-              <tr><th rowspan="2">Название блока</th><th rowspan="2">Обязательный блок</th><th colspan="2">Стажёр</th><th colspan="2">Специалист</th><th rowspan="2">Действия</th></tr>
-              <tr><th>Коэффициент, %</th><th>Минимальный порог блока</th><th>Коэффициент, %</th><th>Минимальный порог блока</th></tr>
-            </thead>
+            <thead><tr><th>Блок</th><th>Стажёр: коэффициент, %</th><th>Специалист: коэффициент, %</th><th>Ведущий специалист: коэффициент, %</th></tr></thead>
             <tbody>
-              <tr><td><span class="inp">Профильный блок</span></td><td>☑ Обязательный блок</td><td><span class="inp">50</span></td><td><span class="inp">50</span></td><td><span class="inp">40</span></td><td><span class="inp">60</span></td><td><span class="lnk dng" style="color:var(--ds-text-disabled);">Удалить</span> <span class="sec sm">Сначала уберите компетенции блока</span></td></tr>
-              <tr><td><span class="strong">Базовые навыки</span> <span class="tag in">Общий блок</span></td><td>☑ Обязательный блок</td><td><span class="inp">30</span></td><td><span class="inp">40</span></td><td><span class="inp">40</span></td><td><span class="inp">50</span></td><td><span class="sec sm">Убирается в мастере, шаг 2</span></td></tr>
-              <tr><td><span class="strong">Вне блоков</span> <span class="sec sm">1 компетенция</span></td><td class="sec">—</td><td><span class="inp">20</span></td><td class="sec">—</td><td><span class="inp">20</span></td><td class="sec">—</td><td><span class="sec sm">Группа исчезает, когда в ней нет компетенций</span></td></tr>
+              <tr><td><span class="strong">Базовые навыки</span> <span class="tag in">Общий блок</span></td><td class="num"><span class="inp">50</span></td><td class="num"><span class="inp">50</span></td><td class="num"><span class="inp">50</span></td></tr><tr><td><span class="strong">Вне блоков</span> <span class="sec sm">2 компетенции</span></td><td class="num"><span class="inp">50</span></td><td class="num"><span class="inp">50</span></td><td class="num"><span class="inp">50</span></td></tr>
+              <tr><td class="strong">Сумма коэффициентов</td><td class="num strong">100</td><td class="num strong">100</td><td class="num strong">100</td></tr>
+              <tr><td class="strong">Минимальный общий порог, %</td><td class="num"><span class="inp">60</span></td><td class="num"><span class="inp">70</span></td><td class="num"><span class="inp">80</span></td></tr>
             </tbody>
           </table></div>
         </div>
@@ -1081,12 +1082,12 @@ flowchart TD
     </div>
     <p><b>Notes</b>:</p>
     <ul>
-      <li><b>Группы в таблице.</b> Строки таблицы «компетенции × уровни» собраны под строками-заголовками групп (<code>surface-muted</code>): общие блоки (название ссылкой в справочник, тег «Общий блок»; шкалы у блока нет — шкала каждой компетенции стоит словами под её названием), собственные блоки версии и «Вне блоков». Группа «Вне блоков» есть, только пока в версии есть такие компетенции. Компетенция входит в версию один раз.</li>
+      <li><b>Группы в таблице.</b> Строки таблицы «компетенции × уровни» собраны под строками-заголовками групп (<code>surface-muted</code>): общие блоки (название ссылкой в справочник, тег «Общий блок»; шкалы у блока нет — шкала каждой компетенции стоит словами под её названием) и «Вне блоков». Группа «Вне блоков» есть, только пока в версии есть такие компетенции. Компетенция входит в версию один раз.</li>
       <li><b>Область.</b> В матрице трека члены общего блока принадлежат области матрицы или «общие»: при добавлении блока в мастере (шаг 2) блок с компетенцией другой области недоступен с причиной «в составе компетенции другой области — «{область}»». У матрицы должности области нет, ограничения нет.</li>
       <li><b>Черновой общий блок.</b> Блок со статусом «Черновик» в версии помечен тегом «Черновик» на строке-заголовке группы; он публикуется вместе с версией каскадом, если публикующий вправе его утвердить, и стоит в перечне публикуемого (<a href="#m-publish-confirm">макет «Утверждение записи»</a>); блок добавляют в мастере (шаг 2), где в выборе доступны действующие и черновые блоки.</li>
-      <li><b>Состав общего блока — только чтение.</b> Название блока и его состав в матрице не правятся: у компетенции общего блока вместо выбора блока стоит тег «Общий блок «…»» и нет «Удалить»; убрать блок можно только целиком в мастере (шаг 2), а состав меняет справочник «Общие блоки». Для требований каждая компетенция — на своей шкале (чип с баллом, цвет по доле шкалы; окно требования показывает баллы её шкалы).</li>
+      <li><b>Состав общего блока — только чтение.</b> Название блока и его состав в матрице не правятся: компетенция общего блока стоит под строкой-заголовком группы (тег «Общий блок») и без «Удалить»; убрать блок можно только целиком в мастере (шаг 2), а состав меняет справочник «Общие блоки». Для требований каждая компетенция — на своей шкале (чип с баллом, цвет по доле шкалы; список баллов клетки — шкалы этой компетенции).</li>
       <li><b>«Состав изменился».</b> В неопубликованной версии (черновик, на согласовании, возвращена) на строке-заголовке общего блока стоит <code>tag-warning</code> «⚠ Состав изменился», если состав блока отличается от состава в действующей опубликованной версии матрицы (сравнение с ней, а не с последним сохранением); рядом — что изменилось словами; у новой компетенции — <code>tag-warning</code> «⚠ Добавлена в блок». Пометки есть только у блоков, которые есть и в опубликованной версии; у матрицы без опубликованной версии новая компетенция блока отмечена только <code>tag-warning</code> «Нет требований». Версия сразу видит новый состав; полнота проверяется при ближайшем действии над ней. Опубликованная и архивная версии читаются из снимка, пометки на них нет.</li>
-      <li><b>Блоки компетенций.</b> В таблице блоков общий блок — название только для чтения с тегом «Общий блок»; «Обязательный блок», коэффициенты и пороги по уровням задаются здесь. «Вне блоков» — строка без «Обязательный блок» и без порога блока, но с коэффициентом: сумма коэффициентов всех групп уровня — 100 %. «Удалить» блока с компетенциями недоступно с причиной (как у собственных блоков); общий блок убирается в мастере.</li>
+      <li><b>Коэффициенты блоков.</b> В таблице коэффициентов общий блок — название только для чтения с тегом «Общий блок»; для каждого уровня — один коэффициент, под таблицей общий порог по уровню. «Вне блоков» — строка с коэффициентом: сумма коэффициентов всех групп уровня — 100 %. Признака «обязательный блок» и порогов по блокам нет; «Удалить» и «Добавить блок» нет — общий блок убирается в мастере.</li>
       <li><b>Только чтение</b> — как у остальных версий: значения текстом, без «Удалить» и «Сохранить»; состав общего блока опубликованной версии — из снимка.</li>
     </ul>
   </article>
@@ -1102,26 +1103,27 @@ flowchart TD
       <div class="pg stack">
         <div><span class="lnk" style="margin:0;">Карьерная модель</span></div>
         <div class="h1" style="margin:0;">Матрица должности «Руководитель проекта» — Департамент разработки</div>
-                <div class="row"><span class="inp" style="min-width:calc(var(--ds-h-md) * 4);"><span>Версия 1</span><span aria-hidden="true">▾</span></span><span class="tag">Черновик</span><span class="btn">Перейти к отправке в мастере</span><span class="btn" aria-label="Ещё">…</span></div>
+        <div class="row"><span class="inp" style="min-width:calc(var(--ds-h-md) * 4);"><span>Версия 1</span><span aria-hidden="true">▾</span></span><span class="tag">Черновик</span><span class="btn">Перейти к отправке в мастере</span><span class="btn" aria-label="Ещё">…</span></div>
         <div class="scroll"><table class="mx">
-          <thead><tr><th class="n">Компетенции</th><th>Требуемый балл</th></tr></thead>
+          <thead><tr><th class="n">Компетенция</th><th class="ty">Тип</th><th>Требуемый балл</th></tr></thead>
           <tbody>
-            <tr class="gh"><td colspan="2"><span class="lnk" style="margin:0;">Базовые навыки</span> <span class="tag in">Общий блок</span></td></tr>
-            <tr><td class="n"><b class="strong">Коммуникация</b><br><span class="sec">шкала 0–5</span><br><span class="inp" style="margin:var(--ds-xxs) 0;width:max-content;">Дополнительная <span aria-hidden="true">▾</span></span></td><td><span class="chip r3">4</span></td></tr>
-            <tr><td class="n"><b class="strong">Планирование</b><br><span class="sec">шкала 0–5</span><br><span class="inp" style="margin:var(--ds-xxs) 0;width:max-content;">Профильная <span aria-hidden="true">▾</span></span></td><td><span class="inp er" style="justify-content:center;"><span class="ph">—</span></span></td></tr>
-            <tr class="gh"><td colspan="2">Профильный блок <span class="sec sm">собственный блок версии</span></td></tr>
-            <tr><td class="n"><b class="strong">Управление проектом</b><br><span class="sec">шкала 0–4</span><br><span class="inp" style="margin:var(--ds-xxs) 0;width:max-content;">Профильная <span aria-hidden="true">▾</span></span></td><td><span class="chip r3">3</span></td></tr>
-            <tr><td class="n"><b class="strong">Безопасная разработка</b><br><span class="tag er">⚠ Критическая</span></td><td><span class="chip r3">3</span></td></tr>
-            <tr><td class="n"><b class="strong">Минимальный общий порог</b></td><td><span class="inp" style="justify-content:center;">70</span></td></tr>
+            <tr class="gh"><td colspan="3"><span class="lnk" style="margin:0;">Базовые навыки</span> <span class="tag in">Общий блок</span> <span class="sec sm">Для всех</span></td></tr>
+            <tr><td class="n"><b class="strong">Коммуникация</b><br><span class="sec">шкала 0–5</span></td><td class="ty"><span class="inp" style="width:max-content;">Дополнительная <span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r3">4</span><span aria-hidden="true">▾</span></span></td></tr>
+            <tr><td class="n"><b class="strong">Планирование</b><br><span class="sec">шкала 0–5</span></td><td class="ty"><span class="inp" style="width:max-content;">Профильная <span aria-hidden="true">▾</span></span></td><td><span class="sc" style="border-color:var(--ds-danger);"><span class="sec">—</span><span aria-hidden="true">▾</span></span></td></tr>
+            <tr class="gh"><td colspan="3">Вне блоков</td></tr>
+            <tr><td class="n"><b class="strong">Управление проектом</b><br><span class="sec">шкала 0–4</span></td><td class="ty"><span class="inp" style="width:max-content;">Профильная <span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r3">3</span><span aria-hidden="true">▾</span></span></td></tr>
+            <tr><td class="n"><b class="strong">Безопасная разработка</b><br><span class="sec">шкала 0–4</span></td><td class="ty"><span class="inp" style="width:max-content;"><span class="tag er">⚠ Критическая</span> <span aria-hidden="true">▾</span></span><br><span class="sec sm">Балл — порог уровня</span></td><td><span class="sc"><span class="chip r3">3</span><span aria-hidden="true">▾</span></span></td></tr>
           </tbody>
         </table></div>
         <div>
-          <div class="h2" style="margin-bottom:var(--ds-sm);">Блоки компетенций</div>
+          <div class="h2" style="margin-bottom:var(--ds-sm);">Коэффициенты блоков</div>
           <div class="scroll"><table class="t">
-            <thead><tr><th>Название блока</th><th>Обязательный блок</th><th>Коэффициент, %</th><th>Минимальный порог блока</th><th>Действия</th></tr></thead>
+            <thead><tr><th>Блок</th><th>Коэффициент, %</th></tr></thead>
             <tbody>
-              <tr><td><span class="inp">Профильный блок</span></td><td>☑ Обязательный блок</td><td><span class="inp">60</span></td><td><span class="inp">60</span></td><td><span class="lnk dng" style="color:var(--ds-text-disabled);">Удалить</span> <span class="sec sm">Сначала уберите компетенции блока</span></td></tr>
-              <tr><td><span class="strong">Базовые навыки</span> <span class="tag in">Общий блок</span></td><td>☐ Обязательный блок</td><td><span class="inp">40</span></td><td class="sec">—</td><td><span class="sec sm">Убирается в мастере, шаг 2</span></td></tr>
+              <tr><td><span class="strong">Базовые навыки</span> <span class="tag in">Общий блок</span></td><td class="num"><span class="inp">40</span></td></tr>
+              <tr><td><span class="strong">Вне блоков</span> <span class="sec sm">2 компетенции</span></td><td class="num"><span class="inp">60</span></td></tr>
+              <tr><td class="strong">Сумма коэффициентов</td><td class="num strong">100</td></tr>
+              <tr><td class="strong">Минимальный общий порог, %</td><td class="num"><span class="inp">70</span></td></tr>
             </tbody>
           </table></div>
         </div>
@@ -1130,8 +1132,8 @@ flowchart TD
     <p><b>Notes</b>:</p>
     <ul>
       <li><b>Шапка.</b> Заголовок «Матрица должности «{должность}» — {подразделение}» (<code>heading-1</code>), под ним ничего лишнего: области, трека и шкалы у матрицы должности нет. Выбор версии, статус, маршрут согласования (автор, вышестоящий руководитель, HR, публикация), панель действий и история — как у матрицы трека.</li>
-      <li><b>Один столбец.</b> Вместо столбцов уровней — один столбец «Требуемый балл»: ячейка — чип балла шкалы компетенции или пустое поле («—», ошибка полноты «У компетенции «{компетенция}» не задан требуемый балл»); вся ячейка открывает окно «Требование» без поля уровня (тип, вес, обязательность, ожидаемое поведение, примеры, дата действия). Добавить и удалить уровень нельзя — «Добавить уровень» и «Удалить» у столбца на этой странице нет.</li>
-      <li><b>Один набор коэффициентов и порогов.</b> Таблица блоков — по одной ячейке «Коэффициент, %» и «Минимальный порог блока» на блок (у общего блока и собственного одинаково), под таблицей матрицы — одно значение «Минимального общего порога». Сумма коэффициентов всех групп — 100 %.</li>
+      <li><b>Один столбец.</b> Вместо столбцов уровней — один столбец «Требуемый балл» рядом со столбцом «Тип»: клетка — компактный список баллов шкалы компетенции или пустая («—», ошибка полноты «У компетенции «{компетенция}» не задан требуемый балл»); окна требования нет. Добавить и удалить уровень нельзя. Компетенции и блоки назначаются только в мастере (шаг 2).</li>
+      <li><b>Один набор коэффициентов и один порог.</b> Таблица коэффициентов — по одному полю «Коэффициент, %» на блок (общий блок и «Вне блоков»), под ней одно значение «Минимального общего порога». Сумма коэффициентов всех групп — 100 %. Порогов по блокам и признака «обязательный» нет.</li>
       <li><b>Полнота.</b> В версии есть хотя бы одна компетенция («В матрице должности нет компетенций»); у каждой компетенции задан балл; коэффициенты дают 100 % («Коэффициенты блоков дают в сумме {n} %, нужно 100 %»); у критической компетенции задан минимальный уровень; нет неактивных записей, включая должность («В версии есть неактивная запись «{название}»»). Проверок связи «должность — уровень» нет.</li>
       <li><b>Должность вне треков.</b> Должность матрицы должности не связана с уровнем трека (иначе матрицы нет), поэтому ссылки «Связать должности» на странице нет. Деактивация должности и исключение её из перечня не удаляют матрицу и не блокируются: новая версия станет неполной.</li>
     </ul>
@@ -1193,8 +1195,8 @@ flowchart TD
   <article class="mockup">
     <h3>Редактор: несохранённые правки, сохранение, окна выбора и требования</h3>
     <dl class="screen-meta">
-      <dt><b>Purpose</b></dt><dd>Не дать выйти к решению по версии с несохранёнными правками, не потерять ввод при сохранении, быстро задать требование.</dd>
-      <dt><b>Entry from</b></dt><dd>Правка в редакторе версии; нажатие ячейки таблицы; «Добавить компетенцию», «Добавить уровень»; «Вернуть с правками».</dd>
+      <dt><b>Purpose</b></dt><dd>Не дать выйти к решению по версии с несохранёнными правками, не потерять ввод при сохранении, быстро задать балл в клетке.</dd>
+      <dt><b>Entry from</b></dt><dd>Правка в редакторе версии: выбор балла и типа, коэффициенты; «Добавить уровень»; «Вернуть с правками».</dd>
       <dt><b>Exit to</b></dt><dd>Та же страница; сохранённая версия заменяет форму.</dd>
     </dl>
     <div class="mockup-preview">
@@ -1206,27 +1208,23 @@ flowchart TD
         </div>
         <div class="card stack">
           <div class="cap">Идёт сохранение: редактор заблокирован целиком</div>
-          <div class="row"><span class="btn off">Добавить компетенцию</span><span class="btn off">Добавить уровень</span><span class="btn pri">⟳ Сохранить</span></div>
+          <div class="row"><span class="btn off">Добавить уровень</span><span class="btn pri">⟳ Сохранить</span></div>
           <div class="row"><span class="btn off" style="padding:0;width:var(--ds-matrix-cell);justify-content:center;">—</span><span class="inp off" style="width:var(--ds-matrix-cell);justify-content:center;">60</span><span class="muted sm">кнопки, ячейки и поля недоступны, пока ответ не пришёл</span></div>
         </div>
         <div class="cols">
-          <div class="scrim"><div class="modal">
-            <div class="h2">Безопасная разработка, Специалист</div>
-            <div class="fld"><div class="lbl">Требуемый уровень</div><div class="inp"><span>3 — Самостоятельно на сложных задачах</span><span aria-hidden="true">⊗ ▾</span></div></div>
-            <div class="fld"><div class="lbl">Вес</div><div class="inp"><span>1</span></div></div>
-            <div class="fld">☑ Обязательная</div>
-            <div class="fld"><div class="lbl">Ожидаемое поведение</div><div class="inp area" style="min-height:calc(var(--ds-h-md) * 2);"></div></div>
-            <div class="fld"><div class="lbl">Примеры подтверждений</div><div class="inp area" style="min-height:calc(var(--ds-h-md) * 2);"></div></div>
-            <div class="fld"><div class="lbl">Действует с</div><div class="inp"><span class="ph">дд.мм.гггг</span><span aria-hidden="true">📅</span></div></div>
-            <div class="row"><span class="btn pri">Сохранить</span><span class="btn">Отмена</span><span class="btn" style="border-color:var(--ds-danger);color:var(--ds-danger);">Удалить</span></div>
-          </div></div>
+          <div class="pg stack">
+            <div class="cap">Клетка открыта: баллы шкалы компетенции «Безопасная разработка» (шкала 0–4)</div>
+            <span class="sc"><span class="chip r3">3</span><span aria-hidden="true">▴</span></span>
+            <div class="pop" style="max-width:calc(var(--ds-xxxl) * 7);">
+              <div class="opt"><span class="sec">— Не задан</span></div>
+              <div class="opt"><span class="chip">0</span> Не подтверждена</div>
+              <div class="opt"><span class="chip r1">1</span> Работает с поддержкой</div>
+              <div class="opt"><span class="chip r2">2</span> Самостоятельно на типовых задачах</div>
+              <div class="opt sel"><span class="chip r3">3</span> Самостоятельно на сложных задачах</div>
+              <div class="opt hov"><span class="chip r4">4</span> Задаёт стандарты</div>
+            </div>
+          </div>
           <div class="stack">
-            <div class="scrim"><div class="modal">
-              <div class="h2">Добавить компетенцию</div>
-              <div class="fld"><div class="lbl">Компетенции</div><div class="inp on foc"><span class="ph"></span><span aria-hidden="true">▾</span></div></div>
-              <div class="fld"><div class="lbl">Блоки компетенций</div><div class="inp"><span>Базовый блок</span><span aria-hidden="true">▾</span></div></div>
-              <div class="row"><span class="btn pri">Добавить</span><span class="btn">Отмена</span></div>
-            </div></div>
             <div class="scrim"><div class="modal">
               <div class="h2">Вернуть с правками</div>
               <div class="fld"><div class="lbl">Комментарий</div><div class="inp area on foc" style="min-height:calc(var(--ds-h-md) * 3);"></div></div>
@@ -1240,8 +1238,8 @@ flowchart TD
     <ul>
       <li><b>Правки копятся в форме, пока их не сохранят.</b> Пока есть несохранённые правки или идёт сохранение, все переходы статуса и ссылки на сценарии («Перейти к отправке в мастере», «Согласовать версию», «Доработать возвращённую версию», «Вернуть с правками», «Принять и доработать», «Откатить правки») недоступны, а под ними написано «Сначала сохраните изменения». Надпись появляется, только если какой-то переход иначе был бы доступен. «Создать новую версию» и «История» это не касается.</li>
       <li><b>Пока идёт сохранение, весь редактор заблокирован</b> (кнопки, ячейки, поля порогов и блоков), «Сохранить» показывает индикатор: ввод, сделанный в этот момент, не потерялся бы при замене формы сохранённой версией. Успех заменяет форму сохранённой версией; отказ показывает над таблицей «Не удалось сохранить запись» с причиной, форма остаётся с введённым. Изменение версии другим пользователем (412) подтягивает актуальную версию.</li>
-      <li><b>Окно требования</b> — заголовок «{компетенция}, {уровень}» (имена записей здесь нужны: окно открывается ячейкой). Поля: «Требуемый уровень» (выбор «{балл} — {значение}», очищается; тип компетенции в окне не правится — он в её строке), «Вес» (число, по умолчанию 1), «Обязательная», «Ожидаемое поведение», «Примеры подтверждений», «Действует с» (дата). Кнопки «Сохранить» и «Отмена»; «Удалить» (контурная красная) — только если требование уже есть. «Сохранить» меняет только форму матрицы, не сервер: на сервер всё уходит кнопкой «Сохранить» страницы. В режиме чтения поля недоступны, кнопок нет.</li>
-      <li><b>Выборы.</b> «Добавить компетенцию»: поиск на сервере среди действующих компетенций любых шкал, области матрицы и «общих», без уже добавленных (до 20 за раз); блок выбирается из блоков версии, предлагается первый. «Добавить уровень»: поиск по уровням трека, которых ещё нет в версии, неактивные не предлагаются. «Вернуть с правками»: окно с комментарием (необязательным); главная кнопка окна называется так же, как действие.</li>
+      <li><b>Баллы в клетках.</b> Отдельного окна требования нет: клетка таблицы — компактный список баллов шкалы компетенции («— Не задан», затем «{балл} — {значение}»); выбор попадает в форму и сохраняется кнопкой «Сохранить». Требование — только балл; «Примеры подтверждений» — поле компетенции справочника (окно компетенции), а не требования.</li>
+      <li><b>Выборы.</b> Компетенции и блоки на странице матрицы не добавляются (это шаг 2 мастера). «Добавить уровень»: поиск по уровням трека, которых ещё нет в версии, неактивные не предлагаются. «Вернуть с правками»: окно с комментарием (необязательным); главная кнопка окна называется так же, как действие.</li>
       <li><b>Проверка полноты.</b> Отправка версии на согласование выполняется в мастере «Построить матрицу компетенций» (<a href="desk.html#m-wiz-4">desk.html</a>, шаг 5 «Проверка»), где замечания собраны списком со ссылками на шаги. Слова сервера показываются как написаны: «У уровня «{уровень}» нет требований», «Коэффициенты блоков уровня «{уровень}» дают в сумме {n} %, нужно 100 %», «У критической компетенции «{компетенция}» не задан минимальный уровень», «В версии есть неактивная запись «{название}»», «Нет ответственного HR — обратитесь к администратору», «Сейчас ход другого участника согласования».</li>
     </ul>
   </article>
@@ -1262,27 +1260,29 @@ flowchart TD
           <div class="h2" style="margin:0;">Изменено согласующим</div>
           <ul class="plain">
             <li>Изменено: тип компетенции «Командная работа»<div class="sec">Было: Профильная</div><div class="sec">Стало: Дополнительная</div></li>
-            <li>Изменено: требование «Командная работа», уровень «Стажёр»
-              <div class="sec">Было: Требуемый уровень: 1 (Работает с поддержкой); Вес: 1</div>
-              <div class="sec">Стало: Требуемый уровень: 2 (Самостоятельно на типовых задачах); Вес: 1; Обязательная</div></li>
-            <li>Изменено: коэффициент блока «Базовый блок», уровень «Стажёр»
-              <div class="sec">Было: Коэффициент, %: 60; Минимальный порог блока: 50 %</div>
-              <div class="sec">Стало: Коэффициент, %: 55; Минимальный порог блока: 50 %</div></li>
+            <li>Изменено: требуемый балл «Командная работа», уровень «Стажёр»
+              <div class="sec">Было: 1 (Работает с поддержкой)</div>
+              <div class="sec">Стало: 2 (Самостоятельно на типовых задачах)</div></li>
+            <li>Изменено: коэффициент блока «Базовые навыки», уровень «Стажёр»
+              <div class="sec">Было: Коэффициент, %: 60</div>
+              <div class="sec">Стало: Коэффициент, %: 55</div></li>
             <li>Добавлено: компетенция «Работа с данными»
-              <div class="sec">Стало: Блок «Профильный блок»</div></li>
+              <div class="sec">Стало: Вне блоков</div></li>
             <li>Удалено: уровень «Ведущий специалист»
               <div class="sec">Было: Минимальный общий порог: 80 %</div></li>
           </ul>
           <div class="scroll"><table class="mx">
-            <thead><tr><th class="n">Компетенции</th><th>Стажёр</th><th>Специалист</th></tr></thead>
+            <thead><tr><th class="n">Компетенция</th><th class="ty">Тип</th><th>Стажёр</th><th>Специалист</th></tr></thead>
             <tbody>
               <tr>
                 <td class="n chg"><b class="strong">Командная работа</b><br><span class="sec">шкала 0–4</span><br><span class="tag wn">✎ Изменено согласующим</span></td>
-                <td class="chg"><span class="chip r2">2</span><span aria-label="Изменено согласующим"> ✎</span></td><td><span class="chip r2">2</span></td>
+                <td class="ty chg"><span class="inp" style="width:max-content;">Дополнительная <span aria-hidden="true">▾</span></span> <span aria-label="Изменено согласующим">✎</span></td>
+                <td class="chg"><span class="sc"><span class="chip r2">2</span><span aria-hidden="true">▾</span></span><span aria-label="Изменено согласующим"> ✎</span></td><td><span class="sc"><span class="chip r2">2</span><span aria-hidden="true">▾</span></span></td>
               </tr>
               <tr>
-                <td class="n"><b class="strong">Требования и анализ</b><br><span class="sec">шкала 0–4</span><br><span class="inp" style="margin:var(--ds-xxs) 0;width:max-content;">Профильная <span aria-hidden="true">▾</span></span></td>
-                <td><span class="chip r1">1</span></td><td><span class="chip r2">2</span></td>
+                <td class="n"><b class="strong">Требования и анализ</b><br><span class="sec">шкала 0–4</span></td>
+                <td class="ty"><span class="inp" style="width:max-content;">Профильная <span aria-hidden="true">▾</span></span></td>
+                <td><span class="sc"><span class="chip r1">1</span><span aria-hidden="true">▾</span></span></td><td><span class="sc"><span class="chip r2">2</span><span aria-hidden="true">▾</span></span></td>
               </tr>
             </tbody>
           </table></div>
@@ -1312,7 +1312,7 @@ flowchart TD
     </div>
     <p><b>Notes</b>:</p>
     <ul>
-      <li><b>Правки согласующего — список словами, не только отметки в таблице.</b> Раздел «Изменено согласующим» появляется над легендой, когда последний вариант версии сделал согласующий. Каждая строка начинается с типа («Добавлено», «Удалено», «Изменено») и места («уровень «…»», «блок «…»», «компетенция «…»», «коэффициент блока «…», уровень «…»», «требование «…», уровень «…»»); ниже, как вторичный текст, «Было: …» и «Стало: …» (у добавленного только «Стало», у удалённого только «Было»). Так видны и удаления, которых в таблице уже нет. Значения: «Минимальный общий порог: … %»; ««{блок}», обязательный блок»; «Блок «{блок}»»; «Коэффициент, %: …; Минимальный порог блока: …»; для требования «Требуемый уровень: … (…)», «Вес: …», «Обязательная», «Ожидаемое поведение: …», «Примеры подтверждений: …», «Действует с: …».</li>
+      <li><b>Правки согласующего — список словами, не только отметки в таблице.</b> Раздел «Изменено согласующим» появляется над легендой, когда последний вариант версии сделал согласующий. Каждая строка начинается с типа («Добавлено», «Удалено», «Изменено») и места («уровень «…»», «блок «…»», «компетенция «…»», «коэффициент блока «…», уровень «…»», «требуемый балл «…», уровень «…»», «тип компетенции «…»»); ниже, как вторичный текст, «Было: …» и «Стало: …» (у добавленного только «Стало», у удалённого только «Было»). Так видны и удаления, которых в таблице уже нет. Значения: «Минимальный общий порог: … %»; «Блок «{блок}»»; «Коэффициент, %: …»; «Требуемый балл: … (…)»; «Тип компетенции: …».</li>
       <li><b>Отметки в таблице</b>: изменённая ячейка залита <code>warning-bg</code> и несёт значок «✎» с подписью «Изменено согласующим»; строка компетенции и заголовок уровня или блока — тег <code>tag-warning</code> с тем же текстом. Цвет не единственный носитель: всегда есть значок или слово.</li>
       <li><b>Три ответа автора на возвращённую версию</b> (ходит только автор): «Принять правки» — шаг считается согласованным и версия идёт дальше по маршруту; «Принять и доработать» — версия становится черновиком с принятыми правками и после доработки идёт на согласование с первого шага; «Откатить правки» — версия возвращается к варианту автора, становится черновиком и уходит на согласование с первого шага. «Принять правки» может публиковать, поэтому решается только на экране «Доработать возвращённую версию» (<a href="desk.html#m-rework">desk.html</a>) с перечнем публикуемого; на странице матрицы вместо него ссылка «Доработать возвращённую версию», а «Принять и доработать» и «Откатить правки» остаются кнопками, так как ничего не публикуют.</li>
       <li><b>«Вернуть с правками»</b> доступно согласующему на его шаге вместе со ссылкой «Согласовать версию»; решение «Согласовать» принимается на экране «Согласовать версию» (<a href="desk.html#m-review">desk.html</a>). Согласующий сам правит таблицу (редактор доступен ему на его шаге), сохраняет и возвращает версию с необязательным комментарием; комментарий виден в истории.</li>

@@ -298,7 +298,7 @@ Material risk: change: public contract, change: migration
 
 ### Task 51: UX — шаг «Требования» и редактор матрицы
 Material risk: none
-- [ ] `docs/ux/desk.html`, `docs/ux/career-framework.html`: таблица со столбцом «Тип», баллы в ячейках, группировка по блокам без назначения, назначение блоков на шаге 2, легенда с ровными подложками, окно компетенции с примерами подтверждений (AC-56)
+- [x] `docs/ux/desk.html`, `docs/ux/career-framework.html`: таблица со столбцом «Тип», баллы в ячейках, группировка по блокам без назначения, назначение блоков на шаге 2, легенда с ровными подложками, окно компетенции с примерами подтверждений (AC-56)
 
 ### Task 52: Бэкенд — упрощённое требование матрицы
 Material risk: change: public contract, change: migration
