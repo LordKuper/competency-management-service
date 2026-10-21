@@ -403,3 +403,13 @@
 {"op":"close","id":"Task 74","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:34:14.560Z","end":"2026-10-21T13:39:24.246Z","outcome":"done","attrs":{}}
 {"op":"open","id":"Task 74 roles-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:40:03.707Z","attrs":{}}
 {"op":"close","id":"Task 74 roles-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:40:03.707Z","end":"2026-10-21T13:41:02.748Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 74 rights-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:42:27.090Z","attrs":{}}
+{"op":"close","id":"Task 76","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:34:14.681Z","end":"2026-10-21T13:45:19.675Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 74 rights-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:42:27.090Z","end":"2026-10-21T13:46:06.899Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 75","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:34:14.618Z","end":"2026-10-21T14:10:06.759Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 74 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.861Z","attrs":{}}
+{"op":"open","id":"Task 75 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.914Z","attrs":{}}
+{"op":"open","id":"Task 76 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.967Z","attrs":{}}
+{"op":"close","id":"Task 74 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.861Z","end":"2026-10-21T14:11:12.827Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 75 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.914Z","end":"2026-10-21T14:11:52.435Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 76 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.967Z","end":"2026-10-21T14:12:35.816Z","outcome":"done","attrs":{}}

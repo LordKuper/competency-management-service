@@ -1045,6 +1045,30 @@
       "tier": "standard",
       "reason": "owner asd-ba (docs/product)",
       "resolved_model": "sonnet"
+    },
+    "Task 74 tracks-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 75 tracks-fix": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:authorization; owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 76 tracks-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 77": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:authorization",
+      "resolved_model": "opus"
     }
   },
   "skipped_phases": [],

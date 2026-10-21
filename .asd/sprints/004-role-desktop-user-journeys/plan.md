@@ -395,15 +395,15 @@ Material risk: none
 
 ### Task 74: Требования — роль HR и выбор ответственного HR
 Material risk: none
-- [ ] `docs/product/requirements/user-management.html`, `career-framework.html`, `desk.html`: роль «HR» у учётной записи, назначение и снятие, запрет снятия при закреплении; выбор ответственного HR из сотрудников с учётной записью с ролью «HR» (AC-62)
+- [x] `docs/product/requirements/user-management.html`, `career-framework.html`, `desk.html`: роль «HR» у учётной записи, назначение и снятие, запрет снятия при закреплении; выбор ответственного HR из сотрудников с учётной записью с ролью «HR» (AC-62)
 
 ### Task 75: Архитектура — роль HR, проверка закрепления, список кандидатов
 Material risk: change: authorization, change: public contract
-- [ ] `docs/architecture/user-management.md`, `career-framework.md`, `org-structure.md`, `desk.md`: `UserRole.Hr`, проверки при закреплении HR и при снятии роли, источник списка кандидатов (сотрудник с учётной записью с ролью), контракт (AC-62)
+- [x] `docs/architecture/user-management.md`, `career-framework.md`, `org-structure.md`, `desk.md`: `UserRole.Hr`, проверки при закреплении HR и при снятии роли, источник списка кандидатов (сотрудник с учётной записью с ролью), контракт (AC-62)
 
 ### Task 76: UX — роль HR и выбор сотрудника ответственным HR
 Material risk: none
-- [ ] `docs/ux/user-management.html`, `org-structure.html`, `desk.html`: роль «HR» в карточке пользователя, поле «Сотрудник» вместо «Пользователь» в закреплении HR, пустой список (нет сотрудников с ролью) (AC-62)
+- [x] `docs/ux/user-management.html`, `org-structure.html`, `desk.html`: роль «HR» в карточке пользователя, поле «Сотрудник» вместо «Пользователь» в закреплении HR, пустой список (нет сотрудников с ролью) (AC-62)
 
 ### Task 77: Бэкенд — роль HR и проверка закрепления
 Material risk: change: authorization, change: public contract
