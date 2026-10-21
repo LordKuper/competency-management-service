@@ -25,4 +25,4 @@ Phase-scoped rules go elsewhere — design constraints to `custom-design-rules.m
 
 ## No backward compatibility before 1.0
 
-- Until release 1.0 the project keeps no backward compatibility. The API contract version stays 1.0.0 and is not bumped before release. Obsolete surface is deleted, never marked deprecated. DB migrations are squashed and no data-migration code is written. (`004-role-desktop-user-journeys#AC-58`)
+- Until release 1.0 the project keeps no API backward compatibility: the contract version stays 1.0.0 and is not bumped before release; obsolete surface is deleted, never marked deprecated. The DB schema changes by incremental EF migrations, with data transfer where the working development database would otherwise fail to migrate or lose meaning; right before release the migrations are squashed into one InitialCreate and every database is recreated (`docs/architecture/stack.html` «Контракт из кода»). (`004-role-desktop-user-journeys#AC-58`, `#AC-63`)
