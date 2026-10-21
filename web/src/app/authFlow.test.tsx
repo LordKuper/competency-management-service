@@ -7,14 +7,14 @@ import { queryClient } from "../api/queryClient";
 import { currentUserQueryKey } from "../features/auth/useCurrentUser";
 import { paths } from "../features/org-structure/paths";
 import { deferred, fakeApi, problem } from "../test/fakeApi";
-import { LOGIN_PATH } from "./featureContract";
+import { HOME_PATH, LOGIN_PATH } from "./featureContract";
 import { Providers } from "./Providers";
 import { router } from "./router";
 
 const ACCOUNT = {
   id: "account",
   email: "user@test.local",
-  role: "User",
+  roles: [],
   employeeId: null,
   employeeName: null,
   employeeLastName: null,
@@ -97,7 +97,7 @@ describe("sign-in (AC-6, AC-13)", () => {
       await screen.findByRole("button", { name: ACCOUNT.email }),
     ).toBeInTheDocument();
     expect(queryClient.getQueryData(currentUserQueryKey)).toEqual(ACCOUNT);
-    expect(currentPath()).toBe(paths.tree);
+    expect(currentPath()).toBe(HOME_PATH);
     expect(await fakeApi.calls("POST /api/v1/auth/login")[0]?.json()).toEqual({
       email: ACCOUNT.email,
       password: "Correct-horse-1!",

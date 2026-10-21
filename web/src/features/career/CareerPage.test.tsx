@@ -11,9 +11,9 @@ import { careerQueryKey } from "./careerApi";
 const UNIT = { id: "unit", name: "Отдел" };
 const REFERENCE_TABS = [
   "Шкалы",
-  "Категории",
-  "Направления и треки",
+  "Области и треки",
   "Компетенции",
+  "Общие блоки",
   "Матрицы",
 ];
 const APPROVALS_TAB = "На согласовании";
@@ -23,7 +23,11 @@ async function openAs(
   roles: { headedUnits?: object[]; hrUnits?: object[] } = {},
 ) {
   fakeApi.on("GET /api/v1/auth/me", () =>
-    Response.json({ id: "account", email: "user@test.local", role }),
+    Response.json({
+      id: "account",
+      email: "user@test.local",
+      roles: role === "User" ? [] : [role],
+    }),
   );
   fakeApi.on("GET /api/v1/career/me", () =>
     Response.json({ headedUnits: [], hrUnits: [], ...roles }),
@@ -72,7 +76,7 @@ describe("tabs of the career model (AC-24, AC-19)", {
     expect(tabNames()).toEqual([...REFERENCE_TABS, APPROVALS_TAB]);
   });
 
-  it("keep the approvals from a user with no process role, who still reads the five reference tabs", async () => {
+  it("keep the approvals from a user with no process role, who still reads the reference tabs", async () => {
     await openAs("User");
 
     expect(tabNames()).toEqual(REFERENCE_TABS);

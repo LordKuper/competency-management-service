@@ -35,7 +35,11 @@ const LIST = [
 
 function serve(role: "GlobalAdmin" | "User", list = LIST) {
   fakeApi.on("GET /api/v1/auth/me", () =>
-    Response.json({ id: "a", email: "a@test.local", role }),
+    Response.json({
+      id: "a",
+      email: "a@test.local",
+      roles: role === "User" ? [] : [role],
+    }),
   );
   fakeApi.on("GET /api/v1/org-units/sales/positions", () =>
     Response.json(list),

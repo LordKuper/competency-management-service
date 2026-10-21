@@ -11,7 +11,7 @@ function user(overrides: Partial<CurrentUser>): CurrentUser {
   return {
     id: "account",
     email: "user@test.local",
-    role: "User",
+    roles: [],
     employeeId: null,
     employeeName: null,
     employeeLastName: null,

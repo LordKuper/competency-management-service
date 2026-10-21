@@ -1,6 +1,7 @@
 import type { Active, Over } from "@dnd-kit/core";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
@@ -152,23 +153,29 @@ describe("level announcements for a screen reader (AC-11)", () => {
 
 function renderLevels(rows: LevelRow[], onOrderChange = vi.fn()) {
   fakeApi.on("GET /api/v1/auth/me", () =>
-    Response.json({ id: "a", email: "admin@test.local", role: "GlobalAdmin" }),
+    Response.json({
+      id: "a",
+      email: "admin@test.local",
+      roles: ["GlobalAdmin"],
+    }),
   );
   fakeApi.on("GET /api/v1/career/me", () =>
     Response.json({ headedUnits: [], hrUnits: [] }),
   );
   render(
     <Providers>
-      <TrackLevels
-        track={TRACK}
-        rows={rows}
-        isLoading={false}
-        error={null}
-        onRetry={vi.fn()}
-        pending={[]}
-        onPendingChange={vi.fn()}
-        onOrderChange={onOrderChange}
-      />
+      <MemoryRouter>
+        <TrackLevels
+          track={TRACK}
+          rows={rows}
+          isLoading={false}
+          error={null}
+          onRetry={vi.fn()}
+          pending={[]}
+          onPendingChange={vi.fn()}
+          onOrderChange={onOrderChange}
+        />
+      </MemoryRouter>
     </Providers>,
   );
 }
@@ -232,8 +239,13 @@ describe("the level list of the track dialog (AC-11)", {
     expect(
       within(rows[0] as HTMLElement).getByText("Действует"),
     ).toBeInTheDocument();
+    await userEvent.click(
+      within(rows[3] as HTMLElement).getByRole("button", {
+        name: "Действия с «Ведущий»",
+      }),
+    );
     expect(
-      within(rows[3] as HTMLElement).getByRole("button", { name: "Удалить" }),
+      await screen.findByRole("menuitem", { name: "Удалить" }),
     ).toBeInTheDocument();
     expect(
       within(rows[3] as HTMLElement).queryByText("Действует"),

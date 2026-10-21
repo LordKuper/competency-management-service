@@ -31,7 +31,6 @@ interface PagedTable {
   show: () => ReactElement;
   route: string;
   row: (index: number) => object;
-  isNested?: boolean;
 }
 
 const TABLES: PagedTable[] = [
@@ -40,18 +39,6 @@ const TABLES: PagedTable[] = [
     show: () => <DirectionsTracksTab />,
     route: "GET /api/v1/career/directions",
     row: entry,
-  },
-  {
-    table: "tracks of a direction",
-    show: () => <DirectionsTracksTab />,
-    route: "GET /api/v1/career/tracks",
-    row: (index) => ({
-      ...entry(index),
-      directionId: "direction",
-      ownerOrgUnitId: "unit",
-      ownerOrgUnitName: "Отдел",
-    }),
-    isNested: true,
   },
   {
     table: "scales",
@@ -66,9 +53,7 @@ const TABLES: PagedTable[] = [
     row: (index) => ({
       ...entry(index),
       description: null,
-      categoryId: "category",
       directionId: null,
-      type: "Profile",
       scaleId: "scale",
       createdAt: "2026-10-01T10:00:00Z",
       versionNumber: 1,
@@ -100,7 +85,11 @@ const queries = (route: string) =>
 
 function serveRole(role: "GlobalAdmin" | "User") {
   fakeApi.on("GET /api/v1/auth/me", () =>
-    Response.json({ id: "account", email: "who@test.local", role }),
+    Response.json({
+      id: "account",
+      email: "who@test.local",
+      roles: role === "User" ? [] : [role],
+    }),
   );
   fakeApi.on("GET /api/v1/career/me", () =>
     Response.json({ headedUnits: [], hrUnits: [] }),
@@ -133,7 +122,7 @@ describe("a catalogue table pages on the server (AC-24)", {
 }, () => {
   it.each(TABLES)(
     "$table: 20 rows to a page, the next page asked from the server",
-    async ({ show, route, row, isNested }) => {
+    async ({ show, route, row }) => {
       serveRole("GlobalAdmin");
       fakeApi.on("GET /api/v1/career/directions", () =>
         Response.json(page([{ ...entry(0), name: "Разработка" }])),
@@ -153,22 +142,7 @@ describe("a catalogue table pages on the server (AC-24)", {
         });
       });
       const user = showTable(show());
-      let scope: HTMLElement = document.body;
-      if (isNested) {
-        await user.click(
-          await waitFor(() => {
-            const expander = document.querySelector(
-              ".ant-table-row-expand-icon",
-            );
-            expect(expander).not.toBeNull();
-            return expander as HTMLElement;
-          }),
-        );
-        await screen.findByText("Запись 1");
-        scope = document.querySelector(
-          ".ant-table-expanded-row .ant-table-wrapper",
-        ) as HTMLElement;
-      }
+      const scope: HTMLElement = document.body;
       expect(await within(scope).findByText("Запись 1")).toBeInTheDocument();
       expect(within(scope).queryByText(FIRST_OF_SECOND_PAGE)).toBeNull();
       expect(queries(route)[0]).toMatchObject({
@@ -259,6 +233,14 @@ describe("an action taken from a list row carries the tag of the row the user sa
     fakeApi.on("GET /api/v1/career/directions/draft", () =>
       Response.json({ ...entry(1), id: "draft", version: 9 }),
     );
+    fakeApi.on("GET /api/v1/career/directions/draft/publication", () =>
+      Response.json({
+        entries: [],
+        blockers: [],
+        moreCount: 0,
+        cascadeTag: "tag",
+      }),
+    );
     fakeApi.on(route, () => Response.json({ ...entry(1), id: "draft" }));
     const user = showTable(<DraftsSection />);
 
@@ -282,8 +264,6 @@ describe("the competency table and its version history (AC-12, AC-24)", {
     id,
     name: `Проектирование ${id}`,
     description: "Описание",
-    categoryId: "category",
-    categoryName: "Профессиональные",
     directionId,
     directionName: directionId ? "Разработка" : null,
     type: "Critical",
@@ -300,9 +280,7 @@ describe("the competency table and its version history (AC-12, AC-24)", {
     number,
     name: "Проектирование",
     description: null,
-    categoryId: "category",
     directionId: null,
-    type: "Profile",
     scaleId: "scale",
     status: "Active",
     changedById: null,
@@ -318,12 +296,6 @@ describe("the competency table and its version history (AC-12, AC-24)", {
         page([competency("first", "direction"), competency("second", null)]),
       ),
     );
-    fakeApi.on("GET /api/v1/career/categories/category", () =>
-      Response.json(named("category", "Профессиональные")),
-    );
-    fakeApi.on("GET /api/v1/career/categories/old-category", () =>
-      Response.json(named("old-category", "Прежняя категория")),
-    );
     fakeApi.on("GET /api/v1/career/directions/direction", () =>
       Response.json(named("direction", "Разработка")),
     );
@@ -332,7 +304,7 @@ describe("the competency table and its version history (AC-12, AC-24)", {
     );
   }
 
-  it("names the category, the direction and the scale of each row from the list response without reading each, and calls a competency of no direction «Общая»", async () => {
+  it("names the direction and the scale of each row from the list response without reading each, and calls a competency of no direction «Общая»", async () => {
     serveCompetencies();
     showTable(<CompetenciesTab />);
 
@@ -343,15 +315,10 @@ describe("the competency table and its version history (AC-12, AC-24)", {
       "tr",
     ) as HTMLElement;
 
-    expect(await within(first).findByText("Профессиональные")).toBeVisible();
-    expect(within(first).getByText("Разработка")).toBeVisible();
+    expect(await within(first).findByText("Разработка")).toBeVisible();
     expect(within(first).getByText("Базовая 0–4")).toBeVisible();
     expect(within(second).getByText("Общая")).toBeVisible();
-    for (const route of [
-      "categories/category",
-      "directions/direction",
-      "scales/scale",
-    ]) {
+    for (const route of ["directions/direction", "scales/scale"]) {
       expect(fakeApi.calls(`GET /api/v1/career/${route}`)).toHaveLength(0);
     }
   });
@@ -364,9 +331,8 @@ describe("the competency table and its version history (AC-12, AC-24)", {
           name: "Проектирование систем",
           description: "Новое описание",
           directionId: "direction",
-          type: "Critical",
         }),
-        version(1, { categoryId: "old-category", status: "Draft" }),
+        version(1, { status: "Draft" }),
       ]),
     );
     const user = showTable(<CompetenciesTab />);
@@ -386,11 +352,7 @@ describe("the competency table and its version history (AC-12, AC-24)", {
       await within(dialog).findByText("Проектирование систем"),
     ).toBeInTheDocument();
     expect(within(dialog).getByText("Новое описание")).toBeInTheDocument();
-    expect(
-      await within(dialog).findByText("Профессиональные"),
-    ).toBeInTheDocument();
-    expect(within(dialog).getByText("Разработка")).toBeInTheDocument();
-    expect(within(dialog).getByText("Критическая")).toBeInTheDocument();
+    expect(await within(dialog).findByText("Разработка")).toBeInTheDocument();
     expect(within(dialog).getByText("Базовая 0–4")).toBeInTheDocument();
     expect(within(dialog).queryByRole("textbox")).toBeNull();
 
@@ -401,11 +363,7 @@ describe("the competency table and its version history (AC-12, AC-24)", {
       }),
     );
 
-    expect(
-      await within(dialog).findByText("Прежняя категория"),
-    ).toBeInTheDocument();
-    expect(within(dialog).getByText("Общая")).toBeInTheDocument();
-    expect(within(dialog).getByText("Профильная")).toBeInTheDocument();
+    expect(await within(dialog).findByText("Общая")).toBeInTheDocument();
     expect(within(dialog).getByText("Черновик")).toBeInTheDocument();
     expect(within(dialog).queryByText("Новое описание")).toBeNull();
   });
@@ -470,7 +428,6 @@ describe("the row actions of the catalogues (AC-19, AC-25)", {
             description: null,
             categoryId: "c",
             directionId: null,
-            type: "Profile",
             scaleId: "s",
             createdAt: "2026-10-01T10:00:00Z",
             versionNumber: 1,

@@ -37,7 +37,6 @@ const unit = (id: string, name: string, parentId: string | null) => ({
   version: 1,
 });
 
-const CATEGORY = entry("category", "Профессиональные");
 const DIRECTION = entry("direction", "Разработка");
 const SCALE = {
   ...entry("scale", "Базовая 0–4"),
@@ -56,7 +55,7 @@ function serve() {
     Response.json({
       id: "account",
       email: "admin@test.local",
-      role: "GlobalAdmin",
+      roles: ["GlobalAdmin"],
     }),
   );
   fakeApi.on("GET /api/v1/career/me", () =>
@@ -67,9 +66,6 @@ function serve() {
       unit("company", "Компания", null),
       unit("sales", "Продажи", "company"),
     ]),
-  );
-  fakeApi.on("GET /api/v1/career/categories", () =>
-    Response.json(page([CATEGORY])),
   );
   fakeApi.on("GET /api/v1/career/directions", () =>
     Response.json(page([DIRECTION])),
@@ -87,6 +83,8 @@ interface FilterCase {
   show: () => ReactElement;
   route: string;
   column: string;
+  /** Accessible name of the control inside the filter when it differs from the column title. */
+  control?: string;
   choose: { option: string } | { entry: string } | { unit: string };
   param: string;
   value: string;
@@ -142,31 +140,13 @@ const CASES: FilterCase[] = [
     inNestedTable: true,
   },
   {
-    table: "competencies by category",
-    show: () => <CompetenciesTab />,
-    route: "GET /api/v1/career/competencies",
-    column: "Категория",
-    choose: { entry: CATEGORY.name },
-    param: "categoryId",
-    value: CATEGORY.id,
-  },
-  {
     table: "competencies by direction",
     show: () => <CompetenciesTab />,
     route: "GET /api/v1/career/competencies",
-    column: "Направление",
+    column: "Область",
     choose: { entry: DIRECTION.name },
     param: "directionId",
     value: DIRECTION.id,
-  },
-  {
-    table: "competencies by type",
-    show: () => <CompetenciesTab />,
-    route: "GET /api/v1/career/competencies",
-    column: "Тип",
-    choose: { option: "Критическая" },
-    param: "type",
-    value: "Critical",
   },
   {
     table: "competencies by scale",
@@ -199,7 +179,7 @@ const CASES: FilterCase[] = [
     table: "matrices by direction",
     show: () => <MatricesTab />,
     route: "GET /api/v1/career/matrices",
-    column: "Направление",
+    column: "Область",
     choose: { entry: DIRECTION.name },
     param: "directionId",
     value: DIRECTION.id,
@@ -208,7 +188,8 @@ const CASES: FilterCase[] = [
     table: "matrices by track",
     show: () => <MatricesTab />,
     route: "GET /api/v1/career/matrices",
-    column: "Трек",
+    column: "Трек или должность",
+    control: "Трек",
     choose: { entry: TRACK.name },
     param: "trackId",
     value: TRACK.id,
@@ -323,7 +304,9 @@ describe("column filters send their value under the param the server reads (AC-2
       );
       await user.click(screen.getByRole("button", { name: "OK" }));
     } else if ("entry" in filter.choose) {
-      await user.click(screen.getByRole("combobox", { name: filter.column }));
+      await user.click(
+        screen.getByRole("combobox", { name: filter.control ?? filter.column }),
+      );
       await user.click(
         await screen.findByText(filter.choose.entry, {
           selector: ".ant-select-item-option-content",

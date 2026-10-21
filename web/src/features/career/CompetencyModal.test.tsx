@@ -51,7 +51,7 @@ function serve() {
     Response.json({
       id: "account",
       email: "admin@test.local",
-      role: "GlobalAdmin",
+      roles: ["GlobalAdmin"],
     }),
   );
   fakeApi.on("GET /api/v1/career/me", () =>

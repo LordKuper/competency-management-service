@@ -16,7 +16,7 @@ function impact(
   account: EmployeeImpact["account"],
   headOfUnits = [SALES],
 ): EmployeeImpact {
-  return { headOfUnits, account };
+  return { headOfUnits, hrUnits: [], account };
 }
 
 const ACTIVE_ACCOUNT = {

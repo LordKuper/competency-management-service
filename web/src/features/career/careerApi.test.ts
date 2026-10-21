@@ -1,12 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { effectiveHr, type OrgUnitHrPerson } from "./careerApi";
 
-const person = (name: string, isActive?: boolean): OrgUnitHrPerson => ({
-  userId: name,
+const person = (name: string, canAct?: boolean): OrgUnitHrPerson => ({
+  employeeId: name,
   name,
   orgUnitId: "unit",
   orgUnitName: "Отдел",
-  ...(isActive === undefined ? {} : { isActive }),
+  ...(canAct === undefined
+    ? {}
+    : {
+        account: {
+          id: name,
+          email: `${name}@test.local`,
+          state: canAct ? "Active" : "Blocked",
+          version: 1,
+        },
+      }),
 });
 
 describe("the HR who answers for a unit (AC-8)", () => {

@@ -910,60 +910,51 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     const handOver = () => deskLink(SUBMIT);
     const THRESHOLD = "Минимальный общий порог, %: Младший";
 
-    it("holds the hand-over back, says why, and frees it once the edits are saved", async () => {
+    const REVIEW = () =>
+      version({
+        status: "OnReview",
+        step: "Superior",
+        actions: ["Edit", "Approve", "Return"],
+      });
+    const RETURN = "Вернуть с правками";
+
+    it("keeps the link to the desk scenario open with unsaved edits, since leaving goes through the confirmation", async () => {
       serveEditor();
       const user = await openPage();
       const threshold = await screen.findByRole("spinbutton", {
         name: THRESHOLD,
       });
-      expect(handOver()).not.toHaveAttribute("aria-disabled", "true");
-      expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
 
       await user.type(threshold, "60");
 
-      expect(handOver()).toHaveAttribute("aria-disabled", "true");
-      expect(screen.getByText(UNSAVED_REASON)).toBeInTheDocument();
-      await user.click(handOver());
-      expect(screen.queryByText(DESK)).not.toBeInTheDocument();
-
-      await user.click(screen.getByRole("button", { name: "Сохранить" }));
-
-      await waitFor(() =>
-        expect(handOver()).toHaveAttribute("aria-disabled", "false"),
-      );
-      expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
+      expect(handOver()).not.toHaveAttribute("aria-disabled", "true");
       await user.click(handOver());
       expect(await screen.findByText(DESK)).toBeInTheDocument();
     });
 
-    it("holds the hand-over back while a save is in flight, even when nothing was changed", async () => {
+    it("holds the actions on the saved version back while a save is in flight, even when nothing was changed", async () => {
       const held = deferred<Response>();
-      serveEditor();
+      serveEditor(REVIEW());
       fakeApi.on(CONTENT_ROUTE, () => held.promise);
       const user = await openPage();
       await screen.findByRole("spinbutton", { name: THRESHOLD });
+      expect(screen.getByRole("button", { name: RETURN })).toBeEnabled();
 
       await user.click(screen.getByRole("button", { name: "Сохранить" }));
 
       await waitFor(() =>
-        expect(handOver()).toHaveAttribute("aria-disabled", "true"),
+        expect(screen.getByRole("button", { name: RETURN })).toBeDisabled(),
       );
       expect(screen.getByText(UNSAVED_REASON)).toBeInTheDocument();
       held.resolve(Response.json({ ...draft(), version: VERSION_TAG + 1 }));
       await waitFor(() =>
-        expect(handOver()).toHaveAttribute("aria-disabled", "false"),
+        expect(screen.getByRole("button", { name: RETURN })).toBeEnabled(),
       );
       expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
     });
 
-    it("holds an approval and a return back too, for an approver who changed the content", async () => {
-      serveEditor(
-        version({
-          status: "OnReview",
-          step: "Superior",
-          actions: ["Edit", "Approve", "Return"],
-        }),
-      );
+    it("holds a return back, says why, and frees it once the edits are saved", async () => {
+      serveEditor(REVIEW());
       const user = await openPage();
 
       await user.type(
@@ -971,14 +962,19 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
         "60",
       );
 
-      expect(deskLink("Согласовать версию")).toHaveAttribute(
+      expect(screen.getByRole("button", { name: RETURN })).toBeDisabled();
+      expect(screen.getByText(UNSAVED_REASON)).toBeInTheDocument();
+      expect(deskLink("Согласовать версию")).not.toHaveAttribute(
         "aria-disabled",
         "true",
       );
-      expect(
-        screen.getByRole("button", { name: "Вернуть с правками" }),
-      ).toBeDisabled();
-      expect(screen.getByText(UNSAVED_REASON)).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: RETURN })).toBeEnabled(),
+      );
+      expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
     });
 
     it("gives the reason only where there is a blocked button to explain, not when the user can only edit", async () => {

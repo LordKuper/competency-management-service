@@ -53,7 +53,7 @@ const TRACKS = [
 
 function serve() {
   fakeApi.on("GET /api/v1/auth/me", () =>
-    Response.json({ id: "account", email: "head@test.local", role: "User" }),
+    Response.json({ id: "account", email: "head@test.local", roles: [] }),
   );
   fakeApi.on("GET /api/v1/career/me", () =>
     Response.json({
@@ -86,20 +86,6 @@ function serve() {
       page(TRACKS.filter((item) => chain.has(item.ownerOrgUnitId))),
     );
   });
-  fakeApi.on("GET /api/v1/career/scales", () =>
-    Response.json(
-      page([
-        {
-          id: "scale",
-          name: "Базовая 0–4",
-          points: [],
-          isDefault: true,
-          status: "Active",
-          version: 1,
-        },
-      ]),
-    ),
-  );
 }
 
 async function openModal(override: () => void = () => undefined) {
@@ -161,7 +147,7 @@ describe("starting a matrix (AC-14)", { timeout: LONG_FLOW_TIMEOUT }, () => {
   it("offers the units the user heads, and only the tracks of the chosen unit and of the units above it", async () => {
     const user = await openModal();
     await choose(user, "Подразделение", "Команда");
-    await choose(user, "Направление", "Разработка");
+    await choose(user, "Область", "Разработка");
 
     expect(await openTracks(user)).toEqual([
       "Трек компании",
@@ -183,7 +169,7 @@ describe("starting a matrix (AC-14)", { timeout: LONG_FLOW_TIMEOUT }, () => {
   it("changes the tracks when another unit is chosen and clears the track chosen before", async () => {
     const user = await openModal();
     await choose(user, "Подразделение", "Команда");
-    await choose(user, "Направление", "Разработка");
+    await choose(user, "Область", "Разработка");
     await choose(user, "Трек", "Трек команды");
 
     await choose(user, "Подразделение", "Департамент");
@@ -200,15 +186,14 @@ describe("starting a matrix (AC-14)", { timeout: LONG_FLOW_TIMEOUT }, () => {
     ]);
   });
 
-  it("creates the matrix with the four choices and opens it", async () => {
+  it("creates the matrix with the three choices and opens it", async () => {
     fakeApi.on("POST /api/v1/career/matrices", () =>
       Response.json({ id: "new-matrix" }),
     );
     const user = await openModal();
     await choose(user, "Подразделение", "Команда");
-    await choose(user, "Направление", "Разработка");
+    await choose(user, "Область", "Разработка");
     await choose(user, "Трек", "Трек департамента");
-    await choose(user, "Шкала", "Базовая 0–4");
 
     await user.click(screen.getByRole("button", { name: "Сохранить" }));
 
@@ -219,19 +204,18 @@ describe("starting a matrix (AC-14)", { timeout: LONG_FLOW_TIMEOUT }, () => {
       orgUnitId: "team",
       directionId: "direction",
       trackId: "t-department",
-      scaleId: "scale",
     });
   });
 
   it("says under the track which choices it waits for, until the unit and the direction are chosen", async () => {
-    const reason = "Сначала выберите подразделение и направление";
+    const reason = "Сначала выберите подразделение и область";
     const user = await openModal();
     expect(screen.getByText(reason)).toBeInTheDocument();
 
     await choose(user, "Подразделение", "Команда");
     expect(screen.getByText(reason)).toBeInTheDocument();
 
-    await choose(user, "Направление", "Разработка");
+    await choose(user, "Область", "Разработка");
     await waitFor(() =>
       expect(screen.queryByText(reason)).not.toBeInTheDocument(),
     );
@@ -261,7 +245,7 @@ describe("starting a matrix (AC-14)", { timeout: LONG_FLOW_TIMEOUT }, () => {
         });
       }),
     );
-    const combobox = screen.getByRole("combobox", { name: "Направление" });
+    const combobox = screen.getByRole("combobox", { name: "Область" });
 
     await user.click(combobox);
     await user.keyboard("Направление 230");
@@ -302,9 +286,8 @@ describe("starting a matrix (AC-14)", { timeout: LONG_FLOW_TIMEOUT }, () => {
     );
     const user = await openModal();
     await choose(user, "Подразделение", "Команда");
-    await choose(user, "Направление", "Разработка");
+    await choose(user, "Область", "Разработка");
     await choose(user, "Трек", "Трек команды");
-    await choose(user, "Шкала", "Базовая 0–4");
 
     await user.click(screen.getByRole("button", { name: "Сохранить" }));
 

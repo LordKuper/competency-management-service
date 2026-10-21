@@ -14,7 +14,7 @@ const account = (
 ): UserResponse => ({
   id,
   email: `${id}@test.local`,
-  role: "User",
+  roles: [],
   employeeId: null,
   employeeName: null,
   version,
@@ -258,7 +258,7 @@ describe("new account (AC-4, AC-11)", () => {
     expect(await screen.findByText(MAIL_NOT_SENT)).toBeInTheDocument();
     expect(await fakeApi.calls("POST /api/v1/users")[0]?.json()).toEqual({
       email: "new@test.local",
-      role: "User",
+      roles: [],
       employeeId: null,
     });
   });

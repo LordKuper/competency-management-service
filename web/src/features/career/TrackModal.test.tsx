@@ -1,5 +1,6 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
@@ -61,7 +62,7 @@ function serve(): Served {
     Response.json({
       id: "account",
       email: "admin@test.local",
-      role: "GlobalAdmin",
+      roles: ["GlobalAdmin"],
     }),
   );
   fakeApi.on("GET /api/v1/career/me", () =>
@@ -70,6 +71,24 @@ function serve(): Served {
   fakeApi.on("GET /api/v1/org-units/tree", () =>
     Response.json([unit(SALES, "Продажи", null)]),
   );
+  fakeApi.on("GET /api/v1/career/directions", () =>
+    Response.json({ items: [], total: 0, page: 1, pageSize: 20 }),
+  );
+  fakeApi.on(`GET /api/v1/career/directions/${DIRECTION_ID}`, () =>
+    Response.json({
+      id: DIRECTION_ID,
+      name: "Разработка",
+      status: "Active",
+      version: 1,
+      canEdit: false,
+      canDelete: false,
+    }),
+  );
+  for (const id of ["created", "existing"]) {
+    fakeApi.on(`GET /api/v1/career/tracks/${id}/positions`, () =>
+      Response.json({ canEdit: false, levels: [] }),
+    );
+  }
   fakeApi.on("GET /api/v1/career/levels", () =>
     Response.json({
       items: served.levels,
@@ -146,8 +165,8 @@ async function fillNewTrack(
   await user.type(screen.getByRole("textbox", { name: "Название" }), name);
 }
 
-const save = (user: ReturnType<typeof userEvent.setup>) =>
-  user.click(screen.getByRole("button", { name: "Сохранить" }));
+const save = async (user: ReturnType<typeof userEvent.setup>) =>
+  user.click(await screen.findByRole("button", { name: "Сохранить" }));
 
 const originalScrollIntoView = Element.prototype.scrollIntoView;
 let restoreLayout: () => void = () => undefined;
@@ -172,7 +191,9 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     const onClose = vi.fn();
     render(
       <Providers>
-        <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+        <MemoryRouter>
+          <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+        </MemoryRouter>
       </Providers>,
     );
     const user = userEvent.setup();
@@ -207,7 +228,9 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     const onClose = vi.fn();
     render(
       <Providers>
-        <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+        <MemoryRouter>
+          <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+        </MemoryRouter>
       </Providers>,
     );
     const user = userEvent.setup();
@@ -243,7 +266,9 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     const onClose = vi.fn();
     render(
       <Providers>
-        <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+        <MemoryRouter>
+          <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+        </MemoryRouter>
       </Providers>,
     );
     const user = userEvent.setup();
@@ -289,7 +314,9 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     const onClose = vi.fn();
     render(
       <Providers>
-        <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+        <MemoryRouter>
+          <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+        </MemoryRouter>
       </Providers>,
     );
     const user = userEvent.setup();
@@ -334,11 +361,13 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     const onClose = vi.fn();
     render(
       <Providers>
-        <TrackModal
-          directionId={DIRECTION_ID}
-          track={track("existing", "Бэкенд", 3)}
-          onClose={onClose}
-        />
+        <MemoryRouter>
+          <TrackModal
+            directionId={DIRECTION_ID}
+            track={track("existing", "Бэкенд", 3)}
+            onClose={onClose}
+          />
+        </MemoryRouter>
       </Providers>,
     );
     const user = userEvent.setup();
@@ -364,7 +393,9 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     const onClose = vi.fn();
     render(
       <Providers>
-        <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+        <MemoryRouter>
+          <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+        </MemoryRouter>
       </Providers>,
     );
     const user = userEvent.setup();
@@ -401,11 +432,13 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     const onClose = vi.fn();
     const modal = (shown: CareerTrack) => (
       <Providers>
-        <TrackModal
-          directionId={DIRECTION_ID}
-          track={shown}
-          onClose={onClose}
-        />
+        <MemoryRouter>
+          <TrackModal
+            directionId={DIRECTION_ID}
+            track={shown}
+            onClose={onClose}
+          />
+        </MemoryRouter>
       </Providers>
     );
     const view = render(modal(track("existing", "Бэкенд", 3)));
@@ -448,11 +481,13 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     const onClose = vi.fn();
     render(
       <Providers>
-        <TrackModal
-          directionId={DIRECTION_ID}
-          track={track("existing", "Бэкенд", 3)}
-          onClose={onClose}
-        />
+        <MemoryRouter>
+          <TrackModal
+            directionId={DIRECTION_ID}
+            track={track("existing", "Бэкенд", 3)}
+            onClose={onClose}
+          />
+        </MemoryRouter>
       </Providers>,
     );
     const user = userEvent.setup();
