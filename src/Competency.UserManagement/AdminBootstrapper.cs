@@ -14,6 +14,7 @@ namespace Competency.UserManagement;
 internal sealed class AdminBootstrapper(
     AppDbContext context,
     UserManager<AppUser> users,
+    IAuditWriter audit,
     IConfiguration configuration,
     ILogger<AdminBootstrapper> logger)
 {
@@ -27,7 +28,7 @@ internal sealed class AdminBootstrapper(
     /// <exception cref="InvalidOperationException">No administrator is active and the environment does not provide a usable one.</exception>
     public async Task EnsureAdminAsync(CancellationToken cancellationToken)
     {
-        if (await context.Set<AppUser>().AnyAsync(user => user.IsGlobalAdmin && !user.IsBlocked && user.PasswordHash != null, cancellationToken))
+        if (await context.Set<AppUser>().AnyAsync(ActiveAdministrators.IsActive, cancellationToken))
         {
             return;
         }
@@ -44,16 +45,22 @@ internal sealed class AdminBootstrapper(
             throw new InvalidOperationException($"'{EmailSetting}' is not a valid e-mail address of at most {AppUser.EmailMaxLength} characters.");
         }
 
-        var administrator = new AppUser { IsGlobalAdmin = true };
+        var administrator = new AppUser();
         administrator.SetEmail(email);
-        var result = await users.CreateAsync(administrator, password);
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        EnsureSucceeded(await users.CreateAsync(administrator, password));
+        EnsureSucceeded(await users.SetRolesAsync(administrator, [UserRole.GlobalAdmin], audit, context));
+        await transaction.CommitAsync(cancellationToken);
+        logger.LogInformation("Bootstrap administrator {UserId} created", administrator.Id);
+    }
+
+    private static void EnsureSucceeded(IdentityResult result)
+    {
         if (!result.Succeeded)
         {
             throw new InvalidOperationException(
                 $"The bootstrap administrator was not created: {string.Join(", ", result.Errors.Select(error => error.Code))}.");
         }
-
-        logger.LogInformation("Bootstrap administrator {UserId} created", administrator.Id);
     }
 
     private static string MissingSettingsMessage(string? email, string? password)

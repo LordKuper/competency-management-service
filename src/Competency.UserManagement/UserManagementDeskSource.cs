@@ -56,18 +56,26 @@ internal sealed class UserManagementDeskSource(ICurrentActor actor, AppDbContext
     private async Task<List<AccountRow>> ReadAccountsAsync(HashSet<Guid> headIds, CancellationToken cancellationToken)
     {
         var heads = headIds.ToArray();
+        var globalAdminRoleId = UserRoleIds.Of(UserRole.GlobalAdmin);
+        var hrRoleId = UserRoleIds.Of(UserRole.Hr);
         return await context
             .Set<AppUser>()
             .AsNoTracking()
-            .Where(user => (user.PasswordHash == null && !user.IsBlocked)
-                || ((!user.IsGlobalAdmin || user.IsHr) && user.EmployeeId == null && !user.IsBlocked)
-                || (user.IsHr && !user.IsBlocked && user.PasswordHash != null)
-                || (user.EmployeeId != null && heads.Contains(user.EmployeeId.Value)))
-            .Select(user => new AccountRow(
-                new UserStatus(user.Id, user.Email!, user.EmployeeId, user.IsBlocked, user.PasswordHash != null, user.IsHr, user.Version),
-                user.IsGlobalAdmin,
-                user.LinkTokenHash != null && user.LinkSecurityStamp == user.SecurityStamp,
-                user.LinkExpiresAt))
+            .Select(user => new
+            {
+                User = user,
+                IsGlobalAdmin = user.UserRoles.Any(role => role.RoleId == globalAdminRoleId),
+                IsHr = user.UserRoles.Any(role => role.RoleId == hrRoleId),
+            })
+            .Where(row => (row.User.PasswordHash == null && !row.User.IsBlocked)
+                || ((!row.IsGlobalAdmin || row.IsHr) && row.User.EmployeeId == null && !row.User.IsBlocked)
+                || (row.IsHr && !row.User.IsBlocked && row.User.PasswordHash != null)
+                || (row.User.EmployeeId != null && heads.Contains(row.User.EmployeeId.Value)))
+            .Select(row => new AccountRow(
+                new UserStatus(row.User.Id, row.User.Email!, row.User.EmployeeId, row.User.IsBlocked, row.User.PasswordHash != null, row.IsHr, row.User.Version),
+                row.IsGlobalAdmin,
+                row.User.LinkTokenHash != null && row.User.LinkSecurityStamp == row.User.SecurityStamp,
+                row.User.LinkExpiresAt))
             .ToListAsync(cancellationToken);
     }
 

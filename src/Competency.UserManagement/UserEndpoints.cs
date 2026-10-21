@@ -86,9 +86,9 @@ internal static class UserEndpoints
         var users = context.Set<AppUser>().AsNoTracking();
         users = query.Role switch
         {
-            UserRoleFilter.GlobalAdmin => users.Where(user => user.IsGlobalAdmin),
-            UserRoleFilter.Hr => users.Where(user => user.IsHr),
-            UserRoleFilter.User => users.Where(user => !user.IsGlobalAdmin && !user.IsHr),
+            UserRoleFilter.GlobalAdmin => users.Where(user => user.UserRoles.Any(role => role.RoleId == UserRoleIds.Of(UserRole.GlobalAdmin))),
+            UserRoleFilter.Hr => users.Where(user => user.UserRoles.Any(role => role.RoleId == UserRoleIds.Of(UserRole.Hr))),
+            UserRoleFilter.User => users.Where(user => !user.UserRoles.Any()),
             _ => users,
         };
 
@@ -150,6 +150,7 @@ internal static class UserEndpoints
         UserManager<AppUser> users,
         AppDbContext context,
         IEmployeeDirectory employees,
+        IAuditWriter audit,
         AccountMail mail,
         IOptions<AccountLinkOptions> links,
         TimeProvider time,
@@ -177,9 +178,13 @@ internal static class UserEndpoints
         }
 
         var user = new AppUser { EmployeeId = request.EmployeeId };
-        user.SetRoles(request.Roles);
         user.SetEmail(request.Email.Trim());
         var result = await users.CreateAsync(user);
+        if (result.Succeeded)
+        {
+            result = await users.SetRolesAsync(user, request.Roles, audit, context);
+        }
+
         if (!result.Succeeded)
         {
             return Rejections.From(result);
@@ -189,7 +194,7 @@ internal static class UserEndpoints
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         var mailSent = await mail.SendInvitationAsync(user, token, isRepeat: false, cancellationToken);
-        var created = await RespondAsync(user, employees, response, cancellationToken) with { MailSent = mailSent };
+        var created = await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken) with { MailSent = mailSent };
         return TypedResults.Created($"{Route}/{created.Id}", created);
     }
 
@@ -230,7 +235,7 @@ internal static class UserEndpoints
 
         await transaction.CommitAsync(cancellationToken);
         var mailSent = await mail.SendInvitationAsync(user, token, isRepeat: true, cancellationToken);
-        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken) with { MailSent = mailSent });
+        return TypedResults.Ok(await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken) with { MailSent = mailSent });
     }
 
     private static async Task<Results<Ok<UserResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateAsync(
@@ -241,6 +246,7 @@ internal static class UserEndpoints
         AppDbContext context,
         IEmployeeDirectory employees,
         IHrAssignments hrAssignments,
+        IAuditWriter audit,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -270,13 +276,14 @@ internal static class UserEndpoints
             }
         }
 
-        if (user.IsActiveAdministrator() && !request.Roles.Contains(UserRole.GlobalAdmin)
+        var rolesBefore = await users.RolesAsync(user);
+        if (user.IsActiveAdministrator(rolesBefore) && !request.Roles.Contains(UserRole.GlobalAdmin)
             && !await context.HasOtherAsync(user.Id, cancellationToken))
         {
             return Rejection.Conflict(ActiveAdministrators.LastOneMessage);
         }
 
-        if (user.IsHr && !request.Roles.Contains(UserRole.Hr)
+        if (rolesBefore.Contains(UserRole.Hr) && !request.Roles.Contains(UserRole.Hr)
             && request.EmployeeId is { } boundEmployeeId
             && await hrAssignments.UnitNamesAsync(boundEmployeeId, cancellationToken) is { Count: > 0 } hrUnits)
         {
@@ -284,21 +291,26 @@ internal static class UserEndpoints
         }
 
         ifMatch.ApplyTo(context, user);
-        var rolesBefore = user.Roles;
-        var employeeBefore = user.EmployeeId;
-        user.SetEmail(request.Email.Trim());
-        user.SetRoles(request.Roles);
-        user.EmployeeId = request.EmployeeId;
-        var endsSessions = !rolesBefore.SequenceEqual(user.Roles) || employeeBefore != user.EmployeeId;
+        if (!request.Roles.ToHashSet().SetEquals(rolesBefore) || request.EmployeeId != user.EmployeeId)
+        {
+            user.EndSessions();
+        }
 
-        var result = endsSessions ? await users.UpdateSecurityStampAsync(user) : await users.UpdateAsync(user);
+        user.SetEmail(request.Email.Trim());
+        user.EmployeeId = request.EmployeeId;
+        var result = await users.UpdateAsync(user);
+        if (result.Succeeded)
+        {
+            result = await users.SetRolesAsync(user, request.Roles, audit, context);
+        }
+
         if (!result.Succeeded)
         {
             return Rejections.From(result);
         }
 
         await transaction.CommitAsync(cancellationToken);
-        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken));
+        return TypedResults.Ok(await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken));
     }
 
     private static async Task<Results<Ok<UserResponse>, NotFound, ProblemHttpResult>> BlockAsync(
@@ -317,7 +329,8 @@ internal static class UserEndpoints
             return TypedResults.NotFound();
         }
 
-        if (user.IsActiveAdministrator() && !await context.HasOtherAsync(user.Id, cancellationToken))
+        var roles = await users.RolesAsync(user);
+        if (user.IsActiveAdministrator(roles) && !await context.HasOtherAsync(user.Id, cancellationToken))
         {
             return Rejection.Conflict(ActiveAdministrators.LastOneMessage);
         }
@@ -331,7 +344,7 @@ internal static class UserEndpoints
         }
 
         await transaction.CommitAsync(cancellationToken);
-        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken));
+        return TypedResults.Ok(await RespondAsync(user, roles, employees, response, cancellationToken));
     }
 
     private static async Task<Results<Ok<UserResponse>, NotFound, ProblemHttpResult>> UnblockAsync(
@@ -365,7 +378,7 @@ internal static class UserEndpoints
         }
 
         await transaction.CommitAsync(cancellationToken);
-        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken));
+        return TypedResults.Ok(await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken));
     }
 
     /// <summary>
@@ -408,7 +421,7 @@ internal static class UserEndpoints
 
         await transaction.CommitAsync(cancellationToken);
         var mailSent = await mail.SendPasswordResetAsync(user, token, requestId: null, cancellationToken);
-        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken) with { MailSent = mailSent });
+        return TypedResults.Ok(await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken) with { MailSent = mailSent });
     }
 
     /// <summary>
@@ -423,11 +436,12 @@ internal static class UserEndpoints
 
     private static async Task<UserResponse> RespondAsync(
         AppUser user,
+        IReadOnlyList<UserRole> roles,
         IEmployeeDirectory employees,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
         response.SetETag(user.Version);
-        return UserResponse.From(user, await employees.NameAsync(user.EmployeeId, cancellationToken));
+        return UserResponse.From(user, roles, await employees.NameAsync(user.EmployeeId, cancellationToken));
     }
 }

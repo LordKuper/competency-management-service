@@ -40,13 +40,14 @@ internal static class SessionAuthentication
     /// and the security stamp the session was issued under.
     /// </summary>
     /// <param name="user">The account that signed in.</param>
+    /// <param name="roles">The account's roles.</param>
     /// <returns>The authenticated principal to sign in with.</returns>
-    public static ClaimsPrincipal CreatePrincipal(AppUser user)
+    public static ClaimsPrincipal CreatePrincipal(AppUser user, IReadOnlyList<UserRole> roles)
     {
         List<Claim> claims =
         [
             new(PlatformClaims.Subject, user.Id.ToString()),
-            .. user.Roles.Select(role => new Claim(PlatformClaims.Role, role.ToString())),
+            .. roles.Select(role => new Claim(PlatformClaims.Role, role.ToString())),
             new(SecurityStampClaim, user.SecurityStamp!),
         ];
 

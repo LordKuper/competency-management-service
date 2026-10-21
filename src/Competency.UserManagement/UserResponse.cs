@@ -21,7 +21,7 @@ internal sealed record UserResponse(
     public static readonly Expression<Func<AppUser, UserResponse>> Projection = user => new UserResponse(
         user.Id,
         user.Email!,
-        AppUser.RolesOf(user.IsGlobalAdmin, user.IsHr),
+        UserRoleIds.RolesOf(user.UserRoles.Select(role => role.RoleId).ToList()),
         user.IsBlocked,
         user.PasswordHash == null,
         user.EmployeeId,
@@ -31,5 +31,6 @@ internal sealed record UserResponse(
 
     private static readonly Func<AppUser, UserResponse> Compiled = Projection.Compile();
 
-    public static UserResponse From(AppUser user, string? employeeName) => Compiled(user) with { EmployeeName = employeeName };
+    public static UserResponse From(AppUser user, IReadOnlyList<UserRole> roles, string? employeeName) =>
+        Compiled(user) with { Roles = roles, EmployeeName = employeeName };
 }

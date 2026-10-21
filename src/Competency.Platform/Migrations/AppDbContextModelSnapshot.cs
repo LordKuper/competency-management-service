@@ -833,7 +833,7 @@ namespace Competency.Platform.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToSqlQuery("SELECT employee_id, email, is_blocked, NOT is_blocked AND password_hash IS NOT NULL AND is_hr AS can_be_hr FROM users WHERE employee_id IS NOT NULL");
+                    b.ToSqlQuery("SELECT u.employee_id, u.email, u.is_blocked, NOT u.is_blocked AND u.password_hash IS NOT NULL AND EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id AND r.name = 'Hr') AS can_be_hr FROM users u WHERE u.employee_id IS NOT NULL");
                 });
 
             modelBuilder.Entity("Competency.OrgStructure.OrgUnit", b =>
@@ -986,14 +986,6 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_blocked");
 
-                    b.Property<bool>("IsGlobalAdmin")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_global_admin");
-
-                    b.Property<bool>("IsHr")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_hr");
-
                     b.Property<DateTimeOffset?>("LinkExpiresAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("link_expires_at");
@@ -1066,6 +1058,69 @@ namespace Competency.Platform.Migrations
                         .IsUnique();
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text")
+                        .HasColumnName("concurrency_stamp");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("normalized_name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("roles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0991bde9-ccde-4831-a138-eef704ed876c"),
+                            ConcurrencyStamp = "0991bde9-ccde-4831-a138-eef704ed876c",
+                            Name = "GlobalAdmin",
+                            NormalizedName = "GLOBALADMIN"
+                        },
+                        new
+                        {
+                            Id = new Guid("2d465e5b-a4c6-46af-bae3-926cca129e5e"),
+                            ConcurrencyStamp = "2d465e5b-a4c6-46af-bae3-926cca129e5e",
+                            Name = "Hr",
+                            NormalizedName = "HR"
+                        });
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("role_id");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("user_roles", (string)null);
                 });
 
             modelBuilder.Entity("Competency.CareerFramework.CareerCompetency", b =>
@@ -1329,6 +1384,26 @@ namespace Competency.Platform.Migrations
                         .WithMany()
                         .HasForeignKey("EmployeeId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.UserManagement.AppUser", b =>
+                {
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

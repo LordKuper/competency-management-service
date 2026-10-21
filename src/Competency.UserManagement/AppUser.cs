@@ -30,18 +30,6 @@ internal sealed class AppUser : IdentityUser<Guid>, IVersioned
     public override string? Email { get; set; }
 
     /// <summary>
-    /// Whether the account has the <see cref="UserRole.GlobalAdmin"/> role. Change the roles only through <see cref="SetRoles"/>.
-    /// </summary>
-    [Audited]
-    public bool IsGlobalAdmin { get; set; }
-
-    /// <summary>
-    /// Whether the account has the <see cref="UserRole.Hr"/> role.
-    /// </summary>
-    [Audited]
-    public bool IsHr { get; set; }
-
-    /// <summary>
     /// Whether an administrator has blocked the account; a blocked account cannot sign in and its sessions end.
     /// </summary>
     [Audited]
@@ -73,46 +61,9 @@ internal sealed class AppUser : IdentityUser<Guid>, IVersioned
     public bool IsInvited => PasswordHash is null;
 
     /// <summary>
-    /// The account's roles in <see cref="UserRole"/> member order; empty for an account without roles.
+    /// The account's role rows, for queries only: it is never loaded with the account, and roles change only through <see cref="AccountRoles.SetRolesAsync"/>.
     /// </summary>
-    public IReadOnlyList<UserRole> Roles => RolesOf(IsGlobalAdmin, IsHr);
-
-    /// <summary>
-    /// The account's roles as the journal records them.
-    /// </summary>
-    public string JournalRole => PlatformClaims.JournalRole(Roles.Select(role => role.ToString()));
-
-    /// <summary>
-    /// The roles of an account with the given role columns, in <see cref="UserRole"/> member order; usable in a query's final projection.
-    /// </summary>
-    /// <param name="isGlobalAdmin">Whether the account is a global administrator.</param>
-    /// <param name="isHr">Whether the account has the HR role.</param>
-    /// <returns>The roles.</returns>
-    public static IReadOnlyList<UserRole> RolesOf(bool isGlobalAdmin, bool isHr)
-    {
-        List<UserRole> roles = [];
-        if (isGlobalAdmin)
-        {
-            roles.Add(UserRole.GlobalAdmin);
-        }
-
-        if (isHr)
-        {
-            roles.Add(UserRole.Hr);
-        }
-
-        return roles;
-    }
-
-    /// <summary>
-    /// Replaces the account's roles; a repeated role counts once, and an empty set leaves the account without roles.
-    /// </summary>
-    /// <param name="roles">The new roles.</param>
-    public void SetRoles(IReadOnlyCollection<UserRole> roles)
-    {
-        IsGlobalAdmin = roles.Contains(UserRole.GlobalAdmin);
-        IsHr = roles.Contains(UserRole.Hr);
-    }
+    public ICollection<IdentityUserRole<Guid>> UserRoles { get; set; } = [];
 
     /// <summary>
     /// Sets the e-mail and the Identity user name to the same value: the user name is internal, kept so that Identity's own

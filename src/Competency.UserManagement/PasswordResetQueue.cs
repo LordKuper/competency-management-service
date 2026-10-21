@@ -89,9 +89,10 @@ internal sealed class PasswordResetQueue(
             return null;
         }
 
+        var role = await services.GetRequiredService<UserManager<AppUser>>().JournalRoleAsync(user);
         var token = user.IssueLink(now, links.Value.PasswordResetLifetime);
         audit.Stage(
-            new AuditEntry(RequestedAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.JournalRole, RequestId: requestId),
+            new AuditEntry(RequestedAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: role, RequestId: requestId),
             context);
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);

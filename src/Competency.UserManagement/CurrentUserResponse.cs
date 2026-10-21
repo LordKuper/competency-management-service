@@ -15,10 +15,10 @@ internal sealed record CurrentUserResponse(
     string? EmployeeFirstName,
     string? EmployeeMiddleName)
 {
-    public static CurrentUserResponse From(AppUser user, EmployeeStatus? employee) => new(
+    public static CurrentUserResponse From(AppUser user, IReadOnlyList<UserRole> roles, EmployeeStatus? employee) => new(
         user.Id,
         user.Email!,
-        user.Roles,
+        roles,
         user.EmployeeId,
         employee?.FullName,
         employee?.LastName,

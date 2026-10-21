@@ -1,6 +1,7 @@
 using Competency.OrgStructure;
 using Competency.Platform;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +16,7 @@ public static class UserManagementModule
     private const string IdentitySection = "Identity";
 
     /// <summary>
-    /// Registers the UserManagement module services: the account table, Identity with the password and lockout policy read from
+    /// Registers the UserManagement module services: the account and role tables, Identity with its roles, the password and lockout policy read from
     /// the <c>Identity</c> configuration section, no restriction on user-name characters (the user name is the e-mail, checked by the requests) and the account id read from the platform subject claim, the cookie session read from
     /// <c>Authentication:Cookie</c>, the lifetime of e-mailed links read from <c>AccountLinks</c>, the account e-mails, the queue of anonymous password reset requests, the <see cref="IUserDirectory"/> other modules read accounts through, the module's <see cref="IDeskSource"/>, and the bootstrap of the first administrator. The host adds <c>UseAuthentication</c> to its pipeline.
     /// </summary>
@@ -33,7 +34,9 @@ public static class UserManagementModule
         });
         services.Configure<IdentityOptions>(configuration.GetSection(IdentitySection));
         services.AddIdentityCore<AppUser>()
+            .AddRoles<IdentityRole<Guid>>()
             .AddUserStore<AppUserStore>()
+            .AddRoleStore<RoleStore<IdentityRole<Guid>, AppDbContext, Guid>>()
             .AddErrorDescriber<RussianIdentityErrorDescriber>();
 
         services.AddAuthentication(SessionAuthentication.Scheme)

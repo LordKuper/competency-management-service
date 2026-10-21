@@ -7,14 +7,14 @@ namespace Competency.OrgStructure;
 /// <summary>
 /// Contributes the <see cref="OrgUnit"/>, <see cref="Employee"/>, <see cref="Position"/> and <see cref="OrgUnitPosition"/> tables to the shared model: snake_case names,
 /// foreign keys that never cascade, and the Russian full-text and trigram indexes that serve search.
-/// It also maps the keyless <see cref="EmployeeAccount"/> query over the accounts table, which has no table of its own.
+/// It also maps the keyless <see cref="EmployeeAccount"/> query over the account and role tables; it has no table of its own.
 /// The unique index on <c>lower(name)</c> of positions is created by the migration's own SQL, because the model cannot express an index on an expression.
 /// </summary>
 internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationContributor
 {
     private const string TrigramExtension = "pg_trgm";
     private const string FullNameSql = "last_name || ' ' || first_name || coalesce(' ' || middle_name, '')";
-    private const string EmployeeAccountsSql = "SELECT employee_id, email, is_blocked, NOT is_blocked AND password_hash IS NOT NULL AND is_hr AS can_be_hr FROM users WHERE employee_id IS NOT NULL";
+    private const string EmployeeAccountsSql = "SELECT u.employee_id, u.email, u.is_blocked, NOT u.is_blocked AND u.password_hash IS NOT NULL AND EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id AND r.name = 'Hr') AS can_be_hr FROM users u WHERE u.employee_id IS NOT NULL";
 
     public void Configure(ModelBuilder modelBuilder)
     {
