@@ -425,3 +425,6 @@
 {"op":"close","id":"Task 78","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:31:06.414Z","end":"2026-10-21T14:38:08.273Z","outcome":"done","attrs":{}}
 {"op":"open","id":"Task 77-78 test-compile","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:38:08.615Z","attrs":{}}
 {"op":"open","id":"Task 79","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:58:38.995Z","attrs":{}}
+{"op":"close","id":"Task 77-78 test-compile","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:38:08.615Z","end":"2026-10-21T15:13:07.816Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 73 held-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T15:13:07.963Z","attrs":{}}
+{"op":"close","id":"Task 73 held-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T15:13:07.963Z","end":"2026-10-21T15:14:44.394Z","outcome":"done","attrs":{}}

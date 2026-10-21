@@ -1112,6 +1112,12 @@
       "tier": "critical",
       "reason": "risk:migration; owner asd-architect (docs/architecture)",
       "resolved_model": "opus"
+    },
+    "Task 73 held-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
