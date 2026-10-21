@@ -1,4 +1,4 @@
-import { type RouteObject, redirect } from "react-router";
+import type { RouteObject } from "react-router";
 import { AdminOnly } from "../../app/AdminOnly";
 import type { NavItem } from "../../app/featureContract";
 import { DeskCounter } from "./DeskCounter";
@@ -50,10 +50,6 @@ export const routes: RouteObject[] = [
       import("./ReworkPage").then((page) => ({ Component: page.ReworkPage })),
   },
   { path: deskPaths.drafts, lazy: drafts },
-  {
-    path: "/desk/drafts/category/:entryId",
-    loader: () => redirect(deskPaths.drafts),
-  },
   { path: "/desk/drafts/:kind/:entryId", lazy: drafts },
   { path: deskPaths.matrixBuilder, lazy: builder },
   { path: "/desk/matrix-builder/:versionId", lazy: builder },

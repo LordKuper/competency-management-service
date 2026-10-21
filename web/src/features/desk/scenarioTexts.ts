@@ -17,15 +17,12 @@ export function remarksText(count: number): string {
 /** The wizard step where each problem of a version is put right; none for a problem put right outside the wizard. */
 export const PROBLEM_STEP: Record<MatrixProblem["code"], number | null> = {
   NoLevels: 1,
-  LevelWithoutRequirements: 3,
   BlockWeights: 4,
   InactiveEntry: 2,
   ForeignCompetency: 2,
   ScoreOutOfScale: 3,
   LevelWithoutActivePosition: null,
   NoCompetencies: 2,
-  CompetencyWithoutScore: 3,
-  CompetencyWithoutRequirements: 3,
   DuplicateCompetency: 2,
   PositionUnavailable: null,
   SharedBlockUnavailable: 2,

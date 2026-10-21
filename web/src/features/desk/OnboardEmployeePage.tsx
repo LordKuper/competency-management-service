@@ -38,7 +38,7 @@ const ACCOUNT_STEP = 2;
 const SUMMARY_STEP = 3;
 
 const UNSAVED_MESSAGE =
-  "Есть несохранённые правки. Сохраните их, чтобы перейти на другой экран.";
+  "Есть несохранённые правки. Сохраните или отмените их, чтобы перейти на другой экран.";
 
 /** «Принять сотрудника»: the employee card, then an account with an invitation if wanted, then what was created. */
 export function OnboardEmployeePage() {
@@ -221,8 +221,8 @@ function EmployeeStep({
         scenarioActions={{
           end: employee && isDirty && !save.isPending && (
             <Typography.Text type="secondary">
-              Есть несохранённые правки. Сохраните их, чтобы перейти на другой
-              шаг.
+              Есть несохранённые правки. Сохраните или отмените их, чтобы
+              перейти на другой экран.
             </Typography.Text>
           ),
         }}

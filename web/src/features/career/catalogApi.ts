@@ -22,18 +22,14 @@ export type CompetencyVersion = Schemas["CompetencyVersionResponse"];
 export type Scale = Schemas["CompetencyScaleResponse"];
 export type CompetencyBlock = Schemas["CompetencyBlockResponse"];
 export type ScalePoint = Schemas["ScalePoint"];
-export type CatalogDraft = Omit<Schemas["CatalogDraftResponse"], "kind"> & {
-  kind: CatalogKind;
-};
-export type CatalogKind = Exclude<Schemas["CatalogEntryKind"], "Category">;
+export type CatalogDraft = Schemas["CatalogDraftResponse"];
+export type CatalogKind = Schemas["CatalogEntryKind"];
 export type PublicationPreview = Schemas["PublicationPreviewResponse"];
 export type PublicationBlocker = Schemas["PublicationBlocker"];
 export type PublicationEntry = Schemas["PublicationEntry"];
 export type TrackPositions = Schemas["TrackPositionsResponse"];
 export type AvailablePosition = Schemas["AvailablePositionResponse"];
-export type UnusedEntry = Omit<Schemas["UnusedEntryResponse"], "kind"> & {
-  kind: CatalogKind;
-};
+export type UnusedEntry = Schemas["UnusedEntryResponse"];
 export type EntryMatrix = Schemas["EntryMatrixResponse"];
 
 /** Cache key prefix of every catalogue query, so one invalidation rereads whatever a change touched. */
@@ -305,24 +301,13 @@ export async function saveBlock(
 }
 
 /** Draft entries waiting for the signed-in HR. */
-/** Leaves out the entries of the removed «Категория» kind, which the server no longer sends but the schema still names. */
-function withoutCategories<T extends { kind: Schemas["CatalogEntryKind"] }>(
-  items: readonly T[],
-) {
-  return items.filter(
-    (item): item is T & { kind: CatalogKind } => item.kind !== "Category",
-  );
-}
-
 export function draftsQuery(params: DraftListParams = {}) {
   return queryOptions({
     queryKey: [...catalogQueryKey, "drafts", params],
-    queryFn: async () => {
-      const read = unwrap(
+    queryFn: async () =>
+      unwrap(
         await api.GET("/api/v1/career/drafts", { params: { query: params } }),
-      );
-      return withoutCategories(read);
-    },
+      ),
   });
 }
 
@@ -330,14 +315,12 @@ export function draftsQuery(params: DraftListParams = {}) {
 export function unusedEntriesQuery(limit: number, kind?: CatalogKind) {
   return queryOptions({
     queryKey: [...catalogQueryKey, "unused", kind, limit],
-    queryFn: async () => {
-      const read = unwrap(
+    queryFn: async () =>
+      unwrap(
         await api.GET("/api/v1/career/unused-entries", {
           params: { query: { kind, page: 1, pageSize: limit } },
         }),
-      );
-      return { ...read, items: withoutCategories(read.items) };
-    },
+      ),
     placeholderData: keepPreviousData,
   });
 }

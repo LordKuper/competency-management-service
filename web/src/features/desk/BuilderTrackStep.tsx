@@ -423,8 +423,8 @@ function NewVersionForm({
           {isDirty && !isSubmitting && (
             <>
               <Typography.Text type="secondary">
-                Есть несохранённые правки. Сохраните их, чтобы перейти на другой
-                шаг.
+                Есть несохранённые правки. Сохраните или отмените их, чтобы
+                перейти на другой шаг.
               </Typography.Text>
               <Button
                 type="link"

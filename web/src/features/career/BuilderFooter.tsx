@@ -11,8 +11,6 @@ export interface BuilderStepControls {
   onSaved: (then: "next" | "exit") => void;
   /** Goes on without saving, for a version the user may not edit. */
   onSkip: () => void;
-  /** Opens the step that assigns the competencies and blocks. */
-  onEditComposition: () => void;
 }
 
 interface BuilderFooterProps {
@@ -69,8 +67,8 @@ export function BuilderFooter({
         {isUnsaved && !isSaving && (
           <>
             <Typography.Text type="secondary">
-              Есть несохранённые правки. Сохраните их, чтобы перейти на другой
-              шаг.
+              Есть несохранённые правки. Сохраните или отмените их, чтобы
+              перейти на другой шаг.
             </Typography.Text>
             <Button type="link" onClick={onCancelEdits}>
               Отменить правки

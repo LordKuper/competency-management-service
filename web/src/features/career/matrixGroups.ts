@@ -11,7 +11,7 @@ export const OUTSIDE_LABEL = "Вне блоков";
 /** The name of the single requirements column of a position matrix. */
 export const POSITION_COLUMN_LABEL = "Требуемый балл";
 
-type Scale = NonNullable<MatrixVersion["entries"]["scale"]>;
+type Scale = NonNullable<MatrixVersion["entries"]["scales"]>[number];
 
 const NO_SCALE: Scale = { id: "", name: "", points: [], status: "Active" };
 
@@ -54,7 +54,7 @@ export function scaleNameOf(
   );
 }
 
-/** The scale a requirement for the competency is a score of: its own, else the scale of a version published with one. */
+/** The scale a requirement for the competency is a score of. */
 export function scaleOfCompetency(
   version: Pick<MatrixVersion, "entries">,
   competencyId: string,
@@ -63,11 +63,14 @@ export function scaleOfCompetency(
   const scaleId = entries.competencies.find(
     (competency) => competency.id === competencyId,
   )?.scaleId;
-  return (
-    entries.scales?.find((scale) => scale.id === scaleId) ??
-    entries.scale ??
-    NO_SCALE
-  );
+  return entries.scales?.find((scale) => scale.id === scaleId) ?? NO_SCALE;
+}
+
+/** The lowest score of a scale, which is the requirement of a cell nobody has set yet; none for a scale without points. */
+export function minimumScoreOf(points: readonly { score: number }[]) {
+  return points.length > 0
+    ? Math.min(...points.map((point) => point.score))
+    : undefined;
 }
 
 /** Every competency a version holds: its own and outside ones in content order, then those its shared blocks bring. */

@@ -32,7 +32,7 @@ const FIRST_STEP = 1;
 const COMPETENCIES_STEP = 2;
 const LAST_STEP = BUILDER_STEPS.length;
 const UNSAVED_MESSAGE =
-  "Есть несохранённые правки. Сохраните их или отмените, чтобы перейти на другой экран.";
+  "Есть несохранённые правки. Сохраните или отмените их, чтобы перейти на другой экран.";
 
 /** «Построить матрицу компетенций»: six steps from the track to the sending, each saved as the draft of a version. */
 export function MatrixBuilderPage() {
@@ -290,7 +290,6 @@ function StepBody({
             onBack: stepProps.onBack,
             onSaved: stepProps.onSaved,
             onSkip: stepProps.onSkip,
-            onEditComposition: () => onGoToStep(COMPETENCIES_STEP),
           }}
         />
       );

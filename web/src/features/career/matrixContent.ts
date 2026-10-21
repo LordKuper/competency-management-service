@@ -227,7 +227,7 @@ export function requirementOf(
   );
 }
 
-export function withoutRequirement(
+function withoutRequirement(
   content: MatrixContent,
   levelId: string,
   competencyId: string,

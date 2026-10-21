@@ -52,10 +52,8 @@ export function describeChanges(
     competencyId: string,
   ) => readonly { score: number; label: string }[],
 ): (change: MatrixChange) => ChangeDescription {
-  const blockName = (content: MatrixContent, blockId: string | null) =>
-    blockId === null
-      ? OUTSIDE_LABEL
-      : (content.blocks ?? []).find((block) => block.id === blockId)?.name;
+  const blockName = (blockId: string | null) =>
+    blockId === null ? OUTSIDE_LABEL : undefined;
   const levelName = (levelId: string | null) =>
     quoted(levelId ? levelNames.get(levelId) : undefined);
   const competencyName = (competencyId: string | null) =>
@@ -80,13 +78,13 @@ export function describeChanges(
       case "Level":
         return `уровень ${levelName(change.levelId)}`;
       case "Block":
-        return `блок ${quoted(blockName(diff.after, change.blockId) ?? blockName(diff.before, change.blockId))}`;
+        return `блок ${quoted(blockName(change.blockId))}`;
       case "Competency":
         return isOnlyTypeChange(change)
           ? `Тип компетенции ${competencyName(change.competencyId)}`
           : `компетенция ${competencyName(change.competencyId)}`;
       case "BlockWeight":
-        return `коэффициент блока ${quoted(blockName(diff.after, change.blockId) ?? blockName(diff.before, change.blockId))}, уровень ${levelName(change.levelId)}`;
+        return `коэффициент блока ${quoted(blockName(change.blockId))}, уровень ${levelName(change.levelId)}`;
       case "Requirement":
         return `требуемый балл ${competencyName(change.competencyId)}, уровень ${levelName(change.levelId)}`;
     }
@@ -102,12 +100,8 @@ export function describeChanges(
           `Минимальный общий порог: ${percent(level.minOverallPercent)}`
         );
       }
-      case "Block": {
-        const block = (content.blocks ?? []).find(
-          (item) => item.id === blockId,
-        );
-        return block && quoted(block.name);
-      }
+      case "Block":
+        return undefined;
       case "Competency": {
         const competency = content.competencies.find(
           (item) => item.competencyId === competencyId,
@@ -119,7 +113,7 @@ export function describeChanges(
         }
         return (
           competency &&
-          `Блок ${quoted(blockName(content, competency.blockId))}; Тип: ${COMPETENCY_TYPES[typeOfCompetency(content, competency.competencyId)]}`
+          `Блок ${quoted(blockName(competency.blockId))}; Тип: ${COMPETENCY_TYPES[typeOfCompetency(content, competency.competencyId)]}`
         );
       }
       case "BlockWeight": {

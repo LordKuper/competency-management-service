@@ -12,7 +12,6 @@ export type MatrixVersion = Schemas["MatrixVersionResponse"];
 export type MatrixVersionStatus = Schemas["MatrixVersionStatus"];
 export type MatrixContent = Schemas["MatrixContent"];
 export type MatrixRequirement = Schemas["MatrixRequirement"];
-export type MatrixBlock = Schemas["MatrixBlock"];
 export type MatrixPosition = Schemas["MatrixPositionResponse"];
 export type MatrixSharedBlockEntry = Schemas["MatrixSharedBlockEntry"];
 export type MatrixAction = Schemas["MatrixAction"];

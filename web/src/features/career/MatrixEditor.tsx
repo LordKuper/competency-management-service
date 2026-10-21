@@ -54,12 +54,12 @@ import {
   requirementOf,
   setCompetencyType,
   typeOfCompetency,
-  withoutRequirement,
   withRequirement,
 } from "./matrixContent";
 import {
   compositionChanges,
   compositionsOf,
+  minimumScoreOf,
   OUTSIDE_LABEL,
   POSITION_COLUMN_LABEL,
   scaleNameOf,
@@ -71,7 +71,6 @@ import { CHANGED_NOTE } from "./matrixLabels";
 import "./matrix.css";
 
 const NO_VALUE = "—";
-const NO_SCORE = "none";
 const TYPE_COLUMN_WIDTH_IN_CONTROLS = 6;
 const NAME_COLUMN_WIDTH_IN_CONTROLS = 9;
 const LEVEL_COLUMN_WIDTH_IN_CONTROLS = 4;
@@ -399,8 +398,10 @@ function MatrixEditorBody({
     if (row.group || row.competencyId === null) return null;
     const competencyId = row.competencyId;
     const levelName = levelNames.get(levelId) ?? "";
-    const score = requirementOf(shown, levelId, competencyId)?.requiredScore;
     const { points } = scaleOfCompetency(version, competencyId);
+    const score =
+      requirementOf(shown, levelId, competencyId)?.requiredScore ??
+      minimumScoreOf(points);
     const changedMark = changed.requirementCells.has(
       cellKey(levelId, competencyId),
     ) && (
@@ -427,30 +428,25 @@ function MatrixEditorBody({
     }
     return (
       <Space size="small">
-        <Select<number | typeof NO_SCORE>
+        <Select<number>
           size="small"
           className="matrix-score-select"
           aria-label={`${competencies.get(competencyId)?.name}, ${levelName}`}
-          value={score ?? NO_SCORE}
+          value={score}
           labelRender={() => chip}
-          options={[
-            { value: NO_SCORE, label: "— Не задан" },
-            ...[...points]
-              .sort((left, right) => left.score - right.score)
-              .map((point) => ({
-                value: point.score,
-                label: `${point.score} — ${point.label}`,
-              })),
-          ]}
+          options={[...points]
+            .sort((left, right) => left.score - right.score)
+            .map((point) => ({
+              value: point.score,
+              label: `${point.score} — ${point.label}`,
+            }))}
           onChange={(next) =>
             setEdited(
-              next === NO_SCORE
-                ? withoutRequirement(edited, levelId, competencyId)
-                : withRequirement(edited, {
-                    levelId,
-                    competencyId,
-                    requiredScore: next,
-                  }),
+              withRequirement(edited, {
+                levelId,
+                competencyId,
+                requiredScore: next,
+              }),
             )
           }
         />
@@ -523,13 +519,7 @@ function MatrixEditorBody({
   const isGridShown = builder === undefined || builder.part === "requirements";
   const isBlocksShown = builder === undefined || builder.part === "formula";
 
-  const usedScales = [
-    ...(entries.scales ?? []),
-    ...(entries.scale ? [entries.scale] : []),
-  ].filter(
-    (scale, index, all) =>
-      all.findIndex((other) => other.id === scale.id) === index,
-  );
+  const usedScales = entries.scales ?? [];
   const legend = (
     <Space orientation="vertical" size="small">
       {usedScales.map((scale) => (
@@ -575,20 +565,7 @@ function MatrixEditorBody({
       }
     />
   );
-  const compositionLink = builder ? (
-    <Typography.Text type="secondary">
-      Состав и блоки меняются на шаге 2.{" "}
-      <Button
-        type="link"
-        size="small"
-        disabled={isUnsaved}
-        onClick={builder.onEditComposition}
-      >
-        Изменить состав на шаге 2
-      </Button>
-      {isUnsaved && " Сначала сохраните правки."}
-    </Typography.Text>
-  ) : (
+  const compositionLink = (
     <Link to={`/desk/matrix-builder/${version.id}?step=2`}>
       Изменить состав и блоки в мастере, шаг 2
     </Link>
@@ -618,7 +595,6 @@ function MatrixEditorBody({
             {compositionLink}
           </Flex>
         )}
-        {isEditable && builder?.part === "requirements" && compositionLink}
         {save.error != null && (
           <MatrixErrorAlert
             title="Не удалось сохранить запись"
