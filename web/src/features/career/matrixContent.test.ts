@@ -23,18 +23,12 @@ const TESTING = "testing";
 function requirement(
   levelId: string,
   competencyId: string,
-  requiredScore: number | null = 2,
+  requiredScore = 2,
 ): MatrixRequirement {
   return {
     levelId,
     competencyId,
     requiredScore,
-    type: "Profile",
-    weight: 1,
-    isMandatory: false,
-    expectedBehavior: null,
-    evidenceExamples: null,
-    validFrom: null,
   };
 }
 
@@ -44,18 +38,14 @@ function content(): MatrixContent {
       { levelId: JUNIOR, minOverallPercent: 60 },
       { levelId: SENIOR, minOverallPercent: 70 },
     ],
-    blocks: [
-      { id: CORE, name: "Основные", isMandatory: true },
-      { id: EXTRA, name: "Дополнительные", isMandatory: false },
-    ],
     competencies: [
       { competencyId: DESIGN, blockId: CORE },
       { competencyId: TESTING, blockId: EXTRA },
     ],
     blockWeights: [
-      { levelId: JUNIOR, blockId: CORE, percent: 100, minPercent: 50 },
-      { levelId: SENIOR, blockId: CORE, percent: 70, minPercent: null },
-      { levelId: SENIOR, blockId: EXTRA, percent: 30, minPercent: null },
+      { levelId: JUNIOR, blockId: CORE, percent: 100 },
+      { levelId: SENIOR, blockId: CORE, percent: 70 },
+      { levelId: SENIOR, blockId: EXTRA, percent: 30 },
     ],
     requirements: [
       requirement(JUNIOR, DESIGN),

@@ -30,22 +30,12 @@ const OTHER_SCALE = {
   isDefault: false,
 };
 
-const CATEGORY = {
-  id: "category",
-  name: "Профессиональные",
-  status: "Active",
-  version: 1,
-};
-
 const EXISTING: Competency = {
   id: "competency",
   name: "Проектирование",
   description: null,
-  categoryId: CATEGORY.id,
-  categoryName: CATEGORY.name,
   directionId: null,
   directionName: null,
-  type: "Profile",
   scaleId: OTHER_SCALE.id,
   scaleName: OTHER_SCALE.name,
   status: "Active",
@@ -66,9 +56,6 @@ function serve() {
   );
   fakeApi.on("GET /api/v1/career/me", () =>
     Response.json({ headedUnits: [], hrUnits: [] }),
-  );
-  fakeApi.on("GET /api/v1/career/categories", () =>
-    Response.json(page([CATEGORY])),
   );
   fakeApi.on("GET /api/v1/career/directions", () => Response.json(page([])));
   fakeApi.on("GET /api/v1/career/scales", () =>
@@ -95,15 +82,13 @@ async function choose(
   await user.click(screen.getByRole("combobox", { name: field }));
   await user.click(
     await screen.findByText(option, {
-      selector: ".ant-select-item-option-content",
+      selector: ".ant-select-item-option-content *",
     }),
   );
 }
 
 async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
   await user.type(await screen.findByLabelText("Название"), "Проектирование");
-  await choose(user, "Категория", CATEGORY.name);
-  await choose(user, "Тип", "Профильная");
 }
 
 beforeEach(() => {
@@ -135,7 +120,7 @@ describe("scale of a new competency (AC-22)", {
     );
     expect(
       await fakeApi.calls("POST /api/v1/career/competencies")[0]?.json(),
-    ).toMatchObject({ scaleId: BASE_SCALE.id, type: "Profile" });
+    ).toMatchObject({ scaleId: BASE_SCALE.id });
   });
 
   it("keeps the scale the user picks instead of the default", async () => {
@@ -209,7 +194,7 @@ describe("scale of a new competency (AC-22)", {
       expect(
         within(
           screen
-            .getByRole("combobox", { name: "Направление" })
+            .getByRole("combobox", { name: "Область" })
             .closest(".ant-select") as HTMLElement,
         ).getByText("Дальнее направление"),
       ).toBeInTheDocument(),
