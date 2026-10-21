@@ -12,4 +12,6 @@ In-place `dotnet test` fails with MSB3021 while the user's Competency.Api or Vis
 **How to apply:**
 - Redirect stdin (`< /dev/null`) for any command that could read it; a bare `cat > file` in a Bash call hangs the call.
 - API tests build state through `MatrixKit` and `CareerScenarios` in `tests/Competency.Tests/Infrastructure`; change those helpers, not every test: a level needs a linked active position, a track is a draft until approved with `?cascade=<tag>` read from `.../publication`, publishing matrix steps need the same query.
+- HR is assigned by employee: `HrCandidateAsync` (employee plus Hr-role account) and `AssignHrAsync` in CareerScenarios; changing an account's roles ends its sessions, so re-sign in (`GrantHrRoleAsync` returns the refreshed member). A unit with working employees cannot be deactivated, so build HR candidates in another unit.
+- Perf seed check: start the scratch-build Api against a throwaway `postgres:18.6-trixie` container (needs `Smtp__Host/Port/SecureSocketOptions/From`, `App__PublicBaseUrl`, bootstrap admin env), apply `tests/perf/seed-10k.sql` with `docker exec -i ... psql`, read it back through the API, then `docker rm -f -v` the container by name.
 - Python edit scripts with Cyrillic literals: write them to a file and run it; keep file EOL (`\r\n` check) when rewriting.
