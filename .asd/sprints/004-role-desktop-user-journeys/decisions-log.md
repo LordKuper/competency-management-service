@@ -271,3 +271,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-21 — Task 60 prereq-fix COMPLETED (60d20ba): AC-209/AC-210 — пока нет действующего; AC-211 — нейтральный пустой текст блока
 - 2026-10-21 — Task 62 COMPLETED (1bb3707): m-desk-4 «пустая система» (4 состояния), таблица предпосылок, карточки «первое» ведут на экраны «Оргструктура» / «Должности», пустой текст «Сейчас начать нечего» (по наличию ролей, а не пустоте списка). Flagged приняты оркестратором
 - 2026-10-21 — Task 61 COMPLETED (2abacba): GET /desk — prerequisites: DeskPrerequisite[] (ActiveUnit, ActivePosition, VisibleTrack); IDeskSource.FindAsync → DeskReport(Findings, Prerequisites); без новых SQL-команд; VisibleTrack — CatalogViewer.Sees<CareerTrack> в памяти. Flagged приняты оркестратором
+- 2026-10-21 — route Task 63: critical, dispatch HEAD 3eec712; risk change: public contract
+- 2026-10-21 — Task 63 COMPLETED (86ccbf0): DeskPrerequisite, DeskReport, prerequisites в GET /desk; без новых SQL-команд; gate чисто. Flagged принят оркестратором

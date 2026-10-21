@@ -350,7 +350,7 @@ Material risk: none
 
 ### Task 63: Бэкенд — предпосылки сценариев стола
 Material risk: change: public contract
-- [ ] по Task 61: данные о предпосылках сценариев в ответе стола, если Task 61 их туда кладёт; OpenAPI и `web/src/api/schema.d.ts` (AC-59)
+- [x] по Task 61: данные о предпосылках сценариев в ответе стола, если Task 61 их туда кладёт; OpenAPI и `web/src/api/schema.d.ts` (AC-59)
 
 ### Task 64: SPA — предпосылки сценариев стола
 Material risk: none
