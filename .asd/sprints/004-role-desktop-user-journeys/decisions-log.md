@@ -273,3 +273,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-21 — Task 61 COMPLETED (2abacba): GET /desk — prerequisites: DeskPrerequisite[] (ActiveUnit, ActivePosition, VisibleTrack); IDeskSource.FindAsync → DeskReport(Findings, Prerequisites); без новых SQL-команд; VisibleTrack — CatalogViewer.Sees<CareerTrack> в памяти. Flagged приняты оркестратором
 - 2026-10-21 — route Task 63: critical, dispatch HEAD 3eec712; risk change: public contract
 - 2026-10-21 — Task 63 COMPLETED (86ccbf0): DeskPrerequisite, DeskReport, prerequisites в GET /desk; без новых SQL-команд; gate чисто. Flagged принят оркестратором
+- 2026-10-21 — route Task 64: standard, dispatch HEAD 51d632b; risk none via web typecheck
+- 2026-10-21 — Task 64 COMPLETED (1812184): holds у сценариев, карточки «Добавить первое подразделение» / «первую должность», пустой текст «Сейчас начать нечего»; стол обновляется через MutationCache. Flagged принят оркестратором
+- 2026-10-21 — impl completion gate (после Task 60–64): dotnet 0/0 (artifacts-path), web lint/build/check:api чисто; diff в пределах областей; все задачи плана отмечены; stubs нет
