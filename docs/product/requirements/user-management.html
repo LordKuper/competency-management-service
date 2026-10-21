@@ -15,7 +15,7 @@ responsibility:
   <meta name="sprint-id" content="">
   <meta name="status" content="approved">
   <meta name="updated" content="2026-10-21">
-  <meta name="responsibility" content="product requirements of the user-management subsystem: local sign-in and session, accounts and two roles, binding to employees, access rules, registration by e-mailed invitation and password reset by e-mailed link, sign-in screen with return to the link target, header and menu with the desktop entry, Users section">
+  <meta name="responsibility" content="product requirements of the user-management subsystem: local sign-in and session, accounts and three roles, binding to employees, access rules, registration by e-mailed invitation and password reset by e-mailed link, sign-in screen with return to the link target, header and menu with the desktop entry, Users section">
   <meta name="provenance" content="original">
   <meta name="source" content="">
   <title>Требования — Управление пользователями</title>
@@ -208,12 +208,12 @@ responsibility:
           <span class="status-approved">approved</span>
         </div>
         <h1>Требования — Управление пользователями</h1>
-        <div class="stats">6 goals · 17 stories · 49 AC · 9 non-goals · updated 2026-10-21</div>
+        <div class="stats">6 goals · 18 stories · 52 AC · 9 non-goals · updated 2026-10-21</div>
       </header>
       <main>
 <!--
 responsibility:
-  owns: product requirements of the user-management subsystem: local sign-in and session, accounts and two roles, binding to employees, access rules, registration by e-mailed invitation and password reset by e-mailed link, sign-in screen with return to the link target, header and menu with the desktop entry and its counter slot, Users section
+  owns: product requirements of the user-management subsystem: local sign-in and session, accounts and three roles, binding to employees, access rules, registration by e-mailed invitation and password reset by e-mailed link, sign-in screen with return to the link target, header and menu with the desktop entry and its counter slot, Users section
   excludes: ui mockups, design decisions, code, ux flows, employees and units (org-structure.html), career process roles (career-framework.html), the journal (audit.html)
   delegates_to: org-structure.html (employee dismissal and deletion cascade), audit.html (journaling), desk.html (desktop, counter value, reminder e-mails), ux-spec.html (ui + flows), adr.html (decisions)
 provenance: original
@@ -228,7 +228,7 @@ provenance: original
   <h2>Цели</h2>
   <ol class="goal-grid">
     <li><span class="num">G1</span><p>Безопасный локальный вход по e-mail и паролю с защитой от подбора пароля и обрывом сессии при блокировке.</p></li>
-    <li><span class="num">G2</span><p>Две роли — глобальный администратор и пользователь — и управление учётными записями глобальным администратором.</p></li>
+    <li><span class="num">G2</span><p>Три роли — глобальный администратор, HR и пользователь — и управление учётными записями глобальным администратором; роль «HR» допускает сотрудника учётной записи к закреплению ответственным HR подразделения.</p></li>
     <li><span class="num">G3</span><p>Необязательная привязка любой учётной записи к работающему сотруднику, не более одной записи на сотрудника.</p></li>
     <li><span class="num">G4</span><p>Система не остаётся без активного глобального администратора ни при каких действиях.</p></li>
     <li><span class="num">G5</span><p>Права проверяются на сервере: прямой доступ по идентификатору без прав и перебор идентификаторов не дают данных.</p></li>
@@ -252,12 +252,13 @@ provenance: original
     </ul>
   </details>
   <details class="role-group" open>
-    <summary>Глобальный администратор <span class="count">7</span></summary>
+    <summary>Глобальный администратор <span class="count">8</span></summary>
     <ul class="stories">
       <li><b>as</b> глобальный администратор, <b>I want</b> создавать учётные записи с ролью и необязательной привязкой к сотруднику, не задавая пароль, а приглашая человека по e-mail, <b>so that</b> дать людям доступ к сервису, не зная их паролей (AC-15, AC-23, AC-24, AC-39).</li>
       <li><b>as</b> глобальный администратор, <b>I want</b> отправить приглашение повторно, <b>so that</b> человек, потерявший письмо или не успевший открыть ссылку, смог завершить регистрацию (AC-36, AC-41).</li>
       <li><b>as</b> глобальный администратор, <b>I want</b> находить записи поиском по e-mail и фильтрами по роли и состоянию, <b>so that</b> быстро найти нужную (AC-16).</li>
       <li><b>as</b> глобальный администратор, <b>I want</b> править e-mail, роль и привязку записи, <b>so that</b> данные записи оставались верными (AC-17).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> назначать и снимать роль «HR» у учётных записей в разделе «Пользователи», <b>so that</b> определять, кого можно закреплять ответственным HR подразделения (AC-12, AC-50, AC-51, AC-52).</li>
       <li><b>as</b> глобальный администратор, <b>I want</b> блокировать и разблокировать записи, а не удалять их, <b>so that</b> закрыть доступ, сохранив историю (AC-18, AC-19, AC-21).</li>
       <li><b>as</b> глобальный администратор, <b>I want</b> отправить пользователю ссылку для сброса пароля, <b>so that</b> вернуть доступ тому, кто его забыл, не задавая пароль за него (AC-20, AC-38, AC-41).</li>
       <li><b>as</b> глобальный администратор, <b>I want</b> быть уверенным, что нельзя случайно лишить систему последнего администратора, <b>so that</b> управление всегда оставалось доступным (AC-22).</li>
@@ -290,7 +291,7 @@ provenance: original
       <tr id="AC-9"><td><a href="#AC-9">AC-9</a></td><td>Анонимны только вход, запрос ссылки для сброса пароля, задание пароля по ссылке из письма (приглашения или сброса), чтение минимальной длины пароля (AC-43) и пробы работоспособности; любой другой запрос без аутентификации получает 401, без достаточной роли — 403. Недействительная ссылка из письма даёт 400, а не 401.</td><td><span class="chip area">доступ</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-10"><td><a href="#AC-10">AC-10</a></td><td>Смена собственного пароля требует текущий пароль; неверный текущий считается неудачной попыткой по правилам блокировки при переборе. После успешной смены остальные сессии записи завершаются, текущая продолжается.</td><td><span class="chip area">пароль</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-11"><td><a href="#AC-11">AC-11</a></td><td>Если в системе нет ни одного активного глобального администратора (не заблокированного и уже задавшего пароль), при запуске создаётся администратор с e-mail и паролем из параметров развёртывания, не привязанный к сотруднику. Существующая запись не изменяется и не перезаписывается; без параметров запуск прерывается с понятной ошибкой; пароль нигде не записывается в логи.</td><td><span class="chip area">развёртывание</span></td><td><span class="chip prio-must">must</span></td></tr>
-      <tr id="AC-12"><td><a href="#AC-12">AC-12</a></td><td>Две роли учётной записи: глобальный администратор (управляет пользователями и оргструктурой, читает журнал) и пользователь (читает дерево подразделений и урезанные данные сотрудников). Роли процесса карьерной модели — руководитель подразделения и ответственный HR — не роли учётной записи: они вычисляются из оргструктуры и закреплений HR (<a href="career-framework.html#AC-5">career-framework AC-5</a>).</td><td><span class="chip area">роли</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-12"><td><a href="#AC-12">AC-12</a></td><td>Три роли учётной записи, у каждой записи ровно одна: глобальный администратор (управляет пользователями и оргструктурой, читает журнал), HR и пользователь (читает дерево подразделений и урезанные данные сотрудников). Права роли «HR» в сервисе такие же, как у пользователя: права HR в карьерной модели возникают только от закрепления (<a href="career-framework.html#AC-6">career-framework AC-6</a>), а роль лишь допускает сотрудника учётной записи к закреплению. Роли процесса карьерной модели — руководитель подразделения и ответственный HR — не роли учётной записи: они вычисляются из оргструктуры и закреплений HR (<a href="career-framework.html#AC-5">career-framework AC-5</a>).</td><td><span class="chip area">роли</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-13"><td><a href="#AC-13">AC-13</a></td><td>Все проверки прав выполняются на сервере; интерфейс лишь скрывает недоступное.</td><td><span class="chip area">доступ</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-14"><td><a href="#AC-14">AC-14</a></td><td>Прямой доступ к записи по идентификатору без достаточных прав отклоняется (защита от IDOR); идентификаторы записей не последовательные и не подбираются перебором.</td><td><span class="chip area">доступ</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-15"><td><a href="#AC-15">AC-15</a></td><td>Администратор создаёт учётную запись без пароля: e-mail, роль, необязательная привязка к сотруднику. Запись создаётся приглашённой (войти нельзя, пока пользователь не задаст пароль по AC-35), на её e-mail уходит письмо-приглашение (AC-34, AC-40). Дубль e-mail отклоняется (409) с понятной причиной.</td><td><span class="chip area">управление</span></td><td><span class="chip prio-must">must</span></td></tr>
@@ -328,6 +329,9 @@ provenance: original
       <tr id="AC-47"><td><a href="#AC-47">AC-47</a></td><td>Уход с экрана или шага сценария при несохранённых правках — по пункту меню, хлебным крошкам, ссылке (в том числе ссылке рабочего стола), кнопкам «Назад» и «Вперёд» браузера, при смене шага многошагового сценария — сначала показывает подтверждение, что несохранённые правки будут потеряны. «Остаться» отменяет уход и сохраняет правки на экране; согласие выполняет уход и отбрасывает правки. Без несохранённых правок уход выполняется без подтверждения.</td><td><span class="chip area">интерфейс</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-48"><td><a href="#AC-48">AC-48</a></td><td>Закрытие или обновление вкладки при несохранённых правках показывает стандартное предупреждение браузера.</td><td><span class="chip area">интерфейс</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-49"><td><a href="#AC-49">AC-49</a></td><td>Несохранённые правки не блокируют навигацию: пункты меню, хлебные крошки и ссылки остаются доступными, а подсказок вида «Есть несохранённые правки. Сохраните или отмените их, чтобы перейти на другой шаг / экран.» нет.</td><td><span class="chip area">интерфейс</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-50"><td><a href="#AC-50">AC-50</a></td><td>Роль «HR» назначает и снимает только глобальный администратор — полем «Роль» при создании и изменении учётной записи (AC-15, AC-17), рядом с ролью администратора; остальным — 403. Роль одна, поэтому учётная запись глобального администратора не имеет роли «HR» и ответственным HR закреплена быть не может, пока она администратор. Запись с ролью «HR» может быть не привязана к сотруднику, но закрепить ответственным HR можно только сотрудника (<a href="career-framework.html#AC-7">career-framework AC-7</a>): без привязки запись кандидатом не становится.</td><td><span class="chip area">роли</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-51"><td><a href="#AC-51">AC-51</a></td><td>Роль «HR» нельзя снять (сменить на другую), пока привязанный к учётной записи сотрудник закреплён ответственным HR хотя бы за одним подразделением (<a href="career-framework.html#AC-6">career-framework AC-6</a>): запрос отклоняется (409) с понятным текстом, называющим эти подразделения. Запрет действует и для заблокированной записи, и выдерживается при одновременных запросах (<a href="career-framework.html#AC-158">career-framework AC-158</a>). Не привязанная учётная запись закреплений не имеет, её роль снимается свободно; после снятия закреплений роль снимается.</td><td><span class="chip area">роли</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-52"><td><a href="#AC-52">AC-52</a></td><td>Блокировка учётной записи и смена или снятие её привязки закреплением HR не запрещаются: закрепление остаётся за сотрудником и не действует (<a href="career-framework.html#AC-9">career-framework AC-9</a>), пока запись не разблокирована либо к сотруднику не привязана действующая запись с ролью «HR».</td><td><span class="chip area">роли</span></td><td><span class="chip prio-must">must</span></td></tr>
     </tbody>
   </table>
 </section>
@@ -340,7 +344,7 @@ provenance: original
     <li>Подтверждение смены e-mail письмом, двухфакторная аутентификация, срок действия пароля; рассылки, дайджесты и редактор шаблонов писем; уведомления, кроме писем приглашения и сброса пароля и писем-напоминаний рабочего стола (<a href="desk.html#AC-102">desk AC-102…AC-112</a>).</li>
     <li>Приглашение и ссылка сброса для первого администратора из параметров развёртывания: он входит по паролю из параметров, развёртывание не зависит от почты.</li>
     <li>Гарантированная доставка писем (outbox): письма по анонимным запросам ставятся в очередь в памяти и теряются при перезапуске сервиса, пользователь запрашивает ссылку заново; так же устроены письма-напоминания рабочего стола — потерянное письмо не теряет действие, оно остаётся на столе.</li>
-    <li>Роли учётной записи из «Постановки» сверх двух принятых, роли с областью действия (scope-based access), row-level и field-level безопасность; роли процесса карьерной модели вычисляются отдельно (<a href="career-framework.html">career-framework</a>) и ролей учётной записи не меняют.</li>
+    <li>Роли учётной записи из «Постановки» сверх трёх принятых, роли с областью действия (scope-based access), row-level и field-level безопасность; роли процесса карьерной модели вычисляются отдельно (<a href="career-framework.html">career-framework</a>) и ролей учётной записи не меняют.</li>
     <li>Физическое удаление учётных записей.</li>
     <li>Импорт и экспорт пользователей, массовые операции.</li>
     <li>Отдельная роль внутреннего контроля (только чтение журнала): журнал читает глобальный администратор.</li>
