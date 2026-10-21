@@ -30,12 +30,14 @@ export function unitHrQuery(orgUnitId: string) {
 
 /**
  * The HR who answers for the unit: its own assignment, or the inherited one when there is none. An inactive assignee is
- * not replaced by the inherited HR, because the server does not route to one either. Only administrators get `isActive`;
- * for everyone else the server leaves out the assignments whose account cannot act, so what it returns can act.
+ * not replaced by the inherited HR, because the server does not route to one either. Only administrators get the account
+ * with its state; for everyone else the server leaves out the assignments whose account cannot act, so what it returns can act.
  */
 export function effectiveHr(hr: OrgUnitHr): OrgUnitHrPerson | null {
   const person = hr.assigned ?? hr.inherited;
-  return person && person.isActive !== false ? person : null;
+  return person && (!person.account || person.account.state === "Active")
+    ? person
+    : null;
 }
 
 /** Process roles of the signed-in user; the section shows what these units allow. */

@@ -39,7 +39,7 @@ const STATUS_OPTIONS = [
 type PositionDialog = { kind: "create" } | { kind: "rename"; id: string };
 
 /**
- * The position catalogue for administrators: search, paging, the status filter in the column header, creation, renaming, deactivation after
+ * The position catalogue for administrators and HR: search, paging, the status filter in the column header, creation, renaming, deactivation after
  * showing how many working employees keep the position, and return to work. The dialogs live here, once for all rows.
  */
 export function PositionsPage() {

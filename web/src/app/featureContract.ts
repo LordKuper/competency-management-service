@@ -26,8 +26,10 @@ export interface NavItem {
   order: number;
   /** Submenu the entry is grouped under; omitted means a top-level entry. */
   group?: NavGroup;
-  /** Roles that see the entry; omitted means every signed-in user. */
+  /** Roles that see the entry: an account with any of them does; omitted means every signed-in user. */
   roles?: ReadonlyArray<UserRole>;
+  /** Roles that never see the entry, even with one of `roles`: an account with any of them has the same page under another entry. */
+  hiddenFromRoles?: ReadonlyArray<UserRole>;
   /** Mark shown after the label, such as a count; it renders nothing when there is nothing to show. */
   badge?: ComponentType;
 }

@@ -103,7 +103,7 @@ function ShellFrame({ user }: { user: CurrentUser }) {
   const { token } = antdTheme.useToken();
   const screens = Grid.useBreakpoint();
   const { pathname } = useLocation();
-  const navItems = navItemsFor(user.role);
+  const navItems = navItemsFor(user.roles);
   const current = navItems.find(
     (item) => pathname === item.path || pathname.startsWith(`${item.path}/`),
   );

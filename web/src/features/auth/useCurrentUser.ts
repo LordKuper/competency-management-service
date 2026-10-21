@@ -19,5 +19,10 @@ export function useCurrentUser() {
 
 /** Whether the signed-in account is a global administrator; false while loading and when signed out. */
 export function useIsAdmin(): boolean {
-  return useCurrentUser().data?.role === "GlobalAdmin";
+  return useCurrentUser().data?.roles.includes("GlobalAdmin") ?? false;
+}
+
+/** Whether the signed-in account has the HR role; false while loading and when signed out. */
+export function useIsHr(): boolean {
+  return useCurrentUser().data?.roles.includes("Hr") ?? false;
 }

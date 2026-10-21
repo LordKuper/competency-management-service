@@ -9,7 +9,11 @@ const navItems = features
   .flatMap((feature) => feature.navItems ?? [])
   .sort((first, second) => first.order - second.order);
 
-/** Navigation entries a user of the given role may see, in menu order. */
-export function navItemsFor(role: UserRole): NavItem[] {
-  return navItems.filter((item) => item.roles?.includes(role) ?? true);
+/** Navigation entries a user with the given roles may see, in menu order. */
+export function navItemsFor(roles: ReadonlyArray<UserRole>): NavItem[] {
+  return navItems.filter(
+    (item) =>
+      (item.roles?.some((role) => roles.includes(role)) ?? true) &&
+      !item.hiddenFromRoles?.some((role) => roles.includes(role)),
+  );
 }
