@@ -341,3 +341,11 @@
 {"op":"close","id":"Task 58-59 test-compile","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:23:25.770Z","end":"2026-10-21T10:14:59.386Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl assessment 4","kind":"user-wait","parent":"impl#2","start":"2026-10-21T10:15:49.913Z","attrs":{}}
 {"op":"close","id":"impl assessment 4","kind":"user-wait","parent":"impl#2","start":"2026-10-21T10:15:49.913Z","end":"2026-10-21T11:27:58.822Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 60","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:28:07.875Z","attrs":{}}
+{"op":"open","id":"Task 61","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:28:07.932Z","attrs":{}}
+{"op":"open","id":"Task 62","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:28:07.988Z","attrs":{}}
+{"op":"close","id":"Task 60","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:28:07.875Z","end":"2026-10-21T11:30:47.946Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 60 prereq-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:30:48.006Z","attrs":{}}
+{"op":"close","id":"Task 60 prereq-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:30:48.006Z","end":"2026-10-21T11:30:58.647Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 62","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:28:07.988Z","end":"2026-10-21T11:33:10.342Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 61","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:28:07.932Z","end":"2026-10-21T11:36:21.420Z","outcome":"done","attrs":{}}
