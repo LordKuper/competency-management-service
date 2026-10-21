@@ -813,6 +813,24 @@
       "tier": "standard",
       "reason": "owner asd-ux (docs/ux)",
       "resolved_model": "sonnet"
+    },
+    "Task 55 completeness-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 56 completeness-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 58": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
     }
   },
   "skipped_phases": [],
