@@ -303,3 +303,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-21 — route Task 73: standard, dispatch HEAD eb837c6; risk none via web typecheck
 - 2026-10-21 — Task 73 COMPLETED (25f70a6, 6e6da07, c1c96e6): leaveGuard.tsx (один useBlocker, confirmLeave/confirmClose/leaveAfterSave, beforeunload, modal.confirm), AppModal с Form.Provider, шаги мастеров и выбор версии через подтверждение, без блокировки ссылок и подсказок; правило AC-20 в custom-coding-rules.md. Flagged приняты оркестратором; 3 теста MatrixPage.test.tsx проверяют заблокированные ссылки — в impl-test
 - 2026-10-21 — impl completion gate (после Task 70–73): web lint/build чисто, backend не менялся; diff в пределах областей; все задачи плана отмечены; stubs нет
+- 2026-10-21 — impl assessment (user): убрать «Выход из сценария его не отменяет.» в «Сотрудник создан» (макет m-onboard этой фразы не содержит — расхождение кода); route Task 73 assessment-fix 1: standard, dispatch HEAD 3d12ccf; risk none via grep
+- 2026-10-21 — Task 73 assessment-fix 1 COMPLETED (a8f8bbc): «Сотрудник создан» без «Выход из сценария его не отменяет.»; gate: web lint/build чисто
