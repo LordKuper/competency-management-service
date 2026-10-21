@@ -35,7 +35,7 @@ public sealed class MailFailureTests(MailServerDownHost fixture) : IClassFixture
         var admin = await host.AdminAsync();
         var email = $"{Scenarios.Unique("down")}@test.local";
 
-        var created = (await admin.PostAsync("/api/v1/users", new { email, role = Scenarios.User, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
+        var created = (await admin.PostAsync("/api/v1/users", new { email, roles = Scenarios.NoRoles, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
         var resent = (await admin.PostAsync($"/api/v1/users/{created.Id}/resend-invitation", ifMatch: created.ETag)).Expect(HttpStatusCode.OK);
         var registered = await admin.CreateUserAsync();
         var reset = (await admin.PostAsync($"/api/v1/users/{registered.Id}/send-password-reset", ifMatch: registered.ETag)).Expect(HttpStatusCode.OK);
@@ -78,7 +78,7 @@ public sealed class MailFailureTests(MailServerDownHost fixture) : IClassFixture
         var host = fixture.Host;
         var admin = await host.AdminAsync();
         var email = $"{Scenarios.Unique("quiet")}@test.local";
-        (await admin.PostAsync("/api/v1/users", new { email, role = Scenarios.User, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
+        (await admin.PostAsync("/api/v1/users", new { email, roles = Scenarios.NoRoles, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
 
         var logs = await host.LogsAfterAsync("Mail was not sent");
 

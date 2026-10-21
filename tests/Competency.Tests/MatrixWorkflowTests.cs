@@ -189,9 +189,10 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var kit = await ReadyAsync(org);
-        (await org.Admin.PutAsync($"/api/v1/career/org-units/{org.Team.Id}/hr", new { userId = org.TeamHead.Id })).Expect(HttpStatusCode.NoContent);
+        var teamHead = await org.Admin.GrantHrRoleAsync(fixture.Host, org.TeamHead);
+        (await org.Admin.AssignHrAsync(org.Team.Id, teamHead.EmployeeId)).Expect(HttpStatusCode.NoContent);
 
-        var submitted = (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
+        var submitted = (await kit.TransitAsync(teamHead.Client, "submit")).Expect(HttpStatusCode.OK);
         var approved = (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
 
         submitted.Json!["step"]!.GetValue<string>().Should().Be("Superior", "the superior still decides");
@@ -205,9 +206,10 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var kit = await ReadyAsync(org);
         await BlockAsync(org, org.DepartmentHead, org.RootHead);
-        (await org.Admin.PutAsync($"/api/v1/career/org-units/{org.Team.Id}/hr", new { userId = org.TeamHead.Id })).Expect(HttpStatusCode.NoContent);
+        var teamHead = await org.Admin.GrantHrRoleAsync(fixture.Host, org.TeamHead);
+        (await org.Admin.AssignHrAsync(org.Team.Id, teamHead.EmployeeId)).Expect(HttpStatusCode.NoContent);
 
-        var submitted = (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
+        var submitted = (await kit.TransitAsync(teamHead.Client, "submit")).Expect(HttpStatusCode.OK);
 
         submitted.Json!["status"]!.GetValue<string>().Should().Be("Published");
         (await kit.DecisionsAsync()).Should().Equal("Submitted", "Skipped@Superior", "AutoApproved@Hr", "Published");
@@ -218,11 +220,12 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var kit = await ReadyAsync(org);
-        (await org.Admin.PutAsync($"/api/v1/career/org-units/{org.Team.Id}/hr", new { userId = org.DepartmentHead.Id })).Expect(HttpStatusCode.NoContent);
+        var departmentHead = await org.Admin.GrantHrRoleAsync(fixture.Host, org.DepartmentHead);
+        (await org.Admin.AssignHrAsync(org.Team.Id, departmentHead.EmployeeId)).Expect(HttpStatusCode.NoContent);
         (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
 
-        var first = (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
-        var second = (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
+        var first = (await kit.TransitAsync(departmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
+        var second = (await kit.TransitAsync(departmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
 
         first.Json!["step"]!.GetValue<string>().Should().Be("Hr");
         second.Json!["status"]!.GetValue<string>().Should().Be("Published");

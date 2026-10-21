@@ -14,6 +14,7 @@ public sealed class UserBindingTests(TestEnvironment environment)
     [Theory]
     [InlineData(Scenarios.User)]
     [InlineData(Scenarios.GlobalAdmin)]
+    [InlineData(Scenarios.Hr)]
     public async Task Ac8_AccountOfAnyRole_CanBeBoundToAWorkingEmployee(string role)
     {
         var host = await environment.SharedHostAsync();
@@ -24,7 +25,7 @@ public sealed class UserBindingTests(TestEnvironment environment)
         var account = await admin.CreateUserAsync(role, employee.Id);
 
         var me = (await (await account.SignInAsync(host)).GetAsync("/api/v1/auth/me")).Expect(HttpStatusCode.OK);
-        me.Json!["role"]!.GetValue<string>().Should().Be(role);
+        me.Json!["roles"]!.AsArray().Select(item => item!.GetValue<string>()).Should().Equal(Scenarios.RolesOf(role));
         me.Json["employeeId"]!.GetValue<string>().Should().Be(employee.Id.ToString());
         me.Json["employeeLastName"]!.GetValue<string>().Should().Be("Кузнецов");
         me.Json["employeeFirstName"]!.GetValue<string>().Should().Be("Пётр");
@@ -43,10 +44,10 @@ public sealed class UserBindingTests(TestEnvironment environment)
 
         var onCreate = await admin.PostAsync(
             "/api/v1/users",
-            new { email = $"{Scenarios.Unique("second")}@test.local", role = Scenarios.User, employeeId = employee.Id });
+            new { email = $"{Scenarios.Unique("second")}@test.local", roles = Scenarios.NoRoles, employeeId = employee.Id });
         var onUpdate = await admin.PutAsync(
             $"/api/v1/users/{other.Id}",
-            new { email = other.Email, role = Scenarios.User, employeeId = employee.Id },
+            new { email = other.Email, roles = Scenarios.NoRoles, employeeId = employee.Id },
             other.ETag);
 
         onCreate.Status.Should().Be(HttpStatusCode.Conflict, onCreate.Body);
@@ -64,10 +65,10 @@ public sealed class UserBindingTests(TestEnvironment environment)
 
         var unknown = await admin.PostAsync(
             "/api/v1/users",
-            new { email = $"{Scenarios.Unique("ghost")}@test.local", role = Scenarios.User, employeeId = Guid.NewGuid() });
+            new { email = $"{Scenarios.Unique("ghost")}@test.local", roles = Scenarios.NoRoles, employeeId = Guid.NewGuid() });
         var notWorking = await admin.PostAsync(
             "/api/v1/users",
-            new { email = $"{Scenarios.Unique("gone")}@test.local", role = Scenarios.User, employeeId = dismissed.Id });
+            new { email = $"{Scenarios.Unique("gone")}@test.local", roles = Scenarios.NoRoles, employeeId = dismissed.Id });
 
         unknown.Status.Should().Be(HttpStatusCode.BadRequest, unknown.Body);
         unknown.FieldErrors("employeeId").Should().ContainSingle();
@@ -87,11 +88,11 @@ public sealed class UserBindingTests(TestEnvironment environment)
 
         var bound = (await admin.PutAsync(
             $"/api/v1/users/{account.Id}",
-            new { email = account.Email, role = Scenarios.User, employeeId = employee.Id },
+            new { email = account.Email, roles = Scenarios.NoRoles, employeeId = employee.Id },
             account.ETag)).Expect(HttpStatusCode.OK);
         var unbound = (await admin.PutAsync(
             $"/api/v1/users/{account.Id}",
-            new { email = account.Email, role = Scenarios.User, employeeId = (Guid?)null },
+            new { email = account.Email, roles = Scenarios.NoRoles, employeeId = (Guid?)null },
             bound.ETag)).Expect(HttpStatusCode.OK);
 
         (await session.GetAsync("/api/v1/auth/me")).Status.Should().Be(HttpStatusCode.Unauthorized, "a changed binding ends the sessions of the account");
@@ -114,10 +115,10 @@ public sealed class UserBindingTests(TestEnvironment environment)
 
         var duplicate = await admin.PostAsync(
             "/api/v1/users",
-            new { email = $"{local.ToUpperInvariant()}@TEST.local", role = Scenarios.User, employeeId = (Guid?)null });
+            new { email = $"{local.ToUpperInvariant()}@TEST.local", roles = Scenarios.NoRoles, employeeId = (Guid?)null });
         var malformed = await admin.PostAsync(
             "/api/v1/users",
-            new { email = "not-an-email", role = Scenarios.User, employeeId = (Guid?)null });
+            new { email = "not-an-email", roles = Scenarios.NoRoles, employeeId = (Guid?)null });
 
         duplicate.Status.Should().Be(HttpStatusCode.Conflict, duplicate.Body);
         duplicate.FieldErrors("email").Should().ContainSingle();

@@ -186,19 +186,19 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
     public async Task Ac8_TwoAssignmentsOfAnHrToOneUnit_LeaveOneRow_TheLaterOneWinning_AndNeitherFails()
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);
-        var first = await org.Admin.CreateUserAsync();
-        var second = await org.Admin.CreateUserAsync();
         var unit = await org.Admin.CreateUnitAsync(org.Root.Id);
+        var first = await org.Admin.HrCandidateAsync(fixture.Host, unit.Id);
+        var second = await org.Admin.HrCandidateAsync(fixture.Host, unit.Id);
 
         await using var gate = await RowLock.HoldAdvisoryAsync(fixture.Host, RowLock.TreeKey);
-        var a = await RowLock.StartWaitingAsync(fixture.Host, 1, () => org.Admin.PutAsync($"/api/v1/career/org-units/{unit.Id}/hr", new { userId = first.Id }));
-        var b = await RowLock.StartWaitingAsync(fixture.Host, 2, () => org.Admin.PutAsync($"/api/v1/career/org-units/{unit.Id}/hr", new { userId = second.Id }));
+        var a = await RowLock.StartWaitingAsync(fixture.Host, 1, () => org.Admin.AssignHrAsync(unit.Id, first.EmployeeId));
+        var b = await RowLock.StartWaitingAsync(fixture.Host, 2, () => org.Admin.AssignHrAsync(unit.Id, second.EmployeeId));
         await gate.ReleaseAsync();
 
         (await a).Status.Should().Be(HttpStatusCode.NoContent);
         (await b).Status.Should().Be(HttpStatusCode.NoContent);
         (await fixture.Host.ScalarAsync<long>($"SELECT count(*) FROM org_unit_hr WHERE org_unit_id = '{unit.Id}'")).Should().Be(1);
-        (await org.Admin.GetAsync($"/api/v1/career/org-units/{unit.Id}/hr")).Json!["assigned"]!["userId"]!.GetValue<Guid>().Should().Be(second.Id);
+        (await org.Admin.GetAsync($"/api/v1/career/org-units/{unit.Id}/hr")).Json!["assigned"]!["employeeId"]!.GetValue<Guid>().Should().Be(second.Employee);
     }
 
     [Theory]
@@ -207,10 +207,10 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
     public async Task Ac8_AnAssignmentRacingTheBlockingOfTheAccount_IsDecidedByWhichRequestIsFirst(bool assignmentFirst, HttpStatusCode assignmentStatus)
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);
-        var account = await org.Admin.CreateUserAsync();
         var unit = await org.Admin.CreateUnitAsync(org.Root.Id);
-        var assign = () => org.Admin.PutAsync($"/api/v1/career/org-units/{unit.Id}/hr", new { userId = account.Id });
-        var block = () => org.Admin.PostAsync($"/api/v1/users/{account.Id}/block", ifMatch: account.ETag);
+        var account = await org.Admin.HrCandidateAsync(fixture.Host, unit.Id);
+        var assign = () => org.Admin.AssignHrAsync(unit.Id, account.EmployeeId);
+        var block = () => org.Admin.PostAsync($"/api/v1/users/{account.Id}/block", ifMatch: account.User.ETag);
 
         await using var gate = await RowLock.HoldAdvisoryAsync(fixture.Host, RowLock.TreeKey);
         var first = await RowLock.StartWaitingAsync(fixture.Host, 1, assignmentFirst ? assign : block);
@@ -444,7 +444,6 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
         var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
         await kit.PublishAsync();
         var next = (await org.TeamHead.Client.PostAsync($"/api/v1/career/matrices/{kit.MatrixId}/versions")).Expect(HttpStatusCode.Created).Json!["id"]!.GetValue<Guid>();
-        var user = await org.Admin.CreateUserAsync();
         var scale = await org.Admin.MakeScaleAsync();
 
         var violations = new Dictionary<string, bool>
@@ -452,7 +451,7 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
             ["a second published version"] = await ViolatesUniqueAsync($"UPDATE matrix_versions SET status = 'Published' WHERE id = '{next}'"),
             ["a second version in work"] = await ViolatesUniqueAsync($"INSERT INTO matrix_versions (id, version, created_at, matrix_id, number, status, author_id, content) SELECT gen_random_uuid(), 0, now(), matrix_id, 99, 'OnReview', author_id, content FROM matrix_versions WHERE id = '{next}'"),
             ["a second matrix of a unit and track"] = await ViolatesUniqueAsync($"INSERT INTO competency_matrices (id, version, created_at, org_unit_id, direction_id, track_id) SELECT gen_random_uuid(), 0, now(), org_unit_id, direction_id, track_id FROM competency_matrices WHERE id = '{kit.MatrixId}'"),
-            ["a second HR of a unit"] = await ViolatesUniqueAsync($"INSERT INTO org_unit_hr (org_unit_id, user_id) VALUES ('{org.Root.Id}', '{user.Id}')"),
+            ["a second HR of a unit"] = await ViolatesUniqueAsync($"INSERT INTO org_unit_hr (org_unit_id, employee_id) VALUES ('{org.Root.Id}', '{org.Hr.Employee}')"),
             ["a second default scale"] = await ViolatesUniqueAsync($"UPDATE competency_scales SET is_default = true WHERE id = '{scale.Id}'"),
             ["two levels in one place"] = await ViolatesUniqueAsync($"UPDATE career_levels SET position = 1 WHERE track_id = '{kit.Track.Id}' AND position = 2"),
         };
@@ -529,8 +528,8 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
 
             case "hr-assign":
             {
-                var account = await admin.CreateUserAsync();
-                return () => admin.PutAsync($"/api/v1/career/org-units/{org.Team.Id}/hr", new { userId = account.Id });
+                var candidate = await admin.HrCandidateAsync(fixture.Host, org.Team.Id);
+                return () => admin.AssignHrAsync(org.Team.Id, candidate.EmployeeId);
             }
 
             case "hr-remove":

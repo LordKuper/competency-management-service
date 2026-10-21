@@ -52,7 +52,7 @@ public sealed class AdministratorsHost(TestEnvironment environment) : HostFixtur
         {
             var client = Host.Anonymous();
             var login = await client.PostAsync("/api/v1/auth/login", new { email, password });
-            if (login.Status == HttpStatusCode.OK && login.Json!["role"]!.GetValue<string>() == Scenarios.GlobalAdmin)
+            if (login.Status == HttpStatusCode.OK && login.Json!["roles"]!.AsArray().Any(role => role!.GetValue<string>() == Scenarios.GlobalAdmin))
             {
                 active.Add((client, Guid.Parse(login.Json["id"]!.GetValue<string>()), email, password));
             }
@@ -99,12 +99,12 @@ public sealed class LastAdministratorTests(AdministratorsHost fixture, TestEnvir
 
         var refused = await sole.PutAsync(
             $"/api/v1/users/{soleId}",
-            new { email = current.Json!["email"]!.GetValue<string>(), role = Scenarios.User, employeeId = (Guid?)null },
+            new { email = current.Json!["email"]!.GetValue<string>(), roles = Scenarios.NoRoles, employeeId = (Guid?)null },
             current.ETag);
 
         refused.Status.Should().Be(HttpStatusCode.Conflict);
         refused.Json!["detail"]!.GetValue<string>().Should().Contain(LastAdministratorWording);
-        (await sole.GetUserAsync(soleId)).Json!["role"]!.GetValue<string>().Should().Be(Scenarios.GlobalAdmin);
+        (await sole.GetUserAsync(soleId)).Json!["roles"]!.AsArray().Select(role => role!.GetValue<string>()).Should().Equal(Scenarios.GlobalAdmin);
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public sealed class LastAdministratorTests(AdministratorsHost fixture, TestEnvir
         (await sole.PostAsync($"/api/v1/users/{blocked.Id}/block", ifMatch: blocked.ETag)).Expect(HttpStatusCode.OK);
         (await sole.PutAsync(
             $"/api/v1/users/{demoted.Id}",
-            new { email = demoted.Email, role = Scenarios.User, employeeId = (Guid?)null },
+            new { email = demoted.Email, roles = Scenarios.NoRoles, employeeId = (Guid?)null },
             demoted.ETag)).Expect(HttpStatusCode.OK);
 
         var current = await sole.GetUserAsync(soleId);
@@ -135,7 +135,7 @@ public sealed class LastAdministratorTests(AdministratorsHost fixture, TestEnvir
         var block = await sole.PostAsync($"/api/v1/users/{soleId}/block", ifMatch: current.ETag);
         var demote = await sole.PutAsync(
             $"/api/v1/users/{soleId}",
-            new { email = current.Json!["email"]!.GetValue<string>(), role = Scenarios.User, employeeId = (Guid?)null },
+            new { email = current.Json!["email"]!.GetValue<string>(), roles = Scenarios.NoRoles, employeeId = (Guid?)null },
             current.ETag);
 
         block.Status.Should().Be(HttpStatusCode.Conflict, "an administrator who cannot sign in is not another active one");
@@ -158,7 +158,7 @@ public sealed class LastAdministratorTests(AdministratorsHost fixture, TestEnvir
         var account = await sole.GetUserAsync(soleId);
         (await sole.PutAsync(
             $"/api/v1/users/{soleId}",
-            new { email = account.Json!["email"]!.GetValue<string>(), role = Scenarios.GlobalAdmin, employeeId = employee.Id },
+            new { email = account.Json!["email"]!.GetValue<string>(), roles = Scenarios.AdminRoles, employeeId = employee.Id },
             account.ETag)).Expect(HttpStatusCode.OK);
         (sole, _) = await fixture.ActiveAdministratorAsync();
         var current = await sole.GetEmployeeAsync(employee.Id);

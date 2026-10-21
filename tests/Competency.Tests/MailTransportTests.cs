@@ -73,8 +73,8 @@ public sealed class MailTransportTests(AuthenticatedMailHosts authenticated, Sil
         var emailRight = $"{Scenarios.Unique("auth")}@test.local";
         var emailWrong = $"{Scenarios.Unique("auth")}@test.local";
 
-        var right = (await (await authenticated.Right.AdminAsync()).PostAsync("/api/v1/users", new { email = emailRight, role = Scenarios.User, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
-        var wrong = (await (await authenticated.Wrong.AdminAsync()).PostAsync("/api/v1/users", new { email = emailWrong, role = Scenarios.User, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
+        var right = (await (await authenticated.Right.AdminAsync()).PostAsync("/api/v1/users", new { email = emailRight, roles = Scenarios.NoRoles, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
+        var wrong = (await (await authenticated.Wrong.AdminAsync()).PostAsync("/api/v1/users", new { email = emailWrong, roles = Scenarios.NoRoles, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
 
         right.Json!["mailSent"]!.GetValue<bool>().Should().BeTrue();
         (await authenticated.Mail.WaitForAsync(emailRight)).Should().ContainSingle();
@@ -90,13 +90,13 @@ public sealed class MailTransportTests(AuthenticatedMailHosts authenticated, Sil
         var admin = await host.AdminAsync();
         var email = $"{Scenarios.Unique("silent")}@test.local";
 
-        var creation = admin.PostAsync("/api/v1/users", new { email, role = Scenarios.User, employeeId = (Guid?)null });
+        var creation = admin.PostAsync("/api/v1/users", new { email, roles = Scenarios.NoRoles, employeeId = (Guid?)null });
         await Waiting.UntilAsync(async () => await host.ScalarAsync<long>($"SELECT count(*) FROM users WHERE email = '{email}'") == 1, "the account is saved");
         var saved = (await admin.GetAsync($"/api/v1/users?q={Uri.EscapeDataString(email)}")).Expect(HttpStatusCode.OK).Json!["items"]![0]!;
         var treeChange = await admin.CreateUnitAsync();
         var accountChange = await admin.PutAsync(
             $"/api/v1/users/{saved["id"]!.GetValue<string>()}",
-            new { email, role = Scenarios.GlobalAdmin, employeeId = (Guid?)null },
+            new { email, roles = Scenarios.AdminRoles, employeeId = (Guid?)null },
             $"\"{saved["version"]!.GetValue<int>()}\"");
         var pendingWhileOthersWorked = !creation.IsCompleted;
         var created = await creation;

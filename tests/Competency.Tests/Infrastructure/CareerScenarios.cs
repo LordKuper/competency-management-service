@@ -7,9 +7,13 @@ namespace Competency.Tests.Infrastructure;
 /// </summary>
 /// <param name="User">The account with the credentials it signs in with.</param>
 /// <param name="Client">The client holding the session.</param>
-public sealed record Member(TestUser User, ApiClient Client)
+/// <param name="EmployeeId">The employee the account is bound to; none for an account bound to no one.</param>
+public sealed record Member(TestUser User, ApiClient Client, Guid? EmployeeId = null)
 {
     public Guid Id => User.Id;
+
+    /// <summary>The employee the account is bound to, for a member who has one.</summary>
+    public Guid Employee => EmployeeId!.Value;
 }
 
 /// <summary>
@@ -93,14 +97,44 @@ public static class CareerScenarios
         var employee = await admin.CreateEmployeeAsync(unit.Id);
         var account = await admin.CreateUserAsync(employeeId: employee.Id);
         (await admin.SetHeadAsync(unit, employee.Id)).Expect(HttpStatusCode.OK);
-        return new Member(account, await account.SignInAsync(host));
+        return new Member(account, await account.SignInAsync(host), employee.Id);
     }
 
+    /// <summary>
+    /// A working employee of the unit whose bound account holds the HR role and can sign in, not yet assigned to any unit.
+    /// </summary>
+    public static async Task<Member> HrCandidateAsync(this ApiClient admin, ApiHost host, Guid unitId)
+    {
+        var employee = await admin.CreateEmployeeAsync(unitId);
+        var account = await admin.CreateUserAsync(Scenarios.Hr, employee.Id);
+        return new Member(account, await account.SignInAsync(host), employee.Id);
+    }
+
+    /// <summary>
+    /// Gives the account of the member the HR role, which assigning the member's employee as the HR of a unit requires.
+    /// </summary>
+    /// <returns>The member signed in again, since changing the roles ends the account's sessions.</returns>
+    public static async Task<Member> GrantHrRoleAsync(this ApiClient admin, ApiHost host, Member member)
+    {
+        var current = await admin.GetUserAsync(member.Id);
+        (await admin.PutAsync(
+            $"/api/v1/users/{member.Id}",
+            new { email = member.User.Email, roles = Scenarios.RolesOf(Scenarios.Hr), employeeId = member.EmployeeId },
+            current.ETag)).Expect(HttpStatusCode.OK);
+        return member with { Client = await member.User.SignInAsync(host) };
+    }
+
+    public static async Task<ApiResponse> AssignHrAsync(this ApiClient admin, Guid unitId, Guid? employeeId) =>
+        await admin.PutAsync($"/api/v1/career/org-units/{unitId}/hr", new { employeeId });
+
+    /// <summary>
+    /// An HR candidate assigned to the unit; the employee sits in the unit itself.
+    /// </summary>
     public static async Task<Member> HrOfAsync(this ApiClient admin, ApiHost host, Guid unitId)
     {
-        var account = await admin.CreateUserAsync();
-        (await admin.PutAsync($"/api/v1/career/org-units/{unitId}/hr", new { userId = account.Id })).Expect(HttpStatusCode.NoContent);
-        return new Member(account, await account.SignInAsync(host));
+        var member = await admin.HrCandidateAsync(host, unitId);
+        (await admin.AssignHrAsync(unitId, member.EmployeeId)).Expect(HttpStatusCode.NoContent);
+        return member;
     }
 
     public static async Task<Member> PlainMemberAsync(this ApiClient admin, ApiHost host)

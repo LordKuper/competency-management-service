@@ -21,7 +21,7 @@ BEGIN;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM users WHERE role = 'GlobalAdmin' AND NOT is_blocked AND password_hash IS NOT NULL) THEN
+    IF NOT EXISTS (SELECT 1 FROM users WHERE is_global_admin AND NOT is_blocked AND password_hash IS NOT NULL) THEN
         RAISE EXCEPTION 'No active administrator: start the API against this database once before seeding.';
     END IF;
 
@@ -96,7 +96,7 @@ SELECT 100 + n, 'head.' || n || '@seed.local', n,
 FROM generate_series(1, 250) AS n;
 
 INSERT INTO seed_accounts
-SELECT 400 + k, 'hr.' || k || '@seed.local', CASE WHEN k % 2 = 0 THEN 9000 + k END,
+SELECT 400 + k, 'hr.' || k || '@seed.local', 9000 + k,
        CASE WHEN k % 10 = 0 THEN 'blocked' ELSE 'active' END, NULL
 FROM generate_series(1, 50) AS k;
 
@@ -111,10 +111,10 @@ SELECT 600 + n, 'orphan.' || n || '@seed.local', NULL, 'active', NULL
 FROM generate_series(1, 5) AS n;
 
 INSERT INTO users (
-    id, version, email, normalized_email, user_name, normalized_user_name, role, employee_id, is_blocked, password_hash,
+    id, version, email, normalized_email, user_name, normalized_user_name, is_global_admin, is_hr, employee_id, is_blocked, password_hash,
     security_stamp, concurrency_stamp, lockout_enabled, access_failed_count,
     link_token_hash, link_security_stamp, link_issued_at, link_expires_at)
-SELECT pg_temp.sid('account', a.n), 0, a.email, upper(a.email), a.email, upper(a.email), 'User',
+SELECT pg_temp.sid('account', a.n), 0, a.email, upper(a.email), a.email, upper(a.email), false, a.n = 1 OR a.n BETWEEN 401 AND 450,
        CASE WHEN a.employee_no IS NOT NULL THEN pg_temp.sid('employee', a.employee_no) END,
        a.state = 'blocked',
        CASE WHEN a.state <> 'invited' THEN admin.password_hash END,
@@ -126,16 +126,16 @@ SELECT pg_temp.sid('account', a.n), 0, a.email, upper(a.email), a.email, upper(a
 FROM seed_accounts AS a
 CROSS JOIN (
     SELECT password_hash FROM users
-    WHERE role = 'GlobalAdmin' AND NOT is_blocked AND password_hash IS NOT NULL
+    WHERE is_global_admin AND NOT is_blocked AND password_hash IS NOT NULL
     ORDER BY email
     LIMIT 1
 ) AS admin;
 
--- HR assignments: the root and 50 units below it; every tenth of those HR accounts is blocked.
-INSERT INTO org_unit_hr (org_unit_id, user_id)
-SELECT pg_temp.sid('unit', 1), pg_temp.sid('account', 1)
+-- HR assignments by employee: the root and 50 units below it; the accounts of those employees carry the HR role, every tenth is blocked.
+INSERT INTO org_unit_hr (org_unit_id, employee_id)
+SELECT pg_temp.sid('unit', 1), pg_temp.sid('employee', 9999)
 UNION ALL
-SELECT pg_temp.sid('unit', 3 * k + 2), pg_temp.sid('account', 400 + k)
+SELECT pg_temp.sid('unit', 3 * k + 2), pg_temp.sid('employee', 9000 + k)
 FROM generate_series(1, 50) AS k;
 
 -- Directions: ten active (the tenth without tracks), one inactive, two drafts of unit heads.
@@ -176,13 +176,7 @@ FROM (
 ) AS links
 ON CONFLICT DO NOTHING;
 
--- Categories and scales beyond the initial ones: an unused active category and scale, and drafts.
-INSERT INTO competency_categories (id, version, created_at, name, status, author_id)
-VALUES
-    (pg_temp.sid('category', 1), 0, now() - interval '100 days', 'Категория без компетенций', 'Active', NULL),
-    (pg_temp.sid('category', 2), 0, now() - interval '5 days', 'Черновая категория 2', 'Draft', pg_temp.sid('account', 102)),
-    (pg_temp.sid('category', 3), 0, now() - interval '4 days', 'Черновая категория 3', 'Draft', pg_temp.sid('account', 103));
-
+-- Scales beyond the initial one: an unused active scale and a draft.
 INSERT INTO competency_scales (id, version, created_at, name, points, is_default, status, author_id)
 VALUES
     (pg_temp.sid('scale', 1), 0, now() - interval '100 days', 'Шкала 1–5',
@@ -192,23 +186,20 @@ VALUES
 
 -- Competencies: every third is general, the rest belong to a direction; every hundredth is inactive, ten are drafts of unit
 -- heads, and every 37th has been changed once, so matrices published with its first version see it changed.
-INSERT INTO competencies (id, version, created_at, name, description, category_id, direction_id, type, scale_id, status, author_id)
+INSERT INTO competencies (id, version, created_at, name, description, direction_id, scale_id, status, author_id)
 SELECT pg_temp.sid('competency', n), CASE WHEN n % 37 = 0 THEN 1 ELSE 0 END, now() - interval '120 days',
        'Компетенция ' || n, 'Описание компетенции ' || n,
-       initial.category_ids[n % array_length(initial.category_ids, 1) + 1],
        CASE WHEN n % 3 <> 0 THEN pg_temp.sid('direction', n % 9 + 1) END,
-       (ARRAY['Critical', 'Profile', 'Additional'])[n % 3 + 1],
        initial.scale_id,
        CASE WHEN n % 150 = 7 THEN 'Draft' WHEN n % 100 = 0 THEN 'Inactive' ELSE 'Active' END,
        CASE WHEN n % 150 = 7 THEN pg_temp.sid('account', 100 + n % 50 + 1) END
 FROM generate_series(1, 1500) AS n
 CROSS JOIN (
-    SELECT (SELECT array_agg(id ORDER BY id) FROM competency_categories WHERE author_id IS NULL AND status = 'Active' AND id <> pg_temp.sid('category', 1)) AS category_ids,
-           (SELECT id FROM competency_scales WHERE is_default) AS scale_id
+    SELECT (SELECT id FROM competency_scales WHERE is_default) AS scale_id
 ) AS initial;
 
-INSERT INTO competency_versions (competency_id, number, name, description, category_id, direction_id, type, scale_id, status, changed_by_id, changed_at)
-SELECT c.id, history.number, c.name, c.description, c.category_id, c.direction_id, c.type, c.scale_id, c.status, c.author_id,
+INSERT INTO competency_versions (competency_id, number, name, description, direction_id, scale_id, status, changed_by_id, changed_at)
+SELECT c.id, history.number, c.name, c.description, c.direction_id, c.scale_id, c.status, c.author_id,
        c.created_at + (history.number - 1) * interval '60 days'
 FROM competencies AS c
 CROSS JOIN LATERAL generate_series(1, c.version + 1) AS history(number);
@@ -249,24 +240,26 @@ FROM (
 CREATE FUNCTION pg_temp.matrix_competency(u integer, j integer) RETURNS uuid
     LANGUAGE sql IMMUTABLE AS $$ SELECT pg_temp.sid('competency', 3 * ((u * 5 + j) % 500) + 3) $$;
 
+CREATE FUNCTION pg_temp.matrix_type(j integer) RETURNS text
+    LANGUAGE sql IMMUTABLE AS $$ SELECT (ARRAY['Critical', 'Profile', 'Additional'])[j % 3 + 1] $$;
+
+-- Five competencies outside blocks, each typed in the version; one group of them weighs 100 % on every level.
 CREATE FUNCTION pg_temp.matrix_content(u integer, t integer) RETURNS jsonb
     LANGUAGE sql STABLE AS $$
     SELECT jsonb_build_object(
         'levels', COALESCE((
             SELECT jsonb_agg(jsonb_build_object('levelId', pg_temp.sid('level', t * 10 + k), 'minOverallPercent', 60) ORDER BY k)
             FROM seed_levels WHERE track_no = t), '[]'::jsonb),
-        'blocks', jsonb_build_array(jsonb_build_object('id', pg_temp.sid('block', u), 'name', 'Основной блок', 'isMandatory', true)),
         'competencies', (
-            SELECT jsonb_agg(jsonb_build_object('competencyId', pg_temp.matrix_competency(u, j), 'blockId', pg_temp.sid('block', u)) ORDER BY j)
+            SELECT jsonb_agg(jsonb_build_object('competencyId', pg_temp.matrix_competency(u, j), 'blockId', NULL, 'type', pg_temp.matrix_type(j)) ORDER BY j)
             FROM generate_series(0, 4) AS j),
         'blockWeights', COALESCE((
-            SELECT jsonb_agg(jsonb_build_object('levelId', pg_temp.sid('level', t * 10 + k), 'blockId', pg_temp.sid('block', u), 'percent', 100, 'minPercent', NULL) ORDER BY k)
+            SELECT jsonb_agg(jsonb_build_object('levelId', pg_temp.sid('level', t * 10 + k), 'blockId', NULL, 'percent', 100) ORDER BY k)
             FROM seed_levels WHERE track_no = t), '[]'::jsonb),
         'requirements', COALESCE((
-            SELECT jsonb_agg(jsonb_build_object(
-                'levelId', pg_temp.sid('level', t * 10 + k), 'competencyId', pg_temp.matrix_competency(u, j), 'requiredScore', least(k, 4),
-                'type', 'Profile', 'weight', 1, 'isMandatory', false, 'expectedBehavior', NULL, 'evidenceExamples', NULL, 'validFrom', NULL) ORDER BY k, j)
-            FROM seed_levels CROSS JOIN generate_series(0, 4) AS j WHERE track_no = t), '[]'::jsonb))
+            SELECT jsonb_agg(jsonb_build_object('levelId', pg_temp.sid('level', t * 10 + k), 'competencyId', pg_temp.matrix_competency(u, j), 'requiredScore', least(k, 4)) ORDER BY k, j)
+            FROM seed_levels CROSS JOIN generate_series(0, 4) AS j WHERE track_no = t), '[]'::jsonb),
+        'sharedBlocks', '[]'::jsonb)
 $$;
 
 -- The snapshot of a published version; on every seventh track it misses the last level, so the track looks changed since.
@@ -275,23 +268,22 @@ CREATE FUNCTION pg_temp.matrix_snapshot(u integer, t integer) RETURNS jsonb
     SELECT jsonb_build_object(
         'direction', (SELECT jsonb_build_object('id', id, 'name', name, 'status', status) FROM career_directions WHERE id = pg_temp.sid('direction', t % 9 + 1)),
         'track', (SELECT jsonb_build_object('id', id, 'name', name, 'status', 'Active') FROM career_tracks WHERE id = pg_temp.sid('track', t)),
-        'scale', (SELECT jsonb_build_object('id', id, 'name', name, 'points', points, 'status', status) FROM competency_scales WHERE is_default),
+        'scales', (SELECT jsonb_agg(jsonb_build_object('id', id, 'name', name, 'points', points, 'status', status)) FROM competency_scales WHERE is_default),
         'levels', COALESCE((
             SELECT jsonb_agg(jsonb_build_object('id', pg_temp.sid('level', t * 10 + k), 'name', 'Уровень ' || k, 'status', 'Active') ORDER BY k)
             FROM seed_levels
             WHERE track_no = t AND NOT (t % 7 = 0 AND k = (SELECT max(k) FROM seed_levels WHERE track_no = t))), '[]'::jsonb),
         'competencies', (
             SELECT jsonb_agg(jsonb_build_object(
-                'id', c.id, 'name', c.name, 'description', c.description, 'categoryId', c.category_id, 'categoryName', category.name,
-                'directionId', c.direction_id, 'type', c.type, 'versionNumber', 1, 'status', 'Active') ORDER BY j)
+                'id', c.id, 'name', c.name, 'description', c.description, 'directionId', c.direction_id,
+                'type', pg_temp.matrix_type(j), 'versionNumber', 1, 'status', 'Active', 'scaleId', c.scale_id) ORDER BY j)
             FROM generate_series(0, 4) AS j
-            JOIN competencies AS c ON c.id = pg_temp.matrix_competency(u, j)
-            JOIN competency_categories AS category ON category.id = c.category_id))
+            JOIN competencies AS c ON c.id = pg_temp.matrix_competency(u, j)),
+        'sharedBlocks', '[]'::jsonb)
 $$;
 
-INSERT INTO matrix_versions (id, version, created_at, matrix_id, number, status, step, scale_id, author_id, content, snapshot, published_at, builder_step)
+INSERT INTO matrix_versions (id, version, created_at, matrix_id, number, status, step, author_id, content, snapshot, published_at, builder_step)
 SELECT v.id, 0, now() - interval '80 days' + v.number * interval '30 days', pg_temp.sid('matrix', v.u), v.number, v.status, v.step,
-       (SELECT id FROM competency_scales WHERE is_default),
        CASE WHEN v.u <= 250 THEN pg_temp.sid('account', 100 + v.u) ELSE pg_temp.sid('account', 1) END,
        pg_temp.matrix_content(v.u, v.t),
        CASE WHEN v.status = 'Published' THEN pg_temp.matrix_snapshot(v.u, v.t) END,

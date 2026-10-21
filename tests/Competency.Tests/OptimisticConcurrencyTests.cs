@@ -16,7 +16,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
 
     private static readonly (string Method, string Path, object? Body)[] VersionedEndpoints =
     [
-        ("PUT", "/api/v1/users/{id}", new { email = "a@test.local", role = Scenarios.User, employeeId = (Guid?)null }),
+        ("PUT", "/api/v1/users/{id}", new { email = "a@test.local", roles = Scenarios.NoRoles, employeeId = (Guid?)null }),
         ("POST", "/api/v1/users/{id}/block", null),
         ("POST", "/api/v1/users/{id}/unblock", null),
         ("POST", "/api/v1/users/{id}/resend-invitation", null),
@@ -120,12 +120,12 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         var user = action == "resend-invitation" ? await admin.InviteUserAsync() : await admin.CreateUserAsync();
         var bumped = (await admin.PutAsync(
             $"/api/v1/users/{user.Id}",
-            new { email = $"{Scenarios.Unique("moved")}@test.local", role = Scenarios.User, employeeId = (Guid?)null },
+            new { email = $"{Scenarios.Unique("moved")}@test.local", roles = Scenarios.NoRoles, employeeId = (Guid?)null },
             user.ETag)).Expect(HttpStatusCode.OK);
 
         var stale = action switch
         {
-            "update" => await admin.PutAsync($"/api/v1/users/{user.Id}", new { email = user.Email, role = Scenarios.GlobalAdmin, employeeId = (Guid?)null }, user.ETag),
+            "update" => await admin.PutAsync($"/api/v1/users/{user.Id}", new { email = user.Email, roles = Scenarios.AdminRoles, employeeId = (Guid?)null }, user.ETag),
             "block" => await admin.PostAsync($"/api/v1/users/{user.Id}/block", ifMatch: user.ETag),
             _ => await admin.PostAsync($"/api/v1/users/{user.Id}/{action}", ifMatch: user.ETag),
         };
@@ -134,7 +134,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         stale.ContentType.Should().Be(ProblemJson);
         var after = await admin.GetUserAsync(user.Id);
         after.ETag.Should().Be(bumped.ETag, "a refused write must not change the account");
-        after.Json!["role"]!.GetValue<string>().Should().Be(Scenarios.User);
+        after.Json!["roles"]!.AsArray().Should().BeEmpty();
         after.Json["isBlocked"]!.GetValue<bool>().Should().BeFalse();
     }
 

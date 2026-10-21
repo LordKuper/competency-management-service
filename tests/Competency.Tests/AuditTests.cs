@@ -13,7 +13,7 @@ namespace Competency.Tests;
 /// </summary>
 public sealed class AuditTests(TestEnvironment environment)
 {
-    private static readonly string[] UserProperties = ["email", "employeeId", "isBlocked", "role"];
+    private static readonly string[] UserProperties = ["email", "employeeId", "isBlocked", "isGlobalAdmin", "isHr"];
 
     [Fact]
     public async Task Ac15_Mutations_AreJournaledWithActorRoleRequestIdAndOnlyTheChangedValues()
@@ -83,7 +83,7 @@ public sealed class AuditTests(TestEnvironment environment)
         var admin = await host.AdminAsync();
         var secrets = new[] { $"Create-{Guid.NewGuid():N}-1!", $"Change-{Guid.NewGuid():N}-2!", $"Wrong-{Guid.NewGuid():N}-3!" };
         var email = $"{Scenarios.Unique("secret")}@test.local";
-        var created = (await admin.PostAsync("/api/v1/users", new { email, role = Scenarios.User, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
+        var created = (await admin.PostAsync("/api/v1/users", new { email, roles = Scenarios.NoRoles, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
         var token = (await environment.Mail.WaitForAsync(email))[0].Token;
         var registered = (await host.Anonymous().PostAsync("/api/v1/auth/accept-invitation", new { token, password = secrets[0] })).Expect(HttpStatusCode.NoContent);
         var session = await host.LoginAsync(email, secrets[0]);

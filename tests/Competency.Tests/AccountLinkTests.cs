@@ -33,7 +33,7 @@ public sealed partial class AccountLinkTests(TestEnvironment environment)
 
         var created = (await admin.PostAsync(
             "/api/v1/users",
-            new { email, password = IgnoredPassword, role = Scenarios.User, employeeId = (Guid?)null },
+            new { email, password = IgnoredPassword, roles = Scenarios.NoRoles, employeeId = (Guid?)null },
             configure: request => request.Headers.Host = "evil.example")).Expect(HttpStatusCode.Created);
 
         created.Json!["isInvited"]!.GetValue<bool>().Should().BeTrue();
@@ -97,7 +97,7 @@ public sealed partial class AccountLinkTests(TestEnvironment environment)
                 email = $"{Scenarios.Unique("moved")}@test.local";
                 (await admin.PutAsync(
                     $"/api/v1/users/{invited.Id}",
-                    new { email, role = Scenarios.User, employeeId = (Guid?)null },
+                    new { email, roles = Scenarios.NoRoles, employeeId = (Guid?)null },
                     (await admin.GetUserAsync(invited.Id)).ETag)).Expect(HttpStatusCode.OK);
                 break;
             case "block":
@@ -293,7 +293,7 @@ public sealed partial class AccountLinkTests(TestEnvironment environment)
             case "email-change":
                 (await admin.PutAsync(
                     $"/api/v1/users/{account.Id}",
-                    new { email = $"{Scenarios.Unique("moved")}@test.local", role = Scenarios.User, employeeId = (Guid?)null },
+                    new { email = $"{Scenarios.Unique("moved")}@test.local", roles = Scenarios.NoRoles, employeeId = (Guid?)null },
                     (await admin.GetUserAsync(account.Id)).ETag)).Expect(HttpStatusCode.OK);
                 break;
             case "block":
