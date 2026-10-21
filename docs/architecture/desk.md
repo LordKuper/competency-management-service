@@ -26,7 +26,7 @@ responsibility:
   - `/desk` — рабочий стол;
   - `/desk/review/:versionId` — «Согласовать версию», ссылка в письме;
   - `/desk/rework/:versionId` — «Доработать возвращённую версию», ссылка в письме;
-  - `/desk/drafts`, `/desk/drafts/:kind/:entryId` — «Утвердить черновые записи», `kind` ∈ `direction`, `track`, `competency`, `scale`, `block`; ссылка в письме; адрес `/desk/drafts/category/…` из писем, отправленных до удаления категорий, перенаправляется на `/desk/drafts`;
+  - `/desk/drafts`, `/desk/drafts/:kind/:entryId` — «Утвердить черновые записи», `kind` ∈ `direction`, `track`, `competency`, `scale`, `block`; ссылка в письме;
   - `/desk/matrix-builder` — «Построить матрицу», новая матрица; `?unitId=&trackId=` — предвыбор из пункта стола;
   - `/desk/matrix-builder/:versionId` — продолжение: `?step=3` или `?step=5` — вход из «Доработать», иначе шаг `builderStep` версии (так открывают и мастер, и ссылка «Перейти к отправке в мастере» со страницы матрицы);
   - `/desk/connect-unit`, `/desk/connect-unit/:unitId` — «Подключить подразделение»;
@@ -35,6 +35,5 @@ responsibility:
   - `/desk/track-positions`, `/desk/track-positions/:trackId` — «Связать должности с треком»; кнопка возврата выбирается по состоянию навигации, а не по адресу;
   - `/desk/catalog-cleanup` — «Привести каталог в порядок»;
   - `/desk/org-cleanup` — «Навести порядок в оргструктуре» (та же выборка `/desk/items` по группам оргструктуры).
-  Адреса из писем (`/desk/review/…`, `/desk/rework/…`, `/desk/drafts/…/…`) — публичный контракт: переименовать их можно только с перенаправлением со старого адреса. Прежние адреса работают. Пункт «Рабочий стол» со счётчиком стоит в меню первым; группа «Справочники» — поле `featureContract.NavItem.group`; раздел меню определяется по началу адреса. Экраны переиспользуют компоненты `career`, `org-structure` и `users`, копий нет. Счётчик в клиенте — ключ `['desk']`: сброс после любой успешной мутации, перечитывание при смене адреса и при возврате фокуса, без опроса по таймеру и push; до первого ответа и при ошибке метки нет (`tech-reference/tanstack-react-query-5.104.1.md`).
-- **Переход на контракт API 3.1.0**: методы `/api/v1/desk*` новые, изменение аддитивное, как и члены `DeskKind.MatrixSharedBlockChanged` и `DeskObjectType.Block`; остальные изменения контракта — `career-framework.md`.
+  Адреса из писем (`/desk/review/…`, `/desk/rework/…`, `/desk/drafts/…/…`) строит `CareerMailQueue` (`career-framework.md`): переименование маршрута меняет и текст письма. Пункт «Рабочий стол» со счётчиком стоит в меню первым; группа «Справочники» — поле `featureContract.NavItem.group`; раздел меню определяется по началу адреса. Экраны переиспользуют компоненты `career`, `org-structure` и `users`, копий нет. Счётчик в клиенте — ключ `['desk']`: сброс после любой успешной мутации, перечитывание при смене адреса и при возврате фокуса, без опроса по таймеру и push; до первого ответа и при ошибке метки нет (`tech-reference/tanstack-react-query-5.104.1.md`).
 - `docs/product/requirements/desk.html`: требования; `docs/ux/desk.html`: UX-спецификация.
