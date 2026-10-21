@@ -328,7 +328,8 @@ namespace Competency.Platform.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     email = table.Column<string>(type: "character varying(254)", maxLength: 254, nullable: false),
-                    role = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    is_global_admin = table.Column<bool>(type: "boolean", nullable: false),
+                    is_hr = table.Column<bool>(type: "boolean", nullable: false),
                     is_blocked = table.Column<bool>(type: "boolean", nullable: false),
                     employee_id = table.Column<Guid>(type: "uuid", nullable: true),
                     version = table.Column<int>(type: "integer", nullable: false),
@@ -349,11 +350,34 @@ namespace Competency.Platform.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_users", x => x.id);
-                    table.CheckConstraint("ck_users_role", "role IN ('User', 'GlobalAdmin')");
                     table.ForeignKey(
                         name: "FK_users_employees_employee_id",
                         column: x => x.employee_id,
                         principalTable: "employees",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "org_unit_hr",
+                columns: table => new
+                {
+                    org_unit_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    employee_id = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_org_unit_hr", x => x.org_unit_id);
+                    table.ForeignKey(
+                        name: "FK_org_unit_hr_employees_employee_id",
+                        column: x => x.employee_id,
+                        principalTable: "employees",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_org_unit_hr_org_units_org_unit_id",
+                        column: x => x.org_unit_id,
+                        principalTable: "org_units",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -413,30 +437,6 @@ namespace Competency.Platform.Migrations
                     table.ForeignKey(
                         name: "FK_matrix_versions_users_author_id",
                         column: x => x.author_id,
-                        principalTable: "users",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "org_unit_hr",
-                columns: table => new
-                {
-                    org_unit_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_org_unit_hr", x => x.org_unit_id);
-                    table.ForeignKey(
-                        name: "FK_org_unit_hr_org_units_org_unit_id",
-                        column: x => x.org_unit_id,
-                        principalTable: "org_units",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_org_unit_hr_users_user_id",
-                        column: x => x.user_id,
                         principalTable: "users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
@@ -696,9 +696,9 @@ namespace Competency.Platform.Migrations
                 filter: "status = 'Published'");
 
             migrationBuilder.CreateIndex(
-                name: "IX_org_unit_hr_user_id",
+                name: "IX_org_unit_hr_employee_id",
                 table: "org_unit_hr",
-                column: "user_id");
+                column: "employee_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_org_unit_positions_position_id",

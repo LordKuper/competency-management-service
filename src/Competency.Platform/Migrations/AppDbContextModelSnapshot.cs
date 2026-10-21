@@ -723,13 +723,13 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("org_unit_id");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid")
-                        .HasColumnName("user_id");
+                        .HasColumnName("employee_id");
 
                     b.HasKey("OrgUnitId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("EmployeeId");
 
                     b.ToTable("org_unit_hr", (string)null);
                 });
@@ -814,6 +814,10 @@ namespace Competency.Platform.Migrations
 
             modelBuilder.Entity("Competency.OrgStructure.EmployeeAccount", b =>
                 {
+                    b.Property<bool>("CanBeHr")
+                        .HasColumnType("boolean")
+                        .HasColumnName("can_be_hr");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text")
@@ -829,7 +833,7 @@ namespace Competency.Platform.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToSqlQuery("SELECT employee_id, email, is_blocked FROM users WHERE employee_id IS NOT NULL");
+                    b.ToSqlQuery("SELECT employee_id, email, is_blocked, NOT is_blocked AND password_hash IS NOT NULL AND is_hr AS can_be_hr FROM users WHERE employee_id IS NOT NULL");
                 });
 
             modelBuilder.Entity("Competency.OrgStructure.OrgUnit", b =>
@@ -982,6 +986,14 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_blocked");
 
+                    b.Property<bool>("IsGlobalAdmin")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_global_admin");
+
+                    b.Property<bool>("IsHr")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_hr");
+
                     b.Property<DateTimeOffset?>("LinkExpiresAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("link_expires_at");
@@ -1022,12 +1034,6 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("text")
                         .HasColumnName("password_hash");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("role");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text")
                         .HasColumnName("security_stamp");
@@ -1059,10 +1065,7 @@ namespace Competency.Platform.Migrations
                     b.HasIndex("NormalizedUserName")
                         .IsUnique();
 
-                    b.ToTable("users", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_users_role", "role IN ('User', 'GlobalAdmin')");
-                        });
+                    b.ToTable("users", (string)null);
                 });
 
             modelBuilder.Entity("Competency.CareerFramework.CareerCompetency", b =>
@@ -1256,15 +1259,15 @@ namespace Competency.Platform.Migrations
 
             modelBuilder.Entity("Competency.CareerFramework.OrgUnitHr", b =>
                 {
-                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
-                        .WithOne()
-                        .HasForeignKey("Competency.CareerFramework.OrgUnitHr", "OrgUnitId")
+                    b.HasOne("Competency.OrgStructure.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Competency.UserManagement.AppUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
+                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
+                        .WithOne()
+                        .HasForeignKey("Competency.CareerFramework.OrgUnitHr", "OrgUnitId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
