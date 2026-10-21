@@ -1118,6 +1118,12 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "Task 80": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:migration",
+      "resolved_model": "opus"
     }
   },
   "skipped_phases": [],

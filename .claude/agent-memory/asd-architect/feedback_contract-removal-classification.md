@@ -5,7 +5,7 @@ metadata:
   type: feedback
 ---
 
-First read `backward_compat` in config and `.asd/project/custom-common-rules.md`. With `none` and a "no backward compatibility before 1.0" rule, delete removed surface from code, contract and docs outright. Leave no deprecation note, no stub endpoint, no old-data reading branch, no "Переход на контракт API N" section and no data-migration description. The migration line is one `InitialCreate`. The rest of this note applies only under `migration`.
+First read `backward_compat` in config and `.asd/project/custom-common-rules.md`. With `none` and a "no backward compatibility before 1.0" rule, delete removed surface from code, contract and docs outright. Leave no deprecation note, no stub endpoint, no old-data reading branch, no "Переход на контракт API N" section and no data-migration description in docs. The DB schema is a separate rule: incremental migrations with data transfer where the dev DB needs it, squashed only right before release (`stack.html` «Контракт из кода»). The rest of this note applies only under `migration`.
 
 When a scope change removes something from the public API while the plan fixes an unreleased minor version, sort each item by the released contract. Get it with `git show main:openapi/openapi.json` and list its paths, schemas and properties.
 - Present in the released version: deprecate, do not remove. Request fields become optional and ignored. Response fields become `null`. A filter on a removed concept returns an empty result. A list endpoint returns an empty page. Create returns 410. Per-id routes are left unmapped so they return 404, as for a missing record. Mark all of it deprecated in the OpenAPI description and remove it at the next major.
