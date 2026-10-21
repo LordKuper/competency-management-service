@@ -32,7 +32,7 @@ Put here: forbidden libraries/APIs, perf budgets (latency, memory, throughput, r
 
 ## Mutating UI flows
 
-- Every UI flow that mutates data locks editing while the save is in flight and blocks navigation while edits are unsaved. After a 412 it rereads the record, shows it to the user, and the next save sends the new version; no automatic retry. (`003-positions-career-competency#P-2`)
+- Every UI flow that mutates data locks editing while the save is in flight and never blocks navigation because of unsaved edits: every loss of unsaved edits (router navigation, browser Back/Forward, wizard step change, selecting another object on the screen, closing a modal with an unsaved form) asks for confirmation through the app's single leave guard (`docs/architecture/stack.html`, «Несохранённые правки в SPA»), and closing or reloading the tab triggers the browser's own `beforeunload` warning. After a 412 it rereads the record, shows it to the user, and the next save sends the new version; no automatic retry. (`003-positions-career-competency#P-2`, `004-role-desktop-user-journeys#AC-61`)
 
 ## Comment self-check before commit
 
