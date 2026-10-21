@@ -106,6 +106,9 @@ const SLOW_TOP_N = 5;
 /** Minutes past which a leaf machine operation is slow whatever its rank. */
 const SLOW_MINUTES = 30;
 
+/** The `providers.md` section holding the role grant table `context` reads. */
+const CONTEXT_SECTION = 'Role-scoped context';
+
 function stable(value) {
   if (Array.isArray(value)) return '[' + value.map(stable).join(',') + ']';
   if (value && typeof value === 'object') return '{' + Object.keys(value).sort().map((key) => JSON.stringify(key) + ':' + stable(value[key])).join(',') + '}';
@@ -1334,6 +1337,85 @@ function timingSummaryCommand(flags) {
   return timingSummary(fs.existsSync(flags.ledger) ? fs.readFileSync(flags.ledger, 'utf8') : null, archived);
 }
 
+/** Every Markdown heading outside fenced code blocks: its line index, level and exact text. A fence closes only on its opener's character, at least the opener's length, with nothing but whitespace after (CommonMark). */
+function markdownHeadings(lines) {
+  const headings = [];
+  let fence = null;
+  lines.forEach((line, index) => {
+    const marker = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+    if (fence) {
+      if (marker && marker[1][0] === fence[0] && marker[1].length >= fence.length && /^[ \t]*$/.test(marker[2])) fence = null;
+      return;
+    }
+    if (marker && !(marker[1][0] === '`' && marker[2].includes('`'))) {
+      fence = marker[1];
+      return;
+    }
+    const match = line.match(/^(#{1,6})[ \t]+(.*?)[ \t]*$/);
+    if (match) headings.push({ index, level: match[1].length, text: match[2] });
+  });
+  return headings;
+}
+
+/** The section of `text` whose heading text is exactly `heading`: the heading line through the line before the next heading of the same or higher level, LF-normalized. Zero or several matches fail. */
+function markdownSection(text, heading) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\n$/, '').split('\n');
+  const headings = markdownHeadings(lines);
+  const matches = headings.filter((entry) => entry.text === heading);
+  if (matches.length !== 1) fail(`heading "${heading}": ${matches.length} matches`);
+  const [start] = matches;
+  const end = headings.find((entry) => entry.index > start.index && entry.level <= start.level);
+  return `${lines.slice(start.index, end ? end.index : lines.length).join('\n')}\n`;
+}
+
+function refFile(ref) {
+  const cut = ref.indexOf('#');
+  return cut === -1 ? ref : ref.slice(0, cut);
+}
+
+/** The refs the grant table in `tableText` (providers.md) gives `role` in `phase`: every row of the role — a tier variant reads as its base agent — whose phase is `phase` or `*`, in table order, a repeated ref keeping its first occurrence. Tier-variant suffixes are owned by sync.js, required lazily so role-free commands never load it. */
+function contextRefs(tableText, role, phase) {
+  const blocks = [...markdownSection(tableText, CONTEXT_SECTION).matchAll(/^```json\n([\s\S]*?)\n```$/gm)];
+  if (blocks.length !== 1) fail(`"${CONTEXT_SECTION}" must hold one json block, found ${blocks.length}`);
+  const rows = JSON.parse(blocks[0][1]);
+  if (!Array.isArray(rows) || rows.some((row) => !row || typeof row.role !== 'string' || typeof row.phase !== 'string')) fail('grant rows must be {role, phase, refs}');
+  const { VARIANT_SUFFIXES } = require('./sync.js');
+  const base = role.replace(new RegExp(`-(${VARIANT_SUFFIXES.join('|')})$`), '');
+  const matched = rows.filter((row) => row.role === base && (row.phase === '*' || row.phase === phase));
+  if (matched.length === 0) fail(`no grant row for role "${role}" in phase "${phase}"`);
+  return [...new Set(matched.flatMap((row) => stringArray(row.refs, `refs of ${row.role} ${row.phase}`)))];
+}
+
+/** The context bundle: per ref, one `<!-- <ref> -->` line, then its section — or the whole file for a ref without `#` — in ref order. `files` maps each repo path to its text, null when absent; any unresolved ref fails. */
+function contextBundle(refs, files) {
+  return refs.map((ref) => {
+    const text = files[refFile(ref)];
+    if (typeof text !== 'string') fail(`ref "${ref}": file not found`);
+    if (ref === refFile(ref)) return `<!-- ${ref} -->\n${text.replace(/\r\n/g, '\n').replace(/\n?$/, '\n')}`;
+    try {
+      return `<!-- ${ref} -->\n${markdownSection(text, ref.slice(ref.indexOf('#') + 1))}`;
+    } catch (error) {
+      return fail(`ref "${ref}": ${error.message}`);
+    }
+  }).join('');
+}
+
+function sectionCommand(flags) {
+  if (typeof flags.file !== 'string' || typeof flags.heading !== 'string') fail('--file <path> and --heading <text> required');
+  return markdownSection(fs.readFileSync(flags.file, 'utf8'), flags.heading);
+}
+
+/** Builds the bundle for `--role` in `--phase` and writes it to `--out` only once every ref resolved. */
+function contextCommand(flags) {
+  if (typeof flags.role !== 'string' || typeof flags.phase !== 'string' || typeof flags.out !== 'string') fail('--role <agent|orchestrator>, --phase <phase> and --out <file> required');
+  const root = path.join(__dirname, '..');
+  const refs = contextRefs(fs.readFileSync(path.join(__dirname, 'rules', 'providers.md'), 'utf8'), flags.role, flags.phase);
+  const files = Object.fromEntries([...new Set(refs.map(refFile))].map((file) => [file, fs.existsSync(path.join(root, file)) ? fs.readFileSync(path.join(root, file), 'utf8') : null]));
+  const bundle = contextBundle(refs, files);
+  fs.writeFileSync(flags.out, bundle, 'utf8');
+  return { out: flags.out, refs: refs.length, bytes: Buffer.byteLength(bundle) };
+}
+
 function parseFlagArgs(argv, booleanFlags) {
   const bools = booleanFlags || [];
   const out = {};
@@ -1421,16 +1503,25 @@ async function main(argv) {
     process.stdout.write(`${scratchDir()}\n`);
     return 0;
   }
+  if (command === 'section' || command === 'context') {
+    try {
+      process.stdout.write(command === 'section' ? sectionCommand(flags) : JSON.stringify(contextCommand(flags)) + '\n');
+      return 0;
+    } catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      return 1;
+    }
+  }
   if (command === 'agent-liveness') return agentLivenessCommand(flags);
   if (command === 'timing-summary') {
     process.stdout.write(JSON.stringify(timingSummaryCommand(flags)) + '\n');
     return 0;
   }
-  fail('usage: emit-manifest, manifest-digest, validate-ledger, persist-review, external-preflight, external-record-failure, route-task, defect-stalemate, memory-check, draft-snapshot, review-waves, wave-files, retro-candidates, scratch-dir, agent-liveness, timing, timing-recover, or timing-summary');
+  fail('usage: emit-manifest, manifest-digest, validate-ledger, persist-review, external-preflight, external-record-failure, route-task, defect-stalemate, memory-check, draft-snapshot, review-waves, wave-files, retro-candidates, scratch-dir, section, context, agent-liveness, timing, timing-recover, or timing-summary');
 }
 
 if (require.main === module) {
   main(process.argv).then((code) => { process.exitCode = code; }, (error) => { process.stderr.write(`${error.message}\n`); process.exitCode = 2; });
 }
 
-module.exports = { AUDIT_BATCH_THRESHOLD_FILES, COMBINED_REVIEWER, EXTERNAL_REVIEWER, INTERNAL_REVIEWERS, LARGE_WAVE_FILES, LEDGER_NA_SHAPE, LEDGER_ROW_EXAMPLE, LEDGER_VOCABULARY, MAX_REVIEW_WAVES, NA_PREDICATES, SLOW_MINUTES, SLOW_TOP_N, WAVE_THRESHOLD_BYTES, WAVE_THRESHOLD_FILES, WAVE_THRESHOLD_LINES, agentLiveness, backlogRows, buildInvocation, coverageManifestDigest, defectStalemate, draftSnapshot, emitCoverageManifest, externalPreflight, isDocumentation, isTest, loadWorkflow, numstatLines, persistReview, recordExternalFailure, retroCandidates, retroRows, reviewFindings, reviewWaveCount, reviewerFiles, reviewerKeys, routeTask, timingAppend, timingRecover, timingSummary, validateCoverageLedger, validateWaveDivision, waveFiles, fingerprint };
+module.exports = { AUDIT_BATCH_THRESHOLD_FILES, COMBINED_REVIEWER, EXTERNAL_REVIEWER, INTERNAL_REVIEWERS, LARGE_WAVE_FILES, LEDGER_NA_SHAPE, LEDGER_ROW_EXAMPLE, LEDGER_VOCABULARY, MAX_REVIEW_WAVES, NA_PREDICATES, SLOW_MINUTES, SLOW_TOP_N, WAVE_THRESHOLD_BYTES, WAVE_THRESHOLD_FILES, WAVE_THRESHOLD_LINES, agentLiveness, backlogRows, buildInvocation, contextBundle, contextRefs, coverageManifestDigest, defectStalemate, draftSnapshot, emitCoverageManifest, externalPreflight, isDocumentation, isTest, loadWorkflow, markdownSection, numstatLines, persistReview, recordExternalFailure, retroCandidates, retroRows, reviewFindings, reviewWaveCount, reviewerFiles, reviewerKeys, routeTask, timingAppend, timingRecover, timingSummary, validateCoverageLedger, validateWaveDivision, waveFiles, fingerprint };

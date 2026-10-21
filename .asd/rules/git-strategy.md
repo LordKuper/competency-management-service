@@ -16,12 +16,13 @@ Before creating: fast-forward local `git.base_branch` to `origin/<base_branch>` 
 - One commit per task when possible; phase-grouped acceptable for small tasks
 - A dispatched agent commits in the one-command form of "Commit before review"
 - A dispatched `asd-dev`/`asd-tester` commit carries one trailer line `ASD-Task: <id>` per id it covers — `Task N`, a review finding id (its id in the reviewer's ledger `findings`, prefixed by its review file when another file of the iteration reuses it: `testing.md F-1`), `D-N`, `impl-test entry N` for impl-test's own commits, or `impl-review wave-<K>/iter-NN suite` (its iteration id, `sprint-lifecycle.md` "Review iteration counters") for impl-review step 9's in-place test fix; impl-review's in-place fix of low-severity test-only findings (`review-policy.md` "Low-severity test-only findings") uses the review finding id form
-- Before push: squash local WIP/fixup commits into task-level commits (`git reset --soft` + recommit, or non-interactive rebase). Applies to unpushed commits only — published history stays untouched (see Forbidden)
+- Before push, the main orchestrator alone squashes local WIP/fixup commits into task-level commits (`git reset --soft` + recommit, or non-interactive rebase). Applies to unpushed commits only — published history stays untouched (see Forbidden)
 
 ## Forbidden
 
 - Never force-push
 - Never rebase published commits
+- A dispatched agent never moves HEAD in the shared worktree (`git reset <commit>`/`--soft`/`--mixed`/`--hard`, `commit --amend`, `rebase`); it corrects a wrong commit with a follow-up commit of its own paths. Index-only `git reset -q -- <paths>` ("Commit before review") stays allowed
 - Never use `--no-verify` or skip hooks
 - Never commit `.env`, credentials, or `.gitignore`-matching files
 - Never commit or push directly to `git.base_branch`

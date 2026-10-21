@@ -4,9 +4,7 @@
 
 The main orchestrator owns scope and plan writing, phase/state transitions, decision logging, manual-step validation, Git/PR, archival, merge recovery and self-hosting release. It delegates only artefact creation, testing, review or advice.
 
-**Retrospective-derived criteria are re-verified at scope.** A retrospective is sprint-scoped and never promoted ("Retro phase" below), so its rows state what was true at the HEAD that produced them. Before such a row becomes an `AC-N` in `sprint.md`, the orchestrator checks it against current `HEAD` and carries only what is still unresolved — an already-satisfied row is closed, a partly delivered one narrowed to its remaining half. Recording home is `decisions-log.md` alone: one entry naming the verified HEAD sha, each row's outcome and the evidence for it. `sprint.md` gains no section for this. A row asserting host behaviour (a provider tool, CLI or runtime) is verified against that host's docs or a live dispatch — never against the row itself or memory — and the doc URL or dispatch is its evidence.
-
-**Retro intake.** At scope, after the decisions log is seeded and before the scope gate (`asd-phase-scope.md` step 2a), the orchestrator offers open retro rows. Candidates: `node .asd/runtime.js retro-candidates --sprints <dir> --backlog <path> [--self-hosting]` (`--self-hosting` iff `self_hosting: enabled`) — the retro rows ("Retro phase" row id) of the most recent `archived/` sprint with `phase=done` and a `retrospective.html`, minus rows the retro backlog (`artifact-layout.md` "Retro backlog") already disposes, plus its `deferred` rows; `covered by:` rows are dropped. Output: a JSON array of `{row, acts_on, guardrail, home}`; outside `--self-hosting` the latest retro's `asd` rows stay in it, tagged `upstream: true`. A non-zero exit blocks intake: its stderr goes to the user as a scope-gate decision — fix the backlog or retro and re-run, or skip intake this sprint with one decisions-log line. An empty array, or one of only `upstream: true` rows, is a no-op for dispositions: one decisions-log line, no question, no backlog write; its `upstream: true` rows are still shown at the gate. A row tagged `upstream: true` is no candidate for disposition: the scope gate shows it as an upstream proposal for the framework repo — row id, guardrail, home — with no question; it is never an `AC-N` and is written to no backlog. Each other candidate is re-verified per the rule above; a resolved one is written `closed` without asking. The rest go to the user inside the hard scope gate (`checkpoints.md` "Gate policy"), a recommendation each; the user decides all or some: include → an `AC-N`, reject → never offered again, undecided → `deferred`. Each row put to the user, an `upstream: true` or `closed` one excepted, is shown at that gate before its disposition is asked, with its root cause, its proposed edits (files and change, from the `HEAD` re-verification), and the consequences of including it (cost per `checkpoints.md` "Criterion cost surfacing", risk, saving) and of deferring it, since a bare row id and guardrail is no basis for the decision. An `A-N` row's root cause is that of its `Addresses` F-N in the source retro's Analysis plus the source friction entry's Impact; a `P-N` row has no root-cause field, so the gate states its `Expected saving` and says so, never inventing a cause. Dispositions are written to the backlog on scope acceptance and land with the sprint PR; an aborted sprint loses them, so they are offered again.
+**Retrospective-derived criteria are re-verified at scope.** A retrospective is sprint-scoped and never promoted (`asd-phase-retro.md` step 6), so its rows state what was true at the HEAD that produced them. Before such a row becomes an `AC-N` in `sprint.md`, the orchestrator checks it against current `HEAD` and carries only what is still unresolved — an already-satisfied row is closed, a partly delivered one narrowed to its remaining half. Recording home is `decisions-log.md` alone: one entry naming the verified HEAD sha, each row's outcome and the evidence for it. `sprint.md` gains no section for this. A row asserting host behaviour (a provider tool, CLI or runtime) is verified against that host's docs or a live dispatch — never against the row itself or memory — and the doc URL or dispatch is its evidence.
 
 At scope, accept only `documents.audit: auto|always|off`; any other value, legacy `enabled`/`disabled` included, blocks (`checkpoints.md` "Gate policy" invalid-policy rule). Freeze the effective audit boolean in state (`documents.audit`) — the rule below is deterministic, so no separate reason field is stored. `auto` skips only a complete, verifiably mechanical scope with no behaviour, contract, migration or gate impact; unknown/risky scope audits. An accepted scope expansion ("Scope amendment") reevaluates it. Architect owns audit. An ambiguity only authority or preference can settle goes straight to the user; BA is dispatched only for evidenced material product/domain ambiguity its sources can resolve.
 
@@ -24,7 +22,7 @@ A workflow is one sprint lifecycle, declared in `.asd/workflows/<name>.json`; on
 - Chain: scope → audit → plan → impl ⇄ impl-test → impl-review → design-promote → retro → pr. No `design`, no `design-review`, no drafts.
 - Acceptance criteria: always `sprint.md`'s `AC-N` list, whatever `documents.prd`. `plan` reads `sprint.md` plus `audit.md` when audit ran; it needs no promoted doc.
 - impl-review dispatches `combined` plus External Review (`reviewers.impl`); waves, counters, severity floors, latches, the terminal full suite and fix routing are unchanged. Its green exit is `NEXT: design-promote`.
-- design-promote runs after impl-review DoD, "Design-promote phase" steps 1-5 with `sprint.md`, `plan.md`, the sprint diff and `audit.md` when present in place of drafts: each domain creator writes or updates the persistent docs of every document the frozen `documents.*` enables — no draft, no review. With `ux_spec` enabled the design-system gate ("Design phase") precedes UX's write. Hard gates stay: a new subsystem, material stack/UX/brand direction, each `DESIGN.md` token change (`checkpoints.md` "Gate policy"). No-op when frozen `prd`, `ux_spec`, `adr` and `c4` are all `false`. Its writes are committed before `NEXT: retro`.
+- design-promote runs after impl-review DoD, "Design-promote phase" steps 1-5 with `sprint.md`, `plan.md`, the sprint diff and `audit.md` when present in place of drafts: each domain creator writes or updates the persistent docs of every document the frozen `documents.*` enables — no draft, no review. With `ux_spec` enabled the design-system gate (`asd-phase-design.md` step 7) precedes UX's write. Hard gates stay: a new subsystem, material stack/UX/brand direction, each `DESIGN.md` token change (`checkpoints.md` "Gate policy"). No-op when frozen `prd`, `ux_spec`, `adr` and `c4` are all `false`. Its writes are committed before `NEXT: retro`.
 
 ## Phases (all mandatory)
 
@@ -41,11 +39,13 @@ scope → audit → design → design-review → design-promote → plan → imp
 - `impl-test` selects the test approach for the whole change scope, prunes redundant tests, writes missing ones, runs the **impacted set** (below) as its suite gate. Code defects → back to `impl` (test-fix mode), then `impl-test` again. Impacted set green → `impl-review`.
 - `impl-review` does NOT fix findings — routes back to `impl` (review-fix mode) on unresolved findings, low-severity test-only ones excepted (`review-policy.md` "Low-severity test-only findings"); the sprint then re-enters `impl-test` (code changed → tests re-selected + re-run) before returning to `impl-review`. Once the last review wave's required reviewers return `APPROVE` or are latched ("Review iteration counters" below), `impl-review` runs the **full suite exactly once** — the cycle's only full-suite run — via `asd-tester`, before its green exit. On red: test defects are fixed by `asd-tester` and the suite re-run; code defects instead become `D-N` rows in `test-plan.md` + `state.json.test_defects_pending`, and the phase exits to `impl` test-fix mode rather than fixing code in place. Either red path also clears every APPROVE latch sprint-wide (`APPROVE latch` below).
 
-No cap on `impl⇄impl-test` rounds: loop until the impacted set is green, a dev blocker escalates (`FAILED`/`QUESTION`) or a stalemate escalates ("Impl-test phase" below). `impl-review` keeps its iteration cap. Phase routing follows the `NEXT:` token in each phase skill's return contract, not a fixed linear chain.
+No cap on `impl⇄impl-test` rounds: loop until the impacted set is green, a dev blocker escalates (`FAILED`/`QUESTION`) or a stalemate escalates (`asd-phase-impl-test.md` step 9). `impl-review` keeps its iteration cap. Phase routing follows the `NEXT:` token in each phase skill's return contract, not a fixed linear chain.
 
-**Impl-review clean-worktree precondition** (home statement; mechanic in `asd-phase-impl-review.md` "Preconditions"): `impl-review` refuses to start while `git status --porcelain` is non-empty, measured at phase entry before any dispatch — the iteration diff is computed from commits, so uncommitted work (including pre-existing sprint bookkeeping files) is invisible to every reviewer. The orchestrator commits a dirty timing ledger alone just before the check ("Operation timing"). The phase's own later writes (review files, `state.json`, `decisions-log.md`, `test-plan.md`) are produced after this gate and are not subject to it. `design-review` has no matching precondition — it builds its manifest from on-disk drafts, so the git-invisibility blind spot does not exist there.
+**Impl-review clean-worktree precondition** (home statement; mechanic in `asd-phase-impl-review.md` "Entry"): `impl-review` refuses to start while `git status --porcelain` is non-empty, measured at phase entry before any dispatch — the iteration diff is computed from commits, so uncommitted work (including pre-existing sprint bookkeeping files) is invisible to every reviewer. The orchestrator commits a dirty timing ledger alone just before the check ("Operation timing"). The phase's own later writes (review files, `state.json`, `decisions-log.md`, `test-plan.md`) are produced after this gate and are not subject to it. `design-review` has no matching precondition — it builds its manifest from on-disk drafts, so the git-invisibility blind spot does not exist there.
 
-**Impl-test commits its own output** (home statement; mechanic in `asd-phase-impl-test.md`): `impl-test` commits its authored/pruned tests and `test-plan.md` changes, Conventional Commits, before signalling COMPLETED — it runs immediately before the clean-worktree precondition above, and always writes tests plus `test-plan.md`, so the two rules only compose if `impl-test` leaves a clean worktree behind it (`git-strategy.md` "Commit before review").
+### Impl-test commits its own output
+
+Home statement; mechanic in `asd-phase-impl-test.md`. `impl-test` commits its authored/pruned tests and `test-plan.md` changes, Conventional Commits, before signalling COMPLETED — it runs immediately before the clean-worktree precondition above, and always writes tests plus `test-plan.md`, so the two rules only compose if `impl-test` leaves a clean worktree behind it (`git-strategy.md` "Commit before review").
 
 
 ## Review iteration counters
@@ -110,9 +110,9 @@ Every scoped test run in `impl` and `impl-test` uses the **impacted set** — so
 
 **Safety valve — mandatory, not heuristic, checked BEFORE the selector or the search-derived set is used.** `asd-tester` MUST apply this test before every scoped run: when the change surface touches shared infrastructure — build config, CI config, shared/common modules, any framework-wide file — the impacted set degrades to the **full suite** for that run.
 
-**Where impacted-only applies**: `impl` (self-verification only, below — devs never author/modify/prune a test); `impl-test`'s suite gate (below).
+**Where impacted-only applies**: `impl` (self-verification only, `asd-phase-impl.md` "Rules" — devs never author/modify/prune a test); `impl-test`'s suite gate (`asd-phase-impl-test.md` step 8).
 
-**Where the full suite still runs**: exactly once per sprint cycle, at the end of `impl-review`, after the last review wave's required reviewers return `APPROVE` or are latched and before the phase's green exit — dispatched to `asd-tester` (reviewers are read-only, `providers.md`; the phase gains this capability only through that one dispatch). Recorded in `test-plan.md`'s existing `Suite run` section including `HEAD`; the `pr` gate keeps reading it from there, wording unchanged (`PR phase` below). Red path and latch-clearing: `impl` bullet above and `APPROVE latch` above. Green full suite is part of impl-review's DoD (`review-policy.md` "DoD per review phase").
+**Where the full suite still runs**: exactly once per sprint cycle, at the end of `impl-review`, after the last review wave's required reviewers return `APPROVE` or are latched and before the phase's green exit — dispatched to `asd-tester` (reviewers are read-only, `providers.md`; the phase gains this capability only through that one dispatch). Recorded in `test-plan.md`'s existing `Suite run` section including `HEAD`; the `pr` gate keeps reading it from there, wording unchanged (`asd-phase-pr.md` "Open mode" step 1). Red path and latch-clearing: `impl` bullet above and `APPROVE latch` above. Green full suite is part of impl-review's DoD (`review-policy.md` "DoD per review phase").
 
 Each `impl-test` entry's `Suite run` record measures the tree that entry analysed. Only the terminal full-suite run at the end of `impl-review` measures the final tree.
 
@@ -122,7 +122,7 @@ Rows are `standard`'s; `lite` deltas: "Workflows".
 
 | Phase | Owner | Input | Output | Exit criteria |
 |---|---|---|---|---|
-| scope | Main orchestrator | user request, retro intake candidates and upstream proposals ("Retro intake" above) | `sprint.md`, sprint id, branch, retro backlog dispositions | scope gate passed, branch created |
+| scope | Main orchestrator | user request, retro intake candidates and upstream proposals (`asd-phase-scope.md` step 2a) | `sprint.md`, sprint id, branch, retro backlog dispositions | scope gate passed, branch created |
 | audit | Architect (BA conditional) | `sprint.md`, codebase, `docs/`, existing docs any format/location | `audit.md`; optional reverse-engineered/migrated drafts in `<sprint>/design/`; subsystem registry when absent (decomposition enabled) | audit gate passed |
 | design | BA → UX → Architect | `audit.md` | drafts in `<sprint>/design/` | drafts complete |
 | design-review | Correctness (UI section, conditional) + Efficiency + Documentation + External Review | `<sprint>/design/` | `reviews/design/iter-NN/<reviewer>.md` | DoD met |
@@ -160,16 +160,30 @@ Framework impl-review/External Review change surface: the whole repo diff (every
 
 Never optional: `sprint.md`, `state.json`, `plan.md`, `test-plan.md`, impl-review reports, `manual-steps.md` (already lazy), `friction-log.md` (already lazy), `retrospective.html`, `<sprint>/decisions-log.md`, `stubs.md`. A disabled document is never written as an empty stub — skip recorded in `state.json` plus one decisions-log line.
 
-**Acceptance-criteria source**: PRD AC-N when `documents.prd` enabled; else `sprint.md`'s own `AC-N` list (`t_sprint.md`); `lite`: "Workflows". Every phase citing AC-N (plan, impl, impl-test, impl-review, pr) uses the source this rule selects.
+### Input sources
 
-**Independent design docs** (replaces the old hard PRD→UX→ADR chain):
+The orchestrator resolves each key below into the dispatch payload's `inputs` (`agent-protocol.md` "Dispatch payload"); agents and workflows cite the key and never restate its condition. Every phase citing AC-N (plan, impl, impl-test, impl-review, pr) reads `requirements`.
+
+| Key | Resolves to | Condition |
+|---|---|---|
+| `requirements` | PRD AC-N: `<sprint>/design/prd.html` before design-promote, `docs/product/requirements/<subsystem>.html` after (flat `requirements.html` with decomposition disabled) | `documents.prd` enabled under `standard`; else, and always under `lite` ("Workflows"), `sprint.md`'s Goal and `AC-N` list (`t_sprint.md`) |
+| `decisions` | whichever persistent doc folded a relevant sprint ADR ("Design-promote phase" fold rule) | one bears on the task |
+| `contracts` | `docs/architecture/stack.html` plus whichever persistent doc holds the touched subsystem's folded API contracts | present |
+| `ux` | ux-spec (`<sprint>/design/ux-spec.html` before design-promote, `docs/ux/<subsystem>.html` after, flat `ux-spec.html` with decomposition disabled), `docs/ux/DESIGN.md`, `docs/ux/design-system.html`, `docs/ux/accessibility.html` | each present, and the task touches UI; `self_hosting` with no design-system/ux-spec for the touched surface: `stack.html` conventions and the existing `t_*.html` templates (e.g. `t_html-shell.html`) instead |
+| `audit` | `<sprint>/audit.md` | audit ran (frozen `documents.audit` true) |
+
+### Independent design docs
+
+Replaces the old hard PRD→UX→ADR chain:
 - PRD (`prd`) reads `sprint.md` + `audit.md` (if `audit` enabled).
 - UX-spec (`ux_spec`) reads PRD if enabled, else `sprint.md`; audit optional. Disabling `ux_spec` also disables the design-system gate, `design-md-delta.yaml`, and UX promotion.
 - ADR (`adr`) reads whichever of PRD/UX-spec exist, else `sprint.md`; audit optional. ADRs are sprint-scoped only (`<sprint>/design/adr.html`, sprint-local `ADR-1`, `ADR-2`, … numbering) and are never promoted as a standalone persistent document — see "Design-promote phase" fold rule.
 - C4 (effective `c4`) reads whichever design drafts exist, current stack, the subsystem registry, `sprint.md`; ADR not required.
 - Audit disabled → creators scan the repo themselves for context; the plan workflow greps touched files and reads `.asd/project/stubs.md` directly instead of `audit.md`'s "Related open stubs" section.
 
-**No-op phase rule**: a phase whose entire applicable-artifact set is empty skips dispatch, records its skip inline and returns `COMPLETED`. It has no artifact gate.
+### No-op phase rule
+
+A phase whose entire applicable-artifact set is empty skips dispatch, records its skip inline and returns `COMPLETED`. It has no artifact gate.
 
 | Phase | No-op when |
 |---|---|
@@ -180,39 +194,9 @@ Never optional: `sprint.md`, `state.json`, `plan.md`, `test-plan.md`, impl-revie
 
 `plan`, `impl`, `impl-test`, `impl-review`, `retro`, `pr` are never no-op.
 
-**Design/design-review/design-promote collapse**: `standard` only ("Workflows"). One deterministic no-op write at the audit exit — design is never dispatched either; the design workflow repeats it only as a defensive fallback for a direct re-dispatch. Design-review and design-promote are not dispatched. Collapse test, on frozen state and never on the historical `skipped_phases`: `documents.prd`/`ux_spec`/`adr`/`c4` are all `false`. A legacy `state.json.skip_design_phases` is ignored: the scope that froze it `true` froze those documents `false`. Under it no design draft is produced or promoted, so `phase="design-promote"` is the collapse write: resume dispatches `plan`, and `plan` needs no promotion.
+### Design/design-review/design-promote collapse
 
-## Audit phase
-
-No-op when frozen `documents.audit` is `false` (see "Optional documents").
-
-An absent optional section in `audit.md` (`t_audit.md`) means an empty finding set for that check — the check ran and found nothing — never that the check was skipped. BA/Architect omit an optional section entirely when it has no findings; they never emit a mandated placeholder row to signal "none". A check that could not run at all is a `FAILED`/`ABORT` from the responsible agent, not a silently-omitted section.
-
-Scans: existing source in touched areas; existing docs in **any format/location** (MD, RST, Confluence/Notion exports, HTML, Wiki, text-extractable PDF, READMEs outside ASD layout); **every** persistent doc in `docs/` bearing on a touched area, never a sample, each listed in `audit.md` "Existing docs found".
-
-**Contradictions**: a canonical ASD document is a persistent doc at its `artifact-layout.md` path-map location, and under `self_hosting` also a `.asd/rules/` doc. Canonical beats non-canonical, no gate. Canonical vs canonical, or no canonical side, is a hard user decision before the audit gate (`checkpoints.md` "Gate policy"). `audit.md` "Contradictions" records each with both sources and the winner or the user's answer.
-
-**Criterion check**: Architect checks every `AC-N` for deliverability as stated — the host, runtime and contract facts it relies on hold — and for consistency with every other criterion. An undeliverable or conflicting criterion is a "Contradictions" entry with no canonical side: a hard user decision.
-
-Output `audit.md` — findings (touched areas, existing docs/code, gaps, risks) plus **Documentation migration plan** listing found external docs to promote into ASD format. Where sprint scope directly overlaps found content, the agent may pre-formulate reverse-engineered/migrated drafts in `<sprint>/design/` (prd.html / adr.html) — **only for documents whose frozen `documents.*` flag is enabled**; a disabled document is never draft-created here either, its finding stays migration-plan text — with `provenance` + `source` frontmatter; these flow through design and design-review like any draft. Migration items not covered by drafts wait for design-promote.
-
-**Subsystem registry** (decomposition enabled; `artifact-layout.md` "Subsystem registry"): Architect reads `docs/architecture/subsystems.md` and each touched subsystem's `<id>.md` to locate the code in scope. When the registry is absent, Architect proposes it — per subsystem: id, purpose, key paths — from an existing C4 registry under `docs/architecture/c4/` (likec4 model or mermaid `subsystems.yaml`), else from code. Every proposed subsystem needs explicit user confirmation (`checkpoints.md` "Gate policy" hard list); only then does Architect write the registry and the `<id>.md` of each confirmed one, before the audit gate. Migrating from a mermaid `subsystems.yaml` with `project.diagram_tool: mermaid`, that write also carries its diagram — the confirmed subsystems and their relations — into the registry's `## Diagram` (`t_subsystems.md`). A registered subsystem without its `<id>.md` gets it backfilled, no gate (nothing is added). Only after that migration lands, a legacy `docs/architecture/c4/` the rules make redundant — `project.diagram_tool` other than `likec4` — is deleted only on user approval (same hard list), with its `.gitignore` entries and `commands.yaml` `c4-build`; declined keeps it.
-
-
-## Design phase
-
-No-op when `prd`, `ux_spec`, `adr`, and effective `c4` are all disabled (see "Optional documents").
-
-Agents produce a draft set for the whole sprint scope in `<sprint>/design/`, one artifact per enabled document only — a disabled document produces no draft, no gate, no dependency on it:
-
-- `prd.html` — requirements + acceptance criteria (`documents.prd`)
-- `ux-spec.html` — flows + accessibility notes (`documents.ux_spec`)
-- `adr.html` — architecture decisions (`documents.adr`)
-- `design-md-delta.yaml` — proposed DESIGN.md token changes, produced inline during UX-spec authoring (only on token gap; each entry user-approved)
-- `c4-full/` — delta patch against the persistent diagram for sprint scope — likec4 `model/*.c4`, `views.c4` against `docs/architecture/c4/`; mermaid `subsystems.md` against the registry's diagram block; full schema only when that diagram does not yet exist (frozen `documents.c4`). Never build `dist/` here — generated output no reviewer sees (`external-review.md`).
-
-Order among enabled documents: PRD (if enabled) before design-system gate. Design-system gate (existence check on `docs/ux/DESIGN.md`, `design-system.html`, `accessibility.html`; dispatches `/asd-design-system` when any missing) applies only when `ux_spec` enabled, and blocks UX-spec. UX-spec (if enabled) before ADR. ADR (if enabled) before c4-full. If frozen `documents.c4` is `false` (`diagram_tool: none`, or `subsystem_decomposition: disabled`), `c4-full/` omitted.
-
+`standard` only ("Workflows"). One deterministic no-op write at the audit exit — design is never dispatched either; the design workflow repeats it only as a defensive fallback for a direct re-dispatch. Design-review and design-promote are not dispatched. Collapse test, on frozen state and never on the historical `skipped_phases`: `documents.prd`/`ux_spec`/`adr`/`c4` are all `false`. A legacy `state.json.skip_design_phases` is ignored: the scope that froze it `true` froze those documents `false`. Under it no design draft is produced or promoted, so `phase="design-promote"` is the collapse write: resume dispatches `plan`, and `plan` needs no promotion.
 
 ## Design-promote phase
 
@@ -234,47 +218,6 @@ Dropping the per-persistent-write and final-mutation gates (former steps 4's tra
 **ADR fold rule**: every architectural decision approved in a sprint's `adr.html` is folded, at `design-promote`, into whichever existing persistent doc already declares ownership of that decision's subject in its `responsibility.owns` frontmatter — never from a lookup table. The `adr.html` article's optional "Fold target" line names the candidate and the matched `owns:` clause; the Architect verifies the match, not invents it. A binding rejected alternative folds as one line into the target doc's Constraints-equivalent section (or the fold target's nearest analogous section); a non-binding rejected alternative stays sprint-archive-only, never promoted. When no existing doc's `owns` matches, that is a Complication Approval, not a licence to invent a document — API contracts fold the same way: into a subsystem requirements/architecture doc, `stack.html`, a project-generated OpenAPI/SDL/proto artifact, or, only via Complication Approval, a brand-new doc with no pre-made template. The design gate stays **one approval for the sprint's whole ADR set** — fold-target selection happens after that gate, during promotion, and never re-opens it.
 
 If `subsystem_decomposition: disabled`: drafts merge into flat project-level docs (`requirements.html`, `ux-spec.html`); ADRs still fold per the rule above, never into a flat `adr/` tree. No subsystem folders, no subsystem registry, no c4 model.
-
-## Impl phase
-
-Devs implement plan tasks. A human-only operational action is registered as `MS-N`; the main orchestrator validates necessity and presents validated pending entries. On resume the dev verifies and completes them.
-
-After a wave's last signal the orchestrator ticks its `plan.md` checkboxes, appends the `MEMORY.md` index lines its Task agents returned and commits; devs and testers never edit `plan.md`, and in a wave of more than one Task leave a shared `MEMORY.md` untouched, returning their index line in `COMPLETED`.
-
-Devs write **production code only** — no tests, no test runs, except self-verification: a dev may run the impacted set (`Impacted test set` above) to self-check work in progress, but never authors, modifies, or prunes a test, and this run never substitutes for or satisfies the `impl-test`/`impl-review` gates. All test work belongs to `impl-test`, except a `Test-only` Task, which `asd-tester` runs in this phase ("Plan file format").
-
-**Modes** — detected from `state.json`:
-
-- **Initial** (`review_fixes_pending` and `test_defects_pending` both null) — implement `plan.md` tasks. Ends with the user-facing impl assessment gate.
-- **Review-fix** (`review_fixes_pending` = `wave-<K>/iter-NN`) — entered when impl-review routed back. Devs read findings in `<sprint>/reviews/impl/wave-<K>/iter-NN/`, resolve every CONCERNS finding plus every user-approved FAIL finding. Clears `review_fixes_pending` on completion.
-- **Test-fix** (`test_defects_pending` = `true`) — entered when impl-test found code defects. Devs resolve every open defect in the `Defects` section of `<sprint>/test-plan.md`, marking each `fixed` with the fixing commit. Clears `test_defects_pending` on completion.
-
-Only one fix flag is ever set: each fix mode clears its own before routing on, save that an amendment accepted during a review-fix round continues into initial mode first ("Scope amendment"). Fix modes skip the impl assessment gate; blockers escalate as in initial mode. All modes return `NEXT: impl-test`.
-
-**Completion gate** (all modes) — impl MUST NOT emit `COMPLETED` until, verified via `commands.yaml`: `build` and `lint` ran with no errors and no warnings. The gate itself never runs tests — the optional self-verification run above is not part of it. On failure: devs fix and re-run; unrecoverable failure escalates as `FAILED`. Automatic verification, not a user pause.
-
-## Impl-test phase
-
-Owner: Tester — a fresh one per entry and per terminal full-suite run (`Impacted test set` above), never resumed across entries; `test-plan.md` is the only hand-off. Its `Entry log` and segment rotation are impl-test's alone (a review-fix tester's rows: `artifact-layout.md` "Test plan"). Runs after every `impl` exit. Selects the test approach **after** the implementation exists, so tests follow the real change surface instead of a speculative one. Before selecting anything new, it runs the existing impacted tests (`Impacted test set` above) so the strategy pass observes actual post-impl behaviour and catches an `impl` regression before any new test is authored. A `Test-only` Task's commits ("Plan file format") are existing tests in entry 1's change surface: its pre-strategy run covers them and entry 1 does not re-author them; strategy, pruning and the suite gate stay impl-test's.
-
-**Principles**: check-ladder selection, prune criteria, no-new-test decision rule, and fail-first regression proof are all defined once in `code-style.md` §17 — binding here, not restated here.
-
-**Workflow**: change-surface analysis → pre-strategy impacted run (existing tests) → `test-plan.md` (risk → chosen check → decision) → prune + author → impacted-set suite run.
-
-**Manual verification**: each `test-plan.md` `Manual verification` row gets its user smoke check once, at the first impl-test entry whose suite gate is green after the row is written (`asd-phase-impl-test.md`); its result is recorded in `test-plan.md`, where impl-review reads it.
-
-**Re-entry** (every `impl` exit after the first re-enters this phase): the strategy and prune passes scope to the **delta since the prior entry** (the review-fix/test-fix commits, via `test-plan.md`'s `Entry log`), not the whole change surface again — `test-plan.md` is amended, not rewritten, after the prior entry's narrative rows rotate (`artifact-layout.md` "Test plan"). The **suite gate re-runs on every entry**, scoped per `Impacted test set` above (never the whole repo, subject to its safety valve). Bounded risk: a defect introduced by a fix outside the impacted set's reach is not caught here — the end-of-`impl-review` full suite (`Impacted test set` above) is the backstop.
-
-**Removal gate** — deleting a test outside scope uses `checkpoints.md`: explicit approval in strict, or adaptive evidence when authority and checks cover it. In-scope removals record a reason.
-
-**Suite gate** — verdict comes from the actual `test` runner output (exit code plus report), never from an agent's claim, scoped to the impacted set (`Impacted test set` above) — the full suite runs only once, at the end of `impl-review`. Failures triaged:
-
-- **test defect** (bad assertion, wrong fixture, flaky pattern) → fixed inside impl-test, suite re-run.
-- **code defect** → appended to the `Defects` section of `test-plan.md`, `state.json.test_defects_pending = true`, `NEXT: impl` (test-fix mode).
-
-Loops until the impacted set passes. No iteration cap — an unfixable state surfaces as a dev/tester `FAILED`, not as a silent exit.
-
-**Stalemate** — when two consecutive impl-test entries routed the same code-defect identity set (a green entry between them breaks the run), the phase escalates `FAILED: stalemate` instead of routing. Identity is the `Defects` file path, runner failure line and failing test, never `D-N`; `impl-review` rows never count. `node .asd/runtime.js defect-stalemate` compares deterministically. A user answer, logged with the set's digest, covers only the next routing of that set; the same set repeating after it escalates again. Mechanics: `asd-phase-impl-test.md` step 9.
 
 ## Friction log
 
@@ -301,36 +244,15 @@ The **timing ledger** `<sprint>/timing.jsonl` (never a bare "ledger") is written
 
 Kinds (attrs): `phase`; `dispatch` (`agent`, `tier`, `model` — `state.json.task_routing`'s when routed); `review-iteration` (`wave`, `iteration`: plain integers); `suite` (`scope`: `impacted`|`full`); `external-review` (`model`: the wrapped CLI's); `user-wait` (`gate`: gate name or short question label). Unique ids: a routed dispatch's `task_routing` id (an unrouted one takes `tier`/`model` from the agent's frontmatter); a reviewer dispatch `<reviewer key> [wave-<K>/]iter-NN`; else `<agent> <phase>#<n>`; `review-iteration` `<phase> [wave-<K>/]iter-NN`; `suite` `suite <phase>#<n>`; `user-wait` `wait <gate>`. A phase op opens and closes by bare phase name (the runtime numbers entries `#<n>`); an op nested in another (a tester's `suite` in its `dispatch`) passes `--parent <that id>`, otherwise it takes the open phase.
 
-Writers: `asd-sprint` opens a phase op before each phase-skill delegation and closes it on return — `done` on `COMPLETED`, `interrupted` on `FAILED`/`ABORT`; a `QUESTION` halt leaves it open. Scope opens its own at folder creation; pr open mode closes its own before its final commit and push. Each phase workflow's timing line names its other sites; `asd-tester` brackets its suite runs. A `user-wait` opens right before every request user decision, gate prompt or free-text question (`QUESTION` protocol step 2 included) and closes once the answer is processed. Not recorded: pr merge mode, the release retry, time before the ledger exists (scope collection, the ASD version check and its answer).
+Writers: `asd-sprint` opens a phase op before each phase-skill delegation and closes it on return — `done` on `COMPLETED`, `interrupted` on `FAILED`/`ABORT`; a `QUESTION` halt leaves it open. Scope opens its own at folder creation; pr open mode closes its own before its final commit and push. Each phase workflow's timing line names its other sites; `asd-tester` brackets its suite runs. A `user-wait` opens right before every request user decision, gate prompt or free-text question (`agent-protocol.md` "Relay" `QUESTION` step 2 included) and closes once the answer is processed. Not recorded: pr merge mode, the release retry, time before the ledger exists (scope collection, the ASD version check and its answer).
 
 Recovery: a dispatch found failed or stalled closes `interrupted` at detection; on resume `timing-recover --ledger <path>` closes every still-open op `interrupted`.
 
 Commits: `git-strategy.md` "Commit before review".
 
-## Retro phase
+## Retro row ids
 
-Runs between `impl-review` (`lite`: `design-promote`) and `pr`. Unconditional (never no-op). Owner: main orchestrator (`asd-phase-retro.md`).
-
-Input `<sprint>/friction-log.md` and the timing ledger's `timing-summary` ("Operation timing"); output `<sprint>/retrospective.html` per `t_retrospective.html` — derived analysis, sprint-scoped, archived with the sprint. Nothing is promoted to a persistent doc; the retro backlog holds only scope-time dispositions of its rows ("Retro intake" above), never retro content.
-
-**Retro row id** — `A-N` names the Nth row of the Actions table, `P-N` the Nth of the Systemic proposals table; N is the 1-based `<tbody>` ordinal, `covered by:` rows counted. Written as `<tr id="A-N">`; a legacy retro without ids gets the same ids from the same ordinal. Cross-sprint address: `<NNN-slug>#A-N`. Row ids, `Acts on` values and the `covered by:` prefix are English literals under any `language.docs`.
-
-**Two output classes.** Both are split into consumer-project and ASD-framework actions so every row names the side that acts and its home — a finding with both halves takes two rows, an empty half none; both are proposals the phase never executes and never promotes — promoting a guardrail is the user's decision.
-
-1. **Remediation** — answers *what went wrong*. Every `F-N` entry analysed to a root cause; each finding traced to every entry id it addresses. Bounded by the log.
-2. **Systemic proposals** — answers *what would have made this sprint cheaper*, never *what went wrong*. Evidence is how the sprint actually ran (review iterations, rework loops, gate waits, task churn, dispatch cost, the `timing-summary` output), not the entry set: a proposal may cite an `F-N` as supporting evidence, but is neither derived from nor limited by the log. A fact a friction entry already owns is remediation only — rewording it as a proposal is the double-channel duplication this split exists to prevent.
-
-**Findings, in order** (both classes; dedup before any drafting):
-
-1. **Merge** — entries and proposals sharing one root cause become one finding citing every source `F-N`; a finding merged with any `F-N` is remediation.
-2. **Coverage** — search the finding's candidate home (list below) for its subject, reading no other file; a finding an existing rule already covers is dropped, its row citing that rule in place of a guardrail.
-3. **Draft** — each surviving finding gets `Guardrail`, one imperative line stating the prohibition or requirement, and `Home`, finalizing the candidate (a changed home re-runs step 2): `custom-coding-rules.md`, `custom-design-rules.md`, `custom-common-rules.md`, `.claude/agent-memory/<agent>/` (Claude-only), a `.asd/rules/` doc when `self_hosting` is enabled, or "upstream ASD" (a framework proposal, never applied; shown at the next scope without a disposition, "Retro intake") when it is not.
-
-**Timing candidates**: each `slow` op and each `user_waits` entry of the `timing-summary` output enters the findings order above as a systemic candidate. A slow op's row names what took long, its cause from the run record, the change, and an expected saving drawn from its `excess_seconds`. A user wait is checked for whether its escalation was avoidable (adaptive evidence, a deterministic rule, a decision already authorised); an avoidable one proposes removing that escalation, never speeding up the user, an unavoidable one no row. `retrospective.html`'s duration section, kept on both branches, holds the summary table, the slow set and the user waits, each slow op or avoidable wait naming its cause and linking its `P-N` or `A-N` row. `{"timing": null}` (no ledger) reads "No timing data" there, and the retro proceeds without timing candidates.
-
-**Empty-log branch**: an absent or entry-free log is a legitimate outcome — record "no friction recorded" and skip class 1; class 2 is still produced, so an entry-free log is never an empty retrospective. Never invent friction entries; never mutate sprint state to reach this branch.
-
-Closes with a short `language.chat` summary covering both classes, then `NEXT: pr`. Adds no gate of its own; only `checkpoints.md`'s existing gates apply.
+`A-N` names the Nth row of the Actions table, `P-N` the Nth of the Systemic proposals table; N is the 1-based `<tbody>` ordinal, `covered by:` rows counted. Written as `<tr id="A-N">`; a legacy retro without ids gets the same ids from the same ordinal. Cross-sprint address: `<NNN-slug>#A-N`. Row ids, `Acts on` values and the `covered by:` prefix are English literals under any `language.docs`.
 
 ## PR phase
 
@@ -340,7 +262,7 @@ Modes are `pr=null` (open the PR, `NEXT: await-merge`, unless the "Merged-unclos
 
 **Closure write** — `asd-phase-scope.md` step 1, for the merged-unclosed sprint `asd-sprint` passes, right after the new sprint branch is created and before the new sprint is seeded; no user gate:
 1. `git mv` the closing sprint folder to `archived/`;
-2. write its `pr.state="merged"`, `pr.merge_commit` (the `mergeCommit` above), `pr.number` when `pr` is null (the one `asd-sprint` carries), `phase="done"`, `updated_at`, `archived_at`, and a `sprint closure` `gate_decisions` entry with `decision_actor: orchestrator`, its evidence the merge commit;
+2. write its `pr.state="merged"`, `pr.merge_commit` (the `mergeCommit` above), `pr.number` when `pr` is null (the one `asd-sprint` carries), `phase="done"`, `updated_at`, `archived_at`, and a `sprint-closure` `gate_decisions` entry with `decision_actor: orchestrator`, its evidence the merge commit;
 3. append one entry to its decisions log;
 4. commit, as the new branch's first commit.
 
@@ -350,34 +272,6 @@ A scope aborted before its branch exists writes nothing; the next `asd-sprint` d
 - `pr.state="closure-pending"` (local state of the retired companion flow; the base copy says `open`) — a merged-unclosed sprint.
 - an archived non-done sprint — its terminal write lands in place, inside the closure write, with no `git mv` ("Sprint immutability").
 - an open `chore/finalize-sprint-<NNN-slug>` PR (`gh pr list --head`) — merged at detection; the closure write is skipped for that sprint.
-
-**Open mode's DoD verification is conditional on two checks, neither a `checkpoints.md` gate** (`asd-phase-pr.md` open mode step 1 — internal verification only, gates PR opening, never a user-facing pause):
-- **Tests/lint re-run**: content-scoped, not HEAD-sha-equality (HEAD always moves past the recorded sha — the recording commit itself, plus later phase-transition commits, guarantee it). Skipped when `git diff --quiet <recorded HEAD>...HEAD -- <code/test/stub pathspec, excluding .asd/sprints/** and .asd/project/**>` is empty, where `<recorded HEAD>` is the sha in test-plan.md's `Suite run` section — the commit impl-review's terminal full-suite step (`Impacted test set` above) last verified the full suite at, which is also the last point any code/test/stub file can change before `pr`. The check is sha-independent, not read-only-dependent: whatever landed since that recording — a review-fix commit, or the rare in-phase test-defect fix — shows up as a non-empty diff and forces a re-run; an empty diff means nothing changed, full stop.
-- **Reviews-green source**: `state.json.reviews.impl.wave` equals the wave count (`waves.length`), and every wave node's `verdicts["iter-NN"]` for its highest iteration is satisfied, read from state first; parse review files under `<sprint>/reviews/impl/wave-<K>/iter-NN/` only as an explicit fallback when `state.json` data is missing or stale, or for a user-resolved entry. Satisfied-vs-blocking semantics for each entry: "State recovery" below.
-
-## Signal vocabulary
-
-- `COMPLETED` — phase work done, ready for next
-- `FAILED` — cannot proceed, reason in body
-- `REVIEW_DONE` — reviewer finished, verdict in body
-- `QUESTION` — needs user input, body has the question and options; emitter: any dispatched agent except a reviewer, whose question rides its verdict report (`review-policy.md` "Gate Verdict Format"). Handled per the `QUESTION` protocol below.
-- `PLAN_DRAFT` — plan written, not approved
-- `PLAN_READY` — plan approved
-- `BLOCKED_MANUAL` — task needs a human-performed manual action; entry registered in `manual-steps.md`
-- `ADVICE_NEEDED` — emitter: any dispatched agent other than `asd-advisor`, on non-gate uncertainty only (analysis/judgment question, never a HARD-gate approval decision — see `core.md`'s autonomy/escalation rule for the gate-vs-non-gate distinction). Payload: the question plus relevant context paths. Relay obligation: the dispatching phase workflow catches the signal, dispatches `asd-advisor`, then re-dispatches the consulting agent with its answer appended — the per-workflow relay branch is implemented in each `asd-phase-*.md`.
-
-**`ADVICE_NEEDED` protocol** (every `asd-phase-*.md`'s relay branch is this exact sequence, invoked as "relay per `sprint-lifecycle.md`'s `ADVICE_NEEDED` protocol"):
-1. Dispatching phase workflow catches `ADVICE_NEEDED` from a dispatched agent other than `asd-advisor`, mid-task.
-2. Dispatches `asd-advisor` with the question plus the context paths as given by the consulting agent — no other context injected.
-3. On the advisor's returned recommendation → re-dispatch the consulting agent (`delegate to agent X`, `providers.md`) with its original task context plus the advisor's answer appended; no other context injected except the running consult count/remaining budget (step 6). Not a same-turn resume (no host tool suspends and resumes a dispatched agent mid-execution — `providers.md` has no such operation); it is a fresh dispatch carrying forward the same task.
-4. On `asd-advisor` `FAILED` (question turned out to be a HARD gate) → relay that finding to the consulting agent unchanged; the consulting agent then treats it as gate uncertainty per `core.md`'s Autonomy and escalation rule and returns `QUESTION` — a reviewer, its question carrier per `review-policy.md` "Gate Verdict Format".
-5. No halt, no user contact, no logged trail — the round-trip is autonomous and intra-phase (`asd-advisor.md` Don'ts: consults are not logged).
-6. Capped at 3 consults per consulting-agent **task** — the dispatching phase workflow owns this counter (the consulting agent does not; each re-dispatch in step 3 is a fresh dispatch and would otherwise reset a self-held count), increments it once per completed advisor round-trip, and does not reset it across the task's re-dispatches. At the cap, the workflow stops relaying further `ADVICE_NEEDED` signals for that task; the agent proceeds on its own judgment or re-classifies the question as gate uncertainty and returns `QUESTION` per `core.md`'s Autonomy and escalation rule — a reviewer, its question carrier (step 4).
-
-**`QUESTION` protocol** (cited as "per `sprint-lifecycle.md`'s `QUESTION` protocol"):
-1. The dispatching workflow catches `QUESTION` — the question plus options (`core.md` "User-decision presentation format") — from a dispatched agent.
-2. The main orchestrator asks the user via request user decision (free-form input as a plain chat message) and records the answer in `decisions-log.md` before any further work (`core.md` "Context hygiene").
-3. Re-dispatches the agent fresh with its original task context plus the answer appended — not a resume, for the reason in `ADVICE_NEEDED` step 3.
 
 ## Plan file format
 
@@ -409,9 +303,10 @@ Its absence semantics are deliberately not `Material risk`'s, and the two are ne
 - No two Tasks in one wave touch overlapping paths, a `Test-only` Task's paths and globs included.
 - A subtask adds no helper, guard or export unless it names a caller or a reachable failure (`code-style.md` §1, §3).
 - The plan lists the external APIs each Task needs and extends the tech reference (`artifact-layout.md` "Tech reference docs") where one is missing, before acceptance.
+- A plan decision defining a computed metric or a bounded fetch states its edge semantics — interval overlap, nesting versus concurrency, re-entry of an open operation, total versus idle deadline — before acceptance.
 - A stub offered for inclusion states its verified cost and behaviour change. A stub whose files are tests only routes to `impl-test`, never to a Task.
 
-**Standing Definition of Done** (constant across every sprint, never restated in `plan.md`): all AC-N from the acceptance-criteria source covered by Tasks; impacted test set green at `impl-test` (`Impacted test set` above); full test suite green once, at the end of `impl-review`; all required reviewers green in every `impl-review` wave. `plan.md`'s own Definition of Done section holds only sprint-specific additions to this standing set, referencing it rather than repeating it.
+**Standing Definition of Done** (constant across every sprint, never restated in `plan.md`): all AC-N of the `requirements` input ("Input sources") covered by Tasks; impacted test set green at `impl-test` (`Impacted test set` above); full test suite green once, at the end of `impl-review`; all required reviewers green in every `impl-review` wave. `plan.md`'s own Definition of Done section holds only sprint-specific additions to this standing set, referencing it rather than repeating it.
 
 ## Scope amendment
 
@@ -422,7 +317,7 @@ A criterion added, changed or retired after scope acceptance needs the hard `new
 
 The audit boolean is then reevaluated ("Orchestration and adaptive gates").
 
-An amendment accepted while `review_fixes_pending` is set waits for that fix round: `impl` runs review-fix mode first, and once its finalize clears the flag the same `impl` entry continues in initial mode over the plan's unticked Tasks only, never a ticked one again. The impl assessment gate runs once, after that pass, then the entry returns one `NEXT: impl-test`. This is the one case where an `impl` entry runs two modes ("Impl phase" Modes).
+An amendment accepted while `review_fixes_pending` is set waits for that fix round: `impl` runs review-fix mode first, and once its finalize clears the flag the same `impl` entry continues in initial mode over the plan's unticked Tasks only, never a ticked one again. The impl assessment gate runs once, after that pass, then the entry returns one `NEXT: impl-test`. This is the one case where an `impl` entry runs two modes (`asd-phase-impl.md` steps 2, 11).
 
 ## Sprint immutability
 

@@ -7,7 +7,7 @@ responsibility:
 
 # Audit
 
-An absent optional section below means an empty finding set for that section, never an unperformed check (`.asd/rules/sprint-lifecycle.md` "Audit phase"). Omit any optional section entirely when it has no findings — never emit a placeholder row.
+An absent optional section below means an empty finding set for that section, never an unperformed check (`.asd/workflows/asd-phase-audit.md` "Rules"). Omit any optional section entirely when it has no findings — never emit a placeholder row.
 
 Architect returns all applicable sections; the phase orchestrator writes this file. BA contributes only on evidenced material product/domain ambiguity a source can resolve; ambiguity only authority or preference can settle goes to the user.
 

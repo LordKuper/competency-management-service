@@ -92,7 +92,7 @@ No registry, no `<subsystem>.md`, no `c4/` directory. No subsystem subfolders.
 
 ## Agent memory
 
-Agent memory lives at the provider-view root — `.claude/agent-memory/<agent>/` (`MEMORY.md` index + one file per memory) — always, whatever working directory a dispatch names. Never inside a sprint tree (path map above). One directory per dispatched agent name, tier variants included: distinct agents never share a memory file, so co-authorship arises only between concurrent dispatches of the same agent, which share that directory and its single `MEMORY.md`. Before a write lands, the writing agent checks it against its own definition (declared tool policy: `providers.md` "Role-scoped context"); a practice that contradicts the definition is never recorded.
+Agent memory lives at the provider-view root — `.claude/agent-memory/<agent>/` (`MEMORY.md` index + one file per memory) — always, whatever working directory a dispatch names. Never inside a sprint tree (path map above). One directory per dispatched agent name, tier variants included: distinct agents never share a memory file, so co-authorship arises only between concurrent dispatches of the same agent, which share that directory and its single `MEMORY.md`. Before a write lands, the writing agent checks it against its own definition (declared tool policy: `providers.md` "Declared tool policy"); a practice that contradicts the definition is never recorded.
 
 **Content**: memory holds method only; it never records a sprint id, a Task, a wave, an iteration or a review verdict — that history belongs in the sprint's artefacts. Checked at the orchestrator's memory commit: `git-strategy.md` "Commit before review".
 
@@ -110,7 +110,7 @@ Agent memory lives at the provider-view root — `.claude/agent-memory/<agent>/`
 
 When decomposition enabled, `docs/architecture/subsystems.md` (`t_subsystems.md`) is the sole subsystem registry — which subsystems exist and their ids — whatever `project.diagram_tool`. Each entry links `docs/architecture/<id>.md` (`t_subsystem.md`: purpose, key paths), and every registered subsystem has one. Reserved, never a subsystem id (they collide in flat `docs/architecture/`): `subsystems`, `stack`, `c4`, `tech-reference`.
 
-`/asd-init` seeds the registry empty; only Architect fills it. A subsystem is added at `design-promote` (`sprint-lifecycle.md` "Design-promote phase"), or at `audit` when the registry is absent (`sprint-lifecycle.md` "Audit phase") — each addition with explicit user approval (hard gate).
+`/asd-init` seeds the registry empty; only Architect fills it. A subsystem is added at `design-promote` (`sprint-lifecycle.md` "Design-promote phase"), or at `audit` when the registry is absent (`asd-phase-audit.md` "Rules", step 3a) — each addition with explicit user approval (hard gate).
 
 Diagram per `project.diagram_tool`; with `none`, no diagram is written and `docs/architecture/c4/` is never created:
 
@@ -207,11 +207,11 @@ SSoT for two things invisible in the diff: **why** a test was removed, and **why
 
 ## Retrospective
 
-`<sprint>/retrospective.html` per `t_retrospective.html`. User-facing HTML, shell-wrapped like every other. **Derived analysis, never a rendering of the log** — references `F-N` ids, never a second copy of the entries. Owner: `retro` phase; semantics in `sprint-lifecycle.md` "Retro phase".
+`<sprint>/retrospective.html` per `t_retrospective.html`. User-facing HTML, shell-wrapped like every other. **Derived analysis, never a rendering of the log** — references `F-N` ids, never a second copy of the entries. Owner: `retro` phase; semantics in `asd-phase-retro.md`.
 
 ## Retro backlog
 
-`.asd/project/retro-backlog.md` per `t_retro-backlog.md`: the cross-sprint disposition of each retro row, one line per row, updated in place. Owner: main orchestrator. Created lazily at the first retro-intake write — `asd-init` seeds none, no migration creates it, `/asd-update` never touches it. Semantics: `sprint-lifecycle.md` "Retro intake".
+`.asd/project/retro-backlog.md` per `t_retro-backlog.md`: the cross-sprint disposition of each retro row, one line per row, updated in place. Owner: main orchestrator. Created lazily at the first retro-intake write — `asd-init` seeds none, no migration creates it, `/asd-update` never touches it. Semantics: `asd-phase-scope.md` step 2a.
 
 ## Single Source of Truth (iron rule)
 

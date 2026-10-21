@@ -968,12 +968,15 @@ function variantMeta(baseMeta, suffix) {
   return Object.assign({}, baseMeta, { name: `${baseMeta.name}-${suffix}`, description: `${baseMeta.description} Task class: ${suffix}.`, claude, codex });
 }
 
+/** Tier-variant name suffixes an agent may declare; `runtime.js` `context` reads them to map a variant to its base agent. */
+const VARIANT_SUFFIXES = ['mechanical', 'standard', 'critical'];
+
 function agentVariants(meta) {
   if (meta.variants === undefined) return [];
   const suffixes = Object.keys(meta.variants).sort();
   if (suffixes.length === 0) throw new Error(`agent "${meta.name}": variants cannot be empty`);
   for (const suffix of suffixes) {
-    if (!/^(mechanical|standard|critical)$/.test(suffix)) throw new Error(`agent "${meta.name}": unsupported variant suffix "${suffix}"`);
+    if (!VARIANT_SUFFIXES.includes(suffix)) throw new Error(`agent "${meta.name}": unsupported variant suffix "${suffix}"`);
   }
   return suffixes.map((suffix) => variantMeta(meta, suffix));
 }
@@ -1504,6 +1507,7 @@ if (require.main === module) {
 
 module.exports = {
   SCHEMA_VERSION,
+  VARIANT_SUFFIXES,
   BLOCK_BEGIN,
   BLOCK_END,
   normalizeText,
