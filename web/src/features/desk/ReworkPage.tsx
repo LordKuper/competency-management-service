@@ -21,12 +21,13 @@ import {
   matrixQuery,
   matrixVersionQuery,
 } from "../career/matrixApi";
-import { blockNamesOf, scaleOfCompetency } from "../career/matrixGroups";
+import { scaleOfCompetency } from "../career/matrixGroups";
 import {
   APPROVAL_STEP_LABELS,
   matrixName,
   VERSION_STATUS_LABELS,
 } from "../career/matrixLabels";
+import { useBlockNames } from "../career/useBlockNames";
 import { draftRecords } from "../career/usePublishEntry";
 import { ChangesBlock } from "./ChangesBlock";
 import { CompletenessBlock } from "./CompletenessBlock";
@@ -121,6 +122,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
     version,
     approverDiff.data?.before.competencies.map((item) => item.competencyId),
   );
+  const blockNames = useBlockNames(version, approverDiff.data);
   const transition = useVersionTransition();
 
   const can = (action: MatrixVersion["actions"][number]) =>
@@ -267,7 +269,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
                 diff={approverDiff.data}
                 levelNames={levelNames}
                 competencyNames={competencyNames}
-                blockNames={blockNamesOf(version)}
+                blockNames={blockNames}
                 pointsOf={(id) => scaleOfCompetency(version, id).points}
                 columns={{
                   before: "Ваш вариант",

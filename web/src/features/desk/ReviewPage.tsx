@@ -16,8 +16,9 @@ import {
   matrixVersionQuery,
   returnMatrixVersion,
 } from "../career/matrixApi";
-import { blockNamesOf, scaleOfCompetency } from "../career/matrixGroups";
+import { scaleOfCompetency } from "../career/matrixGroups";
 import { matrixName, VERSION_STATUS_LABELS } from "../career/matrixLabels";
+import { useBlockNames } from "../career/useBlockNames";
 import { draftRecords, RefusalContent } from "../career/usePublishEntry";
 import { CascadeTable } from "./CascadeTable";
 import { ChangesBlock } from "./ChangesBlock";
@@ -73,6 +74,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
     version,
     changes.data?.before.competencies.map((item) => item.competencyId),
   );
+  const blockNames = useBlockNames(version, changes.data, approverDiff.data);
   const transition = useVersionTransition();
   const sendBack = useMutation({
     mutationFn: (comment: string) => returnMatrixVersion(version, comment),
@@ -199,7 +201,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
             diff={changes.data}
             levelNames={levelNames}
             competencyNames={competencyNames}
-            blockNames={blockNamesOf(version)}
+            blockNames={blockNames}
             pointsOf={(id) => scaleOfCompetency(version, id).points}
             columns={{ before: "Действует", after: "В этой версии" }}
             emptyText="Отличий от опубликованной версии нет."
@@ -213,7 +215,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
             diff={approverChanges}
             levelNames={levelNames}
             competencyNames={competencyNames}
-            blockNames={blockNamesOf(version)}
+            blockNames={blockNames}
             pointsOf={(id) => scaleOfCompetency(version, id).points}
             columns={{ before: "Было", after: "Стало" }}
             emptyText="Правок нет."

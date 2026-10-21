@@ -57,7 +57,6 @@ import {
   withRequirement,
 } from "./matrixContent";
 import {
-  blockNamesOf,
   compositionChanges,
   compositionsOf,
   minimumScoreOf,
@@ -69,6 +68,7 @@ import {
   versionCompetencyIds,
 } from "./matrixGroups";
 import { CHANGED_NOTE } from "./matrixLabels";
+import { useBlockNames } from "./useBlockNames";
 import "./matrix.css";
 
 const NO_VALUE = "—";
@@ -182,6 +182,7 @@ function MatrixEditorBody({
   const shown = isEditable ? edited : version.content;
   const { entries } = version;
   const changed = diff ? changedPlaces(diff.changes) : NO_CHANGES;
+  const blockNames = useBlockNames(version, diff);
   const isPosition = entries.position != null;
   const sharedEntries = sharedEntriesOf(version);
   const isFrozen =
@@ -614,7 +615,7 @@ function MatrixEditorBody({
                 ]),
               )
             }
-            blockNames={blockNamesOf(version)}
+            blockNames={blockNames}
             pointsOf={(id) => scaleOfCompetency(version, id).points}
           />
         )}
