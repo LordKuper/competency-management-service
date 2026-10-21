@@ -5,7 +5,7 @@ namespace Competency.OrgStructure;
 
 /// <summary>
 /// What the organization structure expects of a global administrator, who alone may change it: units without a head or without positions,
-/// employees whose position their unit does not offer, positions out of use and empty units. Other users get only its prerequisites.
+/// employees whose position their unit does not offer, positions out of use and empty units. Every user gets its prerequisites, other users nothing else.
 /// </summary>
 internal sealed class OrgStructureDeskSource(ICurrentActor actor, IEmployeeDirectory directory, AppDbContext context) : IDeskSource
 {
@@ -29,7 +29,8 @@ internal sealed class OrgStructureDeskSource(ICurrentActor actor, IEmployeeDirec
     }
 
     /// <summary>
-    /// Whether there is an active unit and an active position. Every signed-in user reads the tree and the catalogue, so the facts reveal nothing.
+    /// Whether there is an active unit, an active position and a working employee.
+    /// Every signed-in user reads the tree, the catalogue and the working employees, so the facts reveal nothing.
     /// </summary>
     private static List<DeskPrerequisite> Prerequisites(OrgSnapshot snapshot)
     {
@@ -42,6 +43,11 @@ internal sealed class OrgStructureDeskSource(ICurrentActor actor, IEmployeeDirec
         if (snapshot.Positions.Values.Any(position => position.IsActive))
         {
             prerequisites.Add(DeskPrerequisite.ActivePosition);
+        }
+
+        if (snapshot.WorkingEmployeeCounts.Count > 0)
+        {
+            prerequisites.Add(DeskPrerequisite.WorkingEmployee);
         }
 
         return prerequisites;

@@ -13853,6 +13853,7 @@
         "enum": [
           "ActiveUnit",
           "ActivePosition",
+          "WorkingEmployee",
           "VisibleTrack"
         ],
         "description": "A fact about the current data that a desk scenario needs before the user can start it.\r\nMember names are sent in the API, so renaming one changes it; a new member also needs a source that knows it."

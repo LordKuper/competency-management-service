@@ -20,6 +20,11 @@ public enum DeskPrerequisite
     ActivePosition,
 
     /// <summary>
+    /// The organization has a working (not dismissed) employee.
+    /// </summary>
+    WorkingEmployee,
+
+    /// <summary>
     /// The user may open at least one track.
     /// </summary>
     VisibleTrack,
