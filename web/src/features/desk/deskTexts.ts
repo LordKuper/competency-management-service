@@ -32,6 +32,7 @@ export const deskPaths = {
   trackPositionsOf: (trackId: string) => `/desk/track-positions/${trackId}`,
   catalogCleanup: "/desk/catalog-cleanup",
   orgCleanup: "/desk/org-cleanup",
+  positions: "/positions",
 } as const;
 
 /** Titles of the matrix builder steps, in order. */

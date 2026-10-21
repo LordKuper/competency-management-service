@@ -1,6 +1,12 @@
 import { theme as antdTheme, Card, Empty, Typography } from "antd";
 import { Link } from "react-router";
-import { type Desk, type DeskGroup, ORG_QUEUE_GROUPS } from "./deskApi";
+import { paths as orgPaths } from "../org-structure/paths";
+import {
+  type Desk,
+  type DeskGroup,
+  type DeskPrerequisite,
+  ORG_QUEUE_GROUPS,
+} from "./deskApi";
 import { deskPaths, itemAction } from "./deskTexts";
 
 /** The roles the scenario cards follow; process roles come from the units the user heads or answers for as HR. */
@@ -25,9 +31,29 @@ interface Scenario {
   isQueue?: boolean;
   /** A queue with its own screen that has a card only while its groups hold items. */
   isShownWhenWaiting?: boolean;
+  /** Shown only on a loaded desk whose prerequisites satisfy it. */
+  holds?: (prerequisites: DeskPrerequisite[]) => boolean;
 }
 
 const SCENARIOS: Scenario[] = [
+  {
+    key: "first-unit",
+    title: "Добавить первое подразделение",
+    description:
+      "Действующих подразделений нет: создайте верхнее подразделение компании.",
+    isFor: (roles) => roles.isAdmin,
+    path: orgPaths.tree,
+    holds: (prerequisites) => !prerequisites.includes("ActiveUnit"),
+  },
+  {
+    key: "first-position",
+    title: "Добавить первую должность",
+    description:
+      "Действующих должностей нет: заведите должность для сотрудников и карьерных треков.",
+    isFor: (roles) => roles.isAdmin,
+    path: deskPaths.positions,
+    holds: (prerequisites) => !prerequisites.includes("ActivePosition"),
+  },
   {
     key: "my-place",
     title: "Моё место в компании",
@@ -79,6 +105,7 @@ const SCENARIOS: Scenario[] = [
     isFor: (roles) => roles.isAdmin,
     path: deskPaths.connectUnit,
     groups: ["UnitsToConnect"],
+    holds: (prerequisites) => prerequisites.includes("ActiveUnit"),
   },
   {
     key: "onboard",
@@ -87,6 +114,9 @@ const SCENARIOS: Scenario[] = [
       "Карточка сотрудника и, по желанию, учётная запись с приглашением — одним сценарием.",
     isFor: (roles) => roles.isAdmin,
     path: deskPaths.onboardEmployee,
+    holds: (prerequisites) =>
+      prerequisites.includes("ActiveUnit") &&
+      prerequisites.includes("ActivePosition"),
   },
   {
     key: "link",
@@ -95,6 +125,9 @@ const SCENARIOS: Scenario[] = [
     isFor: (roles) => roles.isHead || roles.isHr || roles.isAdmin,
     path: deskPaths.trackPositions,
     groups: ["PositionsToLink"],
+    holds: (prerequisites) =>
+      prerequisites.includes("ActivePosition") &&
+      prerequisites.includes("VisibleTrack"),
   },
   {
     key: "catalog",
@@ -122,6 +155,9 @@ const SCENARIOS: Scenario[] = [
 
 /** The screen a scenario opens: its own, or that of the first item waiting in its groups; null when it needs an object or a queue and nothing waits. */
 function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
+  if (scenario.holds && !(desk && scenario.holds(desk.prerequisites))) {
+    return null;
+  }
   const groups = desk?.groups.filter((group) =>
     scenario.groups?.includes(group.group),
   );
@@ -139,8 +175,9 @@ function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
 /**
  * "Что можно сделать": a card for every scenario the user's roles allow that can be opened now, «Моё место в компании»
  * first. A scenario that works on one object from a desk group, and a queue, have no card until something waits, so
- * there is never an inert card. The empty state follows the roles: every role keeps a scenario that is always shown
- * («Моё место в компании», «Связать должности с треком», «Принять сотрудника» or «Построить матрицу»).
+ * there is never an inert card; a scenario with prerequisites waits for the loaded desk. The empty state follows the
+ * roles: no roles at all gives the unbound-account text, roles whose cards are all hidden on a loaded desk give the
+ * neutral one.
  */
 export function DeskScenarios({
   roles,
@@ -172,6 +209,41 @@ export function DeskScenarios({
       </Card>
     );
   }
+  const cards = scenarios.flatMap((scenario) => {
+    const path = entryPath(scenario, desk);
+    return path
+      ? [
+          <ScenarioCard
+            key={scenario.key}
+            scenario={scenario}
+            path={path}
+            desk={desk}
+          />,
+        ]
+      : [];
+  });
+  if (desk && cards.length === 0) {
+    return (
+      <Card>
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={
+            <>
+              <Typography.Title level={3}>
+                Сейчас начать нечего
+              </Typography.Title>
+              <Typography.Paragraph>
+                Сценарии вашей роли появятся здесь, когда в системе будут нужные
+                им данные: например, действующие должности и карьерные треки,
+                которые вам доступны. Карточки покажутся сами; если данные
+                должны были появиться раньше, обратитесь к администратору.
+              </Typography.Paragraph>
+            </>
+          }
+        />
+      </Card>
+    );
+  }
   return (
     <div
       style={{
@@ -180,19 +252,7 @@ export function DeskScenarios({
         gap: token.margin,
       }}
     >
-      {scenarios.flatMap((scenario) => {
-        const path = entryPath(scenario, desk);
-        return path
-          ? [
-              <ScenarioCard
-                key={scenario.key}
-                scenario={scenario}
-                path={path}
-                desk={desk}
-              />,
-            ]
-          : [];
-      })}
+      {cards}
     </div>
   );
 }

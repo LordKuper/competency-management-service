@@ -23,6 +23,9 @@ export type DeskKind = components["schemas"]["DeskKind"];
 /** A record a desk item is about or names. */
 export type DeskObject = components["schemas"]["DeskObject"];
 
+/** A fact about the system that a scenario card needs before it is shown. */
+export type DeskPrerequisite = components["schemas"]["DeskPrerequisite"];
+
 /** How many items of a group the desk response carries. */
 export const FIRST_ITEMS = 10;
 
