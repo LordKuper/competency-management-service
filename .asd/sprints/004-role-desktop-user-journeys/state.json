@@ -831,6 +831,12 @@
       "tier": "critical",
       "reason": "risk:public contract",
       "resolved_model": "opus"
+    },
+    "Task 59": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],

@@ -327,9 +327,9 @@ Material risk: none
 
 ### Task 58: Бэкенд — контракт 1.0.0, одна миграция, балл обязателен
 Material risk: change: public contract, change: migration
-- [ ] по Task 56: `ContractVersion` 1.0.0; удалить deprecated-поля, параметры, методы и `CatalogEntryKind.Category`; `RequiredScore` не null, минимальный балл по умолчанию, убрать проверки «нет требований» / «не задан балл» (AC-57, AC-58)
-- [ ] схлопнуть миграции `src/Competency.Platform/Migrations` в одну `InitialCreate` без переноса данных; `ef-pending-changes` чисто (AC-58)
-- [ ] закрепить `System.Security.Cryptography.Pkcs` 10.0.13 в `Competency.Platform` (GHSA-846f-f764-76mx, GHSA-2fmv-rv2c-59x7; решение пользователя 2026-10-21); OpenAPI и `web/src/api/schema.d.ts`
+- [x] по Task 56: `ContractVersion` 1.0.0; удалить deprecated-поля, параметры, методы и `CatalogEntryKind.Category`; `RequiredScore` не null, минимальный балл по умолчанию, убрать проверки «нет требований» / «не задан балл» (AC-57, AC-58)
+- [x] схлопнуть миграции `src/Competency.Platform/Migrations` в одну `InitialCreate` без переноса данных; `ef-pending-changes` чисто (AC-58)
+- [x] закрепить `System.Security.Cryptography.Pkcs` 10.0.13 в `Competency.Platform` (GHSA-846f-f764-76mx, GHSA-2fmv-rv2c-59x7; решение пользователя 2026-10-21); OpenAPI и `web/src/api/schema.d.ts`
 
 ### Task 59: SPA — балл всегда задан, без устаревшего
 Material risk: none
