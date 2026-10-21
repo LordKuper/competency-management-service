@@ -18,13 +18,15 @@ import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import {
+  type Employee,
   employeeQuery,
   employeeSearchQuery,
   invalidateOrgStructure,
   orgUnitQuery,
+  orgUnitTreeQuery,
 } from "../org-structure/orgStructureApi";
 import { useUnitActivation } from "../org-structure/useUnitActivation";
-import { invalidatePositions } from "../positions/positionsApi";
+import { invalidatePositions, positionQuery } from "../positions/positionsApi";
 import { EmployeePicker } from "../users/EmployeePicker";
 import { userQuery, usersQueryKey } from "../users/usersApi";
 import { ChangePositionForm } from "./ChangePositionForm";
@@ -33,7 +35,13 @@ import type { DeskItem } from "./deskApi";
 import { deskPaths, objectTitle, reasonLines, typeLabelOf } from "./deskTexts";
 import { ORG_FINDING_MUTATION, useIsFindingBusy } from "./findingBusy";
 import { LinkButton } from "./LinkButton";
+import { returnState } from "./returnLink";
 import { CompactAlert } from "./ScenarioContext";
+
+const QUEUE_RETURN = returnState({
+  to: deskPaths.orgCleanup,
+  crumb: "Навести порядок в оргструктуре",
+});
 
 interface OrgFindingProps {
   item: DeskItem;
@@ -255,6 +263,28 @@ function InactivePosition({ item }: { item: DeskItem }) {
     (employee) =>
       employee.positionId === item.object.id && employee.isActive !== false,
   );
+  const queryClient = useQueryClient();
+  const { message } = App.useApp();
+  const isBusy = useIsFindingBusy();
+  const restore = useMutation({
+    mutationKey: ORG_FINDING_MUTATION,
+    mutationFn: async () => {
+      const position = await queryClient.fetchQuery(
+        positionQuery(item.object.id),
+      );
+      return unwrap(
+        await api.POST("/api/v1/positions/{id}/activate", {
+          params: {
+            path: { id: position.id },
+            header: { "If-Match": ifMatchOf(position.version) },
+          },
+        }),
+      );
+    },
+    onSuccess: () =>
+      message.success(`Должность «${item.object.name}» восстановлена`),
+    onSettled: () => invalidatePositions(queryClient),
+  });
   if (holders.error) {
     return (
       <ErrorAlert
@@ -265,11 +295,45 @@ function InactivePosition({ item }: { item: DeskItem }) {
     );
   }
   return (
+    <Flex vertical gap="small">
+      {restore.isError && (
+        <DecisionError
+          title="Должность не восстановлена"
+          error={restore.error}
+        />
+      )}
+      <div>
+        <Button
+          type="primary"
+          loading={restore.isPending}
+          disabled={isBusy && !restore.isPending}
+          onClick={() => restore.mutate()}
+        >
+          Восстановить должность
+        </Button>
+      </div>
+      <Typography.Text type="secondary">
+        Должность вернётся в работу, сотрудники останутся на своих местах. Или
+        смените должность сотрудникам:
+      </Typography.Text>
+      <HoldersTable isLoading={holders.isPending} rows={rows} />
+    </Flex>
+  );
+}
+
+function HoldersTable({
+  isLoading,
+  rows,
+}: {
+  isLoading: boolean;
+  rows: Employee[];
+}) {
+  return (
     <Table
       size="small"
       rowKey="id"
       pagination={false}
-      loading={holders.isPending}
+      loading={isLoading}
       dataSource={rows}
       locale={{ emptyText: "Работающих сотрудников с этой должностью нет" }}
       columns={[
@@ -312,18 +376,38 @@ function UnusedPosition({ item }: { item: DeskItem }) {
       message.success(`Должность «${item.object.name}» деактивирована`),
     onSettled: () => invalidatePositions(queryClient),
   });
+  const units = useQuery(orgUnitTreeQuery);
+  const canOnboard = units.data?.some((unit) => unit.isActive) ?? false;
   return (
     <ActionWithError
       error={deactivate.isError ? deactivate.error : null}
       title="Должность не деактивирована"
     >
-      <Button
-        loading={deactivate.isPending}
-        disabled={isBusy && !deactivate.isPending}
-        onClick={() => deactivate.mutate()}
-      >
-        Деактивировать должность
-      </Button>
+      <Flex vertical gap="small">
+        <Flex gap="small" wrap>
+          {canOnboard && (
+            <LinkButton
+              type="primary"
+              to={deskPaths.onboardEmployeeWith({ positionId: item.object.id })}
+              state={QUEUE_RETURN}
+            >
+              Принять сотрудника
+            </LinkButton>
+          )}
+          <Button
+            loading={deactivate.isPending}
+            disabled={isBusy && !deactivate.isPending}
+            onClick={() => deactivate.mutate()}
+          >
+            Деактивировать должность
+          </Button>
+        </Flex>
+        {canOnboard && (
+          <Typography.Text type="secondary">
+            {`«Принять сотрудника» — откроется сценарий, должность «${item.object.name}» в нём уже выбрана; «Деактивировать» — должность перестанет предлагаться.`}
+          </Typography.Text>
+        )}
+      </Flex>
     </ActionWithError>
   );
 }
@@ -339,14 +423,27 @@ function EmptyUnit({ item }: { item: DeskItem }) {
     onError: (failure) => message.error(describeApiError(failure)),
   });
   return (
-    <Button
-      danger
-      loading={read.isPending}
-      disabled={isBusy}
-      onClick={() => read.mutate()}
-    >
-      Деактивировать подразделение
-    </Button>
+    <Flex vertical gap="small">
+      <Flex gap="small" wrap>
+        <LinkButton
+          type="primary"
+          to={deskPaths.onboardEmployeeWith({ unitId: item.object.id })}
+          state={QUEUE_RETURN}
+        >
+          Принять сотрудника
+        </LinkButton>
+        <Button
+          loading={read.isPending}
+          disabled={isBusy}
+          onClick={() => read.mutate()}
+        >
+          Деактивировать подразделение
+        </Button>
+      </Flex>
+      <Typography.Text type="secondary">
+        {`«Принять сотрудника» — откроется сценарий, подразделение «${item.object.name}» в нём уже выбрано; «Деактивировать» — подразделение исчезнет из дерева.`}
+      </Typography.Text>
+    </Flex>
   );
 }
 
