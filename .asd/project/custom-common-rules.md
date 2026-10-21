@@ -22,3 +22,7 @@ Phase-scoped rules go elsewhere — design constraints to `custom-design-rules.m
 ## No financial data
 
 - The system stores no financial information: salaries, salary ranges, budgets. No field, column, endpoint or screen carries it.
+
+## No backward compatibility before 1.0
+
+- Until release 1.0 the project keeps no backward compatibility. The API contract version stays 1.0.0 and is not bumped before release. Obsolete surface is deleted, never marked deprecated. DB migrations are squashed and no data-migration code is written. (`004-role-desktop-user-journeys#AC-58`)
