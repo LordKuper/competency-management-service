@@ -114,12 +114,6 @@ export function ReferenceGroup({ groups }: { groups: DeskGroupView[] }) {
           </Typography.Title>
           <Tag>{NUMBER.format(total)}</Tag>
         </Flex>
-        <Typography.Text
-          type="secondary"
-          style={{ fontSize: token.fontSizeSM }}
-        >
-          Не требует вашего действия и не входит в счётчик
-        </Typography.Text>
       </Flex>
       {isOpen &&
         groups.map((group) => {
