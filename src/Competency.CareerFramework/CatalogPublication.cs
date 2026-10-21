@@ -69,7 +69,8 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
 
     /// <summary>
     /// Plans publishing the version by the right of the responsible HR of the matrix unit, whoever starts it; without that HR no draft
-    /// may be approved. The drafts are set active on the tracked entries.
+    /// may be approved. A responsible HR always holds the HR role, since an assignment acts only through such an account.
+    /// The drafts are set active on the tracked entries.
     /// </summary>
     /// <param name="version">The version, with its matrix.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
@@ -78,7 +79,7 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
     {
         var hrId = await roles.ResponsibleHrAsync(version.Matrix.OrgUnitId, cancellationToken);
         var approver = hrId is { } id
-            ? await CatalogViewer.LoadAsync(id, id == actor.UserId && actor.Role == PlatformClaims.GlobalAdminRole, roles, cancellationToken)
+            ? await CatalogViewer.LoadAsync(id, id == actor.UserId && actor.IsGlobalAdmin(), isHr: true, roles, cancellationToken)
             : null;
 
         var blocks = await NotInactiveAsync<CompetencyBlock>([.. version.Content.SharedBlocks.Select(block => block.BlockId)], cancellationToken);

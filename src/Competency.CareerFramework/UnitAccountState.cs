@@ -24,6 +24,11 @@ internal enum UnitAccountState
     Blocked,
 
     /// <summary>
+    /// The account of an assigned HR can act but lacks the HR role, so the assignment does not act.
+    /// </summary>
+    NoHrRole,
+
+    /// <summary>
     /// The account can act.
     /// </summary>
     Active,

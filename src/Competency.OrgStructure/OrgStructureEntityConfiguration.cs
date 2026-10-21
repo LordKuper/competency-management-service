@@ -14,7 +14,7 @@ internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationCont
 {
     private const string TrigramExtension = "pg_trgm";
     private const string FullNameSql = "last_name || ' ' || first_name || coalesce(' ' || middle_name, '')";
-    private const string EmployeeAccountsSql = "SELECT employee_id, email, is_blocked FROM users WHERE employee_id IS NOT NULL";
+    private const string EmployeeAccountsSql = "SELECT employee_id, email, is_blocked, NOT is_blocked AND password_hash IS NOT NULL AND is_hr AS can_be_hr FROM users WHERE employee_id IS NOT NULL";
 
     public void Configure(ModelBuilder modelBuilder)
     {
@@ -89,6 +89,7 @@ internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationCont
             entity.Property(e => e.EmployeeId).HasColumnName("employee_id");
             entity.Property(e => e.Email).HasColumnName("email");
             entity.Property(e => e.IsBlocked).HasColumnName("is_blocked");
+            entity.Property(e => e.CanBeHr).HasColumnName("can_be_hr");
         });
     }
 

@@ -6,7 +6,8 @@ namespace Competency.UserManagement;
 
 /// <summary>
 /// What the accounts expect of a global administrator, who alone manages them: invitations whose link no longer works or soon will not,
-/// user accounts bound to no employee, and unit heads without an account that can act. Other users get nothing from it.
+/// accounts bound to no employee that are expected to have one, and unit heads without an account that can act, with the prerequisite that an
+/// account with the HR role can act. Other users get nothing from it.
 /// </summary>
 internal sealed class UserManagementDeskSource(ICurrentActor actor, AppDbContext context, IEmployeeDirectory employees, TimeProvider time) : IDeskSource
 {
@@ -18,7 +19,7 @@ internal sealed class UserManagementDeskSource(ICurrentActor actor, AppDbContext
     /// <inheritdoc />
     public async Task<DeskReport> FindAsync(CancellationToken cancellationToken)
     {
-        if (actor.Role != PlatformClaims.GlobalAdminRole)
+        if (!actor.IsGlobalAdmin())
         {
             return new DeskReport([], []);
         }
@@ -38,14 +39,19 @@ internal sealed class UserManagementDeskSource(ICurrentActor actor, AppDbContext
             [
                 .. headedUnits.Select(unit => HeadFinding(snapshot, unit, accountOfHead.GetValueOrDefault(unit.HeadEmployeeId!.Value), people)).OfType<DeskFinding>(),
                 .. accounts.Select(account => InvitationFinding(account, people, now)).OfType<DeskFinding>(),
-                .. accounts.Where(account => account is { Role: UserRole.User, Status: { EmployeeId: null, IsBlocked: false } })
-                    .Select(account => new DeskFinding(DeskKind.AccountWithoutEmployee, AccountObject(account, people), IsAction: true)),
+                .. accounts.Where(IsExpectedToHaveEmployee)
+                    .Select(account => new DeskFinding(
+                        DeskKind.AccountWithoutEmployee,
+                        AccountObject(account, people),
+                        IsAction: true,
+                        Details: account.Status.IsHr ? new DeskDetails(HasHrRole: true) : null)),
             ],
-            []);
+            accounts.Any(account => account.Status is { IsHr: true, IsActive: true }) ? [DeskPrerequisite.HrAccount] : []);
     }
 
     /// <summary>
-    /// Reads, in one query, the invited accounts that are not blocked, the user accounts bound to no employee and the accounts of the given heads.
+    /// Reads, in one query, the invited accounts that are not blocked, the accounts bound to no employee that are expected to have one,
+    /// the accounts with the HR role that can act and the accounts of the given heads.
     /// </summary>
     private async Task<List<AccountRow>> ReadAccountsAsync(HashSet<Guid> headIds, CancellationToken cancellationToken)
     {
@@ -54,11 +60,12 @@ internal sealed class UserManagementDeskSource(ICurrentActor actor, AppDbContext
             .Set<AppUser>()
             .AsNoTracking()
             .Where(user => (user.PasswordHash == null && !user.IsBlocked)
-                || (user.Role == UserRole.User && user.EmployeeId == null && !user.IsBlocked)
+                || ((!user.IsGlobalAdmin || user.IsHr) && user.EmployeeId == null && !user.IsBlocked)
+                || (user.IsHr && !user.IsBlocked && user.PasswordHash != null)
                 || (user.EmployeeId != null && heads.Contains(user.EmployeeId.Value)))
             .Select(user => new AccountRow(
-                new UserStatus(user.Id, user.Email!, user.EmployeeId, user.IsBlocked, user.PasswordHash != null, user.Version),
-                user.Role,
+                new UserStatus(user.Id, user.Email!, user.EmployeeId, user.IsBlocked, user.PasswordHash != null, user.IsHr, user.Version),
+                user.IsGlobalAdmin,
                 user.LinkTokenHash != null && user.LinkSecurityStamp == user.SecurityStamp,
                 user.LinkExpiresAt))
             .ToListAsync(cancellationToken);
@@ -123,6 +130,13 @@ internal sealed class UserManagementDeskSource(ICurrentActor actor, AppDbContext
             Invitation: new DeskInvitation(account.Status.Id, account.Status.Version));
     }
 
+    /// <summary>
+    /// Whether an account that is not blocked lacks the employee it is expected to have: any account but one with the global administrator
+    /// role alone, which is meant to stay unbound; an HR account needs one to be assigned as a responsible HR.
+    /// </summary>
+    private static bool IsExpectedToHaveEmployee(AccountRow account) =>
+        account.Status is { EmployeeId: null, IsBlocked: false } && (!account.IsGlobalAdmin || account.Status.IsHr);
+
     private static DeskObject AccountObject(AccountRow account, IReadOnlyDictionary<Guid, EmployeeStatus> people) => new(
         DeskObjectType.UserAccount,
         account.Status.Id,
@@ -133,8 +147,8 @@ internal sealed class UserManagementDeskSource(ICurrentActor actor, AppDbContext
     /// The facts of an account the desk needs, beyond those other modules rely on.
     /// </summary>
     /// <param name="Status">The facts other modules rely on, with the one rule of an account that can act.</param>
-    /// <param name="Role">The account's role.</param>
+    /// <param name="IsGlobalAdmin">Whether the account has the global administrator role.</param>
     /// <param name="IsLinkCurrent">Whether the account has a link issued under its current security stamp.</param>
     /// <param name="LinkExpiresAt">When the account's link expires; null when it has none.</param>
-    private sealed record AccountRow(UserStatus Status, UserRole Role, bool IsLinkCurrent, DateTimeOffset? LinkExpiresAt);
+    private sealed record AccountRow(UserStatus Status, bool IsGlobalAdmin, bool IsLinkCurrent, DateTimeOffset? LinkExpiresAt);
 }

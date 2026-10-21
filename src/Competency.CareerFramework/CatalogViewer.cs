@@ -5,7 +5,8 @@ using Competency.Platform;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// What the signed-in user may see and do in the career catalogues, from their account role and their process roles at the moment of asking.
+/// What the signed-in user may see and do in the career catalogues, from their account roles and their process roles at the moment of asking.
+/// An HR is an account with the HR role, whatever its assignments; a responsible HR of a unit is the one its assignment names.
 /// Global administrators and every HR keep the entries no unit keeps, and a unit head proposes drafts of them. A track is kept by global
 /// administrators and the responsible HR of its unit, and its unit's head edits it while it is a draft; a level goes with its track.
 /// Every HR sees active and inactive entries. A draft of no unit is seen by its author, every HR and global administrators; a draft track or
@@ -15,9 +16,10 @@ namespace Competency.CareerFramework;
 /// </summary>
 /// <param name="UserId">The signed-in account.</param>
 /// <param name="IsAdmin">Whether the account is a global administrator.</param>
+/// <param name="IsHr">Whether the account has the HR role, which keeps the entries of no unit; an assignment neither gives nor needs it.</param>
 /// <param name="HeadedUnitIds">The units the account heads.</param>
 /// <param name="HrUnitIds">The units the account is the responsible HR of.</param>
-internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Guid> HeadedUnitIds, IReadOnlySet<Guid> HrUnitIds)
+internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, bool IsHr, IReadOnlySet<Guid> HeadedUnitIds, IReadOnlySet<Guid> HrUnitIds)
 {
     /// <summary>
     /// The entries of the matrix versions in work the user reads through the approval route rather than as a keeper or head of their unit.
@@ -31,11 +33,6 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Gui
     public IReadOnlySet<Guid> HeadedSubtreeIds { get; init; } = new HashSet<Guid>();
 
     /// <summary>
-    /// Whether the user is an HR: the responsible HR of at least one unit.
-    /// </summary>
-    public bool IsHr => HrUnitIds.Count > 0;
-
-    /// <summary>
     /// Works out the signed-in user's rights; a writer calls it under the catalogue lock, so the rights hold until it commits.
     /// </summary>
     /// <param name="actor">The signed-in user.</param>
@@ -43,23 +40,25 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, IReadOnlySet<Gui
     /// <param name="cancellationToken">Cancels the lookups.</param>
     /// <returns>The user's rights.</returns>
     public static Task<CatalogViewer> LoadAsync(ICurrentActor actor, ProcessRoles roles, CancellationToken cancellationToken) =>
-        LoadAsync(actor.UserId ?? Guid.Empty, actor.Role == PlatformClaims.GlobalAdminRole, roles, cancellationToken);
+        LoadAsync(actor.UserId ?? Guid.Empty, actor.IsGlobalAdmin(), actor.IsHr(), roles, cancellationToken);
 
     /// <summary>
     /// Works out the rights of an account other than the signed-in one, such as the responsible HR whose right publishes a matrix version.
     /// </summary>
     /// <param name="userId">The account.</param>
     /// <param name="isAdmin">Whether the account is a global administrator.</param>
+    /// <param name="isHr">Whether the account has the HR role.</param>
     /// <param name="roles">The process roles service.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
     /// <returns>The account's rights.</returns>
-    public static async Task<CatalogViewer> LoadAsync(Guid userId, bool isAdmin, ProcessRoles roles, CancellationToken cancellationToken)
+    public static async Task<CatalogViewer> LoadAsync(Guid userId, bool isAdmin, bool isHr, ProcessRoles roles, CancellationToken cancellationToken)
     {
         var headedUnits = await roles.HeadedUnitsAsync(userId, cancellationToken);
         var hrUnits = await roles.HrUnitsAsync(userId, cancellationToken);
         return new CatalogViewer(
             userId,
             isAdmin,
+            isHr,
             headedUnits.Select(unit => unit.Id).ToHashSet(),
             hrUnits.Select(unit => unit.Id).ToHashSet());
     }

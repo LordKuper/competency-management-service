@@ -27,7 +27,7 @@ internal sealed class AdminBootstrapper(
     /// <exception cref="InvalidOperationException">No administrator is active and the environment does not provide a usable one.</exception>
     public async Task EnsureAdminAsync(CancellationToken cancellationToken)
     {
-        if (await context.Set<AppUser>().AnyAsync(user => user.Role == UserRole.GlobalAdmin && !user.IsBlocked && user.PasswordHash != null, cancellationToken))
+        if (await context.Set<AppUser>().AnyAsync(user => user.IsGlobalAdmin && !user.IsBlocked && user.PasswordHash != null, cancellationToken))
         {
             return;
         }
@@ -44,7 +44,7 @@ internal sealed class AdminBootstrapper(
             throw new InvalidOperationException($"'{EmailSetting}' is not a valid e-mail address of at most {AppUser.EmailMaxLength} characters.");
         }
 
-        var administrator = new AppUser { Role = UserRole.GlobalAdmin };
+        var administrator = new AppUser { IsGlobalAdmin = true };
         administrator.SetEmail(email);
         var result = await users.CreateAsync(administrator, password);
         if (!result.Succeeded)

@@ -16,6 +16,7 @@ namespace Competency.Platform;
 /// <param name="AddedLevels">The levels a track gained since its matrix was published, in track order.</param>
 /// <param name="RemovedLevels">The levels a published matrix lists that its track no longer has in use, in matrix order.</param>
 /// <param name="MovedLevels">The levels whose place in the track changed since its matrix was published, in track order.</param>
+/// <param name="HasHrRole">Whether the account the reason is about has the HR role.</param>
 public sealed record DeskDetails(
     int? EmployeeCount = null,
     int? Step = null,
@@ -29,4 +30,5 @@ public sealed record DeskDetails(
     int? LevelCount = null,
     IReadOnlyList<DeskObject>? AddedLevels = null,
     IReadOnlyList<DeskObject>? RemovedLevels = null,
-    IReadOnlyList<DeskObject>? MovedLevels = null);
+    IReadOnlyList<DeskObject>? MovedLevels = null,
+    bool? HasHrRole = null);

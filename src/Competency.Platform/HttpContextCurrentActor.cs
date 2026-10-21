@@ -9,9 +9,13 @@ internal sealed class HttpContextCurrentActor(IHttpContextAccessor accessor) : I
 {
     public Guid? UserId => ParseGuid(FindClaim(PlatformClaims.Subject));
 
-    public string? Role => FindClaim(PlatformClaims.Role);
+    public string? Role => UserId is null
+        ? null
+        : PlatformClaims.JournalRole(accessor.HttpContext!.User.FindAll(PlatformClaims.Role).Select(claim => claim.Value));
 
     public string? RequestId => accessor.HttpContext?.Items[RequestIdMiddleware.ItemKey] as string;
+
+    public bool IsInRole(string role) => accessor.HttpContext?.User.HasClaim(PlatformClaims.Role, role) == true;
 
     private string? FindClaim(string claimType) => accessor.HttpContext?.User.FindFirst(claimType)?.Value;
 

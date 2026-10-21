@@ -10,9 +10,10 @@ using NpgsqlTypes;
 namespace Competency.OrgStructure;
 
 /// <summary>
-/// The employee API. Any signed-in user reads the restricted projection of working employees; only global administrators
-/// read the full projection and change employees, under the tree lock and with <c>If-Match</c>.
-/// Dismissal and deletion cascade to the units the employee heads and to the bound account in the same transaction,
+/// The employee API. Any signed-in user reads the restricted projection of working employees; global administrators and HR
+/// read the full projection of every employee, and only global administrators list the candidates for responsible HR and change employees,
+/// under the tree lock and with <c>If-Match</c>.
+/// Dismissal and deletion cascade to the units the employee heads, their responsible HR assignments and the bound account in the same transaction,
 /// and administrators preview exactly those changes first. A transfer likewise takes the employee off the headship of the unit they leave.
 /// </summary>
 internal static class EmployeeEndpoints
@@ -28,7 +29,7 @@ internal static class EmployeeEndpoints
             .RequireAuthorization(AuthorizationPolicies.Authenticated)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        readers.MapGet(string.Empty, ListAsync).WithName("ListEmployees");
+        readers.MapGet(string.Empty, ListAsync).WithName("ListEmployees").ProducesProblem(StatusCodes.Status403Forbidden);
         readers.MapGet("/{id:guid}", GetAsync).WithName("GetEmployee").ProducesETag().ProducesProblem(StatusCodes.Status404NotFound);
 
         var administrators = readers.MapGroup(string.Empty)
@@ -51,7 +52,7 @@ internal static class EmployeeEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict);
     }
 
-    private static async Task<Results<Ok<PageResponse<EmployeeResponse>>, ValidationProblem>> ListAsync(
+    private static async Task<Results<Ok<PageResponse<EmployeeResponse>>, ValidationProblem, ProblemHttpResult>> ListAsync(
         [AsParameters] EmployeeListQuery query,
         AppDbContext context,
         ICurrentActor actor,
@@ -63,10 +64,17 @@ internal static class EmployeeEndpoints
             return TypedResults.ValidationProblem(errors);
         }
 
+        if (query.HrCandidate && !actor.IsGlobalAdmin())
+        {
+            return Rejection.Forbidden();
+        }
+
+        var accounts = context.Set<EmployeeAccount>();
         var employees = context.Set<Employee>()
             .AsNoTracking()
             .VisibleTo(actor)
-            .WhereIf(query.IsActive is not null, employee => employee.IsActive == query.IsActive);
+            .WhereIf(query.IsActive is not null, employee => employee.IsActive == query.IsActive)
+            .WhereIf(query.HrCandidate, employee => employee.IsActive && accounts.Any(account => account.EmployeeId == employee.Id && account.CanBeHr));
         if (query.OrgUnitId is { } unitId)
         {
             var subtreeIds = context.DescendantIds(unitId);
@@ -77,7 +85,7 @@ internal static class EmployeeEndpoints
 
         if (TextSearch.Normalize(query.Q) is { } text)
         {
-            employees = employees.Matching(text);
+            employees = employees.Matching(text, accounts, query.HrCandidate);
         }
 
         var page = await employees
@@ -90,7 +98,7 @@ internal static class EmployeeEndpoints
     }
 
     /// <summary>
-    /// Returns the projection for the caller's role; the <c>ETag</c> header is sent to global administrators only, because only they may change employees.
+    /// Returns the projection for the caller's roles; the <c>ETag</c> header comes with the full projection only, which carries the version.
     /// </summary>
     private static async Task<Results<Ok<EmployeeResponse>, NotFound>> GetAsync(
         Guid id,
@@ -223,6 +231,7 @@ internal static class EmployeeEndpoints
         Guid id,
         AppDbContext context,
         IEmployeeAccounts accounts,
+        IHrAssignments hrAssignments,
         CancellationToken cancellationToken)
     {
         if (!await context.Set<Employee>().AnyAsync(candidate => candidate.Id == id, cancellationToken))
@@ -230,11 +239,11 @@ internal static class EmployeeEndpoints
             return TypedResults.NotFound();
         }
 
-        return TypedResults.Ok((await EmployeeImpact.OfAsync(context, accounts, id, cancellationToken)).ToResponse());
+        return TypedResults.Ok((await EmployeeImpact.OfAsync(context, accounts, hrAssignments, id, cancellationToken)).ToResponse());
     }
 
     /// <summary>
-    /// Marks the employee as not working, takes them off every unit they head and blocks their account, all in one transaction;
+    /// Marks the employee as not working, takes them off every unit they head and every responsible HR assignment and blocks their account, all in one transaction;
     /// refused when the account is the last active administrator.
     /// </summary>
     private static async Task<Results<Ok<EmployeeResponse>, NotFound, ProblemHttpResult>> DismissAsync(
@@ -242,6 +251,7 @@ internal static class EmployeeEndpoints
         IfMatch ifMatch,
         AppDbContext context,
         IEmployeeAccounts accounts,
+        IHrAssignments hrAssignments,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -258,13 +268,13 @@ internal static class EmployeeEndpoints
         }
 
         await accounts.LockAdministratorsAsync(cancellationToken);
-        var impact = await EmployeeImpact.OfAsync(context, accounts, id, cancellationToken);
+        var impact = await EmployeeImpact.OfAsync(context, accounts, hrAssignments, id, cancellationToken);
         if (impact.IsRefused)
         {
             return Rejection.Conflict(EmployeeImpact.LastAdministratorMessage);
         }
 
-        await impact.ApplyAsync(id, accounts, unbindAccount: false, cancellationToken);
+        await impact.ApplyAsync(id, accounts, hrAssignments, unbindAccount: false, cancellationToken);
         ifMatch.ApplyTo(context, employee);
         employee.IsActive = false;
 
@@ -272,7 +282,7 @@ internal static class EmployeeEndpoints
     }
 
     /// <summary>
-    /// Marks a dismissed employee as working again; the account stays blocked and the units keep their new heads.
+    /// Marks a dismissed employee as working again; the account stays blocked, the units keep their new heads and the HR assignments are not restored.
     /// </summary>
     private static async Task<Results<Ok<EmployeeResponse>, NotFound, ProblemHttpResult>> RehireAsync(
         Guid id,
@@ -305,7 +315,7 @@ internal static class EmployeeEndpoints
     }
 
     /// <summary>
-    /// Deletes the employee for good, after taking them off every unit they head and blocking and detaching their account, all in one transaction;
+    /// Deletes the employee for good, after taking them off every unit they head and every responsible HR assignment and blocking and detaching their account, all in one transaction;
     /// refused when the account is the last active administrator.
     /// </summary>
     private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> DeleteAsync(
@@ -313,6 +323,7 @@ internal static class EmployeeEndpoints
         IfMatch ifMatch,
         AppDbContext context,
         IEmployeeAccounts accounts,
+        IHrAssignments hrAssignments,
         CancellationToken cancellationToken)
     {
         await using var transaction = await context.BeginExclusiveAsync(cancellationToken);
@@ -323,13 +334,13 @@ internal static class EmployeeEndpoints
         }
 
         await accounts.LockAdministratorsAsync(cancellationToken);
-        var impact = await EmployeeImpact.OfAsync(context, accounts, id, cancellationToken);
+        var impact = await EmployeeImpact.OfAsync(context, accounts, hrAssignments, id, cancellationToken);
         if (impact.IsRefused)
         {
             return Rejection.Conflict(EmployeeImpact.LastAdministratorMessage);
         }
 
-        await impact.ApplyAsync(id, accounts, unbindAccount: true, cancellationToken);
+        await impact.ApplyAsync(id, accounts, hrAssignments, unbindAccount: true, cancellationToken);
         ifMatch.ApplyTo(context, employee);
         context.Remove(employee);
 
@@ -355,15 +366,16 @@ internal static class EmployeeEndpoints
     /// <summary>
     /// Narrows the employees to those whose full name contains the text, or whose name parts and position together match it as Russian full text,
     /// so one query may mix name and position words. A generated column cannot read another table, so the employee's vector is joined
-    /// with its position's vector at query time.
+    /// with its position's vector at query time. When picking a responsible HR, the account's e-mail containing the text matches too.
     /// </summary>
-    private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, string text)
+    private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, string text, IQueryable<EmployeeAccount> accounts, bool matchesEmail)
     {
         var pattern = ListRequest.ContainsPattern(text);
         return employees.Where(employee =>
             EF.Functions.ILike(employee.FullName, pattern, ListRequest.LikeEscape)
             || employee.SearchVector.Concat(employee.Position.SearchVector)
-                .Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)));
+                .Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text))
+            || (matchesEmail && accounts.Any(account => account.EmployeeId == employee.Id && EF.Functions.ILike(account.Email, pattern, ListRequest.LikeEscape))));
     }
 
     /// <summary>

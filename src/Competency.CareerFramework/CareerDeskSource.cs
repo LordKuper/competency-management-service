@@ -27,13 +27,12 @@ internal sealed class CareerDeskSource(
             return new DeskReport([], []);
         }
 
-        var assigneeOf = await roles.AllAssigneesAsync(cancellationToken);
-        var accounts = new Dictionary<Guid, UserStatus>(await users.FindManyAsync([userId, .. assigneeOf.Values.Distinct()], cancellationToken));
-        if (accounts.GetValueOrDefault(userId) is not { IsActive: true } account)
+        if (await users.FindAsync(userId, cancellationToken) is not { IsActive: true } account)
         {
             return new DeskReport([], []);
         }
 
+        var assigneeOf = await roles.AllAssigneesAsync(cancellationToken);
         var snapshot = await employees.FindOrgSnapshotAsync(cancellationToken);
         var hrUnitIds = ProcessRoles.HrUnits(snapshot, assigneeOf, account).Select(unit => unit.Id).ToHashSet();
         var mayHead = account.EmployeeId is { } employeeId && snapshot.Units.Values.Any(unit => unit.HeadEmployeeId == employeeId);
@@ -41,30 +40,46 @@ internal sealed class CareerDeskSource(
             ? [.. snapshot.Units.Values.Where(unit => unit.IsActive).Select(unit => unit.HeadEmployeeId).OfType<Guid>().Distinct()]
             : [];
         var people = new Dictionary<Guid, EmployeeStatus>();
-        await AddEmployeesAsync([.. headIds, .. accounts.Values.Select(status => status.EmployeeId).OfType<Guid>()], people, cancellationToken);
+        List<Guid> namedIds = [.. headIds, .. assigneeOf.Values];
+        if (account.EmployeeId is { } ownId)
+        {
+            namedIds.Add(ownId);
+        }
+
+        await AddEmployeesAsync(namedIds, people, cancellationToken);
         var self = account.EmployeeId is { } selfId ? people.GetValueOrDefault(selfId) : null;
         var viewer = new CatalogViewer(
             userId,
-            actor.Role == PlatformClaims.GlobalAdminRole,
+            actor.IsGlobalAdmin(),
+            actor.IsHr(),
             ProcessRoles.HeadedUnits(snapshot.Units.Values, account, self).Select(unit => unit.Id).ToHashSet(),
             hrUnitIds);
-        var isInvolved = viewer.HeadedUnitIds.Count > 0 || viewer.IsHr;
+        var isInvolved = viewer.HeadedUnitIds.Count > 0 || viewer.HrUnitIds.Count > 0;
 
-        var headAccountOf = isInvolved ? await ActingHeadsAsync(snapshot, headIds, people, accounts, cancellationToken) : new Dictionary<Guid, Guid>();
+        var accountsByEmployee = await AccountsByEmployeeAsync(
+            [.. viewer.IsAdmin || isInvolved ? assigneeOf.Values : [], .. isInvolved ? headIds : []],
+            cancellationToken);
+        var accounts = new Dictionary<Guid, UserStatus> { [account.Id] = account };
+        foreach (var bound in accountsByEmployee.Values)
+        {
+            accounts.TryAdd(bound.Id, bound);
+        }
+
+        var headAccountOf = isInvolved ? ActingHeads(snapshot, people, accountsByEmployee) : new Dictionary<Guid, Guid>();
         var tracks = await TracksAsync(cancellationToken);
         var sees = viewer.Sees<CareerTrack>().Compile();
         DeskPrerequisite[] prerequisites = tracks.Any(row => sees(row.Track)) ? [DeskPrerequisite.VisibleTrack] : [];
         var versions = isInvolved ? await VersionsAsync(cancellationToken) : [];
         var lastDecisionOf = await LastDecisionsAsync(versions, cancellationToken);
         var published = await PublishedAsync(versions, viewer, cancellationToken);
-        var catalog = viewer.IsAdmin || isInvolved ? await CatalogAsync(viewer, tracks, published, cancellationToken) : CareerDeskCatalog.Empty;
+        var catalog = viewer.IsAdmin || viewer.IsHr || isInvolved ? await CatalogAsync(viewer, tracks, published, cancellationToken) : CareerDeskCatalog.Empty;
         await AddAccountsAsync(
             [.. versions.Where(version => version.Status != MatrixVersionStatus.Published).Select(version => version.AuthorId), .. catalog.Drafts.Select(draft => draft.AuthorId).OfType<Guid>()],
             accounts,
             people,
             cancellationToken);
 
-        var scan = new CareerDeskScan(viewer, snapshot, assigneeOf, accounts, people, headAccountOf, tracks, versions, lastDecisionOf, time.GetUtcNow());
+        var scan = new CareerDeskScan(viewer, snapshot, assigneeOf, accounts, accountsByEmployee, people, headAccountOf, tracks, versions, lastDecisionOf, time.GetUtcNow());
         return new DeskReport(
             [
                 .. scan.UnitFindings(),
@@ -112,26 +127,23 @@ internal sealed class CareerDeskSource(
     private static bool IsDraft(CatalogEntry entry) => entry.Status == CatalogStatus.Draft;
 
     /// <summary>
-    /// Finds the accounts of the heads of the active units and works out, for each unit, whether its head can act; the accounts join those the findings may name.
+    /// Works out, for each unit, whether its head can act, from the accounts of the heads read beforehand.
     /// </summary>
-    private async Task<Dictionary<Guid, Guid>> ActingHeadsAsync(
+    private static Dictionary<Guid, Guid> ActingHeads(
         OrgSnapshot snapshot,
-        List<Guid> headIds,
         IReadOnlyDictionary<Guid, EmployeeStatus> people,
-        Dictionary<Guid, UserStatus> accounts,
-        CancellationToken cancellationToken)
-    {
-        var accountsByEmployee = await users.FindByEmployeeIdsAsync(headIds, cancellationToken);
-        foreach (var headAccount in accountsByEmployee.Values)
-        {
-            accounts.TryAdd(headAccount.Id, headAccount);
-        }
+        IReadOnlyDictionary<Guid, UserStatus> accountsByEmployee) => snapshot.Units.Values
+        .Select(unit => (unit.Id, AccountId: ProcessRoles.ActingHeadAccount(unit, people, accountsByEmployee)))
+        .Where(pair => pair.AccountId is not null)
+        .ToDictionary(pair => pair.Id, pair => pair.AccountId!.Value);
 
-        return snapshot.Units.Values
-            .Select(unit => (unit.Id, AccountId: ProcessRoles.ActingHeadAccount(unit, people, accountsByEmployee)))
-            .Where(pair => pair.AccountId is not null)
-            .ToDictionary(pair => pair.Id, pair => pair.AccountId!.Value);
-    }
+    /// <summary>
+    /// Reads, in one query, the accounts bound to the assigned HR employees and to the heads the findings need; none when none is needed.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<Guid, UserStatus>> AccountsByEmployeeAsync(IReadOnlyCollection<Guid> employeeIds, CancellationToken cancellationToken) =>
+        employeeIds.Count == 0
+            ? new Dictionary<Guid, UserStatus>()
+            : await users.FindByEmployeeIdsAsync([.. employeeIds.Distinct()], cancellationToken);
 
     /// <summary>
     /// Every track with its levels other than inactive ones and the links of its levels, in one query.

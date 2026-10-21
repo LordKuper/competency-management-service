@@ -42,10 +42,10 @@ internal static class ActiveAdministrators
     /// <returns>A task that completes once the lock is held.</returns>
     public static async Task LockAsync(this AppDbContext context, CancellationToken cancellationToken) =>
         await context.Database.ExecuteSqlAsync(
-            $"SELECT id FROM users WHERE role = {nameof(UserRole.GlobalAdmin)} AND NOT is_blocked AND password_hash IS NOT NULL ORDER BY id FOR UPDATE",
+            $"SELECT id FROM users WHERE is_global_admin AND NOT is_blocked AND password_hash IS NOT NULL ORDER BY id FOR UPDATE",
             cancellationToken);
 
-    public static bool IsActiveAdministrator(this AppUser user) => user.Role == UserRole.GlobalAdmin && !user.IsBlocked && !user.IsInvited;
+    public static bool IsActiveAdministrator(this AppUser user) => user.IsGlobalAdmin && !user.IsBlocked && !user.IsInvited;
 
     /// <summary>
     /// Whether another active administrator exists, so the given one may be blocked or demoted; call it under the lock of <see cref="BeginExclusiveAsync"/> or <see cref="LockAsync"/>.
@@ -56,6 +56,6 @@ internal static class ActiveAdministrators
     /// <returns><see langword="true"/> when at least one other active administrator exists.</returns>
     public static Task<bool> HasOtherAsync(this AppDbContext context, Guid userId, CancellationToken cancellationToken) =>
         context.Set<AppUser>().AnyAsync(
-            user => user.Role == UserRole.GlobalAdmin && !user.IsBlocked && user.PasswordHash != null && user.Id != userId,
+            user => user.IsGlobalAdmin && !user.IsBlocked && user.PasswordHash != null && user.Id != userId,
             cancellationToken);
 }

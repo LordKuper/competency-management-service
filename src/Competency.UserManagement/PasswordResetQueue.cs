@@ -91,7 +91,7 @@ internal sealed class PasswordResetQueue(
 
         var token = user.IssueLink(now, links.Value.PasswordResetLifetime);
         audit.Stage(
-            new AuditEntry(RequestedAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString(), RequestId: requestId),
+            new AuditEntry(RequestedAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.JournalRole, RequestId: requestId),
             context);
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);

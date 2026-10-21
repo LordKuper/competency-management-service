@@ -10,15 +10,15 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The API of the HR assigned to a unit. Any signed-in user reads the assigned and inherited HR of a unit they can see; only global
-/// administrators assign and remove, under the exclusive tree lock taken first, which blocking an account also takes, so the account
-/// checked as able to act stays so until the assignment commits.
+/// The API of the employee assigned to a unit as its responsible HR. Any signed-in user reads the assigned and inherited HR of a unit they
+/// can see; only global administrators assign and remove, under the exclusive tree lock taken first, which dismissing or deleting an employee
+/// and changing the roles, binding or block of an account also take, so the employee and account checked stay so until the assignment commits.
 /// </summary>
 internal static class OrgUnitHrEndpoints
 {
     private const string Route = "/api/v1/career/org-units/{id:guid}/hr";
     private const string Tag = "Career";
-    private const string UserField = "userId";
+    private const string EmployeeField = "employeeId";
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -39,10 +39,9 @@ internal static class OrgUnitHrEndpoints
     }
 
     /// <summary>
-    /// A deactivated unit is visible to global administrators only. Global administrators also see assignments whose account cannot act,
-    /// with the flag that says so. Other users see only assignments whose account can act, without the flag: an own assignment whose account
-    /// cannot act leaves the unit without an HR, so neither it nor the inherited one is shown, and an inherited one whose account cannot act
-    /// is not shown either.
+    /// A deactivated unit is visible to global administrators only. Global administrators also see assignments that do not act, with the
+    /// account that says why. Other users see only assignments that act, without the account: an own assignment that does not act leaves the
+    /// unit without an HR, so neither it nor the inherited one is shown, and an inherited one that does not act is not shown either.
     /// </summary>
     private static async Task<Results<Ok<OrgUnitHrResponse>, NotFound>> GetAsync(
         Guid id,
@@ -53,7 +52,7 @@ internal static class OrgUnitHrEndpoints
         CancellationToken cancellationToken)
     {
         var ancestry = await employees.FindAncestryAsync(id, cancellationToken);
-        var isAdmin = actor.Role == PlatformClaims.GlobalAdminRole;
+        var isAdmin = actor.IsGlobalAdmin();
         if (ancestry is not [var unit, ..] || (!unit.IsActive && !isAdmin))
         {
             return TypedResults.NotFound();
@@ -62,7 +61,7 @@ internal static class OrgUnitHrEndpoints
         var ancestryIds = ancestry.Select(candidate => candidate.Id).ToList();
         var assigneeOf = await context.Set<OrgUnitHr>()
             .Where(assignment => ancestryIds.Contains(assignment.OrgUnitId))
-            .ToDictionaryAsync(assignment => assignment.OrgUnitId, assignment => assignment.UserId, cancellationToken);
+            .ToDictionaryAsync(assignment => assignment.OrgUnitId, assignment => assignment.EmployeeId, cancellationToken);
         var inheritedFrom = ancestry.Skip(1).FirstOrDefault(candidate => assigneeOf.ContainsKey(candidate.Id));
 
         var assigned = await DescribeAsync(unit, assigneeOf, employees, users, cancellationToken);
@@ -72,16 +71,14 @@ internal static class OrgUnitHrEndpoints
             return TypedResults.Ok(new OrgUnitHrResponse(assigned, inherited));
         }
 
-        return TypedResults.Ok(assigned is { IsActive: false }
+        return TypedResults.Ok(assigned is not null && !Acts(assigned)
             ? new OrgUnitHrResponse(null, null)
-            : new OrgUnitHrResponse(AbleToAct(assigned), AbleToAct(inherited)));
-
-        static OrgUnitHrPersonResponse? AbleToAct(OrgUnitHrPersonResponse? person) =>
-            person is { IsActive: true } ? person with { IsActive = null } : null;
+            : new OrgUnitHrResponse(Acting(assigned), Acting(inherited)));
     }
 
     /// <summary>
-    /// Assigns an account that can act as the unit's HR, replacing the unit's previous assignment; assigning the current HR again changes nothing.
+    /// Assigns an employee as the unit's responsible HR, replacing the unit's previous assignment; assigning the current HR again changes nothing.
+    /// The employee must work and be bound to an account that can act and has the HR role; the first rule broken is the field error.
     /// </summary>
     private static async Task<Results<NoContent, NotFound, ValidationProblem>> AssignAsync(
         Guid id,
@@ -97,20 +94,19 @@ internal static class OrgUnitHrEndpoints
             return TypedResults.NotFound();
         }
 
-        var user = await users.FindAsync(request.UserId, cancellationToken);
-        if (user is not { IsActive: true })
+        if (await CandidateProblemAsync(request.EmployeeId, employees, users, cancellationToken) is { } problem)
         {
-            return Rejection.Invalid(UserField, user is null ? "Пользователь не найден" : "Учётная запись заблокирована или не завершила регистрацию");
+            return Rejection.Invalid(EmployeeField, problem);
         }
 
         var assignment = await context.Set<OrgUnitHr>().FirstOrDefaultAsync(candidate => candidate.OrgUnitId == id, cancellationToken);
         if (assignment is null)
         {
-            context.Add(new OrgUnitHr { OrgUnitId = id, UserId = user.Id });
+            context.Add(new OrgUnitHr { OrgUnitId = id, EmployeeId = request.EmployeeId });
         }
         else
         {
-            assignment.UserId = user.Id;
+            assignment.EmployeeId = request.EmployeeId;
         }
 
         await context.SaveChangesAsync(cancellationToken);
@@ -141,11 +137,51 @@ internal static class OrgUnitHrEndpoints
     }
 
     /// <summary>
-    /// Describes the assignment of a unit with the flag whether its account can act.
+    /// Says why an employee cannot be assigned as a responsible HR, by the rule of <see cref="UserStatus.CanBeHr"/> that also picks the candidates.
+    /// </summary>
+    /// <returns>The first rule broken, or <see langword="null"/> when the employee can be assigned.</returns>
+    private static async Task<string?> CandidateProblemAsync(
+        Guid employeeId,
+        IEmployeeDirectory employees,
+        IUserDirectory users,
+        CancellationToken cancellationToken)
+    {
+        var employee = await employees.FindAsync(employeeId, cancellationToken);
+        if (employee is not { IsActive: true })
+        {
+            return employee is null ? "Сотрудник не найден" : "Сотрудник не работает";
+        }
+
+        return (await users.FindByEmployeeIdsAsync([employeeId], cancellationToken)).GetValueOrDefault(employeeId) switch
+        {
+            null => "К сотруднику не привязана учётная запись",
+            { IsActive: false } => "Учётная запись заблокирована или не завершила регистрацию",
+            { IsHr: false } => "У учётной записи нет роли «HR»",
+            _ => null,
+        };
+    }
+
+    /// <summary>
+    /// Whether an assignment acts: the account bound to the assigned employee can act and has the HR role.
+    /// </summary>
+    /// <param name="person">The assignment, with its account.</param>
+    /// <returns><see langword="true"/> when the assignment gives the unit a responsible HR.</returns>
+    public static bool Acts(OrgUnitHrPersonResponse person) => person.Account is { State: UnitAccountState.Active };
+
+    /// <summary>
+    /// The assignment as users other than global administrators see it: only when it acts, and without its account.
+    /// </summary>
+    /// <param name="person">The assignment, with its account; null for none.</param>
+    /// <returns>The assignment without its account, or <see langword="null"/> when there is none or it does not act.</returns>
+    public static OrgUnitHrPersonResponse? Acting(OrgUnitHrPersonResponse? person) =>
+        person is not null && Acts(person) ? person with { Account = null } : null;
+
+    /// <summary>
+    /// Describes the assignment of a unit with the account bound to the assigned employee now, which tells whether it acts.
     /// </summary>
     /// <param name="source">The unit whose assignment it is; null for none.</param>
-    /// <param name="assigneeOf">The assigned account by unit.</param>
-    /// <param name="employees">The employee directory, for the account's name.</param>
+    /// <param name="assigneeOf">The assigned employee by unit.</param>
+    /// <param name="employees">The employee directory, for the employee's name.</param>
     /// <param name="users">The account directory.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
     /// <returns>The assignment, or <see langword="null"/> when the unit has none.</returns>
@@ -157,13 +193,13 @@ internal static class OrgUnitHrEndpoints
         CancellationToken cancellationToken)
     {
         if (source is null
-            || !assigneeOf.TryGetValue(source.Id, out var userId)
-            || await users.FindAsync(userId, cancellationToken) is not { } user)
+            || !assigneeOf.TryGetValue(source.Id, out var employeeId)
+            || await employees.FindAsync(employeeId, cancellationToken) is not { } employee)
         {
             return null;
         }
 
-        var employee = user.EmployeeId is { } employeeId ? await employees.FindAsync(employeeId, cancellationToken) : null;
-        return new OrgUnitHrPersonResponse(user.Id, employee?.FullName ?? user.Email, source.Id, source.Name, user.IsActive);
+        var account = (await users.FindByEmployeeIdsAsync([employeeId], cancellationToken)).GetValueOrDefault(employeeId);
+        return new OrgUnitHrPersonResponse(employee.Id, employee.FullName, source.Id, source.Name, UnitAccountResponse.Of(account, forHr: true));
     }
 }

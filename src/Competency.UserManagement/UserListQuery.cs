@@ -9,7 +9,7 @@ namespace Competency.UserManagement;
 /// </summary>
 internal sealed record UserListQuery(
     [FromQuery(Name = "q")] string? Q = null,
-    [FromQuery(Name = "role")] UserRole? Role = null,
+    [FromQuery(Name = "role")] UserRoleFilter? Role = null,
     [FromQuery(Name = "isBlocked")] bool? IsBlocked = null,
     [FromQuery(Name = "isInvited")] bool? IsInvited = null,
     [FromQuery(Name = "page")] int Page = 1,
@@ -24,7 +24,7 @@ internal sealed record UserListQuery(
         var errors = ListRequest.Validate(Page, PageSize, Q);
         if (Role is { } role && !Enum.IsDefined(role))
         {
-            errors["role"] = ["role must be a known role."];
+            errors["role"] = ["role must be a known role filter."];
         }
 
         return errors;

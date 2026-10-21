@@ -28,4 +28,9 @@ public enum DeskPrerequisite
     /// The user may open at least one track.
     /// </summary>
     VisibleTrack,
+
+    /// <summary>
+    /// An account with the HR role is neither blocked nor still invited.
+    /// </summary>
+    HrAccount,
 }

@@ -11,9 +11,10 @@ namespace Competency.CareerFramework;
 /// </summary>
 /// <param name="viewer">The user's rights.</param>
 /// <param name="snapshot">The organization snapshot.</param>
-/// <param name="assigneeOf">Every HR assignment, as the assigned account by unit.</param>
+/// <param name="assigneeOf">Every HR assignment, as the assigned employee by unit.</param>
 /// <param name="accounts">The accounts the findings may name, by identifier: the user's, the assigned HR's, the heads' and the authors'.</param>
-/// <param name="people">The employees the findings may name, by identifier: the user, the heads and those bound to the accounts.</param>
+/// <param name="accountsByEmployee">The accounts bound to the assigned HR employees and to the heads, by employee, when the findings need them.</param>
+/// <param name="people">The employees the findings may name, by identifier: the user, the heads, the assigned HR and those bound to the accounts.</param>
 /// <param name="headAccountOf">The account of each unit's head who can act, by unit.</param>
 /// <param name="tracks">Every track with its levels and links.</param>
 /// <param name="versions">Every matrix version in work or published.</param>
@@ -24,6 +25,7 @@ internal sealed class CareerDeskScan(
     OrgSnapshot snapshot,
     IReadOnlyDictionary<Guid, Guid> assigneeOf,
     IReadOnlyDictionary<Guid, UserStatus> accounts,
+    IReadOnlyDictionary<Guid, UserStatus> accountsByEmployee,
     IReadOnlyDictionary<Guid, EmployeeStatus> people,
     IReadOnlyDictionary<Guid, Guid> headAccountOf,
     IReadOnlyList<CareerDeskTrack> tracks,
@@ -441,20 +443,24 @@ internal sealed class CareerDeskScan(
     }
 
     /// <summary>
-    /// The finding about a unit without a responsible HR who can act, naming the assigned HR and why their account cannot act, if one is assigned.
+    /// The finding about a unit without a responsible HR who can act, naming the assigned employee and why the assignment does not act, if one is assigned.
     /// </summary>
     private DeskFinding WithoutHr(OrgUnitStatus unit)
     {
         Guid? assigneeId = ProcessRoles.NearestAssigned(snapshot.Ancestry(unit.Id), assigneeOf) is { } nearest ? assigneeOf[nearest.Id] : null;
         DeskAccountState? state = assigneeId is { } id
-            ? accounts.GetValueOrDefault(id) switch
+            ? accountsByEmployee.GetValueOrDefault(id) switch
             {
                 null => DeskAccountState.None,
                 { IsBlocked: true } => DeskAccountState.Blocked,
-                _ => DeskAccountState.Invited,
+                { IsRegistered: false } => DeskAccountState.Invited,
+                _ => DeskAccountState.NoHrRole,
             }
             : null;
-        return new DeskFinding(DeskKind.UnitWithoutHr, snapshot.UnitDeskObject(unit), IsAction: true, Details: new DeskDetails(Person: PersonOf(assigneeId), AccountState: state));
+        var person = assigneeId is { } employeeId && people.GetValueOrDefault(employeeId) is { } assignee
+            ? new DeskObject(DeskObjectType.Employee, assignee.Id, assignee.FullName)
+            : null;
+        return new DeskFinding(DeskKind.UnitWithoutHr, snapshot.UnitDeskObject(unit), IsAction: true, Details: new DeskDetails(Person: person, AccountState: state));
     }
 
     private List<DeskObject> InactiveEntries(
@@ -528,7 +534,7 @@ internal sealed class CareerDeskScan(
 
     private Guid? ResponsibleHr(Guid unitId) => responsibleHrOf.TryGetValue(unitId, out var hrId)
         ? hrId
-        : responsibleHrOf[unitId] = ProcessRoles.ResponsibleHr(snapshot.Ancestry(unitId), assigneeOf, accounts);
+        : responsibleHrOf[unitId] = ProcessRoles.ResponsibleHr(snapshot.Ancestry(unitId), assigneeOf, accountsByEmployee);
 
     private Guid? SuperiorApprover(Guid unitId) => superiorApproverOf.TryGetValue(unitId, out var approverId)
         ? approverId

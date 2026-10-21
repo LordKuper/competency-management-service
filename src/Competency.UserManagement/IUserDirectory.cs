@@ -29,4 +29,11 @@ public interface IUserDirectory
     /// <param name="cancellationToken">Cancels the lookup.</param>
     /// <returns>The status of each bound account, by employee identifier; employees without an account are absent.</returns>
     Task<IReadOnlyDictionary<Guid, UserStatus>> FindByEmployeeIdsAsync(IReadOnlyCollection<Guid> employeeIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Whether any account is <see cref="UserStatus.CanBeHr"/>, so that some employee can be assigned as a responsible HR; one query.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns><see langword="true"/> when at least one such account exists.</returns>
+    Task<bool> HasHrCandidateAsync(CancellationToken cancellationToken = default);
 }

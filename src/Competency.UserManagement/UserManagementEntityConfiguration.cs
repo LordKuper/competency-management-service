@@ -7,16 +7,11 @@ namespace Competency.UserManagement;
 /// <summary>
 /// Contributes the <see cref="AppUser"/> table to the shared model: snake_case names, a client-generated Guid v4 key,
 /// a unique case-insensitive e-mail that doubles as the internal Identity user name, one account per employee, a link looked up by its token hash,
-/// a role limited to the known values, and a foreign key to the employee that never cascades.
-/// Only the Identity columns this application uses are mapped; roles, claims, logins, tokens, phone and two-factor are not.
+/// a column per role, and a foreign key to the employee that never cascades.
+/// Only the Identity columns this application uses are mapped; Identity's own roles, claims, logins, tokens, phone and two-factor are not.
 /// </summary>
 internal sealed class UserManagementEntityConfiguration : IEntityConfigurationContributor
 {
-    private const int RoleMaxLength = 32;
-    private const string RoleCheckName = "ck_users_role";
-
-    private static readonly string RoleCheckSql = $"role IN ({string.Join(", ", Enum.GetNames<UserRole>().Select(role => $"'{role}'"))})";
-
     /// <summary>
     /// The employee entity is named rather than typed because OrgStructure keeps it internal; it must be configured before this contributor runs.
     /// </summary>
@@ -24,7 +19,7 @@ internal sealed class UserManagementEntityConfiguration : IEntityConfigurationCo
 
     public void Configure(ModelBuilder modelBuilder) => modelBuilder.Entity<AppUser>(entity =>
     {
-        entity.ToTable("users", table => table.HasCheckConstraint(RoleCheckName, RoleCheckSql));
+        entity.ToTable("users");
 
         entity.Property(e => e.Id).HasColumnName("id").HasValueGenerator<GuidValueGenerator>();
         entity.Property(e => e.UserName).HasColumnName("user_name").HasMaxLength(AppUser.EmailMaxLength).IsRequired();
@@ -37,7 +32,8 @@ internal sealed class UserManagementEntityConfiguration : IEntityConfigurationCo
         entity.Property(e => e.LockoutEnd).HasColumnName("lockout_end");
         entity.Property(e => e.LockoutEnabled).HasColumnName("lockout_enabled");
         entity.Property(e => e.AccessFailedCount).HasColumnName("access_failed_count");
-        entity.Property(e => e.Role).HasColumnName("role").HasConversion<string>().HasMaxLength(RoleMaxLength);
+        entity.Property(e => e.IsGlobalAdmin).HasColumnName("is_global_admin");
+        entity.Property(e => e.IsHr).HasColumnName("is_hr");
         entity.Property(e => e.IsBlocked).HasColumnName("is_blocked");
         entity.Property(e => e.EmployeeId).HasColumnName("employee_id");
         entity.Property(e => e.Version).HasColumnName("version");

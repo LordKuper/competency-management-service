@@ -40,7 +40,7 @@ internal static class OrgUnitPositionEndpoints
 
     /// <summary>
     /// The positions of the unit's own list and of the lists of every unit above it, each with the unit whose list holds it.
-    /// Ordinary users get active positions only.
+    /// Users other than global administrators and HR get active positions only.
     /// </summary>
     private static async Task<Results<Ok<List<OrgUnitPositionResponse>>, NotFound>> ListAsync(
         Guid id,
@@ -57,7 +57,7 @@ internal static class OrgUnitPositionEndpoints
         var positions = await context.Set<OrgUnitPosition>()
             .AsNoTracking()
             .Where(link => unitIds.Contains(link.OrgUnitId))
-            .WhereIf(!actor.IsGlobalAdmin(), link => link.Position.IsActive)
+            .WhereIf(!actor.SeesAll(), link => link.Position.IsActive)
             .OrderBy(link => link.Position.Name)
             .ThenBy(link => link.PositionId)
             .ThenBy(link => link.OrgUnit.Name)

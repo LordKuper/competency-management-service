@@ -66,7 +66,7 @@ internal static class MyPlaceEndpoints
             [.. ancestry.Reverse().Select(unit => new CareerUnitResponse(unit.Id, unit.Name))],
             snapshot.Positions.TryGetValue(employee.PositionId, out var position) ? new CareerNamedResponse(position.Id, position.Name) : null,
             head,
-            hr is { IsActive: true } ? hr with { IsActive = null } : null,
+            OrgUnitHrEndpoints.Acting(hr),
             tracks,
             [.. published
                 .Select(version => version.Matrix.TrackId is { } trackId ? MatrixOf(version, trackId) : null)

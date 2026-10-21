@@ -8,7 +8,8 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// Works out the career process roles of an account from the org structure and the HR assignments at the moment of asking, so a change
 /// of head or assignment takes effect at once and nothing about the roles is stored. Only an account that can act takes part in the
-/// process, and a deactivated unit takes part in none. A caller that acts on the answer holds the tree lock first, shared or exclusive,
+/// process, and a deactivated unit takes part in none. An HR assignment names an employee and acts through the account bound to that
+/// employee at the moment, while the account <see cref="UserStatus.CanBeHr"/>. A caller that acts on the answer holds the tree lock first, shared or exclusive,
 /// so the answer stays true until it commits. Each rule is also a static function over data read beforehand, so a caller checking many
 /// units at once, such as the desk, applies the same rule to an organization snapshot.
 /// </summary>
@@ -43,16 +44,21 @@ internal sealed class ProcessRoles(AppDbContext context, IEmployeeDirectory empl
 
     /// <summary>
     /// The units the account is the responsible HR of: active units whose nearest assignment, on the unit itself or else on the nearest
-    /// unit above it, names this account.
+    /// unit above it, names the account's employee.
     /// </summary>
     /// <param name="userId">The account identifier.</param>
     /// <param name="cancellationToken">Cancels the lookup.</param>
-    /// <returns>The units in name order; empty when the account cannot act or has no assignment.</returns>
+    /// <returns>The units in name order; empty when the account cannot act as an HR or its employee has no assignment.</returns>
     public async Task<IReadOnlyList<OrgUnitStatus>> HrUnitsAsync(Guid userId, CancellationToken cancellationToken)
     {
         var account = await users.FindAsync(userId, cancellationToken);
-        var assigneeOf = account is { IsActive: true } ? await AllAssigneesAsync(cancellationToken) : null;
-        if (assigneeOf is null || !assigneeOf.Values.Contains(userId))
+        if (account is not { CanBeHr: true, EmployeeId: { } employeeId })
+        {
+            return [];
+        }
+
+        var assigneeOf = await AllAssigneesAsync(cancellationToken);
+        if (!assigneeOf.Values.Contains(employeeId))
         {
             return [];
         }
@@ -62,22 +68,24 @@ internal sealed class ProcessRoles(AppDbContext context, IEmployeeDirectory empl
     }
 
     /// <summary>
-    /// The units an account is the responsible HR of, over an organization snapshot: active units whose nearest assignment names the account, while it can act.
+    /// The units an account is the responsible HR of, over an organization snapshot: active units whose nearest assignment names the account's
+    /// employee, while the account can act as an HR.
     /// </summary>
     /// <param name="snapshot">The organization snapshot.</param>
-    /// <param name="assigneeOf">Every HR assignment, as the assigned account by unit.</param>
+    /// <param name="assigneeOf">Every HR assignment, as the assigned employee by unit.</param>
     /// <param name="account">The account; null when it does not exist.</param>
     /// <returns>The units in no particular order.</returns>
     public static IEnumerable<OrgUnitStatus> HrUnits(OrgSnapshot snapshot, IReadOnlyDictionary<Guid, Guid> assigneeOf, UserStatus? account) =>
-        account is { IsActive: true }
+        account is { CanBeHr: true }
             ? snapshot.Units.Values.Where(unit => unit.IsActive
                 && NearestAssigned(snapshot.Ancestry(unit.Id), assigneeOf) is { } nearest
-                && assigneeOf[nearest.Id] == account.Id)
+                && assigneeOf[nearest.Id] == account.EmployeeId)
             : [];
 
     /// <summary>
-    /// The responsible HR of a unit: the account assigned to the unit itself or else to the nearest unit above it with an assignment.
-    /// An account that cannot act leaves the unit without a responsible HR rather than passing the role further up.
+    /// The responsible HR of a unit: the account bound to the employee assigned to the unit itself or else to the nearest unit above it with
+    /// an assignment. An assignment whose employee has no account that can act as an HR leaves the unit without a responsible HR rather than
+    /// passing the role further up.
     /// </summary>
     /// <param name="unitId">The unit.</param>
     /// <param name="cancellationToken">Cancels the lookup.</param>
@@ -91,30 +99,30 @@ internal sealed class ProcessRoles(AppDbContext context, IEmployeeDirectory empl
             return null;
         }
 
-        return ResponsibleHr(ancestry, assigneeOf, await users.FindManyAsync([assigneeOf[nearest.Id]], cancellationToken));
+        return ResponsibleHr(ancestry, assigneeOf, await users.FindByEmployeeIdsAsync([assigneeOf[nearest.Id]], cancellationToken));
     }
 
     /// <summary>
     /// The responsible HR of the first unit of a chain, by the rule of <see cref="ResponsibleHrAsync"/>, over data read beforehand.
     /// </summary>
     /// <param name="ancestry">A unit and the units above it, nearest first.</param>
-    /// <param name="assigneeOf">The assigned account by unit, covering at least the units of the chain.</param>
-    /// <param name="accounts">The accounts by identifier, covering at least the one assigned to the nearest assigned unit.</param>
-    /// <returns>The account, or <see langword="null"/> when no assignment applies or its account cannot act.</returns>
+    /// <param name="assigneeOf">The assigned employee by unit, covering at least the units of the chain.</param>
+    /// <param name="accountsByEmployee">The accounts by the employee they are bound to, covering at least the employee assigned to the nearest assigned unit.</param>
+    /// <returns>The account, or <see langword="null"/> when no assignment applies or its employee has no account that can act as an HR.</returns>
     public static Guid? ResponsibleHr(
         IReadOnlyList<OrgUnitStatus> ancestry,
         IReadOnlyDictionary<Guid, Guid> assigneeOf,
-        IReadOnlyDictionary<Guid, UserStatus> accounts) =>
-        NearestAssigned(ancestry, assigneeOf) is { } nearest && accounts.GetValueOrDefault(assigneeOf[nearest.Id]) is { IsActive: true } account
+        IReadOnlyDictionary<Guid, UserStatus> accountsByEmployee) =>
+        NearestAssigned(ancestry, assigneeOf) is { } nearest && accountsByEmployee.GetValueOrDefault(assigneeOf[nearest.Id]) is { CanBeHr: true } account
             ? account.Id
             : null;
 
     /// <summary>
     /// The unit whose HR assignment applies to the first unit of a chain: that unit itself or else the nearest unit above it with an
-    /// assignment, whether or not the assigned account can act. The one rule for a chain read from the tree or from an organization snapshot.
+    /// assignment, whether or not the assignment acts. The one rule for a chain read from the tree or from an organization snapshot.
     /// </summary>
     /// <param name="ancestry">A unit and the units above it, nearest first.</param>
-    /// <param name="assigneeOf">The assigned account by unit, covering at least the units of the chain.</param>
+    /// <param name="assigneeOf">The assigned employee by unit, covering at least the units of the chain.</param>
     /// <returns>The assigned unit, or <see langword="null"/> when no unit of the chain has an assignment.</returns>
     public static OrgUnitStatus? NearestAssigned(IReadOnlyList<OrgUnitStatus> ancestry, IReadOnlyDictionary<Guid, Guid> assigneeOf) =>
         ancestry.FirstOrDefault(unit => assigneeOf.ContainsKey(unit.Id));
@@ -124,22 +132,22 @@ internal sealed class ProcessRoles(AppDbContext context, IEmployeeDirectory empl
     /// </summary>
     /// <param name="unitIds">The units.</param>
     /// <param name="cancellationToken">Cancels the lookup.</param>
-    /// <returns>The assigned account by unit; units without an assignment are absent.</returns>
+    /// <returns>The assigned employee by unit; units without an assignment are absent.</returns>
     public async Task<IReadOnlyDictionary<Guid, Guid>> AssigneesAsync(IReadOnlyCollection<Guid> unitIds, CancellationToken cancellationToken)
     {
         var ids = unitIds.ToArray();
         return await context.Set<OrgUnitHr>()
             .Where(assignment => ids.Contains(assignment.OrgUnitId))
-            .ToDictionaryAsync(assignment => assignment.OrgUnitId, assignment => assignment.UserId, cancellationToken);
+            .ToDictionaryAsync(assignment => assignment.OrgUnitId, assignment => assignment.EmployeeId, cancellationToken);
     }
 
     /// <summary>
     /// Every HR assignment in one query; there are as many as units at most, and usually few.
     /// </summary>
     /// <param name="cancellationToken">Cancels the lookup.</param>
-    /// <returns>The assigned account by unit.</returns>
+    /// <returns>The assigned employee by unit.</returns>
     public async Task<IReadOnlyDictionary<Guid, Guid>> AllAssigneesAsync(CancellationToken cancellationToken) =>
-        await context.Set<OrgUnitHr>().ToDictionaryAsync(assignment => assignment.OrgUnitId, assignment => assignment.UserId, cancellationToken);
+        await context.Set<OrgUnitHr>().ToDictionaryAsync(assignment => assignment.OrgUnitId, assignment => assignment.EmployeeId, cancellationToken);
 
     /// <summary>
     /// The account of the unit's head when the head is a working employee bound to an account that can act.

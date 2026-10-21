@@ -22,4 +22,9 @@ public enum DeskAccountState
     /// The account is blocked.
     /// </summary>
     Blocked,
+
+    /// <summary>
+    /// The account can act but lacks the HR role.
+    /// </summary>
+    NoHrRole,
 }

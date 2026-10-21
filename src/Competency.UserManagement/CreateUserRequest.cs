@@ -1,13 +1,16 @@
 namespace Competency.UserManagement;
 
 /// <summary>
-/// The fields of a new account, which is invited to set its own password by e-mail. An account of either role may have an employee; <c>employeeId</c> is null for none.
+/// The fields of a new account, which is invited to set its own password by e-mail. An account of any roles may have an employee; <c>employeeId</c> is null for none.
 /// </summary>
 internal sealed record CreateUserRequest
 {
     public required string Email { get; init; }
 
-    public required UserRole Role { get; init; }
+    /// <summary>
+    /// The account's roles; empty for none, and a repeated role counts once.
+    /// </summary>
+    public required IReadOnlyList<UserRole> Roles { get; init; }
 
     public required Guid? EmployeeId { get; init; }
 
@@ -19,7 +22,7 @@ internal sealed record CreateUserRequest
     {
         var errors = new Dictionary<string, string[]>();
         CredentialChecks.CheckEmail(errors, "email", Email);
-        EmployeeBinding.CheckRole(errors, Role);
+        EmployeeBinding.CheckRoles(errors, Roles);
         return errors;
     }
 }

@@ -11,7 +11,7 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The API that tells a global administrator what a unit has and lacks to work. It lives in this module, because only this module sees
 /// the HR assignments, the org structure and the accounts together. The statuses follow the rules the module acts by: the organization
-/// snapshot, the nearest HR assignment and whether an account can act.
+/// snapshot, the nearest HR assignment and whether an account can act, as an HR too.
 /// </summary>
 internal static class OrgUnitSetupEndpoints
 {
@@ -44,12 +44,12 @@ internal static class OrgUnitSetupEndpoints
             : null;
         var headAccount = head is null
             ? null
-            : UnitAccountResponse.Of((await users.FindByEmployeeIdsAsync([head.Id], cancellationToken)).GetValueOrDefault(head.Id));
+            : UnitAccountResponse.Of((await users.FindByEmployeeIdsAsync([head.Id], cancellationToken)).GetValueOrDefault(head.Id), forHr: false);
 
         var ancestry = snapshot.Ancestry(id);
         var assigneeOf = await roles.AssigneesAsync([.. ancestry.Select(candidate => candidate.Id)], cancellationToken);
         var hr = await OrgUnitHrEndpoints.DescribeAsync(ProcessRoles.NearestAssigned(ancestry, assigneeOf), assigneeOf, employees, users, cancellationToken);
-        var hrAccount = hr is null ? null : UnitAccountResponse.Of(await users.FindAsync(hr.UserId, cancellationToken));
+        var hasHrCandidates = hr is not null || await users.HasHrCandidateAsync(cancellationToken);
 
         var ownIds = snapshot.UnitPositionIds[id].ToHashSet();
         var positions = new UnitPositionsResponse(
@@ -62,16 +62,20 @@ internal static class OrgUnitSetupEndpoints
             head is null ? null : new CareerEmployeeResponse(head.Id, head.FullName),
             headAccount,
             hr,
-            hrAccount,
             positions,
-            Rows(headAccount, hrAccount, positions)));
+            Rows(headAccount, hr?.Account, hasHrCandidates, positions)));
     }
 
     /// <summary>
     /// The status of each thing the unit needs. A head's or HR's account waits for the head or HR; an assigned HR whose account cannot act
-    /// leaves the unit without an HR; positions are missing when neither the unit nor any unit above it lists one, whether or not anyone works there.
+    /// as an HR leaves the unit without an HR; a unit without an assignment tells whether anyone could be assigned; positions are missing
+    /// when neither the unit nor any unit above it lists one, whether or not anyone works there.
     /// </summary>
-    private static List<UnitSetupRowResponse> Rows(UnitAccountResponse? headAccount, UnitAccountResponse? hrAccount, UnitPositionsResponse positions) =>
+    private static List<UnitSetupRowResponse> Rows(
+        UnitAccountResponse? headAccount,
+        UnitAccountResponse? hrAccount,
+        bool hasHrCandidates,
+        UnitPositionsResponse positions) =>
     [
         headAccount is null
             ? new(UnitSetupRow.Head, UnitSetupStatus.Missing, UnitSetupReason.NoHead)
@@ -79,7 +83,7 @@ internal static class OrgUnitSetupEndpoints
         AccountRow(UnitSetupRow.HeadAccount, headAccount, UnitSetupReason.NoHead),
         hrAccount switch
         {
-            null => new(UnitSetupRow.Hr, UnitSetupStatus.Missing, UnitSetupReason.NoHr),
+            null => new(UnitSetupRow.Hr, UnitSetupStatus.Missing, hasHrCandidates ? UnitSetupReason.NoHr : UnitSetupReason.NoHrCandidates),
             { State: UnitAccountState.Active } => new(UnitSetupRow.Hr, UnitSetupStatus.Ready),
             _ => new(UnitSetupRow.Hr, UnitSetupStatus.Missing, UnitSetupReason.HrCannotAct),
         },
@@ -95,6 +99,7 @@ internal static class OrgUnitSetupEndpoints
         UnitAccountState.Active => new(row, UnitSetupStatus.Ready),
         UnitAccountState.None => new(row, UnitSetupStatus.Missing, UnitSetupReason.NoAccount),
         UnitAccountState.Invited => new(row, UnitSetupStatus.Missing, UnitSetupReason.Invited),
+        UnitAccountState.NoHrRole => new(row, UnitSetupStatus.Missing, UnitSetupReason.NoHrRole),
         _ => new(row, UnitSetupStatus.Missing, UnitSetupReason.Blocked),
     };
 

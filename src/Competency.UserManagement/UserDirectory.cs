@@ -10,7 +10,7 @@ namespace Competency.UserManagement;
 internal sealed class UserDirectory(AppDbContext context) : IUserDirectory
 {
     private static readonly Expression<Func<AppUser, UserStatus>> StatusProjection = user => new UserStatus(
-        user.Id, user.Email!, user.EmployeeId, user.IsBlocked, user.PasswordHash != null, user.Version);
+        user.Id, user.Email!, user.EmployeeId, user.IsBlocked, user.PasswordHash != null, user.IsHr, user.Version);
 
     public Task<UserStatus?> FindAsync(Guid userId, CancellationToken cancellationToken = default) => context
         .Set<AppUser>()
@@ -31,6 +31,10 @@ internal sealed class UserDirectory(AppDbContext context) : IUserDirectory
             .Select(StatusProjection)
             .ToDictionaryAsync(status => status.Id, cancellationToken);
     }
+
+    public Task<bool> HasHrCandidateAsync(CancellationToken cancellationToken = default) => context
+        .Set<AppUser>()
+        .AnyAsync(user => user.IsHr && !user.IsBlocked && user.PasswordHash != null && user.EmployeeId != null, cancellationToken);
 
     public async Task<IReadOnlyDictionary<Guid, UserStatus>> FindByEmployeeIdsAsync(
         IReadOnlyCollection<Guid> employeeIds,

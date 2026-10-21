@@ -19,9 +19,19 @@ internal enum UnitSetupReason
     NoHr,
 
     /// <summary>
-    /// The assignment that applies names an account that cannot act, which leaves the unit without an HR.
+    /// No assignment applies and no employee could be assigned, since no account that can act and has the HR role is bound to one.
+    /// </summary>
+    NoHrCandidates,
+
+    /// <summary>
+    /// The assignment that applies names an employee whose account cannot act as an HR, which leaves the unit without an HR.
     /// </summary>
     HrCannotAct,
+
+    /// <summary>
+    /// The assigned HR's account can act but lacks the HR role.
+    /// </summary>
+    NoHrRole,
 
     /// <summary>
     /// Neither the unit nor any unit above it lists a position.

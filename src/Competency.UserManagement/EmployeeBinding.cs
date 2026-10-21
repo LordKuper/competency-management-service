@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.UserManagement;
 
 /// <summary>
-/// The rules that tie an account to an employee: an account of any role may have one working employee or none,
+/// The rules that tie an account to an employee: an account of any roles may have one working employee or none,
 /// and an employee has at most one account.
 /// </summary>
 internal static class EmployeeBinding
@@ -13,15 +13,15 @@ internal static class EmployeeBinding
     public const string AlreadyBound = "Сотрудник уже привязан к другой учётной записи.";
 
     /// <summary>
-    /// Checks the role in a request, which needs no lookup.
+    /// Checks the roles in a request, which needs no lookup.
     /// </summary>
     /// <param name="errors">Collects the problems by field name.</param>
-    /// <param name="role">The requested role.</param>
-    public static void CheckRole(Dictionary<string, string[]> errors, UserRole role)
+    /// <param name="roles">The requested roles; null when the request sent none.</param>
+    public static void CheckRoles(Dictionary<string, string[]> errors, IReadOnlyList<UserRole>? roles)
     {
-        if (!Enum.IsDefined(role))
+        if (roles is null || !roles.All(role => Enum.IsDefined(role)))
         {
-            errors["role"] = ["Роль: укажите допустимое значение."];
+            errors["roles"] = ["Роли: укажите допустимые значения."];
         }
     }
 

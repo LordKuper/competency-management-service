@@ -14,11 +14,12 @@ namespace Competency.CareerFramework;
 internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationContributor
 {
     /// <summary>
-    /// The unit, position and account entities are named rather than typed because their modules keep them internal; all must be configured before this contributor runs.
+    /// The unit, position, employee and account entities are named rather than typed because their modules keep them internal; all must be configured before this contributor runs.
     /// </summary>
     private const string OrgUnitEntityName = "Competency.OrgStructure.OrgUnit";
 
     private const string PositionEntityName = "Competency.OrgStructure.Position";
+    private const string EmployeeEntityName = "Competency.OrgStructure.Employee";
     private const string UserEntityName = "Competency.UserManagement.AppUser";
     private const int EnumMaxLength = 16;
 
@@ -47,10 +48,10 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
             entity.ToTable("org_unit_hr");
             entity.HasKey(e => e.OrgUnitId);
             entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.EmployeeId).HasColumnName("employee_id");
 
             entity.HasOne(OrgUnitEntityName, navigationName: null).WithOne().HasForeignKey(typeof(OrgUnitHr), nameof(OrgUnitHr.OrgUnitId)).OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(UserEntityName, navigationName: null).WithMany().HasForeignKey(nameof(OrgUnitHr.UserId)).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(EmployeeEntityName, navigationName: null).WithMany().HasForeignKey(nameof(OrgUnitHr.EmployeeId)).OnDelete(DeleteBehavior.Restrict);
         });
 
         ConfigureEntry<CareerDirection>(modelBuilder, "career_directions", _ => { });

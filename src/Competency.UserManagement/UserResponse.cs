@@ -3,14 +3,14 @@ using System.Linq.Expressions;
 namespace Competency.UserManagement;
 
 /// <summary>
-/// An account as administrators see it. Credentials, stamps, lockout state and links are never part of it.
+/// An account as administrators see it; <c>roles</c> lists its roles in <see cref="UserRole"/> member order. Credentials, stamps, lockout state and links are never part of it.
 /// <c>isInvited</c> marks an account that has not set its password through its invitation yet and so cannot sign in;
 /// <c>mailSent</c> tells whether the mail server accepted the e-mail the request sent to the account, and is null when the request sends none.
 /// </summary>
 internal sealed record UserResponse(
     Guid Id,
     string Email,
-    UserRole Role,
+    IReadOnlyList<UserRole> Roles,
     bool IsBlocked,
     bool IsInvited,
     Guid? EmployeeId,
@@ -21,7 +21,7 @@ internal sealed record UserResponse(
     public static readonly Expression<Func<AppUser, UserResponse>> Projection = user => new UserResponse(
         user.Id,
         user.Email!,
-        user.Role,
+        AppUser.RolesOf(user.IsGlobalAdmin, user.IsHr),
         user.IsBlocked,
         user.PasswordHash == null,
         user.EmployeeId,

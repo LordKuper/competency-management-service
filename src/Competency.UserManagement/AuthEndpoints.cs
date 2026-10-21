@@ -136,7 +136,7 @@ internal static class AuthEndpoints
 
         await httpContext.SignInAsync(SessionAuthentication.Scheme, SessionAuthentication.CreatePrincipal(user));
         await audit.WriteAsync(
-            new AuditEntry(LoginSucceededAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString()),
+            new AuditEntry(LoginSucceededAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.JournalRole),
             cancellationToken);
         return TypedResults.Ok(CurrentUserResponse.From(user, employee));
     }
@@ -321,7 +321,7 @@ internal static class AuthEndpoints
         user.ClearLink();
         user.EndSessions();
         audit.Stage(
-            new AuditEntry(use.Action, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString()),
+            new AuditEntry(use.Action, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.JournalRole),
             context);
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -410,7 +410,7 @@ internal static class AuthEndpoints
     private static async Task<ProblemHttpResult> DenyAsync(IAuditWriter audit, AppUser? user, LoginDenial denial, CancellationToken cancellationToken)
     {
         var actor = user?.Id.ToString() ?? UnknownActor;
-        var role = user?.Role.ToString() ?? AnonymousRole;
+        var role = user?.JournalRole ?? AnonymousRole;
         var reason = denial == LoginDenial.LockoutStarted ? LoginDenial.WrongPassword : denial;
         await audit.WriteAsync(
             new AuditEntry(LoginFailedAction, nameof(AppUser), user?.Id.ToString(), Reason: reason.ToString(), Actor: actor, Role: role),
@@ -428,6 +428,6 @@ internal static class AuthEndpoints
     /// </summary>
     private static Task AuditLockoutAsync(IAuditWriter audit, AppUser user, CancellationToken cancellationToken) =>
         audit.WriteAsync(
-            new AuditEntry(LockedOutAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString()),
+            new AuditEntry(LockedOutAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.JournalRole),
             cancellationToken);
 }
