@@ -13849,6 +13849,14 @@
         ],
         "description": "The kinds of records desk findings are about or name. Member names are sent in the API, so renaming one changes it."
       },
+      "DeskPrerequisite": {
+        "enum": [
+          "ActiveUnit",
+          "ActivePosition",
+          "VisibleTrack"
+        ],
+        "description": "A fact about the current data that a desk scenario needs before the user can start it.\r\nMember names are sent in the API, so renaming one changes it; a new member also needs a source that knows it."
+      },
       "DeskReasonResponse": {
         "required": [
           "kind"
@@ -13880,7 +13888,8 @@
       "DeskResponse": {
         "required": [
           "actionCount",
-          "groups"
+          "groups",
+          "prerequisites"
         ],
         "type": "object",
         "properties": {
@@ -13892,6 +13901,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DeskGroupResponse"
+            }
+          },
+          "prerequisites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeskPrerequisite"
             }
           }
         }

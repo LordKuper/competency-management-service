@@ -16,11 +16,11 @@ internal sealed class UserManagementDeskSource(ICurrentActor actor, AppDbContext
     private static readonly TimeSpan ExpiringSoonWithin = TimeSpan.FromDays(2);
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<DeskFinding>> FindAsync(CancellationToken cancellationToken)
+    public async Task<DeskReport> FindAsync(CancellationToken cancellationToken)
     {
         if (actor.Role != PlatformClaims.GlobalAdminRole)
         {
-            return [];
+            return new DeskReport([], []);
         }
 
         var snapshot = await employees.FindOrgSnapshotAsync(cancellationToken);
@@ -34,13 +34,14 @@ internal sealed class UserManagementDeskSource(ICurrentActor actor, AppDbContext
             .Where(account => account.Status.EmployeeId is { } employeeId && headIds.Contains(employeeId))
             .ToDictionary(account => account.Status.EmployeeId!.Value);
         var now = time.GetUtcNow();
-        return
-        [
-            .. headedUnits.Select(unit => HeadFinding(snapshot, unit, accountOfHead.GetValueOrDefault(unit.HeadEmployeeId!.Value), people)).OfType<DeskFinding>(),
-            .. accounts.Select(account => InvitationFinding(account, people, now)).OfType<DeskFinding>(),
-            .. accounts.Where(account => account is { Role: UserRole.User, Status: { EmployeeId: null, IsBlocked: false } })
-                .Select(account => new DeskFinding(DeskKind.AccountWithoutEmployee, AccountObject(account, people), IsAction: true)),
-        ];
+        return new DeskReport(
+            [
+                .. headedUnits.Select(unit => HeadFinding(snapshot, unit, accountOfHead.GetValueOrDefault(unit.HeadEmployeeId!.Value), people)).OfType<DeskFinding>(),
+                .. accounts.Select(account => InvitationFinding(account, people, now)).OfType<DeskFinding>(),
+                .. accounts.Where(account => account is { Role: UserRole.User, Status: { EmployeeId: null, IsBlocked: false } })
+                    .Select(account => new DeskFinding(DeskKind.AccountWithoutEmployee, AccountObject(account, people), IsAction: true)),
+            ],
+            []);
     }
 
     /// <summary>

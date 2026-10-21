@@ -39,14 +39,15 @@ internal static class DeskEndpoints
 
     private static async Task<Ok<DeskResponse>> GetAsync(DeskBoard board, CancellationToken cancellationToken)
     {
-        var items = await board.ItemsAsync(cancellationToken);
+        var (items, prerequisites) = await board.ReadAsync(cancellationToken);
         return TypedResults.Ok(new DeskResponse(
             ActionCount(items),
             [
                 .. items
                     .GroupBy(item => item.Group)
                     .Select(group => new DeskGroupResponse(group.Key, group.First().IsReference, group.Count(), [.. group.Take(FirstItems)])),
-            ]));
+            ],
+            prerequisites));
     }
 
     /// <summary>
@@ -68,14 +69,14 @@ internal static class DeskEndpoints
             return Rejection.Invalid("group", "group must name a desk group.");
         }
 
-        var items = (await board.ItemsAsync(cancellationToken))
+        var items = (await board.ReadAsync(cancellationToken)).Items
             .Where(item => group is not { Length: > 0 } || group.Contains(item.Group))
             .ToList();
         return TypedResults.Ok(new DeskItemsResponse([.. items.Take(Math.Min(limit, MaxItems))], items.Count));
     }
 
     private static async Task<Ok<DeskCountResponse>> CountAsync(DeskBoard board, CancellationToken cancellationToken) =>
-        TypedResults.Ok(new DeskCountResponse(ActionCount(await board.ItemsAsync(cancellationToken))));
+        TypedResults.Ok(new DeskCountResponse(ActionCount((await board.ReadAsync(cancellationToken)).Items)));
 
     private static int ActionCount(List<DeskItemResponse> items) => items.Count(item => !item.IsReference);
 }

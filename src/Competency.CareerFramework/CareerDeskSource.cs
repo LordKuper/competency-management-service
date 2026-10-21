@@ -20,18 +20,18 @@ internal sealed class CareerDeskSource(
     TimeProvider time) : IDeskSource
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<DeskFinding>> FindAsync(CancellationToken cancellationToken)
+    public async Task<DeskReport> FindAsync(CancellationToken cancellationToken)
     {
         if (actor.UserId is not { } userId)
         {
-            return [];
+            return new DeskReport([], []);
         }
 
         var assigneeOf = await roles.AllAssigneesAsync(cancellationToken);
         var accounts = new Dictionary<Guid, UserStatus>(await users.FindManyAsync([userId, .. assigneeOf.Values.Distinct()], cancellationToken));
         if (accounts.GetValueOrDefault(userId) is not { IsActive: true } account)
         {
-            return [];
+            return new DeskReport([], []);
         }
 
         var snapshot = await employees.FindOrgSnapshotAsync(cancellationToken);
@@ -52,6 +52,8 @@ internal sealed class CareerDeskSource(
 
         var headAccountOf = isInvolved ? await ActingHeadsAsync(snapshot, headIds, people, accounts, cancellationToken) : new Dictionary<Guid, Guid>();
         var tracks = await TracksAsync(cancellationToken);
+        var sees = viewer.Sees<CareerTrack>().Compile();
+        DeskPrerequisite[] prerequisites = tracks.Any(row => sees(row.Track)) ? [DeskPrerequisite.VisibleTrack] : [];
         var versions = isInvolved ? await VersionsAsync(cancellationToken) : [];
         var lastDecisionOf = await LastDecisionsAsync(versions, cancellationToken);
         var published = await PublishedAsync(versions, viewer, cancellationToken);
@@ -63,17 +65,18 @@ internal sealed class CareerDeskSource(
             cancellationToken);
 
         var scan = new CareerDeskScan(viewer, snapshot, assigneeOf, accounts, people, headAccountOf, tracks, versions, lastDecisionOf, time.GetUtcNow());
-        return
-        [
-            .. scan.UnitFindings(),
-            .. scan.VersionFindings(),
-            .. scan.PublishedFindings(published, catalog.Directions, catalog.Competencies, catalog.Blocks),
-            .. scan.TrackFindings(),
-            .. scan.PositionFindings(),
-            .. scan.DraftFindings(catalog.Drafts),
-            .. viewer.IsHr || viewer.IsAdmin ? CareerDeskScan.UnusedFindings(await store.UnusedEntriesAsync(cancellationToken)) : [],
-            .. self is null ? [] : await NoTrackFindingsAsync(scan, self, versions, isInvolved, cancellationToken),
-        ];
+        return new DeskReport(
+            [
+                .. scan.UnitFindings(),
+                .. scan.VersionFindings(),
+                .. scan.PublishedFindings(published, catalog.Directions, catalog.Competencies, catalog.Blocks),
+                .. scan.TrackFindings(),
+                .. scan.PositionFindings(),
+                .. scan.DraftFindings(catalog.Drafts),
+                .. viewer.IsHr || viewer.IsAdmin ? CareerDeskScan.UnusedFindings(await store.UnusedEntriesAsync(cancellationToken)) : [],
+                .. self is null ? [] : await NoTrackFindingsAsync(scan, self, versions, isInvolved, cancellationToken),
+            ],
+            prerequisites);
     }
 
     /// <summary>

@@ -5,25 +5,46 @@ namespace Competency.OrgStructure;
 
 /// <summary>
 /// What the organization structure expects of a global administrator, who alone may change it: units without a head or without positions,
-/// employees whose position their unit does not offer, positions out of use and empty units. Other users get nothing from it.
+/// employees whose position their unit does not offer, positions out of use and empty units. Other users get only its prerequisites.
 /// </summary>
 internal sealed class OrgStructureDeskSource(ICurrentActor actor, IEmployeeDirectory directory, AppDbContext context) : IDeskSource
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<DeskFinding>> FindAsync(CancellationToken cancellationToken)
+    public async Task<DeskReport> FindAsync(CancellationToken cancellationToken)
     {
+        var snapshot = await directory.FindOrgSnapshotAsync(cancellationToken);
+        var prerequisites = Prerequisites(snapshot);
         if (!actor.IsGlobalAdmin())
         {
-            return [];
+            return new DeskReport([], prerequisites);
         }
 
-        var snapshot = await directory.FindOrgSnapshotAsync(cancellationToken);
-        return
-        [
-            .. UnitFindings(snapshot),
-            .. PositionFindings(snapshot),
-            .. await EmployeeFindingsAsync(snapshot, cancellationToken),
-        ];
+        return new DeskReport(
+            [
+                .. UnitFindings(snapshot),
+                .. PositionFindings(snapshot),
+                .. await EmployeeFindingsAsync(snapshot, cancellationToken),
+            ],
+            prerequisites);
+    }
+
+    /// <summary>
+    /// Whether there is an active unit and an active position. Every signed-in user reads the tree and the catalogue, so the facts reveal nothing.
+    /// </summary>
+    private static List<DeskPrerequisite> Prerequisites(OrgSnapshot snapshot)
+    {
+        var prerequisites = new List<DeskPrerequisite>();
+        if (snapshot.Units.Values.Any(unit => unit.IsActive))
+        {
+            prerequisites.Add(DeskPrerequisite.ActiveUnit);
+        }
+
+        if (snapshot.Positions.Values.Any(position => position.IsActive))
+        {
+            prerequisites.Add(DeskPrerequisite.ActivePosition);
+        }
+
+        return prerequisites;
     }
 
     /// <summary>

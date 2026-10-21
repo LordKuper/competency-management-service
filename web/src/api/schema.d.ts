@@ -2209,6 +2209,12 @@ export interface components {
          * @enum {unknown}
          */
         DeskObjectType: "Matrix" | "MatrixVersion" | "OrgUnit" | "Track" | "Level" | "Direction" | "Competency" | "Scale" | "Block" | "Position" | "Employee" | "UserAccount";
+        /**
+         * @description A fact about the current data that a desk scenario needs before the user can start it.
+         *     Member names are sent in the API, so renaming one changes it; a new member also needs a source that knows it.
+         * @enum {unknown}
+         */
+        DeskPrerequisite: "ActiveUnit" | "ActivePosition" | "VisibleTrack";
         DeskReasonResponse: {
             kind: components["schemas"]["DeskKind"];
             /** Format: date-time */
@@ -2219,6 +2225,7 @@ export interface components {
             /** Format: int32 */
             actionCount: number;
             groups: components["schemas"]["DeskGroupResponse"][];
+            prerequisites: components["schemas"]["DeskPrerequisite"][];
         };
         EmployeeImpactAccount: {
             email: string;

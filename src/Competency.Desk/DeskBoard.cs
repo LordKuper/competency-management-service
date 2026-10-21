@@ -12,20 +12,23 @@ internal sealed class DeskBoard(IEnumerable<IDeskSource> sources, ICurrentActor 
     private static readonly TimeSpan SlowThreshold = TimeSpan.FromSeconds(1);
 
     /// <summary>
-    /// Asks every source in turn, since they share the request's database context, and merges their findings.
+    /// Asks every source in turn, since they share the request's database context, merges their findings and joins their prerequisites.
     /// A slow run is logged with the role and the time each source took, never with whose desk it was.
     /// </summary>
     /// <param name="cancellationToken">Cancels the work.</param>
-    /// <returns>The desk items in desk order.</returns>
-    public async Task<List<DeskItemResponse>> ItemsAsync(CancellationToken cancellationToken)
+    /// <returns>The desk items in desk order, and the prerequisites that hold, each once, in declaration order.</returns>
+    public async Task<(List<DeskItemResponse> Items, List<DeskPrerequisite> Prerequisites)> ReadAsync(CancellationToken cancellationToken)
     {
         var started = time.GetTimestamp();
         var findings = new List<DeskFinding>();
+        var prerequisites = new HashSet<DeskPrerequisite>();
         var timings = new List<string>();
         foreach (var source in sources)
         {
             var sourceStarted = time.GetTimestamp();
-            findings.AddRange(await source.FindAsync(cancellationToken));
+            var report = await source.FindAsync(cancellationToken);
+            findings.AddRange(report.Findings);
+            prerequisites.UnionWith(report.Prerequisites);
             timings.Add($"{source.GetType().Name} {time.GetElapsedTime(sourceStarted).TotalMilliseconds:F0} ms");
         }
 
@@ -40,6 +43,6 @@ internal sealed class DeskBoard(IEnumerable<IDeskSource> sources, ICurrentActor 
                 string.Join(", ", timings));
         }
 
-        return items;
+        return (items, [.. prerequisites.Order()]);
     }
 }
