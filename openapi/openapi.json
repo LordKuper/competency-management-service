@@ -1184,6 +1184,14 @@
             }
           },
           {
+            "name": "hrCandidate",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "schema": {
@@ -1229,6 +1237,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3110,7 +3128,7 @@
             "name": "role",
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/UserRole"
+              "$ref": "#/components/schemas/UserRoleFilter"
             }
           },
           {
@@ -13306,7 +13324,7 @@
       "CreateUserRequest": {
         "required": [
           "email",
-          "role",
+          "roles",
           "employeeId"
         ],
         "type": "object",
@@ -13314,8 +13332,11 @@
           "email": {
             "type": "string"
           },
-          "role": {
-            "$ref": "#/components/schemas/UserRole"
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserRole"
+            }
           },
           "employeeId": {
             "type": [
@@ -13330,7 +13351,7 @@
         "required": [
           "id",
           "email",
-          "role",
+          "roles",
           "employeeId",
           "employeeName",
           "employeeLastName",
@@ -13346,8 +13367,11 @@
           "email": {
             "type": "string"
           },
-          "role": {
-            "$ref": "#/components/schemas/UserRole"
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserRole"
+            }
           },
           "employeeId": {
             "type": [
@@ -13473,6 +13497,7 @@
           "None",
           "Invited",
           "Blocked",
+          "NoHrRole",
           null
         ]
       },
@@ -13609,6 +13634,13 @@
               "$ref": "#/components/schemas/DeskObject"
             },
             "description": "The levels whose place in the track changed since its matrix was published, in track order."
+          },
+          "hasHrRole": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Whether the account the reason is about has the HR role."
           }
         },
         "description": "The values a desk finding's reason names; the client words the reason from its kind, so each kind fills only the values it names."
@@ -13854,7 +13886,8 @@
           "ActiveUnit",
           "ActivePosition",
           "WorkingEmployee",
-          "VisibleTrack"
+          "VisibleTrack",
+          "HrAccount"
         ],
         "description": "A fact about the current data that a desk scenario needs before the user can start it.\r\nMember names are sent in the API, so renaming one changes it; a new member also needs a source that knows it."
       },
@@ -13934,6 +13967,7 @@
       "EmployeeImpactResponse": {
         "required": [
           "headOfUnits",
+          "hrUnits",
           "account"
         ],
         "type": "object",
@@ -13942,6 +13976,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/OrgUnitResponse"
+            }
+          },
+          "hrUnits": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           },
           "account": {
@@ -15711,14 +15751,14 @@
       },
       "OrgUnitHrPersonResponse": {
         "required": [
-          "userId",
+          "employeeId",
           "name",
           "orgUnitId",
           "orgUnitName"
         ],
         "type": "object",
         "properties": {
-          "userId": {
+          "employeeId": {
             "type": "string",
             "format": "uuid"
           },
@@ -15732,21 +15772,25 @@
           "orgUnitName": {
             "type": "string"
           },
-          "isActive": {
-            "type": [
-              "null",
-              "boolean"
+          "account": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UnitAccountResponse"
+              }
             ]
           }
         }
       },
       "OrgUnitHrRequest": {
         "required": [
-          "userId"
+          "employeeId"
         ],
         "type": "object",
         "properties": {
-          "userId": {
+          "employeeId": {
             "type": "string",
             "format": "uuid"
           }
@@ -16787,6 +16831,7 @@
           "None",
           "Invited",
           "Blocked",
+          "NoHrRole",
           "Active"
         ]
       },
@@ -16838,7 +16883,9 @@
           "Invited",
           "Blocked",
           "NoHr",
+          "NoHrCandidates",
           "HrCannotAct",
+          "NoHrRole",
           "NoPositions",
           null
         ]
@@ -16850,7 +16897,6 @@
           "head",
           "headAccount",
           "hr",
-          "hrAccount",
           "positions",
           "rows"
         ],
@@ -16893,16 +16939,6 @@
               },
               {
                 "$ref": "#/components/schemas/OrgUnitHrPersonResponse"
-              }
-            ]
-          },
-          "hrAccount": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/UnitAccountResponse"
               }
             ]
           },
@@ -17005,7 +17041,7 @@
       "UpdateUserRequest": {
         "required": [
           "email",
-          "role",
+          "roles",
           "employeeId"
         ],
         "type": "object",
@@ -17013,8 +17049,11 @@
           "email": {
             "type": "string"
           },
-          "role": {
-            "$ref": "#/components/schemas/UserRole"
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserRole"
+            }
           },
           "employeeId": {
             "type": [
@@ -17029,7 +17068,7 @@
         "required": [
           "id",
           "email",
-          "role",
+          "roles",
           "isBlocked",
           "isInvited",
           "employeeId",
@@ -17046,8 +17085,11 @@
           "email": {
             "type": "string"
           },
-          "role": {
-            "$ref": "#/components/schemas/UserRole"
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserRole"
+            }
           },
           "isBlocked": {
             "type": "boolean"
@@ -17082,8 +17124,16 @@
       },
       "UserRole": {
         "enum": [
+          "GlobalAdmin",
+          "Hr"
+        ]
+      },
+      "UserRoleFilter": {
+        "enum": [
           "User",
-          "GlobalAdmin"
+          "GlobalAdmin",
+          "Hr",
+          null
         ]
       }
     }

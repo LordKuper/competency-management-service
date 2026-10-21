@@ -2067,7 +2067,7 @@ export interface components {
         };
         CreateUserRequest: {
             email: string;
-            role: components["schemas"]["UserRole"];
+            roles: components["schemas"]["UserRole"][];
             /** Format: uuid */
             employeeId: null | string;
         };
@@ -2075,7 +2075,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             email: string;
-            role: components["schemas"]["UserRole"];
+            roles: components["schemas"]["UserRole"][];
             /** Format: uuid */
             employeeId: null | string;
             employeeName: null | string;
@@ -2104,7 +2104,7 @@ export interface components {
             moreCount: number;
         };
         /** @enum {unknown} */
-        DeskAccountState: "None" | "Invited" | "Blocked" | null;
+        DeskAccountState: "None" | "Invited" | "Blocked" | "NoHrRole" | null;
         DeskCountResponse: {
             /** Format: int32 */
             actionCount: number;
@@ -2146,6 +2146,8 @@ export interface components {
             removedLevels?: null | components["schemas"]["DeskObject"][];
             /** @description The levels whose place in the track changed since its matrix was published, in track order. */
             movedLevels?: null | components["schemas"]["DeskObject"][];
+            /** @description Whether the account the reason is about has the HR role. */
+            hasHrRole?: null | boolean;
         };
         /** @enum {unknown} */
         DeskGroup: "ReturnedVersions" | "VersionsToApprove" | "UnsubmittedVersions" | "DraftsToApprove" | "MatricesToBuild" | "PositionsToLink" | "UnitsToConnect" | "Invitations" | "OrgCleanup" | "UnitsWithoutMatrix" | "VersionsInApproval" | "StuckVersions" | "ChangedCompetencies" | "OwnDrafts" | "PositionLinksInfo" | "UnusedCatalogEntries" | "InactivePositions" | "UnusedPositions" | "EmptyUnits" | "NoTrack";
@@ -2214,7 +2216,7 @@ export interface components {
          *     Member names are sent in the API, so renaming one changes it; a new member also needs a source that knows it.
          * @enum {unknown}
          */
-        DeskPrerequisite: "ActiveUnit" | "ActivePosition" | "WorkingEmployee" | "VisibleTrack";
+        DeskPrerequisite: "ActiveUnit" | "ActivePosition" | "WorkingEmployee" | "VisibleTrack" | "HrAccount";
         DeskReasonResponse: {
             kind: components["schemas"]["DeskKind"];
             /** Format: date-time */
@@ -2234,6 +2236,7 @@ export interface components {
         };
         EmployeeImpactResponse: {
             headOfUnits: components["schemas"]["OrgUnitResponse"][];
+            hrUnits: string[];
             account: null | components["schemas"]["EmployeeImpactAccount"];
         };
         EmployeeRequest: {
@@ -2673,16 +2676,16 @@ export interface components {
         };
         OrgUnitHrPersonResponse: {
             /** Format: uuid */
-            userId: string;
+            employeeId: string;
             name: string;
             /** Format: uuid */
             orgUnitId: string;
             orgUnitName: string;
-            isActive?: null | boolean;
+            account?: null | components["schemas"]["UnitAccountResponse"];
         };
         OrgUnitHrRequest: {
             /** Format: uuid */
-            userId: string;
+            employeeId: string;
         };
         OrgUnitHrResponse: {
             assigned: null | components["schemas"]["OrgUnitHrPersonResponse"];
@@ -2971,7 +2974,7 @@ export interface components {
             version: null | number;
         };
         /** @enum {unknown} */
-        UnitAccountState: "None" | "Invited" | "Blocked" | "Active";
+        UnitAccountState: "None" | "Invited" | "Blocked" | "NoHrRole" | "Active";
         UnitPositionResponse: {
             /** Format: uuid */
             id: string;
@@ -2983,7 +2986,7 @@ export interface components {
             inherited: components["schemas"]["UnitPositionResponse"][];
         };
         /** @enum {unknown} */
-        UnitSetupReason: "NoHead" | "NoAccount" | "Invited" | "Blocked" | "NoHr" | "HrCannotAct" | "NoPositions" | null;
+        UnitSetupReason: "NoHead" | "NoAccount" | "Invited" | "Blocked" | "NoHr" | "NoHrCandidates" | "HrCannotAct" | "NoHrRole" | "NoPositions" | null;
         UnitSetupResponse: {
             unit: components["schemas"]["CareerUnitResponse"][];
             /** Format: int32 */
@@ -2991,7 +2994,6 @@ export interface components {
             head: null | components["schemas"]["CareerEmployeeResponse"];
             headAccount: null | components["schemas"]["UnitAccountResponse"];
             hr: null | components["schemas"]["OrgUnitHrPersonResponse"];
-            hrAccount: null | components["schemas"]["UnitAccountResponse"];
             positions: components["schemas"]["UnitPositionsResponse"];
             rows: components["schemas"]["UnitSetupRowResponse"][];
         };
@@ -3019,7 +3021,7 @@ export interface components {
         };
         UpdateUserRequest: {
             email: string;
-            role: components["schemas"]["UserRole"];
+            roles: components["schemas"]["UserRole"][];
             /** Format: uuid */
             employeeId: null | string;
         };
@@ -3027,7 +3029,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             email: string;
-            role: components["schemas"]["UserRole"];
+            roles: components["schemas"]["UserRole"][];
             isBlocked: boolean;
             isInvited: boolean;
             /** Format: uuid */
@@ -3038,7 +3040,9 @@ export interface components {
             mailSent: null | boolean;
         };
         /** @enum {unknown} */
-        UserRole: "User" | "GlobalAdmin";
+        UserRole: "GlobalAdmin" | "Hr";
+        /** @enum {unknown} */
+        UserRoleFilter: "User" | "GlobalAdmin" | "Hr" | null;
     };
     responses: never;
     parameters: never;
@@ -3886,6 +3890,7 @@ export interface operations {
                 isActive?: boolean;
                 orgUnitId?: string;
                 includeDescendants?: boolean;
+                hrCandidate?: boolean;
                 page?: number;
                 pageSize?: number;
             };
@@ -3915,6 +3920,15 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5396,7 +5410,7 @@ export interface operations {
         parameters: {
             query?: {
                 q?: string;
-                role?: components["schemas"]["UserRole"];
+                role?: components["schemas"]["UserRoleFilter"];
                 isBlocked?: boolean;
                 isInvited?: boolean;
                 page?: number;
