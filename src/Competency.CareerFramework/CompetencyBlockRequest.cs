@@ -2,7 +2,7 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// The name, unit and composition of a new shared block or of a change of one; the composition replaces the block's as a whole. A block
-/// has no scale, so a scale sent by an older client is not read.
+/// has no scale.
 /// </summary>
 internal sealed record CompetencyBlockRequest : CatalogNameRequest
 {

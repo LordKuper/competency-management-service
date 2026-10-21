@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace Competency.CareerFramework;
 
 /// <summary>
@@ -24,10 +22,4 @@ internal sealed record NewMatrixRequest
     /// The position of a position matrix; absent for a track matrix.
     /// </summary>
     public Guid? PositionId { get; init; }
-
-    /// <summary>
-    /// Accepted and not read: a matrix has no scale.
-    /// </summary>
-    [Description("Deprecated, removed in the next major version: accepted and ignored, a matrix has no scale.")]
-    public Guid? ScaleId { get; init; }
 }

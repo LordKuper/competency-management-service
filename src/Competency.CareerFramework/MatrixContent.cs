@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Text.Json;
 
 namespace Competency.CareerFramework;
@@ -31,15 +30,9 @@ internal sealed record MatrixContent(
     public static MatrixContent Empty { get; } = new([], [], [], []);
 
     /// <summary>
-    /// The shared blocks the version includes by reference; empty in a document written before shared blocks existed or sent without them.
+    /// The shared blocks the version includes by reference; empty when sent without them.
     /// </summary>
     public IReadOnlyList<MatrixSharedBlock> SharedBlocks { get; init; } = SharedBlocks ?? [];
-
-    /// <summary>
-    /// Kept for clients of the contract that had blocks of a version's own; never read, always empty.
-    /// </summary>
-    [Description("Deprecated, removed in the next major version: a version has no blocks of its own; ignored in requests, always empty in responses.")]
-    public IReadOnlyList<MatrixBlock> Blocks => [];
 
     public static MatrixContent FromJson(string json) => JsonSerializer.Deserialize<MatrixContent>(json, Json) ?? Empty;
 
@@ -166,17 +159,29 @@ internal sealed record MatrixContent(
     }
 
     /// <summary>
-    /// The document as stored: a requirement is a required score alone, so one without a score is left out and the fields requirements
-    /// and coefficients no longer have are dropped; call after <see cref="Validate"/> succeeded.
+    /// The document with a requirement for every level and competency of the version: each pair without one gets the lowest score of the
+    /// competency's scale, after the requirements already there, by level in level order and within a level in competency order. The
+    /// requirements already there stay as they are, so the version never has a level or competency without a required score.
     /// </summary>
-    /// <returns>The stored document.</returns>
-    public MatrixContent Stored() => this with
+    /// <param name="compositions">The composition of each shared block, as <see cref="MatrixVersion.CompositionsOf"/> chooses it.</param>
+    /// <param name="lowestScores">The lowest score of each competency's scale, by competency; a competency missing here gets none.</param>
+    /// <returns>The filled document.</returns>
+    public MatrixContent Filled(IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> compositions, IReadOnlyDictionary<Guid, int> lowestScores)
     {
-        BlockWeights = [.. BlockWeights.Select(item => item with { MinPercent = null })],
-        Requirements = [.. Requirements
-            .Where(item => item.RequiredScore is not null)
-            .Select(item => new MatrixRequirement(item.LevelId, item.CompetencyId, item.RequiredScore))],
-    };
+        var present = Requirements.Select(item => (item.LevelId, item.CompetencyId)).ToHashSet();
+        var competencyIds = CompetenciesWith(compositions).Select(item => item.CompetencyId).Distinct().ToList();
+        var added = Levels.SelectMany(level => competencyIds
+            .Where(competencyId => !present.Contains((level.LevelId, competencyId)) && lowestScores.ContainsKey(competencyId))
+            .Select(competencyId => new MatrixRequirement(level.LevelId, competencyId, lowestScores[competencyId])));
+        return this with { Requirements = [.. Requirements, .. added] };
+    }
+
+    /// <summary>
+    /// The document filled by the shared blocks, competencies and scales of the entries the version refers to.
+    /// </summary>
+    /// <param name="entries">The entries, frozen at publication or read live.</param>
+    /// <returns>The filled document.</returns>
+    public MatrixContent Filled(MatrixEntries entries) => Filled(entries.Compositions(), entries.LowestScores());
 
     private static bool IsPercent(decimal? value) => value is null or (>= 0 and <= MaxPercent);
 }

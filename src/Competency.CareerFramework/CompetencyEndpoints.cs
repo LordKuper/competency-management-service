@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -17,11 +16,9 @@ namespace Competency.CareerFramework;
 internal static class CompetencyEndpoints
 {
     private const string Route = "/api/v1/career/competencies";
-    private const string CategoryField = "categoryId";
     private const string DirectionField = "directionId";
     private const string WithGeneralField = "withGeneral";
     private const string ScaleField = "scaleId";
-    private const string TypeField = "type";
     private const string InUseMessage = "Компетенцию используют матрицы — удалить нельзя";
     private const string BlockInUseMessage = "Компетенцию используют общие блоки — удалить нельзя";
     private const string DraftReferenceMessage = "Выбрана черновая запись — сначала утвердите её";
@@ -78,24 +75,19 @@ internal static class CompetencyEndpoints
 
     /// <summary>
     /// Lists the competencies; <c>withGeneral=true</c> adds the general competencies to those of the direction, as a matrix of the direction may use them.
-    /// A category or type filter, left from the contract that had them, matches no competency.
     /// </summary>
     private static Task<Results<Ok<PageResponse<CompetencyResponse>>, ValidationProblem>> ListAsync(
         [AsParameters] CatalogListQuery query,
-        [FromQuery(Name = CategoryField)][Description(CompetencyResponse.DeprecatedCategory)] Guid? categoryId,
         [FromQuery(Name = DirectionField)] Guid? directionId,
         [FromQuery(Name = WithGeneralField)] bool? withGeneral,
         [FromQuery(Name = ScaleField)] Guid? scaleId,
-        [FromQuery(Name = TypeField)][Description(CompetencyResponse.DeprecatedType)] CompetencyType? type,
         AppDbContext context,
         CatalogStore store,
         CancellationToken cancellationToken) =>
         CatalogEndpoints.ListAsync(
             context.Set<CareerCompetency>()
-                .WhereIf(categoryId is not null, _ => false)
                 .WhereIf(directionId is not null, competency => competency.DirectionId == directionId || (withGeneral == true && competency.DirectionId == null))
-                .WhereIf(scaleId is not null, competency => competency.ScaleId == scaleId)
-                .WhereIf(type is not null, _ => false),
+                .WhereIf(scaleId is not null, competency => competency.ScaleId == scaleId),
             query,
             Kind,
             store,
@@ -232,9 +224,7 @@ internal static class CompetencyEndpoints
             version.Number,
             version.Name,
             version.Description,
-            CategoryId: null,
             version.DirectionId,
-            Type: null,
             version.ScaleId,
             version.Status,
             version.ChangedById,

@@ -1,7 +1,7 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// One item that differs between two documents of a version, named by the keys of its kind: a level, a block of its own or a shared
+/// One item that differs between two documents of a version, named by the keys of its kind: a level, a shared
 /// block, or a competency by its own identifier, a block coefficient by level and group, a requirement by level and competency.
 /// </summary>
 internal sealed record MatrixChange(MatrixChangeKind Kind, MatrixChangeType Type, Guid? LevelId, Guid? BlockId, Guid? CompetencyId)

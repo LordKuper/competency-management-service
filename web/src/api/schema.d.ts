@@ -1092,24 +1092,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/career/categories": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Deprecated, removed in the next major version: competencies have no category. */
-        get: operations["ListCompetencyCategories"];
-        put?: never;
-        /** @description Deprecated, removed in the next major version: competencies have no category. */
-        post: operations["CreateCompetencyCategory"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/career/competencies": {
         parameters: {
             query?: never;
@@ -1971,11 +1953,8 @@ export interface components {
             version: number;
             readiness?: null | components["schemas"]["TrackReadinessResponse"];
         };
-        /**
-         * @description Category is deprecated and removed in the next major version: competencies have no category, so no entry is of that kind.
-         * @enum {unknown}
-         */
-        CatalogEntryKind: "Direction" | "Track" | "Category" | "Competency" | "Scale" | "Block";
+        /** @enum {unknown} */
+        CatalogEntryKind: "Direction" | "Track" | "Competency" | "Scale" | "Block";
         CatalogEntryResponse: {
             /** Format: uuid */
             id: string;
@@ -2018,14 +1997,8 @@ export interface components {
         CompetencyRequest: {
             description: null | string;
             evidenceExamples?: null | string;
-            /**
-             * Format: uuid
-             * @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.
-             */
-            categoryId?: null | string;
             /** Format: uuid */
             directionId: null | string;
-            type?: null | components["schemas"]["CompetencyType"];
             /** Format: uuid */
             scaleId?: null | string;
             name: string;
@@ -2035,17 +2008,9 @@ export interface components {
             id: string;
             name: string;
             description: null | string;
-            /**
-             * Format: uuid
-             * @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.
-             */
-            categoryId: null | string;
-            /** @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses. */
-            categoryName: null | string;
             /** Format: uuid */
             directionId: null | string;
             directionName: null | string;
-            type: null | components["schemas"]["CompetencyType"];
             /** Format: uuid */
             scaleId: string;
             scaleName: string;
@@ -2083,14 +2048,8 @@ export interface components {
             number: number;
             name: string;
             description: null | string;
-            /**
-             * Format: uuid
-             * @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.
-             */
-            categoryId: null | string;
             /** Format: uuid */
             directionId: null | string;
-            type: null | components["schemas"]["CompetencyType"];
             /** Format: uuid */
             scaleId: string;
             status: components["schemas"]["CatalogStatus"];
@@ -2356,12 +2315,6 @@ export interface components {
         };
         /** @enum {unknown} */
         MatrixAction: "Edit" | "Submit" | "Approve" | "Return" | "AcceptChanges" | "AcceptAndRevise" | "RollbackChanges";
-        MatrixBlock: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            isMandatory: boolean;
-        };
         MatrixBlockWeight: {
             /** Format: uuid */
             levelId: string;
@@ -2369,11 +2322,6 @@ export interface components {
             blockId: null | string;
             /** Format: double */
             percent: number;
-            /**
-             * Format: double
-             * @description Deprecated, removed in the next major version: groups have no threshold; ignored in requests, always null in responses.
-             */
-            minPercent?: null | number;
         };
         MatrixChange: {
             kind: components["schemas"]["MatrixChangeKind"];
@@ -2401,13 +2349,6 @@ export interface components {
             id: string;
             name: string;
             description: null | string;
-            /**
-             * Format: uuid
-             * @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.
-             */
-            categoryId: null | string;
-            /** @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses. */
-            categoryName: null | string;
             /** Format: uuid */
             directionId: null | string;
             type: components["schemas"]["CompetencyType"];
@@ -2432,8 +2373,6 @@ export interface components {
             blockWeights: components["schemas"]["MatrixBlockWeight"][];
             requirements: components["schemas"]["MatrixRequirement"][];
             sharedBlocks?: null | components["schemas"]["MatrixSharedBlock"][];
-            /** @description Deprecated, removed in the next major version: a version has no blocks of its own; ignored in requests, always empty in responses. */
-            blocks?: null | components["schemas"]["MatrixBlock"][];
         };
         /** @enum {unknown} */
         MatrixDecisionKind: "Submitted" | "Skipped" | "Approved" | "AutoApproved" | "Returned" | "AcceptedChanges" | "AcceptedAndRevising" | "RolledBack" | "Published";
@@ -2463,7 +2402,6 @@ export interface components {
         MatrixEntries: {
             direction: null | components["schemas"]["MatrixNamedEntry"];
             track: null | components["schemas"]["MatrixNamedEntry"];
-            scale: null | components["schemas"]["MatrixScaleEntry"];
             levels: components["schemas"]["MatrixLevelEntry"][];
             competencies: components["schemas"]["MatrixCompetencyEntry"][];
             position?: null | components["schemas"]["MatrixNamedEntry"];
@@ -2508,7 +2446,7 @@ export interface components {
             competencyId?: null | string;
         };
         /** @enum {unknown} */
-        MatrixProblemCode: "NoLevels" | "LevelWithoutRequirements" | "BlockWeights" | "InactiveEntry" | "ForeignCompetency" | "ScoreOutOfScale" | "LevelWithoutActivePosition" | "NoCompetencies" | "CompetencyWithoutScore" | "CompetencyWithoutRequirements" | "DuplicateCompetency" | "PositionUnavailable" | "SharedBlockUnavailable";
+        MatrixProblemCode: "NoLevels" | "BlockWeights" | "InactiveEntry" | "ForeignCompetency" | "ScoreOutOfScale" | "LevelWithoutActivePosition" | "NoCompetencies" | "DuplicateCompetency" | "PositionUnavailable" | "SharedBlockUnavailable";
         MatrixPublicationResponse: {
             publishingActions: components["schemas"]["MatrixAction"][];
             entries: components["schemas"]["PublicationEntry"][];
@@ -2523,24 +2461,7 @@ export interface components {
             /** Format: uuid */
             competencyId: string;
             /** Format: int32 */
-            requiredScore: null | number;
-            /**
-             * Format: double
-             * @description Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses.
-             */
-            weight?: null | number;
-            /** @description Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses. */
-            isMandatory?: null | boolean;
-            /** @description Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses. */
-            expectedBehavior?: null | string;
-            /** @description Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses. */
-            evidenceExamples?: null | string;
-            /**
-             * Format: date
-             * @description Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses.
-             */
-            validFrom?: null | string;
-            type?: null | components["schemas"]["CompetencyType"];
+            requiredScore: number;
         };
         MatrixResponse: {
             /** Format: uuid */
@@ -2625,11 +2546,6 @@ export interface components {
             number: number;
             status: components["schemas"]["MatrixVersionStatus"];
             step: null | components["schemas"]["ApprovalStep"];
-            /**
-             * Format: uuid
-             * @description Deprecated, removed in the next major version: the one scale of a version published before matrices lost their scale; null otherwise. Use competencies[].scaleId and scales.
-             */
-            scaleId: null | string;
             /** Format: uuid */
             authorId: string;
             authorName: null | string;
@@ -2704,7 +2620,7 @@ export interface components {
             competencyId: string;
             competencyName: string;
             /** Format: int32 */
-            requiredScore: null | number;
+            requiredScore: number;
             scoreLabel: null | string;
             type: components["schemas"]["CompetencyType"];
         };
@@ -2747,11 +2663,6 @@ export interface components {
             trackId?: null | string;
             /** Format: uuid */
             positionId?: null | string;
-            /**
-             * Format: uuid
-             * @description Deprecated, removed in the next major version: accepted and ignored, a matrix has no scale.
-             */
-            scaleId?: null | string;
         };
         OrgUnitHrPersonResponse: {
             /** Format: uuid */
@@ -8682,79 +8593,6 @@ export interface operations {
             };
         };
     };
-    ListCompetencyCategories: {
-        parameters: {
-            query?: {
-                q?: string;
-                status?: components["schemas"]["CatalogStatus"];
-                inWork?: boolean;
-                page?: number;
-                pageSize?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PageResponseOfCatalogEntryResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    CreateCompetencyCategory: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Gone */
-            410: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
     ListCompetencies: {
         parameters: {
             query?: {
@@ -8763,13 +8601,9 @@ export interface operations {
                 inWork?: boolean;
                 page?: number;
                 pageSize?: number;
-                /** @description Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses. */
-                categoryId?: string;
                 directionId?: string;
                 withGeneral?: boolean;
                 scaleId?: string;
-                /** @description Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses. */
-                type?: components["schemas"]["CompetencyType"];
             };
             header?: never;
             path?: never;

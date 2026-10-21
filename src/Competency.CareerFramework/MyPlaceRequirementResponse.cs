@@ -5,7 +5,7 @@ namespace Competency.CareerFramework;
 /// </summary>
 /// <param name="CompetencyId">The competency.</param>
 /// <param name="CompetencyName">The competency's name.</param>
-/// <param name="RequiredScore">The required point of the scale; null when the requirement sets none.</param>
-/// <param name="ScoreLabel">What the required point means; null when the requirement sets none.</param>
+/// <param name="RequiredScore">The required point of the scale.</param>
+/// <param name="ScoreLabel">What the required point means; null when the scale frozen for the competency has no such point.</param>
 /// <param name="Type">How the competency counts towards readiness.</param>
-internal sealed record MyPlaceRequirementResponse(Guid CompetencyId, string CompetencyName, int? RequiredScore, string? ScoreLabel, CompetencyType Type);
+internal sealed record MyPlaceRequirementResponse(Guid CompetencyId, string CompetencyName, int RequiredScore, string? ScoreLabel, CompetencyType Type);

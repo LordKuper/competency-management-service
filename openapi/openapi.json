@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "Competency.Api | v1",
-    "version": "3.1.0"
+    "version": "1.0.0"
   },
   "paths": {
     "/api/v1/auth/password-policy": {
@@ -7439,117 +7439,6 @@
         }
       }
     },
-    "/api/v1/career/categories": {
-      "get": {
-        "tags": [
-          "Career"
-        ],
-        "description": "Deprecated, removed in the next major version: competencies have no category.",
-        "operationId": "ListCompetencyCategories",
-        "parameters": [
-          {
-            "name": "q",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/CatalogStatus"
-            }
-          },
-          {
-            "name": "inWork",
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 1
-            }
-          },
-          {
-            "name": "pageSize",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 50
-            }
-          }
-        ],
-        "responses": {
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PageResponseOfCatalogEntryResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Career"
-        ],
-        "description": "Deprecated, removed in the next major version: competencies have no category.",
-        "operationId": "CreateCompetencyCategory",
-        "responses": {
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "410": {
-            "description": "Gone",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/career/competencies": {
       "get": {
         "tags": [
@@ -7597,15 +7486,6 @@
             }
           },
           {
-            "name": "categoryId",
-            "in": "query",
-            "description": "Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
             "name": "directionId",
             "in": "query",
             "schema": {
@@ -7626,14 +7506,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          {
-            "name": "type",
-            "in": "query",
-            "description": "Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses.",
-            "schema": {
-              "$ref": "#/components/schemas/CompetencyType"
             }
           }
         ],
@@ -13009,12 +12881,10 @@
         "enum": [
           "Direction",
           "Track",
-          "Category",
           "Competency",
           "Scale",
           "Block"
-        ],
-        "description": "Category is deprecated and removed in the next major version: competencies have no category, so no entry is of that kind."
+        ]
       },
       "CatalogEntryResponse": {
         "required": [
@@ -13181,31 +13051,12 @@
               "string"
             ]
           },
-          "categoryId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.",
-            "format": "uuid"
-          },
           "directionId": {
             "type": [
               "null",
               "string"
             ],
             "format": "uuid"
-          },
-          "type": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses.",
-                "$ref": "#/components/schemas/CompetencyType"
-              }
-            ]
           },
           "scaleId": {
             "type": [
@@ -13224,11 +13075,8 @@
           "id",
           "name",
           "description",
-          "categoryId",
-          "categoryName",
           "directionId",
           "directionName",
-          "type",
           "scaleId",
           "scaleName",
           "status",
@@ -13253,21 +13101,6 @@
               "string"
             ]
           },
-          "categoryId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.",
-            "format": "uuid"
-          },
-          "categoryName": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses."
-          },
           "directionId": {
             "type": [
               "null",
@@ -13279,17 +13112,6 @@
             "type": [
               "null",
               "string"
-            ]
-          },
-          "type": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses.",
-                "$ref": "#/components/schemas/CompetencyType"
-              }
             ]
           },
           "scaleId": {
@@ -13402,9 +13224,7 @@
           "number",
           "name",
           "description",
-          "categoryId",
           "directionId",
-          "type",
           "scaleId",
           "status",
           "changedById",
@@ -13426,31 +13246,12 @@
               "string"
             ]
           },
-          "categoryId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.",
-            "format": "uuid"
-          },
           "directionId": {
             "type": [
               "null",
               "string"
             ],
             "format": "uuid"
-          },
-          "type": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses.",
-                "$ref": "#/components/schemas/CompetencyType"
-              }
-            ]
           },
           "scaleId": {
             "type": "string",
@@ -14456,26 +14257,6 @@
           "RollbackChanges"
         ]
       },
-      "MatrixBlock": {
-        "required": [
-          "id",
-          "name",
-          "isMandatory"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "isMandatory": {
-            "type": "boolean"
-          }
-        }
-      },
       "MatrixBlockWeight": {
         "required": [
           "levelId",
@@ -14497,14 +14278,6 @@
           },
           "percent": {
             "type": "number",
-            "format": "double"
-          },
-          "minPercent": {
-            "type": [
-              "null",
-              "number"
-            ],
-            "description": "Deprecated, removed in the next major version: groups have no threshold; ignored in requests, always null in responses.",
             "format": "double"
           }
         }
@@ -14599,8 +14372,6 @@
           "id",
           "name",
           "description",
-          "categoryId",
-          "categoryName",
           "directionId",
           "type",
           "versionNumber",
@@ -14620,21 +14391,6 @@
               "null",
               "string"
             ]
-          },
-          "categoryId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.",
-            "format": "uuid"
-          },
-          "categoryName": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses."
           },
           "directionId": {
             "type": [
@@ -14739,16 +14495,6 @@
             "items": {
               "$ref": "#/components/schemas/MatrixSharedBlock"
             }
-          },
-          "blocks": {
-            "type": [
-              "null",
-              "array"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/MatrixBlock"
-            },
-            "description": "Deprecated, removed in the next major version: a version has no blocks of its own; ignored in requests, always empty in responses."
           }
         }
       },
@@ -14866,7 +14612,6 @@
         "required": [
           "direction",
           "track",
-          "scale",
           "levels",
           "competencies"
         ],
@@ -14889,17 +14634,6 @@
               },
               {
                 "$ref": "#/components/schemas/MatrixNamedEntry"
-              }
-            ]
-          },
-          "scale": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Deprecated, removed in the next major version: the one scale of a version published before matrices lost their scale; null otherwise. Use competencies[].scaleId and scales.",
-                "$ref": "#/components/schemas/MatrixScaleEntry"
               }
             ]
           },
@@ -15089,15 +14823,12 @@
       "MatrixProblemCode": {
         "enum": [
           "NoLevels",
-          "LevelWithoutRequirements",
           "BlockWeights",
           "InactiveEntry",
           "ForeignCompetency",
           "ScoreOutOfScale",
           "LevelWithoutActivePosition",
           "NoCompetencies",
-          "CompetencyWithoutScore",
-          "CompetencyWithoutRequirements",
           "DuplicateCompetency",
           "PositionUnavailable",
           "SharedBlockUnavailable"
@@ -15157,59 +14888,8 @@
             "format": "uuid"
           },
           "requiredScore": {
-            "type": [
-              "null",
-              "integer"
-            ],
+            "type": "integer",
             "format": "int32"
-          },
-          "weight": {
-            "type": [
-              "null",
-              "number"
-            ],
-            "description": "Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses.",
-            "format": "double"
-          },
-          "isMandatory": {
-            "type": [
-              "null",
-              "boolean"
-            ],
-            "description": "Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses."
-          },
-          "expectedBehavior": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses."
-          },
-          "evidenceExamples": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses."
-          },
-          "validFrom": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Deprecated, removed in the next major version: a requirement is a required score alone; ignored in requests, always null in responses.",
-            "format": "date"
-          },
-          "type": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "description": "Deprecated, removed in the next major version: a competency's type is set once per version in competencies[].type or sharedBlocks[].competencyTypes; ignored in requests, always null in responses.",
-                "$ref": "#/components/schemas/CompetencyType"
-              }
-            ]
           }
         }
       },
@@ -15503,7 +15183,6 @@
           "number",
           "status",
           "step",
-          "scaleId",
           "authorId",
           "authorName",
           "createdAt",
@@ -15542,14 +15221,6 @@
                 "$ref": "#/components/schemas/ApprovalStep"
               }
             ]
-          },
-          "scaleId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Deprecated, removed in the next major version: the one scale of a version published before matrices lost their scale; null otherwise. Use competencies[].scaleId and scales.",
-            "format": "uuid"
           },
           "authorId": {
             "type": "string",
@@ -15815,10 +15486,7 @@
             "type": "string"
           },
           "requiredScore": {
-            "type": [
-              "null",
-              "integer"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "scoreLabel": {
@@ -16021,14 +15689,6 @@
               "null",
               "string"
             ],
-            "format": "uuid"
-          },
-          "scaleId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Deprecated, removed in the next major version: accepted and ignored, a matrix has no scale.",
             "format": "uuid"
           }
         }

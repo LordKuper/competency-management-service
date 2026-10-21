@@ -119,7 +119,8 @@ internal static class MatrixVersionEndpoints
 
     /// <summary>
     /// What the version changes against the published version of its matrix, or against an empty document when none is published. Both
-    /// documents come with the compositions of their shared blocks: the published one's from its snapshot, the other's as it counts them.
+    /// documents come filled and with the compositions of their shared blocks: the published one's from its snapshot, the other's as it
+    /// counts them.
     /// </summary>
     private static async Task<Results<Ok<MatrixDiffResponse>, NotFound>> ChangesAsync(
         Guid id,
@@ -127,6 +128,7 @@ internal static class MatrixVersionEndpoints
         CatalogStore store,
         MatrixWorkflow workflow,
         MatrixRoute route,
+        MatrixCatalog catalog,
         CancellationToken cancellationToken)
     {
         if (await FindReadableAsync(id, context, workflow, route, cancellationToken) is not { } version)
@@ -138,10 +140,21 @@ internal static class MatrixVersionEndpoints
             .AsNoTracking()
             .FirstOrDefaultAsync(candidate => candidate.MatrixId == version.MatrixId && candidate.Status == MatrixVersionStatus.Published, cancellationToken);
         var current = await store.CompositionsAsync([version.Content], cancellationToken);
-        var before = published is null ? MatrixContent.Empty : published.Content.Expanded(published.CompositionsOf(current));
-        var after = version.Content.Expanded(version.CompositionsOf(current));
+        var before = published is null ? MatrixContent.Empty : await ExpandedAsync(published, published.Content, published.CompositionsOf(current), catalog, cancellationToken);
+        var after = await ExpandedAsync(version, version.Content, version.CompositionsOf(current), catalog, cancellationToken);
         return TypedResults.Ok(new MatrixDiffResponse(version.Number, published?.Number, before, after, MatrixChange.Between(before, after)));
     }
+
+    /// <summary>
+    /// A document of the version filled and then expanded, as two documents are compared.
+    /// </summary>
+    private static async Task<MatrixContent> ExpandedAsync(
+        MatrixVersion version,
+        MatrixContent content,
+        IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> compositions,
+        MatrixCatalog catalog,
+        CancellationToken cancellationToken) =>
+        (await catalog.FilledAsync(version, content, compositions, cancellationToken)).Expanded(compositions);
 
     private static async Task<MatrixVersion?> FindReadableAsync(
         Guid id,
@@ -185,7 +198,7 @@ internal static class MatrixVersionEndpoints
         MatrixRoute route,
         CancellationToken cancellationToken)
     {
-        if (!await CanReadHistoryAsync(id, context, workflow, route, cancellationToken))
+        if (await FindHistoryReadableAsync(id, context, workflow, route, cancellationToken) is null)
         {
             return TypedResults.NotFound();
         }
@@ -219,6 +232,9 @@ internal static class MatrixVersionEndpoints
                 decision.VariantNumber))]));
     }
 
+    /// <summary>
+    /// A variant with its content filled by the shared blocks and scales the version counts with.
+    /// </summary>
     private static async Task<Results<Ok<MatrixVariantResponse>, NotFound>> VariantAsync(
         Guid id,
         int number,
@@ -226,21 +242,25 @@ internal static class MatrixVersionEndpoints
         CatalogStore store,
         MatrixWorkflow workflow,
         MatrixRoute route,
+        MatrixCatalog catalog,
         CancellationToken cancellationToken)
     {
-        if (!await CanReadHistoryAsync(id, context, workflow, route, cancellationToken)
+        if (await FindHistoryReadableAsync(id, context, workflow, route, cancellationToken) is not { } version
             || await FindVariantAsync(id, number, context, cancellationToken) is not { } variant)
         {
             return TypedResults.NotFound();
         }
 
+        var compositions = version.CompositionsOf(await store.CompositionsAsync([variant.Content], cancellationToken));
+        var content = await catalog.FilledAsync(version, variant.Content, compositions, cancellationToken);
         var names = await store.UserNamesAsync([variant.CreatedById], cancellationToken);
         return TypedResults.Ok(new MatrixVariantResponse(
-            variant.Number, variant.Kind, variant.CreatedById, names.GetValueOrDefault(variant.CreatedById), variant.CreatedAt, variant.Content));
+            variant.Number, variant.Kind, variant.CreatedById, names.GetValueOrDefault(variant.CreatedById), variant.CreatedAt, content));
     }
 
     /// <summary>
-    /// What a variant changed against the variant before it, both with the compositions of their shared blocks as the version counts them.
+    /// What a variant changed against the variant before it, both filled and with the compositions of their shared blocks as the version
+    /// counts them.
     /// </summary>
     private static async Task<Results<Ok<MatrixDiffResponse>, NotFound>> DiffAsync(
         Guid id,
@@ -249,6 +269,7 @@ internal static class MatrixVersionEndpoints
         CatalogStore store,
         MatrixWorkflow workflow,
         MatrixRoute route,
+        MatrixCatalog catalog,
         CancellationToken cancellationToken)
     {
         if (await FindHistoryReadableAsync(id, context, workflow, route, cancellationToken) is not { } version
@@ -260,18 +281,10 @@ internal static class MatrixVersionEndpoints
         var previous = await FindVariantAsync(id, number - 1, context, cancellationToken);
         MatrixContent[] contents = previous is null ? [variant.Content] : [variant.Content, previous.Content];
         var compositions = version.CompositionsOf(await store.CompositionsAsync(contents, cancellationToken));
-        var before = previous?.Content.Expanded(compositions) ?? MatrixContent.Empty;
-        var after = variant.Content.Expanded(compositions);
+        var before = previous is null ? MatrixContent.Empty : await ExpandedAsync(version, previous.Content, compositions, catalog, cancellationToken);
+        var after = await ExpandedAsync(version, variant.Content, compositions, catalog, cancellationToken);
         return TypedResults.Ok(new MatrixDiffResponse(variant.Number, previous?.Number, before, after, MatrixChange.Between(before, after)));
     }
-
-    private static async Task<bool> CanReadHistoryAsync(
-        Guid id,
-        AppDbContext context,
-        MatrixWorkflow workflow,
-        MatrixRoute route,
-        CancellationToken cancellationToken) =>
-        await FindHistoryReadableAsync(id, context, workflow, route, cancellationToken) is not null;
 
     private static async Task<MatrixVersion?> FindHistoryReadableAsync(
         Guid id,

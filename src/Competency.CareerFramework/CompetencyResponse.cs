@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace Competency.CareerFramework;
 
 /// <summary>
@@ -12,11 +10,8 @@ internal sealed record CompetencyResponse(
     Guid Id,
     string Name,
     string? Description,
-    [property: Description(CompetencyResponse.DeprecatedCategory)] Guid? CategoryId,
-    [property: Description(CompetencyResponse.DeprecatedCategory)] string? CategoryName,
     Guid? DirectionId,
     string? DirectionName,
-    [property: Description(CompetencyResponse.DeprecatedType)] CompetencyType? Type,
     Guid ScaleId,
     string ScaleName,
     CatalogStatus Status,
@@ -27,25 +22,12 @@ internal sealed record CompetencyResponse(
     bool CanDelete,
     string? EvidenceExamples = null)
 {
-    /// <summary>
-    /// What the contract says of the type of a competency, which competencies no longer have.
-    /// </summary>
-    public const string DeprecatedType = "Deprecated, removed in the next major version: a competency's type is set in each matrix version; ignored in requests, always null in responses.";
-
-    /// <summary>
-    /// What the contract says of the category fields of a competency, which competencies no longer have.
-    /// </summary>
-    public const string DeprecatedCategory = "Deprecated, removed in the next major version: competencies have no category; ignored in requests, always null in responses.";
-
     public static CompetencyResponse From(CareerCompetency competency, IReadOnlyDictionary<Guid, string> names, CatalogViewer viewer) => new(
         competency.Id,
         competency.Name,
         competency.Description,
-        CategoryId: null,
-        CategoryName: null,
         competency.DirectionId,
         competency.DirectionId is { } directionId ? names.GetValueOrDefault(directionId, string.Empty) : null,
-        Type: null,
         competency.ScaleId,
         names.GetValueOrDefault(competency.ScaleId, string.Empty),
         competency.Status,

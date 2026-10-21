@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace Competency.CareerFramework;
 
 /// <summary>
@@ -11,7 +9,6 @@ namespace Competency.CareerFramework;
 internal sealed record MatrixEntries(
     MatrixNamedEntry? Direction,
     MatrixNamedEntry? Track,
-    [property: Description(MatrixEntries.DeprecatedScale)] MatrixScaleEntry? Scale,
     IReadOnlyList<MatrixLevelEntry> Levels,
     IReadOnlyList<MatrixCompetencyEntry> Competencies,
     MatrixNamedEntry? Position = null,
@@ -19,13 +16,7 @@ internal sealed record MatrixEntries(
     IReadOnlyList<MatrixScaleEntry>? Scales = null)
 {
     /// <summary>
-    /// What the contract says of the scale of a version, which matrices no longer have.
-    /// </summary>
-    public const string DeprecatedScale =
-        "Deprecated, removed in the next major version: the one scale of a version published before matrices lost their scale; null otherwise. Use competencies[].scaleId and scales.";
-
-    /// <summary>
-    /// The shared blocks of the version with their compositions; empty in a snapshot taken before shared blocks existed.
+    /// The shared blocks of the version with their compositions.
     /// </summary>
     public IReadOnlyList<MatrixSharedBlockEntry> SharedBlocks { get; init; } = SharedBlocks ?? [];
 
@@ -39,4 +30,16 @@ internal sealed record MatrixEntries(
     /// </summary>
     /// <returns>The compositions.</returns>
     public IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> Compositions() => SharedBlocks.ToDictionary(block => block.Id, block => block.CompetencyIds);
+
+    /// <summary>
+    /// The lowest score of each competency's scale, by competency; a competency whose scale is not listed or has no points has none.
+    /// </summary>
+    /// <returns>The lowest scores.</returns>
+    public IReadOnlyDictionary<Guid, int> LowestScores()
+    {
+        var lowest = Scales.Where(scale => scale.Points.Count > 0).ToDictionary(scale => scale.Id, scale => scale.Points.Min(point => point.Score));
+        return Competencies
+            .Where(competency => competency.ScaleId is { } scaleId && lowest.ContainsKey(scaleId))
+            .ToDictionary(competency => competency.Id, competency => lowest[competency.ScaleId!.Value]);
+    }
 }

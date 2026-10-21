@@ -81,7 +81,8 @@ internal sealed class MatrixWorkflow(
     }
 
     /// <summary>
-    /// Describes the version for the API and sets its <c>ETag</c>.
+    /// Describes the version for the API and sets its <c>ETag</c>; its content comes with a required score for every level and
+    /// competency, by the entries the version counts with.
     /// </summary>
     /// <param name="version">The version.</param>
     /// <param name="state">What the user may do with it.</param>
@@ -107,12 +108,11 @@ internal sealed class MatrixWorkflow(
             version.Number,
             version.Status,
             state.Turn?.Step ?? version.Step,
-            version.Snapshot?.Scale?.Id,
             version.AuthorId,
             names.GetValueOrDefault(version.AuthorId),
             version.CreatedAt,
             version.PublishedAt,
-            version.Content,
+            version.Content.Filled(entries),
             entries,
             PersonOf(superiorId, names),
             PersonOf(hrId, names),
@@ -124,7 +124,8 @@ internal sealed class MatrixWorkflow(
 
     /// <summary>
     /// Replaces the content of a version: by a unit head while it is a draft, and by the current approver while it is on review.
-    /// Every competency gets its type stored, the one sent or else the one it had. The builder step, when given, is saved with it, even
+    /// Every competency gets its type stored, the one sent or else the one it had, and every level and competency a required score, the
+    /// one sent or else the lowest of the competency's scale. The builder step, when given, is saved with it, even
     /// when the content stays the same.
     /// The catalogue lock is held shared, so an entry the content refers to cannot be deleted between the reference check and the save.
     /// </summary>
@@ -160,12 +161,14 @@ internal sealed class MatrixWorkflow(
             return refusal;
         }
 
-        var stored = content.Stored().WithTypes(version.Content, version.CompositionsOf(await store.CompositionsAsync([content], cancellationToken)));
-        if (await catalog.ReferenceProblemAsync(version, stored, cancellationToken) is { } problem)
+        var compositions = version.CompositionsOf(await store.CompositionsAsync([content], cancellationToken));
+        var typed = content.WithTypes(version.Content, compositions);
+        if (await catalog.ReferenceProblemAsync(version, typed, cancellationToken) is { } problem)
         {
             return TypedResults.ValidationProblem(problem);
         }
 
+        var stored = await catalog.FilledAsync(version, typed, compositions, cancellationToken);
         ifMatch.ApplyTo(context, version);
         if (!version.Content.SameAs(stored))
         {
@@ -486,7 +489,8 @@ internal sealed class MatrixWorkflow(
     /// <summary>
     /// Publishes the approved version by the one publication rule: the drafts it refers to become active with it, or nothing does, and
     /// only with the tag of the list the user confirmed. The previously published version is archived in a save of its own, so the
-    /// published-version index never sees two, and the entries the version refers to are frozen into its snapshot.
+    /// published-version index never sees two, and the entries the version refers to are frozen into its snapshot, by which its content
+    /// is stored filled.
     /// </summary>
     private async Task<ProblemHttpResult?> PublishAsync(Progress progress, CancellationToken cancellationToken)
     {
@@ -515,6 +519,7 @@ internal sealed class MatrixWorkflow(
         context.AddRange(plan.Entries.OfType<CareerCompetency>().Select(competency => CompetencyVersion.Of(competency, progress.ActorId, progress.Now)));
 
         version.Snapshot = await catalog.EntriesAsync(version, cancellationToken);
+        version.Content = version.Content.Filled(version.Snapshot);
         version.Status = MatrixVersionStatus.Published;
         version.Step = null;
         version.PublishedAt = progress.Now;

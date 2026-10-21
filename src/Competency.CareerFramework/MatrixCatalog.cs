@@ -84,12 +84,12 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     }
 
     /// <summary>
-    /// Says what keeps the version from being handed on. For a track matrix: a level without a required score, a competency without a
-    /// required score at any level, block coefficients of a level that do not add up to 100 %, a level of the matrix track without a linked
-    /// active position. For a position matrix: no competencies, a competency without a required score, coefficients that do not add up to
-    /// 100 %, a position no longer available to the matrix unit. For both: a competency in two groups, an entry that is no longer usable or
+    /// Says what keeps the version from being handed on. A track matrix without levels has that problem alone. For both kinds: no
+    /// competencies, coefficients of a column that do not add up to 100 %, a competency in two groups, an entry that is no longer usable or
     /// no longer fits the version, a shared block no longer available to the matrix unit, or a required score the competency's scale no
-    /// longer has. An inactive scale is no problem; a critical competency needs no score of its own, its required score is its threshold.
+    /// longer has. For a track matrix also a level of the matrix track without a linked active position; for a position matrix a position
+    /// no longer available to the matrix unit. Every level and competency has a required score, so none is checked for; an inactive scale
+    /// is no problem.
     /// </summary>
     /// <param name="version">The version.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
@@ -104,10 +104,17 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         }
 
         var entries = await LoadAsync(version, content, cancellationToken);
-        var requirements = entries.Counted(content.Requirements).ToList();
-        var problems = matrix.PositionId is { } positionId
-            ? await PositionProblemsAsync(matrix, positionId, content, entries, requirements, cancellationToken)
-            : await TrackProblemsAsync(matrix, content, entries, requirements, cancellationToken);
+        var problems = new List<MatrixProblem>();
+        if (entries.Set.Count == 0)
+        {
+            problems.Add(new MatrixProblem(
+                MatrixProblemCode.NoCompetencies,
+                matrix.PositionId is null ? "В матрице нет компетенций" : "В матрице должности нет компетенций"));
+        }
+
+        problems.AddRange(matrix.PositionId is { } positionId
+            ? await PositionProblemsAsync(matrix, positionId, content, cancellationToken)
+            : await TrackProblemsAsync(matrix, content, entries, cancellationToken));
 
         foreach (var competencyId in entries.Set.GroupBy(item => item.CompetencyId).Where(group => group.Count() > 1).Select(group => group.Key))
         {
@@ -118,7 +125,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         }
 
         problems.AddRange(EntryProblems(version, entries, await HeadOfAsync(matrix, cancellationToken)));
-        foreach (var requirement in requirements.Where(requirement => !entries.HasScore(requirement)))
+        foreach (var requirement in entries.Counted(content.Requirements).Where(requirement => !entries.HasScore(requirement)))
         {
             problems.Add(new MatrixProblem(
                 MatrixProblemCode.ScoreOutOfScale,
@@ -152,7 +159,6 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         return new MatrixEntries(
             direction is null ? null : new MatrixNamedEntry(direction.Id, direction.Name, direction.Status),
             track is null ? null : new MatrixNamedEntry(track.Id, track.Name, track.Status),
-            Scale: null,
             [.. entries.Levels.Values
                 .OrderBy(level => level.Position)
                 .Select(level => new MatrixLevelEntry(level.Id, level.Name, level.Status))],
@@ -165,8 +171,6 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
                     competency.Id,
                     competency.Name,
                     competency.Description,
-                    CategoryId: null,
-                    CategoryName: null,
                     competency.DirectionId,
                     entries.TypeOf(competency.Id),
                     CompetencyVersion.NumberOf(competency),
@@ -184,6 +188,22 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
                 .DistinctBy(scale => scale.Id)
                 .Select(ScaleEntryOf)]);
     }
+
+    /// <summary>
+    /// A document of the version with every missing requirement filled in (<see cref="MatrixContent.Filled(IReadOnlyDictionary{Guid, IReadOnlyList{Guid}}, IReadOnlyDictionary{Guid, int})"/>)
+    /// by the scales the version counts with: frozen into the snapshot of a published or archived version, and read live otherwise.
+    /// </summary>
+    /// <param name="version">The version the document belongs to: its content or one of its variants.</param>
+    /// <param name="content">The document.</param>
+    /// <param name="compositions">The composition of each shared block, as <see cref="MatrixVersion.CompositionsOf"/> chooses it.</param>
+    /// <param name="cancellationToken">Cancels the query.</param>
+    /// <returns>The filled document.</returns>
+    public async Task<MatrixContent> FilledAsync(
+        MatrixVersion version,
+        MatrixContent content,
+        IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> compositions,
+        CancellationToken cancellationToken) =>
+        content.Filled(compositions, version.Snapshot?.LowestScores() ?? await LowestScoresAsync(content.CompetenciesWith(compositions), cancellationToken));
 
     /// <summary>
     /// A competency the saved content holds twice where at least one of the two places is new: an own or outside competency not in the
@@ -244,14 +264,13 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         matrix.DirectionId is null || competency.DirectionId is null || competency.DirectionId == matrix.DirectionId;
 
     /// <summary>
-    /// What keeps a track matrix version from being handed on by its levels and competencies: levels without a required score, coefficients
-    /// of a level not adding up to 100 %, competencies without a required score, levels without an active position.
+    /// What keeps a track matrix version from being handed on by its levels: coefficients of a level not adding up to 100 %, levels
+    /// without an active position.
     /// </summary>
     private async Task<List<MatrixProblem>> TrackProblemsAsync(
         CompetencyMatrix matrix,
         MatrixContent content,
         LoadedEntries entries,
-        IReadOnlyList<MatrixRequirement> requirements,
         CancellationToken cancellationToken)
     {
         var problems = new List<MatrixProblem>();
@@ -259,11 +278,6 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         {
             var levelId = level.LevelId;
             var name = entries.Levels.GetValueOrDefault(levelId)?.Name ?? levelId.ToString();
-            if (!requirements.Any(requirement => requirement.LevelId == levelId && requirement.RequiredScore is not null))
-            {
-                problems.Add(new MatrixProblem(MatrixProblemCode.LevelWithoutRequirements, $"У уровня «{name}» нет требований", levelId));
-            }
-
             var sum = WeightSum(content, levelId);
             if (sum != MatrixContent.MaxPercent)
             {
@@ -272,17 +286,6 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
                     $"Коэффициенты блоков уровня «{name}» дают в сумме {sum.ToString("0.##", DecimalComma)} %, нужно 100 %",
                     levelId));
             }
-        }
-
-        foreach (var competencyId in entries.Set
-                     .Select(item => item.CompetencyId)
-                     .Distinct()
-                     .Where(competencyId => !requirements.Any(requirement => requirement.CompetencyId == competencyId && requirement.RequiredScore is not null)))
-        {
-            problems.Add(new MatrixProblem(
-                MatrixProblemCode.CompetencyWithoutRequirements,
-                $"У компетенции «{entries.CompetencyName(competencyId)}» нет требуемого балла",
-                CompetencyId: competencyId));
         }
 
         var readiness = await store.ReadinessAsync(matrix.TrackId!.Value, cancellationToken);
@@ -294,25 +297,16 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     }
 
     /// <summary>
-    /// What keeps a position matrix version from being handed on by its one column and its position: no competencies, coefficients not
-    /// adding up to 100 %, competencies without a required score, and a position that is inactive or no longer on the lists of the matrix
-    /// unit and the units above it.
+    /// What keeps a position matrix version from being handed on by its one column and its position: coefficients not adding up to
+    /// 100 %, and a position that is inactive or no longer on the lists of the matrix unit and the units above it.
     /// </summary>
     private async Task<List<MatrixProblem>> PositionProblemsAsync(
         CompetencyMatrix matrix,
         Guid positionId,
         MatrixContent content,
-        LoadedEntries entries,
-        IReadOnlyList<MatrixRequirement> requirements,
         CancellationToken cancellationToken)
     {
         var problems = new List<MatrixProblem>();
-        var competencyIds = entries.Set.Select(item => item.CompetencyId).Distinct().ToList();
-        if (competencyIds.Count == 0)
-        {
-            problems.Add(new MatrixProblem(MatrixProblemCode.NoCompetencies, "В матрице должности нет компетенций"));
-        }
-
         var sum = WeightSum(content, positionId);
         if (sum != MatrixContent.MaxPercent)
         {
@@ -320,15 +314,6 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
                 MatrixProblemCode.BlockWeights,
                 $"Коэффициенты блоков дают в сумме {sum.ToString("0.##", DecimalComma)} %, нужно 100 %",
                 positionId));
-        }
-
-        foreach (var competencyId in competencyIds.Where(competencyId =>
-                     !requirements.Any(requirement => requirement.CompetencyId == competencyId && requirement.RequiredScore is not null)))
-        {
-            problems.Add(new MatrixProblem(
-                MatrixProblemCode.CompetencyWithoutScore,
-                $"У компетенции «{entries.CompetencyName(competencyId)}» не задан требуемый балл",
-                CompetencyId: competencyId));
         }
 
         var snapshot = await employees.FindOrgSnapshotAsync(cancellationToken);
@@ -356,6 +341,20 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         await employees.FindUnitAsync(matrix.OrgUnitId, cancellationToken) is { } unit
             ? await roles.HeadAccountAsync(unit, cancellationToken)
             : null;
+
+    /// <summary>
+    /// The lowest score of the current scale of each competency, by competency; one on a scale without points has none.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<Guid, int>> LowestScoresAsync(IEnumerable<MatrixCompetency> competencies, CancellationToken cancellationToken)
+    {
+        var ids = competencies.Select(item => item.CompetencyId).Distinct().ToList();
+        var scales = await context.Set<CareerCompetency>()
+            .AsNoTracking()
+            .Where(competency => ids.Contains(competency.Id))
+            .Join(context.Set<CompetencyScale>(), competency => competency.ScaleId, scale => scale.Id, (competency, scale) => new { competency.Id, scale.Points })
+            .ToListAsync(cancellationToken);
+        return scales.Where(item => item.Points.Count > 0).ToDictionary(item => item.Id, item => item.Points.Min(point => point.Score));
+    }
 
     private async Task<PositionStatus?> PositionAsync(Guid positionId, CancellationToken cancellationToken) =>
         (await employees.FindOrgSnapshotAsync(cancellationToken)).Positions.GetValueOrDefault(positionId);
@@ -425,7 +424,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             requirements.Where(requirement => Includes(requirement.CompetencyId));
 
         public bool HasScore(MatrixRequirement requirement) =>
-            requirement.RequiredScore is not { } score || ScaleOf(requirement.CompetencyId)?.Points.Any(point => point.Score == score) != false;
+            ScaleOf(requirement.CompetencyId)?.Points.Any(point => point.Score == requirement.RequiredScore) != false;
 
         public string ScaleWords(Guid competencyId) => $"шкале «{ScaleOf(competencyId)?.Name}»";
 
