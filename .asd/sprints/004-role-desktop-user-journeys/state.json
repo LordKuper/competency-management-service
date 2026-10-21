@@ -291,6 +291,13 @@
       "decision": "AC-60 connect-unit card needs at least one employee; org queue findings get a meaningful primary action (onboard with preselected unit/position), deactivation secondary; Task 65-67 wave 44, Task 68 wave 45, Task 69 wave 46",
       "reason": "user remarks at impl assessment 6; cost 0",
       "evidence": "decisions-log.md 2026-10-21 AC-60"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-61 unsaved edits never block navigation: confirm-to-discard on any leave incl. wizard steps, beforeunload on tab close; AC-20 coding rule changed; Task 70-72 wave 47, Task 73 wave 48",
+      "reason": "user remark at impl assessment 8; cost 0",
+      "evidence": "decisions-log.md 2026-10-21 AC-61"
     }
   ],
   "task_routing": {
@@ -965,6 +972,24 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "Task 70": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 71": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 72": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -1023,7 +1048,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-21T11:57:14.567Z",
+  "updated_at": "2026-10-21T12:22:30.385Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
