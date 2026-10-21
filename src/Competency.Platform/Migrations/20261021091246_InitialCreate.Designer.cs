@@ -13,8 +13,8 @@ using NpgsqlTypes;
 namespace Competency.Platform.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261020133406_RequirementIsScore")]
-    partial class RequirementIsScore
+    [Migration("20261021091246_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
