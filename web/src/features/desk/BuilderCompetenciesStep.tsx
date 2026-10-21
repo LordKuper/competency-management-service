@@ -148,7 +148,7 @@ function CompetenciesBody({
   onBack,
   onSaved,
   onSkip,
-  onUnsavedChange,
+  onEditsChange,
 }: CompetenciesBodyProps) {
   const queryClient = useQueryClient();
   const isEditable = version.actions.includes("Edit");
@@ -306,12 +306,14 @@ function CompetenciesBody({
   });
   const isUnsaved =
     isEditable &&
-    (save.isPending ||
-      attach.isPending ||
-      chosen.size !== savedIds.size ||
+    (chosen.size !== savedIds.size ||
       [...chosen].some((id) => !savedIds.has(id)) ||
       !sameIds(blockIds, savedBlockIds));
-  useEffect(() => onUnsavedChange(isUnsaved), [isUnsaved, onUnsavedChange]);
+  const isSaving = save.isPending || attach.isPending;
+  useEffect(
+    () => onEditsChange({ isUnsaved, isSaving }),
+    [isUnsaved, isSaving, onEditsChange],
+  );
 
   function choose(id: string, isChosen: boolean) {
     setChosen((previous) => {
@@ -350,7 +352,7 @@ function CompetenciesBody({
   ];
 
   return (
-    <ConfigProvider componentDisabled={save.isPending || attach.isPending}>
+    <ConfigProvider componentDisabled={isSaving}>
       <Flex vertical gap="middle">
         <Card
           size="small"

@@ -25,6 +25,7 @@ import {
 } from "antd";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import type { LeaveEdits } from "../../app/leaveGuard";
 import { useEditBase } from "../../app/useEditBase";
 import { BuilderFooter, type BuilderStepControls } from "./BuilderFooter";
 import { CatalogStatusTag } from "./CatalogParts";
@@ -111,8 +112,8 @@ interface MatrixEditorProps {
   diff?: MatrixDiff;
   /** Called after a save, once the cache holds the saved version; omitted for a read-only view. */
   onSaved?: () => void;
-  /** Told whether the form holds edits that are not saved yet or are being saved, so the page holds back the transitions; omitted for a read-only view. */
-  onUnsavedChange?: (isUnsaved: boolean) => void;
+  /** Told whether the form holds edits that are not saved yet and whether a save is in flight, so the page holds back the transitions; omitted for a read-only view. */
+  onEditsChange?: (edits: LeaveEdits) => void;
   /** Shows one step of the matrix wizard instead of the whole editor: its part of the version and its own buttons. */
   builder?: BuilderStepControls;
   /** Lays the editor out for a scenario screen: closer blocks and headings of the fourth level; a wizard step is always compact. */
@@ -169,7 +170,7 @@ function MatrixEditorBody({
   diff,
   noteSaveFailure,
   onSaved,
-  onUnsavedChange,
+  onEditsChange,
   builder,
   isCompact: isCompactRequested = false,
 }: MatrixEditorBodyProps) {
@@ -213,9 +214,12 @@ function MatrixEditorBody({
     onSettled: () => invalidateMatrices(queryClient),
   });
   const isUnsaved =
-    isEditable &&
-    (save.isPending || JSON.stringify(edited) !== JSON.stringify(base.content));
-  useEffect(() => onUnsavedChange?.(isUnsaved), [isUnsaved, onUnsavedChange]);
+    isEditable && JSON.stringify(edited) !== JSON.stringify(base.content);
+  const isSaving = save.isPending;
+  useEffect(
+    () => onEditsChange?.({ isUnsaved, isSaving }),
+    [isUnsaved, isSaving, onEditsChange],
+  );
 
   const catalogOrder = catalogLevels.data?.items ?? [];
   const levelNames = new Map<string, string>([
@@ -661,7 +665,7 @@ function MatrixEditorBody({
             onSkip={builder.onSkip}
             isEditable={isEditable}
             isUnsaved={isUnsaved}
-            isSaving={save.isPending}
+            isSaving={isSaving}
             onSave={(step, then) => save.mutate({ step, then })}
             onCancelEdits={() => setEdited(base.content)}
           />

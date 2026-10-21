@@ -12,6 +12,7 @@ import {
 } from "antd";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { type LeaveEdits, useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogSelect, IN_WORK } from "../career/CatalogSelect";
 import { useProcessRoles } from "../career/careerApi";
@@ -129,7 +130,7 @@ interface BuilderTrackStepProps {
   basis: Basis;
   onBasisChange: (basis: Basis) => void;
   onNext: () => void;
-  onUnsavedChange: (isUnsaved: boolean) => void;
+  onEditsChange: (edits: LeaveEdits) => void;
 }
 
 /** Step 1: the basis, the unit, and the track or the position. Saving it creates the draft version, or the next version of a published matrix. */
@@ -139,7 +140,7 @@ export function BuilderTrackStep({
   basis,
   onBasisChange,
   onNext,
-  onUnsavedChange,
+  onEditsChange,
 }: BuilderTrackStepProps) {
   if (version) return <CreatedVersion version={version} onNext={onNext} />;
   return (
@@ -147,7 +148,7 @@ export function BuilderTrackStep({
       preselected={preselected}
       basis={basis}
       onBasisChange={onBasisChange}
-      onUnsavedChange={onUnsavedChange}
+      onEditsChange={onEditsChange}
     />
   );
 }
@@ -193,12 +194,13 @@ function NewVersionForm({
   preselected,
   basis,
   onBasisChange,
-  onUnsavedChange,
+  onEditsChange,
 }: Pick<
   BuilderTrackStepProps,
-  "preselected" | "basis" | "onBasisChange" | "onUnsavedChange"
+  "preselected" | "basis" | "onBasisChange" | "onEditsChange"
 >) {
   const navigate = useNavigate();
+  const { leaveAfterSave } = useLeaveGuard();
   const queryClient = useQueryClient();
   const [form] = Form.useForm<FormValues>();
   const [isDirty, setIsDirty] = useState(false);
@@ -234,7 +236,6 @@ function NewVersionForm({
     positions.data.items.every((item) => item.isLinked);
   const matrix = existing.data?.items[0];
 
-  useEffect(() => onUnsavedChange(isDirty), [isDirty, onUnsavedChange]);
   useEffect(() => {
     if (headedUnits.length === 1 && !form.getFieldValue("orgUnitId")) {
       form.setFieldValue("orgUnitId", headedUnits[0]?.id);
@@ -267,12 +268,21 @@ function NewVersionForm({
     },
     onSuccess: (versionId) => {
       setIsDirty(false);
-      void navigate(deskPaths.matrixBuilderOf(versionId), { replace: true });
+      leaveAfterSave(
+        () =>
+          void navigate(deskPaths.matrixBuilderOf(versionId), {
+            replace: true,
+          }),
+      );
     },
     onSettled: () => invalidateMatrices(queryClient),
   });
   const { isSubmitting, submit } = useFormSubmit(form, create.mutateAsync);
   const isLocked = isSubmitting;
+  useEffect(
+    () => onEditsChange({ isUnsaved: isDirty, isSaving: isSubmitting }),
+    [isDirty, isSubmitting, onEditsChange],
+  );
 
   return (
     <Form
@@ -421,21 +431,15 @@ function NewVersionForm({
         )}
         <ActionBar>
           {isDirty && !isSubmitting && (
-            <>
-              <Typography.Text type="secondary">
-                Есть несохранённые правки. Сохраните или отмените их, чтобы
-                перейти на другой шаг.
-              </Typography.Text>
-              <Button
-                type="link"
-                onClick={() => {
-                  form.resetFields();
-                  setIsDirty(false);
-                }}
-              >
-                Отменить правки
-              </Button>
-            </>
+            <Button
+              type="link"
+              onClick={() => {
+                form.resetFields();
+                setIsDirty(false);
+              }}
+            >
+              Отменить правки
+            </Button>
           )}
           <Button
             type="primary"

@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { Alert, App, Flex, Skeleton, Tag, Typography } from "antd";
-import { useEffect, useState } from "react";
+import { Alert, Flex, Skeleton, Tag, Typography } from "antd";
+import { useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import {
-  useBlocker,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router";
+  type LeaveEdits,
+  NO_LEAVE_EDITS,
+  useLeaveGuard,
+} from "../../app/leaveGuard";
 import { trackQuery } from "../career/catalogApi";
 import { MatrixEditor } from "../career/MatrixEditor";
 import {
@@ -31,8 +31,6 @@ import { PROBLEM_STEP } from "./scenarioTexts";
 const FIRST_STEP = 1;
 const COMPETENCIES_STEP = 2;
 const LAST_STEP = BUILDER_STEPS.length;
-const UNSAVED_MESSAGE =
-  "Есть несохранённые правки. Сохраните или отмените их, чтобы перейти на другой экран.";
 
 /** «Построить матрицу компетенций»: six steps from the track to the sending, each saved as the draft of a version. */
 export function MatrixBuilderPage() {
@@ -98,7 +96,6 @@ interface BuilderShellProps {
 }
 
 function BuilderShell({ version, startedFrom }: BuilderShellProps) {
-  const { message } = App.useApp();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const requested = params.get("step");
@@ -107,7 +104,8 @@ function BuilderShell({ version, startedFrom }: BuilderShellProps) {
   const [reached, setReached] = useState(
     Math.max(opening, version?.builderStep ?? COMPETENCIES_STEP),
   );
-  const [isUnsaved, setIsUnsaved] = useState(false);
+  const [edits, setEdits] = useState(NO_LEAVE_EDITS);
+  const { confirmLeave, leaveAfterSave } = useLeaveGuard(edits);
   const preselected = {
     unitId: params.get("unitId") ?? startedFrom?.orgUnitId ?? undefined,
     trackId: params.get("trackId") ?? startedFrom?.trackId ?? undefined,
@@ -135,16 +133,6 @@ function BuilderShell({ version, startedFrom }: BuilderShellProps) {
     ...matrixCompletenessQuery(version?.id ?? ""),
     enabled: version !== undefined && reached >= LAST_STEP - 1,
   });
-  const blocker = useBlocker(
-    ({ nextLocation }) =>
-      isUnsaved && !nextLocation.pathname.startsWith(deskPaths.matrixBuilder),
-  );
-  useEffect(() => {
-    if (blocker.state === "blocked") {
-      message.warning(UNSAVED_MESSAGE);
-      blocker.reset();
-    }
-  }, [blocker, message]);
 
   const remarksByStep = new Map<number, number>();
   for (const problem of completeness.data?.problems ?? []) {
@@ -155,7 +143,7 @@ function BuilderShell({ version, startedFrom }: BuilderShellProps) {
   }
 
   function goTo(next: number) {
-    setIsUnsaved(false);
+    setEdits(NO_LEAVE_EDITS);
     setStep(next);
     setReached((previous) => Math.max(previous, next));
   }
@@ -167,8 +155,10 @@ function BuilderShell({ version, startedFrom }: BuilderShellProps) {
     onBack: () => goTo(step - 1),
     onSkip: () => goTo(step + 1),
     onSaved: (then) =>
-      then === "next" ? goTo(step + 1) : void navigate(deskPaths.desk),
-    onUnsavedChange: setIsUnsaved,
+      then === "next"
+        ? goTo(step + 1)
+        : leaveAfterSave(() => void navigate(deskPaths.desk)),
+    onEditsChange: setEdits,
   };
 
   return (
@@ -194,9 +184,9 @@ function BuilderShell({ version, startedFrom }: BuilderShellProps) {
         steps={builderSteps(basis === "position")}
         current={step}
         reached={version ? reached : FIRST_STEP}
-        isLocked={isUnsaved}
+        isLocked={edits.isSaving}
         remarks={remarksByStep}
-        onChange={goTo}
+        onChange={(next) => confirmLeave(() => goTo(next))}
       />
       {version && !isEditable ? (
         <Alert
@@ -230,7 +220,7 @@ function BuilderShell({ version, startedFrom }: BuilderShellProps) {
         basis={basis}
         onBasisChange={setBasis}
         onGoToStep={goTo}
-        onUnsavedChange={setIsUnsaved}
+        onEditsChange={setEdits}
       />
     </Flex>
   );
@@ -249,7 +239,7 @@ interface StepBodyProps {
   basis: Basis;
   onBasisChange: (basis: Basis) => void;
   onGoToStep: (step: number) => void;
-  onUnsavedChange: (isUnsaved: boolean) => void;
+  onEditsChange: (edits: LeaveEdits) => void;
 }
 
 function StepBody({
@@ -260,7 +250,7 @@ function StepBody({
   basis,
   onBasisChange,
   onGoToStep,
-  onUnsavedChange,
+  onEditsChange,
 }: StepBodyProps) {
   if (step === FIRST_STEP || !version || !stepProps) {
     return (
@@ -270,7 +260,7 @@ function StepBody({
         basis={basis}
         onBasisChange={onBasisChange}
         onNext={() => onGoToStep(COMPETENCIES_STEP)}
-        onUnsavedChange={onUnsavedChange}
+        onEditsChange={onEditsChange}
       />
     );
   }
@@ -283,7 +273,7 @@ function StepBody({
         <MatrixEditor
           key={step}
           version={version}
-          onUnsavedChange={onUnsavedChange}
+          onEditsChange={onEditsChange}
           builder={{
             part: step === 3 ? "requirements" : "formula",
             step,

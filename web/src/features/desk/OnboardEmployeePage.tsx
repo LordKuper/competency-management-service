@@ -1,11 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { App, Button, Skeleton, Table, Tag, Typography } from "antd";
+import { Button, Skeleton, Table, Tag } from "antd";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { useBlocker, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import {
+  type LeaveEdits,
+  NO_LEAVE_EDITS,
+  useLeaveGuard,
+} from "../../app/leaveGuard";
 import { EmployeeForm } from "../org-structure/EmployeeForm";
 import {
   type Employee,
@@ -74,29 +79,19 @@ const EMPLOYEE_STEP = 1;
 const ACCOUNT_STEP = 2;
 const SUMMARY_STEP = 3;
 
-const UNSAVED_MESSAGE =
-  "Есть несохранённые правки. Сохраните или отмените их, чтобы перейти на другой экран.";
-
 /** «Принять сотрудника»: the employee card, then an account with an invitation if wanted, then what was created. */
 export function OnboardEmployeePage() {
   const requested = useSelection();
-  const { message } = App.useApp();
   const [outcome, setOutcome] = useState<Outcome>();
   const [step, setStep] = useState(EMPLOYEE_STEP);
   const [round, setRound] = useState(0);
-  const [isUnsaved, setIsUnsaved] = useState(false);
-  const blocker = useBlocker(() => isUnsaved);
-  useEffect(() => {
-    if (blocker.state === "blocked") {
-      message.warning(UNSAVED_MESSAGE);
-      blocker.reset();
-    }
-  }, [blocker, message]);
+  const [edits, setEdits] = useState(NO_LEAVE_EDITS);
+  const { confirmLeave } = useLeaveGuard(edits);
   const selection: Selection = round === 0 ? requested : {};
   const reached = outcome?.account === undefined ? EMPLOYEE_STEP : SUMMARY_STEP;
 
   function goTo(next: number) {
-    setIsUnsaved(false);
+    setEdits(NO_LEAVE_EDITS);
     setStep(next);
   }
 
@@ -106,8 +101,8 @@ export function OnboardEmployeePage() {
         steps={STEPS}
         current={step}
         reached={reached}
-        isLocked={isUnsaved}
-        onChange={goTo}
+        isLocked={edits.isSaving}
+        onChange={(next) => confirmLeave(() => goTo(next))}
       />
       {step === EMPLOYEE_STEP && requested.isPending && <Skeleton active />}
       {step === EMPLOYEE_STEP && !requested.isPending && (
@@ -119,7 +114,7 @@ export function OnboardEmployeePage() {
             setOutcome(saved);
             goTo(ACCOUNT_STEP);
           }}
-          onUnsavedChange={setIsUnsaved}
+          onEditsChange={setEdits}
         />
       )}
       {step === ACCOUNT_STEP && outcome && (
@@ -130,7 +125,7 @@ export function OnboardEmployeePage() {
             goTo(SUMMARY_STEP);
           }}
           onBack={() => goTo(EMPLOYEE_STEP)}
-          onUnsavedChange={setIsUnsaved}
+          onEditsChange={setEdits}
         />
       )}
       {step === SUMMARY_STEP && outcome && (
@@ -173,14 +168,14 @@ interface EmployeeStepProps {
   /** The employee already created; the step then shows their saved values and saves a change to the same card. */
   outcome?: Outcome;
   onSaved: (outcome: Outcome) => void;
-  onUnsavedChange: (isUnsaved: boolean) => void;
+  onEditsChange: (edits: LeaveEdits) => void;
 }
 
 function EmployeeStep({
   selection,
   outcome,
   onSaved,
-  onUnsavedChange,
+  onEditsChange,
 }: EmployeeStepProps) {
   const queryClient = useQueryClient();
   const added = useRef<AddedPosition>(undefined);
@@ -226,9 +221,10 @@ function EmployeeStep({
     );
     added.current = position;
   }
+  const isSaving = save.isPending;
   useEffect(
-    () => onUnsavedChange(isDirty || save.isPending),
-    [isDirty, save.isPending, onUnsavedChange],
+    () => onEditsChange({ isUnsaved: isDirty, isSaving }),
+    [isDirty, isSaving, onEditsChange],
   );
 
   const employee = outcome?.employee;
@@ -293,14 +289,6 @@ function EmployeeStep({
             account: outcome?.account,
           });
         }}
-        scenarioActions={{
-          end: employee && isDirty && !save.isPending && (
-            <Typography.Text type="secondary">
-              Есть несохранённые правки. Сохраните или отмените их, чтобы
-              перейти на другой экран.
-            </Typography.Text>
-          ),
-        }}
       />
     </FormColumn>
   );
@@ -310,18 +298,22 @@ interface AccountStepProps {
   outcome: Outcome;
   onDone: (outcome: Outcome) => void;
   onBack: () => void;
-  onUnsavedChange: (isUnsaved: boolean) => void;
+  onEditsChange: (edits: LeaveEdits) => void;
 }
 
 function AccountStep({
   outcome,
   onDone,
   onBack,
-  onUnsavedChange,
+  onEditsChange,
 }: AccountStepProps) {
   const { employee, account } = outcome;
   const [isDirty, setIsDirty] = useState(false);
-  useEffect(() => onUnsavedChange(isDirty), [isDirty, onUnsavedChange]);
+  const { confirmLeave } = useLeaveGuard();
+  useEffect(
+    () => onEditsChange({ isUnsaved: isDirty }),
+    [isDirty, onEditsChange],
+  );
 
   return (
     <FormColumn>
@@ -349,23 +341,15 @@ function AccountStep({
           onDirtyChange={setIsDirty}
           onCreated={(created) => onDone({ ...outcome, account: created })}
           scenarioActions={{
-            start: (
-              <Button disabled={isDirty} onClick={onBack}>
-                Назад
-              </Button>
-            ),
+            start: <Button onClick={() => confirmLeave(onBack)}>Назад</Button>,
             end: (
-              <>
-                {isDirty && (
-                  <Typography.Text type="secondary">
-                    Есть несохранённые правки. Создайте учётную запись или
-                    пропустите шаг, чтобы вернуться.
-                  </Typography.Text>
-                )}
-                <Button onClick={() => onDone({ ...outcome, account: null })}>
-                  Пропустить
-                </Button>
-              </>
+              <Button
+                onClick={() =>
+                  confirmLeave(() => onDone({ ...outcome, account: null }))
+                }
+              >
+                Пропустить
+              </Button>
             ),
           }}
         />

@@ -27,7 +27,7 @@ interface MatrixActionsProps {
   /** Whether the user may start the next version of a published matrix. */
   isNextVersionOffered: boolean;
   isBusy: boolean;
-  /** Unsaved edits of the content keep every action from being taken. */
+  /** Unsaved edits of the content hold back the actions on the saved version; the links to desk scenarios stay available. */
   hasUnsaved: boolean;
   onTransit: (transition: MatrixTransition) => void;
   onReturn: () => void;
@@ -83,7 +83,6 @@ export function MatrixActions({
             key: "review",
             label: "Согласовать версию",
             to: desk("review"),
-            disabled: hasUnsaved,
           },
         ]
       : []),
@@ -103,7 +102,6 @@ export function MatrixActions({
             key: "rework",
             label: "Доработать возвращённую версию",
             to: desk("rework"),
-            disabled: hasUnsaved,
           },
         ]
       : []),
@@ -113,7 +111,6 @@ export function MatrixActions({
             key: "builder",
             label: "Перейти к отправке в мастере",
             to: desk("matrix-builder"),
-            disabled: hasUnsaved,
           },
         ]
       : []),
@@ -122,7 +119,7 @@ export function MatrixActions({
           {
             key: "new-version",
             label: "Создать новую версию",
-            disabled: isBusy,
+            disabled: held,
             onClick: onNewVersion,
           },
         ]

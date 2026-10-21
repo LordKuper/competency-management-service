@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert, Form, Radio, Select } from "antd";
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogModal, FormActions } from "./CatalogModal";
 import { CatalogSelect, IN_WORK } from "./CatalogSelect";
@@ -23,6 +24,7 @@ interface MatrixCreateModalProps {
 export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { leaveAfterSave } = useLeaveGuard();
   const [form] = Form.useForm<NewMatrix>();
   const [basis, setBasis] = useState<Basis>("track");
   const directionId = Form.useWatch("directionId", form);
@@ -32,7 +34,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
     mutationFn: createMatrix,
     onSuccess: (created) => {
       onClose();
-      void navigate(`/career/matrices/${created.id}`);
+      leaveAfterSave(() => void navigate(`/career/matrices/${created.id}`));
     },
     onSettled: () => invalidateMatrices(queryClient),
   });

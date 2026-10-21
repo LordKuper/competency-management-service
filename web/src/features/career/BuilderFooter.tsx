@@ -1,4 +1,5 @@
 import { Button, Flex, Typography } from "antd";
+import { useLeaveGuard } from "../../app/leaveGuard";
 
 /** How the matrix editor serves one step of the wizard: the part of the version it shows and what its buttons do. */
 export interface BuilderStepControls {
@@ -28,8 +29,8 @@ interface BuilderFooterProps {
 }
 
 /**
- * Buttons under a wizard step. While the step holds unsaved edits, going back and leaving are off and the reason is
- * written beside them; the edits can be saved or dropped.
+ * Buttons under a wizard step. Going back with unsaved edits asks for confirmation; the edits can be saved or dropped.
+ * While a save is in flight going back is off.
  */
 export function BuilderFooter({
   step,
@@ -42,8 +43,9 @@ export function BuilderFooter({
   onSave,
   onCancelEdits,
 }: BuilderFooterProps) {
+  const { confirmLeave } = useLeaveGuard();
   const back = (
-    <Button disabled={isUnsaved} onClick={onBack}>
+    <Button disabled={isSaving} onClick={() => confirmLeave(onBack)}>
       Назад
     </Button>
   );
@@ -65,15 +67,9 @@ export function BuilderFooter({
           <Typography.Text type="secondary">{nextBlock}</Typography.Text>
         )}
         {isUnsaved && !isSaving && (
-          <>
-            <Typography.Text type="secondary">
-              Есть несохранённые правки. Сохраните или отмените их, чтобы
-              перейти на другой шаг.
-            </Typography.Text>
-            <Button type="link" onClick={onCancelEdits}>
-              Отменить правки
-            </Button>
-          </>
+          <Button type="link" onClick={onCancelEdits}>
+            Отменить правки
+          </Button>
         )}
         <Button disabled={isSaving} onClick={() => onSave(step, "exit")}>
           Сохранить и выйти

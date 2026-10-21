@@ -15,6 +15,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { NO_LEAVE_EDITS, useLeaveGuard } from "../../app/leaveGuard";
 import { useProcessRoles } from "./careerApi";
 import { MatrixActions, RETURN_LABEL } from "./MatrixActions";
 import { MatrixEditor } from "./MatrixEditor";
@@ -166,7 +167,9 @@ export function MatrixPage() {
   const [chosenId, setChosenId] = useState<string>();
   const [session, setSession] = useState(0);
   const [dialog, setDialog] = useState<"return" | "history" | null>(null);
-  const [hasUnsaved, setHasUnsaved] = useState(false);
+  const [edits, setEdits] = useState(NO_LEAVE_EDITS);
+  const { confirmLeave, leaveAfterSave } = useLeaveGuard(edits);
+  const hasUnsaved = edits.isUnsaved || !!edits.isSaving;
 
   const matrix = matrixRead.data;
   const latestVersionId = [...(versionsRead.data ?? [])].sort(
@@ -243,7 +246,9 @@ export function MatrixPage() {
     isHead && !!matrix.publishedVersion && !matrix.inWorkVersion;
   const isBusy = transit.isPending || startVersion.isPending;
   const isHeldBack =
-    hasUnsaved && version.actions.some((action) => action !== "Edit");
+    hasUnsaved &&
+    (isNextVersionOffered ||
+      version.actions.some((action) => action !== "Edit"));
 
   return (
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>
@@ -274,7 +279,7 @@ export function MatrixPage() {
               value: item.id,
               label: `Версия ${item.number}`,
             }))}
-          onChange={setChosenId}
+          onChange={(next) => confirmLeave(() => setChosenId(next))}
         />
         <Tag color={STATUS_COLORS[version.status]}>
           {VERSION_STATUS_LABELS[version.status]}
@@ -290,7 +295,7 @@ export function MatrixPage() {
           onReturn={() => setDialog("return")}
           onNewVersion={() => startVersion.mutate()}
           onHistory={() => setDialog("history")}
-          onDeleted={() => void navigate("/career")}
+          onDeleted={() => leaveAfterSave(() => void navigate("/career"))}
         />
       </Flex>
       {isHeldBack && (
@@ -316,7 +321,7 @@ export function MatrixPage() {
         version={version}
         diff={diffRead.data}
         onSaved={() => setSession((previous) => previous + 1)}
-        onUnsavedChange={setHasUnsaved}
+        onEditsChange={setEdits}
       />
       {dialog === "return" && (
         <ReturnModal
