@@ -22,6 +22,15 @@ export function sharedEntriesOf(
   return version.entries.sharedBlocks ?? [];
 }
 
+/** The names of the shared blocks of a version, by block id. */
+export function blockNamesOf(
+  version: Pick<MatrixVersion, "entries">,
+): Map<string, string> {
+  return new Map(
+    sharedEntriesOf(version).map((block) => [block.id, block.name]),
+  );
+}
+
 /** The composition of each shared block of a version, by block id. */
 export function compositionsOf(
   version: Pick<MatrixVersion, "entries">,

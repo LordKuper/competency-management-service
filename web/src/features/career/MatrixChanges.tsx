@@ -23,6 +23,7 @@ interface MatrixChangesProps {
   diff: MatrixDiff;
   levelNames: ReadonlyMap<string, string>;
   competencyNames: ReadonlyMap<string, string>;
+  blockNames: ReadonlyMap<string, string>;
   pointsOf: (
     competencyId: string,
   ) => readonly { score: number; label: string }[];
@@ -48,12 +49,13 @@ export function describeChanges(
   diff: MatrixDiff,
   levelNames: ReadonlyMap<string, string>,
   competencyNames: ReadonlyMap<string, string>,
+  blockNames: ReadonlyMap<string, string>,
   pointsOf: (
     competencyId: string,
   ) => readonly { score: number; label: string }[],
 ): (change: MatrixChange) => ChangeDescription {
   const blockName = (blockId: string | null) =>
-    blockId === null ? OUTSIDE_LABEL : undefined;
+    blockId === null ? OUTSIDE_LABEL : blockNames.get(blockId);
   const levelName = (levelId: string | null) =>
     quoted(levelId ? levelNames.get(levelId) : undefined);
   const competencyName = (competencyId: string | null) =>
@@ -100,8 +102,12 @@ export function describeChanges(
           `Минимальный общий порог: ${percent(level.minOverallPercent)}`
         );
       }
-      case "Block":
-        return undefined;
+      case "Block": {
+        const isIncluded = content.sharedBlocks?.some(
+          (item) => item.blockId === blockId,
+        );
+        return isIncluded ? `Блок ${quoted(blockName(blockId))}` : undefined;
+      }
       case "Competency": {
         const competency = content.competencies.find(
           (item) => item.competencyId === competencyId,
@@ -152,11 +158,18 @@ export function MatrixChanges({
   diff,
   levelNames,
   competencyNames,
+  blockNames,
   pointsOf,
 }: MatrixChangesProps) {
   if (diff.changes.length === 0) return null;
 
-  const describe = describeChanges(diff, levelNames, competencyNames, pointsOf);
+  const describe = describeChanges(
+    diff,
+    levelNames,
+    competencyNames,
+    blockNames,
+    pointsOf,
+  );
   return (
     <section>
       <Typography.Title level={2}>{CHANGED_NOTE}</Typography.Title>

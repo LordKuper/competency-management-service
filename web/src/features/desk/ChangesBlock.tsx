@@ -15,6 +15,7 @@ interface ChangesBlockProps {
   diff: MatrixDiff;
   levelNames: ReadonlyMap<string, string>;
   competencyNames: ReadonlyMap<string, string>;
+  blockNames: ReadonlyMap<string, string>;
   pointsOf: (
     competencyId: string,
   ) => readonly { score: number; label: string }[];
@@ -37,11 +38,18 @@ export function ChangesBlock({
   diff,
   levelNames,
   competencyNames,
+  blockNames,
   pointsOf,
   columns: heads,
   emptyText,
 }: ChangesBlockProps) {
-  const describe = describeChanges(diff, levelNames, competencyNames, pointsOf);
+  const describe = describeChanges(
+    diff,
+    levelNames,
+    competencyNames,
+    blockNames,
+    pointsOf,
+  );
   const rows: Row[] = diff.changes.map((change) => ({
     key: `${change.kind}:${change.levelId}:${change.blockId}:${change.competencyId}`,
     change,

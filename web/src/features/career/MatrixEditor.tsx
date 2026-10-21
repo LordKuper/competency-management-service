@@ -57,6 +57,7 @@ import {
   withRequirement,
 } from "./matrixContent";
 import {
+  blockNamesOf,
   compositionChanges,
   compositionsOf,
   minimumScoreOf,
@@ -613,6 +614,7 @@ function MatrixEditorBody({
                 ]),
               )
             }
+            blockNames={blockNamesOf(version)}
             pointsOf={(id) => scaleOfCompetency(version, id).points}
           />
         )}
