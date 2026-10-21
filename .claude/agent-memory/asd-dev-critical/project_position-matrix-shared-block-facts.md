@@ -24,5 +24,7 @@ Sprint 004 Task 23 (2026-10-14), commits da17b1c, ffddd1b, a7c471c. Nothing was 
 
 - Task 52 (2026-10-20, 5b3c19b): a requirement is a score alone. `MatrixContent.Blocks` is a get-only `[]`: still serialized, never read, so stored documents contain `"blocks":[]`. Every deprecated field in the docs is null. `RequirementIsScore` is one plpgsql DO block with `pg_temp` helper functions and temp tables. Its strip step selects documents by jsonpath on non-null deprecated values, so documents written by the new code are left alone. It has never run.
 
+- Task 58 (2026-10-21) superseded the Task 38, 47 and 52 bullets. The deprecated stubs and the `Blocks` getter are gone, the migrations were squashed into one `InitialCreate`, and requirements are always filled. See [[contract-reset-and-squash-facts]].
+
 **Why:** Task 24 (SPA) and impl-test build on these choices.
 **How to apply:** read before touching matrix documents, snapshots, blocks or the career desk source. See [[career-desk-source-facts]], [[publication-cascade-facts]], [[career-record-deletion-facts]].
