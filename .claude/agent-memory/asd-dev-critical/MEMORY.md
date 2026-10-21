@@ -56,3 +56,4 @@
 - [Career desk source](project_career-desk-source-facts.md) — 25-command budget incl. 2 auth, rule functions on snapshot, HrUnitsAsync reads snapshot, seed run order
 - [Position matrix + shared blocks](project_position-matrix-shared-block-facts.md) — CompositionsOf, per-competency ScaleOf (no version scale), HeadedSubtreeIds only via ViewerAsync, unrun SQL, test pin
 - [Contract reset + squash](project_contract-reset-and-squash-facts.md) — 1.0.0 reset, InitialCreate squash recipe (Release ef, hand SQL), JsonRequired probe, fill sources
+- [Role set + HR by employee](project_role-set-hr-assignment-facts.md) — bool role columns, RolesOf in projection, CanBeHr x3, ViewerAsync HR skip is right, tests break at run time
