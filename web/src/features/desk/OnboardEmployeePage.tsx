@@ -320,7 +320,7 @@ function AccountStep({
       <CompactAlert
         type="success"
         lead="Сотрудник создан:"
-        text={`${employee.fullName}, ${employee.orgUnitName}, ${employee.position}. Выход из сценария его не отменяет.`}
+        text={`${employee.fullName}, ${employee.orgUnitName}, ${employee.position}.`}
       />
       {account ? (
         <>
