@@ -288,3 +288,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-21 — Task 66 COMPLETED (181b1fd): DeskPrerequisite.WorkingEmployee (снимок оргструктуры, без новых SQL); /desk/onboard-employee?unitId=&positionId= с молчаливым отбросом неактивных; должность вне перечня — POST /org-units/{id}/positions, затем POST /employees; «Восстановить должность» — существующий activate. Flagged приняты оркестратором
 - 2026-10-21 — route Task 68: critical, dispatch HEAD d86af63; risk change: public contract
 - 2026-10-21 — Task 68 COMPLETED (1daae38): DeskPrerequisite.WorkingEmployee; gate чисто
+- 2026-10-21 — route Task 69: standard, dispatch HEAD 0fcbd18; risk none via web typecheck
+- 2026-10-21 — Task 69 COMPLETED (2bc392f, 900f3cc, cae6529): «Подключить подразделение» — ActiveUnit && WorkingEmployee; onboardEmployeeWith, предвыбор с проверкой; главные действия находок, «Восстановить должность», деактивация — default. Flagged приняты оркестратором; затронутые тесты (DeskScenarios, OrgFinding/OrgCleanup, OnboardEmployeePage) — в impl-test
+- 2026-10-21 — impl completion gate (после Task 65–69): dotnet 0/0, web lint/build/check:api чисто; diff в пределах областей; все задачи плана отмечены; stubs нет
