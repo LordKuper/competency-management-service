@@ -990,6 +990,18 @@
       "tier": "standard",
       "reason": "owner asd-ux (docs/ux)",
       "resolved_model": "sonnet"
+    },
+    "Task 71 close-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 73": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
