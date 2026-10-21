@@ -321,3 +321,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-21 — Task 74 tracks-fix COMPLETED (a8e35ee): треки — по закреплению (AC-15, 16, 17, 19, 91, desk AC-28, AC-162), AC-159 — только общие справочники; «Должности» для HR — в «Справочниках». Flagged приняты оркестратором (чтение опубликованных треков — любому HR; блоки «Действует для» — общие)
 - 2026-10-21 — Task 75 tracks-fix COMPLETED (65c1a41): треки по HrUnitIds, IsHr — из роли; финальные чек-листы Task 77, Task 78
 - 2026-10-21 — Task 76 tracks-fix COMPLETED (244c50c): роль HR без треков в desk.html, user-management.html; «Должности» для HR — только просмотр (у должностей нет черновиков). Flagged приняты оркестратором
+- 2026-10-21 — route Task 77: critical, dispatch HEAD 50f7126; risk change: authorization, change: public contract
+- 2026-10-21 — дополнение AC-62 (user): роль «HR» даёт полноценное ведение справочника должностей (создание, изменение, деактивация); route Task 74/75/76 positions-fix: standard, параллельно; передано Task 77
