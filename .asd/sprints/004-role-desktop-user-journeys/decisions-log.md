@@ -286,3 +286,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-21 — Task 65 reactivate-fix COMPLETED (b39b1ec): AC-176 — главное «Восстановить должность» (activate), запасное — сменить должность; AC-212 выровнен. Flagged приняты оркестратором
 - 2026-10-21 — Task 67 COMPLETED (e3bfb0d): m-desk-4 (состояния 2, 3, 5), «Как исправить» — главное действие по смыслу, «Восстановить должность», предзаполненный шаг 1 найма, возврат в очередь; кнопка деактивации — default (код рисует danger — Task 69 по макету). Flagged приняты оркестратором
 - 2026-10-21 — Task 66 COMPLETED (181b1fd): DeskPrerequisite.WorkingEmployee (снимок оргструктуры, без новых SQL); /desk/onboard-employee?unitId=&positionId= с молчаливым отбросом неактивных; должность вне перечня — POST /org-units/{id}/positions, затем POST /employees; «Восстановить должность» — существующий activate. Flagged приняты оркестратором
+- 2026-10-21 — route Task 68: critical, dispatch HEAD d86af63; risk change: public contract
+- 2026-10-21 — Task 68 COMPLETED (1daae38): DeskPrerequisite.WorkingEmployee; gate чисто

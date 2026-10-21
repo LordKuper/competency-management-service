@@ -370,7 +370,7 @@ Material risk: none
 
 ### Task 68: Бэкенд — предпосылка сотрудника
 Material risk: change: public contract
-- [ ] по Task 66: новый член `DeskPrerequisite`; OpenAPI и `web/src/api/schema.d.ts` (AC-60)
+- [x] по Task 66: новый член `DeskPrerequisite`; OpenAPI и `web/src/api/schema.d.ts` (AC-60)
 
 ### Task 69: SPA — предпосылка сотрудника, действия очереди оргструктуры
 Material risk: none
