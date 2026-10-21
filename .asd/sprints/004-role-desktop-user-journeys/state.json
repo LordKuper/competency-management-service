@@ -305,6 +305,13 @@
       "decision": "AC-62 new account role HR assigned by admin; responsible HR is picked as an employee whose bound active account has role HR; server checks on assignment; role removal blocked while assigned; Task 74-76 wave 49, Task 77 wave 50, Task 78 wave 51",
       "reason": "user remark at impl assessment 10; cost 0",
       "evidence": "decisions-log.md 2026-10-21 AC-62"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-63 incremental DB migrations until release (data transfer where the dev DB needs it), squash and recreate right before release; API still without backward compat; Task 77 schema change as a migration over InitialCreate 20261021091246; Task 79 wave 52, Task 80 wave 53",
+      "reason": "user decision 2026-10-21; cost 0",
+      "evidence": "decisions-log.md 2026-10-21 AC-63"
     }
   ],
   "task_routing": {
@@ -1099,6 +1106,12 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "Task 79": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:migration; owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
     }
   },
   "skipped_phases": [],
@@ -1157,7 +1170,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-21T13:34:14.294Z",
+  "updated_at": "2026-10-21T14:58:38.697Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
