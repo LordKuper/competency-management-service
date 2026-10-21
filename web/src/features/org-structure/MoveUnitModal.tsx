@@ -69,7 +69,7 @@ export function MoveUnitModal({ unit, onClose }: MoveUnitModalProps) {
           <Form.Item
             name="parentId"
             label="Новое родительское подразделение"
-            extra="Подразделение переносится вместе со всеми дочерними. Очистите поле, чтобы сделать его корневым."
+            extra="Подразделение переносится вместе со всеми дочерними."
           >
             <OrgUnitSelect
               allowClear
