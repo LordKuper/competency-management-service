@@ -90,7 +90,7 @@ public sealed class AuthorizationTests(TestEnvironment environment)
         ("GET", "/api/v1/career/matrix-versions/{id}/variants/1/diff"),
         ("PUT", "/api/v1/career/tracks/{id}/level-order"),
         ("POST", "/api/v1/career/scales/{id}/make-default"),
-        .. new[] { "directions", "categories", "tracks", "levels", "scales", "competencies" }.SelectMany(kind => new (string, string)[]
+        .. new[] { "directions", "tracks", "levels", "scales", "competencies" }.SelectMany(kind => new (string, string)[]
         {
             ("GET", $"/api/v1/career/{kind}"),
             ("POST", $"/api/v1/career/{kind}"),

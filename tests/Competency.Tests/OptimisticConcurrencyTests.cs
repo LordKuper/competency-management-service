@@ -33,7 +33,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
 
     private static readonly (string Method, string Path, object? Body)[] CatalogueEndpoints =
     [
-        .. new[] { "directions", "categories", "tracks", "levels", "scales", "competencies" }.SelectMany(kind => new (string, string, object?)[]
+        .. new[] { "directions", "tracks", "levels", "scales", "competencies" }.SelectMany(kind => new (string, string, object?)[]
         {
             ("POST", $"/api/v1/career/{kind}/{{id}}/approve", null),
             ("POST", $"/api/v1/career/{kind}/{{id}}/deactivate", null),
@@ -41,15 +41,14 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
             ("DELETE", $"/api/v1/career/{kind}/{{id}}", null),
         }),
         ("PUT", "/api/v1/career/directions/{id}", new { name = "Направление" }),
-        ("PUT", "/api/v1/career/categories/{id}", new { name = "Категория" }),
         ("PUT", "/api/v1/career/tracks/{id}", new { name = "Трек" }),
         ("PUT", "/api/v1/career/levels/{id}", new { name = "Уровень" }),
         ("PUT", "/api/v1/career/scales/{id}", new { name = "Шкала", points = CareerScenarios.Points() }),
-        ("PUT", "/api/v1/career/competencies/{id}", new { name = "Навык", description = (string?)null, categoryId = UnknownId, directionId = (Guid?)null, type = "Profile", scaleId = (Guid?)null }),
+        ("PUT", "/api/v1/career/competencies/{id}", new { name = "Навык", description = (string?)null, directionId = (Guid?)null, scaleId = (Guid?)null }),
         ("POST", "/api/v1/career/scales/{id}/make-default", null),
         ("PUT", "/api/v1/career/tracks/{id}/level-order", new { levelIds = Array.Empty<Guid>() }),
         ("DELETE", "/api/v1/career/matrices/{id}", null),
-        ("PUT", "/api/v1/career/matrix-versions/{id}/content", new { levels = Array.Empty<object>(), blocks = Array.Empty<object>(), competencies = Array.Empty<object>(), blockWeights = Array.Empty<object>(), requirements = Array.Empty<object>() }),
+        ("PUT", "/api/v1/career/matrix-versions/{id}/content", new { levels = Array.Empty<object>(), competencies = Array.Empty<object>(), blockWeights = Array.Empty<object>(), requirements = Array.Empty<object>() }),
         ("POST", "/api/v1/career/matrix-versions/{id}/submit", null),
         ("POST", "/api/v1/career/matrix-versions/{id}/approve", null),
         ("POST", "/api/v1/career/matrix-versions/{id}/return", new { comment = (string?)null }),

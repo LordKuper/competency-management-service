@@ -6,7 +6,7 @@ using Xunit;
 namespace Competency.Tests;
 
 /// <summary>
-/// Who may create, read, change, approve and deactivate the entries of the catalogues that belong to no unit (directions, categories, scales
+/// Who may create, read, change, approve and deactivate the entries of the catalogues that belong to no unit (directions, scales
 /// and competencies): administrators and every HR keep them, a unit head proposes drafts that only their author, every HR and administrators
 /// read, inactive entries are read by HR and administrators only, and a request for what the caller cannot read answers 404.
 /// </summary>
@@ -15,7 +15,7 @@ public sealed class CatalogRightsTests(CareerHost fixture) : IClassFixture<Caree
     private const string NotDraftMessage = "Согласовать можно только черновую запись";
     private const string DraftActivationMessage = "Черновую запись нужно согласовать";
 
-    public static TheoryData<string> Kinds => new() { "directions", "categories", "scales", "competencies" };
+    public static TheoryData<string> Kinds => new() { "directions", "scales", "competencies" };
 
     [Theory]
     [MemberData(nameof(Kinds))]
@@ -238,16 +238,14 @@ public sealed class CatalogRightsTests(CareerHost fixture) : IClassFixture<Caree
 
     private async Task<Catalogue> CatalogueAsync(string kind, CareerOrg org)
     {
-        var categoryId = await org.Admin.CategoryIdAsync();
         return kind switch
         {
             "directions" => new Catalogue("/api/v1/career/directions", "CareerDirection", name => new { name }),
-            "categories" => new Catalogue("/api/v1/career/categories", "CompetencyCategory", name => new { name }),
             "scales" => new Catalogue("/api/v1/career/scales", "CompetencyScale", name => new { name, points = CareerScenarios.Points() }),
             _ => new Catalogue(
                 "/api/v1/career/competencies",
                 "CareerCompetency",
-                name => new { name, description = (string?)null, categoryId, directionId = (Guid?)null, type = "Profile", scaleId = (Guid?)null }),
+                name => new { name, description = (string?)null, directionId = (Guid?)null, scaleId = (Guid?)null }),
         };
     }
 

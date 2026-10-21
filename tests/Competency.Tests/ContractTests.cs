@@ -26,7 +26,7 @@ public sealed class ContractTests(TestEnvironment environment)
     ];
 
     [Fact]
-    public void Ac6_Contract_IsVersion3_WithThePositionAsAnIdentifier_AndNoFinancialData()
+    public void Ac6_Contract_StaysVersion1_WithThePositionAsAnIdentifier_AndNoFinancialData()
     {
         var contract = ReadContract();
         var schemas = contract["components"]!["schemas"]!.AsObject();
@@ -34,7 +34,7 @@ public sealed class ContractTests(TestEnvironment environment)
         var request = schemas["EmployeeRequest"]!["properties"]!.AsObject();
         var response = schemas["EmployeeResponse"]!["properties"]!.AsObject();
 
-        contract["info"]!["version"]!.GetValue<string>().Should().Be("3.0.0");
+        contract["info"]!["version"]!.GetValue<string>().Should().Be("1.0.0");
         request.ContainsKey("positionId").Should().BeTrue("an employee's input names the catalogue position");
         request.ContainsKey("position").Should().BeFalse("the free-text position left the input");
         response.ContainsKey("positionId").Should().BeTrue();

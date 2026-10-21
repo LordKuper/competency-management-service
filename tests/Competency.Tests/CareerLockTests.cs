@@ -231,7 +231,7 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
         var direction = await org.Admin.MakeDirectionAsync();
         var track = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
         var successor = await org.Admin.CreateEmployeeAsync(org.Team.Id);
-        var create = () => org.TeamHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Team.Id, directionId = direction.Id, trackId = track.Id, scaleId = CareerScenarios.BaseScaleId });
+        var create = () => org.TeamHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Team.Id, directionId = direction.Id, trackId = track.Id });
         var change = async () => await org.Admin.SetHeadAsync(org.Team, successor.Id);
 
         await using var gate = await RowLock.HoldAdvisoryAsync(fixture.Host, RowLock.TreeKey);
@@ -290,7 +290,7 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var direction = await org.Admin.MakeDirectionAsync();
         var track = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
-        var create = () => org.TeamHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Team.Id, directionId = direction.Id, trackId = track.Id, scaleId = CareerScenarios.BaseScaleId });
+        var create = () => org.TeamHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Team.Id, directionId = direction.Id, trackId = track.Id });
 
         await using var gate = await RowLock.HoldAdvisoryAsync(fixture.Host, RowLock.CatalogueKey);
         var first = await RowLock.StartWaitingAsync(fixture.Host, 1, create);
@@ -450,7 +450,7 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
         var violations = new Dictionary<string, bool>
         {
             ["a second published version"] = await ViolatesUniqueAsync($"UPDATE matrix_versions SET status = 'Published' WHERE id = '{next}'"),
-            ["a second version in work"] = await ViolatesUniqueAsync($"INSERT INTO matrix_versions (id, version, created_at, matrix_id, number, status, scale_id, author_id, content) SELECT gen_random_uuid(), 0, now(), matrix_id, 99, 'OnReview', scale_id, author_id, content FROM matrix_versions WHERE id = '{next}'"),
+            ["a second version in work"] = await ViolatesUniqueAsync($"INSERT INTO matrix_versions (id, version, created_at, matrix_id, number, status, author_id, content) SELECT gen_random_uuid(), 0, now(), matrix_id, 99, 'OnReview', author_id, content FROM matrix_versions WHERE id = '{next}'"),
             ["a second matrix of a unit and track"] = await ViolatesUniqueAsync($"INSERT INTO competency_matrices (id, version, created_at, org_unit_id, direction_id, track_id) SELECT gen_random_uuid(), 0, now(), org_unit_id, direction_id, track_id FROM competency_matrices WHERE id = '{kit.MatrixId}'"),
             ["a second HR of a unit"] = await ViolatesUniqueAsync($"INSERT INTO org_unit_hr (org_unit_id, user_id) VALUES ('{org.Root.Id}', '{user.Id}')"),
             ["a second default scale"] = await ViolatesUniqueAsync($"UPDATE competency_scales SET is_default = true WHERE id = '{scale.Id}'"),
@@ -591,7 +591,7 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
             {
                 var direction = await admin.MakeDirectionAsync();
                 var track = await admin.MakeTrackAsync(org.Team.Id, direction.Id);
-                return () => org.TeamHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Team.Id, directionId = direction.Id, trackId = track.Id, scaleId = CareerScenarios.BaseScaleId });
+                return () => org.TeamHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Team.Id, directionId = direction.Id, trackId = track.Id });
             }
 
             case "matrix-submit":

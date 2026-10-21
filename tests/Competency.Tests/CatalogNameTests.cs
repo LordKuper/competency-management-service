@@ -13,7 +13,7 @@ public sealed class CatalogNameTests(CareerHost fixture) : IClassFixture<CareerH
 {
     private const string DuplicateMessage = "Запись с таким названием уже есть";
 
-    public static TheoryData<string> Kinds => new() { "directions", "categories", "scales", "competencies" };
+    public static TheoryData<string> Kinds => new() { "directions", "scales", "competencies" };
 
     [Theory]
     [MemberData(nameof(Kinds))]
@@ -57,7 +57,7 @@ public sealed class CatalogNameTests(CareerHost fixture) : IClassFixture<CareerH
         again.FieldErrors("name").Should().Equal(DuplicateMessage);
         approved.Status.Should().Be(HttpStatusCode.OK, approved.Body);
         refused.Status.Should().Be(HttpStatusCode.Conflict, "the approved entry now holds the name");
-        refused.FieldErrors("name").Should().Equal(DuplicateMessage);
+        refused.Json!["blockers"]!.AsArray().Select(blocker => blocker!["reason"]!.GetValue<string>()).Should().Equal("NameTaken");
         (await org.Admin.GetAsync($"{catalogue.Path}/{fromSibling.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Draft");
     }
 
@@ -83,34 +83,31 @@ public sealed class CatalogNameTests(CareerHost fixture) : IClassFixture<CareerH
     public async Task Ac10_CompetencyName_IsUniqueWithinItsDirectionAndAmongGeneralCompetencies_ButNotAcross()
     {
         var org = await fixture.OrgAsync();
-        var categoryId = await org.Admin.CategoryIdAsync();
         var first = await org.Admin.MakeDirectionAsync();
         var second = await org.Admin.MakeDirectionAsync();
         var name = Scenarios.Unique("Навык");
-        await org.Admin.MakeCompetencyAsync(categoryId, name, first.Id);
-        await org.Admin.MakeCompetencyAsync(categoryId, name);
+        await org.Admin.MakeCompetencyAsync(name, first.Id);
+        await org.Admin.MakeCompetencyAsync(name);
 
-        var sameDirection = await org.Admin.PostAsync("/api/v1/career/competencies", Competency(name.ToUpperInvariant(), categoryId, first.Id));
-        var sameGeneral = await org.Admin.PostAsync("/api/v1/career/competencies", Competency(name.ToUpperInvariant(), categoryId, null));
-        var otherDirection = await org.Admin.PostAsync("/api/v1/career/competencies", Competency(name, categoryId, second.Id));
+        var sameDirection = await org.Admin.PostAsync("/api/v1/career/competencies", Competency(name.ToUpperInvariant(), first.Id));
+        var sameGeneral = await org.Admin.PostAsync("/api/v1/career/competencies", Competency(name.ToUpperInvariant(), null));
+        var otherDirection = await org.Admin.PostAsync("/api/v1/career/competencies", Competency(name, second.Id));
 
         sameDirection.Status.Should().Be(HttpStatusCode.Conflict);
         sameGeneral.Status.Should().Be(HttpStatusCode.Conflict);
         otherDirection.Status.Should().Be(HttpStatusCode.Created, otherDirection.Body);
     }
 
-    private static object Competency(string name, Guid categoryId, Guid? directionId) =>
-        new { name, description = (string?)null, categoryId, directionId, type = "Profile", scaleId = (Guid?)null };
+    private static object Competency(string name, Guid? directionId) =>
+        new { name, description = (string?)null, directionId, scaleId = (Guid?)null };
 
     private static async Task<Catalogue> CatalogueAsync(string kind, CareerOrg org)
     {
-        var categoryId = await org.Admin.CategoryIdAsync();
         return kind switch
         {
             "directions" => new Catalogue("/api/v1/career/directions", name => new { name }),
-            "categories" => new Catalogue("/api/v1/career/categories", name => new { name }),
             "scales" => new Catalogue("/api/v1/career/scales", name => new { name, points = CareerScenarios.Points() }),
-            _ => new Catalogue("/api/v1/career/competencies", name => Competency(name, categoryId, null)),
+            _ => new Catalogue("/api/v1/career/competencies", name => Competency(name, null)),
         };
     }
 

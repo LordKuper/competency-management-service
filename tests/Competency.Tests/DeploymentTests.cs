@@ -5,7 +5,7 @@ namespace Competency.Tests;
 
 /// <summary>
 /// What the image build and the operators read must follow the code: every source project is restored before the sources are copied in, or the
-/// image build fails, and the deployment guide describes the move to contract 3.0.0 and the migration of the positions.
+/// image build fails, and the deployment guide tells how to move an existing deployment to the squashed migration line.
 /// </summary>
 public sealed class DeploymentTests
 {
@@ -31,11 +31,11 @@ public sealed class DeploymentTests
     }
 
     [Fact]
-    public void Ac6_TheDeploymentGuide_DescribesTheMoveToContract3AndTheMigrationOfThePositions()
+    public void Ac6_TheDeploymentGuide_DescribesRecreatingTheDatabaseOfAnOlderMigrationLine()
     {
         var guide = File.ReadAllText(Path.Combine(RepositoryRoot(), "deploy", "README.md"));
 
-        guide.Should().Contain("3.0.0").And.Contain("positionId").And.Contain("PositionCatalogue");
+        guide.Should().Contain("InitialCreate").And.Contain("1.0.0").And.Contain("__EFMigrationsHistory");
     }
 
     private static string RepositoryRoot()

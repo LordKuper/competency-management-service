@@ -50,7 +50,7 @@ public sealed class MatrixAccessTests(CareerHost fixture) : IClassFixture<Career
             {
                 var version = (await kit.GetVersionAsync(reader.Client, id)).Expect(HttpStatusCode.OK);
                 version.Json!["entries"]!["levels"]!.AsArray().Should().HaveCount(2);
-                version.Json["entries"]!["scale"]!["points"]!.AsArray().Should().HaveCount(5);
+                version.Json["entries"]!["scales"]!.AsArray().Single()!["points"]!.AsArray().Should().HaveCount(5);
             }
         }
 
