@@ -407,7 +407,7 @@ Material risk: none
 
 ### Task 77: Бэкенд — роль HR и проверка закрепления
 Material risk: change: authorization, change: public contract
-- [ ] по Task 75: `UserRole.Hr`, проверки закрепления и снятия роли, список кандидатов; OpenAPI и `web/src/api/schema.d.ts` (AC-62)
+- [x] по Task 75: `UserRole.Hr`, проверки закрепления и снятия роли, список кандидатов; OpenAPI и `web/src/api/schema.d.ts` (AC-62)
 
 ### Task 78: SPA — роль HR и выбор сотрудника ответственным HR
 Material risk: none

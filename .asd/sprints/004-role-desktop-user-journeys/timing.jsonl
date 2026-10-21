@@ -414,3 +414,10 @@
 {"op":"close","id":"Task 75 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.914Z","end":"2026-10-21T14:11:52.435Z","outcome":"done","attrs":{}}
 {"op":"close","id":"Task 76 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.967Z","end":"2026-10-21T14:12:35.816Z","outcome":"done","attrs":{}}
 {"op":"open","id":"Task 77","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:12:36.434Z","attrs":{}}
+{"op":"open","id":"Task 74 positions-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:15:00.269Z","attrs":{}}
+{"op":"open","id":"Task 75 positions-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:15:00.326Z","attrs":{}}
+{"op":"open","id":"Task 76 positions-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:15:00.384Z","attrs":{}}
+{"op":"close","id":"Task 76 positions-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:15:00.384Z","end":"2026-10-21T14:16:16.758Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 74 positions-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:15:00.269Z","end":"2026-10-21T14:16:23.842Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 75 positions-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:15:00.326Z","end":"2026-10-21T14:16:34.491Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 77","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:12:36.434Z","end":"2026-10-21T14:31:06.080Z","outcome":"done","attrs":{}}
