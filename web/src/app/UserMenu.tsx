@@ -11,6 +11,7 @@ import { useState } from "react";
 import { ChangePasswordModal } from "../features/auth/ChangePasswordModal";
 import type { CurrentUser } from "../features/auth/useCurrentUser";
 import { useSignOut } from "../features/auth/useSignOut";
+import { useLeaveGuard } from "./leaveGuard";
 
 const NON_BREAKING_SPACE = " ";
 
@@ -44,6 +45,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
   const { token } = antdTheme.useToken();
   const screens = Grid.useBreakpoint();
   const signOut = useSignOut();
+  const { confirmLeave } = useLeaveGuard();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const displayName = formatDisplayName(user);
 
@@ -67,7 +69,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
                   key: "sign-out",
                   icon: <LogoutOutlined />,
                   label: "Выйти",
-                  onClick: () => signOut.mutate(),
+                  onClick: () => confirmLeave(() => signOut.mutate()),
                 },
               ],
             },

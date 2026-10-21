@@ -11,6 +11,7 @@ import {
   Typography,
 } from "antd";
 import type { ReactNode } from "react";
+import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { OrgUnitSelect } from "./OrgUnitSelect";
 import type { EmployeeInput } from "./orgStructureApi";
@@ -30,7 +31,7 @@ interface EmployeeFormProps {
   email?: string | null;
   /** Told when the position field adds a new position to the unit's list. */
   onPositionAdded?: (position: { id: string; name: string }) => void;
-  /** Told whether the form holds input that was not saved, so a screen can refuse to be left. */
+  /** Told whether the form holds input that was not saved, so a screen can ask before it is left. */
   onDirtyChange?: (isDirty: boolean) => void;
   submitLabel: string;
   /** Saves the input; a rejection is shown on the fields it names and by the caller. */
@@ -61,6 +62,7 @@ export function EmployeeForm({
   onCancel,
   scenarioActions,
 }: EmployeeFormProps) {
+  const { confirmClose } = useLeaveGuard();
   const { token } = antdTheme.useToken();
   const [form] = Form.useForm<EmployeeInput>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
@@ -184,7 +186,9 @@ export function EmployeeForm({
           )}
           <Space>
             {submitButton}
-            <Button onClick={onCancel}>Отмена</Button>
+            <Button onClick={() => confirmClose(() => onCancel?.())}>
+              Отмена
+            </Button>
           </Space>
         </>
       )}

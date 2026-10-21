@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ApiError } from "../../api/ApiError";
 import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { useLeaveGuard } from "../../app/leaveGuard";
 
 const CONFLICT_STATUS = 409;
 
@@ -16,6 +17,8 @@ interface CatalogModalProps {
   conflictNotice?: string;
   /** Width of the dialog when its content needs more than the usual one. */
   width?: number | string;
+  /** The form holds changes the dialog cannot see by itself, such as an edited list of levels. */
+  isUnsaved?: boolean;
   onClose: () => void;
   children: ReactNode;
 }
@@ -38,6 +41,7 @@ export function CatalogModal({
   fields,
   conflictNotice,
   width,
+  isUnsaved,
   onClose,
   children,
 }: CatalogModalProps) {
@@ -51,9 +55,8 @@ export function CatalogModal({
       open
       title={title}
       width={width}
-      onCancel={(event) => {
-        if (!event.defaultPrevented) onClose();
-      }}
+      isUnsaved={isUnsaved}
+      onCancel={onClose}
       footer={null}
     >
       <Space orientation="vertical" size="large" style={{ display: "flex" }}>
@@ -76,14 +79,15 @@ interface FormActionsProps {
   onCancel: () => void;
 }
 
-/** Save and cancel buttons of a catalogue form. */
+/** Save and cancel buttons of a catalogue form; cancelling asks for confirmation while the dialog holds unsaved changes. */
 export function FormActions({ isSubmitting, onCancel }: FormActionsProps) {
+  const { confirmClose } = useLeaveGuard();
   return (
     <Space>
       <Button type="primary" htmlType="submit" loading={isSubmitting}>
         Сохранить
       </Button>
-      <Button onClick={onCancel}>Отмена</Button>
+      <Button onClick={() => confirmClose(onCancel)}>Отмена</Button>
     </Space>
   );
 }

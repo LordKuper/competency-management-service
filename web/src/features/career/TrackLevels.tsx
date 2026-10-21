@@ -56,7 +56,6 @@ import { RowActions } from "./RowActions";
 const EMPTY_TEXT = "В треке пока нет уровней";
 const VISIBLE_POSITIONS = 3;
 const SAVE_TRACK_FIRST = "Сначала сохраните трек";
-const SAVE_CHANGES_FIRST = "Сначала сохраните изменения";
 
 /** Counts the levels added in this session, so each unsaved level has a key of its own. */
 let pendingCount = 0;
@@ -260,8 +259,6 @@ interface TrackLevelsProps {
   pending: readonly PendingLevel[];
   onPendingChange: (pending: PendingLevel[]) => void;
   onOrderChange: (order: string[]) => void;
-  /** Whether the dialog holds edits not saved yet, which keep the link to the positions screen from being followed. */
-  hasUnsaved?: boolean;
 }
 
 /**
@@ -277,7 +274,6 @@ export function TrackLevels({
   pending,
   onPendingChange,
   onOrderChange,
-  hasUnsaved = false,
 }: TrackLevelsProps) {
   const { token } = theme.useToken();
   const [dialog, setDialog] = useState<string | null>(null);
@@ -402,13 +398,13 @@ export function TrackLevels({
           Уровни идут от младшего к старшему. Перетащите строку, чтобы изменить
           порядок
         </Typography.Text>
-        {track && !hasUnsaved ? (
+        {track ? (
           <Link to={`/desk/track-positions/${track.id}`}>
             Связать должности на отдельном экране
           </Link>
         ) : (
           <Typography.Text type="secondary">
-            {`Связать должности на отдельном экране: ${(track ? SAVE_CHANGES_FIRST : SAVE_TRACK_FIRST).toLowerCase()}`}
+            {`Связать должности на отдельном экране: ${SAVE_TRACK_FIRST.toLowerCase()}`}
           </Typography.Text>
         )}
       </Flex>

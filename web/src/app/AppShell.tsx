@@ -18,6 +18,7 @@ import {
 import { ErrorAlert } from "./ErrorAlert";
 import type { NavGroup, NavItem } from "./featureContract";
 import { navItemsFor } from "./features";
+import { LeaveGuardProvider } from "./leaveGuard";
 import { PRODUCT_NAME } from "./productName";
 import { UserMenu } from "./UserMenu";
 
@@ -108,49 +109,51 @@ function ShellFrame({ user }: { user: CurrentUser }) {
   );
   return (
     <ConfigProvider componentSize={screens.lg ? "middle" : "large"}>
-      <Layout style={{ minHeight: "100vh" }}>
-        <Layout.Header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: token.marginLG,
-          }}
-        >
-          <Flex align="center" gap={token.marginXS} style={brandStyle}>
-            <Flex
-              align="center"
-              justify="center"
-              style={{
-                flex: "none",
-                background: token.colorBgContainer,
-                borderRadius: "50%",
-              }}
-            >
-              <img src="/brand/logo-256.png" alt="" width={32} height={32} />
+      <LeaveGuardProvider>
+        <Layout style={{ minHeight: "100vh" }}>
+          <Layout.Header
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: token.marginLG,
+            }}
+          >
+            <Flex align="center" gap={token.marginXS} style={brandStyle}>
+              <Flex
+                align="center"
+                justify="center"
+                style={{
+                  flex: "none",
+                  background: token.colorBgContainer,
+                  borderRadius: "50%",
+                }}
+              >
+                <img src="/brand/logo-256.png" alt="" width={32} height={32} />
+              </Flex>
+              <strong title={PRODUCT_NAME} style={productNameStyle}>
+                {PRODUCT_NAME}
+              </strong>
             </Flex>
-            <strong title={PRODUCT_NAME} style={productNameStyle}>
-              {PRODUCT_NAME}
-            </strong>
-          </Flex>
-          {navItems.length > 0 && (
-            <Menu
-              theme="dark"
-              mode="horizontal"
-              selectedKeys={current ? [current.key] : []}
-              items={menuItems(navItems)}
-              style={{ flex: 1, minWidth: 0 }}
-            />
-          )}
-          <div style={{ marginInlineStart: "auto" }}>
-            <UserMenu user={user} />
-          </div>
-        </Layout.Header>
-        <Layout.Content
-          style={{ padding: screens.lg ? token.paddingLG : token.padding }}
-        >
-          <Outlet />
-        </Layout.Content>
-      </Layout>
+            {navItems.length > 0 && (
+              <Menu
+                theme="dark"
+                mode="horizontal"
+                selectedKeys={current ? [current.key] : []}
+                items={menuItems(navItems)}
+                style={{ flex: 1, minWidth: 0 }}
+              />
+            )}
+            <div style={{ marginInlineStart: "auto" }}>
+              <UserMenu user={user} />
+            </div>
+          </Layout.Header>
+          <Layout.Content
+            style={{ padding: screens.lg ? token.paddingLG : token.padding }}
+          >
+            <Outlet />
+          </Layout.Content>
+        </Layout>
+      </LeaveGuardProvider>
     </ConfigProvider>
   );
 }

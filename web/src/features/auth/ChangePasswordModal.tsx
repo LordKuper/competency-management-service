@@ -5,6 +5,7 @@ import { unwrap } from "../../api/unwrap";
 import { AppModal } from "../../app/AppModal";
 import { showFieldErrors } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { useLeaveGuard } from "../../app/leaveGuard";
 import { usePasswordHint } from "./passwordPolicy";
 
 interface ChangePasswordValues {
@@ -37,6 +38,7 @@ export function ChangePasswordModal({
 }
 
 function ChangePasswordForm({ onDone }: { onDone: () => void }) {
+  const { confirmClose } = useLeaveGuard();
   const [form] = Form.useForm<ChangePasswordValues>();
   const { message } = App.useApp();
   const passwordHint = usePasswordHint();
@@ -104,7 +106,7 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
         <Button type="primary" htmlType="submit" loading={change.isPending}>
           Изменить пароль
         </Button>
-        <Button onClick={onDone}>Отмена</Button>
+        <Button onClick={() => confirmClose(onDone)}>Отмена</Button>
       </Space>
     </Form>
   );

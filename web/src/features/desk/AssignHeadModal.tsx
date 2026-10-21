@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
-import { AppModal } from "../../app/AppModal";
+import { AppModal, CancelButton } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import {
@@ -112,9 +112,7 @@ export function AssignHeadModal({ unitId, onClose }: AssignHeadModalProps) {
               <Button type="primary" htmlType="submit" loading={isSubmitting}>
                 Назначить
               </Button>
-              <Button disabled={isSubmitting} onClick={onClose}>
-                Отмена
-              </Button>
+              <CancelButton disabled={isSubmitting} onClose={onClose} />
             </Space>
           </Form>
         </Space>

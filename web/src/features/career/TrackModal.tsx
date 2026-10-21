@@ -126,6 +126,11 @@ export function TrackModal({
       title={latest ? "Изменение трека" : "Новый трек"}
       error={save.error}
       fields={FIELDS}
+      isUnsaved={
+        pending.length > 0 ||
+        order !== undefined ||
+        (name !== undefined && name !== current?.name)
+      }
       onClose={onClose}
     >
       <Form
@@ -197,11 +202,6 @@ export function TrackModal({
             pending={pending}
             onPendingChange={setPending}
             onOrderChange={setOrder}
-            hasUnsaved={
-              pending.length > 0 ||
-              order !== undefined ||
-              (name !== undefined && name !== current?.name)
-            }
           />
         </section>
         <FormActions isSubmitting={isSubmitting} onCancel={onClose} />

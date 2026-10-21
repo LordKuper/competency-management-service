@@ -1,5 +1,6 @@
-import { Modal, type ModalProps } from "antd";
-import { useEffect, useRef } from "react";
+import { Button, Form, Modal, type ModalProps } from "antd";
+import { useEffect, useRef, useState } from "react";
+import { ModalUnsavedProvider, useLeaveGuard } from "./leaveGuard";
 
 // Select and picker inputs are read-only unless searchable, yet they are the controls to focus.
 const FIELD =
@@ -23,18 +24,45 @@ function focusEntry(dialog: HTMLElement, body: HTMLElement) {
   return target != null;
 }
 
+/** «Отмена» of a dialog body written inline where the AppModal is rendered; it asks before closing an unsaved dialog. */
+export function CancelButton({
+  onClose,
+  disabled,
+}: {
+  onClose: () => void;
+  disabled?: boolean;
+}) {
+  const { confirmClose } = useLeaveGuard();
+  return (
+    <Button disabled={disabled} onClick={() => confirmClose(onClose)}>
+      Отмена
+    </Button>
+  );
+}
+
 /**
  * The application's dialog: antd `Modal` that, once opened, moves focus to its first form field, or to the primary
  * footer button when it has no field. A field that appears after the opening, as when a record is still loading, gets
- * the focus too, unless the user has already moved it inside the dialog. Re-renders never move focus.
+ * the focus too, unless the user has already moved it inside the dialog. Re-renders never move focus. A form changed
+ * in the dialog, or `isUnsaved`, makes closing it by the cross, Escape or the scrim ask for confirmation.
  */
-export function AppModal({ afterOpenChange, children, ...props }: ModalProps) {
+export function AppModal({
+  afterOpenChange,
+  children,
+  isUnsaved = false,
+  onCancel,
+  ...props
+}: ModalProps & { isUnsaved?: boolean }) {
+  const [isTouched, setIsTouched] = useState(false);
+  const isModalUnsaved = !!props.open && (isTouched || isUnsaved);
+  const { confirmLeave } = useLeaveGuard({ isUnsaved: isModalUnsaved });
   const bodyRef = useRef<HTMLDivElement>(null);
   const stopWaiting = useRef<() => void>(() => {});
   useEffect(() => () => stopWaiting.current(), []);
 
   function handleOpenChange(isOpen: boolean) {
     afterOpenChange?.(isOpen);
+    if (!isOpen) setIsTouched(false);
     stopWaiting.current();
     const body = bodyRef.current;
     const dialog = body?.closest<HTMLElement>('[role="dialog"]');
@@ -56,8 +84,27 @@ export function AppModal({ afterOpenChange, children, ...props }: ModalProps) {
   }
 
   return (
-    <Modal {...props} afterOpenChange={handleOpenChange}>
-      <div ref={bodyRef}>{children}</div>
+    <Modal
+      {...props}
+      afterOpenChange={handleOpenChange}
+      onCancel={(event) => {
+        if (event.defaultPrevented) return;
+        const close = () => onCancel?.(event);
+        if (isModalUnsaved) confirmLeave(close);
+        else close();
+      }}
+    >
+      <ModalUnsavedProvider value={isModalUnsaved}>
+        <Form.Provider
+          onFormChange={(_, { changedFields }) => {
+            if (changedFields.some((field) => field.touched)) {
+              setIsTouched(true);
+            }
+          }}
+        >
+          <div ref={bodyRef}>{children}</div>
+        </Form.Provider>
+      </ModalUnsavedProvider>
     </Modal>
   );
 }

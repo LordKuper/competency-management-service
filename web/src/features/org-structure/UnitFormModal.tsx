@@ -5,6 +5,7 @@ import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { useLeaveGuard } from "../../app/leaveGuard";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { EmployeePicker } from "../users/EmployeePicker";
@@ -116,6 +117,7 @@ function UnitForm({
   onSubmit,
   onCancel,
 }: UnitFormProps) {
+  const { confirmClose } = useLeaveGuard();
   const [form] = Form.useForm<UnitFormValues>();
   const headId = unit?.headEmployeeId ?? null;
   const { data: head } = useQuery({
@@ -176,7 +178,7 @@ function UnitForm({
         <Button type="primary" htmlType="submit" loading={isSubmitting}>
           {submitLabel}
         </Button>
-        <Button onClick={onCancel}>Отмена</Button>
+        <Button onClick={() => confirmClose(onCancel)}>Отмена</Button>
       </Space>
     </Form>
   );
