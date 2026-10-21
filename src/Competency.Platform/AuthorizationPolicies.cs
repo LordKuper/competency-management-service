@@ -11,7 +11,12 @@ public static class AuthorizationPolicies
     public const string Authenticated = "Authenticated";
 
     /// <summary>
-    /// An authenticated user whose role claim is <see cref="PlatformClaims.GlobalAdminRole"/>.
+    /// An authenticated user with the <see cref="PlatformClaims.GlobalAdminRole"/> role.
     /// </summary>
     public const string GlobalAdmin = "GlobalAdmin";
+
+    /// <summary>
+    /// An authenticated user with the <see cref="PlatformClaims.GlobalAdminRole"/> role, the <see cref="PlatformClaims.HrRole"/> role or both.
+    /// </summary>
+    public const string GlobalAdminOrHr = "GlobalAdminOrHr";
 }
