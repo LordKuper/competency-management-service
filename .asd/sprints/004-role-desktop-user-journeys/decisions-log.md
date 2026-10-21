@@ -307,3 +307,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-21 — Task 73 assessment-fix 1 COMPLETED (a8f8bbc): «Сотрудник создан» без «Выход из сценария его не отменяет.»; gate: web lint/build чисто
 - 2026-10-21 — impl assessment (user): в подключении подразделения ответственного HR выбирать из сотрудников, а не пользователей, — только сотрудники с привязанной учётной записью с ролью HR
 - 2026-10-21 — поправка скоупа (user): AC-62 — роли «HR» у учётной записи не было (UserRole: User, GlobalAdmin); выбор пользователя: новая роль «HR», назначает администратор; кандидаты — работающие сотрудники с действующей учётной записью с ролью; проверка на сервере; снятие роли запрещено при закреплении. Task 74–76 — волна 49, Task 77 — 50, Task 78 — 51
+- 2026-10-21 — route Task 74: standard (asd-ba), Task 75: critical (asd-architect; risk change: authorization, change: public contract), Task 76: standard (asd-ux), параллельно; dispatch HEAD 2232e9e
+- 2026-10-21 — дополнение AC-62 (user): пока нет ни одной действующей учётной записи с ролью «HR», администратору на столе — карточка-предложение назначить HR; передано Task 74–76
