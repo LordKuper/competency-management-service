@@ -11,7 +11,7 @@ namespace Competency.Tests;
 
 /// <summary>
 /// The platform on a real database: schema applied from an empty database, probes, the mail and link settings it refuses to start with,
-/// what the logs carry, the account role limited in the database itself, the columns wide enough for every value a check constraint
+/// what the logs carry, the columns wide enough for every value a check constraint
 /// admits, and the journal append-only in the database itself,
 /// for the application account too.
 /// </summary>

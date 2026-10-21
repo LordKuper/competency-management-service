@@ -12,7 +12,8 @@ namespace Competency.Tests.Infrastructure;
 public sealed class RowLock : IAsyncDisposable
 {
     private const string WaitingForALock = "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'";
-    private const string ActiveAdministrators = "SELECT id FROM users WHERE is_global_admin AND NOT is_blocked AND password_hash IS NOT NULL ORDER BY id FOR UPDATE";
+    private const string ActiveAdministrators =
+        "SELECT u.id FROM users u WHERE NOT u.is_blocked AND u.password_hash IS NOT NULL AND EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id AND r.name = 'GlobalAdmin') ORDER BY u.id FOR UPDATE OF u";
 
     private readonly NpgsqlConnection connection;
     private readonly NpgsqlTransaction transaction;

@@ -21,7 +21,12 @@ BEGIN;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM users WHERE is_global_admin AND NOT is_blocked AND password_hash IS NOT NULL) THEN
+    IF NOT EXISTS (
+        SELECT 1 FROM users u
+        JOIN user_roles ur ON ur.user_id = u.id
+        JOIN roles r ON r.id = ur.role_id
+        WHERE r.name = 'GlobalAdmin' AND NOT u.is_blocked AND u.password_hash IS NOT NULL
+    ) THEN
         RAISE EXCEPTION 'No active administrator: start the API against this database once before seeding.';
     END IF;
 
@@ -111,10 +116,10 @@ SELECT 600 + n, 'orphan.' || n || '@seed.local', NULL, 'active', NULL
 FROM generate_series(1, 5) AS n;
 
 INSERT INTO users (
-    id, version, email, normalized_email, user_name, normalized_user_name, is_global_admin, is_hr, employee_id, is_blocked, password_hash,
+    id, version, email, normalized_email, user_name, normalized_user_name, employee_id, is_blocked, password_hash,
     security_stamp, concurrency_stamp, lockout_enabled, access_failed_count,
     link_token_hash, link_security_stamp, link_issued_at, link_expires_at)
-SELECT pg_temp.sid('account', a.n), 0, a.email, upper(a.email), a.email, upper(a.email), false, a.n = 1 OR a.n BETWEEN 401 AND 450,
+SELECT pg_temp.sid('account', a.n), 0, a.email, upper(a.email), a.email, upper(a.email),
        CASE WHEN a.employee_no IS NOT NULL THEN pg_temp.sid('employee', a.employee_no) END,
        a.state = 'blocked',
        CASE WHEN a.state <> 'invited' THEN admin.password_hash END,
@@ -125,13 +130,22 @@ SELECT pg_temp.sid('account', a.n), 0, a.email, upper(a.email), a.email, upper(a
        a.link_expires_at
 FROM seed_accounts AS a
 CROSS JOIN (
-    SELECT password_hash FROM users
-    WHERE is_global_admin AND NOT is_blocked AND password_hash IS NOT NULL
-    ORDER BY email
+    SELECT u.password_hash FROM users u
+    JOIN user_roles ur ON ur.user_id = u.id
+    JOIN roles r ON r.id = ur.role_id
+    WHERE r.name = 'GlobalAdmin' AND NOT u.is_blocked AND u.password_hash IS NOT NULL
+    ORDER BY u.email
     LIMIT 1
 ) AS admin;
 
--- HR assignments by employee: the root and 50 units below it; the accounts of those employees carry the HR role, every tenth is blocked.
+-- The HR role: the accounts of the employees assigned below carry it.
+INSERT INTO user_roles (user_id, role_id)
+SELECT pg_temp.sid('account', a.n), r.id
+FROM seed_accounts AS a
+CROSS JOIN roles AS r
+WHERE r.name = 'Hr' AND (a.n = 1 OR a.n BETWEEN 401 AND 450);
+
+-- HR assignments by employee: the root and 50 units below it, every tenth of the accounts of those employees blocked.
 INSERT INTO org_unit_hr (org_unit_id, employee_id)
 SELECT pg_temp.sid('unit', 1), pg_temp.sid('employee', 9999)
 UNION ALL

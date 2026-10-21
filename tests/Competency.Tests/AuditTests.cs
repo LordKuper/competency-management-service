@@ -13,7 +13,7 @@ namespace Competency.Tests;
 /// </summary>
 public sealed class AuditTests(TestEnvironment environment)
 {
-    private static readonly string[] UserProperties = ["email", "employeeId", "isBlocked", "isGlobalAdmin", "isHr"];
+    private static readonly string[] UserProperties = ["email", "employeeId", "isBlocked"];
 
     [Fact]
     public async Task Ac15_Mutations_AreJournaledWithActorRoleRequestIdAndOnlyTheChangedValues()
@@ -101,6 +101,62 @@ public sealed class AuditTests(TestEnvironment environment)
 
         (await CountRowsAsync(host, "concat_ws(' ', old_value::text, new_value::text) ~* '(password|hash|stamp|lockout|concurrency|link|token)'"))
             .Should().Be(0, "only allow-listed properties are journaled");
+    }
+
+    [Fact]
+    public async Task Ac15_RoleChange_IsJournaledAsOneUpdateOfTheRoles_WithBothSetsInMemberOrder()
+    {
+        var admin = await (await environment.SharedHostAsync()).AdminAsync();
+        var adminId = (await admin.GetAsync("/api/v1/auth/me")).Id;
+        var email = $"{Scenarios.Unique("roles")}@test.local";
+        var renamed = $"{Scenarios.Unique("renamed")}@test.local";
+
+        var created = (await admin.PostAsync("/api/v1/users", new { email, roles = new[] { Scenarios.Hr, Scenarios.GlobalAdmin }, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
+        var removed = (await ChangeRolesAsync(admin, created, email, [Scenarios.Hr])).Expect(HttpStatusCode.OK);
+        var swapped = (await ChangeRolesAsync(admin, removed, email, [Scenarios.GlobalAdmin])).Expect(HttpStatusCode.OK);
+        var withEmail = (await ChangeRolesAsync(admin, swapped, renamed, [Scenarios.Hr, Scenarios.GlobalAdmin])).Expect(HttpStatusCode.OK);
+        var emailOnly = (await ChangeRolesAsync(admin, withEmail, email, [Scenarios.GlobalAdmin, Scenarios.Hr])).Expect(HttpStatusCode.OK);
+
+        var creation = await admin.AuditOfRequestAsync(created.RequestId!);
+        creation.Actions().Should().Equal("AppUser.Created", "AppUser.InvitationSent", "AppUser.Updated");
+        RolesEvent(creation)["actor"]!.GetValue<string>().Should().Be(adminId.ToString());
+        RolesEvent(creation)["entityId"]!.GetValue<string>().Should().Be(created.Id.ToString());
+        AssertRolesChange(creation, [], [Scenarios.GlobalAdmin, Scenarios.Hr]);
+        AssertRolesChange(await admin.AuditOfRequestAsync(removed.RequestId!), [Scenarios.GlobalAdmin, Scenarios.Hr], [Scenarios.Hr]);
+        AssertRolesChange(await admin.AuditOfRequestAsync(swapped.RequestId!), [Scenarios.Hr], [Scenarios.GlobalAdmin]);
+        var both = await admin.AuditOfRequestAsync(withEmail.RequestId!);
+        both.Actions().Should().Equal("AppUser.Updated", "AppUser.Updated");
+        both.Select(row => Keys(row!["newValue"])).Should().BeEquivalentTo(new[] { new[] { "email" }, new[] { "roles" } }, "the other changed fields are journaled by their own update");
+        AssertRolesChange(both, [Scenarios.GlobalAdmin], [Scenarios.GlobalAdmin, Scenarios.Hr]);
+        Keys((await admin.AuditOfRequestAsync(emailOnly.RequestId!)).Single()!["newValue"]).Should().Equal("email");
+        (await admin.GetUserAsync(created.Id)).ETag.Should().Be(emailOnly.ETag, "the version of the last response is the stored one, though a role change saves the account several times");
+    }
+
+    [Fact]
+    public async Task Ac15_RoleChangeAndItsJournalRow_AreSavedTogetherOrNotAtAll()
+    {
+        await using var host = await environment.StartHostAsync();
+        var admin = await host.AdminAsync();
+        var account = await admin.InviteUserAsync(Scenarios.GlobalAdmin);
+        var before = await admin.GetUserAsync(account.Id);
+        var rejection = $"reject_role_insert_{Guid.NewGuid():N}";
+        await host.ExecuteAsync(
+            $"CREATE FUNCTION {rejection}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'role rows are refused'; END $$; "
+            + $"CREATE TRIGGER {rejection} BEFORE INSERT ON user_roles FOR EACH ROW EXECUTE FUNCTION {rejection}()");
+
+        var failed = await ChangeRolesAsync(admin, before, account.Email, [Scenarios.Hr]);
+        var unchanged = await admin.GetUserAsync(account.Id);
+        var journalAfterFailure = await admin.GetAsync($"/api/v1/audit?entityId={account.Id}&pageSize=200");
+        await host.ExecuteAsync($"DROP TRIGGER {rejection} ON user_roles");
+        var changed = await ChangeRolesAsync(admin, before, account.Email, [Scenarios.Hr]);
+
+        failed.Status.Should().Be(HttpStatusCode.InternalServerError, "the second of the account's saves cannot be written");
+        RolesOf(unchanged.Json).Should().Equal(Scenarios.GlobalAdmin);
+        unchanged.ETag.Should().Be(before.ETag, "the account version moves only with a saved change");
+        journalAfterFailure.Json!["items"]!.AsArray().Actions().Should().Equal("AppUser.Created", "AppUser.InvitationSent", "AppUser.Updated");
+        changed.Expect(HttpStatusCode.OK);
+        RolesOf(changed.Json).Should().Equal(Scenarios.Hr);
+        AssertRolesChange(await admin.AuditOfRequestAsync(changed.RequestId!), [Scenarios.GlobalAdmin], [Scenarios.Hr]);
     }
 
     [Fact]
@@ -302,6 +358,21 @@ public sealed class AuditTests(TestEnvironment environment)
     private static Action<HttpRequestMessage> Header(string name, string value) => request => request.Headers.Add(name, value);
 
     private static string[] Keys(JsonNode? values) => [.. values!.AsObject().Select(pair => pair.Key).Order()];
+
+    private static Task<ApiResponse> ChangeRolesAsync(ApiClient admin, ApiResponse account, string email, string[] roles) =>
+        admin.PutAsync($"/api/v1/users/{account.Id}", new { email, roles, employeeId = (Guid?)null }, account.ETag);
+
+    private static string[] RolesOf(JsonNode? holder) => [.. holder!["roles"]!.AsArray().Select(role => role!.GetValue<string>())];
+
+    private static JsonNode RolesEvent(JsonArray rows) =>
+        rows.Single(row => row!["action"]!.GetValue<string>() == "AppUser.Updated" && Keys(row["newValue"]).SequenceEqual(["roles"]))!;
+
+    private static void AssertRolesChange(JsonArray rows, string[] before, string[] after)
+    {
+        var change = RolesEvent(rows);
+        RolesOf(change["oldValue"]).Should().Equal(before);
+        RolesOf(change["newValue"]).Should().Equal(after);
+    }
 
     private static async Task<long> CountRowsAsync(ApiHost host, string condition)
     {
