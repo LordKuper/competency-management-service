@@ -13,7 +13,8 @@ responsibility:
 - API: https://reactrouter.com/api/data-routers/createBrowserRouter , https://reactrouter.com/api/data-routers/RouterProvider
 - Changelog: https://raw.githubusercontent.com/remix-run/react-router/main/CHANGELOG.md
 - npm: https://www.npmjs.com/package/react-router (манифест 8.4.0: `engines.node >=22.22.0`, peer `react >=19.2.7`, `react-dom >=19.2.7` (optional), dependencies `cookie-es ^3.1.1`, `@remix-run/route-pattern ^0.22.1`; `exports`: `.`, `./dom`, `./internal`, `./route-pattern`)
-- Last verified: 2026-10-05 (`latest = 8.4.0`)
+- Блокировка переходов: https://reactrouter.com/api/hooks/useBlocker , https://reactrouter.com/how-to/navigation-blocking , https://reactrouter.com/api/hooks/useBeforeUnload (на 2026-10-21 сайт показывает latest 8.5.0; проект закреплён на 8.4.0, поведение сверено по установленному `dist/development/lib/router/router.js`, `lib/hooks.js`, `lib/dom/lib.js`)
+- Last verified: 2026-10-21 (блокировка переходов; версии — 2026-10-05, `latest = 8.4.0`)
 
 ## API surface used in project
 Data mode, без SSR и без Framework mode (`@react-router/dev`, Vite-плагин — не входят в стек).
@@ -22,6 +23,7 @@ Data mode, без SSR и без Framework mode (`@react-router/dev`, Vite-пла
 - Route object: `path`, `Component`, `loader`, `action`, `lazy`; обработка ошибок — `useRouteError`.
 - Доступно в Data mode (применение — решение design): `useLoaderData`, `useActionData`, `useFetcher`, `useNavigation`, `useRevalidator`, `<Await>`, `<Form>`, middleware маршрутов + `getContext`.
 - Общие: `<Link>`, `useNavigate`, `useLocation`.
+- `useBlocker(shouldBlock: boolean | BlockerFunction): Blocker` — Data и Framework mode, в Declarative mode недоступен; функция получает `{ currentLocation, nextLocation, historyAction }`. `Blocker.state`: `unblocked` / `blocked` / `proceeding`; в `blocked` — `location`, `proceed()` (выполнить прерванный переход), `reset()` (остаться). Не перехватывает перезагрузку и уход на другой origin. Проект: один `useBlocker` на приложение — механизм «Несохранённые правки в SPA» (`stack.html`).
 
 ```tsx
 import { createBrowserRouter } from "react-router";
@@ -35,6 +37,10 @@ createRoot(root).render(<RouterProvider router={router} />);
 - v8.3.0 (2026-07-22): path params кодируются по RFC 3986, а не `encodeURIComponent` — проверить URL со спецсимволами/кириллицей и построение ссылок.
 - v8.4.0 (2026-09-15): меньше лишних перерисовок компонентов маршрутов (гранулярные внутренние контексты); новый матчинг маршрутов на `@remix-run/route-pattern` и `unstable_validateParams` — помечены как unstable, в проекте не использовать.
 - Два runtime-зависимых пакета (`cookie-es`, `@remix-run/route-pattern` — предрелизная 0.x) — учитывать при сканировании цепочки поставок.
+- Блокировщик — один на маршрутизатор: при нескольких `shouldBlockNavigation` пишет предупреждение «A router only supports one blocker at a time» и спрашивает только последний зарегистрированный (8.4.0, `router.js`).
+- `useBlocker` передаёт свою функцию маршрутизатору в `useEffect`: состояние, изменённое в том же обработчике, что вызывает `navigate`, функция ещё не видит — признаки читать из ref. `navigate` проверяет блокировщик до первого `await`.
+- POP («Назад»/«Вперёд»): заблокированный переход маршрутизатор отменяет `history.go(-delta)`, `proceed()` повторяет `history.go(delta)`; работает только для записей истории, созданных маршрутизатором (иначе предупреждение и молчаливый отказ в production).
+- `useBeforeUnload(callback, { capture? })` — Data, Framework и Declarative mode; вешает слушатель `beforeunload` на всё время жизни компонента, поэтому для предупреждения только при несохранённых правках не подходит (MDN советует слушать `beforeunload` лишь на это время, Firefox не кладёт страницу со слушателем в bfcache).
 
 ## Deprecations and breaking changes from prior version
 v7 → v8 (по CHANGELOG 8.0.0 и upgrade-гайду):
@@ -46,7 +52,8 @@ v7 → v8 (по CHANGELOG 8.0.0 и upgrade-гайду):
 
 ## Project conventions
 - Маршрутизатор создаётся один раз на уровне модуля, `RouterProvider` — из `react-router/dom`.
-- Не использовать `react-router-dom`, `unstable_*`, Framework mode.
+- Не использовать `react-router-dom`, `unstable_*` (в том числе `unstable_usePrompt`), Framework mode.
+- `useBlocker` вызывает только механизм подтверждения ухода в `web/src/app/`; экраны регистрируют свои правки в нём (`stack.html`, «Несохранённые правки в SPA»).
 - Kestrel отдаёт `index.html` для глубоких ссылок SPA, но не для `/api/*` и статических файлов (подтверждается на design).
 - 401 от API обрабатывает SPA (stack.html): перенаправление на экран входа — из единой точки (middleware openapi-fetch / обработчик ошибок), не из каждого компонента.
 - Разделение «loader/action vs TanStack Query» для серверных данных в stack.html не зафиксировано — решение design.

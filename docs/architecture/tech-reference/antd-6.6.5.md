@@ -13,7 +13,8 @@ responsibility:
 - Тема/CSS-переменные/zero-runtime: https://ant.design/docs/react/customize-theme ; релиз 6.0: https://dev.to/zombiej/ant-design-60-is-released-bfa
 - CSP: https://ant.design/components/config-provider (prop `csp`), https://ant.design/docs/react/faq
 - npm: https://www.npmjs.com/package/antd (манифест 6.6.5: peer `react >=18.0.0`, `react-dom >=18.0.0`; 47 dependencies, среди них `@ant-design/icons ^6.3.4`, `dayjs ^1.11.11`, `@ant-design/cssinjs ^2.1.2`, `clsx ^2.1.1`, пакеты `@rc-component/*`; `sideEffects: ["*.css"]`)
-- Last verified: 2026-10-05 (dist-tag `latest = 6.6.5`, релиз 2026-09-20)
+- Form.Provider: https://ant.design/components/form (раздел Form.Provider); поведение окон подтверждения и `Form.Provider` сверено по установленным `antd/lib/modal/ConfirmDialog.js` 6.6.5 и `@rc-component/form` 1.8.6 (`lib/FormContext.js`, `lib/Form.js`, `lib/hooks/useForm.js`)
+- Last verified: 2026-10-21 (Form.Provider, окно подтверждения; версии — 2026-10-05, dist-tag `latest = 6.6.5`, релиз 2026-09-20)
 
 ## API surface used in project
 - `ConfigProvider`: `locale={ru_RU}` (`import ru_RU from 'antd/locale/ru_RU'`), `theme` (token/algorithm/components/cssVar/hashed), `csp={{ nonce }}`, `getPopupContainer`.
@@ -32,6 +33,8 @@ responsibility:
 - Из changelog 6.x, затрагивающее используемые компоненты: Form — `defaultValidateMessages` на 8 языках, `labelAlign` в ConfigProvider (6.4.0); Table — `column` в ConfigProvider, `scrollTo` с alignment (6.4.0), `expandable.forceRender` (6.6.0); DatePicker — `onClear` (6.5.0); Upload — `classNames/styles.trigger` (6.3.0); Tree — хук `useTree`, `scrollTo({ autoExpand })` (6.6.0); исправление ESM-сборки в строгих окружениях (6.4.4).
 
 - Фокус в Modal (по `antd/es/modal` и `@rc-component/dialog` 6.6.5): после анимации открытия rc-dialog фокусирует саму панель (`[role="dialog"]`, `tabIndex=-1`), а не поле; хук для фокуса поля — `afterOpenChange(open)`; при закрытии фокус возвращается на элемент, бывший активным до открытия (`focusable.focusTriggerAfterClose`, по умолчанию true; работает и для вложенного окна). `modal.confirm/error/warning` (через `App.useApp()`): кнопка по умолчанию — `autoFocusButton`, по умолчанию `ok` (`ok`/`cancel`/`null`, в 6.x также `focusable.autoFocusButton`); `ConfigProvider modal.focusable` это поле не принимает (тип `FocusableConfig`). Классы: тело `.ant-modal-body`, подвал `.ant-modal-footer`, контейнер `.ant-modal-container`.
+- `modal.confirm` (6.6.5 `ConfirmDialog.js`): Esc, щелчок по затемнению (`maskClosable`, у confirm по умолчанию `false`) и «×» (`closable`, по умолчанию `false`) вызывают `onCancel` — то же, что кнопка Cancel; безопасное действие, которое должны выполнять Esc и затемнение, ставится на Cancel. Кнопки по умолчанию — Cancel, затем OK; `footer` принимает функцию `(originNode, { OkBtn, CancelBtn })` для другого порядка; вид — `okType`, `okButtonProps`, `cancelButtonProps`.
+- `Form.Provider` `onFormChange(formName, { changedFields, forms })` — по документации срабатывает при изменении поля вложенной формы с `name`; @rc-component/form 1.8.6 вызывает его для любой вложенной формы (`FormContext.js` без проверки `name`, `Form.js` — из `onFieldsChange`), в том числе через портал окна. `onFieldsChange` приходит при вводе пользователя (`updateValue`) и при валидации; ввод отличает `touched: true` в `changedFields`; `setFieldsValue` его не вызывает. Опору на вызов без `name` закрепляет тест.
 ## Deprecations and breaking changes from prior version
 v5 → v6 (проект новый; v5-идиомы не использовать):
 - `Button.Group`, `Input.Group` → `Space.Compact`; `Dropdown.Button` → `Space.Compact` + `Dropdown` + `Button`; `BackTop` → `FloatButton.BackTop`;
@@ -45,6 +48,7 @@ v5 → v6 (проект новый; v5-идиомы не использоват�
 - Один пакет закрывает таблицы, формы, даты, i18n — без react-hook-form/zod и отдельного data-grid (stack.html); добавлять только при доказанной нехватке.
 - Никаких CDN: ни скриптов антд, ни иконочных шрифтов; иконки — только из бандла.
 - Глобальные уведомления — через `App.useApp()`, не статические методы.
+- Подтверждение ухода с несохранёнными правками — одно окно `modal.confirm` механизма в `web/src/app/` (`stack.html`, «Несохранённые правки в SPA»), своих окон «правки будут потеряны» экраны не делают.
 - `@ant-design/icons` 6.3.4 — прямая зависимость `web/package.json`, закреплена точно (`save-exact`); `dayjs` приходит транзитивно через antd (`^1.11.11` в манифесте antd 6.6.5) — фактическую версию фиксирует `package-lock.json`.
 
 ## Known issues and workarounds
