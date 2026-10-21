@@ -298,6 +298,13 @@
       "decision": "AC-61 unsaved edits never block navigation: confirm-to-discard on any leave incl. wizard steps, beforeunload on tab close; AC-20 coding rule changed; Task 70-72 wave 47, Task 73 wave 48",
       "reason": "user remark at impl assessment 8; cost 0",
       "evidence": "decisions-log.md 2026-10-21 AC-61"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-62 new account role HR assigned by admin; responsible HR is picked as an employee whose bound active account has role HR; server checks on assignment; role removal blocked while assigned; Task 74-76 wave 49, Task 77 wave 50, Task 78 wave 51",
+      "reason": "user remark at impl assessment 10; cost 0",
+      "evidence": "decisions-log.md 2026-10-21 AC-62"
     }
   ],
   "task_routing": {
@@ -1008,6 +1015,24 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "Task 74": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 75": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:authorization; owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 76": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -1066,7 +1091,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-21T12:22:30.385Z",
+  "updated_at": "2026-10-21T13:34:14.294Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
