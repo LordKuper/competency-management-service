@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { App, Button, Table, Tag, Typography } from "antd";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { App, Button, Skeleton, Table, Tag, Typography } from "antd";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useBlocker, useSearchParams } from "react-router";
 import { api } from "../../api/client";
@@ -11,7 +11,13 @@ import {
   type Employee,
   type EmployeeInput,
   invalidateOrgStructure,
+  orgUnitTreeQuery,
 } from "../org-structure/orgStructureApi";
+import {
+  invalidatePositions,
+  positionQuery,
+  unitPositionsQuery,
+} from "../positions/positionsApi";
 import type { UserResponse } from "../users/usersApi";
 import { CreateAccountForm } from "./CreateAccountForm";
 import { deskPaths } from "./deskTexts";
@@ -23,6 +29,37 @@ import { StepRuler } from "./StepRuler";
 interface AddedPosition {
   id: string;
   name: string;
+}
+
+/** The unit and position a finding of the organisation queue opens the scenario with; only still-active ones are kept. */
+interface Selection {
+  unitId?: string;
+  position?: AddedPosition;
+}
+
+/** Reads the requested unit and position from the address and keeps what is still active; a refused or unreadable one is dropped silently. */
+function useSelection(): Selection & { isPending: boolean } {
+  const [searchParams] = useSearchParams();
+  const requestedUnit = searchParams.get("unitId") ?? undefined;
+  const requestedPosition = searchParams.get("positionId") ?? undefined;
+  const tree = useQuery({
+    ...orgUnitTreeQuery,
+    enabled: requestedUnit !== undefined,
+  });
+  const position = useQuery({
+    ...positionQuery(requestedPosition ?? ""),
+    enabled: requestedPosition !== undefined,
+  });
+  const isUnitActive = tree.data?.some(
+    (unit) => unit.id === requestedUnit && unit.isActive,
+  );
+  return {
+    isPending: tree.isLoading || position.isLoading,
+    unitId: isUnitActive ? requestedUnit : undefined,
+    position: position.data?.isActive
+      ? { id: position.data.id, name: position.data.name }
+      : undefined,
+  };
 }
 
 /** What the scenario has done so far: the employee, the position added for them, and the account (null when skipped). */
@@ -42,8 +79,7 @@ const UNSAVED_MESSAGE =
 
 /** «Принять сотрудника»: the employee card, then an account with an invitation if wanted, then what was created. */
 export function OnboardEmployeePage() {
-  const [searchParams] = useSearchParams();
-  const unitId = searchParams.get("unitId") ?? undefined;
+  const requested = useSelection();
   const { message } = App.useApp();
   const [outcome, setOutcome] = useState<Outcome>();
   const [step, setStep] = useState(EMPLOYEE_STEP);
@@ -56,6 +92,7 @@ export function OnboardEmployeePage() {
       blocker.reset();
     }
   }, [blocker, message]);
+  const selection: Selection = round === 0 ? requested : {};
   const reached = outcome?.account === undefined ? EMPLOYEE_STEP : SUMMARY_STEP;
 
   function goTo(next: number) {
@@ -72,10 +109,11 @@ export function OnboardEmployeePage() {
         isLocked={isUnsaved}
         onChange={goTo}
       />
-      {step === EMPLOYEE_STEP && (
+      {step === EMPLOYEE_STEP && requested.isPending && <Skeleton active />}
+      {step === EMPLOYEE_STEP && !requested.isPending && (
         <EmployeeStep
           key={round}
-          unitId={unitId}
+          selection={selection}
           outcome={outcome}
           onSaved={(saved) => {
             setOutcome(saved);
@@ -110,6 +148,16 @@ export function OnboardEmployeePage() {
   );
 }
 
+function selectionHints({ unitId, position }: Selection) {
+  if (!unitId && !position) return undefined;
+  return {
+    orgUnit: unitId ? "Выбрано из находки; можно выбрать другое." : undefined,
+    position: position
+      ? "Выбрана из находки; можно выбрать другую. Если её нет в перечне подразделения, она будет добавлена в него."
+      : "Нужной должности нет в перечне подразделения — добавьте её в списке.",
+  };
+}
+
 function isChanged(employee: Employee, input: EmployeeInput): boolean {
   return (
     employee.lastName !== input.lastName ||
@@ -121,7 +169,7 @@ function isChanged(employee: Employee, input: EmployeeInput): boolean {
 }
 
 interface EmployeeStepProps {
-  unitId?: string;
+  selection: Selection;
   /** The employee already created; the step then shows their saved values and saves a change to the same card. */
   outcome?: Outcome;
   onSaved: (outcome: Outcome) => void;
@@ -129,7 +177,7 @@ interface EmployeeStepProps {
 }
 
 function EmployeeStep({
-  unitId,
+  selection,
   outcome,
   onSaved,
   onUnsavedChange,
@@ -139,6 +187,10 @@ function EmployeeStep({
   const [isDirty, setIsDirty] = useState(false);
   const save = useMutation({
     mutationFn: async (input: EmployeeInput) => {
+      const { position } = selection;
+      if (position?.id === input.positionId) {
+        await allowInUnit(position, input.orgUnitId);
+      }
       if (!outcome) {
         return unwrap(await api.POST("/api/v1/employees", { body: input }));
       }
@@ -154,8 +206,26 @@ function EmployeeStep({
         }),
       );
     },
-    onSettled: () => invalidateOrgStructure(queryClient),
+    onSettled: () =>
+      Promise.all([
+        invalidateOrgStructure(queryClient),
+        invalidatePositions(queryClient),
+      ]),
   });
+  async function allowInUnit(position: AddedPosition, orgUnitId: string) {
+    const allowed = await queryClient.fetchQuery({
+      ...unitPositionsQuery(orgUnitId),
+      staleTime: 0,
+    });
+    if (allowed.some((entry) => entry.positionId === position.id)) return;
+    unwrap(
+      await api.POST("/api/v1/org-units/{id}/positions", {
+        params: { path: { id: orgUnitId } },
+        body: { positionId: position.id },
+      }),
+    );
+    added.current = position;
+  }
   useEffect(
     () => onUnsavedChange(isDirty || save.isPending),
     [isDirty, save.isPending, onUnsavedChange],
@@ -198,8 +268,13 @@ function EmployeeStep({
                 orgUnitId: employee.orgUnitId,
                 positionId: employee.positionId,
               }
-            : { orgUnitId: unitId }
+            : {
+                orgUnitId: selection.unitId,
+                positionId: selection.position?.id,
+              }
         }
+        preselectedPosition={selection.position}
+        hints={selectionHints(selection)}
         position={
           employee && { id: employee.positionId, name: employee.position }
         }

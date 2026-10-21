@@ -38,6 +38,18 @@ export function positionListQuery(params: PositionListParams) {
   });
 }
 
+/** One position by id, never kept once nothing shows it, so a change made from it starts from the current version. */
+export function positionQuery(id: string) {
+  return queryOptions({
+    queryKey: [...positionsQueryKey, "detail", id],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/positions/{id}", { params: { path: { id } } }),
+      ),
+    gcTime: 0,
+  });
+}
+
 /** The positions of a unit's own list and of the lists of the units above it, ordered by name. */
 export function unitPositionsQuery(orgUnitId: string) {
   return queryOptions({

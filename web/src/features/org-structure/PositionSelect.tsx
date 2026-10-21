@@ -34,6 +34,8 @@ interface PositionSelectProps {
   orgUnitId?: string;
   /** The position the employee holds now, listed by name even when it is no longer allowed or active, so an unrelated edit keeps it; the caller passes it only while the unit is unchanged. */
   current?: { id: string; name: string };
+  /** A position chosen before the form was opened, offered under any unit and never cleared by the unit's list. */
+  preselected?: { id: string; name: string };
   /** Told when the form adds a position to the unit's list, so a scenario can report it. */
   onAdded?: (position: { id: string; name: string }) => void;
 }
@@ -57,6 +59,7 @@ export function PositionSelect({
   onChange,
   orgUnitId,
   current,
+  preselected,
   onAdded,
 }: PositionSelectProps) {
   const queryClient = useQueryClient();
@@ -97,6 +100,7 @@ export function PositionSelect({
   }
   for (const extra of [
     current && { value: current.id, label: current.name },
+    preselected && { value: preselected.id, label: preselected.name },
     added?.orgUnitId === orgUnitId && added,
   ]) {
     if (extra && !options.has(extra.value)) options.set(extra.value, extra);
