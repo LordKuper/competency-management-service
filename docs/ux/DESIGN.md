@@ -922,6 +922,7 @@ Tags are labels, not buttons. The text of a tag always names the state in words.
 |---|---|---|---|
 | Modal (`modal`, `scrim`) | `Modal` | default / confirm / danger confirm | title `heading-2`, 24px padding; scrim is `overlay-scrim` |
 | Confirm dialog (destructive) | `Modal.confirm` via `App.useApp()` | danger | title states the action and object, body states the consequence and whether it can be undone, primary button is `button-danger` with a verb label, the safe action is `button-default` (Cancel) |
+| Leave-confirmation dialog (`modal`, `scrim`) | `Modal.confirm` via `App.useApp()` plus a router blocker | one dialog for the whole app, no variants | the only reaction to unsaved edits when the user leaves a screen or closes a modal that holds a changed form; a link, menu item, breadcrumb or step is never disabled for this reason. Title asks the question, body says the unsaved edits will be lost and how to keep them. "Stay" is the safe action: `button-primary`, initial focus, and what Esc, scrim click and close do. "Leave without saving" is `button-default`, not `button-danger`, because nothing is deleted from the system. Shown only when the form differs from its saved state. Closing or reloading the browser tab uses the browser's own warning, no custom UI. Copy and layout: desk.html (general states, 2) |
 | Drawer (`drawer`, `scrim`) | `Drawer` | right-side, 480px to 720px wide | record details, filters, evidence preview; title `heading-3` |
 | Dropdown item (`dropdown-item`, `-hover`, `-selected`) | `Dropdown`, `Select` popup, `DatePicker` popup | default / hover / selected / disabled | 14.6:1 and 12.9:1; selected also shows a check icon; popup uses `elevation-popup` |
 | Tooltip (`tooltip`) | `Tooltip` | hover | 17.9:1; short text only; never the only carrier of a label or disabled reason; antd `colorBgSpotlight` = `surface-inverse` (default is a translucent black) |
@@ -980,6 +981,7 @@ Each rule restates a decision made in the sections above; none is new.
 - Don't use weights 500 or 600, italics, uppercase transforms or letter-spacing on Cyrillic labels, or `compactAlgorithm`.
 - Don't rely on color alone, on a tooltip alone, or on a shadow alone to carry meaning or a boundary.
 - Don't show a disabled control without a reason, and don't remove the focus ring without an equal replacement.
+- Don't block navigation because of unsaved edits (no disabled link, menu item, breadcrumb or step with a hint); ask once with the leave-confirmation dialog.
 - Don't add shadows to static panels, tables or cards, and don't raise cards on hover.
 - Don't animate data (matrix cells, ratings, rankings), use transitions longer than 300ms, bounce easing, click ripple or looping decoration; honor `prefers-reduced-motion`.
 - Don't recolor a rating chip to show the target-level comparison; use a status tag or icon beside it.
