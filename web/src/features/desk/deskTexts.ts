@@ -27,6 +27,12 @@ export const deskPaths = {
   connectUnit: "/desk/connect-unit",
   connectUnitOf: (unitId: string) => `/desk/connect-unit/${unitId}`,
   onboardEmployee: "/desk/onboard-employee",
+  onboardEmployeeWith: (selection: { unitId?: string; positionId?: string }) =>
+    `/desk/onboard-employee?${new URLSearchParams(
+      Object.entries(selection).filter(
+        (entry): entry is [string, string] => entry[1] !== undefined,
+      ),
+    )}`,
   myPlace: "/desk/my-place",
   trackPositions: "/desk/track-positions",
   trackPositionsOf: (trackId: string) => `/desk/track-positions/${trackId}`,

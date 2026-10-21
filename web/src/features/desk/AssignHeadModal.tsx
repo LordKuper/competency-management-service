@@ -98,7 +98,7 @@ export function AssignHeadModal({ unitId, onClose }: AssignHeadModalProps) {
             <Typography.Paragraph type="secondary">
               Если сотрудников нет, сначала{" "}
               <Link
-                to={`${deskPaths.onboardEmployee}?${new URLSearchParams({ unitId: unit.id })}`}
+                to={deskPaths.onboardEmployeeWith({ unitId: unit.id })}
                 state={returnState({
                   to: deskPaths.connectUnitOf(unit.id),
                   crumb: "Подключить подразделение",

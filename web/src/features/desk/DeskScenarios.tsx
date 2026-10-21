@@ -105,7 +105,9 @@ const SCENARIOS: Scenario[] = [
     isFor: (roles) => roles.isAdmin,
     path: deskPaths.connectUnit,
     groups: ["UnitsToConnect"],
-    holds: (prerequisites) => prerequisites.includes("ActiveUnit"),
+    holds: (prerequisites) =>
+      prerequisites.includes("ActiveUnit") &&
+      prerequisites.includes("WorkingEmployee"),
   },
   {
     key: "onboard",
