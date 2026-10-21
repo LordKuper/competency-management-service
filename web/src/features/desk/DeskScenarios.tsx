@@ -9,11 +9,14 @@ import {
 } from "./deskApi";
 import { deskPaths, itemAction } from "./deskTexts";
 
-/** The roles the scenario cards follow; process roles come from the units the user heads or answers for as HR. */
+/** The roles the scenario cards follow; the head role comes from the units the user heads, the others from the account roles. */
 export interface SessionRoles {
   isAdmin: boolean;
   isHead: boolean;
+  /** Has the HR role. */
   isHr: boolean;
+  /** Answers for some unit as its assigned HR. */
+  isUnitHr: boolean;
   /** Bound to an employee card. */
   isBound: boolean;
 }
@@ -55,6 +58,15 @@ const SCENARIOS: Scenario[] = [
     holds: (prerequisites) => !prerequisites.includes("ActivePosition"),
   },
   {
+    key: "assign-hr",
+    title: "Назначить HR",
+    description:
+      "Ни у одной действующей учётной записи нет роли «HR»: отметьте её в разделе «Пользователи», чтобы закреплять ответственных HR за подразделениями.",
+    isFor: (roles) => roles.isAdmin,
+    path: deskPaths.users,
+    holds: (prerequisites) => !prerequisites.includes("HrAccount"),
+  },
+  {
     key: "my-place",
     title: "Моё место в компании",
     description:
@@ -84,7 +96,7 @@ const SCENARIOS: Scenario[] = [
     title: "Согласовать версию",
     description:
       "Что изменилось, полна ли версия и что опубликуется вместе с ней.",
-    isFor: (roles) => roles.isHead || roles.isHr,
+    isFor: (roles) => roles.isHead || roles.isUnitHr,
     groups: ["VersionsToApprove"],
   },
   {
@@ -124,7 +136,7 @@ const SCENARIOS: Scenario[] = [
     key: "link",
     title: "Связать должности с треком",
     description: "Какие должности относятся к каким уровням трека.",
-    isFor: (roles) => roles.isHead || roles.isHr || roles.isAdmin,
+    isFor: (roles) => roles.isHead || roles.isUnitHr || roles.isAdmin,
     path: deskPaths.trackPositions,
     groups: ["PositionsToLink"],
     holds: (prerequisites) =>

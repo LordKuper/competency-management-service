@@ -9,7 +9,7 @@ import {
 } from "antd";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { contentMaxWidth } from "../../app/theme";
-import { useCurrentUser } from "../auth/useCurrentUser";
+import { useCurrentUser, useIsAdmin, useIsHr } from "../auth/useCurrentUser";
 import { useProcessRoles } from "../career/careerApi";
 import { ActionGroup, DeskPanel, ReferenceGroup } from "./DeskGroups";
 import { DeskScenarios, type SessionRoles } from "./DeskScenarios";
@@ -23,12 +23,15 @@ import { useResendInvitation } from "./useResendInvitation";
 export function DeskPage() {
   const { token } = antdTheme.useToken();
   const { data: user } = useCurrentUser();
+  const isAdmin = useIsAdmin();
+  const isHr = useIsHr();
   const processRoles = useProcessRoles();
   const desk = useDesk();
   const roles: SessionRoles = {
-    isAdmin: user?.role === "GlobalAdmin",
+    isAdmin,
     isHead: (processRoles.data?.headedUnits.length ?? 0) > 0,
-    isHr: (processRoles.data?.hrUnits.length ?? 0) > 0,
+    isHr,
+    isUnitHr: (processRoles.data?.hrUnits.length ?? 0) > 0,
     isBound: user?.employeeId != null,
   };
   return (
@@ -120,7 +123,8 @@ function ExpectedActions({
 
 function AllDone({ roles }: { roles: SessionRoles }) {
   const { token } = antdTheme.useToken();
-  const hasProcessRole = roles.isAdmin || roles.isHead || roles.isHr;
+  const hasProcessRole =
+    roles.isAdmin || roles.isHead || roles.isHr || roles.isUnitHr;
   return (
     <DeskPanel>
       <Empty

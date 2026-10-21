@@ -10,6 +10,7 @@ import { AccountModal } from "./AccountModal";
 import { AssignHeadModal } from "./AssignHeadModal";
 import { type UnitSetup, unitSetupQuery } from "./deskApi";
 import { deskPaths } from "./deskTexts";
+import { LinkButton } from "./LinkButton";
 import { CompactAlert, ContextLine } from "./ScenarioContext";
 import { LoadFailure, ScenarioPage } from "./ScenarioPage";
 import {
@@ -62,10 +63,22 @@ function missingText(rows: readonly Row[]): string {
   return `Нет ${names.length > 0 ? `${names.join(", ")} и ` : ""}${last}.`;
 }
 
+const NO_CANDIDATES_NOTE =
+  "некого закрепить: нужен работающий сотрудник с действующей учётной записью и ролью «HR». Выдайте роль в разделе «Пользователи», проверив привязку записи к сотруднику; пробел закроется после этого.";
+
+const HR_INACTIVE_CAUSES: Record<Account["state"], string> = {
+  None: "у него нет учётной записи",
+  Invited: "его учётная запись не приняла приглашение",
+  Blocked: "его учётная запись заблокирована",
+  NoHrRole: "у его учётной записи нет роли «HR»",
+  Active: "его учётная запись не может действовать",
+};
+
 const ACCOUNT_STATES: Record<Account["state"], string> = {
   None: "нет учётной записи",
   Invited: "Приглашена: пароль не задан, вход невозможен",
   Blocked: "Заблокирована: вход невозможен",
+  NoHrRole: "Нет роли «HR»: закрепление не действует",
   Active: "Действует",
 };
 
@@ -179,12 +192,22 @@ function SetupRows({ unitId, data, resend }: SetupRowsProps) {
         </Button>
       );
     }
+    if (account.state === "NoHrRole") {
+      return <LinkButton to={deskPaths.users}>Пользователи</LinkButton>;
+    }
     return null;
   }
 
   function describeHr(row: Row): RowContent {
-    const { hr, hrAccount } = data;
+    const { hr } = data;
     if (!hr) {
+      if (row.reason === "NoHrCandidates") {
+        return {
+          value: "Не назначен",
+          note: NO_CANDIDATES_NOTE,
+          action: <LinkButton to={deskPaths.users}>Пользователи</LinkButton>,
+        };
+      }
       return {
         value: "Не назначен: ни своего, ни унаследованного закрепления",
         action: open("hr", "Закрепить HR"),
@@ -194,10 +217,7 @@ function SetupRows({ unitId, data, resend }: SetupRowsProps) {
       hr.orgUnitId === unitId ? "свой" : `унаследован из «${hr.orgUnitName}»`;
     const value = `${hr.name} (${place})`;
     if (row.status === "Ready") return { value };
-    const why =
-      hrAccount?.state === "Invited"
-        ? "его учётная запись не приняла приглашение"
-        : "его учётная запись заблокирована";
+    const why = HR_INACTIVE_CAUSES[hr.account?.state ?? "None"];
     return {
       value: `Закреплён: ${value}, но ${why} и действовать не может, поэтому ответственного HR нет`,
       action: open("hr", "Закрепить другого HR"),
@@ -235,7 +255,7 @@ function SetupRows({ unitId, data, resend }: SetupRowsProps) {
       case "HeadAccount":
       case "HrAccount": {
         const account =
-          row.row === "HeadAccount" ? data.headAccount : data.hrAccount;
+          row.row === "HeadAccount" ? data.headAccount : data.hr?.account;
         return {
           value: account?.email
             ? `${account.email} — ${ACCOUNT_STATES[account.state]}`

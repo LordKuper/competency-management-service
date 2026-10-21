@@ -39,6 +39,7 @@ export const deskPaths = {
   catalogCleanup: "/desk/catalog-cleanup",
   orgCleanup: "/desk/org-cleanup",
   positions: "/positions",
+  users: "/users",
 } as const;
 
 /** Titles of the matrix builder steps, in order. */
@@ -446,7 +447,16 @@ function reasonOf(reason: DeskReason, item: DeskItem): ReasonLine[] {
         },
       ];
     case "AccountWithoutEmployee":
-      return [{ text: "Учётная запись не привязана к сотруднику" }];
+      return [
+        { text: "Учётная запись не привязана к сотруднику" },
+        ...(details.hasHrRole
+          ? [
+              {
+                text: "Без карточки сотрудника её нельзя закрепить ответственным HR: в списке кандидатов её нет",
+              },
+            ]
+          : []),
+      ];
     case "InvitationNotAccepted":
       return [
         {
@@ -536,6 +546,8 @@ function assignedHrState(details: NonNullable<DeskReason["details"]>): string {
       return ": закреплённая учётная запись заблокирована";
     case "Invited":
       return ": закреплённая учётная запись не приняла приглашение";
+    case "NoHrRole":
+      return ": у закреплённой учётной записи нет роли «HR»";
     case "None":
       return ": закреплённая учётная запись не может действовать";
     default:
