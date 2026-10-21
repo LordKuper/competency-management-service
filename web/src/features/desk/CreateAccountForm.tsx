@@ -52,7 +52,7 @@ export function CreateAccountForm({
       )}
       <UserForm
         isNew
-        lockedTo={{ role: "User", employeeId }}
+        lockedTo={{ employeeId }}
         submitLabel={submitLabel}
         cancelLabel={cancelLabel}
         onSubmit={(input) => create.mutateAsync(input)}

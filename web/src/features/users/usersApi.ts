@@ -2,7 +2,7 @@ import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import type { components } from "../../api/schema";
 import { unwrap } from "../../api/unwrap";
-import type { UserRole } from "../../app/featureContract";
+import type { UserRoleFilter } from "./roles";
 
 /** An account as the administrator API returns it. */
 export type UserResponse = components["schemas"]["UserResponse"];
@@ -10,7 +10,7 @@ export type UserResponse = components["schemas"]["UserResponse"];
 /** Filters and paging of the account list; pages count from 1. */
 export interface UserListParams {
   q?: string;
-  role?: UserRole;
+  role?: UserRoleFilter;
   isBlocked?: boolean;
   isInvited?: boolean;
   page: number;

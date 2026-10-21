@@ -1,4 +1,4 @@
-import { Button, Flex, Form, Input, Select, Space } from "antd";
+import { Button, Checkbox, Flex, Form, Input, Space } from "antd";
 import type { ReactNode } from "react";
 import type { UserRole } from "../../app/featureContract";
 import { useLeaveGuard } from "../../app/leaveGuard";
@@ -9,13 +9,13 @@ import { ROLE_OPTIONS } from "./roles";
 /** What the account form submits. */
 export interface UserInput {
   email: string;
-  role: UserRole;
+  roles: UserRole[];
   employeeId: string | null;
 }
 
 interface UserFormValues {
   email: string;
-  role: UserRole;
+  roles: UserRole[];
   employeeId?: string;
 }
 
@@ -26,8 +26,10 @@ interface UserFormProps {
   employee?: { id: string; name: string };
   /** Whether the form creates an account, which is then invited by e-mail to set its own password. */
   isNew?: boolean;
-  /** Fixes the role and the employee, as when an account is created for a given employee: their fields are not shown. */
-  lockedTo?: { role: UserRole; employeeId: string };
+  /** Fixes the employee and leaves the account without special roles, as when an account is created for a given employee: their fields are not shown. */
+  lockedTo?: { employeeId: string };
+  /** The server refusal to show under the roles, which keeps the checkboxes as the administrator left them. */
+  rolesError?: string;
   submitLabel: string;
   cancelLabel?: string;
   /** Saves the input; a rejection is shown on the fields it names and by the caller. */
@@ -40,7 +42,10 @@ interface UserFormProps {
   scenarioActions?: { start?: ReactNode; end?: ReactNode };
 }
 
-const NEW_ACCOUNT_VALUES: UserFormValues = { email: "", role: "User" };
+const ROLES_HINT =
+  "Без отмеченных ролей учётная запись — обычный пользователь. Роль «HR» открывает просмотр оргструктуры, ведение справочника должностей и утверждение черновых записей справочников и позволяет закрепить привязанного сотрудника ответственным HR подразделения.";
+
+const NEW_ACCOUNT_VALUES: UserFormValues = { email: "", roles: [] };
 
 /**
  * Account fields shared by creation and editing. The employee is optional for either role; the server decides whether the binding is allowed.
@@ -50,6 +55,7 @@ export function UserForm({
   employee,
   isNew = false,
   lockedTo,
+  rolesError,
   submitLabel,
   cancelLabel = "Отмена",
   onSubmit,
@@ -62,7 +68,7 @@ export function UserForm({
   const { isSubmitting, submit } = useFormSubmit(form, (values) =>
     onSubmit(
       lockedTo
-        ? { email: values.email, ...lockedTo }
+        ? { email: values.email, roles: [], ...lockedTo }
         : { ...values, employeeId: values.employeeId ?? null },
     ),
   );
@@ -96,11 +102,13 @@ export function UserForm({
       {!lockedTo && (
         <>
           <Form.Item
-            name="role"
-            label="Роль"
-            rules={[{ required: true, message: "Выберите роль" }]}
+            name="roles"
+            label="Роли"
+            validateStatus={rolesError ? "error" : undefined}
+            help={rolesError}
+            extra={rolesError ? undefined : ROLES_HINT}
           >
-            <Select options={ROLE_OPTIONS} />
+            <Checkbox.Group options={ROLE_OPTIONS} />
           </Form.Item>
           <Form.Item name="employeeId" label="Сотрудник">
             <EmployeePicker current={employee} />

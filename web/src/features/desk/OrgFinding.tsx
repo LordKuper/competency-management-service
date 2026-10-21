@@ -198,7 +198,7 @@ function LinkAccount({ accountId }: { accountId: string }) {
             path: { id: account.id },
             header: { "If-Match": ifMatchOf(account.version) },
           },
-          body: { email: account.email, role: account.role, employeeId },
+          body: { email: account.email, roles: account.roles, employeeId },
         }),
       );
     },

@@ -14,6 +14,7 @@ import {
 import type { Dayjs } from "dayjs";
 import { useState } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { formatRecordedRoles } from "../users/roles";
 import {
   type AuditEventResponse,
   type AuditFilters,
@@ -76,7 +77,7 @@ const COLUMNS: TableColumnsType<AuditEventResponse> = [
     render: (timestamp: string) => TIMESTAMP_FORMAT.format(new Date(timestamp)),
   },
   { title: "Актор", dataIndex: "actor" },
-  { title: "Роль", dataIndex: "role" },
+  { title: "Роль", dataIndex: "role", render: formatRecordedRoles },
   { title: "Действие", dataIndex: "action" },
   { title: "Сущность", dataIndex: "entityType" },
   { title: "Идентификатор", dataIndex: "entityId" },
