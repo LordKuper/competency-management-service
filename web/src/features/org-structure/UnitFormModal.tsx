@@ -146,11 +146,7 @@ function UnitForm({
         <Input autoComplete="off" />
       </Form.Item>
       {!unit && (
-        <Form.Item
-          name="parentId"
-          label="Родительское подразделение"
-          extra="Оставьте поле пустым, чтобы создать корневое подразделение."
-        >
+        <Form.Item name="parentId" label="Родительское подразделение">
           <OrgUnitSelect
             allowClear
             isActiveRequired
