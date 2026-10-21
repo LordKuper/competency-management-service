@@ -9,4 +9,6 @@ Before you commit an architecture fold that runs in the same wave as UX or BA ta
 
 **Why:** while an architecture fold was being written, the orchestrator aligned the requirements and the UX (draft shared blocks became includable in versions). The UX also left a marker trigger to the architecture model. Committing from the first read would have missed both.
 
+Mid-task coordinator notes can also reverse a premise the task was written on: a single role became a set, and "the role grants no rights" became "the role grants catalogue rights". Leave the storage key and the rights model unwritten until BA commits the ACs, and draft the rest first. The BA wording decides which entity a relation belongs to. "Закрепление остаётся за сотрудником" moved `org_unit_hr` from the account id to the employee id.
+
 **How to apply:** run this check before every architecture commit in a mixed wave, and again after any "file modified on disk" notice on plan.md.
