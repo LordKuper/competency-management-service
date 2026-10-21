@@ -291,3 +291,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-21 — route Task 69: standard, dispatch HEAD 0fcbd18; risk none via web typecheck
 - 2026-10-21 — Task 69 COMPLETED (2bc392f, 900f3cc, cae6529): «Подключить подразделение» — ActiveUnit && WorkingEmployee; onboardEmployeeWith, предвыбор с проверкой; главные действия находок, «Восстановить должность», деактивация — default. Flagged приняты оркестратором; затронутые тесты (DeskScenarios, OrgFinding/OrgCleanup, OnboardEmployeePage) — в impl-test
 - 2026-10-21 — impl completion gate (после Task 65–69): dotnet 0/0, web lint/build/check:api чисто; diff в пределах областей; все задачи плана отмечены; stubs нет
+- 2026-10-21 — impl assessment (user): убрать примечание «Не требует вашего действия и не входит в счётчик» (группа «К сведению»); route Task 67 assessment-fix 1 (asd-ux), Task 69 assessment-fix 1 (asd-dev): standard, параллельно, dispatch HEAD e74b2bb; risk none via grep
+- 2026-10-21 — Task 67 assessment-fix 1 COMPLETED (1e2dde1), Task 69 assessment-fix 1 COMPLETED (baac0a1): без примечания «Не требует вашего действия и не входит в счётчик»; gate: web lint/build чисто
