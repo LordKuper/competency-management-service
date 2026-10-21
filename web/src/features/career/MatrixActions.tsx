@@ -8,6 +8,21 @@ const MAX_VISIBLE = 2;
 
 export const RETURN_LABEL = "Вернуть с правками";
 
+/** Actions on the saved version that unsaved edits hold back; the others are links to desk scenarios. */
+const HELD_ACTIONS: MatrixVersion["actions"] = [
+  "Return",
+  "AcceptAndRevise",
+  "RollbackChanges",
+];
+
+/** Whether the bar offers at least one action that unsaved edits hold back. */
+export const hasHeldActions = (
+  version: MatrixVersion,
+  isNextVersionOffered: boolean,
+) =>
+  isNextVersionOffered ||
+  version.actions.some((action) => HELD_ACTIONS.includes(action));
+
 /** An action of the version bar: a button, or a link to a desk scenario that looks like one. */
 export interface MatrixBarAction {
   key: string;

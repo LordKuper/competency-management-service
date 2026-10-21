@@ -17,7 +17,7 @@ import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { NO_LEAVE_EDITS, useLeaveGuard } from "../../app/leaveGuard";
 import { useProcessRoles } from "./careerApi";
-import { MatrixActions, RETURN_LABEL } from "./MatrixActions";
+import { hasHeldActions, MatrixActions, RETURN_LABEL } from "./MatrixActions";
 import { MatrixEditor } from "./MatrixEditor";
 import { MatrixErrorAlert } from "./MatrixErrorAlert";
 import { MatrixHistoryModal } from "./MatrixHistory";
@@ -246,9 +246,7 @@ export function MatrixPage() {
     isHead && !!matrix.publishedVersion && !matrix.inWorkVersion;
   const isBusy = transit.isPending || startVersion.isPending;
   const isHeldBack =
-    hasUnsaved &&
-    (isNextVersionOffered ||
-      version.actions.some((action) => action !== "Edit"));
+    hasUnsaved && hasHeldActions(version, isNextVersionOffered);
 
   return (
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>
