@@ -20,7 +20,7 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
     public static TheoryData<string> CatalogueOperations => new()
     {
         "direction-create", "direction-rename", "direction-approve", "direction-deactivate", "direction-delete", "scale-make-default", "level-order", "level-create",
-        "matrix-create", "matrix-submit", "matrix-delete", "matrix-version-create", "matrix-content-edit",
+        "level-position-link", "level-position-unlink", "matrix-create", "matrix-submit", "matrix-delete", "matrix-version-create", "matrix-content-edit",
     };
 
     [Theory]
@@ -478,6 +478,38 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
         }
     }
 
+    [Fact]
+    public async Task Ac98_TwoRemovalsOfTheLastTwoActivePositionsOfALevel_LeaveOneLinked_AndTheSecondLearnsWhy()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var admin = org.Admin;
+        var track = await admin.MakeTrackAsync(org.Team.Id, (await admin.MakeDirectionAsync()).Id);
+        var level = await admin.MakeLevelAsync(track.Id);
+        var other = await admin.MakeLevelAsync(track.Id);
+        var first = await admin.PositionAsync(org.Team.Id, Scenarios.Unique("Должность"));
+        var second = await admin.PositionAsync(org.Team.Id, Scenarios.Unique("Должность"));
+        var third = await admin.PositionAsync(org.Team.Id, Scenarios.Unique("Должность"));
+        level = (await admin.PostAsync($"/api/v1/career/levels/{level.Id}/positions", new { positionId = first }, level.ETag)).Expect(HttpStatusCode.OK);
+        level = (await admin.PostAsync($"/api/v1/career/levels/{level.Id}/positions", new { positionId = second }, level.ETag)).Expect(HttpStatusCode.OK);
+        (await admin.PostAsync($"/api/v1/career/levels/{other.Id}/positions", new { positionId = third }, other.ETag)).Expect(HttpStatusCode.OK);
+        var current = (await admin.GetAsync($"/api/v1/career/tracks/{track.Id}")).Expect(HttpStatusCode.OK);
+        var tag = (await admin.GetAsync($"/api/v1/career/tracks/{track.Id}/publication")).Expect(HttpStatusCode.OK).Json!["cascadeTag"]!.GetValue<string>();
+        (await admin.PostAsync($"/api/v1/career/tracks/{track.Id}/approve?cascade={Uri.EscapeDataString(tag)}", ifMatch: current.ETag)).Expect(HttpStatusCode.OK);
+
+        var approved = (await admin.GetAsync($"/api/v1/career/levels/{level.Id}")).Expect(HttpStatusCode.OK);
+
+        await using var exclusive = await RowLock.HoldAdvisoryAsync(fixture.Host, RowLock.CatalogueKey);
+        var removeFirst = await RowLock.StartWaitingAsync(fixture.Host, 1, () => admin.DeleteAsync($"/api/v1/career/levels/{level.Id}/positions/{first}", approved.ETag));
+        var removeSecond = await RowLock.StartWaitingAsync(fixture.Host, 2, () => admin.DeleteAsync($"/api/v1/career/levels/{level.Id}/positions/{second}", approved.ETag));
+        await exclusive.ReleaseAsync();
+        var answers = await Task.WhenAll(removeFirst, removeSecond);
+
+        answers.Select(answer => answer.Status).Order().Should().Equal(HttpStatusCode.OK, HttpStatusCode.Conflict);
+        answers.Single(answer => answer.Status == HttpStatusCode.Conflict).Json!["blockers"]!.AsArray()
+            .Select(blocker => blocker!["reason"]!.GetValue<string>()).Should().Equal("NoActivePosition");
+        (await fixture.Host.ScalarAsync<long>($"SELECT count(*) FROM career_level_positions WHERE level_id = '{level.Id}'")).Should().Be(1);
+    }
+
     private async Task<Func<Task<ApiResponse>>> PrepareAsync(string operation, CareerOrg org) => (await PrepareWithMatrixAsync(operation, org)).Send;
 
     private async Task<(Func<Task<ApiResponse>> Send, Guid MatrixId)> PrepareWithMatrixAsync(string operation, CareerOrg org)
@@ -579,6 +611,23 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
                 var direction = await admin.MakeDirectionAsync();
                 var track = await admin.MakeTrackAsync(org.Team.Id, direction.Id);
                 return () => admin.PostAsync("/api/v1/career/levels", new { name = Scenarios.Unique("Уровень"), trackId = track.Id });
+            }
+
+            case "level-position-link":
+            {
+                var direction = await admin.MakeDirectionAsync();
+                var level = await admin.MakeLevelAsync((await admin.MakeTrackAsync(org.Team.Id, direction.Id)).Id);
+                var positionId = await admin.PositionAsync(org.Team.Id, Scenarios.Unique("Должность"));
+                return () => admin.PostAsync($"/api/v1/career/levels/{level.Id}/positions", new { positionId }, level.ETag);
+            }
+
+            case "level-position-unlink":
+            {
+                var direction = await admin.MakeDirectionAsync();
+                var level = await admin.MakeLevelAsync((await admin.MakeTrackAsync(org.Team.Id, direction.Id)).Id);
+                var positionId = await admin.PositionAsync(org.Team.Id, Scenarios.Unique("Должность"));
+                var linked = (await admin.PostAsync($"/api/v1/career/levels/{level.Id}/positions", new { positionId }, level.ETag)).Expect(HttpStatusCode.OK);
+                return () => admin.DeleteAsync($"/api/v1/career/levels/{level.Id}/positions/{positionId}", linked.ETag);
             }
         }
 

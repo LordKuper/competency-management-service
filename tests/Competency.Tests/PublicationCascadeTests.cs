@@ -1,0 +1,188 @@
+using System.Net;
+using System.Text.Json.Nodes;
+using AwesomeAssertions;
+using Competency.Tests.Infrastructure;
+using Xunit;
+
+namespace Competency.Tests;
+
+/// <summary>
+/// The one rule of making career entries active: an approval publishes every draft the entry refers to or nothing at all, shows the list
+/// first and takes the tag of the list the user confirmed, journals each entry on its own, and keeps what a keeper writes from referring to
+/// a draft that is not published.
+/// </summary>
+public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<CareerHost>
+{
+    private const string DraftReference = "Выбрана черновая запись — сначала утвердите её";
+
+    [Fact]
+    public async Task Ac107_Ac110_Ac113_Ac114_ApprovingACompetency_PublishesTheDraftsItReferstoOnTheTagOfTheListShown_EachJournaledOnItsOwn()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var (direction, scale, competency) = await DraftCompetencyAsync(org);
+        var path = $"/api/v1/career/competencies/{competency.Id}";
+
+        var preview = (await org.Hr.Client.GetAsync($"{path}/publication")).Expect(HttpStatusCode.OK).Json!;
+        var withoutTag = await org.Hr.Client.PostAsync($"{path}/approve", ifMatch: competency.ETag);
+        var wrongTag = await org.Hr.Client.PostAsync($"{path}/approve?cascade=0000", ifMatch: competency.ETag);
+        var renamed = (await org.TeamHead.Client.PutAsync($"/api/v1/career/directions/{direction.Id}", new { name = Scenarios.Unique("Правка") }, direction.ETag)).Expect(HttpStatusCode.OK);
+        var changedPreview = (await org.Hr.Client.GetAsync($"{path}/publication")).Expect(HttpStatusCode.OK).Json!;
+        var staleTag = await org.Hr.Client.PostAsync($"{path}/approve?cascade={Uri.EscapeDataString(preview["cascadeTag"]!.GetValue<string>())}", ifMatch: competency.ETag);
+        var approved = (await org.Hr.Client.PostAsync(
+            $"{path}/approve?cascade={Uri.EscapeDataString(changedPreview["cascadeTag"]!.GetValue<string>())}",
+            ifMatch: competency.ETag)).Expect(HttpStatusCode.OK);
+
+        Entries(preview).Should().BeEquivalentTo([("Direction", direction.Id), ("Scale", scale.Id)]);
+        preview["blockers"]!.AsArray().Should().BeEmpty();
+        preview["moreCount"]!.GetValue<int>().Should().Be(0);
+        foreach (var refused in new[] { withoutTag, wrongTag, staleTag })
+        {
+            refused.Status.Should().Be(HttpStatusCode.PreconditionFailed);
+            refused.Json!["publication"]!.GetValue<string>().Should().Be($"{path}/publication");
+        }
+
+        changedPreview["cascadeTag"]!.GetValue<string>().Should().NotBe(preview["cascadeTag"]!.GetValue<string>(), "the list changed with the direction's version");
+        renamed.Json!["status"]!.GetValue<string>().Should().Be("Draft");
+        approved.Json!["status"]!.GetValue<string>().Should().Be("Active");
+        (await StatusAsync(org.Admin, "directions", direction.Id)).Should().Be("Active");
+        (await StatusAsync(org.Admin, "scales", scale.Id)).Should().Be("Active");
+        var journal = await org.Admin.AuditOfRequestAsync(approved.RequestId!);
+        journal.Where(row => row!["action"]!.GetValue<string>().EndsWith(".Approved", StringComparison.Ordinal))
+            .Select(row => row!["action"]!.GetValue<string>()).Should().BeEquivalentTo(["CareerCompetency.Approved", "CareerDirection.Approved", "CompetencyScale.Approved"]);
+        journal.Single(row => row!["action"]!.GetValue<string>() == "CareerCompetency.Approved")!["reason"].Should().BeNull();
+        journal.Single(row => row!["action"]!.GetValue<string>() == "CareerDirection.Approved")!["reason"]!.GetValue<string>().Should().Contain(competency.Id.ToString());
+    }
+
+    [Fact]
+    public async Task Ac109_Ac113_APublicationThatSomethingStopsLeavesEveryDraftAsItWas_AndThenGoesThroughOnceNothingIsInTheWay()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var head = org.TeamHead.Client;
+        var direction = (await head.PostAsync("/api/v1/career/directions", new { name = Scenarios.Unique("Область") })).Expect(HttpStatusCode.Created);
+        var track = (await head.PostAsync("/api/v1/career/tracks", new { name = Scenarios.Unique("Трек"), ownerOrgUnitId = org.Team.Id, directionId = direction.Id })).Expect(HttpStatusCode.Created);
+        var level = await head.MakeLevelAsync(track.Id);
+        var path = $"/api/v1/career/tracks/{track.Id}";
+
+        var refused = await org.Hr.Client.PostAsync($"{path}/approve", ifMatch: track.ETag);
+        var linked = await org.Admin.LinkToNewPositionAsync(level, org.Team.Id);
+        var preview = (await org.Hr.Client.GetAsync($"{path}/publication")).Expect(HttpStatusCode.OK).Json!;
+        var approved = (await org.Hr.Client.PostAsync(
+            $"{path}/approve?cascade={Uri.EscapeDataString(preview["cascadeTag"]!.GetValue<string>())}",
+            ifMatch: (await org.Admin.GetAsync(path)).ETag)).Expect(HttpStatusCode.OK);
+
+        refused.Status.Should().Be(HttpStatusCode.Conflict);
+        refused.Json!["blockers"]!.AsArray().Select(blocker => $"{blocker!["kind"]}/{blocker["reason"]}").Should().Equal("Level/NoActivePosition");
+        (await org.Admin.AuditOfRequestAsync(refused.RequestId!)).Should().BeEmpty();
+        Entries(preview).Should().BeEquivalentTo([("Direction", direction.Id), ("Level", level.Id)]);
+        approved.Json!["status"]!.GetValue<string>().Should().Be("Active");
+        (await StatusAsync(org.Admin, "directions", direction.Id)).Should().Be("Active");
+        (await StatusAsync(org.Admin, "levels", level.Id)).Should().Be("Active");
+        (await org.Admin.AuditOfRequestAsync(approved.RequestId!)).Actions().Where(action => action.EndsWith(".Approved", StringComparison.Ordinal))
+            .Should().BeEquivalentTo(["CareerTrack.Approved", "CareerDirection.Approved", "CareerLevel.Approved"]);
+        linked.Json!["id"]!.GetValue<Guid>().Should().Be(level.Id);
+    }
+
+    [Fact]
+    public async Task Ac109_AnApprovalAndItsPreview_AreAKeepersAlone_AndADraftIsInvisibleToAUserOutsideItsUnit()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var (_, _, competency) = await DraftCompetencyAsync(org);
+        var path = $"/api/v1/career/competencies/{competency.Id}";
+
+        var byHead = await org.TeamHead.Client.PostAsync($"{path}/approve", ifMatch: competency.ETag);
+        var headPreview = await org.TeamHead.Client.GetAsync($"{path}/publication");
+        var plainPreview = await org.Plain.Client.GetAsync($"{path}/publication");
+        var plainApproval = await org.Plain.Client.PostAsync($"{path}/approve", ifMatch: competency.ETag);
+
+        byHead.Status.Should().Be(HttpStatusCode.Forbidden);
+        headPreview.Status.Should().Be(HttpStatusCode.Forbidden, "only whoever may approve is shown what the approval would publish");
+        plainPreview.Status.Should().Be(HttpStatusCode.NotFound);
+        plainApproval.Status.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Ac106_Ac109_Ac110_PublishingAVersion_ListsItsDraftTrackAndLevelsAndCompetencies_AndOnlyTheResponsibleHrsStepPublishesThem()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var kit = await (await MatrixKit.CreateAsync(org, competencyAuthor: org.TeamHead.Client)).PrepareAsync();
+        (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
+        var path = $"/api/v1/career/matrix-versions/{kit.VersionId}";
+
+        var superior = (await org.DepartmentHead.Client.GetAsync($"{path}/publication")).Expect(HttpStatusCode.OK).Json!;
+        (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
+        var hr = (await org.Hr.Client.GetAsync($"{path}/publication")).Expect(HttpStatusCode.OK).Json!;
+        var withoutTag = await org.Hr.Client.PostAsync($"{path}/approve", ifMatch: await kit.ETagAsync());
+        var plain = await org.Plain.Client.GetAsync($"{path}/publication");
+        var published = (await org.Hr.Client.PostAsync(
+            $"{path}/approve?cascade={Uri.EscapeDataString(hr["cascadeTag"]!.GetValue<string>())}",
+            ifMatch: await kit.ETagAsync())).Expect(HttpStatusCode.OK);
+
+        var expected = new[] { ("Track", kit.Track.Id), ("Level", kit.Junior.Id), ("Level", kit.Senior.Id), ("Competency", kit.Critical.Id), ("Competency", kit.Profile.Id) };
+        Entries(superior).Should().BeEquivalentTo(expected);
+        Entries(hr).Should().BeEquivalentTo(expected);
+        superior["publishingActions"]!.AsArray().Should().BeEmpty("the superior's approval publishes nothing");
+        hr["publishingActions"]!.AsArray().Select(action => action!.GetValue<string>()).Should().Equal("Approve");
+        withoutTag.Status.Should().Be(HttpStatusCode.PreconditionFailed);
+        withoutTag.Json!["publication"]!.GetValue<string>().Should().Be($"{path}/publication");
+        plain.Status.Should().Be(HttpStatusCode.NotFound);
+        published.Json!["status"]!.GetValue<string>().Should().Be("Published");
+        (await StatusAsync(org.Admin, "tracks", kit.Track.Id)).Should().Be("Active");
+        (await StatusAsync(org.Admin, "competencies", kit.Critical.Id)).Should().Be("Active");
+        (await org.Admin.AuditOfRequestAsync(published.RequestId!)).Actions().Where(action => action.EndsWith(".Approved", StringComparison.Ordinal))
+            .Should().BeEquivalentTo(["MatrixVersion.Approved", "CareerTrack.Approved", "CareerLevel.Approved", "CareerLevel.Approved", "CareerCompetency.Approved", "CareerCompetency.Approved"]);
+    }
+
+    [Fact]
+    public async Task Ac115_AKeepersNewEntryThatRefersToADraft_IsCreatedAsADraft_AndOneThatRefersToNothingDraftIsActive()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var draftDirection = (await org.TeamHead.Client.PostAsync("/api/v1/career/directions", new { name = Scenarios.Unique("Область") })).Expect(HttpStatusCode.Created);
+        var keeper = await org.Admin.GrantHrRoleAsync(fixture.Host, org.TeamHead);
+
+        var referring = (await keeper.Client.PostAsync(
+            "/api/v1/career/competencies",
+            new { name = Scenarios.Unique("Ссылка"), description = (string?)null, directionId = (Guid?)draftDirection.Id, scaleId = (Guid?)null })).Expect(HttpStatusCode.Created);
+        var plain = await keeper.Client.MakeCompetencyAsync();
+
+        draftDirection.Json!["status"]!.GetValue<string>().Should().Be("Draft");
+        referring.Json!["status"]!.GetValue<string>().Should().Be("Draft");
+        plain.Json!["status"]!.GetValue<string>().Should().Be("Active");
+    }
+
+    [Fact]
+    public async Task Ac116_ChangingAnActiveEntryToReferToADraft_IsRefusedAsAFieldError_AndTheEntryStaysAsItWas()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var draftDirection = (await org.TeamHead.Client.PostAsync("/api/v1/career/directions", new { name = Scenarios.Unique("Область") })).Expect(HttpStatusCode.Created);
+        var competency = await org.Admin.MakeCompetencyAsync();
+
+        var refused = await org.Admin.PutAsync(
+            $"/api/v1/career/competencies/{competency.Id}",
+            new { name = competency.Json!["name"]!.GetValue<string>(), description = (string?)null, directionId = (Guid?)draftDirection.Id, scaleId = (Guid?)null },
+            competency.ETag);
+
+        refused.Status.Should().Be(HttpStatusCode.BadRequest);
+        refused.FieldErrors("directionId").Should().Equal(DraftReference);
+        var after = (await org.Admin.GetAsync($"/api/v1/career/competencies/{competency.Id}")).Expect(HttpStatusCode.OK);
+        after.ETag.Should().Be(competency.ETag);
+        after.Json!["directionId"].Should().BeNull();
+        after.Json["status"]!.GetValue<string>().Should().Be("Active");
+    }
+
+    private static (string Kind, Guid Id)[] Entries(JsonNode preview) =>
+        [.. preview["entries"]!.AsArray().Select(entry => (entry!["kind"]!.GetValue<string>(), entry["id"]!.GetValue<Guid>()))];
+
+    private static async Task<string> StatusAsync(ApiClient client, string segment, Guid id) =>
+        (await client.GetAsync($"/api/v1/career/{segment}/{id}")).Expect(HttpStatusCode.OK).Json!["status"]!.GetValue<string>();
+
+    private static async Task<(ApiResponse Direction, ApiResponse Scale, ApiResponse Competency)> DraftCompetencyAsync(CareerOrg org)
+    {
+        var head = org.TeamHead.Client;
+        var direction = (await head.PostAsync("/api/v1/career/directions", new { name = Scenarios.Unique("Область") })).Expect(HttpStatusCode.Created);
+        var scale = (await head.PostAsync("/api/v1/career/scales", new { name = Scenarios.Unique("Шкала"), points = CareerScenarios.Points() })).Expect(HttpStatusCode.Created);
+        var competency = (await head.PostAsync(
+            "/api/v1/career/competencies",
+            new { name = Scenarios.Unique("Компетенция"), description = (string?)null, directionId = (Guid?)direction.Id, scaleId = (Guid?)scale.Id })).Expect(HttpStatusCode.Created);
+        return (direction, scale, competency);
+    }
+}
