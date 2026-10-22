@@ -263,7 +263,10 @@ function LinkAccount({ accountId }: { accountId: string }) {
   );
 }
 
-// ponytail: the employee search returns one page of 200; a position held by more employees shows its first 200.
+/**
+ * An inactive position still held: restore it, or move its holders to other positions.
+ * ponytail: the employee search returns one page of 200; a position held by more employees shows its first 200.
+ */
 function InactivePosition({ item }: { item: DeskItem }) {
   const holders = useQuery(employeeSearchQuery(item.object.name));
   const rows = (holders.data?.items ?? []).filter(

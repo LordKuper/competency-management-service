@@ -170,7 +170,6 @@ export function useVersionTransition() {
     });
   }
 
-  /** Takes the decision, asking first where the screen has not shown what it does. */
   async function decide(decision: Decision) {
     setError(null);
     const { preview, publishing, plain } = decision;
