@@ -45,10 +45,29 @@ function manyItems(group: DeskGroup, count: number): DeskItem[] {
   );
 }
 
-function answerWith(desk: Desk, roles: string[] = []) {
-  fakeApi.on("GET /api/v1/auth/me", () => Response.json({ ...ACCOUNT, roles }));
+const UNIT = { id: "unit", name: "Отдел" };
+
+function answerWith(
+  desk: Desk,
+  roles: string[] = [],
+  session: {
+    headedUnits?: object[];
+    hrUnits?: object[];
+    employeeId?: string;
+  } = {},
+) {
+  fakeApi.on("GET /api/v1/auth/me", () =>
+    Response.json({
+      ...ACCOUNT,
+      roles,
+      employeeId: session.employeeId ?? null,
+    }),
+  );
   fakeApi.on("GET /api/v1/career/me", () =>
-    Response.json({ headedUnits: [], hrUnits: [] }),
+    Response.json({
+      headedUnits: session.headedUnits ?? [],
+      hrUnits: session.hrUnits ?? [],
+    }),
   );
   fakeApi.on("GET /api/v1/desk", () => Response.json(desk));
 }
@@ -68,10 +87,10 @@ beforeEach(() => {
 });
 
 describe("the desk page (AC-2…AC-9)", () => {
-  it("shows the groups of expected actions with their full counts, and the count of actions", async () => {
+  it("shows the groups of expected actions with their full counts, and the count of actions apart from them", async () => {
     answerWith(
       {
-        actionCount: 12,
+        actionCount: 15,
         prerequisites: [],
         groups: [
           {
@@ -79,6 +98,16 @@ describe("the desk page (AC-2…AC-9)", () => {
             isReference: false,
             total: 12,
             items: manyItems("UnitsToConnect", FIRST_ITEMS),
+          },
+          {
+            group: "Invitations",
+            isReference: false,
+            total: 3,
+            items: [
+              item("Invitations", "InvitationNotAccepted", "a@test.local", {
+                type: "UserAccount",
+              }),
+            ],
           },
         ],
       },
@@ -92,6 +121,18 @@ describe("the desk page (AC-2…AC-9)", () => {
     });
     expect(
       within(heading.parentElement as HTMLElement).getByText("12"),
+    ).toBeInTheDocument();
+    const invitations = screen.getByRole("heading", {
+      name: "Приглашения не приняты",
+    });
+    expect(
+      within(invitations.parentElement as HTMLElement).getByText("3"),
+    ).toBeInTheDocument();
+    const expected = screen.getByRole("heading", {
+      name: "Ожидают вашего действия",
+    });
+    expect(
+      within(expected.parentElement as HTMLElement).getByText("15"),
     ).toBeInTheDocument();
     expect(screen.getByText("Показано 10 из 12")).toBeInTheDocument();
     expect(
@@ -219,13 +260,10 @@ describe("the desk page (AC-2…AC-9)", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("reports a failed read of the desk with a way to retry, without hiding the scenarios of the user's roles", async () => {
-    fakeApi.on("GET /api/v1/auth/me", () =>
-      Response.json({ ...ACCOUNT, roles: ["GlobalAdmin"] }),
-    );
-    fakeApi.on("GET /api/v1/career/me", () =>
-      Response.json({ headedUnits: [], hrUnits: [] }),
-    );
+  it("reports a failed read of the desk with a way to retry, keeping the cards that need no desk and no neutral text", async () => {
+    answerWith({ actionCount: 0, prerequisites: [], groups: [] }, [], {
+      headedUnits: [UNIT],
+    });
     fakeApi.on("GET /api/v1/desk", () => problem(403));
     const user = userEvent.setup();
     renderDesk();
@@ -233,12 +271,220 @@ describe("the desk page (AC-2…AC-9)", () => {
     expect(
       await screen.findByText("Не удалось загрузить ожидаемые действия"),
     ).toBeInTheDocument();
+    expect(
+      await screen.findByRole("link", {
+        name: "Построить матрицу компетенций",
+      }),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Сейчас начать нечего")).not.toBeInTheDocument();
     fakeApi.on("GET /api/v1/desk", () =>
       Response.json({ actionCount: 0, prerequisites: [], groups: [] }),
     );
     await user.click(screen.getByRole("button", { name: /Повторить/ }));
     expect(await screen.findByText("Всё сделано")).toBeInTheDocument();
+  });
+});
+
+describe("the scenario cards follow the session roles (AC-204…AC-208)", () => {
+  const WAITING_VERSION: DeskItem = {
+    object: { type: "Matrix", id: "matrix", name: "Матрица" },
+    group: "VersionsToApprove",
+    isReference: false,
+    reasons: [{ kind: "VersionAwaitsHeadApproval" }],
+    target: { type: "MatrixVersion", id: "version", name: "Версия" },
+  };
+  const WAITING_DRAFT: DeskItem = {
+    object: { type: "Competency", id: "draft", name: "Черновик" },
+    group: "DraftsToApprove",
+    isReference: false,
+    reasons: [{ kind: "DraftAwaitsApproval" }],
+  };
+  const deskWith = (...waiting: DeskItem[]): Desk => ({
+    actionCount: waiting.length,
+    prerequisites: [],
+    groups: waiting.map((one) => ({
+      group: one.group,
+      isReference: false,
+      total: 1,
+      items: [one],
+    })),
+  });
+  const card = (name: string) => screen.findByRole("link", { name });
+  const expectNoCard = (name: string) =>
+    expect(screen.queryByRole("link", { name })).not.toBeInTheDocument();
+
+  it("gives a head of a unit the card to build a matrix", async () => {
+    answerWith(deskWith(WAITING_VERSION), [], { headedUnits: [UNIT] });
+
+    renderDesk();
+
+    expect(await card("Построить матрицу компетенций")).toBeInTheDocument();
+    expect(await card("Согласовать версию")).toBeInTheDocument();
+  });
+
+  it("gives an HR of a unit the review, and not the card to build a matrix that a head has", async () => {
+    answerWith(deskWith(WAITING_VERSION), [], { hrUnits: [UNIT] });
+
+    renderDesk();
+
+    expect(await card("Согласовать версию")).toBeInTheDocument();
+    expectNoCard("Построить матрицу компетенций");
+  });
+
+  it("gives an account bound to an employee the card of their place in the company", async () => {
+    answerWith(deskWith(), [], { employeeId: "employee" });
+
+    renderDesk();
+
+    expect(await card("Моё место в компании")).toBeInTheDocument();
+  });
+
+  it("gives the HR role the queue of drafts and none of the cards of an administrator", async () => {
+    answerWith(deskWith(WAITING_DRAFT), ["Hr"]);
+
+    renderDesk();
+
+    expect(await card("Утвердить черновые записи")).toBeInTheDocument();
+    expectNoCard("Принять сотрудника");
+    expectNoCard("Подключить подразделение");
+  });
+});
+
+describe("the columns of a group (AC-7, AC-8, AC-160)", () => {
+  const AGO = new Date(Date.now() - 5.5 * 24 * 3_600_000).toISOString();
+  const IN_TWO_DAYS = new Date(Date.now() + 2 * 24 * 3_600_000).toISOString();
+
+  function deskOf(...groups: Desk["groups"]): Desk {
+    return { actionCount: groups.length, prerequisites: [], groups };
+  }
+
+  function returnedItem(name: string, occurredAt?: string): DeskItem {
+    return {
+      object: { type: "Matrix", id: `id-${name}`, name },
+      group: "ReturnedVersions",
+      isReference: false,
+      reasons: [{ kind: "VersionReturned", occurredAt }],
+      target: { type: "MatrixVersion", id: "version", name },
+    };
+  }
+
+  const rowOf = (text: string) =>
+    screen.getByText(text).closest("tr")?.textContent ?? "";
+
+  it("shows how long ago it was in a dated group, only for the item that has a date", async () => {
+    answerWith(
+      deskOf({
+        group: "ReturnedVersions",
+        isReference: false,
+        total: 2,
+        items: [returnedItem("Датированная", AGO), returnedItem("Без даты")],
+      }),
+    );
+
+    renderDesk();
+
+    await screen.findByText(/Датированная/);
+    expect(
+      screen.getByRole("columnheader", { name: "Давность" }),
+    ).toBeInTheDocument();
+    expect(rowOf("Матрица «Датированная»")).toContain("назад");
+    expect(rowOf("Матрица «Без даты»")).not.toContain("назад");
+  });
+
+  it("shows no age in a group whose items are not dated events, even when the reason has a moment", async () => {
+    answerWith(
+      deskOf({
+        group: "UnitsToConnect",
+        isReference: false,
+        total: 1,
+        items: [
+          {
+            ...item("UnitsToConnect", "UnitWithoutHead", "Отдел"),
+            reasons: [{ kind: "UnitWithoutHead", occurredAt: AGO }],
+          },
+        ],
+      }),
+    );
+
+    renderDesk();
+
+    await screen.findByText(/Отдел/);
+    expect(
+      screen.queryByRole("columnheader", { name: "Давность" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/назад/)).not.toBeInTheDocument();
+  });
+
+  it("shows an invitation link that is about to end and one that has ended, in a column of their own", async () => {
+    const invited = (name: string, linkState: "ExpiringSoon" | "Expired") => ({
+      ...item("Invitations", "InvitationNotAccepted", name, {
+        type: "UserAccount" as const,
+      }),
+      reasons: [
+        {
+          kind: "InvitationNotAccepted" as const,
+          occurredAt: linkState === "Expired" ? AGO : IN_TWO_DAYS,
+          details: { linkState },
+        },
+      ],
+    });
+    answerWith(
+      deskOf({
+        group: "Invitations",
+        isReference: false,
+        total: 2,
+        items: [
+          invited("soon@test.local", "ExpiringSoon"),
+          invited("gone@test.local", "Expired"),
+        ],
+      }),
+    );
+
+    renderDesk();
+
+    await screen.findByText("soon@test.local");
+    expect(
+      screen.getByRole("columnheader", { name: "Срок ссылки" }),
+    ).toBeInTheDocument();
+    expect(rowOf("soon@test.local")).toContain("Скоро истечёт");
+    expect(rowOf("gone@test.local")).toContain("Истекла");
+    expect(rowOf("gone@test.local")).not.toContain("Скоро истечёт");
+  });
+
+  it("keeps the link to the scenario and the button to send the invitation again on an item with two reasons", async () => {
+    answerWith(
+      deskOf({
+        group: "UnitsToConnect",
+        isReference: false,
+        total: 1,
+        items: [
+          {
+            ...item("UnitsToConnect", "UnitWithoutHead", "Отдел"),
+            reasons: [
+              { kind: "UnitWithoutHead" },
+              {
+                kind: "InvitationNotAccepted",
+                details: { linkState: "Expired" },
+              },
+            ],
+            invitation: { accountId: "account-1", version: 2 },
+          },
+        ],
+      }),
+      ["GlobalAdmin"],
+    );
+
+    renderDesk();
+
+    const row = (await screen.findByText(/Отдел/)).closest("tr") as HTMLElement;
+    expect(
+      within(row).getByRole("link", { name: "Подключить" }),
+    ).toHaveAttribute("href", "/desk/connect-unit/id-Отдел");
+    expect(
+      within(row).getByRole("button", {
+        name: "Отправить приглашение повторно",
+      }),
+    ).toBeInTheDocument();
   });
 });
 

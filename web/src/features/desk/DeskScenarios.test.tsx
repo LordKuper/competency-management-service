@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
+import { paths as orgPaths } from "../org-structure/paths";
 import { DeskScenarios, type SessionRoles } from "./DeskScenarios";
 import type {
   Desk,
@@ -9,6 +10,7 @@ import type {
   DeskKind,
   DeskPrerequisite,
 } from "./deskApi";
+import { deskPaths } from "./deskTexts";
 
 const NO_ROLES: SessionRoles = {
   isAdmin: false,
@@ -86,6 +88,9 @@ function titlesShownFor(roles: SessionRoles, desk: Desk | undefined) {
     .queryAllByRole("heading", { level: 4 })
     .map((h) => h.textContent);
 }
+
+const hrefOf = (title: string) =>
+  screen.getByRole("link", { name: title }).getAttribute("href");
 
 describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
   it("shows an administrator the first-step cards for what the system lacks, and no scenario that needs it", () => {
@@ -205,6 +210,46 @@ describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
     );
 
     expect(titles).toEqual([MY_PLACE, BUILD]);
+  });
+
+  it("sends each first-step card to the screen that closes its gap (AC-204, AC-209, AC-210)", () => {
+    titlesShownFor({ ...NO_ROLES, isAdmin: true }, deskWith([]));
+
+    expect(hrefOf(FIRST_UNIT)).toBe(orgPaths.tree);
+    expect(hrefOf(FIRST_POSITION)).toBe(deskPaths.positions);
+    expect(hrefOf(ASSIGN_HR)).toBe(deskPaths.users);
+  });
+
+  it("sends each scenario card to its own screen, and the ones that work on a version to the first version waiting (AC-218)", () => {
+    titlesShownFor(
+      {
+        isAdmin: true,
+        isHead: true,
+        isHr: true,
+        isUnitHr: true,
+        isBound: true,
+      },
+      deskWith(ALL_PREREQUISITES, {
+        ReturnedVersions: 1,
+        VersionsToApprove: 1,
+        UnitsToConnect: 1,
+        PositionsToLink: 1,
+        DraftsToApprove: 1,
+        UnusedCatalogEntries: 1,
+        OrgCleanup: 1,
+      }),
+    );
+
+    expect(hrefOf(MY_PLACE)).toBe(deskPaths.myPlace);
+    expect(hrefOf(BUILD)).toBe(deskPaths.matrixBuilder);
+    expect(hrefOf(REWORK)).toBe(deskPaths.rework("version"));
+    expect(hrefOf(REVIEW)).toBe(deskPaths.review("version"));
+    expect(hrefOf(DRAFTS)).toBe(deskPaths.drafts);
+    expect(hrefOf(CONNECT)).toBe(deskPaths.connectUnit);
+    expect(hrefOf(ONBOARD)).toBe(deskPaths.onboardEmployee);
+    expect(hrefOf(LINK)).toBe(deskPaths.trackPositions);
+    expect(hrefOf(CATALOG)).toBe(deskPaths.catalogCleanup);
+    expect(hrefOf(ORG)).toBe(deskPaths.orgCleanup);
   });
 
   it("counts a queue as waiting in the queue and the rest as waiting for the user", () => {

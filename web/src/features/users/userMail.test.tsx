@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { deferred, fakeApi } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { UserListPage } from "./UserListPage";
 import type { UserResponse } from "./usersApi";
 
@@ -235,6 +235,28 @@ describe("row menu (AC-6, AC-9, AC-11)", () => {
     expect(
       screen.queryByText("Приглашение отправлено повторно"),
     ).not.toBeInTheDocument();
+  });
+
+  it("tells the administrator a refused send, rereads the list to show the account as it is, and sends once", async () => {
+    fakeApi.on(`POST /api/v1/users/${INVITED.id}/resend-invitation`, () =>
+      problem(412),
+    );
+    await openUsers();
+    const user = userEvent.setup();
+
+    await openMenuOf(user, INVITED);
+    await user.click(await screen.findByRole("menuitem", { name: RESEND }));
+
+    expect(
+      await screen.findByText(/Данные изменены другим пользователем/),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(fakeApi.calls("GET /api/v1/users")).toHaveLength(2),
+    );
+    expect(
+      fakeApi.calls(`POST /api/v1/users/${INVITED.id}/resend-invitation`),
+    ).toHaveLength(1);
+    expect(screen.queryByText(MAIL_NOT_SENT)).not.toBeInTheDocument();
   });
 });
 

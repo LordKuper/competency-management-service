@@ -64,19 +64,18 @@ describe("the desk counter in the menu (AC-16…AC-21)", () => {
   });
 
   it("shows nothing at zero", async () => {
-    answerCount(0);
+    let count = 3;
+    fakeApi.on(COUNT_ROUTE, () => Response.json({ actionCount: count }));
+    const router = renderAt();
+    expect(await screen.findByText("3")).toBeInTheDocument();
+    count = 0;
 
-    const { container } = render(
-      <Providers>
-        <RouterProvider
-          router={createMemoryRouter([{ path: "/", element: <DeskCounter /> }])}
-        />
-      </Providers>,
+    await act(() => router.navigate("/other"));
+
+    await waitFor(() =>
+      expect(screen.queryByText("3")).not.toBeInTheDocument(),
     );
-
-    await waitFor(() => expect(fakeApi.calls(COUNT_ROUTE)).toHaveLength(1));
-    await act(async () => undefined);
-    expect(container.textContent).toBe("");
+    expect(document.body.textContent).toBe("");
   });
 
   it("shows nothing before the first answer and after a failed read", async () => {
