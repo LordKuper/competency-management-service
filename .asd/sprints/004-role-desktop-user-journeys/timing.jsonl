@@ -455,3 +455,9 @@
 {"op":"open","id":"Task 76 hr-close-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:26:56.500Z","attrs":{}}
 {"op":"close","id":"Task 76 hr-close-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:26:56.500Z","end":"2026-10-22T09:27:51.104Z","outcome":"done","attrs":{}}
 {"op":"close","id":"Task 73 submit-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:26:56.438Z","end":"2026-10-22T09:28:10.138Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 14","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:28:53.886Z","attrs":{}}
+{"op":"close","id":"impl assessment 14","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:28:53.886Z","end":"2026-10-22T09:31:57.376Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 69 own-hr-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:31:57.527Z","attrs":{}}
+{"op":"open","id":"Task 67 own-hr-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:31:57.588Z","attrs":{}}
+{"op":"close","id":"Task 69 own-hr-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:31:57.527Z","end":"2026-10-22T09:32:32.885Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 67 own-hr-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:31:57.588Z","end":"2026-10-22T09:32:57.260Z","outcome":"done","attrs":{}}

@@ -1178,6 +1178,18 @@
       "tier": "standard",
       "reason": "owner asd-ux (docs/ux)",
       "resolved_model": "sonnet"
+    },
+    "Task 69 own-hr-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 67 own-hr-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
