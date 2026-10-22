@@ -1240,6 +1240,18 @@
       "tier": "critical",
       "reason": "risk:security",
       "resolved_model": "sonnet"
+    },
+    "test-fix D-1, D-2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -1298,9 +1310,9 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-22T13:49:59.363Z",
+  "updated_at": "2026-10-22T13:53:06.359Z",
   "review_fixes_pending": null,
-  "test_defects_pending": true,
+  "test_defects_pending": null,
   "pr": null,
   "archived_at": null
 }

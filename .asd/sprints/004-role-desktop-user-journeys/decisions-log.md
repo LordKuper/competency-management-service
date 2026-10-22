@@ -369,3 +369,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-22 — impl-test entry 1 memory-fix (16478d5): asd-dev-critical (position-matrix, contract-reset, position-catalogue — удалённые термины и файлы), asd-ux (ux-docs-conventions — подпись «Шаг n из N» снята AC-187); заметки asd-tester-critical о стенде
 - 2026-10-22 — impl-test entry 1 flagged (оркестратор): (1) отметка «Нет требований» в web/src/features/career/MatrixEditor.tsx (~353) противоречит AC-57 — не D-N (тест не падает), передаётся на impl-review как известный остаток; (2) эквивалентные мутанты T6, T6b, MP7, P2, HR4, ML3, W1/W2/W5 — принято, перепроверка за reviewer testing; (3) потолки покрытия (очередь писем, мастер SPA без e2e) записаны в test-plan.md — принято; (4) замер стола на seed-10k в бюджете (≤22 SQL из 25) — принято; (5) тема 3b63a1a 52 символа — принято без amend
 - 2026-10-22 — impl-test: defects D-1, D-2 → impl test-fix (digest 8fc6822194ff3c17de2fcc979100993507e98063d035044310222442d4d93113)
+- 2026-10-22 — route test-fix D-1, D-2: standard, dispatch HEAD 3aa12fb; risk none via failing test
+- 2026-10-22 — impl test-fix: defects D-1, D-2 resolved (2725176, 4483101); gate: build 0/0, web build и lint чисто
+- 2026-10-22 — route impl-test entry 2: standard, dispatch HEAD ca9c433; risk none via failing test
