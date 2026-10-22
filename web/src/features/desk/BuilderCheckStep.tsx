@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Flex, Typography } from "antd";
+import { useEffect } from "react";
 import { MatrixErrorAlert } from "../career/MatrixErrorAlert";
 import {
   invalidateMatrices,
@@ -27,6 +28,7 @@ export function BuilderCheckStep({
   onSaved,
   onSkip,
   onGoToStep,
+  onEditsChange,
 }: BuilderCheckStepProps) {
   const queryClient = useQueryClient();
   const completeness = useQuery({
@@ -47,6 +49,11 @@ export function BuilderCheckStep({
     },
     onSettled: () => invalidateMatrices(queryClient),
   });
+  const isSaving = goOn.isPending;
+  useEffect(
+    () => onEditsChange({ isUnsaved: false, isSaving }),
+    [isSaving, onEditsChange],
+  );
   const isEditable = version.actions.includes("Edit");
   const hasProblems = problems !== null && problems.length > 0;
 

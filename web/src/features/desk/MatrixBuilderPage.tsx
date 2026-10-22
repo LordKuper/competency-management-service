@@ -286,6 +286,12 @@ function StepBody({
     case 5:
       return <BuilderCheckStep {...stepProps} onGoToStep={onGoToStep} />;
     default:
-      return <BuilderSubmitStep version={version} onBack={stepProps.onBack} />;
+      return (
+        <BuilderSubmitStep
+          version={version}
+          onBack={stepProps.onBack}
+          onEditsChange={onEditsChange}
+        />
+      );
   }
 }

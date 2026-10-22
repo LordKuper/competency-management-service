@@ -1,7 +1,9 @@
 import { CheckCircleOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { App, Button, Flex, Skeleton, Typography } from "antd";
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
+import type { LeaveEdits } from "../../app/leaveGuard";
 import { trackQuery } from "../career/catalogApi";
 import {
   type MatrixVersion,
@@ -25,10 +27,16 @@ import { useVersionTransition } from "./useVersionTransition";
 interface BuilderSubmitStepProps {
   version: MatrixVersion;
   onBack: () => void;
+  /** Told whether the sending is in flight, so the wizard holds its steps until it ends. */
+  onEditsChange?: (edits: LeaveEdits) => void;
 }
 
 /** Step 6: the summary of the version and the route it takes, and the sending. */
-export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
+export function BuilderSubmitStep({
+  version,
+  onBack,
+  onEditsChange,
+}: BuilderSubmitStepProps) {
   const { message } = App.useApp();
   const navigate = useNavigate();
   const track = useQuery({
@@ -45,6 +53,11 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
     refetchOnMount: "always",
   });
   const transition = useVersionTransition();
+  const isSaving = transition.isPending;
+  useEffect(
+    () => onEditsChange?.({ isUnsaved: false, isSaving }),
+    [isSaving, onEditsChange],
+  );
   const problems = completeness.data?.problems ?? null;
   const preview = publication.data;
   const isPublishing = preview?.publishingActions.includes("Submit") === true;
