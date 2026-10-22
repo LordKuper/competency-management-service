@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { App, Button, Flex, Form } from "antd";
+import { useState } from "react";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
+import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import {
   type Employee,
@@ -28,6 +30,7 @@ export function ChangePositionForm({
   const { message } = App.useApp();
   const isBusy = useIsFindingBusy();
   const [form] = Form.useForm<{ positionId?: string }>();
+  const [isDirty, setIsDirty] = useState(false);
   const change = useMutation({
     mutationKey: ORG_FINDING_MUTATION,
     mutationFn: async (positionId: string) =>
@@ -46,10 +49,13 @@ export function ChangePositionForm({
           },
         }),
       ),
-    onSuccess: () =>
-      message.success(`Должность сотрудника ${employee.fullName} изменена`),
+    onSuccess: () => {
+      setIsDirty(false);
+      message.success(`Должность сотрудника ${employee.fullName} изменена`);
+    },
     onSettled: () => invalidateOrgStructure(queryClient),
   });
+  useLeaveGuard({ isUnsaved: isDirty, isSaving: change.isPending });
   const { submit } = useFormSubmit(form, async (values) => {
     if (values.positionId) await change.mutateAsync(values.positionId);
   });
@@ -66,6 +72,7 @@ export function ChangePositionForm({
         layout={isInline ? "inline" : "vertical"}
         disabled={isBusy}
         onFinish={submit}
+        onValuesChange={() => setIsDirty(form.isFieldsTouched())}
       >
         <Form.Item
           name="positionId"

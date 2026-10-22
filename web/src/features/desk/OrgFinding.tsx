@@ -10,12 +10,13 @@ import {
   Table,
   Typography,
 } from "antd";
-import type { ReactNode, RefObject } from "react";
+import { type ReactNode, type RefObject, useState } from "react";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import {
   type Employee,
@@ -187,6 +188,7 @@ function LinkAccount({ accountId }: { accountId: string }) {
   const isBusy = useIsFindingBusy();
   const user = useQuery(userQuery(accountId));
   const [form] = Form.useForm<{ employeeId?: string }>();
+  const [isDirty, setIsDirty] = useState(false);
   const link = useMutation({
     mutationKey: ORG_FINDING_MUTATION,
     mutationFn: async (employeeId: string) => {
@@ -202,13 +204,17 @@ function LinkAccount({ accountId }: { accountId: string }) {
         }),
       );
     },
-    onSuccess: () => message.success("Учётная запись привязана к сотруднику"),
+    onSuccess: () => {
+      setIsDirty(false);
+      message.success("Учётная запись привязана к сотруднику");
+    },
     onSettled: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: usersQueryKey }),
         invalidateOrgStructure(queryClient),
       ]),
   });
+  useLeaveGuard({ isUnsaved: isDirty, isSaving: link.isPending });
   const { submit } = useFormSubmit(form, async (values) => {
     if (values.employeeId) await link.mutateAsync(values.employeeId);
   });
@@ -234,6 +240,7 @@ function LinkAccount({ accountId }: { accountId: string }) {
         layout="vertical"
         disabled={isBusy}
         onFinish={submit}
+        onValuesChange={() => setIsDirty(form.isFieldsTouched())}
       >
         <Form.Item
           name="employeeId"

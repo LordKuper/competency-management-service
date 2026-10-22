@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Flex, Skeleton, Tag, Typography } from "antd";
 import { useState } from "react";
+import { useLeaveGuard } from "../../app/leaveGuard";
 import { type DeskGroup, type DeskItem, orgQueueQuery } from "./deskApi";
 import { reasonLines, typeLabelOf } from "./deskTexts";
 import { useIsFindingBusy } from "./findingBusy";
@@ -50,6 +51,7 @@ export function OrgCleanupPage() {
   const current = items.find((item) => keyOf(item) === selection.selectedKey);
   const headingRef = useRecordFocus(selection.selectedKey);
   const isBusy = useIsFindingBusy();
+  const { confirmLeave } = useLeaveGuard();
 
   return (
     <ScenarioPage title="Навести порядок в оргструктуре">
@@ -65,7 +67,7 @@ export function OrgCleanupPage() {
           total={list.data?.total ?? 0}
           getKey={keyOf}
           selectedKey={selection.selectedKey}
-          onSelect={selection.select}
+          onSelect={(key) => confirmLeave(() => selection.select(key))}
           renderItem={(item) => (
             <Flex vertical gap="var(--ant-margin-xxs)">
               <Flex align="center" gap="small" wrap>
@@ -81,7 +83,8 @@ export function OrgCleanupPage() {
           filter={{
             value: group,
             options: KIND_OPTIONS,
-            onChange: (value) => setGroup(value as DeskGroup | undefined),
+            onChange: (value) =>
+              confirmLeave(() => setGroup(value as DeskGroup | undefined)),
           }}
           onShowMore={showMore}
           moreCount={MORE_COUNT}
