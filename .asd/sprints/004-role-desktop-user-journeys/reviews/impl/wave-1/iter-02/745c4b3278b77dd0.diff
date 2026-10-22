@@ -1,0 +1,879 @@
+diff --git a/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-02.md b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-02.md
+new file mode 100644
+index 0000000..b83a0ab
+--- /dev/null
++++ b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-02.md
+@@ -0,0 +1,58 @@
++---
++responsibility:
++  owns: test approach for sprint change scope, removal reasons, no-test decisions, suite run result, code defects found by tests, manual-verification spec (single home — never duplicated in a review file)
++  excludes: task breakdown, requirements, review verdicts, code, change surface (derivable from the diff)
++  delegates_to: plan.md (tasks), persistent docs (requirements), reviews/impl/wave-<K>/iter-NN/testing.md (verdict)
++---
++
++# Test plan — sprint 004-role-desktop-user-journeys, entry 2 (rotated)
++
++Строки записи 2 вместе со строками тестировщика ревью-фикса (TST-1…TST-10), добавленными после неё: у них нет собственной строки в журнале записей, поэтому они ротируются с предыдущей записью.
++
++## Risk → check decisions
++
++| Change | Material risk | Chosen check | Decision | Reason |
++|---|---|---|---|---|
++| `usePublishEntry` вызывает `useNavigate()` (исправление D-2); хук подключён в модальных окнах и страницах стола | change: workflow — окно, показанное вне маршрутизатора, не должно падать; окно, показанное в нём, должно вести по ссылке | component | keep | существующий `usePublishEntry.test.tsx` закрепляет отказ в окне вне маршрутизатора и подпись ссылки; два теста без маршрутизатора (`ScaleModal`, `CompetencyModal`) исправлены как дефект теста (см. «Added tests») |
++| `InUseMessage` «Область используют…» (исправление D-1) | change: public contract — текст отказа | component/contract | keep | `CatalogDeletionTests.Ac25_…` закрепляет текст; зелёный |
++| Порядок проверок передачи на согласование: `If-Match` раньше полноты документа (AC-17, TST-1) | change: public contract — устаревшая версия отвечает 409 вместо 412 | contract | keep | тест `Ac17_AStaleVersion_IsRefusedWith412_BeforeTheHandOverCheckJudgesTheDocument` сохранял полный документ и не мог упасть по заявленному свойству; теперь документ неполный (как в `Ac15_Return_WithChangesThatLeaveTheVersionIncomplete`), мутация порядка убита |
++| Допустимость типа компетенции в документе версии (`MatrixContent.ValueProblem`, AC-55, TST-2) | change: public contract — число вне перечисления попало бы в jsonb | contract | add | два случая в `Ac14_Document_IsRefusedWhenItIsNotWellFormed`: `competencies[0].type = 999` и тип 999 внутри общего блока |
++| Поле «Примеры подтверждений» компетенции (`evidenceExamples`, AC-33 справочника, AC-56 плана, TST-3) | change: public contract — сохранение, возврат, история версий, «не передано — прежнее», «пусто — очистка», предел 4000 | contract | add | `Ac12_EvidenceExamples_AreKept_ReturnedAndWrittenToTheHistory_AbsentKeepsThemAndBlankClearsThem` и пары 4001/4000 в `Ac12_Competency_IsValidated` |
++| Приглашённая учётная запись с ролью HR не считается HR-учётной записью и кандидатом (`UserManagementDeskSource`, `UserDirectory.HasHrCandidateAsync`, TST-4) | change: security — предпосылка «есть HR» ложна, пока HR не принял приглашение | component/contract | add | шаг «в системе только приглашённый HR» в `Ac204_…` (нет `HrAccount`) и в `UnitSetupTests` (остаётся `NoHrCandidates`); мутанты `P2` и `HR4` из записи 1 не эквивалентны и пересчитаны как убитые |
++| Число SQL-команд `GET /desk` и `GET /desk/count` (Task 3, Task 9, TST-6) | change: perf — запрос на строку или лишний источник | integration | add | число команд — детерминированное свойство: хост пишет команды EF в журнал (`Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command=Information`), конец запроса отмечает строка `Request finished … - 200` с уникальным `probe`; число на малом и на большем наборе подразделений одинаково и не больше 25 (`DeskQueryCountTests`). Время запроса остаётся замером (решение `none` записи 1) |
++| Снятие роли HR при закреплении и закрепление при роли HR (AC-62, `custom-coding-rules.md` «Multi-row invariant locking», TST-5) | change: lock ordering — инвариант на нескольких строках | component + гонка | add | `Ac62_AnAssignmentRacingTheRemovalOfTheHrRole_IsDecidedByWhichRequestIsFirst`: тестовое соединение держит блокировку дерева, оба запроса ждут в обоих порядках |
++| Базовая шкала начальных данных (`InitialCreate`, AC-25 справочника, TST-7) | change: migration — потеря или порча сида при схлопывании миграций перед 1.0 | contract | add | `BaseScaleSeedTests` на отдельном хосте: пять точек с дословными текстами, шкала по умолчанию и действующая, в журнале нет строк по её идентификатору |
++| Перенос ролей в Identity и закрепление HR по сотруднику (Task 77/80, миграция `IdentityRolesAndHrByEmployee`, AC-63, TST-10) | change: authorization, migration — потеря роли или закрепления на существующей базе | component (миграция на реальной БД) | add | `IdentityRolesMigrationTests`: строки вставляются на предыдущей миграции, после перехода проверяются роли (в том числе администратор с закреплением получает обе), закрепление по сотруднику, отброшенное закрепление без сотрудника, отсутствие колонки `role`. Удаляется вместе с миграциями при схлопывании перед 1.0 |
++| Журнал смены ролей (`AccountRoles.SetRolesAsync`, Task 77/80, TST-10) | change: authorization — смена ролей должна оставлять ровно одну запись и сохраняться вместе с ней | component/contract | add | `Ac15_RoleChange_IsJournaledAsOneUpdateOfTheRoles_WithBothSetsInMemberOrder` и `Ac15_RoleChangeAndItsJournalRow_AreSavedTogetherOrNotAtAll` |
++| Тесты, удалённые в `impl` до записи 1 (TST-8) | нет поведения | — | none | перечень и причины — в «Removed tests» |
++
++Предыдущая запись рассматривалась по записи 1; её строки — в `test-plan.entry-01.md`. Для остальных вызывающих хук (`BlockModal`, `NameModal`, `DraftsSection`, `CatalogParts`, `BuilderSubmitStep`, `CascadeTable`, `CatalogCleanupPage`, `DecisionError`, `DraftsQueuePage`, `ReviewPage`, `ReworkPage`, `useVersionTransition`) новых тестов не нужно: их тесты уже рендерят под маршрутизатором и зелёные (`vitest run` 492 из 492).
++
++## Removed tests
++
++| Test | Reason | In change scope |
++|---|---|---|
++| `CareerMigrationTests` (класс, 203 строки) и помощник `Infrastructure/MigrationDatabase` | тесты переноса данных старых схем вместе с самими миграциями; до 1.0 перенос данных делает только последняя миграция, остальные схлопываются в `InitialCreate` (AC-58, AC-63); поведения больше нет. Удалены коммитом `29ac3bc` в `impl`, записи 1 это не отражено | да; замена — `BaseScaleSeedTests` (сид, TST-7) и `IdentityRolesMigrationTests` (перенос в Identity) |
++| `PositionMigrationTests` (класс, 121 строка) | перенос данных каталога должностей старых схем; поведения больше нет по той же причине (AC-58); коммит `29ac3bc` | да; замены нет |
++| `CatalogDeletionTests.Ac23_ACategory_IsDeletedUnlessCompetenciesOrTheirHistoryUseIt`, `Ac23_Categories_StartWithTheGeneralOnes_ReadableByEveryone` | категории компетенций упразднены (AC-51); поведения больше нет; коммит `29ac3bc` | да; замены нет |
++| `CompetencyTests.Ac12_Competency_RefusesANumberThatNamesNoType_OnCreationAndOnChange` | тип удалён из справочника компетенций, остался в документе версии (AC-55); коммит `29ac3bc` | да; замена — два случая в `MatrixCreationTests.Ac14_Document_IsRefusedWhenItIsNotWellFormed` (TST-2) |
++| `AuthorizationTests.Ac7_UserRole_IsLimitedToTheKnownValuesInTheDatabaseItself` | колонки `users.role` и её проверочного ограничения нет, роли — строки Identity (AC-62, AC-63); коммит `d94007b`; допустимость значений проверяет `HrRoleTests.Ac62_TheRolesOfAnAccount_AreASet_WithSeveralMembers_AndOnlyKnownRoles` | да; замена — этот тест |
++| `MatrixWorkflowTests.Ac9_TheDraftCategoryOfAUsedCompetency_IsReadByTheRouteWhileInWork_AndMadeActiveAndJournaledByPublication`, `Ac9_Publication_IsRefusedWhenTheDraftCategoryOfAUsedCompetencyWouldTakeANameAnActiveCategoryHasNow` | черновая категория используемой компетенции исчезла вместе с категориями (AC-51); коммит `29ac3bc` | да; замены нет |
++| `CareerMigrationTests.Ac12_Catalogues_StartWithTheTwelveCategoriesAndTheBaseScaleOfTheSource…` (в составе удалённого класса) | единственная проверка начальных данных: двенадцать категорий упразднены, базовая шкала 0–4 и «начальные данные не пишутся в журнал» остались требованием (AC-25) | да; замена — `BaseScaleSeedTests` |
++
++## Added tests
++
++Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
++
++| Test | Regression proof |
++|---|---|
++| `web/src/features/career/ScaleModal.test.tsx`, `CompetencyModal.test.tsx` | исправление дефекта теста (не новый тест): окна отрисованы без `MemoryRouter`, а `usePublishEntry` теперь читает маршрутизатор; fail-first: `node node_modules/vitest/vitest.mjs run src/features/career src/features/desk` → exit 1, 10 упавших, напр. `ScaleModal.test.tsx > scale form (AC-13) > asks for a name, a score and a value` (`useNavigate() may be used only in the context of a <Router> component.`); после обёртки в `MemoryRouter` — exit 0; runs: 275 |
++| `tests/Competency.Tests/MatrixWorkflowTests.cs` (`Ac17_AStaleVersion_IsRefusedWith412_BeforeTheHandOverCheckJudgesTheDocument`) | мутация: `ifMatch.ApplyTo` перенесён в `MatrixWorkflow.TransitAsync` после проверок действия (проверка полноты раньше `If-Match`): `dotnet test --solution Competency.slnx --filter-class "*MatrixWorkflowTests"` → exit 2, упал `Ac17_AStaleVersion_IsRefusedWith412_BeforeTheHandOverCheckJudgesTheDocument` (1 из 35); без мутации — 35 из 35, exit 0; runs: 1 |
++| `tests/Competency.Tests/MatrixCreationTests.cs` (два случая в `Ac14_Document_IsRefusedWhenItIsNotWellFormed`) | мутации в `MatrixContent.ValueProblem`: убрана проверка `Enum.IsDefined` у `competencies[].type`; убрана у `sharedBlocks[].competencyTypes[].type`; убраны обе — каждая: `dotnet test --solution Competency.slnx --filter-class "*MatrixCreationTests"` → exit 2, упал `Ac14_Document_IsRefusedWhenItIsNotWellFormed` (1 из 11); без мутаций — 11 из 11; runs: 3 |
++| `tests/Competency.Tests/CompetencyTests.cs` (`Ac12_EvidenceExamples_AreKept_ReturnedAndWrittenToTheHistory_AbsentKeepsThemAndBlankClearsThem`, 4001/4000 в `Ac12_Competency_IsValidated`) | мутации: `if (EvidenceExamples is not null)` → `if (true)` в `CompetencyRequest.ApplyTo`; убрана проверка длины; пустой текст не сводится к «нет» (`OptionalText` убран); снимок версии без примеров: `dotnet test --solution Competency.slnx --filter-class "*.CompetencyTests"` → exit 2, упали `Ac12_EvidenceExamples_AreKept_…` (три мутации) и `Ac12_Competency_IsValidated` (проверка длины), по одному из 9; без мутаций — 9 из 9; runs: 4 |
++| `tests/Competency.Tests/DeskPrerequisiteTests.cs`, `UnitSetupTests.cs` (шаг приглашённого HR) | мутанты `P2` (`UserManagementDeskSource`: `IsActive` у HR-учётной записи убран) и `HR4` (`UserDirectory.HasHrCandidateAsync`: условие `PasswordHash != null` убрано), выжившие в записи 1 и названные эквивалентными, не эквивалентны и теперь убиты: `dotnet test --solution Competency.slnx --filter-class "*DeskPrerequisiteTests"` → exit 2, упал `Ac204_Ac205_Ac209_Ac210_Ac218_PrerequisitesAppearAndGoWithTheData_InTheOrderOfTheirDeclaration` (P2); `--filter-class "*UnitSetupTests"` → exit 2, упал `Ac81_Ac82_Ac84_TheRowsOfAUnit_FollowItsHeadItsHrItsAccountsAndItsPositions_AsEachGapIsClosed` (HR4); без мутаций оба зелёные; runs: 2 |
++| `tests/Competency.Tests/CareerLockTests.cs` (`Ac62_AnAssignmentRacingTheRemovalOfTheHrRole_IsDecidedByWhichRequestIsFirst`) | мутация: `UserEndpoints.UpdateAsync` берёт обычную транзакцию вместо `BeginExclusiveAsync` (блокировка дерева снята): `dotnet test --solution Competency.slnx --filter-class "*CareerLockTests"` → exit 2, упали оба порядка — `(assignmentFirst: True, assignmentStatus: NoContent, removalStatus: Conflict)` и `(assignmentFirst: False, assignmentStatus: BadRequest, removalStatus: OK)` (2 из 97); без мутации — 97 из 97, exit 0; runs: 1 |
++| `tests/Competency.Tests/DeskQueryCountTests.cs` | мутация: в `UserManagementDeskSource.FindAsync` добавлен запрос на каждое подразделение с руководителем: `dotnet test --solution Competency.slnx --filter-class "*DeskQueryCountTests"` → exit 2, упали `Ac4_TheSqlCommandsOfADeskRequest_AreFewAndTheSameOnSmallAndOnLargerData(route: "/api/v1/desk")` и `(route: "/api/v1/desk/count")` (2 из 2; runner: `Expected large to be 18 … but found 30`, `Expected small to be between 1 and 25, but found 31`); без мутации — 2 из 2, exit 0, 18 команд на запрос; runs: 1 |
++| `tests/Competency.Tests/BaseScaleSeedTests.cs` | мутации `InitialCreate`: точка в конце текста балла 2; шкала не по умолчанию; в сид добавлена строка `audit_events`: `dotnet test --solution Competency.slnx --filter-class "*BaseScaleSeedTests"` → exit 2, упали `Ac25_TheBaseScale_IsActiveAndTheDefault_WithTheFivePointsOfTheSource` (текст, по умолчанию) и `Ac25_TheCreationOfTheBaseScale_LeavesNoAuditRecord` (журнал), по одному из 2; без мутаций — 2 из 2; runs: 3 |
++| `tests/Competency.Tests/IdentityRolesMigrationTests.cs` | мутации миграции `IdentityRolesAndHrByEmployee`: роль HR не выдаётся администратору с закреплением (`AND u.role <> 'GlobalAdmin'`); закрепление не переносится на сотрудника (`UPDATE org_unit_hr …` заменён на `SELECT 1`); колонка `role` остаётся; выбор роли HR без `DISTINCT`: `dotnet test --solution Competency.slnx --filter-class "*IdentityRolesMigrationTests"` → exit 2, упал `Ac63_RolesAndHrAssignments_PassToIdentityRolesAndEmployees_WhenTheDatabaseMovesToTheNextMigration` (1 из 1) на каждой из четырёх; без мутаций — зелёный; runs: 4 |
++| `tests/Competency.Tests/AuditTests.cs` (`Ac15_RoleChange_IsJournaledAsOneUpdateOfTheRoles_WithBothSetsInMemberOrder`, `Ac15_RoleChangeAndItsJournalRow_AreSavedTogetherOrNotAtAll`) | мутации: роли новой записи не упорядочены (`AccountRoles.SetRolesAsync`) → упал первый тест; запись журнала не ставится → упали оба; транзакция фиксируется до сохранения ролей (`UserEndpoints.UpdateAsync`) → упали оба: `dotnet test --solution Competency.slnx --filter-class "*.AuditTests"` → exit 2, 1/2/2 из 12; без мутаций — 12 из 12; runs: 3 |
+diff --git a/.asd/sprints/004-role-desktop-user-journeys/test-plan.md b/.asd/sprints/004-role-desktop-user-journeys/test-plan.md
+index 6732d74..b2bf114 100644
+--- a/.asd/sprints/004-role-desktop-user-journeys/test-plan.md
++++ b/.asd/sprints/004-role-desktop-user-journeys/test-plan.md
+@@ -13,37 +13,71 @@ responsibility:
+ |---|---|---|
+ | 1 | 16478d5 | full change surface |
+ | 2 | 7fe0c10 | delta since entry 1 |
++| 3 | f72d32e | delta since entry 2 |
+ 
+ ## Risk → check decisions
+ 
++Дельта записи 3 — `git diff 7fe0c10...HEAD`: правки `impl` по замечаниям ревью (`c1b7e1d`…`3f1de41`) и тесты тестировщика ревью-фикса (`43568e1`…`aa6b31e`, их строки — в `test-plan.entry-02.md`). Изменений в `web/`, `openapi/` и конфигурации сборки нет: набор web не затронут, общая инфраструктура — нет; набор backend запущен целиком (правки лежат в центре модуля `CareerFramework` и меняют публичный порт `UserStatus`, поэтому safety valve применён).
++
+ | Change | Material risk | Chosen check | Decision | Reason |
+ |---|---|---|---|---|
+-| `usePublishEntry` вызывает `useNavigate()` (исправление D-2); хук подключён в модальных окнах и страницах стола | change: workflow — окно, показанное вне маршрутизатора, не должно падать; окно, показанное в нём, должно вести по ссылке | component | add | существующий `usePublishEntry.test.tsx` закрепляет отказ в окне вне маршрутизатора и подпись ссылки; два теста без маршрутизатора (`ScaleModal`, `CompetencyModal`) исправлены как дефект теста (см. «Added tests») |
+-| `InUseMessage` «Область используют…» (исправление D-1) | change: public contract — текст отказа | component/contract | keep | `CatalogDeletionTests.Ac25_…` закрепляет текст; зелёный |
+-
+-Предыдущая запись рассматривалась по записи 1; её строки — в `test-plan.entry-01.md`. Для остальных вызывающих хук (`BlockModal`, `NameModal`, `DraftsSection`, `CatalogParts`, `BuilderSubmitStep`, `CascadeTable`, `CatalogCleanupPage`, `DecisionError`, `DraftsQueuePage`, `ReviewPage`, `ReworkPage`, `useVersionTransition`) новых тестов не нужно: их тесты уже рендерят под маршрутизатором и зелёные (`vitest run` 492 из 492).
++| `MatrixCatalog.IsUsable`, `LoadedEntries.HeadedScopeIds` — черновой блок «Действует для» подразделения матрицы, написанный вышестоящим руководителем (external 1) | change: security — руководитель видит такой блок, но получал 400 при включении; блок для подразделения, которым он не руководит, должен остаться недоступным | contract | add | `CompetencyBlockTests.Ac128_Ac130_ADraftBlockForTheMatrixUnitWrittenByTheHeadAbove_…`: блок начальника отдела для команды включается (200, проверка полноты без `InactiveEntry`), его же блок для отдела — нет (400, поле `content`); правка затрагивает два пути (сохранение и полнота), мутант на каждый |
++| `CatalogStore.SaveAsync(transaction)` — версии всех компетенций, сохранённых каскадом (external 2) | change: public contract — история компетенции, утверждённой вместе с блоком, не получала новой строки | contract | add | `PublicationCascadeTests.Ac107_Ac114_ApprovingABlock_…`: после утверждения блока у черновой компетенции его состава в истории строки «Active», «Draft», номер на 1 больше. Утверждение самой компетенции и версии матрицы закрыто прежде (`CompetencyTests`, `MatrixWorkflowTests.Ac9_Publication_…`); «вернуть в работу» идёт тем же `PublishAsync` → `CommitAsync`, отдельной строки не требует |
++| `MatrixRoute.RouteEntryIdsAsync`, `CatalogViewer.Sees<CareerTrack>` — черновой трек версии читает вышестоящий согласующий (external 3) | change: security — на своём шаге согласующий получал 404 на трек версии, а посторонний не должен его видеть | contract | add | `MatrixAccessTests.Ac18_TheDraftTrackOfAVersionInWork_…`: трек читают руководитель, вышестоящий согласующий и HR, не читают посторонний, руководитель соседней команды и руководитель корня; обе половины правки (идентификатор в маршруте и ветка фильтра) убиваются по отдельности |
++| Часть правки external 3 про направление (`Matrix.DirectionId`, направление компетенции в `RouteEntryIdsAsync`) | нет достижимого поведения | — | none | матрица создаётся только на действующем направлении (`MatrixEndpoints.ReferenceProblemAsync`), компетенция версии — того же направления или без него, а действующее направление черновым не становится; идентификатор, добавленный к маршруту, не меняет ничьего права. Случай «автор переводит свой черновик на черновое направление уже после включения» останавливает проверка полноты (чужое направление) |
++| `CatalogPublication.PlanAsync`, `UserStatus.IsGlobalAdmin`, `UserDirectory` — права каскада считаются по собственным ролям ответственного HR, кто бы ни запустил публикацию (external 4) | change: security — «Принять правки» автором теряло права администратора у HR с ролями Hr и GlobalAdmin | component | add | `PublicationCascadeTests.Ac144_ADraftBlockOutsideTheResponsibleHrsUnits_…`: ответственный HR закреплён на команде, блок автора для отдела вне его подразделений; тот же запрос автора «Принять правки» отвечает 409 `NoRight` (HR без роли администратора) и 200 `Published` (после выдачи роли) — менялись только роли HR. Запрос `UserRoles.Any(GlobalAdminRoleId)` выполняется на PostgreSQL |
++| `CompetencyBlockRequest.Validate` — `competencyIds: null` (external 5) | change: public contract — 500 вместо ошибки поля при создании и изменении | contract | add | `CompetencyBlockTests.Ac127_ABlockRequestWithNoComposition_…`: POST и PUT с `null` отвечают 400 с ошибкой поля `competencyIds`, блок не меняется |
++| `CatalogStore.UsableIdsAsync`, `CompetencyBlockEndpoints.UnusableAsync` — состав проверяется одним запросом (efficiency 1) | change: perf, с риском смены поведения — «первая недоступная» и текст отказа | contract | add | `CompetencyBlockTests.Ac127_AnUnusableCompetencyAmongSeveralAdded_…`: черновик или несуществующая запись среди нескольких добавленных отказывают целиком с прежними текстами, ни одна добавленная не сохраняется, добавленные вместе годные проходят. Зелёный и до правки (поведение сохранено): страж, не регрессия; мутанты ниже |
++| `CatalogStore.ReadinessAsync(List<Guid>)` — готовность черновых треков пакетом (efficiency 2) | change: perf, с риском смены поведения — уровни и привязки одного трека попадают в другой | contract | add | `CatalogDraftTests.Ac9_TheDraftList_ShowsEachDraftTrackItsOwnReadiness_…`: готовый трек, трек без уровней и трек с уровнем без должности в одном списке; до этого `readiness` очереди не проверяла ни один тест. Зелёный и до правки: страж |
++| `CatalogViewer.SeesLoaded()` и три места вызова (`CareerLevelPositionEndpoints`, `MatrixEndpoints`, `PublicationPlan.Visible`) — фильтр компилируется один раз на тип (efficiency 3) | change: security — скрытый трек не называется; кэш по типу записи | contract | add | `LevelPositionTests.Ac90_TheTrackAPositionIsLinkedTo_…` (имя трека в отказе и `linkedTrack` в списке должностей — тому, кто видит черновой трек, и скрыто от того, кто не видит) и `PublicationCascadeTests.Ac109_Ac110_APreview_NamesEveryBlockerTheReaderSees_…` (помехи двух видов в одном предпросмотре). Раньше правило «не называется» не проверял ни один тест, а мутант ключа кэша выжил на 60 существующих тестах пяти классов. Потолок: отсев скрытой помехи в `PublicationPlan.Visible` через API воспроизводится только перепривязкой чужого блока уже после включения — не строился (фильтр прежний, изменилась лишь компиляция) |
++| `CatalogStore.UnusedEntriesAsync(kind)`, `UnusedEntryResponse` как проекция, `CareerDeskScan.UnusedFindings` (efficiency 4) | change: public contract — вид, версия и число записей списка; находки стола по трём видам | contract | add | `ScenarioReadTests.Ac137_Ac138_Ac140_EachKindFilterOfTheUnusedEntries_…` (каждый фильтр `kind` отдаёт только свой вид, `version` строки равна версии записи, суммы по видам равны общему числу) и `DeskCatalogTests.Ac137_Ac138_AnUnusedScaleAndADirectionWithoutTracks_…` (вид и тип объекта находок «шкала» и «область»; прежде проверялась только компетенция). Оба зелёные до правки: стражи |
++| Тесты тестировщика ревью-фикса `43568e1`…`aa6b31e` | уже с доказательствами (строки в `test-plan.entry-02.md`) | — | keep | в записи 3 не перепроверялись и не переписывались; прогон ниже подтверждает их зелёными |
++| Комментарии и документы (`OrgStructure`, `docs/**`, `tech-reference`), `UserManagementDeskSource` (параметр `IsGlobalAdmin` конструктора `UserStatus`) | нет поведения | — | none | комментарии и тексты не исполняются; значение `IsGlobalAdmin` из источника стола нигде не читается, а чтение из `UserDirectory` проверено строкой про external 4 |
++| Новые запросы к PostgreSQL (`List<Guid>.Contains`, пакетные уровни и привязки, проекция `UnusedEntryResponse`, трек в `RouteEntryIdsAsync`) | change: perf, не проверялись на реальной БД | contract | keep | выполняются перечисленными тестами на хосте API против общего контейнера PostgreSQL, подмены поставщика нет |
++| Окружение прогона: контейнер PostgreSQL с лимитом 100 соединений при десятках параллельных хостов | change: flaky — `53300: sorry, too many clients already`, красные тесты случайных классов | окружение | add | `TestEnvironment` задаёт `max_connections=500` (см. «Added tests»); виден в сэмплере соединений, не в наборе |
+ 
+ ## Removed tests
+ 
++Строки перенесены из строк тестировщика ревью-фикса (TST-8): сами тесты удалены в `impl` (`29ac3bc`, `d94007b`) — ещё до записи 1, на этой записи удалять нечего. Все лежат внутри области изменений спринта (вентиль удаления не нужен). Записью 3 не удалён ни один тест.
++
+ | Test | Reason | In change scope |
+ |---|---|---|
+-| — | ни один тест не удалён | — |
++| `CareerMigrationTests` (класс, 203 строки) и помощник `Infrastructure/MigrationDatabase` | тесты переноса данных старых схем вместе с самими миграциями; до 1.0 перенос данных делает только последняя миграция, остальные схлопываются в `InitialCreate` (AC-58, AC-63); поведения больше нет. Удалены коммитом `29ac3bc` в `impl`, записи 1 это не отражено | да; замена — `BaseScaleSeedTests` (сид, TST-7) и `IdentityRolesMigrationTests` (перенос в Identity) |
++| `PositionMigrationTests` (класс, 121 строка) | перенос данных каталога должностей старых схем; поведения больше нет по той же причине (AC-58); коммит `29ac3bc` | да; замены нет |
++| `CatalogDeletionTests.Ac23_ACategory_IsDeletedUnlessCompetenciesOrTheirHistoryUseIt`, `Ac23_Categories_StartWithTheGeneralOnes_ReadableByEveryone` | категории компетенций упразднены (AC-51); поведения больше нет; коммит `29ac3bc` | да; замены нет |
++| `CompetencyTests.Ac12_Competency_RefusesANumberThatNamesNoType_OnCreationAndOnChange` | тип удалён из справочника компетенций, остался в документе версии (AC-55); коммит `29ac3bc` | да; замена — два случая в `MatrixCreationTests.Ac14_Document_IsRefusedWhenItIsNotWellFormed` (TST-2) |
++| `AuthorizationTests.Ac7_UserRole_IsLimitedToTheKnownValuesInTheDatabaseItself` | колонки `users.role` и её проверочного ограничения нет, роли — строки Identity (AC-62, AC-63); коммит `d94007b`; допустимость значений проверяет `HrRoleTests.Ac62_TheRolesOfAnAccount_AreASet_WithSeveralMembers_AndOnlyKnownRoles` | да; замена — этот тест |
++| `MatrixWorkflowTests.Ac9_TheDraftCategoryOfAUsedCompetency_IsReadByTheRouteWhileInWork_AndMadeActiveAndJournaledByPublication`, `Ac9_Publication_IsRefusedWhenTheDraftCategoryOfAUsedCompetencyWouldTakeANameAnActiveCategoryHasNow` | черновая категория используемой компетенции исчезла вместе с категориями (AC-51); коммит `29ac3bc` | да; замены нет |
++| `CareerMigrationTests.Ac12_Catalogues_StartWithTheTwelveCategoriesAndTheBaseScaleOfTheSource…` (в составе удалённого класса) | единственная проверка начальных данных: двенадцать категорий упразднены, базовая шкала 0–4 и «начальные данные не пишутся в журнал» остались требованием (AC-25) | да; замена — `BaseScaleSeedTests` |
+ 
+ ## Added tests
+ 
+ Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
+ 
++Fail-first: `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj --filter-method <11 имён из этой записи>` в копии `git archive 521d37f src` (родитель `c1b7e1d`, первого исправления ревью) с тестами рабочего дерева → exit 2, итог 11: 5 красных, 6 зелёных (runs: 2 — первый на 9 тестах, второй на 11). Красные — тесты пяти замечаний external; зелёные — стражи переписанных запросов, они не доказывают исправление и держат поведение. Мутации — в копии `git archive HEAD` с тестами рабочего дерева, `dotnet test --project … --filter-method <имя теста>` (для `M10` — `--filter-class` пяти классов); контрольный прогон без мутаций 9 из 9 и 4 из 4, exit 0.
++
+ | Test | Regression proof |
+ |---|---|
+-| `web/src/features/career/ScaleModal.test.tsx`, `CompetencyModal.test.tsx` | исправление дефекта теста (не новый тест): окна отрисованы без `MemoryRouter`, а `usePublishEntry` теперь читает маршрутизатор; fail-first: `node node_modules/vitest/vitest.mjs run src/features/career src/features/desk` → exit 1, 10 упавших, напр. `ScaleModal.test.tsx > scale form (AC-13) > asks for a name, a score and a value` (`useNavigate() may be used only in the context of a <Router> component.`); после обёртки в `MemoryRouter` — exit 0; runs: 275 |
++| `tests/Competency.Tests/CompetencyBlockTests.cs` (`Ac128_Ac130_ADraftBlockForTheMatrixUnitWrittenByTheHeadAbove_…`) | до правки: `Expected included.Status to be HttpStatusCode.OK … 400 … "errors":{"content":["Запись не найдена или недоступна"]} … but found HttpStatusCode.BadRequest`. Мутации: `M1a` (проверка при сохранении по прежнему правилу) → `Expected included.Status to be OK`; `M1b` (`HeadedScopeIds` → `AvailableScopeIds`) → `Expected unseen.Status to be BadRequest`; `M1c` (проверка полноты по прежнему правилу) → `Expected problems to be empty, but found at least one item {"InactiveEntry"}`; каждая exit 2, 1 красный из 1; runs: 3 |
++| `tests/Competency.Tests/CompetencyBlockTests.cs` (`Ac127_ABlockRequestWithNoComposition_…`) | до правки: `Expected refused.Status to be HttpStatusCode.BadRequest … "status":500 … but found HttpStatusCode.InternalServerError`. Мутации: `M2a` (создание без `Validate`) и `M2b` (изменение без `Validate`) → та же строка, 1 из 1, exit 2 (в `M2b` создание проходит, красна вторая итерация — половина «изменение» доказана отдельно); runs: 2 |
++| `tests/Competency.Tests/CompetencyBlockTests.cs` (`Ac127_AnUnusableCompetencyAmongSeveralAdded_…`) | страж: зелёный до правки. Мутации: `M3a` (проверяется только первая добавленная) и `M3b` (статус записи не проверяется) → `Expected withDraft.Status to be HttpStatusCode.BadRequest`; `M3e` (черновик определяется всегда) → `Expected withMissing.FieldErrors("competencyIds") … to not contain` текст ссылки на черновик; каждая exit 2, 1 из 1; runs: 3 |
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac107_Ac114_ApprovingABlock_…`) | до правки: `Expected after.Select(version => version.Status) to be equal to {"Active", "Draft"}, but {"Draft"} contains 1 item(s) less.`; мутаций нет (половина «корень» закрыта `CompetencyTests`); runs: 0 |
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac144_ADraftBlockOutsideTheResponsibleHrsUnits_…`) | до правки: `Expected asAlsoAdministrator.Status to be HttpStatusCode.OK … "status":409,"detail":"Версию нельзя опубликовать","blockers":[{"kind":"Block",…,"reason":"NoRight"…` (контроль `asOnlyHr` зелёный и до, и после). Мутации: `M5a` (роль администратора ответственного HR всегда ложна) → та же строка; `M5b` (всегда истинна) → `Expected asOnlyHr.Status to be HttpStatusCode.Conflict … "status":"Published"`; exit 2, 1 из 1; runs: 2 |
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac109_Ac110_APreview_NamesEveryBlockerTheReaderSees_…`) | страж: зелёный до правки. Мутации: `M10b` (ключ кэша `SeesLoaded` — один тип для всех) → `Expected 200 OK but got 500 InternalServerError` (приведение типа); `M11` (помехи скрыты всегда) → `Expected preview["blockers"]… to be a collection with 2 item(s), but found an empty collection.`; exit 2, 1 из 1; прежний мутант `M10` на пяти классах (`PublicationCascadeTests`, `CatalogDeletionTests`, `PositionMatrixTests`, `LevelPositionTests`, `TrackAndLevelTests`) выжил — 60 из 60 зелёных, поэтому закрепление новое; runs: 3 |
++| `tests/Competency.Tests/MatrixAccessTests.cs` (`Ac18_TheDraftTrackOfAVersionInWork_…`) | до правки: `Expected (reader.Client.GetAsync(path)).Status to be HttpStatusCode.OK … but found HttpStatusCode.NotFound`. Мутации: `M6a` (ветка трека в `Sees<CareerTrack>` без маршрута) и `M6b` (трек не входит в `RouteEntryIdsAsync`) → та же строка; `M6c` (ветка трека открыта всем) → `Expected (stranger.Client.GetAsync(path)).Status to be HttpStatusCode.NotFound … but found HttpStatusCode.OK`; exit 2, 1 из 1; runs: 3 |
++| `tests/Competency.Tests/CatalogDraftTests.cs` (`Ac9_TheDraftList_ShowsEachDraftTrackItsOwnReadiness_…`) | страж: зелёный до правки. Мутации: `M7a` (уровни всех треков вместо своих) → `Expected ReadinessOf(ready.Id) to be <null> because a ready track has nothing to report`; `M7d` (готовность считается только для первого трека) → `Expected withoutLevelsReadiness not to be <null> because a track without levels is not ready.`; exit 2, 1 из 1; runs: 2 |
++| `tests/Competency.Tests/ScenarioReadTests.cs` (`Ac137_Ac138_Ac140_EachKindFilterOfTheUnusedEntries_…`) | страж: зелёный до правки. Мутации: `M8a` (запросы шкал идут при любом виде) → `Expected items.Select(item => item!["kind"]…) to contain only items matching … because Competency, but {"Scale"} do(es) not match`; `M8b` (вид области записан как шкала) → то же с `because Direction`; `M8c` (версия строки нулевая) → `Expected $"\"{row["version"]…}\"" to be the same string because Competency: the row carries the version the entry is changed with`; exit 2, 1 из 1; runs: 3 |
++| `tests/Competency.Tests/DeskCatalogTests.cs` (`Ac137_Ac138_AnUnusedScaleAndADirectionWithoutTracks_…`) | страж: зелёный до правки. Мутации: `M9a` (находка шкалы с видом компетенции) → `Expected unusedScale.Kinds() to be equal to {"UnusedScale"}, but {"UnusedCompetency"} differs at index 0.`; `M9b` (тип объекта области — шкала) → `Expected emptyDirection["object"]!["type"]… to be the same string`; `M9c` (тип объекта шкалы — компетенция) → `Expected unusedScale["object"]!["type"]… to be the same string`; `M9d` (находка области с видом шкалы) → `Expected emptyDirection.Kinds() to be equal to {"DirectionWithoutTracks"}, but {"UnusedScale"} differs at index 0.`; exit 2, 1 из 1; runs: 4 |
++| `tests/Competency.Tests/LevelPositionTests.cs` (`Ac90_TheTrackAPositionIsLinkedTo_IsNamedToWhoCanSeeIt_…`) | страж: зелёный до правки. Мутации: `M12a` (отказ создания матрицы называет первый трек без проверки видимости) → `Did not expect unnamedRefusal.Json!["detail"]!.GetValue<string>() "…" to contain "<имя трека>"`; `M12b` (то же в `matrix-positions`) → `Expected listedForSibling to be <null> because a draft track of another unit is not shown to its head, but found {[id, …], [name, …]}`; exit 2, 1 из 1; runs: 2 |
++| `tests/Competency.Tests/Infrastructure/TestEnvironment.cs` | исправление дефекта теста (окружения), не новый тест: прогон 1 при лимите 100 — `dotnet test --solution Competency.slnx` → exit 2, 25 красных из 678 (24 — `Npgsql.PostgresException : 53300: sorry, too many clients already`, 1 — `CatalogDeletionTests.Ac25_Deleting_…`: `Expected plain.Status to be HttpStatusCode.Forbidden {value: 403}, but found HttpStatusCode.InternalServerError`), сэмплер `pg_stat_activity` упёрся в 100 из 100; до этого, до стратегии — 2 красных из 667 (`ScaleTests.Ac22_MakeDefault_…`, `CareerLockTests.Ac15_…`) и зелёные 104 из 104 при отдельном запуске двух классов. После `max_connections=500` — см. «Suite run»; runs: 3 |
+ 
+ ## Suite run
+ 
+-Command (запись 2, impacted set): `dotnet test --solution Competency.slnx --artifacts-path <scratch> --filter-class "*CatalogDeletionTests"` и `node node_modules/vitest/vitest.mjs run` в `web` (хук `usePublishEntry` подключён в 15 файлах, весь набор web — 47 файлов, дешёв); safety valve не сработал: дельта — одна строка в `Competency.CareerFramework` и один хук SPA, общая инфраструктура не затронута.
+-Scope: impacted.
+-Result: pass — backend 16 тестов: 16 успешно, 0 упало, 0 пропущено, exit 0 (D-1 закрыт); web 492 теста: 492 успешно, 0 упало, 47 файлов, exit 0 (D-2 закрыт). До стратегии: backend 16/0, web career+desk 265 успешно, 10 упало (дефект теста: окна `ScaleModal`/`CompetencyModal` без маршрутизатора, исправлен), остальные web не запускались до исправления.
+-Lint / build: pass — `npm --prefix web run lint` (biome ci + tsc) exit 0; backend не менялся кроме строки константы (сборка прошла в тесте).
+-HEAD: 0d8070e (плюс правки тестов этой записи)
++Command (запись 3): `dotnet test --solution Competency.slnx --artifacts-path <scratch>` — весь набор backend. Web не запускался: в дельте нет файлов `web/`, `openapi/` и конфигурации сборки, а тесты web работают с подменой сети. Safety valve для backend применён: правки лежат в центре модуля `CareerFramework` и меняют публичный порт `UserStatus`, поэтому набор не сужался.
++Scope: full (backend); impacted-набор вырождается в полный.
++Result: pass — 678 тестов: 678 успешно, 0 упало, 0 пропущено, exit 0, 3 мин. Это 667 прежних и 11 добавленных записью. Сырой ход: до стратегии (667) 665 успешно и 2 упало — `ScaleTests.Ac22_MakeDefault_…` (500 на создании шкалы) и `CareerLockTests.Ac15_…` (`53300: sorry, too many clients already`), оба зелёные при отдельном запуске двух классов (104 из 104); после авторства (678), прогон 1: 653 успешно и 25 упало (24 с `53300`, 1 — ответ 500 хоста в `CatalogDeletionTests.Ac25_Deleting_…`), сэмплер `pg_stat_activity` дошёл до 100 из 100; после `max_connections=500` (дефект окружения, см. «Added tests»), прогон 2: 678 из 678, пик 108 соединений из 500. Новых кодовых дефектов нет.
++Lint / build: pass — `npm --prefix web run lint` (biome ci + tsc) exit 0; backend собран прогоном (`TreatWarningsAsErrors`), предупреждений 0.
++HEAD: 3fb12b1 (прогон 2 измерял дерево `fbbebea` плюс правку `TestEnvironment` из `3fb12b1`; после неё менялись только артефакты спринта)
+ 
+ Замер стола на сиде `tests/perf/seed-10k.sql` (10 000 работающих сотрудников, 1 000 подразделений, 348 учётных записей, 625 версий матриц; сборка `Debug`, один процесс, 60 замеров после 5 прогревочных; число SQL-команд — команды приложения, без `DISCARD ALL` сброса соединения Npgsql):
+ 
+diff --git a/tests/Competency.Tests/BaseScaleSeedTests.cs b/tests/Competency.Tests/BaseScaleSeedTests.cs
+new file mode 100644
+index 0000000..7ac9fee
+--- /dev/null
++++ b/tests/Competency.Tests/BaseScaleSeedTests.cs
+@@ -0,0 +1,42 @@
++using System.Net;
++using AwesomeAssertions;
++using Competency.Tests.Infrastructure;
++using Xunit;
++
++namespace Competency.Tests;
++
++/// <summary>
++/// The scale the deployment creates: its points with their texts are the contract of the initial data, and the creation leaves no audit record.
++/// The class has a host of its own, so no other test has touched the scale.
++/// </summary>
++public sealed class BaseScaleSeedTests(CareerHost fixture) : IClassFixture<CareerHost>
++{
++    private static readonly (int Score, string Label)[] BasePoints =
++    [
++        (0, "Компетенция не подтверждена"),
++        (1, "Выполняет работу преимущественно с поддержкой"),
++        (2, "Самостоятельно решает типовые задачи"),
++        (3, "Самостоятельно решает сложные и неопределённые задачи, способен помогать другим"),
++        (4, "Формирует подходы и стандарты, решает наиболее сложные задачи и развивает других"),
++    ];
++
++    [Fact]
++    public async Task Ac25_TheBaseScale_IsActiveAndTheDefault_WithTheFivePointsOfTheSource()
++    {
++        var admin = await fixture.Host.AdminAsync();
++
++        var scale = (await admin.GetAsync($"/api/v1/career/scales/{CareerScenarios.BaseScaleId}")).Expect(HttpStatusCode.OK).Json!;
++
++        scale["isDefault"]!.GetValue<bool>().Should().BeTrue();
++        scale["status"]!.GetValue<string>().Should().Be("Active");
++        scale["points"]!.AsArray().Select(point => (point!["score"]!.GetValue<int>(), point["label"]!.GetValue<string>())).Should().Equal(BasePoints);
++    }
++
++    [Fact]
++    public async Task Ac25_TheCreationOfTheBaseScale_LeavesNoAuditRecord()
++    {
++        var recorded = await fixture.Host.ScalarAsync<long>($"SELECT count(*) FROM audit_events WHERE entity_id = '{CareerScenarios.BaseScaleId}'");
++
++        recorded.Should().Be(0);
++    }
++}
+diff --git a/tests/Competency.Tests/CareerLockTests.cs b/tests/Competency.Tests/CareerLockTests.cs
+index 1544711..775c4ff 100644
+--- a/tests/Competency.Tests/CareerLockTests.cs
++++ b/tests/Competency.Tests/CareerLockTests.cs
+@@ -222,6 +222,38 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
+         blocked.Status.Should().Be(HttpStatusCode.OK, blocked.Body);
+     }
+ 
++    [Theory]
++    [InlineData(true, HttpStatusCode.NoContent, HttpStatusCode.Conflict)]
++    [InlineData(false, HttpStatusCode.BadRequest, HttpStatusCode.OK)]
++    public async Task Ac62_AnAssignmentRacingTheRemovalOfTheHrRole_IsDecidedByWhichRequestIsFirst(bool assignmentFirst, HttpStatusCode assignmentStatus, HttpStatusCode removalStatus)
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var unit = await org.Admin.CreateUnitAsync(org.Root.Id);
++        var account = await org.Admin.HrCandidateAsync(fixture.Host, unit.Id);
++        var assign = () => org.Admin.AssignHrAsync(unit.Id, account.EmployeeId);
++        var removeRole = () => org.Admin.PutAsync(
++            $"/api/v1/users/{account.Id}",
++            new { email = account.User.Email, roles = Scenarios.NoRoles, employeeId = (Guid?)account.EmployeeId },
++            account.User.ETag);
++
++        await using var gate = await RowLock.HoldAdvisoryAsync(fixture.Host, RowLock.TreeKey);
++        var first = await RowLock.StartWaitingAsync(fixture.Host, 1, assignmentFirst ? assign : removeRole);
++        var second = await RowLock.StartWaitingAsync(fixture.Host, 2, assignmentFirst ? removeRole : assign);
++        await gate.ReleaseAsync();
++        var (assigned, removed) = assignmentFirst ? (await first, await second) : (await second, await first);
++
++        assigned.Status.Should().Be(assignmentStatus, assigned.Body);
++        removed.Status.Should().Be(removalStatus, removed.Body);
++        if (assignmentFirst)
++        {
++            removed.Json!["detail"]!.GetValue<string>().Should().Contain("Роль «HR» нельзя снять").And.Contain($"«{unit.Json!["name"]!.GetValue<string>()}»");
++        }
++        else
++        {
++            assigned.FieldErrors("employeeId").Should().Equal("У учётной записи нет роли «HR»");
++        }
++    }
++
+     [Theory]
+     [InlineData(true, HttpStatusCode.Created)]
+     [InlineData(false, HttpStatusCode.Forbidden)]
+diff --git a/tests/Competency.Tests/CatalogDraftTests.cs b/tests/Competency.Tests/CatalogDraftTests.cs
+index 42f8da3..64346a0 100644
+--- a/tests/Competency.Tests/CatalogDraftTests.cs
++++ b/tests/Competency.Tests/CatalogDraftTests.cs
+@@ -1,4 +1,5 @@
+ using System.Net;
++using System.Text.Json.Nodes;
+ using AwesomeAssertions;
+ using Competency.Tests.Infrastructure;
+ using Xunit;
+@@ -113,6 +114,35 @@ public sealed class CatalogDraftTests(CareerHost fixture) : IClassFixture<Career
+         }
+     }
+ 
++    [Fact]
++    public async Task Ac9_TheDraftList_ShowsEachDraftTrackItsOwnReadiness_AmongSeveralTracks()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var direction = await org.Admin.MakeDirectionAsync();
++        var head = org.TeamHead.Client;
++        var ready = await head.MakeTrackAsync(org.Team.Id, direction.Id);
++        await org.Admin.LinkToNewPositionAsync(await head.MakeLevelAsync(ready.Id), org.Team.Id);
++        var withoutLevels = await head.MakeTrackAsync(org.Team.Id, direction.Id);
++        var partial = await head.MakeTrackAsync(org.Team.Id, direction.Id);
++        await org.Admin.LinkToNewPositionAsync(await head.MakeLevelAsync(partial.Id), org.Team.Id);
++        var bare = await head.MakeLevelAsync(partial.Id);
++
++        var rows = (await org.Hr.Client.GetAsync("/api/v1/career/drafts?kind=Track")).Expect(HttpStatusCode.OK).Json!.AsArray();
++
++        JsonNode? ReadinessOf(Guid trackId) => rows.Single(row => row!["id"]!.GetValue<Guid>() == trackId)!["readiness"];
++
++        var withoutLevelsReadiness = ReadinessOf(withoutLevels.Id);
++        var partialReadiness = ReadinessOf(partial.Id);
++
++        ReadinessOf(ready.Id).Should().BeNull("a ready track has nothing to report");
++        withoutLevelsReadiness.Should().NotBeNull("a track without levels is not ready");
++        withoutLevelsReadiness!["hasLevels"]!.GetValue<bool>().Should().BeFalse();
++        withoutLevelsReadiness["levelsWithoutActivePosition"]!.AsArray().Should().BeEmpty();
++        partialReadiness.Should().NotBeNull("a track with a level without a position is not ready");
++        partialReadiness!["hasLevels"]!.GetValue<bool>().Should().BeTrue();
++        partialReadiness["levelsWithoutActivePosition"]!.AsArray().Select(level => level!["id"]!.GetValue<Guid>()).Should().Equal(bare.Id);
++    }
++
+     private static async Task<string> CascadeAsync(ApiClient client, string path)
+     {
+         var publication = await client.GetAsync($"{path}/publication");
+diff --git a/tests/Competency.Tests/CompetencyBlockTests.cs b/tests/Competency.Tests/CompetencyBlockTests.cs
+index 3b17bdc..354ae88 100644
+--- a/tests/Competency.Tests/CompetencyBlockTests.cs
++++ b/tests/Competency.Tests/CompetencyBlockTests.cs
+@@ -168,6 +168,84 @@ public sealed class CompetencyBlockTests(CareerHost fixture) : IClassFixture<Car
+         changed.Json!["competencies"]!.AsArray().Should().HaveCount(1);
+     }
+ 
++    [Fact]
++    public async Task Ac128_Ac130_ADraftBlockForTheMatrixUnitWrittenByTheHeadAbove_IsIncludedByTheUnitsHead_AndOneTheHeadCannotSeeIsNot()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var kit = await MatrixKit.CreateAsync(org);
++        var superior = org.DepartmentHead.Client;
++        var forTeam = (await CreateAsync(superior, [kit.Critical.Id, kit.Profile.Id], org.Team.Id)).Expect(HttpStatusCode.Created);
++        var forDepartment = (await CreateAsync(superior, [kit.Critical.Id, kit.Profile.Id], org.Department.Id)).Expect(HttpStatusCode.Created);
++
++        var unseen = await kit.SaveAsync(org.TeamHead.Client, WithBlock(kit, forDepartment.Id, kit.Critical.Id, kit.Profile.Id));
++        var included = await kit.SaveAsync(org.TeamHead.Client, WithBlock(kit, forTeam.Id, kit.Critical.Id, kit.Profile.Id));
++        var problems = await ProblemsAsync(kit);
++
++        forTeam.Json!["status"]!.GetValue<string>().Should().Be("Draft");
++        unseen.Status.Should().Be(HttpStatusCode.BadRequest, unseen.Body);
++        unseen.FieldErrors("content").Should().NotBeEmpty();
++        included.Status.Should().Be(HttpStatusCode.OK, included.Body);
++        problems.Should().BeEmpty();
++    }
++
++    [Fact]
++    public async Task Ac127_ABlockRequestWithNoComposition_IsRefusedAsAFieldError_OnCreationAndOnChange_AndChangesNothing()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var competency = await org.Admin.MakeCompetencyAsync();
++        var block = (await CreateAsync(org.Admin, [competency.Id])).Expect(HttpStatusCode.Created);
++
++        var created = await org.Admin.PostAsync("/api/v1/career/blocks", new { name = Scenarios.Unique("Блок"), scopeUnitId = (Guid?)null, competencyIds = (Guid[]?)null });
++        var changed = await org.Admin.PutAsync(
++            $"/api/v1/career/blocks/{block.Id}",
++            new { name = block.Json!["name"]!.GetValue<string>(), scopeUnitId = (Guid?)null, competencyIds = (Guid[]?)null },
++            block.ETag);
++        var after = (await org.Admin.GetAsync($"/api/v1/career/blocks/{block.Id}")).Expect(HttpStatusCode.OK);
++
++        foreach (var refused in new[] { created, changed })
++        {
++            refused.Status.Should().Be(HttpStatusCode.BadRequest, refused.Body);
++            refused.FieldErrors("competencyIds").Should().NotBeEmpty(refused.Body);
++        }
++
++        after.ETag.Should().Be(block.ETag);
++        after.Json!["competencies"]!.AsArray().Select(entry => entry!["id"]!.GetValue<Guid>()).Should().Equal(competency.Id);
++    }
++
++    [Fact]
++    public async Task Ac127_AnUnusableCompetencyAmongSeveralAdded_RefusesTheWholeChange_AndUsableOnesAddedTogetherPass()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var kept = await org.Admin.MakeCompetencyAsync();
++        var first = await org.Admin.MakeCompetencyAsync();
++        var second = await org.Admin.MakeCompetencyAsync();
++        var draft = await org.TeamHead.Client.MakeCompetencyAsync();
++        var block = (await CreateAsync(org.Admin, [kept.Id])).Expect(HttpStatusCode.Created);
++
++        var withDraft = await ReplaceAsync(org.Admin, block, [kept.Id, first.Id, draft.Id]);
++        var withMissing = await ReplaceAsync(org.Admin, block, [kept.Id, Guid.NewGuid(), first.Id]);
++        var createdWithMissing = await CreateAsync(org.Admin, [first.Id, second.Id, Guid.NewGuid()]);
++        var unchanged = (await org.Admin.GetAsync($"/api/v1/career/blocks/{block.Id}")).Expect(HttpStatusCode.OK);
++
++        withDraft.Status.Should().Be(HttpStatusCode.BadRequest, withDraft.Body);
++        withDraft.FieldErrors("competencyIds").Should().Equal(DraftReference);
++        withMissing.Status.Should().Be(HttpStatusCode.BadRequest, withMissing.Body);
++        withMissing.FieldErrors("competencyIds").Should().NotBeEmpty().And.NotContain(DraftReference);
++        createdWithMissing.Status.Should().Be(HttpStatusCode.BadRequest, createdWithMissing.Body);
++        createdWithMissing.FieldErrors("competencyIds").Should().NotBeEmpty();
++        unchanged.ETag.Should().Be(block.ETag);
++
++        var together = (await ReplaceAsync(org.Admin, block, [kept.Id, first.Id, second.Id])).Expect(HttpStatusCode.OK);
++
++        together.Json!["competencies"]!.AsArray().Select(entry => entry!["id"]!.GetValue<Guid>()).Should().Equal(kept.Id, first.Id, second.Id);
++    }
++
++    private static Task<ApiResponse> ReplaceAsync(ApiClient client, ApiResponse block, Guid[] competencyIds) =>
++        client.PutAsync(
++            $"/api/v1/career/blocks/{block.Id}",
++            new { name = block.Json!["name"]!.GetValue<string>(), scopeUnitId = (Guid?)null, competencyIds },
++            block.ETag);
++
+     private static Task<ApiResponse> CreateAsync(ApiClient client, Guid[] competencyIds, Guid? scopeUnitId = null, string? name = null) =>
+         client.PostAsync("/api/v1/career/blocks", new { name = name ?? Scenarios.Unique("Блок"), scopeUnitId, competencyIds });
+ 
+diff --git a/tests/Competency.Tests/CompetencyTests.cs b/tests/Competency.Tests/CompetencyTests.cs
+index faf079b..f0d836c 100644
+--- a/tests/Competency.Tests/CompetencyTests.cs
++++ b/tests/Competency.Tests/CompetencyTests.cs
+@@ -54,6 +54,28 @@ public sealed class CompetencyTests(CareerHost fixture) : IClassFixture<CareerHo
+         blankDescription.Json["versionNumber"]!.GetValue<int>().Should().Be(2);
+     }
+ 
++    [Fact]
++    public async Task Ac12_EvidenceExamples_AreKept_ReturnedAndWrittenToTheHistory_AbsentKeepsThemAndBlankClearsThem()
++    {
++        var org = await fixture.OrgAsync();
++
++        var created = (await org.Admin.PostAsync(
++            "/api/v1/career/competencies",
++            new { name = Scenarios.Unique("Навык"), description = (string?)null, evidenceExamples = "  Провёл ревью  ", directionId = (Guid?)null })).Expect(HttpStatusCode.Created);
++        var withoutField = (await org.Admin.PutAsync($"/api/v1/career/competencies/{created.Id}", Body(Name(created), null, description: "Описание"), created.ETag)).Expect(HttpStatusCode.OK);
++        var blank = (await org.Admin.PutAsync(
++            $"/api/v1/career/competencies/{created.Id}",
++            new { name = Name(created), description = "Описание", evidenceExamples = "   ", directionId = (Guid?)null },
++            withoutField.ETag)).Expect(HttpStatusCode.OK);
++
++        var versions = (await org.Admin.GetAsync($"/api/v1/career/competencies/{created.Id}/versions")).Expect(HttpStatusCode.OK).Json!.AsArray();
++
++        created.Json!["evidenceExamples"]!.GetValue<string>().Should().Be("Провёл ревью");
++        withoutField.Json!["evidenceExamples"]!.GetValue<string>().Should().Be("Провёл ревью", "a change that sends no examples keeps them");
++        blank.Json!["evidenceExamples"].Should().BeNull("an empty text clears the examples");
++        versions.Select(version => version!["evidenceExamples"]?.GetValue<string>()).Should().Equal(null, "Провёл ревью", "Провёл ревью");
++    }
++
+     [Fact]
+     public async Task Ac12_Competency_IsValidated()
+     {
+@@ -64,10 +86,15 @@ public sealed class CompetencyTests(CareerHost fixture) : IClassFixture<CareerHo
+         var longDescription = await org.Admin.PostAsync("/api/v1/career/competencies", Body(Scenarios.Unique("Навык"), null, description: new string('я', 4001)));
+         var longestDescription = await org.Admin.PostAsync("/api/v1/career/competencies", Body(Scenarios.Unique("Навык"), null, description: new string('я', 4000)));
+ 
++        var longExamples = await org.Admin.PostAsync("/api/v1/career/competencies", new { name = Scenarios.Unique("Навык"), evidenceExamples = new string('я', 4001), description = (string?)null, directionId = (Guid?)null });
++        var longestExamples = await org.Admin.PostAsync("/api/v1/career/competencies", new { name = Scenarios.Unique("Навык"), evidenceExamples = new string('я', 4000), description = (string?)null, directionId = (Guid?)null });
++
+         blank.FieldErrors("name").Should().Equal("Укажите название");
+         longName.FieldErrors("name").Should().Equal("Не длиннее 200 символов");
+         longDescription.FieldErrors("description").Should().Equal("Не длиннее 4000 символов");
+         longestDescription.Status.Should().Be(HttpStatusCode.Created, longestDescription.Body);
++        longExamples.FieldErrors("evidenceExamples").Should().Equal("Не длиннее 4000 символов");
++        longestExamples.Status.Should().Be(HttpStatusCode.Created, longestExamples.Body);
+     }
+ 
+     [Fact]
+diff --git a/tests/Competency.Tests/DeskCatalogTests.cs b/tests/Competency.Tests/DeskCatalogTests.cs
+index dbc846a..5a14de2 100644
+--- a/tests/Competency.Tests/DeskCatalogTests.cs
++++ b/tests/Competency.Tests/DeskCatalogTests.cs
+@@ -115,6 +115,35 @@ public sealed class DeskCatalogTests(CareerHost fixture) : IClassFixture<CareerH
+         }
+     }
+ 
++    [Fact]
++    public async Task Ac137_Ac138_AnUnusedScaleAndADirectionWithoutTracks_AreForReference_ToHrAndAdministratorsAlone()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var scale = await org.Admin.MakeScaleAsync();
++        var direction = await org.Admin.MakeDirectionAsync();
++
++        foreach (var client in new[] { org.Hr.Client, org.Admin })
++        {
++            var items = await client.ItemsAsync();
++            var unusedScale = items.ItemFor(scale.Id);
++            var emptyDirection = items.ItemFor(direction.Id);
++
++            unusedScale.Kinds().Should().Equal("UnusedScale");
++            unusedScale["object"]!["type"]!.GetValue<string>().Should().Be("Scale");
++            unusedScale["isReference"]!.GetValue<bool>().Should().BeTrue();
++            emptyDirection.Kinds().Should().Equal("DirectionWithoutTracks");
++            emptyDirection["object"]!["type"]!.GetValue<string>().Should().Be("Direction");
++            emptyDirection["isReference"]!.GetValue<bool>().Should().BeTrue();
++        }
++
++        foreach (var client in new[] { org.TeamHead.Client, org.Plain.Client })
++        {
++            var items = await client.ItemsAsync();
++            items.ItemOf(scale.Id).Should().BeNull();
++            items.ItemOf(direction.Id).Should().BeNull();
++        }
++    }
++
+     [Fact]
+     public async Task Ac113_TheDraftsTheDeskAsksToApprove_AreTheDraftsTheServerLetsTheUserApprove_LevelsAside()
+     {
+diff --git a/tests/Competency.Tests/DeskPrerequisiteTests.cs b/tests/Competency.Tests/DeskPrerequisiteTests.cs
+index 96fb2ea..0a8bd28 100644
+--- a/tests/Competency.Tests/DeskPrerequisiteTests.cs
++++ b/tests/Competency.Tests/DeskPrerequisiteTests.cs
+@@ -31,6 +31,8 @@ public sealed class DeskPrerequisiteTests(CareerHost fixture) : IClassFixture<Ca
+         await admin.MakeLevelAsync(track.Id);
+         (await admin.ActivateAsync(track, unit.Id)).Expect(HttpStatusCode.OK);
+         var plainAfterApproval = await PrerequisitesAsync(plain);
++        await admin.InviteUserAsync(Scenarios.Hr);
++        var withInvitedHr = await PrerequisitesAsync(admin);
+         var hr = await admin.CreateUserAsync(Scenarios.Hr);
+         var withHr = await PrerequisitesAsync(admin);
+         var plainWithHr = await PrerequisitesAsync(plain);
+@@ -48,6 +50,7 @@ public sealed class DeskPrerequisiteTests(CareerHost fixture) : IClassFixture<Ca
+         adminSeesDraft.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
+         plainBeforeApproval.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee");
+         plainAfterApproval.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
++        withInvitedHr.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
+         withHr.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack", "HrAccount");
+         plainWithHr.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
+         blockedHr.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
+diff --git a/tests/Competency.Tests/DeskQueryCountTests.cs b/tests/Competency.Tests/DeskQueryCountTests.cs
+new file mode 100644
+index 0000000..4ce797d
+--- /dev/null
++++ b/tests/Competency.Tests/DeskQueryCountTests.cs
+@@ -0,0 +1,65 @@
++using System.Net;
++using AwesomeAssertions;
++using Competency.Tests.Infrastructure;
++using Xunit;
++
++namespace Competency.Tests;
++
++/// <summary>
++/// The number of SQL commands a desk request sends does not depend on how much data the desk is built from: counted in the host's own log of
++/// database commands, once on a small set of units and once on a larger one.
++/// </summary>
++public sealed class DeskQueryCountTests(DeskQueryCountTests.SqlLoggingHost fixture) : IClassFixture<DeskQueryCountTests.SqlLoggingHost>
++{
++    private const int CommandBudget = 25;
++    private const string CommandRecord = "\"EventId\":20101,";
++
++    [Theory]
++    [InlineData("/api/v1/desk")]
++    [InlineData("/api/v1/desk/count")]
++    public async Task Ac4_TheSqlCommandsOfADeskRequest_AreFewAndTheSameOnSmallAndOnLargerData(string route)
++    {
++        var admin = await fixture.Host.AdminAsync();
++        await AddUnitsAsync(admin, 1);
++        await CommandsAsync(admin, route);
++        var small = await CommandsAsync(admin, route);
++
++        await AddUnitsAsync(admin, 12);
++        var large = await CommandsAsync(admin, route);
++
++        small.Should().BeInRange(1, CommandBudget);
++        large.Should().Be(small, "the desk reads each source in sets, not once per unit");
++    }
++
++    private async Task<int> CommandsAsync(ApiClient client, string route)
++    {
++        var probe = Guid.NewGuid().ToString("N");
++        var before = fixture.Host.Logs.Length;
++
++        (await client.GetAsync($"{route}?probe={probe}")).Expect(HttpStatusCode.OK);
++        var logs = await fixture.Host.LogsAfterAsync($"{probe} - 200");
++
++        return logs[before..].Split(CommandRecord).Length - 1;
++    }
++
++    private static async Task AddUnitsAsync(ApiClient admin, int count)
++    {
++        for (var index = 0; index < count; index++)
++        {
++            var unit = await admin.CreateUnitAsync();
++            var head = await admin.CreateEmployeeAsync(unit.Id);
++            (await admin.SetHeadAsync(unit, head.Id)).Expect(HttpStatusCode.OK);
++            await admin.InviteUserAsync(employeeId: head.Id);
++        }
++    }
++
++    /// <summary>
++    /// A host that logs the SQL commands it sends and the end of each request, the latter to tell when the console has caught up.
++    /// </summary>
++    /// <param name="environment">The shared environment that supplies the database.</param>
++    public sealed class SqlLoggingHost(TestEnvironment environment) : HostFixture(environment, new Dictionary<string, string>
++    {
++        ["Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command"] = "Information",
++        ["Logging__LogLevel__Microsoft.AspNetCore.Hosting.Diagnostics"] = "Information",
++    });
++}
+diff --git a/tests/Competency.Tests/Infrastructure/TestEnvironment.cs b/tests/Competency.Tests/Infrastructure/TestEnvironment.cs
+index cad5890..88c32a5 100644
+--- a/tests/Competency.Tests/Infrastructure/TestEnvironment.cs
++++ b/tests/Competency.Tests/Infrastructure/TestEnvironment.cs
+@@ -16,7 +16,13 @@ public sealed class TestEnvironment : IAsyncLifetime
+     private const string PostgresImage = "postgres:18.6-trixie";
+     private const string GssSetting = "GSS Encryption Mode=Disable";
+ 
+-    private readonly PostgreSqlContainer container = new PostgreSqlBuilder(PostgresImage).Build();
++    /// <summary>
++    /// The server's connection limit. The default of 100 runs out while the hosts of the classes that run in parallel start together
++    /// and keep their pooled connections, and a host or a test then fails with "too many clients".
++    /// </summary>
++    private const string ConnectionLimitSetting = "max_connections=500";
++
++    private readonly PostgreSqlContainer container = new PostgreSqlBuilder(PostgresImage).WithCommand("-c", ConnectionLimitSetting).Build();
+     private readonly Lazy<Task<ApiHost>> shared;
+ 
+     public TestEnvironment()
+diff --git a/tests/Competency.Tests/LevelPositionTests.cs b/tests/Competency.Tests/LevelPositionTests.cs
+index 3e4764c..baaf2dc 100644
+--- a/tests/Competency.Tests/LevelPositionTests.cs
++++ b/tests/Competency.Tests/LevelPositionTests.cs
+@@ -1,4 +1,5 @@
+ using System.Net;
++using System.Text.Json.Nodes;
+ using AwesomeAssertions;
+ using Competency.Tests.Infrastructure;
+ using Xunit;
+@@ -46,6 +47,28 @@ public sealed class LevelPositionTests(CareerHost fixture) : IClassFixture<Caree
+             .Should().Be(HttpStatusCode.NotFound, "the link is gone");
+     }
+ 
++    [Fact]
++    public async Task Ac90_TheTrackAPositionIsLinkedTo_IsNamedToWhoCanSeeIt_AndNotToWhoCannot()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var (track, level) = await DraftTrackWithLevelAsync(org);
++        var position = await PositionAsync(org, org.Department.Id);
++        (await LinkAsync(org.Admin, level, position)).Expect(HttpStatusCode.OK);
++
++        var namedRefusal = await org.TeamHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Team.Id, positionId = position });
++        var unnamedRefusal = await org.SiblingHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Sibling.Id, positionId = position });
++        var listedForTeam = await LinkedTrackOfAsync(org.TeamHead.Client, org.Team.Id, position);
++        var listedForSibling = await LinkedTrackOfAsync(org.SiblingHead.Client, org.Sibling.Id, position);
++
++        var trackName = track.Json!["name"]!.GetValue<string>();
++        namedRefusal.Status.Should().Be(HttpStatusCode.Conflict, namedRefusal.Body);
++        namedRefusal.Json!["detail"]!.GetValue<string>().Should().Contain(trackName);
++        unnamedRefusal.Status.Should().Be(HttpStatusCode.Conflict, unnamedRefusal.Body);
++        unnamedRefusal.Json!["detail"]!.GetValue<string>().Should().Contain("связана с уровнем трека").And.NotContain(trackName);
++        listedForTeam!["id"]!.GetValue<Guid>().Should().Be(track.Id);
++        listedForSibling.Should().BeNull("a draft track of another unit is not shown to its head");
++    }
++
+     [Fact]
+     public async Task Ac91_AnActiveTrack_HasItsLinksChangedByTheHrAndTheAdministratorOnly_AndItsHeadMayReadThem()
+     {
+@@ -336,6 +359,10 @@ public sealed class LevelPositionTests(CareerHost fixture) : IClassFixture<Caree
+         return (track, await org.Admin.MakeLevelAsync(track.Id));
+     }
+ 
++    private static async Task<JsonNode?> LinkedTrackOfAsync(ApiClient client, Guid unitId, Guid positionId) =>
++        (await client.GetAsync($"/api/v1/career/org-units/{unitId}/matrix-positions?pageSize=200")).Expect(HttpStatusCode.OK).Json!["items"]!.AsArray()
++            .Single(item => item!["id"]!.GetValue<Guid>() == positionId)!["linkedTrack"];
++
+     private static async Task<Guid> PositionAsync(CareerOrg org, Guid unitId) => await org.Admin.PositionAsync(unitId, Scenarios.Unique("Должность"));
+ 
+     private static Task<ApiResponse> LinkAsync(ApiClient client, ApiResponse level, Guid positionId) =>
+diff --git a/tests/Competency.Tests/MatrixAccessTests.cs b/tests/Competency.Tests/MatrixAccessTests.cs
+index eecfbff..c8ecad5 100644
+--- a/tests/Competency.Tests/MatrixAccessTests.cs
++++ b/tests/Competency.Tests/MatrixAccessTests.cs
+@@ -229,6 +229,25 @@ public sealed class MatrixAccessTests(CareerHost fixture) : IClassFixture<Career
+         }
+     }
+ 
++    [Fact]
++    public async Task Ac18_TheDraftTrackOfAVersionInWork_IsReadByTheSuperiorApprover_AndByNoOneOutsideTheRoute()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
++        var path = $"/api/v1/career/tracks/{kit.Track.Id}";
++
++        kit.Track.Json!["status"]!.GetValue<string>().Should().Be("Draft");
++        foreach (var reader in new[] { org.TeamHead, org.DepartmentHead, org.Hr })
++        {
++            (await reader.Client.GetAsync(path)).Status.Should().Be(HttpStatusCode.OK, reader.User.Email);
++        }
++
++        foreach (var stranger in new[] { org.Plain, org.SiblingHead, org.RootHead })
++        {
++            (await stranger.Client.GetAsync(path)).Status.Should().Be(HttpStatusCode.NotFound, stranger.User.Email);
++        }
++    }
++
+     [Fact]
+     public async Task Ac16_Approvals_ListTheVersionsWaitingForTheUser_LongestWaitingFirst_AndFilterByUnitAndStep()
+     {
+diff --git a/tests/Competency.Tests/MatrixCreationTests.cs b/tests/Competency.Tests/MatrixCreationTests.cs
+index d9da09f..9755acd 100644
+--- a/tests/Competency.Tests/MatrixCreationTests.cs
++++ b/tests/Competency.Tests/MatrixCreationTests.cs
+@@ -146,6 +146,12 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
+             ("a requirement of a competency outside the version", c => c["requirements"]![0]!["competencyId"] = Guid.NewGuid(), "Требование относится к уровню или компетенции не из версии"),
+             ("a threshold above 100", c => c["levels"]![0]!["minOverallPercent"] = 100.5m, "Коэффициенты и пороги — от 0 до 100 %"),
+             ("a negative coefficient", c => c["blockWeights"]![0]!["percent"] = -1, "Коэффициенты и пороги — от 0 до 100 %"),
++            ("a competency type that names no type", c => c["competencies"]![0]!["type"] = 999, "Укажите допустимый тип компетенции"),
++            ("a type that names no type inside a shared block", c => c["sharedBlocks"] = new JsonArray(new JsonObject
++            {
++                ["blockId"] = Guid.NewGuid(),
++                ["competencyTypes"] = new JsonArray(new JsonObject { ["competencyId"] = Guid.NewGuid(), ["type"] = 999 }),
++            }), "Укажите допустимый тип компетенции"),
+         };
+ 
+         foreach (var (reason, breakIt, message) in cases)
+diff --git a/tests/Competency.Tests/MatrixWorkflowTests.cs b/tests/Competency.Tests/MatrixWorkflowTests.cs
+index 173475a..aab9ad0 100644
+--- a/tests/Competency.Tests/MatrixWorkflowTests.cs
++++ b/tests/Competency.Tests/MatrixWorkflowTests.cs
+@@ -629,7 +629,10 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
+         var org = await fixture.OrgAsync();
+         var kit = await MatrixKit.CreateAsync(org);
+         var opened = await kit.ETagAsync();
+-        (await kit.SaveAsync(org.TeamHead.Client, kit.Content(4), opened)).Expect(HttpStatusCode.OK);
++        var incomplete = kit.Content();
++        incomplete["competencies"]!.AsArray().Clear();
++        incomplete["requirements"]!.AsArray().Clear();
++        (await kit.SaveAsync(org.TeamHead.Client, incomplete, opened)).Expect(HttpStatusCode.OK);
+ 
+         var stale = await kit.TransitAsync(org.TeamHead.Client, "submit", etag: opened);
+ 
+diff --git a/tests/Competency.Tests/PublicationCascadeTests.cs b/tests/Competency.Tests/PublicationCascadeTests.cs
+index bb46704..bd48d61 100644
+--- a/tests/Competency.Tests/PublicationCascadeTests.cs
++++ b/tests/Competency.Tests/PublicationCascadeTests.cs
+@@ -169,6 +169,107 @@ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<
+         after.Json["status"]!.GetValue<string>().Should().Be("Active");
+     }
+ 
++    [Fact]
++    public async Task Ac107_Ac114_ApprovingABlock_PublishesTheDraftCompetenciesOfItsComposition_EachWithANewVersionInItsHistory()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var competency = await org.TeamHead.Client.MakeCompetencyAsync();
++        var block = (await org.TeamHead.Client.PostAsync(
++            "/api/v1/career/blocks",
++            new { name = Scenarios.Unique("Блок"), scopeUnitId = (Guid?)org.Team.Id, competencyIds = new[] { competency.Id } })).Expect(HttpStatusCode.Created);
++        var path = $"/api/v1/career/blocks/{block.Id}";
++        var before = await VersionsAsync(org.Admin, competency.Id);
++
++        var preview = (await org.Hr.Client.GetAsync($"{path}/publication")).Expect(HttpStatusCode.OK).Json!;
++        (await org.Hr.Client.PostAsync(
++            $"{path}/approve?cascade={Uri.EscapeDataString(preview["cascadeTag"]!.GetValue<string>())}",
++            ifMatch: block.ETag)).Expect(HttpStatusCode.OK);
++
++        var after = await VersionsAsync(org.Admin, competency.Id);
++        Entries(preview).Should().BeEquivalentTo([("Competency", competency.Id)]);
++        (await StatusAsync(org.Admin, "competencies", competency.Id)).Should().Be("Active");
++        before.Select(version => version.Status).Should().Equal("Draft");
++        after.Select(version => version.Status).Should().Equal("Active", "Draft");
++        after[0].Number.Should().Be(before.Single().Number + 1);
++    }
++
++    [Fact]
++    public async Task Ac144_ADraftBlockOutsideTheResponsibleHrsUnits_IsPublishedWhenThatHrIsAlsoAnAdministrator_WhoeverAcceptsTheirChanges()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var draftCompetency = await org.TeamHead.Client.MakeCompetencyAsync();
++        var head = await org.Admin.GrantHrRoleAsync(fixture.Host, org.TeamHead);
++        var block = (await head.Client.PostAsync(
++            "/api/v1/career/blocks",
++            new { name = Scenarios.Unique("Блок"), scopeUnitId = (Guid?)org.Department.Id, competencyIds = new[] { draftCompetency.Id } })).Expect(HttpStatusCode.Created);
++        var responsible = await org.Admin.HrOfAsync(fixture.Host, org.Team.Id);
++        var kit = await MatrixKit.CreateAsync(org, author: head.Client);
++        (await kit.SaveAsync(head.Client, ContentWithBlock(kit, block.Id, draftCompetency.Id, seniorScore: 3))).Expect(HttpStatusCode.OK);
++        (await kit.TransitAsync(head.Client, "submit")).Expect(HttpStatusCode.OK);
++        (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
++        (await kit.SaveAsync(responsible.Client, ContentWithBlock(kit, block.Id, draftCompetency.Id, seniorScore: 4))).Expect(HttpStatusCode.OK);
++        (await kit.TransitAsync(responsible.Client, "return", new { comment = "Поправил" })).Expect(HttpStatusCode.OK);
++
++        var asOnlyHr = await kit.TransitAsync(head.Client, "accept-changes");
++        await AddAdministratorRoleAsync(org.Admin, responsible);
++        var asAlsoAdministrator = await kit.TransitAsync(head.Client, "accept-changes");
++
++        asOnlyHr.Status.Should().Be(HttpStatusCode.Conflict, asOnlyHr.Body);
++        asOnlyHr.Json!["blockers"]!.AsArray().Select(blocker => $"{blocker!["id"]}/{blocker["reason"]}").Should().Equal($"{block.Id}/NoRight");
++        asAlsoAdministrator.Status.Should().Be(HttpStatusCode.OK, asAlsoAdministrator.Body);
++        asAlsoAdministrator.Json!["status"]!.GetValue<string>().Should().Be("Published");
++        (await StatusAsync(org.Admin, "blocks", block.Id)).Should().Be("Active");
++        (await StatusAsync(org.Admin, "competencies", draftCompetency.Id)).Should().Be("Active");
++    }
++
++    [Fact]
++    public async Task Ac109_Ac110_APreview_NamesEveryBlockerTheReaderSees_WhateverItsKind()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var head = org.TeamHead.Client;
++        var directionName = Scenarios.Unique("Область");
++        var direction = (await head.PostAsync("/api/v1/career/directions", new { name = directionName })).Expect(HttpStatusCode.Created);
++        var track = (await head.PostAsync("/api/v1/career/tracks", new { name = Scenarios.Unique("Трек"), ownerOrgUnitId = org.Team.Id, directionId = direction.Id })).Expect(HttpStatusCode.Created);
++        var level = await head.MakeLevelAsync(track.Id);
++        await org.Admin.MakeDirectionAsync(directionName.ToUpperInvariant());
++
++        var preview = (await org.Hr.Client.GetAsync($"/api/v1/career/tracks/{track.Id}/publication")).Expect(HttpStatusCode.OK).Json!;
++
++        preview["blockers"]!.AsArray().Select(blocker => $"{blocker!["kind"]}/{blocker["reason"]}/{blocker["id"]}").Should()
++            .BeEquivalentTo([$"Direction/NameTaken/{direction.Id}", $"Level/NoActivePosition/{level.Id}"]);
++    }
++
++    private static async Task AddAdministratorRoleAsync(ApiClient admin, Member member)
++    {
++        var current = await admin.GetUserAsync(member.Id);
++        (await admin.PutAsync(
++            $"/api/v1/users/{member.Id}",
++            new { email = member.User.Email, roles = new[] { Scenarios.Hr, Scenarios.GlobalAdmin }, employeeId = member.EmployeeId },
++            current.ETag)).Expect(HttpStatusCode.OK);
++    }
++
++    private static JsonObject ContentWithBlock(MatrixKit kit, Guid blockId, Guid competencyId, int seniorScore)
++    {
++        var content = kit.Content();
++        content["competencies"] = new JsonArray();
++        content["sharedBlocks"] = new JsonArray(new JsonObject
++        {
++            ["blockId"] = blockId,
++            ["competencyTypes"] = new JsonArray(new JsonObject { ["competencyId"] = competencyId, ["type"] = "Profile" }),
++        });
++        content["blockWeights"] = new JsonArray(
++            new JsonObject { ["levelId"] = kit.Junior.Id, ["blockId"] = blockId, ["percent"] = 100 },
++            new JsonObject { ["levelId"] = kit.Senior.Id, ["blockId"] = blockId, ["percent"] = 100 });
++        content["requirements"] = new JsonArray(
++            new JsonObject { ["levelId"] = kit.Junior.Id, ["competencyId"] = competencyId, ["requiredScore"] = 2 },
++            new JsonObject { ["levelId"] = kit.Senior.Id, ["competencyId"] = competencyId, ["requiredScore"] = seniorScore });
++        return content;
++    }
++
++    private static async Task<(int Number, string Status)[]> VersionsAsync(ApiClient client, Guid competencyId) =>
++        [.. (await client.GetAsync($"/api/v1/career/competencies/{competencyId}/versions")).Expect(HttpStatusCode.OK).Json!.AsArray()
++            .Select(version => (version!["number"]!.GetValue<int>(), version["status"]!.GetValue<string>()))];
++
+     private static (string Kind, Guid Id)[] Entries(JsonNode preview) =>
+         [.. preview["entries"]!.AsArray().Select(entry => (entry!["kind"]!.GetValue<string>(), entry["id"]!.GetValue<Guid>()))];
+ 
+diff --git a/tests/Competency.Tests/ScenarioReadTests.cs b/tests/Competency.Tests/ScenarioReadTests.cs
+index 88d7f31..b05b952 100644
+--- a/tests/Competency.Tests/ScenarioReadTests.cs
++++ b/tests/Competency.Tests/ScenarioReadTests.cs
+@@ -223,6 +223,47 @@ public sealed class ScenarioReadTests(CareerHost fixture) : IClassFixture<Career
+         (await org.Admin.GetAsync("/api/v1/career/unused-entries?page=0")).Status.Should().Be(HttpStatusCode.BadRequest);
+     }
+ 
++    [Fact]
++    public async Task Ac137_Ac138_Ac140_EachKindFilterOfTheUnusedEntries_ListsOnlyThatKind_WithTheEntrysVersion_AndTheTotalsOfTheKindsAddUp()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var competency = await org.Admin.MakeCompetencyAsync();
++        var scale = await org.Admin.MakeScaleAsync();
++        var direction = await org.Admin.MakeDirectionAsync();
++        var renamed = new Dictionary<string, ApiResponse>
++        {
++            ["Competency"] = (await org.Admin.PutAsync(
++                $"/api/v1/career/competencies/{competency.Id}",
++                new { name = Scenarios.Unique("Правка"), description = (string?)null, directionId = (Guid?)null, scaleId = (Guid?)null },
++                competency.ETag)).Expect(HttpStatusCode.OK),
++            ["Scale"] = (await org.Admin.PutAsync(
++                $"/api/v1/career/scales/{scale.Id}",
++                new { name = Scenarios.Unique("Правка"), points = CareerScenarios.Points() },
++                scale.ETag)).Expect(HttpStatusCode.OK),
++            ["Direction"] = (await org.Admin.PutAsync(
++                $"/api/v1/career/directions/{direction.Id}",
++                new { name = Scenarios.Unique("Правка") },
++                direction.ETag)).Expect(HttpStatusCode.OK),
++        };
++
++        var everything = (await org.Admin.GetAsync("/api/v1/career/unused-entries?pageSize=200")).Expect(HttpStatusCode.OK).Json!;
++        var totals = 0;
++        foreach (var (kind, entry) in renamed)
++        {
++            var listed = (await org.Admin.GetAsync($"/api/v1/career/unused-entries?kind={kind}&pageSize=200")).Expect(HttpStatusCode.OK).Json!;
++            var items = listed["items"]!.AsArray();
++            var row = items.Single(item => item!["id"]!.GetValue<Guid>() == entry.Id)!;
++
++            items.Select(item => item!["kind"]!.GetValue<string>()).Should().OnlyContain(itemKind => itemKind == kind, kind);
++            listed["total"]!.GetValue<int>().Should().Be(items.Count, kind);
++            row["name"]!.GetValue<string>().Should().Be(entry.Json!["name"]!.GetValue<string>(), kind);
++            $"\"{row["version"]!.GetValue<int>()}\"".Should().Be(entry.ETag, $"{kind}: the row carries the version the entry is changed with");
++            totals += listed["total"]!.GetValue<int>();
++        }
++
++        everything["total"]!.GetValue<int>().Should().Be(totals, "every unused entry is of exactly one of the three kinds");
++    }
++
+     private static string[] Kinds(JsonNode diff) =>
+         [.. diff["changes"]!.AsArray().Select(change => $"{change!["kind"]!.GetValue<string>()}/{change["type"]!.GetValue<string>()}")];
+ 
+diff --git a/tests/Competency.Tests/UnitSetupTests.cs b/tests/Competency.Tests/UnitSetupTests.cs
+index 9297fb9..8327102 100644
+--- a/tests/Competency.Tests/UnitSetupTests.cs
++++ b/tests/Competency.Tests/UnitSetupTests.cs
+@@ -28,7 +28,11 @@ public sealed class UnitSetupTests(CareerHost fixture) : IClassFixture<CareerHos
+         var withInvited = await SetupAsync(admin, path);
+         (await admin.PostAsync($"/api/v1/users/{invited.Id}/block", ifMatch: (await admin.GetUserAsync(invited.Id)).ETag)).Expect(HttpStatusCode.OK);
+         var withBlocked = await SetupAsync(admin, path);
+-        var candidate = await admin.HrCandidateAsync(fixture.Host, (await admin.CreateUnitAsync()).Id);
++        var otherUnit = await admin.CreateUnitAsync();
++        var invitedHrEmployee = await admin.CreateEmployeeAsync(otherUnit.Id);
++        await admin.InviteUserAsync(Scenarios.Hr, invitedHrEmployee.Id);
++        var withInvitedHr = await SetupAsync(admin, path);
++        var candidate = await admin.HrCandidateAsync(fixture.Host, otherUnit.Id);
+         var withCandidate = await SetupAsync(admin, path);
+         (await admin.AssignHrAsync(unit.Id, candidate.EmployeeId)).Expect(HttpStatusCode.NoContent);
+         var withHr = await SetupAsync(admin, path);
+@@ -43,6 +47,7 @@ public sealed class UnitSetupTests(CareerHost fixture) : IClassFixture<CareerHos
+         withHead.Json["head"]!["id"]!.GetValue<Guid>().Should().Be(employee.Id);
+         withInvited.Rows[1].Should().Be("HeadAccount/Missing/Invited");
+         withBlocked.Rows[1].Should().Be("HeadAccount/Missing/Blocked");
++        withInvitedHr.Rows[2..4].Should().Equal("Hr/Missing/NoHrCandidates", "HrAccount/Waiting/NoHr");
+         withCandidate.Rows[2..4].Should().Equal("Hr/Missing/NoHr", "HrAccount/Waiting/NoHr");
+         withHr.Rows[2..4].Should().Equal("Hr/Ready/", "HrAccount/Ready/");
+         withHr.Json["hr"]!["employeeId"]!.GetValue<Guid>().Should().Be(candidate.Employee);
