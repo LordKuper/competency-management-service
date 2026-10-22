@@ -312,6 +312,14 @@
       "decision": "AC-63 incremental DB migrations until release (data transfer where the dev DB needs it), squash and recreate right before release; API still without backward compat; Task 77 schema change as a migration over InitialCreate 20261021091246; Task 79 wave 52, Task 80 wave 53",
       "reason": "user decision 2026-10-21; cost 0",
       "evidence": "decisions-log.md 2026-10-21 AC-63"
+    },
+    {
+      "gate": "initial impl assessment",
+      "decision_actor": "user",
+      "decision": "approve",
+      "reason": "user approved after build-card and onboarding-cancel round",
+      "evidence": "decisions-log.md 2026-10-22 impl assessment approved",
+      "artifact_revision": "e6a5588"
     }
   ],
   "task_routing": {
@@ -1284,7 +1292,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-21T14:58:38.697Z",
+  "updated_at": "2026-10-22T11:50:47.818Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
