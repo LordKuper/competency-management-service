@@ -9,7 +9,7 @@ namespace Competency.CareerFramework;
 /// </summary>
 internal static class CareerDirectionEndpoints
 {
-    private const string InUseMessage = "Направление используют треки, компетенции или матрицы — удалить нельзя";
+    private const string InUseMessage = "Область используют треки, компетенции или матрицы — удалить нельзя";
 
     internal static readonly CatalogKind<CareerDirection, CatalogEntryResponse> Kind = new("CareerDirection", (entry, _, viewer) => CatalogEntryResponse.From(entry, viewer));
 
