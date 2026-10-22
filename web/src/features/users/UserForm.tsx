@@ -1,4 +1,4 @@
-import { Button, Checkbox, Flex, Form, Input, Space } from "antd";
+import { Button, Flex, Form, Input, Select, Space } from "antd";
 import type { ReactNode } from "react";
 import type { UserRole } from "../../app/featureContract";
 import { useFormSubmit } from "../../app/useFormSubmit";
@@ -27,7 +27,7 @@ interface UserFormProps {
   isNew?: boolean;
   /** Fixes the employee and leaves the account without special roles, as when an account is created for a given employee: their fields are not shown. */
   lockedTo?: { employeeId: string };
-  /** The server refusal to show under the roles, which keeps the checkboxes as the administrator left them. */
+  /** The server refusal to show under the roles, which keeps the selected roles as the administrator left them. */
   rolesError?: string;
   submitLabel: string;
   cancelLabel?: string;
@@ -40,9 +40,6 @@ interface UserFormProps {
   /** Puts the buttons of a scenario step into one row, `start` at the left and `end` before the submit button at the right, in place of the cancel button. */
   scenarioActions?: { start?: ReactNode; end?: ReactNode };
 }
-
-const ROLES_HINT =
-  "Без отмеченных ролей учётная запись — обычный пользователь. Роль «HR» открывает просмотр оргструктуры, ведение справочника должностей и утверждение черновых записей справочников и позволяет закрепить привязанного сотрудника ответственным HR подразделения.";
 
 const NEW_ACCOUNT_VALUES: UserFormValues = { email: "", roles: [] };
 
@@ -104,9 +101,12 @@ export function UserForm({
             label="Роли"
             validateStatus={rolesError ? "error" : undefined}
             help={rolesError}
-            extra={rolesError ? undefined : ROLES_HINT}
           >
-            <Checkbox.Group options={ROLE_OPTIONS} />
+            <Select
+              mode="multiple"
+              options={ROLE_OPTIONS}
+              placeholder="Пользователь без ролей"
+            />
           </Form.Item>
           <Form.Item name="employeeId" label="Сотрудник">
             <EmployeePicker current={employee} />
