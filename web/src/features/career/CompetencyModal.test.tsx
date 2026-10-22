@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
@@ -68,7 +69,9 @@ function open(competency?: Competency, override: () => void = () => undefined) {
   override();
   render(
     <Providers>
-      <CompetencyModal competency={competency} onClose={() => undefined} />
+      <MemoryRouter>
+        <CompetencyModal competency={competency} onClose={() => undefined} />
+      </MemoryRouter>
     </Providers>,
   );
   return userEvent.setup();

@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
@@ -26,7 +27,9 @@ function open(scale?: Scale) {
   const onClose = vi.fn();
   render(
     <Providers>
-      <ScaleModal scale={scale} onClose={onClose} />
+      <MemoryRouter>
+        <ScaleModal scale={scale} onClose={onClose} />
+      </MemoryRouter>
     </Providers>,
   );
   return { onClose, user: userEvent.setup() };
