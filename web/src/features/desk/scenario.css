@@ -11,11 +11,6 @@
   background: var(--ant-color-error-bg);
 }
 
-/* The list of a queue: the chosen record stands out by the primary subtle tone and keeps its text colour. */
-.queue-row-selected {
-  background: var(--ant-color-primary-bg);
-}
-
 .queue-row {
   display: block;
   width: 100%;
@@ -27,6 +22,11 @@
   color: inherit;
   text-align: start;
   cursor: pointer;
+}
+
+/* The chosen record stands out by the primary subtle tone and keeps its text colour; it follows the base rule to win over it. */
+.queue-row-selected {
+  background: var(--ant-color-primary-bg);
 }
 
 .queue-row:hover {
