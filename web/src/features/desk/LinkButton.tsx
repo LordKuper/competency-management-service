@@ -7,7 +7,7 @@ interface LinkButtonProps extends Pick<ButtonProps, "type" | "children"> {
   state?: unknown;
 }
 
-/** A link that looks like a button: it is an anchor, so it opens in a new tab on request, and navigates inside the application otherwise. */
+/** A link that looks like a button: a plain left click navigates inside the application, a modified or middle click opens it the browser's way, as in a new tab. */
 export function LinkButton({ to, type, state, children }: LinkButtonProps) {
   const navigate = useNavigate();
   return (
@@ -15,6 +15,15 @@ export function LinkButton({ to, type, state, children }: LinkButtonProps) {
       type={type}
       href={to}
       onClick={(event) => {
+        if (
+          event.button !== 0 ||
+          event.ctrlKey ||
+          event.metaKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
         event.preventDefault();
         void navigate(to, { state });
       }}
