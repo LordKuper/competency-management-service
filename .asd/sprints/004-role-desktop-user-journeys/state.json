@@ -1,7 +1,7 @@
 {
   "sprint_id": "004-role-desktop-user-journeys",
   "branch": "sprint/004-role-desktop-user-journeys",
-  "phase": "impl",
+  "phase": "impl-test",
   "workflow": "standard",
   "documents": {
     "audit": true,
@@ -320,6 +320,14 @@
       "reason": "user approved after build-card and onboarding-cancel round",
       "evidence": "decisions-log.md 2026-10-22 impl assessment approved",
       "artifact_revision": "e6a5588"
+    },
+    {
+      "gate": "review escalation: requirement change AC-110",
+      "decision_actor": "user",
+      "decision": "hide unreadable entries, show count; AC-112 over full cascade",
+      "reason": "external wave-1/iter-03 finding 1 conflicts with AC-110",
+      "evidence": "decisions-log.md 2026-10-22 AC-110 amendment",
+      "artifact_revision": "6003748"
     }
   ],
   "task_routing": {
@@ -1288,6 +1296,24 @@
       "tier": "critical",
       "reason": "risk:security",
       "resolved_model": "sonnet"
+    },
+    "review-fix wave-1/iter-03 requirements": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-1/iter-03": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "opus"
+    },
+    "impl-test entry 5": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -1389,8 +1415,8 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-22T17:02:07.878Z",
-  "review_fixes_pending": "wave-1/iter-03",
+  "updated_at": "2026-10-22T18:10:53.380Z",
+  "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
   "archived_at": null

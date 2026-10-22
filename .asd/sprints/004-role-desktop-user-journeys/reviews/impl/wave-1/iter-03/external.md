@@ -25,3 +25,7 @@ CONCERNS: 1
 Route finding 1 to review-fix. Codex validated by source inspection only and did not run tests.
 
 Stalemate check: not triggered. The previous iteration's finding set was CatalogStore.cs:65 and CatalogPublication.cs:176. The only finding now is PublicationPlan.cs:69, so the sets differ.
+
+## User-approved change (2026-10-22)
+
+Finding 1 accepted for fix with a requirement change: AC-110 amended — the publisher's list names only entities the publisher may read; the rest appear as a count («и ещё N»); the AC-112 confirmation check stays over the full cascade on the server.
