@@ -28,12 +28,10 @@ interface Scenario {
   isFor: (roles: SessionRoles) => boolean;
   /** Fixed entry screen; scenarios opened on one version start from the first item waiting in their groups. */
   path?: string;
-  /** Groups whose items the scenario works through. */
+  /** Groups whose items the scenario works through; the card is shown only on a loaded desk while their total is above 0. */
   groups?: DeskGroup[];
   /** Reference queues are counted as waiting in the queue, not waiting for the user. */
   isQueue?: boolean;
-  /** A queue with its own screen that has a card only while its groups hold items. */
-  isShownWhenWaiting?: boolean;
   /** Shown only on a loaded desk whose prerequisites satisfy it. */
   holds?: (prerequisites: DeskPrerequisite[]) => boolean;
 }
@@ -107,7 +105,6 @@ const SCENARIOS: Scenario[] = [
     isFor: (roles) => roles.isHr || roles.isAdmin,
     path: deskPaths.drafts,
     groups: ["DraftsToApprove"],
-    isShownWhenWaiting: true,
   },
   {
     key: "connect",
@@ -151,7 +148,6 @@ const SCENARIOS: Scenario[] = [
     isFor: (roles) => roles.isHr || roles.isAdmin,
     path: deskPaths.catalogCleanup,
     groups: ["UnusedCatalogEntries"],
-    isShownWhenWaiting: true,
     isQueue: true,
   },
   {
@@ -163,11 +159,10 @@ const SCENARIOS: Scenario[] = [
     path: deskPaths.orgCleanup,
     groups: [...ORG_QUEUE_GROUPS],
     isQueue: true,
-    isShownWhenWaiting: true,
   },
 ];
 
-/** The screen a scenario opens: its own, or that of the first item waiting in its groups; null when it needs an object or a queue and nothing waits. */
+/** The screen a scenario opens: its own, or that of the first item waiting in its groups; null when its prerequisites fail or its groups are empty or not loaded. */
 function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
   if (scenario.holds && !(desk && scenario.holds(desk.prerequisites))) {
     return null;
@@ -175,10 +170,7 @@ function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
   const groups = desk?.groups.filter((group) =>
     scenario.groups?.includes(group.group),
   );
-  if (
-    scenario.isShownWhenWaiting &&
-    !groups?.some((group) => group.total > 0)
-  ) {
+  if (scenario.groups && !groups?.some((group) => group.total > 0)) {
     return null;
   }
   if (scenario.path) return scenario.path;
@@ -188,8 +180,8 @@ function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
 
 /**
  * "Что можно сделать": a card for every scenario the user's roles allow that can be opened now, «Моё место в компании»
- * first. A scenario that works on one object from a desk group, and a queue, have no card until something waits, so
- * there is never an inert card; a scenario with prerequisites waits for the loaded desk. The empty state follows the
+ * first. A scenario with desk groups has no card until the loaded desk shows something waiting in them, so there is
+ * never an inert or zero-count card; a scenario with prerequisites waits for the loaded desk. The empty state follows the
  * roles: no roles at all gives the unbound-account text, roles whose cards are all hidden on a loaded desk give the
  * neutral one.
  */
@@ -305,6 +297,5 @@ function ScenarioCard({
 }
 
 function waitingCaption(waiting: number, isQueue: boolean | undefined): string {
-  if (waiting === 0) return "Сейчас таких нет";
   return isQueue ? `В очереди: ${waiting}` : `Ждут вас: ${waiting}`;
 }
