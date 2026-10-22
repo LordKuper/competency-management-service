@@ -120,6 +120,53 @@ describe("sign-in (AC-6, AC-13)", () => {
   });
 });
 
+describe("return to the requested page (AC-15.13, AC-15.14)", () => {
+  it("carries the page a visitor asked for through sign-in and opens it, saying so on the sign-in screen", async () => {
+    fakeApi.on("GET /api/v1/auth/me", () => problem(401));
+    fakeApi.on("POST /api/v1/auth/login", () => Response.json(ACCOUNT));
+    fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([]));
+
+    await openApp(paths.tree);
+
+    expect(
+      await screen.findByRole("heading", { name: SIGN_IN_HEADING }),
+    ).toBeInTheDocument();
+    expect(router.state.location.search).toBe(
+      `?returnTo=${encodeURIComponent(paths.tree)}`,
+    );
+    expect(
+      screen.getByText(/После входа откроется страница/),
+    ).toBeInTheDocument();
+    fakeApi.on("GET /api/v1/auth/me", () => Response.json(ACCOUNT));
+    await submitCredentials();
+    expect(
+      await screen.findByRole("button", { name: ACCOUNT.email }),
+    ).toBeInTheDocument();
+    expect(currentPath()).toBe(paths.tree);
+  });
+
+  it("opens home, and says nothing about a page, when the address names a target outside the application", async () => {
+    fakeApi.on("POST /api/v1/auth/login", () => Response.json(ACCOUNT));
+    fakeApi.on("GET /api/v1/auth/me", () => Response.json(ACCOUNT));
+
+    await openApp(
+      `${LOGIN_PATH}?returnTo=${encodeURIComponent("//evil.example/steal")}`,
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: SIGN_IN_HEADING }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/После входа откроется страница/),
+    ).not.toBeInTheDocument();
+    await submitCredentials();
+    expect(
+      await screen.findByRole("button", { name: ACCOUNT.email }),
+    ).toBeInTheDocument();
+    expect(currentPath()).toBe(HOME_PATH);
+  });
+});
+
 describe("sign-out (AC-6, AC-13)", () => {
   it("ends the session, empties the cache and replaces the page with the sign-in screen", async () => {
     answerAsSignedIn();
