@@ -12,7 +12,7 @@ namespace Competency.Tests;
 /// </summary>
 public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<CareerHost>
 {
-    private const string DirectionInUse = "Направление используют треки, компетенции или матрицы — удалить нельзя";
+    private const string DirectionInUse = "Область используют треки, компетенции или матрицы — удалить нельзя";
     private const string TrackInUse = "Трек используют матрицы — удалить нельзя";
     private const string LevelInUse = "Уровень используют матрицы — удалить нельзя";
     private const string CompetencyInUse = "Компетенцию используют матрицы — удалить нельзя";
