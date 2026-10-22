@@ -11,7 +11,7 @@ type DeskInvitation = components["schemas"]["DeskInvitation"];
 
 const SENDING_KEY = "desk-resend-invitation";
 
-/** What the desk needs to send invitations again: the action, and which account is being sent to while a send runs. */
+/** What the desk needs to send invitations again. */
 export interface InvitationResend {
   send: (invitation: DeskInvitation) => void;
   /** The account a send is running for; every other send waits until it ends. */

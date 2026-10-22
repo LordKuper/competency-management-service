@@ -173,7 +173,7 @@ function GroupHeading({
 }
 
 /**
- * The rows of a group: the first ten, then twenty more per "Показать ещё", read again from the start since done items
+ * The rows of a group: the first page, then one more page per "Показать ещё", read again from the start since done items
  * leave. A group longer than the server returns says so under the table instead of offering more.
  */
 function GroupRows({

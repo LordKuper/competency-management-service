@@ -28,13 +28,13 @@ interface Scenario {
   isFor: (roles: SessionRoles) => boolean;
   /** Fixed entry screen; scenarios opened on one version start from the first item waiting in their groups. */
   path?: string;
-  /** Groups whose items the scenario works through; the card is shown only on a loaded desk while their total is above 0. */
+  /** Groups whose items the scenario works through. */
   groups?: DeskGroup[];
   /** Reference queues are counted as waiting in the queue, not waiting for the user. */
   isQueue?: boolean;
   /** The card stays on a loaded desk with nothing waiting; its caption then shows only while something waits. */
   isAlwaysShown?: boolean;
-  /** Shown only on a loaded desk whose prerequisites satisfy it. */
+  /** The prerequisites the scenario needs to be offered. */
   holds?: (prerequisites: DeskPrerequisite[]) => boolean;
 }
 
@@ -186,11 +186,9 @@ function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
 }
 
 /**
- * "Что можно сделать": a card for every scenario the user's roles allow that can be opened now, «Моё место в компании»
- * first. A scenario with desk groups has no card until the loaded desk shows something waiting in them, so there is
- * never an inert or zero-count card; a scenario with prerequisites waits for the loaded desk. The empty state follows the
- * roles: no roles at all gives the unbound-account text, roles whose cards are all hidden on a loaded desk give the
- * neutral one.
+ * "Что можно сделать": a card for every scenario the user's roles allow that can be opened now, so there is never an
+ * inert or zero-count card; the setup cards come first, then «Моё место в компании». The empty state follows the roles:
+ * no roles at all gives the unbound-account text, roles whose cards are all hidden on a loaded desk give the neutral one.
  */
 export function DeskScenarios({
   roles,

@@ -7,7 +7,7 @@ interface StepRulerProps {
   current: number;
   /** The furthest step opened by a click; every step up to it is passed. */
   reached: number;
-  /** The steps are off while edits are unsaved or being saved; the screen writes the reason beside its buttons. */
+  /** The steps are off while a save is in flight. */
   isLocked?: boolean;
   /** Number of remarks of the completeness check by step. */
   remarks?: ReadonlyMap<number, number>;

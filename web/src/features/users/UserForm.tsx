@@ -43,7 +43,7 @@ interface UserFormProps {
 const NEW_ACCOUNT_VALUES: UserFormValues = { email: "", roles: [] };
 
 /**
- * Account fields shared by creation and editing. The employee is optional for either role; the server decides whether the binding is allowed.
+ * Account fields shared by creation and editing. The employee is optional; the server decides whether the binding is allowed.
  */
 export function UserForm({
   initialValues = NEW_ACCOUNT_VALUES,
