@@ -230,15 +230,14 @@ internal static class CompetencyBlockEndpoints
         CatalogStore store,
         CancellationToken cancellationToken)
     {
-        foreach (var competencyId in competencyIds.Where(competencyId => !previousIds.Contains(competencyId)))
+        var added = competencyIds.Where(competencyId => !previousIds.Contains(competencyId)).ToList();
+        var usable = added.Count == 0 ? new HashSet<Guid>() : await store.UsableIdsAsync<CareerCompetency>(added, draftAuthorId, cancellationToken);
+        if (added.Where(competencyId => !usable.Contains(competencyId)).Select(competencyId => (Guid?)competencyId).FirstOrDefault() is not { } unusable)
         {
-            if (!await store.IsUsableAsync<CareerCompetency>(competencyId, draftAuthorId, cancellationToken))
-            {
-                var isDraft = draftAuthorId is null && await store.IsDraftAsync<CareerCompetency>(competencyId, cancellationToken);
-                return Rejection.Invalid(CompetencyBlockRequest.CompetenciesField, isDraft ? DraftReferenceMessage : CatalogEndpoints.UnavailableMessage);
-            }
+            return null;
         }
 
-        return null;
+        var isDraft = draftAuthorId is null && await store.IsDraftAsync<CareerCompetency>(unusable, cancellationToken);
+        return Rejection.Invalid(CompetencyBlockRequest.CompetenciesField, isDraft ? DraftReferenceMessage : CatalogEndpoints.UnavailableMessage);
     }
 }

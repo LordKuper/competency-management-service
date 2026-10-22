@@ -133,13 +133,27 @@ internal sealed class CatalogStore(
     /// <param name="draftAuthorId">The author whose drafts may be referred to; null when only an active entry may, as for a referring entry that is active.</param>
     /// <param name="cancellationToken">Cancels the query.</param>
     /// <returns>True when the reference is allowed; false also when the entry does not exist.</returns>
-    public Task<bool> IsUsableAsync<T>(Guid id, Guid? draftAuthorId, CancellationToken cancellationToken)
+    public async Task<bool> IsUsableAsync<T>(Guid id, Guid? draftAuthorId, CancellationToken cancellationToken)
         where T : CatalogEntry =>
-        context.Set<T>().AnyAsync(
-            entry => entry.Id == id
+        (await UsableIdsAsync<T>([id], draftAuthorId, cancellationToken)).Contains(id);
+
+    /// <summary>
+    /// The entries among the given ones an entry may refer to, by the rule of <see cref="IsUsableAsync"/>, in one query.
+    /// </summary>
+    /// <typeparam name="T">The referenced entry type.</typeparam>
+    /// <param name="ids">The referenced entries.</param>
+    /// <param name="draftAuthorId">The author whose drafts may be referred to; null when only active entries may.</param>
+    /// <param name="cancellationToken">Cancels the query.</param>
+    /// <returns>The identifiers of the usable entries; those of entries that do not exist are absent.</returns>
+    public async Task<IReadOnlySet<Guid>> UsableIdsAsync<T>(List<Guid> ids, Guid? draftAuthorId, CancellationToken cancellationToken)
+        where T : CatalogEntry =>
+        (await context.Set<T>()
+            .Where(entry => ids.Contains(entry.Id)
                 && (entry.Status == CatalogStatus.Active
-                    || (draftAuthorId != null && entry.Status == CatalogStatus.Draft && entry.AuthorId == draftAuthorId)),
-            cancellationToken);
+                    || (draftAuthorId != null && entry.Status == CatalogStatus.Draft && entry.AuthorId == draftAuthorId)))
+            .Select(entry => entry.Id)
+            .ToListAsync(cancellationToken))
+        .ToHashSet();
 
     /// <summary>
     /// Whether the entry is a draft, to tell a draft reference from a missing or inactive one.
