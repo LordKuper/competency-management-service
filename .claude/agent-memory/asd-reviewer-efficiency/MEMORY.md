@@ -5,3 +5,4 @@
 - [Design-review gate outcomes](feedback_design-review-gate-outcomes.md) — read rotated decisions-log segments for settled ADR gates; approved ones stay, leftover fallback branches are dead text.
 - [Large-diff read method](feedback_large-diff-read-method.md) — map with `^diff --git` grep, read src in ~1000-line chunks, skip generated migrations; ledger/table parsing rules for the report.
 - [Redundant gate pair](feedback_redundant-gate-pair-keep.md) — two one-conjunct gates, each sufficient alone (query enabled plus adoption condition): keep-as-is, not an OE hit.
+- [Dead-after-redesign sweep](feedback_dead-after-redesign-sweep.md) — grep exports, CSS classes and vars whose last caller the diff removed; one `f` per rule row, merge same-kind findings.

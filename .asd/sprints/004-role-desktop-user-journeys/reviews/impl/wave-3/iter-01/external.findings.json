@@ -1,0 +1,1 @@
+[{"id":"1","severity":"high","location":"web/src/features/career/CatalogModal.tsx:88"},{"id":"2","severity":"high","location":"web/src/features/career/NameModal.tsx:78"},{"id":"3","severity":"medium","location":"web/src/features/org-structure/UnitHrModal.tsx:225"}]
