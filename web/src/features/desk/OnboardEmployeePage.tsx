@@ -11,6 +11,7 @@ import {
   NO_LEAVE_EDITS,
   useLeaveGuard,
 } from "../../app/leaveGuard";
+import { isStaleVersion } from "../../app/useEditBase";
 import { EmployeeForm } from "../org-structure/EmployeeForm";
 import {
   type Employee,
@@ -92,15 +93,23 @@ const EMPLOYEE_STEP = 1;
 const ACCOUNT_STEP = 2;
 const SUMMARY_STEP = 3;
 
-/** «Принять сотрудника»: the employee card, then an account with an invitation if wanted, then what was created. */
+/**
+ * «Принять сотрудника»: the employee card, then an account with an invitation if wanted, then what was created.
+ * The created employee is reread only after a save refused for a stale version, so no background refresh replaces input on step 1.
+ */
 export function OnboardEmployeePage() {
   const requested = useSelection();
-  const [saved, setSaved] = useState<Outcome>();
+  const [outcome, setOutcome] = useState<Outcome>();
+  const [isRefused, setIsRefused] = useState(false);
   const reread = useQuery({
-    ...employeeQuery(saved?.employee.id ?? ""),
-    enabled: saved !== undefined,
+    ...employeeQuery(outcome?.employee.id ?? ""),
+    enabled: outcome !== undefined && isRefused,
   });
-  const outcome = saved && withLatestEmployee(saved, reread.data);
+  const latest = outcome && withLatestEmployee(outcome, reread.data);
+  if (isRefused && latest !== outcome) {
+    setOutcome(latest);
+    setIsRefused(false);
+  }
   const [step, setStep] = useState(EMPLOYEE_STEP);
   const [round, setRound] = useState(0);
   const [edits, setEdits] = useState(NO_LEAVE_EDITS);
@@ -131,9 +140,11 @@ export function OnboardEmployeePage() {
           selection={selection}
           outcome={outcome}
           onSaved={(next) => {
-            setSaved(next);
+            setOutcome(next);
+            setIsRefused(false);
             goTo(ACCOUNT_STEP);
           }}
+          onStaleVersion={() => setIsRefused(true)}
           onEditsChange={setEdits}
           onCancel={() =>
             leaveAfterSave(() => void navigate(origin?.to ?? deskPaths.desk))
@@ -144,7 +155,7 @@ export function OnboardEmployeePage() {
         <AccountStep
           outcome={outcome}
           onDone={(done) => {
-            setSaved(done);
+            setOutcome(done);
             goTo(SUMMARY_STEP);
           }}
           onBack={() => goTo(EMPLOYEE_STEP)}
@@ -156,7 +167,8 @@ export function OnboardEmployeePage() {
           outcome={outcome}
           onBack={() => goTo(ACCOUNT_STEP)}
           onAnother={() => {
-            setSaved(undefined);
+            setOutcome(undefined);
+            setIsRefused(false);
             setRound((count) => count + 1);
             goTo(EMPLOYEE_STEP);
           }}
@@ -191,6 +203,8 @@ interface EmployeeStepProps {
   /** The employee already created; the step then shows their saved values and saves a change to the same card. */
   outcome?: Outcome;
   onSaved: (outcome: Outcome) => void;
+  /** Told when a save is refused because the card changed since the version it sent. */
+  onStaleVersion: () => void;
   onEditsChange: (edits: LeaveEdits) => void;
   /** Explicit discard: leaves the scenario without asking; offered only until the employee is created. */
   onCancel: () => void;
@@ -200,6 +214,7 @@ function EmployeeStep({
   selection,
   outcome,
   onSaved,
+  onStaleVersion,
   onEditsChange,
   onCancel,
 }: EmployeeStepProps) {
@@ -226,6 +241,9 @@ function EmployeeStep({
           body: input,
         }),
       );
+    },
+    onError: (error) => {
+      if (isStaleVersion(error)) onStaleVersion();
     },
     onSettled: () =>
       Promise.all([
