@@ -72,7 +72,7 @@ internal sealed class UserManagementDeskSource(ICurrentActor actor, AppDbContext
                 || (row.IsHr && !row.User.IsBlocked && row.User.PasswordHash != null)
                 || (row.User.EmployeeId != null && heads.Contains(row.User.EmployeeId.Value)))
             .Select(row => new AccountRow(
-                new UserStatus(row.User.Id, row.User.Email!, row.User.EmployeeId, row.User.IsBlocked, row.User.PasswordHash != null, row.IsHr, row.User.Version),
+                new UserStatus(row.User.Id, row.User.Email!, row.User.EmployeeId, row.User.IsBlocked, row.User.PasswordHash != null, row.IsHr, row.IsGlobalAdmin, row.User.Version),
                 row.IsGlobalAdmin,
                 row.User.LinkTokenHash != null && row.User.LinkSecurityStamp == row.User.SecurityStamp,
                 row.User.LinkExpiresAt))

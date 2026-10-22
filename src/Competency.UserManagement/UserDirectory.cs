@@ -11,6 +11,8 @@ internal sealed class UserDirectory(AppDbContext context) : IUserDirectory
 {
     private static readonly Guid HrRoleId = UserRoleIds.Of(UserRole.Hr);
 
+    private static readonly Guid GlobalAdminRoleId = UserRoleIds.Of(UserRole.GlobalAdmin);
+
     private static readonly Expression<Func<AppUser, UserStatus>> StatusProjection = user => new UserStatus(
         user.Id,
         user.Email!,
@@ -18,6 +20,7 @@ internal sealed class UserDirectory(AppDbContext context) : IUserDirectory
         user.IsBlocked,
         user.PasswordHash != null,
         user.UserRoles.Any(role => role.RoleId == HrRoleId),
+        user.UserRoles.Any(role => role.RoleId == GlobalAdminRoleId),
         user.Version);
 
     public Task<UserStatus?> FindAsync(Guid userId, CancellationToken cancellationToken = default) => context

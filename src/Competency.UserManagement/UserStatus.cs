@@ -9,8 +9,9 @@ namespace Competency.UserManagement;
 /// <param name="IsBlocked">Whether an administrator has blocked the account.</param>
 /// <param name="IsRegistered">Whether the account has a password, rather than an invitation not yet accepted.</param>
 /// <param name="IsHr">Whether the account has the HR role.</param>
+/// <param name="IsGlobalAdmin">Whether the account has the global administrator role.</param>
 /// <param name="Version">The account's version, which an action on the account sends back in <c>If-Match</c>.</param>
-public sealed record UserStatus(Guid Id, string Email, Guid? EmployeeId, bool IsBlocked, bool IsRegistered, bool IsHr, int Version)
+public sealed record UserStatus(Guid Id, string Email, Guid? EmployeeId, bool IsBlocked, bool IsRegistered, bool IsHr, bool IsGlobalAdmin, int Version)
 {
     /// <summary>
     /// Whether the account can act at all: neither blocked nor still invited.

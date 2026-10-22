@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using Competency.Platform;
+using Competency.UserManagement;
 using Microsoft.EntityFrameworkCore;
 
 namespace Competency.CareerFramework;
@@ -15,7 +16,7 @@ namespace Competency.CareerFramework;
 /// a track be ready, and as a shared block have competencies. The plan runs under the caller's locks for an action, and without locks
 /// for a preview, which then changes nothing because nobody saves it.
 /// </summary>
-internal sealed class CatalogPublication(AppDbContext context, CatalogStore store, ProcessRoles roles, IAuditWriter audit, ICurrentActor actor)
+internal sealed class CatalogPublication(AppDbContext context, CatalogStore store, ProcessRoles roles, IAuditWriter audit, IUserDirectory users)
 {
     private const string ApprovedAction = "Approved";
 
@@ -68,8 +69,8 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
     }
 
     /// <summary>
-    /// Plans publishing the version by the right of the responsible HR of the matrix unit, whoever starts it; without that HR no draft
-    /// may be approved. A responsible HR always holds the HR role, since an assignment acts only through such an account.
+    /// Plans publishing the version by the right of the responsible HR of the matrix unit, with that HR's own roles, whoever starts it;
+    /// without that HR no draft may be approved. A responsible HR always holds the HR role, since an assignment acts only through such an account.
     /// The drafts are set active on the tracked entries.
     /// </summary>
     /// <param name="version">The version, with its matrix.</param>
@@ -77,10 +78,12 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
     /// <returns>The plan; nothing is saved.</returns>
     public async Task<PublicationPlan> PlanAsync(MatrixVersion version, CancellationToken cancellationToken)
     {
-        var hrId = await roles.ResponsibleHrAsync(version.Matrix.OrgUnitId, cancellationToken);
-        var approver = hrId is { } id
-            ? await CatalogViewer.LoadAsync(id, id == actor.UserId && actor.IsGlobalAdmin(), isHr: true, roles, cancellationToken)
+        var hr = await roles.ResponsibleHrAsync(version.Matrix.OrgUnitId, cancellationToken) is { } hrId
+            ? await users.FindAsync(hrId, cancellationToken)
             : null;
+        var approver = hr is null
+            ? null
+            : await CatalogViewer.LoadAsync(hr.Id, hr.IsGlobalAdmin, isHr: true, roles, cancellationToken);
 
         var blocks = await NotInactiveAsync<CompetencyBlock>([.. version.Content.SharedBlocks.Select(block => block.BlockId)], cancellationToken);
         var competencies = await NotInactiveAsync<CareerCompetency>([.. version.Content.Competencies.Select(competency => competency.CompetencyId)], cancellationToken);
