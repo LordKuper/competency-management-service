@@ -146,6 +146,12 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
             ("a requirement of a competency outside the version", c => c["requirements"]![0]!["competencyId"] = Guid.NewGuid(), "Требование относится к уровню или компетенции не из версии"),
             ("a threshold above 100", c => c["levels"]![0]!["minOverallPercent"] = 100.5m, "Коэффициенты и пороги — от 0 до 100 %"),
             ("a negative coefficient", c => c["blockWeights"]![0]!["percent"] = -1, "Коэффициенты и пороги — от 0 до 100 %"),
+            ("a competency type that names no type", c => c["competencies"]![0]!["type"] = 999, "Укажите допустимый тип компетенции"),
+            ("a type that names no type inside a shared block", c => c["sharedBlocks"] = new JsonArray(new JsonObject
+            {
+                ["blockId"] = Guid.NewGuid(),
+                ["competencyTypes"] = new JsonArray(new JsonObject { ["competencyId"] = Guid.NewGuid(), ["type"] = 999 }),
+            }), "Укажите допустимый тип компетенции"),
         };
 
         foreach (var (reason, breakIt, message) in cases)

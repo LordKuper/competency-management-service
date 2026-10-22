@@ -629,7 +629,10 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var org = await fixture.OrgAsync();
         var kit = await MatrixKit.CreateAsync(org);
         var opened = await kit.ETagAsync();
-        (await kit.SaveAsync(org.TeamHead.Client, kit.Content(4), opened)).Expect(HttpStatusCode.OK);
+        var incomplete = kit.Content();
+        incomplete["competencies"]!.AsArray().Clear();
+        incomplete["requirements"]!.AsArray().Clear();
+        (await kit.SaveAsync(org.TeamHead.Client, incomplete, opened)).Expect(HttpStatusCode.OK);
 
         var stale = await kit.TransitAsync(org.TeamHead.Client, "submit", etag: opened);
 

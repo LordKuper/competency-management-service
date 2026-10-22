@@ -55,6 +55,28 @@ public sealed class CompetencyTests(CareerHost fixture) : IClassFixture<CareerHo
     }
 
     [Fact]
+    public async Task Ac12_EvidenceExamples_AreKept_ReturnedAndWrittenToTheHistory_AbsentKeepsThemAndBlankClearsThem()
+    {
+        var org = await fixture.OrgAsync();
+
+        var created = (await org.Admin.PostAsync(
+            "/api/v1/career/competencies",
+            new { name = Scenarios.Unique("Навык"), description = (string?)null, evidenceExamples = "  Провёл ревью  ", directionId = (Guid?)null })).Expect(HttpStatusCode.Created);
+        var withoutField = (await org.Admin.PutAsync($"/api/v1/career/competencies/{created.Id}", Body(Name(created), null, description: "Описание"), created.ETag)).Expect(HttpStatusCode.OK);
+        var blank = (await org.Admin.PutAsync(
+            $"/api/v1/career/competencies/{created.Id}",
+            new { name = Name(created), description = "Описание", evidenceExamples = "   ", directionId = (Guid?)null },
+            withoutField.ETag)).Expect(HttpStatusCode.OK);
+
+        var versions = (await org.Admin.GetAsync($"/api/v1/career/competencies/{created.Id}/versions")).Expect(HttpStatusCode.OK).Json!.AsArray();
+
+        created.Json!["evidenceExamples"]!.GetValue<string>().Should().Be("Провёл ревью");
+        withoutField.Json!["evidenceExamples"]!.GetValue<string>().Should().Be("Провёл ревью", "a change that sends no examples keeps them");
+        blank.Json!["evidenceExamples"].Should().BeNull("an empty text clears the examples");
+        versions.Select(version => version!["evidenceExamples"]?.GetValue<string>()).Should().Equal(null, "Провёл ревью", "Провёл ревью");
+    }
+
+    [Fact]
     public async Task Ac12_Competency_IsValidated()
     {
         var org = await fixture.OrgAsync();
@@ -64,10 +86,15 @@ public sealed class CompetencyTests(CareerHost fixture) : IClassFixture<CareerHo
         var longDescription = await org.Admin.PostAsync("/api/v1/career/competencies", Body(Scenarios.Unique("Навык"), null, description: new string('я', 4001)));
         var longestDescription = await org.Admin.PostAsync("/api/v1/career/competencies", Body(Scenarios.Unique("Навык"), null, description: new string('я', 4000)));
 
+        var longExamples = await org.Admin.PostAsync("/api/v1/career/competencies", new { name = Scenarios.Unique("Навык"), evidenceExamples = new string('я', 4001), description = (string?)null, directionId = (Guid?)null });
+        var longestExamples = await org.Admin.PostAsync("/api/v1/career/competencies", new { name = Scenarios.Unique("Навык"), evidenceExamples = new string('я', 4000), description = (string?)null, directionId = (Guid?)null });
+
         blank.FieldErrors("name").Should().Equal("Укажите название");
         longName.FieldErrors("name").Should().Equal("Не длиннее 200 символов");
         longDescription.FieldErrors("description").Should().Equal("Не длиннее 4000 символов");
         longestDescription.Status.Should().Be(HttpStatusCode.Created, longestDescription.Body);
+        longExamples.FieldErrors("evidenceExamples").Should().Equal("Не длиннее 4000 символов");
+        longestExamples.Status.Should().Be(HttpStatusCode.Created, longestExamples.Body);
     }
 
     [Fact]
