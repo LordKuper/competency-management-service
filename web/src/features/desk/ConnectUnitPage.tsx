@@ -213,9 +213,10 @@ function SetupRows({ unitId, data, resend }: SetupRowsProps) {
         action: open("hr", "Закрепить HR"),
       };
     }
-    const place =
-      hr.orgUnitId === unitId ? "свой" : `унаследован из «${hr.orgUnitName}»`;
-    const value = `${hr.name} (${place})`;
+    const value =
+      hr.orgUnitId === unitId
+        ? hr.name
+        : `${hr.name} (унаследован из «${hr.orgUnitName}»)`;
     if (row.status === "Ready") return { value };
     const why = HR_INACTIVE_CAUSES[hr.account?.state ?? "None"];
     return {
