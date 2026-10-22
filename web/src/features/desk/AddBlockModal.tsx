@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Button,
   Empty,
@@ -19,7 +19,6 @@ import { CatalogStatusTag } from "../career/CatalogParts";
 import {
   blocksQuery,
   type CompetencyBlock,
-  competencyQuery,
   MAX_PAGE_SIZE,
 } from "../career/catalogApi";
 import { useCompetencies } from "../career/MatrixEditor";
@@ -107,27 +106,11 @@ export function AddBlockModal({
   const chosen = items.find((block) => block.id === chosenId);
   const foreignOf = (block: CompetencyBlock) =>
     allowedIds && block.competencies.find((item) => !allowedIds.has(item.id));
-  const foreignIds = [
-    ...new Set(
-      items.flatMap((block) => {
-        const foreign = foreignOf(block);
-        return foreign ? [foreign.id] : [];
-      }),
-    ),
-  ];
-  const foreignReads = useQueries({ queries: foreignIds.map(competencyQuery) });
-  const directionOf = new Map(
-    foreignReads.flatMap((read) =>
-      read.data ? [[read.data.id, read.data.directionName] as const] : [],
-    ),
-  );
   const unavailableBecause = (block: CompetencyBlock) => {
     const foreign = foreignOf(block);
-    if (!foreign) return reasonOf(block);
-    const direction = directionOf.get(foreign.id);
     return (
       reasonOf(block) ??
-      `в составе компетенции другой области${direction ? ` — «${direction}»` : ""}`
+      (foreign && `в составе компетенция «${foreign.name}» другой области`)
     );
   };
 
