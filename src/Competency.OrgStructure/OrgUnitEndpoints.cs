@@ -11,7 +11,7 @@ namespace Competency.OrgStructure;
 
 /// <summary>
 /// The unit API. Any signed-in user reads the tree; only global administrators change it, under the tree lock and with <c>If-Match</c>.
-/// Units are never deleted: they are deactivated, and a deactivated unit stays readable for administrators.
+/// Units are never deleted: they are deactivated, and a deactivated unit stays readable for global administrators and HR.
 /// </summary>
 internal static class OrgUnitEndpoints
 {

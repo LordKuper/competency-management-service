@@ -40,7 +40,7 @@ internal sealed class Employee : EntityBase
     public Position Position { get; set; } = null!;
 
     /// <summary>
-    /// Whether the employee works in the organization; visible to global administrators only.
+    /// Whether the employee works in the organization; visible to global administrators and HR.
     /// </summary>
     [Audited]
     public bool IsActive { get; set; } = true;
