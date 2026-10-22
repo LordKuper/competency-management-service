@@ -143,14 +143,19 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
       ? `шаг HR${hrName ? ` (${hrName})` : ""}. Ему придёт письмо`
       : "Публикация";
 
+  const historyBlock = history.error
+    ? "Недоступно: не загрузилась история версии."
+    : undefined;
   const acceptBlock =
-    changeCount === 0
-      ? "Недоступно: согласующий вернул версию только с комментарием, принимать нечего."
-      : problems && problems.length > 0
-        ? `Недоступно: ${remarksText(problems.length)} полноты. Устраните его (ссылка выше) или выберите другое решение.`
-        : publication.isPending
-          ? "Проверяем, что будет опубликовано…"
-          : undefined;
+    history.error || completeness.error || publication.error
+      ? "Недоступно: не загрузились история версии, проверка полноты или перечень публикации."
+      : changeCount === 0
+        ? "Недоступно: согласующий вернул версию только с комментарием, принимать нечего."
+        : problems && problems.length > 0
+          ? `Недоступно: ${remarksText(problems.length)} полноты. Устраните его (ссылка выше) или выберите другое решение.`
+          : publication.isPending
+            ? "Проверяем, что будет опубликовано…"
+            : undefined;
 
   function decide(
     transitionName: MatrixTransition,
@@ -231,77 +236,104 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
           }
         />
       )}
-      <section>
-        <Typography.Title level={4}>Комментарий согласующего</Typography.Title>
-        {returned ? (
-          <Flex vertical gap={token.marginXXS}>
-            <Typography.Text type="secondary">
-              {[
-                shortName(returned.actorName ?? ""),
-                returned.step && `${APPROVAL_STEP_LABELS[returned.step]}`,
-              ]
-                .filter(Boolean)
-                .join(", ")}
-              {` · ${relativeTime(returned.at)}, ${formatDate(returned.at)}`}
-            </Typography.Text>
-            <Typography.Paragraph style={{ whiteSpace: "pre-wrap" }}>
-              {returned.comment || "Комментария нет."}
-            </Typography.Paragraph>
-          </Flex>
-        ) : (
-          <Skeleton active />
-        )}
-      </section>
-      <section>
-        <Typography.Title level={4}>
-          Правки согласующего относительно вашего варианта
-        </Typography.Title>
-        {approverDiff.data ? (
-          <>
-            {changeCount === 0 && (
+      {history.error ? (
+        <LoadFailure
+          title="Не удалось загрузить комментарий и правки согласующего"
+          error={history.error}
+          onRetry={() => void history.refetch()}
+        />
+      ) : (
+        <>
+          <section>
+            <Typography.Title level={4}>
+              Комментарий согласующего
+            </Typography.Title>
+            {returned ? (
+              <Flex vertical gap={token.marginXXS}>
+                <Typography.Text type="secondary">
+                  {[
+                    shortName(returned.actorName ?? ""),
+                    returned.step && `${APPROVAL_STEP_LABELS[returned.step]}`,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                  {` · ${relativeTime(returned.at)}, ${formatDate(returned.at)}`}
+                </Typography.Text>
+                <Typography.Paragraph style={{ whiteSpace: "pre-wrap" }}>
+                  {returned.comment || "Комментария нет."}
+                </Typography.Paragraph>
+              </Flex>
+            ) : (
+              <Skeleton active />
+            )}
+          </section>
+          <section>
+            <Typography.Title level={4}>
+              Правки согласующего относительно вашего варианта
+            </Typography.Title>
+            {approverDiff.data ? (
+              <>
+                {changeCount === 0 && (
+                  <Typography.Paragraph>
+                    Правок нет: согласующий оставил только комментарий. Учтите
+                    его в доработке или откатите версию к своему варианту.
+                  </Typography.Paragraph>
+                )}
+                {changeCount > 0 && (
+                  <ChangesBlock
+                    diff={approverDiff.data}
+                    levelNames={levelNames}
+                    competencyNames={competencyNames}
+                    blockNames={blockNames}
+                    pointsOf={(id) => scaleOfCompetency(version, id).points}
+                    columns={{
+                      before: "Ваш вариант",
+                      after: "Правка согласующего",
+                    }}
+                    emptyText="Правок нет."
+                  />
+                )}
+              </>
+            ) : approverDiff.error ? (
+              <LoadFailure
+                title="Не удалось загрузить правки"
+                error={approverDiff.error}
+                onRetry={() => void approverDiff.refetch()}
+              />
+            ) : lastVariant && lastVariant.kind !== "Approver" ? (
               <Typography.Paragraph>
                 Правок нет: согласующий оставил только комментарий. Учтите его в
                 доработке или откатите версию к своему варианту.
               </Typography.Paragraph>
+            ) : (
+              <Skeleton active />
             )}
-            {changeCount > 0 && (
-              <ChangesBlock
-                diff={approverDiff.data}
-                levelNames={levelNames}
-                competencyNames={competencyNames}
-                blockNames={blockNames}
-                pointsOf={(id) => scaleOfCompetency(version, id).points}
-                columns={{
-                  before: "Ваш вариант",
-                  after: "Правка согласующего",
-                }}
-                emptyText="Правок нет."
-              />
-            )}
-          </>
-        ) : approverDiff.error ? (
-          <LoadFailure
-            title="Не удалось загрузить правки"
-            error={approverDiff.error}
-            onRetry={() => void approverDiff.refetch()}
-          />
-        ) : lastVariant && lastVariant.kind !== "Approver" ? (
-          <Typography.Paragraph>
-            Правок нет: согласующий оставил только комментарий. Учтите его в
-            доработке или откатите версию к своему варианту.
-          </Typography.Paragraph>
-        ) : (
-          <Skeleton active />
-        )}
-      </section>
-      <CompletenessBlock
-        problems={problems}
-        trackId={version.entries.track?.id ?? ""}
-        warning={(count) =>
-          `Проверка полноты с учётом правок: ${remarksText(count)}, повторно отправить версию нельзя.`
-        }
-        originName="Доработать возвращённую версию"
-      />
+          </section>
+        </>
+      )}
+      {completeness.error ? (
+        <LoadFailure
+          title="Не удалось выполнить проверку полноты"
+          error={completeness.error}
+          onRetry={() => void completeness.refetch()}
+        />
+      ) : (
+        <CompletenessBlock
+          problems={problems}
+          trackId={version.entries.track?.id ?? ""}
+          warning={(count) =>
+            `Проверка полноты с учётом правок: ${remarksText(count)}, повторно отправить версию нельзя.`
+          }
+          originName="Доработать возвращённую версию"
+        />
+      )}
+      {publication.error && (
+        <LoadFailure
+          title="Не удалось загрузить перечень публикации"
+          error={publication.error}
+          onRetry={() => void publication.refetch()}
+        />
+      )}
       {transition.error != null && (
         <DecisionError
           title="Не удалось выполнить решение"
@@ -327,6 +359,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
                 title="Принять и доработать"
                 consequence="Версия становится черновиком с принятыми правками. После доработки она снова идёт на согласование с первого шага."
                 button="Принять и доработать"
+                unavailable={historyBlock}
                 isPending={transition.isPending}
                 onClick={() =>
                   decide("accept-and-revise", toBuilder(3), {
@@ -344,6 +377,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
                 title="Откатить правки"
                 consequence="Версия возвращается к вашему последнему варианту и становится черновиком. Правки согласующего пропадут. Затем версия снова идёт на согласование с первого шага."
                 button="Откатить правки"
+                unavailable={historyBlock}
                 isDanger
                 isPending={transition.isPending}
                 onClick={() =>

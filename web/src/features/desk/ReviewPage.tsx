@@ -103,9 +103,13 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
   const hasProblems = problems !== null && problems.length > 0;
   const approveBlock = !can("Approve")
     ? "Вы внесли правки: версию можно только вернуть"
-    : hasProblems
-      ? `Согласовать недоступно: ${remarksText(problems.length)} полноты`
-      : null;
+    : completeness.error || publication.error
+      ? "Согласовать недоступно: не загрузились проверка полноты или перечень публикации"
+      : hasProblems
+        ? `Согласовать недоступно: ${remarksText(problems.length)} полноты`
+        : !publication.data
+          ? "Проверяем, что будет опубликовано…"
+          : null;
   const unitName = matrix.data?.orgUnitName ?? "";
   const title = matrixName({
     trackName: version.entries.track?.name,
@@ -225,16 +229,31 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
           />
         </section>
       )}
-      <CompletenessBlock
-        problems={problems}
-        trackId={version.entries.track?.id ?? ""}
-        warning={(count) =>
-          isPublishing
-            ? `Проверка полноты: опубликовать версию нельзя, ${remarksText(count)}`
-            : `Проверка полноты: согласовать версию нельзя, ${remarksText(count)}`
-        }
-        originName="Согласовать версию"
-      />
+      {completeness.error ? (
+        <LoadFailure
+          title="Не удалось выполнить проверку полноты"
+          error={completeness.error}
+          onRetry={() => void completeness.refetch()}
+        />
+      ) : (
+        <CompletenessBlock
+          problems={problems}
+          trackId={version.entries.track?.id ?? ""}
+          warning={(count) =>
+            isPublishing
+              ? `Проверка полноты: опубликовать версию нельзя, ${remarksText(count)}`
+              : `Проверка полноты: согласовать версию нельзя, ${remarksText(count)}`
+          }
+          originName="Согласовать версию"
+        />
+      )}
+      {publication.error && (
+        <LoadFailure
+          title="Не удалось загрузить перечень публикации"
+          error={publication.error}
+          onRetry={() => void publication.refetch()}
+        />
+      )}
       {isPublishing && publication.data && (
         <section>
           <Typography.Title level={4}>
@@ -304,7 +323,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
           <Button
             type="primary"
             loading={transition.isPending}
-            disabled={approveBlock !== null || !publication.data}
+            disabled={approveBlock !== null}
             onClick={approve}
           >
             {isPublishing ? "Согласовать и опубликовать" : "Согласовать"}

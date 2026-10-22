@@ -18,6 +18,7 @@ import { CompletenessBlock } from "./CompletenessBlock";
 import { DecisionError } from "./DecisionError";
 import { deskPaths, shortName } from "./deskTexts";
 import { ActionBar, CompactAlert } from "./ScenarioContext";
+import { LoadFailure } from "./ScenarioPage";
 import { outcomeText, remarksText } from "./scenarioTexts";
 import { useVersionTransition } from "./useVersionTransition";
 
@@ -82,6 +83,30 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
     });
   }
 
+  const failure = completeness.error ?? publication.error;
+  if (failure) {
+    return (
+      <Flex vertical gap="middle">
+        <LoadFailure
+          title="Не удалось подготовить отправку"
+          error={failure}
+          onRetry={() => {
+            void completeness.refetch();
+            void publication.refetch();
+          }}
+        />
+        <ActionBar start={<Button onClick={onBack}>Назад</Button>}>
+          <Typography.Text type="secondary">
+            Отправка недоступна, пока не загружены проверка полноты и перечень
+            публикации.
+          </Typography.Text>
+          <Button type="primary" disabled>
+            Отправить на согласование
+          </Button>
+        </ActionBar>
+      </Flex>
+    );
+  }
   if (problems === null || !preview) return <Skeleton active />;
   const cascadeCount = publishedCount(preview);
 
