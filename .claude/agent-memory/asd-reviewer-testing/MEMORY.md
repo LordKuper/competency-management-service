@@ -7,3 +7,4 @@
 - [Temp-repo git determinism](feedback_temp-repo-git-determinism.md) — runtime-spawned git inherits host config (diff.noprefix); Testing manifest = the wave's isTest files + test-plan (sprints 015/017); resolve rows from it
 - [Value-removal sprints](feedback_value-removal-sprints.md) — swapped fixtures must hit the same disjunct; hand-enumerated sets on touched asserts = §17 low; pr-deferred ACs need a plan line
 - [Workflow-definition sprints](feedback_workflow-definition-sprints.md) — predecessor + collapse acting sites pinned (closed, 020 wave-1 review-fix); grep+compare per new workflow; name-guard target; memory dir swept
+- [.NET API test review](feedback_dotnet-api-test-review.md) — xUnit API tests: neutered precedence tests, false equivalent mutants, moved validations, new fields, race tests, ledger shape

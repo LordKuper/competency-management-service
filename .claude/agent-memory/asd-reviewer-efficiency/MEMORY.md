@@ -3,3 +3,4 @@
 - [MEMORY-FIX fallback is AC-mandated](project_memory-fix-fallback-keep.md) — owner-without-write-tool branch never fires for canon agents, but AC-14 requires it; keep-as-is, don't raise.
 - [020 workflow definition keys](project_020-workflow-definition-keys.md) — stored `next`/`rollback_reset` judged keep-as-is; persist-review parses Findings columns by position (Category goes last).
 - [Design-review gate outcomes](feedback_design-review-gate-outcomes.md) — read rotated decisions-log segments for settled ADR gates; approved ones stay, leftover fallback branches are dead text.
+- [Large-diff read method](feedback_large-diff-read-method.md) — map with `^diff --git` grep, read src in ~1000-line chunks, skip generated migrations; ledger/table parsing rules for the report.

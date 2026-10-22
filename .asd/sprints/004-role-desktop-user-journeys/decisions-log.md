@@ -373,3 +373,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-22 — impl test-fix: defects D-1, D-2 resolved (2725176, 4483101); gate: build 0/0, web build и lint чисто
 - 2026-10-22 — route impl-test entry 2: standard, dispatch HEAD ca9c433; risk none via failing test
 - 2026-10-22 — impl-test: impacted set green (backend 16/16, web 492/492), 0/0 tests; ScaleModal/CompetencyModal тесты обёрнуты в MemoryRouter (тестовый дефект после D-2)
+- 2026-10-22 — impl-review division: 3 волны (lines 61880, files 526, bytes 3362210): 1 — backend (src, tests, миграции, deploy), 2 — web рабочий стол, вход, пользователи, должности, аудит, 3 — web карьера, оргструктура, app/api/стили, openapi.json, agent-memory
+- 2026-10-22 — external interrupted attempt 1 in wave-1/iter-01 (persist-review rejected: severity column «major → high» not one of low/medium/high/critical)
+- 2026-10-22 — impl-review wave-1/iter-01: correctness APPROVE (latched), efficiency CONCERNS (4), testing CONCERNS (10), documentation CONCERNS (3), external CONCERNS (5); low-severity test-only не срабатывает (есть medium/high и код) → impl review-fix (review_fixes_pending wave-1/iter-01)
