@@ -641,3 +641,13 @@
 {"op":"close","id":"review-fix wave-2/iter-02","kind":"dispatch","parent":"impl#9","start":"2026-10-22T21:05:07.338Z","end":"2026-10-22T21:11:58.833Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl#9","kind":"phase","parent":null,"start":"2026-10-22T21:05:06.975Z","end":"2026-10-22T21:12:11.143Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-test#7","kind":"phase","parent":null,"start":"2026-10-22T21:12:11.143Z","attrs":{}}
+{"op":"open","id":"impl-test entry 7","kind":"dispatch","parent":"impl-test#7","start":"2026-10-22T21:12:11.460Z","attrs":{}}
+{"op":"open","id":"suite impl-test#14","kind":"suite","parent":"impl-test entry 7","start":"2026-10-22T21:13:25.611Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#14","kind":"suite","parent":"impl-test entry 7","start":"2026-10-22T21:13:25.611Z","end":"2026-10-22T21:13:59.241Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#15","kind":"suite","parent":"impl-test entry 7","start":"2026-10-22T21:36:07.589Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#15","kind":"suite","parent":"impl-test entry 7","start":"2026-10-22T21:36:07.589Z","end":"2026-10-22T21:36:47.675Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#16","kind":"suite","parent":"impl-test entry 7","start":"2026-10-22T21:37:51.361Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#16","kind":"suite","parent":"impl-test entry 7","start":"2026-10-22T21:37:51.361Z","end":"2026-10-22T21:38:29.010Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-test entry 7","kind":"dispatch","parent":"impl-test#7","start":"2026-10-22T21:12:11.460Z","end":"2026-10-22T21:43:13.344Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#7","kind":"phase","parent":null,"start":"2026-10-22T21:12:11.143Z","end":"2026-10-22T21:43:13.509Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#6","kind":"phase","parent":null,"start":"2026-10-22T21:43:13.509Z","attrs":{}}

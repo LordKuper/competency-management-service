@@ -422,3 +422,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-23 — review-fix wave-2/iter-02 dev chain COMPLETED (2414036…c5a16e7): correctness 1 / external 1-4, efficiency 1
 - 2026-10-23 — impl fix for wave-2/iter-02: findings resolved; gate: web build и lint чисто (backend не менялся)
 - 2026-10-23 — route impl-test entry 7: critical, dispatch HEAD c5a16e7; risk change: security
+- 2026-10-23 — impl-test entry 7 flagged приняты: двойная защита перечитывания в OnboardEmployeePage (эквивалентные мутанты) — на суд efficiency; тело PUT не утверждается (собирается до щелчка); O5/O6 — защита; ChangePositionForm без отдельного теста блокировки — потолок
+- 2026-10-23 — impl-test: impacted set green (web 685/685), 9/0 tests
