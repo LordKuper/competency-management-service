@@ -28,3 +28,7 @@ CONCERNS: 3
 
 ## Next action
 Все три находки исправляются разработчиком в review-fix без эскалации пользователю: № 1 и № 2 удаляют лишнее, № 3 убирает N запросов и не вводит ни абстракции, ни слоя, ни зависимости. Вариант № 3 с отдачей названия области сервером меняет контракт и идёт через Complication Approval, только если продукт настаивает на названии области в причине. После правок перепроверить, что `cancelLabel` и `clearError` нигде не остались (включая тесты).
+
+## User-approved change (2026-10-22)
+
+Finding 3: option B — the unavailability reason names the foreign competency itself («в составе компетенция «{имя}» другой области»); foreignReads/directionOf removed; UX text updated by asd-ux.
