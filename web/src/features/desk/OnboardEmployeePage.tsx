@@ -341,12 +341,9 @@ function AccountStep({
   onEditsChange,
 }: AccountStepProps) {
   const { employee, account } = outcome;
-  const [isDirty, setIsDirty] = useState(false);
+  const [edits, setEdits] = useState(NO_LEAVE_EDITS);
   const { confirmLeave } = useLeaveGuard();
-  useEffect(
-    () => onEditsChange({ isUnsaved: isDirty }),
-    [isDirty, onEditsChange],
-  );
+  useEffect(() => onEditsChange(edits), [edits, onEditsChange]);
 
   return (
     <FormColumn>
@@ -371,12 +368,20 @@ function AccountStep({
         <CreateAccountForm
           employeeId={employee.id}
           submitLabel="Создать учётную запись и отправить приглашение"
-          onDirtyChange={setIsDirty}
+          onEditsChange={setEdits}
           onCreated={(created) => onDone({ ...outcome, account: created })}
           scenarioActions={{
-            start: <Button onClick={() => confirmLeave(onBack)}>Назад</Button>,
+            start: (
+              <Button
+                disabled={edits.isSaving}
+                onClick={() => confirmLeave(onBack)}
+              >
+                Назад
+              </Button>
+            ),
             end: (
               <Button
+                disabled={edits.isSaving}
                 onClick={() =>
                   confirmLeave(() => onDone({ ...outcome, account: null }))
                 }
