@@ -386,3 +386,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-22 — impl-test: impacted set green (backend 678/678, web lint чисто), 11/0 tests
 - 2026-10-22 — external interrupted attempt 1 in wave-1/iter-02 (persist-review rejected: unescaped «||» inside a findings-table cell split the row)
 - 2026-10-22 — impl-review wave-1/iter-02 (floor medium): correctness APPROVE (latched), efficiency APPROVE (latched), testing CONCERNS (1), documentation CONCERNS (2), external CONCERNS (2) → impl review-fix (review_fixes_pending wave-1/iter-02)
+- 2026-10-22 — route review-fix wave-1/iter-02 (external.md 1-2, documentation.md 1-2): critical, dispatch HEAD 4a20587; risk change: security
+- 2026-10-22 — route review-fix wave-1/iter-02 tests (testing.md TST-1): standard, dispatch HEAD 4a20587; risk none via deterministic test
+- 2026-10-22 — review-fix wave-1/iter-02 dev chain COMPLETED (0de4ecc…ba40df4): external.md 1-2, documentation.md 1-2. Flagged приняты: ext 2 исправлен в корне — CheckAsync восстанавливает прочитанные статусы, активацию делает Apply (корень — PublishAsync перед Apply), предпросмотры больше не меняют сущности; правка собственной памяти dev
+- 2026-10-22 — review-fix wave-1/iter-02 tester chain COMPLETED (a51e623): TST-1
+- 2026-10-22 — impl fix for wave-1/iter-02: findings resolved; gate: build 0/0, lint чисто
+- 2026-10-22 — route impl-test entry 4: critical, dispatch HEAD a51e623; risk change: security
