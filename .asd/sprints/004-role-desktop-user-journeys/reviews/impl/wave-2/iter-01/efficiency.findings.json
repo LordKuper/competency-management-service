@@ -1,0 +1,1 @@
+[{"id":"1","severity":"critical","location":"web/src/features/users/UserForm.tsx:33"},{"id":"2","severity":"critical","location":"web/src/features/desk/useVersionTransition.tsx:207"},{"id":"3","severity":"medium","location":"web/src/features/desk/AddBlockModal.tsx:118"}]

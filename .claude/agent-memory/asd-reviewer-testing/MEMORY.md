@@ -9,3 +9,4 @@
 - [Workflow-definition sprints](feedback_workflow-definition-sprints.md) — predecessor + collapse acting sites pinned (closed, 020 wave-1 review-fix); grep+compare per new workflow; name-guard target; memory dir swept
 - [.NET API test review](feedback_dotnet-api-test-review.md) — xUnit API tests: neutered precedence tests, false equivalent mutants, moved validations, new fields, race tests, ledger shape
 - [Review isolation + log-window tests](feedback_review-isolation-and-log-window-tests.md) — scope sprint-dir greps with a glob (reviews/ leaks); log-count tests race unless synced
+- [Web SPA test review](feedback_web-spa-test-review.md) — vitest+fakeApi: grep exports an "add" row names; absence asserts synced on fake call count are vacuous; page role seams; typed Record tables
