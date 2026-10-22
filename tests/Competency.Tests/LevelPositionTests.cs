@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using Competency.Tests.Infrastructure;
 using Xunit;
@@ -44,6 +45,28 @@ public sealed class LevelPositionTests(CareerHost fixture) : IClassFixture<Caree
         (await org.Admin.AuditOfRequestAsync(unlinked.RequestId!)).Actions().Should().Equal("CareerLevelPosition.Deleted");
         (await org.TeamHead.Client.DeleteAsync($"/api/v1/career/levels/{level.Id}/positions/{positions[0]}", unlinked.ETag)).Status
             .Should().Be(HttpStatusCode.NotFound, "the link is gone");
+    }
+
+    [Fact]
+    public async Task Ac90_TheTrackAPositionIsLinkedTo_IsNamedToWhoCanSeeIt_AndNotToWhoCannot()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var (track, level) = await DraftTrackWithLevelAsync(org);
+        var position = await PositionAsync(org, org.Department.Id);
+        (await LinkAsync(org.Admin, level, position)).Expect(HttpStatusCode.OK);
+
+        var namedRefusal = await org.TeamHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Team.Id, positionId = position });
+        var unnamedRefusal = await org.SiblingHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Sibling.Id, positionId = position });
+        var listedForTeam = await LinkedTrackOfAsync(org.TeamHead.Client, org.Team.Id, position);
+        var listedForSibling = await LinkedTrackOfAsync(org.SiblingHead.Client, org.Sibling.Id, position);
+
+        var trackName = track.Json!["name"]!.GetValue<string>();
+        namedRefusal.Status.Should().Be(HttpStatusCode.Conflict, namedRefusal.Body);
+        namedRefusal.Json!["detail"]!.GetValue<string>().Should().Contain(trackName);
+        unnamedRefusal.Status.Should().Be(HttpStatusCode.Conflict, unnamedRefusal.Body);
+        unnamedRefusal.Json!["detail"]!.GetValue<string>().Should().Contain("связана с уровнем трека").And.NotContain(trackName);
+        listedForTeam!["id"]!.GetValue<Guid>().Should().Be(track.Id);
+        listedForSibling.Should().BeNull("a draft track of another unit is not shown to its head");
     }
 
     [Fact]
@@ -335,6 +358,10 @@ public sealed class LevelPositionTests(CareerHost fixture) : IClassFixture<Caree
         var track = await org.Admin.MakeTrackAsync(org.Team.Id, (await org.Admin.MakeDirectionAsync()).Id);
         return (track, await org.Admin.MakeLevelAsync(track.Id));
     }
+
+    private static async Task<JsonNode?> LinkedTrackOfAsync(ApiClient client, Guid unitId, Guid positionId) =>
+        (await client.GetAsync($"/api/v1/career/org-units/{unitId}/matrix-positions?pageSize=200")).Expect(HttpStatusCode.OK).Json!["items"]!.AsArray()
+            .Single(item => item!["id"]!.GetValue<Guid>() == positionId)!["linkedTrack"];
 
     private static async Task<Guid> PositionAsync(CareerOrg org, Guid unitId) => await org.Admin.PositionAsync(unitId, Scenarios.Unique("Должность"));
 

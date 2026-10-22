@@ -168,6 +168,84 @@ public sealed class CompetencyBlockTests(CareerHost fixture) : IClassFixture<Car
         changed.Json!["competencies"]!.AsArray().Should().HaveCount(1);
     }
 
+    [Fact]
+    public async Task Ac128_Ac130_ADraftBlockForTheMatrixUnitWrittenByTheHeadAbove_IsIncludedByTheUnitsHead_AndOneTheHeadCannotSeeIsNot()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var kit = await MatrixKit.CreateAsync(org);
+        var superior = org.DepartmentHead.Client;
+        var forTeam = (await CreateAsync(superior, [kit.Critical.Id, kit.Profile.Id], org.Team.Id)).Expect(HttpStatusCode.Created);
+        var forDepartment = (await CreateAsync(superior, [kit.Critical.Id, kit.Profile.Id], org.Department.Id)).Expect(HttpStatusCode.Created);
+
+        var unseen = await kit.SaveAsync(org.TeamHead.Client, WithBlock(kit, forDepartment.Id, kit.Critical.Id, kit.Profile.Id));
+        var included = await kit.SaveAsync(org.TeamHead.Client, WithBlock(kit, forTeam.Id, kit.Critical.Id, kit.Profile.Id));
+        var problems = await ProblemsAsync(kit);
+
+        forTeam.Json!["status"]!.GetValue<string>().Should().Be("Draft");
+        unseen.Status.Should().Be(HttpStatusCode.BadRequest, unseen.Body);
+        unseen.FieldErrors("content").Should().NotBeEmpty();
+        included.Status.Should().Be(HttpStatusCode.OK, included.Body);
+        problems.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Ac127_ABlockRequestWithNoComposition_IsRefusedAsAFieldError_OnCreationAndOnChange_AndChangesNothing()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var competency = await org.Admin.MakeCompetencyAsync();
+        var block = (await CreateAsync(org.Admin, [competency.Id])).Expect(HttpStatusCode.Created);
+
+        var created = await org.Admin.PostAsync("/api/v1/career/blocks", new { name = Scenarios.Unique("Блок"), scopeUnitId = (Guid?)null, competencyIds = (Guid[]?)null });
+        var changed = await org.Admin.PutAsync(
+            $"/api/v1/career/blocks/{block.Id}",
+            new { name = block.Json!["name"]!.GetValue<string>(), scopeUnitId = (Guid?)null, competencyIds = (Guid[]?)null },
+            block.ETag);
+        var after = (await org.Admin.GetAsync($"/api/v1/career/blocks/{block.Id}")).Expect(HttpStatusCode.OK);
+
+        foreach (var refused in new[] { created, changed })
+        {
+            refused.Status.Should().Be(HttpStatusCode.BadRequest, refused.Body);
+            refused.FieldErrors("competencyIds").Should().NotBeEmpty(refused.Body);
+        }
+
+        after.ETag.Should().Be(block.ETag);
+        after.Json!["competencies"]!.AsArray().Select(entry => entry!["id"]!.GetValue<Guid>()).Should().Equal(competency.Id);
+    }
+
+    [Fact]
+    public async Task Ac127_AnUnusableCompetencyAmongSeveralAdded_RefusesTheWholeChange_AndUsableOnesAddedTogetherPass()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var kept = await org.Admin.MakeCompetencyAsync();
+        var first = await org.Admin.MakeCompetencyAsync();
+        var second = await org.Admin.MakeCompetencyAsync();
+        var draft = await org.TeamHead.Client.MakeCompetencyAsync();
+        var block = (await CreateAsync(org.Admin, [kept.Id])).Expect(HttpStatusCode.Created);
+
+        var withDraft = await ReplaceAsync(org.Admin, block, [kept.Id, first.Id, draft.Id]);
+        var withMissing = await ReplaceAsync(org.Admin, block, [kept.Id, Guid.NewGuid(), first.Id]);
+        var createdWithMissing = await CreateAsync(org.Admin, [first.Id, second.Id, Guid.NewGuid()]);
+        var unchanged = (await org.Admin.GetAsync($"/api/v1/career/blocks/{block.Id}")).Expect(HttpStatusCode.OK);
+
+        withDraft.Status.Should().Be(HttpStatusCode.BadRequest, withDraft.Body);
+        withDraft.FieldErrors("competencyIds").Should().Equal(DraftReference);
+        withMissing.Status.Should().Be(HttpStatusCode.BadRequest, withMissing.Body);
+        withMissing.FieldErrors("competencyIds").Should().NotBeEmpty().And.NotContain(DraftReference);
+        createdWithMissing.Status.Should().Be(HttpStatusCode.BadRequest, createdWithMissing.Body);
+        createdWithMissing.FieldErrors("competencyIds").Should().NotBeEmpty();
+        unchanged.ETag.Should().Be(block.ETag);
+
+        var together = (await ReplaceAsync(org.Admin, block, [kept.Id, first.Id, second.Id])).Expect(HttpStatusCode.OK);
+
+        together.Json!["competencies"]!.AsArray().Select(entry => entry!["id"]!.GetValue<Guid>()).Should().Equal(kept.Id, first.Id, second.Id);
+    }
+
+    private static Task<ApiResponse> ReplaceAsync(ApiClient client, ApiResponse block, Guid[] competencyIds) =>
+        client.PutAsync(
+            $"/api/v1/career/blocks/{block.Id}",
+            new { name = block.Json!["name"]!.GetValue<string>(), scopeUnitId = (Guid?)null, competencyIds },
+            block.ETag);
+
     private static Task<ApiResponse> CreateAsync(ApiClient client, Guid[] competencyIds, Guid? scopeUnitId = null, string? name = null) =>
         client.PostAsync("/api/v1/career/blocks", new { name = name ?? Scenarios.Unique("Блок"), scopeUnitId, competencyIds });
 

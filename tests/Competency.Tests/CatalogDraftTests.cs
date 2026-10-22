@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using Competency.Tests.Infrastructure;
 using Xunit;
@@ -111,6 +112,35 @@ public sealed class CatalogDraftTests(CareerHost fixture) : IClassFixture<Career
             $"\"{current}\"".Should().Be(renamed.ETag, segment);
             (await org.Hr.Client.PostAsync($"{path}/approve{await CascadeAsync(org.Hr.Client, path)}", ifMatch: $"\"{current}\"")).Expect(HttpStatusCode.OK);
         }
+    }
+
+    [Fact]
+    public async Task Ac9_TheDraftList_ShowsEachDraftTrackItsOwnReadiness_AmongSeveralTracks()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var direction = await org.Admin.MakeDirectionAsync();
+        var head = org.TeamHead.Client;
+        var ready = await head.MakeTrackAsync(org.Team.Id, direction.Id);
+        await org.Admin.LinkToNewPositionAsync(await head.MakeLevelAsync(ready.Id), org.Team.Id);
+        var withoutLevels = await head.MakeTrackAsync(org.Team.Id, direction.Id);
+        var partial = await head.MakeTrackAsync(org.Team.Id, direction.Id);
+        await org.Admin.LinkToNewPositionAsync(await head.MakeLevelAsync(partial.Id), org.Team.Id);
+        var bare = await head.MakeLevelAsync(partial.Id);
+
+        var rows = (await org.Hr.Client.GetAsync("/api/v1/career/drafts?kind=Track")).Expect(HttpStatusCode.OK).Json!.AsArray();
+
+        JsonNode? ReadinessOf(Guid trackId) => rows.Single(row => row!["id"]!.GetValue<Guid>() == trackId)!["readiness"];
+
+        var withoutLevelsReadiness = ReadinessOf(withoutLevels.Id);
+        var partialReadiness = ReadinessOf(partial.Id);
+
+        ReadinessOf(ready.Id).Should().BeNull("a ready track has nothing to report");
+        withoutLevelsReadiness.Should().NotBeNull("a track without levels is not ready");
+        withoutLevelsReadiness!["hasLevels"]!.GetValue<bool>().Should().BeFalse();
+        withoutLevelsReadiness["levelsWithoutActivePosition"]!.AsArray().Should().BeEmpty();
+        partialReadiness.Should().NotBeNull("a track with a level without a position is not ready");
+        partialReadiness!["hasLevels"]!.GetValue<bool>().Should().BeTrue();
+        partialReadiness["levelsWithoutActivePosition"]!.AsArray().Select(level => level!["id"]!.GetValue<Guid>()).Should().Equal(bare.Id);
     }
 
     private static async Task<string> CascadeAsync(ApiClient client, string path)

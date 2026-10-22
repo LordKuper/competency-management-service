@@ -230,6 +230,25 @@ public sealed class MatrixAccessTests(CareerHost fixture) : IClassFixture<Career
     }
 
     [Fact]
+    public async Task Ac18_TheDraftTrackOfAVersionInWork_IsReadByTheSuperiorApprover_AndByNoOneOutsideTheRoute()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
+        var path = $"/api/v1/career/tracks/{kit.Track.Id}";
+
+        kit.Track.Json!["status"]!.GetValue<string>().Should().Be("Draft");
+        foreach (var reader in new[] { org.TeamHead, org.DepartmentHead, org.Hr })
+        {
+            (await reader.Client.GetAsync(path)).Status.Should().Be(HttpStatusCode.OK, reader.User.Email);
+        }
+
+        foreach (var stranger in new[] { org.Plain, org.SiblingHead, org.RootHead })
+        {
+            (await stranger.Client.GetAsync(path)).Status.Should().Be(HttpStatusCode.NotFound, stranger.User.Email);
+        }
+    }
+
+    [Fact]
     public async Task Ac16_Approvals_ListTheVersionsWaitingForTheUser_LongestWaitingFirst_AndFilterByUnitAndStep()
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);

@@ -223,6 +223,47 @@ public sealed class ScenarioReadTests(CareerHost fixture) : IClassFixture<Career
         (await org.Admin.GetAsync("/api/v1/career/unused-entries?page=0")).Status.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    [Fact]
+    public async Task Ac137_Ac138_Ac140_EachKindFilterOfTheUnusedEntries_ListsOnlyThatKind_WithTheEntrysVersion_AndTheTotalsOfTheKindsAddUp()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var competency = await org.Admin.MakeCompetencyAsync();
+        var scale = await org.Admin.MakeScaleAsync();
+        var direction = await org.Admin.MakeDirectionAsync();
+        var renamed = new Dictionary<string, ApiResponse>
+        {
+            ["Competency"] = (await org.Admin.PutAsync(
+                $"/api/v1/career/competencies/{competency.Id}",
+                new { name = Scenarios.Unique("Правка"), description = (string?)null, directionId = (Guid?)null, scaleId = (Guid?)null },
+                competency.ETag)).Expect(HttpStatusCode.OK),
+            ["Scale"] = (await org.Admin.PutAsync(
+                $"/api/v1/career/scales/{scale.Id}",
+                new { name = Scenarios.Unique("Правка"), points = CareerScenarios.Points() },
+                scale.ETag)).Expect(HttpStatusCode.OK),
+            ["Direction"] = (await org.Admin.PutAsync(
+                $"/api/v1/career/directions/{direction.Id}",
+                new { name = Scenarios.Unique("Правка") },
+                direction.ETag)).Expect(HttpStatusCode.OK),
+        };
+
+        var everything = (await org.Admin.GetAsync("/api/v1/career/unused-entries?pageSize=200")).Expect(HttpStatusCode.OK).Json!;
+        var totals = 0;
+        foreach (var (kind, entry) in renamed)
+        {
+            var listed = (await org.Admin.GetAsync($"/api/v1/career/unused-entries?kind={kind}&pageSize=200")).Expect(HttpStatusCode.OK).Json!;
+            var items = listed["items"]!.AsArray();
+            var row = items.Single(item => item!["id"]!.GetValue<Guid>() == entry.Id)!;
+
+            items.Select(item => item!["kind"]!.GetValue<string>()).Should().OnlyContain(itemKind => itemKind == kind, kind);
+            listed["total"]!.GetValue<int>().Should().Be(items.Count, kind);
+            row["name"]!.GetValue<string>().Should().Be(entry.Json!["name"]!.GetValue<string>(), kind);
+            $"\"{row["version"]!.GetValue<int>()}\"".Should().Be(entry.ETag, $"{kind}: the row carries the version the entry is changed with");
+            totals += listed["total"]!.GetValue<int>();
+        }
+
+        everything["total"]!.GetValue<int>().Should().Be(totals, "every unused entry is of exactly one of the three kinds");
+    }
+
     private static string[] Kinds(JsonNode diff) =>
         [.. diff["changes"]!.AsArray().Select(change => $"{change!["kind"]!.GetValue<string>()}/{change["type"]!.GetValue<string>()}")];
 

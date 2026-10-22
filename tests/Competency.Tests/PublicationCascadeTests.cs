@@ -169,6 +169,107 @@ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<
         after.Json["status"]!.GetValue<string>().Should().Be("Active");
     }
 
+    [Fact]
+    public async Task Ac107_Ac114_ApprovingABlock_PublishesTheDraftCompetenciesOfItsComposition_EachWithANewVersionInItsHistory()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var competency = await org.TeamHead.Client.MakeCompetencyAsync();
+        var block = (await org.TeamHead.Client.PostAsync(
+            "/api/v1/career/blocks",
+            new { name = Scenarios.Unique("Блок"), scopeUnitId = (Guid?)org.Team.Id, competencyIds = new[] { competency.Id } })).Expect(HttpStatusCode.Created);
+        var path = $"/api/v1/career/blocks/{block.Id}";
+        var before = await VersionsAsync(org.Admin, competency.Id);
+
+        var preview = (await org.Hr.Client.GetAsync($"{path}/publication")).Expect(HttpStatusCode.OK).Json!;
+        (await org.Hr.Client.PostAsync(
+            $"{path}/approve?cascade={Uri.EscapeDataString(preview["cascadeTag"]!.GetValue<string>())}",
+            ifMatch: block.ETag)).Expect(HttpStatusCode.OK);
+
+        var after = await VersionsAsync(org.Admin, competency.Id);
+        Entries(preview).Should().BeEquivalentTo([("Competency", competency.Id)]);
+        (await StatusAsync(org.Admin, "competencies", competency.Id)).Should().Be("Active");
+        before.Select(version => version.Status).Should().Equal("Draft");
+        after.Select(version => version.Status).Should().Equal("Active", "Draft");
+        after[0].Number.Should().Be(before.Single().Number + 1);
+    }
+
+    [Fact]
+    public async Task Ac144_ADraftBlockOutsideTheResponsibleHrsUnits_IsPublishedWhenThatHrIsAlsoAnAdministrator_WhoeverAcceptsTheirChanges()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var draftCompetency = await org.TeamHead.Client.MakeCompetencyAsync();
+        var head = await org.Admin.GrantHrRoleAsync(fixture.Host, org.TeamHead);
+        var block = (await head.Client.PostAsync(
+            "/api/v1/career/blocks",
+            new { name = Scenarios.Unique("Блок"), scopeUnitId = (Guid?)org.Department.Id, competencyIds = new[] { draftCompetency.Id } })).Expect(HttpStatusCode.Created);
+        var responsible = await org.Admin.HrOfAsync(fixture.Host, org.Team.Id);
+        var kit = await MatrixKit.CreateAsync(org, author: head.Client);
+        (await kit.SaveAsync(head.Client, ContentWithBlock(kit, block.Id, draftCompetency.Id, seniorScore: 3))).Expect(HttpStatusCode.OK);
+        (await kit.TransitAsync(head.Client, "submit")).Expect(HttpStatusCode.OK);
+        (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
+        (await kit.SaveAsync(responsible.Client, ContentWithBlock(kit, block.Id, draftCompetency.Id, seniorScore: 4))).Expect(HttpStatusCode.OK);
+        (await kit.TransitAsync(responsible.Client, "return", new { comment = "Поправил" })).Expect(HttpStatusCode.OK);
+
+        var asOnlyHr = await kit.TransitAsync(head.Client, "accept-changes");
+        await AddAdministratorRoleAsync(org.Admin, responsible);
+        var asAlsoAdministrator = await kit.TransitAsync(head.Client, "accept-changes");
+
+        asOnlyHr.Status.Should().Be(HttpStatusCode.Conflict, asOnlyHr.Body);
+        asOnlyHr.Json!["blockers"]!.AsArray().Select(blocker => $"{blocker!["id"]}/{blocker["reason"]}").Should().Equal($"{block.Id}/NoRight");
+        asAlsoAdministrator.Status.Should().Be(HttpStatusCode.OK, asAlsoAdministrator.Body);
+        asAlsoAdministrator.Json!["status"]!.GetValue<string>().Should().Be("Published");
+        (await StatusAsync(org.Admin, "blocks", block.Id)).Should().Be("Active");
+        (await StatusAsync(org.Admin, "competencies", draftCompetency.Id)).Should().Be("Active");
+    }
+
+    [Fact]
+    public async Task Ac109_Ac110_APreview_NamesEveryBlockerTheReaderSees_WhateverItsKind()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var head = org.TeamHead.Client;
+        var directionName = Scenarios.Unique("Область");
+        var direction = (await head.PostAsync("/api/v1/career/directions", new { name = directionName })).Expect(HttpStatusCode.Created);
+        var track = (await head.PostAsync("/api/v1/career/tracks", new { name = Scenarios.Unique("Трек"), ownerOrgUnitId = org.Team.Id, directionId = direction.Id })).Expect(HttpStatusCode.Created);
+        var level = await head.MakeLevelAsync(track.Id);
+        await org.Admin.MakeDirectionAsync(directionName.ToUpperInvariant());
+
+        var preview = (await org.Hr.Client.GetAsync($"/api/v1/career/tracks/{track.Id}/publication")).Expect(HttpStatusCode.OK).Json!;
+
+        preview["blockers"]!.AsArray().Select(blocker => $"{blocker!["kind"]}/{blocker["reason"]}/{blocker["id"]}").Should()
+            .BeEquivalentTo([$"Direction/NameTaken/{direction.Id}", $"Level/NoActivePosition/{level.Id}"]);
+    }
+
+    private static async Task AddAdministratorRoleAsync(ApiClient admin, Member member)
+    {
+        var current = await admin.GetUserAsync(member.Id);
+        (await admin.PutAsync(
+            $"/api/v1/users/{member.Id}",
+            new { email = member.User.Email, roles = new[] { Scenarios.Hr, Scenarios.GlobalAdmin }, employeeId = member.EmployeeId },
+            current.ETag)).Expect(HttpStatusCode.OK);
+    }
+
+    private static JsonObject ContentWithBlock(MatrixKit kit, Guid blockId, Guid competencyId, int seniorScore)
+    {
+        var content = kit.Content();
+        content["competencies"] = new JsonArray();
+        content["sharedBlocks"] = new JsonArray(new JsonObject
+        {
+            ["blockId"] = blockId,
+            ["competencyTypes"] = new JsonArray(new JsonObject { ["competencyId"] = competencyId, ["type"] = "Profile" }),
+        });
+        content["blockWeights"] = new JsonArray(
+            new JsonObject { ["levelId"] = kit.Junior.Id, ["blockId"] = blockId, ["percent"] = 100 },
+            new JsonObject { ["levelId"] = kit.Senior.Id, ["blockId"] = blockId, ["percent"] = 100 });
+        content["requirements"] = new JsonArray(
+            new JsonObject { ["levelId"] = kit.Junior.Id, ["competencyId"] = competencyId, ["requiredScore"] = 2 },
+            new JsonObject { ["levelId"] = kit.Senior.Id, ["competencyId"] = competencyId, ["requiredScore"] = seniorScore });
+        return content;
+    }
+
+    private static async Task<(int Number, string Status)[]> VersionsAsync(ApiClient client, Guid competencyId) =>
+        [.. (await client.GetAsync($"/api/v1/career/competencies/{competencyId}/versions")).Expect(HttpStatusCode.OK).Json!.AsArray()
+            .Select(version => (version!["number"]!.GetValue<int>(), version["status"]!.GetValue<string>()))];
+
     private static (string Kind, Guid Id)[] Entries(JsonNode preview) =>
         [.. preview["entries"]!.AsArray().Select(entry => (entry!["kind"]!.GetValue<string>(), entry["id"]!.GetValue<Guid>()))];
 

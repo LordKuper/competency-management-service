@@ -116,6 +116,35 @@ public sealed class DeskCatalogTests(CareerHost fixture) : IClassFixture<CareerH
     }
 
     [Fact]
+    public async Task Ac137_Ac138_AnUnusedScaleAndADirectionWithoutTracks_AreForReference_ToHrAndAdministratorsAlone()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var scale = await org.Admin.MakeScaleAsync();
+        var direction = await org.Admin.MakeDirectionAsync();
+
+        foreach (var client in new[] { org.Hr.Client, org.Admin })
+        {
+            var items = await client.ItemsAsync();
+            var unusedScale = items.ItemFor(scale.Id);
+            var emptyDirection = items.ItemFor(direction.Id);
+
+            unusedScale.Kinds().Should().Equal("UnusedScale");
+            unusedScale["object"]!["type"]!.GetValue<string>().Should().Be("Scale");
+            unusedScale["isReference"]!.GetValue<bool>().Should().BeTrue();
+            emptyDirection.Kinds().Should().Equal("DirectionWithoutTracks");
+            emptyDirection["object"]!["type"]!.GetValue<string>().Should().Be("Direction");
+            emptyDirection["isReference"]!.GetValue<bool>().Should().BeTrue();
+        }
+
+        foreach (var client in new[] { org.TeamHead.Client, org.Plain.Client })
+        {
+            var items = await client.ItemsAsync();
+            items.ItemOf(scale.Id).Should().BeNull();
+            items.ItemOf(direction.Id).Should().BeNull();
+        }
+    }
+
+    [Fact]
     public async Task Ac113_TheDraftsTheDeskAsksToApprove_AreTheDraftsTheServerLetsTheUserApprove_LevelsAside()
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);
