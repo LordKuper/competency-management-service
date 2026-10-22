@@ -394,3 +394,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-22 — route impl-test entry 4: critical, dispatch HEAD a51e623; risk change: security
 - 2026-10-22 — impl-test entry 4 flagged приняты: п.4 счётчик SQL каталога у HR — none (стол не вызывает ViewerAsync); п.3 перенос активации покрыт существующими тестами (мутации M3A/M3B убиты); заметка: design/adr.html:873 спринта несёт устаревшую фразу про стол администратора (черновик, не постоянный документ)
 - 2026-10-22 — impl-test: impacted set green (backend 680/680, lint чисто), 2/0 tests
+- 2026-10-22 — impl-review wave-1/iter-03 (floor high): correctness, efficiency (latched), testing, documentation APPROVE (latched); external CONCERNS (1 critical: предпросмотр публикации называет скрытые черновики в entries) → impl review-fix (review_fixes_pending wave-1/iter-03)
