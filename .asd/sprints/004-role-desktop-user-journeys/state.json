@@ -1,7 +1,7 @@
 {
   "sprint_id": "004-role-desktop-user-journeys",
   "branch": "sprint/004-role-desktop-user-journeys",
-  "phase": "impl-test",
+  "phase": "impl-review",
   "workflow": "standard",
   "documents": {
     "audit": true,
@@ -1363,7 +1363,7 @@
       "wave": 1,
       "waves": [
         {
-          "iteration": 3,
+          "iteration": 4,
           "verdicts": {
             "iter-01": {
               "correctness": "APPROVE",
@@ -1390,7 +1390,8 @@
           "iteration_heads": {
             "iter-01": "2eca62ff61abd477559607cdca75abddb0e980a4",
             "iter-02": "adddc192cc5e3cea80b74eaeeaf95825d53eba3d",
-            "iter-03": "a78f8b00476bd94a87ef7a3cffbc134eda59b698"
+            "iter-03": "a78f8b00476bd94a87ef7a3cffbc134eda59b698",
+            "iter-04": "26e259871eaeb50fab1d369e0a37eb0912e3df7f"
           },
           "latched": {
             "correctness": 1,
@@ -1415,7 +1416,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-22T18:10:53.380Z",
+  "updated_at": "2026-10-22T18:41:09.140Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
