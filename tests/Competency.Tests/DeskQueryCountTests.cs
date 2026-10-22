@@ -25,6 +25,7 @@ public sealed class DeskQueryCountTests(DeskQueryCountTests.SqlLoggingHost fixtu
         var small = await CommandsAsync(admin, route);
 
         await AddUnitsAsync(admin, 12);
+        await CommandsAsync(admin, route);
         var large = await CommandsAsync(admin, route);
 
         small.Should().BeInRange(1, CommandBudget);
