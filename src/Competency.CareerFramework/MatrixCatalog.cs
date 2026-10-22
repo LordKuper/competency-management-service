@@ -9,7 +9,8 @@ namespace Competency.CareerFramework;
 /// The catalogue side of matrix versions: which entries a version may refer to, whether a version is complete enough to be handed on,
 /// and the entries it refers to as they stand. A track matrix version refers to the levels of its track; a position matrix version has
 /// one column, its position. A version refers to shared blocks available to the matrix unit and to competencies of any scale, for a track
-/// matrix of the matrix direction or general ones, and to entries that are active or drafts whose author heads the matrix unit. Draft
+/// matrix of the matrix direction or general ones, and to entries that are active or drafts whose author heads the matrix unit. A draft
+/// shared block is also usable when it applies to a unit the matrix unit's head heads, since that head sees it whoever wrote it. Draft
 /// levels of the matrix track are usable whoever wrote them, because a matrix may be built on a draft track of its unit, which its HR edits
 /// too. Neither a version nor a shared block has a scale: a required score is a point of the competency's own scale.
 /// The competencies of a version include the compositions of its shared blocks; a requirement of a competency that has left its block
@@ -58,7 +59,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         {
             problem = ForeignCompetencyMessage;
         }
-        else if (referenced.Any(entry => entry is null || (!previousIds.Contains(entry.Id) && !IsUsable(entry, headId))))
+        else if (referenced.Any(entry => entry is null || (!previousIds.Contains(entry.Id) && !IsUsable(entry, headId, entries))))
         {
             problem = CatalogEndpoints.UnavailableMessage;
         }
@@ -236,7 +237,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     private static IEnumerable<MatrixProblem> EntryProblems(MatrixVersion version, LoadedEntries entries, Guid? headId)
     {
         IEnumerable<CatalogEntry> all = [.. entries.Levels.Values, .. entries.Competencies.Values, .. entries.Blocks.Values];
-        foreach (var entry in all.Where(entry => !IsUsable(entry, headId)))
+        foreach (var entry in all.Where(entry => !IsUsable(entry, headId, entries)))
         {
             yield return new MatrixProblem(
                 MatrixProblemCode.InactiveEntry,
@@ -256,9 +257,16 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         }
     }
 
-    private static bool IsUsable(CatalogEntry entry, Guid? headId) =>
+    /// <summary>
+    /// Whether the version may refer to the entry: an active one, a draft level, or a draft the matrix unit's head may see as its author
+    /// or, for a shared block, as the head of the unit it applies to.
+    /// </summary>
+    private static bool IsUsable(CatalogEntry entry, Guid? headId, LoadedEntries entries) =>
         entry.Status == CatalogStatus.Active
-        || (entry.Status == CatalogStatus.Draft && (entry is CareerLevel || (headId is not null && entry.AuthorId == headId)));
+        || (entry.Status == CatalogStatus.Draft
+            && (entry is CareerLevel
+                || (headId is not null
+                    && (entry.AuthorId == headId || (entry is CompetencyBlock { ScopeUnitId: { } scopeUnitId } && entries.HeadedScopeIds.Contains(scopeUnitId))))));
 
     private static bool IsOfDirection(CareerCompetency competency, CompetencyMatrix matrix) =>
         matrix.DirectionId is null || competency.DirectionId is null || competency.DirectionId == matrix.DirectionId;
@@ -379,9 +387,10 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             .ToDictionaryAsync(competency => competency.Id, cancellationToken);
         var scaleIds = competencies.Values.Select(competency => competency.ScaleId).Distinct().ToList();
         var scales = await context.Set<CompetencyScale>().AsNoTracking().Where(scale => scaleIds.Contains(scale.Id)).ToDictionaryAsync(scale => scale.Id, cancellationToken);
-        var availableScopeIds = blocks.Values.Any(block => block.ScopeUnitId is not null)
-            ? (await employees.FindAncestryAsync(version.Matrix.OrgUnitId, cancellationToken)).Select(unit => unit.Id).ToHashSet()
+        var ancestry = blocks.Values.Any(block => block.ScopeUnitId is not null)
+            ? await employees.FindAncestryAsync(version.Matrix.OrgUnitId, cancellationToken)
             : [];
+        var headEmployeeId = ancestry.FirstOrDefault()?.HeadEmployeeId;
         return new LoadedEntries(
             scales,
             levelIds.Count == 0
@@ -390,7 +399,8 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             competencies,
             blocks,
             set,
-            availableScopeIds);
+            ancestry.Select(unit => unit.Id).ToHashSet(),
+            ancestry.Where(unit => unit.IsActive && headEmployeeId is not null && unit.HeadEmployeeId == headEmployeeId).Select(unit => unit.Id).ToHashSet());
     }
 
     /// <summary>
@@ -402,13 +412,15 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     /// <param name="Blocks">The shared blocks the content includes, by identifier.</param>
     /// <param name="Set">Every competency of the version with its group, in content order, a competency in two groups twice.</param>
     /// <param name="AvailableScopeIds">The matrix unit and the units above it, read when a shared block applies to a unit.</param>
+    /// <param name="HeadedScopeIds">The units among them the matrix unit's head heads, whose draft blocks the head sees.</param>
     private sealed record LoadedEntries(
         Dictionary<Guid, CompetencyScale> Scales,
         Dictionary<Guid, CareerLevel> Levels,
         Dictionary<Guid, CareerCompetency> Competencies,
         Dictionary<Guid, CompetencyBlock> Blocks,
         List<MatrixCompetency> Set,
-        HashSet<Guid> AvailableScopeIds)
+        HashSet<Guid> AvailableScopeIds,
+        HashSet<Guid> HeadedScopeIds)
     {
         /// <summary>
         /// Whether a matrix of the unit may include the block: one that applies to all, or to the matrix unit or a unit above it.
