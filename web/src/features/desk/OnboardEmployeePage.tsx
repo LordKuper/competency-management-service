@@ -15,6 +15,7 @@ import { EmployeeForm } from "../org-structure/EmployeeForm";
 import {
   type Employee,
   type EmployeeInput,
+  employeeQuery,
   invalidateOrgStructure,
   orgUnitTreeQuery,
 } from "../org-structure/orgStructureApi";
@@ -75,6 +76,17 @@ interface Outcome {
   account?: UserResponse | null;
 }
 
+/** The outcome with the employee as last read, when the card changed after the scenario saved it. */
+function withLatestEmployee(
+  outcome: Outcome,
+  read: Employee | undefined,
+): Outcome {
+  const isNewer =
+    read?.id === outcome.employee.id &&
+    (read.version ?? 0) > (outcome.employee.version ?? 0);
+  return isNewer ? { ...outcome, employee: read } : outcome;
+}
+
 const STEPS = ["Сотрудник", "Учётная запись", "Итог"] as const;
 const EMPLOYEE_STEP = 1;
 const ACCOUNT_STEP = 2;
@@ -83,7 +95,12 @@ const SUMMARY_STEP = 3;
 /** «Принять сотрудника»: the employee card, then an account with an invitation if wanted, then what was created. */
 export function OnboardEmployeePage() {
   const requested = useSelection();
-  const [outcome, setOutcome] = useState<Outcome>();
+  const [saved, setSaved] = useState<Outcome>();
+  const reread = useQuery({
+    ...employeeQuery(saved?.employee.id ?? ""),
+    enabled: saved !== undefined,
+  });
+  const outcome = saved && withLatestEmployee(saved, reread.data);
   const [step, setStep] = useState(EMPLOYEE_STEP);
   const [round, setRound] = useState(0);
   const [edits, setEdits] = useState(NO_LEAVE_EDITS);
@@ -113,8 +130,8 @@ export function OnboardEmployeePage() {
           key={round}
           selection={selection}
           outcome={outcome}
-          onSaved={(saved) => {
-            setOutcome(saved);
+          onSaved={(next) => {
+            setSaved(next);
             goTo(ACCOUNT_STEP);
           }}
           onEditsChange={setEdits}
@@ -127,7 +144,7 @@ export function OnboardEmployeePage() {
         <AccountStep
           outcome={outcome}
           onDone={(done) => {
-            setOutcome(done);
+            setSaved(done);
             goTo(SUMMARY_STEP);
           }}
           onBack={() => goTo(EMPLOYEE_STEP)}
@@ -139,7 +156,7 @@ export function OnboardEmployeePage() {
           outcome={outcome}
           onBack={() => goTo(ACCOUNT_STEP)}
           onAnother={() => {
-            setOutcome(undefined);
+            setSaved(undefined);
             setRound((count) => count + 1);
             goTo(EMPLOYEE_STEP);
           }}
@@ -237,6 +254,11 @@ function EmployeeStep({
   );
 
   const employee = outcome?.employee;
+  const [formBase, setFormBase] = useState(employee?.version);
+  if (formBase !== employee?.version) {
+    setFormBase(employee?.version);
+    setIsDirty(false);
+  }
   const positionOf = (positionId: string) =>
     added.current?.id === positionId
       ? added.current
@@ -264,6 +286,7 @@ function EmployeeStep({
         />
       )}
       <EmployeeForm
+        key={employee?.version}
         initialValues={
           employee
             ? {
