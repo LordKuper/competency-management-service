@@ -382,3 +382,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-22 — review-fix wave-1/iter-01 tester chain COMPLETED (43568e1…aa6b31e): TST-1…TST-10; flagged приняты (TST-6 счёт команд по EventId 20101; TST-8 удаления из истории; TST-4 P2/HR4 убиты)
 - 2026-10-22 — impl fix for wave-1/iter-01: findings resolved; gate: build 0/0, web build и lint чисто
 - 2026-10-22 — route impl-test entry 3: critical, dispatch HEAD aa6b31e; risk change: security
+- 2026-10-22 — impl-test entry 3 flagged приняты оркестратором: max_connections=500 тестового контейнера PostgreSQL (замер: 100 из 100, 25 красных с 53300 → 678/678, пик 108); весь backend по вентилю безопасности (порт UserStatus); половина ext 3 про направления — none с причиной; 6 стражей с мутациями; потолок PublicationPlan.Visible записан
+- 2026-10-22 — impl-test: impacted set green (backend 678/678, web lint чисто), 11/0 tests

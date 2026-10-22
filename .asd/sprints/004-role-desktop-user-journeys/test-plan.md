@@ -13,7 +13,7 @@ responsibility:
 |---|---|---|
 | 1 | 16478d5 | full change surface |
 | 2 | 7fe0c10 | delta since entry 1 |
-| 3 | | delta since entry 2 |
+| 3 | f72d32e | delta since entry 2 |
 
 ## Risk → check decisions
 

@@ -525,3 +525,13 @@
 {"op":"close","id":"review-fix wave-1/iter-01 tests","kind":"dispatch","parent":"impl#5","start":"2026-10-22T14:51:23.843Z","end":"2026-10-22T15:17:12.101Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl#5","kind":"phase","parent":null,"start":"2026-10-22T14:33:33.074Z","end":"2026-10-22T15:17:41.921Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-test#3","kind":"phase","parent":null,"start":"2026-10-22T15:17:41.921Z","attrs":{}}
+{"op":"open","id":"impl-test entry 3","kind":"dispatch","parent":"impl-test#3","start":"2026-10-22T15:17:42.221Z","attrs":{}}
+{"op":"open","id":"suite impl-test#4","kind":"suite","parent":"impl-test entry 3","start":"2026-10-22T15:22:10.890Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#4","kind":"suite","parent":"impl-test entry 3","start":"2026-10-22T15:22:10.890Z","end":"2026-10-22T15:25:07.064Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#5","kind":"suite","parent":"impl-test entry 3","start":"2026-10-22T15:44:31.684Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#5","kind":"suite","parent":"impl-test entry 3","start":"2026-10-22T15:44:31.684Z","end":"2026-10-22T15:48:40.790Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#6","kind":"suite","parent":"impl-test entry 3","start":"2026-10-22T15:48:40.851Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#6","kind":"suite","parent":"impl-test entry 3","start":"2026-10-22T15:48:40.851Z","end":"2026-10-22T15:51:56.385Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-test entry 3","kind":"dispatch","parent":"impl-test#3","start":"2026-10-22T15:17:42.221Z","end":"2026-10-22T15:54:25.881Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#3","kind":"phase","parent":null,"start":"2026-10-22T15:17:41.921Z","end":"2026-10-22T15:54:26.077Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#2","kind":"phase","parent":null,"start":"2026-10-22T15:54:26.077Z","attrs":{}}
