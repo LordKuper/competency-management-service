@@ -417,3 +417,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-22 — route impl-test entry 6: critical, dispatch HEAD 7c5de21; risk change: security
 - 2026-10-22 — impl-test entry 6 flagged приняты: backend не запускался (в дельте нет backend-файлов), токены/подсветка строки очереди — none (jsdom без вёрстки, проверка — UI conformance ревью); выжившие мутанты: мёртвый onOpenChange в TrackPositionsPage (кандидат на удаление dev), два недостижимых из UI; тесты линейки шагов на классе antd
 - 2026-10-22 — impl-test: impacted set green (web 676/676), 44/0 tests
+- 2026-10-23 — impl-review wave-2/iter-02 (floor medium): testing, documentation APPROVE (latched); correctness CONCERNS (1), efficiency CONCERNS (1), external CONCERNS (4; ext 1 = corr 1) → impl review-fix (review_fixes_pending wave-2/iter-02)
+- 2026-10-23 — route review-fix wave-2/iter-02 (correctness.md 1, efficiency.md 1, external.md 1-4): critical, dispatch HEAD 6310932; risk change: security
