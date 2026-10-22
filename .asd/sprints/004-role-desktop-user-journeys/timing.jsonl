@@ -481,3 +481,12 @@
 {"op":"close","id":"impl#2","kind":"phase","parent":null,"start":"2026-10-21T08:31:13.145Z","end":"2026-10-22T11:43:04.000Z","outcome":"interrupted","attrs":{}}
 {"op":"close","id":"impl assessment 16","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:41:06.248Z","end":"2026-10-22T11:43:04.000Z","outcome":"interrupted","attrs":{}}
 {"op":"open","id":"impl#3","kind":"phase","parent":null,"start":"2026-10-22T11:48:18.603Z","attrs":{}}
+{"op":"close","id":"impl#3","kind":"phase","parent":null,"start":"2026-10-22T11:48:18.603Z","end":"2026-10-22T11:50:48.116Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#1","kind":"phase","parent":null,"start":"2026-10-22T11:50:48.116Z","attrs":{}}
+{"op":"open","id":"impl-test entry 1","kind":"dispatch","parent":"impl-test#1","start":"2026-10-22T11:51:34.282Z","attrs":{}}
+{"op":"open","id":"suite impl-test#1","kind":"suite","parent":"impl-test entry 1","start":"2026-10-22T11:53:39.325Z","attrs":{}}
+{"op":"close","id":"suite impl-test#1","kind":"suite","parent":"impl-test entry 1","start":"2026-10-22T11:53:39.325Z","end":"2026-10-22T11:56:39.158Z","outcome":"done","attrs":{}}
+{"op":"open","id":"suite impl-test#2","kind":"suite","parent":"impl-test entry 1","start":"2026-10-22T13:32:02.536Z","attrs":{}}
+{"op":"close","id":"suite impl-test#2","kind":"suite","parent":"impl-test entry 1","start":"2026-10-22T13:32:02.536Z","end":"2026-10-22T13:35:34.958Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test entry 1","kind":"dispatch","parent":"impl-test#1","start":"2026-10-22T11:51:34.282Z","end":"2026-10-22T13:47:42.367Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#1","kind":"phase","parent":null,"start":"2026-10-22T11:50:48.116Z","end":"2026-10-22T13:49:59.448Z","outcome":"done","attrs":{}}
