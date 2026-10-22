@@ -86,7 +86,10 @@ export function UnitHrModal({ unit, onClose }: UnitHrModalProps) {
       cancelText: "Отмена",
       onOk: () =>
         remove().then(
-          () => undefined,
+          () => {
+            message.success("Закрепление HR снято");
+            onClose();
+          },
           (failure) => message.error(describeApiError(failure)),
         ),
     });
@@ -130,7 +133,13 @@ export function UnitHrModal({ unit, onClose }: UnitHrModalProps) {
           )}
           {isAdmin && (
             <>
-              <AssignHrForm onAssign={assign} />
+              <AssignHrForm
+                onAssign={async (employeeId) => {
+                  await assign(employeeId);
+                  message.success("HR закреплён");
+                  onClose();
+                }}
+              />
               {data.assigned && (
                 <Button danger onClick={confirmRemoval}>
                   Снять закрепление
@@ -217,7 +226,6 @@ function AssignHrForm({
       await queryClient.invalidateQueries({ queryKey: CANDIDATES_QUERY_KEY });
       throw failure;
     }
-    form.resetFields();
   });
   const [search, setSearch] = useState("");
   const text = useDebouncedValue(search.trim());

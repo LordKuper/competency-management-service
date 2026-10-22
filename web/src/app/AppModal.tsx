@@ -1,6 +1,7 @@
 import { Form, Modal, type ModalProps } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { useLeaveGuard } from "./leaveGuard";
+import { ModalSavedContext } from "./modalSaved";
 
 // Select and picker inputs are read-only unless searchable, yet they are the controls to focus.
 const FIELD =
@@ -85,7 +86,9 @@ export function AppModal({
           }
         }}
       >
-        <div ref={bodyRef}>{children}</div>
+        <ModalSavedContext value={() => setIsTouched(false)}>
+          <div ref={bodyRef}>{children}</div>
+        </ModalSavedContext>
       </Form.Provider>
     </Modal>
   );
