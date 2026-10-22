@@ -12,7 +12,7 @@ import {
 import { sharedBlocksOf } from "../career/matrixContent";
 import { versionCompetencyIds } from "../career/matrixGroups";
 import { SKIPPED_NOTE } from "../career/matrixLabels";
-import { draftRecords } from "../career/usePublishEntry";
+import { draftRecords, publishedCount } from "../career/usePublishEntry";
 import { CascadeTable } from "./CascadeTable";
 import { CompletenessBlock } from "./CompletenessBlock";
 import { DecisionError } from "./DecisionError";
@@ -83,6 +83,7 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
   }
 
   if (problems === null || !preview) return <Skeleton active />;
+  const cascadeCount = publishedCount(preview);
 
   return (
     <Flex vertical gap="middle">
@@ -123,14 +124,12 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
             type="warning"
             lead="Отправка опубликует версию"
             text={
-              preview.entries.length > 0
-                ? `и вместе с ней ${draftRecords(preview.entries.length)}: вы — ответственный HR этого подразделения, шаг 2 согласуется автоматически.`
+              cascadeCount > 0
+                ? `и вместе с ней ${draftRecords(cascadeCount)}: вы — ответственный HR этого подразделения, шаг 2 согласуется автоматически.`
                 : "без черновых записей: вы — ответственный HR этого подразделения, шаг 2 согласуется автоматически."
             }
           />
-          {preview.entries.length > 0 && (
-            <CascadeTable entries={preview.entries} />
-          )}
+          {cascadeCount > 0 && <CascadeTable drafts={preview} />}
         </Flex>
       ) : (
         <section>

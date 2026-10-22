@@ -16,6 +16,7 @@ import {
 import {
   type ChangedNotice,
   ChangedNoticeAlert,
+  publishedCount,
 } from "../career/usePublishEntry";
 import { CascadeTable } from "./CascadeTable";
 
@@ -78,13 +79,14 @@ function PublishingContent({
   preview,
   notice,
 }: PublishingContentProps) {
+  const count = publishedCount(preview);
   return (
     <Space orientation="vertical" size="small" style={{ display: "flex" }}>
       {notice && <ChangedNoticeAlert notice={notice} />}
-      <div>{question.lead(preview.entries.length)}</div>
-      {preview.entries.length > 0 && (
+      <div>{question.lead(count)}</div>
+      {count > 0 && (
         <>
-          <CascadeTable entries={preview.entries} />
+          <CascadeTable drafts={preview} />
           <p>Всё публикуется сразу или не публикуется ничего.</p>
         </>
       )}
@@ -163,7 +165,7 @@ export function useVersionTransition() {
       onOk: () =>
         run(decision, {
           tag: preview.cascadeTag,
-          count: preview.entries.length,
+          count: publishedCount(preview),
         }),
     });
   }
@@ -184,7 +186,7 @@ export function useVersionTransition() {
       }
       await run(decision, {
         tag: preview.cascadeTag,
-        count: preview.entries.length,
+        count: publishedCount(preview),
       });
       return;
     }

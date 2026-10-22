@@ -19,7 +19,11 @@ import {
 import { scaleOfCompetency } from "../career/matrixGroups";
 import { matrixName, VERSION_STATUS_LABELS } from "../career/matrixLabels";
 import { useBlockNames } from "../career/useBlockNames";
-import { draftRecords, RefusalContent } from "../career/usePublishEntry";
+import {
+  draftRecords,
+  publishedCount,
+  RefusalContent,
+} from "../career/usePublishEntry";
 import { CascadeTable } from "./CascadeTable";
 import { ChangesBlock } from "./ChangesBlock";
 import { CompletenessBlock } from "./CompletenessBlock";
@@ -90,7 +94,6 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
   const isWaitingForUser = can("Approve") || can("Return");
   const problems = completeness.data?.problems ?? null;
   const isPublishing = publication.data?.publishingActions.includes("Approve");
-  const entries = publication.data?.entries ?? [];
   const approverChanges =
     lastVariant?.kind === "Approver" ? approverDiff.data : undefined;
   const isFirstVersion = changes.data?.previousNumber === null;
@@ -238,14 +241,14 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
             Будет опубликовано вместе с версией
           </Typography.Title>
           <Flex vertical gap="small">
-            {entries.length > 0 ? (
+            {publishedCount(publication.data) > 0 ? (
               <>
                 <Typography.Text>
                   Эти черновые записи станут действующими одновременно с
                   версией. Право утвердить их проверяется у ответственного HR
                   подразделения матрицы; отказать по одной нельзя.
                 </Typography.Text>
-                <CascadeTable entries={entries} />
+                <CascadeTable drafts={publication.data} />
               </>
             ) : (
               <Typography.Text>

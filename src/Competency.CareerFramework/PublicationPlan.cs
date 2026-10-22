@@ -34,7 +34,7 @@ internal sealed record PublicationPlan(
     /// <returns>A 409 response.</returns>
     public ProblemHttpResult Refuse(string detail, CatalogViewer reader)
     {
-        var visible = Visible(reader);
+        var visible = Visible(reader.SeesLoaded());
         return PublicationRefusal.Refuse(detail, visible, Blockers.Count - visible.Count);
     }
 
@@ -45,9 +45,12 @@ internal sealed record PublicationPlan(
     /// <returns>The preview.</returns>
     public PublicationPreviewResponse Describe(CatalogViewer reader)
     {
-        var visible = Visible(reader);
+        var canSee = reader.SeesLoaded();
+        var visible = Visible(canSee);
+        var entries = DescribeEntries(canSee);
         return new PublicationPreviewResponse(
-            DescribeEntries(),
+            entries,
+            Entries.Count - entries.Count,
             [.. visible.Take(PublicationRefusal.ShownLimit)],
             Blockers.Count - Math.Min(visible.Count, PublicationRefusal.ShownLimit),
             Tag);
@@ -62,15 +65,13 @@ internal sealed record PublicationPlan(
     public MatrixPublicationResponse Describe(IReadOnlyList<MatrixAction> publishingActions, CatalogViewer reader)
     {
         var preview = Describe(reader);
-        return new MatrixPublicationResponse(publishingActions, preview.Entries, preview.Blockers, preview.MoreCount, preview.CascadeTag);
+        return new MatrixPublicationResponse(
+            publishingActions, preview.Entries, preview.HiddenEntryCount, preview.Blockers, preview.MoreCount, preview.CascadeTag);
     }
 
-    private List<PublicationEntry> DescribeEntries() =>
-        [.. Entries.Select(entry => new PublicationEntry(CatalogPublication.KindOf(entry), entry.Id, entry.Name, CatalogPublication.ContextOf(entry)))];
+    private List<PublicationEntry> DescribeEntries(Func<CatalogEntry, bool> canSee) =>
+        [.. Entries.Where(canSee).Select(entry => new PublicationEntry(CatalogPublication.KindOf(entry), entry.Id, entry.Name, CatalogPublication.ContextOf(entry)))];
 
-    private List<PublicationBlocker> Visible(CatalogViewer reader)
-    {
-        var canSee = reader.SeesLoaded();
-        return [.. Blockers.Where(blocker => canSee(blocker.Entry)).Select(blocker => blocker.Blocker)];
-    }
+    private List<PublicationBlocker> Visible(Func<CatalogEntry, bool> canSee) =>
+        [.. Blockers.Where(blocker => canSee(blocker.Entry)).Select(blocker => blocker.Blocker)];
 }

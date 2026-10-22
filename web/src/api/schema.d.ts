@@ -2460,6 +2460,8 @@ export interface components {
         MatrixPublicationResponse: {
             publishingActions: components["schemas"]["MatrixAction"][];
             entries: components["schemas"]["PublicationEntry"][];
+            /** Format: int32 */
+            hiddenEntryCount: number;
             blockers: components["schemas"]["PublicationBlocker"][];
             /** Format: int32 */
             moreCount: number;
@@ -2926,6 +2928,8 @@ export interface components {
         PublicationEntryKind: "Direction" | "Track" | "Level" | "Competency" | "Scale" | "Block";
         PublicationPreviewResponse: {
             entries: components["schemas"]["PublicationEntry"][];
+            /** Format: int32 */
+            hiddenEntryCount: number;
             blockers: components["schemas"]["PublicationBlocker"][];
             /** Format: int32 */
             moreCount: number;

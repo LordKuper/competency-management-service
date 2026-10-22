@@ -78,6 +78,22 @@ export function recordsInstrumental(count: number): string {
   return `${count} ${PLURAL.select(count) === "one" ? "записью" : "записями"}`;
 }
 
+/** The listed drafts of a publication and how many more the user may not read, as an entry's and a version's preview carry them. */
+export type PublishedDrafts = Pick<
+  PublicationPreview,
+  "entries" | "hiddenEntryCount"
+>;
+
+/** How many drafts a publication makes active, the unlisted ones the user may not read included. */
+export function publishedCount(drafts: PublishedDrafts): number {
+  return drafts.entries.length + drafts.hiddenEntryCount;
+}
+
+/** «и ещё 2 черновые записи»: the drafts of a publication the user may not read, named by number only. */
+export function hiddenDraftsText(count: number): string {
+  return `и ещё ${draftRecords(count)}`;
+}
+
 /** What is published together with an entry, and why it may not be. */
 export interface PublishTarget {
   segment: PublishableSegment;
@@ -110,16 +126,21 @@ export function ChangedNoticeAlert({ notice }: { notice: ChangedNotice }) {
   );
 }
 
-function EntryList({ entries }: { entries: readonly PublicationEntry[] }) {
+function EntryList({ entries, hiddenEntryCount }: PublishedDrafts) {
   return (
-    <ul>
-      {entries.map((item) => (
-        <li key={`${item.kind}:${item.id}`}>
-          {`${KIND_LABELS[item.kind]} ${item.name}`}
-          {item.context ? ` (${item.context})` : ""}
-        </li>
-      ))}
-    </ul>
+    <>
+      {entries.length > 0 && (
+        <ul>
+          {entries.map((item) => (
+            <li key={`${item.kind}:${item.id}`}>
+              {`${KIND_LABELS[item.kind]} ${item.name}`}
+              {item.context ? ` (${item.context})` : ""}
+            </li>
+          ))}
+        </ul>
+      )}
+      {hiddenEntryCount > 0 && <p>{hiddenDraftsText(hiddenEntryCount)}</p>}
+    </>
   );
 }
 
@@ -137,14 +158,14 @@ function ConfirmContent({
   notice,
   isOffer,
 }: ConfirmContentProps) {
-  const { entries } = preview;
+  const count = publishedCount(preview);
   const lead = isOffer
     ? "Запись ссылается на черновые записи, поэтому сразу действующей не стала. "
     : "";
   return (
     <Space orientation="vertical" size="small" style={{ display: "flex" }}>
       {notice && <ChangedNoticeAlert notice={notice} />}
-      {entries.length === 0 ? (
+      {count === 0 ? (
         <p>
           {action === "approve"
             ? "Запись станет действующей."
@@ -154,10 +175,13 @@ function ConfirmContent({
         <>
           <p>
             {isOffer
-              ? `${lead}Утвердить её можно сейчас: вместе с ней станут действующими ${draftRecords(entries.length)}:`
-              : `${action === "approve" ? "Запись станет действующей" : "Запись вернётся в работу"}. Вместе с ней станут действующими ${draftRecords(entries.length)}:`}
+              ? `${lead}Утвердить её можно сейчас: вместе с ней станут действующими ${draftRecords(count)}:`
+              : `${action === "approve" ? "Запись станет действующей" : "Запись вернётся в работу"}. Вместе с ней станут действующими ${draftRecords(count)}:`}
           </p>
-          <EntryList entries={entries} />
+          <EntryList
+            entries={preview.entries}
+            hiddenEntryCount={preview.hiddenEntryCount}
+          />
           <p>Всё публикуется сразу или не публикуется ничего.</p>
           {isOffer && (
             <p>
@@ -321,7 +345,7 @@ export function usePublishEntry() {
     action: PublishAction,
     preview: PublicationPreview,
   ): Promise<ChangedNotice | undefined> {
-    const count = preview.entries.length;
+    const count = publishedCount(preview);
     try {
       await changeCatalogStatus(
         target.segment,
@@ -365,7 +389,7 @@ export function usePublishEntry() {
     notice?: ChangedNotice,
     isOffer?: boolean,
   ) {
-    const count = preview.entries.length;
+    const count = publishedCount(preview);
     const verb = action === "approve" ? "Утвердить" : "Вернуть в работу";
     modal.confirm({
       title: isOffer
@@ -409,7 +433,7 @@ export function usePublishEntry() {
         );
         return;
       }
-      if (preview.entries.length === 0 && !notice) {
+      if (publishedCount(preview) === 0 && !notice) {
         const again = await execute(target, action, preview);
         if (again) await publish(target, action, again);
         return;

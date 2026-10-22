@@ -28,6 +28,7 @@ import { KIND_LABELS } from "../career/DraftsSection";
 import { matrixName, VERSION_STATUS_LABELS } from "../career/matrixLabels";
 import { useCatalogRights } from "../career/useCatalogRights";
 import {
+  publishedCount,
   RefusalContent,
   recordsInstrumental,
   usePublishEntry,
@@ -224,10 +225,10 @@ function DraftRecord({ draft, position, total, headingRef }: DraftRecordProps) {
   const reason = earlyReason(draft);
   const isEarly = reason !== null;
   const canApprove = rights.canManage(draft.ownerOrgUnitId ?? undefined);
-  const entries = preview.data?.entries ?? [];
+  const cascadeCount = preview.data ? publishedCount(preview.data) : 0;
   const label =
-    entries.length > 0
-      ? `Утвердить вместе с ${recordsInstrumental(entries.length)}`
+    cascadeCount > 0
+      ? `Утвердить вместе с ${recordsInstrumental(cascadeCount)}`
       : "Утвердить";
   const back = {
     to: location.pathname + location.search,
@@ -314,8 +315,8 @@ function DraftRecord({ draft, position, total, headingRef }: DraftRecordProps) {
           <Skeleton active />
         ) : (
           <Flex vertical gap="small">
-            {entries.length > 0 ? (
-              <CascadeTable entries={entries} />
+            {cascadeCount > 0 ? (
+              <CascadeTable drafts={preview.data} />
             ) : (
               <Typography.Paragraph>
                 Других черновых записей публикация не затронет.

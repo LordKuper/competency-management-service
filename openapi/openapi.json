@@ -14894,6 +14894,7 @@
         "required": [
           "publishingActions",
           "entries",
+          "hiddenEntryCount",
           "blockers",
           "moreCount",
           "cascadeTag"
@@ -14911,6 +14912,10 @@
             "items": {
               "$ref": "#/components/schemas/PublicationEntry"
             }
+          },
+          "hiddenEntryCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "blockers": {
             "type": "array",
@@ -16627,6 +16632,7 @@
       "PublicationPreviewResponse": {
         "required": [
           "entries",
+          "hiddenEntryCount",
           "blockers",
           "moreCount",
           "cascadeTag"
@@ -16638,6 +16644,10 @@
             "items": {
               "$ref": "#/components/schemas/PublicationEntry"
             }
+          },
+          "hiddenEntryCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "blockers": {
             "type": "array",
