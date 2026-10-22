@@ -140,7 +140,7 @@ internal static class MatrixEndpoints
             if ((await store.LinkedTracksAsync([positionId], cancellationToken))[positionId].ToList() is { Count: > 0 } linkedTracks)
             {
                 var positionName = snapshot.Positions[positionId].Name;
-                return Rejection.Conflict(linkedTracks.FirstOrDefault(viewer.CanSee) is { } track
+                return Rejection.Conflict(linkedTracks.FirstOrDefault(viewer.SeesLoaded()) is { } track
                     ? $"Должность «{positionName}» связана с уровнем трека «{track.Name}» — матрица должности для неё невозможна"
                     : $"Должность «{positionName}» связана с уровнем трека — матрица должности для неё невозможна");
             }

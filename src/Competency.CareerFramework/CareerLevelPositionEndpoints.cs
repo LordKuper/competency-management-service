@@ -85,12 +85,13 @@ internal static class CareerLevelPositionEndpoints
         var shown = matching.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         var viewer = await store.ViewerAsync(cancellationToken);
         var tracks = await store.LinkedTracksAsync([.. shown.Select(position => position.Id)], cancellationToken);
+        var canSee = viewer.SeesLoaded();
         var items = shown
             .Select(position => new MatrixPositionResponse(
                 position.Id,
                 position.Name,
                 tracks[position.Id].Any(),
-                tracks[position.Id].FirstOrDefault(viewer.CanSee) is { } track ? new CareerNamedResponse(track.Id, track.Name) : null))
+                tracks[position.Id].FirstOrDefault(canSee) is { } track ? new CareerNamedResponse(track.Id, track.Name) : null))
             .ToList();
         return TypedResults.Ok(new PageResponse<MatrixPositionResponse>(items, matching.Count, page, pageSize));
     }

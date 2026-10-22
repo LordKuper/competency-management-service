@@ -99,20 +99,24 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, bool IsHr, IRead
     }
 
     /// <summary>
-    /// Whether the user may read an entry already loaded, by the same filter as <see cref="Sees{T}"/>.
+    /// The check whether the user may read entries already loaded, by the same filter as <see cref="Sees{T}"/>. Compiling a filter costs
+    /// far more than applying it, so the check compiles each entry type's filter once, on its first entry; take one per list of entries.
     /// </summary>
-    /// <param name="entry">The entry; a level with its track loaded.</param>
-    /// <returns>True when the user may read it.</returns>
-    public bool CanSee(CatalogEntry entry) => entry switch
+    /// <returns>The check, given an entry and, for a level, its track loaded.</returns>
+    public Func<CatalogEntry, bool> SeesLoaded()
     {
-        CareerDirection direction => SeesEntry(direction),
-        CareerTrack track => SeesEntry(track),
-        CareerLevel level => SeesEntry(level),
-        CareerCompetency competency => SeesEntry(competency),
-        CompetencyScale scale => SeesEntry(scale),
-        CompetencyBlock block => SeesEntry(block),
-        _ => throw new UnreachableException($"Unknown catalogue entry type {entry.GetType().Name}."),
-    };
+        var compiled = new Dictionary<Type, Func<CatalogEntry, bool>>();
+        return entry =>
+        {
+            if (!compiled.TryGetValue(entry.GetType(), out var sees))
+            {
+                sees = Compiled(entry);
+                compiled[entry.GetType()] = sees;
+            }
+
+            return sees(entry);
+        };
+    }
 
     /// <summary>
     /// Whether the user may change the entry's fields: its keepers, and while it is a draft the head of its unit, or for an entry of no unit
@@ -181,8 +185,23 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, bool IsHr, IRead
         ? CatalogStatus.Active
         : Heads(unitId) ? CatalogStatus.Draft : null;
 
-    private bool SeesEntry<T>(T entry)
-        where T : CatalogEntry => Sees<T>().Compile()(entry);
+    private Func<CatalogEntry, bool> Compiled(CatalogEntry entry) => entry switch
+    {
+        CareerDirection => Compiled<CareerDirection>(),
+        CareerTrack => Compiled<CareerTrack>(),
+        CareerLevel => Compiled<CareerLevel>(),
+        CareerCompetency => Compiled<CareerCompetency>(),
+        CompetencyScale => Compiled<CompetencyScale>(),
+        CompetencyBlock => Compiled<CompetencyBlock>(),
+        _ => throw new UnreachableException($"Unknown catalogue entry type {entry.GetType().Name}."),
+    };
+
+    private Func<CatalogEntry, bool> Compiled<T>()
+        where T : CatalogEntry
+    {
+        var sees = Sees<T>().Compile();
+        return entry => sees((T)entry);
+    }
 
     private bool Keeps(Guid? unitId) => IsAdmin || (unitId is { } id ? HrUnitIds.Contains(id) : IsHr);
 

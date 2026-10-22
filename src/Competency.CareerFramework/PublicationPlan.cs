@@ -68,6 +68,9 @@ internal sealed record PublicationPlan(
     private List<PublicationEntry> DescribeEntries() =>
         [.. Entries.Select(entry => new PublicationEntry(CatalogPublication.KindOf(entry), entry.Id, entry.Name, CatalogPublication.ContextOf(entry)))];
 
-    private List<PublicationBlocker> Visible(CatalogViewer reader) =>
-        [.. Blockers.Where(blocker => reader.CanSee(blocker.Entry)).Select(blocker => blocker.Blocker)];
+    private List<PublicationBlocker> Visible(CatalogViewer reader)
+    {
+        var canSee = reader.SeesLoaded();
+        return [.. Blockers.Where(blocker => canSee(blocker.Entry)).Select(blocker => blocker.Blocker)];
+    }
 }
