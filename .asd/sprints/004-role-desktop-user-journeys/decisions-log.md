@@ -419,3 +419,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-22 — impl-test: impacted set green (web 676/676), 44/0 tests
 - 2026-10-23 — impl-review wave-2/iter-02 (floor medium): testing, documentation APPROVE (latched); correctness CONCERNS (1), efficiency CONCERNS (1), external CONCERNS (4; ext 1 = corr 1) → impl review-fix (review_fixes_pending wave-2/iter-02)
 - 2026-10-23 — route review-fix wave-2/iter-02 (correctness.md 1, efficiency.md 1, external.md 1-4): critical, dispatch HEAD 6310932; risk change: security
+- 2026-10-23 — review-fix wave-2/iter-02 dev chain COMPLETED (2414036…c5a16e7): correctness 1 / external 1-4, efficiency 1
+- 2026-10-23 — impl fix for wave-2/iter-02: findings resolved; gate: web build и lint чисто (backend не менялся)
+- 2026-10-23 — route impl-test entry 7: critical, dispatch HEAD c5a16e7; risk change: security
