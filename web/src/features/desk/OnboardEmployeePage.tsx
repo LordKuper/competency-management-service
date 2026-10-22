@@ -175,7 +175,7 @@ interface EmployeeStepProps {
   outcome?: Outcome;
   onSaved: (outcome: Outcome) => void;
   onEditsChange: (edits: LeaveEdits) => void;
-  /** Explicit discard: leaves the scenario without asking. */
+  /** Explicit discard: leaves the scenario without asking; offered only until the employee is created. */
   onCancel: () => void;
 }
 
@@ -284,7 +284,7 @@ function EmployeeStep({
           employee && { id: employee.positionId, name: employee.position }
         }
         onDirtyChange={setIsDirty}
-        onCancel={onCancel}
+        onCancel={employee ? undefined : onCancel}
         onPositionAdded={(position) => {
           added.current = position;
         }}

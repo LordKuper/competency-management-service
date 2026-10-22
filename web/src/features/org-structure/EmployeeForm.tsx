@@ -35,7 +35,7 @@ interface EmployeeFormProps {
   submitLabel: string;
   /** Saves the input; a rejection is shown on the fields it names and by the caller. */
   onSubmit: (input: EmployeeInput) => Promise<unknown>;
-  /** Leaves the form; omitted when `scenarioActions` carries the buttons. */
+  /** Leaves the form; without it, and without `scenarioActions`, the form offers only its submit button. */
   onCancel?: () => void;
   /**
    * Lays the form out as a step of a scenario: one field to a row, the three name fields as one row, and one row of buttons, `start` at the left and
@@ -184,7 +184,7 @@ export function EmployeeForm({
           )}
           <Space>
             {submitButton}
-            <Button onClick={() => onCancel?.()}>Отмена</Button>
+            {onCancel && <Button onClick={onCancel}>Отмена</Button>}
           </Space>
         </>
       )}
