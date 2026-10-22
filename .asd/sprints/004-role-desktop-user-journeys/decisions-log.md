@@ -404,3 +404,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-22 — route impl-test entry 5: critical, dispatch HEAD 68c1a40; risk change: security, change: public contract
 - 2026-10-22 — impl-test entry 5 flagged приняты: п.1 (скрытое в предпросмотре записи) — none, предпосылка недостижима, hiddenEntryCount=0 закреплён в Ac107; компонентные тесты трёх изменённых экранов стола (отступление от потолка entry-01 обосновано AC-112); стражи с мутантами
 - 2026-10-22 — impl-test: impacted set green (backend 682/682, web 505/505), 15/0 tests; 9 web-фикстур без hiddenEntryCount исправлены как дефект теста
+- 2026-10-22 — impl-review wave-1/iter-04: external APPROVE (latched); волна 1 закрыта (все APPROVE) → волна 2, итерация 1

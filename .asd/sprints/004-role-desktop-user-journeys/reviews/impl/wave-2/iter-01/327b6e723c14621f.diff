@@ -1,0 +1,1499 @@
+diff --git a/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-01.md b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-01.md
+new file mode 100644
+index 0000000..882348f
+--- /dev/null
++++ b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-01.md
+@@ -0,0 +1,85 @@
++---
++responsibility:
++  owns: test approach for sprint change scope, removal reasons, no-test decisions, suite run result, code defects found by tests, manual-verification spec (single home — never duplicated in a review file)
++  excludes: task breakdown, requirements, review verdicts, code, change surface (derivable from the diff)
++  delegates_to: plan.md (tasks), persistent docs (requirements), reviews/impl/wave-<K>/iter-NN/testing.md (verdict)
++---
++
++# Test plan — sprint 004-role-desktop-user-journeys, entry 1 (rotated)
++
++## Risk → check decisions
++
++Проверки выбраны после того, как код существует, по реальному `git diff --stat 956eeeb HEAD`. Backend — HTTP-тесты на реальном хосте API против общего контейнера PostgreSQL (так устроен весь набор); чистые правила стола — модульные тесты; SPA — vitest с подменой сети `fakeApi` (e2e по правилу проекта нет).
++
++| Change | Material risk | Chosen check | Decision | Reason |
++|---|---|---|---|---|
++| `Competency.Desk/DeskRules.Merge` (поглощение, порядок причин, группы, порядок элементов) | change: public contract — стол показывает не то, что нужно, или в неверном порядке | unit | add | чистая функция; таблица поглощений, порядок причин и группа каждого вида `DeskKind` проверяются без хоста (`DeskRulesTests`) |
++| Источники стола оргструктуры и учётных записей, администратор (`OrgStructureDeskSource`, `UserManagementDeskSource`) | change: security — источники видны только своим ролям, стол только о себе | component/contract | add | находки зависят от данных нескольких модулей; проверяется ответ `/desk`, `/desk/items`, `/desk/count` под каждой ролью (`DeskAdministratorTests`) |
++| Источник career-framework: версии и матрицы, треки, уровни, должности, справочники, предпосылки | change: security — неопубликованное попадает только к тем, кто его читает | component/contract | add | права читателя считаются в БД и снимке оргструктуры; нужны реальные данные (`DeskMatrixTests`, `DeskTrackTests`, `DeskCatalogTests`, `DeskPrerequisiteTests`) |
++| Постраничность и потолок `GET /desk/items` (`limit` ≤ 2000), счётчик | change: perf — вычисление на каждый запрос | component/contract | add | граница 2000 и страницы проверяются на 2001 вставленной SQL должности (`DeskPagingTests`, `DeskCeilingTests`) |
++| Бюджет стола: p95 `/desk/count` ≤ 300 мс, `/desk` ≤ 600 мс, ≤ 25 SQL-команд | change: perf | замер на сиде 10 000 (вне набора) | none (замер записан ниже) | тест со временем недетерминирован и запрещён правилами; замер сделан одноразовым скриптом (вне репозитория) на `tests/perf/seed-10k.sql`, итог — в «Suite run» |
++| Связь «должность — уровень», готовность трека | change: public contract; lock ordering | component/contract + гонка | add | правила привязки и снятия последней должности; гонка двух снятий держит блокировку каталога (`LevelPositionTests`, `CareerLockTests`) |
++| Блокировки справочников: новые методы связей | change: lock ordering | component | add | две строки в теориях `CareerLockTests` (`level-position-link`, `level-position-unlink`): запрос ждёт эксклюзивной блокировки каталога |
++| Общее правило публикации с каскадом (`CatalogPublication`, `PublicationPlan`) | change: workflow state machine; public contract; security | component/contract | add | предпросмотр, метка `cascadeTag`, 412 `publication`, 409 `PublicationRefusal`, журнал на каждую сущность (`PublicationCascadeTests`) |
++| Методы чтения сценариев: полнота, изменения, настройка подразделения, `me/place`, неиспользуемые записи, шаг мастера | change: migration (`builder_step`); security | component/contract | add | права `setup` — только администратору, `me/place` — только о себе, шаг 2–6 (`ScenarioReadTests`, `MyPlaceTests`, `UnitSetupTests`, `UnitSetupReadTests`) |
++| Письма-напоминания (`CareerMail`, `CareerMailQueue`) | change: lock ordering — отправка только после коммита, вне блокировок | component + перехват почты | add | письма читаются из общего Mailpit; сбой сервера — отдельный хост с недоступной почтой (`CareerMailTests`, `CareerMailFailureTests`) |
++| Повторная проверка адреса при отправке и ёмкость очереди 1000 (`CareerMailQueue`) | change: lock ordering | — | none | отправка идёт в фоне, вход в очередь переполняется только на 1000 писем; в тестах это потребовало бы сна или подмены часов — потолок записан ниже |
++| Общие блоки, матрицы должности, роль HR по сотруднику | change: public contract; migration | component/contract | add | `CompetencyBlockTests`, `PositionMatrixTests`, `HrRoleTests` |
++| Авторизация и `If-Match` по каждому методу контракта | change: public contract; security | contract | add | перечни методов выводятся из `openapi/openapi.json` (`ApiContract`): новый метод без строки в таблице права или без `If-Match` валит тест |
++| Термин «область» вместо «направление» (`CareerDirectionEndpoints`) | change: public contract | component/contract + component | add | текст отказа удаления закреплён и на backend (`CatalogDeletionTests`), и на SPA (`useConfirmDeletion.test.tsx`); см. D-1 |
++| Возврат после входа только внутри приложения (`returnTo.ts`, `LoginPage`) | change: security — open redirect | unit + component | add | `returnTo.test.ts` (чужой источник, `//`, `\`, управляющие символы), `authFlow.test.tsx` (возврат и сообщение при отказе) |
++| Рабочий стол в SPA: страница, счётчик в меню, сценарные карточки, тексты причин | change: public contract (рендер ответа `/desk`) | component | add | `DeskPage`, `DeskCounter` (нет опроса), `DeskScenarios`, `deskTexts` — по каждому виду и причине |
++| Защита несохранённых правок (`leaveGuard`, `AppModal`) | change: workflow (AC-61) | component | add | `leaveGuard.test.tsx`, `AppModalLeave.test.tsx` — вопрос при уходе, удержание при сохранении, сброс отметки |
++| Утверждение записи со списком черновиков (`usePublishEntry`) | change: workflow state machine; public contract | component | add | метка перечня, повторное подтверждение, отказ, предложение утвердить черновик (`usePublishEntry.test.tsx`); см. D-2 |
++| Мастер матрицы, окна блока/компетенции/области, редактор матрицы и прочие страницы сценариев в SPA | риск «none» в плане; поведение собрано из уже проверенных хуков и серверных правил | — | none | e2e не принято правилом проекта; страницы ничего не вычисляют сверх покрытого; существующие компонентные тесты оставлены; потолок записан ниже |
++| Документы (`docs/**`, `.asd/project/**`), UX-макеты, память dev | нет поведения | — | none | проверять нечем; сверка терминов — ниже |
++| Контракт `1.0.0`, `InitialCreate`, `check:api` | change: public contract; migration | contract (существующие `ContractTests`) | keep | `ContractTests` читает контракт через `ApiContract`; `npm --prefix web run check:api` — exit 0 |
++
++### Примечания к решениям
++
++- **Выжившие мутанты, признанные эквивалентными** (тесты не усиливались; отличия в ответе на данных, которые создаёт API, при разборе не найдено): `T6` и `MP7` (`Status == Active` → `!= Inactive` для трека отличается только на черновом треке, которого в этом месте не бывает); `T6b` (неактивные уровни в счёте готовности); `P2` (`IsActive` у HR-учётной записи); `HR4` (`IsActive` у кандидата в HR); `ML3` (уровень в письме о черновиках); web `W1`, `W2`, `W5` — слои защиты `returnTo` перекрывают друг друга, пары `W1+W5`, `W2+W5` убиты.
++- **Потолки, оставленные без проверки:** повторная проверка адреса при отправке и ёмкость очереди писем (см. выше); страницы-сценарии SPA целиком (мастера); поведение браузера при настоящем переходе.
++- **Проверка остатков терминов** (`artifact-layout.md` «Agent memory»), по удалённым в диффе строкам и терминам: в коде — `Направление используют…` в `src/Competency.CareerFramework/CareerDirectionEndpoints.cs` (D-1); в `web/src/features/career/MatrixEditor.tsx` метка «Нет требований» при том, что sprint AC-57 убрал замечания полноты «нет требований» — метка достижима только для компетенции без требования, чего после AC-57 не бывает (flag, не D-N: теста, который падает, нет). Попадания в память агентов (не правились, владелец — по `review-policy.md` «Memory-fix dispatch»): `.claude/agent-memory/asd-dev-critical/project_position-matrix-shared-block-facts.md` (строки про `NoCompetencyCategories`, `BlockScopeNoMatrixScale`, `RequirementIsScore`, заглушки `CompetencyCategoryEndpoints`/410 в контракте 3.0.0 и `MatrixContent.Blocks`), `.claude/agent-memory/asd-dev-critical/project_contract-reset-and-squash-facts.md` (строка 14: `CareerMigrationTests`, `PositionMigrationTests`, `Infrastructure/MigrationDatabase.cs` удалены), `.claude/agent-memory/asd-dev-critical/project_position-catalogue-facts.md` (строка 3: «контракт 3.0.0»), `.claude/agent-memory/asd-ux/project_ux-docs-conventions.md` (строка 15: подпись «Шаг n из N» у линейки шагов, убранная AC-187).
++
++## Removed tests
++
++| Test | Reason | In change scope |
++|---|---|---|
++| — (ни один тест не удалён; тесты миграций данных, категорий, типа в справочнике и мёртвых кодов полноты удалены ранее Task 58–59 в `impl`) | — | — |
++
++## Added tests
++
++Level and AC/risk covered are visible in the test file itself (name, path) — not restated here. Мутации ставились в копию `git archive HEAD` (production-код), запуск `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj --filter-class <класс>`; web — `node node_modules/vitest/vitest.mjs run <файлы>` с подстановкой строки в production-файл и восстановлением в `finally`. «Убит» — runner вернул ненулевой код и назвал упавший тест. Прогон без мутации (control) — зелёный, число тестов в колонке `runs`.
++
++| Test | Regression proof |
++|---|---|
++| `tests/Competency.Tests/DeskRulesTests.cs` | мутации R1–R13 (порядок причин, пара поглощения, повторы находки, ссылка рядом с действием, поглощение по объекту, цель первой причины, приглашение, порядок событий и идентификаторов, вид без группы): 13 из 13 убиты, exit 2, напр. R1 → `Ac154_ReasonsFollowTheOrderOfTheTable_AndTheFirstReasonDecidesTheGroup`; R2 первым прогоном выжил (порядок из одного элемента) → тест перестроен на две находки → exit 2, `Ac154_EveryKind_HasAGroupAndAPlaceInTheOrderOfReasons`; runs: 71 |
++| `tests/Competency.Tests/DeskAdministratorTests.cs` | мутации A1–A15 (пустые места в должностях, пустое подразделение с детьми, неактивное в использовании, срок приглашения 1 и 3 суток, заблокированные руководитель и HR, источники для всех): 14 из 14 убиты, exit 2; runs: 18 |
++| `tests/Competency.Tests/DeskTrackTests.cs` | мутации T1–T11 (уровни, трек и должность как действие или ссылка, снятие с привязок, право руководителя, только свои треки): 10 из 11 убиты, exit 2; `T6` выжил, эквивалентный (см. примечания); runs: 18 |
++| `tests/Competency.Tests/DeskMatrixTests.cs` | мутации M1–M12 (черновик для не-руководителя, шаг мастера, согласующий, своя версия на согласовании, задержка 5 и 10 суток, комментарий и правки): 12 из 12 убиты, exit 2; runs: 12 |
++| `tests/Competency.Tests/DeskCatalogTests.cs` | мутации C1–C9 (добавленные уровни, перемещение, правки компетенции, автор, неиспользуемые для всех): 8 из 8 убиты, exit 2; runs: 16 |
++| `tests/Competency.Tests/DeskPrerequisiteTests.cs` | мутации P1–P5 (предпосылки HR, подразделения, сотрудника, видимого трека): 4 из 5 убиты, exit 2; `P2` выжил, эквивалентный; runs: 16 |
++| `tests/Competency.Tests/DeskPagingTests.cs`, `DeskCeilingTests.cs` | мутации G1–G6 (первые 20, `limit` 0, фильтр группы, потолок, итог после обрезки, признак ссылки): 6 из 6 убиты, exit 2; runs: 16 |
++| `tests/Competency.Tests/Infrastructure/DeskReads.cs` | вспомогательные методы чтения стола; проверяются мутациями классов выше |
++| `tests/Competency.Tests/LevelPositionTests.cs` | мутации L1–L17 (право правки, доступность должности, должность с матрицей, последняя должность, неактивная должность, готовность, счёт сотрудников): 14 из 14 убиты, exit 2; `L17` первым прогоном выжил → тест усилен → exit 2, `Ac87_ATracksPositions_ListEachLevelWithItsPositionsAndHeadcount…`; runs: 23 |
++| `tests/Competency.Tests/PublicationCascadeTests.cs` | мутации K1–K10 (перечень черновиков, метка, 412, 409, откат при отказе, журнал по каждой сущности): 10 из 10 убиты, exit 2; `K1` первым прогоном не применился (якорь не уникален) → повтор с уникальным якорем → exit 2, `Ac107_Ac110_Ac113_Ac114_ApprovingACompetency_Publishes…`; runs: 6 |
++| `tests/Competency.Tests/CareerLockTests.cs` (строки `level-position-link`/`-unlink`, гонка `Ac98_…`) | мутации LK1–LK3 (привязка без блокировки каталога, снятие без неё, снятие под общей блокировкой): 3 из 3 убиты, exit 2 — `Ac9_ACatalogueOrMatrixChange_WaitsForAWriterOfTheCatalogues(operation: "level-position-link")` (LK1), `…(operation: "level-position-unlink")` и `Ac98_TwoRemovalsOfTheLastTwoActivePositionsOfALevel_…` (LK2), `Ac98_…` (LK3); runs: 95 |
++| `tests/Competency.Tests/ScenarioReadTests.cs` | мутации SR1–SR14 (границы шага мастера 2–6 и его хранение, тип, изменения, неиспользуемые записи, архив, скрытые версии, полнота): 12 из 12 убиты, exit 2; runs: 23 |
++| `tests/Competency.Tests/MyPlaceTests.cs` | мутации MP1–MP9 (матрицы чужих подразделений, текущий уровень как следующий, черновики, путь подразделения, трек): 5 из 6 убиты, exit 2; `MP7` выжил, эквивалентный; runs: 23 |
++| `tests/Competency.Tests/UnitSetupTests.cs`, `UnitSetupReadTests.cs` | мутации US1–US8 (заблокированный как приглашённый, кандидаты, унаследованные должности, доступ всем, цепочка предков, готовность HR): 8 из 8 убиты, exit 2; runs: 23 |
++| `tests/Competency.Tests/CareerMailTests.cs` | мутации ML1–ML13 (письмо себе, получатели, маршрут, тема, возврат, слова): 7 из 8 убиты, exit 2; `ML3` выжил, эквивалентный; runs: 23 |
++| `tests/Competency.Tests/CareerMailFailureTests.cs` | мутации MF1–MF4 (потеря причины, исполнителя, названия действия и запроса в журнале `Mail.SendFailed`): 4 из 4 убиты, exit 2; runs: 23 |
++| `tests/Competency.Tests/CompetencyBlockTests.cs` | мутации BL1–BL10 (права руководителя, дубли, пустой блок, черновая компетенция в действующем блоке, «для всех», удаление используемого, область): 10 из 10 убиты, exit 2; runs: 35 |
++| `tests/Competency.Tests/PositionMatrixTests.cs` | мутации PM1–PM9 (основа «и то, и другое», недоступная должность, дубль матрицы должности, колонка, черновая матрица, веса): 9 из 9 убиты, exit 2; `PM8` первым прогоном не собрался (синтаксис мутации) → повтор → exit 2, `Ac196_Ac197_APositionWithAMatrixIsNotWithoutATrack_OnTheDeskAndInTheEmployeesPlace_ByTheStatusOfItsVersion`; runs: 35 |
++| `tests/Competency.Tests/HrRoleTests.cs` | мутации HR1–HR6 (права HR на должности, снятие роли при закреплении, кандидаты, сессии при смене роли): 4 из 5 убиты, exit 2; `HR4` выжил, эквивалентный; runs: 35 |
++| `tests/Competency.Tests/AuthorizationTests.cs` (+`Infrastructure/ApiContract.cs`) | мутации AU1–AU4 (стол открыт анониму, настройка подразделения открыта пользователям, метод контракта без строки в таблице, строка таблицы удалена): 4 из 4 убиты, exit 2; runs: 35 |
++| `tests/Competency.Tests/OptimisticConcurrencyTests.cs`, `ContractTests.cs` | мутация OC1 (строка таблицы `If-Match` удалена): убита, exit 2; runs: 35 |
++| `tests/Competency.Tests/CatalogDeletionTests.cs` | fail-first vs D-1: `dotnet test --solution Competency.slnx` → exit 2, `Competency.Tests.CatalogDeletionTests.Ac25_ADirectionInUse_IsRefused_NamingTheTracksCompetenciesHistoryAndMatrices`; с текстом, исправленным в копии `HEAD` → exit 0; runs: 16 |
++| `web/src/features/auth/returnTo.test.ts`, `web/src/app/authFlow.test.tsx` | мутации W1–W11 (`//`, `\`, управляющие символы, `DEL`, чужой источник, разбор `//`, экраны входа, исходное значение, непроверенные цель и чтение, вход без цели): 8 из 11 убиты поодиночке, exit 1; `W1`, `W2`, `W5` выжили поодиночке (перекрывающиеся слои), пары `W1+W5` и `W2+W5` убиты, exit 1, `return target after sign-in (open redirect) refuses …`; runs: 64 |
++| `web/src/features/desk/DeskScenarios.test.tsx` | мутации D1–D8 (первое подразделение, привязка без сотрудника, приём без должности, привязка без трека, построение не всегда, HR подразделения, подпись, нейтральная карточка до загрузки): 8 из 8 убиты, exit 1; runs: 12 |
++| `web/src/features/desk/deskTexts.test.ts` | мутации E1–E5 (экран доработки, вид черновика, первый из треков, маршруты проверки и черновика): 5 из 5 убиты, exit 1; runs: 26 |
++| `web/src/features/desk/DeskCounter.test.tsx` | мутации C1–C7 (предел, «99+», ошибка, перечитывание при переходе, после сбоя, при фокусе, опрос): 7 из 7 убиты, exit 1; `C7` (опрос раз в секунду) первым прогоном выжил → поддельные таймеры включены до рендера → exit 1, `the desk counter in the menu (AC-16…AC-21) does not poll: nothing is read again while the address and the data stay`; runs: 10 |
++| `web/src/features/desk/DeskPage.test.tsx` | мутации P1–P7 (ссылки как действия, «всё сделано», шаг «ещё», обрезка на первой странице, версия и признак письма, перечитывание после отказа): 7 из 7 убиты, exit 1; runs: 9 |
++| `web/src/app/leaveGuard.test.tsx`, `web/src/app/AppModalLeave.test.tsx` | мутации L1–L10 (вход, то же место, сохранение, инверсия, предупреждение вкладки, окно, много окон, своё сохранение), A1–A4 (закрытие диалога с правками, отметка вызывающего, сохранение, отслеживание правки): 14 из 14 убиты, exit 1; `L3` (сохранение не удерживает переход) первым прогоном выжил → добавлен тест «only a save runs» → exit 1, `the guard against losing edits (AC-61) holds a move silently while a save runs even when nothing else is unsaved`; runs: 11 и 6 |
++| `web/src/features/career/usePublishEntry.test.tsx` | мутации PE1–PE13 (11 заданных: метка перечня, «изменился» как «появился», без повторного подтверждения, пустой перечень с уведомлением, предложение для любого статуса, 404 как жалоба, успех для пустого, без перечитывания, блокеры, остаток, подпись кнопки): 11 из 11 убиты, exit 1; `PE5`, `PE11`, `PE12` проверены с подставленной обходной правкой D-2 (`<Link>` → `<a>`; без неё упавший тест D-2 красен и без мутации), для `PE5` и `PE12` добавлены тесты «asks again, saying the list changed, even when the new list is empty…» и «counts the further records…» → exit 1; тест D-2 — fail-first vs D-2: exit 1, `explains a refusal the server gives at the moment of approval, with the way to the track's positions`, с обходной правкой exit 0; runs: 13 |
++| `web/src/features/career/useConfirmDeletion.test.tsx` | n/a — две строки фикстуры приведены к новому термину AC-37 («Область используют…»), поведение хука не менялось; fail-first даёт backend-тест D-1 |
+diff --git a/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-02.md b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-02.md
+new file mode 100644
+index 0000000..b83a0ab
+--- /dev/null
++++ b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-02.md
+@@ -0,0 +1,58 @@
++---
++responsibility:
++  owns: test approach for sprint change scope, removal reasons, no-test decisions, suite run result, code defects found by tests, manual-verification spec (single home — never duplicated in a review file)
++  excludes: task breakdown, requirements, review verdicts, code, change surface (derivable from the diff)
++  delegates_to: plan.md (tasks), persistent docs (requirements), reviews/impl/wave-<K>/iter-NN/testing.md (verdict)
++---
++
++# Test plan — sprint 004-role-desktop-user-journeys, entry 2 (rotated)
++
++Строки записи 2 вместе со строками тестировщика ревью-фикса (TST-1…TST-10), добавленными после неё: у них нет собственной строки в журнале записей, поэтому они ротируются с предыдущей записью.
++
++## Risk → check decisions
++
++| Change | Material risk | Chosen check | Decision | Reason |
++|---|---|---|---|---|
++| `usePublishEntry` вызывает `useNavigate()` (исправление D-2); хук подключён в модальных окнах и страницах стола | change: workflow — окно, показанное вне маршрутизатора, не должно падать; окно, показанное в нём, должно вести по ссылке | component | keep | существующий `usePublishEntry.test.tsx` закрепляет отказ в окне вне маршрутизатора и подпись ссылки; два теста без маршрутизатора (`ScaleModal`, `CompetencyModal`) исправлены как дефект теста (см. «Added tests») |
++| `InUseMessage` «Область используют…» (исправление D-1) | change: public contract — текст отказа | component/contract | keep | `CatalogDeletionTests.Ac25_…` закрепляет текст; зелёный |
++| Порядок проверок передачи на согласование: `If-Match` раньше полноты документа (AC-17, TST-1) | change: public contract — устаревшая версия отвечает 409 вместо 412 | contract | keep | тест `Ac17_AStaleVersion_IsRefusedWith412_BeforeTheHandOverCheckJudgesTheDocument` сохранял полный документ и не мог упасть по заявленному свойству; теперь документ неполный (как в `Ac15_Return_WithChangesThatLeaveTheVersionIncomplete`), мутация порядка убита |
++| Допустимость типа компетенции в документе версии (`MatrixContent.ValueProblem`, AC-55, TST-2) | change: public contract — число вне перечисления попало бы в jsonb | contract | add | два случая в `Ac14_Document_IsRefusedWhenItIsNotWellFormed`: `competencies[0].type = 999` и тип 999 внутри общего блока |
++| Поле «Примеры подтверждений» компетенции (`evidenceExamples`, AC-33 справочника, AC-56 плана, TST-3) | change: public contract — сохранение, возврат, история версий, «не передано — прежнее», «пусто — очистка», предел 4000 | contract | add | `Ac12_EvidenceExamples_AreKept_ReturnedAndWrittenToTheHistory_AbsentKeepsThemAndBlankClearsThem` и пары 4001/4000 в `Ac12_Competency_IsValidated` |
++| Приглашённая учётная запись с ролью HR не считается HR-учётной записью и кандидатом (`UserManagementDeskSource`, `UserDirectory.HasHrCandidateAsync`, TST-4) | change: security — предпосылка «есть HR» ложна, пока HR не принял приглашение | component/contract | add | шаг «в системе только приглашённый HR» в `Ac204_…` (нет `HrAccount`) и в `UnitSetupTests` (остаётся `NoHrCandidates`); мутанты `P2` и `HR4` из записи 1 не эквивалентны и пересчитаны как убитые |
++| Число SQL-команд `GET /desk` и `GET /desk/count` (Task 3, Task 9, TST-6) | change: perf — запрос на строку или лишний источник | integration | add | число команд — детерминированное свойство: хост пишет команды EF в журнал (`Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command=Information`), конец запроса отмечает строка `Request finished … - 200` с уникальным `probe`; число на малом и на большем наборе подразделений одинаково и не больше 25 (`DeskQueryCountTests`). Время запроса остаётся замером (решение `none` записи 1) |
++| Снятие роли HR при закреплении и закрепление при роли HR (AC-62, `custom-coding-rules.md` «Multi-row invariant locking», TST-5) | change: lock ordering — инвариант на нескольких строках | component + гонка | add | `Ac62_AnAssignmentRacingTheRemovalOfTheHrRole_IsDecidedByWhichRequestIsFirst`: тестовое соединение держит блокировку дерева, оба запроса ждут в обоих порядках |
++| Базовая шкала начальных данных (`InitialCreate`, AC-25 справочника, TST-7) | change: migration — потеря или порча сида при схлопывании миграций перед 1.0 | contract | add | `BaseScaleSeedTests` на отдельном хосте: пять точек с дословными текстами, шкала по умолчанию и действующая, в журнале нет строк по её идентификатору |
++| Перенос ролей в Identity и закрепление HR по сотруднику (Task 77/80, миграция `IdentityRolesAndHrByEmployee`, AC-63, TST-10) | change: authorization, migration — потеря роли или закрепления на существующей базе | component (миграция на реальной БД) | add | `IdentityRolesMigrationTests`: строки вставляются на предыдущей миграции, после перехода проверяются роли (в том числе администратор с закреплением получает обе), закрепление по сотруднику, отброшенное закрепление без сотрудника, отсутствие колонки `role`. Удаляется вместе с миграциями при схлопывании перед 1.0 |
++| Журнал смены ролей (`AccountRoles.SetRolesAsync`, Task 77/80, TST-10) | change: authorization — смена ролей должна оставлять ровно одну запись и сохраняться вместе с ней | component/contract | add | `Ac15_RoleChange_IsJournaledAsOneUpdateOfTheRoles_WithBothSetsInMemberOrder` и `Ac15_RoleChangeAndItsJournalRow_AreSavedTogetherOrNotAtAll` |
++| Тесты, удалённые в `impl` до записи 1 (TST-8) | нет поведения | — | none | перечень и причины — в «Removed tests» |
++
++Предыдущая запись рассматривалась по записи 1; её строки — в `test-plan.entry-01.md`. Для остальных вызывающих хук (`BlockModal`, `NameModal`, `DraftsSection`, `CatalogParts`, `BuilderSubmitStep`, `CascadeTable`, `CatalogCleanupPage`, `DecisionError`, `DraftsQueuePage`, `ReviewPage`, `ReworkPage`, `useVersionTransition`) новых тестов не нужно: их тесты уже рендерят под маршрутизатором и зелёные (`vitest run` 492 из 492).
++
++## Removed tests
++
++| Test | Reason | In change scope |
++|---|---|---|
++| `CareerMigrationTests` (класс, 203 строки) и помощник `Infrastructure/MigrationDatabase` | тесты переноса данных старых схем вместе с самими миграциями; до 1.0 перенос данных делает только последняя миграция, остальные схлопываются в `InitialCreate` (AC-58, AC-63); поведения больше нет. Удалены коммитом `29ac3bc` в `impl`, записи 1 это не отражено | да; замена — `BaseScaleSeedTests` (сид, TST-7) и `IdentityRolesMigrationTests` (перенос в Identity) |
++| `PositionMigrationTests` (класс, 121 строка) | перенос данных каталога должностей старых схем; поведения больше нет по той же причине (AC-58); коммит `29ac3bc` | да; замены нет |
++| `CatalogDeletionTests.Ac23_ACategory_IsDeletedUnlessCompetenciesOrTheirHistoryUseIt`, `Ac23_Categories_StartWithTheGeneralOnes_ReadableByEveryone` | категории компетенций упразднены (AC-51); поведения больше нет; коммит `29ac3bc` | да; замены нет |
++| `CompetencyTests.Ac12_Competency_RefusesANumberThatNamesNoType_OnCreationAndOnChange` | тип удалён из справочника компетенций, остался в документе версии (AC-55); коммит `29ac3bc` | да; замена — два случая в `MatrixCreationTests.Ac14_Document_IsRefusedWhenItIsNotWellFormed` (TST-2) |
++| `AuthorizationTests.Ac7_UserRole_IsLimitedToTheKnownValuesInTheDatabaseItself` | колонки `users.role` и её проверочного ограничения нет, роли — строки Identity (AC-62, AC-63); коммит `d94007b`; допустимость значений проверяет `HrRoleTests.Ac62_TheRolesOfAnAccount_AreASet_WithSeveralMembers_AndOnlyKnownRoles` | да; замена — этот тест |
++| `MatrixWorkflowTests.Ac9_TheDraftCategoryOfAUsedCompetency_IsReadByTheRouteWhileInWork_AndMadeActiveAndJournaledByPublication`, `Ac9_Publication_IsRefusedWhenTheDraftCategoryOfAUsedCompetencyWouldTakeANameAnActiveCategoryHasNow` | черновая категория используемой компетенции исчезла вместе с категориями (AC-51); коммит `29ac3bc` | да; замены нет |
++| `CareerMigrationTests.Ac12_Catalogues_StartWithTheTwelveCategoriesAndTheBaseScaleOfTheSource…` (в составе удалённого класса) | единственная проверка начальных данных: двенадцать категорий упразднены, базовая шкала 0–4 и «начальные данные не пишутся в журнал» остались требованием (AC-25) | да; замена — `BaseScaleSeedTests` |
++
++## Added tests
++
++Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
++
++| Test | Regression proof |
++|---|---|
++| `web/src/features/career/ScaleModal.test.tsx`, `CompetencyModal.test.tsx` | исправление дефекта теста (не новый тест): окна отрисованы без `MemoryRouter`, а `usePublishEntry` теперь читает маршрутизатор; fail-first: `node node_modules/vitest/vitest.mjs run src/features/career src/features/desk` → exit 1, 10 упавших, напр. `ScaleModal.test.tsx > scale form (AC-13) > asks for a name, a score and a value` (`useNavigate() may be used only in the context of a <Router> component.`); после обёртки в `MemoryRouter` — exit 0; runs: 275 |
++| `tests/Competency.Tests/MatrixWorkflowTests.cs` (`Ac17_AStaleVersion_IsRefusedWith412_BeforeTheHandOverCheckJudgesTheDocument`) | мутация: `ifMatch.ApplyTo` перенесён в `MatrixWorkflow.TransitAsync` после проверок действия (проверка полноты раньше `If-Match`): `dotnet test --solution Competency.slnx --filter-class "*MatrixWorkflowTests"` → exit 2, упал `Ac17_AStaleVersion_IsRefusedWith412_BeforeTheHandOverCheckJudgesTheDocument` (1 из 35); без мутации — 35 из 35, exit 0; runs: 1 |
++| `tests/Competency.Tests/MatrixCreationTests.cs` (два случая в `Ac14_Document_IsRefusedWhenItIsNotWellFormed`) | мутации в `MatrixContent.ValueProblem`: убрана проверка `Enum.IsDefined` у `competencies[].type`; убрана у `sharedBlocks[].competencyTypes[].type`; убраны обе — каждая: `dotnet test --solution Competency.slnx --filter-class "*MatrixCreationTests"` → exit 2, упал `Ac14_Document_IsRefusedWhenItIsNotWellFormed` (1 из 11); без мутаций — 11 из 11; runs: 3 |
++| `tests/Competency.Tests/CompetencyTests.cs` (`Ac12_EvidenceExamples_AreKept_ReturnedAndWrittenToTheHistory_AbsentKeepsThemAndBlankClearsThem`, 4001/4000 в `Ac12_Competency_IsValidated`) | мутации: `if (EvidenceExamples is not null)` → `if (true)` в `CompetencyRequest.ApplyTo`; убрана проверка длины; пустой текст не сводится к «нет» (`OptionalText` убран); снимок версии без примеров: `dotnet test --solution Competency.slnx --filter-class "*.CompetencyTests"` → exit 2, упали `Ac12_EvidenceExamples_AreKept_…` (три мутации) и `Ac12_Competency_IsValidated` (проверка длины), по одному из 9; без мутаций — 9 из 9; runs: 4 |
++| `tests/Competency.Tests/DeskPrerequisiteTests.cs`, `UnitSetupTests.cs` (шаг приглашённого HR) | мутанты `P2` (`UserManagementDeskSource`: `IsActive` у HR-учётной записи убран) и `HR4` (`UserDirectory.HasHrCandidateAsync`: условие `PasswordHash != null` убрано), выжившие в записи 1 и названные эквивалентными, не эквивалентны и теперь убиты: `dotnet test --solution Competency.slnx --filter-class "*DeskPrerequisiteTests"` → exit 2, упал `Ac204_Ac205_Ac209_Ac210_Ac218_PrerequisitesAppearAndGoWithTheData_InTheOrderOfTheirDeclaration` (P2); `--filter-class "*UnitSetupTests"` → exit 2, упал `Ac81_Ac82_Ac84_TheRowsOfAUnit_FollowItsHeadItsHrItsAccountsAndItsPositions_AsEachGapIsClosed` (HR4); без мутаций оба зелёные; runs: 2 |
++| `tests/Competency.Tests/CareerLockTests.cs` (`Ac62_AnAssignmentRacingTheRemovalOfTheHrRole_IsDecidedByWhichRequestIsFirst`) | мутация: `UserEndpoints.UpdateAsync` берёт обычную транзакцию вместо `BeginExclusiveAsync` (блокировка дерева снята): `dotnet test --solution Competency.slnx --filter-class "*CareerLockTests"` → exit 2, упали оба порядка — `(assignmentFirst: True, assignmentStatus: NoContent, removalStatus: Conflict)` и `(assignmentFirst: False, assignmentStatus: BadRequest, removalStatus: OK)` (2 из 97); без мутации — 97 из 97, exit 0; runs: 1 |
++| `tests/Competency.Tests/DeskQueryCountTests.cs` | мутация: в `UserManagementDeskSource.FindAsync` добавлен запрос на каждое подразделение с руководителем: `dotnet test --solution Competency.slnx --filter-class "*DeskQueryCountTests"` → exit 2, упали `Ac4_TheSqlCommandsOfADeskRequest_AreFewAndTheSameOnSmallAndOnLargerData(route: "/api/v1/desk")` и `(route: "/api/v1/desk/count")` (2 из 2; runner: `Expected large to be 18 … but found 30`, `Expected small to be between 1 and 25, but found 31`); без мутации — 2 из 2, exit 0, 18 команд на запрос; runs: 1 |
++| `tests/Competency.Tests/BaseScaleSeedTests.cs` | мутации `InitialCreate`: точка в конце текста балла 2; шкала не по умолчанию; в сид добавлена строка `audit_events`: `dotnet test --solution Competency.slnx --filter-class "*BaseScaleSeedTests"` → exit 2, упали `Ac25_TheBaseScale_IsActiveAndTheDefault_WithTheFivePointsOfTheSource` (текст, по умолчанию) и `Ac25_TheCreationOfTheBaseScale_LeavesNoAuditRecord` (журнал), по одному из 2; без мутаций — 2 из 2; runs: 3 |
++| `tests/Competency.Tests/IdentityRolesMigrationTests.cs` | мутации миграции `IdentityRolesAndHrByEmployee`: роль HR не выдаётся администратору с закреплением (`AND u.role <> 'GlobalAdmin'`); закрепление не переносится на сотрудника (`UPDATE org_unit_hr …` заменён на `SELECT 1`); колонка `role` остаётся; выбор роли HR без `DISTINCT`: `dotnet test --solution Competency.slnx --filter-class "*IdentityRolesMigrationTests"` → exit 2, упал `Ac63_RolesAndHrAssignments_PassToIdentityRolesAndEmployees_WhenTheDatabaseMovesToTheNextMigration` (1 из 1) на каждой из четырёх; без мутаций — зелёный; runs: 4 |
++| `tests/Competency.Tests/AuditTests.cs` (`Ac15_RoleChange_IsJournaledAsOneUpdateOfTheRoles_WithBothSetsInMemberOrder`, `Ac15_RoleChangeAndItsJournalRow_AreSavedTogetherOrNotAtAll`) | мутации: роли новой записи не упорядочены (`AccountRoles.SetRolesAsync`) → упал первый тест; запись журнала не ставится → упали оба; транзакция фиксируется до сохранения ролей (`UserEndpoints.UpdateAsync`) → упали оба: `dotnet test --solution Competency.slnx --filter-class "*.AuditTests"` → exit 2, 1/2/2 из 12; без мутаций — 12 из 12; runs: 3 |
+diff --git a/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-03.md b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-03.md
+new file mode 100644
+index 0000000..744a398
+--- /dev/null
++++ b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-03.md
+@@ -0,0 +1,67 @@
++---
++responsibility:
++  owns: test approach for sprint change scope, removal reasons, no-test decisions, suite run result, code defects found by tests, manual-verification spec (single home — never duplicated in a review file)
++  excludes: task breakdown, requirements, review verdicts, code, change surface (derivable from the diff)
++  delegates_to: plan.md (tasks), persistent docs (requirements), reviews/impl/wave-<K>/iter-NN/testing.md (verdict)
++---
++
++# Test plan — sprint 004-role-desktop-user-journeys, entry 3 (rotated)
++
++Строки записи 3 вместе со строкой тестировщика ревью-фикса (TST-1, `DeskQueryCountTests`), добавленной после неё: у неё нет собственной строки в журнале записей, поэтому она ротируется с предыдущей записью. Строк тестов к удалению, которые надо было бы перенести в запись 4, ревью-фикс не оставил.
++
++## Risk → check decisions
++
++Дельта записи 3 — `git diff 7fe0c10...HEAD`: правки `impl` по замечаниям ревью (`c1b7e1d`…`3f1de41`) и тесты тестировщика ревью-фикса (`43568e1`…`aa6b31e`, их строки — в `test-plan.entry-02.md`). Изменений в `web/`, `openapi/` и конфигурации сборки нет: набор web не затронут, общая инфраструктура — нет; набор backend запущен целиком (правки лежат в центре модуля `CareerFramework` и меняют публичный порт `UserStatus`, поэтому safety valve применён).
++
++| Change | Material risk | Chosen check | Decision | Reason |
++|---|---|---|---|---|
++| `MatrixCatalog.IsUsable`, `LoadedEntries.HeadedScopeIds` — черновой блок «Действует для» подразделения матрицы, написанный вышестоящим руководителем (external 1) | change: security — руководитель видит такой блок, но получал 400 при включении; блок для подразделения, которым он не руководит, должен остаться недоступным | contract | add | `CompetencyBlockTests.Ac128_Ac130_ADraftBlockForTheMatrixUnitWrittenByTheHeadAbove_…`: блок начальника отдела для команды включается (200, проверка полноты без `InactiveEntry`), его же блок для отдела — нет (400, поле `content`); правка затрагивает два пути (сохранение и полнота), мутант на каждый |
++| `CatalogStore.SaveAsync(transaction)` — версии всех компетенций, сохранённых каскадом (external 2) | change: public contract — история компетенции, утверждённой вместе с блоком, не получала новой строки | contract | add | `PublicationCascadeTests.Ac107_Ac114_ApprovingABlock_…`: после утверждения блока у черновой компетенции его состава в истории строки «Active», «Draft», номер на 1 больше. Утверждение самой компетенции и версии матрицы закрыто прежде (`CompetencyTests`, `MatrixWorkflowTests.Ac9_Publication_…`); «вернуть в работу» идёт тем же `PublishAsync` → `CommitAsync`, отдельной строки не требует |
++| `MatrixRoute.RouteEntryIdsAsync`, `CatalogViewer.Sees<CareerTrack>` — черновой трек версии читает вышестоящий согласующий (external 3) | change: security — на своём шаге согласующий получал 404 на трек версии, а посторонний не должен его видеть | contract | add | `MatrixAccessTests.Ac18_TheDraftTrackOfAVersionInWork_…`: трек читают руководитель, вышестоящий согласующий и HR, не читают посторонний, руководитель соседней команды и руководитель корня; обе половины правки (идентификатор в маршруте и ветка фильтра) убиваются по отдельности |
++| Часть правки external 3 про направление (`Matrix.DirectionId`, направление компетенции в `RouteEntryIdsAsync`) | нет достижимого поведения | — | none | матрица создаётся только на действующем направлении (`MatrixEndpoints.ReferenceProblemAsync`), компетенция версии — того же направления или без него, а действующее направление черновым не становится; идентификатор, добавленный к маршруту, не меняет ничьего права. Случай «автор переводит свой черновик на черновое направление уже после включения» останавливает проверка полноты (чужое направление) |
++| `CatalogPublication.PlanAsync`, `UserStatus.IsGlobalAdmin`, `UserDirectory` — права каскада считаются по собственным ролям ответственного HR, кто бы ни запустил публикацию (external 4) | change: security — «Принять правки» автором теряло права администратора у HR с ролями Hr и GlobalAdmin | component | add | `PublicationCascadeTests.Ac144_ADraftBlockOutsideTheResponsibleHrsUnits_…`: ответственный HR закреплён на команде, блок автора для отдела вне его подразделений; тот же запрос автора «Принять правки» отвечает 409 `NoRight` (HR без роли администратора) и 200 `Published` (после выдачи роли) — менялись только роли HR. Запрос `UserRoles.Any(GlobalAdminRoleId)` выполняется на PostgreSQL |
++| `CompetencyBlockRequest.Validate` — `competencyIds: null` (external 5) | change: public contract — 500 вместо ошибки поля при создании и изменении | contract | add | `CompetencyBlockTests.Ac127_ABlockRequestWithNoComposition_…`: POST и PUT с `null` отвечают 400 с ошибкой поля `competencyIds`, блок не меняется |
++| `CatalogStore.UsableIdsAsync`, `CompetencyBlockEndpoints.UnusableAsync` — состав проверяется одним запросом (efficiency 1) | change: perf, с риском смены поведения — «первая недоступная» и текст отказа | contract | add | `CompetencyBlockTests.Ac127_AnUnusableCompetencyAmongSeveralAdded_…`: черновик или несуществующая запись среди нескольких добавленных отказывают целиком с прежними текстами, ни одна добавленная не сохраняется, добавленные вместе годные проходят. Зелёный и до правки (поведение сохранено): страж, не регрессия; мутанты ниже |
++| `CatalogStore.ReadinessAsync(List<Guid>)` — готовность черновых треков пакетом (efficiency 2) | change: perf, с риском смены поведения — уровни и привязки одного трека попадают в другой | contract | add | `CatalogDraftTests.Ac9_TheDraftList_ShowsEachDraftTrackItsOwnReadiness_…`: готовый трек, трек без уровней и трек с уровнем без должности в одном списке; до этого `readiness` очереди не проверяла ни один тест. Зелёный и до правки: страж |
++| `CatalogViewer.SeesLoaded()` и три места вызова (`CareerLevelPositionEndpoints`, `MatrixEndpoints`, `PublicationPlan.Visible`) — фильтр компилируется один раз на тип (efficiency 3) | change: security — скрытый трек не называется; кэш по типу записи | contract | add | `LevelPositionTests.Ac90_TheTrackAPositionIsLinkedTo_…` (имя трека в отказе и `linkedTrack` в списке должностей — тому, кто видит черновой трек, и скрыто от того, кто не видит) и `PublicationCascadeTests.Ac109_Ac110_APreview_NamesEveryBlockerTheReaderSees_…` (помехи двух видов в одном предпросмотре). Раньше правило «не называется» не проверял ни один тест, а мутант ключа кэша выжил на 60 существующих тестах пяти классов. Потолок: отсев скрытой помехи в `PublicationPlan.Visible` через API воспроизводится только перепривязкой чужого блока уже после включения — не строился (фильтр прежний, изменилась лишь компиляция) |
++| `CatalogStore.UnusedEntriesAsync(kind)`, `UnusedEntryResponse` как проекция, `CareerDeskScan.UnusedFindings` (efficiency 4) | change: public contract — вид, версия и число записей списка; находки стола по трём видам | contract | add | `ScenarioReadTests.Ac137_Ac138_Ac140_EachKindFilterOfTheUnusedEntries_…` (каждый фильтр `kind` отдаёт только свой вид, `version` строки равна версии записи, суммы по видам равны общему числу) и `DeskCatalogTests.Ac137_Ac138_AnUnusedScaleAndADirectionWithoutTracks_…` (вид и тип объекта находок «шкала» и «область»; прежде проверялась только компетенция). Оба зелёные до правки: стражи |
++| Тесты тестировщика ревью-фикса `43568e1`…`aa6b31e` | уже с доказательствами (строки в `test-plan.entry-02.md`) | — | keep | в записи 3 не перепроверялись и не переписывались; прогон ниже подтверждает их зелёными |
++| Комментарии и документы (`OrgStructure`, `docs/**`, `tech-reference`), `UserManagementDeskSource` (параметр `IsGlobalAdmin` конструктора `UserStatus`) | нет поведения | — | none | комментарии и тексты не исполняются; значение `IsGlobalAdmin` из источника стола нигде не читается, а чтение из `UserDirectory` проверено строкой про external 4 |
++| Новые запросы к PostgreSQL (`List<Guid>.Contains`, пакетные уровни и привязки, проекция `UnusedEntryResponse`, трек в `RouteEntryIdsAsync`) | change: perf, не проверялись на реальной БД | contract | keep | выполняются перечисленными тестами на хосте API против общего контейнера PostgreSQL, подмены поставщика нет |
++| Окружение прогона: контейнер PostgreSQL с лимитом 100 соединений при десятках параллельных хостов | change: flaky — `53300: sorry, too many clients already`, красные тесты случайных классов | окружение | add | `TestEnvironment` задаёт `max_connections=500` (см. «Added tests»); виден в сэмплере соединений, не в наборе |
++
++## Removed tests
++
++Строки перенесены из строк тестировщика ревью-фикса (TST-8): сами тесты удалены в `impl` (`29ac3bc`, `d94007b`) — ещё до записи 1, на этой записи удалять нечего. Все лежат внутри области изменений спринта (вентиль удаления не нужен). Записью 3 не удалён ни один тест.
++
++| Test | Reason | In change scope |
++|---|---|---|
++| `CareerMigrationTests` (класс, 203 строки) и помощник `Infrastructure/MigrationDatabase` | тесты переноса данных старых схем вместе с самими миграциями; до 1.0 перенос данных делает только последняя миграция, остальные схлопываются в `InitialCreate` (AC-58, AC-63); поведения больше нет. Удалены коммитом `29ac3bc` в `impl`, записи 1 это не отражено | да; замена — `BaseScaleSeedTests` (сид, TST-7) и `IdentityRolesMigrationTests` (перенос в Identity) |
++| `PositionMigrationTests` (класс, 121 строка) | перенос данных каталога должностей старых схем; поведения больше нет по той же причине (AC-58); коммит `29ac3bc` | да; замены нет |
++| `CatalogDeletionTests.Ac23_ACategory_IsDeletedUnlessCompetenciesOrTheirHistoryUseIt`, `Ac23_Categories_StartWithTheGeneralOnes_ReadableByEveryone` | категории компетенций упразднены (AC-51); поведения больше нет; коммит `29ac3bc` | да; замены нет |
++| `CompetencyTests.Ac12_Competency_RefusesANumberThatNamesNoType_OnCreationAndOnChange` | тип удалён из справочника компетенций, остался в документе версии (AC-55); коммит `29ac3bc` | да; замена — два случая в `MatrixCreationTests.Ac14_Document_IsRefusedWhenItIsNotWellFormed` (TST-2) |
++| `AuthorizationTests.Ac7_UserRole_IsLimitedToTheKnownValuesInTheDatabaseItself` | колонки `users.role` и её проверочного ограничения нет, роли — строки Identity (AC-62, AC-63); коммит `d94007b`; допустимость значений проверяет `HrRoleTests.Ac62_TheRolesOfAnAccount_AreASet_WithSeveralMembers_AndOnlyKnownRoles` | да; замена — этот тест |
++| `MatrixWorkflowTests.Ac9_TheDraftCategoryOfAUsedCompetency_IsReadByTheRouteWhileInWork_AndMadeActiveAndJournaledByPublication`, `Ac9_Publication_IsRefusedWhenTheDraftCategoryOfAUsedCompetencyWouldTakeANameAnActiveCategoryHasNow` | черновая категория используемой компетенции исчезла вместе с категориями (AC-51); коммит `29ac3bc` | да; замены нет |
++| `CareerMigrationTests.Ac12_Catalogues_StartWithTheTwelveCategoriesAndTheBaseScaleOfTheSource…` (в составе удалённого класса) | единственная проверка начальных данных: двенадцать категорий упразднены, базовая шкала 0–4 и «начальные данные не пишутся в журнал» остались требованием (AC-25) | да; замена — `BaseScaleSeedTests` |
++
++## Added tests
++
++Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
++
++Fail-first: `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj --filter-method <11 имён из этой записи>` в копии `git archive 521d37f src` (родитель `c1b7e1d`, первого исправления ревью) с тестами рабочего дерева → exit 2, итог 11: 5 красных, 6 зелёных (runs: 2 — первый на 9 тестах, второй на 11). Красные — тесты пяти замечаний external; зелёные — стражи переписанных запросов, они не доказывают исправление и держат поведение. Мутации — в копии `git archive HEAD` с тестами рабочего дерева, `dotnet test --project … --filter-method <имя теста>` (для `M10` — `--filter-class` пяти классов); контрольный прогон без мутаций 9 из 9 и 4 из 4, exit 0.
++
++| Test | Regression proof |
++|---|---|
++| `tests/Competency.Tests/CompetencyBlockTests.cs` (`Ac128_Ac130_ADraftBlockForTheMatrixUnitWrittenByTheHeadAbove_…`) | до правки: `Expected included.Status to be HttpStatusCode.OK … 400 … "errors":{"content":["Запись не найдена или недоступна"]} … but found HttpStatusCode.BadRequest`. Мутации: `M1a` (проверка при сохранении по прежнему правилу) → `Expected included.Status to be OK`; `M1b` (`HeadedScopeIds` → `AvailableScopeIds`) → `Expected unseen.Status to be BadRequest`; `M1c` (проверка полноты по прежнему правилу) → `Expected problems to be empty, but found at least one item {"InactiveEntry"}`; каждая exit 2, 1 красный из 1; runs: 3 |
++| `tests/Competency.Tests/CompetencyBlockTests.cs` (`Ac127_ABlockRequestWithNoComposition_…`) | до правки: `Expected refused.Status to be HttpStatusCode.BadRequest … "status":500 … but found HttpStatusCode.InternalServerError`. Мутации: `M2a` (создание без `Validate`) и `M2b` (изменение без `Validate`) → та же строка, 1 из 1, exit 2 (в `M2b` создание проходит, красна вторая итерация — половина «изменение» доказана отдельно); runs: 2 |
++| `tests/Competency.Tests/CompetencyBlockTests.cs` (`Ac127_AnUnusableCompetencyAmongSeveralAdded_…`) | страж: зелёный до правки. Мутации: `M3a` (проверяется только первая добавленная) и `M3b` (статус записи не проверяется) → `Expected withDraft.Status to be HttpStatusCode.BadRequest`; `M3e` (черновик определяется всегда) → `Expected withMissing.FieldErrors("competencyIds") … to not contain` текст ссылки на черновик; каждая exit 2, 1 из 1; runs: 3 |
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac107_Ac114_ApprovingABlock_…`) | до правки: `Expected after.Select(version => version.Status) to be equal to {"Active", "Draft"}, but {"Draft"} contains 1 item(s) less.`; мутаций нет (половина «корень» закрыта `CompetencyTests`); runs: 0 |
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac144_ADraftBlockOutsideTheResponsibleHrsUnits_…`) | до правки: `Expected asAlsoAdministrator.Status to be HttpStatusCode.OK … "status":409,"detail":"Версию нельзя опубликовать","blockers":[{"kind":"Block",…,"reason":"NoRight"…` (контроль `asOnlyHr` зелёный и до, и после). Мутации: `M5a` (роль администратора ответственного HR всегда ложна) → та же строка; `M5b` (всегда истинна) → `Expected asOnlyHr.Status to be HttpStatusCode.Conflict … "status":"Published"`; exit 2, 1 из 1; runs: 2 |
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac109_Ac110_APreview_NamesEveryBlockerTheReaderSees_…`) | страж: зелёный до правки. Мутации: `M10b` (ключ кэша `SeesLoaded` — один тип для всех) → `Expected 200 OK but got 500 InternalServerError` (приведение типа); `M11` (помехи скрыты всегда) → `Expected preview["blockers"]… to be a collection with 2 item(s), but found an empty collection.`; exit 2, 1 из 1; прежний мутант `M10` на пяти классах (`PublicationCascadeTests`, `CatalogDeletionTests`, `PositionMatrixTests`, `LevelPositionTests`, `TrackAndLevelTests`) выжил — 60 из 60 зелёных, поэтому закрепление новое; runs: 3 |
++| `tests/Competency.Tests/MatrixAccessTests.cs` (`Ac18_TheDraftTrackOfAVersionInWork_…`) | до правки: `Expected (reader.Client.GetAsync(path)).Status to be HttpStatusCode.OK … but found HttpStatusCode.NotFound`. Мутации: `M6a` (ветка трека в `Sees<CareerTrack>` без маршрута) и `M6b` (трек не входит в `RouteEntryIdsAsync`) → та же строка; `M6c` (ветка трека открыта всем) → `Expected (stranger.Client.GetAsync(path)).Status to be HttpStatusCode.NotFound … but found HttpStatusCode.OK`; exit 2, 1 из 1; runs: 3 |
++| `tests/Competency.Tests/CatalogDraftTests.cs` (`Ac9_TheDraftList_ShowsEachDraftTrackItsOwnReadiness_…`) | страж: зелёный до правки. Мутации: `M7a` (уровни всех треков вместо своих) → `Expected ReadinessOf(ready.Id) to be <null> because a ready track has nothing to report`; `M7d` (готовность считается только для первого трека) → `Expected withoutLevelsReadiness not to be <null> because a track without levels is not ready.`; exit 2, 1 из 1; runs: 2 |
++| `tests/Competency.Tests/ScenarioReadTests.cs` (`Ac137_Ac138_Ac140_EachKindFilterOfTheUnusedEntries_…`) | страж: зелёный до правки. Мутации: `M8a` (запросы шкал идут при любом виде) → `Expected items.Select(item => item!["kind"]…) to contain only items matching … because Competency, but {"Scale"} do(es) not match`; `M8b` (вид области записан как шкала) → то же с `because Direction`; `M8c` (версия строки нулевая) → `Expected $"\"{row["version"]…}\"" to be the same string because Competency: the row carries the version the entry is changed with`; exit 2, 1 из 1; runs: 3 |
++| `tests/Competency.Tests/DeskCatalogTests.cs` (`Ac137_Ac138_AnUnusedScaleAndADirectionWithoutTracks_…`) | страж: зелёный до правки. Мутации: `M9a` (находка шкалы с видом компетенции) → `Expected unusedScale.Kinds() to be equal to {"UnusedScale"}, but {"UnusedCompetency"} differs at index 0.`; `M9b` (тип объекта области — шкала) → `Expected emptyDirection["object"]!["type"]… to be the same string`; `M9c` (тип объекта шкалы — компетенция) → `Expected unusedScale["object"]!["type"]… to be the same string`; `M9d` (находка области с видом шкалы) → `Expected emptyDirection.Kinds() to be equal to {"DirectionWithoutTracks"}, but {"UnusedScale"} differs at index 0.`; exit 2, 1 из 1; runs: 4 |
++| `tests/Competency.Tests/LevelPositionTests.cs` (`Ac90_TheTrackAPositionIsLinkedTo_IsNamedToWhoCanSeeIt_…`) | страж: зелёный до правки. Мутации: `M12a` (отказ создания матрицы называет первый трек без проверки видимости) → `Did not expect unnamedRefusal.Json!["detail"]!.GetValue<string>() "…" to contain "<имя трека>"`; `M12b` (то же в `matrix-positions`) → `Expected listedForSibling to be <null> because a draft track of another unit is not shown to its head, but found {[id, …], [name, …]}`; exit 2, 1 из 1; runs: 2 |
++| `tests/Competency.Tests/Infrastructure/TestEnvironment.cs` | исправление дефекта теста (окружения), не новый тест: прогон 1 при лимите 100 — `dotnet test --solution Competency.slnx` → exit 2, 25 красных из 678 (24 — `Npgsql.PostgresException : 53300: sorry, too many clients already`, 1 — `CatalogDeletionTests.Ac25_Deleting_…`: `Expected plain.Status to be HttpStatusCode.Forbidden {value: 403}, but found HttpStatusCode.InternalServerError`), сэмплер `pg_stat_activity` упёрся в 100 из 100; до этого, до стратегии — 2 красных из 667 (`ScaleTests.Ac22_MakeDefault_…`, `CareerLockTests.Ac15_…`) и зелёные 104 из 104 при отдельном запуске двух классов. После `max_connections=500` — см. «Suite run»; runs: 3 |
++| `tests/Competency.Tests/DeskQueryCountTests.cs` | исправление дефекта теста (TST-1, flaky-pattern): окно `large` открывалось снимком длины асинхронного журнала сразу после `AddUnitsAsync(admin, 12)`, не дожидаясь хвоста журнала последнего запроса подготовки (приглашения), поэтому его команды EF могли попасть в окно и сломать `large == small` без дефекта кода; перед `large` добавлен отбрасываемый прогрев `CommandsAsync` (как перед `small`), он ждёт строку `… - 200` своего запроса, журнал идёт по порядку. Мутация (копия `git archive HEAD`, запрос `FindManyAsync` на каждое подразделение с руководителем в `UserManagementDeskSource.FindAsync`): `dotnet test --solution Competency.slnx --filter-class "*DeskQueryCountTests"` → exit 2, упали `Ac4_TheSqlCommandsOfADeskRequest_AreFewAndTheSameOnSmallAndOnLargerData(route: "/api/v1/desk")` (`Expected large to be 18 … but found 30`) и `(route: "/api/v1/desk/count")` (`Expected small to be between 1 and 25, but found 31`), 2 из 2; без мутации на текущем HEAD — 2 из 2, exit 0; runs: 1 |
+diff --git a/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-04.md b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-04.md
+new file mode 100644
+index 0000000..1a2bb6b
+--- /dev/null
++++ b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-04.md
+@@ -0,0 +1,41 @@
++---
++responsibility:
++  owns: test approach for sprint change scope, removal reasons, no-test decisions, suite run result, code defects found by tests, manual-verification spec (single home — never duplicated in a review file)
++  excludes: task breakdown, requirements, review verdicts, code, change surface (derivable from the diff)
++  delegates_to: plan.md (tasks), persistent docs (requirements), reviews/impl/wave-<K>/iter-NN/testing.md (verdict)
++---
++
++# Test plan — sprint 004-role-desktop-user-journeys, entry 4 (rotated)
++
++Строки записи 4. Строк тестировщика ревью-фикса после неё нет: правки `impl` по замечаниям iter-03 тестов не меняли.
++
++## Risk → check decisions
++
++Дельта записи 4 — `git diff f72d32e...HEAD`: правки `impl` по замечаниям ревью iter-02 (`0de4ecc` — external 1, `2f24826` — external 2), документы (`1826d60`, `e42aa03`, `ba40df4`) и тест тестировщика ревью-фикса (`a51e623`, его строка — в `test-plan.entry-03.md`). Изменений в `web/`, `openapi/` и конфигурации сборки нет: набор web не затронут. Safety valve применён: правка лежит в общем `CatalogStore.ViewerAsync`, который вызывают конечные точки каталога и матриц, поэтому набор backend запущен целиком.
++
++| Change | Material risk | Chosen check | Decision | Reason |
++|---|---|---|---|---|
++| `CatalogStore.ViewerAsync` — маршрут чтения считается и для HR, пропускается только администратор (external 1) | change: security — вышестоящий согласующий с ролью HR, не ответственный HR подразделения матрицы, получал 404 на черновой трек и уровни версии на своём шаге; доступ HR вне маршрута расширяться не должен | contract | add | `MatrixAccessTests.Ac18_TheDraftTrackAndLevelsOfAVersionInWork_AreReadByTheSuperiorApproverWhoHoldsTheHrRole_…`: руководитель отдела с ролью HR читает черновой трек и оба уровня версии команды (200) и видит их в списках `tracks?q=` и `levels?trackId=`; HR соседней команды (ответственный HR другого подразделения, не на маршруте) получает 404 и пустые списки. Правка затрагивает одиночное чтение, список и маршрут, мутант на каждый (ниже) |
++| `CatalogPublication.CheckAsync` возвращает статусы как прочитаны, `PublicationPlan.Visible` решает по ним (external 2) | change: security — помеха-уровень вне состава версии с занятым именем показывалась вышестоящему согласующему, который этот уровень не читает | contract | add | `PublicationCascadeTests.Ac109_Ac110_ABlockerOfALevelOutsideTheVersion_…`: два черновых уровня одного трека с одним именем (разные авторы, один вне состава версии); вышестоящий согласующий и в предпросмотре версии, и в отказе шага, который публикует (согласование с автоматическим шагом HR), видит одну помеху (уровень состава) и `moreCount = 1`; ответственный HR и администратор видят обе, `moreCount = 0`. Предпросмотр и отказ идут через два вызова `Visible`, мутант на каждый |
++| Активация перенесена: `CatalogPublication.Apply` и `CatalogEndpoints.PublishAsync` делают `Active` сами, `CheckAsync` активирует лишь на время проверок (external 2) | change: public contract — корень и каскад сохраняются не `Active`, нет строки истории версий компетенции, возвращение неактивной записи не действует, отказ или предпросмотр меняют данные | integration | keep | Закрыто существующими тестами, новый не нужен: утверждение с каскадом — `PublicationCascadeTests.Ac107_Ac110_Ac113_Ac114_ApprovingACompetency_…`, `Ac109_Ac113_…`, `Ac107_Ac114_ApprovingABlock_…` (строки истории «Active», «Draft»); публикация версии — `PublicationCascadeTests.Ac106_Ac109_Ac110_…`, `MatrixWorkflowTests.Ac9_Publication_MakesTheDraftsOfTheVersionActive_AndAddsTheirVersionToTheHistory`; возвращение — `CatalogRightsTests.Ac9_Deactivation_AndReactivation_…` (каждый вид), `TrackAndLevelTests.Ac11_ReactivatingATrackDeactivatedAsADraft_ApprovesItsDraftLevelsAndJournalsEach`; отказ ничего не меняет — `MatrixWorkflowTests.Ac9_Publication_IsRefusedWhenADraftOf…` (шкала остаётся черновиком), `TrackAndLevelTests.Ac11_ReactivatingATrackDeactivatedAsADraft_IsRefusedWhenTwoOf…` (трек неактивен, уровни черновики). Отказ и предпросмотр ничего не сохраняют и без этих тестов: транзакция записи закрывается без фиксации. Проверка «живы ли они»: мутации новых строк активации в копии `git archive HEAD`, `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj` с `--filter-class` по `PublicationCascadeTests`, `CatalogDraftTests`, `MatrixWorkflowTests`, `TrackAndLevelTests`, `CatalogRightsTests`, `CompetencyTests`, `CompetencyBlockTests`, `LevelPositionTests` (130 тестов): `M3A` (`PublishAsync` не делает корень `Active`) → exit 2, 22 красных, среди них `CompetencyTests.Ac12_EverySavedChange_AddsAVersionToTheHistory_ListedLatestFirst` (`Expected versions.Select(version => version!["status"]!.GetValue<string>()) to be equal to {"Inactive", "Active", "Draft", "Draft"}, but {"Inactive", "Draft", "Draft", "Draft"} differs at index 1.`), `PublicationCascadeTests.Ac107_Ac110_Ac113_Ac114_ApprovingACompetency_…`, `CatalogDraftTests.Ac9_AnApprovedOrDeletedDraft_LeavesTheList`; `M3B` (`Apply` не делает каскад `Active`) → exit 2, 12 красных, среди них `TrackAndLevelTests.Ac11_ReactivatingATrackDeactivatedAsADraft_ApprovesItsDraftLevelsAndJournalsEach` (`Expected 200 OK but got 404 NotFound`), `PublicationCascadeTests.Ac106_Ac109_Ac110_PublishingAVersion_…`, `MatrixWorkflowTests.Ac9_Publication_MakesTheDraftsOfTheVersionActive_AndAddsTheirVersionToTheHistory`, `PublicationCascadeTests.Ac107_Ac114_ApprovingABlock_…`. Потолок: возврат статуса корня в `CheckAsync` через API не наблюдается (читающий предпросмотр записи читает её сам, поэтому помеха корня видна в любом статусе), мутант не строился |
++| Запросы маршрута у HR в чтениях каталога (`ViewerAsync` больше не возвращает HR сразу) | change: perf — лишние SQL-команды чтений каталога | — | none | Счётчик команд закреплён одним тестом, `DeskQueryCountTests`; он считает стол администратора, а стол `CatalogStore.ViewerAsync` не вызывает (источник стола строит `CatalogViewer` из снимка оргструктуры), поэтому HR-стол с 22 командами из записи 3 и его замер остаются в силе. Бюджет спринта (не больше 25 команд) относится к столу, для чтений каталога бюджета нет, и тест на него закрепил бы реализацию. Для HR добавляется постоянное число команд: запрос версий в работе у автора и участника и, если такие версии есть, запросы блоков и компетенций; обход поддеревьев платит только HR, руководящий подразделениями, — как любой руководитель |
++| `DeskQueryCountTests` — прогрев перед `large` (TST-1, `a51e623`) | уже с доказательством (строка в `test-plan.entry-03.md`) | — | keep | не перепроверялась и не переписывалась; прогон ниже подтверждает её зелёной |
++| Комментарии и документы (`CatalogPublication`, `PublicationPlan`, `CatalogStore`, `docs/architecture/career-framework.md`, `tech-reference`) | нет поведения | — | none | комментарии и тексты не исполняются; утверждение документа о странице очистки справочников (`unusedEntriesQuery` читает `GET /unused-entries` с `kind`) сверено с `web/src/features/career/catalogApi.ts` и `CatalogCleanupPage.tsx` |
++
++## Removed tests
++
++Записью 4 не удалён ни один тест; ревью-фикс не оставил строк на удаление.
++
++| Test | Reason | In change scope |
++|---|---|---|
++
++## Added tests
++
++Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
++
++Fail-first: `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj --filter-method "*TheDraftTrackAndLevelsOfAVersionInWork_AreReadByTheSuperiorApproverWhoHoldsTheHrRole*" --filter-method "*ABlockerOfALevelOutsideTheVersion*"` в копии `git archive 4a20587 src` (родитель `0de4ecc`, первого исправления ревью iter-02) с тестами рабочего дерева → exit 2, итог 2: 2 красных. Мутации — в копии `git archive HEAD` с теми же тестами, `dotnet test --project … --filter-method <имя теста>`; контрольный прогон без мутаций 2 из 2, exit 0.
++
++| Test | Regression proof |
++|---|---|
++| `tests/Competency.Tests/MatrixAccessTests.cs` (`Ac18_TheDraftTrackAndLevelsOfAVersionInWork_AreReadByTheSuperiorApproverWhoHoldsTheHrRole_…`) | до правки: `Expected (superior.Client.GetAsync($"/api/v1/career/tracks/{kit.Track.Id}")).Status to be HttpStatusCode.OK {value: 200} because the superior approver reads the track of the version, but found HttpStatusCode.NotFound {value: 404}.` Мутации (каждая exit 2, 1 из 1): `T1A` (`ViewerAsync` снова возвращает HR сразу) → та же строка; `T1B` (черновой трек читает любой HR) → `Expected (outsider.GetAsync($"/api/v1/career/tracks/{kit.Track.Id}")).Status to be HttpStatusCode.NotFound {value: 404} because an HR of another unit is not on the route, but found HttpStatusCode.OK {value: 200}.`; `T1C` (то же для уровня) → `Expected (outsider.GetAsync($"/api/v1/career/levels/{levelId}")).Status to be HttpStatusCode.NotFound {value: 404}, but found HttpStatusCode.OK {value: 200}.`; `T1D` (уровни версии не входят в маршрут) → `Expected (superior.Client.GetAsync($"/api/v1/career/levels/{levelId}")).Status to be HttpStatusCode.OK {value: 200}, but found HttpStatusCode.NotFound {value: 404}.`; `T1E` (список не отсекает нечитаемое) → `Expected (outsider.GetAsync($"/api/v1/career/tracks?q={Uri.EscapeDataString(trackName)}&pageSize=200")).Expect(HttpStatusCode.OK).ItemIds() to be empty, but found at least one item`; `T1F` (список не учитывает маршрут) → `Expected (superior.Client.GetAsync($"/api/v1/career/tracks?q={Uri.EscapeDataString(trackName)}&pageSize=200")).Expect(HttpStatusCode.OK).ItemIds() to be equal to {…}, but found empty collection.`; runs: 6 |
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac109_Ac110_ABlockerOfALevelOutsideTheVersion_…`) | до правки: `Expected Blockers(bySuperior) to be equal to {"Level/NameTaken/<id>"}, but {"Level/NameTaken/<id>", "Level/NameTaken/<id>"} contains 1 item(s) too many.` Мутации (каждая exit 2, 1 из 1): `T2A` (статусы как прочитаны не возвращаются) → та же строка; `T2B` (отказ называет все помехи, предпросмотр прежний) → `Expected Blockers(refused.Json!) to be equal to {"Level/NameTaken/<id>"}, but {"Level/NameTaken/<id>", "Level/NameTaken/<id>"} contains 1 item(s) too many.`; `T2C` (`moreCount` предпросмотра всегда 0) → `Expected bySuperior["moreCount"]!.GetValue<int>() to be 1 because the level outside the version is counted but not named, but found 0 (difference of -1).`; `T2D` (отказ не считает скрытые) → `Expected refused.Json!["moreCount"]!.GetValue<int>() to be 1, but found 0 (difference of -1).`; runs: 4 |
+diff --git a/.asd/sprints/004-role-desktop-user-journeys/test-plan.md b/.asd/sprints/004-role-desktop-user-journeys/test-plan.md
+new file mode 100644
+index 0000000..2768b24
+--- /dev/null
++++ b/.asd/sprints/004-role-desktop-user-journeys/test-plan.md
+@@ -0,0 +1,100 @@
++---
++responsibility:
++  owns: test approach for sprint change scope, removal reasons, no-test decisions, suite run result, code defects found by tests, manual-verification spec (single home — never duplicated in a review file)
++  excludes: task breakdown, requirements, review verdicts, code, change surface (derivable from the diff)
++  delegates_to: plan.md (tasks), persistent docs (requirements), reviews/impl/wave-<K>/iter-NN/testing.md (verdict)
++---
++
++# Test plan — sprint 004-role-desktop-user-journeys
++
++## Entry log
++
++| Entry | HEAD analysed | Scope |
++|---|---|---|
++| 1 | 16478d5 | full change surface |
++| 2 | 7fe0c10 | delta since entry 1 |
++| 3 | f72d32e | delta since entry 2 |
++| 4 | d8c397f | delta since entry 3 |
++| 5 | 7b8de3c | delta since entry 4 |
++
++## Risk → check decisions
++
++Дельта записи 5 — `git diff d8c397f...HEAD`: изменение требований AC-110/AC-112 (`d329d7c`: перечень публикации называет только читаемые публикующим записи, остальные показаны числом «и ещё N»; подтверждение остаётся над всем каскадом), правка `impl` по замечанию внешнего ревью (`e692120`: `PublicationPlan.Describe(reader)` отбирает записи и помехи одной `SeesLoaded`, поле контракта `hiddenEntryCount`; web считает каскад целиком и показывает «и ещё N») и заметка памяти dev (`68c1a40`). Тесты этих коммитов не менялись. Safety valve применён: правка затрагивает общий контракт (`openapi.json`, `schema.d.ts`), общий `PublicationPlan` (оба предпросмотра) и общие web-компоненты (`usePublishEntry`, `CascadeTable`, `useVersionTransition`), поэтому набор backend и набор web запущены целиком.
++
++| Change | Material risk | Chosen check | Decision | Reason |
++|---|---|---|---|---|
++| `PublicationPlan.Describe(reader)` — `entries` только читаемые, остальные числом `hiddenEntryCount` (предпросмотр версии; предпросмотр записи идёт тем же методом) | change: security — вышестоящий согласующий видел идентификатор и название черновика, который читать не вправе; число скрытых неверно | contract | add | `PublicationCascadeTests.Ac110_Ac112_APreviewOfAVersion_…`: версия на шаге вышестоящего согласующего (автор — ответственный HR), в треке черновой уровень вне содержимого версии. Вышестоящий согласующий видит трек и два уровня версии, `hiddenEntryCount = 1`, идентификатора и названия скрытого уровня нет ни в одной строке тела; ответственный HR и администратор видят все четыре записи, `hiddenEntryCount = 0`; тег один у всех троих. Мутанты — ниже |
++| Подтверждение над всем каскадом: `Tag`, `IsConfirmedBy` (AC-112; код не менялся, смысл — тег остаётся по полному перечню, когда перечень читателя короче) | change: workflow state machine — тег по видимой части дал бы опубликовать скрытые черновики без подтверждения того, что изменилось | contract | add | `Ac112_ApprovingUnderThePreviewOfAReaderWhoCannotReadADraft_…`: тот же вышестоящий согласующий подтверждает по тегу своего предпросмотра; скрытый уровень переименован → 412 с `publication`, версия остаётся «на согласовании», уровень — черновиком; новый предпросмотр даёт другой тег, подтверждение по нему публикует и скрытый уровень (три `CareerLevel.Approved` в журнале). Страж: кроме нового поля до правки зелёный, поэтому его держат мутанты |
++| Предпросмотр записи (`GET /{segment}/{id}/publication`), читающий вправе утвердить корень | change: security | contract | add | одна проверка в существующем `Ac107_Ac110_Ac113_Ac114_ApprovingACompetency_…`: у HR `hiddenEntryCount = 0` на маршруте записи. Что хранитель читает весь свой каскад, уже закрепляют `Entries(preview)` в `Ac107_…` и `Ac109_Ac113_…` |
++| Предпросмотр записи: читающий вправе утвердить корень, но не вправе читать черновик каскада (пункт 1 списка dev) | change: security | — | none | предпосылка не достижима. Каскад записи — направление, шкала, компетенции (без подразделения) и уровни трека-корня. Утвердить корень вправе администратор, ответственный HR подразделения трека (учётная запись с ролью HR) и любой HR для записи без подразделения. `CatalogViewer.Sees` показывает черновик без подразделения каждому HR и администратору, а уровень — ответственному HR подразделения его трека. Скрытое возникает только в предпросмотре версии, где читает вышестоящий согласующий, не хранитель; этот случай — первая строка. Сузятся права чтения HR — красными станут строка выше и `Entries(...)` существующих тестов |
++| `usePublishEntry`: `publishedCount`, `hiddenDraftsText`, `EntryList`, решение «спросить или утвердить сразу» (`publish`), подпись кнопки, число в вопросе и в сообщении | change: workflow state machine — публикующее действие без подтверждения, когда читаемый список пуст, а скрытые записи есть; неверное число | component | add | `usePublishEntry.test.tsx`: два теста — читаемые вместе со скрытыми (подпись «вместе с 3 записями», строка «и ещё 2 черновые записи», тег целого перечня, сообщение «опубликовано записей: 3») и только скрытые (окно открывается, до подтверждения запроса нет, списка `<ul>` нет) |
++| `CascadeTable` — таблица читаемых записей и строка «и ещё N» (общая для четырёх экранов) | change: public contract — при одних скрытых таблица не показывается, при нуле скрытых строки нет | component | add | `CascadeTable.test.tsx`: три сочетания — только читаемые, читаемые и скрытые, только число |
++| `useVersionTransition`: число в вопросе, `CascadeTable` в окне, число в `onDone` | change: workflow state machine | component | add | `useVersionTransition.test.tsx`: при пустом читаемом перечне хук спрашивает первым и публикует по тегу (число 2); решение под перечнем, который показал экран, выполняется сразу, число 3 |
++| Экраны `DraftsQueuePage` (подпись кнопки, фраза «Других черновых записей…»), `BuilderSubmitStep` (фраза, таблица, отправка без окна), `ReviewPage` (блок «Будет опубликовано вместе с версией») | change: workflow state machine — на `DraftsQueuePage` и `BuilderSubmitStep` экран и есть подтверждение, окна нет | component | add | по два теста на экран (скрытые записи и пустой перечень), сеть `fakeApi`. Запись 1 оставила страницы сценариев целиком на `none` (потолок); здесь закреплены только изменённые блоки, остальные части страниц и `ReworkPage` по-прежнему вне проверок |
++| Фикстуры предпросмотра без `hiddenEntryCount` (`usePublishEntry.test.tsx`, `catalogueTables.test.tsx`) | дефект теста: ответы строятся `Response.json` без типа, `tsc` нового поля не видит, `entries.length + undefined` — `NaN`, и пустой перечень не распознаётся | component | add | поле добавлено в обе фикстуры; до правки 9 красных (`approves at once under the tag of an empty list, …` и ещё семь тестов `usePublishEntry.test.tsx`, `approves a draft against the version its row shows, …` в `catalogueTables.test.tsx`) — дефект теста, не кода, `D-N` нет |
++| Контракт: `hiddenEntryCount` в `PublicationPreviewResponse` и `MatrixPublicationResponse` (`openapi.json`, `schema.d.ts`) | change: public contract | contract | keep | `ContractTests` в наборе backend зелёные; `npm --prefix web run check:api` без расхождений |
++| Документы (`docs/product`, `docs/architecture`, `docs/ux`), заметка памяти dev (`68c1a40`) | нет поведения | — | none | тексты не исполняются; заметка памяти верна — фикстуры, о которых она, исправлены строкой выше. Попаданий в память агентов нет: проверено поиском `cascadeTag`, `PublicationPreviewResponse`, `moreCount` по `.claude/agent-memory` (только память тестировщика, описания приёмов верны) |
++
++## Removed tests
++
++Записью 5 не удалён ни один тест; ревью-фикс не оставил строк на удаление.
++
++| Test | Reason | In change scope |
++|---|---|---|
++
++## Added tests
++
++Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
++
++Fail-first. Backend: `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj --filter-method "*Ac110_Ac112_APreviewOfAVersion*" --filter-method "*Ac112_ApprovingUnderThePreview*" --filter-method "*Ac107_Ac110_Ac113_Ac114_ApprovingACompetency*"` в копии `git archive e692120~1` (src, tests, openapi; родитель исправления `e692120`) с `PublicationCascadeTests.cs` рабочего дерева → exit 2, итог 3: 3 красных. Web: `node node_modules/vitest/vitest.mjs run <семь файлов> --reporter=verbose` в копии `git archive e692120~1 web` (node_modules — junction) с тестами рабочего дерева → exit 1, красных 10 из 13 новых тестов; три теста «пустой перечень» зелёные до правки (стражи, чтобы экран не показывал список всегда).
++
++Мутации — в копиях `git archive HEAD` с тестами рабочего дерева. Backend: тот же `dotnet test --project … --filter-method` (три имени выше), `runs` — число мутационных прогонов; контрольный прогон без мутации 3 из 3, exit 0. Web: `node node_modules/vitest/vitest.mjs run <семь файлов> --reporter=json`; контрольный прогон 38 из 38, exit 0. «Убит» — runner вернул ненулевой код и назвал упавший тест; в ячейке — первая упавшая проверка из отчёта runner.
++
++| Test | Regression proof |
++|---|---|
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac110_Ac112_APreviewOfAVersion_…`) | до правки: `Expected HiddenEntryCount(full) to be 0 because whoever may read every draft sees them all, but found -1 (difference of -1).` (поля нет; в том же прогоне `Expected Entries(bySuperior) to be a collection with 3 item(s), but` и идентификатор скрытого уровня в теле). Мутации (каждая exit 2): `S1` (предпросмотр перечисляет весь каскад) → `Expected Entries(bySuperior) to be a collection with 3 item(s), but`; `S2` (`hiddenEntryCount` всегда 0) → `Expected HiddenEntryCount(bySuperior) to be 1 because the level outside the version is counted but not listed, but found 0 (difference of -1).`; `S3` (число — весь каскад) → `Expected HiddenEntryCount(full) to be 0 because whoever may read every draft sees them all, but found 4 (difference of 4).`; `S4` (ответ версии теряет число) → строка `S2`; runs: 4 |
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac112_ApprovingUnderThePreviewOfAReaderWhoCannotReadADraft_…`) | до правки красен одним новым полем: `Expected HiddenEntryCount(fresh) to be 1, but found -1 (difference of -2).`; 412, неизменность данных, новый тег и публикация скрытого уровня до правки зелёные — страж, его держит мутация `S5` (тег не включает последний черновик каскада — скрытый уровень), exit 2, 1 красный: `Expected stale.Status to be HttpStatusCode.PreconditionFailed {value: 412} because a change of the draft the reader cannot read changes the list they confirmed, but found HttpStatusCode.OK {value: 200}.`; `S1`–`S4` краснят его только строкой `HiddenEntryCount(fresh)`; runs: 1 |
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac107_Ac110_Ac113_Ac114_ApprovingACompetency_…`, проверка `hiddenEntryCount`) | до правки: `Expected HiddenEntryCount(preview) to be 0 because a keeper reads every draft the approval publishes, but found -1 (difference of -1).` Мутации (каждая exit 2): `S3` → `… but found 2 (difference of 2).`; `S6` (предпросмотр записи описан для читателя без роли HR) → `Expected Entries(preview) to be a collection with 2 item(s), but found an empty collection.`; runs: 2 |
++| `web/src/features/career/usePublishEntry.test.tsx` (`names the drafts the user may read, counts the ones they may not, …`, `asks before approving when every draft of the list is one the user may not read, …`) | до правки (exit 1): `Error: expect(element).toHaveTextContent()` («3 черновые записи») и `AssertionError: expected null not to be null` (окно не открылось, утверждение ушло сразу). Мутации (каждая exit 1): `U1` (`publishedCount` без скрытых) → 7 красных, оба новых среди них; `U2` (`publish` решает по `entries.length`) → `AssertionError: expected null not to be null`; `U3` (текст окна по читаемым) → `Error: expect(element).toHaveTextContent()`; `U4` (`execute` сообщает читаемые) → `Unable to find an element with the text: /вместе с ней опубликовано записей: 3/`; `U5` (подпись кнопки по читаемым) → `Unable to find an accessible element with the role "button" and name "Утвердить вместе с 3 записями"`; `U6` (нет строки «и ещё») → `Error: expect(element).toHaveTextContent()`; `U7` (из строки убрано «и») → 8 красных; `U8` (пустой `<ul>` при одних скрытых) → `AssertionError: expected <ul></ul> to be null`; runs: 8 |
++| `web/src/features/desk/CascadeTable.test.tsx` | до правки все три красные `TypeError: entries is not iterable` (проп переименован в `drafts`, по поведению до правки проверить нечем). Мутации (каждая exit 1): `C1` (таблица при нуле читаемых) → `AssertionError: expected <table …(1)>…(2)</table> to be null`; `C2` (строка при нуле скрытых) → `AssertionError: expected <p></p> to be null`; `C3` (строка без числа) → `Unable to find an element with the text: и ещё 2 черновые записи.`; runs: 3 |
++| `web/src/features/desk/useVersionTransition.test.tsx` | до правки: `Error: expect(element).toHaveTextContent()` («записей: 2») и `AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining {"id": "v1"}, 3 ]`. Мутации (каждая exit 1): `V1` (вопрос по читаемым) → `Error: expect(element).toHaveTextContent()`; `V2` (подтверждённое решение сообщает читаемые) → `expected "vi.fn()" to be called with arguments: [ ObjectContaining {"id": "v1"}, 2 ]`; `V3` (прямое решение) → то же с `3`; `C1` краснит и его (таблица в окне); runs: 3 |
++| `web/src/features/desk/DraftsQueuePage.test.tsx` | до правки: `TestingLibraryElementError: Unable to find role="button" and name "Утвердить вместе с 2 записями"`; тест «пустой перечень» — страж, зелёный до правки. Мутации (каждая exit 1): `Q1` (счёт по читаемым) → та же строка; `Q2` (список только при читаемых) → `Unable to find an element with the text: и ещё 2 черновые записи.`; runs: 2 |
++| `web/src/features/desk/BuilderSubmitStep.test.tsx` | до правки: `Unable to find an element with the text: /и вместе с ней 3 черновые записи/`; тест «нет черновых записей» — страж. Мутации (каждая exit 1): `B1` (счёт по читаемым) → та же строка; `B2` (таблица только при читаемых) → `Unable to find an element with the text: и ещё 3 черновые записи.`; `V3` краснит и проверку сообщения «опубликовано записей: 3»; runs: 2 |
++| `web/src/features/desk/ReviewPage.test.tsx` | до правки: `Unable to find an element with the text: и ещё 2 черновые записи.`; тест «версия уходит одна» — страж. Мутация `R1` (блок только при читаемых) → exit 1, та же строка; runs: 1 |
++| `web/src/features/career/usePublishEntry.test.tsx`, `web/src/features/career/catalogueTables.test.tsx` (фикстуры предпросмотра) | исправление дефекта теста, не новый тест. Команда `npm --prefix web test` на дереве `07dc3df`: exit 1, 9 красных из 492; первая — `approves a draft against the version its row shows, and reads no entry on the way`: `AssertionError: expected [] to have a length of 1 but got +0`; после правки обе фикстуры зелёные |
++
++## Suite run
++
++Command (запись 5): `dotnet test --solution Competency.slnx --artifacts-path <scratch>` — весь набор backend и `npm --prefix web test` — весь набор web. Safety valve применён: правка затрагивает общий контракт, `PublicationPlan` обоих предпросмотров и общие web-компоненты, поэтому ни один набор не сужался.
++Scope: full (backend и web); impacted-набор вырождается в полный.
++Result: pass — backend 682 теста: 682 успешно, 0 упало, 0 пропущено, exit 0, 2 мин 23 с; web 505 тестов в 52 файлах: 505 успешно, 0 упало, exit 0, 30 с. Это 680 и 492 прежних плюс 2 и 13 добавленных записью. Сырой ход: до стратегии на дереве `07dc3df` backend 680 из 680, exit 0, 2 мин 25 с, web 483 из 492, 9 красных, exit 1 — все девять от фикстур теста без нового поля (см. «Risk → check decisions»), кода среди них нет; после авторства на дереве `6581783` оба набора зелёные. Новых кодовых дефектов нет.
++Lint / build: pass — `npm --prefix web run lint` (biome ci + tsc) exit 0; `dotnet build Competency.slnx --tl:off` — предупреждений 0, ошибок 0 (`TreatWarningsAsErrors`); `npm --prefix web run build` exit 0; `npm --prefix web run check:api` без расхождений.
++HEAD: 6581783 (прогон измеряет дерево этого коммита; после него менялись только `test-plan.md`, `test-plan.entry-04.md` и память тестировщика)
++
++Замер стола на сиде `tests/perf/seed-10k.sql` (10 000 работающих сотрудников, 1 000 подразделений, 348 учётных записей, 625 версий матриц; сборка `Debug`, один процесс, 60 замеров после 5 прогревочных; число SQL-команд — команды приложения, без `DISCARD ALL` сброса соединения Npgsql):
++
++| Роль | `/desk/count` p50 / p95 мс | `/desk` p50 / p95 мс | SQL-команд | Элементов действий | Крупнейшая группа |
++|---|---|---|---|---|---|
++| администратор | 75 / 91 | 57 / 64 | 22 | 813 | 1077 (UnusedCatalogEntries) |
++| HR с закреплением на корне | 53 / 61 | 53 / 63 | 22 | 275 | 1077 (UnusedCatalogEntries) |
++| руководитель верхнего подразделения | 33 / 42 | 34 / 41 | 19 | 1 | 6 |
++| сотрудник | 19 / 27 | 20 / 25 | 11 | 0 | 1 |
++
++Бюджеты соблюдены (≤ 300 мс, ≤ 600 мс, ≤ 25 SQL-команд, наибольшая группа 1077 < 2000). Сырой счёт строк журнала PostgreSQL вдвое больше (44 / 44 / 38 / 22) из-за `DISCARD ALL` после каждой команды; для администратора три раза читаются учётные записи и сотрудники и два раза — справочники (запас до 25 небольшой).
++
++Замер сделан в записи 3 и не повторялся: код стола в дельтах записей 4 и 5 не менялся (запись 5 меняет `PublicationPlan`, ответы предпросмотров публикации и web), а `CatalogStore.ViewerAsync` из записи 4 стол не вызывает.
++
++## Defects
++
++| ID | Entry | Location | Symptom | Failing test | Status | Fix commit |
++|---|---|---|---|---|---|---|
++| D-1 | 1 | src/Competency.CareerFramework/CareerDirectionEndpoints.cs | Expected refused.Json!["detail"]!.GetValue<string>() to be the same string, but they differ at index 0: | Competency.Tests.CatalogDeletionTests.Ac25_ADirectionInUse_IsRefused_NamingTheTracksCompetenciesHistoryAndMatrices | fixed | 2725176 |
++| D-2 | 1 | web/src/features/career/usePublishEntry.tsx | AssertionError: expected null not to be null | approving an entry under the list of what is published with it (AC-110…AC-112) > explains a refusal the server gives at the moment of approval, with the way to the track's positions | fixed | 4483101 |
++
++Пояснения (вне строк таблицы): D-1 — константа `InUseMessage` («Направление используют треки, компетенции или матрицы — удалить нельзя») не обновлена под AC-37 (сущность называется «область»), `CareerMail` и остальной текст уже используют «область». D-2 — `RefusalContent` вставляет `<Link>` в содержимое `modal.error`, а модальное окно из `App.useApp()` в `Providers` отрисовывается вне `RouterProvider` (структура приложения такая же, как в тесте), поэтому при отказе «нет действующей должности» с известным треком `Link` падает на `useContext(...) is null` и экран остаётся пустым; проверено: замена `<Link>` на `<a>` в копии делает весь файл зелёным (13 из 13).
++
++## Manual verification
++
++| AC | Steps | Expected observation |
++|---|---|---|
++| — | автоматизируется всё проверяемое; ручной проверки не требуется | — |
+diff --git a/web/src/features/auth/returnTo.test.ts b/web/src/features/auth/returnTo.test.ts
+new file mode 100644
+index 0000000..064531a
+--- /dev/null
++++ b/web/src/features/auth/returnTo.test.ts
+@@ -0,0 +1,104 @@
++import { describe, expect, it } from "vitest";
++import { HOME_PATH, LOGIN_PATH } from "../../app/featureContract";
++import { FORGOT_PASSWORD_PATH } from "./ForgotPasswordPage";
++import {
++  ACCEPT_INVITATION_PATH,
++  RESET_PASSWORD_PATH,
++} from "./LinkPasswordPage";
++import { loginPathReturningTo, returnTargetOf, safeReturnTo } from "./returnTo";
++
++const SIGN_IN_SCREENS = [
++  LOGIN_PATH,
++  FORGOT_PASSWORD_PATH,
++  ACCEPT_INVITATION_PATH,
++  RESET_PASSWORD_PATH,
++];
++
++const FOREIGN_TARGETS = [
++  "//evil.example",
++  "///evil.example/path",
++  "/\\evil.example",
++  "/\\\\evil.example",
++  "https://evil.example/desk",
++  "http://evil.example",
++  "javascript:alert(1)",
++  "data:text/html,x",
++  "/.//evil.example",
++  "/a/..//evil.example",
++  "desk",
++  "",
++  " /desk",
++  "/\t/evil.example",
++  "/desk\nSet-Cookie: a=b",
++  "/desk\r",
++  "/de\u0000sk",
++  "/\u007f",
++];
++
++const IN_APP_TARGETS = [
++  ["/desk", "/desk"],
++  ["/desk/review/8c1d?step=3", "/desk/review/8c1d?step=3"],
++  ["/org-structure?q=%D0%B0&page=2", "/org-structure?q=%D0%B0&page=2"],
++  ["/desk#section", "/desk"],
++  ["/a/../desk", "/desk"],
++  ["/%2F%2Fevil.example", "/%2F%2Fevil.example"],
++] as const;
++
++describe("return target after sign-in (open redirect)", () => {
++  it.each(FOREIGN_TARGETS)(
++    "refuses %j, which leaves this origin or this app's paths",
++    (target) => {
++      expect(safeReturnTo(target)).toBeNull();
++    },
++  );
++
++  it("refuses an absent target", () => {
++    expect(safeReturnTo(null)).toBeNull();
++  });
++
++  it.each(SIGN_IN_SCREENS)(
++    "refuses the sign-in screen %s, which a signed-in user has no use for",
++    (screen) => {
++      expect(safeReturnTo(screen)).toBeNull();
++      expect(safeReturnTo(`${screen}?returnTo=%2Fdesk`)).toBeNull();
++    },
++  );
++
++  it.each(IN_APP_TARGETS)(
++    "opens %j as the parsed in-app path %j",
++    (target, opened) => {
++      expect(safeReturnTo(target)).toBe(opened);
++    },
++  );
++
++  it("builds a sign-in address that carries an in-app target and reads it back unchanged", () => {
++    for (const [target, opened] of IN_APP_TARGETS.filter(
++      ([target]) => target !== HOME_PATH,
++    )) {
++      const address = new URL(
++        loginPathReturningTo(target),
++        window.location.origin,
++      );
++
++      expect(address.pathname).toBe(LOGIN_PATH);
++      expect(returnTargetOf(address.searchParams)).toBe(opened);
++    }
++  });
++
++  it.each(["/", HOME_PATH, ...FOREIGN_TARGETS, ...SIGN_IN_SCREENS])(
++    "builds the plain sign-in address for %j, which nothing needs to be carried for",
++    (target) => {
++      expect(loginPathReturningTo(target)).toBe(LOGIN_PATH);
++    },
++  );
++
++  it("reads no target from a sign-in address that names none or a foreign one", () => {
++    expect(returnTargetOf(new URLSearchParams())).toBeNull();
++    expect(
++      returnTargetOf(new URLSearchParams({ returnTo: "//evil.example" })),
++    ).toBeNull();
++    expect(
++      returnTargetOf(new URLSearchParams({ returnTo: "https://evil.example" })),
++    ).toBeNull();
++  });
++});
+diff --git a/web/src/features/desk/DeskCounter.test.tsx b/web/src/features/desk/DeskCounter.test.tsx
+new file mode 100644
+index 0000000..93cfdf6
+--- /dev/null
++++ b/web/src/features/desk/DeskCounter.test.tsx
+@@ -0,0 +1,190 @@
++import { focusManager } from "@tanstack/react-query";
++import { act, render, screen, waitFor } from "@testing-library/react";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
++import { DeskCounter } from "./DeskCounter";
++
++const COUNT_ROUTE = "GET /api/v1/desk/count";
++const ONE_HOUR = 3_600_000;
++
++function answerCount(actionCount: number) {
++  fakeApi.on(COUNT_ROUTE, () => Response.json({ actionCount }));
++}
++
++function renderAt(path = "/") {
++  const router = createMemoryRouter(
++    [
++      { path: "/", element: <DeskCounter /> },
++      { path: "/other", element: <DeskCounter /> },
++    ],
++    { initialEntries: [path] },
++  );
++  render(
++    <Providers>
++      <RouterProvider router={router} />
++    </Providers>,
++  );
++  return router;
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++afterEach(() => {
++  vi.useRealTimers();
++});
++
++describe("the desk counter in the menu (AC-16…AC-21)", () => {
++  it("shows the number of expected actions", async () => {
++    answerCount(7);
++
++    renderAt();
++
++    expect(await screen.findByText("7")).toBeInTheDocument();
++  });
++
++  it("shows 99+ above ninety-nine", async () => {
++    answerCount(100);
++
++    renderAt();
++
++    expect(await screen.findByText("99+")).toBeInTheDocument();
++  });
++
++  it("shows ninety-nine as it is", async () => {
++    answerCount(99);
++
++    renderAt();
++
++    expect(await screen.findByText("99")).toBeInTheDocument();
++  });
++
++  it("shows nothing at zero", async () => {
++    answerCount(0);
++
++    const { container } = render(
++      <Providers>
++        <RouterProvider
++          router={createMemoryRouter([{ path: "/", element: <DeskCounter /> }])}
++        />
++      </Providers>,
++    );
++
++    await waitFor(() => expect(fakeApi.calls(COUNT_ROUTE)).toHaveLength(1));
++    await act(async () => undefined);
++    expect(container.textContent).toBe("");
++  });
++
++  it("shows nothing before the first answer and after a failed read", async () => {
++    const held = deferred<Response>();
++    fakeApi.on(COUNT_ROUTE, () => held.promise);
++
++    const { container } = render(
++      <Providers>
++        <RouterProvider
++          router={createMemoryRouter([{ path: "/", element: <DeskCounter /> }])}
++        />
++      </Providers>,
++    );
++
++    await waitFor(() => expect(fakeApi.calls(COUNT_ROUTE)).toHaveLength(1));
++    expect(container.textContent).toBe("");
++    held.resolve(problem(403));
++    await waitFor(() =>
++      expect(queryClient.getQueryState(["desk", "count"])?.status).toBe(
++        "error",
++      ),
++    );
++    expect(container.textContent).toBe("");
++  });
++
++  it("hides the number when a reread fails, rather than keeping an old one", async () => {
++    let isFailing = false;
++    fakeApi.on(COUNT_ROUTE, () =>
++      isFailing ? problem(403) : Response.json({ actionCount: 5 }),
++    );
++    const router = renderAt();
++    expect(await screen.findByText("5")).toBeInTheDocument();
++    isFailing = true;
++
++    await act(() => router.navigate("/other"));
++
++    await waitFor(() =>
++      expect(screen.queryByText("5")).not.toBeInTheDocument(),
++    );
++  });
++
++  it("rereads the count when the address changes, and not otherwise", async () => {
++    let count = 3;
++    fakeApi.on(COUNT_ROUTE, () => Response.json({ actionCount: count }));
++    const router = renderAt();
++    expect(await screen.findByText("3")).toBeInTheDocument();
++    count = 5;
++
++    await act(() => router.navigate("/other"));
++
++    expect(await screen.findByText("5")).toBeInTheDocument();
++    expect(fakeApi.calls(COUNT_ROUTE)).toHaveLength(2);
++  });
++
++  it("rereads the count after any successful change, and leaves it alone after a failed one", async () => {
++    let count = 2;
++    fakeApi.on(COUNT_ROUTE, () => Response.json({ actionCount: count }));
++    renderAt();
++    expect(await screen.findByText("2")).toBeInTheDocument();
++    count = 1;
++
++    await act(async () => {
++      await queryClient
++        .getMutationCache()
++        .build(queryClient, { mutationFn: async () => "done" })
++        .execute(undefined)
++        .then(() => undefined);
++    });
++
++    expect(await screen.findByText("1")).toBeInTheDocument();
++    const readsBeforeFailure = fakeApi.calls(COUNT_ROUTE).length;
++    await act(async () => {
++      await queryClient
++        .getMutationCache()
++        .build(queryClient, {
++          mutationFn: async () => {
++            throw new Error("refused");
++          },
++        })
++        .execute(undefined)
++        .catch(() => undefined);
++    });
++    expect(fakeApi.calls(COUNT_ROUTE)).toHaveLength(readsBeforeFailure);
++  });
++
++  it("rereads the count when the window gets the focus back", async () => {
++    let count = 4;
++    fakeApi.on(COUNT_ROUTE, () => Response.json({ actionCount: count }));
++    renderAt();
++    expect(await screen.findByText("4")).toBeInTheDocument();
++    count = 6;
++
++    await act(async () => {
++      focusManager.setFocused(false);
++      focusManager.setFocused(true);
++    });
++
++    expect(await screen.findByText("6")).toBeInTheDocument();
++  });
++
++  it("does not poll: nothing is read again while the address and the data stay", async () => {
++    vi.useFakeTimers({ shouldAdvanceTime: true });
++    answerCount(2);
++    renderAt();
++    expect(await screen.findByText("2")).toBeInTheDocument();
++
++    await vi.advanceTimersByTimeAsync(ONE_HOUR);
++
++    expect(fakeApi.calls(COUNT_ROUTE)).toHaveLength(1);
++  });
++});
+diff --git a/web/src/features/desk/DeskPage.test.tsx b/web/src/features/desk/DeskPage.test.tsx
+new file mode 100644
+index 0000000..dc9f797
+--- /dev/null
++++ b/web/src/features/desk/DeskPage.test.tsx
+@@ -0,0 +1,345 @@
++import { render, screen, waitFor, within } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { MemoryRouter } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi, problem } from "../../test/fakeApi";
++import { DeskPage } from "./DeskPage";
++import type { Desk, DeskGroup, DeskItem, DeskKind } from "./deskApi";
++
++const ACCOUNT = {
++  id: "account",
++  email: "user@test.local",
++  roles: [] as string[],
++  employeeId: null,
++  employeeName: null,
++  employeeLastName: null,
++  employeeFirstName: null,
++  employeeMiddleName: null,
++};
++const SHOW_MORE_STEP = 20;
++const FIRST_ITEMS = 10;
++
++function item(
++  group: DeskGroup,
++  kind: DeskKind,
++  name: string,
++  options: { isReference?: boolean; type?: DeskItem["object"]["type"] } = {},
++): DeskItem {
++  return {
++    object: { type: options.type ?? "OrgUnit", id: `id-${name}`, name },
++    group,
++    isReference: options.isReference ?? false,
++    reasons: [{ kind }],
++  };
++}
++
++function manyItems(group: DeskGroup, count: number): DeskItem[] {
++  return Array.from({ length: count }, (_, index) =>
++    item(
++      group,
++      "UnitWithoutHead",
++      `Отдел ${String(index + 1).padStart(4, "0")}`,
++    ),
++  );
++}
++
++function answerWith(desk: Desk, roles: string[] = []) {
++  fakeApi.on("GET /api/v1/auth/me", () => Response.json({ ...ACCOUNT, roles }));
++  fakeApi.on("GET /api/v1/career/me", () =>
++    Response.json({ headedUnits: [], hrUnits: [] }),
++  );
++  fakeApi.on("GET /api/v1/desk", () => Response.json(desk));
++}
++
++function renderDesk() {
++  render(
++    <Providers>
++      <MemoryRouter>
++        <DeskPage />
++      </MemoryRouter>
++    </Providers>,
++  );
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("the desk page (AC-2…AC-9)", () => {
++  it("shows the groups of expected actions with their full counts, and the count of actions", async () => {
++    answerWith(
++      {
++        actionCount: 12,
++        prerequisites: [],
++        groups: [
++          {
++            group: "UnitsToConnect",
++            isReference: false,
++            total: 12,
++            items: manyItems("UnitsToConnect", FIRST_ITEMS),
++          },
++        ],
++      },
++      ["GlobalAdmin"],
++    );
++
++    renderDesk();
++
++    const heading = await screen.findByRole("heading", {
++      name: "Подключить подразделения",
++    });
++    expect(
++      within(heading.parentElement as HTMLElement).getByText("12"),
++    ).toBeInTheDocument();
++    expect(screen.getByText("Показано 10 из 12")).toBeInTheDocument();
++    expect(
++      await screen.findAllByRole("link", { name: "Подключить" }),
++    ).toHaveLength(FIRST_ITEMS);
++    expect(screen.queryByText("Всё сделано")).not.toBeInTheDocument();
++  });
++
++  it("says everything is done when only groups for reference remain, and keeps them folded outside the count", async () => {
++    answerWith({
++      actionCount: 0,
++      prerequisites: [],
++      groups: [
++        {
++          group: "EmptyUnits",
++          isReference: true,
++          total: 3,
++          items: [
++            item("EmptyUnits", "EmptyUnit", "Пустой отдел", {
++              isReference: true,
++            }),
++          ],
++        },
++      ],
++    });
++    const user = userEvent.setup();
++
++    renderDesk();
++
++    expect(await screen.findByText("Всё сделано")).toBeInTheDocument();
++    expect(screen.queryByText(/Пустой отдел/)).not.toBeInTheDocument();
++    const toggle = screen.getByRole("button", { name: /К сведению/ });
++    expect(toggle).toHaveAttribute("aria-expanded", "false");
++    await user.click(toggle);
++    expect(await screen.findByText(/Пустой отдел/)).toBeInTheDocument();
++    expect(toggle).toHaveAttribute("aria-expanded", "true");
++  });
++
++  it("says everything is done on an empty desk", async () => {
++    answerWith({ actionCount: 0, prerequisites: [], groups: [] });
++
++    renderDesk();
++
++    expect(await screen.findByText("Всё сделано")).toBeInTheDocument();
++    expect(
++      screen.queryByRole("button", { name: /К сведению/ }),
++    ).not.toBeInTheDocument();
++  });
++
++  it("reads more of a group from its start, twenty at a time, and offers no more once the group is shown", async () => {
++    answerWith(
++      {
++        actionCount: 25,
++        prerequisites: [],
++        groups: [
++          {
++            group: "UnitsToConnect",
++            isReference: false,
++            total: 25,
++            items: manyItems("UnitsToConnect", FIRST_ITEMS),
++          },
++        ],
++      },
++      ["GlobalAdmin"],
++    );
++    fakeApi.on("GET /api/v1/desk/items", (request) => {
++      const limit = Number(new URL(request.url).searchParams.get("limit"));
++      return Response.json({
++        items: manyItems("UnitsToConnect", Math.min(limit, 25)),
++        total: 25,
++      });
++    });
++    const user = userEvent.setup();
++    renderDesk();
++
++    await user.click(
++      await screen.findByRole("button", { name: "Показать ещё 15" }),
++    );
++
++    await waitFor(() =>
++      expect(screen.getAllByRole("link", { name: "Подключить" })).toHaveLength(
++        25,
++      ),
++    );
++    const request = fakeApi.calls("GET /api/v1/desk/items").at(-1);
++    const query = new URL(request?.url ?? "").searchParams;
++    expect(query.getAll("group")).toEqual(["UnitsToConnect"]);
++    expect(query.get("limit")).toBe(String(FIRST_ITEMS + SHOW_MORE_STEP));
++    expect(
++      screen.queryByRole("button", { name: /Показать ещё/ }),
++    ).not.toBeInTheDocument();
++  });
++
++  it("says a group is cut when the server returns fewer rows than the group has, and offers no more of it", async () => {
++    answerWith(
++      {
++        actionCount: 2500,
++        prerequisites: [],
++        groups: [
++          {
++            group: "UnitsToConnect",
++            isReference: false,
++            total: 2500,
++            items: manyItems("UnitsToConnect", FIRST_ITEMS),
++          },
++        ],
++      },
++      ["GlobalAdmin"],
++    );
++    fakeApi.on("GET /api/v1/desk/items", () =>
++      Response.json({ items: manyItems("UnitsToConnect", 20), total: 2500 }),
++    );
++    const user = userEvent.setup();
++    renderDesk();
++
++    await user.click(
++      await screen.findByRole("button", { name: "Показать ещё 20" }),
++    );
++
++    expect(
++      await screen.findByText(/Показаны первые 20 из 2\s?500 пунктов/),
++    ).toBeInTheDocument();
++    expect(
++      screen.queryByRole("button", { name: /Показать ещё/ }),
++    ).not.toBeInTheDocument();
++  });
++
++  it("reports a failed read of the desk with a way to retry, without hiding the scenarios of the user's roles", async () => {
++    fakeApi.on("GET /api/v1/auth/me", () =>
++      Response.json({ ...ACCOUNT, roles: ["GlobalAdmin"] }),
++    );
++    fakeApi.on("GET /api/v1/career/me", () =>
++      Response.json({ headedUnits: [], hrUnits: [] }),
++    );
++    fakeApi.on("GET /api/v1/desk", () => problem(403));
++    const user = userEvent.setup();
++    renderDesk();
++
++    expect(
++      await screen.findByText("Не удалось загрузить ожидаемые действия"),
++    ).toBeInTheDocument();
++    expect(screen.queryByText("Сейчас начать нечего")).not.toBeInTheDocument();
++    fakeApi.on("GET /api/v1/desk", () =>
++      Response.json({ actionCount: 0, prerequisites: [], groups: [] }),
++    );
++    await user.click(screen.getByRole("button", { name: /Повторить/ }));
++    expect(await screen.findByText("Всё сделано")).toBeInTheDocument();
++  });
++});
++
++describe("an invitation sent again from the desk (AC-39, AC-40)", () => {
++  const INVITED: DeskItem = {
++    object: {
++      type: "UserAccount",
++      id: "account-1",
++      name: "invited@test.local",
++    },
++    group: "Invitations",
++    isReference: false,
++    reasons: [
++      { kind: "InvitationNotAccepted", details: { linkState: "Expired" } },
++    ],
++    invitation: { accountId: "account-1", version: 7 },
++  };
++  const DESK: Desk = {
++    actionCount: 1,
++    prerequisites: [],
++    groups: [
++      { group: "Invitations", isReference: false, total: 1, items: [INVITED] },
++    ],
++  };
++
++  it("sends it with the account version the desk read, and reports that the letter went", async () => {
++    answerWith(DESK, ["GlobalAdmin"]);
++    fakeApi.on("POST /api/v1/users/account-1/resend-invitation", () =>
++      Response.json({
++        id: "account-1",
++        email: "invited@test.local",
++        mailSent: true,
++      }),
++    );
++    const user = userEvent.setup();
++    renderDesk();
++
++    await user.click(
++      await screen.findByRole("button", {
++        name: "Отправить приглашение повторно",
++      }),
++    );
++
++    expect(
++      await screen.findByText(
++        "Приглашение отправлено повторно: invited@test.local",
++      ),
++    ).toBeInTheDocument();
++    const sent = fakeApi.calls(
++      "POST /api/v1/users/account-1/resend-invitation",
++    );
++    expect(sent).toHaveLength(1);
++    expect(sent[0]?.headers.get("If-Match")).toBe('"7"');
++  });
++
++  it("tells that the letter did not go, in a window that stays until closed", async () => {
++    answerWith(DESK, ["GlobalAdmin"]);
++    fakeApi.on("POST /api/v1/users/account-1/resend-invitation", () =>
++      Response.json({
++        id: "account-1",
++        email: "invited@test.local",
++        mailSent: false,
++      }),
++    );
++    const user = userEvent.setup();
++    renderDesk();
++
++    await user.click(
++      await screen.findByRole("button", {
++        name: "Отправить приглашение повторно",
++      }),
++    );
++
++    expect(
++      (await screen.findAllByText("Письмо не отправлено"))[0],
++    ).toBeInTheDocument();
++  });
++
++  it("rereads the desk after the request is refused, and does not retry by itself", async () => {
++    answerWith(DESK, ["GlobalAdmin"]);
++    fakeApi.on("POST /api/v1/users/account-1/resend-invitation", () =>
++      problem(412),
++    );
++    const user = userEvent.setup();
++    renderDesk();
++    await screen.findByRole("button", {
++      name: "Отправить приглашение повторно",
++    });
++    const readsBefore = fakeApi.calls("GET /api/v1/desk").length;
++
++    await user.click(
++      screen.getByRole("button", { name: "Отправить приглашение повторно" }),
++    );
++
++    await waitFor(() =>
++      expect(fakeApi.calls("GET /api/v1/desk").length).toBeGreaterThan(
++        readsBefore,
++      ),
++    );
++    expect(
++      fakeApi.calls("POST /api/v1/users/account-1/resend-invitation"),
++    ).toHaveLength(1);
++  });
++});
+diff --git a/web/src/features/desk/DeskScenarios.test.tsx b/web/src/features/desk/DeskScenarios.test.tsx
+new file mode 100644
+index 0000000..2b70e06
+--- /dev/null
++++ b/web/src/features/desk/DeskScenarios.test.tsx
+@@ -0,0 +1,243 @@
++import { render, screen } from "@testing-library/react";
++import { MemoryRouter } from "react-router";
++import { describe, expect, it } from "vitest";
++import { DeskScenarios, type SessionRoles } from "./DeskScenarios";
++import type {
++  Desk,
++  DeskGroup,
++  DeskItem,
++  DeskKind,
++  DeskPrerequisite,
++} from "./deskApi";
++
++const NO_ROLES: SessionRoles = {
++  isAdmin: false,
++  isHead: false,
++  isHr: false,
++  isUnitHr: false,
++  isBound: false,
++};
++const FIRST_UNIT = "Добавить первое подразделение";
++const FIRST_POSITION = "Добавить первую должность";
++const ASSIGN_HR = "Назначить HR";
++const CONNECT = "Подключить подразделение";
++const ONBOARD = "Принять сотрудника";
++const LINK = "Связать должности с треком";
++const BUILD = "Построить матрицу компетенций";
++const MY_PLACE = "Моё место в компании";
++const REWORK = "Доработать возвращённую версию";
++const REVIEW = "Согласовать версию";
++const DRAFTS = "Утвердить черновые записи";
++const CATALOG = "Привести каталог в порядок";
++const ORG = "Навести порядок в оргструктуре";
++const NOTHING_TO_START = "Сейчас начать нечего";
++const UNBOUND = "Сценариев для вашей учётной записи пока нет";
++const ALL_PREREQUISITES: DeskPrerequisite[] = [
++  "ActiveUnit",
++  "ActivePosition",
++  "WorkingEmployee",
++  "VisibleTrack",
++  "HrAccount",
++];
++
++const WAITING_ITEM_KINDS: Partial<Record<DeskGroup, DeskKind>> = {
++  ReturnedVersions: "VersionReturned",
++  VersionsToApprove: "VersionAwaitsHeadApproval",
++};
++
++function waitingItem(group: DeskGroup): DeskItem[] {
++  const kind = WAITING_ITEM_KINDS[group];
++  return kind
++    ? [
++        {
++          object: { type: "Matrix", id: "matrix", name: "Трек" },
++          group,
++          isReference: false,
++          reasons: [{ kind }],
++          target: { type: "MatrixVersion", id: "version", name: "Трек" },
++        },
++      ]
++    : [];
++}
++
++function deskWith(
++  prerequisites: DeskPrerequisite[],
++  waiting: Partial<Record<DeskGroup, number>> = {},
++): Desk {
++  return {
++    actionCount: 0,
++    prerequisites,
++    groups: Object.entries(waiting).map(([group, total]) => ({
++      group: group as DeskGroup,
++      isReference: false,
++      total,
++      items: waitingItem(group as DeskGroup),
++    })),
++  };
++}
++
++function titlesShownFor(roles: SessionRoles, desk: Desk | undefined) {
++  render(
++    <MemoryRouter>
++      <DeskScenarios roles={roles} desk={desk} />
++    </MemoryRouter>,
++  );
++  return screen
++    .queryAllByRole("heading", { level: 4 })
++    .map((h) => h.textContent);
++}
++
++describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
++  it("shows an administrator the first-step cards for what the system lacks, and no scenario that needs it", () => {
++    const titles = titlesShownFor({ ...NO_ROLES, isAdmin: true }, deskWith([]));
++
++    expect(titles).toEqual([FIRST_UNIT, FIRST_POSITION, ASSIGN_HR]);
++  });
++
++  it("drops each first-step card as its prerequisite holds, and opens the scenarios that needed it", () => {
++    const admin = { ...NO_ROLES, isAdmin: true };
++
++    const withUnit = titlesShownFor(admin, deskWith(["ActiveUnit"]));
++
++    expect(withUnit).toEqual([FIRST_POSITION, ASSIGN_HR]);
++  });
++
++  it("opens 'Принять сотрудника' with an active unit and an active position, and 'Назначить HR' goes once an HR account is there", () => {
++    const titles = titlesShownFor(
++      { ...NO_ROLES, isAdmin: true },
++      deskWith(["ActiveUnit", "ActivePosition", "HrAccount"]),
++    );
++
++    expect(titles).toEqual([ONBOARD]);
++  });
++
++  it("opens 'Подключить подразделение' only with a unit, a working employee and a unit waiting to be connected", () => {
++    const admin = { ...NO_ROLES, isAdmin: true };
++    const prerequisites: DeskPrerequisite[] = [
++      "ActiveUnit",
++      "ActivePosition",
++      "HrAccount",
++    ];
++
++    const nobodyWorks = titlesShownFor(
++      admin,
++      deskWith(prerequisites, { UnitsToConnect: 2 }),
++    );
++    document.body.innerHTML = "";
++    const worksButNoneWaits = titlesShownFor(
++      admin,
++      deskWith([...prerequisites, "WorkingEmployee"]),
++    );
++    document.body.innerHTML = "";
++    const connectable = titlesShownFor(
++      admin,
++      deskWith([...prerequisites, "WorkingEmployee"], { UnitsToConnect: 2 }),
++    );
++
++    expect(nobodyWorks).not.toContain(CONNECT);
++    expect(worksButNoneWaits).not.toContain(CONNECT);
++    expect(connectable).toEqual([CONNECT, ONBOARD, ORG]);
++  });
++
++  it("opens 'Связать должности с треком' for whoever may edit tracks, with a position, a track they may open and something to link", () => {
++    for (const roles of [
++      { ...NO_ROLES, isHead: true },
++      { ...NO_ROLES, isUnitHr: true },
++      { ...NO_ROLES, isAdmin: true },
++    ]) {
++      document.body.innerHTML = "";
++      const titles = titlesShownFor(
++        roles,
++        deskWith(ALL_PREREQUISITES, { PositionsToLink: 3 }),
++      );
++      document.body.innerHTML = "";
++      const withoutTrack = titlesShownFor(
++        roles,
++        deskWith(["ActivePosition"], { PositionsToLink: 3 }),
++      );
++      document.body.innerHTML = "";
++      const nothingToLink = titlesShownFor(roles, deskWith(ALL_PREREQUISITES));
++
++      expect(titles).toContain(LINK);
++      expect(withoutTrack).not.toContain(LINK);
++      expect(nothingToLink).not.toContain(LINK);
++    }
++  });
++
++  it("shows a head the card to build a matrix always, and the ones to rework and review only while something waits", () => {
++    const head = { ...NO_ROLES, isHead: true };
++
++    const idle = titlesShownFor(head, deskWith([]));
++    document.body.innerHTML = "";
++    const busy = titlesShownFor(
++      head,
++      deskWith([], { ReturnedVersions: 1, VersionsToApprove: 4 }),
++    );
++
++    expect(idle).toEqual([BUILD]);
++    expect(busy).toEqual([BUILD, REWORK, REVIEW]);
++  });
++
++  it("offers HR and the administrator the queues of drafts, catalogue and organisation by what waits in them", () => {
++    const hr = { ...NO_ROLES, isHr: true };
++    const admin = { ...NO_ROLES, isAdmin: true };
++    const waiting = {
++      DraftsToApprove: 2,
++      UnusedCatalogEntries: 5,
++      OrgCleanup: 1,
++    };
++
++    const forHr = titlesShownFor(hr, deskWith([], waiting));
++    document.body.innerHTML = "";
++    const forAdmin = titlesShownFor(
++      admin,
++      deskWith(["ActiveUnit", "ActivePosition", "HrAccount"], waiting),
++    );
++
++    expect(forHr).toEqual([DRAFTS, CATALOG]);
++    expect(forAdmin).toEqual([DRAFTS, ONBOARD, CATALOG, ORG]);
++  });
++
++  it("puts 'Моё место в компании' first for anyone bound to an employee, whatever else they are", () => {
++    const titles = titlesShownFor(
++      { ...NO_ROLES, isBound: true, isHead: true },
++      deskWith([]),
++    );
++
++    expect(titles).toEqual([MY_PLACE, BUILD]);
++  });
++
++  it("counts a queue as waiting in the queue and the rest as waiting for the user", () => {
++    titlesShownFor(
++      { ...NO_ROLES, isAdmin: true },
++      deskWith(["ActiveUnit", "ActivePosition", "HrAccount"], {
++        DraftsToApprove: 2,
++        UnusedCatalogEntries: 5,
++      }),
++    );
++
++    expect(screen.getByText("Ждут вас: 2")).toBeInTheDocument();
++    expect(screen.getByText("В очереди: 5")).toBeInTheDocument();
++  });
++
++  it("shows no first-step or prerequisite card before the desk has answered", () => {
++    const titles = titlesShownFor({ ...NO_ROLES, isAdmin: true }, undefined);
++
++    expect(titles).toEqual([]);
++    expect(screen.queryByText(NOTHING_TO_START)).not.toBeInTheDocument();
++  });
++
++  it("explains an account bound to no one and holding no role, without claiming the desk is empty", () => {
++    titlesShownFor(NO_ROLES, deskWith([]));
++
++    expect(screen.getByText(UNBOUND)).toBeInTheDocument();
++    expect(screen.queryByText(NOTHING_TO_START)).not.toBeInTheDocument();
++  });
++
++  it("says neutrally that nothing can be started when every card of the roles is hidden on a loaded desk", () => {
++    titlesShownFor({ ...NO_ROLES, isHr: true }, deskWith([]));
++
++    expect(screen.getByText(NOTHING_TO_START)).toBeInTheDocument();
++    expect(screen.queryByText(UNBOUND)).not.toBeInTheDocument();
++  });
++});
+diff --git a/web/src/features/desk/deskTexts.test.ts b/web/src/features/desk/deskTexts.test.ts
+new file mode 100644
+index 0000000..51f8f3c
+--- /dev/null
++++ b/web/src/features/desk/deskTexts.test.ts
+@@ -0,0 +1,184 @@
++import { describe, expect, it } from "vitest";
++import type { DeskGroup, DeskItem, DeskKind, DeskObject } from "./deskApi";
++import { deskPaths, itemAction, itemLink } from "./deskTexts";
++
++const OBJECT_ID = "8f1c0a52-0000-4000-8000-000000000001";
++const VERSION_ID = "8f1c0a52-0000-4000-8000-000000000002";
++const OTHER_ID = "8f1c0a52-0000-4000-8000-000000000003";
++
++function objectOf(type: DeskObject["type"], id = OBJECT_ID): DeskObject {
++  return { type, id, name: "Имя" };
++}
++
++function itemOf(
++  kind: DeskKind,
++  options: {
++    type?: DeskObject["type"];
++    target?: DeskObject | null;
++    isReference?: boolean;
++    group?: DeskGroup;
++    entries?: DeskObject[];
++  } = {},
++): DeskItem {
++  return {
++    object: objectOf(options.type ?? "Matrix"),
++    group: options.group ?? "ReturnedVersions",
++    isReference: options.isReference ?? false,
++    reasons: [
++      {
++        kind,
++        details: options.entries ? { entries: options.entries } : undefined,
++      },
++    ],
++    target: options.target === null ? undefined : options.target,
++  };
++}
++
++const VERSION = objectOf("MatrixVersion", VERSION_ID);
++
++describe("the addresses the e-mails link to (AC-110)", () => {
++  it("keeps the review, rework and drafts routes the mail letters are built from", () => {
++    expect(deskPaths.review(VERSION_ID)).toBe(`/desk/review/${VERSION_ID}`);
++    expect(deskPaths.rework(VERSION_ID)).toBe(`/desk/rework/${VERSION_ID}`);
++    expect(deskPaths.draft("competency", OBJECT_ID)).toBe(
++      `/desk/drafts/competency/${OBJECT_ID}`,
++    );
++  });
++});
++
++describe("the screen an action item opens (AC-6, AC-160)", () => {
++  it.each([
++    ["VersionReturned", `/desk/rework/${VERSION_ID}`],
++    ["VersionNotSubmitted", `/desk/matrix-builder/${VERSION_ID}`],
++    ["VersionAwaitsHeadApproval", `/desk/review/${VERSION_ID}`],
++    ["VersionAwaitsHrApproval", `/desk/review/${VERSION_ID}`],
++  ] as const)("opens a %s item on the version the item names", (kind, path) => {
++    expect(itemAction(itemOf(kind, { target: VERSION }))?.path).toBe(path);
++  });
++
++  it("opens no scenario for a version item that names no version", () => {
++    expect(itemAction(itemOf("VersionReturned", { target: null }))).toBeNull();
++  });
++
++  it.each([
++    ["Direction", "direction"],
++    ["Track", "track"],
++    ["Competency", "competency"],
++    ["Scale", "scale"],
++    ["Block", "block"],
++  ] as const)(
++    "opens the draft %s on the queue's entry of its kind",
++    (type, kind) => {
++      expect(itemAction(itemOf("DraftAwaitsApproval", { type }))?.path).toBe(
++        `/desk/drafts/${kind}/${OBJECT_ID}`,
++      );
++    },
++  );
++
++  it("opens the whole drafts queue for a draft of a kind the queue has no entry for", () => {
++    expect(
++      itemAction(itemOf("DraftAwaitsApproval", { type: "Level" }))?.path,
++    ).toBe(deskPaths.drafts);
++  });
++
++  it("preselects the unit, and the track too when exactly one is named, for a unit that needs a matrix", () => {
++    const track = objectOf("Track", OTHER_ID);
++    const one = itemAction(
++      itemOf("UnitWithoutMatrix", { type: "OrgUnit", entries: [track] }),
++    )?.path;
++    const several = itemAction(
++      itemOf("UnitWithoutMatrix", {
++        type: "OrgUnit",
++        entries: [track, objectOf("Track", VERSION_ID)],
++      }),
++    )?.path;
++
++    expect(one).toBe(
++      `/desk/matrix-builder?${new URLSearchParams({ unitId: OBJECT_ID, trackId: OTHER_ID })}`,
++    );
++    expect(several).toBe(
++      `/desk/matrix-builder?${new URLSearchParams({ unitId: OBJECT_ID })}`,
++    );
++  });
++
++  it.each([
++    "UnitWithoutHead",
++    "HeadWithoutAccount",
++    "HeadAccountInvited",
++    "HeadAccountBlocked",
++    "UnitWithoutHr",
++    "UnitWithoutPositions",
++  ] as const)("sends %s to connecting the unit it is about", (kind) => {
++    expect(itemAction(itemOf(kind, { type: "OrgUnit" }))?.path).toBe(
++      `/desk/connect-unit/${OBJECT_ID}`,
++    );
++  });
++
++  it.each(["TrackWithoutPositions", "LevelWithoutPosition"] as const)(
++    "sends %s to linking the positions of the track",
++    (kind) => {
++      expect(itemAction(itemOf(kind, { type: "Track" }))?.path).toBe(
++        `/desk/track-positions/${OBJECT_ID}`,
++      );
++    },
++  );
++
++  it.each(["PositionOutsideList", "AccountWithoutEmployee"] as const)(
++    "sends %s to the organisation queue",
++    (kind) => {
++      expect(itemAction(itemOf(kind))?.path).toBe(deskPaths.orgCleanup);
++    },
++  );
++
++  it("leaves an item whose action is on the desk itself without a screen", () => {
++    expect(
++      itemAction(itemOf("InvitationNotAccepted", { type: "UserAccount" })),
++    ).toBeNull();
++  });
++});
++
++describe("where an item's name leads (AC-6)", () => {
++  it("leads an action to its scenario and a note for reference to a view of the object", () => {
++    expect(itemLink(itemOf("VersionReturned", { target: VERSION }))).toBe(
++      `/desk/rework/${VERSION_ID}`,
++    );
++    expect(
++      itemLink(
++        itemOf("OwnVersionInApproval", {
++          isReference: true,
++          group: "VersionsInApproval",
++        }),
++      ),
++    ).toBe(`/career/matrices/${OBJECT_ID}`);
++    expect(
++      itemLink(
++        itemOf("NoTrackForPosition", {
++          type: "Employee",
++          isReference: true,
++          group: "NoTrack",
++        }),
++      ),
++    ).toBe(deskPaths.myPlace);
++    expect(
++      itemLink(
++        itemOf("LevelWithoutPosition", {
++          type: "Track",
++          isReference: true,
++          group: "PositionLinksInfo",
++        }),
++      ),
++    ).toBe(`/desk/track-positions/${OBJECT_ID}`);
++  });
++
++  it("leads a reference item of a group with a queue to the queue", () => {
++    expect(
++      itemLink(
++        itemOf("UnusedCompetency", {
++          type: "Competency",
++          isReference: true,
++          group: "UnusedCatalogEntries",
++        }),
++      ),
++    ).toBe(deskPaths.catalogCleanup);
++  });
++});
+diff --git a/web/src/features/users/userMail.test.tsx b/web/src/features/users/userMail.test.tsx
+index 5894e93..1184d36 100644
+--- a/web/src/features/users/userMail.test.tsx
++++ b/web/src/features/users/userMail.test.tsx
+@@ -14,7 +14,7 @@ const account = (
+ ): UserResponse => ({
+   id,
+   email: `${id}@test.local`,
+-  role: "User",
++  roles: [],
+   employeeId: null,
+   employeeName: null,
+   version,
+@@ -258,7 +258,7 @@ describe("new account (AC-4, AC-11)", () => {
+     expect(await screen.findByText(MAIL_NOT_SENT)).toBeInTheDocument();
+     expect(await fakeApi.calls("POST /api/v1/users")[0]?.json()).toEqual({
+       email: "new@test.local",
+-      role: "User",
++      roles: [],
+       employeeId: null,
+     });
+   });

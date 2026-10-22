@@ -1360,7 +1360,7 @@
       }
     },
     "impl": {
-      "wave": 1,
+      "wave": 2,
       "waves": [
         {
           "iteration": 4,
@@ -1385,6 +1385,13 @@
               "testing": "APPROVE",
               "documentation": "APPROVE",
               "external": "CONCERNS"
+            },
+            "iter-04": {
+              "correctness": "APPROVE",
+              "efficiency": "APPROVE",
+              "testing": "APPROVE",
+              "documentation": "APPROVE",
+              "external": "APPROVE"
             }
           },
           "iteration_heads": {
@@ -1397,13 +1404,16 @@
             "correctness": 1,
             "efficiency": 2,
             "testing": 3,
-            "documentation": 3
+            "documentation": 3,
+            "external": 4
           }
         },
         {
-          "iteration": 0,
+          "iteration": 1,
           "verdicts": {},
-          "iteration_heads": {},
+          "iteration_heads": {
+            "iter-01": "b478840398a32d8351bbfd869201d19066a5f1c7"
+          },
           "latched": {}
         },
         {
@@ -1416,7 +1426,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-22T18:41:09.140Z",
+  "updated_at": "2026-10-22T18:44:26.417Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
