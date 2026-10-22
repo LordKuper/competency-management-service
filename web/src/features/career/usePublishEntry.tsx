@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Alert, App, Space } from "antd";
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ApiError } from "../../api/ApiError";
 import { describeApiError } from "../../app/apiErrors";
 import {
@@ -186,7 +186,31 @@ interface RefusalContentProps {
   target?: PublishTarget;
   blockers: readonly PublicationBlocker[];
   moreCount: number;
-  onNavigate?: () => void;
+  /** Leaves for a path; given where the content is shown outside the router, where a router link cannot render. */
+  navigateTo?: (path: string) => void;
+}
+
+function TrackPositionsLink({
+  trackId,
+  navigateTo,
+}: {
+  trackId: string;
+  navigateTo?: (path: string) => void;
+}) {
+  const path = `/desk/track-positions/${trackId}`;
+  const label = "Связать должности с треком";
+  if (!navigateTo) return <Link to={path}>{label}</Link>;
+  return (
+    <a
+      href={path}
+      onClick={(event) => {
+        event.preventDefault();
+        navigateTo(path);
+      }}
+    >
+      {label}
+    </a>
+  );
 }
 
 /** The refusal in its parts: what blocks, then what to do next. */
@@ -194,7 +218,7 @@ export function RefusalContent({
   target,
   blockers,
   moreCount,
-  onNavigate,
+  navigateTo,
 }: RefusalContentProps) {
   const reasons = new Set(blockers.map((blocker) => blocker.reason));
   const trackId =
@@ -218,12 +242,7 @@ export function RefusalContent({
           {trackId && (
             <>
               {" ("}
-              <Link
-                to={`/desk/track-positions/${trackId}`}
-                onClick={onNavigate}
-              >
-                Связать должности с треком
-              </Link>
+              <TrackPositionsLink trackId={trackId} navigateTo={navigateTo} />
               {")"}
             </>
           )}{" "}
@@ -259,6 +278,7 @@ function publicationBlockers(error: ApiError) {
 export function usePublishEntry() {
   const { modal, message } = App.useApp();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [isBusy, setIsBusy] = useState(false);
   const reread = () =>
     Promise.all([
@@ -279,7 +299,10 @@ export function usePublishEntry() {
           target={target}
           blockers={blockers}
           moreCount={moreCount}
-          onNavigate={() => instance.destroy()}
+          navigateTo={(path) => {
+            instance.destroy();
+            void navigate(path);
+          }}
         />
       ),
       okText: "OK",
