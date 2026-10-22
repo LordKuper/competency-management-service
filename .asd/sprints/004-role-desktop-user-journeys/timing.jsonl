@@ -463,3 +463,17 @@
 {"op":"close","id":"Task 67 own-hr-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:31:57.588Z","end":"2026-10-22T09:32:57.260Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl assessment 15","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:33:09.197Z","attrs":{}}
 {"op":"close","id":"impl assessment 15","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:33:09.197Z","end":"2026-10-22T09:33:44.941Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 60 empty-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:33:45.275Z","attrs":{}}
+{"op":"open","id":"Task 62 empty-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:33:45.334Z","attrs":{}}
+{"op":"open","id":"Task 64 empty-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:33:45.395Z","attrs":{}}
+{"op":"close","id":"Task 64 empty-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:33:45.395Z","end":"2026-10-22T09:35:02.624Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 60 empty-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:33:45.275Z","end":"2026-10-22T09:35:34.421Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 62 empty-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:33:45.334Z","end":"2026-10-22T09:37:18.380Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 60 build-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:37:18.560Z","attrs":{}}
+{"op":"open","id":"Task 62 build-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:37:18.617Z","attrs":{}}
+{"op":"open","id":"Task 64 build-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:37:18.671Z","attrs":{}}
+{"op":"close","id":"Task 60 build-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:37:18.560Z","end":"2026-10-22T09:38:51.478Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 64 build-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:37:18.671Z","end":"2026-10-22T09:39:15.259Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 62 build-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:37:18.617Z","end":"2026-10-22T09:40:02.650Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 60 build-card-fix 2","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:40:02.705Z","attrs":{}}
+{"op":"close","id":"Task 60 build-card-fix 2","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:40:02.705Z","end":"2026-10-22T09:40:29.564Z","outcome":"done","attrs":{}}
