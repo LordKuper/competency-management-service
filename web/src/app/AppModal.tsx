@@ -1,6 +1,6 @@
-import { Button, Form, Modal, type ModalProps } from "antd";
+import { Form, Modal, type ModalProps } from "antd";
 import { useEffect, useRef, useState } from "react";
-import { ModalUnsavedProvider, useLeaveGuard } from "./leaveGuard";
+import { useLeaveGuard } from "./leaveGuard";
 
 // Select and picker inputs are read-only unless searchable, yet they are the controls to focus.
 const FIELD =
@@ -22,22 +22,6 @@ function focusEntry(dialog: HTMLElement, body: HTMLElement) {
     dialog.querySelector<HTMLElement>(".ant-modal-footer .ant-btn-primary");
   target?.focus();
   return target != null;
-}
-
-/** «Отмена» of a dialog body written inline where the AppModal is rendered; it asks before closing an unsaved dialog. */
-export function CancelButton({
-  onClose,
-  disabled,
-}: {
-  onClose: () => void;
-  disabled?: boolean;
-}) {
-  const { confirmClose } = useLeaveGuard();
-  return (
-    <Button disabled={disabled} onClick={() => confirmClose(onClose)}>
-      Отмена
-    </Button>
-  );
 }
 
 /**
@@ -94,17 +78,15 @@ export function AppModal({
         else close();
       }}
     >
-      <ModalUnsavedProvider value={isModalUnsaved}>
-        <Form.Provider
-          onFormChange={(_, { changedFields }) => {
-            if (changedFields.some((field) => field.touched)) {
-              setIsTouched(true);
-            }
-          }}
-        >
-          <div ref={bodyRef}>{children}</div>
-        </Form.Provider>
-      </ModalUnsavedProvider>
+      <Form.Provider
+        onFormChange={(_, { changedFields }) => {
+          if (changedFields.some((field) => field.touched)) {
+            setIsTouched(true);
+          }
+        }}
+      >
+        <div ref={bodyRef}>{children}</div>
+      </Form.Provider>
     </Modal>
   );
 }

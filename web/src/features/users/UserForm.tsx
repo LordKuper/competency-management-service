@@ -1,7 +1,6 @@
 import { Button, Checkbox, Flex, Form, Input, Space } from "antd";
 import type { ReactNode } from "react";
 import type { UserRole } from "../../app/featureContract";
-import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { EmployeePicker } from "./EmployeePicker";
 import { ROLE_OPTIONS } from "./roles";
@@ -63,7 +62,6 @@ export function UserForm({
   onDirtyChange,
   scenarioActions,
 }: UserFormProps) {
-  const { confirmClose } = useLeaveGuard();
   const [form] = Form.useForm<UserFormValues>();
   const { isSubmitting, submit } = useFormSubmit(form, (values) =>
     onSubmit(
@@ -137,9 +135,7 @@ export function UserForm({
           <Button type="primary" htmlType="submit" loading={isSubmitting}>
             {submitLabel}
           </Button>
-          <Button onClick={() => confirmClose(() => onCancel?.())}>
-            {cancelLabel}
-          </Button>
+          <Button onClick={() => onCancel?.()}>{cancelLabel}</Button>
         </Space>
       )}
     </Form>

@@ -37,10 +37,6 @@ const NO_GUARD: LeaveGuard = {
 };
 
 const LeaveGuardContext = createContext<LeaveGuard>(NO_GUARD);
-const ModalUnsavedContext = createContext(false);
-
-/** Tells the guard whether the dialog around its children holds unsaved edits; `useLeaveGuard().confirmClose` reads it. */
-export const ModalUnsavedProvider = ModalUnsavedContext.Provider;
 
 const DIALOG = {
   title: "Перейти без сохранения?",
@@ -163,12 +159,11 @@ export function LeaveGuardProvider({ children }: { children: ReactNode }) {
 
 /**
  * Registers the caller's edits with the guard until it unmounts (nothing without an argument) and returns the ways to
- * leave: `confirmLeave` asks when any registered edits are unsaved, `confirmClose` when the dialog around the caller is
- * unsaved, `leaveAfterSave` runs a navigation right after the caller's own successful save without asking.
+ * leave: `confirmLeave` asks when any registered edits are unsaved, `leaveAfterSave` runs a navigation right after the
+ * caller's own successful save without asking.
  */
 export function useLeaveGuard(registered?: LeaveEdits) {
   const guard = useContext(LeaveGuardContext);
-  const isModalUnsaved = useContext(ModalUnsavedContext);
   const id = useId();
   const isUnsaved = registered?.isUnsaved;
   const isSaving = registered?.isSaving;
@@ -180,9 +175,5 @@ export function useLeaveGuard(registered?: LeaveEdits) {
   }, [id, isUnsaved, isSaving, setEdits]);
 
   const { confirmLeave, leaveAfterSave } = guard;
-  const confirmClose = useCallback(
-    (action: () => void) => (isModalUnsaved ? confirmLeave(action) : action()),
-    [isModalUnsaved, confirmLeave],
-  );
-  return { confirmLeave, confirmClose, leaveAfterSave };
+  return { confirmLeave, leaveAfterSave };
 }

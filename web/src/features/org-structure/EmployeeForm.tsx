@@ -11,7 +11,6 @@ import {
   Typography,
 } from "antd";
 import type { ReactNode } from "react";
-import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { OrgUnitSelect } from "./OrgUnitSelect";
 import type { EmployeeInput } from "./orgStructureApi";
@@ -62,7 +61,6 @@ export function EmployeeForm({
   onCancel,
   scenarioActions,
 }: EmployeeFormProps) {
-  const { confirmClose } = useLeaveGuard();
   const { token } = antdTheme.useToken();
   const [form] = Form.useForm<EmployeeInput>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
@@ -186,9 +184,7 @@ export function EmployeeForm({
           )}
           <Space>
             {submitButton}
-            <Button onClick={() => confirmClose(() => onCancel?.())}>
-              Отмена
-            </Button>
+            <Button onClick={() => onCancel?.()}>Отмена</Button>
           </Space>
         </>
       )}

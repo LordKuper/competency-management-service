@@ -6,7 +6,6 @@ import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { useLeaveGuard } from "../../app/leaveGuard";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { invalidatePositions, type Position } from "./positionsApi";
@@ -89,7 +88,6 @@ interface PositionNameFormProps {
 }
 
 function PositionNameForm({ name, onSubmit, onCancel }: PositionNameFormProps) {
-  const { confirmClose } = useLeaveGuard();
   const [form] = Form.useForm<PositionNameValues>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
 
@@ -118,7 +116,7 @@ function PositionNameForm({ name, onSubmit, onCancel }: PositionNameFormProps) {
         <Button type="primary" htmlType="submit" loading={isSubmitting}>
           Сохранить
         </Button>
-        <Button onClick={() => confirmClose(onCancel)}>Отмена</Button>
+        <Button onClick={onCancel}>Отмена</Button>
       </Space>
     </Form>
   );

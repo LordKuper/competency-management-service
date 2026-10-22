@@ -3,7 +3,7 @@ import { App, Button, Form, Space } from "antd";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
-import { AppModal, CancelButton } from "../../app/AppModal";
+import { AppModal } from "../../app/AppModal";
 import { showFieldErrors } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { OrgUnitSelect } from "./OrgUnitSelect";
@@ -82,7 +82,7 @@ export function MoveUnitModal({ unit, onClose }: MoveUnitModalProps) {
             <Button type="primary" htmlType="submit" loading={move.isPending}>
               Перенести
             </Button>
-            <CancelButton onClose={onClose} />
+            <Button onClick={onClose}>Отмена</Button>
           </Space>
         </Space>
       </Form>

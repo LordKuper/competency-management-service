@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { ApiError } from "../../api/ApiError";
 import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { useLeaveGuard } from "../../app/leaveGuard";
 
 const CONFLICT_STATUS = 409;
 
@@ -81,13 +80,12 @@ interface FormActionsProps {
 
 /** Save and cancel buttons of a catalogue form; cancelling asks for confirmation while the dialog holds unsaved changes. */
 export function FormActions({ isSubmitting, onCancel }: FormActionsProps) {
-  const { confirmClose } = useLeaveGuard();
   return (
     <Space>
       <Button type="primary" htmlType="submit" loading={isSubmitting}>
         Сохранить
       </Button>
-      <Button onClick={() => confirmClose(onCancel)}>Отмена</Button>
+      <Button onClick={onCancel}>Отмена</Button>
     </Space>
   );
 }
