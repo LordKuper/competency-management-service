@@ -16,7 +16,13 @@ public sealed class TestEnvironment : IAsyncLifetime
     private const string PostgresImage = "postgres:18.6-trixie";
     private const string GssSetting = "GSS Encryption Mode=Disable";
 
-    private readonly PostgreSqlContainer container = new PostgreSqlBuilder(PostgresImage).Build();
+    /// <summary>
+    /// The server's connection limit. The default of 100 runs out while the hosts of the classes that run in parallel start together
+    /// and keep their pooled connections, and a host or a test then fails with "too many clients".
+    /// </summary>
+    private const string ConnectionLimitSetting = "max_connections=500";
+
+    private readonly PostgreSqlContainer container = new PostgreSqlBuilder(PostgresImage).WithCommand("-c", ConnectionLimitSetting).Build();
     private readonly Lazy<Task<ApiHost>> shared;
 
     public TestEnvironment()
