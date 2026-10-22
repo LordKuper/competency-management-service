@@ -382,7 +382,10 @@ function ResultTable({ rows }: { rows: ResultRow[] }) {
       showHeader={false}
       rowKey="key"
       dataSource={rows}
-      columns={[{ dataIndex: "tag", width: 160 }, { dataIndex: "text" }]}
+      columns={[
+        { dataIndex: "tag", width: "calc(var(--ant-control-height) * 5)" },
+        { dataIndex: "text" },
+      ]}
     />
   );
 }

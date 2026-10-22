@@ -67,7 +67,7 @@ export function OrgCleanupPage() {
           selectedKey={selection.selectedKey}
           onSelect={selection.select}
           renderItem={(item) => (
-            <Flex vertical gap={2}>
+            <Flex vertical gap="var(--ant-margin-xxs)">
               <Flex align="center" gap="small" wrap>
                 <Tag>{typeLabelOf(item) ?? "Подразделение"}</Tag>
                 <Typography.Text strong>{item.object.name}</Typography.Text>

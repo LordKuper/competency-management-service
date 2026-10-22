@@ -39,10 +39,9 @@
 
 .queue-columns {
   display: grid;
-  grid-template-columns: minmax(var(--queue-list-min-width), 2fr) 3fr;
+  grid-template-columns: minmax(calc(var(--ant-control-height) * 10), 2fr) 3fr;
   gap: var(--ant-margin-lg);
   align-items: start;
-  --queue-list-min-width: 320px;
 }
 
 @media (width < 992px) {
@@ -57,10 +56,8 @@
 
 /* The choice of the object of a scenario, in the context line: it grows to fit the names it holds. */
 .context-select {
-  flex: 1 1 var(--context-select-basis);
-  max-width: var(--context-select-max-width);
-  --context-select-basis: 320px;
-  --context-select-max-width: 560px;
+  flex: 1 1 calc(var(--ant-control-height) * 10);
+  max-width: calc(var(--ant-control-height) * 18);
 }
 
 .context-select > * {

@@ -165,7 +165,7 @@ export function DraftsQueuePage() {
 function DraftRow({ draft }: { draft: CatalogDraft }) {
   const isEarly = earlyReason(draft) !== null;
   return (
-    <Flex vertical gap={2}>
+    <Flex vertical gap="var(--ant-margin-xxs)">
       <Flex align="center" gap="small" wrap>
         <Tag>{KIND_LABELS[draft.kind]}</Tag>
         <Typography.Text strong>{draft.name}</Typography.Text>

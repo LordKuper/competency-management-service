@@ -127,7 +127,7 @@ export function QueueLayout<T>({
             allowClear
             aria-label="Вид"
             placeholder="Вид"
-            style={{ minWidth: 160 }}
+            style={{ minWidth: "calc(var(--ant-control-height) * 5)" }}
             value={filter.value}
             options={[...filter.options]}
             onChange={(value) => filter.onChange(value ?? undefined)}

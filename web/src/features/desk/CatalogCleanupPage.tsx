@@ -80,7 +80,7 @@ export function CatalogCleanupPage() {
           selectedKey={selection.selectedKey}
           onSelect={selection.select}
           renderItem={(entry) => (
-            <Flex vertical gap={2}>
+            <Flex vertical gap="var(--ant-margin-xxs)">
               <Flex align="center" gap="small" wrap>
                 <Tag>{KIND_LABELS[entry.kind]}</Tag>
                 <Typography.Text strong>{entry.name}</Typography.Text>

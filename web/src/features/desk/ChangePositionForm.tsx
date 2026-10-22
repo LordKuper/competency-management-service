@@ -71,7 +71,11 @@ export function ChangePositionForm({
           name="positionId"
           label={isInline ? undefined : "Новая должность"}
           rules={[{ required: true, message: "Выберите должность" }]}
-          style={isInline ? { minWidth: 220 } : undefined}
+          style={
+            isInline
+              ? { minWidth: "calc(var(--ant-control-height) * 7)" }
+              : undefined
+          }
         >
           <PositionSelect orgUnitId={employee.orgUnitId} />
         </Form.Item>
