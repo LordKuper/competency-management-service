@@ -11,7 +11,9 @@ interface Selection {
 
 /**
  * Which record of a queue is open. A record that leaves the queue, being decided, gives way to the one that took its
- * place, so the next one opens by itself; before the queue is read the record asked for stays remembered.
+ * place, so the next one opens by itself; before the queue is read the record asked for stays remembered. Whether the
+ * record asked for was found is judged on the first read only, so deciding it or changing the filter later does not
+ * report it missing.
  */
 export function useQueueSelection(
   keys: readonly string[],
@@ -22,6 +24,8 @@ export function useQueueSelection(
     key: requestedKey,
     index: 0,
   });
+  const [firstKeys, setFirstKeys] = useState<readonly string[]>();
+  if (isReady && firstKeys === undefined) setFirstKeys(keys);
   const found = selection.key === undefined ? -1 : keys.indexOf(selection.key);
   const index =
     found >= 0
@@ -38,7 +42,9 @@ export function useQueueSelection(
   return {
     selectedKey: key,
     wasRequestedFound:
-      requestedKey === undefined || keys.includes(requestedKey),
+      requestedKey === undefined ||
+      firstKeys === undefined ||
+      firstKeys.includes(requestedKey),
     select: (next: string) =>
       setSelection({ key: next, index: Math.max(keys.indexOf(next), 0) }),
   };
