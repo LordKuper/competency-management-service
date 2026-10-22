@@ -47,7 +47,6 @@ import {
   compositionChanges,
   compositionsOf,
   scaleNameOf,
-  versionCompetencyIds,
 } from "../career/matrixGroups";
 import { AddBlockModal } from "./AddBlockModal";
 import {
@@ -269,7 +268,7 @@ function CompetenciesBody({
   });
   const attach = useMutation({
     mutationFn: (block: CompetencyBlock) => {
-      const held = new Set([...versionCompetencyIds(version), ...chosen]);
+      const held = new Set([...chosen, ...brought.keys()]);
       const repeated = block.competencies.find((item) => held.has(item.id));
       if (repeated) {
         return Promise.reject(
