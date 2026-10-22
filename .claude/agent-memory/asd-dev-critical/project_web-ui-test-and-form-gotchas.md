@@ -14,6 +14,7 @@ Facts that cost a round while building the SPA shell and the account screens, no
 - `npm run lint` cannot take arguments (they go to the typecheck step). For Biome format/import-order diffs run `npx biome ci --colors=off --error-on-warnings <paths>` inside `web/` and hand-apply the shown diff; its import sort puts `Avatar, theme as antdTheme, Button` (not by the alias).
 - A Vite dev server started for a curl check: find the PID with `netstat -ano | grep :<port>` and stop it with `taskkill //PID <pid> //F //T`.
 - antd 6.6.5 Select: the top-level `searchValue`, `onSearch`, `filterOption` and `optionFilterProp` are deprecated in `@rc-component/select`; pass them in the `showSearch` object (`showSearch={{ filterOption: false, onSearch }}` for server search). Under `noUncheckedIndexedAccess`, `bytes[6] & 0x0f` on a `Uint8Array` fails the typecheck; set bytes with `.map((byte, index) => ...)`.
+- Web tests mock API responses with untyped `Response.json({...})`, so `tsc` does not catch a new required response field missing from a fixture; at run time it is `undefined` and arithmetic on it is `NaN` (`NaN === 0` and `NaN > 0` both false). After adding a contract field, list in the report which fixtures impl-test must extend.
 
 **Why:** each was found only by running the throwaway scenarios or the linter.
 
