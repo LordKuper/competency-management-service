@@ -223,6 +223,38 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
     }
 
     [Theory]
+    [InlineData(true, HttpStatusCode.NoContent, HttpStatusCode.Conflict)]
+    [InlineData(false, HttpStatusCode.BadRequest, HttpStatusCode.OK)]
+    public async Task Ac62_AnAssignmentRacingTheRemovalOfTheHrRole_IsDecidedByWhichRequestIsFirst(bool assignmentFirst, HttpStatusCode assignmentStatus, HttpStatusCode removalStatus)
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var unit = await org.Admin.CreateUnitAsync(org.Root.Id);
+        var account = await org.Admin.HrCandidateAsync(fixture.Host, unit.Id);
+        var assign = () => org.Admin.AssignHrAsync(unit.Id, account.EmployeeId);
+        var removeRole = () => org.Admin.PutAsync(
+            $"/api/v1/users/{account.Id}",
+            new { email = account.User.Email, roles = Scenarios.NoRoles, employeeId = (Guid?)account.EmployeeId },
+            account.User.ETag);
+
+        await using var gate = await RowLock.HoldAdvisoryAsync(fixture.Host, RowLock.TreeKey);
+        var first = await RowLock.StartWaitingAsync(fixture.Host, 1, assignmentFirst ? assign : removeRole);
+        var second = await RowLock.StartWaitingAsync(fixture.Host, 2, assignmentFirst ? removeRole : assign);
+        await gate.ReleaseAsync();
+        var (assigned, removed) = assignmentFirst ? (await first, await second) : (await second, await first);
+
+        assigned.Status.Should().Be(assignmentStatus, assigned.Body);
+        removed.Status.Should().Be(removalStatus, removed.Body);
+        if (assignmentFirst)
+        {
+            removed.Json!["detail"]!.GetValue<string>().Should().Contain("Роль «HR» нельзя снять").And.Contain($"«{unit.Json!["name"]!.GetValue<string>()}»");
+        }
+        else
+        {
+            assigned.FieldErrors("employeeId").Should().Equal("У учётной записи нет роли «HR»");
+        }
+    }
+
+    [Theory]
     [InlineData(true, HttpStatusCode.Created)]
     [InlineData(false, HttpStatusCode.Forbidden)]
     public async Task Ac14_AMatrixCreatedWhileTheHeadIsChanged_IsDecidedByWhichRequestIsFirst(bool creationFirst, HttpStatusCode creationStatus)
