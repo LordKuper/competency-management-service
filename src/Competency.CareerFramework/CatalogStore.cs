@@ -359,18 +359,22 @@ internal sealed class CatalogStore(
     }
 
     /// <summary>
-    /// Saves the change and commits. A changed competency also gets its next version row, numbered after the version the save gave it.
+    /// Saves the change and commits. Every competency the save creates or changes, the entry itself or a draft published with it, also
+    /// gets its next version row, numbered after the version the save gave it.
     /// </summary>
-    /// <param name="entry">The entry that was created or changed.</param>
     /// <param name="transaction">The transaction to commit.</param>
     /// <param name="cancellationToken">Cancels the save.</param>
-    public async Task SaveAsync(CatalogEntry entry, IDbContextTransaction transaction, CancellationToken cancellationToken)
+    public async Task SaveAsync(IDbContextTransaction transaction, CancellationToken cancellationToken)
     {
-        var isChanged = context.Entry(entry).State is EntityState.Added or EntityState.Modified;
+        var changed = context.ChangeTracker.Entries<CareerCompetency>()
+            .Where(tracked => tracked.State is EntityState.Added or EntityState.Modified)
+            .Select(tracked => tracked.Entity)
+            .ToList();
         await context.SaveChangesAsync(cancellationToken);
-        if (isChanged && entry is CareerCompetency competency)
+        if (changed.Count > 0)
         {
-            context.Add(CompetencyVersion.Of(competency, actor.UserId, time.GetUtcNow()));
+            var now = time.GetUtcNow();
+            context.AddRange(changed.Select(competency => CompetencyVersion.Of(competency, actor.UserId, now)));
             await context.SaveChangesAsync(cancellationToken);
         }
 

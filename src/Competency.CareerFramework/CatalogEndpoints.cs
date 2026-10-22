@@ -215,7 +215,7 @@ internal static class CatalogEndpoints
         CancellationToken cancellationToken)
         where TEntry : CatalogEntry
     {
-        await store.SaveAsync(entry, transaction, cancellationToken);
+        await store.SaveAsync(transaction, cancellationToken);
         return await DescribeAsync(entry, kind, viewer, store, response, cancellationToken);
     }
 
@@ -390,7 +390,7 @@ internal static class CatalogEndpoints
 
         ifMatch.ApplyTo(context, entry);
         context.Remove(entry);
-        await store.SaveAsync(entry, transaction, cancellationToken);
+        await store.SaveAsync(transaction, cancellationToken);
         return TypedResults.NoContent();
     }
 
