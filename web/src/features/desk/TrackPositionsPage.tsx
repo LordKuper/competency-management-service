@@ -89,9 +89,6 @@ export function TrackPositionsPage() {
         <div className="context-select">
           <Select
             showSearch={{ filterOption: false, onSearch: setSearch }}
-            onOpenChange={(isOpen) => {
-              if (!isOpen) setSearch("");
-            }}
             aria-label="Трек"
             placeholder="Выберите трек"
             value={trackId}
