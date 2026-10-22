@@ -20,7 +20,8 @@ internal static class UnusedEntryEndpoints
         .ProducesProblem(StatusCodes.Status403Forbidden);
 
     /// <summary>
-    /// One page of the unused entries, optionally of one kind. The whole list is worked out and then paged, because it stays short.
+    /// One page of the unused entries, optionally of one kind. The light rows of the kind are read whole and paged in memory, which holds
+    /// while the list stays within the ceiling the desk reads it under.
     /// </summary>
     private static async Task<Results<Ok<PageResponse<UnusedEntryResponse>>, ValidationProblem, ProblemHttpResult>> ListAsync(
         [FromQuery(Name = "kind")] CatalogEntryKind? kind,
@@ -41,10 +42,7 @@ internal static class UnusedEntryEndpoints
             return Rejection.Forbidden();
         }
 
-        var entries = (await store.UnusedEntriesAsync(cancellationToken))
-            .Select(entry => new UnusedEntryResponse(CatalogDraftEndpoints.KindOf(entry), entry.Id, entry.Name, entry.Version))
-            .Where(entry => kind is null || entry.Kind == kind)
-            .ToList();
+        var entries = await store.UnusedEntriesAsync(kind, cancellationToken);
         return TypedResults.Ok(new PageResponse<UnusedEntryResponse>(
             [.. entries.Skip((page - 1) * pageSize).Take(pageSize)],
             entries.Count,

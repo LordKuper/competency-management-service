@@ -75,16 +75,13 @@ internal sealed class CareerDeskScan(
     /// </summary>
     /// <param name="unused">The unused entries.</param>
     /// <returns>One finding per entry, for reference.</returns>
-    public static IEnumerable<DeskFinding> UnusedFindings(IEnumerable<CatalogEntry> unused) => unused.Select(entry => new DeskFinding(
-        entry switch
-        {
-            CareerCompetency => DeskKind.UnusedCompetency,
-            CompetencyScale => DeskKind.UnusedScale,
-            CareerDirection => DeskKind.DirectionWithoutTracks,
-            _ => throw new UnreachableException($"Unused entries are never of type {entry.GetType().Name}."),
-        },
-        new DeskObject(TypeOf(entry), entry.Id, entry.Name),
-        IsAction: false));
+    public static IEnumerable<DeskFinding> UnusedFindings(IEnumerable<UnusedEntryResponse> unused) => unused.Select(entry => entry.Kind switch
+    {
+        CatalogEntryKind.Competency => new DeskFinding(DeskKind.UnusedCompetency, new DeskObject(DeskObjectType.Competency, entry.Id, entry.Name), IsAction: false),
+        CatalogEntryKind.Scale => new DeskFinding(DeskKind.UnusedScale, new DeskObject(DeskObjectType.Scale, entry.Id, entry.Name), IsAction: false),
+        CatalogEntryKind.Direction => new DeskFinding(DeskKind.DirectionWithoutTracks, new DeskObject(DeskObjectType.Direction, entry.Id, entry.Name), IsAction: false),
+        _ => throw new UnreachableException($"Unused entries are never of kind {entry.Kind}."),
+    });
 
     /// <summary>
     /// Units without a responsible HR who can act, for a global administrator; units the user heads that have no track matrix in force

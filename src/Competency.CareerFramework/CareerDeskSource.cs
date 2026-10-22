@@ -88,7 +88,7 @@ internal sealed class CareerDeskSource(
                 .. scan.TrackFindings(),
                 .. scan.PositionFindings(),
                 .. scan.DraftFindings(catalog.Drafts),
-                .. viewer.IsHr || viewer.IsAdmin ? CareerDeskScan.UnusedFindings(await store.UnusedEntriesAsync(cancellationToken)) : [],
+                .. viewer.IsHr || viewer.IsAdmin ? CareerDeskScan.UnusedFindings(await store.UnusedEntriesAsync(kind: null, cancellationToken)) : [],
                 .. self is null ? [] : await NoTrackFindingsAsync(scan, self, versions, isInvolved, cancellationToken),
             ],
             prerequisites);

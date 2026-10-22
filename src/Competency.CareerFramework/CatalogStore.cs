@@ -313,12 +313,15 @@ internal sealed class CatalogStore(
     /// <summary>
     /// The active entries nothing uses, the one definition every list of them shares: competencies no matrix version, variant or
     /// published snapshot lists, directly or in the composition of a shared block a version or variant includes; scales other than the
-    /// default that no competency is on, in its current version or in its history; directions without tracks.
+    /// default that no competency is on, in its current version or in its history; directions without tracks. Only the kind, identifier,
+    /// name and version of each entry are read, and only the queries of the asked kind run.
     /// </summary>
+    /// <param name="kind">The kind to list; null for every kind.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
     /// <returns>The competencies, then the scales and directions, each in name order.</returns>
-    public async Task<List<CatalogEntry>> UnusedEntriesAsync(CancellationToken cancellationToken)
+    public async Task<List<UnusedEntryResponse>> UnusedEntriesAsync(CatalogEntryKind? kind, CancellationToken cancellationToken)
     {
+        List<UnusedEntryResponse> unused = [];
         var usedCompetencyIds = context.Database.SqlQuery<Guid>($"""
             SELECT (item ->> 'competencyId')::uuid AS "Value" FROM matrix_versions, jsonb_array_elements(content -> 'competencies') AS item
             UNION SELECT (item ->> 'competencyId')::uuid FROM matrix_version_variants, jsonb_array_elements(content -> 'competencies') AS item
@@ -334,16 +337,33 @@ internal sealed class CatalogStore(
         var competencies = context.Set<CareerCompetency>();
         var tracks = context.Set<CareerTrack>();
         var competencyVersions = context.Set<CompetencyVersion>();
-        return
-        [
-            .. await ActiveByName(competencies.Where(competency => !usedCompetencyIds.Contains(competency.Id)), cancellationToken),
-            .. await ActiveByName(
+        if (kind is null or CatalogEntryKind.Competency)
+        {
+            unused.AddRange(await ActiveByName(
+                competencies.Where(competency => !usedCompetencyIds.Contains(competency.Id)),
+                CatalogEntryKind.Competency,
+                cancellationToken));
+        }
+
+        if (kind is null or CatalogEntryKind.Scale)
+        {
+            unused.AddRange(await ActiveByName(
                 context.Set<CompetencyScale>().Where(scale => !scale.IsDefault
                     && !competencies.Any(competency => competency.ScaleId == scale.Id)
                     && !competencyVersions.Any(version => version.ScaleId == scale.Id)),
-                cancellationToken),
-            .. await ActiveByName(context.Set<CareerDirection>().Where(direction => !tracks.Any(track => track.DirectionId == direction.Id)), cancellationToken),
-        ];
+                CatalogEntryKind.Scale,
+                cancellationToken));
+        }
+
+        if (kind is null or CatalogEntryKind.Direction)
+        {
+            unused.AddRange(await ActiveByName(
+                context.Set<CareerDirection>().Where(direction => !tracks.Any(track => track.DirectionId == direction.Id)),
+                CatalogEntryKind.Direction,
+                cancellationToken));
+        }
+
+        return unused;
     }
 
     /// <summary>
@@ -406,12 +426,13 @@ internal sealed class CatalogStore(
         await transaction.CommitAsync(cancellationToken);
     }
 
-    private static Task<List<T>> ActiveByName<T>(IQueryable<T> entries, CancellationToken cancellationToken)
+    private static Task<List<UnusedEntryResponse>> ActiveByName<T>(IQueryable<T> entries, CatalogEntryKind kind, CancellationToken cancellationToken)
         where T : CatalogEntry =>
         entries.AsNoTracking()
             .Where(entry => entry.Status == CatalogStatus.Active)
             .OrderBy(entry => entry.Name)
             .ThenBy(entry => entry.Id)
+            .Select(entry => new UnusedEntryResponse(kind, entry.Id, entry.Name, entry.Version))
             .ToListAsync(cancellationToken);
 
     /// <summary>
