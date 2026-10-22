@@ -52,11 +52,19 @@ type LinkedPosition = Level["positions"][number];
 const TITLE = "Связать должности с треком";
 const LINK_MUTATION = ["desk", "track-positions"] as const;
 
-/** «Связать должности с треком»: the choice of a track stays on screen; below it the levels with their positions and the positions that can still be linked. */
+/**
+ * «Связать должности с треком»: the choice of a track stays on screen, searched on the server; below it the levels with
+ * their positions and the positions that can still be linked.
+ */
 export function TrackPositionsPage() {
   const { trackId } = useParams();
   const navigate = useNavigate();
-  const tracks = useQuery(tracksQuery({ page: 1, pageSize: MAX_PAGE_SIZE }));
+  const [search, setSearch] = useState("");
+  const q = useDebouncedValue(search.trim());
+  const tracks = useQuery({
+    ...tracksQuery({ q: q || undefined, page: 1, pageSize: MAX_PAGE_SIZE }),
+    placeholderData: keepPreviousData,
+  });
   const track = useQuery({
     ...trackQuery(trackId ?? ""),
     enabled: trackId !== undefined,
@@ -80,12 +88,15 @@ export function TrackPositionsPage() {
         <Typography.Text strong>Трек</Typography.Text>
         <div className="context-select">
           <Select
-            showSearch={{ optionFilterProp: "label" }}
+            showSearch={{ filterOption: false, onSearch: setSearch }}
+            onOpenChange={(isOpen) => {
+              if (!isOpen) setSearch("");
+            }}
             aria-label="Трек"
             placeholder="Выберите трек"
             value={trackId}
             disabled={isChanging}
-            loading={tracks.isPending}
+            loading={tracks.isFetching}
             options={options.map((item) => ({
               value: item.id,
               label: `${item.name} — ${item.ownerOrgUnitName}`,
@@ -108,7 +119,11 @@ export function TrackPositionsPage() {
                 label
               );
             }}
-            notFoundContent="Треков, связи которых вы вправе править, нет."
+            notFoundContent={
+              q
+                ? `Трек «${q}» не найден среди тех, связи которых вы вправе править.`
+                : "Треков, связи которых вы вправе править, нет."
+            }
             onChange={(id) => void navigate(deskPaths.trackPositionsOf(id))}
           />
         </div>
