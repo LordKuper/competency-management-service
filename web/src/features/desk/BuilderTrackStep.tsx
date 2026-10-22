@@ -365,7 +365,15 @@ function NewVersionForm({
             </Form.Item>
           )
         ) : (
-          <Form.Item label="Трек" required>
+          <Form.Item
+            label="Трек"
+            required
+            extra={
+              unit
+                ? undefined
+                : "Трек можно выбрать или добавить после выбора подразделения."
+            }
+          >
             <Flex gap="small">
               <Form.Item
                 name="trackId"

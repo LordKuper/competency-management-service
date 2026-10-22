@@ -117,6 +117,12 @@ export function ConnectUnitPage() {
           </Typography.Text>
         )}
       </ContextLine>
+      {resend.sendingAccountId !== null && (
+        <Typography.Text type="secondary">
+          Пока идёт отправка письма, выбор подразделения и повторная отправка в
+          других строках недоступны.
+        </Typography.Text>
+      )}
       {unitId ? (
         <SetupScreen
           key={unitId}
