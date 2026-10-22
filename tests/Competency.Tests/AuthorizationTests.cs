@@ -48,6 +48,16 @@ public sealed class AuthorizationTests(TestEnvironment environment)
         ("POST", "/api/v1/org-units/{id}/positions/quick-add"),
         ("PUT", "/api/v1/career/org-units/{id}/hr"),
         ("DELETE", "/api/v1/career/org-units/{id}/hr"),
+        ("GET", "/api/v1/career/org-units/{id}/setup"),
+    ];
+
+    private static readonly (string Method, string Path)[] AnonymousEndpoints =
+    [
+        ("POST", "/api/v1/auth/login"),
+        ("GET", "/api/v1/auth/password-policy"),
+        ("POST", "/api/v1/auth/forgot-password"),
+        ("POST", "/api/v1/auth/accept-invitation"),
+        ("POST", "/api/v1/auth/reset-password"),
     ];
 
     private static readonly (string Method, string Path)[] SignedInEndpoints =
@@ -90,7 +100,22 @@ public sealed class AuthorizationTests(TestEnvironment environment)
         ("GET", "/api/v1/career/matrix-versions/{id}/variants/1/diff"),
         ("PUT", "/api/v1/career/tracks/{id}/level-order"),
         ("POST", "/api/v1/career/scales/{id}/make-default"),
-        .. new[] { "directions", "tracks", "levels", "scales", "competencies" }.SelectMany(kind => new (string, string)[]
+        ("GET", "/api/v1/career/me/place"),
+        ("GET", "/api/v1/career/unused-entries"),
+        ("GET", "/api/v1/career/org-units/{id}/matrix-positions"),
+        ("GET", "/api/v1/career/tracks/{id}/positions"),
+        ("GET", "/api/v1/career/tracks/{id}/available-positions"),
+        ("POST", "/api/v1/career/levels/{id}/positions"),
+        ("DELETE", "/api/v1/career/levels/{id}/positions/{id}"),
+        ("GET", "/api/v1/career/matrix-versions/{id}/completeness"),
+        ("GET", "/api/v1/career/matrix-versions/{id}/changes"),
+        ("GET", "/api/v1/career/matrix-versions/{id}/publication"),
+        ("GET", "/api/v1/desk"),
+        ("GET", "/api/v1/desk/items"),
+        ("GET", "/api/v1/desk/count"),
+        .. new[] { "directions", "tracks", "competencies", "scales", "blocks" }.Select(kind => ("GET", $"/api/v1/career/{kind}/{{id}}/publication")),
+        .. new[] { "directions", "tracks", "levels", "competencies", "scales", "blocks" }.Select(kind => ("GET", $"/api/v1/career/{kind}/{{id}}/matrices")),
+        .. new[] { "directions", "tracks", "levels", "scales", "competencies", "blocks" }.SelectMany(kind => new (string, string)[]
         {
             ("GET", $"/api/v1/career/{kind}"),
             ("POST", $"/api/v1/career/{kind}"),
@@ -124,6 +149,18 @@ public sealed class AuthorizationTests(TestEnvironment environment)
         }
 
         wrong.Should().BeEmpty("every administrator endpoint must answer 401 (anonymous) and 403 (user) as problem+json");
+    }
+
+    [Fact]
+    public void Ac6_EveryOperationOfTheContract_IsCheckedHereOrNamedAsOpenToAnonymous_AndNoCheckedRowIsOfARouteThatIsGone()
+    {
+        var contract = ApiContract.Operations().Select(operation => (operation.Method, operation.Path)).ToHashSet();
+        var listed = AdministratorEndpoints.Concat(SignedInEndpoints).Concat(AnonymousEndpoints)
+            .Select(row => (row.Method, Path: ApiContract.Normalize(row.Path)))
+            .ToHashSet();
+
+        contract.Except(listed).Should().BeEmpty("a route the API gained must be listed above, so that its session and role checks are tested");
+        listed.Except(contract).Should().BeEmpty("a listed route the API no longer has is a stale row");
     }
 
     [Fact]

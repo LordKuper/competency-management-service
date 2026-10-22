@@ -33,7 +33,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
 
     private static readonly (string Method, string Path, object? Body)[] CatalogueEndpoints =
     [
-        .. new[] { "directions", "tracks", "levels", "scales", "competencies" }.SelectMany(kind => new (string, string, object?)[]
+        .. new[] { "directions", "tracks", "levels", "scales", "competencies", "blocks" }.SelectMany(kind => new (string, string, object?)[]
         {
             ("POST", $"/api/v1/career/{kind}/{{id}}/approve", null),
             ("POST", $"/api/v1/career/{kind}/{{id}}/deactivate", null),
@@ -45,6 +45,9 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         ("PUT", "/api/v1/career/levels/{id}", new { name = "Уровень" }),
         ("PUT", "/api/v1/career/scales/{id}", new { name = "Шкала", points = CareerScenarios.Points() }),
         ("PUT", "/api/v1/career/competencies/{id}", new { name = "Навык", description = (string?)null, directionId = (Guid?)null, scaleId = (Guid?)null }),
+        ("PUT", "/api/v1/career/blocks/{id}", new { name = "Блок", scopeUnitId = (Guid?)null, competencyIds = Array.Empty<Guid>() }),
+        ("POST", "/api/v1/career/levels/{id}/positions", new { positionId = UnknownId }),
+        ("DELETE", "/api/v1/career/levels/{id}/positions/{id}", null),
         ("POST", "/api/v1/career/scales/{id}/make-default", null),
         ("PUT", "/api/v1/career/tracks/{id}/level-order", new { levelIds = Array.Empty<Guid>() }),
         ("DELETE", "/api/v1/career/matrices/{id}", null),
@@ -76,6 +79,19 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         }
 
         wrong.Should().BeEmpty("a write without If-Match must be refused with 428 problem+json before anything is read");
+    }
+
+    [Fact]
+    public void Ac5_EveryOperationOfTheContractThatTakesIfMatch_IsCheckedHere_AndNoCheckedRowIsOfARouteThatIsGone()
+    {
+        var versioned = ApiContract.Operations()
+            .Where(operation => operation.Operation["parameters"]?.AsArray().Any(parameter => parameter!["name"]!.GetValue<string>() == "If-Match") == true)
+            .Select(operation => (operation.Method, operation.Path))
+            .ToHashSet();
+        var listed = VersionedEndpoints.Concat(CatalogueEndpoints).Select(row => (row.Method, Path: ApiContract.Normalize(row.Path))).ToHashSet();
+
+        versioned.Except(listed).Should().BeEmpty("an endpoint that takes If-Match must be listed above, so that its 428 is tested");
+        listed.Except(versioned).Should().BeEmpty("a listed endpoint that takes no If-Match is a stale row");
     }
 
     [Theory]

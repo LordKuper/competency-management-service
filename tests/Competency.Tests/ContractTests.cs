@@ -12,8 +12,6 @@ namespace Competency.Tests;
 /// </summary>
 public sealed class ContractTests(TestEnvironment environment)
 {
-    private const string SolutionFile = "Competency.slnx";
-    private const string ContractPath = "openapi/openapi.json";
     private const string RemovedPasswordMethod = "/api/v1/users/{id}/reset-password";
     private const int LongestPage = 200;
     private const int LastPage = int.MaxValue / LongestPage;
@@ -141,14 +139,5 @@ public sealed class ContractTests(TestEnvironment environment)
         longest.Status.Should().Be(HttpStatusCode.OK);
     }
 
-    private static JsonNode ReadContract()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null && !directory.EnumerateFiles(SolutionFile).Any())
-        {
-            directory = directory.Parent;
-        }
-
-        return JsonNode.Parse(File.ReadAllText(Path.Combine(directory?.FullName ?? throw new FileNotFoundException(SolutionFile), ContractPath)))!;
-    }
+    private static JsonNode ReadContract() => ApiContract.Read();
 }
