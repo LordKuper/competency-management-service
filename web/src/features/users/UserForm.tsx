@@ -30,7 +30,6 @@ interface UserFormProps {
   /** The server refusal to show under the roles, which keeps the selected roles as the administrator left them. */
   rolesError?: string;
   submitLabel: string;
-  cancelLabel?: string;
   /** Saves the input; a rejection is shown on the fields it names and by the caller. */
   onSubmit: (input: UserInput) => Promise<unknown>;
   /** Leaves the form; omitted when `scenarioActions` carries the buttons. */
@@ -53,7 +52,6 @@ export function UserForm({
   lockedTo,
   rolesError,
   submitLabel,
-  cancelLabel = "Отмена",
   onSubmit,
   onCancel,
   onDirtyChange,
@@ -135,7 +133,7 @@ export function UserForm({
           <Button type="primary" htmlType="submit" loading={isSubmitting}>
             {submitLabel}
           </Button>
-          <Button onClick={() => onCancel?.()}>{cancelLabel}</Button>
+          <Button onClick={() => onCancel?.()}>Отмена</Button>
         </Space>
       )}
     </Form>

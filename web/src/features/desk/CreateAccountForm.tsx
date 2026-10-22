@@ -12,7 +12,6 @@ interface CreateAccountFormProps {
   /** The employee the account is created for and bound to. */
   employeeId: string;
   submitLabel: string;
-  cancelLabel?: string;
   /** Receives the created account, with whether the invitation was sent. */
   onCreated: (account: UserResponse) => void;
   onCancel?: () => void;
@@ -27,7 +26,6 @@ interface CreateAccountFormProps {
 export function CreateAccountForm({
   employeeId,
   submitLabel,
-  cancelLabel,
   onCreated,
   onCancel,
   onDirtyChange,
@@ -54,7 +52,6 @@ export function CreateAccountForm({
         isNew
         lockedTo={{ employeeId }}
         submitLabel={submitLabel}
-        cancelLabel={cancelLabel}
         onSubmit={(input) => create.mutateAsync(input)}
         onCancel={onCancel}
         onDirtyChange={onDirtyChange}
