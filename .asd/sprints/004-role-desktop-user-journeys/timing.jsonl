@@ -435,3 +435,11 @@
 {"op":"close","id":"Task 80 test-compile","kind":"dispatch","parent":"impl#2","start":"2026-10-21T15:31:40.003Z","end":"2026-10-21T15:55:50.726Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl assessment 11","kind":"user-wait","parent":"impl#2","start":"2026-10-21T15:56:16.304Z","attrs":{}}
 {"op":"close","id":"impl assessment 11","kind":"user-wait","parent":"impl#2","start":"2026-10-21T15:56:16.304Z","end":"2026-10-22T07:59:51.459Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 70 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:51.968Z","attrs":{}}
+{"op":"open","id":"Task 71 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.020Z","attrs":{}}
+{"op":"open","id":"Task 72 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.096Z","attrs":{}}
+{"op":"open","id":"Task 73 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.164Z","attrs":{}}
+{"op":"close","id":"Task 70 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:51.968Z","end":"2026-10-22T08:00:34.414Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 72 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.096Z","end":"2026-10-22T08:00:48.094Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 73 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.164Z","end":"2026-10-22T08:02:02.995Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 71 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.020Z","end":"2026-10-22T08:02:28.172Z","outcome":"done","attrs":{}}
