@@ -540,3 +540,12 @@
 {"op":"open","id":"testing wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:48.935Z","attrs":{}}
 {"op":"open","id":"documentation wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:49.000Z","attrs":{}}
 {"op":"open","id":"external wave-1/iter-02","kind":"external-review","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:49.063Z","attrs":{}}
+{"op":"close","id":"efficiency wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:48.871Z","end":"2026-10-22T16:12:31.348Z","outcome":"done","attrs":{}}
+{"op":"close","id":"testing wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:48.935Z","end":"2026-10-22T16:12:31.482Z","outcome":"done","attrs":{}}
+{"op":"close","id":"documentation wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:49.000Z","end":"2026-10-22T16:12:31.645Z","outcome":"done","attrs":{}}
+{"op":"close","id":"external wave-1/iter-02","kind":"external-review","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:49.063Z","end":"2026-10-22T16:12:31.799Z","outcome":"done","attrs":{}}
+{"op":"open","id":"external wave-1/iter-02 #2","kind":"external-review","parent":"impl-review wave-1/iter-02","start":"2026-10-22T16:12:40.246Z","attrs":{}}
+{"op":"close","id":"external wave-1/iter-02 #2","kind":"external-review","parent":"impl-review wave-1/iter-02","start":"2026-10-22T16:12:40.246Z","end":"2026-10-22T16:19:23.905Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review wave-1/iter-02","kind":"review-iteration","parent":"impl-review#2","start":"2026-10-22T15:54:48.809Z","end":"2026-10-22T16:19:24.080Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review#2","kind":"phase","parent":null,"start":"2026-10-22T15:54:26.077Z","end":"2026-10-22T16:19:24.139Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#6","kind":"phase","parent":null,"start":"2026-10-22T16:19:24.139Z","attrs":{}}

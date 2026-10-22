@@ -8,3 +8,4 @@
 - [Value-removal sprints](feedback_value-removal-sprints.md) — swapped fixtures must hit the same disjunct; hand-enumerated sets on touched asserts = §17 low; pr-deferred ACs need a plan line
 - [Workflow-definition sprints](feedback_workflow-definition-sprints.md) — predecessor + collapse acting sites pinned (closed, 020 wave-1 review-fix); grep+compare per new workflow; name-guard target; memory dir swept
 - [.NET API test review](feedback_dotnet-api-test-review.md) — xUnit API tests: neutered precedence tests, false equivalent mutants, moved validations, new fields, race tests, ledger shape
+- [Review isolation + log-window tests](feedback_review-isolation-and-log-window-tests.md) — scope sprint-dir greps with a glob (reviews/ leaks); log-count tests race unless synced

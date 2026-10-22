@@ -384,3 +384,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-22 — route impl-test entry 3: critical, dispatch HEAD aa6b31e; risk change: security
 - 2026-10-22 — impl-test entry 3 flagged приняты оркестратором: max_connections=500 тестового контейнера PostgreSQL (замер: 100 из 100, 25 красных с 53300 → 678/678, пик 108); весь backend по вентилю безопасности (порт UserStatus); половина ext 3 про направления — none с причиной; 6 стражей с мутациями; потолок PublicationPlan.Visible записан
 - 2026-10-22 — impl-test: impacted set green (backend 678/678, web lint чисто), 11/0 tests
+- 2026-10-22 — external interrupted attempt 1 in wave-1/iter-02 (persist-review rejected: unescaped «||» inside a findings-table cell split the row)
+- 2026-10-22 — impl-review wave-1/iter-02 (floor medium): correctness APPROVE (latched), efficiency APPROVE (latched), testing CONCERNS (1), documentation CONCERNS (2), external CONCERNS (2) → impl review-fix (review_fixes_pending wave-1/iter-02)
