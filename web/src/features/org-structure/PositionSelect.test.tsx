@@ -4,7 +4,7 @@ import { Form } from "antd";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi, problem } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { PositionSelect } from "./PositionSelect";
 
@@ -124,6 +124,38 @@ describe("position choice in the employee form (AC-4)", {
 
     expect(await screen.findByText("Инженер")).toBeInTheDocument();
     expect(screen.queryByText(/Добавить должность/)).not.toBeInTheDocument();
+  });
+
+  it("holds the choice while the typed name is being added, and frees it once the position is added", async () => {
+    serve();
+    const added = deferred<Response>();
+    fakeApi.on(
+      "POST /api/v1/org-units/sales/positions/quick-add",
+      () => added.promise,
+    );
+    const user = await openSelect();
+    await user.click(screen.getByRole("combobox", { name: "Должность" }));
+    await user.keyboard("Аналитик");
+
+    await user.click(await screen.findByText("Добавить должность «Аналитик»"));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("combobox", { name: "Должность" }),
+      ).toBeDisabled(),
+    );
+    added.resolve(
+      Response.json({
+        id: "new",
+        name: "Аналитик",
+        isActive: true,
+        version: 0,
+      }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "Должность" })).toBeEnabled(),
+    );
+    expect(screen.getByTestId("chosen")).toHaveTextContent("new");
   });
 
   it("shows the server's reason when the position cannot be added and keeps the form's choice", async () => {

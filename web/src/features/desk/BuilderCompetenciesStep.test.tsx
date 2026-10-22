@@ -1,10 +1,12 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import userEvent, {
+  PointerEventsCheckLevel,
+} from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi, problem } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import type { MatrixVersion } from "../career/matrixApi";
 import { BuilderCompetenciesStep } from "./BuilderCompetenciesStep";
@@ -153,6 +155,20 @@ function checkboxOf(scope: Pick<typeof screen, "getByText">, name: string) {
   return within(row).getByRole("checkbox");
 }
 
+function lockedCheckboxes() {
+  const [selectAll, ...rows] = screen.getAllByRole("checkbox");
+  const boxes: [string, HTMLElement | undefined][] = [
+    ["select all", selectAll],
+    ...rows.map((row, index): [string, HTMLElement] => [
+      `row ${index + 1}`,
+      row,
+    ]),
+  ];
+  return boxes
+    .filter(([, box]) => box?.hasAttribute("disabled"))
+    .map(([kind]) => kind);
+}
+
 beforeEach(() => {
   queryClient.clear();
 });
@@ -187,5 +203,36 @@ describe("a block created in the wizard from a competency the author took out of
     ).toEqual([BLOCK.id]);
     expect(saved.competencies).toEqual([]);
     expect(screen.queryByText(NOT_ATTACHED)).toBeNull();
+  });
+});
+
+describe("the list of competencies is held while the version is being saved (AC-20)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
+  it("turns every checkbox off while the content is saved, so no competency is ticked then, and turns them on when the save is refused", async () => {
+    serve();
+    const held = deferred<Response>();
+    fakeApi.on(CONTENT_ROUTE, () => held.promise);
+    const user = renderStep();
+    await screen.findByText(OTHER_COMPETENCY.name);
+    await waitFor(() =>
+      expect(checkboxOf(screen, SAVED_COMPETENCY.name)).toBeChecked(),
+    );
+    expect(screen.getAllByRole("checkbox")).toHaveLength(3);
+    expect(lockedCheckboxes()).toEqual([]);
+
+    await user.click(screen.getByRole("button", { name: "Сохранить и далее" }));
+
+    await waitFor(() => expect(fakeApi.calls(CONTENT_ROUTE)).toHaveLength(1));
+    expect(lockedCheckboxes()).toEqual(["select all", "row 1", "row 2"]);
+    await userEvent
+      .setup({ pointerEventsCheck: PointerEventsCheckLevel.Never })
+      .click(checkboxOf(screen, OTHER_COMPETENCY.name));
+    expect(checkboxOf(screen, OTHER_COMPETENCY.name)).not.toBeChecked();
+    held.resolve(problem(500));
+    expect(await screen.findByText("Не удалось сохранить шаг")).toBeVisible();
+    await waitFor(() => expect(lockedCheckboxes()).toEqual([]));
+    await user.click(checkboxOf(screen, OTHER_COMPETENCY.name));
+    expect(checkboxOf(screen, OTHER_COMPETENCY.name)).toBeChecked();
   });
 });

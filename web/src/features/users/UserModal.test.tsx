@@ -3,12 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi, problem } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { UserModal } from "./UserModal";
 
 const USER_ID = "user-1";
 const REFUSAL = "HR отвечает за подразделения: сначала передайте их другому";
 const SAVE_FAILED = "Не удалось сохранить пользователя";
+const CREATE_ROUTE = "POST /api/v1/users";
+const SAVE_ROUTE = `PUT /api/v1/users/${USER_ID}`;
 const HR_ACCOUNT = {
   id: USER_ID,
   email: "hr@test.local",
@@ -23,17 +25,38 @@ const HR_ACCOUNT = {
 
 const noop = () => undefined;
 
-async function openAccount() {
-  fakeApi.on(`GET /api/v1/users/${USER_ID}`, () => Response.json(HR_ACCOUNT));
+async function openModal(userId?: string) {
   fakeApi.on("GET /api/v1/employees", () =>
     Response.json({ items: [], total: 0, page: 1, pageSize: 20 }),
   );
   render(
     <Providers>
-      <UserModal userId={USER_ID} onClose={noop} />
+      <UserModal userId={userId} onClose={noop} />
     </Providers>,
   );
   return within(await screen.findByRole("dialog"));
+}
+
+async function openAccount() {
+  fakeApi.on(`GET /api/v1/users/${USER_ID}`, () => Response.json(HR_ACCOUNT));
+  return openModal(USER_ID);
+}
+
+async function openNewAccount() {
+  const dialog = await openModal();
+  await userEvent.type(dialog.getByLabelText("E-mail"), "new@test.local");
+  return dialog;
+}
+
+function lockedFields(dialog: ReturnType<typeof within>) {
+  const fields: [string, HTMLElement][] = [
+    ["e-mail", dialog.getByLabelText("E-mail")],
+    ["roles", dialog.getByRole("combobox", { name: "Роли" })],
+    ["employee", dialog.getByRole("combobox", { name: "Сотрудник" })],
+  ];
+  return fields
+    .filter(([, field]) => field.hasAttribute("disabled"))
+    .map(([kind]) => kind);
 }
 
 async function removeHrRole(dialog: ReturnType<typeof within>) {
@@ -106,4 +129,38 @@ describe("removing the HR role from an account (user-management AC-50, AC-51)", 
     );
     expect(await dialog.findByText(SAVE_FAILED)).toBeInTheDocument();
   });
+});
+
+describe("the account form is held while the account is being saved (AC-20)", () => {
+  it.each([
+    {
+      what: "creates",
+      route: CREATE_ROUTE,
+      submit: "Создать",
+      open: openNewAccount,
+    },
+    {
+      what: "changes",
+      route: SAVE_ROUTE,
+      submit: "Сохранить",
+      open: openAccount,
+    },
+  ])(
+    "holds the e-mail, the roles and the employee while the form $what the account, and frees them when the server refuses",
+    async ({ route, submit, open }) => {
+      const held = deferred<Response>();
+      fakeApi.on(route, () => held.promise);
+      const dialog = await open();
+      await dialog.findByLabelText("E-mail");
+      expect(lockedFields(dialog)).toEqual([]);
+
+      await userEvent.click(dialog.getByRole("button", { name: submit }));
+
+      await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
+      expect(lockedFields(dialog)).toEqual(["e-mail", "roles", "employee"]);
+      held.resolve(problem(500));
+      expect(await dialog.findByText(SAVE_FAILED)).toBeInTheDocument();
+      await waitFor(() => expect(lockedFields(dialog)).toEqual([]));
+    },
+  );
 });

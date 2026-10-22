@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { focusManager, onlineManager } from "@tanstack/react-query";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -17,6 +18,7 @@ const SAVE_LABEL = "Сохранить и далее";
 const ACCOUNT_LABEL = "Создать учётную запись и отправить приглашение";
 const UNIT = { id: "u1", name: "Команда" };
 const POSITION = { id: "p1", name: "Инженер" };
+const POSITIONS_ROUTE = `GET /api/v1/org-units/${UNIT.id}/positions`;
 
 function employee(version: number, lastName: string) {
   return {
@@ -131,8 +133,42 @@ function stepRuler() {
   return Array.from(document.querySelectorAll(".ant-steps-item"));
 }
 
+function surname() {
+  return screen.getByLabelText("Фамилия");
+}
+
+const TAB_RETURN = {
+  cause: "the user returns to the browser tab",
+  refresh: () => {
+    focusManager.setFocused(false);
+    focusManager.setFocused(true);
+  },
+};
+const NETWORK_RETURN = {
+  cause: "the network comes back",
+  refresh: () => {
+    onlineManager.setOnline(false);
+    onlineManager.setOnline(true);
+  },
+};
+
+async function refreshInTheBackground(refresh: () => void) {
+  await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+  const reads = fakeApi.calls(POSITIONS_ROUTE).length;
+  await act(async () => refresh());
+  await waitFor(() =>
+    expect(
+      fakeApi.calls(POSITIONS_ROUTE).length,
+      "the refresh must reach the cache: the positions of the unit are reread",
+    ).toBeGreaterThan(reads),
+  );
+  await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+}
+
 beforeEach(() => {
   queryClient.clear();
+  focusManager.setFocused(undefined);
+  onlineManager.setOnline(true);
 });
 
 describe("the scenario that takes an employee on", {
@@ -188,7 +224,67 @@ describe("the scenario that takes an employee on", {
     expect(accepted?.headers.get("If-Match")).toBe('"2"');
   });
 
-  it("holds the steps, «Назад» and «Пропустить» while the account is being created (AC-187)", async () => {
+  it.each([TAB_RETURN, NETWORK_RETURN])(
+    "keeps what was typed on the card of the created employee when $cause and the card has changed behind the back (AC-61)",
+    async ({ refresh }) => {
+      const card = serve();
+      const user = renderPage();
+      await createEmployee(user);
+      await backToTheEmployee(user);
+      await user.type(surname(), "ов");
+      card.changeBehindTheBack("Сидоров");
+
+      await refreshInTheBackground(refresh);
+
+      await user.type(surname(), "а");
+      expect(surname()).toHaveValue("Ивановова");
+      fakeApi.on(UPDATE_EMPLOYEE_ROUTE, () =>
+        Response.json(card.saveAs("Ивановова")),
+      );
+      await user.click(screen.getByRole("button", { name: SAVE_LABEL }));
+      await screen.findByLabelText("E-mail");
+      const [saved] = fakeApi.calls(UPDATE_EMPLOYEE_ROUTE);
+      expect(saved?.headers.get("If-Match")).toBe('"1"');
+      expect(await saved?.json()).toMatchObject({ lastName: "Ивановова" });
+    },
+  );
+
+  it("goes back to leaving the card alone once the reread after a refused save is on screen (AC-61)", async () => {
+    const card = serve();
+    const user = renderPage();
+    await refuseTheSecondSave(user, card);
+    await waitFor(() => expect(surname()).toHaveValue("Сидоров"));
+    await user.type(surname(), "а");
+    card.changeBehindTheBack("Петров");
+
+    await refreshInTheBackground(TAB_RETURN.refresh);
+
+    await user.type(surname(), "в");
+    expect(surname()).toHaveValue("Сидоровав");
+  });
+
+  it("keeps what was typed when the save fails for another reason than a stale card, and rereads nothing (AC-61)", async () => {
+    const card = serve();
+    const user = renderPage();
+    await createEmployee(user);
+    await backToTheEmployee(user);
+    fakeApi.on(UPDATE_EMPLOYEE_ROUTE, () => {
+      card.changeBehindTheBack("Сидоров");
+      return problem(500);
+    });
+    await user.type(surname(), "ов");
+
+    await user.click(screen.getByRole("button", { name: SAVE_LABEL }));
+
+    expect(
+      await screen.findByText("Карточка сотрудника не обновлена"),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    await user.type(surname(), "а");
+    expect(surname()).toHaveValue("Ивановова");
+  });
+
+  it("holds the steps, «Назад», «Пропустить» and the e-mail while the account is being created (AC-187)", async () => {
     serve();
     const created = deferred<Response>();
     fakeApi.on(CREATE_ACCOUNT_ROUTE, () => created.promise);
@@ -203,6 +299,7 @@ describe("the scenario that takes an employee on", {
     );
     expect(screen.getByRole("button", { name: "Назад" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Пропустить" })).toBeDisabled();
+    expect(screen.getByLabelText("E-mail")).toBeDisabled();
     expect(
       stepRuler().filter((step) =>
         step.classList.contains("ant-steps-item-disabled"),
