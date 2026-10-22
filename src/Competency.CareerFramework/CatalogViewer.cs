@@ -85,7 +85,8 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, bool IsHr, IRead
             : typeof(T) == typeof(CareerTrack)
             ? (Expression<Func<CareerTrack, bool>>)(track => track.Status == CatalogStatus.Active
                 || (track.Status == CatalogStatus.Inactive && seesInactive)
-                || (track.Status == CatalogStatus.Draft && (isAdmin || track.AuthorId == userId || unitIds.Contains(track.OwnerOrgUnitId))))
+                || (track.Status == CatalogStatus.Draft
+                    && (isAdmin || track.AuthorId == userId || unitIds.Contains(track.OwnerOrgUnitId) || routeEntryIds.Contains(track.Id))))
             : typeof(T) == typeof(CareerLevel)
                 ? (Expression<Func<CareerLevel, bool>>)(level => level.Status == CatalogStatus.Active
                     || (level.Status == CatalogStatus.Inactive && seesInactive)

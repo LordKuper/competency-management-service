@@ -137,7 +137,8 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// <param name="viewer">The user's rights.</param>
     /// <param name="below">The units strictly below the user's headed units, as <see cref="UnitsBelowHeadedAsync"/> finds them.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    /// <returns>The identifiers of the levels, shared blocks, competencies with those of the blocks and scales of those competencies.</returns>
+    /// <returns>The identifiers of the matrix tracks and directions, the levels, shared blocks, competencies with those of the blocks, and
+    /// the scales and directions of those competencies.</returns>
     public async Task<IReadOnlySet<Guid>> RouteEntryIdsAsync(
         CatalogViewer viewer,
         IReadOnlyDictionary<Guid, OrgUnitStatus> below,
@@ -156,6 +157,7 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
         var competencyIds = new HashSet<Guid>();
         foreach (var version in versions)
         {
+            ids.UnionWith(new[] { version.Matrix.TrackId, version.Matrix.DirectionId }.OfType<Guid>());
             ids.UnionWith(version.Content.Levels.Select(level => level.LevelId));
             ids.UnionWith(version.Content.SharedBlocks.Select(block => block.BlockId));
             competencyIds.UnionWith(version.Content.Competencies.Select(competency => competency.CompetencyId));
@@ -174,10 +176,13 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
         {
             var used = competencyIds.ToList();
             ids.UnionWith(used);
-            ids.UnionWith(await context.Set<CareerCompetency>()
+            foreach (var references in await context.Set<CareerCompetency>()
                 .Where(competency => used.Contains(competency.Id))
-                .Select(competency => competency.ScaleId)
-                .ToListAsync(cancellationToken));
+                .Select(competency => new { competency.ScaleId, competency.DirectionId })
+                .ToListAsync(cancellationToken))
+            {
+                ids.UnionWith(new[] { references.ScaleId, references.DirectionId }.OfType<Guid>());
+            }
         }
 
         return ids;
