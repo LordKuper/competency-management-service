@@ -372,3 +372,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-22 — route test-fix D-1, D-2: standard, dispatch HEAD 3aa12fb; risk none via failing test
 - 2026-10-22 — impl test-fix: defects D-1, D-2 resolved (2725176, 4483101); gate: build 0/0, web build и lint чисто
 - 2026-10-22 — route impl-test entry 2: standard, dispatch HEAD ca9c433; risk none via failing test
+- 2026-10-22 — impl-test: impacted set green (backend 16/16, web 492/492), 0/0 tests; ScaleModal/CompetencyModal тесты обёрнуты в MemoryRouter (тестовый дефект после D-2)
