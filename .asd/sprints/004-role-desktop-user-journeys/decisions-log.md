@@ -345,3 +345,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-22 — Task 72 cancel-fix COMPLETED (574b4f7): desk.html m-leave, DESIGN.md — «Отмена» без диалога
 - 2026-10-22 — Task 73 cancel-fix COMPLETED (9bb2eff): «Отмена» в 8 окнах закрывает без подтверждения; confirmClose/ModalUnsavedContext/CancelButton удалены; «×»/Esc/затемнение — confirmLeave только при несохранённом окне; lint/build чисто
 - 2026-10-22 — Task 71 cancel-fix COMPLETED (1cb0826): stack.html — подтверждение только у onCancel AppModal; gate: web lint/build чисто, web 348/348, backend не менялся
+- 2026-10-22 — impl assessment (user): убрать подсказку под ролями «Без отмеченных ролей…»; роли — список с мультивыбором, а не флажок на роль. route Task 76 roles-select-fix (asd-ux), Task 78 roles-select-fix (asd-dev): standard, параллельно, dispatch HEAD 2a41f01; risk none via web typecheck
+- 2026-10-22 — Task 78 roles-select-fix COMPLETED (c1624e5): Select mode=multiple «Роли», placeholder «Пользователь без ролей», без подсказки
+- 2026-10-22 — Task 76 roles-select-fix COMPLETED (90fcb6d): мультивыбор «Роли», без подсказки, placeholder совпадает с кодом; gate: web lint/build чисто

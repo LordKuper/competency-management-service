@@ -443,3 +443,9 @@
 {"op":"close","id":"Task 72 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.096Z","end":"2026-10-22T08:00:48.094Z","outcome":"done","attrs":{}}
 {"op":"close","id":"Task 73 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.164Z","end":"2026-10-22T08:02:02.995Z","outcome":"done","attrs":{}}
 {"op":"close","id":"Task 71 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.020Z","end":"2026-10-22T08:02:28.172Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 12","kind":"user-wait","parent":"impl#2","start":"2026-10-22T08:03:16.800Z","attrs":{}}
+{"op":"close","id":"impl assessment 12","kind":"user-wait","parent":"impl#2","start":"2026-10-22T08:03:16.800Z","end":"2026-10-22T09:17:11.048Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 76 roles-select-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:17:11.290Z","attrs":{}}
+{"op":"open","id":"Task 78 roles-select-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:17:11.346Z","attrs":{}}
+{"op":"close","id":"Task 78 roles-select-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:17:11.346Z","end":"2026-10-22T09:18:04.298Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 76 roles-select-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:17:11.290Z","end":"2026-10-22T09:19:04.235Z","outcome":"done","attrs":{}}
