@@ -204,5 +204,5 @@ export function useVersionTransition() {
     await run(decision);
   }
 
-  return { decide, isPending, error, clearError: () => setError(null) };
+  return { decide, isPending, error };
 }
