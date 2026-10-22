@@ -6,7 +6,7 @@ namespace Competency.CareerFramework;
 /// One publication as worked out under the current data: the drafts that become active with the root, what keeps it from happening,
 /// and the tag of the list. A refusal and a preview list the same entries in the way, so what the user saw is what was refused.
 /// </summary>
-/// <param name="Entries">The tracked drafts published with the root, in the order the list shows them, already set active in memory.</param>
+/// <param name="Entries">The tracked drafts published with the root, in the order the list shows them, still drafts until the plan is applied.</param>
 /// <param name="Blockers">Every entry in the way with the reason; empty when the publication may go ahead.</param>
 /// <param name="Tag">The hash of the root and of every draft with its version.</param>
 internal sealed record PublicationPlan(

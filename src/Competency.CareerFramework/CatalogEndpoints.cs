@@ -467,6 +467,7 @@ internal static class CatalogEndpoints
             return PublicationChanged.Refuse($"{route}/{id}/publication");
         }
 
+        entry.Status = CatalogStatus.Active;
         publication.Apply(plan, entry.GetType().Name, entry.Id);
         if (isApproval)
         {

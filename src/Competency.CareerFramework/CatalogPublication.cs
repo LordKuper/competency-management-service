@@ -45,7 +45,6 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
 
     /// <summary>
     /// Plans making a draft or inactive entry active by the right of the given user; an entry that is already active publishes nothing.
-    /// The root and its drafts are set active on the tracked entries, so names are checked against everything published together.
     /// </summary>
     /// <param name="root">The tracked entry; the caller has checked that the user may manage it.</param>
     /// <param name="approver">The rights of the user who publishes.</param>
@@ -71,7 +70,6 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
     /// <summary>
     /// Plans publishing the version by the right of the responsible HR of the matrix unit, with that HR's own roles, whoever starts it;
     /// without that HR no draft may be approved. A responsible HR always holds the HR role, since an assignment acts only through such an account.
-    /// The drafts are set active on the tracked entries.
     /// </summary>
     /// <param name="version">The version, with its matrix.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
@@ -116,7 +114,8 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
     }
 
     /// <summary>
-    /// Journals each draft of the plan as approved together with the root; the caller saves them with its own change.
+    /// Sets each draft of the plan active and journals it as approved together with the root; the caller saves them with its own change
+    /// and sets a catalogue root active itself.
     /// </summary>
     /// <param name="plan">A plan with no blockers.</param>
     /// <param name="rootType">The root's entity type, such as <c>MatrixVersion</c>.</param>
@@ -126,6 +125,7 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
         var reason = $"каскад {rootType} {rootId}";
         foreach (var entry in plan.Entries)
         {
+            entry.Status = CatalogStatus.Active;
             StageApproved(entry, reason);
         }
     }
@@ -153,8 +153,10 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
         (entry, new PublicationBlocker(KindOf(entry), entry.Id, entry.Name, reason, ContextOf(entry)));
 
     /// <summary>
-    /// Sets the root and its drafts active and finds what is in the way: drafts the approver may not approve, tracks that are not ready,
-    /// shared blocks without competencies, and names taken, the root's only when it leaves the draft status. The tag is taken from the versions as read.
+    /// Finds what is in the way: drafts the approver may not approve, tracks that are not ready, shared blocks without competencies, and
+    /// names taken, the root's only when it leaves the draft status. The root and its drafts are active on the tracked entries only while
+    /// the checks run, so names are checked against everything published together, and keep the statuses as read afterwards, by which a
+    /// reader's right to see a blocker is decided. The tag is taken from the versions as read.
     /// </summary>
     private async Task<PublicationPlan> CheckAsync(
         Guid rootId,
@@ -171,6 +173,7 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
             .ThenBy(entry => entry.Name, StringComparer.Ordinal)];
         List<CatalogEntry> named = [.. root is { Status: CatalogStatus.Draft } ? [root] : Array.Empty<CatalogEntry>(), .. entries];
         List<CatalogEntry> published = [.. root is null ? Array.Empty<CatalogEntry>() : [root], .. entries];
+        List<CatalogStatus> statusesAsRead = [.. published.Select(entry => entry.Status)];
         foreach (var entry in published)
         {
             entry.Status = CatalogStatus.Active;
@@ -193,6 +196,11 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
             {
                 blockers.Add(BlockerOf(entry, PublicationBlockerReason.NameTaken));
             }
+        }
+
+        foreach (var (entry, status) in published.Zip(statusesAsRead))
+        {
+            entry.Status = status;
         }
 
         return new PublicationPlan(entries, blockers, TagOf(rootId, rootVersion, entries));
