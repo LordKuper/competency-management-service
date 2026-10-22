@@ -424,3 +424,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-23 — route impl-test entry 7: critical, dispatch HEAD c5a16e7; risk change: security
 - 2026-10-23 — impl-test entry 7 flagged приняты: двойная защита перечитывания в OnboardEmployeePage (эквивалентные мутанты) — на суд efficiency; тело PUT не утверждается (собирается до щелчка); O5/O6 — защита; ChangePositionForm без отдельного теста блокировки — потолок
 - 2026-10-23 — impl-test: impacted set green (web 685/685), 9/0 tests
+- 2026-10-23 — impl-review wave-2/iter-03 (floor high): correctness, efficiency, external APPROVE (latched); волна 2 закрыта → волна 3, итерация 1. Memory-fix asd-reviewer-correctness (reference_persist-review-return-shape: пустая таблица находок — только заголовок и разделитель), применено оркестратором по MEMORY-FIX

@@ -6,7 +6,7 @@
 - [OS is not shell](project_os-is-not-shell.md) — Claude Code runs commands via POSIX `Bash` even on win32; OS-keyed shell syntax is wrong for one provider
 - [Check host claims against own dispatch](feedback_check-host-claims-against-own-dispatch.md) — host-capability canon claims: compare with your own tool list + host docs, not just the retro row
 - [Read deferred gaps in sprint logs](feedback_read-deferred-gaps-in-sprint-logs.md) — grep decisions-log/friction-log for gaps "left for impl-review" before the verdict
-- [persist-review return shape](reference_persist-review-return-shape.md) — write return verbatim to payload's `.asd/tmp/` file; first table parsed by column; bare APPROVE keeps only `—` row
+- [persist-review return shape](reference_persist-review-return-shape.md) — write return verbatim to payload's `.asd/tmp/` file; first table parsed by column; bare APPROVE: header + separator only
 - [Product design-review: derived actor paths](feedback_design-review-derived-actor-paths.md) — actor-keyed rights on indirect paths, sibling write paths, existing SPA callers of a tightened contract, mockup samples
 - [No prior-iteration reports](feedback_no-prior-iteration-reports.md) — never open reviews/*/iter-<other>/ files; Glob only the current iter dir (violated twice in sprint 004)
 - [Check persistent AC text before raising](feedback_check-persistent-ac-text-before-raising.md) — odd rights/scope rule in code is often literal requirement text; read the AC row first
