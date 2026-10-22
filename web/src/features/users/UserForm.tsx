@@ -91,6 +91,7 @@ export function UserForm({
       name="user"
       layout="vertical"
       noValidate
+      disabled={isSubmitting}
       initialValues={initialValues}
       onFinish={submit}
       onValuesChange={() => onDirtyChange?.(form.isFieldsTouched())}
