@@ -57,3 +57,4 @@
 - [Position matrix + shared blocks](project_position-matrix-shared-block-facts.md) — CompositionsOf, per-competency ScaleOf (no version scale), HeadedSubtreeIds only via ViewerAsync, unrun SQL, test pin
 - [Contract reset + squash](project_contract-reset-and-squash-facts.md) — 1.0.0 reset, incremental migrations + hand-ordered transfer, release squash recipe, JsonRequired probe
 - [Role set + HR by employee](project_role-set-hr-assignment-facts.md) — Identity roles via AccountRoles, ToQueryString probe, CanBeHr x3, ViewerAsync skips only admins, run-time test breaks
+- [Commit subject length](feedback_commit-subject-length.md) — ≤50 chars incl. scope, English only; count with node before committing, no amend later
