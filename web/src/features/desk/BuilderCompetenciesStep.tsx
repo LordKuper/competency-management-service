@@ -431,7 +431,7 @@ function CompetenciesBody({
             rowSelection={{
               selectedRowKeys: [...chosen, ...brought.keys()],
               getCheckboxProps: (row) => ({
-                disabled: !isEditable || brought.has(row.id),
+                disabled: isSaving || !isEditable || brought.has(row.id),
               }),
               onSelect: (row, isChosen) => choose(row.id, isChosen),
               onSelectAll: (isChosen, _rows, changed) => {
