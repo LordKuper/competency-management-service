@@ -54,11 +54,8 @@ internal static class CatalogDraftEndpoints
         var drafts = all.Where(draft => (kind is null || KindOf(draft) == kind) && (orgUnitId is null || draft.ListedUnitId == orgUnitId)).ToList();
         var unitNames = await store.UnitNamesAsync(drafts.Select(draft => draft.ListedUnitId), cancellationToken);
         var authorNames = await store.UserNamesAsync(drafts.Select(draft => draft.AuthorId), cancellationToken);
-        var readiness = new Dictionary<Guid, TrackReadinessResponse?>();
-        foreach (var track in drafts.OfType<CareerTrack>())
-        {
-            readiness[track.Id] = TrackReadinessResponse.Of(await store.ReadinessAsync(track.Id, cancellationToken));
-        }
+        var trackIds = drafts.OfType<CareerTrack>().Select(track => track.Id).ToList();
+        var readiness = trackIds.Count == 0 ? new Dictionary<Guid, TrackReadiness>() : await store.ReadinessAsync(trackIds, cancellationToken);
 
         return TypedResults.Ok(drafts
             .OrderBy(draft => draft.CreatedAt)
@@ -73,7 +70,7 @@ internal static class CatalogDraftEndpoints
                 draft.AuthorId is { } authorId ? authorNames.GetValueOrDefault(authorId) : null,
                 draft.CreatedAt,
                 draft.Version,
-                readiness.GetValueOrDefault(draft.Id)))
+                readiness.TryGetValue(draft.Id, out var trackReadiness) ? TrackReadinessResponse.Of(trackReadiness) : null))
             .ToList());
     }
 

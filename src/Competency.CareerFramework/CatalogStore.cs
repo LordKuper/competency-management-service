@@ -173,19 +173,30 @@ internal sealed class CatalogStore(
     /// <param name="trackId">The track.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
     /// <returns>The track's readiness.</returns>
-    public async Task<TrackReadiness> ReadinessAsync(Guid trackId, CancellationToken cancellationToken)
+    public async Task<TrackReadiness> ReadinessAsync(Guid trackId, CancellationToken cancellationToken) =>
+        (await ReadinessAsync([trackId], cancellationToken))[trackId];
+
+    /// <summary>
+    /// Works out the readiness of many tracks by the rule of <see cref="ReadinessAsync(Guid, CancellationToken)"/>, with the same queries as for one.
+    /// </summary>
+    /// <param name="trackIds">The tracks.</param>
+    /// <param name="cancellationToken">Cancels the queries.</param>
+    /// <returns>The readiness of each track, by track.</returns>
+    public async Task<IReadOnlyDictionary<Guid, TrackReadiness>> ReadinessAsync(List<Guid> trackIds, CancellationToken cancellationToken)
     {
-        var levels = await context.Set<CareerLevel>()
-            .AsNoTracking()
-            .Where(level => level.TrackId == trackId && level.Status != CatalogStatus.Inactive)
-            .OrderBy(level => level.Position)
-            .ToListAsync(cancellationToken);
+        var levels = (await context.Set<CareerLevel>()
+                .AsNoTracking()
+                .Where(level => trackIds.Contains(level.TrackId) && level.Status != CatalogStatus.Inactive)
+                .OrderBy(level => level.Position)
+                .ToListAsync(cancellationToken))
+            .ToLookup(level => level.TrackId);
         var links = (await context.Set<CareerLevelPosition>()
                 .AsNoTracking()
-                .Where(link => link.TrackId == trackId)
+                .Where(link => trackIds.Contains(link.TrackId))
                 .ToListAsync(cancellationToken))
             .ToLookup(link => link.LevelId, link => link.PositionId);
-        return TrackReadiness.Of(levels, links, (await employees.FindOrgSnapshotAsync(cancellationToken)).Positions);
+        var positions = (await employees.FindOrgSnapshotAsync(cancellationToken)).Positions;
+        return trackIds.Distinct().ToDictionary(trackId => trackId, trackId => TrackReadiness.Of([.. levels[trackId]], links, positions));
     }
 
     /// <summary>
