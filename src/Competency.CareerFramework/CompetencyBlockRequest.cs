@@ -19,8 +19,11 @@ internal sealed record CompetencyBlockRequest : CatalogNameRequest
     public override Dictionary<string, string[]> Validate()
     {
         var errors = base.Validate();
-        var ids = CompetencyIds ?? [];
-        if (ids.Distinct().Count() != ids.Count)
+        if (CompetencyIds is null)
+        {
+            errors[CompetenciesField] = ["Укажите состав блока"];
+        }
+        else if (CompetencyIds.Distinct().Count() != CompetencyIds.Count)
         {
             errors[CompetenciesField] = ["Компетенция входит в состав блока не больше одного раза"];
         }
