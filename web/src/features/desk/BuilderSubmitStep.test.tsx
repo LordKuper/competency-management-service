@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi } from "../../test/fakeApi";
+import { fakeApi, problem } from "../../test/fakeApi";
 import type { MatrixVersion } from "../career/matrixApi";
 import { BuilderSubmitStep } from "./BuilderSubmitStep";
 import { deskPaths } from "./deskTexts";
@@ -51,14 +51,14 @@ function serve(hiddenEntryCount: number) {
   );
 }
 
-function renderStep() {
+function renderStep(onBack: () => void = () => {}) {
   render(
     <Providers>
       <RouterProvider
         router={createMemoryRouter([
           {
             path: "/",
-            element: <BuilderSubmitStep version={VERSION} onBack={() => {}} />,
+            element: <BuilderSubmitStep version={VERSION} onBack={onBack} />,
           },
           { path: deskPaths.desk, element: <p>рабочий стол</p> },
         ])}
@@ -104,5 +104,60 @@ describe("sending a version whose publication carries drafts the user may not re
     expect(await screen.findByText(/без черновых записей/)).toBeInTheDocument();
 
     expect(screen.queryByText(/и ещё/)).toBeNull();
+  });
+});
+
+const CHECK_ROUTE = "GET /api/v1/career/matrix-versions/v1/completeness";
+const LIST_ROUTE = "GET /api/v1/career/matrix-versions/v1/publication";
+const FAILED_READS: Record<string, string> = {
+  "the completeness check": CHECK_ROUTE,
+  "the list of what the sending publishes": LIST_ROUTE,
+};
+
+describe("the sending of a version whose preparation could not be read (AC-52)", () => {
+  it.each(Object.entries(FAILED_READS))(
+    "shows the failure of %s with a retry, holds the sending off with the reason, and keeps the way back",
+    async (_, route) => {
+      serve(0);
+      fakeApi.on(route, () => problem(403, { title: "Нет доступа" }));
+      const onBack = vi.fn();
+      const user = renderStep(onBack);
+
+      expect(
+        await screen.findByText("Не удалось подготовить отправку"),
+      ).toBeInTheDocument();
+
+      expect(screen.getByRole("button", { name: "Повторить" })).toBeEnabled();
+      expect(
+        screen.getByRole("button", { name: "Отправить на согласование" }),
+      ).toBeDisabled();
+      expect(
+        screen.getByText(/Отправка недоступна, пока не загружены/),
+      ).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Назад" }));
+      expect(onBack).toHaveBeenCalledOnce();
+    },
+  );
+
+  it("reads both again on a retry and offers the sending once they are read", async () => {
+    serve(0);
+    for (const route of Object.values(FAILED_READS)) {
+      fakeApi.on(route, () => problem(403, { title: "Нет доступа" }));
+    }
+    const user = renderStep();
+    const retry = await screen.findByRole("button", { name: "Повторить" });
+    serve(0);
+    await user.click(retry);
+
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Не удалось подготовить отправку"),
+      ).not.toBeInTheDocument(),
+    );
+
+    expect(await screen.findByText(/без черновых записей/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Отправить и опубликовать" }),
+    ).toBeEnabled();
   });
 });

@@ -93,3 +93,120 @@ describe("the queue of drafts to approve shows what an approval publishes (AC-77
     expect(screen.queryByText(/и ещё/)).toBeNull();
   });
 });
+
+const NOTICE = "Запись уже утверждена другим пользователем или недоступна вам.";
+const SECOND_DRAFT = {
+  ...DRAFT,
+  id: "c2",
+  name: "Ответственность",
+  version: 2,
+};
+const TRACK_DRAFT = {
+  ...DRAFT,
+  kind: "Track",
+  id: "t1",
+  name: "Инженер-аналитик",
+  readiness: { hasLevels: true, levelsWithoutActivePosition: [] },
+};
+const HEADING_OF_FIRST = "Компетенция Работа в команде";
+const HEADING_OF_SECOND = "Компетенция Ответственность";
+
+function serveQueue() {
+  let approved = false;
+  fakeApi.on("GET /api/v1/auth/me", () =>
+    Response.json({ id: "hr", email: "hr@test.local", roles: ["Hr"] }),
+  );
+  fakeApi.on("GET /api/v1/career/me", () =>
+    Response.json({ headedUnits: [], hrUnits: [] }),
+  );
+  fakeApi.on("GET /api/v1/career/drafts", (request) => {
+    const kind = new URL(request.url).searchParams.get("kind");
+    if (kind === "Track") return Response.json([TRACK_DRAFT]);
+    return Response.json(
+      approved
+        ? [SECOND_DRAFT, TRACK_DRAFT]
+        : [DRAFT, SECOND_DRAFT, TRACK_DRAFT],
+    );
+  });
+  for (const id of [DRAFT.id, SECOND_DRAFT.id]) {
+    fakeApi.on(`GET /api/v1/career/competencies/${id}/matrices`, () =>
+      Response.json([]),
+    );
+    fakeApi.on(`GET /api/v1/career/competencies/${id}/publication`, () =>
+      Response.json({
+        entries: [],
+        hiddenEntryCount: 0,
+        blockers: [],
+        moreCount: 0,
+        cascadeTag: `tag-${id}`,
+      }),
+    );
+  }
+  fakeApi.on(APPROVE_ROUTE, () => {
+    approved = true;
+    return Response.json({ id: DRAFT.id });
+  });
+}
+
+function renderQueueAt(path: string) {
+  render(
+    <Providers>
+      <RouterProvider
+        router={createMemoryRouter(
+          [
+            { path: "/desk/drafts", element: <DraftsQueuePage /> },
+            {
+              path: "/desk/drafts/:kind/:entryId",
+              element: <DraftsQueuePage />,
+            },
+          ],
+          { initialEntries: [path] },
+        )}
+      />
+    </Providers>,
+  );
+  return userEvent.setup();
+}
+
+describe("the notice that a record asked for by link is gone judges the first read of the queue only (AC-76)", () => {
+  it("says nothing when the user approves the record they opened by link, and opens the next one", async () => {
+    serveQueue();
+    const user = renderQueueAt("/desk/drafts/competency/c1");
+    await screen.findByRole("heading", { name: HEADING_OF_FIRST });
+
+    await user.click(await screen.findByRole("button", { name: "Утвердить" }));
+
+    expect(
+      await screen.findByRole("heading", { name: HEADING_OF_SECOND }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(NOTICE)).toBeNull();
+  });
+
+  it("says nothing when the user narrows the queue to a kind that does not hold the record they opened by link", async () => {
+    serveQueue();
+    const user = renderQueueAt("/desk/drafts/competency/c1");
+    await screen.findByRole("heading", { name: HEADING_OF_FIRST });
+
+    await user.click(screen.getByRole("combobox", { name: "Вид" }));
+    await user.click(
+      await screen.findByText("Трек", {
+        selector: ".ant-select-item-option-content",
+      }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Трек Инженер-аналитик" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(NOTICE)).toBeNull();
+  });
+
+  it("says the record is gone when the first read of the queue does not hold the record asked for", async () => {
+    serveQueue();
+    renderQueueAt("/desk/drafts/competency/missing");
+
+    expect(await screen.findByText(NOTICE)).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: HEADING_OF_FIRST }),
+    ).toBeInTheDocument();
+  });
+});

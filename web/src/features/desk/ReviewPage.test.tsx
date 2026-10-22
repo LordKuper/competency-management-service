@@ -1,9 +1,10 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { ReviewPage } from "./ReviewPage";
 
 const NO_DRAFTS = "Черновых записей нет: публикуется только версия.";
@@ -63,6 +64,7 @@ function serve(hiddenEntryCount: number) {
 }
 
 function renderReview() {
+  const user = userEvent.setup();
   render(
     <Providers>
       <RouterProvider
@@ -73,6 +75,7 @@ function renderReview() {
       />
     </Providers>,
   );
+  return user;
 }
 
 beforeEach(() => {
@@ -98,5 +101,60 @@ describe("the review of a version lists what its approval publishes (AC-65, AC-1
     expect(await screen.findByText(NO_DRAFTS)).toBeInTheDocument();
 
     expect(screen.queryByText(/и ещё/)).toBeNull();
+  });
+});
+
+const CHECK_ROUTE = "GET /api/v1/career/matrix-versions/v1/completeness";
+const LIST_ROUTE = "GET /api/v1/career/matrix-versions/v1/publication";
+const APPROVE_BUTTON = { name: /^Согласовать( и опубликовать)?$/ };
+const FAILED_READS = [
+  {
+    read: "the completeness check",
+    route: CHECK_ROUTE,
+    title: "Не удалось выполнить проверку полноты",
+  },
+  {
+    read: "the list of what the approval publishes",
+    route: LIST_ROUTE,
+    title: "Не удалось загрузить перечень публикации",
+  },
+];
+
+describe("the review of a version whose preparation could not be read (AC-65)", () => {
+  it.each(FAILED_READS)(
+    "shows the failure of $read with a retry, holds the approval off with the reason, and approves once a retry reads it",
+    async ({ route, title }) => {
+      serve(0);
+      fakeApi.on(route, () => problem(403, { title: "Нет доступа" }));
+      const user = renderReview();
+
+      expect(await screen.findByText(title)).toBeInTheDocument();
+
+      expect(screen.getByRole("button", APPROVE_BUTTON)).toBeDisabled();
+      expect(
+        screen.getByText(
+          "Согласовать недоступно: не загрузились проверка полноты или перечень публикации",
+        ),
+      ).toBeInTheDocument();
+      const retry = screen.getByRole("button", { name: "Повторить" });
+      serve(0);
+      await user.click(retry);
+      expect(await screen.findByText(NO_DRAFTS)).toBeInTheDocument();
+      expect(screen.queryByText(title)).toBeNull();
+      expect(screen.getByRole("button", APPROVE_BUTTON)).toBeEnabled();
+    },
+  );
+
+  it("holds the approval off and says why while the list of what it publishes is being read", async () => {
+    serve(0);
+    const list = deferred<Response>();
+    fakeApi.on(LIST_ROUTE, () => list.promise);
+    renderReview();
+
+    expect(
+      await screen.findByText("Проверяем, что будет опубликовано…"),
+    ).toBeInTheDocument();
+
+    expect(screen.getByRole("button", APPROVE_BUTTON)).toBeDisabled();
   });
 });
