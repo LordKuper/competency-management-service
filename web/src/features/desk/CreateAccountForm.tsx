@@ -4,6 +4,7 @@ import { type ComponentProps, useEffect, useState } from "react";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import type { UserRole } from "../../app/featureContract";
 import type { LeaveEdits } from "../../app/leaveGuard";
 import { invalidateOrgStructure } from "../org-structure/orgStructureApi";
 import { UserForm, type UserInput } from "../users/UserForm";
@@ -12,6 +13,8 @@ import { type UserResponse, usersQueryKey } from "../users/usersApi";
 interface CreateAccountFormProps {
   /** The employee the account is created for and bound to. */
   employeeId: string;
+  /** The roles the account gets; none, the role «Пользователь», when omitted. */
+  roles?: UserRole[];
   submitLabel: string;
   /** Receives the created account, with whether the invitation was sent. */
   onCreated: (account: UserResponse) => void;
@@ -22,11 +25,11 @@ interface CreateAccountFormProps {
 }
 
 /**
- * The e-mail of a new account for a given employee, with the role «Пользователь»: the account is created with an
- * invitation by e-mail. A refusal (a taken e-mail) is shown above the field and under it; the employee stays as it is.
+ * The e-mail of a new account for a given employee: the account is created with an invitation by e-mail. A refusal (a taken e-mail) is shown above the field and under it; the employee stays as it is.
  */
 export function CreateAccountForm({
   employeeId,
+  roles,
   submitLabel,
   onCreated,
   onCancel,
@@ -58,7 +61,7 @@ export function CreateAccountForm({
       )}
       <UserForm
         isNew
-        lockedTo={{ employeeId }}
+        lockedTo={{ employeeId, roles }}
         submitLabel={submitLabel}
         onSubmit={(input) => create.mutateAsync(input)}
         onCancel={onCancel}

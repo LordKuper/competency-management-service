@@ -25,8 +25,8 @@ interface UserFormProps {
   employee?: { id: string; name: string };
   /** Whether the form creates an account, which is then invited by e-mail to set its own password. */
   isNew?: boolean;
-  /** Fixes the employee and leaves the account without special roles, as when an account is created for a given employee: their fields are not shown. */
-  lockedTo?: { employeeId: string };
+  /** Fixes the employee and the roles, none unless given, as when an account is created for a given employee: their fields are not shown. */
+  lockedTo?: { employeeId: string; roles?: UserRole[] };
   /** The server refusal to show under the roles, which keeps the selected roles as the administrator left them. */
   rolesError?: string;
   submitLabel: string;
@@ -61,7 +61,11 @@ export function UserForm({
   const { isSubmitting, submit } = useFormSubmit(form, (values) =>
     onSubmit(
       lockedTo
-        ? { email: values.email, roles: [], ...lockedTo }
+        ? {
+            email: values.email,
+            roles: lockedTo.roles ?? [],
+            employeeId: lockedTo.employeeId,
+          }
         : { ...values, employeeId: values.employeeId ?? null },
     ),
   );

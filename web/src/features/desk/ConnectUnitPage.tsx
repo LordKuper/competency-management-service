@@ -20,7 +20,13 @@ import {
 
 type Row = UnitSetup["rows"][number];
 type Account = NonNullable<UnitSetup["headAccount"]>;
-type Dialog = "head" | "account" | "hr" | "positions" | null;
+type AccountRow = "HeadAccount" | "HrAccount";
+type Dialog = "head" | "headAccount" | "hr" | "hrAccount" | "positions" | null;
+
+const ACCOUNT_DIALOGS: Record<AccountRow, Dialog> = {
+  HeadAccount: "headAccount",
+  HrAccount: "hrAccount",
+};
 
 interface RowContent {
   value: ReactNode;
@@ -163,10 +169,13 @@ function SetupRows({ unitId, data, resend }: SetupRowsProps) {
     <Button onClick={() => setDialog(target)}>{label}</Button>
   );
 
-  function accountAction(account: Account | null): ReactNode {
+  function accountAction(row: AccountRow, account: Account | null): ReactNode {
     if (!account) return null;
-    if (account.state === "None" && data.head) {
-      return open("account", "Создать и отправить приглашение");
+    if (account.state === "None") {
+      const owner = row === "HeadAccount" ? data.head : data.hr;
+      return (
+        owner && open(ACCOUNT_DIALOGS[row], "Создать и отправить приглашение")
+      );
     }
     if (account.id === null || account.version === null) return null;
     const { id, email, version } = account;
@@ -261,7 +270,7 @@ function SetupRows({ unitId, data, resend }: SetupRowsProps) {
           value: account?.email
             ? `${account.email} — ${ACCOUNT_STATES[account.state]}`
             : "Нет учётной записи",
-          action: accountAction(account ?? null),
+          action: accountAction(row.row, account ?? null),
         };
       }
       case "Hr":
@@ -328,8 +337,15 @@ function SetupRows({ unitId, data, resend }: SetupRowsProps) {
       {dialog === "positions" && (
         <UnitPositionsModal unit={unit} onClose={close} />
       )}
-      {dialog === "account" && data.head && (
-        <AccountModal head={data.head} onClose={close} />
+      {dialog === "headAccount" && data.head && (
+        <AccountModal employee={data.head} addressee="head" onClose={close} />
+      )}
+      {dialog === "hrAccount" && data.hr && (
+        <AccountModal
+          employee={{ id: data.hr.employeeId, fullName: data.hr.name }}
+          addressee="hr"
+          onClose={close}
+        />
       )}
     </Flex>
   );
