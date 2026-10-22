@@ -31,6 +31,8 @@ public sealed class DeskPrerequisiteTests(CareerHost fixture) : IClassFixture<Ca
         await admin.MakeLevelAsync(track.Id);
         (await admin.ActivateAsync(track, unit.Id)).Expect(HttpStatusCode.OK);
         var plainAfterApproval = await PrerequisitesAsync(plain);
+        await admin.InviteUserAsync(Scenarios.Hr);
+        var withInvitedHr = await PrerequisitesAsync(admin);
         var hr = await admin.CreateUserAsync(Scenarios.Hr);
         var withHr = await PrerequisitesAsync(admin);
         var plainWithHr = await PrerequisitesAsync(plain);
@@ -48,6 +50,7 @@ public sealed class DeskPrerequisiteTests(CareerHost fixture) : IClassFixture<Ca
         adminSeesDraft.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
         plainBeforeApproval.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee");
         plainAfterApproval.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
+        withInvitedHr.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
         withHr.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack", "HrAccount");
         plainWithHr.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
         blockedHr.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");

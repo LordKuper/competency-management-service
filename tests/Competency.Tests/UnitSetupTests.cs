@@ -28,7 +28,11 @@ public sealed class UnitSetupTests(CareerHost fixture) : IClassFixture<CareerHos
         var withInvited = await SetupAsync(admin, path);
         (await admin.PostAsync($"/api/v1/users/{invited.Id}/block", ifMatch: (await admin.GetUserAsync(invited.Id)).ETag)).Expect(HttpStatusCode.OK);
         var withBlocked = await SetupAsync(admin, path);
-        var candidate = await admin.HrCandidateAsync(fixture.Host, (await admin.CreateUnitAsync()).Id);
+        var otherUnit = await admin.CreateUnitAsync();
+        var invitedHrEmployee = await admin.CreateEmployeeAsync(otherUnit.Id);
+        await admin.InviteUserAsync(Scenarios.Hr, invitedHrEmployee.Id);
+        var withInvitedHr = await SetupAsync(admin, path);
+        var candidate = await admin.HrCandidateAsync(fixture.Host, otherUnit.Id);
         var withCandidate = await SetupAsync(admin, path);
         (await admin.AssignHrAsync(unit.Id, candidate.EmployeeId)).Expect(HttpStatusCode.NoContent);
         var withHr = await SetupAsync(admin, path);
@@ -43,6 +47,7 @@ public sealed class UnitSetupTests(CareerHost fixture) : IClassFixture<CareerHos
         withHead.Json["head"]!["id"]!.GetValue<Guid>().Should().Be(employee.Id);
         withInvited.Rows[1].Should().Be("HeadAccount/Missing/Invited");
         withBlocked.Rows[1].Should().Be("HeadAccount/Missing/Blocked");
+        withInvitedHr.Rows[2..4].Should().Equal("Hr/Missing/NoHrCandidates", "HrAccount/Waiting/NoHr");
         withCandidate.Rows[2..4].Should().Equal("Hr/Missing/NoHr", "HrAccount/Waiting/NoHr");
         withHr.Rows[2..4].Should().Equal("Hr/Ready/", "HrAccount/Ready/");
         withHr.Json["hr"]!["employeeId"]!.GetValue<Guid>().Should().Be(candidate.Employee);
