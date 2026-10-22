@@ -129,6 +129,7 @@ export function EmployeeForm({
       form={form}
       name="employee"
       layout="vertical"
+      disabled={isSubmitting}
       initialValues={initialValues}
       onFinish={submit}
       onValuesChange={() => onDirtyChange?.(form.isFieldsTouched())}

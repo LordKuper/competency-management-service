@@ -141,7 +141,7 @@ export function PositionSelect({
         if (!isOpen) setSearch("");
       }}
       loading={isFetching || quickAdd.isPending}
-      disabled={quickAdd.isPending}
+      disabled={quickAdd.isPending || undefined}
       placeholder="Выберите должность"
       notFoundContent={error ? describeApiError(error) : undefined}
     />
