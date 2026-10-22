@@ -21,12 +21,14 @@ function preview(
   cascadeTag: string,
   options: {
     entries?: readonly object[];
+    hiddenEntryCount?: number;
     blockers?: readonly object[];
     moreCount?: number;
   } = {},
 ) {
   return Response.json({
     entries: options.entries ?? [],
+    hiddenEntryCount: options.hiddenEntryCount ?? 0,
     blockers: options.blockers ?? [],
     moreCount: options.moreCount ?? 0,
     cascadeTag,
@@ -135,6 +137,61 @@ describe("approving an entry under the list of what is published with it (AC-110
     );
     expect(
       await screen.findByText(/вместе с ней опубликовано записей: 2/),
+    ).toBeInTheDocument();
+  });
+
+  it("names the drafts the user may read, counts the ones they may not, and approves under the tag of the whole list", async () => {
+    fakeApi.on(PREVIEW_ROUTE, () =>
+      preview("tag-whole", { entries: [DIRECTION], hiddenEntryCount: 2 }),
+    );
+    fakeApi.on(APPROVE_ROUTE, () => Response.json({ id: "c1" }));
+    const user = renderHarness();
+
+    await user.click(screen.getByRole("button", { name: "утвердить" }));
+
+    const dialog = await confirmDialog();
+    expect(dialog).toHaveTextContent(
+      "Вместе с ней станут действующими 3 черновые записи",
+    );
+    expect(dialog).toHaveTextContent("Область Разработка");
+    expect(dialog).toHaveTextContent("и ещё 2 черновые записи");
+    await user.click(
+      screen.getByRole("button", { name: "Утвердить вместе с 3 записями" }),
+    );
+    await waitFor(() => expect(fakeApi.calls(APPROVE_ROUTE)).toHaveLength(1));
+    expect(queryOf(fakeApi.calls(APPROVE_ROUTE)[0]).get("cascade")).toBe(
+      "tag-whole",
+    );
+    expect(
+      await screen.findByText(/вместе с ней опубликовано записей: 3/),
+    ).toBeInTheDocument();
+  });
+
+  it("asks before approving when every draft of the list is one the user may not read, and sends nothing until they confirm", async () => {
+    fakeApi.on(PREVIEW_ROUTE, () =>
+      preview("tag-unseen", { hiddenEntryCount: 1 }),
+    );
+    fakeApi.on(APPROVE_ROUTE, () => Response.json({ id: "c1" }));
+    const user = renderHarness();
+
+    await user.click(screen.getByRole("button", { name: "утвердить" }));
+
+    const dialog = await confirmDialog();
+    expect(dialog).toHaveTextContent(
+      "Вместе с ней станут действующими 1 черновая запись",
+    );
+    expect(dialog).toHaveTextContent("и ещё 1 черновая запись");
+    expect(dialog.querySelector("ul")).toBeNull();
+    expect(fakeApi.calls(APPROVE_ROUTE)).toHaveLength(0);
+    await user.click(
+      screen.getByRole("button", { name: "Утвердить вместе с 1 записью" }),
+    );
+    await waitFor(() => expect(fakeApi.calls(APPROVE_ROUTE)).toHaveLength(1));
+    expect(queryOf(fakeApi.calls(APPROVE_ROUTE)[0]).get("cascade")).toBe(
+      "tag-unseen",
+    );
+    expect(
+      await screen.findByText(/вместе с ней опубликовано записей: 1/),
     ).toBeInTheDocument();
   });
 

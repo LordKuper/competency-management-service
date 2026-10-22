@@ -236,6 +236,7 @@ describe("an action taken from a list row carries the tag of the row the user sa
     fakeApi.on("GET /api/v1/career/directions/draft/publication", () =>
       Response.json({
         entries: [],
+        hiddenEntryCount: 0,
         blockers: [],
         moreCount: 0,
         cascadeTag: "tag",
