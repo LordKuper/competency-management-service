@@ -613,3 +613,13 @@
 {"op":"close","id":"review-fix wave-2/iter-01 tests","kind":"dispatch","parent":"impl#8","start":"2026-10-22T19:28:30.467Z","end":"2026-10-22T19:44:40.803Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl#8","kind":"phase","parent":null,"start":"2026-10-22T18:59:41.918Z","end":"2026-10-22T19:45:05.363Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-test#6","kind":"phase","parent":null,"start":"2026-10-22T19:45:05.363Z","attrs":{}}
+{"op":"open","id":"impl-test entry 6","kind":"dispatch","parent":"impl-test#6","start":"2026-10-22T19:45:05.701Z","attrs":{}}
+{"op":"open","id":"suite impl-test#11","kind":"suite","parent":"impl-test entry 6","start":"2026-10-22T19:47:08.597Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#11","kind":"suite","parent":"impl-test entry 6","start":"2026-10-22T19:47:08.597Z","end":"2026-10-22T19:47:45.470Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#12","kind":"suite","parent":"impl-test entry 6","start":"2026-10-22T20:28:06.481Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#12","kind":"suite","parent":"impl-test entry 6","start":"2026-10-22T20:28:06.481Z","end":"2026-10-22T20:28:40.912Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#13","kind":"suite","parent":"impl-test entry 6","start":"2026-10-22T20:32:08.152Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#13","kind":"suite","parent":"impl-test entry 6","start":"2026-10-22T20:32:08.152Z","end":"2026-10-22T20:32:41.306Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-test entry 6","kind":"dispatch","parent":"impl-test#6","start":"2026-10-22T19:45:05.701Z","end":"2026-10-22T20:37:44.056Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#6","kind":"phase","parent":null,"start":"2026-10-22T19:45:05.363Z","end":"2026-10-22T20:37:44.232Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#5","kind":"phase","parent":null,"start":"2026-10-22T20:37:44.232Z","attrs":{}}
