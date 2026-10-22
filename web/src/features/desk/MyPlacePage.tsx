@@ -124,7 +124,7 @@ function PlaceContent({ place }: { place: MyPlace }) {
                   key: "hr",
                   label: "Ответственный HR",
                   children: hr
-                    ? `${hr.name} · ${hr.orgUnitName === unitName ? "закрепление за вашим подразделением" : `унаследовано из «${hr.orgUnitName}»`}`
+                    ? `${hr.name} · ${hr.orgUnitId === place.unit.at(-1)?.id ? "закрепление за вашим подразделением" : `унаследовано из «${hr.orgUnitName}»`}`
                     : "Не назначен",
                 },
               ]}
