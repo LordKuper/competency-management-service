@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Skeleton, Table, Tag } from "antd";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
@@ -27,6 +27,7 @@ import type { UserResponse } from "../users/usersApi";
 import { CreateAccountForm } from "./CreateAccountForm";
 import { deskPaths } from "./deskTexts";
 import { LinkButton } from "./LinkButton";
+import { useReturnLink } from "./returnLink";
 import { ActionBar, CompactAlert, FormColumn } from "./ScenarioContext";
 import { ScenarioPage } from "./ScenarioPage";
 import { StepRuler } from "./StepRuler";
@@ -86,7 +87,9 @@ export function OnboardEmployeePage() {
   const [step, setStep] = useState(EMPLOYEE_STEP);
   const [round, setRound] = useState(0);
   const [edits, setEdits] = useState(NO_LEAVE_EDITS);
-  const { confirmLeave } = useLeaveGuard(edits);
+  const { confirmLeave, leaveAfterSave } = useLeaveGuard(edits);
+  const navigate = useNavigate();
+  const origin = useReturnLink();
   const selection: Selection = round === 0 ? requested : {};
   const reached = outcome?.account === undefined ? EMPLOYEE_STEP : SUMMARY_STEP;
 
@@ -115,6 +118,9 @@ export function OnboardEmployeePage() {
             goTo(ACCOUNT_STEP);
           }}
           onEditsChange={setEdits}
+          onCancel={() =>
+            leaveAfterSave(() => void navigate(origin?.to ?? deskPaths.desk))
+          }
         />
       )}
       {step === ACCOUNT_STEP && outcome && (
@@ -169,6 +175,8 @@ interface EmployeeStepProps {
   outcome?: Outcome;
   onSaved: (outcome: Outcome) => void;
   onEditsChange: (edits: LeaveEdits) => void;
+  /** Explicit discard: leaves the scenario without asking. */
+  onCancel: () => void;
 }
 
 function EmployeeStep({
@@ -176,6 +184,7 @@ function EmployeeStep({
   outcome,
   onSaved,
   onEditsChange,
+  onCancel,
 }: EmployeeStepProps) {
   const queryClient = useQueryClient();
   const added = useRef<AddedPosition>(undefined);
@@ -275,6 +284,7 @@ function EmployeeStep({
           employee && { id: employee.positionId, name: employee.position }
         }
         onDirtyChange={setIsDirty}
+        onCancel={onCancel}
         onPositionAdded={(position) => {
           added.current = position;
         }}

@@ -32,6 +32,8 @@ interface Scenario {
   groups?: DeskGroup[];
   /** Reference queues are counted as waiting in the queue, not waiting for the user. */
   isQueue?: boolean;
+  /** The card stays on a loaded desk with nothing waiting; its caption then shows only while something waits. */
+  isAlwaysShown?: boolean;
   /** Shown only on a loaded desk whose prerequisites satisfy it. */
   holds?: (prerequisites: DeskPrerequisite[]) => boolean;
 }
@@ -80,6 +82,7 @@ const SCENARIOS: Scenario[] = [
     isFor: (roles) => roles.isHead,
     path: deskPaths.matrixBuilder,
     groups: ["UnsubmittedVersions", "MatricesToBuild"],
+    isAlwaysShown: true,
   },
   {
     key: "rework",
@@ -170,7 +173,11 @@ function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
   const groups = desk?.groups.filter((group) =>
     scenario.groups?.includes(group.group),
   );
-  if (scenario.groups && !groups?.some((group) => group.total > 0)) {
+  if (
+    scenario.groups &&
+    !scenario.isAlwaysShown &&
+    !groups?.some((group) => group.total > 0)
+  ) {
     return null;
   }
   if (scenario.path) return scenario.path;
@@ -240,9 +247,10 @@ export function DeskScenarios({
               </Typography.Title>
               <Typography.Paragraph>
                 Сценарии вашей роли появятся здесь, когда в системе будут нужные
-                им данные: например, действующие должности и карьерные треки,
-                которые вам доступны. Карточки покажутся сами; если данные
-                должны были появиться раньше, обратитесь к администратору.
+                им данные: например, записи, которые ждут вас, или действующие
+                должности и карьерные треки, которые вам доступны. Карточки
+                покажутся сами; если данные должны были появиться раньше,
+                обратитесь к администратору.
               </Typography.Paragraph>
             </>
           }
@@ -285,13 +293,18 @@ function ScenarioCard({
       <Typography.Paragraph type="secondary">
         {scenario.description}
       </Typography.Paragraph>
-      {scenario.groups && waiting !== undefined && (
-        <Typography.Text
-          style={{ color: token.colorTextTertiary, fontSize: token.fontSizeSM }}
-        >
-          {waitingCaption(waiting, scenario.isQueue)}
-        </Typography.Text>
-      )}
+      {scenario.groups &&
+        waiting !== undefined &&
+        (waiting > 0 || !scenario.isAlwaysShown) && (
+          <Typography.Text
+            style={{
+              color: token.colorTextTertiary,
+              fontSize: token.fontSizeSM,
+            }}
+          >
+            {waitingCaption(waiting, scenario.isQueue)}
+          </Typography.Text>
+        )}
     </Card>
   );
 }
