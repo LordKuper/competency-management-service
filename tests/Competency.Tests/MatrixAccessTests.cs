@@ -249,6 +249,37 @@ public sealed class MatrixAccessTests(CareerHost fixture) : IClassFixture<Career
     }
 
     [Fact]
+    public async Task Ac18_TheDraftTrackAndLevelsOfAVersionInWork_AreReadByTheSuperiorApproverWhoHoldsTheHrRole_AndByNoHrOutsideTheRoute()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
+        var superior = await org.Admin.GrantHrRoleAsync(fixture.Host, org.DepartmentHead);
+        var trackName = kit.Track.Json!["name"]!.GetValue<string>();
+        var levelIds = new[] { kit.Junior.Id, kit.Senior.Id };
+
+        (await superior.Client.GetAsync($"/api/v1/career/tracks/{kit.Track.Id}")).Status.Should().Be(HttpStatusCode.OK, "the superior approver reads the track of the version");
+        foreach (var levelId in levelIds)
+        {
+            (await superior.Client.GetAsync($"/api/v1/career/levels/{levelId}")).Status.Should().Be(HttpStatusCode.OK);
+        }
+
+        (await superior.Client.GetAsync($"/api/v1/career/tracks?q={Uri.EscapeDataString(trackName)}&pageSize=200")).Expect(HttpStatusCode.OK)
+            .ItemIds().Should().Equal(kit.Track.Id.ToString());
+        (await superior.Client.GetAsync($"/api/v1/career/levels?trackId={kit.Track.Id}&pageSize=200")).Expect(HttpStatusCode.OK)
+            .ItemIds().Should().BeEquivalentTo(levelIds.Select(levelId => levelId.ToString()));
+
+        var outsider = org.SiblingHr.Client;
+        (await outsider.GetAsync($"/api/v1/career/tracks/{kit.Track.Id}")).Status.Should().Be(HttpStatusCode.NotFound, "an HR of another unit is not on the route");
+        foreach (var levelId in levelIds)
+        {
+            (await outsider.GetAsync($"/api/v1/career/levels/{levelId}")).Status.Should().Be(HttpStatusCode.NotFound);
+        }
+
+        (await outsider.GetAsync($"/api/v1/career/tracks?q={Uri.EscapeDataString(trackName)}&pageSize=200")).Expect(HttpStatusCode.OK).ItemIds().Should().BeEmpty();
+        (await outsider.GetAsync($"/api/v1/career/levels?trackId={kit.Track.Id}&pageSize=200")).Expect(HttpStatusCode.OK).ItemIds().Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task Ac16_Approvals_ListTheVersionsWaitingForTheUser_LongestWaitingFirst_AndFilterByUnitAndStep()
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);

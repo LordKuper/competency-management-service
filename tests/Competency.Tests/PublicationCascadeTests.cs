@@ -239,6 +239,38 @@ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<
             .BeEquivalentTo([$"Direction/NameTaken/{direction.Id}", $"Level/NoActivePosition/{level.Id}"]);
     }
 
+    [Fact]
+    public async Task Ac109_Ac110_ABlockerOfALevelOutsideTheVersion_IsNotNamedToTheSuperiorApproverWhoCannotReadIt_InThePreviewNorInTheRefusal()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var responsible = await org.Admin.GrantHrRoleAsync(fixture.Host, org.TeamHead);
+        (await org.Admin.AssignHrAsync(org.Team.Id, responsible.EmployeeId)).Expect(HttpStatusCode.NoContent);
+        var kit = await (await MatrixKit.CreateAsync(org, author: responsible.Client)).PrepareAsync();
+        var outside = await responsible.Client.MakeLevelAsync(kit.Track.Id, kit.Junior.Json!["name"]!.GetValue<string>().ToUpperInvariant());
+        await org.Admin.LinkToNewPositionAsync(outside, org.Team.Id);
+        (await kit.TransitAsync(responsible.Client, "submit")).Expect(HttpStatusCode.OK);
+        var path = $"/api/v1/career/matrix-versions/{kit.VersionId}/publication";
+        var inContent = $"Level/NameTaken/{kit.Junior.Id}";
+        var notInContent = $"Level/NameTaken/{outside.Id}";
+
+        var bySuperior = (await org.DepartmentHead.Client.GetAsync(path)).Expect(HttpStatusCode.OK).Json!;
+        var byResponsible = (await responsible.Client.GetAsync(path)).Expect(HttpStatusCode.OK).Json!;
+        var byAdmin = (await org.Admin.GetAsync(path)).Expect(HttpStatusCode.OK).Json!;
+        var refused = await kit.TransitAsync(org.DepartmentHead.Client, "approve");
+
+        foreach (var full in new[] { byResponsible, byAdmin })
+        {
+            Blockers(full).Should().BeEquivalentTo([inContent, notInContent]);
+            full["moreCount"]!.GetValue<int>().Should().Be(0);
+        }
+
+        Blockers(bySuperior).Should().Equal(inContent);
+        bySuperior["moreCount"]!.GetValue<int>().Should().Be(1, "the level outside the version is counted but not named");
+        refused.Status.Should().Be(HttpStatusCode.Conflict, refused.Body);
+        Blockers(refused.Json!).Should().Equal(inContent);
+        refused.Json!["moreCount"]!.GetValue<int>().Should().Be(1);
+    }
+
     private static async Task AddAdministratorRoleAsync(ApiClient admin, Member member)
     {
         var current = await admin.GetUserAsync(member.Id);
@@ -269,6 +301,9 @@ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<
     private static async Task<(int Number, string Status)[]> VersionsAsync(ApiClient client, Guid competencyId) =>
         [.. (await client.GetAsync($"/api/v1/career/competencies/{competencyId}/versions")).Expect(HttpStatusCode.OK).Json!.AsArray()
             .Select(version => (version!["number"]!.GetValue<int>(), version["status"]!.GetValue<string>()))];
+
+    private static string[] Blockers(JsonNode body) =>
+        [.. body["blockers"]!.AsArray().Select(blocker => $"{blocker!["kind"]}/{blocker["reason"]}/{blocker["id"]}")];
 
     private static (string Kind, Guid Id)[] Entries(JsonNode preview) =>
         [.. preview["entries"]!.AsArray().Select(entry => (entry!["kind"]!.GetValue<string>(), entry["id"]!.GetValue<Guid>()))];
