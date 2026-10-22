@@ -1,0 +1,645 @@
+diff --git a/.claude/agent-memory/asd-tester-critical/MEMORY.md b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+index 4b84776..0a175e8 100644
+--- a/.claude/agent-memory/asd-tester-critical/MEMORY.md
++++ b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+@@ -1,4 +1,4 @@
+ - [Fail-first and `none` honesty](feedback_fail-first-and-none-honesty.md) — transcribe the first-failing assertion, never justify `none` with "it's prose", never assert a qualifier where the substance is assertable
+ - [Mutation runs trip the hash ledger](project_mutation-runs-trip-the-hash-ledger.md) — editing a managed_paths file to prove a mutation also fails upstream_hashes; expected noise
+ - [Testability envelope](project_testability-envelope.md) — what is testable here, honest `none` decisions, mutation and fixture traps, and the §7 in-body-comment ban.
+-- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/antd Select and pager/filter-wiring web traps, web pre-fix copy and mutation runner, fake fetch, forcing a 5xx, class-shared org, antd disabled-context locks, container connection limit (53300), guard tests vs fail-first, draft-read, cascade-right, hidden-blocker, HR-superior and unlisted-draft arrangements, desk-page web tests, scenario-page web tests (leave-guard dialog, forced failure and retry, step lock, 412 reread, server search)
++- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/antd Select and pager/filter-wiring web traps, web pre-fix copy and mutation runner, fake fetch, forcing a 5xx, class-shared org, antd disabled-context locks, container connection limit (53300), guard tests vs fail-first, draft-read, cascade-right, hidden-blocker, HR-superior and unlisted-draft arrangements, desk-page web tests, scenario-page web tests (leave-guard dialog, forced failure and retry, step lock, 412 reread, server search), background-refresh edit-retention tests, redundant-gate mutants, form lock tests
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index 230d2fa..6fa5ba0 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -1,6 +1,6 @@
+ ---
+ name: competency-test-harness
+-description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate, migration data-transfer tests, multi-save atomicity by trigger, throwaway Postgres for seed scripts, the shared container's connection limit, guard tests versus fail-first, reusable arrangements for draft-entry reads, cascade rights, hidden publication blockers, an HR-role superior approver, unlisted drafts of a publication list, desk-page web tests and scenario-page web tests (leave-guard dialog, forced failure and retry, step lock, 412 reread, server search)
++description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate, migration data-transfer tests, multi-save atomicity by trigger, throwaway Postgres for seed scripts, the shared container's connection limit, guard tests versus fail-first, reusable arrangements for draft-entry reads, cascade rights, hidden publication blockers, an HR-role superior approver, unlisted drafts of a publication list, desk-page web tests and scenario-page web tests (leave-guard dialog, forced failure and retry, step lock, 412 reread, server search), background-refresh (focus, online) edit-retention tests, redundant-gate mutants and form lock tests
+ metadata:
+   type: project
+ ---
+@@ -55,7 +55,7 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Delete versus transition race: hold the matrix row (`RowLock.HoldMatrixAsync`), start the matrix delete (it takes the catalogue lock, then waits on the row) with `StartWaitingAsync(…, 1, …)`, then the transition (it waits on the catalogue lock) with `…, 2, …`, release: the delete commits first and the transition finds its version gone. Pre-fix answer 500 (`FirstAsync`), fixed answer 404. Pass the version's tag to both requests (`etag:` on `TransitAsync`) so no extra request runs inside the wait.
+ - Read-access rewrites need a test per path: single-version reads (`GET matrix-versions/{id}`) and the matrix lists (`GET matrices`, `GET matrices/{id}`, `…/versions`) use different code. A list test over two units of one page (the head of the root unit is the superior approver of the department's matrix but not of the team's) kills a per-unit cache keyed wrongly; a participant who acted and then lost the role kills a dropped acted-on lookup; a blocked nearer head makes the farther head the superior approver for draft-entry visibility. Unfiltered `GET matrices?pageSize=200` is safe on a class host (fewer than 200 matrices).
+ - A python or JS patch script written through a bash heredoc loses backslashes silently (a `replace` anchor stopped matching and nothing failed): write scripts with the Write tool, build line-ending separators with `String.fromCharCode(13)` and `grep -c` the result.
+-- Line endings: count CRLF pairs with python on the bytes (`count` of carriage return plus line feed); `grep -c` with a CR pattern reports 0 for a fully CRLF file in this shell. Worktree test files are a mix (some CRLF, most LF); the Edit tool and `open(..., newline='')` keep each file's own.
++- Line endings: count CRLF pairs with python on the bytes (`count` of carriage return plus line feed); `grep -c` with a CR pattern reports 0 for a fully CRLF file in this shell. Worktree test files are a mix (some CRLF, most LF); `open(..., newline='')` keeps each file's own, but an Edit-tool edit of a CRLF worktree file left it LF (the index is LF by `.gitattributes`, so `git diff --stat` stays the size of the change): count carriage returns before a scripted edit and read the file's own ending in the script.
+ - Web pre-fix proof: `git archive <commit before the first fix> web` into a scratch directory, a junction for `node_modules` (`cmd //c "mklink /J node_modules <absolute path>"`), copy only the changed test files over it, `npx vitest run <files> --reporter=verbose`. Vitest does not typecheck, so new tests run against old code and fail on assertions. A wholesale-copied test file also brings the older tests of that file that the fix commit adapted: they go red too, so separate them by name before counting. Web mutation runner: one Node script, a single-anchor check per mutation, `vitest run <files> --reporter=json --outputFile=...`, read `assertionResults` with status failed, restore the file in `finally`; multi-line anchors are fine in a `git archive` web copy (LF). The runner starts `node node_modules/vitest/vitest.mjs run …` with an argument array, never `npx` with `shell: true`: the shell splits a `-t` pattern with spaces or `|` into file filters, the wrong tests run and the failures still look plausible.
+ - `dotnet test --filter-class` and `--filter-method` together are ANDed: a class filter plus a method filter of another class runs zero tests (exit 8). Run the two kinds in separate invocations. The Windows console codepage breaks Cyrillic runner output piped through Python (`UnicodeEncodeError`), and a `print` of Cyrillic text from a Python script fails the same way: set `PYTHONIOENCODING=utf-8` or print `ascii(...)`, and write an extracted summary to a UTF-8 file and read it with the Read tool.
+ - Web test traps met with server-search pickers and paged tables: antd `Select` options are virtualised, so never count them, assert the request (`q`, `page`, `pageSize`) instead; the selected text also sits in the hidden dropdown, so scope it with `within(combobox.closest(".ant-select"))`; `getAllByRole` throws when nothing matches, use `queryAllByRole` for "no actions"; `findByRole("dialog", { name })` found nothing for `AppModal`, locate it by the `.ant-modal-title` text and `closest('[role="dialog"]')`; a pagination item is `getByTitle("2")` and its size changer `.ant-pagination-options .ant-select`; `toBeVisible()` fails inside modal bodies in jsdom, use `toBeInTheDocument()`; `Form.useWatch` is `undefined` on the first render, so a guard that clears a value must wait for the data of the watched unit (removing it reddens the control test). A mutation that keeps every excluded option can fail on the free option missing from the window of about eight rendered rows before it reaches the "excluded are absent" assert; keep one excluded option (`exclude.slice(1)`) to reach it.
+@@ -84,3 +84,6 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - rc-select calls `onSearch("")` itself when a single select closes, so an `onOpenChange` handler that clears the search is an equivalent mutant; pin the visible result (full list after closing) and say the handler is dead. Server search with real timers: `user.type`, then `waitFor` on the `q` of the last request (the 300 ms debounce fits the default 1 s window); sync first on a positive control (the unfiltered first call).
+ - A guard such as `owner && openDialog` that mirrors a server contract survives a mutation that swaps the owner when the fixture has both people: add the arrangement where only one of the two exists. A guard that duplicates another derivation (picker `takenIds` and the attach check) cannot be reached from the UI: record the surviving mutant as defence, not as a gap.
+ - Onboarding-style pages take their preselection from the address (`?unitId=&positionId=`), so no unit or position Select has to be driven. A stateful fake (a `stored` record that a handler changes) models "someone changed it behind the back" for a 412 reread. When a claim sits behind a sync that the pre-fix copy cannot pass (the field shows the reread value), the pre-fix run stops at the sync: prove the claim by a mutation that keeps the sync and breaks only it.
++- Background-refresh test (an edit must survive a refetch): trigger inside `act` with `focusManager.setFocused(false); setFocused(true)` or `onlineManager.setOnline(false); setOnline(true)`; the control that the signal reached the cache is a stale active query that rereads on focus (positions of the unit), asserted `toBeGreaterThan(reads)`, never `reads + 1` (a remounting pre-fix copy rereads twice and the run stops at the control); then type one more letter before reading the field, which flushes the notifier. Restore both managers in `beforeEach` (`setFocused(undefined)`, `setOnline(true)`): their state outlives the test.
++- Two sufficient gates (a query `enabled` flag and an adoption condition) make each single-gate mutant equivalent and green; only a multi-edit mutant removing both reddens the test. Record the pair as a ceiling and prove with the combined mutant. A mutant that survives on the old test file and dies on the new one (`swap` of the head version of the test file in the runner, `edits` array for several anchors) is the proof that a guard row was needed.
++- Lock tests on antd forms: collect the KIND of every locked field into one list and assert it at three moments (idle `[]`, in flight all kinds, after a refusal `[]`); an explicit `disabled={false}` on a child control beats the Form's disabled context (fixed with `cond || undefined`). `userEvent` throws on a click at an element with `pointer-events: none` (a disabled antd checkbox), so the attempt to tick it uses `userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never })`.
+diff --git a/web/src/features/desk/BuilderCompetenciesStep.test.tsx b/web/src/features/desk/BuilderCompetenciesStep.test.tsx
+index ee37a31..c25e504 100644
+--- a/web/src/features/desk/BuilderCompetenciesStep.test.tsx
++++ b/web/src/features/desk/BuilderCompetenciesStep.test.tsx
+@@ -1,10 +1,12 @@
+ import { render, screen, waitFor, within } from "@testing-library/react";
+-import userEvent from "@testing-library/user-event";
++import userEvent, {
++  PointerEventsCheckLevel,
++} from "@testing-library/user-event";
+ import { createMemoryRouter, RouterProvider } from "react-router";
+ import { beforeEach, describe, expect, it, vi } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi, problem } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import type { MatrixVersion } from "../career/matrixApi";
+ import { BuilderCompetenciesStep } from "./BuilderCompetenciesStep";
+@@ -153,6 +155,20 @@ function checkboxOf(scope: Pick<typeof screen, "getByText">, name: string) {
+   return within(row).getByRole("checkbox");
+ }
+ 
++function lockedCheckboxes() {
++  const [selectAll, ...rows] = screen.getAllByRole("checkbox");
++  const boxes: [string, HTMLElement | undefined][] = [
++    ["select all", selectAll],
++    ...rows.map((row, index): [string, HTMLElement] => [
++      `row ${index + 1}`,
++      row,
++    ]),
++  ];
++  return boxes
++    .filter(([, box]) => box?.hasAttribute("disabled"))
++    .map(([kind]) => kind);
++}
++
+ beforeEach(() => {
+   queryClient.clear();
+ });
+@@ -189,3 +205,34 @@ describe("a block created in the wizard from a competency the author took out of
+     expect(screen.queryByText(NOT_ATTACHED)).toBeNull();
+   });
+ });
++
++describe("the list of competencies is held while the version is being saved (AC-20)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("turns every checkbox off while the content is saved, so no competency is ticked then, and turns them on when the save is refused", async () => {
++    serve();
++    const held = deferred<Response>();
++    fakeApi.on(CONTENT_ROUTE, () => held.promise);
++    const user = renderStep();
++    await screen.findByText(OTHER_COMPETENCY.name);
++    await waitFor(() =>
++      expect(checkboxOf(screen, SAVED_COMPETENCY.name)).toBeChecked(),
++    );
++    expect(screen.getAllByRole("checkbox")).toHaveLength(3);
++    expect(lockedCheckboxes()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить и далее" }));
++
++    await waitFor(() => expect(fakeApi.calls(CONTENT_ROUTE)).toHaveLength(1));
++    expect(lockedCheckboxes()).toEqual(["select all", "row 1", "row 2"]);
++    await userEvent
++      .setup({ pointerEventsCheck: PointerEventsCheckLevel.Never })
++      .click(checkboxOf(screen, OTHER_COMPETENCY.name));
++    expect(checkboxOf(screen, OTHER_COMPETENCY.name)).not.toBeChecked();
++    held.resolve(problem(500));
++    expect(await screen.findByText("Не удалось сохранить шаг")).toBeVisible();
++    await waitFor(() => expect(lockedCheckboxes()).toEqual([]));
++    await user.click(checkboxOf(screen, OTHER_COMPETENCY.name));
++    expect(checkboxOf(screen, OTHER_COMPETENCY.name)).toBeChecked();
++  });
++});
+diff --git a/web/src/features/desk/BuilderCompetenciesStep.tsx b/web/src/features/desk/BuilderCompetenciesStep.tsx
+index 1caa792..f9fe2d2 100644
+--- a/web/src/features/desk/BuilderCompetenciesStep.tsx
++++ b/web/src/features/desk/BuilderCompetenciesStep.tsx
+@@ -431,7 +431,7 @@ function CompetenciesBody({
+             rowSelection={{
+               selectedRowKeys: [...chosen, ...brought.keys()],
+               getCheckboxProps: (row) => ({
+-                disabled: !isEditable || brought.has(row.id),
++                disabled: isSaving || !isEditable || brought.has(row.id),
+               }),
+               onSelect: (row, isChosen) => choose(row.id, isChosen),
+               onSelectAll: (isChosen, _rows, changed) => {
+diff --git a/web/src/features/desk/OnboardEmployeePage.test.tsx b/web/src/features/desk/OnboardEmployeePage.test.tsx
+index 2398a80..a9af12a 100644
+--- a/web/src/features/desk/OnboardEmployeePage.test.tsx
++++ b/web/src/features/desk/OnboardEmployeePage.test.tsx
+@@ -1,4 +1,5 @@
+-import { render, screen, waitFor } from "@testing-library/react";
++import { focusManager, onlineManager } from "@tanstack/react-query";
++import { act, render, screen, waitFor } from "@testing-library/react";
+ import userEvent from "@testing-library/user-event";
+ import { createMemoryRouter, RouterProvider } from "react-router";
+ import { beforeEach, describe, expect, it } from "vitest";
+@@ -17,6 +18,7 @@ const SAVE_LABEL = "Сохранить и далее";
+ const ACCOUNT_LABEL = "Создать учётную запись и отправить приглашение";
+ const UNIT = { id: "u1", name: "Команда" };
+ const POSITION = { id: "p1", name: "Инженер" };
++const POSITIONS_ROUTE = `GET /api/v1/org-units/${UNIT.id}/positions`;
+ 
+ function employee(version: number, lastName: string) {
+   return {
+@@ -131,8 +133,42 @@ function stepRuler() {
+   return Array.from(document.querySelectorAll(".ant-steps-item"));
+ }
+ 
++function surname() {
++  return screen.getByLabelText("Фамилия");
++}
++
++const TAB_RETURN = {
++  cause: "the user returns to the browser tab",
++  refresh: () => {
++    focusManager.setFocused(false);
++    focusManager.setFocused(true);
++  },
++};
++const NETWORK_RETURN = {
++  cause: "the network comes back",
++  refresh: () => {
++    onlineManager.setOnline(false);
++    onlineManager.setOnline(true);
++  },
++};
++
++async function refreshInTheBackground(refresh: () => void) {
++  await waitFor(() => expect(queryClient.isFetching()).toBe(0));
++  const reads = fakeApi.calls(POSITIONS_ROUTE).length;
++  await act(async () => refresh());
++  await waitFor(() =>
++    expect(
++      fakeApi.calls(POSITIONS_ROUTE).length,
++      "the refresh must reach the cache: the positions of the unit are reread",
++    ).toBeGreaterThan(reads),
++  );
++  await waitFor(() => expect(queryClient.isFetching()).toBe(0));
++}
++
+ beforeEach(() => {
+   queryClient.clear();
++  focusManager.setFocused(undefined);
++  onlineManager.setOnline(true);
+ });
+ 
+ describe("the scenario that takes an employee on", {
+@@ -188,7 +224,67 @@ describe("the scenario that takes an employee on", {
+     expect(accepted?.headers.get("If-Match")).toBe('"2"');
+   });
+ 
+-  it("holds the steps, «Назад» and «Пропустить» while the account is being created (AC-187)", async () => {
++  it.each([TAB_RETURN, NETWORK_RETURN])(
++    "keeps what was typed on the card of the created employee when $cause and the card has changed behind the back (AC-61)",
++    async ({ refresh }) => {
++      const card = serve();
++      const user = renderPage();
++      await createEmployee(user);
++      await backToTheEmployee(user);
++      await user.type(surname(), "ов");
++      card.changeBehindTheBack("Сидоров");
++
++      await refreshInTheBackground(refresh);
++
++      await user.type(surname(), "а");
++      expect(surname()).toHaveValue("Ивановова");
++      fakeApi.on(UPDATE_EMPLOYEE_ROUTE, () =>
++        Response.json(card.saveAs("Ивановова")),
++      );
++      await user.click(screen.getByRole("button", { name: SAVE_LABEL }));
++      await screen.findByLabelText("E-mail");
++      const [saved] = fakeApi.calls(UPDATE_EMPLOYEE_ROUTE);
++      expect(saved?.headers.get("If-Match")).toBe('"1"');
++      expect(await saved?.json()).toMatchObject({ lastName: "Ивановова" });
++    },
++  );
++
++  it("goes back to leaving the card alone once the reread after a refused save is on screen (AC-61)", async () => {
++    const card = serve();
++    const user = renderPage();
++    await refuseTheSecondSave(user, card);
++    await waitFor(() => expect(surname()).toHaveValue("Сидоров"));
++    await user.type(surname(), "а");
++    card.changeBehindTheBack("Петров");
++
++    await refreshInTheBackground(TAB_RETURN.refresh);
++
++    await user.type(surname(), "в");
++    expect(surname()).toHaveValue("Сидоровав");
++  });
++
++  it("keeps what was typed when the save fails for another reason than a stale card, and rereads nothing (AC-61)", async () => {
++    const card = serve();
++    const user = renderPage();
++    await createEmployee(user);
++    await backToTheEmployee(user);
++    fakeApi.on(UPDATE_EMPLOYEE_ROUTE, () => {
++      card.changeBehindTheBack("Сидоров");
++      return problem(500);
++    });
++    await user.type(surname(), "ов");
++
++    await user.click(screen.getByRole("button", { name: SAVE_LABEL }));
++
++    expect(
++      await screen.findByText("Карточка сотрудника не обновлена"),
++    ).toBeInTheDocument();
++    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
++    await user.type(surname(), "а");
++    expect(surname()).toHaveValue("Ивановова");
++  });
++
++  it("holds the steps, «Назад», «Пропустить» and the e-mail while the account is being created (AC-187)", async () => {
+     serve();
+     const created = deferred<Response>();
+     fakeApi.on(CREATE_ACCOUNT_ROUTE, () => created.promise);
+@@ -203,6 +299,7 @@ describe("the scenario that takes an employee on", {
+     );
+     expect(screen.getByRole("button", { name: "Назад" })).toBeDisabled();
+     expect(screen.getByRole("button", { name: "Пропустить" })).toBeDisabled();
++    expect(screen.getByLabelText("E-mail")).toBeDisabled();
+     expect(
+       stepRuler().filter((step) =>
+         step.classList.contains("ant-steps-item-disabled"),
+diff --git a/web/src/features/desk/OnboardEmployeePage.tsx b/web/src/features/desk/OnboardEmployeePage.tsx
+index 5ad5868..f2a7c40 100644
+--- a/web/src/features/desk/OnboardEmployeePage.tsx
++++ b/web/src/features/desk/OnboardEmployeePage.tsx
+@@ -11,6 +11,7 @@ import {
+   NO_LEAVE_EDITS,
+   useLeaveGuard,
+ } from "../../app/leaveGuard";
++import { isStaleVersion } from "../../app/useEditBase";
+ import { EmployeeForm } from "../org-structure/EmployeeForm";
+ import {
+   type Employee,
+@@ -92,15 +93,23 @@ const EMPLOYEE_STEP = 1;
+ const ACCOUNT_STEP = 2;
+ const SUMMARY_STEP = 3;
+ 
+-/** «Принять сотрудника»: the employee card, then an account with an invitation if wanted, then what was created. */
++/**
++ * «Принять сотрудника»: the employee card, then an account with an invitation if wanted, then what was created.
++ * The created employee is reread only after a save refused for a stale version, so no background refresh replaces input on step 1.
++ */
+ export function OnboardEmployeePage() {
+   const requested = useSelection();
+-  const [saved, setSaved] = useState<Outcome>();
++  const [outcome, setOutcome] = useState<Outcome>();
++  const [isRefused, setIsRefused] = useState(false);
+   const reread = useQuery({
+-    ...employeeQuery(saved?.employee.id ?? ""),
+-    enabled: saved !== undefined,
++    ...employeeQuery(outcome?.employee.id ?? ""),
++    enabled: outcome !== undefined && isRefused,
+   });
+-  const outcome = saved && withLatestEmployee(saved, reread.data);
++  const latest = outcome && withLatestEmployee(outcome, reread.data);
++  if (isRefused && latest !== outcome) {
++    setOutcome(latest);
++    setIsRefused(false);
++  }
+   const [step, setStep] = useState(EMPLOYEE_STEP);
+   const [round, setRound] = useState(0);
+   const [edits, setEdits] = useState(NO_LEAVE_EDITS);
+@@ -131,9 +140,11 @@ export function OnboardEmployeePage() {
+           selection={selection}
+           outcome={outcome}
+           onSaved={(next) => {
+-            setSaved(next);
++            setOutcome(next);
++            setIsRefused(false);
+             goTo(ACCOUNT_STEP);
+           }}
++          onStaleVersion={() => setIsRefused(true)}
+           onEditsChange={setEdits}
+           onCancel={() =>
+             leaveAfterSave(() => void navigate(origin?.to ?? deskPaths.desk))
+@@ -144,7 +155,7 @@ export function OnboardEmployeePage() {
+         <AccountStep
+           outcome={outcome}
+           onDone={(done) => {
+-            setSaved(done);
++            setOutcome(done);
+             goTo(SUMMARY_STEP);
+           }}
+           onBack={() => goTo(EMPLOYEE_STEP)}
+@@ -156,7 +167,8 @@ export function OnboardEmployeePage() {
+           outcome={outcome}
+           onBack={() => goTo(ACCOUNT_STEP)}
+           onAnother={() => {
+-            setSaved(undefined);
++            setOutcome(undefined);
++            setIsRefused(false);
+             setRound((count) => count + 1);
+             goTo(EMPLOYEE_STEP);
+           }}
+@@ -191,6 +203,8 @@ interface EmployeeStepProps {
+   /** The employee already created; the step then shows their saved values and saves a change to the same card. */
+   outcome?: Outcome;
+   onSaved: (outcome: Outcome) => void;
++  /** Told when a save is refused because the card changed since the version it sent. */
++  onStaleVersion: () => void;
+   onEditsChange: (edits: LeaveEdits) => void;
+   /** Explicit discard: leaves the scenario without asking; offered only until the employee is created. */
+   onCancel: () => void;
+@@ -200,6 +214,7 @@ function EmployeeStep({
+   selection,
+   outcome,
+   onSaved,
++  onStaleVersion,
+   onEditsChange,
+   onCancel,
+ }: EmployeeStepProps) {
+@@ -227,6 +242,9 @@ function EmployeeStep({
+         }),
+       );
+     },
++    onError: (error) => {
++      if (isStaleVersion(error)) onStaleVersion();
++    },
+     onSettled: () =>
+       Promise.all([
+         invalidateOrgStructure(queryClient),
+diff --git a/web/src/features/desk/TrackPositionsPage.tsx b/web/src/features/desk/TrackPositionsPage.tsx
+index ac8847b..7263ead 100644
+--- a/web/src/features/desk/TrackPositionsPage.tsx
++++ b/web/src/features/desk/TrackPositionsPage.tsx
+@@ -89,9 +89,6 @@ export function TrackPositionsPage() {
+         <div className="context-select">
+           <Select
+             showSearch={{ filterOption: false, onSearch: setSearch }}
+-            onOpenChange={(isOpen) => {
+-              if (!isOpen) setSearch("");
+-            }}
+             aria-label="Трек"
+             placeholder="Выберите трек"
+             value={trackId}
+diff --git a/web/src/features/org-structure/EmployeeForm.test.tsx b/web/src/features/org-structure/EmployeeForm.test.tsx
+index bbd3c08..65b0951 100644
+--- a/web/src/features/org-structure/EmployeeForm.test.tsx
++++ b/web/src/features/org-structure/EmployeeForm.test.tsx
+@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
+ import { beforeEach, describe, expect, it, vi } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi } from "../../test/fakeApi";
++import { deferred, fakeApi } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import { EmployeeForm } from "./EmployeeForm";
+ 
+@@ -41,9 +41,11 @@ function serve() {
+   );
+ }
+ 
+-async function openForm(held = FORMER) {
++async function openForm(
++  held = FORMER,
++  onSubmit = vi.fn().mockResolvedValue(undefined),
++) {
+   serve();
+-  const onSubmit = vi.fn().mockResolvedValue(undefined);
+   render(
+     <Providers>
+       <EmployeeForm
+@@ -82,6 +84,19 @@ async function transferTo(
+   );
+ }
+ 
++function lockedFields() {
++  const fields: [string, HTMLElement][] = [
++    ["surname", screen.getByLabelText("Фамилия")],
++    ["name", screen.getByLabelText("Имя")],
++    ["patronymic", screen.getByLabelText("Отчество")],
++    ["unit", screen.getByRole("combobox", { name: "Подразделение" })],
++    ["position", screen.getByRole("combobox", { name: "Должность" })],
++  ];
++  return fields
++    .filter(([, field]) => field.hasAttribute("disabled"))
++    .map(([kind]) => kind);
++}
++
+ beforeEach(() => {
+   queryClient.clear();
+ });
+@@ -210,3 +225,27 @@ describe("the position after a transfer in the employee form (AC-3, AC-4)", {
+     expect(within(position()).queryByText("Аналитик")).not.toBeInTheDocument();
+   });
+ });
++
++describe("the employee form is held while the employee is being saved (AC-20)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("holds every field, the unit and the position choices included, and frees them once the save is over", async () => {
++    const saved = deferred<undefined>();
++    const onSubmit = vi.fn(() => saved.promise);
++    const { user } = await openForm(FORMER, onSubmit);
++    expect(lockedFields()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
++    expect(lockedFields()).toEqual([
++      "surname",
++      "name",
++      "patronymic",
++      "unit",
++      "position",
++    ]);
++    saved.resolve(undefined);
++    await waitFor(() => expect(lockedFields()).toEqual([]));
++  });
++});
+diff --git a/web/src/features/org-structure/EmployeeForm.tsx b/web/src/features/org-structure/EmployeeForm.tsx
+index 2d2174f..b7f6554 100644
+--- a/web/src/features/org-structure/EmployeeForm.tsx
++++ b/web/src/features/org-structure/EmployeeForm.tsx
+@@ -129,6 +129,7 @@ export function EmployeeForm({
+       form={form}
+       name="employee"
+       layout="vertical"
++      disabled={isSubmitting}
+       initialValues={initialValues}
+       onFinish={submit}
+       onValuesChange={() => onDirtyChange?.(form.isFieldsTouched())}
+diff --git a/web/src/features/org-structure/PositionSelect.test.tsx b/web/src/features/org-structure/PositionSelect.test.tsx
+index 0df7538..72f5fb6 100644
+--- a/web/src/features/org-structure/PositionSelect.test.tsx
++++ b/web/src/features/org-structure/PositionSelect.test.tsx
+@@ -4,7 +4,7 @@ import { Form } from "antd";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi, problem } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import { PositionSelect } from "./PositionSelect";
+ 
+@@ -126,6 +126,38 @@ describe("position choice in the employee form (AC-4)", {
+     expect(screen.queryByText(/Добавить должность/)).not.toBeInTheDocument();
+   });
+ 
++  it("holds the choice while the typed name is being added, and frees it once the position is added", async () => {
++    serve();
++    const added = deferred<Response>();
++    fakeApi.on(
++      "POST /api/v1/org-units/sales/positions/quick-add",
++      () => added.promise,
++    );
++    const user = await openSelect();
++    await user.click(screen.getByRole("combobox", { name: "Должность" }));
++    await user.keyboard("Аналитик");
++
++    await user.click(await screen.findByText("Добавить должность «Аналитик»"));
++
++    await waitFor(() =>
++      expect(
++        screen.getByRole("combobox", { name: "Должность" }),
++      ).toBeDisabled(),
++    );
++    added.resolve(
++      Response.json({
++        id: "new",
++        name: "Аналитик",
++        isActive: true,
++        version: 0,
++      }),
++    );
++    await waitFor(() =>
++      expect(screen.getByRole("combobox", { name: "Должность" })).toBeEnabled(),
++    );
++    expect(screen.getByTestId("chosen")).toHaveTextContent("new");
++  });
++
+   it("shows the server's reason when the position cannot be added and keeps the form's choice", async () => {
+     serve();
+     fakeApi.on("POST /api/v1/org-units/sales/positions/quick-add", () =>
+diff --git a/web/src/features/org-structure/PositionSelect.tsx b/web/src/features/org-structure/PositionSelect.tsx
+index 1500ba2..907db8f 100644
+--- a/web/src/features/org-structure/PositionSelect.tsx
++++ b/web/src/features/org-structure/PositionSelect.tsx
+@@ -141,7 +141,7 @@ export function PositionSelect({
+         if (!isOpen) setSearch("");
+       }}
+       loading={isFetching || quickAdd.isPending}
+-      disabled={quickAdd.isPending}
++      disabled={quickAdd.isPending || undefined}
+       placeholder="Выберите должность"
+       notFoundContent={error ? describeApiError(error) : undefined}
+     />
+diff --git a/web/src/features/users/UserForm.tsx b/web/src/features/users/UserForm.tsx
+index da5a821..b7ccf04 100644
+--- a/web/src/features/users/UserForm.tsx
++++ b/web/src/features/users/UserForm.tsx
+@@ -91,6 +91,7 @@ export function UserForm({
+       name="user"
+       layout="vertical"
+       noValidate
++      disabled={isSubmitting}
+       initialValues={initialValues}
+       onFinish={submit}
+       onValuesChange={() => onDirtyChange?.(form.isFieldsTouched())}
+diff --git a/web/src/features/users/UserModal.test.tsx b/web/src/features/users/UserModal.test.tsx
+index ebac539..3df656b 100644
+--- a/web/src/features/users/UserModal.test.tsx
++++ b/web/src/features/users/UserModal.test.tsx
+@@ -3,12 +3,14 @@ import userEvent from "@testing-library/user-event";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi, problem } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { UserModal } from "./UserModal";
+ 
+ const USER_ID = "user-1";
+ const REFUSAL = "HR отвечает за подразделения: сначала передайте их другому";
+ const SAVE_FAILED = "Не удалось сохранить пользователя";
++const CREATE_ROUTE = "POST /api/v1/users";
++const SAVE_ROUTE = `PUT /api/v1/users/${USER_ID}`;
+ const HR_ACCOUNT = {
+   id: USER_ID,
+   email: "hr@test.local",
+@@ -23,19 +25,40 @@ const HR_ACCOUNT = {
+ 
+ const noop = () => undefined;
+ 
+-async function openAccount() {
+-  fakeApi.on(`GET /api/v1/users/${USER_ID}`, () => Response.json(HR_ACCOUNT));
++async function openModal(userId?: string) {
+   fakeApi.on("GET /api/v1/employees", () =>
+     Response.json({ items: [], total: 0, page: 1, pageSize: 20 }),
+   );
+   render(
+     <Providers>
+-      <UserModal userId={USER_ID} onClose={noop} />
++      <UserModal userId={userId} onClose={noop} />
+     </Providers>,
+   );
+   return within(await screen.findByRole("dialog"));
+ }
+ 
++async function openAccount() {
++  fakeApi.on(`GET /api/v1/users/${USER_ID}`, () => Response.json(HR_ACCOUNT));
++  return openModal(USER_ID);
++}
++
++async function openNewAccount() {
++  const dialog = await openModal();
++  await userEvent.type(dialog.getByLabelText("E-mail"), "new@test.local");
++  return dialog;
++}
++
++function lockedFields(dialog: ReturnType<typeof within>) {
++  const fields: [string, HTMLElement][] = [
++    ["e-mail", dialog.getByLabelText("E-mail")],
++    ["roles", dialog.getByRole("combobox", { name: "Роли" })],
++    ["employee", dialog.getByRole("combobox", { name: "Сотрудник" })],
++  ];
++  return fields
++    .filter(([, field]) => field.hasAttribute("disabled"))
++    .map(([kind]) => kind);
++}
++
+ async function removeHrRole(dialog: ReturnType<typeof within>) {
+   const tag = (await dialog.findByText("HR")).closest(
+     ".ant-select-selection-item",
+@@ -107,3 +130,37 @@ describe("removing the HR role from an account (user-management AC-50, AC-51)",
+     expect(await dialog.findByText(SAVE_FAILED)).toBeInTheDocument();
+   });
+ });
++
++describe("the account form is held while the account is being saved (AC-20)", () => {
++  it.each([
++    {
++      what: "creates",
++      route: CREATE_ROUTE,
++      submit: "Создать",
++      open: openNewAccount,
++    },
++    {
++      what: "changes",
++      route: SAVE_ROUTE,
++      submit: "Сохранить",
++      open: openAccount,
++    },
++  ])(
++    "holds the e-mail, the roles and the employee while the form $what the account, and frees them when the server refuses",
++    async ({ route, submit, open }) => {
++      const held = deferred<Response>();
++      fakeApi.on(route, () => held.promise);
++      const dialog = await open();
++      await dialog.findByLabelText("E-mail");
++      expect(lockedFields(dialog)).toEqual([]);
++
++      await userEvent.click(dialog.getByRole("button", { name: submit }));
++
++      await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
++      expect(lockedFields(dialog)).toEqual(["e-mail", "roles", "employee"]);
++      held.resolve(problem(500));
++      expect(await dialog.findByText(SAVE_FAILED)).toBeInTheDocument();
++      await waitFor(() => expect(lockedFields(dialog)).toEqual([]));
++    },
++  );
++});
