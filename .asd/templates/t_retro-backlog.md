@@ -10,7 +10,7 @@ responsibility:
 <!--
 Intake, ownership and lifecycle: .asd/workflows/asd-phase-scope.md step 2a — not restated here.
 One line per retro row, updated in place. Row: <NNN-slug>#A-N | <NNN-slug>#P-N. Row, Acts on and Disposition are English literals.
-Disposition: deferred | included | rejected | closed (closed = verified already resolved at HEAD).
+Disposition: deferred | included | rejected | closed. The first three are the user's explicit choice per row, never a default. closed = verified already resolved at HEAD.
 Decided in: the sprint that last decided the row. Guardrail: the row's text; escape | as \|.
 -->
 

@@ -1,7 +1,7 @@
 ---
-# ASD generated. Edit .asd/skills/asd-phase-scope/SKILL.md. source_digest=sha256:a21d695d2ddb947e45b55519c54e3654eb42b5db7d8d1a9bc6be01586b62eaa7 content_digest=sha256:15c3894d2b08a0bf8e297af8ebd98a692e50fbfd6648dc8a4d5996ddb58a1174 asd_version=13.3.0 schema=1
+# ASD generated. Edit .asd/skills/asd-phase-scope/SKILL.md. source_digest=sha256:ece9fa38eb3c48b734a26ce3e78cdac88743da90f712857edd0756fc4ffc5c93 content_digest=sha256:f71e469675dc2c1299f5553d2ecaa095cba46d88b3cb1a445f142f710117df7f asd_version=13.10.0 schema=1
 name: asd-phase-scope
-description: "Runs the ASD scope phase of a sprint: the phase orchestrator asks the user to choose the sprint workflow (standard or lite, frozen into state.json), creates the sprint folder, state.json, branch, and refined scope under the active gate policy. Use when asd-sprint dispatches the scope phase for a new sprint, or when the user explicitly asks to run or re-run the scope phase for the active sprint."
+description: "Runs the ASD scope phase of a sprint: the phase orchestrator asks the user to choose the sprint workflow (standard or lite, frozen into state.json), creates the sprint folder, state.json and branch, runs staged solution design (requirements interview, BA best-practice research, approach choice into research.md), and refines scope under the active gate policy. Use when asd-sprint dispatches the scope phase for a new sprint, or when the user explicitly asks to run or re-run the scope phase for the active sprint."
 ---
 
 Operation mapping: see `.asd/rules/providers.md`.

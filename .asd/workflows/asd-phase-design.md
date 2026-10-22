@@ -11,7 +11,7 @@ Owner: inline orchestrator; dispatches `asd-ba`, `asd-ux`, `asd-architect`, skil
 ## Inputs
 
 ```json
-[".asd/project/config.yaml (project.diagram_tool, language.chat, language.docs)", "state.json frozen documents.prd, ux_spec, adr, c4", "<sprint>/sprint.md", "<sprint>/audit.md (when present)", "existing drafts in <sprint>/design/ (provenance flag)"]
+[".asd/project/config.yaml (project.diagram_tool, language.chat, language.docs)", "state.json frozen documents.prd, ux_spec, adr, c4", "<sprint>/sprint.md", "<sprint>/audit.md (when present)", "research (sprint-lifecycle.md 'Input sources')", "existing drafts in <sprint>/design/ (provenance flag)"]
 ```
 
 ## Steps
@@ -49,13 +49,14 @@ Owner: inline orchestrator; dispatches `asd-ba`, `asd-ux`, `asd-architect`, skil
 
 - Drafts cover the whole sprint scope in `<sprint>/design/`, one artifact per enabled document only — a disabled document produces no draft, no gate, no dependency on it.
 - Order: PRD, design-system gate (blocks UX-spec), UX-spec, ADR, c4-full — each only when enabled.
+- A creator reads `inputs.research` first and researches only the technical delta it leaves (`design-principles.md` §11).
 - A creator integrates an existing draft, preserving `provenance` + `source` when present, and translates its draft to `language.docs`.
 - `design-md-delta.yaml` holds proposed DESIGN.md token changes, produced inline during UX-spec authoring only on a token gap; each entry user-approved (step 8 token gate).
 
 ## Dispatch
 
 ```json
-[{"agent": "asd-ba", "when": "step 6", "payload": ["inputs.context", "inputs.requirements (sprint.md)", "inputs.audit", "inputs.draft (existing prd draft)", "inputs.template (t_prd.html)", "language"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}, {"agent": "asd-ux", "when": "step 8", "payload": ["inputs.context", "inputs.requirements", "inputs.audit", "inputs.draft (existing ux-spec draft)", "inputs.ux", "inputs.template (t_ux-spec.html, t_design-md-delta.yaml)", "answers (approved token)", "language"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}, {"agent": "asd-architect", "when": "step 9", "payload": ["inputs.context", "inputs.requirements (whichever of prd.html/ux-spec.html exist, else sprint.md)", "inputs.audit", "inputs.draft (existing adr draft)", "inputs.contracts", "inputs.fold_targets (persistent docs/ by responsibility.owns, tech-reference/)", "inputs.template (t_adr.html)", "language"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}, {"agent": "asd-architect", "when": "step 10", "payload": ["inputs.context", "inputs.drafts (whichever exist; ADR not required)", "inputs.contracts", "inputs.registry (docs/architecture/subsystems.md)", "inputs.diagram (persistent diagram: likec4 docs/architecture/c4/, mermaid the registry's diagram block)", "inputs.requirements (sprint.md)", "inputs.template (per diagram_tool)"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}]
+[{"agent": "asd-ba", "when": "step 6", "payload": ["inputs.context", "inputs.requirements (sprint.md)", "inputs.audit", "inputs.research", "inputs.draft (existing prd draft)", "inputs.template (t_prd.html)", "language"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}, {"agent": "asd-ux", "when": "step 8", "payload": ["inputs.context", "inputs.requirements", "inputs.audit", "inputs.research", "inputs.draft (existing ux-spec draft)", "inputs.ux", "inputs.template (t_ux-spec.html, t_design-md-delta.yaml)", "answers (approved token)", "language"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}, {"agent": "asd-architect", "when": "step 9", "payload": ["inputs.context", "inputs.requirements (whichever of prd.html/ux-spec.html exist, else sprint.md)", "inputs.audit", "inputs.research", "inputs.draft (existing adr draft)", "inputs.contracts", "inputs.fold_targets (persistent docs/ by responsibility.owns, tech-reference/)", "inputs.template (t_adr.html)", "language"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}, {"agent": "asd-architect", "when": "step 10", "payload": ["inputs.context", "inputs.drafts (whichever exist; ADR not required)", "inputs.contracts", "inputs.registry (docs/architecture/subsystems.md)", "inputs.diagram (persistent diagram: likec4 docs/architecture/c4/, mermaid the registry's diagram block)", "inputs.requirements (sprint.md)", "inputs.research", "inputs.template (per diagram_tool)"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}]
 ```
 
 ## Exit

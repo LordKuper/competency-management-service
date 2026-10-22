@@ -516,7 +516,7 @@ function tableCells(line) {
   return line.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map((cell) => cell.trim().replace(/\\\|/g, '|').replace(/^`([^`]*)`$/, '$1'));
 }
 
-/** A review's findings as `{id, severity, location}`, read by column position from its first table: `t_review.md`'s Findings or the external report's Kept findings, whose column order the templates fix while headings follow the docs language. A `—` id row is the empty table's placeholder. */
+/** A review's findings as `{id, severity, location}`, read by column position from its first table: `t_review.md`'s Findings or the external report's Kept findings, whose column order the templates fix while headings follow the docs language. An empty table is header and separator only; a `—` id row is skipped as legacy tolerance. */
 function reviewFindings(text) {
   const lines = text.split(/\r?\n/).map((line) => line.trim());
   const start = lines.findIndex((line) => line.startsWith('|'));

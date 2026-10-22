@@ -45,7 +45,7 @@ The main orchestrator commits its own bookkeeping — `state.json`, `decisions-l
 
 **Timing ledger**: a dirty `timing.jsonl` is committed by the orchestrator alone (`git commit --only -- <ledger>`, subject `chore(sprint): <NNN> timing`) before any clean-tree check or diff-reading gate, so those never see it; an agent never stages it (`sprint-lifecycle.md` "Operation timing").
 
-**Memory content check**: at the commit of agent-memory writes it holds (the clause above), the orchestrator stages them and runs `node .asd/runtime.js memory-check` first; it reads the staged diff, prints a JSON array of `{path, line, token}` hits and exits 1 on a hit (rule: `artifact-layout.md` "Agent memory"). A violating write is unstaged and not committed; it returns to its owner's memory-fix dispatch (`review-policy.md` "Memory-fix dispatch"). A dev's or tester's own memory commit is not gated; legacy memory text is not swept.
+**Memory content check**: at the commit of agent-memory writes it holds (the clause above), the orchestrator stages them and runs `node .asd/runtime.js memory-check` first; it reads the staged diff, prints a JSON array of `{path, line, token}` hits and exits 1 on a hit (rule: `artifact-layout.md` "Agent memory"). A violating write is unstaged and not committed; it returns to its owner's memory-fix dispatch in the current phase, before that phase's COMPLETED (`review-policy.md` "Memory-fix dispatch"). A dev's or tester's own memory commit is not gated; legacy memory text is not swept.
 
 ## PR self-review checklist
 

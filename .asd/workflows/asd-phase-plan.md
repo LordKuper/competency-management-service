@@ -11,7 +11,7 @@ Owner: inline orchestrator; dispatches none.
 ## Inputs
 
 ```json
-[".asd/project/config.yaml (language.chat, language.docs, project.subsystem_decomposition)", "state.json frozen workflow, documents.prd, documents.audit", "<sprint>/sprint.md", "requirements: acceptance-criteria source (sprint-lifecycle.md 'Input sources')", "persistent docs referenced: decomposition enabled — docs/architecture/subsystems.md and each touched subsystem's <id>.md, to locate its code; per-subsystem files updated this sprint, plus shared concept.html, stack.html, DESIGN.md, accessibility.html — only whichever exist", ".asd/project/commands.yaml", "lite: <sprint>/audit.md when audit ran", ".asd/project/stubs.md", "t_plan.md"]
+[".asd/project/config.yaml (language.chat, language.docs, project.subsystem_decomposition)", "state.json frozen workflow, documents.prd, documents.audit", "<sprint>/sprint.md", "requirements: acceptance-criteria source (sprint-lifecycle.md 'Input sources')", "persistent docs referenced: decomposition enabled — docs/architecture/subsystems.md and each touched subsystem's <id>.md, to locate its code; per-subsystem files updated this sprint, plus shared concept.html, stack.html, DESIGN.md, accessibility.html — only whichever exist", ".asd/project/commands.yaml", "lite: <sprint>/audit.md when audit ran", "research (sprint-lifecycle.md 'Input sources'): read first; research only the technical delta it leaves (design-principles.md §11)", ".asd/project/stubs.md", "t_plan.md"]
 ```
 
 ## Steps

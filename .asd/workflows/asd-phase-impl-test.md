@@ -1,6 +1,6 @@
 # ASD Workflow: Impl Test
 
-Owner: inline orchestrator; dispatches one fresh `asd-tester` per entry.
+Owner: inline orchestrator; dispatches one fresh `asd-tester` per entry, plus a memory hit's owner (step 7a).
 
 ## Entry
 ```json
@@ -16,7 +16,7 @@ Owner: inline orchestrator; dispatches one fresh `asd-tester` per entry.
 
 Autonomous: no user gate on a green impacted-set run, none on routing defects back to impl short of a stalemate. The one live `asd-tester` of an entry runs steps 3, 4, 7 and 8 and is never resumed into a later entry — `test-plan.md` is the only hand-off; recover from on-disk evidence only after session loss.
 
-1. Read `.asd/project/config.yaml` (`language.chat`, `language.docs`, `backward_compat`, `self_hosting`), `<sprint>/state.json` → write `phase=impl-test` inline (mechanical, no gate). Detect the mode per `## Entry` `modes` from `<sprint>/test-plan.md`'s `Entry log`. **Resume**: keep its row (step 4 appends none), take `<prior-sha>` from the row before it (none → entry 1, amended not rewritten), never re-append its `D-N` rows; when they exist and a current answer (step 9) names their digest, go straight to step 9's current-answer branch. Entry 1 of a sprint that removes a mechanism or term also runs the leftover-term check `artifact-layout.md` "Agent memory" requires, in the strategy pass (step 4)
+1. Read `.asd/project/config.yaml` (`language.chat`, `language.docs`, `backward_compat`, `self_hosting`), `<sprint>/state.json` → write `phase=impl-test` inline (mechanical, no gate). Detect the mode per `## Entry` `modes` from `<sprint>/test-plan.md`'s `Entry log`. **Resume**: keep its row (step 4 appends none), take `<prior-sha>` from the row before it (none → entry 1, amended not rewritten), never re-append its `D-N` rows; when they exist and a current answer (step 9) names their digest, go straight to step 9's current-answer branch. Entry 1 of a sprint that removes a mechanism or term also runs the leftover-term check `artifact-layout.md` "Agent memory" requires, in the strategy pass (step 4), its memory hits fixed at step 7a
 1a. Route Tester work through `node .asd/runtime.js route-task --input <path>`, its tier per `providers.md` "Task-class variants and routing", and persist its result. `execution="command"` runs directly; `execution="agent"` dispatches `asd-tester-<tier>` for `mechanical`/`critical`, or the base `asd-tester` for `tier: standard` (no `-standard` variant exists — `providers.md` "Task-class variants and routing"), payload per `agent-protocol.md` "Dispatch payload" with `## Dispatch`'s role keys. Persist `state.json.task_routing[taskId]` per `providers.md`. Append the decisions-log routing line `- YYYY-MM-DD — route <taskId>: <tier>, dispatch HEAD <sha>; risk <declaration>` (`git rev-parse HEAD`; the declaration per `providers.md` "Task-class variants and routing") at each tester dispatch.
 2. **Change surface**:
    - **Entry 1**: run command for `git diff <git.base_branch>...HEAD --stat <pathspec>` plus file list, the pathspec excluding the impl-review row's exclusions (`.asd/rules/external-review.md` "Phase-scoped payload"). This is the **full change surface**; a `Test-only` Task's commits (trailer `ASD-Task: Task N`, `sprint-lifecycle.md` "Plan file format") are existing tests in it
@@ -32,6 +32,7 @@ Autonomous: no user gate on a green impacted-set run, none on routing defects ba
    - deletes the approved removals; writes the `add` decisions at the chosen level, never re-authoring a `Test-only` Task's tests (strategy and pruning still cover them); fail-first regression proof and test-quality bars per `code-style.md` §17 (SSoT) — the proof recorded in the `Added tests` table
    - **entry 1**: resolves each stub a `plan.md` `Stub <ref> → impl-test` line routes here (`sprint-lifecycle.md` "Plan file format") per `git-strategy.md` "TODO stubs": its TODO resolved in the test file, its `.asd/project/stubs.md` row deleted
    - commits per Conventional Commits; emits COMPLETED
+7a. **Memory fix** — before step 8, each hit in `.claude/agent-memory/<owner>/` the tester reports (step 4's leftover-term check, step 9's memory class) goes to its owner's memory-fix dispatch in this entry (`review-policy.md` "Memory-fix dispatch"), never a `D-N`.
 8. **Suite gate** — the tester runs the impacted suite, lint/build and records raw results; verdict per `## Rules` suite gate.
 9. **Triage** on any failure:
    - **test defect** (bad assertion, wrong fixture, flaky pattern) → re-dispatch step 7 for the offending tests, then step 8 again
@@ -40,7 +41,8 @@ Autonomous: no user gate on a green impacted-set run, none on routing defects ba
      - `stalemate: true` and no current answer → emit `FAILED: stalemate <digest>` instead of routing and request a hard user decision (`checkpoints.md`): continue test-fix with guidance, accept as debt, or abort; append the answer with the digest to decisions-log, then apply it
      - `stalemate: true` and a current answer → apply it without re-asking: continue → route below, its guidance riding the test-fix payload; accept as debt → set those rows `accepted-debt`, register each failing test in `.asd/project/stubs.md` with an `(accepted-debt)` Reason, re-dispatch step 7 to skip exactly those tests, then step 8 again; abort → ABORT
      - otherwise, or on continue, **route**: fill this entry's `Entry log` `HEAD analysed` with `git rev-parse HEAD`; write `state.json.test_defects_pending = true` inline and append decisions-log "impl-test: defects <D-N list> → impl test-fix (digest <digest>)" (mechanical, no gate); commit these bookkeeping writes (`sprint-lifecycle.md` "Impl-test commits its own output"); emit COMPLETED with `NEXT: impl`
-   - both kinds present → fix the test defects first, re-run, then route the remaining code defects back
+   - **memory defect** (the failure traces to text in `.claude/agent-memory/<owner>/`) → step 7a, then step 8 again
+   - several kinds present → fix the test and memory defects first, re-run, then route the remaining code defects back
    - no iteration cap: loop until the impacted set passes; an unfixable state surfaces as a dev/tester `FAILED`, never a silent exit
 10. **Green impacted run** — first, the smoke check (`artifact-layout.md` "Test plan" Manual verification): each `Manual verification` row gets it once, at the first entry whose suite gate is green after the row is written — request a user decision (pass / fail, with notes) for each row still lacking a result, record each as `result: <pass|fail> — <notes>` beneath its row (impl-review reads it there), and append one decisions-log line. Then write inline (mechanical, no gate): fill this entry's `Entry log` row `HEAD analysed` with current `git rev-parse HEAD`; append decisions-log "impl-test: impacted set green (<counts>), <added>/<removed> tests"; confirm `test_defects_pending` null; commit these bookkeeping writes (`sprint-lifecycle.md` "Impl-test commits its own output") and the timing ledger — `git status --porcelain` MUST be empty before this step's COMPLETED; emit COMPLETED with `NEXT: impl-review`
 11. tester `QUESTION` → `agent-protocol.md` "Relay"; FAILED / ABORT → relay, halt; no signal → `sprint-lifecycle.md` "State recovery" failed dispatch before re-dispatch
@@ -53,11 +55,11 @@ Autonomous: no user gate on a green impacted-set run, none on routing defects ba
 - must: `Defects` rows persist across entries — a resolved row stays `fixed` for the record; a reappearing defect gets a new `D-N` row, never a reopened one.
 - must: record a reason for each in-scope removal; a removal outside the sprint's overall change surface waits for step 6.
 - must: suite gate — re-run on every entry, scoped to the impacted set (`sprint-lifecycle.md` "Impacted test set", subject to its safety valve, never the whole repo — the full suite runs only once, at the end of `impl-review`); verdict from the runner's exit code plus report, never an agent's claim; bracket each suite run (steps 3, 8) with a `suite` op. Bounded risk: a defect a fix introduces outside the impacted set's reach is not caught here — impl-review's terminal full suite is the backstop.
-- must: triage a failure as a test defect (fix it, re-run) or a code defect (a `D-N` row, never a production-code fix).
+- must: triage a failure as a test defect (fix it, re-run), a memory defect (report it, step 7a) or a code defect (a `D-N` row, never a production-code fix).
 
 ## Dispatch
 ```json
-[{"agent": "asd-tester", "when": "one fresh instance per entry, steps 3-9", "payload": ["mode", "task", "inputs.context", "inputs", "write_scope", "language", "timing"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}]
+[{"agent": "asd-tester", "when": "one fresh instance per entry, steps 3-9", "payload": ["mode", "task", "inputs.context", "inputs", "write_scope", "language", "timing"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}, {"agent": "<owner> of .claude/agent-memory/<owner>/", "when": "a memory hit (Claude only), step 7a", "payload": ["mode", "task", "work", "inputs.context", "write_scope"], "signals": ["COMPLETED", "FAILED"]}]
 ```
 
 ## Signals

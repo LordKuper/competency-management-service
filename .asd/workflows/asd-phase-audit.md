@@ -11,7 +11,7 @@ Owner: inline orchestrator; dispatches `asd-architect`, `asd-ba`.
 ## Inputs
 
 ```json
-["state.json frozen workflow and documents.*", "sprint.md", "touched areas: source, every docs/ document bearing on them, other documentation, stubs", "docs/architecture/subsystems.md and touched <id>.md (subsystem_decomposition enabled)", "t_audit.md"]
+["state.json frozen workflow and documents.*", "sprint.md", "research (sprint-lifecycle.md 'Input sources')", "touched areas: source, every docs/ document bearing on them, other documentation, stubs", "docs/architecture/subsystems.md and touched <id>.md (subsystem_decomposition enabled)", "t_audit.md"]
 ```
 
 ## Steps
@@ -39,7 +39,7 @@ Owner: inline orchestrator; dispatches `asd-architect`, `asd-ba`.
 ## Dispatch
 
 ```json
-[{"agent": "asd-architect", "when": "step 2; step 3a", "payload": ["inputs.context", "inputs.requirements", "inputs.touched_areas", "read_plan (step 2)", "inputs.confirmed_subsystems (step 3a)"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}, {"agent": "asd-ba", "when": "step 3", "payload": ["inputs.context", "inputs.requirements", "inputs.findings"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}]
+[{"agent": "asd-architect", "when": "step 2; step 3a", "payload": ["inputs.context", "inputs.requirements", "inputs.research", "inputs.touched_areas", "read_plan (step 2)", "inputs.confirmed_subsystems (step 3a)"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}, {"agent": "asd-ba", "when": "step 3", "payload": ["inputs.context", "inputs.requirements", "inputs.findings"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}]
 ```
 
 ## Exit

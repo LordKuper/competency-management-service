@@ -1,6 +1,6 @@
 # ASD Workflow: Design Review
 
-Owner: inline orchestrator; dispatches reviewers (documentation, efficiency, correctness, External Review), creators (BA, UX, Architect) for fixes.
+Owner: inline orchestrator; dispatches reviewers (documentation, efficiency, correctness, External Review), creators (BA, UX, Architect) for fixes, a memory-fix owner.
 
 ## Entry
 
@@ -36,6 +36,7 @@ Owner: inline orchestrator; dispatches reviewers (documentation, efficiency, cor
    - Late duplicate return — reaches any replaced dispatch, External Review included, per `review-policy.md` "Late duplicate return" (sole SSoT for the admission test and every action it mandates). Phase bindings: a return delivering after step 9 recorded its replacement's verdict, once admitted, is persisted by step 8's `persist-review` plus `--late` to `<sprint>/reviews/design/iter-NN/<reviewer>.late.md`, linked from `<reviewer>.md`, and carries that section's `verdicts["iter-NN"]`, `latched` and decisions-log writes even though step 9 already ran.
 9. Parse first-line tokens from all written reviewer files; write `state.json` `reviews.design.verdicts["iter-NN"]` (keyed `correctness`/`efficiency`/`documentation`/`external`) and `reviews.design.latched` per `sprint-lifecycle.md` "APPROVE latch" — sole SSoT for the every-reviewer-gets-an-entry invariant, the inherited `APPROVE` a latch-skipped reviewer receives and the bare-`APPROVE`-only latch condition; not restated here. Phase bindings: an interrupted attempt contributes no entry, its attempts already logged at step 8a. External Review's availability skip is recorded as `"APPROVE (skipped: <reason>)"` when the phase-supplied preflight returns non-ready; its `external.md` (the skip's `Unreviewed files` line, the `files[]` step 7's scope manifest would carry, included) is persisted through step 8's `persist-review` per `review-policy.md` "Coverage ledger" Persistence, its other duties `external-review.md` "Detection and negative cache"'s, not this step's. Aggregate per `sprint-lifecycle.md` "State recovery" satisfied-vs-blocking semantics, reading `verdicts["iter-NN"]` alone, except per `sprint-lifecycle.md` "State recovery" "User-resolved findings":
    - **Reviewer questions first** [GATE hard: reviewer question] — a report carrying `question:` items under `## Escalations` (`review-policy.md` "Gate Verdict Format" question carrier) is verdict-bearing, never interrupted (step 8a): request user decision per item, append the answers to decisions-log, and write each under its item in that reviewer's file per that carrier, passing it with that reviewer's findings to the creator fix dispatch (such a report is at least CONCERNS, per that carrier)
+   - **Memory findings** — each finding located in `.claude/agent-memory/<owner>/`, plus each `memory-check` hit of step 8's commit, goes to its owner's memory-fix dispatch per `review-policy.md` "Memory-fix dispatch", its `resolved: <ids> — memory-fix, <YYYY-MM-DD>` lines included — never a creator fix or an extra iteration
    - **All APPROVE, latched or user-resolved** (`sprint-lifecycle.md` "State recovery" user-resolved findings) → DoD met; apply the adaptive gate policy [GATE adaptive: design-review green handoff] and append the decision inline; emit phase COMPLETED
    - **Any FAIL** → escalation [GATE hard: FAIL escalation]:
      - parse FAIL findings; group by escalation cause (concept change / new abstraction / scope expansion / contract change)
@@ -51,7 +52,7 @@ Owner: inline orchestrator; dispatches reviewers (documentation, efficiency, cor
    - on override → loop step 4 (`reviews.design.iteration` keeps incrementing — not reset; severity floor pinned at `critical`)
    - on accept → record every open finding resolved (`cap-accept`, same home); COMPLETED note "iteration cap reached, user accepted"
    - on abort → emit ABORT
-11. Any reviewer or creator FAILED / ABORT → relay, halt; creator `QUESTION` → `agent-protocol.md` "Relay" `QUESTION`.
+11. Any reviewer, creator or memory-fix owner FAILED / ABORT → relay, halt; creator `QUESTION` → `agent-protocol.md` "Relay" `QUESTION`.
 12. Creator `ADVICE_NEEDED` → `agent-protocol.md` "Relay" `ADVICE_NEEDED`; reviewers never emit it.
 
 ## Rules
@@ -65,13 +66,13 @@ Owner: inline orchestrator; dispatches reviewers (documentation, efficiency, cor
 ## Dispatch
 
 ```json
-[{"agent": "asd-reviewer-documentation, asd-reviewer-efficiency, asd-reviewer-correctness", "when": "step 7", "payload": ["turn_budget", "inputs.context", "manifest", "diff (iter 2+, else null)", "iteration", "floor", "interrupted (step 8a re-dispatch, else null)", "out_dir (<sprint>/reviews/design/iter-NN/)", "return_file", "language"], "signals": ["REVIEW_DONE", "FAILED", "ABORT"]}, {"agent": "asd-external-review", "when": "step 7", "payload": ["turn_budget", "inputs.context", "manifest (external.scope.json)", "diff (iter 2+, else null)", "iteration", "out_dir", "floor", "preflight (step 3a result, platform included)", "findings (stalemate set, iter 2+, external-review.md 'Stalemate detection')", "language"], "signals": ["REVIEW_DONE"]}, {"agent": "asd-ba, asd-ux, asd-architect", "when": "step 9 fixes, the creator owning each finding, one creator at a time", "payload": ["task (finding ids)", "inputs.context", "inputs.requirements", "inputs.ux (asd-ux)", "inputs.findings (reviewer file, question answers included)", "inputs.draft", "language"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}]
+[{"agent": "asd-reviewer-documentation, asd-reviewer-efficiency, asd-reviewer-correctness", "when": "step 7", "payload": ["turn_budget", "inputs.context", "manifest", "diff (iter 2+, else null)", "iteration", "floor", "interrupted (step 8a re-dispatch, else null)", "out_dir (<sprint>/reviews/design/iter-NN/)", "return_file", "language"], "signals": ["REVIEW_DONE", "FAILED", "ABORT"]}, {"agent": "asd-external-review", "when": "step 7", "payload": ["turn_budget", "inputs.context", "manifest (external.scope.json)", "diff (iter 2+, else null)", "iteration", "out_dir", "floor", "preflight (step 3a result, platform included)", "findings (stalemate set, iter 2+, external-review.md 'Stalemate detection')", "language"], "signals": ["REVIEW_DONE"]}, {"agent": "asd-ba, asd-ux, asd-architect", "when": "step 9 fixes, the creator owning each finding, one creator at a time", "payload": ["task (finding ids)", "inputs.context", "inputs.requirements", "inputs.ux (asd-ux)", "inputs.findings (reviewer file, question answers included)", "inputs.draft", "language"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}, {"agent": "<owner> of .claude/agent-memory/<owner>/", "when": "step 9 memory finding or memory-check hit (Claude only)", "payload": ["mode", "task", "work", "inputs.context", "write_scope"], "signals": ["COMPLETED", "FAILED"]}]
 ```
 
 ## Exit
 
 ```json
-{"writes": ["<sprint>/reviews/design/iter-NN/: <reviewer>.md and <reviewer>.findings.json (step 8), snapshot/, <reviewer>.manifest.json, external.scope.json, <fingerprint>.diff (step 7)", "<sprint>/reviews/design/iter-NN/<reviewer>.late.md (step 8a)", "<sprint>/design/ drafts (step 9 fixes)", "state.json phase, reviews.design", "decisions-log.md"], "next": [{"if": "DoD met or cap accepted", "next": "design-promote"}]}
+{"writes": ["<sprint>/reviews/design/iter-NN/: <reviewer>.md and <reviewer>.findings.json (step 8), snapshot/, <reviewer>.manifest.json, external.scope.json, <fingerprint>.diff (step 7)", "<sprint>/reviews/design/iter-NN/<reviewer>.late.md (step 8a)", "<sprint>/design/ drafts (step 9 fixes)", "resolved: lines in reviewer files and memory-fix commits by the owner or orchestrator (step 9)", "state.json phase, reviews.design", "decisions-log.md"], "next": [{"if": "DoD met or cap accepted", "next": "design-promote"}]}
 ```
 
 ## Return
