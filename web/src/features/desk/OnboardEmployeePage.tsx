@@ -482,7 +482,10 @@ function accountRows(account: UserResponse): ResultRow[] {
   ];
 }
 
-function resultRows({ employee, position, account }: Outcome): ResultRow[] {
+function resultRows(
+  { employee, position, account }: Outcome,
+  isAdmin: boolean,
+): ResultRow[] {
   const rows: ResultRow[] = [
     {
       key: "employee",
@@ -501,7 +504,9 @@ function resultRows({ employee, position, account }: Outcome): ResultRow[] {
     rows.push({
       key: "account",
       tag: <Tag>Не создана</Tag>,
-      text: "Учётная запись: её можно создать позже в «Администрирование → Пользователи»",
+      text: isAdmin
+        ? "Учётная запись: её можно создать позже в «Администрирование → Пользователи»"
+        : "Учётная запись: её создаёт администратор",
     });
     return rows;
   }
@@ -515,9 +520,10 @@ interface SummaryStepProps {
 }
 
 function SummaryStep({ outcome, onBack, onAnother }: SummaryStepProps) {
+  const isAdmin = useIsAdmin();
   return (
     <FormColumn>
-      <ResultTable rows={resultRows(outcome)} />
+      <ResultTable rows={resultRows(outcome, isAdmin)} />
       <ActionBar start={<Button onClick={onBack}>Назад</Button>}>
         <Button onClick={onAnother}>Принять ещё одного сотрудника</Button>
         <LinkButton to={deskPaths.desk} type="primary">
