@@ -33,4 +33,14 @@ public interface IEmployeeAccounts
     /// <param name="cancellationToken">Cancels the query.</param>
     /// <returns><see langword="true"/> when the employee's account is the last active administrator; <see langword="false"/> also when there is no account.</returns>
     Task<bool> IsLastActiveAdministratorAsync(Guid employeeId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Whether blocking the accounts bound to all the given employees together would leave no active global administrator, which asking
+    /// <see cref="IsLastActiveAdministratorAsync"/> employee by employee cannot tell when several administrators leave at once;
+    /// call <see cref="LockAdministratorsAsync"/> first.
+    /// </summary>
+    /// <param name="employeeIds">The employees who leave together.</param>
+    /// <param name="cancellationToken">Cancels the query.</param>
+    /// <returns><see langword="true"/> when at least one of them is an active administrator and no active administrator would remain.</returns>
+    Task<bool> LeavesNoActiveAdministratorAsync(IReadOnlyCollection<Guid> employeeIds, CancellationToken cancellationToken = default);
 }
