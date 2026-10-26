@@ -845,7 +845,7 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     return { opened, saved };
   }
 
-  it("marks no competency as lacking a requirement, since its cell shows the lowest score of the scale", async () => {
+  it("marks no competency as lacking a requirement (AC-57), since its cell shows the lowest score of the scale", async () => {
     const { opened } = editorWithACompetency();
     serveEditor({
       ...opened,
