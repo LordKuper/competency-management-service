@@ -33,7 +33,12 @@ Put here: forbidden libraries/APIs, perf budgets (latency, memory, throughput, r
 ## Mutating UI flows
 
 - Every UI flow that mutates data locks editing while the save is in flight and never blocks navigation because of unsaved edits: every loss of unsaved edits (router navigation, browser Back/Forward, wizard step change, selecting another object on the screen, closing a modal with an unsaved form) asks for confirmation through the app's single leave guard (`docs/architecture/stack.html`, «Несохранённые правки в SPA»), and closing or reloading the tab triggers the browser's own `beforeunload` warning. After a 412 it rereads the record, shows it to the user, and the next save sends the new version; no automatic retry. (`003-positions-career-competency#P-2`, `004-role-desktop-user-journeys#AC-61`)
+- Fixing a "Mutating UI flows" violation in one form, `asd-dev` checks and fixes in the same round every form using the same technique (Form `disabled`, explicit `disabled=false`, reread after 412). (`004-role-desktop-user-journeys#P-1`)
 
 ## Comment self-check before commit
 
 - Before every commit, `asd-dev` and `asd-tester` search their own diff for comments inside function bodies and for references to AC or sprint in comments (`.asd/rules/code-style.md` §7, §8), and fix them before review. (`002-mail-invite-password-reset#P-2`)
+
+## Contract surface changes
+
+- A Task that removes or changes a surface (contract fields, categories, old migrations) itself brings the tests back to compiling; no separate test-compile Task is planned. (`004-role-desktop-user-journeys#P-2`)
