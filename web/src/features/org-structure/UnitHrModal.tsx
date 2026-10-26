@@ -263,7 +263,13 @@ function AssignHrForm({
   }));
 
   return (
-    <Form form={form} name="unit-hr" layout="vertical" onFinish={submit}>
+    <Form
+      form={form}
+      name="unit-hr"
+      layout="vertical"
+      disabled={isSubmitting}
+      onFinish={submit}
+    >
       <Form.Item
         name="employeeId"
         label="Сотрудник"
