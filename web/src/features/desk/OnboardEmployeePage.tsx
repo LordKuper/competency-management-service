@@ -12,10 +12,12 @@ import {
   useLeaveGuard,
 } from "../../app/leaveGuard";
 import { isStaleVersion } from "../../app/useEditBase";
+import { useIsAdmin } from "../auth/useCurrentUser";
 import { EmployeeForm } from "../org-structure/EmployeeForm";
 import {
   type Employee,
   type EmployeeInput,
+  employeeInputOf,
   employeeQuery,
   invalidateOrgStructure,
   orgUnitTreeQuery,
@@ -188,14 +190,25 @@ function selectionHints({ unitId, position }: Selection) {
   };
 }
 
+/** The input as text that does not depend on the order of the legal entities and of the secondary assignments. */
+function inputKey(input: EmployeeInput): string {
+  return JSON.stringify([
+    input.lastName,
+    input.firstName,
+    input.middleName ?? "",
+    input.orgUnitId,
+    input.positionId,
+    [...input.legalEntityIds].sort(),
+    input.assignments
+      .map(({ orgUnitId, positionId, legalEntityIds }) =>
+        JSON.stringify([orgUnitId, positionId, [...legalEntityIds].sort()]),
+      )
+      .sort(),
+  ]);
+}
+
 function isChanged(employee: Employee, input: EmployeeInput): boolean {
-  return (
-    employee.lastName !== input.lastName ||
-    employee.firstName !== input.firstName ||
-    (employee.middleName ?? "") !== (input.middleName ?? "") ||
-    employee.orgUnitId !== input.orgUnitId ||
-    employee.positionId !== input.positionId
-  );
+  return inputKey(employeeInputOf(employee)) !== inputKey(input);
 }
 
 interface EmployeeStepProps {
@@ -307,13 +320,7 @@ function EmployeeStep({
         key={employee?.version}
         initialValues={
           employee
-            ? {
-                lastName: employee.lastName,
-                firstName: employee.firstName,
-                middleName: employee.middleName ?? undefined,
-                orgUnitId: employee.orgUnitId,
-                positionId: employee.positionId,
-              }
+            ? employeeInputOf(employee)
             : {
                 orgUnitId: selection.unitId,
                 positionId: selection.position?.id,
@@ -324,6 +331,7 @@ function EmployeeStep({
         position={
           employee && { id: employee.positionId, name: employee.position }
         }
+        saved={employee}
         onDirtyChange={setIsDirty}
         onCancel={employee ? undefined : onCancel}
         onPositionAdded={(position) => {
@@ -359,6 +367,7 @@ function AccountStep({
   onEditsChange,
 }: AccountStepProps) {
   const { employee, account } = outcome;
+  const isAdmin = useIsAdmin();
   const [edits, setEdits] = useState(NO_LEAVE_EDITS);
   const { confirmLeave } = useLeaveGuard();
   useEffect(() => onEditsChange(edits), [edits, onEditsChange]);
@@ -377,6 +386,22 @@ function AccountStep({
             <Button
               type="primary"
               onClick={() => onDone({ ...outcome, account })}
+            >
+              Далее
+            </Button>
+          </ActionBar>
+        </>
+      ) : !isAdmin ? (
+        <>
+          <CompactAlert
+            type="info"
+            lead="Учётную запись создаёт администратор."
+            text="Сотрудник уже сохранён: попросите администратора создать для него учётную запись."
+          />
+          <ActionBar start={<Button onClick={onBack}>Назад</Button>}>
+            <Button
+              type="primary"
+              onClick={() => onDone({ ...outcome, account: null })}
             >
               Далее
             </Button>

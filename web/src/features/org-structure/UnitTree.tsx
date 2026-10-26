@@ -13,7 +13,7 @@ export interface UnitTreeView {
   /** The search in progress; it narrows the units shown, and null means every unit is shown. */
   search: UnitSearch | null;
   selectedId: string | null;
-  isAdmin: boolean;
+  canEdit: boolean;
   onToggle: (unitId: string, isOpen: boolean) => void;
   onAction: (action: UnitAction, unit: OrgUnit) => void;
   onEmployeeAction: (action: EmployeeAction, employee: Employee) => void;
@@ -41,7 +41,7 @@ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
         openness={openness}
         isSelected={view.selectedId === unit.id}
         needle={view.search?.needle ?? ""}
-        isAdmin={view.isAdmin}
+        canEdit={view.canEdit}
         onToggle={view.onToggle}
         onAction={view.onAction}
       />
@@ -55,7 +55,7 @@ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
               unitId={unit.id}
               headEmployeeId={unit.headEmployeeId}
               hasChildUnits={children.length > 0}
-              isAdmin={view.isAdmin}
+              canEdit={view.canEdit}
               onAction={view.onEmployeeAction}
             />
           )}
@@ -64,7 +64,7 @@ function UnitNodeView({ node, view }: { node: UnitNode; view: UnitTreeView }) {
               employees={matchedEmployees}
               headEmployeeId={unit.headEmployeeId}
               needle={view.search?.needle}
-              isAdmin={view.isAdmin}
+              canEdit={view.canEdit}
               onAction={view.onEmployeeAction}
             />
           )}

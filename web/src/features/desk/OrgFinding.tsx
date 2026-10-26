@@ -20,9 +20,11 @@ import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import {
   type Employee,
+  type EmployeeAssignment,
   employeeQuery,
   employeeSearchQuery,
   invalidateOrgStructure,
+  mainAssignmentOf,
   orgUnitQuery,
   orgUnitTreeQuery,
 } from "../org-structure/orgStructureApi";
@@ -173,7 +175,14 @@ function OutsideList({ item }: { item: DeskItem }) {
             ) : employee.data?.version == null ? (
               <Typography.Text type="secondary">Загрузка…</Typography.Text>
             ) : (
-              <ChangePositionForm employee={employee.data} />
+              <ChangePositionForm
+                employee={employee.data}
+                assignment={
+                  position && unit
+                    ? { orgUnitId: unit.id, positionId: position.id }
+                    : undefined
+                }
+              />
             )}
           </Flex>
         </Col>
@@ -269,10 +278,13 @@ function LinkAccount({ accountId }: { accountId: string }) {
  */
 function InactivePosition({ item }: { item: DeskItem }) {
   const holders = useQuery(employeeSearchQuery(item.object.name));
-  const rows = (holders.data?.items ?? []).filter(
-    (employee) =>
-      employee.positionId === item.object.id && employee.isActive !== false,
-  );
+  const rows = (holders.data?.items ?? [])
+    .filter((employee) => employee.isActive !== false)
+    .flatMap((employee) =>
+      [mainAssignmentOf(employee), ...employee.assignments]
+        .filter((assignment) => assignment.positionId === item.object.id)
+        .map((assignment) => ({ employee, assignment })),
+    );
   const queryClient = useQueryClient();
   const { message } = App.useApp();
   const isBusy = useIsFindingBusy();
@@ -331,30 +343,50 @@ function InactivePosition({ item }: { item: DeskItem }) {
   );
 }
 
+/** A working employee with one assignment that holds the position. */
+interface Holder {
+  employee: Employee;
+  assignment: EmployeeAssignment;
+}
+
 function HoldersTable({
   isLoading,
   rows,
 }: {
   isLoading: boolean;
-  rows: Employee[];
+  rows: Holder[];
 }) {
   return (
     <Table
       size="small"
-      rowKey="id"
+      rowKey={({ employee, assignment }) =>
+        `${employee.id}:${assignment.orgUnitId}`
+      }
       pagination={false}
       loading={isLoading}
       dataSource={rows}
       locale={{ emptyText: "Работающих сотрудников с этой должностью нет" }}
       columns={[
-        { title: "Сотрудник", dataIndex: "fullName" },
-        { title: "Подразделение", dataIndex: "orgUnitName" },
+        {
+          title: "Сотрудник",
+          key: "employee",
+          render: (_, { employee }) => employee.fullName,
+        },
+        {
+          title: "Подразделение",
+          key: "unit",
+          render: (_, { assignment }) => assignment.orgUnitName,
+        },
         {
           title: "Новая должность",
           key: "change",
-          render: (_, employee) =>
+          render: (_, { employee, assignment }) =>
             employee.version == null ? null : (
-              <ChangePositionForm employee={employee} isInline />
+              <ChangePositionForm
+                employee={employee}
+                assignment={assignment}
+                isInline
+              />
             ),
         },
       ]}

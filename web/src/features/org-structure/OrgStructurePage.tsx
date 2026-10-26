@@ -4,7 +4,6 @@ import { Button, Empty, Flex, Input, Skeleton, Space, Typography } from "antd";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { useIsAdmin } from "../auth/useCurrentUser";
 import type { EmployeeAction } from "./EmployeeCard";
 import { EmployeeModal } from "./EmployeeModal";
 import { MoveUnitModal } from "./MoveUnitModal";
@@ -20,6 +19,7 @@ import { UnitFormModal } from "./UnitFormModal";
 import { UnitHrModal } from "./UnitHrModal";
 import { UnitPositionsModal } from "./UnitPositionsModal";
 import { UnitTree } from "./UnitTree";
+import { useCanEditOrgStructure } from "./useCanEditOrgStructure";
 import { useEmployeeLifecycle } from "./useEmployeeLifecycle";
 import { SEARCH_MIN_LENGTH } from "./useEmployeeSearch";
 import { useUnitActivation } from "./useUnitActivation";
@@ -37,10 +37,10 @@ type PageDialog =
  * The structure screen: a hierarchy of unit and employee cards, searchable by unit name and by employee name and
  * position. The `unit` address parameter opens the path to that unit and scrolls to it, so a shared link or a new
  * unit or employee lands on the same card.
- * Administrators change units and employees from the cards. The dialogs and the confirmations live here, once for all cards.
+ * Administrators and HR change units and employees from the cards. The dialogs and the confirmations live here, once for all cards.
  */
 export function OrgStructurePage() {
-  const isAdmin = useIsAdmin();
+  const canEdit = useCanEditOrgStructure();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: units, error, isPending, refetch } = useQuery(orgUnitTreeQuery);
   const roots = useMemo(() => buildUnitTree(units ?? []), [units]);
@@ -92,7 +92,7 @@ export function OrgStructurePage() {
         <Typography.Title level={1} style={{ margin: 0 }}>
           Оргструктура
         </Typography.Title>
-        {isAdmin && (
+        {canEdit && (
           <Space wrap>
             <Button onClick={() => setDialog({ kind: "addEmployee" })}>
               Добавить сотрудника
@@ -154,7 +154,7 @@ export function OrgStructurePage() {
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
                 "Подразделений пока нет." +
-                (isAdmin ? " Добавьте подразделение." : "")
+                (canEdit ? " Добавьте подразделение." : "")
               }
             />
           ) : (
@@ -164,7 +164,7 @@ export function OrgStructurePage() {
                 openness,
                 search,
                 selectedId,
-                isAdmin,
+                canEdit,
                 onToggle: toggle,
                 onAction: handleAction,
                 onEmployeeAction: handleEmployeeAction,

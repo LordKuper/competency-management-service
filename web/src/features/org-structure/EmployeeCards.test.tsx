@@ -17,6 +17,9 @@ function employee(id: string, fullName: string): Employee {
     orgUnitName: "Отдел",
     positionId: "position",
     position: "Инженер",
+    legalEntities: [],
+    assignments: [],
+    unitAssignments: [],
   };
 }
 
@@ -29,7 +32,7 @@ function namesInOrder(
       <EmployeeCards
         employees={employees}
         headEmployeeId={headEmployeeId}
-        isAdmin={false}
+        canEdit={false}
         onAction={vi.fn()}
       />
     </ul>,
@@ -76,7 +79,7 @@ describe("EmployeeCard actions menu (AC-18)", () => {
         <EmployeeCards
           employees={[employee("1", "Яшин Пётр")]}
           headEmployeeId={null}
-          isAdmin
+          canEdit
           onAction={vi.fn()}
         />
       </ul>,

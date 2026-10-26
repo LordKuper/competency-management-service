@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Select } from "antd";
 import { useEffect, useState } from "react";
-import { ApiError } from "../../api/ApiError";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
-import { describeApiError } from "../../app/apiErrors";
+import { describeApiError, describeNameFailure } from "../../app/apiErrors";
 import {
   invalidatePositions,
   unitPositionsQuery,
@@ -38,13 +37,6 @@ interface PositionSelectProps {
   preselected?: { id: string; name: string };
   /** Told when the form adds a position to the unit's list, so a scenario can report it. */
   onAdded?: (position: { id: string; name: string }) => void;
-}
-
-/** The server's reason a name was refused, which belongs to the name field the dialog does not show. */
-function describeAddFailure(error: unknown): string {
-  return error instanceof ApiError && error.errors?.name
-    ? error.errors.name.join(" ")
-    : describeApiError(error);
 }
 
 /**
@@ -84,7 +76,7 @@ export function PositionSelect({
       onAdded?.({ id: position.id, name: position.name });
     },
     onError: (failure) => {
-      message.error(describeAddFailure(failure));
+      message.error(describeNameFailure(failure));
     },
     onSettled: () => invalidatePositions(queryClient),
   });

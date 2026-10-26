@@ -47,7 +47,7 @@ function show(hr: { assigned: unknown; inherited: unknown }, isAdmin = false) {
         openness="closed"
         isSelected={false}
         needle=""
-        isAdmin={isAdmin}
+        canEdit={isAdmin}
         onToggle={vi.fn()}
         onAction={onAction}
       />

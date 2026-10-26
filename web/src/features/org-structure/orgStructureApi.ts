@@ -1,4 +1,8 @@
-import { type QueryClient, queryOptions } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  type QueryClient,
+  queryOptions,
+} from "@tanstack/react-query";
 import { api } from "../../api/client";
 import type { components } from "../../api/schema";
 import { unwrap } from "../../api/unwrap";
@@ -12,11 +16,20 @@ export type OrgUnitTreeNode = components["schemas"]["OrgUnitTreeNodeResponse"];
 /** An employee; the projection for ordinary users leaves out the status and the version. */
 export type Employee = components["schemas"]["EmployeeResponse"];
 
+/** One assignment of an employee: a unit, a position there and the legal entities it is held for; the main one is not secondary. */
+export type EmployeeAssignment = components["schemas"]["AssignmentResponse"];
+
+/** A legal entity of the catalogue. */
+export type LegalEntity = components["schemas"]["LegalEntityResponse"];
+
 /** What dismissing or deleting an employee changes elsewhere: the units that lose their head and the account that is blocked, or the refusal when that account is the last active administrator. */
 export type EmployeeImpact = components["schemas"]["EmployeeImpactResponse"];
 
 /** The fields an employee is created or replaced with. */
 export type EmployeeInput = components["schemas"]["EmployeeRequest"];
+
+/** Cache key prefix of every legal entity query. */
+const legalEntitiesQueryKey = ["legal-entities"] as const;
 
 /** Cache key prefix of every unit query, so one invalidation rereads the tree. */
 export const orgUnitsQueryKey = ["org-units"] as const;
@@ -106,6 +119,68 @@ export function employeeQuery(id: string) {
       ),
     gcTime: 0,
   });
+}
+
+/** Legal entities listed for one search; a longer list is narrowed by typing more. */
+const LEGAL_ENTITY_PAGE_SIZE = 50;
+
+/** The first page of the legal entities whose name contains the text, in list order; the whole first page when the text is blank. */
+export function legalEntitiesQuery(text: string) {
+  return queryOptions({
+    queryKey: [...legalEntitiesQueryKey, text],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/legal-entities", {
+          params: { query: { q: text, pageSize: LEGAL_ENTITY_PAGE_SIZE } },
+        }),
+      ),
+    ...LIST_REREAD,
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** Finds the legal entity of that name, whatever the letter case, or creates it. */
+export async function quickAddLegalEntity(name: string) {
+  return unwrap(
+    await api.POST("/api/v1/legal-entities/quick-add", { body: { name } }),
+  );
+}
+
+/** Rereads the legal entity lists after one was added. */
+export function invalidateLegalEntities(queryClient: QueryClient) {
+  return queryClient.invalidateQueries({ queryKey: legalEntitiesQueryKey });
+}
+
+/** The main assignment of an employee in the shape of the others. */
+export function mainAssignmentOf(employee: Employee): EmployeeAssignment {
+  return {
+    orgUnitId: employee.orgUnitId,
+    orgUnitName: employee.orgUnitName,
+    positionId: employee.positionId,
+    position: employee.position,
+    legalEntities: employee.legalEntities,
+    isSecondary: false,
+  };
+}
+
+/**
+ * The input that saves the employee exactly as the server holds them. A change is spread over it, because a save replaces
+ * the whole set of assignments and whatever a change leaves out would be removed.
+ */
+export function employeeInputOf(employee: Employee): EmployeeInput {
+  return {
+    lastName: employee.lastName,
+    firstName: employee.firstName,
+    middleName: employee.middleName ?? undefined,
+    orgUnitId: employee.orgUnitId,
+    positionId: employee.positionId,
+    legalEntityIds: employee.legalEntities.map(({ id }) => id),
+    assignments: employee.assignments.map((assignment) => ({
+      orgUnitId: assignment.orgUnitId,
+      positionId: assignment.positionId,
+      legalEntityIds: assignment.legalEntities.map(({ id }) => id),
+    })),
+  };
 }
 
 /** Reads what dismissing or deleting the employee would change elsewhere; never cached, because the confirmation must show the state now. */

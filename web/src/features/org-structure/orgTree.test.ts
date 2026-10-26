@@ -36,6 +36,9 @@ function employeeIn(orgUnitId: string): Employee {
     orgUnitName: "",
     positionId: "position",
     position: "Инженер",
+    legalEntities: [],
+    assignments: [],
+    unitAssignments: [],
   };
 }
 
