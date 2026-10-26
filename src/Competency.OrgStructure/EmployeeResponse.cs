@@ -12,6 +12,10 @@ namespace Competency.OrgStructure;
 /// The full name is the display form of the name parts, derived by the database and read-only.
 /// The e-mail is the one of the account bound to the employee, read in the same query, and is null when there is no account.
 /// The position comes as its catalogue identifier and its current name.
+/// The unit, position and <see cref="LegalEntities"/> are the main assignment; <see cref="Assignments"/> are the secondary ones.
+/// <see cref="UnitAssignments"/> is empty unless the list is filtered by unit: it then holds the employee's assignments, main or secondary, in that unit
+/// (or below it when descendants are included), which is what a unit's card of the employee shows.
+/// The projections leave the three lists empty, and <see cref="EmployeeAssignmentReader"/> fills them from the assignment tables.
 /// </summary>
 internal sealed record EmployeeResponse(
     Guid Id,
@@ -24,9 +28,15 @@ internal sealed record EmployeeResponse(
     string OrgUnitName,
     Guid PositionId,
     string Position,
+    IReadOnlyList<LegalEntityResponse> LegalEntities,
+    IReadOnlyList<AssignmentResponse> Assignments,
+    IReadOnlyList<AssignmentResponse> UnitAssignments,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? IsActive = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Version = null)
 {
+    private static readonly IReadOnlyList<LegalEntityResponse> NoLegalEntities = [];
+    private static readonly IReadOnlyList<AssignmentResponse> NoAssignments = [];
+
     public static Expression<Func<Employee, EmployeeResponse>> FullProjection(AppDbContext context)
     {
         var accounts = context.Set<EmployeeAccount>();
@@ -41,6 +51,9 @@ internal sealed record EmployeeResponse(
             employee.OrgUnit.Name,
             employee.PositionId,
             employee.Position.Name,
+            NoLegalEntities,
+            NoAssignments,
+            NoAssignments,
             employee.IsActive,
             employee.Version);
     }
@@ -64,6 +77,9 @@ internal sealed record EmployeeResponse(
             employee.OrgUnit.Name,
             employee.PositionId,
             employee.Position.Name,
+            NoLegalEntities,
+            NoAssignments,
+            NoAssignments,
             null,
             null);
     }

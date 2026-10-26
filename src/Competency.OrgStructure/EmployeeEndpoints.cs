@@ -11,16 +11,16 @@ namespace Competency.OrgStructure;
 
 /// <summary>
 /// The employee API. Any signed-in user reads the restricted projection of working employees; global administrators and HR
-/// read the full projection of every employee, and only global administrators list the candidates for responsible HR and change employees,
-/// under the tree lock and with <c>If-Match</c>.
+/// read the full projection of every employee and change employees, under the tree lock and with <c>If-Match</c>,
+/// and only global administrators list the candidates for responsible HR.
+/// An employee is in every unit of their main and secondary assignments, so a unit's list holds the employees with any assignment in it.
 /// Dismissal and deletion cascade to the units the employee heads, their responsible HR assignments and the bound account in the same transaction,
-/// and administrators preview exactly those changes first. A transfer likewise takes the employee off the headship of the unit they leave.
+/// and they preview exactly those changes first. A transfer likewise takes the employee off the headship of the unit they leave.
 /// </summary>
 internal static class EmployeeEndpoints
 {
     private const string Route = "/api/v1/employees";
     private const string Tag = "Employees";
-    private const string PositionField = "positionId";
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -32,22 +32,22 @@ internal static class EmployeeEndpoints
         readers.MapGet(string.Empty, ListAsync).WithName("ListEmployees").ProducesProblem(StatusCodes.Status403Forbidden);
         readers.MapGet("/{id:guid}", GetAsync).WithName("GetEmployee").ProducesETag().ProducesProblem(StatusCodes.Status404NotFound);
 
-        var administrators = readers.MapGroup(string.Empty)
-            .RequireAuthorization(AuthorizationPolicies.GlobalAdmin)
+        var keepers = readers.MapGroup(string.Empty)
+            .RequireAuthorization(AuthorizationPolicies.GlobalAdminOrHr)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        administrators.MapPost(string.Empty, CreateAsync).WithName("CreateEmployee").ProducesETag();
-        administrators.MapPut("/{id:guid}", UpdateAsync).WithName("UpdateEmployee").ProducesETag()
+        keepers.MapPost(string.Empty, CreateAsync).WithName("CreateEmployee").ProducesETag();
+        keepers.MapPut("/{id:guid}", UpdateAsync).WithName("UpdateEmployee").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound);
-        administrators.MapGet("/{id:guid}/impact", ImpactAsync).WithName("GetEmployeeImpact")
+        keepers.MapGet("/{id:guid}/impact", ImpactAsync).WithName("GetEmployeeImpact")
             .ProducesProblem(StatusCodes.Status404NotFound);
-        administrators.MapPost("/{id:guid}/dismiss", DismissAsync).WithName("DismissEmployee").ProducesETag()
+        keepers.MapPost("/{id:guid}/dismiss", DismissAsync).WithName("DismissEmployee").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        administrators.MapPost("/{id:guid}/rehire", RehireAsync).WithName("RehireEmployee").ProducesETag()
+        keepers.MapPost("/{id:guid}/rehire", RehireAsync).WithName("RehireEmployee").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        administrators.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteEmployee")
+        keepers.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteEmployee")
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
     }
@@ -70,22 +70,25 @@ internal static class EmployeeEndpoints
         }
 
         var accounts = context.Set<EmployeeAccount>();
+        var placements = context.Set<EmployeePlacement>();
         var employees = context.Set<Employee>()
             .AsNoTracking()
             .VisibleTo(actor)
             .WhereIf(query.IsActive is not null, employee => employee.IsActive == query.IsActive)
             .WhereIf(query.HrCandidate, employee => employee.IsActive && accounts.Any(account => account.EmployeeId == employee.Id && account.CanBeHr));
+        HashSet<Guid>? scopeUnitIds = null;
         if (query.OrgUnitId is { } unitId)
         {
             var subtreeIds = context.DescendantIds(unitId);
             employees = query.IncludeDescendants
-                ? employees.Where(employee => subtreeIds.Contains(employee.OrgUnitId))
-                : employees.Where(employee => employee.OrgUnitId == unitId);
+                ? employees.Where(employee => placements.Any(placement => placement.EmployeeId == employee.Id && subtreeIds.Contains(placement.OrgUnitId)))
+                : employees.Where(employee => placements.Any(placement => placement.EmployeeId == employee.Id && placement.OrgUnitId == unitId));
+            scopeUnitIds = query.IncludeDescendants ? [.. await subtreeIds.ToListAsync(cancellationToken)] : [unitId];
         }
 
         if (TextSearch.Normalize(query.Q) is { } text)
         {
-            employees = employees.Matching(text, accounts, query.HrCandidate);
+            employees = employees.Matching(text, accounts, context.Set<EmployeeAssignment>(), query.HrCandidate);
         }
 
         var page = await employees
@@ -94,7 +97,7 @@ internal static class EmployeeEndpoints
             .Select(EmployeeResponse.ProjectionFor(context, actor))
             .ToPageAsync(query.Page, query.PageSize, cancellationToken);
 
-        return TypedResults.Ok(page);
+        return TypedResults.Ok(page with { Items = await context.FillAsync(page.Items, scopeUnitIds, cancellationToken) });
     }
 
     /// <summary>
@@ -123,7 +126,7 @@ internal static class EmployeeEndpoints
             response.SetETag(version);
         }
 
-        return TypedResults.Ok(employee);
+        return TypedResults.Ok((await context.FillAsync([employee], null, cancellationToken))[0]);
     }
 
     private static async Task<Results<Created<EmployeeResponse>, ValidationProblem>> CreateAsync(
@@ -146,16 +149,6 @@ internal static class EmployeeEndpoints
             return Rejection.Invalid("orgUnitId", "Подразделение не найдено.");
         }
 
-        if (!unit.IsActive)
-        {
-            return Rejection.Invalid("orgUnitId", "Подразделение неактивно.");
-        }
-
-        if (await context.PositionProblemAsync(input.PositionId, unit.Id, cancellationToken) is { } positionProblem)
-        {
-            return Rejection.Invalid(PositionField, positionProblem);
-        }
-
         var employee = new Employee
         {
             LastName = input.LastName,
@@ -164,7 +157,14 @@ internal static class EmployeeEndpoints
             PositionId = input.PositionId,
             OrgUnit = unit,
         };
+        var assignmentChange = await AssignmentChange.LoadAsync(context, employee, input, isNew: true, cancellationToken);
+        if (await assignmentChange.CheckAsync(unit, cancellationToken) is { } problem)
+        {
+            return problem;
+        }
+
         context.Add(employee);
+        assignmentChange.Apply();
 
         var created = await SaveAsync(employee, context, transaction, response, cancellationToken);
         return TypedResults.Created($"{Route}/{created.Id}", created);
@@ -198,15 +198,10 @@ internal static class EmployeeEndpoints
             return Rejection.Invalid("orgUnitId", "Подразделение не найдено.");
         }
 
-        if (unit.Id != employee.OrgUnitId && !unit.IsActive)
+        var assignmentChange = await AssignmentChange.LoadAsync(context, employee, input, isNew: false, cancellationToken);
+        if (await assignmentChange.CheckAsync(unit, cancellationToken) is { } problem)
         {
-            return Rejection.Invalid("orgUnitId", "Подразделение неактивно.");
-        }
-
-        if ((input.PositionId != employee.PositionId || unit.Id != employee.OrgUnitId)
-            && await context.PositionProblemAsync(input.PositionId, unit.Id, cancellationToken) is { } positionProblem)
-        {
-            return Rejection.Invalid(PositionField, positionProblem);
+            return problem;
         }
 
         ifMatch.ApplyTo(context, employee);
@@ -220,6 +215,7 @@ internal static class EmployeeEndpoints
         employee.MiddleName = input.MiddleName;
         employee.PositionId = input.PositionId;
         employee.OrgUnit = unit;
+        assignmentChange.Apply();
 
         return TypedResults.Ok(await SaveAsync(employee, context, transaction, response, cancellationToken));
     }
@@ -308,6 +304,15 @@ internal static class EmployeeEndpoints
             return Rejection.Conflict($"Нельзя вернуть сотрудника «{employee.FullName}» на работу. {unitProblem} Сначала активируйте подразделение или переведите сотрудника в другое.");
         }
 
+        var inactiveAssignmentUnit = await context.Set<EmployeeAssignment>()
+            .Where(assignment => assignment.EmployeeId == id && !assignment.OrgUnit.IsActive)
+            .Select(assignment => assignment.OrgUnit.Name)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (inactiveAssignmentUnit is not null)
+        {
+            return Rejection.Conflict($"Нельзя вернуть сотрудника «{employee.FullName}» на работу. Подразделение «{inactiveAssignmentUnit}», в котором у него совмещение, неактивно. Сначала активируйте подразделение или уберите совмещение.");
+        }
+
         ifMatch.ApplyTo(context, employee);
         employee.IsActive = true;
 
@@ -365,16 +370,25 @@ internal static class EmployeeEndpoints
 
     /// <summary>
     /// Narrows the employees to those whose full name contains the text, or whose name parts and position together match it as Russian full text,
-    /// so one query may mix name and position words. A generated column cannot read another table, so the employee's vector is joined
-    /// with its position's vector at query time. When picking a responsible HR, the account's e-mail containing the text matches too.
+    /// so one query may mix name and position words, the position being that of any of the employee's assignments. A generated column cannot read
+    /// another table, so the employee's vector is joined with its position's vector at query time. When picking a responsible HR,
+    /// the account's e-mail containing the text matches too.
     /// </summary>
-    private static IQueryable<Employee> Matching(this IQueryable<Employee> employees, string text, IQueryable<EmployeeAccount> accounts, bool matchesEmail)
+    private static IQueryable<Employee> Matching(
+        this IQueryable<Employee> employees,
+        string text,
+        IQueryable<EmployeeAccount> accounts,
+        IQueryable<EmployeeAssignment> assignments,
+        bool matchesEmail)
     {
         var pattern = ListRequest.ContainsPattern(text);
         return employees.Where(employee =>
             EF.Functions.ILike(employee.FullName, pattern, ListRequest.LikeEscape)
             || employee.SearchVector.Concat(employee.Position.SearchVector)
                 .Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text))
+            || assignments.Any(assignment => assignment.EmployeeId == employee.Id
+                && employee.SearchVector.Concat(assignment.Position.SearchVector)
+                    .Matches(EF.Functions.PlainToTsQuery(TextSearch.FullTextConfig, text)))
             || (matchesEmail && accounts.Any(account => account.EmployeeId == employee.Id && EF.Functions.ILike(account.Email, pattern, ListRequest.LikeEscape))));
     }
 
@@ -390,11 +404,12 @@ internal static class EmployeeEndpoints
         CancellationToken cancellationToken)
     {
         await context.SaveChangesAsync(cancellationToken);
-        var saved = await context.Set<Employee>()
+        var read = await context.Set<Employee>()
             .AsNoTracking()
             .Where(candidate => candidate.Id == employee.Id)
             .Select(EmployeeResponse.FullProjection(context))
             .SingleAsync(cancellationToken);
+        var saved = (await context.FillAsync([read], null, cancellationToken))[0];
         await transaction.CommitAsync(cancellationToken);
         response.SetETag(saved.Version!.Value);
         return saved;

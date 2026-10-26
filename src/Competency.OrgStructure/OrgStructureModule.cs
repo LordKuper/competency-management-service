@@ -34,6 +34,7 @@ public static class OrgStructureModule
         EmployeeEndpoints.Map(endpoints);
         PositionEndpoints.Map(endpoints);
         OrgUnitPositionEndpoints.Map(endpoints);
+        LegalEntityEndpoints.Map(endpoints);
         return endpoints;
     }
 }
