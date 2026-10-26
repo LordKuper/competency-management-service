@@ -745,3 +745,5 @@
 {"op":"close","id":"impl-review wave-3/iter-03 suite","kind":"dispatch","parent":"impl-review#9","start":"2026-10-26T08:46:53.590Z","end":"2026-10-26T08:58:18.365Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl-review#9","kind":"phase","parent":null,"start":"2026-10-26T08:42:18.088Z","end":"2026-10-26T08:58:31.974Z","outcome":"done","attrs":{}}
 {"op":"open","id":"retro#1","kind":"phase","parent":null,"start":"2026-10-26T08:58:31.974Z","attrs":{}}
+{"op":"close","id":"retro#1","kind":"phase","parent":null,"start":"2026-10-26T08:58:31.974Z","end":"2026-10-26T09:02:07.066Z","outcome":"done","attrs":{}}
+{"op":"open","id":"pr#1","kind":"phase","parent":null,"start":"2026-10-26T09:02:07.066Z","attrs":{}}

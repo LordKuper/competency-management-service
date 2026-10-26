@@ -35,3 +35,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
+- 2026-10-26 — retro: <sprint>/retrospective.html written; 10 friction entries analysed (F-1…F-10), 9 actions (3 consumer, 6 asd), 3 systemic proposals; branch: analysed. Предложение «приёмка сценариев на живом макете до плана» не внесено — пересекается с отклонённым пользователем 001#P-2
