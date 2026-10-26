@@ -8,5 +8,6 @@
 - [Read deferred gaps in sprint logs](feedback_read-deferred-gaps-in-sprint-logs.md) — grep decisions-log/friction-log for gaps "left for impl-review" before the verdict
 - [persist-review return shape](reference_persist-review-return-shape.md) — write return verbatim to payload's `.asd/tmp/` file; first table parsed by column; bare APPROVE: header + separator only
 - [Product design-review: derived actor paths](feedback_design-review-derived-actor-paths.md) — actor-keyed rights on indirect paths, sibling write paths, existing SPA callers of a tightened contract, mockup samples
-- [No prior-iteration reports](feedback_no-prior-iteration-reports.md) — never open reviews/*/iter-<other>/ files; Glob only the current iter dir (violated twice in sprint 004)
+- [No prior-iteration reports](feedback_no-prior-iteration-reports.md) — never open another iteration's review files; Glob only the current iter dir (an easy slip)
 - [Check persistent AC text before raising](feedback_check-persistent-ac-text-before-raising.md) — odd rights/scope rule in code is often literal requirement text; read the AC row first
+- [Web impl-review yield](feedback_web-impl-review-yield.md) — useWatch "" vs undefined unsaved flags, disabled-field reasons, leftovers of removed concepts, @media px; ledger mapping

@@ -1,6 +1,6 @@
 ---
 name: adr-authoring-review-traps
-description: ADR drafting patterns design-review flagged in sprint 004 — hard-gate fallbacks, c4-full purpose dupes, count numerals, unsourced norms, paging limits, optional client gates, POST-only rules
+description: ADR drafting patterns design-review flags — hard-gate fallbacks, c4-full purpose dupes, count numerals, unsourced norms, paging limits, optional client gates, POST-only rules
 metadata:
   type: feedback
 ---
@@ -17,6 +17,6 @@ Write ADRs so design-review has nothing to strip:
 - When a server gate becomes mandatory (a required tag or param), grep every existing client caller of the gated methods, not only the new screens. Name in the ADR which screens send it and what happens to the old callers. A "single client is our SPA" argument for a minor version only holds if no SPA path breaks.
 - A rule that closes a state for `POST` must also cover `PUT` of the same fields. A walk that goes "only through drafts" must not skip active nodes that still carry draft references from old data.
 
-**Why:** in sprint 004 design-review iter-01 (2026-10-13), efficiency raised E-1 (critical) and documentation raised F-1, F-4 and F-5 for exactly these patterns. The paging point is E-2: `/desk/items` used `ListRequest` paging, so rows past 200 could never be reached. In iter-02, external #3 flagged the 2 000 cap. Correctness #1 and documentation #1 found that the copies of the publishing-action list had drifted apart and missed accept-changes followed by the HR auto-step. In iter-03, external #1 found that the optional `cascade` tag let a step-1 approve publish after the responsible HR changed. Correctness #1 found that an HR `PUT` gave an active competency a draft reference. In iter-04, correctness #1 found that the old `MatrixPage` still called the transitions without a tag, so it always got 412. The user removed those buttons from the page.
+**Why:** design-review flagged each of these patterns, one as critical. `/desk/items` used `ListRequest` paging, so rows past 200 could never be reached; a 2 000 cap was flagged as well. The copies of the publishing-action list drifted apart and missed accept-changes followed by the HR auto-step. An optional `cascade` tag let a step-1 approve publish after the responsible HR changed. An HR `PUT` gave an active competency a draft reference. The old `MatrixPage` still called the transitions without a tag, so it always got 412; the user removed those buttons from the page.
 
 **How to apply:** check this list before returning COMPLETED on any adr.html or c4-full draft, and again on every autofix pass.

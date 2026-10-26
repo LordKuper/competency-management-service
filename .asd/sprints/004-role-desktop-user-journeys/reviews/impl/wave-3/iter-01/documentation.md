@@ -32,3 +32,5 @@ Notes passed on, not findings: `web/src/features/career/catalogueTables.test.tsx
 
 ## Escalations
 none
+
+resolved: F3, F4 — memory-fix, 2026-10-26

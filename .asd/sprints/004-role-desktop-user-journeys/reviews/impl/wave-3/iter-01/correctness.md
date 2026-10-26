@@ -30,3 +30,5 @@ CONCERNS: 7
 
 ## Next action
 impl review-fix (wave-3/iter-01). Находки 1–5 и 7 исправляет asd-dev (UI) в коде и тестах, находку 5 — вместе с тестами. Находка 6 уходит в memory-fix dispatch владельцу asd-dev-critical. Эскалации не нужны: концепция, контракт и объём не меняются.
+
+resolved: 6 — memory-fix, 2026-10-26

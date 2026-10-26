@@ -1,11 +1,11 @@
 ---
 name: career-reminder-mail-facts
-description: Career reminder mail (sprint 004 Task 7) - where recipients are computed, why names avoid UserNamesAsync, Audit has no kind list, nothing run against SMTP
+description: Career reminder mail - where recipients are computed, why names avoid UserNamesAsync, Audit has no kind list, nothing run against SMTP
 metadata:
   type: project
 ---
 
-Sprint 004 Task 7 (2026-10-13), commit e6ac477. Nothing was run against Mailpit or PostgreSQL.
+As of 2026-10-13 nothing was run against Mailpit or PostgreSQL.
 
 - `CareerMail` (scoped) computes recipients and texts after commit; `CareerMailQueue` (singleton + hosted, like `PasswordResetQueue`) rechecks account/employee and journals `Mail.SendFailed`. Call sites: end of `MatrixWorkflow.TransitAsync` and the four draft-creating handlers (named catalogue, track, competency, scale), never levels.
 - Awaiting mail rule is "after the transition `after.Turn` has an approver" (null turn = published/draft), not per-action branching.

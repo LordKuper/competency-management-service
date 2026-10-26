@@ -14,4 +14,4 @@ Verified on EF Core 10.0.12 / Npgsql 10.0.3 / PostgreSQL 18.6 with 1000 units an
 - A positional record with `<param>` docs for only some parameters fails the build (CS1573 under TreatWarningsAsErrors); document such a record in its type summary only.
 
 **Why:** each cost a failed run or a decision in Task 14.
-**How to apply:** any aggregate added to a list endpoint, or a before/after check of role-dependent counts (see also [[npgsql-search-and-result-type-gotchas]], [[scratch-host-without-postgres]], [[vs-debug-build-lock-and-release-config]]).
+**How to apply:** any aggregate added to a list endpoint, or a before/after check of role-dependent counts (see also [[npgsql-search-and-result-type-gotchas]], [[vs-debug-build-lock-and-release-config]]).
