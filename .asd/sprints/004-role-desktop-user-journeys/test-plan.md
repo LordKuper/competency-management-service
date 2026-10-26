@@ -56,11 +56,12 @@ Fail-first. `node node_modules/vitest/vitest.mjs run <3 файла> --reporter=v
 
 ## Suite run
 
-Command (запись 10): `node node_modules/vitest/vitest.mjs run <25 файлов>` из `web/` — тесты, ссылающиеся на `CompetencyModal`, `TrackModal` и `UnitHrModal` (`vitest related`, 15 файлов), и тесты с тегами AC-61 и AC-8 (ещё 10). Safety valve не сработал: правки — три формы одной фичи, общая инфраструктура и backend не затронуты.
-Scope: impacted (25 файлов web).
-Result: pass — 25 файлов, до стратегии 193 теста (exit 0), после 194 (exit 0), 0 упало; добавлено 2 теста, удалён 1 (замена стража), доработано 2.
-Lint / build: pass — `npm --prefix web run lint` exit 0; `npm --prefix web run build` exit 0; `npm --prefix web run check:api` exit 0.
-HEAD: 142d87f
+Command: `dotnet test --solution Competency.slnx --artifacts-path <scratchpad>/art` и `npm --prefix web test` (терминальный полный прогон impl-review wave-3/iter-03, без выбора набора). Единственное отклонение от commands.yaml: `--artifacts-path` в scratchpad, потому что `src/*/bin` блокирует запущенный Competency.Api и Visual Studio. Для `ContractTests` и `DeploymentTests`, которые ищут `Competency.slnx` от бинарников, в каталог артефактов скопированы `Competency.slnx`, `Dockerfile`, `deploy/`, `openapi/` и `src/*/*.csproj` с `packages.lock.json`.
+Scope: full (весь backend и весь web).
+Result backend: pass — 682 теста, 682 успешно, 0 упало, 0 пропущено, exit 0, 2 мин 57 с. Первый прогон без копии корня дал exit 2 (672/10): 9 падений `FileNotFoundException: Competency.slnx` из-за пути артефактов и один `Npgsql timeout` в `IdentityRolesMigrationTests.Ac63_...` (нагрузка Docker при старте); повтор того же дерева зелёный.
+Result web: pass — 68 файлов, 707 тестов, 0 упало, exit 0, 58 с.
+Lint / build: pass — `npm --prefix web run lint` exit 0; `dotnet build Competency.slnx --tl:off` (артефакты в scratchpad) и `npm --prefix web run build` exit 0.
+HEAD: 1446fdeb13c15ac3a35fdcc1d636d4d7e56d6d3e
 
 Замер стола на сиде `tests/perf/seed-10k.sql` (10 000 работающих сотрудников, 1 000 подразделений, 348 учётных записей, 625 версий матриц; сборка `Debug`, один процесс, 60 замеров после 5 прогревочных; число SQL-команд — команды приложения, без `DISCARD ALL` сброса соединения Npgsql):
 
