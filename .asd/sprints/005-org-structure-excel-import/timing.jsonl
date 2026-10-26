@@ -23,3 +23,5 @@
 {"op":"open","id":"impl#1","kind":"phase","parent":null,"start":"2026-10-26T14:50:05.791Z","attrs":{}}
 {"op":"open","id":"dispatch Task 1","kind":"dispatch","parent":"impl#1","start":"2026-10-26T14:51:15.055Z","attrs":{}}
 {"op":"close","id":"dispatch Task 1","kind":"dispatch","parent":"impl#1","start":"2026-10-26T14:51:15.055Z","end":"2026-10-26T15:07:36.772Z","outcome":"done","attrs":{}}
+{"op":"open","id":"dispatch Task 2","kind":"dispatch","parent":"impl#1","start":"2026-10-26T15:08:15.788Z","attrs":{}}
+{"op":"open","id":"dispatch Task 3","kind":"dispatch","parent":"impl#1","start":"2026-10-26T15:08:15.954Z","attrs":{}}

@@ -70,6 +70,18 @@
       "tier": "standard",
       "reason": "risk:public contract",
       "resolved_model": "sonnet"
+    },
+    "Task 2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "Task 3": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:ui shape",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
