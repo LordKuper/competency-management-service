@@ -20,6 +20,8 @@ const LEVEL_ROUTE = "POST /api/v1/career/levels";
 const ORDER_ROUTE = "PUT /api/v1/career/tracks/created/level-order";
 /** The version the server gives a track it has just created: an entry is first saved as version 0. */
 const CREATED_VERSION = 0;
+/** The name a colleague gave the track while the dialog was open. */
+const REREAD_NAME = "Бэкенд-разработка";
 
 const unit = (id: string, name: string, parentId: string | null) => ({
   id,
@@ -299,7 +301,7 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     expect(fakeApi.calls(TRACK_ROUTE)).toHaveLength(1);
   });
 
-  it("creates a new track once, and after the order is refused for a stale version reads the track again and sends the version it read", async () => {
+  it("creates a new track once, and after the order is refused for a stale version reads the track again, shows the name it read and sends the version it read (AC-61)", async () => {
     const served = serve();
     let refusals = 1;
     fakeApi.on(ORDER_ROUTE, async (request) => {
@@ -307,10 +309,10 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
       served.steps.push(`order ${body.levelIds.join(",")}`);
       return refusals-- > 0
         ? problem(412, { title: "Запись изменена" })
-        : Response.json(track("created", "Бэкенд", 8));
+        : Response.json(track("created", REREAD_NAME, 8));
     });
     fakeApi.on("GET /api/v1/career/tracks/created", () =>
-      Response.json(track("created", "Бэкенд", 5)),
+      Response.json(track("created", REREAD_NAME, 5)),
     );
     const onClose = vi.fn();
     render(
@@ -339,6 +341,11 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
       await screen.findByText("Не удалось сохранить запись"),
     ).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: "Название" })).toHaveValue(
+        REREAD_NAME,
+      ),
+    );
     await save(user);
 
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
@@ -352,6 +359,7 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     expect(
       fakeApi.calls(ORDER_ROUTE).map((call) => call.headers.get("If-Match")),
     ).toEqual([`"${CREATED_VERSION}"`, '"5"']);
+    expect(fakeApi.calls("PUT /api/v1/career/tracks/created")).toHaveLength(0);
   });
 
   it("renames an existing track against the version it was opened with, and creates nothing else", async () => {
@@ -414,7 +422,7 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     ]);
   });
 
-  it("sends the version of the track it reread after a refusal for a stale version, not the one it saved before", async () => {
+  it("shows the name and sends the version of the track it reread after a refusal for a stale version, not those it saved before (AC-61)", async () => {
     const served = serve();
     served.levels.push(
       savedLevel("level-1", "Младший", "existing"),
@@ -428,7 +436,7 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     fakeApi.on("PUT /api/v1/career/tracks/existing/level-order", () =>
       refusals-- > 0
         ? problem(412, { title: "Запись изменена" })
-        : Response.json(track("existing", "Серверная разработка", 7)),
+        : Response.json(track("existing", REREAD_NAME, 7)),
     );
     const onClose = vi.fn();
     const modal = (shown: CareerTrack) => (
@@ -460,10 +468,10 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     await save(user);
 
     await screen.findByText("Не удалось сохранить запись");
-    view.rerender(modal(track("existing", "Серверная разработка", 6)));
+    view.rerender(modal(track("existing", REREAD_NAME, 6)));
     await waitFor(() =>
       expect(screen.getByRole("textbox", { name: "Название" })).toHaveValue(
-        "Серверная разработка",
+        REREAD_NAME,
       ),
     );
     await save(user);

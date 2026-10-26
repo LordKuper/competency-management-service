@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi, problem } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import type { OrgUnit } from "./orgStructureApi";
 import { UnitHrModal } from "./UnitHrModal";
@@ -81,6 +81,16 @@ async function dialogTitled(title: string) {
     selector: ".ant-modal-title, .ant-modal-confirm-title",
   });
   return heading?.closest('[role="dialog"]') as HTMLElement;
+}
+
+function lockedControls() {
+  const controls: [string, HTMLElement][] = [
+    ["employee", screen.getByRole("combobox", { name: "Сотрудник" })],
+    ["assign", screen.getByRole("button", { name: /Закрепить/ })],
+  ];
+  return controls
+    .filter(([, control]) => control.hasAttribute("disabled"))
+    .map(([kind]) => kind);
 }
 
 beforeEach(() => {
@@ -198,6 +208,29 @@ describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
     expect(
       await dialogTitled("HR подразделения «Продажи»"),
     ).toBeInTheDocument();
+  });
+
+  it("holds the employee choice while the assignment is in flight, and frees it when it is refused (AC-61)", async () => {
+    serve("GlobalAdmin", { assigned: null, inherited: null });
+    const held = deferred<Response>();
+    fakeApi.on("PUT /api/v1/career/org-units/sales/hr", () => held.promise);
+    const user = await openModal();
+    await screen.findByText("HR не назначен");
+    expect(lockedControls()).toEqual([]);
+    await user.click(screen.getByRole("combobox", { name: "Сотрудник" }));
+    await user.click(await screen.findByText("Петров Пётр"));
+
+    await user.click(screen.getByRole("button", { name: "Закрепить" }));
+
+    await waitFor(() =>
+      expect(
+        fakeApi.calls("PUT /api/v1/career/org-units/sales/hr"),
+      ).toHaveLength(1),
+    );
+    expect(lockedControls()).toEqual(["employee", "assign"]);
+    held.resolve(problem(500, { title: "Сбой" }));
+    await waitFor(() => expect(lockedControls()).toEqual([]));
+    expect(document.querySelector(".ant-message-notice")).not.toBeNull();
   });
 
   it("removes the assignment after a confirmation that names what follows, focused on «Отмена»", async () => {

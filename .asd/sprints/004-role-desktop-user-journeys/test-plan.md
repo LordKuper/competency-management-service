@@ -20,35 +20,47 @@ responsibility:
 | 7 | 5382584 | delta since entry 6 |
 | 8 | a1b6ed8 | delta since entry 7 |
 | 9 | 6b07d87 | delta since entry 8 |
+| 10 |  | delta since entry 9 |
 
 ## Risk → check decisions
 
-Дельта записи 9 — `git diff a1b6ed8...HEAD`: исправление `D-3` (`8d9f3a5`), удаление не вызываемого `approveDraft` (`b7db7b5`), отметка `D-3` (`db1bf1c`).
+Дельта записи 10 — `git diff 6b07d87...HEAD`: правки dev по замечаниям ревью волны 3, итерации 02 (`acb1e26`, `86eb60b`, `b6b4366`; `ce44112` — память dev), файлы ревью и память ревьюеров. Backend, `openapi/` и конфигурация сборки не менялись; общие модули (`useFormSubmit`, `useEditBase`, `fakeApi`) тоже, safety valve не сработал. Поиск остатков по удалённому `focusFirstRejectedField` по репозиторию и `.claude/agent-memory`: в коде, живых документах и памяти попаданий нет; остались временные файлы `.asd/tmp`.
 
 | Change | Material risk | Chosen check | Decision | Reason |
 |---|---|---|---|---|
-| `BlockModal`: `CompetencyPicker` получает `isSaving`, `getTitleCheckboxProps` запирает «Select all» на время сохранения (`8d9f3a5`) | change: workflow state machine — «Select all» менял состав блока, пока шло сохранение (AC-61) | уже написанный тест `BlockModal.test.tsx` › `holds the name, the unit and the composition while the save is in flight, and frees them when it is refused`; красный на `a1b6ed8` (`D-3`), зелёный теперь | none | Регрессионный тест записи 8 покрывает риск, нового не нужно; fail-first — красный прогон записи 8 (строка `D-3`) |
-| `catalogApi.ts`: удалён `approveDraft` (`b7db7b5`) | нет поведения: функция без вызывающих, тест удалён в записи 8 | `tsc` (`lint`, `build`) ловит оставшиеся ссылки; `grep approveDraft web/src` — пусто | none | Исчезнувший экспорт проверяет компилятор |
+| `CompetencyModal`: отклонённое поле хранится в `rejectedField`, фокус ставит эффект после `!isSubmitting` (`acb1e26`) | change: workflow state machine — форма заперта `disabled={isSubmitting}`, а фокус на первое отклонённое поле вызывался до разблокировки; `focus()` на запертом поле ничего не делает, поле оставалось без фокуса | component | add (заменяет страж записи 8) | `CompetencyModal.test.tsx`: ответ 400 удержан `deferred()`, тест ждёт `toBeDisabled()` у поля, отпускает ответ — поле получает фокус. Страж записи 8 отвечал сразу, цепочка шла в микрозадачах, отрисовка запертой формы не фиксировалась, и он остался зелёным на дефекте (см. `Removed tests`). Ceiling: мутанты `CF1` (эффект без проверки `isSubmitting`) и `CF3` (без сброса `rejectedField`) зелёные и эквивалентны: `setRejectedField` и `setIsSubmitting(false)` попадают в один пакет React, отрисовки «поле названо, форма заперта» не бывает, а новое значение `rejectedField` каждый отказ задаёт заново. Защитные условия, тестом не закреплены |
+| `UnitHrModal.AssignHrForm`: `<Form disabled={isSubmitting}>` (`86eb60b`) | change: workflow state machine — выбор сотрудника оставался доступным, пока шло сохранение; правка терялась (правило «Mutating UI flows») | component | add | `UnitHrModal.test.tsx`: сохранение удержано `deferred()`, виды запертых элементов собраны в список в трёх моментах — покой `[]`, `PUT …/hr` в полёте `["employee", "assign"]`, отказ 500 `[]`. Кнопка «Закрепить» в списке: до правки она была только `loading`, не `disabled` |
+| `TrackModal`: эффект записывает `current?.name ?? ""` в поле при каждой смене `current` (`b6b4366`) | change: stale-version — `form` живёт выше `Form key`, перемонтирование после 412 оставляло в хранилище отклонённое название; следующее сохранение уходило с перечитанной версией и перезаписывало чужое переименование (AC-61) | component | add (в двух существующих тестах 412) | Новые тесты не нужны: поток и риск те же, отдельный повторял бы расстановку с перетаскиванием. Тесты `creates a new track once, and after the order is refused…` (создание: `readTrack` отдаёт другое название) и `shows the name and sends the version of the track it reread…` (правка: `rerender` с другим названием и версией) теперь ждут перечитанное название в поле и не ждут второго сохранения отклонённого названия: ни одного `PUT …/tracks/created`, ровно один `PUT …/tracks/existing`; прежние проверки `If-Match` и порядка остаются, порядок после перечитывания уходит вторым сохранением. Раньше перечитанное название совпадало с набранным, и поле не отличало «показано перечитанное» от «осталось своё». Нужны оба теста: эффект по `base` ловит только создание, по `saved` — только правка (мутанты `TE2`, `TE3`) |
 
 ## Removed tests
 
-Нет.
+Выполнено в том же коммите, что и замена.
+
+| Test | Reason | In change scope |
+|---|---|---|
+| `CompetencyModal.test.tsx`: `moves the focus to the first field the server rejects` (мгновенный ответ 400) | заменён тестом с удержанным ответом в том же describe: прежний не фиксировал отрисовку запертой формы и не краснел на дефекте, а всё, что он ловил (вызов фокуса убран), ловит и новый (`CF2`, `CF4`) | да — файл в области изменений спринта |
 
 ## Added tests
 
 Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
 
+Fail-first. `node node_modules/vitest/vitest.mjs run <3 файла> --reporter=verbose` в копии `git archive 78bcf14 web` (родитель первого исправления `acb1e26`; `node_modules` — junction) с тестами рабочего дерева → exit 1, 4 красных из 27, 23 зелёных (прежние тесты тех же файлов). Vitest типы не проверяет, поэтому тесты идут против старого кода и падают на утверждениях.
+
+Мутации — в копии `git archive HEAD web` (`HEAD` = `142d87f`; `node_modules` — junction, снят перед удалением копии) с тестами рабочего дерева; один якорь на правку (число попаданий проверяется), файл восстанавливается в `finally`; рабочее дерево не мутировалось. Команда: `node node_modules/vitest/vitest.mjs run <файл теста> --reporter=json`. Контрольные прогоны без мутации зелёные, exit 0 (`CompetencyModal` 7 из 7, `TrackModal` 11, `UnitHrModal` 9). «Убит» = exit 1 и runner назвал упавший тест; в ячейке — первая упавшая проверка из отчёта runner, `runs` — число мутационных прогонов, нацеленных на файл (контрольные не считаются).
+
 | Test | Regression proof |
 |---|---|
-| — | нет новых тестов |
+| `web/src/features/career/CompetencyModal.test.tsx` — `moves the focus to the first field the server rejects, once the form is enabled again` | до правки: `Error: expect(element).toHaveFocus()` (фокус остался на кнопке). Мутации: `CF2` (вызов `scrollToField` убран) и `CF4` (поле не запоминается) → exit 1, `Error: expect(element).toHaveFocus()`; `CF1` и `CF3` — exit 0, эквивалентны (см. `Risk → check decisions`); runs: 4 |
+| `web/src/features/org-structure/UnitHrModal.test.tsx` — `holds the employee choice while the assignment is in flight, and frees it when it is refused (AC-61)` | до правки: `AssertionError: expected [] to deeply equal [ 'employee', 'assign' ]`. Мутация `UF1` (форма без `disabled`) → exit 1, та же проверка; runs: 1 |
+| `web/src/features/career/TrackModal.test.tsx` — `creates a new track once, and after the order is refused…` и `shows the name and sends the version of the track it reread…` | до правки оба: `Error: expect(element).toHaveValue(Бэкенд-разработка)`. Мутации (каждая exit 1): `TE1` (эффект убран) → оба теста, та же проверка; `TE2` (эффект следует `base`) → только создание; `TE3` (эффект следует `saved`) → только правка; runs: 3 |
 
 ## Suite run
 
-Command (запись 9): `npm --prefix web exec vitest run <14 файлов>` — тесты, ссылающиеся на `BlockModal`, `BlocksTab` или `catalogApi`. Safety valve не сработал: правки — одна форма каталога и удаление не вызываемого экспорта, общая инфраструктура не затронута; backend не менялся.
-Scope: impacted (14 файлов web).
-Result: pass — 14 файлов, 142 теста успешно, 0 упало, exit 0 (до стратегии и после: файлы тестов не менялись); `D-3` зелёный.
+Command (запись 10): `node node_modules/vitest/vitest.mjs run <25 файлов>` из `web/` — тесты, ссылающиеся на `CompetencyModal`, `TrackModal` и `UnitHrModal` (`vitest related`, 15 файлов), и тесты с тегами AC-61 и AC-8 (ещё 10). Safety valve не сработал: правки — три формы одной фичи, общая инфраструктура и backend не затронуты.
+Scope: impacted (25 файлов web).
+Result: pass — 25 файлов, до стратегии 193 теста (exit 0), после 194 (exit 0), 0 упало; добавлено 2 теста, удалён 1 (замена стража), доработано 2.
 Lint / build: pass — `npm --prefix web run lint` exit 0; `npm --prefix web run build` exit 0; `npm --prefix web run check:api` exit 0.
-HEAD: 7663eac
+HEAD: 142d87f
 
 Замер стола на сиде `tests/perf/seed-10k.sql` (10 000 работающих сотрудников, 1 000 подразделений, 348 учётных записей, 625 версий матриц; сборка `Debug`, один процесс, 60 замеров после 5 прогревочных; число SQL-команд — команды приложения, без `DISCARD ALL` сброса соединения Npgsql):
 

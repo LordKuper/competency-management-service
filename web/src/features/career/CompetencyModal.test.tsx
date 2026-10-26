@@ -274,16 +274,19 @@ describe("competency form while the competency is being saved (AC-61)", {
     expect(lockedControls()).toEqual([]);
   });
 
-  it("moves the focus to the first field the server rejects", async () => {
-    const user = open(EXISTING, () =>
-      fakeApi.on(ROUTE, () =>
-        problem(400, { errors: { evidenceExamples: ["Слишком длинно"] } }),
-      ),
-    );
+  it("moves the focus to the first field the server rejects, once the form is enabled again", async () => {
+    const held = deferred<Response>();
+    const user = open(EXISTING, () => fakeApi.on(ROUTE, () => held.promise));
     await screen.findByDisplayValue("Проектирование");
 
     await user.click(screen.getByRole("button", { name: "Сохранить" }));
 
+    await waitFor(() =>
+      expect(screen.getByLabelText("Примеры подтверждений")).toBeDisabled(),
+    );
+    held.resolve(
+      problem(400, { errors: { evidenceExamples: ["Слишком длинно"] } }),
+    );
     expect(await screen.findByText("Слишком длинно")).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getByLabelText("Примеры подтверждений")).toHaveFocus(),
