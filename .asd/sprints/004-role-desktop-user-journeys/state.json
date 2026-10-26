@@ -335,6 +335,14 @@
       "reason": "all three waves met reviewer DoD; terminal full suite green; user asked to continue",
       "evidence": "test-plan.md Suite run; decisions-log 2026-10-26 impl-review DoD met",
       "artifact_revision": "c3e6ce4"
+    },
+    {
+      "gate": "PR publication",
+      "decision_actor": "user",
+      "decision": "push branch and open PR",
+      "reason": "user approved in chat",
+      "evidence": "decisions-log.md 2026-10-26 PR opened",
+      "artifact_revision": "1e45045"
     }
   ],
   "task_routing": {
@@ -1579,9 +1587,13 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-26T09:04:13.913Z",
+  "updated_at": "2026-10-26T09:06:41.988Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
-  "pr": null,
+  "pr": {
+    "number": 7,
+    "url": "https://github.com/LordKuper/competency-management-service/pull/7",
+    "state": "open"
+  },
   "archived_at": null
 }

@@ -747,3 +747,4 @@
 {"op":"open","id":"retro#1","kind":"phase","parent":null,"start":"2026-10-26T08:58:31.974Z","attrs":{}}
 {"op":"close","id":"retro#1","kind":"phase","parent":null,"start":"2026-10-26T08:58:31.974Z","end":"2026-10-26T09:02:07.066Z","outcome":"done","attrs":{}}
 {"op":"open","id":"pr#1","kind":"phase","parent":null,"start":"2026-10-26T09:02:07.066Z","attrs":{}}
+{"op":"close","id":"pr#1","kind":"phase","parent":null,"start":"2026-10-26T09:02:07.066Z","end":"2026-10-26T09:06:42.050Z","outcome":"done","attrs":{}}
