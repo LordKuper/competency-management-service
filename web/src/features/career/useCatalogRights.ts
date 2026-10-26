@@ -8,6 +8,8 @@ import { useProcessRoles } from "./careerApi";
  * entry may be edited or deleted the server tells with the entry itself.
  * Directions, competencies and scales belong to no unit: administrators and accounts with the HR role keep them and heads of
  * units add drafts. A track and its levels belong to the track's unit: its HR and administrators keep them, its head edits drafts.
+ * Adding a track needs a unit to put it in. `canManage` takes the unit of the track an entry is or belongs to, none for an
+ * entry without a unit.
  */
 export function useCatalogRights() {
   const isAdmin = useIsAdmin();
@@ -30,11 +32,8 @@ export function useCatalogRights() {
       isAdmin,
       isHr,
       ownerUnits,
-      /** Whether the user may add a direction, competency or scale. */
       canCreate: isHr || headed.size > 0,
-      /** Whether the user may add a track: they need a unit to put it in. */
       canCreateTrack: isAdmin || ownerUnits.length > 0,
-      /** `unitId` is the unit of the track the entry is, or belongs to; omitted for an entry without a unit. */
       canManage: (unitId?: string) =>
         unitId === undefined ? isHr : keeps(unitId),
     };

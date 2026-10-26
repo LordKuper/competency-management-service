@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Form, Input } from "antd";
+import { Form, type FormInstance, Input } from "antd";
 import { useEffect } from "react";
 import { ApiError } from "../../api/ApiError";
 import { api } from "../../api/client";
@@ -29,6 +29,19 @@ interface CompetencyValues {
   evidenceExamples?: string | null;
   directionId?: string | null;
   scaleId?: string;
+}
+
+/**
+ * Moves the focus to the first field a rejected save names. The messages land under the fields only after the rejection
+ * is rethrown, so the focus waits for them.
+ */
+function focusFirstRejectedField(
+  form: FormInstance<CompetencyValues>,
+  error: unknown,
+) {
+  const field =
+    error instanceof ApiError && error.errors && Object.keys(error.errors)[0];
+  if (field) queueMicrotask(() => form.scrollToField(field, { focus: true }));
 }
 
 interface CompetencyModalProps {
@@ -120,13 +133,7 @@ function CompetencyForm({
     try {
       return await onSubmit(values);
     } catch (error) {
-      const field =
-        error instanceof ApiError &&
-        error.errors &&
-        Object.keys(error.errors)[0];
-      // The messages are put under the fields right after this rethrow, so the focus waits for them.
-      if (field)
-        queueMicrotask(() => form.scrollToField(field, { focus: true }));
+      focusFirstRejectedField(form, error);
       throw error;
     }
   });

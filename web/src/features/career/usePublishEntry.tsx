@@ -293,9 +293,10 @@ function publicationBlockers(error: ApiError) {
 }
 
 /**
- * Approving and returning to work an entry of the catalogues, and the offer made right after an entry was created as a
- * draft. The list of what is published with the entry is read first; an empty one needs no question, otherwise a window
- * names the entries. The action carries the tag of the list the user saw. A refusal (409) is explained with what blocks;
+ * Approving and returning to work an entry of the catalogues (`publish`), approving it under the list the caller already
+ * shows (`approveShown`), and the approval offered right after an entry was created as a draft (`offerApproval`: none
+ * for an entry that is not a draft or that the user may not approve). The list of what is published with the entry is
+ * read first; an empty one needs no question, otherwise a window names the entries. The action carries the tag of the list the user saw. A refusal (409) is explained with what blocks;
  * a 412 that names a fresh preview shows the new list for confirmation again, with no retry of its own, while a 412 on
  * the entry's version only rereads the tables.
  */
@@ -339,7 +340,6 @@ export function usePublishEntry() {
     return `${isTrack ? "Трек" : "Запись"} «${target.entry.name}» нельзя ${action === "approve" ? `сделать ${done}` : "вернуть в работу"}`;
   }
 
-  /** Runs the action under the confirmed tag; true when the list changed meanwhile and must be confirmed again. */
   async function execute(
     target: PublishTarget,
     action: PublishAction,
@@ -415,7 +415,6 @@ export function usePublishEntry() {
     });
   }
 
-  /** Approves or returns to work an entry, after the list of what is published with it was shown if there is one. */
   async function publish(
     target: PublishTarget,
     action: PublishAction,
@@ -447,10 +446,6 @@ export function usePublishEntry() {
     }
   }
 
-  /**
-   * Approves an entry under the list the user is looking at, which the caller shows; a list that changed meanwhile is
-   * confirmed again, with the new list, before anything is done.
-   */
   async function approveShown(
     target: PublishTarget,
     preview: PublicationPreview,
@@ -464,10 +459,6 @@ export function usePublishEntry() {
     }
   }
 
-  /**
-   * After an entry was created: one made a draft only for lack of the right to approve it, or not referring to drafts,
-   * gets no offer; one the user may approve is offered the approval with the list of what goes with it.
-   */
   async function offerApproval(target: PublishTarget, status: CatalogStatus) {
     if (status !== "Draft") return;
     try {

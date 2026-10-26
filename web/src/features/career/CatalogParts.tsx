@@ -84,7 +84,6 @@ export function EntryActions({
   const { publish, isBusy } = usePublishEntry();
   const canManage = rights.canManage(unitId);
 
-  /** Deactivating a shared block leaves unpublished versions that use it incomplete, which the confirmation says first. */
   const deactivate = () =>
     segment === "blocks"
       ? modal.confirm({
@@ -97,7 +96,6 @@ export function EntryActions({
         })
       : mutate("deactivate");
 
-  /** Approving and returning to work go through the publication preview, but a level publishes nothing with it. */
   const approveOrActivate = (action: "approve" | "activate") =>
     segment === "levels"
       ? mutate(action)
