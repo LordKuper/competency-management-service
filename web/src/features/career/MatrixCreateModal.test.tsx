@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi, problem } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { careerQueryKey } from "./careerApi";
 import { MatrixCreateModal } from "./MatrixCreateModal";
@@ -297,5 +297,123 @@ describe("starting a matrix (AC-14)", { timeout: LONG_FLOW_TIMEOUT }, () => {
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText("Открыта матрица")).not.toBeInTheDocument();
+  });
+});
+
+const POSITIONS_ROUTE = "GET /api/v1/career/org-units/team/matrix-positions";
+
+function servePositions() {
+  fakeApi.on(POSITIONS_ROUTE, () =>
+    Response.json({
+      items: [
+        {
+          id: "manager",
+          name: "Руководитель",
+          isLinked: false,
+          linkedTrack: null,
+        },
+      ],
+      total: 1,
+      page: 1,
+      pageSize: 20,
+    }),
+  );
+}
+
+const choosePositionBasis = (user: ReturnType<typeof userEvent.setup>) =>
+  user.click(screen.getByRole("radio", { name: "По должности" }));
+
+describe("starting a matrix of a position (AC-14)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
+  const REASON = "Сначала выберите подразделение";
+
+  it("says under the position that the unit comes first, until the unit is chosen", async () => {
+    const user = await openModal(servePositions);
+    await choosePositionBasis(user);
+    expect(screen.getByText(REASON)).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Должность" })).toBeDisabled();
+
+    await choose(user, "Подразделение", "Команда");
+
+    await waitFor(() =>
+      expect(screen.queryByText(REASON)).not.toBeInTheDocument(),
+    );
+    expect(screen.getByRole("combobox", { name: "Должность" })).toBeEnabled();
+  });
+});
+
+describe("the matrix form while the matrix is being created (AC-61)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
+  const ROUTE = "POST /api/v1/career/matrices";
+
+  function lockedControls(kinds: Record<string, HTMLElement[]>) {
+    return Object.entries(kinds)
+      .filter(([, group]) =>
+        group.every((item) => item.hasAttribute("disabled")),
+      )
+      .map(([kind]) => kind);
+  }
+
+  const combobox = (name: string) => screen.getByRole("combobox", { name });
+
+  it("holds the basis, the unit, the direction and the track while the save is in flight, and frees them when it is refused", async () => {
+    const held = deferred<Response>();
+    const user = await openModal(() => fakeApi.on(ROUTE, () => held.promise));
+    await choose(user, "Подразделение", "Команда");
+    await choose(user, "Область", "Разработка");
+    await choose(user, "Трек", "Трек команды");
+    const locked = () =>
+      lockedControls({
+        basis: screen.getAllByRole("radio"),
+        unit: [combobox("Подразделение")],
+        direction: [combobox("Область")],
+        track: [combobox("Трек")],
+      });
+    expect(locked()).toEqual([]);
+
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
+    expect(locked()).toEqual(["basis", "unit", "direction", "track"]);
+    held.resolve(problem(500, { title: "Сбой" }));
+    expect(
+      await screen.findByText("Не удалось сохранить запись"),
+    ).toBeInTheDocument();
+    expect(locked()).toEqual([]);
+  });
+
+  it("holds the basis, the unit and the position of a position matrix while the save is in flight, and frees them when it is refused", async () => {
+    const held = deferred<Response>();
+    const user = await openModal(() => {
+      servePositions();
+      fakeApi.on(ROUTE, () => held.promise);
+    });
+    await choosePositionBasis(user);
+    await choose(user, "Подразделение", "Команда");
+    await user.click(combobox("Должность"));
+    await user.click(
+      await screen.findByText("Руководитель", {
+        selector: ".ant-select-item-option-content *",
+      }),
+    );
+    const locked = () =>
+      lockedControls({
+        basis: screen.getAllByRole("radio"),
+        unit: [combobox("Подразделение")],
+        position: [combobox("Должность")],
+      });
+    expect(locked()).toEqual([]);
+
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
+    expect(locked()).toEqual(["basis", "unit", "position"]);
+    held.resolve(problem(500, { title: "Сбой" }));
+    expect(
+      await screen.findByText("Не удалось сохранить запись"),
+    ).toBeInTheDocument();
+    expect(locked()).toEqual([]);
   });
 });

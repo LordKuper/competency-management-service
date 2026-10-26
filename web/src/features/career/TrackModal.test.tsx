@@ -1,10 +1,11 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { queryClient } from "../../api/queryClient";
+import { LeaveGuardProvider } from "../../app/leaveGuard";
 import { Providers } from "../../app/Providers";
-import { fakeApi, problem } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { stubRowLayout } from "../../test/stubRowLayout";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { currentUserQueryKey } from "../auth/useCurrentUser";
@@ -498,5 +499,124 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(fakeApi.calls("PUT /api/v1/career/tracks/existing")).toHaveLength(0);
     expect(fakeApi.calls(TRACK_ROUTE)).toHaveLength(0);
+  });
+});
+
+describe("closing the track dialog (AC-61)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
+  const ASK = "Перейти без сохранения?";
+
+  async function openGuarded(onClose: () => void) {
+    serve();
+    render(
+      <Providers>
+        <RouterProvider
+          router={createMemoryRouter([
+            {
+              path: "/",
+              element: (
+                <LeaveGuardProvider>
+                  <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
+                </LeaveGuardProvider>
+              ),
+            },
+          ])}
+        />
+      </Providers>,
+    );
+    await rightsLoaded();
+    await screen.findByRole("combobox", { name: "Подразделение" });
+    await act(async () => undefined);
+    return userEvent.setup();
+  }
+
+  const close = (user: ReturnType<typeof userEvent.setup>) =>
+    user.click(screen.getByRole("button", { name: /Close|Закрыть/ }));
+
+  it("closes a new track nothing was typed in at once, without a question", async () => {
+    const onClose = vi.fn();
+    const user = await openGuarded(onClose);
+
+    await close(user);
+
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(
+      screen.queryByText(ASK, { selector: ".ant-modal-confirm-title" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("asks before closing a new track once a name was typed", async () => {
+    const onClose = vi.fn();
+    const user = await openGuarded(onClose);
+    await user.type(
+      screen.getByRole("textbox", { name: "Название" }),
+      "Бэкенд",
+    );
+
+    await close(user);
+
+    expect(
+      await screen.findByText(ASK, { selector: ".ant-modal-confirm-title" }),
+    ).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+});
+
+describe("the track dialog while the track is being saved (AC-61)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
+  function lockedControls() {
+    const controls: [string, HTMLElement | null][] = [
+      ["name", screen.queryByRole("textbox", { name: "Название" })],
+      ["unit", screen.queryByRole("combobox", { name: "Подразделение" })],
+      ["direction", screen.queryByRole("combobox", { name: "Область" })],
+      ["add level", screen.queryByRole("button", { name: "Добавить уровень" })],
+      [
+        "move level",
+        screen.queryByRole("button", { name: "Перетащить уровень «Младший»" }),
+      ],
+      [
+        "level actions",
+        screen.queryByRole("button", { name: "Действия с «Младший»" }),
+      ],
+    ];
+    return controls
+      .filter(([, control]) => control?.hasAttribute("disabled"))
+      .map(([kind]) => kind);
+  }
+
+  it("holds the fields and the list of levels while the save is in flight, and frees them when it is refused", async () => {
+    serve();
+    const held = deferred<Response>();
+    fakeApi.on(TRACK_ROUTE, () => held.promise);
+    render(
+      <Providers>
+        <MemoryRouter>
+          <TrackModal directionId={DIRECTION_ID} onClose={vi.fn()} />
+        </MemoryRouter>
+      </Providers>,
+    );
+    const user = userEvent.setup();
+    await fillNewTrack(user, "Бэкенд");
+    await addLevel(user, "Младший");
+    expect(lockedControls()).toEqual([]);
+
+    await save(user);
+
+    await waitFor(() => expect(fakeApi.calls(TRACK_ROUTE)).toHaveLength(1));
+    expect(lockedControls()).toEqual([
+      "name",
+      "unit",
+      "direction",
+      "add level",
+      "move level",
+      "level actions",
+    ]);
+    held.resolve(problem(500, { title: "Сбой" }));
+    expect(
+      await screen.findByText("Не удалось сохранить запись"),
+    ).toBeInTheDocument();
+    expect(lockedControls()).toEqual([]);
   });
 });

@@ -177,6 +177,27 @@ describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
         "Учётная запись заблокирована или не завершила регистрацию",
       ),
     ).toBeInTheDocument();
+    expect(document.querySelector(".ant-message-notice")).toBeNull();
+  });
+
+  it("tells the administrator, and keeps the dialog, when assigning fails for a reason that names no field", async () => {
+    serve("GlobalAdmin", { assigned: null, inherited: null });
+    fakeApi.on("PUT /api/v1/career/org-units/sales/hr", () =>
+      problem(500, { title: "Сбой" }),
+    );
+    const user = await openModal();
+    await screen.findByText("HR не назначен");
+
+    await user.click(screen.getByRole("combobox", { name: "Сотрудник" }));
+    await user.click(await screen.findByText("Петров Пётр"));
+    await user.click(screen.getByRole("button", { name: "Закрепить" }));
+
+    await waitFor(() =>
+      expect(document.querySelector(".ant-message-notice")).not.toBeNull(),
+    );
+    expect(
+      await dialogTitled("HR подразделения «Продажи»"),
+    ).toBeInTheDocument();
   });
 
   it("removes the assignment after a confirmation that names what follows, focused on «Отмена»", async () => {

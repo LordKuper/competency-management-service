@@ -845,6 +845,23 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     return { opened, saved };
   }
 
+  it("marks no competency as lacking a requirement, since its cell shows the lowest score of the scale", async () => {
+    const { opened } = editorWithACompetency();
+    serveEditor({
+      ...opened,
+      content: { ...opened.content, requirements: [] },
+    });
+    await openPage();
+
+    const row = (await screen.findByText("Проектирование")).closest(
+      "tr",
+    ) as HTMLElement;
+
+    expect(
+      within(row).queryByRole("img", { name: "Нет требований" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("locks every control of the editor while the content is being saved, so that nothing typed then is lost, and frees them once it is saved", async () => {
     const held = deferred<Response>();
     const { opened, saved } = editorWithACompetency();

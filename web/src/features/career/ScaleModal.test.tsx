@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi, problem } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import type { Scale } from "./catalogApi";
 import { ScaleModal } from "./ScaleModal";
@@ -135,5 +135,50 @@ describe("scale form (AC-13)", { timeout: LONG_FLOW_TIMEOUT }, () => {
     ).closest('[role="dialog"]') as HTMLElement;
     expect(within(dialog).getByText("Изменение шкалы")).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
+  });
+});
+
+describe("scale form while the scale is being saved (AC-61)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
+  function lockedControls() {
+    const controls: [string, HTMLElement[]][] = [
+      ["name", [screen.getByLabelText("Название")]],
+      ["scores", screen.getAllByLabelText("Балл")],
+      ["labels", screen.getAllByLabelText("Значение")],
+      ["remove point", screen.getAllByRole("button", { name: "Удалить" })],
+      ["add point", [screen.getByRole("button", { name: "Добавить балл" })]],
+    ];
+    return controls
+      .filter(([, group]) =>
+        group.every((item) => item.hasAttribute("disabled")),
+      )
+      .map(([kind]) => kind);
+  }
+
+  it("holds the name and every point while the save is in flight, and frees them when it is refused", async () => {
+    const held = deferred<Response>();
+    fakeApi.on("PUT /api/v1/career/scales/scale", () => held.promise);
+    const { user } = open(EXISTING);
+    await screen.findByDisplayValue("Расширенная");
+    expect(lockedControls()).toEqual([]);
+
+    await save(user);
+
+    await waitFor(() =>
+      expect(fakeApi.calls("PUT /api/v1/career/scales/scale")).toHaveLength(1),
+    );
+    expect(lockedControls()).toEqual([
+      "name",
+      "scores",
+      "labels",
+      "remove point",
+      "add point",
+    ]);
+    held.resolve(problem(500, { title: "Сбой" }));
+    expect(
+      await screen.findByText("Не удалось сохранить запись"),
+    ).toBeInTheDocument();
+    expect(lockedControls()).toEqual([]);
   });
 });

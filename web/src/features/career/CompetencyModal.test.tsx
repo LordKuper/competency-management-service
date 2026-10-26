@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { CompetencyModal } from "./CompetencyModal";
 import type { Competency } from "./catalogApi";
@@ -230,5 +230,63 @@ describe("scale of a new competency (AC-22)", {
     const call = fakeApi.calls("PUT /api/v1/career/competencies/competency")[0];
     expect(call?.headers.get("If-Match")).toBe('"7"');
     expect(await call?.json()).toMatchObject({ scaleId: OTHER_SCALE.id });
+  });
+});
+
+describe("competency form while the competency is being saved (AC-61)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
+  const ROUTE = "PUT /api/v1/career/competencies/competency";
+
+  function lockedControls() {
+    const controls: [string, HTMLElement][] = [
+      ["name", screen.getByLabelText("Название")],
+      ["description", screen.getByLabelText("Описание")],
+      ["evidence", screen.getByLabelText("Примеры подтверждений")],
+      ["direction", screen.getByRole("combobox", { name: "Область" })],
+      ["scale", screen.getByRole("combobox", { name: "Шкала" })],
+    ];
+    return controls
+      .filter(([, control]) => control.hasAttribute("disabled"))
+      .map(([kind]) => kind);
+  }
+
+  it("holds every field while the save is in flight, and frees them when it is refused", async () => {
+    const held = deferred<Response>();
+    const user = open(EXISTING, () => fakeApi.on(ROUTE, () => held.promise));
+    await screen.findByDisplayValue("Проектирование");
+    expect(lockedControls()).toEqual([]);
+
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
+    expect(lockedControls()).toEqual([
+      "name",
+      "description",
+      "evidence",
+      "direction",
+      "scale",
+    ]);
+    held.resolve(problem(500, { title: "Сбой" }));
+    expect(
+      await screen.findByText("Не удалось сохранить запись"),
+    ).toBeInTheDocument();
+    expect(lockedControls()).toEqual([]);
+  });
+
+  it("moves the focus to the first field the server rejects", async () => {
+    const user = open(EXISTING, () =>
+      fakeApi.on(ROUTE, () =>
+        problem(400, { errors: { evidenceExamples: ["Слишком длинно"] } }),
+      ),
+    );
+    await screen.findByDisplayValue("Проектирование");
+
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+    expect(await screen.findByText("Слишком длинно")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByLabelText("Примеры подтверждений")).toHaveFocus(),
+    );
   });
 });
