@@ -44,7 +44,7 @@ const SCENARIOS: Scenario[] = [
     title: "Добавить первое подразделение",
     description:
       "Действующих подразделений нет: создайте верхнее подразделение компании.",
-    isFor: (roles) => roles.isAdmin,
+    isFor: (roles) => roles.isHr || roles.isAdmin,
     path: orgPaths.tree,
     holds: (prerequisites) => !prerequisites.includes("ActiveUnit"),
   },
@@ -126,7 +126,7 @@ const SCENARIOS: Scenario[] = [
     title: "Принять сотрудника",
     description:
       "Карточка сотрудника и, по желанию, учётная запись с приглашением — одним сценарием.",
-    isFor: (roles) => roles.isAdmin,
+    isFor: (roles) => roles.isHr || roles.isAdmin,
     path: deskPaths.onboardEmployee,
     holds: (prerequisites) =>
       prerequisites.includes("ActiveUnit") &&
@@ -158,7 +158,7 @@ const SCENARIOS: Scenario[] = [
     title: "Навести порядок в оргструктуре",
     description:
       "Расхождения оргструктуры и учётных записей: должности вне перечня, учётные записи без сотрудника.",
-    isFor: (roles) => roles.isAdmin,
+    isFor: (roles) => roles.isHr || roles.isAdmin,
     path: deskPaths.orgCleanup,
     groups: [...ORG_QUEUE_GROUPS],
     isQueue: true,
