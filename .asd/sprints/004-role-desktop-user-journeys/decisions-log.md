@@ -440,3 +440,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-26 — impl test-fix: defects D-3 resolved (8d9f3a5); efficiency E-1 остаток — approveDraft удалён (b7db7b5); gate: web build и lint чисто
 - 2026-10-26 — route impl-test entry 9: standard, dispatch HEAD db1bf1c; risk none via failing test
 - 2026-10-26 — impl-test: impacted set green (web 142/142 в 14 файлах), 0/0 tests; D-3 подтверждён
+- 2026-10-26 — external interrupted attempt 1 in wave-3/iter-02 (codex exec exit 1, then 600 s foreground timeout; no auth/quota/reachability cause reported)
+- 2026-10-26 — impl-review wave-3/iter-02 memory-fix: asd-dev-critical (documentation 1, 2 — номер Task, коммит одной составной командой по git-strategy), asd-reviewer-correctness (documentation 3 — исключение удалено, MEMORY-FIX применён); memory-check чист

@@ -1,6 +1,6 @@
 ---
 name: ef-left-join-count-and-visibility-facts
-description: Unit tree head name and employee count (Task 14) - EF left join over a GroupBy count needs (int?)x.Count ?? 0, correlated subqueries vs group join plans, role-visibility rule, seeded-DB parity method
+description: Unit tree head name and employee count - EF left join over a GroupBy count needs (int?)x.Count ?? 0, correlated subqueries vs group join plans, role-visibility rule, seeded-DB parity method
 metadata:
   type: project
 ---
@@ -13,5 +13,5 @@ Verified on EF Core 10.0.12 / Npgsql 10.0.3 / PostgreSQL 18.6 with 1000 units an
 - Parity method: seed with `generate_series` and `md5('u'||n)::uuid` ids (deterministic, joinable from SQL), an inactive-leaf rule so active units never have inactive ancestors, a few deliberately invalid active units with non-working heads to exercise the User filter, a User account created through `POST /api/v1/users` (role `User`, `employeeId`) and logins through `/auth/login` with `Sec-Fetch-Site: same-origin`; then a node script takes the `.competency.auth` cookie from the curl jar (`#HttpOnly_` prefix, tab-separated, fields 5/6) and compares `employeeCount` with `GET /employees?orgUnitId=..&includeDescendants=false&pageSize=1` `total` and `headName` with `GET /employees/{id}` for every unit.
 - A positional record with `<param>` docs for only some parameters fails the build (CS1573 under TreatWarningsAsErrors); document such a record in its type summary only.
 
-**Why:** each cost a failed run or a decision in Task 14.
+**Why:** each cost a failed run or a design decision.
 **How to apply:** any aggregate added to a list endpoint, or a before/after check of role-dependent counts (see also [[npgsql-search-and-result-type-gotchas]], [[vs-debug-build-lock-and-release-config]]).
