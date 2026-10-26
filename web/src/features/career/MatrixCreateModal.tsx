@@ -92,6 +92,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
             name="positionId"
             label="Должность"
             rules={[{ required: true, message: "Выберите должность" }]}
+            extra={!orgUnitId ? "Сначала выберите подразделение" : undefined}
           >
             <MatrixPositionSelect orgUnitId={orgUnitId} />
           </Form.Item>
