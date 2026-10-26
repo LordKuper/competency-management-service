@@ -1,8 +1,18 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes, useParams } from "react-router";
+import {
+  createMemoryRouter,
+  createRoutesFromElements,
+  MemoryRouter,
+  Outlet,
+  Route,
+  RouterProvider,
+  Routes,
+  useParams,
+} from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
+import { LeaveGuardProvider } from "../../app/leaveGuard";
 import { Providers } from "../../app/Providers";
 import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
@@ -112,15 +122,36 @@ function DeskStub() {
   return <p>{`desk:${scenario}:${id}`}</p>;
 }
 
-async function openPage() {
+async function openPage({ guarded = false } = {}) {
+  const routes = (
+    <>
+      <Route path="/career/matrices/:id" element={<MatrixPage />} />
+      <Route path="/desk/:scenario/:id" element={<DeskStub />} />
+    </>
+  );
   render(
     <Providers>
-      <MemoryRouter initialEntries={["/career/matrices/matrix"]}>
-        <Routes>
-          <Route path="/career/matrices/:id" element={<MatrixPage />} />
-          <Route path="/desk/:scenario/:id" element={<DeskStub />} />
-        </Routes>
-      </MemoryRouter>
+      {guarded ? (
+        <RouterProvider
+          router={createMemoryRouter(
+            [
+              {
+                element: (
+                  <LeaveGuardProvider>
+                    <Outlet />
+                  </LeaveGuardProvider>
+                ),
+                children: createRoutesFromElements(routes),
+              },
+            ],
+            { initialEntries: ["/career/matrices/matrix"] },
+          )}
+        />
+      ) : (
+        <MemoryRouter initialEntries={["/career/matrices/matrix"]}>
+          <Routes>{routes}</Routes>
+        </MemoryRouter>
+      )}
     </Providers>,
   );
   await screen.findByRole("heading", { name: "Матрица «Бэкенд» — Отдел" });
@@ -132,12 +163,11 @@ async function openPage() {
   return userEvent.setup();
 }
 
-async function openHistory(user: ReturnType<typeof userEvent.setup>) {
-  const history = screen.queryByRole("button", { name: "История" });
-  if (history) {
-    await user.click(history);
-    return;
-  }
+/** «История» of a returned version with three more actions before it: it sits behind the «…» menu, not in view. */
+async function openHistoryFromMenu(user: ReturnType<typeof userEvent.setup>) {
+  expect(
+    screen.queryByRole("button", { name: "История" }),
+  ).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Действия с версией" }));
   await user.click(await screen.findByRole("menuitem", { name: "История" }));
 }
@@ -645,7 +675,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
       );
       const user = await openPage();
 
-      await openHistory(user);
+      await openHistoryFromMenu(user);
       const history = await dialogTitled("История");
       await user.click(within(history).getByRole("button", { name: /Автор/ }));
 
@@ -696,7 +726,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
       );
       const user = await openPage();
 
-      await openHistory(user);
+      await openHistoryFromMenu(user);
       const history = await dialogTitled("История");
       await user.click(
         within(history).getByRole("button", { name: /Согласующий/ }),
@@ -722,7 +752,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
       );
       const user = await openPage();
 
-      await openHistory(user);
+      await openHistoryFromMenu(user);
       const history = await dialogTitled("История");
       await user.click(within(history).getByRole("button", { name: /Автор/ }));
 
@@ -903,6 +933,8 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
 
   describe("while the form has edits that are not saved (AC-15, AC-17)", () => {
     const UNSAVED_REASON = "Сначала сохраните изменения";
+    const leaveQuestion = () =>
+      screen.queryByRole("dialog", { name: "Перейти без сохранения?" });
     const SUBMIT = "Перейти к отправке в мастере";
     const DESK = `desk:matrix-builder:${VERSION_ID}`;
     const deskLink = (label: string) =>
@@ -918,7 +950,7 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
       });
     const RETURN = "Вернуть с правками";
 
-    it("keeps the link to the desk scenario open with unsaved edits, since leaving goes through the confirmation", async () => {
+    it("keeps the link to the desk scenario enabled with unsaved edits, and following it leads there", async () => {
       serveEditor();
       const user = await openPage();
       const threshold = await screen.findByRole("spinbutton", {
@@ -930,6 +962,66 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
       expect(handOver()).not.toHaveAttribute("aria-disabled", "true");
       await user.click(handOver());
       expect(await screen.findByText(DESK)).toBeInTheDocument();
+    });
+
+    it("asks before another version is chosen over unsaved edits, stays on the version and the value on «Остаться», and asks no more once they are saved", async () => {
+      const other = version({
+        id: "other",
+        number: 2,
+        status: "Published",
+        step: null,
+        actions: [],
+      });
+      serveEditor();
+      fakeApi.on("GET /api/v1/career/matrices/matrix/versions", () =>
+        Response.json(
+          [draft(), other].map(({ id, number, status }) => ({
+            id,
+            number,
+            status,
+            authorId: "author",
+            authorName: "Автор",
+            createdAt: "2026-10-01T10:00:00Z",
+            publishedAt: null,
+          })),
+        ),
+      );
+      fakeApi.on("GET /api/v1/career/matrix-versions/other", () =>
+        Response.json(other),
+      );
+      fakeApi.on("GET /api/v1/career/matrix-versions/other/history", () =>
+        Response.json({ variants: [], decisions: [] }),
+      );
+      const user = await openPage({ guarded: true });
+      const threshold = await screen.findByRole("spinbutton", {
+        name: THRESHOLD,
+      });
+      await user.type(threshold, "60");
+      const chooseOther = async () => {
+        await user.click(screen.getByRole("combobox", { name: "Версия" }));
+        await user.click(
+          await screen.findByText("Версия 2", {
+            selector: ".ant-select-item-option-content",
+          }),
+        );
+      };
+
+      await chooseOther();
+      await user.click(await screen.findByRole("button", { name: "Остаться" }));
+
+      await waitFor(() => expect(leaveQuestion()).not.toBeInTheDocument());
+      expect(screen.getByText("Черновик")).toBeInTheDocument();
+      expect(threshold).toHaveValue("60");
+
+      await user.click(screen.getByRole("button", { name: "Сохранить" }));
+      await waitFor(() => expect(fakeApi.calls(CONTENT_ROUTE)).toHaveLength(1));
+      await waitFor(() =>
+        expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument(),
+      );
+      await chooseOther();
+
+      expect(await screen.findByText("Опубликована")).toBeInTheDocument();
+      expect(leaveQuestion()).not.toBeInTheDocument();
     });
 
     it("holds the actions on the saved version back while a save is in flight, even when nothing was changed", async () => {
