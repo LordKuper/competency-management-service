@@ -8,6 +8,7 @@ import { Providers } from "../../app/Providers";
 import { fakeApi } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { ApprovalsSection } from "./ApprovalsSection";
+import { BlocksTab } from "./BlocksTab";
 import { CompetenciesTab } from "./CompetenciesTab";
 import { DirectionsTracksTab } from "./DirectionsTracksTab";
 import { DraftsSection } from "./DraftsSection";
@@ -74,6 +75,7 @@ function serve() {
   fakeApi.on("GET /api/v1/career/tracks", () => Response.json(page([TRACK])));
   fakeApi.on("GET /api/v1/career/competencies", () => Response.json(page([])));
   fakeApi.on("GET /api/v1/career/matrices", () => Response.json(page([])));
+  fakeApi.on("GET /api/v1/career/blocks", () => Response.json(page([])));
   fakeApi.on("GET /api/v1/career/approvals", () => Response.json([]));
   fakeApi.on("GET /api/v1/career/drafts", () => Response.json([]));
 }
@@ -85,7 +87,11 @@ interface FilterCase {
   column: string;
   /** Accessible name of the control inside the filter when it differs from the column title. */
   control?: string;
-  choose: { option: string } | { entry: string } | { unit: string };
+  choose:
+    | { option: string }
+    | { entry: string }
+    | { unit: string }
+    | { checkbox: string };
   param: string;
   value: string;
   inNestedTable?: boolean;
@@ -165,6 +171,24 @@ const CASES: FilterCase[] = [
     choose: { option: "Действует" },
     param: "status",
     value: "Active",
+  },
+  {
+    table: "blocks by unit",
+    show: () => <BlocksTab />,
+    route: "GET /api/v1/career/blocks",
+    column: "Действует для",
+    choose: { unit: "Компания" },
+    param: "scopeUnitId",
+    value: "company",
+  },
+  {
+    table: "blocks for every unit",
+    show: () => <BlocksTab />,
+    route: "GET /api/v1/career/blocks",
+    column: "Действует для",
+    choose: { checkbox: "Для всех" },
+    param: "forAll",
+    value: "true",
   },
   {
     table: "matrices by unit",
@@ -303,6 +327,10 @@ describe("column filters send their value under the param the server reads (AC-2
         await screen.findByRole("menuitem", { name: filter.choose.option }),
       );
       await user.click(screen.getByRole("button", { name: "OK" }));
+    } else if ("checkbox" in filter.choose) {
+      await user.click(
+        screen.getByRole("checkbox", { name: filter.choose.checkbox }),
+      );
     } else if ("entry" in filter.choose) {
       await user.click(
         screen.getByRole("combobox", { name: filter.control ?? filter.column }),
@@ -313,7 +341,11 @@ describe("column filters send their value under the param the server reads (AC-2
         }),
       );
     } else {
-      await user.click(screen.getByRole("combobox", { name: "Подразделение" }));
+      await user.click(
+        within(
+          document.querySelector(".ant-table-filter-dropdown") as HTMLElement,
+        ).getByRole("combobox"),
+      );
       await user.click(
         await screen.findByText(filter.choose.unit, {
           selector: ".ant-select-tree-title",
