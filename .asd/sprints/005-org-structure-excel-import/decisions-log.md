@@ -37,3 +37,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
+- 2026-10-26 — route Task 1: standard, dispatch HEAD 8c5b1a2
+
+## 2026-10-26 — Task 1: отмеченные выборы dev приняты
+
+- **Decision**: Приняты все `flagged` Task 1: `legalEntityIds` и `assignments` в `EmployeeRequest` обязательны (полная замена в `PUT`); ответ отдаёт `legalEntities: [{id, name}]`, `assignments` (только совмещения) и `unitAssignments` (список назначений в отфильтрованном подразделении); возврат на работу — 409, если совмещение в неактивном подразделении; связи юрлиц — аудируемые сущности; `WorkingAssigneeCounts` в `OrgSnapshot`. Ошибки типов SPA (`ChangePositionForm.tsx`, фикстуры `EmployeeCards.test.tsx`, `orgTree.test.ts`) уходят в Task 3; тестовые вызовы API без новых полей — в impl-test.
+- **Rationale**: Обязательные поля исключают случайное стирание совмещений; список назначений в подразделении нужен, когда у сотрудника две должности в одном подразделении; правило возврата на работу держит инвариант деактивации. План эти детали не задавал.
+- **Affected docs**: [plan.md](./plan.md)

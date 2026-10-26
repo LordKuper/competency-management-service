@@ -19,3 +19,7 @@
 {"op":"open","id":"plan#1","kind":"phase","parent":null,"start":"2026-10-26T14:39:25.797Z","attrs":{}}
 {"op":"open","id":"wait plan","kind":"user-wait","parent":"plan#1","start":"2026-10-26T14:45:38.693Z","attrs":{"gate":"plan"}}
 {"op":"close","id":"wait plan","kind":"user-wait","parent":"plan#1","start":"2026-10-26T14:45:38.693Z","end":"2026-10-26T14:49:47.642Z","outcome":"done","attrs":{"gate":"plan"}}
+{"op":"close","id":"plan#1","kind":"phase","parent":null,"start":"2026-10-26T14:39:25.797Z","end":"2026-10-26T14:50:05.791Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#1","kind":"phase","parent":null,"start":"2026-10-26T14:50:05.791Z","attrs":{}}
+{"op":"open","id":"dispatch Task 1","kind":"dispatch","parent":"impl#1","start":"2026-10-26T14:51:15.055Z","attrs":{}}
+{"op":"close","id":"dispatch Task 1","kind":"dispatch","parent":"impl#1","start":"2026-10-26T14:51:15.055Z","end":"2026-10-26T15:07:36.772Z","outcome":"done","attrs":{}}

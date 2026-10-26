@@ -64,7 +64,14 @@
       "artifact_revision": "plan.md@working-tree"
     }
   ],
-  "task_routing": {},
+  "task_routing": {
+    "Task 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:public contract",
+      "resolved_model": "sonnet"
+    }
+  },
   "skipped_phases": [],
   "reviews": {
     "design": {
