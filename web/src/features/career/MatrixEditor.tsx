@@ -146,8 +146,8 @@ interface MatrixEditorBodyProps extends MatrixEditorProps {
 }
 
 /**
- * Names and kinds of the competencies the grid refers to: the version's entries, and for any other, such as one just
- * added or one the approver removed, the catalogue entry read by its id.
+ * Names, statuses and scales of the competencies the grid refers to: the version's entries, and for any other, such as
+ * one just added or one the approver removed, the catalogue entry read by its id.
  */
 export function useCompetencies(
   entries: MatrixVersion["entries"],

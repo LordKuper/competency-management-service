@@ -78,7 +78,7 @@ interface FormActionsProps {
   onCancel: () => void;
 }
 
-/** Save and cancel buttons of a catalogue form; cancelling asks for confirmation while the dialog holds unsaved changes. */
+/** Save and cancel buttons of a catalogue form. */
 export function FormActions({ isSubmitting, onCancel }: FormActionsProps) {
   return (
     <Space>
