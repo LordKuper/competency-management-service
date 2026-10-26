@@ -129,7 +129,7 @@ export function TrackModal({
       isUnsaved={
         pending.length > 0 ||
         order !== undefined ||
-        (name !== undefined && name !== current?.name)
+        (name !== undefined && name !== (current?.name ?? ""))
       }
       onClose={onClose}
     >
