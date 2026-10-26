@@ -13,6 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Competency.Platform\Competency.Platform.csproj" />
   </ItemGroup>
 
