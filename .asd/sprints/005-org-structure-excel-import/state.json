@@ -41,6 +41,20 @@
       "reason": "004#A-4,A-7 rejected (replaced by AC-25); 004#P-1,P-2 included (AC-26,AC-27)",
       "evidence": ".asd/project/retro-backlog.md; decisions-log.md 2026-10-26",
       "artifact_revision": "8c4c1a6"
+    },
+    {
+      "gate": "AC-8 boundary",
+      "decision_actor": "user",
+      "reason": "HR changes org structure only; unit HR assignment and connect-unit stay GlobalAdmin",
+      "evidence": "decisions-log.md 2026-10-26 AC-8 boundary",
+      "artifact_revision": "2185295"
+    },
+    {
+      "gate": "audit",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: all checks ran; only contradiction settled by scope acceptance; ambiguity answered by user",
+      "evidence": "audit.md; decisions-log.md 2026-10-26 audit accepted",
+      "artifact_revision": "2185295"
     }
   ],
   "task_routing": {},
@@ -64,7 +78,7 @@
     }
   },
   "created_at": "2026-10-26T13:39:38.279Z",
-  "updated_at": "2026-10-26T14:24:56.361Z",
+  "updated_at": "2026-10-26T14:39:17.245Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
