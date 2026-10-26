@@ -1,0 +1,13 @@
+{"op":"open","id":"scope#1","kind":"phase","parent":null,"start":"2026-10-26T13:39:04.116Z","attrs":{}}
+{"op":"open","id":"wait workflow choice","kind":"user-wait","parent":"scope#1","start":"2026-10-26T13:39:04.189Z","attrs":{"gate":"workflow choice"}}
+{"op":"close","id":"wait workflow choice","kind":"user-wait","parent":"scope#1","start":"2026-10-26T13:39:04.189Z","end":"2026-10-26T13:39:38.209Z","outcome":"done","attrs":{"gate":"workflow choice"}}
+{"op":"open","id":"wait requirements interview","kind":"user-wait","parent":"scope#1","start":"2026-10-26T13:40:01.174Z","attrs":{"gate":"requirements interview"}}
+{"op":"close","id":"wait requirements interview","kind":"user-wait","parent":"scope#1","start":"2026-10-26T13:40:01.174Z","end":"2026-10-26T13:49:09.835Z","outcome":"done","attrs":{"gate":"requirements interview"}}
+{"op":"open","id":"wait refinement interview","kind":"user-wait","parent":"scope#1","start":"2026-10-26T13:52:13.776Z","attrs":{"gate":"refinement interview"}}
+{"op":"close","id":"wait refinement interview","kind":"user-wait","parent":"scope#1","start":"2026-10-26T13:52:13.776Z","end":"2026-10-26T13:57:48.366Z","outcome":"done","attrs":{"gate":"refinement interview"}}
+{"op":"open","id":"wait approach choice","kind":"user-wait","parent":"scope#1","start":"2026-10-26T13:59:34.208Z","attrs":{"gate":"approach choice"}}
+{"op":"close","id":"wait approach choice","kind":"user-wait","parent":"scope#1","start":"2026-10-26T13:59:34.208Z","end":"2026-10-26T14:11:59.060Z","outcome":"done","attrs":{"gate":"approach choice"}}
+{"op":"open","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-26T14:13:55.993Z","attrs":{"gate":"scope"}}
+{"op":"close","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-26T14:13:55.993Z","end":"2026-10-26T14:22:44.510Z","outcome":"done","attrs":{"gate":"scope"}}
+{"op":"open","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-26T14:23:28.132Z","attrs":{"gate":"scope"}}
+{"op":"close","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-26T14:23:28.132Z","end":"2026-10-26T14:24:04.951Z","outcome":"done","attrs":{"gate":"scope"}}
