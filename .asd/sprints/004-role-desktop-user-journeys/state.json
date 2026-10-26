@@ -328,6 +328,13 @@
       "reason": "external wave-1/iter-03 finding 1 conflicts with AC-110",
       "evidence": "decisions-log.md 2026-10-22 AC-110 amendment",
       "artifact_revision": "6003748"
+    },
+    {
+      "gate": "impl-review green handoff",
+      "decision_actor": "orchestrator",
+      "reason": "all three waves met reviewer DoD; terminal full suite green; user asked to continue",
+      "evidence": "test-plan.md Suite run; decisions-log 2026-10-26 impl-review DoD met",
+      "artifact_revision": "c3e6ce4"
     }
   ],
   "task_routing": {
@@ -1572,7 +1579,7 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-26T08:46:53.166Z",
+  "updated_at": "2026-10-26T08:58:18.306Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

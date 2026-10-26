@@ -70,3 +70,35 @@ Consumed by the retro phase (.asd/rules/sprint-lifecycle.md "Retro phase").
 - **What happened**: после трёх headless-рендеров агент выполнял `taskkill //F //IM chrome.exe`, который принудительно закрывает все экземпляры Chrome на машине, включая открытый пользователем браузер.
 - **Impact**: пользователь потерял открытый браузер; пользователь запретил скриншоты UI и закрытие своего браузера (память оркестратора, asd-dev, asd-ux). Повторяет F-3/F-4: креатор выполняет системные операции вне своей области.
 - **Refs**: decisions-log 2026-10-14 «скриншоты запрещены»
+
+## F-7 — запущенные Competency.Api и Visual Studio блокируют src/*/bin, команды commands.yaml не проходят как есть
+
+- **Phase**: impl, impl-test, impl-review
+- **Surface**: tool — `.asd/project/commands.yaml` `build`/`test` (`dotnet build/test Competency.slnx`)
+- **What happened**: `dotnet build` падал с MSB3021/MSB3027 (файлы заняты процессами пользователя); все прогоны шли с `--artifacts-path` в scratchpad. Терминальный полный прогон с этим путём дал 10 красных: 9 `FileNotFoundException` на `Competency.slnx` в ContractTests/DeploymentTests (тесты ищут корень репозитория от выходного каталога) и 1 таймаут Npgsql при старте Docker; тестировщик скопировал корневые файлы в каталог артефактов, повтор на том же дереве — зелёный.
+- **Impact**: каждый агент получал отдельную инструкцию про artifacts-path; гейт `build` не мог выполняться командой из commands.yaml; один лишний полный прогон.
+- **Refs**: decisions-log 2026-10-22 impl assessment approved; test-plan.md «Suite run»
+
+## F-8 — отчёты External Review отклонялись persist-review из-за формы таблицы
+
+- **Phase**: impl-review
+- **Surface**: agent — asd-external-review
+- **What happened**: три попытки ушли в interrupted: ячейка Severity «major → high» (wave-1/iter-01), неэкранированный `||` в описании (wave-1/iter-02); плюс сбой/таймаут codex на 600 с в foreground (wave-3/iter-02). Каждый раз — повторный запуск codex (≈5–15 мин).
+- **Impact**: три лишних прогона внешнего ревью; помог только явный «table hygiene» и фоновый запуск codex с выводом в файл в каждом payload.
+- **Refs**: decisions-log «external interrupted attempt 1» (wave-1/iter-01, wave-1/iter-02, wave-3/iter-02)
+
+## F-9 — testing-ревьюер исчерпал лимит 100 ходов на большой волне
+
+- **Phase**: impl-review
+- **Surface**: agent — asd-reviewer-testing (wave-3/iter-01, 155 файлов, тестовый diff ~320 КБ)
+- **What happened**: ревьюер упёрся в maxTurns без отчёта и без return-файла; понадобилась повторная отправка с жёстким бюджетом.
+- **Impact**: interrupted attempt и повтор ревью (~10 мин); пересечение с концом лимита использования сессии.
+- **Refs**: decisions-log 2026-10-23 «testing interrupted attempt 1 in wave-3/iter-01»
+
+## F-10 — копии для мутаций с junction на web/node_modules удалялись рекурсивно
+
+- **Phase**: impl-test
+- **Surface**: agent — asd-tester-critical (entry 6, entry 8)
+- **What happened**: тестировщики создавали копии `git archive` с junction `node_modules` → `web/node_modules`; после entry 6 шесть копий с junction остались в scratchpad (оркестратор снял связки и удалил копии), в entry 8 копии удалены `rm -rf` вместо снятия связки (рабочий `node_modules` уцелел).
+- **Impact**: риск удаления зависимостей рабочего дерева рекурсивным удалением через связку; пользователь просил почистить вручную.
+- **Refs**: decisions-log 2026-10-26; test-plan.entry-08.md

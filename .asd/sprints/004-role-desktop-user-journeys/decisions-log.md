@@ -451,3 +451,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-26 — impl-test: impacted set green (web 194/194 в 25 файлах), 2/1 tests
 - 2026-10-26 — impl-review wave-3/iter-03 (floor high): correctness, documentation, external APPROVE (latched); волна 3 закрыта — reviewer DoD всех трёх волн выполнен → терминальный полный прогон
 - 2026-10-26 — route impl-review wave-3/iter-03 suite: standard, dispatch HEAD d48c599; risk none via full suite
+- 2026-10-26 — impl-review DoD met: волны 1–3 одобрены, терминальный полный прогон зелёный (backend 682/682, web 707/707, lint и build чисто; первый прогон — 10 красных из-за окружения, F-7). Green handoff — адаптивно (оркестратор), F-7…F-10 в friction-log → retro
