@@ -449,3 +449,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-26 — route impl-test entry 10: critical, dispatch HEAD ce44112; risk change: security
 - 2026-10-26 — impl-test entry 10 flagged приняты: темы двух коммитов 51 символ — долг без переписывания; страж фокуса записи 8 заменён удержанным вариантом (в области изменений); CF1/CF3 эквивалентны — потолок
 - 2026-10-26 — impl-test: impacted set green (web 194/194 в 25 файлах), 2/1 tests
+- 2026-10-26 — impl-review wave-3/iter-03 (floor high): correctness, documentation, external APPROVE (latched); волна 3 закрыта — reviewer DoD всех трёх волн выполнен → терминальный полный прогон
+- 2026-10-26 — route impl-review wave-3/iter-03 suite: standard, dispatch HEAD d48c599; risk none via full suite
