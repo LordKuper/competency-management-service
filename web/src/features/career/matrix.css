@@ -112,15 +112,13 @@
 
 .matrix-step-columns {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) calc(var(--ant-size-xxl) * 6);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--ant-margin);
   align-items: start;
 }
 
-@media (width < 992px) {
-  .matrix-step-columns {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.matrix-step-columns--wide {
+  grid-template-columns: minmax(0, 1fr) calc(var(--ant-size-xxl) * 6);
 }
 
 .matrix-legend li {

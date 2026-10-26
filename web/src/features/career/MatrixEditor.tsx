@@ -14,6 +14,7 @@ import {
   Card,
   ConfigProvider,
   Flex,
+  Grid,
   Select,
   Space,
   Table,
@@ -175,6 +176,7 @@ function MatrixEditorBody({
   isCompact: isCompactRequested = false,
 }: MatrixEditorBodyProps) {
   const { token } = theme.useToken();
+  const isWide = Grid.useBreakpoint().lg === true;
   const isCompact = isCompactRequested || builder !== undefined;
   const queryClient = useQueryClient();
   const isEditable = version.actions.includes("Edit");
@@ -611,7 +613,13 @@ function MatrixEditorBody({
         )}
         {isGridShown &&
           (builder ? (
-            <div className="matrix-step-columns">
+            <div
+              className={
+                isWide
+                  ? "matrix-step-columns matrix-step-columns--wide"
+                  : "matrix-step-columns"
+              }
+            >
               <Card size="small" styles={{ body: { padding: 0 } }}>
                 {grid}
               </Card>
