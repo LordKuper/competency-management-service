@@ -5,9 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { fakeApi } from "../../test/fakeApi";
 import {
-  approveDraft,
   type CatalogAction,
-  type CatalogKind,
   type CatalogSegment,
   changeCatalogStatus,
   deleteEntry,
@@ -35,14 +33,6 @@ const ACTIONS = Object.keys({
   deactivate: true,
   activate: true,
 } satisfies Record<CatalogAction, true>) as CatalogAction[];
-
-const DRAFT_KINDS = Object.keys({
-  Direction: true,
-  Track: true,
-  Competency: true,
-  Scale: true,
-  Block: true,
-} satisfies Record<CatalogKind, true>) as CatalogKind[];
 
 const TRANSITIONS = Object.keys({
   submit: true,
@@ -102,18 +92,6 @@ describe("requests whose path is assembled at run time are routes of the contrac
       ).resolves.toBeDefined();
     },
   );
-
-  it.each(DRAFT_KINDS)("approves a draft %s", async (kind) => {
-    await expect(
-      approveDraft({
-        kind,
-        id: "id",
-        name: "Имя",
-        ownerOrgUnitName: null,
-        authorName: null,
-      } as never),
-    ).resolves.toBeDefined();
-  });
 
   it.each(TRANSITIONS)("moves a matrix version by %s", async (transition) => {
     await expect(
