@@ -104,9 +104,9 @@ describe("approving an entry under the list of what is published with it (AC-110
     const request = fakeApi.calls(APPROVE_ROUTE)[0];
     expect(request?.headers.get("If-Match")).toBe('"4"');
     expect(queryOf(request).get("cascade")).toBe("tag-empty");
+    await waitFor(() => expect(isCatalogStale()).toBe(true));
     expect(document.querySelector(".ant-modal-confirm")).toBeNull();
     expect(document.querySelector(".ant-message-notice")).toBeNull();
-    await waitFor(() => expect(isCatalogStale()).toBe(true));
   });
 
   it("names every draft that goes with the entry and approves under their tag once confirmed", async () => {
@@ -469,9 +469,12 @@ describe("the offer to approve a draft right after it was created (AC-115)", () 
       const user = renderHarness();
 
       await user.click(screen.getByRole("button", { name: "предложить" }));
-
       await waitFor(() => expect(fakeApi.calls(PREVIEW_ROUTE)).toHaveLength(1));
-      expect(document.querySelector(".ant-modal-confirm")).toBeNull();
+      fakeApi.on(PREVIEW_ROUTE, () => preview("tag-later"));
+      await user.click(screen.getByRole("button", { name: "предложить" }));
+
+      await confirmDialog();
+      expect(document.querySelectorAll(".ant-modal-confirm")).toHaveLength(1);
       expect(document.querySelector(".ant-message-notice")).toBeNull();
     },
   );
