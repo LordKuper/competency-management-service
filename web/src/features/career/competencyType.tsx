@@ -11,13 +11,8 @@ export const COMPETENCY_TYPES: Record<CompetencyType, string> = {
 /** The type a competency has in a matrix until the author changes it. */
 export const DEFAULT_COMPETENCY_TYPE: CompetencyType = "Profile";
 
-/** The type in words; every type looks the same. */
-export function CompetencyTypeLabel({ type }: { type: CompetencyType }) {
-  return COMPETENCY_TYPES[type];
-}
-
 const OPTIONS = (Object.keys(COMPETENCY_TYPES) as CompetencyType[]).map(
-  (type) => ({ value: type, label: <CompetencyTypeLabel type={type} /> }),
+  (type) => ({ value: type, label: COMPETENCY_TYPES[type] }),
 );
 
 interface CompetencyTypeSelectProps {

@@ -31,7 +31,7 @@ import { useEditBase } from "../../app/useEditBase";
 import { BuilderFooter, type BuilderStepControls } from "./BuilderFooter";
 import { CatalogStatusTag } from "./CatalogParts";
 import { type CatalogStatus, competencyQuery, levelsQuery } from "./catalogApi";
-import { CompetencyTypeLabel, CompetencyTypeSelect } from "./competencyType";
+import { COMPETENCY_TYPES, CompetencyTypeSelect } from "./competencyType";
 import { MatrixBlocks } from "./MatrixBlocks";
 import { MatrixChanges } from "./MatrixChanges";
 import { MatrixErrorAlert } from "./MatrixErrorAlert";
@@ -382,7 +382,7 @@ function MatrixEditorBody({
             }
           />
         ) : (
-          <CompetencyTypeLabel type={type} />
+          COMPETENCY_TYPES[type]
         )}
       </Space>
     );
