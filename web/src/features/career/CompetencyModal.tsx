@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Form, type FormInstance, Input } from "antd";
-import { useEffect } from "react";
+import { Form, Input } from "antd";
+import { useEffect, useState } from "react";
 import { ApiError } from "../../api/ApiError";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
@@ -31,17 +31,11 @@ interface CompetencyValues {
   scaleId?: string;
 }
 
-/**
- * Moves the focus to the first field a rejected save names. The messages land under the fields only after the rejection
- * is rethrown, so the focus waits for them.
- */
-function focusFirstRejectedField(
-  form: FormInstance<CompetencyValues>,
-  error: unknown,
-) {
-  const field =
-    error instanceof ApiError && error.errors && Object.keys(error.errors)[0];
-  if (field) queueMicrotask(() => form.scrollToField(field, { focus: true }));
+/** The first field a rejected save names, if any. */
+function firstRejectedField(error: unknown) {
+  return error instanceof ApiError && error.errors
+    ? Object.keys(error.errors)[0]
+    : undefined;
 }
 
 interface CompetencyModalProps {
@@ -121,7 +115,8 @@ interface CompetencyFormProps {
 
 /**
  * Fields of a competency. The default scale arrives after the form opens, so a new competency gets it then, unless the
- * user has chosen a scale first.
+ * user has chosen a scale first. The first field a rejected save names gets the focus once the form is enabled again,
+ * since a disabled field cannot take it.
  */
 function CompetencyForm({
   competency,
@@ -129,14 +124,21 @@ function CompetencyForm({
   onCancel,
 }: CompetencyFormProps) {
   const [form] = Form.useForm<CompetencyValues>();
+  const [rejectedField, setRejectedField] = useState<string>();
   const { isSubmitting, submit } = useFormSubmit(form, async (values) => {
     try {
       return await onSubmit(values);
     } catch (error) {
-      focusFirstRejectedField(form, error);
+      setRejectedField(firstRejectedField(error));
       throw error;
     }
   });
+
+  useEffect(() => {
+    if (isSubmitting || !rejectedField) return;
+    form.scrollToField(rejectedField, { focus: true });
+    setRejectedField(undefined);
+  }, [isSubmitting, rejectedField, form]);
   const defaultScale = useQuery({
     ...scalesQuery({ page: 1, pageSize: 1, isDefault: true }),
     enabled: !competency,
