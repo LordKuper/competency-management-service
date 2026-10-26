@@ -11,3 +11,7 @@
 {"op":"close","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-26T14:13:55.993Z","end":"2026-10-26T14:22:44.510Z","outcome":"done","attrs":{"gate":"scope"}}
 {"op":"open","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-26T14:23:28.132Z","attrs":{"gate":"scope"}}
 {"op":"close","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-26T14:23:28.132Z","end":"2026-10-26T14:24:04.951Z","outcome":"done","attrs":{"gate":"scope"}}
+{"op":"close","id":"scope#1","kind":"phase","parent":null,"start":"2026-10-26T13:39:04.116Z","end":"2026-10-26T14:24:29.832Z","outcome":"done","attrs":{}}
+{"op":"open","id":"audit#1","kind":"phase","parent":null,"start":"2026-10-26T14:24:29.832Z","attrs":{}}
+{"op":"open","id":"wait AC-8 boundary","kind":"user-wait","parent":"audit#1","start":"2026-10-26T14:27:44.028Z","attrs":{"gate":"AC-8 boundary"}}
+{"op":"close","id":"wait AC-8 boundary","kind":"user-wait","parent":"audit#1","start":"2026-10-26T14:27:44.028Z","end":"2026-10-26T14:39:16.869Z","outcome":"done","attrs":{"gate":"AC-8 boundary"}}
