@@ -10,7 +10,8 @@ using NpgsqlTypes;
 namespace Competency.OrgStructure;
 
 /// <summary>
-/// The unit API. Any signed-in user reads the tree; only global administrators change it, under the tree lock and with <c>If-Match</c>.
+/// The unit API. Any signed-in user reads the tree; only global administrators and HR change it, under the tree lock and with <c>If-Match</c>.
+/// A unit's employees are those with any assignment in it, the main or a secondary one.
 /// Units are never deleted: they are deactivated, and a deactivated unit stays readable for global administrators and HR.
 /// </summary>
 internal static class OrgUnitEndpoints
@@ -34,20 +35,20 @@ internal static class OrgUnitEndpoints
         readers.MapGet("/{id:guid}/path", PathAsync).WithName("GetOrgUnitPath").ProducesProblem(StatusCodes.Status404NotFound);
         readers.MapGet("/{id:guid}/summary", SummaryAsync).WithName("GetOrgUnitSummary").ProducesProblem(StatusCodes.Status404NotFound);
 
-        var administrators = readers.MapGroup(string.Empty)
-            .RequireAuthorization(AuthorizationPolicies.GlobalAdmin)
+        var keepers = readers.MapGroup(string.Empty)
+            .RequireAuthorization(AuthorizationPolicies.GlobalAdminOrHr)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        administrators.MapPost(string.Empty, CreateAsync).WithName("CreateOrgUnit").ProducesETag();
-        administrators.MapPut("/{id:guid}", UpdateAsync).WithName("UpdateOrgUnit").ProducesETag()
+        keepers.MapPost(string.Empty, CreateAsync).WithName("CreateOrgUnit").ProducesETag();
+        keepers.MapPut("/{id:guid}", UpdateAsync).WithName("UpdateOrgUnit").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound);
-        administrators.MapPost("/{id:guid}/move", MoveAsync).WithName("MoveOrgUnit").ProducesETag()
+        keepers.MapPost("/{id:guid}/move", MoveAsync).WithName("MoveOrgUnit").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        administrators.MapPost("/{id:guid}/deactivate", DeactivateAsync).WithName("DeactivateOrgUnit").ProducesETag()
+        keepers.MapPost("/{id:guid}/deactivate", DeactivateAsync).WithName("DeactivateOrgUnit").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        administrators.MapPost("/{id:guid}/activate", ActivateAsync).WithName("ActivateOrgUnit").ProducesETag()
+        keepers.MapPost("/{id:guid}/activate", ActivateAsync).WithName("ActivateOrgUnit").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
     }
@@ -92,9 +93,10 @@ internal static class OrgUnitEndpoints
         CancellationToken cancellationToken)
     {
         var employees = context.Set<Employee>().VisibleTo(actor);
-        var employeeCounts = employees
-            .GroupBy(employee => employee.OrgUnitId)
-            .Select(group => new { OrgUnitId = group.Key, Count = group.Count() });
+        var employeeCounts = context.Set<EmployeePlacement>()
+            .Where(placement => employees.Any(employee => employee.Id == placement.EmployeeId))
+            .GroupBy(placement => placement.OrgUnitId)
+            .Select(group => new { OrgUnitId = group.Key, Count = group.Select(placement => placement.EmployeeId).Distinct().Count() });
         var units = await (
             from unit in context.Set<OrgUnit>().AsNoTracking().VisibleTo(actor)
             join employeeCount in employeeCounts on unit.Id equals employeeCount.OrgUnitId into unitCounts
@@ -204,9 +206,9 @@ internal static class OrgUnitEndpoints
         }
 
         var subtreeIds = context.DescendantIds(id);
-        var employees = context.Set<Employee>().Where(employee => employee.IsActive);
-        var total = await employees.CountAsync(employee => subtreeIds.Contains(employee.OrgUnitId), cancellationToken);
-        var direct = await employees.CountAsync(employee => employee.OrgUnitId == id, cancellationToken);
+        var placements = context.WorkingPlacements();
+        var total = await placements.Where(placement => subtreeIds.Contains(placement.OrgUnitId)).CountEmployeesAsync(cancellationToken);
+        var direct = await placements.Where(placement => placement.OrgUnitId == id).CountEmployeesAsync(cancellationToken);
 
         return TypedResults.Ok(new OrgUnitSummaryResponse(id, total, direct));
     }
@@ -333,11 +335,12 @@ internal static class OrgUnitEndpoints
                 return Rejection.Conflict($"Нельзя деактивировать подразделение «{unit.Name}»: в нём есть активные дочерние подразделения ({activeChildren}). Сначала деактивируйте или перенесите их.");
             }
 
-            var activeEmployees = await context.Set<Employee>()
-                .CountAsync(employee => employee.OrgUnitId == id && employee.IsActive, cancellationToken);
+            var activeEmployees = await context.WorkingPlacements()
+                .Where(placement => placement.OrgUnitId == id)
+                .CountEmployeesAsync(cancellationToken);
             if (activeEmployees > 0)
             {
-                return Rejection.Conflict($"Нельзя деактивировать подразделение «{unit.Name}»: в нём есть работающие сотрудники ({activeEmployees}). Сначала переведите их в другое подразделение или отметьте как не работающих.");
+                return Rejection.Conflict($"Нельзя деактивировать подразделение «{unit.Name}»: в нём есть работающие сотрудники ({activeEmployees}). Сначала переведите их в другое подразделение, снимите их совмещения в нём или отметьте как не работающих.");
             }
         }
 

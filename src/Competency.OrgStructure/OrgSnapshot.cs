@@ -15,17 +15,20 @@ public sealed class OrgSnapshot
     /// <param name="units">Every unit, active or not, by identifier.</param>
     /// <param name="unitPositionIds">The positions on each unit's own list, by unit identifier.</param>
     /// <param name="positions">Every catalogue position, active or not, by identifier.</param>
-    /// <param name="workingEmployeeCounts">The number of working employees, by unit and position; pairs without any are absent.</param>
+    /// <param name="workingEmployeeCounts">The number of working employees by the unit and position of their main assignment; pairs without any are absent.</param>
+    /// <param name="workingAssigneeCounts">The number of working employees by unit and position of any of their assignments, the main and the secondary ones; pairs without any are absent.</param>
     public OrgSnapshot(
         IReadOnlyDictionary<Guid, OrgUnitStatus> units,
         ILookup<Guid, Guid> unitPositionIds,
         IReadOnlyDictionary<Guid, PositionStatus> positions,
-        IReadOnlyDictionary<(Guid OrgUnitId, Guid PositionId), int> workingEmployeeCounts)
+        IReadOnlyDictionary<(Guid OrgUnitId, Guid PositionId), int> workingEmployeeCounts,
+        IReadOnlyDictionary<(Guid OrgUnitId, Guid PositionId), int> workingAssigneeCounts)
     {
         Units = units;
         UnitPositionIds = unitPositionIds;
         Positions = positions;
         WorkingEmployeeCounts = workingEmployeeCounts;
+        WorkingAssigneeCounts = workingAssigneeCounts;
         children = units.Values.ToLookup(unit => unit.ParentId);
     }
 
@@ -45,9 +48,16 @@ public sealed class OrgSnapshot
     public IReadOnlyDictionary<Guid, PositionStatus> Positions { get; }
 
     /// <summary>
-    /// The number of working employees, by unit and position; pairs without any are absent.
+    /// The number of working employees by the unit and position of their main assignment, the only one the rules about heads, matrices and the like read;
+    /// pairs without any are absent.
     /// </summary>
     public IReadOnlyDictionary<(Guid OrgUnitId, Guid PositionId), int> WorkingEmployeeCounts { get; }
+
+    /// <summary>
+    /// The number of working employees by unit and position of any of their assignments, the main and the secondary ones, for what the organization structure
+    /// itself reports; pairs without any are absent. An employee with two positions in one unit counts under each.
+    /// </summary>
+    public IReadOnlyDictionary<(Guid OrgUnitId, Guid PositionId), int> WorkingAssigneeCounts { get; }
 
     /// <summary>
     /// A unit and every unit above it, for rules that apply to the nearest unit up the tree that meets a condition.

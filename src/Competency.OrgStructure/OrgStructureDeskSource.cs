@@ -4,8 +4,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.OrgStructure;
 
 /// <summary>
-/// What the organization structure expects of a global administrator, who alone may change it: units without a head or without positions,
-/// employees whose position their unit does not offer, positions out of use and empty units. Every user gets its prerequisites, other users nothing else.
+/// What the organization structure expects of a global administrator or HR, who alone may change it: units without a head or without positions,
+/// employees whose position in any of their assignments their unit does not offer, positions out of use and empty units. Units and positions count
+/// the employees of every assignment, heads only the main one. Every user gets its prerequisites, other users nothing else.
 /// </summary>
 internal sealed class OrgStructureDeskSource(ICurrentActor actor, IEmployeeDirectory directory, AppDbContext context) : IDeskSource
 {
@@ -14,7 +15,7 @@ internal sealed class OrgStructureDeskSource(ICurrentActor actor, IEmployeeDirec
     {
         var snapshot = await directory.FindOrgSnapshotAsync(cancellationToken);
         var prerequisites = Prerequisites(snapshot);
-        if (!actor.IsGlobalAdmin())
+        if (!actor.SeesAll())
         {
             return new DeskReport([], prerequisites);
         }
@@ -59,7 +60,7 @@ internal sealed class OrgStructureDeskSource(ICurrentActor actor, IEmployeeDirec
     /// </summary>
     private static IEnumerable<DeskFinding> UnitFindings(OrgSnapshot snapshot)
     {
-        var employeeCounts = snapshot.WorkingEmployeeCounts
+        var employeeCounts = snapshot.WorkingAssigneeCounts
             .GroupBy(pair => pair.Key.OrgUnitId)
             .ToDictionary(group => group.Key, group => group.Sum(pair => pair.Value));
         var parentsOfActive = snapshot.Units.Values.Where(unit => unit.IsActive).Select(unit => unit.ParentId).ToHashSet();
@@ -85,11 +86,11 @@ internal sealed class OrgStructureDeskSource(ICurrentActor actor, IEmployeeDirec
     }
 
     /// <summary>
-    /// Inactive positions working employees still hold, and active positions on no unit's list that no working employee holds.
+    /// Inactive positions working employees still hold, and active positions on no unit's list that no working employee holds, in any assignment.
     /// </summary>
     private static IEnumerable<DeskFinding> PositionFindings(OrgSnapshot snapshot)
     {
-        var employeeCounts = snapshot.WorkingEmployeeCounts
+        var employeeCounts = snapshot.WorkingAssigneeCounts
             .GroupBy(pair => pair.Key.PositionId)
             .ToDictionary(group => group.Key, group => group.Sum(pair => pair.Value));
         var listed = snapshot.UnitPositionIds.SelectMany(list => list).ToHashSet();
@@ -110,12 +111,12 @@ internal sealed class OrgStructureDeskSource(ICurrentActor actor, IEmployeeDirec
     }
 
     /// <summary>
-    /// Working employees whose position is not among those their unit offers. The snapshot tells which unit and position pairs are wrong,
-    /// so only the employees of those units are read.
+    /// Working employees with an assignment whose position is not among those its unit offers, one finding per such assignment.
+    /// The snapshot tells which unit and position pairs are wrong, so only the assignments in those units are read.
     /// </summary>
     private async Task<IEnumerable<DeskFinding>> EmployeeFindingsAsync(OrgSnapshot snapshot, CancellationToken cancellationToken)
     {
-        var wrongPairs = snapshot.WorkingEmployeeCounts.Keys
+        var wrongPairs = snapshot.WorkingAssigneeCounts.Keys
             .Where(pair => !snapshot.AvailablePositionIds(pair.OrgUnitId).Contains(pair.PositionId))
             .ToHashSet();
         if (wrongPairs.Count == 0)
@@ -125,10 +126,9 @@ internal sealed class OrgStructureDeskSource(ICurrentActor actor, IEmployeeDirec
 
         var unitIds = wrongPairs.Select(pair => pair.OrgUnitId).Distinct().ToArray();
         var employees = await context
-            .Set<Employee>()
-            .AsNoTracking()
-            .Where(employee => employee.IsActive && unitIds.Contains(employee.OrgUnitId))
-            .Select(employee => new { employee.Id, employee.FullName, employee.OrgUnitId, employee.PositionId })
+            .WorkingPlacements()
+            .Where(placement => unitIds.Contains(placement.OrgUnitId))
+            .Join(context.Set<Employee>(), placement => placement.EmployeeId, employee => employee.Id, (placement, employee) => new { employee.Id, employee.FullName, placement.OrgUnitId, placement.PositionId })
             .ToListAsync(cancellationToken);
         return employees
             .Where(employee => wrongPairs.Contains((employee.OrgUnitId, employee.PositionId)))

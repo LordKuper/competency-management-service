@@ -104,13 +104,15 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
     /// </summary>
     private async Task<OrgSnapshot> ReadOrgSnapshotAsync(CancellationToken cancellationToken)
     {
-        var workingEmployeeCounts = await context
-            .Set<Employee>()
-            .AsNoTracking()
-            .Where(employee => employee.IsActive)
-            .GroupBy(employee => new { employee.OrgUnitId, employee.PositionId })
-            .Select(group => new { group.Key.OrgUnitId, group.Key.PositionId, Count = group.Count() })
-            .ToDictionaryAsync(group => (group.OrgUnitId, group.PositionId), group => group.Count, cancellationToken);
+        var placementCounts = await context
+            .WorkingPlacements()
+            .GroupBy(placement => new { placement.OrgUnitId, placement.PositionId })
+            .Select(group => new { group.Key.OrgUnitId, group.Key.PositionId, Any = group.Count(), Main = group.Count(placement => placement.IsMain) })
+            .ToListAsync(cancellationToken);
+        var workingEmployeeCounts = placementCounts
+            .Where(group => group.Main > 0)
+            .ToDictionary(group => (group.OrgUnitId, group.PositionId), group => group.Main);
+        var workingAssigneeCounts = placementCounts.ToDictionary(group => (group.OrgUnitId, group.PositionId), group => group.Any);
         var unitPositions = await context
             .Set<OrgUnitPosition>()
             .AsNoTracking()
@@ -126,6 +128,6 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
             .AsNoTracking()
             .Select(UnitStatusProjection)
             .ToDictionaryAsync(unit => unit.Id, cancellationToken);
-        return new OrgSnapshot(units, unitPositions.ToLookup(link => link.OrgUnitId, link => link.PositionId), positions, workingEmployeeCounts);
+        return new OrgSnapshot(units, unitPositions.ToLookup(link => link.OrgUnitId, link => link.PositionId), positions, workingEmployeeCounts, workingAssigneeCounts);
     }
 }
