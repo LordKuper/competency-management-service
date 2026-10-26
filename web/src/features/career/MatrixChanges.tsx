@@ -7,11 +7,6 @@ import { CHANGED_NOTE } from "./matrixLabels";
 
 const NO_VALUE = "—";
 
-const _DATE = new Intl.DateTimeFormat("ru-RU", {
-  dateStyle: "short",
-  timeZone: "UTC",
-});
-
 /** How each kind of change is called. */
 export const CHANGE_TYPES: Record<MatrixChange["type"], string> = {
   Added: "Добавлено",
