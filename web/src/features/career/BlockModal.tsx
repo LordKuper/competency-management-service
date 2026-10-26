@@ -236,7 +236,11 @@ function BlockForm({
         </Form.Item>
       )}
       <Form.Item name="competencyIds" label="Состав">
-        <CompetencyPicker onDraftsSeen={noteDrafts} takenIds={takenIds} />
+        <CompetencyPicker
+          isSaving={isSubmitting}
+          onDraftsSeen={noteDrafts}
+          takenIds={takenIds}
+        />
       </Form.Item>
       <DraftMemberNotice
         form={form}
@@ -277,6 +281,8 @@ interface CompetencyPickerProps {
   onChange?: (value: string[]) => void;
   /** Competencies the version holds already: listed, off, with the reason. */
   takenIds?: ReadonlySet<string>;
+  /** The block is being saved: the composition is held, the select-all box included. */
+  isSaving: boolean;
   /** Told which of the competencies listed are drafts. */
   onDraftsSeen: (ids: readonly string[]) => void;
 }
@@ -289,6 +295,7 @@ function CompetencyPicker({
   value = [],
   onChange,
   takenIds,
+  isSaving,
   onDraftsSeen,
 }: CompetencyPickerProps) {
   const { token } = theme.useToken();
@@ -374,6 +381,7 @@ function CompetencyPicker({
           scroll={{ y: token.controlHeight * LIST_HEIGHT_IN_CONTROLS }}
           rowSelection={{
             selectedRowKeys: value,
+            getTitleCheckboxProps: () => ({ disabled: isSaving }),
             getCheckboxProps: (row) => ({
               disabled: takenIds?.has(row.id) || undefined,
             }),
