@@ -163,6 +163,15 @@ const SCENARIOS: Scenario[] = [
     groups: [...ORG_QUEUE_GROUPS],
     isQueue: true,
   },
+  {
+    key: "org-import",
+    title: "Импорт оргструктуры",
+    description:
+      "Загрузите выгрузку оргструктуры из Excel: мастер покажет, что изменится, и применит изменения только после вашего решения.",
+    isFor: (roles) => roles.isHr || roles.isAdmin,
+    path: deskPaths.orgImport,
+    isAlwaysShown: true,
+  },
 ];
 
 /** The screen a scenario opens: its own, or that of the first item waiting in its groups; null when its prerequisites fail or its groups are empty or not loaded. */

@@ -1,0 +1,4 @@
+/* A deactivated unit the organization's rules refuse: the tint always goes with the word and the reason in the row. */
+.import-row-blocked > td {
+  background: var(--ant-color-warning-bg);
+}

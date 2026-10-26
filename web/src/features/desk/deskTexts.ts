@@ -38,6 +38,7 @@ export const deskPaths = {
   trackPositionsOf: (trackId: string) => `/desk/track-positions/${trackId}`,
   catalogCleanup: "/desk/catalog-cleanup",
   orgCleanup: "/desk/org-cleanup",
+  orgImport: "/desk/org-import",
   positions: "/positions",
   users: "/users",
 } as const;

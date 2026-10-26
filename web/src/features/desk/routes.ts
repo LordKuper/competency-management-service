@@ -91,6 +91,13 @@ export const routes: RouteObject[] = [
             Component: page.OrgCleanupPage,
           })),
       },
+      {
+        path: deskPaths.orgImport,
+        lazy: () =>
+          import("../org-import/OrgImportPage").then((page) => ({
+            Component: page.OrgImportPage,
+          })),
+      },
     ],
   },
 ];
