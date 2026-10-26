@@ -1,0 +1,1610 @@
+diff --git a/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-07.md b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-07.md
+new file mode 100644
+index 0000000..9649196
+--- /dev/null
++++ b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-07.md
+@@ -0,0 +1,82 @@
++---
++responsibility:
++  owns: test approach for sprint change scope, removal reasons, no-test decisions, suite run result, code defects found by tests, manual-verification spec (single home — never duplicated in a review file)
++  excludes: task breakdown, requirements, review verdicts, code, change surface (derivable from the diff)
++  delegates_to: plan.md (tasks), persistent docs (requirements), reviews/impl/wave-<K>/iter-NN/testing.md (verdict)
++---
++
++# Test plan — sprint 004-role-desktop-user-journeys, entry 7 (rotated)
++
++Строки записи 7 и строки тестировщика ревью-фикса волны 3, итерации 01 (у них нет своей строки `Entry log`), перенесены без правок. Решение `remove` об `approveDraft` принято тестировщиком ревью-фикса и записано здесь; запись 8 перенесла его в живой `Removed tests` и выполнила удаление.
++
++## Risk → check decisions
++
++Дельта записи 7 — `git diff ce9240f...HEAD`: правки dev по замечаниям ревью волны 2, итерации 02 (`2414036`, `a7aaac5`, `50f3cde`, `f4cc316`, `c5a16e7`; шесть файлов `web/`), документы спринта и файлы ревью. Файлов backend, `openapi/` и конфигурации сборки в дельте нет; dev тестов не менял, строк тестировщика ревью-фикса нет. Safety valve применён: правка затрагивает общие формы (`UserForm`, `EmployeeForm`, `PositionSelect`), поэтому набор web запущен целиком; набор backend не запускался: код и тесты backend не менялись с записи 6. Поиск удалённых имён (`setSaved`, `saved !== undefined`, `onOpenChange` в `TrackPositionsPage`) по репозиторию и `.claude/agent-memory`: устаревших утверждений нет; строка памяти тестировщика об `onOpenChange` описывает приём и остаётся верной.
++
++Замечания ревью — дефекты уже написанного кода, поэтому каждое исправленное поведение получает регрессионный тест (`code-style.md` §17), кроме строк `none` и `keep` ниже. Уровень тот же, что в записи 6: компонентный тест с сетью `fakeApi`.
++
++| Change | Material risk | Chosen check | Decision | Reason |
++|---|---|---|---|---|
++| `OnboardEmployeePage`: фоновое обновление (возврат фокуса, восстановление сети) не подставляет перечитанную карточку; она берётся только после отказа 412 (`2414036`) | change: workflow state machine — при возврате в шаг «Сотрудник» созданного сотрудника более новая карточка пересоздавала форму, и набранные правки молча терялись; «Сохранить и далее» не видел изменений и шёл дальше | component | add | `OnboardEmployeePage.test.tsx`: набрана правка фамилии, карточка за спиной стала новее, затем возврат фокуса и восстановление сети (две строки `it.each`) → поле хранит набранное, «Сохранить и далее» шлёт `PUT` с набранной фамилией и `If-Match: "1"`. Синхронизация: перечень должностей подразделения перечитан по тому же сигналу (положительный контроль, что сигнал дошёл до кэша), затем одна допечатанная буква: проверка сразу после сигнала проходила бы вхолостую. Ceiling: барьеры кода — `enabled` запроса и условие `isRefused` при подстановке — каждый по отдельности достаточен, мутант с одним убранным равнозначен и зелёный (`O1`, `O7`); красным делает только удаление обоих (`O8`). Тест закрепляет поведение, не выбор барьера |
++| `OnboardEmployeePage`: после подстановки перечитанной карточки признак отказа сбрасывается, и следующее фоновое обновление снова её не подставляет (`2414036`) | change: workflow state machine — оставшийся включённым признак возвращал потерю правок после первого 412 | component | add | `OnboardEmployeePage.test.tsx`: отказ 412, перечитанная карточка на экране, дописана буква, карточка за спиной стала новее, возврат фокуса → набранное сохраняется. Ceiling: сброс в `onSaved` (`O5`) и в `onAnother` (`O6`) достижим только после отказа 412 с неудавшимся перечитыванием и успешного повторного сохранения; мутанты выжили, записано как оборона, не как пробел |
++| `OnboardEmployeePage`: `isStaleVersion` — перечитывание включает только отказ по версии (`2414036`) | change: workflow state machine — сбой сохранения не 412 при уже изменившейся карточке заменял набранное перечитанной | component | add | `OnboardEmployeePage.test.tsx`: `PUT` отвечает 500 и меняет карточку за спиной → поле хранит набранное, виден алерт «Карточка сотрудника не обновлена». Ветку `isStaleVersion` держит мутант `O3` (перечитывание при любой ошибке): все прежние тесты отказа используют 412 |
++| `OnboardEmployeePage`: перечитывание по 412 и следующее сохранение с новой версией (`2414036`: запрос включается признаком отказа, раньше был включён всегда); автоповтора нет | change: workflow state machine | component | keep | прежние `rereads the employee after a refused save…` и `sends the version it reread…` (запись 6) зелёные; мутант `O2` (запрос выключен всегда) краснит оба. Автоповтор в коде отсутствует, дельта его не касалась |
++| `UserForm`: `<Form disabled={isSubmitting}>` — e-mail, роли и выбор сотрудника заперты на время отправки (`a7aaac5`) | change: workflow state machine — правка после отправки теряется, приглашение уходит на прежний e-mail | component | add | `UserModal.test.tsx`: создание (`POST /users`) и изменение (`PUT`) удержаны отложенным ответом → три поля выключены; после отказа сервера включены. Потребитель `CreateAccountForm` (поле e-mail шага «Учётная запись») закрыт утверждением в `OnboardEmployeePage.test.tsx` (`holds the steps… and the e-mail…`): мутант `U3` (запирание не для формы с `lockedTo`) краснит только его. Две строки `it.each` различает `U2` (запирание только у новой записи) |
++| `EmployeeForm`: `<Form disabled={isSubmitting}>`; `PositionSelect`: `disabled={quickAdd.isPending \|\| undefined}` — явное `false` перекрывало запирание формы (`50f3cde`) | change: workflow state machine — фамилия, имя, отчество, подразделение и должность правились во время сохранения; итог шёл дальше со старыми значениями | component | add | `EmployeeForm.test.tsx`: сохранение удержано отложенным ответом → пять полей выключены (подразделение и должность — списки), после ответа включены; мутант `P1` (прежнее `disabled={quickAdd.isPending}`) оставляет включённой только должность. `PositionSelect.test.tsx`: запирание на время добавления должности — страж (поведение прежнее, строка переписана); мутант `P2` (`disabled={undefined}`) на прежнем файле теста выжил, поэтому тест добавлен. Ceiling: потребитель `ChangePositionForm` (запирание по `useIsFindingBusy`) получает ту же правку `PositionSelect`; отдельного теста нет — корень один и закреплён мутантом `P1`, а запирание самой формы (`disabled={isBusy}`) пришло из прежних записей |
++| `BuilderCompetenciesStep`: флажки строк (и «выбрать все») выключены на время сохранения содержимого (`f4cc316`) | change: workflow state machine — отметка компетенции после начала `PUT` отсутствовала в сохранённом запросе, экран показывал отметку, которой на сервере нет | component | add | `BuilderCompetenciesStep.test.tsx`: `PUT /content` удержан → выключены «выбрать все» и обе строки, отметить вторую компетенцию нельзя; после отказа сервера включены, отметка ставится. Проверки тела `PUT` нет: оно собирается при вызове мутации, до любой отметки, и не отличается до правки и после. Попытка отметки идёт с `pointerEventsCheck: Never`: у выключенного флажка `pointer-events: none`, обычный щелчок падает исключением до проверки состояния |
++| `TrackPositionsPage`: убран `onOpenChange`, сбрасывавший поиск при закрытии списка (`c5a16e7`) | нет поведения: одиночный `Select` сам вызывает `onSearch("")` при закрытии | component | keep | видимое поведение закреплено прежним тестом «после закрытия списка предлагается весь перечень» (зелёный на HEAD); мутанты `T2` / `T2b` записи 6 сняты вместе с кодом |
++| Комментарий к `OnboardEmployeePage`, документы спринта, файлы ревью | нет поведения | — | none | тексты не исполняются; переименование состояния `saved` → `outcome` и новый пропс `onStaleVersion` проверены сборкой и прогоном набора |
++| Ревью-фикс волны 3, итерации 01 (тестировщик): `approveDraft` в `catalogApi.ts` мёртв — единственный вызов теперь идёт через `usePublishEntry` (efficiency E-1) | нет поведения: утверждение черновика покрыто `changeCatalogStatus` по SEGMENTS × ACTIONS и `approves a draft against the version its row shows…` в `catalogueTables.test.tsx` | — | remove | Строка `approves a draft %s`, константа `DRAFT_KINDS` и импорт `approveDraft` в `web/src/features/career/catalogRoutes.test.ts` проверяют только мёртвую функцию. Ревью-фикс тест не удаляет: удаление выполнит следующая запись `impl-test` (в области изменений) вместе с самой функцией в коде |
++| Волна 3: вкладка `CategoriesTab` и категории компетенций удалены (AC-51); тип компетенции перенесён в матрицу (AC-55) | поведение удалено вместе с кодом | — | remove (выполнено ранее в волне 3) | см. `Removed tests`: тесты, существовавшие только ради удалённой вкладки и параметра, ушли с кодом; проверяемые ими правила строк и размера страницы перенесены на `ScalesTab`/`CompetenciesTab` (TST-2, TST-3) |
++| `catalogueTables.test.tsx`: размер страницы таблицы справочника (`pageProps.onChange`, AC-24) | change: потеря размера страницы при выборе «50 на странице» | component | add | Единственный тест размера шёл через удалённую `CategoriesTab`; мутант `onChange` без `pageSize` выживал на пяти оставшихся таблицах (TST-2). Тест на `ScalesTab`: со страницы 2 выбран размер 50 → последний запрос `page=1`, `pageSize=50` |
++| `catalogueTables.test.tsx`: правила действий строки `EntryActions` (AC-19, AC-25): флаги `canEdit`/`canDelete`, пустое меню, версия строки в `If-Match` у «Деактивировать» и «Удалить» | change: лишнее действие, которого сервер не разрешил; действие против чужой версии | component | add | Тесты шли через `CategoriesTab` и удалены; оставшиеся строки собраны с обоими флагами `true` (TST-3). Три строки `it.each` на `ScalesTab` (обе возможности, только удаление, ни одной) и два теста версии строки. Фокус на «Отмена» в окне удаления закреплён `useConfirmDeletion.test.tsx` (тот же хук, проводки строки не касается), в тест строки не дублируется |
++| `columnFilterWiring.test.tsx`, `catalogueTables.test.tsx`: вкладка «Общие блоки» (AC-24) — фильтр «Действует для» (`scopeUnitId`, `forAll`) и постраничное чтение | change: опечатка в имени параметра, который читает сервер | component | add | Вкладку не называл ни один тест (TST-4): строка `blocks` в `TABLES`, два случая в `CASES`. Подразделение выбрано корнем дерева «Компания»: `OrgUnitSelect` в фильтре не раскрывает дерево и не имеет доступного имени |
++| `AppShell.test.tsx`: маршрут `/positions` для роли HR (AC-19) | change: мутант `hasAccess = isAdmin` отдавал HR пункт меню, ведущий на «Страница не найдена» | component | add | `openAs(["Hr"], "/positions")` → заголовок «Должности» и один запрос списка (TST-5) |
++| `MatrixPage.test.tsx`: защита от потери правок на странице матрицы (AC-61, правило «Mutating UI flows») | change: выбор версии над несохранёнными правками уходит без вопроса | component | add | Тест под `LeaveGuardProvider` в `createMemoryRouter`: набран порог, выбрана «Версия 2» → вопрос; «Остаться» сохраняет версию и значение; после сохранения вопроса нет (TST-6). Название теста ссылки на сценарий стола сужено до проверяемого: без защиты ссылка включена и ведёт на экран |
++| `catalogueTables.test.tsx`: вложенная таблица треков одним запросом (AC-24, граница «много») | change: обрезанный список без пояснения | component | add | `GET /tracks` с `total` 250 при трёх строках → «Показаны первые 3 из 250 — уточните поиск.», запрос несёт `pageSize=200` (TST-7) |
++| `usePublishEntry.test.tsx`: утверждения отсутствия после положительного перехода | change: проверка «нет окна и уведомления» срабатывала раньше ответа | component | change | В первом тесте утверждения отсутствия перенесены после `isCatalogStale`. В `it.each([403, 404])` положительным следом служит второй вызов «предложить» с рабочим ответом: окно ровно одно и уведомления нет (TST-8) |
++| `MatrixPage.test.tsx`: вспомогательная `openHistory` ветвилась по тому, что отрисовано (TST-9) | change: перенос «История» между кнопкой и меню оставался незамеченным | component | change | Заменена на `openHistoryFromMenu`: все три теста идут по возвращённой версии, где «История» — в меню «Действия с версией»; вид закреплён утверждением, что кнопки «История» на виду нет |
++| Волна 3, изменённые утверждения: `AppShell.test.tsx` (`navItemsFor`, группа «Справочники», вход HR), `MatrixPage.test.tsx` (ссылки `Submit` / `Approve` / `AcceptChanges` на экраны стола; запирание действий на время сохранения), `UnitHrModal.test.tsx` (назначение по `employeeId`, `hrCandidate=true`) | change: переписанные утверждения могли стать пустыми | component | keep (мутации) | Доказательства — в `Added tests`, строка «Изменённые утверждения волны 3» (TST-1): каждая правка кода краснит названный тест |
++| `categoryId: "c"` в фикстуре тестов строк справочника | нет поведения | — | none | поле осталось от удалённых категорий (correctness 5); убрано, тесты зелёные |
++
++## Removed tests
++
++Записью 7 не удалён ни один тест. Ниже — тесты, удалённые в волне 3 до ревью (TST-1), с причинами; тест `approves a draft %s` ждёт удаления следующей записью `impl-test` (см. `Risk → check decisions`).
++
++| Test | Reason | In change scope |
++|---|---|---|
++| `MatrixPage.test.tsx`: `adds a named block…`, `says why a block that still has competencies cannot be deleted…`, `offers the competencies a matrix of this version may use…` | блоки собираются в мастере матрицы и на вкладке «Общие блоки», редактор матрицы блоков не создаёт; замена: `BlocksTab` в `catalogueTables.test.tsx` и `columnFilterWiring.test.tsx` (TST-4) | да |
++| `MatrixPage.test.tsx`: три теста действий, переписанные на ссылки стола | действия `Submit`, `Approve`, `AcceptChanges` ведут на экраны стола; переписаны, не удалены (см. строку «Изменённые утверждения волны 3») | да |
++| `catalogueTables.test.tsx`: восемь тестов `CategoriesTab`; строки `tracks of a direction` и `categories` в `TABLES` | категории компетенций удалены (AC-51); постраничное чтение, размер страницы и правила действий строки перенесены на `ScalesTab`/`CompetenciesTab` (TST-2, TST-3), чтение треков — отдельный тест (TST-7) | да |
++| `columnFilterWiring.test.tsx`: `categories by status`, `competencies by category`, `competencies by type` | колонки «Категория» и «Тип» удалены (AC-51, AC-55); вкладка «Общие блоки» добавлена случаями `blocks by unit`, `blocks for every unit` (TST-4) | да |
++| `matrixContent.test.ts`: четыре теста блоков и порогов, тест UUID `addBlock` | функции блоков и порогов удалены из `matrixContent` вместе с редактором блоков (AC-55); содержимое закреплено прежними тестами файла и `MatrixPage.test.tsx` | да |
++
++## Added tests
++
++Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
++
++Fail-first. `node node_modules/vitest/vitest.mjs run <5 файлов> --reporter=verbose` в копии `git archive 10e14f7 web` (родитель первого исправления `2414036`; `node_modules` — junction) с тестами рабочего дерева → exit 1, 9 красных из 27 тестов этих файлов: 8 новых и 1 дополненный прежний (`holds the steps, «Назад», «Пропустить» and the e-mail…`). Зелёный до правки один новый тест — страж (`PositionSelect.test.tsx`: запирание на время добавления должности существовало и раньше). Vitest типы не проверяет, поэтому тесты идут против старого кода и падают на утверждениях.
++
++Мутации — в копии `git archive HEAD web` (`node_modules` — junction) с тестами рабочего дерева; один якорь на правку (число попаданий проверяется), файл восстанавливается в `finally`; рабочее дерево не мутировалось. Команда: `node node_modules/vitest/vitest.mjs run <файлы теста> --reporter=json`; контрольный прогон пяти файлов без мутации — 27 из 27, exit 0. «Убит» = exit 1 и runner назвал упавший тест; в ячейке — первая упавшая проверка из отчёта runner, `runs` — число мутационных прогонов, нацеленных на файл.
++
++| Test | Regression proof |
++|---|---|
++| `web/src/features/desk/OnboardEmployeePage.test.tsx` | до правки (exit 1, пять красных): обе строки `keeps what was typed on the card of the created employee when $cause…` (возврат во вкладку, восстановление сети) → `Error: expect(element).toHaveValue(Ивановова)`, получено `Сидорова` (набранное заменено перечитанной карточкой); `goes back to leaving the card alone once the reread after a refused save is on screen` → `toHaveValue(Сидоровав)`, получено `Петровв`; `keeps what was typed when the save fails for another reason than a stale card…` → `toHaveValue(Ивановова)`, получено `Сидорова`; дополненный `holds the steps, «Назад», «Пропустить» and the e-mail while the account is being created` → `Error: expect(element).toBeDisabled()`, `Received element is not disabled`. Мутации (каждая exit 1, кроме выживших): `O8` (запрос включён всегда и подстановка без `isRefused`, то есть код до правки) → четыре красных, первый — `toHaveValue(Ивановова)`; `O3` (`onStaleVersion()` при любой ошибке) → `keeps what was typed when the save fails for another reason…`: `toHaveValue(Ивановова)`; `O4` (после подстановки признак отказа не сбрасывается) → `goes back to leaving the card alone…`: `toHaveValue(Сидоровав)`; `O2` (запрос выключен всегда) → три красных, первый — прежний `rereads the employee after a refused save…`: `toHaveValue(Сидоров)`; `U1` (`UserForm` не запирается), `U3` (запирание не для формы с `lockedTo`) → `holds the steps… and the e-mail…`: `toBeDisabled()`. Выжили: `O1` (запрос включён всегда), `O1b` / `O1c` (то же с отключённым обновлением по фокусу / по сети), `O7` (подстановка без `isRefused`) — равнозначны, каждый из двух барьеров достаточен один; `O5`, `O6` (сброс признака в `onSaved`, `onAnother`) — достижимы только после отказа 412 с неудавшимся перечитыванием, записано как оборона; runs: 12 |
++| `web/src/features/users/UserModal.test.tsx` | до правки: обе строки `holds the e-mail, the roles and the employee while the form $what the account…` (создаёт, изменяет) → `AssertionError: expected [] to deeply equal [ 'e-mail', 'roles', 'employee' ]`. Мутации (каждая exit 1): `U1` (форма не запирается) → обе строки; `U2` (запирание только у новой записи) → строка изменения; runs: 2 |
++| `web/src/features/org-structure/EmployeeForm.test.tsx` | до правки: `holds every field, the unit and the position choices included…` → `AssertionError: expected [] to deeply equal [ 'surname', 'name', …(3) ]`. Мутации (каждая exit 1): `E1` (форма не запирается) → та же строка; `P1` (прежнее `disabled={quickAdd.isPending}`) → `AssertionError: expected [ 'surname', 'name', …(2) ] to deeply equal [ 'surname', 'name', …(3) ]` (включённой остаётся должность); runs: 2 |
++| `web/src/features/org-structure/PositionSelect.test.tsx` | страж, зелёный до правки: `holds the choice while the typed name is being added, and frees it once the position is added`. Мутации: `P2` (`disabled={undefined}`, запирание на время добавления убрано) → exit 1, `Error: expect(element).toBeDisabled()`, `Received element is not disabled`; тот же `P2` на прежнем файле теста без этой строки → exit 0 (11 из 11), мутант выжил, поэтому тест добавлен; `P1` этот файл не краснит (краснит `EmployeeForm.test.tsx`); runs: 3 |
++| `web/src/features/desk/BuilderCompetenciesStep.test.tsx` | до правки: `turns every checkbox off while the content is saved, so no competency is ticked then, and turns them on when the save is refused` → `AssertionError: expected [] to deeply equal [ 'select all', 'row 1', 'row 2' ]`. Мутация `B1` (`isSaving` убран из `disabled` строки) → exit 1, та же строка; runs: 1 |
++
++Ревью-фикс волны 3, итерации 01 (тестировщик). Мутации — в копии `git archive HEAD web` с тестами рабочего дерева (`node_modules` — junction, снят перед удалением копии), один якорь на правку (число попаданий проверено), файл восстановлен после прогона; рабочее дерево не мутировалось. Команда каждого прогона: `node node_modules/vitest/vitest.mjs run <файл теста> --reporter=verbose`; контрольный прогон пяти файлов без мутации — 91 из 91, exit 0. Все мутации ниже: exit 1.
++
++| Test | Regression proof |
++|---|---|
++| `catalogueTables.test.tsx` — `asks for the first page of the chosen size…` (TST-2) | `PS1` (`pageProps.onChange` без `pageSize`) → тот же тест; runs: 1 |
++| `catalogueTables.test.tsx` — три строки `offers «Изменить» и «Удалить» as the server allows them…`, `deactivates against it`, `deletes against it once the question is confirmed` (TST-3) | `EA1` (`entry.canDelete` → `true`) → строка `…may neither edit nor delete`; `EA2` (`entry.canEdit` не проверяется) → строки `…may only delete`, `…may neither edit nor delete`; `EA3` (удаление с версией 0) → `deletes against it…`; `EA4` (смена статуса с версией 0) → `deactivates against it`; runs: 4 |
++| `columnFilterWiring.test.tsx` — `blocks by unit`, `blocks for every unit`; `catalogueTables.test.tsx` — `blocks: 20 rows to a page…` (TST-4) | `BL1` (`scopeUnitId` → `unit`) → `blocks by unit`; `BL2` (`forAll` → `onlyAll`) → `blocks for every unit`; `BL3` (`pagination={false}`) → `blocks: 20 rows to a page…`; runs: 3 |
++| `AppShell.test.tsx` — `opens the catalogue for an HR account…` (TST-5) | `AS1` (`hasAccess = isAdmin`) → этот тест; runs: 1 |
++| `MatrixPage.test.tsx` — `asks before another version is chosen over unsaved edits…` (TST-6) | `MP1` (выбор версии без `confirmLeave`) → этот тест; `MP2` (редактор не сообщает правки) → этот тест и два прежних (`holds the actions on the saved version…`, `holds a return back…`); runs: 2 |
++| `catalogueTables.test.tsx` — `reads the tracks of a direction in one request…` (TST-7) | `TR1` (убран `TruncationNote`), `TR2` (`pageSize: 20`) → этот тест; runs: 2 |
++| `usePublishEntry.test.tsx` — `approves at once under the tag of an empty list…`, `makes no offer, and no complaint, to a user the preview answers %i` (TST-8) | `PE1` (`message.success` без условия `count > 0`) → первый тест; `PE2` (исключён только 404) → строка 403; `PE3` (убрана проверка `Draft`) → `makes no offer for an entry that is not a draft`; runs: 3 |
++| `MatrixPage.test.tsx` — `openHistoryFromMenu` в трёх тестах истории (TST-9) | `MA1` (`MAX_VISIBLE = 4`, «История» на виду) → все три теста истории; runs: 1 |
++| Изменённые утверждения волны 3 (TST-1): `AppShell.test.tsx`, `MatrixPage.test.tsx`, `UnitHrModal.test.tsx` | `AN1` (убран `hiddenFromRoles` у `positions-hr`) и `AN2` (группа «Должности» администратора → `reference`) → `lists the administrator group only for a global administrator…`; `ML1` (`desk("approve")`) → `Approve is offered as «Согласовать версию»…`; `ML2` (`desk("edit")`) → `AcceptChanges is offered…`; `ML3` (`desk("builder")`) → `Submit is offered…` и `keeps the link to the desk scenario enabled…`; `ML4` (`hasUnsaved` без `isSaving`) → `holds the actions on the saved version back while a save is in flight…`; `UH1` (тело `{ userId }`) и `UH2` (без `hrCandidate`) → `assigns the chosen employee, offering only the candidates the server names`; runs: 8 |
+diff --git a/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-08.md b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-08.md
+new file mode 100644
+index 0000000..4f36d73
+--- /dev/null
++++ b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-08.md
+@@ -0,0 +1,57 @@
++---
++responsibility:
++  owns: test approach for sprint change scope, removal reasons, no-test decisions, suite run result, code defects found by tests, manual-verification spec (single home — never duplicated in a review file)
++  excludes: task breakdown, requirements, review verdicts, code, change surface (derivable from the diff)
++  delegates_to: plan.md (tasks), persistent docs (requirements), reviews/impl/wave-<K>/iter-NN/testing.md (verdict)
++---
++
++# Test plan — sprint 004-role-desktop-user-journeys, entry 8 (rotated)
++
++Строки записи 8 перенесены из `test-plan.md` при входе записи 9 (`artifact-layout.md` «Test plan»); сегмент не правится.
++
++## Risk → check decisions
++
++Дельта записи 8 — `git diff 5382584...HEAD` (на входе `a441cfa`): правки dev по замечаниям ревью волны 3, итерации 01 (`340f97d`…`850fc2d`, 15 коммитов: код `web/`, комментарии, документы и память dev), тест-коммиты тестировщика ревью-фикса (`97abdfe`…`0f33e68`, их строки — в `test-plan.entry-07.md`), документы спринта и файлы ревью. Файлов backend, `openapi/` и конфигурации сборки в дельте нет. Safety valve применён: правки затрагивают общие формы справочников (`CatalogModal`, `CatalogParts`, `usePublishEntry`, `useCatalogRights`) и `MatrixEditor`, поэтому набор web запущен целиком; набор backend не запускался: код и тесты backend не менялись с записи 6. Поиск остатков по именам, удалённым в дельте (`CompetencyTypeLabel`, `hasRequirement`, `matrix-cell-button`, `--matrix-name-column-width`, отметка «Нет требований», `@media (width < 992px)`), по репозиторию и `.claude/agent-memory`: в коде, живых документах и памяти попаданий нет; остались архив спринта 003, файлы ревью и временные файлы `.asd/tmp`.
++
++Замечания ревью — дефекты уже написанного кода, поэтому каждое исправленное поведение получает регрессионный тест (`code-style.md` §17), кроме строк `none` ниже. Уровень — компонентный тест с сетью `fakeApi`, как в записях 6 и 7.
++
++| Change | Material risk | Chosen check | Decision | Reason |
++|---|---|---|---|---|
++| `TrackModal`: `isUnsaved` нового трека сравнивает название с пустой строкой (`8c506ae`) | change: workflow state machine — нетронутое окно «Новый трек» при закрытии крестиком, Esc или щелчком по затемнению спрашивало «Перейти без сохранения?», а «Назад/Вперёд» и `beforeunload` предупреждали, хотя терять нечего | component | add | `TrackModal.test.tsx`, экран под `LeaveGuardProvider` в `createMemoryRouter` (без провайдера `confirmLeave` выполняется сразу, и «закрывается без вопроса» было бы пустым): нетронутое окно закрывается крестиком сразу, вопроса нет. Положительный контроль в том же describe: после набранного названия вопрос есть, то есть защита включена. Esc и затемнение не повторяются: все три пути идут через `onCancel` одного `AppModal`, общий путь закреплён `AppModalLeave.test.tsx`. Ceiling: контроль не закрепляет само условие `name !== …`, потому что набранное название и так делает форму тронутой (`isTouched` в `AppModal`); закреплено ложное срабатывание на нетронутом окне |
++| Формы справочников и матрицы: `<Form disabled={isSubmitting}>` в `NameModal`, `LevelModal`, `ScaleModal`, `CompetencyModal`, `BlockModal`, `TrackModal`, `MatrixCreateModal`; `\|\| undefined` у флажков строк состава блока, выбора трека и `MatrixPositionSelect` (`005e793`, `8c506ae`, `cd3658b`) | change: workflow state machine — правка полей и списков во время сохранения молча пропадала после успеха (замечание внешнего ревью 2; правило «Mutating UI flows») | component | add | По одному тесту на форму: у каждой своя точка кода, общего корня нет. Сохранение удержано отложенным ответом `deferred()`; виды заблокированных элементов собраны в список в трёх моментах (покой `[]`, сохранение — все виды, отказ сервера `[]`; после успеха форма закрывается, поэтому «остаётся после успеха» не проверяется). `NameModal.test.tsx`, `LevelModal.test.tsx`, `BlockModal.test.tsx` — новые файлы; новые тесты в `ScaleModal.test.tsx`, `CompetencyModal.test.tsx`, `TrackModal.test.tsx` (в списке видов — «Добавить уровень», перетаскивание и меню действий уровня) и `MatrixCreateModal.test.tsx` (две основы, трек и должность). Явное `disabled={false}` потребителя перекрывало бы запирание формы: его ловят мутанты `MC2` (выбор трека), `MC3` (выбор должности), `BM2` (флажки строк). Остальные формы — мутант «форма без `disabled`» (`TM2`, `SM1`, `CM1`, `NM1`, `LM1`, `BM1`, `MC1`) |
++| `BlockModal`, таблица состава: флажок «Select all» в шапке остаётся включённым, пока идёт сохранение | change: workflow state machine — нажатие в это время меняет состав («Выбрано: 2»), итог шёл с прежним составом и правка терялась | component | add | Тот же тест `BlockModal.test.tsx` краснит на HEAD: `D-3`. antd считает запертость шапки по явному `disabled` строк, а не по контексту формы; в `BuilderCompetenciesStep` заперты явным `disabled: isSaving…` все строки, и шапка следует за ними. Тест ждёт, что шапка выключена; вид правки (`getTitleCheckboxProps` или явный `disabled` строк) не предписан |
++| `CompetencyModal`: `focusFirstRejectedField` вынесена из тела `catch`; форма заперта до конца отправки (`c9c47df`, `005e793`) | change: фокус на первом отклонённом поле мог пропасть — перенос строк и запирание формы действуют на одном пути | component | add | Страж: `CompetencyModal.test.tsx` — сервер отвечает 400 с `errors.evidenceExamples` → поле «Примеры подтверждений» получает фокус (первое поле формы получает его при открытии, поэтому проверка не пуста). Поведение прежнее и работало до запирания, теста на него раньше не было; тест зелёный до правок, мутант `CM2` (вызов убран) его краснит |
++| `UnitHrModal.AssignHrForm`: отказ, не названный полем, показывается сообщением (`6a67bf6`) | change: ошибка назначения HR без `errors.employeeId` (500) проглатывалась; окно оставалось без сообщения | component | add | `UnitHrModal.test.tsx`: `PUT …/hr` отвечает 500 → виден `.ant-message-notice` (как в `usePublishEntry.test.tsx`), окно открыто. Прежний тест отказа по полю дополнен: при 400 с `employeeId` сообщения нет (страж ветви, не повторяет текст под полем). Текст сообщения не закреплён: его даёт `describeApiError` |
++| `MatrixCreateModal`: пояснение «Сначала выберите подразделение» у поля «Должность» (`cd3658b`) | change: выключенное поле без причины рядом (замечание correctness 4; `components.input-disabled` в DESIGN.md) | component | add | `MatrixCreateModal.test.tsx`: основа «По должности» без подразделения → текст виден, поле «Должность» выключено; после выбора подразделения текста нет, поле включено. Мутанты `MC4` (пояснения нет) и `MC5` (пояснение всегда) красные |
++| `MatrixEditor`: отметка «Нет требований» и `hasRequirement` удалены (`340f97d`) | change: нарушение AC-57 — у компетенции без строки требований рядом с ячейкой, показывающей балл шкалы по умолчанию, висела противоречащая отметка | component | add | `MatrixPage.test.tsx`, редактор черновика: компетенция без строк требований → в её строке нет изображения «Нет требований». Строка найдена по названию компетенции, поэтому отсутствие проверяется на отрисованной строке; до правки тест красный |
++| `MatrixEditor`: колонки шага мастера по `Grid.useBreakpoint().lg` и классу `matrix-step-columns--wide`; `@media (width < 992px)` убран (`cb1ac05`) | раскладка шага при ширине ≥ 992 px и меньше | — | none | Вид, не поведение: стили `matrix.css` vitest здесь не применяет, а `matchMedia` в `setup.ts` всегда отвечает `matches: false`. Проверить можно только имя класса при подменённом `matchMedia`, то есть реализацию, а не раскладку. Проверяемым это сделал бы расчёт стилей в браузере. Владелец проверки — ревью соответствия UI (оно это и нашло, correctness 3); ручной строки не завёл, решение о ней за ревью |
++| Мёртвое и тексты: `_DATE` в `MatrixChanges`, `.matrix-cell-button` и `--matrix-name-column-width` в `matrix.css`, `CompetencyTypeLabel` → `COMPETENCY_TYPES[type]`, `scaleId` в `BlockListParams`, комментарии (`useCatalogRights`, `usePublishEntry`, `CatalogParts`, `CatalogModal`), `categoryId`, документы спринта, файлы ревью | нет поведения | — | none | Удалённое никто не читал: `tsc`, `biome ci` и весь набор web зелёные, `check:api` без расхождений. Подпись типа компетенции выводит ту же строку таблицы `COMPETENCY_TYPES`, что и удалённая обёртка. Поиск остатков — в абзаце над таблицей |
++| `approveDraft`: решение `remove` ревью-фикса (`Risk → check decisions` записи 7) | нет поведения: тест проверял только функцию без вызывающих | — | remove (выполнено) | См. `Removed tests`. Сама функция остаётся в `catalogApi.ts` (код вне области тестировщика): её удаляет dev, тест на неё больше не нужен |
++
++## Removed tests
++
++Выполнено в `c2ea2f8`. Строки тестировщика ревью-фикса записи 7 о других удалениях волны 3 — в `test-plan.entry-07.md`.
++
++| Test | Reason | In change scope |
++|---|---|---|
++| `catalogRoutes.test.ts`: `approves a draft %s` (пять строк `it.each`), константа `DRAFT_KINDS`, импорты `approveDraft` и `CatalogKind` | единственный вызывающий `approveDraft` теперь `usePublishEntry().publish` (efficiency E-1); тест проверял только мёртвую функцию. Утверждение черновика закреплено `changeCatalogStatus` по SEGMENTS × ACTIONS в этом же файле и `approves a draft against the version its row shows…` в `catalogueTables.test.tsx`; `approveDraft` не передаёт метку `cascade`, поэтому для записи с публикуемыми вместе черновиками сервер ответил бы 412 | да — файл в области изменений спринта (`git diff main...HEAD --stat` называет его) |
++
++## Added tests
++
++Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
++
++Fail-first. `node node_modules/vitest/vitest.mjs run <8 файлов> --reporter=verbose` в копии `git archive 0ce5135 web` (родитель первого исправления `340f97d`; `node_modules` — junction) с тестами рабочего дерева → exit 1, 11 красных из 44 тестов этих файлов; тест `MatrixPage.test.tsx` — отдельным прогоном с фильтром `-t "lacking a requirement"` → exit 1, 1 красный. Красные и первая упавшая проверка из отчёта runner указаны в таблице. Зелёные до правок: страж `asks before closing a new track once a name was typed` (контроль, что защита включена), страж `moves the focus to the first field the server rejects`, добавленное утверждение прежнего теста `shows the refusal of an employee who cannot act under the field`. Vitest типы не проверяет, поэтому тесты идут против старого кода и падают на утверждениях.
++
++Мутации — в копии `git archive HEAD web` (`HEAD` = `a441cfa`; `node_modules` — junction, снят перед удалением копии) с тестами рабочего дерева; один якорь на правку (число попаданий проверяется), файл восстанавливается в `finally`; рабочее дерево не мутировалось. Команда: `node node_modules/vitest/vitest.mjs run <файл теста> --reporter=json`. Контрольные прогоны без мутации — зелёные, exit 0 (`TrackModal` 11 из 11, `ScaleModal` 6, `CompetencyModal` 7, `NameModal` 1, `LevelModal` 1, `MatrixCreateModal` 9, `UnitHrModal` 8, `MatrixPage` — отфильтрованный тест). «Убит» = exit 1 и runner назвал упавший тест; в ячейке — первая упавшая проверка из отчёта runner, `runs` — число мутационных прогонов, нацеленных на файл (контрольные не считаются). `BlockModal` красен на HEAD сам по себе (`D-3`), поэтому его мутанты доказаны на копии, где дефект закрыт заплаткой (`getTitleCheckboxProps: () => ({ disabled: componentDisabled })` в таблице состава): контроль с заплаткой — exit 0.
++
++| Test | Regression proof |
++|---|---|
++| `web/src/features/career/TrackModal.test.tsx` | до правки: `closes a new track nothing was typed in at once, without a question` → `AssertionError: expected "vi.fn()" to be called once, but got 0 times`; `holds the fields and the list of levels while the save is in flight, and frees them when it is refused` → `AssertionError: expected [] to deeply equal [ 'name', 'unit', 'direction', …(3) ]`. Мутации (каждая exit 1): `TM1` (прежнее `name !== current?.name`) → первый из них, та же проверка; `TM2` (форма без `disabled`) → второй, та же проверка; runs: 2 |
++| `web/src/features/career/ScaleModal.test.tsx` | до правки: `holds the name and every point while the save is in flight…` → `AssertionError: expected [] to deeply equal [ 'name', 'scores', 'labels', …(2) ]`. Мутация `SM1` (форма без `disabled`) → exit 1, та же проверка; runs: 1 |
++| `web/src/features/career/CompetencyModal.test.tsx` | до правки: `holds every field while the save is in flight…` → `AssertionError: expected [] to deeply equal [ 'name', 'description', …(3) ]`; страж `moves the focus to the first field the server rejects` зелёный до правок. Мутации (каждая exit 1): `CM1` (форма без `disabled`) → первый, та же проверка; `CM2` (убран вызов `focusFirstRejectedField`) → страж, `Error: expect(element).toHaveFocus()`; runs: 2 |
++| `web/src/features/career/NameModal.test.tsx` | до правки: `AssertionError: expected [] to deeply equal [ 'name' ]`. Мутация `NM1` (форма без `disabled`) → exit 1, та же проверка; runs: 1 |
++| `web/src/features/career/LevelModal.test.tsx` | до правки: `AssertionError: expected [] to deeply equal [ 'name' ]`. Мутация `LM1` (форма без `disabled`) → exit 1, та же проверка; runs: 1 |
++| `web/src/features/career/BlockModal.test.tsx` | до правки (`0ce5135`): `AssertionError: expected [] to deeply equal [ 'name', 'unit', 'search', …(3) ]`. На HEAD красен сам (`D-3`): `AssertionError: expected [ 'name', 'unit', 'search', …(2) ] to deeply equal [ 'name', 'unit', 'search', …(3) ]` — нет вида `select all`. Мутации на копии с заплаткой (каждая exit 1): `BM1` (форма без `disabled`) → `expected [] to deeply equal [ 'name', 'unit', 'search', …(3) ]`; `BM2` (флажки строк снова `=== true`, явное `false`) → `expected [ 'name', 'unit', 'search', …(2) ] to deeply equal [ 'name', 'unit', 'search', …(3) ]` — нет вида `ticks`; runs: 2 (+ красный HEAD) |
++| `web/src/features/career/MatrixCreateModal.test.tsx` | до правки: `says under the position that the unit comes first, until the unit is chosen` → `TestingLibraryElementError: Unable to find an element with the text: Сначала выберите подразделение.`; `holds the basis, the unit, the direction and the track…` → `AssertionError: expected [] to deeply equal [ 'basis', 'unit', 'direction', …(1) ]`; `holds the basis, the unit and the position of a position matrix…` → `AssertionError: expected [] to deeply equal [ 'basis', 'unit', 'position' ]`. Мутации (каждая exit 1): `MC1` (форма без `disabled`) → оба теста запирания; `MC2` (`disabled={!directionId \|\| !orgUnitId}`) → `expected [ 'basis', 'unit', 'direction' ] to deeply equal [ 'basis', 'unit', 'direction', …(1) ]`; `MC3` (`MatrixPositionSelect`: `disabled={orgUnitId === undefined}`) → `expected [ 'basis', 'unit' ] to deeply equal [ 'basis', 'unit', 'position' ]`; `MC4` (пояснение убрано) → `TestingLibraryElementError: Unable to find an element with the text: Сначала выберите подразделение.`; `MC5` (пояснение всегда) → `Error: expect(element).not.toBeInTheDocument()`; runs: 5 |
++| `web/src/features/org-structure/UnitHrModal.test.tsx` | до правки: `tells the administrator, and keeps the dialog, when assigning fails for a reason that names no field` → `AssertionError: expected null not to be null`; добавленное утверждение прежнего теста отказа по полю зелёное до правки (страж). Мутации (каждая exit 1): `UH1` (вызов `message.error` убран) и `UH3` (сообщение никогда для `ApiError`) → новый тест, `expected null not to be null`; `UH2` (сообщение всегда) → тест отказа по полю, `AssertionError: expected <div role="alert" …(3)>…(1)</div> to be null`; runs: 3 |
++| `web/src/features/career/MatrixPage.test.tsx` — `marks no competency as lacking a requirement (AC-57), since its cell shows the lowest score of the scale` | до правки: `Error: expect(element).not.toBeInTheDocument()`. Мутация `ME1` (блок отметки и `hasRequirement` возвращены) → exit 1, та же проверка; runs: 1 |
+diff --git a/.asd/sprints/004-role-desktop-user-journeys/test-plan.md b/.asd/sprints/004-role-desktop-user-journeys/test-plan.md
+index 9c25f4d..feeb86e 100644
+--- a/.asd/sprints/004-role-desktop-user-journeys/test-plan.md
++++ b/.asd/sprints/004-role-desktop-user-journeys/test-plan.md
+@@ -18,55 +18,37 @@ responsibility:
+ | 5 | 7b8de3c | delta since entry 4 |
+ | 6 | ce9240f | delta since entry 5 |
+ | 7 | 5382584 | delta since entry 6 |
++| 8 | a1b6ed8 | delta since entry 7 |
++| 9 | 6b07d87 | delta since entry 8 |
+ 
+ ## Risk → check decisions
+ 
+-Дельта записи 7 — `git diff ce9240f...HEAD`: правки dev по замечаниям ревью волны 2, итерации 02 (`2414036`, `a7aaac5`, `50f3cde`, `f4cc316`, `c5a16e7`; шесть файлов `web/`), документы спринта и файлы ревью. Файлов backend, `openapi/` и конфигурации сборки в дельте нет; dev тестов не менял, строк тестировщика ревью-фикса нет. Safety valve применён: правка затрагивает общие формы (`UserForm`, `EmployeeForm`, `PositionSelect`), поэтому набор web запущен целиком; набор backend не запускался: код и тесты backend не менялись с записи 6. Поиск удалённых имён (`setSaved`, `saved !== undefined`, `onOpenChange` в `TrackPositionsPage`) по репозиторию и `.claude/agent-memory`: устаревших утверждений нет; строка памяти тестировщика об `onOpenChange` описывает приём и остаётся верной.
+-
+-Замечания ревью — дефекты уже написанного кода, поэтому каждое исправленное поведение получает регрессионный тест (`code-style.md` §17), кроме строк `none` и `keep` ниже. Уровень тот же, что в записи 6: компонентный тест с сетью `fakeApi`.
++Дельта записи 9 — `git diff a1b6ed8...HEAD`: исправление `D-3` (`8d9f3a5`), удаление не вызываемого `approveDraft` (`b7db7b5`), отметка `D-3` (`db1bf1c`).
+ 
+ | Change | Material risk | Chosen check | Decision | Reason |
+ |---|---|---|---|---|
+-| `OnboardEmployeePage`: фоновое обновление (возврат фокуса, восстановление сети) не подставляет перечитанную карточку; она берётся только после отказа 412 (`2414036`) | change: workflow state machine — при возврате в шаг «Сотрудник» созданного сотрудника более новая карточка пересоздавала форму, и набранные правки молча терялись; «Сохранить и далее» не видел изменений и шёл дальше | component | add | `OnboardEmployeePage.test.tsx`: набрана правка фамилии, карточка за спиной стала новее, затем возврат фокуса и восстановление сети (две строки `it.each`) → поле хранит набранное, «Сохранить и далее» шлёт `PUT` с набранной фамилией и `If-Match: "1"`. Синхронизация: перечень должностей подразделения перечитан по тому же сигналу (положительный контроль, что сигнал дошёл до кэша), затем одна допечатанная буква: проверка сразу после сигнала проходила бы вхолостую. Ceiling: барьеры кода — `enabled` запроса и условие `isRefused` при подстановке — каждый по отдельности достаточен, мутант с одним убранным равнозначен и зелёный (`O1`, `O7`); красным делает только удаление обоих (`O8`). Тест закрепляет поведение, не выбор барьера |
+-| `OnboardEmployeePage`: после подстановки перечитанной карточки признак отказа сбрасывается, и следующее фоновое обновление снова её не подставляет (`2414036`) | change: workflow state machine — оставшийся включённым признак возвращал потерю правок после первого 412 | component | add | `OnboardEmployeePage.test.tsx`: отказ 412, перечитанная карточка на экране, дописана буква, карточка за спиной стала новее, возврат фокуса → набранное сохраняется. Ceiling: сброс в `onSaved` (`O5`) и в `onAnother` (`O6`) достижим только после отказа 412 с неудавшимся перечитыванием и успешного повторного сохранения; мутанты выжили, записано как оборона, не как пробел |
+-| `OnboardEmployeePage`: `isStaleVersion` — перечитывание включает только отказ по версии (`2414036`) | change: workflow state machine — сбой сохранения не 412 при уже изменившейся карточке заменял набранное перечитанной | component | add | `OnboardEmployeePage.test.tsx`: `PUT` отвечает 500 и меняет карточку за спиной → поле хранит набранное, виден алерт «Карточка сотрудника не обновлена». Ветку `isStaleVersion` держит мутант `O3` (перечитывание при любой ошибке): все прежние тесты отказа используют 412 |
+-| `OnboardEmployeePage`: перечитывание по 412 и следующее сохранение с новой версией (`2414036`: запрос включается признаком отказа, раньше был включён всегда); автоповтора нет | change: workflow state machine | component | keep | прежние `rereads the employee after a refused save…` и `sends the version it reread…` (запись 6) зелёные; мутант `O2` (запрос выключен всегда) краснит оба. Автоповтор в коде отсутствует, дельта его не касалась |
+-| `UserForm`: `<Form disabled={isSubmitting}>` — e-mail, роли и выбор сотрудника заперты на время отправки (`a7aaac5`) | change: workflow state machine — правка после отправки теряется, приглашение уходит на прежний e-mail | component | add | `UserModal.test.tsx`: создание (`POST /users`) и изменение (`PUT`) удержаны отложенным ответом → три поля выключены; после отказа сервера включены. Потребитель `CreateAccountForm` (поле e-mail шага «Учётная запись») закрыт утверждением в `OnboardEmployeePage.test.tsx` (`holds the steps… and the e-mail…`): мутант `U3` (запирание не для формы с `lockedTo`) краснит только его. Две строки `it.each` различает `U2` (запирание только у новой записи) |
+-| `EmployeeForm`: `<Form disabled={isSubmitting}>`; `PositionSelect`: `disabled={quickAdd.isPending \|\| undefined}` — явное `false` перекрывало запирание формы (`50f3cde`) | change: workflow state machine — фамилия, имя, отчество, подразделение и должность правились во время сохранения; итог шёл дальше со старыми значениями | component | add | `EmployeeForm.test.tsx`: сохранение удержано отложенным ответом → пять полей выключены (подразделение и должность — списки), после ответа включены; мутант `P1` (прежнее `disabled={quickAdd.isPending}`) оставляет включённой только должность. `PositionSelect.test.tsx`: запирание на время добавления должности — страж (поведение прежнее, строка переписана); мутант `P2` (`disabled={undefined}`) на прежнем файле теста выжил, поэтому тест добавлен. Ceiling: потребитель `ChangePositionForm` (запирание по `useIsFindingBusy`) получает ту же правку `PositionSelect`; отдельного теста нет — корень один и закреплён мутантом `P1`, а запирание самой формы (`disabled={isBusy}`) пришло из прежних записей |
+-| `BuilderCompetenciesStep`: флажки строк (и «выбрать все») выключены на время сохранения содержимого (`f4cc316`) | change: workflow state machine — отметка компетенции после начала `PUT` отсутствовала в сохранённом запросе, экран показывал отметку, которой на сервере нет | component | add | `BuilderCompetenciesStep.test.tsx`: `PUT /content` удержан → выключены «выбрать все» и обе строки, отметить вторую компетенцию нельзя; после отказа сервера включены, отметка ставится. Проверки тела `PUT` нет: оно собирается при вызове мутации, до любой отметки, и не отличается до правки и после. Попытка отметки идёт с `pointerEventsCheck: Never`: у выключенного флажка `pointer-events: none`, обычный щелчок падает исключением до проверки состояния |
+-| `TrackPositionsPage`: убран `onOpenChange`, сбрасывавший поиск при закрытии списка (`c5a16e7`) | нет поведения: одиночный `Select` сам вызывает `onSearch("")` при закрытии | component | keep | видимое поведение закреплено прежним тестом «после закрытия списка предлагается весь перечень» (зелёный на HEAD); мутанты `T2` / `T2b` записи 6 сняты вместе с кодом |
+-| Комментарий к `OnboardEmployeePage`, документы спринта, файлы ревью | нет поведения | — | none | тексты не исполняются; переименование состояния `saved` → `outcome` и новый пропс `onStaleVersion` проверены сборкой и прогоном набора |
++| `BlockModal`: `CompetencyPicker` получает `isSaving`, `getTitleCheckboxProps` запирает «Select all» на время сохранения (`8d9f3a5`) | change: workflow state machine — «Select all» менял состав блока, пока шло сохранение (AC-61) | уже написанный тест `BlockModal.test.tsx` › `holds the name, the unit and the composition while the save is in flight, and frees them when it is refused`; красный на `a1b6ed8` (`D-3`), зелёный теперь | none | Регрессионный тест записи 8 покрывает риск, нового не нужно; fail-first — красный прогон записи 8 (строка `D-3`) |
++| `catalogApi.ts`: удалён `approveDraft` (`b7db7b5`) | нет поведения: функция без вызывающих, тест удалён в записи 8 | `tsc` (`lint`, `build`) ловит оставшиеся ссылки; `grep approveDraft web/src` — пусто | none | Исчезнувший экспорт проверяет компилятор |
+ 
+ ## Removed tests
+ 
+-Записью 7 не удалён ни один тест; строк на удаление от ревью-фикса нет.
+-
+-| Test | Reason | In change scope |
+-|---|---|---|
++Нет.
+ 
+ ## Added tests
+ 
+ Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
+ 
+-Fail-first. `node node_modules/vitest/vitest.mjs run <5 файлов> --reporter=verbose` в копии `git archive 10e14f7 web` (родитель первого исправления `2414036`; `node_modules` — junction) с тестами рабочего дерева → exit 1, 9 красных из 27 тестов этих файлов: 8 новых и 1 дополненный прежний (`holds the steps, «Назад», «Пропустить» and the e-mail…`). Зелёный до правки один новый тест — страж (`PositionSelect.test.tsx`: запирание на время добавления должности существовало и раньше). Vitest типы не проверяет, поэтому тесты идут против старого кода и падают на утверждениях.
+-
+-Мутации — в копии `git archive HEAD web` (`node_modules` — junction) с тестами рабочего дерева; один якорь на правку (число попаданий проверяется), файл восстанавливается в `finally`; рабочее дерево не мутировалось. Команда: `node node_modules/vitest/vitest.mjs run <файлы теста> --reporter=json`; контрольный прогон пяти файлов без мутации — 27 из 27, exit 0. «Убит» = exit 1 и runner назвал упавший тест; в ячейке — первая упавшая проверка из отчёта runner, `runs` — число мутационных прогонов, нацеленных на файл.
+-
+ | Test | Regression proof |
+ |---|---|
+-| `web/src/features/desk/OnboardEmployeePage.test.tsx` | до правки (exit 1, пять красных): обе строки `keeps what was typed on the card of the created employee when $cause…` (возврат во вкладку, восстановление сети) → `Error: expect(element).toHaveValue(Ивановова)`, получено `Сидорова` (набранное заменено перечитанной карточкой); `goes back to leaving the card alone once the reread after a refused save is on screen` → `toHaveValue(Сидоровав)`, получено `Петровв`; `keeps what was typed when the save fails for another reason than a stale card…` → `toHaveValue(Ивановова)`, получено `Сидорова`; дополненный `holds the steps, «Назад», «Пропустить» and the e-mail while the account is being created` → `Error: expect(element).toBeDisabled()`, `Received element is not disabled`. Мутации (каждая exit 1, кроме выживших): `O8` (запрос включён всегда и подстановка без `isRefused`, то есть код до правки) → четыре красных, первый — `toHaveValue(Ивановова)`; `O3` (`onStaleVersion()` при любой ошибке) → `keeps what was typed when the save fails for another reason…`: `toHaveValue(Ивановова)`; `O4` (после подстановки признак отказа не сбрасывается) → `goes back to leaving the card alone…`: `toHaveValue(Сидоровав)`; `O2` (запрос выключен всегда) → три красных, первый — прежний `rereads the employee after a refused save…`: `toHaveValue(Сидоров)`; `U1` (`UserForm` не запирается), `U3` (запирание не для формы с `lockedTo`) → `holds the steps… and the e-mail…`: `toBeDisabled()`. Выжили: `O1` (запрос включён всегда), `O1b` / `O1c` (то же с отключённым обновлением по фокусу / по сети), `O7` (подстановка без `isRefused`) — равнозначны, каждый из двух барьеров достаточен один; `O5`, `O6` (сброс признака в `onSaved`, `onAnother`) — достижимы только после отказа 412 с неудавшимся перечитыванием, записано как оборона; runs: 12 |
+-| `web/src/features/users/UserModal.test.tsx` | до правки: обе строки `holds the e-mail, the roles and the employee while the form $what the account…` (создаёт, изменяет) → `AssertionError: expected [] to deeply equal [ 'e-mail', 'roles', 'employee' ]`. Мутации (каждая exit 1): `U1` (форма не запирается) → обе строки; `U2` (запирание только у новой записи) → строка изменения; runs: 2 |
+-| `web/src/features/org-structure/EmployeeForm.test.tsx` | до правки: `holds every field, the unit and the position choices included…` → `AssertionError: expected [] to deeply equal [ 'surname', 'name', …(3) ]`. Мутации (каждая exit 1): `E1` (форма не запирается) → та же строка; `P1` (прежнее `disabled={quickAdd.isPending}`) → `AssertionError: expected [ 'surname', 'name', …(2) ] to deeply equal [ 'surname', 'name', …(3) ]` (включённой остаётся должность); runs: 2 |
+-| `web/src/features/org-structure/PositionSelect.test.tsx` | страж, зелёный до правки: `holds the choice while the typed name is being added, and frees it once the position is added`. Мутации: `P2` (`disabled={undefined}`, запирание на время добавления убрано) → exit 1, `Error: expect(element).toBeDisabled()`, `Received element is not disabled`; тот же `P2` на прежнем файле теста без этой строки → exit 0 (11 из 11), мутант выжил, поэтому тест добавлен; `P1` этот файл не краснит (краснит `EmployeeForm.test.tsx`); runs: 3 |
+-| `web/src/features/desk/BuilderCompetenciesStep.test.tsx` | до правки: `turns every checkbox off while the content is saved, so no competency is ticked then, and turns them on when the save is refused` → `AssertionError: expected [] to deeply equal [ 'select all', 'row 1', 'row 2' ]`. Мутация `B1` (`isSaving` убран из `disabled` строки) → exit 1, та же строка; runs: 1 |
++| — | нет новых тестов |
+ 
+ ## Suite run
+ 
+-Command (запись 7): `npm --prefix web test` — весь набор web. Safety valve применён: правка затрагивает общие формы (`UserForm`, `EmployeeForm`, `PositionSelect`), поэтому impacted-набор вырождается в весь набор web; backend не запускался (код и тесты backend не менялись с записи 6).
+-Scope: full web (impacted-набор вырождается в полный).
+-Result: pass — до стратегии на дереве `fb5237c` web 676 тестов в 65 файлах: 676 успешно, 0 упало, exit 0, 33 с; после авторства на дереве `427082c` web 685 тестов в 65 файлах: 685 успешно, 0 упало, exit 0, 37 с. Это 676 прежних и 9 добавленных записью (4 в `OnboardEmployeePage`, 2 в `UserModal`, по одному в `EmployeeForm`, `PositionSelect`, `BuilderCompetenciesStep`); один прежний тест дополнен утверждением (`OnboardEmployeePage`, e-mail). Удалённых тестов нет. Три подряд прогона пяти затронутых файлов — по 27 из 27 (нестабильности нет). Новых кодовых дефектов нет.
+-Lint / build: pass — `npm --prefix web run lint` (biome ci + tsc) exit 0; `npm --prefix web run build` exit 0; `npm --prefix web run check:api` exit 0 без расхождений; backend не менялся (запись 6: `dotnet build Competency.slnx --tl:off` — предупреждений 0, ошибок 0).
+-HEAD: 427082c (прогон измеряет дерево этого коммита; после него менялись только `test-plan.md`, `test-plan.entry-06.md` и память тестировщика)
++Command (запись 9): `npm --prefix web exec vitest run <14 файлов>` — тесты, ссылающиеся на `BlockModal`, `BlocksTab` или `catalogApi`. Safety valve не сработал: правки — одна форма каталога и удаление не вызываемого экспорта, общая инфраструктура не затронута; backend не менялся.
++Scope: impacted (14 файлов web).
++Result: pass — 14 файлов, 142 теста успешно, 0 упало, exit 0 (до стратегии и после: файлы тестов не менялись); `D-3` зелёный.
++Lint / build: pass — `npm --prefix web run lint` exit 0; `npm --prefix web run build` exit 0; `npm --prefix web run check:api` exit 0.
++HEAD: 7663eac
+ 
+ Замер стола на сиде `tests/perf/seed-10k.sql` (10 000 работающих сотрудников, 1 000 подразделений, 348 учётных записей, 625 версий матриц; сборка `Debug`, один процесс, 60 замеров после 5 прогревочных; число SQL-команд — команды приложения, без `DISCARD ALL` сброса соединения Npgsql):
+ 
+@@ -87,9 +69,12 @@ HEAD: 427082c (прогон измеряет дерево этого комми
+ |---|---|---|---|---|---|---|
+ | D-1 | 1 | src/Competency.CareerFramework/CareerDirectionEndpoints.cs | Expected refused.Json!["detail"]!.GetValue<string>() to be the same string, but they differ at index 0: | Competency.Tests.CatalogDeletionTests.Ac25_ADirectionInUse_IsRefused_NamingTheTracksCompetenciesHistoryAndMatrices | fixed | 2725176 |
+ | D-2 | 1 | web/src/features/career/usePublishEntry.tsx | AssertionError: expected null not to be null | approving an entry under the list of what is published with it (AC-110…AC-112) > explains a refusal the server gives at the moment of approval, with the way to the track's positions | fixed | 4483101 |
++| D-3 | 8 | web/src/features/career/BlockModal.tsx | AssertionError: expected [ 'name', 'unit', 'search', …(2) ] to deeply equal [ 'name', 'unit', 'search', …(3) ] | block form while the block is being saved (AC-61) > holds the name, the unit and the composition while the save is in flight, and frees them when it is refused | fixed | 8d9f3a5 |
+ 
+ Пояснения (вне строк таблицы): D-1 — константа `InUseMessage` («Направление используют треки, компетенции или матрицы — удалить нельзя») не обновлена под AC-37 (сущность называется «область»), `CareerMail` и остальной текст уже используют «область». D-2 — `RefusalContent` вставляет `<Link>` в содержимое `modal.error`, а модальное окно из `App.useApp()` в `Providers` отрисовывается вне `RouterProvider` (структура приложения такая же, как в тесте), поэтому при отказе «нет действующей должности» с известным треком `Link` падает на `useContext(...) is null` и экран остаётся пустым; проверено: замена `<Link>` на `<a>` в копии делает весь файл зелёным (13 из 13).
+ 
++D-3 — флажок «Select all» в шапке таблицы состава блока (`CompetencyPicker`) остаётся включённым, пока идёт сохранение: antd считает запертость шапки по явному `disabled` строк, а не по контексту формы, а строки заперты только контекстом (`|| undefined`). Нажатие в это время меняет состав: «Выбрано: 2» при пустом составе в запросе, после успеха окно закрывается и выбор теряется. Остальные виды (название, подразделение, поиск, «Создать компетенцию», флажки строк) заперты. Проверено: заплатка `getTitleCheckboxProps: () => ({ disabled: componentDisabled })` в копии делает тест зелёным (мутанты `BM1`, `BM2` на копии с заплаткой красные). Вид правки выбирает dev; скрытие шапки (`hideSelectAll`) потребует изменить и тест.
++
+ ## Manual verification
+ 
+ | AC | Steps | Expected observation |
+diff --git a/web/src/app/AppShell.test.tsx b/web/src/app/AppShell.test.tsx
+index db4e110..0fe0eee 100644
+--- a/web/src/app/AppShell.test.tsx
++++ b/web/src/app/AppShell.test.tsx
+@@ -1,4 +1,4 @@
+-import { render, screen, within } from "@testing-library/react";
++import { render, screen, waitFor, within } from "@testing-library/react";
+ import { RouterProvider } from "react-router";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../api/queryClient";
+@@ -102,6 +102,21 @@ describe("the position catalogue address (AC-1, AC-19)", () => {
+     ).toBeInTheDocument();
+   });
+ 
++  it("opens the catalogue for an HR account and asks for the positions", async () => {
++    fakeApi.on("GET /api/v1/positions", () =>
++      Response.json({ items: [], total: 0, page: 1, pageSize: 20 }),
++    );
++
++    await openAs(["Hr"], "/positions");
++
++    expect(
++      await screen.findByRole("heading", { name: "Должности" }),
++    ).toBeInTheDocument();
++    await waitFor(() =>
++      expect(fakeApi.calls("GET /api/v1/positions")).toHaveLength(1),
++    );
++  });
++
+   it("gives an ordinary user the not-found page and requests no positions", async () => {
+     await openAs([], "/positions");
+ 
+diff --git a/web/src/features/career/BlockModal.test.tsx b/web/src/features/career/BlockModal.test.tsx
+new file mode 100644
+index 0000000..c78a84c
+--- /dev/null
++++ b/web/src/features/career/BlockModal.test.tsx
+@@ -0,0 +1,123 @@
++import { render, screen, waitFor, within } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { MemoryRouter } from "react-router";
++import { beforeEach, describe, expect, it, vi } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import { BlockModal } from "./BlockModal";
++import type { Competency } from "./catalogApi";
++
++const ROUTE = "POST /api/v1/career/blocks";
++
++const competency = (id: string, name: string): Competency => ({
++  id,
++  name,
++  description: null,
++  directionId: null,
++  directionName: null,
++  scaleId: "scale",
++  scaleName: "Базовая",
++  status: "Active",
++  createdAt: "2026-10-01T00:00:00Z",
++  versionNumber: 1,
++  version: 1,
++  canEdit: true,
++  canDelete: true,
++});
++
++const COMPETENCIES = [
++  competency("design", "Проектирование"),
++  competency("teamwork", "Работа в команде"),
++];
++
++function serve() {
++  fakeApi.on("GET /api/v1/auth/me", () =>
++    Response.json({
++      id: "account",
++      email: "admin@test.local",
++      roles: ["GlobalAdmin"],
++    }),
++  );
++  fakeApi.on("GET /api/v1/career/me", () =>
++    Response.json({ headedUnits: [], hrUnits: [] }),
++  );
++  fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([]));
++  fakeApi.on("GET /api/v1/career/competencies", () =>
++    Response.json({
++      items: COMPETENCIES,
++      total: COMPETENCIES.length,
++      page: 1,
++      pageSize: 200,
++    }),
++  );
++}
++
++function lockedControls() {
++  const dialog = screen
++    .getByText("Новый общий блок", { selector: ".ant-modal-title" })
++    .closest('[role="dialog"]') as HTMLElement;
++  const controls: [string, HTMLElement[]][] = [
++    ["name", [within(dialog).getByRole("textbox", { name: "Название" })]],
++    ["unit", [within(dialog).getByRole("combobox", { name: "Действует для" })]],
++    ["search", [within(dialog).getByRole("searchbox")]],
++    [
++      "create competency",
++      [within(dialog).getByRole("button", { name: "Создать компетенцию" })],
++    ],
++    [
++      "select all",
++      [within(dialog).getByRole("checkbox", { name: "Select all" })],
++    ],
++    ["ticks", within(dialog).getAllByRole("checkbox", { name: /Select row/ })],
++  ];
++  return controls
++    .filter(([, group]) => group.every((item) => item.hasAttribute("disabled")))
++    .map(([kind]) => kind);
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("block form while the block is being saved (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("holds the name, the unit and the composition while the save is in flight, and frees them when it is refused", async () => {
++    serve();
++    const held = deferred<Response>();
++    fakeApi.on(ROUTE, () => held.promise);
++    render(
++      <Providers>
++        <MemoryRouter>
++          <BlockModal onClose={vi.fn()} />
++        </MemoryRouter>
++      </Providers>,
++    );
++    const user = userEvent.setup();
++    await user.type(
++      await screen.findByRole("textbox", { name: "Название" }),
++      "Командный блок",
++    );
++    await screen.findByText("Работа в команде");
++    expect(lockedControls()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
++    expect(lockedControls()).toEqual([
++      "name",
++      "unit",
++      "search",
++      "create competency",
++      "select all",
++      "ticks",
++    ]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(lockedControls()).toEqual([]);
++  });
++});
+diff --git a/web/src/features/career/CompetencyModal.test.tsx b/web/src/features/career/CompetencyModal.test.tsx
+index c53bed6..5988cc2 100644
+--- a/web/src/features/career/CompetencyModal.test.tsx
++++ b/web/src/features/career/CompetencyModal.test.tsx
+@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import { CompetencyModal } from "./CompetencyModal";
+ import type { Competency } from "./catalogApi";
+@@ -232,3 +232,61 @@ describe("scale of a new competency (AC-22)", {
+     expect(await call?.json()).toMatchObject({ scaleId: OTHER_SCALE.id });
+   });
+ });
++
++describe("competency form while the competency is being saved (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  const ROUTE = "PUT /api/v1/career/competencies/competency";
++
++  function lockedControls() {
++    const controls: [string, HTMLElement][] = [
++      ["name", screen.getByLabelText("Название")],
++      ["description", screen.getByLabelText("Описание")],
++      ["evidence", screen.getByLabelText("Примеры подтверждений")],
++      ["direction", screen.getByRole("combobox", { name: "Область" })],
++      ["scale", screen.getByRole("combobox", { name: "Шкала" })],
++    ];
++    return controls
++      .filter(([, control]) => control.hasAttribute("disabled"))
++      .map(([kind]) => kind);
++  }
++
++  it("holds every field while the save is in flight, and frees them when it is refused", async () => {
++    const held = deferred<Response>();
++    const user = open(EXISTING, () => fakeApi.on(ROUTE, () => held.promise));
++    await screen.findByDisplayValue("Проектирование");
++    expect(lockedControls()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
++    expect(lockedControls()).toEqual([
++      "name",
++      "description",
++      "evidence",
++      "direction",
++      "scale",
++    ]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(lockedControls()).toEqual([]);
++  });
++
++  it("moves the focus to the first field the server rejects", async () => {
++    const user = open(EXISTING, () =>
++      fakeApi.on(ROUTE, () =>
++        problem(400, { errors: { evidenceExamples: ["Слишком длинно"] } }),
++      ),
++    );
++    await screen.findByDisplayValue("Проектирование");
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    expect(await screen.findByText("Слишком длинно")).toBeInTheDocument();
++    await waitFor(() =>
++      expect(screen.getByLabelText("Примеры подтверждений")).toHaveFocus(),
++    );
++  });
++});
+diff --git a/web/src/features/career/LevelModal.test.tsx b/web/src/features/career/LevelModal.test.tsx
+new file mode 100644
+index 0000000..6766a85
+--- /dev/null
++++ b/web/src/features/career/LevelModal.test.tsx
+@@ -0,0 +1,64 @@
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { MemoryRouter } from "react-router";
++import { beforeEach, describe, expect, it, vi } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import type { CareerLevel } from "./catalogApi";
++import { LevelModal } from "./LevelModal";
++
++const ROUTE = "PUT /api/v1/career/levels/level";
++const LEVEL: CareerLevel = {
++  id: "level",
++  name: "Младший",
++  directionId: "direction",
++  trackId: "track",
++  position: 1,
++  status: "Active",
++  version: 3,
++  canEdit: true,
++  canDelete: true,
++};
++
++const lockedControls = () =>
++  screen.getByRole("combobox", { name: "Название" }).hasAttribute("disabled")
++    ? ["name"]
++    : [];
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("level form while the level is being saved (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("holds the name while the save is in flight, and frees it when it is refused", async () => {
++    const held = deferred<Response>();
++    fakeApi.on(ROUTE, () => held.promise);
++    fakeApi.on("GET /api/v1/career/levels", () =>
++      Response.json({ items: [], total: 0, page: 1, pageSize: 200 }),
++    );
++    render(
++      <Providers>
++        <MemoryRouter>
++          <LevelModal level={LEVEL} onClose={vi.fn()} />
++        </MemoryRouter>
++      </Providers>,
++    );
++    const user = userEvent.setup();
++    await screen.findByDisplayValue("Младший");
++    expect(lockedControls()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
++    expect(lockedControls()).toEqual(["name"]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(lockedControls()).toEqual([]);
++  });
++});
+diff --git a/web/src/features/career/MatrixCreateModal.test.tsx b/web/src/features/career/MatrixCreateModal.test.tsx
+index ff2ca6f..0f28456 100644
+--- a/web/src/features/career/MatrixCreateModal.test.tsx
++++ b/web/src/features/career/MatrixCreateModal.test.tsx
+@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi, problem } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import { careerQueryKey } from "./careerApi";
+ import { MatrixCreateModal } from "./MatrixCreateModal";
+@@ -299,3 +299,121 @@ describe("starting a matrix (AC-14)", { timeout: LONG_FLOW_TIMEOUT }, () => {
+     expect(screen.queryByText("Открыта матрица")).not.toBeInTheDocument();
+   });
+ });
++
++const POSITIONS_ROUTE = "GET /api/v1/career/org-units/team/matrix-positions";
++
++function servePositions() {
++  fakeApi.on(POSITIONS_ROUTE, () =>
++    Response.json({
++      items: [
++        {
++          id: "manager",
++          name: "Руководитель",
++          isLinked: false,
++          linkedTrack: null,
++        },
++      ],
++      total: 1,
++      page: 1,
++      pageSize: 20,
++    }),
++  );
++}
++
++const choosePositionBasis = (user: ReturnType<typeof userEvent.setup>) =>
++  user.click(screen.getByRole("radio", { name: "По должности" }));
++
++describe("starting a matrix of a position (AC-14)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  const REASON = "Сначала выберите подразделение";
++
++  it("says under the position that the unit comes first, until the unit is chosen", async () => {
++    const user = await openModal(servePositions);
++    await choosePositionBasis(user);
++    expect(screen.getByText(REASON)).toBeInTheDocument();
++    expect(screen.getByRole("combobox", { name: "Должность" })).toBeDisabled();
++
++    await choose(user, "Подразделение", "Команда");
++
++    await waitFor(() =>
++      expect(screen.queryByText(REASON)).not.toBeInTheDocument(),
++    );
++    expect(screen.getByRole("combobox", { name: "Должность" })).toBeEnabled();
++  });
++});
++
++describe("the matrix form while the matrix is being created (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  const ROUTE = "POST /api/v1/career/matrices";
++
++  function lockedControls(kinds: Record<string, HTMLElement[]>) {
++    return Object.entries(kinds)
++      .filter(([, group]) =>
++        group.every((item) => item.hasAttribute("disabled")),
++      )
++      .map(([kind]) => kind);
++  }
++
++  const combobox = (name: string) => screen.getByRole("combobox", { name });
++
++  it("holds the basis, the unit, the direction and the track while the save is in flight, and frees them when it is refused", async () => {
++    const held = deferred<Response>();
++    const user = await openModal(() => fakeApi.on(ROUTE, () => held.promise));
++    await choose(user, "Подразделение", "Команда");
++    await choose(user, "Область", "Разработка");
++    await choose(user, "Трек", "Трек команды");
++    const locked = () =>
++      lockedControls({
++        basis: screen.getAllByRole("radio"),
++        unit: [combobox("Подразделение")],
++        direction: [combobox("Область")],
++        track: [combobox("Трек")],
++      });
++    expect(locked()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
++    expect(locked()).toEqual(["basis", "unit", "direction", "track"]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(locked()).toEqual([]);
++  });
++
++  it("holds the basis, the unit and the position of a position matrix while the save is in flight, and frees them when it is refused", async () => {
++    const held = deferred<Response>();
++    const user = await openModal(() => {
++      servePositions();
++      fakeApi.on(ROUTE, () => held.promise);
++    });
++    await choosePositionBasis(user);
++    await choose(user, "Подразделение", "Команда");
++    await user.click(combobox("Должность"));
++    await user.click(
++      await screen.findByText("Руководитель", {
++        selector: ".ant-select-item-option-content *",
++      }),
++    );
++    const locked = () =>
++      lockedControls({
++        basis: screen.getAllByRole("radio"),
++        unit: [combobox("Подразделение")],
++        position: [combobox("Должность")],
++      });
++    expect(locked()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
++    expect(locked()).toEqual(["basis", "unit", "position"]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(locked()).toEqual([]);
++  });
++});
+diff --git a/web/src/features/career/MatrixPage.test.tsx b/web/src/features/career/MatrixPage.test.tsx
+index 385d9b5..a73bc78 100644
+--- a/web/src/features/career/MatrixPage.test.tsx
++++ b/web/src/features/career/MatrixPage.test.tsx
+@@ -1,8 +1,18 @@
+ import { act, render, screen, waitFor, within } from "@testing-library/react";
+ import userEvent from "@testing-library/user-event";
+-import { MemoryRouter, Route, Routes, useParams } from "react-router";
++import {
++  createMemoryRouter,
++  createRoutesFromElements,
++  MemoryRouter,
++  Outlet,
++  Route,
++  RouterProvider,
++  Routes,
++  useParams,
++} from "react-router";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
++import { LeaveGuardProvider } from "../../app/leaveGuard";
+ import { Providers } from "../../app/Providers";
+ import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+@@ -112,15 +122,36 @@ function DeskStub() {
+   return <p>{`desk:${scenario}:${id}`}</p>;
+ }
+ 
+-async function openPage() {
++async function openPage({ guarded = false } = {}) {
++  const routes = (
++    <>
++      <Route path="/career/matrices/:id" element={<MatrixPage />} />
++      <Route path="/desk/:scenario/:id" element={<DeskStub />} />
++    </>
++  );
+   render(
+     <Providers>
+-      <MemoryRouter initialEntries={["/career/matrices/matrix"]}>
+-        <Routes>
+-          <Route path="/career/matrices/:id" element={<MatrixPage />} />
+-          <Route path="/desk/:scenario/:id" element={<DeskStub />} />
+-        </Routes>
+-      </MemoryRouter>
++      {guarded ? (
++        <RouterProvider
++          router={createMemoryRouter(
++            [
++              {
++                element: (
++                  <LeaveGuardProvider>
++                    <Outlet />
++                  </LeaveGuardProvider>
++                ),
++                children: createRoutesFromElements(routes),
++              },
++            ],
++            { initialEntries: ["/career/matrices/matrix"] },
++          )}
++        />
++      ) : (
++        <MemoryRouter initialEntries={["/career/matrices/matrix"]}>
++          <Routes>{routes}</Routes>
++        </MemoryRouter>
++      )}
+     </Providers>,
+   );
+   await screen.findByRole("heading", { name: "Матрица «Бэкенд» — Отдел" });
+@@ -132,12 +163,11 @@ async function openPage() {
+   return userEvent.setup();
+ }
+ 
+-async function openHistory(user: ReturnType<typeof userEvent.setup>) {
+-  const history = screen.queryByRole("button", { name: "История" });
+-  if (history) {
+-    await user.click(history);
+-    return;
+-  }
++/** «История» of a returned version with three more actions before it: it sits behind the «…» menu, not in view. */
++async function openHistoryFromMenu(user: ReturnType<typeof userEvent.setup>) {
++  expect(
++    screen.queryByRole("button", { name: "История" }),
++  ).not.toBeInTheDocument();
+   await user.click(screen.getByRole("button", { name: "Действия с версией" }));
+   await user.click(await screen.findByRole("menuitem", { name: "История" }));
+ }
+@@ -645,7 +675,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
+       );
+       const user = await openPage();
+ 
+-      await openHistory(user);
++      await openHistoryFromMenu(user);
+       const history = await dialogTitled("История");
+       await user.click(within(history).getByRole("button", { name: /Автор/ }));
+ 
+@@ -696,7 +726,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
+       );
+       const user = await openPage();
+ 
+-      await openHistory(user);
++      await openHistoryFromMenu(user);
+       const history = await dialogTitled("История");
+       await user.click(
+         within(history).getByRole("button", { name: /Согласующий/ }),
+@@ -722,7 +752,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
+       );
+       const user = await openPage();
+ 
+-      await openHistory(user);
++      await openHistoryFromMenu(user);
+       const history = await dialogTitled("История");
+       await user.click(within(history).getByRole("button", { name: /Автор/ }));
+ 
+@@ -815,6 +845,23 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
+     return { opened, saved };
+   }
+ 
++  it("marks no competency as lacking a requirement (AC-57), since its cell shows the lowest score of the scale", async () => {
++    const { opened } = editorWithACompetency();
++    serveEditor({
++      ...opened,
++      content: { ...opened.content, requirements: [] },
++    });
++    await openPage();
++
++    const row = (await screen.findByText("Проектирование")).closest(
++      "tr",
++    ) as HTMLElement;
++
++    expect(
++      within(row).queryByRole("img", { name: "Нет требований" }),
++    ).not.toBeInTheDocument();
++  });
++
+   it("locks every control of the editor while the content is being saved, so that nothing typed then is lost, and frees them once it is saved", async () => {
+     const held = deferred<Response>();
+     const { opened, saved } = editorWithACompetency();
+@@ -903,6 +950,8 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
+ 
+   describe("while the form has edits that are not saved (AC-15, AC-17)", () => {
+     const UNSAVED_REASON = "Сначала сохраните изменения";
++    const leaveQuestion = () =>
++      screen.queryByRole("dialog", { name: "Перейти без сохранения?" });
+     const SUBMIT = "Перейти к отправке в мастере";
+     const DESK = `desk:matrix-builder:${VERSION_ID}`;
+     const deskLink = (label: string) =>
+@@ -918,7 +967,7 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
+       });
+     const RETURN = "Вернуть с правками";
+ 
+-    it("keeps the link to the desk scenario open with unsaved edits, since leaving goes through the confirmation", async () => {
++    it("keeps the link to the desk scenario enabled with unsaved edits, and following it leads there", async () => {
+       serveEditor();
+       const user = await openPage();
+       const threshold = await screen.findByRole("spinbutton", {
+@@ -932,6 +981,66 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
+       expect(await screen.findByText(DESK)).toBeInTheDocument();
+     });
+ 
++    it("asks before another version is chosen over unsaved edits, stays on the version and the value on «Остаться», and asks no more once they are saved", async () => {
++      const other = version({
++        id: "other",
++        number: 2,
++        status: "Published",
++        step: null,
++        actions: [],
++      });
++      serveEditor();
++      fakeApi.on("GET /api/v1/career/matrices/matrix/versions", () =>
++        Response.json(
++          [draft(), other].map(({ id, number, status }) => ({
++            id,
++            number,
++            status,
++            authorId: "author",
++            authorName: "Автор",
++            createdAt: "2026-10-01T10:00:00Z",
++            publishedAt: null,
++          })),
++        ),
++      );
++      fakeApi.on("GET /api/v1/career/matrix-versions/other", () =>
++        Response.json(other),
++      );
++      fakeApi.on("GET /api/v1/career/matrix-versions/other/history", () =>
++        Response.json({ variants: [], decisions: [] }),
++      );
++      const user = await openPage({ guarded: true });
++      const threshold = await screen.findByRole("spinbutton", {
++        name: THRESHOLD,
++      });
++      await user.type(threshold, "60");
++      const chooseOther = async () => {
++        await user.click(screen.getByRole("combobox", { name: "Версия" }));
++        await user.click(
++          await screen.findByText("Версия 2", {
++            selector: ".ant-select-item-option-content",
++          }),
++        );
++      };
++
++      await chooseOther();
++      await user.click(await screen.findByRole("button", { name: "Остаться" }));
++
++      await waitFor(() => expect(leaveQuestion()).not.toBeInTheDocument());
++      expect(screen.getByText("Черновик")).toBeInTheDocument();
++      expect(threshold).toHaveValue("60");
++
++      await user.click(screen.getByRole("button", { name: "Сохранить" }));
++      await waitFor(() => expect(fakeApi.calls(CONTENT_ROUTE)).toHaveLength(1));
++      await waitFor(() =>
++        expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument(),
++      );
++      await chooseOther();
++
++      expect(await screen.findByText("Опубликована")).toBeInTheDocument();
++      expect(leaveQuestion()).not.toBeInTheDocument();
++    });
++
+     it("holds the actions on the saved version back while a save is in flight, even when nothing was changed", async () => {
+       const held = deferred<Response>();
+       serveEditor(REVIEW());
+diff --git a/web/src/features/career/NameModal.test.tsx b/web/src/features/career/NameModal.test.tsx
+new file mode 100644
+index 0000000..c2b4921
+--- /dev/null
++++ b/web/src/features/career/NameModal.test.tsx
+@@ -0,0 +1,56 @@
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { MemoryRouter } from "react-router";
++import { beforeEach, describe, expect, it, vi } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import { NameModal } from "./NameModal";
++
++const ROUTE = "POST /api/v1/career/directions";
++
++const lockedControls = () =>
++  screen.getByRole("textbox", { name: "Название" }).hasAttribute("disabled")
++    ? ["name"]
++    : [];
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("name form while the entry is being saved (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("holds the name while the save is in flight, and frees it when it is refused", async () => {
++    const held = deferred<Response>();
++    fakeApi.on(ROUTE, () => held.promise);
++    render(
++      <Providers>
++        <MemoryRouter>
++          <NameModal
++            segment="directions"
++            title="Новая область"
++            onClose={vi.fn()}
++          />
++        </MemoryRouter>
++      </Providers>,
++    );
++    const user = userEvent.setup();
++    await user.type(
++      await screen.findByRole("textbox", { name: "Название" }),
++      "Разработка",
++    );
++    expect(lockedControls()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
++    expect(lockedControls()).toEqual(["name"]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(lockedControls()).toEqual([]);
++  });
++});
+diff --git a/web/src/features/career/ScaleModal.test.tsx b/web/src/features/career/ScaleModal.test.tsx
+index 5ae4773..fdac9bb 100644
+--- a/web/src/features/career/ScaleModal.test.tsx
++++ b/web/src/features/career/ScaleModal.test.tsx
+@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
+ import { beforeEach, describe, expect, it, vi } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi, problem } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import type { Scale } from "./catalogApi";
+ import { ScaleModal } from "./ScaleModal";
+@@ -137,3 +137,48 @@ describe("scale form (AC-13)", { timeout: LONG_FLOW_TIMEOUT }, () => {
+     expect(onClose).not.toHaveBeenCalled();
+   });
+ });
++
++describe("scale form while the scale is being saved (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  function lockedControls() {
++    const controls: [string, HTMLElement[]][] = [
++      ["name", [screen.getByLabelText("Название")]],
++      ["scores", screen.getAllByLabelText("Балл")],
++      ["labels", screen.getAllByLabelText("Значение")],
++      ["remove point", screen.getAllByRole("button", { name: "Удалить" })],
++      ["add point", [screen.getByRole("button", { name: "Добавить балл" })]],
++    ];
++    return controls
++      .filter(([, group]) =>
++        group.every((item) => item.hasAttribute("disabled")),
++      )
++      .map(([kind]) => kind);
++  }
++
++  it("holds the name and every point while the save is in flight, and frees them when it is refused", async () => {
++    const held = deferred<Response>();
++    fakeApi.on("PUT /api/v1/career/scales/scale", () => held.promise);
++    const { user } = open(EXISTING);
++    await screen.findByDisplayValue("Расширенная");
++    expect(lockedControls()).toEqual([]);
++
++    await save(user);
++
++    await waitFor(() =>
++      expect(fakeApi.calls("PUT /api/v1/career/scales/scale")).toHaveLength(1),
++    );
++    expect(lockedControls()).toEqual([
++      "name",
++      "scores",
++      "labels",
++      "remove point",
++      "add point",
++    ]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(lockedControls()).toEqual([]);
++  });
++});
+diff --git a/web/src/features/career/TrackModal.test.tsx b/web/src/features/career/TrackModal.test.tsx
+index e23fd52..2187815 100644
+--- a/web/src/features/career/TrackModal.test.tsx
++++ b/web/src/features/career/TrackModal.test.tsx
+@@ -1,10 +1,11 @@
+ import { act, render, screen, waitFor, within } from "@testing-library/react";
+ import userEvent from "@testing-library/user-event";
+-import { MemoryRouter } from "react-router";
++import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
+ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+ import { queryClient } from "../../api/queryClient";
++import { LeaveGuardProvider } from "../../app/leaveGuard";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi, problem } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { stubRowLayout } from "../../test/stubRowLayout";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import { currentUserQueryKey } from "../auth/useCurrentUser";
+@@ -500,3 +501,122 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
+     expect(fakeApi.calls(TRACK_ROUTE)).toHaveLength(0);
+   });
+ });
++
++describe("closing the track dialog (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  const ASK = "Перейти без сохранения?";
++
++  async function openGuarded(onClose: () => void) {
++    serve();
++    render(
++      <Providers>
++        <RouterProvider
++          router={createMemoryRouter([
++            {
++              path: "/",
++              element: (
++                <LeaveGuardProvider>
++                  <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
++                </LeaveGuardProvider>
++              ),
++            },
++          ])}
++        />
++      </Providers>,
++    );
++    await rightsLoaded();
++    await screen.findByRole("combobox", { name: "Подразделение" });
++    await act(async () => undefined);
++    return userEvent.setup();
++  }
++
++  const close = (user: ReturnType<typeof userEvent.setup>) =>
++    user.click(screen.getByRole("button", { name: /Close|Закрыть/ }));
++
++  it("closes a new track nothing was typed in at once, without a question", async () => {
++    const onClose = vi.fn();
++    const user = await openGuarded(onClose);
++
++    await close(user);
++
++    expect(onClose).toHaveBeenCalledOnce();
++    expect(
++      screen.queryByText(ASK, { selector: ".ant-modal-confirm-title" }),
++    ).not.toBeInTheDocument();
++  });
++
++  it("asks before closing a new track once a name was typed", async () => {
++    const onClose = vi.fn();
++    const user = await openGuarded(onClose);
++    await user.type(
++      screen.getByRole("textbox", { name: "Название" }),
++      "Бэкенд",
++    );
++
++    await close(user);
++
++    expect(
++      await screen.findByText(ASK, { selector: ".ant-modal-confirm-title" }),
++    ).toBeInTheDocument();
++    expect(onClose).not.toHaveBeenCalled();
++  });
++});
++
++describe("the track dialog while the track is being saved (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  function lockedControls() {
++    const controls: [string, HTMLElement | null][] = [
++      ["name", screen.queryByRole("textbox", { name: "Название" })],
++      ["unit", screen.queryByRole("combobox", { name: "Подразделение" })],
++      ["direction", screen.queryByRole("combobox", { name: "Область" })],
++      ["add level", screen.queryByRole("button", { name: "Добавить уровень" })],
++      [
++        "move level",
++        screen.queryByRole("button", { name: "Перетащить уровень «Младший»" }),
++      ],
++      [
++        "level actions",
++        screen.queryByRole("button", { name: "Действия с «Младший»" }),
++      ],
++    ];
++    return controls
++      .filter(([, control]) => control?.hasAttribute("disabled"))
++      .map(([kind]) => kind);
++  }
++
++  it("holds the fields and the list of levels while the save is in flight, and frees them when it is refused", async () => {
++    serve();
++    const held = deferred<Response>();
++    fakeApi.on(TRACK_ROUTE, () => held.promise);
++    render(
++      <Providers>
++        <MemoryRouter>
++          <TrackModal directionId={DIRECTION_ID} onClose={vi.fn()} />
++        </MemoryRouter>
++      </Providers>,
++    );
++    const user = userEvent.setup();
++    await fillNewTrack(user, "Бэкенд");
++    await addLevel(user, "Младший");
++    expect(lockedControls()).toEqual([]);
++
++    await save(user);
++
++    await waitFor(() => expect(fakeApi.calls(TRACK_ROUTE)).toHaveLength(1));
++    expect(lockedControls()).toEqual([
++      "name",
++      "unit",
++      "direction",
++      "add level",
++      "move level",
++      "level actions",
++    ]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(lockedControls()).toEqual([]);
++  });
++});
+diff --git a/web/src/features/career/catalogRoutes.test.ts b/web/src/features/career/catalogRoutes.test.ts
+index df83140..b847c9d 100644
+--- a/web/src/features/career/catalogRoutes.test.ts
++++ b/web/src/features/career/catalogRoutes.test.ts
+@@ -5,9 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { fakeApi } from "../../test/fakeApi";
+ import {
+-  approveDraft,
+   type CatalogAction,
+-  type CatalogKind,
+   type CatalogSegment,
+   changeCatalogStatus,
+   deleteEntry,
+@@ -36,14 +34,6 @@ const ACTIONS = Object.keys({
+   activate: true,
+ } satisfies Record<CatalogAction, true>) as CatalogAction[];
+ 
+-const DRAFT_KINDS = Object.keys({
+-  Direction: true,
+-  Track: true,
+-  Competency: true,
+-  Scale: true,
+-  Block: true,
+-} satisfies Record<CatalogKind, true>) as CatalogKind[];
+-
+ const TRANSITIONS = Object.keys({
+   submit: true,
+   approve: true,
+@@ -103,18 +93,6 @@ describe("requests whose path is assembled at run time are routes of the contrac
+     },
+   );
+ 
+-  it.each(DRAFT_KINDS)("approves a draft %s", async (kind) => {
+-    await expect(
+-      approveDraft({
+-        kind,
+-        id: "id",
+-        name: "Имя",
+-        ownerOrgUnitName: null,
+-        authorName: null,
+-      } as never),
+-    ).resolves.toBeDefined();
+-  });
+-
+   it.each(TRANSITIONS)("moves a matrix version by %s", async (transition) => {
+     await expect(
+       transitMatrixVersion({ id: "id", version: 1 } as never, transition),
+diff --git a/web/src/features/career/catalogueTables.test.tsx b/web/src/features/career/catalogueTables.test.tsx
+index bb6ca0b..7fe11ce 100644
+--- a/web/src/features/career/catalogueTables.test.tsx
++++ b/web/src/features/career/catalogueTables.test.tsx
+@@ -7,7 +7,9 @@ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+ import { fakeApi } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import { BlocksTab } from "./BlocksTab";
+ import { CompetenciesTab } from "./CompetenciesTab";
++import { MAX_PAGE_SIZE } from "./catalogApi";
+ import { DirectionsTracksTab } from "./DirectionsTracksTab";
+ import { DraftsSection } from "./DraftsSection";
+ import { MatricesTab } from "./MatricesTab";
+@@ -59,6 +61,17 @@ const TABLES: PagedTable[] = [
+       versionNumber: 1,
+     }),
+   },
++  {
++    table: "blocks",
++    show: () => <BlocksTab />,
++    route: "GET /api/v1/career/blocks",
++    row: (index) => ({
++      ...entry(index),
++      scopeUnitId: null,
++      scopeUnitName: null,
++      competencies: [],
++    }),
++  },
+   {
+     table: "matrices",
+     show: () => <MatricesTab />,
+@@ -120,27 +133,56 @@ beforeEach(() => {
+ describe("a catalogue table pages on the server (AC-24)", {
+   timeout: LONG_FLOW_TIMEOUT,
+ }, () => {
++  function servePaged({ route, row }: PagedTable) {
++    serveRole("GlobalAdmin");
++    fakeApi.on("GET /api/v1/career/directions", () =>
++      Response.json(page([{ ...entry(0), name: "Разработка" }])),
++    );
++    fakeApi.on(route, (request) => {
++      const query = new URL(request.url).searchParams;
++      const number = Number(query.get("page"));
++      const size = Number(query.get("pageSize"));
++      const items = Array.from({ length: TOTAL }, (_, index) => row(index + 1));
++      return Response.json({
++        items: items.slice((number - 1) * size, number * size),
++        total: TOTAL,
++        page: number,
++        pageSize: size,
++      });
++    });
++  }
++
++  it("asks for the first page of the chosen size when the page size is changed on a later page", async () => {
++    const scales = TABLES.find(({ table }) => table === "scales") as PagedTable;
++    servePaged(scales);
++    const user = showTable(scales.show());
++    await user.click(await screen.findByTitle("2"));
++    expect(await screen.findByText(FIRST_OF_SECOND_PAGE)).toBeInTheDocument();
++
++    await user.click(
++      document.querySelector(
++        ".ant-pagination-options .ant-select",
++      ) as HTMLElement,
++    );
++    await user.click(
++      await screen.findByText(/^50/, {
++        selector: ".ant-select-item-option-content",
++      }),
++    );
++
++    await waitFor(() =>
++      expect(queries(scales.route).at(-1)).toMatchObject({
++        page: "1",
++        pageSize: "50",
++      }),
++    );
++  });
++
+   it.each(TABLES)(
+     "$table: 20 rows to a page, the next page asked from the server",
+-    async ({ show, route, row }) => {
+-      serveRole("GlobalAdmin");
+-      fakeApi.on("GET /api/v1/career/directions", () =>
+-        Response.json(page([{ ...entry(0), name: "Разработка" }])),
+-      );
+-      fakeApi.on(route, (request) => {
+-        const query = new URL(request.url).searchParams;
+-        const number = Number(query.get("page"));
+-        const size = Number(query.get("pageSize"));
+-        const items = Array.from({ length: TOTAL }, (_, index) =>
+-          row(index + 1),
+-        );
+-        return Response.json({
+-          items: items.slice((number - 1) * size, number * size),
+-          total: TOTAL,
+-          page: number,
+-          pageSize: size,
+-        });
+-      });
++    async (table) => {
++      const { show, route } = table;
++      servePaged(table);
+       const user = showTable(show());
+       const scope: HTMLElement = document.body;
+       expect(await within(scope).findByText("Запись 1")).toBeInTheDocument();
+@@ -427,7 +469,6 @@ describe("the row actions of the catalogues (AC-19, AC-25)", {
+             name: "Проектирование",
+             status: "Draft",
+             description: null,
+-            categoryId: "c",
+             directionId: null,
+             scaleId: "s",
+             createdAt: "2026-10-01T10:00:00Z",
+@@ -443,6 +484,89 @@ describe("the row actions of the catalogues (AC-19, AC-25)", {
+     expect(visible).toEqual(["История версий", "Изменить"]);
+     expect(menu).toEqual(["Согласовать", "Деактивировать", "Удалить"]);
+   });
++
++  it.each([
++    {
++      rights: "may edit and delete",
++      row: { canEdit: true, canDelete: true },
++      visible: ["Сделать по умолчанию", "Изменить"],
++      menu: ["Деактивировать", "Удалить"],
++    },
++    {
++      rights: "may only delete",
++      row: { canEdit: false, canDelete: true },
++      visible: ["Сделать по умолчанию"],
++      menu: ["Деактивировать", "Удалить"],
++    },
++    {
++      rights: "may neither edit nor delete",
++      row: { canEdit: false, canDelete: false },
++      visible: ["Сделать по умолчанию", "Деактивировать"],
++      menu: [],
++    },
++  ])(
++    "offers «Изменить» and «Удалить» as the server allows them: a scale the user $rights",
++    async ({ row, visible, menu }) => {
++      serveRole("GlobalAdmin");
++      fakeApi.on("GET /api/v1/career/scales", () =>
++        Response.json(
++          page([
++            editable({ ...row, name: "Шкала", points: [], isDefault: false }),
++          ]),
++        ),
++      );
++      const user = showTable(<ScalesTab />);
++
++      expect(await actionsOf(user, "Шкала")).toEqual({ visible, menu });
++    },
++  );
++
++  describe("an action from the menu of a row carries the version of the row", () => {
++    function serveScale() {
++      serveRole("GlobalAdmin");
++      fakeApi.on("GET /api/v1/career/scales", () =>
++        Response.json(
++          page([editable({ name: "Шкала", points: [], isDefault: false })]),
++        ),
++      );
++    }
++
++    it("deactivates against it", async () => {
++      const route = "POST /api/v1/career/scales/entry/deactivate";
++      serveScale();
++      fakeApi.on(route, () => Response.json(editable({ status: "Inactive" })));
++      const user = showTable(<ScalesTab />);
++      await actionsOf(user, "Шкала");
++
++      await user.click(
++        await screen.findByRole("menuitem", { name: "Деактивировать" }),
++      );
++
++      await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
++      expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe('"3"');
++    });
++
++    it("deletes against it once the question is confirmed", async () => {
++      const route = "DELETE /api/v1/career/scales/entry";
++      serveScale();
++      fakeApi.on(route, () => new Response(null, { status: 204 }));
++      const user = showTable(<ScalesTab />);
++      await actionsOf(user, "Шкала");
++
++      await user.click(
++        await screen.findByRole("menuitem", { name: "Удалить" }),
++      );
++      expect(fakeApi.calls(route)).toHaveLength(0);
++      await user.click(
++        within(await screen.findByRole("dialog")).getByRole("button", {
++          name: "Удалить",
++        }),
++      );
++
++      await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
++      expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe('"3"');
++    });
++  });
+ });
+ 
+ describe("the empty tables of the catalogues (AC-19)", {
+@@ -461,6 +585,47 @@ describe("the empty tables of the catalogues (AC-19)", {
+     ).toEqual(["Шкал пока нет"]);
+   });
+ 
++  it("reads the tracks of a direction in one request of the largest page, and says how many are shown of how many when there are more", async () => {
++    const route = "GET /api/v1/career/tracks";
++    const SHOWN = 3;
++    const ALL = 250;
++    serveRole("GlobalAdmin");
++    fakeApi.on("GET /api/v1/career/directions", () =>
++      Response.json(page([editable({ name: "Разработка" })])),
++    );
++    fakeApi.on(route, () =>
++      Response.json({
++        items: Array.from({ length: SHOWN }, (_, index) => ({
++          ...entry(index + 1),
++          directionId: "entry",
++          ownerOrgUnitId: "unit",
++          ownerOrgUnitName: "Отдел",
++        })),
++        total: ALL,
++        page: 1,
++        pageSize: MAX_PAGE_SIZE,
++      }),
++    );
++    const user = showTable(<DirectionsTracksTab />);
++
++    await user.click(
++      await waitFor(() => {
++        const expander = document.querySelector(".ant-table-row-expand-icon");
++        expect(expander).not.toBeNull();
++        return expander as HTMLElement;
++      }),
++    );
++
++    expect(
++      await screen.findByText(
++        `Показаны первые ${SHOWN} из ${ALL} — уточните поиск.`,
++      ),
++    ).toBeVisible();
++    expect(queries(route)[0]).toMatchObject({
++      pageSize: String(MAX_PAGE_SIZE),
++    });
++  });
++
+   it("says «Треков пока нет» in the tracks of a direction that has none", async () => {
+     serveRole("GlobalAdmin");
+     fakeApi.on("GET /api/v1/career/directions", () =>
+diff --git a/web/src/features/career/columnFilterWiring.test.tsx b/web/src/features/career/columnFilterWiring.test.tsx
+index 69ee5be..9f69c74 100644
+--- a/web/src/features/career/columnFilterWiring.test.tsx
++++ b/web/src/features/career/columnFilterWiring.test.tsx
+@@ -8,6 +8,7 @@ import { Providers } from "../../app/Providers";
+ import { fakeApi } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import { ApprovalsSection } from "./ApprovalsSection";
++import { BlocksTab } from "./BlocksTab";
+ import { CompetenciesTab } from "./CompetenciesTab";
+ import { DirectionsTracksTab } from "./DirectionsTracksTab";
+ import { DraftsSection } from "./DraftsSection";
+@@ -74,6 +75,7 @@ function serve() {
+   fakeApi.on("GET /api/v1/career/tracks", () => Response.json(page([TRACK])));
+   fakeApi.on("GET /api/v1/career/competencies", () => Response.json(page([])));
+   fakeApi.on("GET /api/v1/career/matrices", () => Response.json(page([])));
++  fakeApi.on("GET /api/v1/career/blocks", () => Response.json(page([])));
+   fakeApi.on("GET /api/v1/career/approvals", () => Response.json([]));
+   fakeApi.on("GET /api/v1/career/drafts", () => Response.json([]));
+ }
+@@ -85,7 +87,11 @@ interface FilterCase {
+   column: string;
+   /** Accessible name of the control inside the filter when it differs from the column title. */
+   control?: string;
+-  choose: { option: string } | { entry: string } | { unit: string };
++  choose:
++    | { option: string }
++    | { entry: string }
++    | { unit: string }
++    | { checkbox: string };
+   param: string;
+   value: string;
+   inNestedTable?: boolean;
+@@ -166,6 +172,24 @@ const CASES: FilterCase[] = [
+     param: "status",
+     value: "Active",
+   },
++  {
++    table: "blocks by unit",
++    show: () => <BlocksTab />,
++    route: "GET /api/v1/career/blocks",
++    column: "Действует для",
++    choose: { unit: "Компания" },
++    param: "scopeUnitId",
++    value: "company",
++  },
++  {
++    table: "blocks for every unit",
++    show: () => <BlocksTab />,
++    route: "GET /api/v1/career/blocks",
++    column: "Действует для",
++    choose: { checkbox: "Для всех" },
++    param: "forAll",
++    value: "true",
++  },
+   {
+     table: "matrices by unit",
+     show: () => <MatricesTab />,
+@@ -303,6 +327,10 @@ describe("column filters send their value under the param the server reads (AC-2
+         await screen.findByRole("menuitem", { name: filter.choose.option }),
+       );
+       await user.click(screen.getByRole("button", { name: "OK" }));
++    } else if ("checkbox" in filter.choose) {
++      await user.click(
++        screen.getByRole("checkbox", { name: filter.choose.checkbox }),
++      );
+     } else if ("entry" in filter.choose) {
+       await user.click(
+         screen.getByRole("combobox", { name: filter.control ?? filter.column }),
+@@ -313,7 +341,11 @@ describe("column filters send their value under the param the server reads (AC-2
+         }),
+       );
+     } else {
+-      await user.click(screen.getByRole("combobox", { name: "Подразделение" }));
++      await user.click(
++        within(
++          document.querySelector(".ant-table-filter-dropdown") as HTMLElement,
++        ).getByRole("combobox"),
++      );
+       await user.click(
+         await screen.findByText(filter.choose.unit, {
+           selector: ".ant-select-tree-title",
+diff --git a/web/src/features/career/usePublishEntry.test.tsx b/web/src/features/career/usePublishEntry.test.tsx
+index 4779442..2110775 100644
+--- a/web/src/features/career/usePublishEntry.test.tsx
++++ b/web/src/features/career/usePublishEntry.test.tsx
+@@ -104,9 +104,9 @@ describe("approving an entry under the list of what is published with it (AC-110
+     const request = fakeApi.calls(APPROVE_ROUTE)[0];
+     expect(request?.headers.get("If-Match")).toBe('"4"');
+     expect(queryOf(request).get("cascade")).toBe("tag-empty");
++    await waitFor(() => expect(isCatalogStale()).toBe(true));
+     expect(document.querySelector(".ant-modal-confirm")).toBeNull();
+     expect(document.querySelector(".ant-message-notice")).toBeNull();
+-    await waitFor(() => expect(isCatalogStale()).toBe(true));
+   });
+ 
+   it("names every draft that goes with the entry and approves under their tag once confirmed", async () => {
+@@ -469,9 +469,12 @@ describe("the offer to approve a draft right after it was created (AC-115)", ()
+       const user = renderHarness();
+ 
+       await user.click(screen.getByRole("button", { name: "предложить" }));
+-
+       await waitFor(() => expect(fakeApi.calls(PREVIEW_ROUTE)).toHaveLength(1));
+-      expect(document.querySelector(".ant-modal-confirm")).toBeNull();
++      fakeApi.on(PREVIEW_ROUTE, () => preview("tag-later"));
++      await user.click(screen.getByRole("button", { name: "предложить" }));
++
++      await confirmDialog();
++      expect(document.querySelectorAll(".ant-modal-confirm")).toHaveLength(1);
+       expect(document.querySelector(".ant-message-notice")).toBeNull();
+     },
+   );
+diff --git a/web/src/features/org-structure/UnitHrModal.test.tsx b/web/src/features/org-structure/UnitHrModal.test.tsx
+index 9e31613..60102df 100644
+--- a/web/src/features/org-structure/UnitHrModal.test.tsx
++++ b/web/src/features/org-structure/UnitHrModal.test.tsx
+@@ -177,6 +177,27 @@ describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
+         "Учётная запись заблокирована или не завершила регистрацию",
+       ),
+     ).toBeInTheDocument();
++    expect(document.querySelector(".ant-message-notice")).toBeNull();
++  });
++
++  it("tells the administrator, and keeps the dialog, when assigning fails for a reason that names no field", async () => {
++    serve("GlobalAdmin", { assigned: null, inherited: null });
++    fakeApi.on("PUT /api/v1/career/org-units/sales/hr", () =>
++      problem(500, { title: "Сбой" }),
++    );
++    const user = await openModal();
++    await screen.findByText("HR не назначен");
++
++    await user.click(screen.getByRole("combobox", { name: "Сотрудник" }));
++    await user.click(await screen.findByText("Петров Пётр"));
++    await user.click(screen.getByRole("button", { name: "Закрепить" }));
++
++    await waitFor(() =>
++      expect(document.querySelector(".ant-message-notice")).not.toBeNull(),
++    );
++    expect(
++      await dialogTitled("HR подразделения «Продажи»"),
++    ).toBeInTheDocument();
+   });
+ 
+   it("removes the assignment after a confirmation that names what follows, focused on «Отмена»", async () => {
