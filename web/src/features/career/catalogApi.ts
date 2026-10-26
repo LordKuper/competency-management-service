@@ -403,11 +403,6 @@ export async function changeCatalogStatus(
   );
 }
 
-/** Approves a draft the drafts list names, under the version the list showed. */
-export async function approveDraft(draft: CatalogDraft) {
-  return changeCatalogStatus(SEGMENT_OF_KIND[draft.kind], draft, "approve");
-}
-
 /** Values of a form that names an entry of a catalogue with nothing else to it. */
 export interface NamedEntryValues {
   name: string;
