@@ -1,5 +1,5 @@
 // LikeC4 model seed.
-// Extended by Architect when design-promote approves new subsystems (containers/components).
+// Extended by the main orchestrator when design-promote approves new subsystems (containers/components).
 // Spec: https://likec4.dev
 
 specification {

@@ -1,9 +1,9 @@
 ---
 {
   "name": "asd-stack",
-  "description": "Forms or edits the project tech stack document at docs/architecture/stack.html via asd-architect, branching by silent detection into one of four flows (clean slate / constraints / clear stack / brownfield extraction). Verifies versions via WebFetch, runs knowledge-gap analysis, and maintains a tech-reference doc per chosen tech. Use when the user runs /asd-stack, when asd-init or asd-concept detects a missing stack.html and suggests this skill, or when the user asks to define, draft, refine, edit, upgrade, or reverse-engineer the project technology stack.",
+  "description": "Forms or edits the project tech stack document at docs/architecture/stack.html inline, branching by silent detection into one of four flows (clean slate / constraints / clear stack / brownfield extraction). Verifies versions via WebFetch, runs knowledge-gap analysis, and maintains a tech-reference doc per chosen tech. Use when the user runs /asd-stack, when asd-init or asd-concept detects a missing stack.html and suggests this skill, or when the user asks to define, draft, refine, edit, upgrade, or reverse-engineer the project technology stack.",
   "claude": {
-    "allowed-tools": "Read Glob Grep AskUserQuestion Task Bash(node .asd/runtime.js:*)"
+    "allowed-tools": "Read Write Edit Glob Grep WebFetch WebSearch AskUserQuestion Bash(node .asd/runtime.js:*)"
   }
 }
 ---
@@ -12,7 +12,7 @@
 
 ## Purpose
 
-Form or edit the project tech stack document `docs/architecture/stack.html` and its tech-reference docs via `asd-architect`.
+Create or edit `docs/architecture/stack.html` and its tech-reference docs, authored by the main orchestrator itself.
 
 ## Preconditions
 
@@ -28,6 +28,8 @@ Form or edit the project tech stack document `docs/architecture/stack.html` and 
 
 ## Steps
 
+Build the orchestrator bundle first and read it: `node .asd/runtime.js context --role orchestrator --phase stack --out <scratch-dir>/orchestrator-stack.context.md` (`agent-protocol.md` "Dispatch payload").
+
 ### Phase 1 — silent detection (NO asking)
 
 Scan in order:
@@ -38,107 +40,71 @@ Scan in order:
 
 ### Phase 2 — variant choice (only if Phase 1 did not route to edit)
 
-Request user decision (4 options):
-- **A** — Clean slate, architect proposes from concept
+Request user decision (a brownfield candidate defaults D):
+- **A** — Clean slate, propose from the concept
 - **B** — I have constraints (language, runtime, hosting, budget)
 - **C** — Clear stack, will describe
 - **D** — Brownfield, extract from existing code
 
-Phase 1 brownfield candidates auto-suggest D as default.
+### Phase 3 — flow per variant
 
-### Phase 3 — flow per variant (each delegates to `asd-architect`)
+Read `concept.html` first (vision, target users, value prop, declared constraints).
 
-**Variant A — clean slate**
-- Delegate to agent `asd-architect` with payload: concept.html, language settings, target = `t_stack.html`
-- Architect reads concept (vision, target users, value prop, declared constraints)
-- Proposes 2-3 candidate combinations per relevant section
-- Request user decision: pick combination or request alternatives
-- Proceed to Phase 4
+**A — clean slate**
+- Propose 2-3 candidate combinations per relevant section; request user decision: pick or request alternatives
 
-**Variant B — constrained**
-- Request user input, multi-field one-shot:
-  - Primary language preference (free-text or "no preference")
-  - Runtime/platform target (web / desktop / mobile / server / cli / embedded / no preference)
-  - Hosting preference (cloud / self-host / local-only / no preference)
-  - Budget tier (zero-cost / low / standard / no constraint)
-- Delegate to agent `asd-architect` with concept + constraints
-- Architect proposes within constraints
-- Proceed to Phase 4
+**B — constrained**
+- Request user input, multi-field one-shot: primary language, runtime/platform target (web / desktop / mobile / server / cli / embedded), hosting (cloud / self-host / local-only), budget tier (zero-cost / low / standard), each with "no preference"
+- Propose within the constraints
 
-**Variant C — clear stack**
-- Request user input: describe the chosen stack
-- Delegate to agent `asd-architect` with concept + that description
-- Architect validates compatibility with concept; flags conflicts (e.g., "concept implies mobile but stack is server-only")
-- Architect fills unstated gaps per `t_stack.html` (proposes defaults; user approves)
-- Proceed to Phase 4
+**C — clear stack**
+- Request user input: the chosen stack; validate against the concept and flag conflicts (e.g. concept implies mobile, stack is server-only); fill unstated gaps per `t_stack.html` with proposed defaults the user approves
 
-**Variant D — brownfield extraction**
-- Delegate to agent `asd-architect` with manifest/source paths (repo-search results)
-- Architect extracts stack content from package.json / Cargo.toml / pyproject.toml / go.mod / Makefile / Dockerfile / CI configs
-- Draft sets `provenance: reverse-engineered` + `source: <primary manifest>` in frontmatter
-- Proceed to Phase 4
+**D — brownfield extraction**
+- Extract from package.json / Cargo.toml / pyproject.toml / go.mod / Makefile / Dockerfile / CI configs; frontmatter `provenance: reverse-engineered`, `source: <primary manifest>`
 
 ### Phase 4 — convergence (universal across variants)
 
-- Create mode only (target file does not yet exist): before the first section, write skeleton `docs/architecture/stack.html` per `t_stack.html`, with placeholder sections. Edit mode (target file already exists) skips this write and enters the per-section loop directly against the existing file.
-- Section-by-section:
-  - Per entry: verify current latest version via fetching external doc; flag if user's choice lags or is ahead
-  - Architect drafts the section, translates to `language.docs`, writes it into `docs/architecture/stack.html` on disk
-  - Post the file path + a short delta summary of what the section now says in `language.chat` (never the full section body) per `language-policy.md`
-  - Apply `checkpoints.md`: adaptive pass is allowed only for already-authorized factual/routine content; new or material stack direction remains a hard decision. Otherwise request **Lock in / Revise / Skip**.
-  - on B: collect feedback, architect revises, rewrites the section in place, re-posts delta summary, re-ask
-  - on C: remove that section (heading + placeholder content) from the on-disk file entirely, then continue
-  - repeat until A
-  - next section per `t_stack.html` order
+- Create mode only (file absent): write a skeleton per `t_stack.html` with placeholder sections first. Edit mode enters the loop against the existing file.
+- Per section, per `core.md` "Incremental writing": per entry, verify the current latest version from external docs and flag a lagging or leading choice; draft, translate to `language.docs`, write to disk, post the path and a short delta summary in `language.chat` (never the body, `language-policy.md`).
+  - Apply `checkpoints.md`: an adaptive pass only for already-authorized factual content; new or material stack direction stays a hard decision. Otherwise request **Lock in / Revise this section / Skip**.
+  - Revise: collect feedback, rewrite in place, re-post. Skip: remove the section (heading and placeholder) from the file.
+  - Next section per `t_stack.html` order.
 
 ### Phase 5 — knowledge gap analysis
 
-Per technology entry in approved stack:
-- Architect compares chosen version against LLM training cutoff
-- Risk:
-  - **LOW** — version pre-dates cutoff, well-known
-  - **MEDIUM** — version close to or shortly after cutoff
-  - **HIGH** — version released after cutoff; may have breaking changes LLM does not know
-- MEDIUM/HIGH: architect fetches official changelog / release notes (external doc); records breaking changes and deprecations in tech-reference doc
+Per technology entry compare the chosen version with the training cutoff: **LOW** pre-dates it, well-known; **MEDIUM** close to or shortly after it; **HIGH** released after it, possibly breaking. MEDIUM/HIGH: fetch the official changelog or release notes, record breaking changes and deprecations in the tech-reference doc.
 
 ### Phase 6 — tech-reference creation/update
 
-Per technology in approved stack:
-- Architect creates or updates `docs/architecture/tech-reference/<tech>-<version>.md` per `t_tech-reference.md`
-- Includes canonical source URL, API surface used, version-specific notes, deprecations, project conventions, "Last verified" ISO date
-- Request user decision before each persistent write: approve | revise
+Per technology create or update `docs/architecture/tech-reference/<tech>-<version>.md` per `t_tech-reference.md` and `artifact-layout.md` "Tech reference docs". Request user decision before each persistent write: approve | revise.
 
 ### Phase 7 — final artifact-level gate: stack.html
 
-- `docs/architecture/stack.html` already reflects every locked-in section from Phase 4 (content write is not deferred — only this gate's `accept` is)
-- write-then-review-accept per `checkpoints.md` mechanic (delta summary includes risk summary): post the path + a combined delta summary in chat; user replies `accept` (advance) or feedback (revise in place, re-post) — feedback naming a specific section may re-enter Phase 4 for that section before rewriting
-- if feedback changes a tech entry or its version (not just prose in an already-chosen section): after Phase 4's re-entry, also re-run Phases 5-6 for the affected tech entries (including the per-tech approve-before-write micro-gate) before the delta summary is re-posted and before COMPLETED can be emitted
+- The file already holds every locked-in section. Write-then-review-accept per `checkpoints.md` (delta summary includes the risk summary): `accept` advances, feedback revises in place (a feedback naming a section may re-enter Phase 4 for it)
+- Feedback changing a tech entry or its version re-runs Phases 5-6 for the affected entries (per-tech approve micro-gate included) before the delta summary is re-posted and before COMPLETED
 - emit COMPLETED
 
 ### Phase 8 — handoff
 
-- Print handoff suggestion: "Next: run `/asd-sprint` to start the first sprint"
-- NO auto-dispatch
+- Print: "Next: run `/asd-sprint` to start the first sprint". NO auto-dispatch
 
 ### Edit mode (Phase 1 routed here)
 
-- Show existing stack summary + risk re-assessment (versions may have aged since last write)
-- Request user decision: multi-select which sections to edit; OR "refresh — re-verify all versions"
-- per chosen section: enter Phase 4 loop
-- Phase 5-8 as usual
+- Show the existing stack summary with a risk re-assessment (versions age); request user decision: multi-select sections to edit, or "refresh — re-verify all versions"
+- Per chosen section enter Phase 4; Phases 5-8 as usual
 
 ## Rules
 
-- never: guess a version — always verify via fetching external doc (architect handles)
-- never: add tech to stack speculatively — only when actively integrated; speculative additions belong in stack.html's own `#considered` section (`t_stack.html` "Considered / not adopted") or `.asd/project/stubs.md`, not the main stack list (ADRs are sprint-scoped and lost at archival — not a durable home)
+- never: guess a version — always verify from external docs
+- never: add tech speculatively — only when actively integrated; speculative additions belong in stack.html's own `#considered` section (`t_stack.html` "Considered / not adopted") or `.asd/project/stubs.md`, not the main stack list (ADRs are sprint-scoped and lost at archival)
 - must: give every tech in stack a matching tech-reference doc before COMPLETED
 - never: mix the multi-field and options request shapes in one request.
-- must: before each `asd-architect` delegation, build `inputs.context`: `node .asd/runtime.js context --role asd-architect --phase stack --out <scratch-dir>/stack-<dispatch id>.context.md` (`agent-protocol.md` "Dispatch payload").
 
 ## Delegates
 
 ```json
-{"agents": ["asd-architect"], "skills": []}
+{"agents": [], "skills": []}
 ```
 
 ## Outputs

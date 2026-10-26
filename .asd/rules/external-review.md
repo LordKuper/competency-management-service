@@ -62,7 +62,7 @@ Pathspec exclusions per phase and mode, applied by the phase when it builds the 
 | impl-review, `self_hosting: disabled` (consumer, default) | changed files anywhere in the repo, minus the exclusions — code and tests in practice | `.asd/**`, `docs/**`, generated provider views (`.claude/{agents,skills,hooks}/**`, `.codex/{agents,hooks}/**`, `.agents/skills/**`) |
 | impl-review, `self_hosting: enabled` (this repo) | changed files anywhere in the repo — everything here IS framework source (`sprint-lifecycle.md` "Self-hosting") | `.asd/project/**`, `.asd/sprints/**`, generated provider views per `sprint-lifecycle.md` "Self-hosting" |
 
-Cross-phase reference material (concept, custom rules, accessibility baseline, prd/adr/stack/commands) travels as **paths only** in the rendered prompt (`t_prompt-external-{design,impl}.md` "project context"), never inside the scope manifest, never diffed. design-review scope never names source code; consumer-mode impl-review scope never names design/doc files (a doc-vs-code drift finding belongs to the internal Documentation reviewer). The exclusions also keep C4 schemas out of consumer impl-review: likec4 lives under `<sprint>/design/c4-full/` and `docs/architecture/c4/`.
+Cross-phase reference material (concept, custom rules, accessibility baseline, prd/adr/stack/commands) travels as **paths only** in the rendered prompt (`t_prompt-external-{design,impl}.md` "project context"), never inside the scope manifest, never diffed. design-review scope never names source code; consumer-mode impl-review scope never names design/doc files (a doc-vs-code drift finding belongs to the internal Quality reviewer). The exclusions also keep C4 schemas out of consumer impl-review: likec4 lives under `<sprint>/design/c4-full/` and `docs/architecture/c4/`.
 
 **Generated output is always excluded.** `**/dist/**` (likec4 build), `design-system.html` — both derived from a source the reviewer already sees (`*.c4`, `DESIGN.md`). Review the source, not the build.
 
@@ -96,7 +96,7 @@ Phase skill supplies the finding set of the latest earlier verdict iteration —
 If two consecutive verdict iterations produce an identical issue set (same files, lines, messages), the agent returns a verdict ("Outcome contract"): first line `[REVIEW-<phase>-external]: FAIL`, plus a `Stalemate: <N> iterations, identical findings` block (`t_review-report.md` `## Stalemate`). The orchestrator asks the user (`core.md` "Request user decision") and applies the choice to the stalemated findings; the review workflows' generic FAIL accept/override bullets do not apply:
 
 - **stop** — accept the current state: the orchestrator records the findings resolved without fix (`sprint-lifecycle.md` "State recovery" user-resolved findings), and routing continues with the rest
-- **continue fixing** — the findings stay in the fix set: impl-review routes them to review-fix, design-review to the creator fix and the next iteration
+- **continue fixing** — the findings stay in the fix set: impl-review routes them to review-fix, design-review to the orchestrator fix and the next iteration
 - **abort** — emit ABORT
 
 ## Aggregation

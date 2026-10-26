@@ -2,7 +2,7 @@
 responsibility:
   owns: single reviewer verdict and validated compact coverage for one iteration
   excludes: other reviewers, other iterations, fixes, manual-verification spec (test-plan.md's single home)
-  delegates_to: creator agent (fixes), sibling review files (other reviewers), test-plan.md (manual-verification spec)
+  delegates_to: fix owner (fixes), sibling review files (other reviewers), test-plan.md (manual-verification spec)
 ---
 
 [REVIEW-{{REVIEW_PHASE}}-{{REVIEWER}}]: {{APPROVE | CONCERNS | FAIL}}
@@ -31,7 +31,7 @@ Return and persist the compact JSON ledger defined by `review-policy.md` "Covera
 {{APPROVE | CONCERNS: <count> | FAIL: <count>}}
 
 ## Next action
-{{what creator/orchestrator must do next}}
+{{what the fix owner must do next}}
 
 ## Escalations (optional)
 - finding #{{N}}: requires user approval ({{reason: concept change / new abstraction / scope expansion / contract change}})

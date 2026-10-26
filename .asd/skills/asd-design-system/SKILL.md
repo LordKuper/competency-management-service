@@ -1,9 +1,9 @@
 ---
 {
   "name": "asd-design-system",
-  "description": "Forms or edits the project design system (docs/ux/DESIGN.md, design-system.html, accessibility.html) via asd-ux, branching by silent detection into one of three flows (greenfield / constraints / brownfield extraction). Fetches the Google Labs DESIGN.md spec, lints tokens, regenerates design-system.html previews, and authors the accessibility baseline. Use when the user runs /asd-design-system, when asd-init or asd-phase-design detects missing DESIGN.md/design-system.html/accessibility.html and suggests this skill, or when the user asks to define, draft, refine, edit, augment, or reverse-engineer the project design system, design tokens, or accessibility baseline.",
+  "description": "Forms or edits the project design system (docs/ux/DESIGN.md, design-system.html, accessibility.html) inline, branching by silent detection into one of three flows (greenfield / constraints / brownfield extraction). Fetches the Google Labs DESIGN.md spec, lints tokens, regenerates design-system.html previews, and authors the accessibility baseline. Use when the user runs /asd-design-system, when asd-init or asd-phase-design detects missing DESIGN.md/design-system.html/accessibility.html and suggests this skill, or when the user asks to define, draft, refine, edit, augment, or reverse-engineer the project design system, design tokens, or accessibility baseline.",
   "claude": {
-    "allowed-tools": "Read Glob Grep AskUserQuestion Task Bash(node .asd/runtime.js:*)"
+    "allowed-tools": "Read Write Edit Glob Grep Bash WebFetch AskUserQuestion"
   }
 }
 ---
@@ -12,7 +12,7 @@
 
 ## Purpose
 
-Form or edit the project design system (`docs/ux/DESIGN.md`, `design-system.html`, `accessibility.html`) via `asd-ux`.
+Create or edit the project design system (`docs/ux/DESIGN.md`, `design-system.html`, `accessibility.html`), authored by the main orchestrator itself.
 
 ## Preconditions
 
@@ -28,128 +28,87 @@ Form or edit the project design system (`docs/ux/DESIGN.md`, `design-system.html
 
 ## Steps
 
+Build the orchestrator bundle first and read it: `node .asd/runtime.js context --role orchestrator --phase design-system --out <scratch-dir>/orchestrator-design-system.context.md` (`agent-protocol.md` "Dispatch payload"). Authoring, token and tool rules: `design-system.md` §12.
+
 ### Phase 1 — silent detection (NO asking)
 
 Scan in order:
 1. `docs/ux/DESIGN.md` exists, non-empty → mode = **edit**, skip to Edit-mode flow
-2. CSS / SCSS / theme files / Tailwind config / styled-components / design-system package / design exports detected → brownfield candidate (default variant C)
+2. CSS / SCSS / theme files / Tailwind config / styled-components / design-system package / design exports → brownfield candidate (default variant C)
 3. No code, no styles → greenfield candidate (no default)
 4. Continue to Phase 2
 
 ### Phase 2 — variant choice (only if Phase 1 did not route to edit)
 
-Request user decision (3 options):
-- **A** — Greenfield, designer proposes from concept + stack
+Request user decision (a brownfield candidate defaults C):
+- **A** — Greenfield, propose from concept + stack
 - **B** — I have constraints (brand color, typography, density, platform)
 - **C** — Brownfield, extract from existing code/styles
 
-Phase 1 brownfield candidates auto-suggest C as default.
+### Phase 3 — flow per variant
 
-### Phase 3 — flow per variant (each delegates to `asd-ux`)
+Read `concept.html` (vision, target users, value prop, tone) and `stack.html` (UI platform, framework constraints).
 
-**Variant A — greenfield**
-- Delegate to agent `asd-ux` with payload: concept.html, stack.html, language settings, targets = `t_design-system.html`, `t_accessibility.html`
-- Designer reads concept (vision, target users, value prop, tone) and stack (UI platform, framework constraints)
-- Proposes 2-3 candidate token sets per section (color palette, typography scale, spacing scale, radii, motion)
-- Request user decision: pick set or request alternatives
-- Proceed to Phase 4
+**A — greenfield**
+- Propose 2-3 candidate token sets per section (color palette, typography scale, spacing scale, radii, motion); request user decision: pick or request alternatives
 
-**Variant B — constrained**
-- Request user input, multi-field one-shot:
-  - Brand color (hex / "no preference")
-  - Typography preference (system / serif / sans-serif / monospace / specific family / "no preference")
-  - Density (compact / comfortable / spacious / "no preference")
-  - Target platform (web / native-mobile / native-desktop / cli / mixed)
-- Delegate to agent `asd-ux` with concept + stack + constraints
-- Designer proposes within constraints
-- Proceed to Phase 4
+**B — constrained**
+- Request user input, multi-field one-shot: brand color (hex), typography (system / serif / sans-serif / monospace / family), density (compact / comfortable / spacious), target platform (web / native-mobile / native-desktop / cli / mixed), each with "no preference"
+- Propose within the constraints
 
-**Variant C — brownfield extraction**
-- Delegate to agent `asd-ux` with style/component paths (repo-search results)
-- Designer extracts tokens from CSS variables, Tailwind config, theme objects, styled-components themes, design exports
-- Draft sets `provenance: reverse-engineered` + `source: <primary file>` in frontmatter
-- Proceed to Phase 4
+**C — brownfield extraction**
+- Extract tokens from CSS variables, Tailwind config, theme objects, styled-components themes, design exports; frontmatter `provenance: reverse-engineered`, `source: <primary file>`
 
-### Phase 4 — convergence (universal across variants)
+### Phase 4 — convergence (DESIGN.md, per Google Labs spec order)
 
-Order per Google Labs DESIGN.md spec:
-1. Colors (palette + semantic tokens)
-2. Typography (scale + families)
-3. Spacing scale
-4. Radii / borders
-5. Shadows / elevation
-6. Motion / timing
-7. Components (button, input, card, etc.) — only those needed per concept
+Sections: colors, typography, spacing, radii/borders, shadows/elevation, motion/timing, components (only those the concept needs).
 
-- Before the first section, ONLY when `docs/ux/DESIGN.md` does not yet exist — write a skeleton (Google Labs format) with placeholder sections. When the file already exists, skip this step and enter the per-section loop directly against the existing file.
-- Fetch latest Google Labs DESIGN.md spec (external doc) on first section; cache for session
-- For each section:
-  - Designer drafts the section, writes it into `docs/ux/DESIGN.md` on disk
-  - Post the file path + a short delta summary of what the section now says in `language.chat` (never the full section body) per `language-policy.md`
-  - Apply `checkpoints.md`: adaptive pass only for mechanical/already-authorized content; initial or material UX, brand or accessibility direction remains hard. Otherwise request **Lock in / Revise / Skip**.
-  - on B: collect feedback, designer revises, rewrites the section in place, re-posts delta summary, re-ask
-  - on C: remove that section (heading + placeholder content) from the on-disk file entirely, then continue to the next section
-  - repeat until A
-  - next section
-
-After all DESIGN.md sections approved:
-- Orchestrator: on Windows, run command `designmd-install` once per session before dispatching `asd-ux` for the lint. Designer runs `designmd-lint` via command execution (`commands.yaml` alias).
-- Pass criteria per `.asd/rules/design-system.md` §11: ≥1 error OR ≥1 un-excluded warning = fail.
-- Fail → designer fixes on disk, re-lint. Per persistent warning, request user decision: exclude | fix; on approval record decision + rationale in DESIGN.md lint-exclusions block, written on disk.
-- Clean pass → continue
+- Create mode only (`docs/ux/DESIGN.md` absent): write a skeleton (Google Labs format) with placeholder sections first. Edit mode enters the loop against the existing file.
+- Fetch the latest Google Labs DESIGN.md spec before the first section, cached for the session.
+- Per section, per `core.md` "Incremental writing": draft, write to `DESIGN.md` on disk, post the path and a short delta summary in `language.chat` (never the body, `language-policy.md`).
+  - Apply `checkpoints.md`: an adaptive pass only for mechanical or already-authorized content; initial or material UX, brand or accessibility direction stays hard. Otherwise request **Lock in / Revise this section / Skip**.
+  - Revise: collect feedback, rewrite in place, re-post. Skip: remove the section (heading and placeholder) from the file.
+- After all sections: run `designmd-install` once per session on Windows, then `designmd-lint` (`commands.yaml`); pass criteria `design-system.md` §11. Fail → fix on disk, re-lint; per persistent warning request user decision: exclude | fix, an approved exclusion recorded with rationale in the DESIGN.md lint-exclusions block.
 
 ### Phase 5 — design-system.html regeneration
 
-- Designer renders and writes `docs/ux/design-system.html` per `t_design-system.html` from approved DESIGN.md now (write is not deferred — only the artifact-level `accept` gate is deferred to Phase 7's combined gate)
-- Live previews: color swatches with hex, typography samples, spacing scale, component previews using applied tokens
-- Wrap in `t_html-shell.html` (DOC_TYPE=Design-system, SUBSYSTEM=project)
+- Render and write `docs/ux/design-system.html` per `t_design-system.html` from the approved DESIGN.md now (only the artifact-level `accept` waits for Phase 7), wrapped in `t_html-shell.html` (DOC_TYPE=Design-system, SUBSYSTEM=project), as `design-system.md` §12 "Regeneration" states.
 
 ### Phase 6 — accessibility baseline
 
-- Before the first section, ONLY when `docs/ux/accessibility.html` does not yet exist — write a skeleton (wrapped in `t_html-shell.html`, DOC_TYPE=Accessibility, SUBSYSTEM=project) with placeholder sections. When the file already exists, skip this step and enter the per-section loop directly against the existing file.
-- Sections: visual (contrast, color-blind, motion), motor (target size, keyboard), cognitive (language, predictability), auditory (captions, transcripts), platform (focus order, ARIA, screen reader)
-- For each section:
-  - Designer drafts the section, translates to `language.docs`, writes it into `docs/ux/accessibility.html` on disk
-  - Post the file path + a short delta summary of what the section now says in `language.chat` (never the full section body) per `language-policy.md`
-  - Apply `checkpoints.md`; material accessibility direction remains hard. Otherwise request **Lock in / Revise**.
-  - on B: collect feedback, designer revises, rewrites the section in place, re-posts delta summary, re-ask
-  - repeat until A
-  - next section
+- Create mode only (`docs/ux/accessibility.html` absent): write a skeleton wrapped in `t_html-shell.html` (DOC_TYPE=Accessibility, SUBSYSTEM=project) with placeholder sections first.
+- Sections: visual (contrast, color-blind, motion), motor (target size, keyboard), cognitive (language, predictability), auditory (captions, transcripts), platform (focus order, ARIA, screen reader).
+- Per section, per `core.md` "Incremental writing": draft, translate to `language.docs`, write to disk, post the path and delta summary as in Phase 4; material accessibility direction stays hard, otherwise request **Lock in / Revise this section**.
 
 ### Phase 7 — final artifact-level gate: all three files
 
-- `docs/ux/DESIGN.md`, `docs/ux/design-system.html`, `docs/ux/accessibility.html` already reflect every locked-in section from Phases 4-6
-- write-then-review-accept (`checkpoints.md` mechanic): post the three absolute paths + one combined delta summary in chat (never the body); user reviews the files and replies `accept` (advance) or feedback (revise in place, re-post) — feedback naming a specific section may re-enter Phase 4 or Phase 6 for that section before rewriting; if the re-entered phase is Phase 4 (any DESIGN.md section revised), re-run `designmd-lint` to a clean pass AND Phase 5's design-system.html regeneration before re-posting the combined summary — `accept` may not be requested again until both are done; single loop covers all three files, loop until explicit `accept`
+- The three files already hold every locked-in section. Write-then-review-accept (`checkpoints.md`): post the three absolute paths and one combined delta summary (never the bodies); `accept` advances, feedback revises in place and may re-enter Phase 4 or 6 for a section. Any DESIGN.md revision re-runs `designmd-lint` to a clean pass and Phase 5 before the summary is re-posted; `accept` may not be requested again until both are done. One loop covers all three files until explicit `accept`
 - emit COMPLETED
 
 ### Phase 8 — handoff
 
-- Print handoff suggestion: "Next: run `/asd-sprint` to start the first sprint" (or continue current sprint if dispatched from `asd-phase-design`)
-- NO auto-dispatch
+- Print: "Next: run `/asd-sprint` to start the first sprint" (or continue the current sprint when invoked from `asd-phase-design`). NO auto-dispatch
 
 ### Edit mode (Phase 1 routed here)
 
-- Show existing DESIGN.md token summary, design-system.html freshness, accessibility.html sections
-- Force-include in the edit/section-loop set any of the three artifacts (`docs/ux/DESIGN.md`, `docs/ux/design-system.html`, `docs/ux/accessibility.html`) that is missing on disk, regardless of user selection — a gate-triggered dispatch (this skill was invoked because one file was missing) must not reach COMPLETED without producing it
-- Request user decision: multi-select which files / sections to edit (DESIGN.md sections, regenerate design-system.html only, accessibility.html sections)
-- per chosen section: enter Phase 4 or Phase 6 loop
-- Phase 5, 7, 8 as usual
+- Show the DESIGN.md token summary, design-system.html freshness, accessibility.html sections
+- Force-include any of the three files missing on disk, whatever the user selects — a gate-triggered invocation must not reach COMPLETED without producing it
+- Request user decision: multi-select files / sections to edit (DESIGN.md sections, regenerate design-system.html only, accessibility.html sections); per chosen section enter Phase 4 or 6; Phases 5, 7, 8 as usual
 
 ## Rules
 
-- must: render EVERY user-decision/input request (question text, header, all option labels, all option descriptions, multi-field labels and hints), control options included, in `language.chat` (`.asd/rules/language-policy.md` "User-decision options").
-- never: author accessibility rules without checking concept's target users
-- must: bind token authoring + review by `.asd/rules/design-system.md`; UX shaping by `.asd/rules/ux-principles.md`
-- must: within this skill's own session, regenerate design-system.html from the currently-approved DESIGN.md before Phase 7's `accept` gate — never left stale; this is orthogonal to the in-sprint cadence (`.asd/rules/design-system.md` §10: once per sprint, at design-promote, only if DESIGN.md was actually touched that sprint) — this skill runs standalone or via the design-system gate, not per token edit
-- must: reach a clean `designmd-lint` pass (per `.asd/rules/design-system.md` §11) before Phase 5 regeneration and before Phase 7's `accept` gate — section writes to DESIGN.md are not gated on it (write-first per `.asd/rules/checkpoints.md`); warning exclusions need user approval + recorded rationale
+- must: render EVERY user-decision/input request (question text, header, option labels and descriptions, multi-field labels and hints), control options included, in `language.chat` (`language-policy.md` "User-decision options").
+- never: author accessibility rules without checking the concept's target users
+- must: bind token authoring and review by `design-system.md`; UX shaping by `ux-principles.md`
+- must: regenerate design-system.html from the approved DESIGN.md within this session before Phase 7's `accept` — never stale; orthogonal to the in-sprint cadence (`design-system.md` §10)
+- must: reach a clean `designmd-lint` (`design-system.md` §11) before Phase 5 and before Phase 7's `accept`; section writes are not gated on it; a warning exclusion needs user approval and recorded rationale
 - must: give every component listed in DESIGN.md a live preview in design-system.html
 - never: mix the multi-field and options request shapes in one request.
-- must: before each `asd-ux` delegation, build `inputs.context`: `node .asd/runtime.js context --role asd-ux --phase design-system --out <scratch-dir>/design-system-<dispatch id>.context.md` (`agent-protocol.md` "Dispatch payload").
 
 ## Delegates
 
 ```json
-{"agents": ["asd-ux"], "skills": []}
+{"agents": [], "skills": []}
 ```
 
 ## Outputs

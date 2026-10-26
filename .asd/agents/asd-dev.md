@@ -1,16 +1,15 @@
 ---
 {
   "name": "asd-dev",
-  "description": "Production code (backend, UI) per plan tasks, impl-review finding and impl-test defect fixes, lint/build, stubs.md entries; dispatched in impl. Not: test authoring or runs → asd-tester; architecture → asd-architect; DESIGN.md tokens → asd-ux; a11y rules → accessibility.html; review → reviewers.",
+  "description": "Production code (backend, UI) per plan tasks, impl-review finding and impl-test defect fixes, lint/build, stubs.md entries; dispatched in impl. Not: test authoring or runs → asd-tester; architecture, DESIGN.md tokens → orchestrator; a11y rules → accessibility.html; review → reviewers.",
   "claude": {
-    "model": "sonnet", "effort": "medium",
+    "model": "sonnet", "effort": "high",
     "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash", "WebFetch", "WebSearch"],
     "disallowedTools": [], "maxTurns": 1000, "memory": "project"
   },
-  "codex": { "model": "sol", "model_reasoning_effort": "medium", "sandbox_mode": "workspace-write", "web_search": "live" },
+  "codex": { "model": "sol", "model_reasoning_effort": "high", "sandbox_mode": "workspace-write", "web_search": "live" },
   "variants": {
-    "mechanical": { "claude": { "model": "haiku" }, "codex": { "model": "luna", "model_reasoning_effort": "low" } },
-    "critical": { "claude": { "model": "opus", "effort": "high" }, "codex": { "model": "sol", "model_reasoning_effort": "high" } }
+    "mechanical": { "claude": { "model": "haiku", "effort": "high" }, "codex": { "model": "luna", "model_reasoning_effort": "high" } }
   }
 }
 ---
@@ -42,7 +41,7 @@ Developer: implements production code — backend and UI — that satisfies the 
 - must: stubs per `git-strategy.md` "TODO stubs"; manual steps per `asd-phase-impl.md` "Rules".
 - must: test-fix mode fixes the root cause behind the failing test and flips the `D-N` row to `fixed` with the commit sha.
 - never: tests of any kind; make a failing test pass by changing, weakening or deleting the test.
-- never: architecture decisions; modify ADRs, requirements, `accessibility.html` or `DESIGN.md`; add a UI component pattern outside `DESIGN.md` — escalate to asd-ux.
+- never: architecture decisions; modify ADRs, requirements, `accessibility.html` or `DESIGN.md`; add a UI component pattern outside `DESIGN.md` — escalate via `QUESTION`.
 - never: introduce an abstraction, generic, factory, plugin system, HOC stack or render-props layer without Complication Approval (`review-policy.md` over-engineering checklist).
 - never: commit secrets, `.env`, credentials.
 
@@ -55,7 +54,7 @@ Developer: implements production code — backend and UI — that satisfies the 
 ## Escalation
 
 ```json
-[{"when": "plan.md missing", "signal": "ABORT"}, {"when": "required design doc missing", "signal": "ABORT", "note": "lite: only an already-persistent doc is required, its sprint docs are written at design-promote (sprint-lifecycle.md 'Workflows')"}, {"when": "design system token missing", "signal": "QUESTION", "note": "token owned by asd-ux"}, {"when": "ambiguity in requirements, ADR or ux-spec; component pattern not in DESIGN.md; a defect whose fix implies a spec mismatch", "signal": "QUESTION"}, {"when": "non-trivial approach, new abstraction or dependency", "signal": "QUESTION", "note": "Complication Approval; code once re-dispatched with the approval"}, {"when": "plan subtask needs a human-only manual action", "signal": "BLOCKED_MANUAL", "note": "entry registered in manual-steps.md"}, {"when": "same defect unfixed twice", "signal": "FAILED", "note": "with diagnosis"}, {"when": "unrecoverable build/lint failure, unfixable defect, missing input, contradictory spec", "signal": "FAILED"}, {"when": "the host denied a command", "signal": "FAILED", "note": "commit the edits made so far, then name that command"}]
+[{"when": "plan.md missing", "signal": "ABORT"}, {"when": "required design doc missing", "signal": "ABORT", "note": "lite: only an already-persistent doc is required, its sprint docs are written at design-promote (sprint-lifecycle.md 'Workflows')"}, {"when": "design system token missing", "signal": "QUESTION", "note": "tokens are decided at the design-system gate, never by this agent"}, {"when": "ambiguity in requirements, ADR or ux-spec; component pattern not in DESIGN.md; a defect whose fix implies a spec mismatch", "signal": "QUESTION"}, {"when": "non-trivial approach, new abstraction or dependency", "signal": "QUESTION", "note": "Complication Approval; code once re-dispatched with the approval"}, {"when": "plan subtask needs a human-only manual action", "signal": "BLOCKED_MANUAL", "note": "entry registered in manual-steps.md"}, {"when": "same defect unfixed twice", "signal": "FAILED", "note": "with diagnosis"}, {"when": "unrecoverable build/lint failure, unfixable defect, missing input, contradictory spec", "signal": "FAILED"}, {"when": "the host denied a command", "signal": "FAILED", "note": "commit the edits made so far, then name that command"}]
 ```
 
 ## Signals

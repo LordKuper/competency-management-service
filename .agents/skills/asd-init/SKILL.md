@@ -1,5 +1,5 @@
 ---
-# ASD generated. Edit .asd/skills/asd-init/SKILL.md. source_digest=sha256:8af912f925431b9f28d95cb529964cdcbe10e47024a803d0f631f890342594e0 content_digest=sha256:a19fc1f2e3feafefe1d6da5dc62843bceae4247aa9c3f3292d7711285adda01e asd_version=13.9.0 schema=1
+# ASD generated. Edit .asd/skills/asd-init/SKILL.md. source_digest=sha256:1c1c6ddd5dcf42bed62b8eb9bfff603931415c1b2fb961524495022ee48ad48e content_digest=sha256:4c43c6250f28d3a6584a9f7b8cfdb1cab49de1d8a838ce9861045224249fddb2 asd_version=14.0.0 schema=1
 name: asd-init
 description: "Initializes the ASD (Agentic Software Development) workflow in a project, or edits existing ASD settings in diff mode, or applies a plan-declared settings change for the active sprint's impl phase. Auto-detects build commands and external tools, collects config via request user decision, generates .asd/project/config.yaml and seeds infrastructure-only persistent docs; concept, stack, and design system are owned by dedicated skills. Use when the user runs $asd-init or asks to set up, initialize, configure, or change ASD workflow settings."
 ---
@@ -37,12 +37,12 @@ Fresh and re-init only.
 ### Fresh
 
 1. Detect greenfield vs brownfield via repo search on source files
-2. Request user input, batch: chat/docs language, decomposition, compatibility, external review, self-hosting, `user_gates` (`strict` default or `adaptive`), and document settings. `documents.audit` is `auto|always|off` (`auto` default); other document flags keep their existing values. For self-hosting recommend audit `auto`, other documents disabled and `diagram_tool: none`.
+2. Request user input, batch: chat/docs language, decomposition, compatibility, external review, self-hosting, `user_gates` (`strict` default or `adaptive`), `cleanup` (`enabled` default or `disabled`), and document settings. `documents.audit` is `auto|always|off` (`auto` default); `documents.design_system` gates the design-system gate and tokens, `documents.ux_spec` only the ux-spec docs (`sprint-lifecycle.md` "Optional documents"); other document flags keep their existing values. For self-hosting recommend audit `auto`, other documents disabled and `diagram_tool: none`.
 3. If decomposition enabled → request user decision: diagram_tool (`none` | `likec4` | `mermaid`); disabled → `none`
 4. Detect OS via command execution (silent; no confirm yet) — selects step 12's OS-specific commands, never written to config
 5. Detect external tools (silent; record results, do not prompt per-tool yet):
    - `likec4 --version` (only if diagram_tool=likec4)
-   - Node (only if `documents.ux_spec: enabled` — the design-system gate that needs it is skipped entirely otherwise, `sprint-lifecycle.md` "Optional documents"): check `node --version` and `npm --version`. Tooling invoked via `commands.yaml` (`designmd-*`); no `designmd` binary on PATH required. When `documents.ux_spec: disabled`, skip detection and omit the `designmd-*` custom commands entirely.
+   - Node (only if `documents.design_system: enabled` — the design-system gate that needs it is skipped entirely otherwise): check `node --version` and `npm --version`. Tooling invoked via `commands.yaml` (`designmd-*`); no `designmd` binary on PATH required. When `documents.design_system: disabled`, skip detection and omit the `designmd-*` custom commands entirely.
    - the *other* provider's CLI, wrapped by External Review (only if external_review=enabled): resolve its configured command or default lookup, then probe it — `system.tools.codex_command` or `codex` under Claude Code; `system.tools.claude_command` or `claude` under Codex (`.asd/rules/providers.md` § External review symmetry). Never probe the running host's own CLI.
    Record the resolved command and availability for the consolidated proposal
 6. Pick review iteration defaults (low=1 medium=1 high=2 critical=10) — include in proposal, do not prompt yet
@@ -60,16 +60,16 @@ Fresh and re-init only.
      the search-derived impacted set is the safe fallback
    Record into proposal; do not prompt per-command yet
 8a. **Consolidated proposal & edit gate** — present every auto-detected/defaulted value in one structured block in `language.chat`:
-    - OS, tools, review limits, git settings, `user_gates`, audit mode, diagram_tool, detected build/test/lint/run commands and any affected-test selector
+    - OS, tools, review limits, git settings, `user_gates`, `cleanup`, audit mode, `documents.design_system`, diagram_tool, detected build/test/lint/run commands and any affected-test selector
     Then request user decision: `accept-all` | `edit-section` | `abort`.
     - `edit-section` → request user decision on which section (os | tools | review | git | commands), collect new values, re-show proposal, loop until `accept-all`
-    - Missing required tools → must resolve here: Node (if `documents.ux_spec: enabled`) → install or `documents.ux_spec: disabled`; likec4 (if diagram_tool=likec4) → install or diagram_tool `mermaid`/`none`; the wrapped external-review CLI (if external_review) → install, override path (`system.tools.codex_command`/`claude_command`) or `review.external_review: disabled`. Do NOT silently proceed with missing required tools.
+    - Missing required tools → must resolve here: Node (if `documents.design_system: enabled`) → install or `documents.design_system: disabled`; likec4 (if diagram_tool=likec4) → install or diagram_tool `mermaid`/`none`; the wrapped external-review CLI (if external_review) → install, override path (`system.tools.codex_command`/`claude_command`) or `review.external_review: disabled`. Do NOT silently proceed with missing required tools.
     Only after `accept-all` proceed to write.
-9. Write `.asd/project/config.yaml` from `t_config.yaml` with approved `user_gates`, audit mode, diagram_tool and other fields.
+9. Write `.asd/project/config.yaml` from `t_config.yaml` with approved `user_gates`, `cleanup`, audit mode, `documents.design_system`, diagram_tool and other fields.
 10. Request free-form user input: custom rules to add (separately for common / design / coding scopes); write three files from templates: `.asd/project/custom-common-rules.md`, `custom-design-rules.md`, `custom-coding-rules.md`. Empty scope still writes template stub (header + intro), so agents always find the file.
 11. Write `.asd/project/stubs.md` from `t_stubs.md` (empty registry — downstream phases expect the file to exist)
-12. Write `.asd/project/commands.yaml` (from `t_commands.yaml` + detected + OS-specific `custom.designmd-*` only when `documents.ux_spec: enabled`); `test_affected` written only when detected, omitted (not written empty/guessed) otherwise — a `.asd/project/commands.yaml` from an older ASD version without the field keeps working unchanged since the impacted set falls back to the search-derived definition
-13. If decomp enabled: write an empty registry `docs/architecture/subsystems.md` from `t_subsystems.md` (no rows, no diagram) when absent — Architect fills it (`artifact-layout.md` "Subsystem registry"). Only if `diagram_tool` is not `none`:
+12. Write `.asd/project/commands.yaml` (from `t_commands.yaml` + detected + OS-specific `custom.designmd-*` only when `documents.design_system: enabled`); `test_affected` written only when detected, omitted (not written empty/guessed) otherwise — a `.asd/project/commands.yaml` from an older ASD version without the field keeps working unchanged since the impacted set falls back to the search-derived definition
+13. If decomp enabled: write an empty registry `docs/architecture/subsystems.md` from `t_subsystems.md` (no rows, no diagram) when absent — the main orchestrator fills it (`artifact-layout.md` "Subsystem registry"). Only if `diagram_tool` is not `none`:
     - **likec4 mode**: seed `c4/model/main.c4`, `c4/views.c4` from templates. Seed `commands.yaml` with a `c4-build: "likec4 build docs/architecture/c4 --output docs/architecture/c4/dist"` build-to-view command — `dist/` itself is gitignored, not built here
     - **mermaid mode**: seed nothing more — the diagram lives in `subsystems.md`; no `c4/`, no `c4-build`
 14. If decomp and likec4 mode: **seed `.gitignore`** for C4 build output — append (never clobber existing entries; create the file if absent) `docs/architecture/c4/dist/` if not already present
@@ -144,7 +144,7 @@ Rules:
 
 ### OS-specific commands written to .asd/project/commands.yaml
 
-Four custom commands emitted only when `documents.ux_spec: enabled` (else omitted entirely — no design-system gate to serve them). Linter always invoked via `designmd-lint`; `designmd-install` is session-scoped prerequisite on Windows (no-op elsewhere).
+Four custom commands emitted only when `documents.design_system: enabled` (else omitted entirely — no design-system gate to serve them). Linter always invoked via `designmd-lint`; `designmd-install` is session-scoped prerequisite on Windows (no-op elsewhere).
 
 **Windows** (run from project root):
 - `designmd-install: "npm install @google/design.md"`

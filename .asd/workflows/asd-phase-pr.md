@@ -5,7 +5,7 @@ Owner: inline orchestrator; dispatches none.
 ## Entry
 
 ```json
-{"requires": ["review DoD plus a completed retro (checkpoints.md)"], "modes": {"open": "pr=null, unless the Merged-unclosed lookup finds a PR (sprint-lifecycle.md 'PR phase')", "merge": "pr.state=open, or a dispatch carrying a confirmed MERGED number (asd-sprint's release retry, skipping open mode's DoD gate)"}, "ops": ["context: node .asd/runtime.js context --phase pr --role orchestrator at entry, read it; --out per agent-protocol.md 'Dispatch payload'", "append friction: F-N to <sprint>/friction-log.md per sprint-lifecycle.md 'Friction log'", "timing: open mode closes the pr phase op before step 3's final bookkeeping commit and push, or before step 2's hand-over to merge mode, its ledger committed with step 2's commit, alone when that writes none (sprint-lifecycle.md 'Operation timing')"]}
+{"requires": ["review DoD plus a completed retro (checkpoints.md); a cleanup record is never required"], "modes": {"open": "pr=null, unless the Merged-unclosed lookup finds a PR (sprint-lifecycle.md 'PR phase')", "merge": "pr.state=open, or a dispatch carrying a confirmed MERGED number (asd-sprint's release retry, skipping open mode's DoD gate)"}, "ops": ["context: node .asd/runtime.js context --phase pr --role orchestrator at entry, read it; --out per agent-protocol.md 'Dispatch payload'", "append friction: F-N to <sprint>/friction-log.md per sprint-lifecycle.md 'Friction log'", "timing: open mode closes the pr phase op before step 3's final bookkeeping commit and push, or before step 2's hand-over to merge mode, its ledger committed with step 2's commit, alone when that writes none (sprint-lifecycle.md 'Operation timing')"]}
 ```
 
 ## Inputs

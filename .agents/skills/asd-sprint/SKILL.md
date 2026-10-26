@@ -1,5 +1,5 @@
 ---
-# ASD generated. Edit .asd/skills/asd-sprint/SKILL.md. source_digest=sha256:98c9bc217ccdef857afd1b51a2b62f565958b977e888ee74590512f6b2829401 content_digest=sha256:86366bf18410bdfac24b1e6f655b7523b19c7ec205c37b06833b89daf1d4adab asd_version=13.9.0 schema=1
+# ASD generated. Edit .asd/skills/asd-sprint/SKILL.md. source_digest=sha256:a653b32813b3581cef4c27d6d4433bfd091f8c6cfcab9bcfa4b30a66d4777e79 content_digest=sha256:b63d82829177870f16952a338b8d933b5df392dfbf26938533ce0159148f0500 asd_version=14.0.0 schema=1
 name: asd-sprint
 description: "Starts a new ASD sprint or resumes the active one, dispatching the matching asd-phase-* skill and routing phase signals back to the user. Use when the user runs $asd-sprint or asks to start, continue, resume, or work on an ASD sprint."
 ---
@@ -49,9 +49,9 @@ Before Step 1, fast-forward local `git.base_branch` exactly as `git-strategy.md`
 
 ### Step 3: phase chain advancement
 After any phase skill returns:
-- `COMPLETED` → read the phase skill's `NEXT:` field; a target outside the frozen definition's `next[<phase>]` → relay FAILED, halt; else dispatch that phase skill. `NEXT:` is authoritative — follows the definition's `phases` order except the design-block collapse (`audit` returns `NEXT: plan` under the collapse test; `design` returns `NEXT: plan` on its defensive-fallback no-op) and the `impl`/`impl-test`/`impl-review` cycle: `impl` always returns `NEXT: impl-test`; `impl-test` returns `NEXT: impl` on code defects (routes to impl test-fix mode) or `NEXT: impl-review` on a green suite; `impl-review` returns `NEXT: impl` on unresolved findings (routes to impl review-fix mode) or the next phase of `phases` on DoD met; `retro` always returns `NEXT: pr`, on its analysed and its empty-log branch alike. The `pr` phase ends the chain in two steps: open mode returns `NEXT: await-merge` (PR open, sprint at its active path, `phase="pr"` — halt, no further dispatch); a later resume re-enters `pr` in merge mode, which returns `NEXT: done` once the merge is confirmed and, self-hosting, the release published → halt; the next sprint's scope archives it (`sprint-lifecycle.md` "PR phase").
-- `FAILED` → relay, halt
-- `QUESTION` → relay per `agent-protocol.md` "Relay" `QUESTION`; halt until the reply, then re-delegate the phase skill
+- `COMPLETED` → read the phase skill's `NEXT:` field; a target outside the frozen definition's `next[<phase>]` → relay FAILED, halt; else dispatch that phase skill. `NEXT:` is authoritative — follows the definition's `phases` order except the design-block collapse (`audit` returns `NEXT: plan` under the collapse test; `design` returns `NEXT: plan` on its defensive-fallback no-op) and the `impl`/`impl-test`/`impl-review` cycle: `impl` always returns `NEXT: impl-test`; `impl-test` returns `NEXT: impl` on code defects (routes to impl test-fix mode) or `NEXT: impl-review` on a green suite; `impl-review` returns `NEXT: impl` on unresolved findings (routes to impl review-fix mode) or the next phase of `phases` on DoD met; `cleanup` always returns `NEXT: retro`, run or no-op alike; `retro` always returns `NEXT: pr`, on its analysed and its empty-log branch alike. The `pr` phase ends the chain in two steps: open mode returns `NEXT: await-merge` (PR open, sprint at its active path, `phase="pr"` — halt, no further dispatch); a later resume re-enters `pr` in merge mode, which returns `NEXT: done` once the merge is confirmed and, self-hosting, the release published → halt; the next sprint's scope archives it (`sprint-lifecycle.md` "PR phase").
+- `FAILED` → take the escalation consult (`agent-protocol.md` "Relay"), then relay with the Advisor line, halt
+- `QUESTION` → take the escalation consult, then relay per `agent-protocol.md` "Relay" `QUESTION` with the Advisor line; halt until the reply, then re-delegate the phase skill
 - `ABORT — precondition not met` → relay, halt
 
 ## Rules
@@ -64,7 +64,7 @@ After any phase skill returns:
 ## Delegates
 
 ```json
-{"agents": [], "skills": ["asd-phase-* of the frozen workflow's phases (.asd/workflows/<workflow>.json)", "asd-init sprint-mediated mode: plan-declared settings change (asd-phase-impl.md step 6)", "asd-update sprint-mediated mode: Step 2A update choice (asd-phase-scope.md step 1)"]}
+{"agents": ["asd-advisor"], "skills": ["asd-phase-* of the frozen workflow's phases (.asd/workflows/<workflow>.json)", "asd-init sprint-mediated mode: plan-declared settings change (asd-phase-impl.md step 6)", "asd-update sprint-mediated mode: Step 2A update choice (asd-phase-scope.md step 1)"]}
 ```
 
 ## Outputs

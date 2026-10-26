@@ -2,7 +2,7 @@
 responsibility:
   owns: test approach for sprint change scope, removal reasons, no-test decisions, suite run result, code defects found by tests, manual-verification spec (single home — never duplicated in a review file)
   excludes: task breakdown, requirements, review verdicts, code, change surface (derivable from the diff)
-  delegates_to: plan.md (tasks), persistent docs (requirements), reviews/impl/wave-<K>/iter-NN/testing.md (verdict)
+  delegates_to: plan.md (tasks), persistent docs (requirements), reviews/impl/wave-<K>/iter-NN/quality.md (verdict)
 ---
 
 # Test plan — sprint {{SPRINT_ID}}
@@ -72,7 +72,7 @@ Code defects found by the suite. Resolved in `impl` test-fix mode. `Entry` throu
 
 ## Manual verification (optional)
 
-Only where automation is impossible (visual UI, third-party live integration, ux feel). Spec consumed by asd-reviewer-testing.
+Only where automation is impossible (visual UI, third-party live integration, ux feel). Spec consumed by the quality reviewer.
 
 | AC | Steps | Expected observation |
 |---|---|---|

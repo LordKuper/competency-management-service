@@ -8,9 +8,9 @@ Orchestrator↔agent communication: signals, dispatch payload, return shape, rel
 |---|---|---|
 | `COMPLETED` | creator agent; phase workflow — work done, ready for next | dispatching workflow continues; a phase's → `asd-sprint` Step 3 |
 | `QUESTION` | creator agent — needs user input. A reviewer never emits it: its question rides its verdict `question:` carrier (`review-policy.md` "Gate Verdict Format") | "Relay" `QUESTION` |
-| `ADVICE_NEEDED` | creator agent (BA, UX, Architect, Dev, Tester) on non-gate uncertainty only — an analysis/judgment question, never a HARD-gate approval decision (`core.md` "Autonomy and escalation"). Never a reviewer, never `asd-advisor` | "Relay" `ADVICE_NEEDED`: the relay branch of every `asd-phase-*.md` that dispatches a creator |
+| `ADVICE_NEEDED` | creator agent (Dev, Tester) on non-gate uncertainty only — an analysis/judgment question, never a HARD-gate approval decision (`core.md` "Autonomy and escalation"). Never a reviewer, never `asd-advisor` | "Relay" `ADVICE_NEEDED`: the relay branch of every `asd-phase-*.md` that dispatches a creator |
 | `BLOCKED_MANUAL` | `asd-dev`, `asd-tester` — task needs a human-performed manual action; entry registered in `manual-steps.md` | `asd-phase-impl.md` |
-| `FAILED` | any agent except External Review — cannot proceed. `asd-advisor` (its only token): the question is a HARD-gate matter, gate named | dispatching workflow; the advisor's → "Relay" `ADVICE_NEEDED` step 4 |
+| `FAILED` | any agent except External Review and `asd-advisor` — cannot proceed | dispatching workflow; escalated to the user via "Relay" consult |
 | `ABORT` | any agent, workflow or skill — a precondition is missing; first line `ABORT — precondition not met: <artefact>` | dispatching workflow; a phase's → `asd-sprint` |
 | `REVIEW_DONE` | reviewer, External Review — its return, first line the verdict line (`review-policy.md` "Gate Verdict Format") | review workflow waits for every dispatched reviewer, then persists |
 
@@ -57,7 +57,7 @@ Main orchestrator only.
 1. Dispatching phase workflow catches `ADVICE_NEEDED` from a dispatched creator, mid-task.
 2. Dispatches `asd-advisor` with the question plus the context paths as given by the consulting agent and its own `inputs.context` — no other context injected.
 3. On the advisor's returned recommendation → re-dispatch the consulting agent (`delegate to agent X`, `providers.md`) with its original task context plus the answer in `advice`; no other context injected except `consults_left` (step 6). Not a same-turn resume (no host tool suspends and resumes a dispatched agent mid-execution — `providers.md` has no such operation); it is a fresh dispatch carrying forward the same task.
-4. On `asd-advisor` `FAILED` (question turned out to be a HARD gate) → relay that finding to the consulting agent unchanged; the consulting agent then treats it as gate uncertainty per `core.md` "Autonomy and escalation" and returns `QUESTION`.
+4. The advisor always returns a recommendation. A consulting creator that sees the question named a hard gate treats it as gate uncertainty per `core.md` "Autonomy and escalation" and returns `QUESTION`.
 5. No halt, no user contact, no logged trail — the round-trip is autonomous and intra-phase (consults are not logged, `asd-advisor.md`).
 6. Capped at 3 consults per consulting-agent **task** — the dispatching phase workflow owns this counter (the consulting agent does not; each re-dispatch in step 3 is a fresh dispatch and would otherwise reset a self-held count), increments it once per completed advisor round-trip, and does not reset it across the task's re-dispatches. At the cap, the workflow stops relaying further `ADVICE_NEEDED` signals for that task; the agent proceeds on its own judgment or re-classifies the question as gate uncertainty and returns `QUESTION` per `core.md` "Autonomy and escalation".
 
@@ -65,3 +65,5 @@ Main orchestrator only.
 1. The dispatching workflow catches `QUESTION` — the question plus options (`core.md` "User-decision presentation format") — from a dispatched agent.
 2. The main orchestrator asks the user via request user decision (free-form input as a plain chat message) and records the answer in `decisions-log.md` before any further work (`core.md` "Context hygiene").
 3. Re-dispatches the agent fresh with its original task context plus the answer in `answers` — not a resume, for the reason in `ADVICE_NEEDED` step 3.
+
+**Escalation consult** (orchestrator only; no creator or phase-workflow counter): before putting any of these to the user — an agent `QUESTION`, a `FAILED`, a second stall or interruption, a stalemate (impl-test, External Review), a review-cap override, a reviewer FAIL escalation — the orchestrator dispatches `asd-advisor` once per request, batching its items, with the question, options and context paths. It presents the request with the **Advisor** line (`core.md` "User-decision presentation format") and records the advice in the answer's decisions-log entry. Advisor unavailable → present without it, saying so. The advisor never authorizes a hard gate; gate-inventory gates, skill preference menus and `BLOCKED_MANUAL` take no consult.

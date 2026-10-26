@@ -1,6 +1,6 @@
 # Design System Rules
 
-Binding for `asd-ux` (author) and `asd-reviewer-correctness` (verify, UI conformance section). Applies whenever `DESIGN.md`, `design-system.html`, or UI code touched.
+Binding for the main orchestrator (author) and `asd-reviewer-quality` (verify, UI conformance section). Applies whenever `DESIGN.md`, `design-system.html`, or UI code touched.
 
 ## 1. Source of Truth
 
@@ -80,7 +80,19 @@ Theme MUST NOT change: grid, component size, hit targets, base spacing, notifica
 
 `designmd-lint` result with ≥1 **error** OR ≥1 **warning** (not in exclusion list) = FAIL → fixes required, re-lint. Clean pass = zero errors + zero un-excluded warnings.
 
-Errors never excludable. Each **warning** exclusion MUST be user-approved (request user decision) and the decision + short rationale recorded in DESIGN.md (lint-exclusions block). Reviewer (`asd-reviewer-correctness`) FAIL if excluded warning lacks recorded rationale.
+Errors never excludable. Each **warning** exclusion MUST be user-approved (request user decision) and the decision + short rationale recorded in DESIGN.md (lint-exclusions block). Reviewer (`asd-reviewer-quality`) FAIL if excluded warning lacks recorded rationale.
+
+## 12. Authoring, token decisions, rule survival
+
+Scope: the design-system gate, `design-md-delta.yaml`, DESIGN.md / design-system.html / accessibility.html promotion and the `designmd-*` commands run only when `documents.design_system` is enabled; `documents.ux_spec` gates only the sprint ux-spec draft and persistent ux-spec docs (`sprint-lifecycle.md` "Optional documents"). Whenever a sprint touches UI the orchestrator proposes token deltas.
+
+- **Precondition**: any of `DESIGN.md`, `design-system.html`, `accessibility.html` missing → halt, run `/asd-design-system`; never author mockups against missing tokens.
+- **Token decisions**: never use a missing, insufficient, new or changed token undecided. Put every such proposal into one decision under `checkpoints.md` (adaptive or strict), append each approved token to the sprint's `design-md-delta.yaml` before a mockup or code uses it. No separate unconditional token pause. Lite design-promote: a token the implementation added or changed passes the same decision before `DESIGN.md` is patched.
+- **Mockups**: each modified screen is an interactive HTML/CSS mockup using only tokens in `DESIGN.md` or the delta, with its states (empty, loading, error) where it has them.
+- **Accessibility**: a ux-spec never carries a11y rules; project-wide `accessibility.html` owns them.
+- **DESIGN.md spec**: fetch the latest Google Labs spec before editing when the cached one is stale; the fetch failing twice halts the step. The web is limited to that spec.
+- **Tool bounds**: `designmd-install` runs once per session (it writes `package.json` and the lockfile); `designmd-lint`, `-diff`, `-export` per §10-§11; the `design.md` binary never inline.
+- **Regeneration**: `design-system.html` is regenerated per §10 step 4 with color swatches, typography samples, spacing scale, component previews, UI composition preview and the full token reference.
 
 ## See also
 

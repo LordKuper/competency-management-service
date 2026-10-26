@@ -969,7 +969,7 @@ function variantMeta(baseMeta, suffix) {
 }
 
 /** Tier-variant name suffixes an agent may declare; `runtime.js` `context` reads them to map a variant to its base agent. */
-const VARIANT_SUFFIXES = ['mechanical', 'standard', 'critical'];
+const VARIANT_SUFFIXES = ['mechanical', 'standard'];
 
 function agentVariants(meta) {
   if (meta.variants === undefined) return [];

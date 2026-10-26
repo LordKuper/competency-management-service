@@ -1,4 +1,4 @@
-// ASD generated. Edit .asd/hooks/session-start.js. source_digest=sha256:f0ebc50ed2cbe3557dd5100064feb4499091bdb14ffc2385c74ac2cd3b95eb23 content_digest=sha256:f0ebc50ed2cbe3557dd5100064feb4499091bdb14ffc2385c74ac2cd3b95eb23 asd_version=13.4.0 schema=1
+// ASD generated. Edit .asd/hooks/session-start.js. source_digest=sha256:553745d4ca9c651687d524730b61cb94eead940a31c31696579fc05a16d1fcb3 content_digest=sha256:553745d4ca9c651687d524730b61cb94eead940a31c31696579fc05a16d1fcb3 asd_version=14.0.0 schema=1
 // ASD SessionStart hook (canonical, provider-agnostic).
 // No shebang: this file is never executed directly (`./session-start.js`),
 // always invoked as `node <path> --provider ...`, and every generated
@@ -132,9 +132,9 @@ function nextPhase(phases, current) {
   return phases[idx + 1];
 }
 
-// Design-block collapse test (sprint-lifecycle.md): every frozen design document is false.
+// Design-block collapse test (sprint-lifecycle.md): every frozen design document is false (an absent `design_system` takes the `ux_spec` value).
 function isDesignCollapsed(documents) {
-  return Boolean(documents) && typeof documents === 'object' && ['prd', 'ux_spec', 'adr', 'c4'].every(name => documents[name] === false);
+  return Boolean(documents) && typeof documents === 'object' && ['prd', 'ux_spec', 'design_system', 'adr', 'c4'].every(name => (name === 'design_system' && documents[name] === undefined ? documents.ux_spec : documents[name]) === false);
 }
 
 // reviews.impl is either wave-aware ({wave, waves: [node, ...]}) or the
