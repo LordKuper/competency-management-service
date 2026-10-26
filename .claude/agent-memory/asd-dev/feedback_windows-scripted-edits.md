@@ -13,4 +13,6 @@ When editing web sources with a Python heredoc, open with `newline=''` for both 
 
 Creating a large new `.tsx` file through a Bash `cat <<'EOF'` heredoc once failed with "unexpected EOF while looking for matching `''" (Cyrillic text with apostrophes and backticks); use the Write tool for whole new files, and run `npx biome check --write src/features` afterwards — it fixes line width in one pass.
 
+The working tree is mixed: `git ls-files --eol` shows many `.cs` files `w/crlf` and others `w/lf` (index is LF for all). A multi-line anchor from a script never matches a CRLF file; read the file, normalise to `\n` for matching, and write back with the file's own EOL (a small `Doc` helper in the scratchpad). A script whose `str.replace` silently no-ops leaves the file unmodified — check `git status` after.
+
 For a long multi-hunk patch, write the Python script to `.asd/tmp/*.py` with the Write tool and run it (`assert old in s` per hunk); the same heredoc failure hit a patch with `"""` strings, and a docstring-quote trick (`\"` before a closing `"""`) is fragile.
