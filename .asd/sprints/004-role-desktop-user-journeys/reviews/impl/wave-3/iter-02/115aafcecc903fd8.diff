@@ -1,0 +1,2526 @@
+diff --git a/.claude/agent-memory/asd-architect/feedback_adr-authoring-review-traps.md b/.claude/agent-memory/asd-architect/feedback_adr-authoring-review-traps.md
+index 79c7c2e..6fc5261 100644
+--- a/.claude/agent-memory/asd-architect/feedback_adr-authoring-review-traps.md
++++ b/.claude/agent-memory/asd-architect/feedback_adr-authoring-review-traps.md
+@@ -1,6 +1,6 @@
+ ---
+ name: adr-authoring-review-traps
+-description: ADR drafting patterns design-review flagged in sprint 004 — hard-gate fallbacks, c4-full purpose dupes, count numerals, unsourced norms, paging limits, optional client gates, POST-only rules
++description: ADR drafting patterns design-review flags — hard-gate fallbacks, c4-full purpose dupes, count numerals, unsourced norms, paging limits, optional client gates, POST-only rules
+ metadata:
+   type: feedback
+ ---
+@@ -17,6 +17,6 @@ Write ADRs so design-review has nothing to strip:
+ - When a server gate becomes mandatory (a required tag or param), grep every existing client caller of the gated methods, not only the new screens. Name in the ADR which screens send it and what happens to the old callers. A "single client is our SPA" argument for a minor version only holds if no SPA path breaks.
+ - A rule that closes a state for `POST` must also cover `PUT` of the same fields. A walk that goes "only through drafts" must not skip active nodes that still carry draft references from old data.
+ 
+-**Why:** in sprint 004 design-review iter-01 (2026-10-13), efficiency raised E-1 (critical) and documentation raised F-1, F-4 and F-5 for exactly these patterns. The paging point is E-2: `/desk/items` used `ListRequest` paging, so rows past 200 could never be reached. In iter-02, external #3 flagged the 2 000 cap. Correctness #1 and documentation #1 found that the copies of the publishing-action list had drifted apart and missed accept-changes followed by the HR auto-step. In iter-03, external #1 found that the optional `cascade` tag let a step-1 approve publish after the responsible HR changed. Correctness #1 found that an HR `PUT` gave an active competency a draft reference. In iter-04, correctness #1 found that the old `MatrixPage` still called the transitions without a tag, so it always got 412. The user removed those buttons from the page.
++**Why:** design-review flagged each of these patterns, one as critical. `/desk/items` used `ListRequest` paging, so rows past 200 could never be reached; a 2 000 cap was flagged as well. The copies of the publishing-action list drifted apart and missed accept-changes followed by the HR auto-step. An optional `cascade` tag let a step-1 approve publish after the responsible HR changed. An HR `PUT` gave an active competency a draft reference. The old `MatrixPage` still called the transitions without a tag, so it always got 412; the user removed those buttons from the page.
+ 
+ **How to apply:** check this list before returning COMPLETED on any adr.html or c4-full draft, and again on every autofix pass.
+diff --git a/.claude/agent-memory/asd-architect/reference_host-agent-liveness.md b/.claude/agent-memory/asd-architect/reference_host-agent-liveness.md
+index ede6f98..6db74c6 100644
+--- a/.claude/agent-memory/asd-architect/reference_host-agent-liveness.md
++++ b/.claude/agent-memory/asd-architect/reference_host-agent-liveness.md
+@@ -1,11 +1,11 @@
+ ---
+ name: host-agent-liveness
+-description: What each host actually exposes to observe/stop a running subagent (Claude transcript jsonl, Monitor, CronCreate, TaskStop; Codex wait_agent/close_agent) — verified 2026-09-29 for sprint 021 AC-7
++description: What each host actually exposes to observe/stop a running subagent (Claude transcript jsonl, Monitor, CronCreate, TaskStop; Codex wait_agent/close_agent) — verified 2026-09-29
+ metadata:
+   type: reference
+ ---
+ 
+-Verified 2026-09-29 (sprint 021 audit, Claude Code desktop on Windows):
++Verified 2026-09-29 (Claude Code desktop on Windows):
+ 
+ - Claude progress signal: `~/.claude/projects/<project-slug>/<sessionId>/subagents/agent-<agentId>.jsonl` (documented in code.claude.com/docs/en/sub-agents). Live: it grows once per tool call and does NOT grow while a tool call is in flight (a 20 s Bash call left size/mtime unchanged). Sibling `agent-<id>.meta.json` holds agentType/description/requestShape.
+ - Not a signal: background agent `tasks/<id>.output` is 0 bytes running or finished (orchestrator observation). `ListAgents` shows `running` + elapsed only (not in the tools reference).
+diff --git a/.claude/agent-memory/asd-dev-critical/project_career-desk-source-facts.md b/.claude/agent-memory/asd-dev-critical/project_career-desk-source-facts.md
+index 619c9b1..8616c1a 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_career-desk-source-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_career-desk-source-facts.md
+@@ -5,7 +5,7 @@ metadata:
+   type: project
+ ---
+ 
+-Sprint 004 Task 9 (2026-10-13), commits 075cc8d…d39ff81. Nothing was run against PostgreSQL.
++As of 2026-10-13 nothing was run against PostgreSQL.
+ 
+ - Budget is 25 SQL commands per desk request, and cookie validation already spends 2 (account, then employee). The career source spends about 19 for an HR assigned to the root (4 of them `UnusedEntriesAsync`, 4 the snapshot). Before adding a query to any desk source, count all three sources plus auth.
+ - `CareerDeskSource` loads the data, and `CareerDeskScan` applies the rules in memory through static functions: `ProcessRoles.HeadedUnits/HrUnits/ResponsibleHr/ActingHeadAccount`, `MatrixRoute.SuperiorApprover/Turn/ReadsAnyVersion`, `TrackReadiness.Of`, `CareerLevelPositionEndpoints.AvailablePositions`. The async action paths call the same functions.
+@@ -14,5 +14,5 @@ Sprint 004 Task 9 (2026-10-13), commits 075cc8d…d39ff81. Nothing was run again
+ - "Position linked to an active level of an active track" exists twice: as SQL in `MyPlaceEndpoints.TracksAsync` and in memory in the scan. Change both together.
+ - `tests/perf/seed-10k.sql` needs the API to have started once, so the bootstrap admin exists. Every seeded account copies that admin's password hash. Accounts to measure with: `hr.root@`, `head.1@`, `employee@seed.local`. Ids are `md5(kind:n)::uuid`.
+ 
+-**Why:** the next perf Task reuses the seed, and impl-test measures the budget.
++**Why:** perf measurement reuses the seed, and impl-test measures the budget.
+ **How to apply:** read before touching a desk source, `ProcessRoles` or the seed. See [[desk-merge-contract-facts]], [[scenario-read-facts]].
+diff --git a/.claude/agent-memory/asd-dev-critical/project_career-reminder-mail-facts.md b/.claude/agent-memory/asd-dev-critical/project_career-reminder-mail-facts.md
+index a12fd07..47f8604 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_career-reminder-mail-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_career-reminder-mail-facts.md
+@@ -1,11 +1,11 @@
+ ---
+ name: career-reminder-mail-facts
+-description: Career reminder mail (sprint 004 Task 7) - where recipients are computed, why names avoid UserNamesAsync, Audit has no kind list, nothing run against SMTP
++description: Career reminder mail - where recipients are computed, why names avoid UserNamesAsync, Audit has no kind list, nothing run against SMTP
+ metadata:
+   type: project
+ ---
+ 
+-Sprint 004 Task 7 (2026-10-13), commit e6ac477. Nothing was run against Mailpit or PostgreSQL.
++As of 2026-10-13 nothing was run against Mailpit or PostgreSQL.
+ 
+ - `CareerMail` (scoped) computes recipients and texts after commit; `CareerMailQueue` (singleton + hosted, like `PasswordResetQueue`) rechecks account/employee and journals `Mail.SendFailed`. Call sites: end of `MatrixWorkflow.TransitAsync` and the four draft-creating handlers (named catalogue, track, competency, scale), never levels.
+ - Awaiting mail rule is "after the transition `after.Turn` has an approver" (null turn = published/draft), not per-action branching.
+diff --git a/.claude/agent-memory/asd-dev-critical/project_contract-reset-and-squash-facts.md b/.claude/agent-memory/asd-dev-critical/project_contract-reset-and-squash-facts.md
+index b025fe5..d827016 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_contract-reset-and-squash-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_contract-reset-and-squash-facts.md
+@@ -1,11 +1,11 @@
+ ---
+ name: contract-reset-and-squash-facts
+-description: Sprint 004 Task 58 - contract 1.0.0 reset, required score fill, migration squash recipe, Pkcs pin, JsonRequired probe
++description: Contract 1.0.0 reset, required score fill, migration squash recipe, Pkcs pin, JsonRequired probe
+ metadata:
+   type: project
+ ---
+ 
+-Sprint 004 Task 58 (2026-10-21), commits 4ef9c9d, d3c3860, 451579c. Nothing was run against PostgreSQL.
++As of 2026-10-21 nothing was run against PostgreSQL.
+ 
+ - No API backward compatibility before 1.0: delete obsolete surface, never deprecate. Schema changes are incremental migrations over `20261021091246_InitialCreate`, with data transfer as hand SQL in `Up` (EF scaffolds drops first and a rename where a transfer is needed: reorder by hand, review with `ef migrations script <from> [<to>]`); the squash below runs only right before release.
+ - Squash recipe (release only) that worked offline next to the user's VS-locked Debug output: `git rm` every file in `src/Competency.Platform/Migrations`, then `dotnet ef migrations add InitialCreate ... --configuration Release`, then hand-append to `Up` the audit trigger function, both triggers with `ENABLE ALWAYS`, `IX_positions_name_lower` and the base-scale insert (copy the SQL from `git show HEAD~:<old file>`), and `DROP FUNCTION audit_events_reject_change();` at the end of `Down`. EF writes the new files with CRLF and a BOM; the Edit tool keeps that.
+@@ -14,5 +14,5 @@ Sprint 004 Task 58 (2026-10-21), commits 4ef9c9d, d3c3860, 451579c. Nothing was
+ - Removing contract fields did not break the build of `tests/Competency.Tests`. The tests break when they run (JSON payloads; any test naming a migration breaks on a squash, since the old migration names vanish).
+ - A Pkcs pin in Platform rewrites `tests/Competency.Tests/packages.lock.json` as well. That lock file sits outside the dev write scope, so flag it in the report.
+ 
+-**Why:** Task 59 (SPA) and impl-test build on these choices; the next schema change repeats the squash.
++**Why:** the SPA and impl-test build on these choices; the next schema change repeats the squash.
+ **How to apply:** any schema change before 1.0, any matrix document reader. See [[position-matrix-shared-block-facts]], [[matrix-workflow-facts]].
+diff --git a/.claude/agent-memory/asd-dev-critical/project_desk-merge-contract-facts.md b/.claude/agent-memory/asd-dev-critical/project_desk-merge-contract-facts.md
+index 520dc75..cb09a30 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_desk-merge-contract-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_desk-merge-contract-facts.md
+@@ -5,13 +5,13 @@ metadata:
+   type: project
+ ---
+ 
+-Sprint 004 Task 8 (2026-10-13), commits 6fbdfe1…96889fe. Nothing was run against PostgreSQL or a live API.
++As of 2026-10-13 nothing was run against PostgreSQL or a live API.
+ 
+ - Items merge by `(DeskObject.Type, Id)`; the first reason's object wins, so every source must name a unit through `OrgSnapshot.UnitDeskObject(unit)` (`OrgDeskObjects.cs`, context = ancestor names root-first).
+ - `DeskRules` dedups by `(Kind, object, subject)`, keeping the action. Emit one finding per kind per object: several levels without a position go into one `LevelWithoutPosition` with `Details.Entries`, not one finding each.
+ - Cross-object absorption works only through `Subject`: `PositionWithoutTrack` (object = position) absorbs `NoTrackForPosition` whose subject is that position; `InvitationNotAccepted` (object = account) absorbs `HeadAccountInvited` whose subject is the account.
+ - A kind's group is fixed in `DeskRules.GroupOf`; only the five track/position link kinds switch group by `IsAction`. 5.2/6.1 share `DraftAwaitsApproval`; 6.3/6.4 share `UnitWithoutHr` (cannot-act state in `Details.AccountState`).
+-- `DeskDetails` gained `Number`, `HasChanges`, `HasComment`, `LevelCount` and `Added/Removed/MovedLevels` in Task 9 ([[career-desk-source-facts]]).
++- `DeskDetails` also carries `Number`, `HasChanges`, `HasComment`, `LevelCount` and `Added/Removed/MovedLevels` for the career source ([[career-desk-source-facts]]).
+ - Revoked invitation links have `OccurredAt = null`: the revocation time is not stored.
+ - A new `src/` project needs its `COPY …csproj …packages.lock.json` line in the root `Dockerfile` before `dotnet restore`; `DeploymentTests.Ac8_…` enforces it. New project refs also change `tests/Competency.Tests/packages.lock.json`.
+ 
+diff --git a/.claude/agent-memory/asd-dev-critical/project_ef-left-join-count-and-visibility-facts.md b/.claude/agent-memory/asd-dev-critical/project_ef-left-join-count-and-visibility-facts.md
+index 368a4c9..a2aa9bd 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_ef-left-join-count-and-visibility-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_ef-left-join-count-and-visibility-facts.md
+@@ -14,4 +14,4 @@ Verified on EF Core 10.0.12 / Npgsql 10.0.3 / PostgreSQL 18.6 with 1000 units an
+ - A positional record with `<param>` docs for only some parameters fails the build (CS1573 under TreatWarningsAsErrors); document such a record in its type summary only.
+ 
+ **Why:** each cost a failed run or a decision in Task 14.
+-**How to apply:** any aggregate added to a list endpoint, or a before/after check of role-dependent counts (see also [[npgsql-search-and-result-type-gotchas]], [[scratch-host-without-postgres]], [[vs-debug-build-lock-and-release-config]]).
++**How to apply:** any aggregate added to a list endpoint, or a before/after check of role-dependent counts (see also [[npgsql-search-and-result-type-gotchas]], [[vs-debug-build-lock-and-release-config]]).
+diff --git a/.claude/agent-memory/asd-dev-critical/project_git-commit-only-option-order.md b/.claude/agent-memory/asd-dev-critical/project_git-commit-only-option-order.md
+index 5b3b8e9..de2abc4 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_git-commit-only-option-order.md
++++ b/.claude/agent-memory/asd-dev-critical/project_git-commit-only-option-order.md
+@@ -12,3 +12,5 @@ In `git commit --only -F - -- <paths>`, every option (`--only`, `-F -`, `-m`, 
+ **How to apply:** write it as `git commit --only -F - -- <paths> <<'EOF' … EOF`, options first, `--` last before paths.
+ 
+ A file already removed with `git rm` is no longer a valid `git add -- <path>` pathspec: one such path makes the whole `git add` fail and stage nothing. Leave it out of `git add`, but list it after `--` in `git commit --only` (HEAD knows it, so the deletion is committed).
++
++`git commit --only -- <paths>` commits the worktree content of those paths, never the index, so it cannot commit part of a file. When one file carries fixes for several findings (one commit each), stage the chosen hunks with `git apply --cached --recount -` fed from `git diff -U1 -- <file>` (header + picked `@@` hunks; re-list hunks after each commit, indices shift), then a plain `git commit -F -` with nothing else in the index.
+diff --git a/.claude/agent-memory/asd-dev-critical/project_level-position-links-facts.md b/.claude/agent-memory/asd-dev-critical/project_level-position-links-facts.md
+index f1c9175..b85b09f 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_level-position-links-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_level-position-links-facts.md
+@@ -1,16 +1,16 @@
+ ---
+ name: level-position-links-facts
+-description: Sprint 004 Task 4 level-position links - readiness via org snapshot, 409 union on approve/activate, refusal before If-Match, runtime test fallout of draft-only POST /tracks
++description: Level-position links - readiness via org snapshot, 409 union on approve/activate, refusal before If-Match, runtime test fallout of draft-only POST /tracks
+ metadata:
+   type: project
+ ---
+ 
+-Sprint 004 Task 4 (2026-10-13), commits c938c16, 2b35ff7, 8d4ac3f. None of it was run against PostgreSQL:
++As of 2026-10-13 none of it was run against PostgreSQL:
+ 
+ - `CatalogStore.ReadinessAsync(trackId)` reads positions only through `IEmployeeDirectory.FindOrgSnapshotAsync` (docs forbid other reads of positions). The snapshot is forgotten when `BeginWriteAsync`/`BeginSharedAsync` take the tree lock, so writers see a locked one. `MatrixCatalog` now takes `CatalogStore` (no DI cycle).
+-- `PublicationRefusal` was created minimal in Task 4; Task 5 completed it (see [[publication-cascade-facts]]), and every 409 of `approve`/`activate` is now a `PublicationRefusal`.
++- Every 409 of `approve`/`activate` is a `PublicationRefusal` (its shape: [[publication-cascade-facts]]).
+ - Unlink checks "last active position" before `IfMatch.ApplyTo`. `ApplyTo` throws 412 immediately, so with the usual order two racing removals would give 412, not the 409 the race test expects.
+ - `POST /tracks` is always draft now, and completeness requires links. Every test scenario that builds a matrix on a fresh track (`Infrastructure/CareerScenarios.cs`) fails at runtime until it adds levels, links and approval. It still compiles.
+ 
+-**Why:** Tasks 5, 6 and 9 build on these choices. impl-test will hit the scenario fallout.
++**Why:** publication, scenario reads and the desk build on these choices; impl-test hits the scenario fallout.
+ **How to apply:** extend `PublicationRefusal`/`TrackReadiness` rather than adding copies. Keep the refusal-before-If-Match order for invariant refusals that a race test exercises. See [[career-record-deletion-facts]], [[typed-problem-extension-facts]].
+diff --git a/.claude/agent-memory/asd-dev-critical/project_position-catalogue-facts.md b/.claude/agent-memory/asd-dev-critical/project_position-catalogue-facts.md
+index 59cbc5b..2780d3d 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_position-catalogue-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_position-catalogue-facts.md
+@@ -1,11 +1,11 @@
+ ---
+ name: position-catalogue-facts
+-description: Sprint 003 Task 2 (position catalogue) - expression unique index outside the EF model, .NET Trim parity in SQL, case-insensitive lookup without .NET lowering, which tests broke on the position -> positionId rename
++description: Position catalogue - expression unique index outside the EF model, .NET Trim parity in SQL, case-insensitive lookup without .NET lowering, which tests broke on the position -> positionId rename
+ metadata:
+   type: project
+ ---
+ 
+-Task 2 of sprint 003 (2026-10-09), EF Core 10.0.12 / Npgsql 10.0.3, not run against PostgreSQL:
++As of 2026-10-09, EF Core 10.0.12 / Npgsql 10.0.3, not run against PostgreSQL:
+ 
+ - The unique index on `lower(name)` of `positions` cannot be expressed in the EF model; it lives only in a migration's `Sql("CREATE UNIQUE INDEX ...")` (now `IX_positions_name_lower` in `InitialCreate`). `has-pending-model-changes` stays clean, and `DropTable` in Down drops it.
+ - SQL `btrim(s)` strips spaces only; to match .NET `Trim()` a data-transfer migration passes the `Char.IsWhiteSpace` set as a `U&'...'` literal (the original `PositionCatalogue` migration did; it was squashed into `InitialCreate`, so `git log` holds the copy). List every code point (U+2000 to U+200A one by one): `btrim`'s second argument is a plain character set, not a regex, so `\2000-\200A` would trim `-` and keep U+2001 to U+2009.
+@@ -14,4 +14,4 @@ Task 2 of sprint 003 (2026-10-09), EF Core 10.0.12 / Npgsql 10.0.3, not run agai
+ - `int` response fields are plain `number` in `schema.d.ts` now (no `number | string`).
+ 
+ **Why:** each decided how the migration and the duplicate-name check stay consistent with the database (audit R-2).
+-**How to apply:** later catalogue-like tables with case-insensitive names (career framework records, Task 5) and any migration that normalizes text written by .NET (see also [[employee-name-split-facts]], [[ef-raw-sql-and-openapi-contract-gotchas]]).
++**How to apply:** later catalogue-like tables with case-insensitive names (career framework records) and any migration that normalizes text written by .NET (see also [[employee-name-split-facts]], [[ef-raw-sql-and-openapi-contract-gotchas]]).
+diff --git a/.claude/agent-memory/asd-dev-critical/project_position-matrix-shared-block-facts.md b/.claude/agent-memory/asd-dev-critical/project_position-matrix-shared-block-facts.md
+index 03b777e..5b46f87 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_position-matrix-shared-block-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_position-matrix-shared-block-facts.md
+@@ -1,16 +1,16 @@
+ ---
+ name: position-matrix-shared-block-facts
+-description: Sprint 004 Task 23 position matrices and shared blocks - where the one composition rule lives, legacy-document defaults, snapshot shape choices, test pins it breaks; nothing run on PostgreSQL
++description: Position matrices and shared blocks - where the one composition rule lives, legacy-document defaults, snapshot shape choices, test pins it breaks; nothing run on PostgreSQL
+ metadata:
+   type: project
+ ---
+ 
+-Sprint 004 Task 23 (2026-10-14), commits da17b1c, ffddd1b, a7c471c. Nothing was run against PostgreSQL.
++As of 2026-10-14 nothing was run against PostgreSQL.
+ 
+ - "Competencies of a version" = `MatrixContent.CompetenciesWith(compositions)` (own and outside-block items first, then block members, duplicates kept so `DuplicateCompetency` can see them) with `MatrixVersion.CompositionsOf(current)` deciding snapshot vs live. `CatalogStore.CompositionsAsync` loads live ones. Reuse these, never re-expand by hand.
+ - Legacy rows: `SharedBlocks` is an optional constructor parameter (`= null`) plus a redeclared property `= SharedBlocks ?? []`. STJ binds the parameter, so a document without the key reads empty. OpenAPI then shows `sharedBlocks?: null | array` in requests and responses alike.
+ - A position matrix has one level, `levelId = positionId`, created with version 1. Its snapshot has empty `Levels` and an `entries.position` (a `MatrixNamedEntry`, active or inactive). Direction and track are null. Completeness passes `positionId` as `MatrixProblem.LevelId`.
+-- New raw SQL never run: `MatricesUsing` (competency through blocks, block), `VersionsOn(scale)`, `BlocksHolding`, the extra `UnusedEntriesAsync` union arm (`jsonb_array_elements_text`), the block arm of `MatricesUsingCategory`. Suspect these first when impl-test is red.
++- New raw SQL never run: `MatricesUsing` (competency through blocks, block), `VersionsOn(scale)`, `BlocksHolding`, the extra `UnusedEntriesAsync` union arm (`jsonb_array_elements_text`). Suspect these first when impl-test is red.
+ - Desk: one extra query (blocks in `CatalogAsync`). The my-place matrix check reuses the loaded versions for involved users, and is one query otherwise.
+ - `web/src/features/career/catalogRoutes.test.ts` pins `CatalogKind` and `CatalogSegment` by `satisfies Record<…>`, so any new catalogue kind breaks `npm run lint`/`build` until the tester updates it.
+ 
+@@ -20,5 +20,5 @@ Sprint 004 Task 23 (2026-10-14), commits da17b1c, ffddd1b, a7c471c. Nothing was
+ - A competency's type is per version: `content.competencies[].type` and `sharedBlocks[].competencyTypes`. `MatrixContent.WithTypes` (called in `EditAsync`) stores each type explicitly; `CompetenciesWith` fills in Profile when none is set.
+ - A requirement is a score alone: `MatrixRequirement(LevelId, CompetencyId, [JsonRequired] RequiredScore)`, always filled (see [[contract-reset-and-squash-facts]]). Contract is 1.0.0; obsolete surface is deleted, never deprecated.
+ 
+-**Why:** Task 24 (SPA) and impl-test build on these choices.
++**Why:** the SPA and impl-test build on these choices.
+ **How to apply:** read before touching matrix documents, snapshots, blocks or the career desk source. See [[career-desk-source-facts]], [[publication-cascade-facts]], [[career-record-deletion-facts]].
+diff --git a/.claude/agent-memory/asd-dev-critical/project_publication-cascade-facts.md b/.claude/agent-memory/asd-dev-critical/project_publication-cascade-facts.md
+index 9e21c4f..be42914 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_publication-cascade-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_publication-cascade-facts.md
+@@ -1,11 +1,11 @@
+ ---
+ name: publication-cascade-facts
+-description: Sprint 004 Task 5 cascade publication - checks flip statuses only while running, no save before refusal, 412 metadata override, tag always required for version publishing, HR viewer admin flag, test fallout
++description: Cascade publication - checks flip statuses only while running, no save before refusal, 412 metadata override, tag always required for version publishing, HR viewer admin flag, test fallout
+ metadata:
+   type: project
+ ---
+ 
+-Sprint 004 Task 5 (2026-10-13), commits 0453509, 2969c5f. Not run against PostgreSQL:
++As of 2026-10-13 not run against PostgreSQL:
+ 
+ - `CatalogPublication.CheckAsync` sets `Status = Active` on the tracked root and drafts only while the checks run (name checks see the whole batch through `ChangeTracker`), then restores the statuses as read: blocker visibility (`SeesLoaded`) must see drafts as drafts, or every draft blocker leaks through the active branch. `Apply` sets the drafts active; a catalogue root is set active by its caller. Still never save between planning and the refusal check.
+ - `.Produces<PublicationChanged>(412, ...)` after the `IfMatch` parameter wins in the generated OpenAPI: the 412 schema becomes `PublicationChanged` with an optional `publication`. No duplicate-status error was raised.
+@@ -13,5 +13,5 @@ Sprint 004 Task 5 (2026-10-13), commits 0453509, 2969c5f. Not run against Postgr
+ - Name-taken on approve is now a `NameTaken` blocker, not `errors.name`. NotDraft and draft-activation 409s are `PublicationRefusal` with empty `blockers`.
+ - `UserStatus` has no role, so the responsible HR's `CatalogViewer` is admin only when the HR is the signed-in actor and is an admin.
+ 
+-**Why:** Tasks 6, 9, 11 and 12 and the impl-test repair of tests build on these choices.
++**Why:** scenario reads, the desk, later career work and the impl-test repair of tests build on these choices.
+ **How to apply:** extend `CatalogPublication`, and never add a save between planning and the refusal check. Pass the preview tag in every test that publishes. See [[level-position-links-facts]].
+diff --git a/.claude/agent-memory/asd-dev-critical/project_scenario-read-facts.md b/.claude/agent-memory/asd-dev-critical/project_scenario-read-facts.md
+index 4e0c02e..d6e11a4 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_scenario-read-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_scenario-read-facts.md
+@@ -5,14 +5,14 @@ metadata:
+   type: project
+ ---
+ 
+-Sprint 004 Task 6 (2026-10-13), commits a4ce4dd…24c09b4. Nothing was run against PostgreSQL:
++As of 2026-10-13 nothing was run against PostgreSQL:
+ 
+ - Shared rules for desk sources: `ProcessRoles.NearestAssigned(ancestry, assigneeOf)` (pure, works on snapshot ancestry) plus `ProcessRoles.AssigneesAsync(unitIds)` (one query); `ResponsibleHrAsync` is built from them. "Can the head's account act" and "superior approver" were NOT extracted as pure functions yet.
+-- `CatalogStore.UnusedEntriesAsync` is the one definition of unused entries. Competency usage counts content, variants and snapshots, as the deletion check does. Category usage also counts snapshot `categoryId`. Scale usage ignores competency history rows, so deleting an "unused" scale can still be refused.
++- `CatalogStore.UnusedEntriesAsync` is the one definition of unused entries. Competency usage counts content, variants and snapshots, as the deletion check does. Scale usage ignores competency history rows, so deleting an "unused" scale can still be refused.
+ - `UnitAccountResponse.Of(UserStatus?)`: None / Invited / Blocked / Active, and Blocked wins over Invited. `UserStatus` gained only `Version`; "invited" is still `!IsRegistered`.
+ - Setup "positions missing" = `snapshot.AvailablePositionIds(id)` is empty, active or not. The org-structure desk source must use the same rule.
+-- `/…/{id}/matrices` leaves out archived versions. Level, competency and category select matrices (`MatricesUsing`, `MatricesUsingCategory`), then list all of their non-archived readable versions.
+-- Unverified raw SQL: the `jsonb_array_elements` unions in `UnusedEntriesAsync` and the nested EXISTS in `MatricesUsingCategory`.
++- `/…/{id}/matrices` leaves out archived versions. Level, competency and shared block select matrices through `MatricesUsing`, then list all of their non-archived readable versions.
++- Unverified raw SQL: the `jsonb_array_elements` unions in `UnusedEntriesAsync` and the nested EXISTS of the competency arm of `MatricesUsing`.
+ 
+-**Why:** Tasks 8 and 9 must reuse these definitions, or the desk disagrees with the screens.
++**Why:** desk sources must reuse these definitions, or the desk disagrees with the screens.
+ **How to apply:** call these functions from desk sources, never copy them. When impl-test is red on these endpoints, suspect the raw SQL first. See [[level-position-links-facts]], [[ef-raw-sql-and-openapi-contract-gotchas]].
+diff --git a/.claude/agent-memory/asd-reviewer-correctness/MEMORY.md b/.claude/agent-memory/asd-reviewer-correctness/MEMORY.md
+index 1e67cf3..5610f1a 100644
+--- a/.claude/agent-memory/asd-reviewer-correctness/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-correctness/MEMORY.md
+@@ -8,5 +8,6 @@
+ - [Read deferred gaps in sprint logs](feedback_read-deferred-gaps-in-sprint-logs.md) — grep decisions-log/friction-log for gaps "left for impl-review" before the verdict
+ - [persist-review return shape](reference_persist-review-return-shape.md) — write return verbatim to payload's `.asd/tmp/` file; first table parsed by column; bare APPROVE: header + separator only
+ - [Product design-review: derived actor paths](feedback_design-review-derived-actor-paths.md) — actor-keyed rights on indirect paths, sibling write paths, existing SPA callers of a tightened contract, mockup samples
+-- [No prior-iteration reports](feedback_no-prior-iteration-reports.md) — never open reviews/*/iter-<other>/ files; Glob only the current iter dir (violated twice in sprint 004)
++- [No prior-iteration reports](feedback_no-prior-iteration-reports.md) — never open another iteration's review files; Glob only the current iter dir (an easy slip)
+ - [Check persistent AC text before raising](feedback_check-persistent-ac-text-before-raising.md) — odd rights/scope rule in code is often literal requirement text; read the AC row first
++- [Web impl-review yield](feedback_web-impl-review-yield.md) — useWatch "" vs undefined unsaved flags, disabled-field reasons, leftovers of removed concepts, @media px; ledger mapping
+diff --git a/.claude/agent-memory/asd-reviewer-correctness/feedback_design-review-derived-actor-paths.md b/.claude/agent-memory/asd-reviewer-correctness/feedback_design-review-derived-actor-paths.md
+index 158997c..e3e0c7b 100644
+--- a/.claude/agent-memory/asd-reviewer-correctness/feedback_design-review-derived-actor-paths.md
++++ b/.claude/agent-memory/asd-reviewer-correctness/feedback_design-review-derived-actor-paths.md
+@@ -7,14 +7,14 @@ metadata:
+ 
+ In product design-review (PRD + ux-spec + ADR drafts), the defects that turned up were not in what each draft said on its own. They were in the places where the drafts disagreed with each other or with the code:
+ 
+-- A rights check written as "the actor may approve" (e.g. `viewer.CanManage`) breaks on derived or indirect paths, where the person acting is not the role the rule assumed. Examples: the author accepting an approver's changes; a step-1 approver whose action auto-approves the next step. Walk every path listed as "publishing" and check who actually clicks (sprint 004, ADR-4 cascade).
+-- When a fix adds an explicit enumeration ("publishes when: A, B, C"), check it against the existing code, not just the drafts. Sprint 004 iter-2: `MatrixWorkflow.AcceptChangesAsync` → `AdvanceToHrAsync` → `ToHrAsync` auto-approves and publishes after a step-1 return when the author is the responsible HR. ADR-4 `publishingActions` and PRD AC-9.4/34.4/34.7 listed `accept-changes` only "after an HR-step return".
+-- When a fix adds an invariant for one write path, look for the sibling write path. Sprint 004 iter-3: AC-34.10 made POST create a draft when the new record references drafts. PUT on an active competency (`ReferenceProblemAsync` → `IsUsableAsync(…, competency.AuthorId)` allows the author's drafts) still produced an active record that references a draft. Also look for a closure that stops at active nodes.
+-- When a fix makes a parameter mandatory or adds a new 4xx, grep `web/src` for every existing SPA caller of that endpoint and check that the ux-spec "Изменяемые существующие экраны" list covers each one. Sprint 004 iter-4: `?cascade` became mandatory for publishing version transitions, but `MatrixPage.tsx` `TRANSITION_BUTTONS` still called submit/approve/accept-changes without it. Every HR approve from that page would get a 412, and the generic `apiErrors.ts` handler shows it as "stale" and loops.
++- A rights check written as "the actor may approve" (e.g. `viewer.CanManage`) breaks on derived or indirect paths, where the person acting is not the role the rule assumed. Examples: the author accepting an approver's changes; a step-1 approver whose action auto-approves the next step. Walk every path listed as "publishing" and check who actually clicks.
++- When a fix adds an explicit enumeration ("publishes when: A, B, C"), check it against the existing code, not just the drafts. Example: `MatrixWorkflow.AcceptChangesAsync` → `AdvanceToHrAsync` → `ToHrAsync` auto-approves and publishes after a step-1 return when the author is the responsible HR, while the ADR's `publishingActions` and the PRD ACs listed `accept-changes` only "after an HR-step return".
++- When a fix adds an invariant for one write path, look for the sibling write path. Example: an AC made POST create a draft when the new record references drafts, but PUT on an active competency (`ReferenceProblemAsync` → `IsUsableAsync(…, competency.AuthorId)` allows the author's drafts) still produced an active record that references a draft. Also look for a closure that stops at active nodes.
++- When a fix makes a parameter mandatory or adds a new 4xx, grep `web/src` for every existing SPA caller of that endpoint and check that the ux-spec "Изменяемые существующие экраны" list covers each one. Example: `?cascade` became mandatory for publishing version transitions, but `MatrixPage.tsx` `TRANSITION_BUTTONS` still called submit/approve/accept-changes without it. Every HR approve from that page would get a 412, and the generic `apiErrors.ts` handler shows it as "stale" and loops.
+ - ux-spec notes can contradict the subsystem canon in `docs/product/requirements/<subsystem>.html`, e.g. "action X does not depend on completeness" while the canon runs the completeness check at X. Grep the canon for the rule's trigger list.
+ - Mockup sample data often shows states the PRD forbids: the same object as two desk items, a version that is both a draft and on approval, refusal examples that cannot occur under the rights rules. Those texts go to plan approval, so they count. One shared state text (e.g. the truncation hint "do some actions") can be false for the reference-group variant that the ADR itself says behaves differently.
+ - `design-md-delta.yaml` follows `t_design-md-delta.yaml` (path/new_value/usage). A sentinel like `new_value: "unchanged"` on a component map would overwrite the map on promote.
+ 
+-**Why:** sprint 004 iter-1 to iter-4 found all of their high and medium findings this way. Each draft was plausible on its own; the problems only showed up across files or against the code.
++**Why:** across a multi-iteration product design-review, every high and medium finding came from these checks. Each draft was plausible on its own; the problems only showed up across files or against the code.
+ 
+ **How to apply:** For each ADR rule keyed on the current user, list every action that triggers it and who performs it, then confirm against the workflow code. For each new invariant, grep every endpoint that writes the guarded field. For each tightened contract, grep the SPA for every caller. For each ux "independent of / always available" claim, check the canon trigger list. Scan mockup example rows for one-object-one-item and status-exclusivity violations. The token-mirror `.ds{--ds-*}` block and outlined-danger buttons are an established docs/ux convention, not findings. Related: [[review-method-no-shell]], [[no-prior-iteration-reports]].
+diff --git a/.claude/agent-memory/asd-reviewer-correctness/feedback_no-prior-iteration-reports.md b/.claude/agent-memory/asd-reviewer-correctness/feedback_no-prior-iteration-reports.md
+index 629c400..bffd819 100644
+--- a/.claude/agent-memory/asd-reviewer-correctness/feedback_no-prior-iteration-reports.md
++++ b/.claude/agent-memory/asd-reviewer-correctness/feedback_no-prior-iteration-reports.md
+@@ -1,12 +1,12 @@
+ ---
+ name: no-prior-iteration-reports
+-description: Never open reviews/<phase>/iter-<other>/ files (reports, findings.json, manifests) even when a Glob lists them; clean-context rule, violated in sprint 004 iter-2 AND iter-3
++description: Never open another iteration's review files (reports, findings.json, manifests) even when a Glob lists them; clean-context rule, slipped on more than once
+ metadata:
+   type: feedback
+ ---
+ 
+-Never Read any file under another iteration's review directory (`reviews/design/iter-0<N-1>/…`, any wave): not `correctness.md`, not `*.findings.json`, not manifests. Only the current `iter-NN/` dir plus the payload's manifest and `.diff`.
++Never Read any file under another iteration's review directory (`reviews/design/iter-<previous>/…`, any wave): not `correctness.md`, not `*.findings.json`, not manifests. Only the current `iter-NN/` dir plus the payload's manifest and `.diff`.
+ 
+-**Why:** `review-policy.md` "Clean-context review iteration" forbids it. In sprint 004 I opened the previous `correctness.md` at the start of both iter-2 and iter-3, and both times I had to report it as a procedure deviation. A Glob over `reviews/design/**` lists the old reports right next to the current files, and that makes it easy to open one.
++**Why:** `review-policy.md` "Clean-context review iteration" forbids it. I opened the previous `correctness.md` at the start of two iterations in a row, and both times I had to report it as a procedure deviation. A Glob over `reviews/design/**` lists the old reports right next to the current files, and that makes it easy to open one.
+ 
+-**How to apply:** Glob only `reviews/<phase>/iter-<current>/*`. To see what changed, use the `.diff` and decisions-log.md, never earlier reports. Related: [[review-method-no-shell]], [[design-review-derived-actor-paths]].
++**How to apply:** Glob only `reviews/<phase>/iter-<current>/*` (impl-review: `reviews/impl/wave-<K>/iter-<current>/*`). To see what changed, use the `.diff` and decisions-log.md, never earlier reports. Exception: a dispatch that explicitly asks to re-check a prior iteration's finding may read that one prior report. If a prior report gets opened anyway, disclose it in the report's Coverage note. Related: [[review-method-no-shell]], [[design-review-derived-actor-paths]].
+diff --git a/.claude/agent-memory/asd-reviewer-correctness/feedback_review-method-no-shell.md b/.claude/agent-memory/asd-reviewer-correctness/feedback_review-method-no-shell.md
+index ef652ae..6e5ed0e 100644
+--- a/.claude/agent-memory/asd-reviewer-correctness/feedback_review-method-no-shell.md
++++ b/.claude/agent-memory/asd-reviewer-correctness/feedback_review-method-no-shell.md
+@@ -1,24 +1,24 @@
+ ---
+ name: review-method-no-shell
+-description: How correctness review dispatches work in this repo - no shell, manifest list + runtime-written .diff as scope, clean context per iteration, and the dominant defect shape to hunt
++description: How correctness review dispatches work in this repo - no shell, manifest list + runtime-written .diff as scope, and the dominant defect shapes to hunt
+ metadata:
+   type: feedback
+ ---
+ 
+-Review dispatches give no shell. Scope per `review-policy.md` "Scope hand-off": the manifest's file list is the only normative scope (ledger rows and valid finding locations). The fingerprint-named `.diff` beside it, written by `emit-manifest` for exactly that list, is the change content, deletions included. impl-review has one every iteration; design-review has one from iteration 2 only (iteration-1 drafts are wholly new, so read them whole). Whole files are readable as context only. Never run or plan around git.
++Review dispatches give no shell. Scope per `review-policy.md` "Scope hand-off": the manifest's file list is the only normative scope (ledger rows and valid finding locations). The fingerprint-named `.diff` beside it, written by `emit-manifest` for exactly that list, is the change content, deletions included. impl-review has one every iteration; design-review has one from the second iteration on (first-iteration drafts are wholly new, so read them whole). Whole files are readable as context only. Never run or plan around git.
+ 
+ **Why:** this reviewer gets no command-runner grant on either provider (write scope: `review-policy.md` "Gate Verdict Format"; tool mapping: `.asd/rules/providers.md`). The phase orchestrator computes the diff and hands over the path list plus `correctness.manifest.json` and its `.diff` path.
+ 
+ **How to apply:**
+ - Ledger `files` rows must match the manifest exactly; the orchestrator validates with `node .asd/runtime.js validate-ledger`, so a shape mismatch means a re-dispatch. Copy `n/a` predicates byte-identically from the manifest's `n_a` map; row statuses come from the manifest's own `vocabulary` field (which also names the single status carrying `p` and the single one carrying `f`). A row's `f` is ONE finding id, so each finding needs its own `finding` row.
+ - `isUiSurface` counts `.asd/templates/*.html`, so a scope holding one reviews UI conformance under the self-hosting carve-out.
+-- Read the `.diff` first; open whole files only when a hunk needs context. `plan.md` subtasks and, for iteration 2+, `test-plan.md` Risk rows and the review-fix decisions-log entry explain why a hunk changed.
+-- A payload never carries diff text or a git range, and no payload may tell a reviewer to run git. If one does, do not comply; put a `question:` item naming the contradiction under the report's `## Escalations` and return at least CONCERNS — never a bare `QUESTION` (`review-policy.md` "Gate Verdict Format" question carrier, since sprint 018).
+-- Open only the current iteration dir: `reviews/design/iter-NN/`, or `reviews/impl/wave-<K>/iter-NN/` (iteration id `wave-<K>/iter-NN`). Do not Glob `reviews/*/iter-*` or read a prior `correctness.md` "to see what was fixed" — sprint 004 design iter-02 slipped on exactly that; the `.diff` plus the current decisions-log already show the fixes. If it happens anyway, disclose it in the report's Coverage note. Exception: a dispatch that explicitly asks to re-check a prior iteration's finding may read that one prior report. impl-review state is per wave, `reviews.impl.waves[K-1].{iteration, iteration_heads, verdicts, latched}`, and the severity floor is per wave counter. Grep's `glob` negation does not reliably exclude `.asd/sprints/**`; pass an explicit `path` instead of the repo root when grepping for finding ids.
+-- Commit-message claims (e.g. a plan's "commit carries `!`/`BREAKING CHANGE` so pr infers MAJOR") are checkable without git: Grep `.git/logs/HEAD` for the sprint slug or `!:` (sprint 016 verified `feat(providers)!:` this way).
++- Read the `.diff` first; open whole files only when a hunk needs context. `plan.md` subtasks and, from the second iteration on, `test-plan.md` Risk rows and the review-fix decisions-log entry explain why a hunk changed.
++- A payload never carries diff text or a git range, and no payload may tell a reviewer to run git. If one does, do not comply; put a `question:` item naming the contradiction under the report's `## Escalations` and return at least CONCERNS — never a bare `QUESTION` (`review-policy.md` "Gate Verdict Format" question carrier).
++- impl-review state is per wave, `reviews.impl.waves[K-1].{iteration, iteration_heads, verdicts, latched}`, and the severity floor is per wave counter (iteration id `wave-<K>/iter-NN`). Grep's `glob` negation does not reliably exclude `.asd/sprints/**`; pass an explicit `path` instead of the repo root when grepping for finding ids.
++- Commit-message claims (e.g. a plan's "commit carries `!`/`BREAKING CHANGE` so pr infers MAJOR") are checkable without git: Grep `.git/logs/HEAD` for the sprint slug or `!:`.
+ - Cross-file consistency is the dominant defect class here (canon vs generated views vs README/CHANGELOG vs `release-manifest.json`); a deletion in one canonical file usually leaves a dangling reference elsewhere, so grep the repo for removed identifiers even when the referencing file is outside the diff — the change-surface rule permits this when the change is what made the other file wrong.
+ - **Highest-yield trace for a rules/workflow sprint**: for every AC, find both halves — the obligation in the rule doc AND its binding at the acting site (the `asd-phase-*.md` step, template, or agent file the acting agent actually reads). A rule with no acting-site binding, or a rule that counts an exact literal another file must emit, is the recurring finding here; check the literal against what the emitting side really writes (sprint decisions-log entries are legitimate evidence even though `.asd/sprints/**` is outside the review surface).
+-- Skill `claude.allowed-tools` is pre-approval, not a restriction: `asd-phase-pr`/`asd-phase-design-promote` lack `Bash` yet run git inline, and skill `allowed-tools` was out of scope in sprint 018. A skill gaining a "Run command" op without `Bash` there is not a defect on its own.
+-- Also trace a new trigger condition against every seeding site that can pre-satisfy it (sprint 012: `/asd-init` seeds an empty registry, which made audit's "registry absent" branch unreachable for freshly initialised brownfield projects).
+-- For a new halt/escalation branch (e.g. a `FAILED` that `asd-sprint` relays and halts on), walk the resume path: the phase re-runs from step 1, so check that its entry detection copes with the state the halt left half-written (sprint 013: impl-test's stalemate halt leaves the `Entry log` row's `HEAD analysed` unfilled, which step 1 reads as a finished prior entry).
+-- For a "done" marker (commit trailer, ticked box, log line), check its granularity against the unit of work it is read as finishing, and enumerate every id class, not just the one a prior finding named (sprint 014: `impl-test entry N` was excepted, but `D-N` has the same shape — the fix commit carries the trailer, and the `Status`=`fixed` + sha flip can only follow in a second commit).
++- Skill `claude.allowed-tools` is pre-approval, not a restriction: `asd-phase-pr`/`asd-phase-design-promote` lack `Bash` yet run git inline. A skill gaining a "Run command" op without `Bash` there is not a defect on its own.
++- Also trace a new trigger condition against every seeding site that can pre-satisfy it (e.g. `/asd-init` seeds an empty registry, which made audit's "registry absent" branch unreachable for freshly initialised brownfield projects).
++- For a new halt/escalation branch (e.g. a `FAILED` that `asd-sprint` relays and halts on), walk the resume path: the phase re-runs from step 1, so check that its entry detection copes with the state the halt left half-written (e.g. impl-test's stalemate halt leaves the `Entry log` row's `HEAD analysed` unfilled, which step 1 reads as a finished prior entry).
++- For a "done" marker (commit trailer, ticked box, log line), check its granularity against the unit of work it is read as finishing, and enumerate every id class, not just the one a prior finding named (e.g. `impl-test entry N` was excepted, but `D-N` has the same shape — the fix commit carries the trailer, and the `Status`=`fixed` + sha flip can only follow in a second commit).
+diff --git a/.claude/agent-memory/asd-reviewer-correctness/feedback_web-impl-review-yield.md b/.claude/agent-memory/asd-reviewer-correctness/feedback_web-impl-review-yield.md
+new file mode 100644
+index 0000000..01151cc
+--- /dev/null
++++ b/.claude/agent-memory/asd-reviewer-correctness/feedback_web-impl-review-yield.md
+@@ -0,0 +1,21 @@
++---
++name: web-impl-review-yield
++description: Product impl-review of the web SPA (React + antd) in this app - the defect shapes that paid off and how to map more findings than rubric rows in the ledger
++metadata:
++  type: feedback
++---
++
++In a web impl-review wave, these checks found real defects that the diff alone did not show:
++
++- **Unsaved flags derived from `Form.useWatch`.** The watched field is `""` after mount (from `initialValues`). A comparison with `current?.name`, which is `undefined` for a new record, makes a fresh "new" dialog read as unsaved. Then the leave guard asks on ×/Esc and `beforeunload` turns on.
++- **Disabled controls with no reason next to them.** DESIGN.md `components.input-disabled` says "reason shown as help text". Compare every newly disabled field with its sibling branch, which often has the `extra` text.
++- **Removed concepts that survive.** After a scope change removes something (categories, "нет требований"), grep `web/src` and `.claude/agent-memory/**` for its identifiers. Look in test fixtures (context lines of a hunk), client param types, and new memory files that name code identifiers that no longer exist in `src/`.
++- **Raw px in CSS `@media`.** A media query cannot take a token, but design-system §6 still applies. The codebase pattern is a JS breakpoint (`Grid.useBreakpoint()`, antd `Row`/`Col`).
++
++**Ledger mapping:** each rule row carries one `f`. When there are more findings than rubric rows, hang the extra ones on the custom-rule rows they really fit:
++- `custom-common-rules.md` for obsolete surface left behind;
++- `custom-coding-rules.md` "UI check against DESIGN.md" for DESIGN.md component-table gaps.
++
++**Why:** a cross-file shape like these passes lint and tests, so only a targeted grep finds it.
++
++**How to apply:** run these after the diff pass, before writing the ledger. Related: [[review-method-no-shell]], [[check-persistent-ac-text-before-raising]].
+diff --git a/.claude/agent-memory/asd-reviewer-documentation/feedback_design-draft-review-precedents.md b/.claude/agent-memory/asd-reviewer-documentation/feedback_design-draft-review-precedents.md
+index 7536209..2e9fa55 100644
+--- a/.claude/agent-memory/asd-reviewer-documentation/feedback_design-draft-review-precedents.md
++++ b/.claude/agent-memory/asd-reviewer-documentation/feedback_design-draft-review-precedents.md
+@@ -11,22 +11,22 @@ Design-review drafts here (prd.html, ux-spec.html, adr.html, c4-full/subsystems.
+ - `<div class="ds"><style>` token block inside the ux-spec fragment: mockup-preview CSS, the same pattern sits in `docs/ux/*.html` (promoted from earlier drafts); it is not shell chrome.
+ - Sprint-specific `owns:` in the fragment comment and a paraphrased `meta responsibility`: same in the persistent docs.
+ - ADR `SUBSYSTEM=project` when ADRs span subsystems: `asd-architect.md` Output format sets it, while `artifact-layout.md` says `sprint` for drafts. The conflict is in canon, not in the draft.
+-- Doc `STATUS`: draft at iteration 1; the orchestrator flips it to `in-review` (and the ADR `status-chip` to `accepted` after the user's design-gate accept) in the iteration-1 autofix commit - recorded in the decisions-log. Shell CSS defines `.status-in-review`.
++- Doc `STATUS`: draft in the first round; the orchestrator flips it to `in-review` (and the ADR `status-chip` to `accepted` after the user's design-gate accept) in the first-round autofix commit - recorded in the decisions-log. Shell CSS defines `.status-in-review`.
+ - Extra UX-spec sections (UX decisions, text catalog, coverage) and the ADR "Reversibility / Revisit" line: the first are accepted UX practice, the second is mandated by `design-principles.md` 9.
+ - `design-md-delta.yaml` created by the UX autofix as a documentation-only delta (no token change) with an adaptive decisions-log line: sanctioned, not a scope defect. Its `doc_patch` field (outside `t_design-md-delta.yaml`, carries the exact DESIGN.md table/row text while `reason` stays "why") is a logged flagged choice, confirmed at design-promote; no validator reads the delta (runtime.js/workflows grep empty). Verify its `new_value`s against `docs/ux/DESIGN.md` instead.
+-- A stale `updated` date in PRD meta/STATS/footer after a later autofix: low, drop at floor medium (raised at iteration 1 only).
++- A stale `updated` date in PRD meta/STATS/footer after a later autofix: low severity, raise only while the floor is low.
+ - Two homes of one enumerated list (here `publishingActions`: PRD AC-34.4 and ADR-4 preview) when the decisions-log "ответы пользователя" entry names both: user-approved, compare the copies for drift, do not raise the duplication.
+ 
+ **Defect shapes that paid off:**
+ - c4-full delta carrying a `desk.md` Purpose/Key paths proposal: the registry template excludes purpose and key paths, and ADR-1's hard-gate block already holds them (copies drift). Fixed by pointing to the ADR-1 block.
+-- UX text catalog re-listing static mockup strings verbatim, against its own lede; route lists in both a UX decision and an ADR "final routes" table. After the trim, check the remaining catalog strings against the mockups word for word (iteration 2: "Вместе с версией" in the catalog vs "Вместе с ней" in two modals). An autofix that adds a catalog row can reintroduce static buttons and a string already in another row (iteration 3: «Не сейчас», «Утвердить вместе с {n} записями»): medium, so only raised while the floor is medium or lower.
++- UX text catalog re-listing static mockup strings verbatim, against its own lede; route lists in both a UX decision and an ADR "final routes" table. After the trim, check the remaining catalog strings against the mockups word for word (catalog "Вместе с версией" vs "Вместе с ней" in two modals). An autofix that adds a catalog row can reintroduce static buttons and a string already in another row («Не сейчас», «Утвердить вместе с {n} записями»): medium, so only raised while the floor is medium or lower.
+ - DESIGN.md edits promised "at design-promote" in prose while no `design-md-delta.yaml` exists; once it exists, read it against `t_design-md-delta.yaml`: `new_value` must be the real token value (a sentinel like `"unchanged"` on a composite token breaks the patch) and `reason` is "why", not the table row to add.
+ - Resolved hard-gate branches left in accepted ADRs (fallback variant, "if not approved"), and counts restating the list below them. A leftover can also be the cross-reference that outlives its own fix (ADR-6 "routes provisional in U-22" after U-22 was rewritten to delegate to ADR-6).
+ - A sprint draft linking a sibling draft (`ux-spec.html` -> `adr.html#adr-6`): ADRs are never promoted standalone, so the link dangles in `docs/ux/`. Plain text or the fold-target doc instead.
+ - One enumerated rule (here the four `publishingActions` cases, who-is-checked) restated across PRD ACs, UX notes and ADR: grep a distinctive phrase across all three drafts, then compare the copies - one has usually drifted.
+-- A new AC added by an autofix: grep its id across ADR/UX. Iteration 3 left ADR-4 "Context" at "AC-34.1–34.9" and its decision item citing a neighbour id, and AC-34.7 rewritten to "an action not in this list publishes nothing" (reads wrongly for record approval). Both medium: raise only when the floor allows.
+-- External-norm claims ("recommended by OWASP") without a source, against `design-principles.md` 11 (iteration 2 added source and date: accepted).
++- A new AC added by an autofix: grep its id across ADR/UX. The miss looks like ADR-4 "Context" left at "AC-34.1–34.9" and its decision item citing a neighbour id, and AC-34.7 rewritten to "an action not in this list publishes nothing" (reads wrongly for record approval). Both medium: raise only when the floor allows.
++- External-norm claims ("recommended by OWASP") without a source, against `design-principles.md` 11 (adding source and date fixes it).
+ 
+-**Why:** the finding rows are limited to one `f` per rubric row, so hang each finding on the row it fits best and merge same-kind drift; the decisions-log segments (`decisions-log.00N.md`, live `decisions-log.md`) are the evidence for dates and approvals. A new file in the iteration (the delta) is absent from the `.diff` - read it whole.
++**Why:** the finding rows are limited to one `f` per rubric row, so hang each finding on the row it fits best and merge same-kind drift; the decisions-log segments (`decisions-log.00N.md`, live `decisions-log.md`) are the evidence for dates and approvals. A new file in the round (the delta) is absent from the `.diff` - read it whole.
+ 
+-**How to apply:** at design-review iteration 1 read each draft whole (no `.diff`); in later iterations read the hand-off `.diff` first, then whole files only for cross-checks. Check the iteration floor before deciding a shape is raisable (iteration 3-4: high only).
++**How to apply:** on the first design-review round read each draft whole (no `.diff`); on later rounds read the hand-off `.diff` first, then whole files only for cross-checks. Check the round's floor before deciding a shape is raisable (late rounds: high only).
+diff --git a/.claude/agent-memory/asd-reviewer-efficiency/MEMORY.md b/.claude/agent-memory/asd-reviewer-efficiency/MEMORY.md
+index de1c8f8..f5e76d4 100644
+--- a/.claude/agent-memory/asd-reviewer-efficiency/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-efficiency/MEMORY.md
+@@ -5,3 +5,4 @@
+ - [Design-review gate outcomes](feedback_design-review-gate-outcomes.md) — read rotated decisions-log segments for settled ADR gates; approved ones stay, leftover fallback branches are dead text.
+ - [Large-diff read method](feedback_large-diff-read-method.md) — map with `^diff --git` grep, read src in ~1000-line chunks, skip generated migrations; ledger/table parsing rules for the report.
+ - [Redundant gate pair](feedback_redundant-gate-pair-keep.md) — two one-conjunct gates, each sufficient alone (query enabled plus adoption condition): keep-as-is, not an OE hit.
++- [Dead-after-redesign sweep](feedback_dead-after-redesign-sweep.md) — grep exports, CSS classes and vars whose last caller the diff removed; one `f` per rule row, merge same-kind findings.
+diff --git a/.claude/agent-memory/asd-reviewer-efficiency/feedback_dead-after-redesign-sweep.md b/.claude/agent-memory/asd-reviewer-efficiency/feedback_dead-after-redesign-sweep.md
+new file mode 100644
+index 0000000..18350cd
+--- /dev/null
++++ b/.claude/agent-memory/asd-reviewer-efficiency/feedback_dead-after-redesign-sweep.md
+@@ -0,0 +1,21 @@
++---
++name: dead-after-redesign-sweep
++description: After a screen redesign, grep every export, CSS class and CSS variable whose last caller the diff removed; orphans hide behind underscore names, contract tests and untouched stylesheets
++metadata:
++  type: feedback
++---
++
++A redesign that deletes a component leaves orphans in lines the diff does not touch. Grep each candidate across `web/src`, tests included, and check who still reads it:
++
++- an API helper whose only remaining caller is a contract test (a test-only reader is not a caller);
++- CSS rules for an element the diff removed, and a CSS variable whose reader line the diff deleted (stylesheets are outside the hunks, so read the whole file);
++- a `_`-prefixed constant: it passes lint, so the linter never reports it;
++- a wrapper component that only returns a lookup-table string, once the styling variant it carried is gone.
++
++**Why:** these were the real dead-code hits in a large UI diff; none showed up as a changed line, and the lint and build gates were green.
++
++**How to apply:**
++- Also grep an export before calling it dead: a helper new in the diff is often read by screens in another review wave.
++- Check `docs/ux` for the mock before calling a UI widget over-engineered; behaviour the spec draws is not a finding.
++- A hook file that also exports shared UI text, or a component with a mode flag reused as a wizard step, is cohesive enough: a split adds files and import edits and buys no behaviour.
++- Ledger: a rule row carries one `f` and a section row none, so merge same-kind findings onto the rubric row each fits (dead code onto the over-engineering row, a pointless wrapper onto complexity-vs-value) and list every location in the one finding. Related: [[large-diff-read-method]].
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index 6fa5ba0..747547e 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -1,6 +1,6 @@
+ ---
+ name: competency-test-harness
+-description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate, migration data-transfer tests, multi-save atomicity by trigger, throwaway Postgres for seed scripts, the shared container's connection limit, guard tests versus fail-first, reusable arrangements for draft-entry reads, cascade rights, hidden publication blockers, an HR-role superior approver, unlisted drafts of a publication list, desk-page web tests and scenario-page web tests (leave-guard dialog, forced failure and retry, step lock, 412 reread, server search), background-refresh (focus, online) edit-retention tests, redundant-gate mutants and form lock tests
++description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate, migration data-transfer tests, multi-save atomicity by trigger, throwaway Postgres for seed scripts, the shared container's connection limit, guard tests versus fail-first, reusable arrangements for draft-entry reads, cascade rights, hidden publication blockers, an HR-role superior approver, unlisted drafts of a publication list, desk-page web tests and scenario-page web tests (leave-guard dialog, forced failure and retry, step lock, 412 reread, server search), background-refresh (focus, online) edit-retention tests, redundant-gate mutants, form lock tests (table header checkbox included) and modal close-with-no-question tests
+ metadata:
+   type: project
+ ---
+@@ -78,7 +78,7 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Hidden draft of a publication list, as the superior approver reads it: the responsible HR (team head granted the HR role, assigned to the team) authors the kit and adds a second draft level to the kit's track outside the version document, linked to a position and uniquely named so no blocker arises; after `submit` the department head's `approve` is a publishing action. Department head: that level unlisted, `hiddenEntryCount` 1; responsible HR and administrator: all four entries, 0; one `cascadeTag` for all three. An entry preview (`GET /{segment}/{id}/publication`) can never hide anything, because whoever may approve the root reads every draft of its cascade (unit-less drafts as any HR, levels as the track unit's HR): pin only `hiddenEntryCount = 0` there, and record the hidden case as unreachable rather than inventing an arrangement. "Nowhere in the body" is asserted by walking the parsed JSON for strings (`JsonNode.ToJsonString` escapes Cyrillic); a missing field reads as a sentinel (-1) so the pre-fix copy names an assertion instead of throwing, and `AssertionScope` lists every one.
+ - Desk scenario pages (`DraftsQueuePage`, `ReviewPage`, `BuilderSubmitStep`) mount in vitest with `Providers`, `createMemoryRouter` and `fakeApi` on a handful of routes; unhandled routes answer 599 and only their own sections fail. A `MatrixVersion` fixture needs `entries.levels`, `entries.competencies` and `entries.scales` arrays or `useVersionNames` throws on `.map`. A disabled button exists before its data: `findByRole` on its plain name resolves early, so wait for the text that arrives with the data. A component whose prop was renamed by the fix goes red on the pre-fix copy with a TypeError, not on behaviour, so its proof is mutation; say so in the plan.
+ - Close a `suite` timing op right after its run (`--close`): closing after authoring stretches it over work that is not the run.
+-- Scenario pages that ask before leaving (`useLeaveGuard().confirmLeave`) need `<LeaveGuardProvider>` inside the route element: without it `confirmLeave` runs the action at once and a "asks first" test is red for the wrong reason. antd's `useId` is the constant `test-id` in vitest, so `aria-labelledby` of a `modal.confirm` resolves to the first element with that id (a Select input on the same screen) and `findByRole("dialog", { name })` finds nothing next to a form: find the title with `findByText(title, { selector: ".ant-modal-title" })`; after "Остаться" send `animationEnd`/`transitionEnd` to `.ant-modal` until the dialog is gone before the next click.
++- Scenario pages that ask before leaving (`useLeaveGuard().confirmLeave`) need `<LeaveGuardProvider>` inside the route element: without it `confirmLeave` runs the action at once and a "asks first" test is red for the wrong reason. A modal alone needs it too, under `createMemoryRouter` + `RouterProvider` (`useBlocker` wants a data router, `MemoryRouter` is not enough), and a "closes at once, no question" test is vacuous without a positive control in the same describe (a typed name asks) and without settling the form first (wait for the rights queries, then `await act(async () => undefined)`: a flag derived from `Form.useWatch` appears only after its first effect, and the close button is `{ name: /Close|Закрыть/ }`). antd's `useId` is the constant `test-id` in vitest, so `aria-labelledby` of a `modal.confirm` resolves to the first element with that id (a Select input on the same screen) and `findByRole("dialog", { name })` finds nothing next to a form: find the title with `findByText(title, { selector: ".ant-modal-title" })`; after "Остаться" send `animationEnd`/`transitionEnd` to `.ant-modal` until the dialog is gone before the next click.
+ - Forcing a failed read in a web test: the shared `shouldRetry` repeats a 5xx three times with growing delay and never a 4xx, so answer `problem(403)` (queries with `retry: false` fail at once either way). A retry test registers the healthy handlers BEFORE clicking «Повторить» (the click sends the request at once) and fails every read the one retry button covers, or a mutant that rereads only one of them survives.
+ - A wizard step lock has no accessible names: count `.ant-steps-item-disabled`. Steps beyond the reached one are disabled anyway, so assert the count of all steps (a partial count passes unlocked) and read the baseline count before the click.
+ - rc-select calls `onSearch("")` itself when a single select closes, so an `onOpenChange` handler that clears the search is an equivalent mutant; pin the visible result (full list after closing) and say the handler is dead. Server search with real timers: `user.type`, then `waitFor` on the `q` of the last request (the 300 ms debounce fits the default 1 s window); sync first on a positive control (the unfiltered first call).
+@@ -86,4 +86,4 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Onboarding-style pages take their preselection from the address (`?unitId=&positionId=`), so no unit or position Select has to be driven. A stateful fake (a `stored` record that a handler changes) models "someone changed it behind the back" for a 412 reread. When a claim sits behind a sync that the pre-fix copy cannot pass (the field shows the reread value), the pre-fix run stops at the sync: prove the claim by a mutation that keeps the sync and breaks only it.
+ - Background-refresh test (an edit must survive a refetch): trigger inside `act` with `focusManager.setFocused(false); setFocused(true)` or `onlineManager.setOnline(false); setOnline(true)`; the control that the signal reached the cache is a stale active query that rereads on focus (positions of the unit), asserted `toBeGreaterThan(reads)`, never `reads + 1` (a remounting pre-fix copy rereads twice and the run stops at the control); then type one more letter before reading the field, which flushes the notifier. Restore both managers in `beforeEach` (`setFocused(undefined)`, `setOnline(true)`): their state outlives the test.
+ - Two sufficient gates (a query `enabled` flag and an adoption condition) make each single-gate mutant equivalent and green; only a multi-edit mutant removing both reddens the test. Record the pair as a ceiling and prove with the combined mutant. A mutant that survives on the old test file and dies on the new one (`swap` of the head version of the test file in the runner, `edits` array for several anchors) is the proof that a guard row was needed.
+-- Lock tests on antd forms: collect the KIND of every locked field into one list and assert it at three moments (idle `[]`, in flight all kinds, after a refusal `[]`); an explicit `disabled={false}` on a child control beats the Form's disabled context (fixed with `cond || undefined`). `userEvent` throws on a click at an element with `pointer-events: none` (a disabled antd checkbox), so the attempt to tick it uses `userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never })`.
++- Lock tests on antd forms: collect the KIND of every locked field into one list and assert it at three moments (idle `[]`, in flight all kinds, after a refusal `[]`); an explicit `disabled={false}` on a child control beats the Form's disabled context (fixed with `cond || undefined`). `userEvent` throws on a click at an element with `pointer-events: none` (a disabled antd checkbox), so the attempt to tick it uses `userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never })`. Collect the kinds as `Record<kind, HTMLElement[]>` and call a kind locked when `every` element of it is disabled, so a half-locked group (rows locked, header not) shows. An antd `Table` `rowSelection` header checkbox ("Select all", English aria-labels "Select all" / "Select row N" even under the Russian locale) takes its `disabled` from the rows' own explicit `getCheckboxProps`, never from the form's disabled context: a form `disabled` locks the rows and leaves the header usable (clicking it changed the selected count), so list it as its own kind; a red lock test for that is a code defect, and the fix is `getTitleCheckboxProps` or explicit row `disabled`. A hold on the save is `deferred<Response>()` on the route, the refusal is `held.resolve(problem(500, …))` and the check after it waits for the error alert text.
+diff --git a/.claude/agent-memory/asd-tester/MEMORY.md b/.claude/agent-memory/asd-tester/MEMORY.md
+index bed6fda..d8de85d 100644
+--- a/.claude/agent-memory/asd-tester/MEMORY.md
++++ b/.claude/agent-memory/asd-tester/MEMORY.md
+@@ -3,4 +3,5 @@
+ - [ASD self-hosting test-plan conventions](project_asd-self-hosting-testing.md) — this repo IS the ASD framework; `tests/run.js` covers Node sources plus content contracts (rules, templates, skills, workflows, README, agent memory); sweep exemption shape.
+ - [Web test edits keep LF](feedback_web-test-edits-eol.md) — CRLF from scripted rewrites fails biome ci
+ - [antd test quirks in web](project_web-antd-test-quirks.md) — duplicate modal title ids, Empty svg title, closed modals stay in DOM
++- [Web harness quirks](project_web-test-harness-quirks.md) — leave guard needs data router, RowActions split, unit filter combobox, mutation runner method
+ - [Backend tests scratch build](project_backend-tests-scratch-build.md) — run API tests under locks; ContractTests root copy; kit helpers (positions, cascade tag)
+diff --git a/.claude/agent-memory/asd-tester/project_web-test-harness-quirks.md b/.claude/agent-memory/asd-tester/project_web-test-harness-quirks.md
+new file mode 100644
+index 0000000..a1ebc40
+--- /dev/null
++++ b/.claude/agent-memory/asd-tester/project_web-test-harness-quirks.md
+@@ -0,0 +1,12 @@
++---
++name: web-test-harness-quirks
++description: web vitest tricks - leave-guard needs a data router, RowActions visible/menu split, OrgUnitSelect has no accessible name, mutation runner method
++metadata:
++  type: project
++---
++
++- `LeaveGuardProvider` uses `useBlocker`, so a page test under it needs `createMemoryRouter` + `RouterProvider`, not `MemoryRouter`; query the dialog by `findByRole("dialog", { name })` (the title text matches twice).
++- `RowActions` keeps the first two non-danger actions visible, the rest (danger ones always) in the «…» menu; `MatrixActions` keeps the first two of the whole list visible. Derive expected lists from that, not from guesses.
++- `OrgUnitSelect` (TreeSelect) in a column filter has no accessible name and a collapsed tree rendered in a body portal; `UnitTreeFilter` has `aria-label` and expands. Pick the combobox inside `.ant-table-filter-dropdown` and choose a root unit.
++- Absence assertions need a positive trace first; where the code leaves none, re-run the action with a working response and assert exactly one dialog and no message.
++- Mutation proofs: `git archive HEAD web` into the scratchpad, overlay changed tests, `mklink /J` node_modules, mutate one anchor per run with a node script (assert one hit, restore in `finally`), then remove the junction with `[System.IO.Directory]::Delete(path,$false)` before `rm -rf`. Python heredocs with `\n` inside JS strings break; write scripts with the Write tool.
+diff --git a/.claude/agent-memory/asd-ux/MEMORY.md b/.claude/agent-memory/asd-ux/MEMORY.md
+index dcbf72b..8cc8505 100644
+--- a/.claude/agent-memory/asd-ux/MEMORY.md
++++ b/.claude/agent-memory/asd-ux/MEMORY.md
+@@ -1,3 +1,3 @@
+ - [UX docs conventions](project_ux-docs-conventions.md) — a11y scope trap, mockup token style, menu popup color, row-action links
+-- [Sprint ux-spec authoring](project_sprint-ux-spec-authoring.md) — class set to reuse, link depth, plain-text letters, sprint 004 counter badge without new token
++- [Sprint ux-spec authoring](project_sprint-ux-spec-authoring.md) — class set to reuse, link depth, plain-text letters, composite badge without new token, delta format
+ - [No screenshots, keep user browser](feedback_no-screenshots-keep-user-browser.md) — permanent: no headless renders, never close or kill the user's browser
+diff --git a/.claude/agent-memory/asd-ux/feedback_no-screenshots-keep-user-browser.md b/.claude/agent-memory/asd-ux/feedback_no-screenshots-keep-user-browser.md
+index 977774e..2cc58a8 100644
+--- a/.claude/agent-memory/asd-ux/feedback_no-screenshots-keep-user-browser.md
++++ b/.claude/agent-memory/asd-ux/feedback_no-screenshots-keep-user-browser.md
+@@ -8,5 +8,5 @@ metadata:
+ - No UI screenshots and no headless renders of any kind (no `chrome.exe --headless`, no `--screenshot`, no `--dump-dom` of mockups). Verify mockups by reading the HTML and by tag-balance scripts only.
+ - Never close or kill a browser the user opened: no `taskkill` or `Stop-Process` on chrome/msedge, no closing of their tabs or windows.
+ 
+-**Why:** the user gave this as a permanent instruction after sprint 004 Task 17, when headless Chrome renders had been used for concept checks.
++**Why:** the user gave this as a permanent instruction after headless Chrome renders had been used for concept checks.
+ **How to apply:** any time a mockup or design-system page needs a visual check, skip the render, say it was not rendered, and rely on structure checks. Supersedes the earlier habit of headless-Chrome screenshots noted in [[project-ux-docs-conventions]].
+diff --git a/.claude/agent-memory/asd-ux/project_sprint-ux-spec-authoring.md b/.claude/agent-memory/asd-ux/project_sprint-ux-spec-authoring.md
+index d6b5a7a..d214cfa 100644
+--- a/.claude/agent-memory/asd-ux/project_sprint-ux-spec-authoring.md
++++ b/.claude/agent-memory/asd-ux/project_sprint-ux-spec-authoring.md
+@@ -1,6 +1,6 @@
+ ---
+ name: project-sprint-ux-spec-authoring
+-description: How sprint ux-spec drafts are authored in this repo (class set to reuse, link depth, shell head, no python) and the counter-badge token decision of sprint 004
++description: How sprint ux-spec drafts are authored in this repo (class set to reuse, link depth, shell head, no python) and the counter-badge token decision
+ metadata:
+   type: project
+ ---
+@@ -9,13 +9,13 @@ metadata:
+ - Links from `design/` to repo docs are four levels up (`../../../../docs/ux/...`, `../../../../web/public/brand/logo-64.png`), not three.
+ - Shell has no python in this environment (the `python3` stub fails); use `node -e` for tag-balance and contrast checks.
+ - Existing letters are plain text (`MailSender` sends `TextFormat.Plain`): draft letters as plain text with a bare URL, not HTML layout.
+-- Sprint 004 decision: the header counter badge is composed from existing tokens (`accent` fill, `surface-inverse` text 9.59:1, `rounded-full`, `body-strong`, `control-height-sm`), no component token. Design-review iter 1 (2026-10-13): DESIGN.md doc notes (contrast row, horizontal Steps) need a carrier, so `design-md-delta.yaml` exists with documentation-only `update` entries (values unchanged); promote reads it. Contrast of `accent` on the `primary` active nav item is 3.73:1 (not in DESIGN.md's contrast table).
++- Decision: the header counter badge is composed from existing tokens (`accent` fill, `surface-inverse` text 9.59:1, `rounded-full`, `body-strong`, `control-height-sm`), no component token. DESIGN.md doc notes (contrast row, horizontal Steps) need a carrier, so `design-md-delta.yaml` holds documentation-only `update` entries (values unchanged); promote reads it.
+ 
+-- Delta format (iter 2, 2026-10-13): `new_value` is always the real current token value (full map for composite tokens), never "unchanged"; `usage` = inline token comment; exact DESIGN.md table/row text for doc-only edits goes in a `doc_patch` list, `reason` = why. Publishing-action list lives only in PRD AC-34.4 / ADR-4 `publishingActions`: UX notes reference it, never re-list. Informational (`isReference`) desk groups get their own truncation text (no "выполните действия"). Route table home = `docs/architecture/desk.md`, no `href` to adr.html from ux-spec.
++- Delta format: `new_value` is always the real current token value (full map for composite tokens), never "unchanged"; `usage` = inline token comment; exact DESIGN.md table/row text for doc-only edits goes in a `doc_patch` list, `reason` = why. Publishing-action list lives only in PRD AC-34.4 / ADR-4 `publishingActions`: UX notes reference it, never re-list. Informational (`isReference`) desk groups get their own truncation text (no "выполните действия"). Route table home = `docs/architecture/desk.md`, no `href` to adr.html from ux-spec.
+ 
+-- Iter 3→4 (2026-10-13): 412 has two kinds in the spec: by `If-Match` (record changed → reread, "Общие состояния" 3) and with `publication` address (cascade changed/appeared → confirm window with fresh list + `alert-warning` «Перечень изменился — подтвердите заново», state 3б). AC-34.11: field error «Выбрана черновая запись — сначала утвердите её» on the reference field in record edit windows (mock in m-publish-confirm). Do not renumber m-states items (other notes reference "макет 5"/"состояние 5"): add `3б`-style items.
++- 412 has two kinds in the spec: by `If-Match` (record changed → reread, "Общие состояния" 3) and with `publication` address (cascade changed/appeared → confirm window with fresh list + `alert-warning` «Перечень изменился — подтвердите заново», state 3б). AC-34.11: field error «Выбрана черновая запись — сначала утвердите её» on the reference field in record edit windows (mock in m-publish-confirm). Do not renumber m-states items (other notes reference "макет 5"/"состояние 5"): add `3б`-style items.
+ 
+-- Iter 4→5 (2026-10-13, user decision): existing `MatrixPage` loses publishing buttons («Отправить на согласование», «Согласовать», «Принять правки»); replaced by links «Перейти к отправке в мастере» / «Согласовать версию» / «Доработать возвращённую версию» (mockup `m-matrix`, bar ≤2 visible + «…»). Any "existing screen" that calls a transition must be checked against the cascade tag rule.
++- User decision: existing `MatrixPage` loses publishing buttons («Отправить на согласование», «Согласовать», «Принять правки»); replaced by links «Перейти к отправке в мастере» / «Согласовать версию» / «Доработать возвращённую версию» (mockup `m-matrix`, bar ≤2 visible + «…»). Any "existing screen" that calls a transition must be checked against the cascade tag rule.
+ 
+ **Why:** DESIGN.md already says `accent` may be a badge fill and `rounded-full` is for count badges; the logo plate in `app-shell.html` is the precedent for a composite element without its own token.
+-**How to apply:** never write "стоит дополнить DESIGN.md" in a spec without a delta entry (promote patches DESIGN.md only from the delta). Mockup example data must obey the PRD exclusivity rules (one object = one desk item; version in work suppresses published-matrix findings; the queue shows only entries the user may approve). At the sprint 004 design-promote add the 3.73:1 row to DESIGN.md Colors > Contrast and a horizontal-Steps note to the Steps row; reuse this approach for later composite elements before asking for a new token.
++**How to apply:** never write "стоит дополнить DESIGN.md" in a spec without a delta entry (promote patches DESIGN.md only from the delta). Mockup example data must obey the PRD exclusivity rules (one object = one desk item; version in work suppresses published-matrix findings; the queue shows only entries the user may approve). Reuse the composite-from-existing-tokens approach for later composite elements before asking for a new token.
+diff --git a/.claude/agent-memory/asd-ux/project_ux-docs-conventions.md b/.claude/agent-memory/asd-ux/project_ux-docs-conventions.md
+index 0fd970d..ccbe019 100644
+--- a/.claude/agent-memory/asd-ux/project_ux-docs-conventions.md
++++ b/.claude/agent-memory/asd-ux/project_ux-docs-conventions.md
+@@ -12,5 +12,5 @@ metadata:
+ **Why:** found during a design-promote; they recur on any later UX promote.
+ **How to apply:** check before writing a11y text, new mockups, or reviewing shell/menu visuals; then update `career-framework.html` if the code changed.
+ 
+-- Sprint 004 Task 14 (2026-10-13): `desk.html` has section `#compact-rules` (К1–К6 compactness, В1–В4 return, Л1–Л5 step ruler); scenario mockups have no h1 (crumb only), block titles `.h4`, ruler `.sth` one line with numbered step names and no "Шаг n из N" caption (removed by AC-187; Л1 in `desk.html`), flat `.bar`. «Направление» → «Область» renamed only in `career-framework.html` and `desk.html` (app-shell, user-management, DESIGN.md had none). Big multi-block edits: node script with line anchors + `expect` checks, applied bottom-up; verify with `check.js`-style tag balance only (headless Chrome screenshots are forbidden since 2026-10-14, see [[feedback-no-screenshots-keep-user-browser]]). `sed -i` strips CRs again (desk.html is CRLF in worktree, LF in index; career-framework is LF).
+-- Sprint 004 promote (2026-10-13): `docs/ux/desk.html` is the desk subsystem doc (scenario screens, desk, letters, states; no AC/U ids, no coverage table); header/counter/login-return live in `app-shell.html` (ids `m-shell`, `m-counter`, `m-login`); matrix bar, track window, publish-confirm window in `career-framework.html` (ids `m-matrix`, `m-track-form`, `m-publish-confirm`). Every doc with `.mockup-preview` carries a dark-scheme rule keeping the preview surface light; `.ds` root must never set app font/color. Working-tree EOL is mixed per file (career-framework/user-management LF, others CRLF): preserve each file's EOL; bash heredocs here halve backslashes, so write node scripts with the Write tool; `sed -i` can strip CRs.
++- `desk.html` has section `#compact-rules` (К1–К6 compactness, В1–В4 return, Л1–Л5 step ruler); scenario mockups have no h1 (crumb only), block titles `.h4`, ruler `.sth` one line with numbered step names and no "Шаг n из N" caption (removed by AC-187; Л1 in `desk.html`), flat `.bar`. «Направление» → «Область» renamed only in `career-framework.html` and `desk.html` (app-shell, user-management, DESIGN.md had none). Big multi-block edits: node script with line anchors + `expect` checks, applied bottom-up; verify with `check.js`-style tag balance only (headless Chrome screenshots are forbidden since 2026-10-14, see [[feedback-no-screenshots-keep-user-browser]]). `sed -i` strips CRs again (desk.html is CRLF in worktree, LF in index; career-framework is LF).
++- `docs/ux/desk.html` is the desk subsystem doc (scenario screens, desk, letters, states; no AC/U ids, no coverage table); header/counter/login-return live in `app-shell.html` (ids `m-shell`, `m-counter`, `m-login`); matrix bar, track window, publish-confirm window in `career-framework.html` (ids `m-matrix`, `m-track-form`, `m-publish-confirm`). Every doc with `.mockup-preview` carries a dark-scheme rule keeping the preview surface light; `.ds` root must never set app font/color. Working-tree EOL is mixed per file (career-framework/user-management LF, others CRLF): preserve each file's EOL; bash heredocs here halve backslashes, so write node scripts with the Write tool; `sed -i` can strip CRs.
+diff --git a/web/src/app/AppShell.test.tsx b/web/src/app/AppShell.test.tsx
+index db4e110..0fe0eee 100644
+--- a/web/src/app/AppShell.test.tsx
++++ b/web/src/app/AppShell.test.tsx
+@@ -1,4 +1,4 @@
+-import { render, screen, within } from "@testing-library/react";
++import { render, screen, waitFor, within } from "@testing-library/react";
+ import { RouterProvider } from "react-router";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../api/queryClient";
+@@ -102,6 +102,21 @@ describe("the position catalogue address (AC-1, AC-19)", () => {
+     ).toBeInTheDocument();
+   });
+ 
++  it("opens the catalogue for an HR account and asks for the positions", async () => {
++    fakeApi.on("GET /api/v1/positions", () =>
++      Response.json({ items: [], total: 0, page: 1, pageSize: 20 }),
++    );
++
++    await openAs(["Hr"], "/positions");
++
++    expect(
++      await screen.findByRole("heading", { name: "Должности" }),
++    ).toBeInTheDocument();
++    await waitFor(() =>
++      expect(fakeApi.calls("GET /api/v1/positions")).toHaveLength(1),
++    );
++  });
++
+   it("gives an ordinary user the not-found page and requests no positions", async () => {
+     await openAs([], "/positions");
+ 
+diff --git a/web/src/features/career/BlockModal.test.tsx b/web/src/features/career/BlockModal.test.tsx
+new file mode 100644
+index 0000000..c78a84c
+--- /dev/null
++++ b/web/src/features/career/BlockModal.test.tsx
+@@ -0,0 +1,123 @@
++import { render, screen, waitFor, within } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { MemoryRouter } from "react-router";
++import { beforeEach, describe, expect, it, vi } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import { BlockModal } from "./BlockModal";
++import type { Competency } from "./catalogApi";
++
++const ROUTE = "POST /api/v1/career/blocks";
++
++const competency = (id: string, name: string): Competency => ({
++  id,
++  name,
++  description: null,
++  directionId: null,
++  directionName: null,
++  scaleId: "scale",
++  scaleName: "Базовая",
++  status: "Active",
++  createdAt: "2026-10-01T00:00:00Z",
++  versionNumber: 1,
++  version: 1,
++  canEdit: true,
++  canDelete: true,
++});
++
++const COMPETENCIES = [
++  competency("design", "Проектирование"),
++  competency("teamwork", "Работа в команде"),
++];
++
++function serve() {
++  fakeApi.on("GET /api/v1/auth/me", () =>
++    Response.json({
++      id: "account",
++      email: "admin@test.local",
++      roles: ["GlobalAdmin"],
++    }),
++  );
++  fakeApi.on("GET /api/v1/career/me", () =>
++    Response.json({ headedUnits: [], hrUnits: [] }),
++  );
++  fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([]));
++  fakeApi.on("GET /api/v1/career/competencies", () =>
++    Response.json({
++      items: COMPETENCIES,
++      total: COMPETENCIES.length,
++      page: 1,
++      pageSize: 200,
++    }),
++  );
++}
++
++function lockedControls() {
++  const dialog = screen
++    .getByText("Новый общий блок", { selector: ".ant-modal-title" })
++    .closest('[role="dialog"]') as HTMLElement;
++  const controls: [string, HTMLElement[]][] = [
++    ["name", [within(dialog).getByRole("textbox", { name: "Название" })]],
++    ["unit", [within(dialog).getByRole("combobox", { name: "Действует для" })]],
++    ["search", [within(dialog).getByRole("searchbox")]],
++    [
++      "create competency",
++      [within(dialog).getByRole("button", { name: "Создать компетенцию" })],
++    ],
++    [
++      "select all",
++      [within(dialog).getByRole("checkbox", { name: "Select all" })],
++    ],
++    ["ticks", within(dialog).getAllByRole("checkbox", { name: /Select row/ })],
++  ];
++  return controls
++    .filter(([, group]) => group.every((item) => item.hasAttribute("disabled")))
++    .map(([kind]) => kind);
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("block form while the block is being saved (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("holds the name, the unit and the composition while the save is in flight, and frees them when it is refused", async () => {
++    serve();
++    const held = deferred<Response>();
++    fakeApi.on(ROUTE, () => held.promise);
++    render(
++      <Providers>
++        <MemoryRouter>
++          <BlockModal onClose={vi.fn()} />
++        </MemoryRouter>
++      </Providers>,
++    );
++    const user = userEvent.setup();
++    await user.type(
++      await screen.findByRole("textbox", { name: "Название" }),
++      "Командный блок",
++    );
++    await screen.findByText("Работа в команде");
++    expect(lockedControls()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
++    expect(lockedControls()).toEqual([
++      "name",
++      "unit",
++      "search",
++      "create competency",
++      "select all",
++      "ticks",
++    ]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(lockedControls()).toEqual([]);
++  });
++});
+diff --git a/web/src/features/career/BlockModal.tsx b/web/src/features/career/BlockModal.tsx
+index 249ec9b..9b9fe0c 100644
+--- a/web/src/features/career/BlockModal.tsx
++++ b/web/src/features/career/BlockModal.tsx
+@@ -165,6 +165,7 @@ function BlockForm({
+     <Form
+       form={form}
+       name="competency-block"
++      disabled={isSubmitting}
+       layout="vertical"
+       initialValues={{
+         name: block?.name ?? "",
+@@ -235,7 +236,11 @@ function BlockForm({
+         </Form.Item>
+       )}
+       <Form.Item name="competencyIds" label="Состав">
+-        <CompetencyPicker onDraftsSeen={noteDrafts} takenIds={takenIds} />
++        <CompetencyPicker
++          isSaving={isSubmitting}
++          onDraftsSeen={noteDrafts}
++          takenIds={takenIds}
++        />
+       </Form.Item>
+       <DraftMemberNotice
+         form={form}
+@@ -276,6 +281,8 @@ interface CompetencyPickerProps {
+   onChange?: (value: string[]) => void;
+   /** Competencies the version holds already: listed, off, with the reason. */
+   takenIds?: ReadonlySet<string>;
++  /** The block is being saved: the composition is held, the select-all box included. */
++  isSaving: boolean;
+   /** Told which of the competencies listed are drafts. */
+   onDraftsSeen: (ids: readonly string[]) => void;
+ }
+@@ -288,6 +295,7 @@ function CompetencyPicker({
+   value = [],
+   onChange,
+   takenIds,
++  isSaving,
+   onDraftsSeen,
+ }: CompetencyPickerProps) {
+   const { token } = theme.useToken();
+@@ -373,8 +381,9 @@ function CompetencyPicker({
+           scroll={{ y: token.controlHeight * LIST_HEIGHT_IN_CONTROLS }}
+           rowSelection={{
+             selectedRowKeys: value,
++            getTitleCheckboxProps: () => ({ disabled: isSaving }),
+             getCheckboxProps: (row) => ({
+-              disabled: takenIds?.has(row.id) === true,
++              disabled: takenIds?.has(row.id) || undefined,
+             }),
+             onSelect: (row, isChosen) => toggle(row.id, isChosen),
+             onSelectAll: (isChosen, _rows, changed) => {
+diff --git a/web/src/features/career/CatalogModal.tsx b/web/src/features/career/CatalogModal.tsx
+index deb86d6..3e51a1b 100644
+--- a/web/src/features/career/CatalogModal.tsx
++++ b/web/src/features/career/CatalogModal.tsx
+@@ -78,7 +78,7 @@ interface FormActionsProps {
+   onCancel: () => void;
+ }
+ 
+-/** Save and cancel buttons of a catalogue form; cancelling asks for confirmation while the dialog holds unsaved changes. */
++/** Save and cancel buttons of a catalogue form. */
+ export function FormActions({ isSubmitting, onCancel }: FormActionsProps) {
+   return (
+     <Space>
+diff --git a/web/src/features/career/CatalogParts.tsx b/web/src/features/career/CatalogParts.tsx
+index be18a52..7eaff6d 100644
+--- a/web/src/features/career/CatalogParts.tsx
++++ b/web/src/features/career/CatalogParts.tsx
+@@ -84,7 +84,6 @@ export function EntryActions({
+   const { publish, isBusy } = usePublishEntry();
+   const canManage = rights.canManage(unitId);
+ 
+-  /** Deactivating a shared block leaves unpublished versions that use it incomplete, which the confirmation says first. */
+   const deactivate = () =>
+     segment === "blocks"
+       ? modal.confirm({
+@@ -97,7 +96,6 @@ export function EntryActions({
+         })
+       : mutate("deactivate");
+ 
+-  /** Approving and returning to work go through the publication preview, but a level publishes nothing with it. */
+   const approveOrActivate = (action: "approve" | "activate") =>
+     segment === "levels"
+       ? mutate(action)
+diff --git a/web/src/features/career/CompetencyModal.test.tsx b/web/src/features/career/CompetencyModal.test.tsx
+index c53bed6..5988cc2 100644
+--- a/web/src/features/career/CompetencyModal.test.tsx
++++ b/web/src/features/career/CompetencyModal.test.tsx
+@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import { CompetencyModal } from "./CompetencyModal";
+ import type { Competency } from "./catalogApi";
+@@ -232,3 +232,61 @@ describe("scale of a new competency (AC-22)", {
+     expect(await call?.json()).toMatchObject({ scaleId: OTHER_SCALE.id });
+   });
+ });
++
++describe("competency form while the competency is being saved (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  const ROUTE = "PUT /api/v1/career/competencies/competency";
++
++  function lockedControls() {
++    const controls: [string, HTMLElement][] = [
++      ["name", screen.getByLabelText("Название")],
++      ["description", screen.getByLabelText("Описание")],
++      ["evidence", screen.getByLabelText("Примеры подтверждений")],
++      ["direction", screen.getByRole("combobox", { name: "Область" })],
++      ["scale", screen.getByRole("combobox", { name: "Шкала" })],
++    ];
++    return controls
++      .filter(([, control]) => control.hasAttribute("disabled"))
++      .map(([kind]) => kind);
++  }
++
++  it("holds every field while the save is in flight, and frees them when it is refused", async () => {
++    const held = deferred<Response>();
++    const user = open(EXISTING, () => fakeApi.on(ROUTE, () => held.promise));
++    await screen.findByDisplayValue("Проектирование");
++    expect(lockedControls()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
++    expect(lockedControls()).toEqual([
++      "name",
++      "description",
++      "evidence",
++      "direction",
++      "scale",
++    ]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(lockedControls()).toEqual([]);
++  });
++
++  it("moves the focus to the first field the server rejects", async () => {
++    const user = open(EXISTING, () =>
++      fakeApi.on(ROUTE, () =>
++        problem(400, { errors: { evidenceExamples: ["Слишком длинно"] } }),
++      ),
++    );
++    await screen.findByDisplayValue("Проектирование");
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    expect(await screen.findByText("Слишком длинно")).toBeInTheDocument();
++    await waitFor(() =>
++      expect(screen.getByLabelText("Примеры подтверждений")).toHaveFocus(),
++    );
++  });
++});
+diff --git a/web/src/features/career/CompetencyModal.tsx b/web/src/features/career/CompetencyModal.tsx
+index 9f2865a..2737698 100644
+--- a/web/src/features/career/CompetencyModal.tsx
++++ b/web/src/features/career/CompetencyModal.tsx
+@@ -1,5 +1,5 @@
+ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+-import { Form, Input } from "antd";
++import { Form, type FormInstance, Input } from "antd";
+ import { useEffect } from "react";
+ import { ApiError } from "../../api/ApiError";
+ import { api } from "../../api/client";
+@@ -31,6 +31,19 @@ interface CompetencyValues {
+   scaleId?: string;
+ }
+ 
++/**
++ * Moves the focus to the first field a rejected save names. The messages land under the fields only after the rejection
++ * is rethrown, so the focus waits for them.
++ */
++function focusFirstRejectedField(
++  form: FormInstance<CompetencyValues>,
++  error: unknown,
++) {
++  const field =
++    error instanceof ApiError && error.errors && Object.keys(error.errors)[0];
++  if (field) queueMicrotask(() => form.scrollToField(field, { focus: true }));
++}
++
+ interface CompetencyModalProps {
+   /** Competency being edited as the cache holds it now; omitted when one is created. */
+   competency?: Competency;
+@@ -120,13 +133,7 @@ function CompetencyForm({
+     try {
+       return await onSubmit(values);
+     } catch (error) {
+-      const field =
+-        error instanceof ApiError &&
+-        error.errors &&
+-        Object.keys(error.errors)[0];
+-      // The messages are put under the fields right after this rethrow, so the focus waits for them.
+-      if (field)
+-        queueMicrotask(() => form.scrollToField(field, { focus: true }));
++      focusFirstRejectedField(form, error);
+       throw error;
+     }
+   });
+@@ -146,6 +153,7 @@ function CompetencyForm({
+     <Form
+       form={form}
+       name="competency"
++      disabled={isSubmitting}
+       layout="vertical"
+       initialValues={{
+         name: competency?.name ?? "",
+diff --git a/web/src/features/career/LevelModal.test.tsx b/web/src/features/career/LevelModal.test.tsx
+new file mode 100644
+index 0000000..6766a85
+--- /dev/null
++++ b/web/src/features/career/LevelModal.test.tsx
+@@ -0,0 +1,64 @@
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { MemoryRouter } from "react-router";
++import { beforeEach, describe, expect, it, vi } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import type { CareerLevel } from "./catalogApi";
++import { LevelModal } from "./LevelModal";
++
++const ROUTE = "PUT /api/v1/career/levels/level";
++const LEVEL: CareerLevel = {
++  id: "level",
++  name: "Младший",
++  directionId: "direction",
++  trackId: "track",
++  position: 1,
++  status: "Active",
++  version: 3,
++  canEdit: true,
++  canDelete: true,
++};
++
++const lockedControls = () =>
++  screen.getByRole("combobox", { name: "Название" }).hasAttribute("disabled")
++    ? ["name"]
++    : [];
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("level form while the level is being saved (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("holds the name while the save is in flight, and frees it when it is refused", async () => {
++    const held = deferred<Response>();
++    fakeApi.on(ROUTE, () => held.promise);
++    fakeApi.on("GET /api/v1/career/levels", () =>
++      Response.json({ items: [], total: 0, page: 1, pageSize: 200 }),
++    );
++    render(
++      <Providers>
++        <MemoryRouter>
++          <LevelModal level={LEVEL} onClose={vi.fn()} />
++        </MemoryRouter>
++      </Providers>,
++    );
++    const user = userEvent.setup();
++    await screen.findByDisplayValue("Младший");
++    expect(lockedControls()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
++    expect(lockedControls()).toEqual(["name"]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(lockedControls()).toEqual([]);
++  });
++});
+diff --git a/web/src/features/career/LevelModal.tsx b/web/src/features/career/LevelModal.tsx
+index ed22cce..f83df2a 100644
+--- a/web/src/features/career/LevelModal.tsx
++++ b/web/src/features/career/LevelModal.tsx
+@@ -103,6 +103,7 @@ function LevelForm({ initialName, onSubmit, onCancel }: LevelFormProps) {
+     <Form
+       form={form}
+       name="career-level"
++      disabled={isSubmitting}
+       layout="vertical"
+       initialValues={{ name: initialName }}
+       onFinish={submit}
+diff --git a/web/src/features/career/MatrixChanges.tsx b/web/src/features/career/MatrixChanges.tsx
+index 69146f3..5060910 100644
+--- a/web/src/features/career/MatrixChanges.tsx
++++ b/web/src/features/career/MatrixChanges.tsx
+@@ -7,11 +7,6 @@ import { CHANGED_NOTE } from "./matrixLabels";
+ 
+ const NO_VALUE = "—";
+ 
+-const _DATE = new Intl.DateTimeFormat("ru-RU", {
+-  dateStyle: "short",
+-  timeZone: "UTC",
+-});
+-
+ /** How each kind of change is called. */
+ export const CHANGE_TYPES: Record<MatrixChange["type"], string> = {
+   Added: "Добавлено",
+diff --git a/web/src/features/career/MatrixCreateModal.test.tsx b/web/src/features/career/MatrixCreateModal.test.tsx
+index ff2ca6f..0f28456 100644
+--- a/web/src/features/career/MatrixCreateModal.test.tsx
++++ b/web/src/features/career/MatrixCreateModal.test.tsx
+@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi, problem } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import { careerQueryKey } from "./careerApi";
+ import { MatrixCreateModal } from "./MatrixCreateModal";
+@@ -299,3 +299,121 @@ describe("starting a matrix (AC-14)", { timeout: LONG_FLOW_TIMEOUT }, () => {
+     expect(screen.queryByText("Открыта матрица")).not.toBeInTheDocument();
+   });
+ });
++
++const POSITIONS_ROUTE = "GET /api/v1/career/org-units/team/matrix-positions";
++
++function servePositions() {
++  fakeApi.on(POSITIONS_ROUTE, () =>
++    Response.json({
++      items: [
++        {
++          id: "manager",
++          name: "Руководитель",
++          isLinked: false,
++          linkedTrack: null,
++        },
++      ],
++      total: 1,
++      page: 1,
++      pageSize: 20,
++    }),
++  );
++}
++
++const choosePositionBasis = (user: ReturnType<typeof userEvent.setup>) =>
++  user.click(screen.getByRole("radio", { name: "По должности" }));
++
++describe("starting a matrix of a position (AC-14)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  const REASON = "Сначала выберите подразделение";
++
++  it("says under the position that the unit comes first, until the unit is chosen", async () => {
++    const user = await openModal(servePositions);
++    await choosePositionBasis(user);
++    expect(screen.getByText(REASON)).toBeInTheDocument();
++    expect(screen.getByRole("combobox", { name: "Должность" })).toBeDisabled();
++
++    await choose(user, "Подразделение", "Команда");
++
++    await waitFor(() =>
++      expect(screen.queryByText(REASON)).not.toBeInTheDocument(),
++    );
++    expect(screen.getByRole("combobox", { name: "Должность" })).toBeEnabled();
++  });
++});
++
++describe("the matrix form while the matrix is being created (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  const ROUTE = "POST /api/v1/career/matrices";
++
++  function lockedControls(kinds: Record<string, HTMLElement[]>) {
++    return Object.entries(kinds)
++      .filter(([, group]) =>
++        group.every((item) => item.hasAttribute("disabled")),
++      )
++      .map(([kind]) => kind);
++  }
++
++  const combobox = (name: string) => screen.getByRole("combobox", { name });
++
++  it("holds the basis, the unit, the direction and the track while the save is in flight, and frees them when it is refused", async () => {
++    const held = deferred<Response>();
++    const user = await openModal(() => fakeApi.on(ROUTE, () => held.promise));
++    await choose(user, "Подразделение", "Команда");
++    await choose(user, "Область", "Разработка");
++    await choose(user, "Трек", "Трек команды");
++    const locked = () =>
++      lockedControls({
++        basis: screen.getAllByRole("radio"),
++        unit: [combobox("Подразделение")],
++        direction: [combobox("Область")],
++        track: [combobox("Трек")],
++      });
++    expect(locked()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
++    expect(locked()).toEqual(["basis", "unit", "direction", "track"]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(locked()).toEqual([]);
++  });
++
++  it("holds the basis, the unit and the position of a position matrix while the save is in flight, and frees them when it is refused", async () => {
++    const held = deferred<Response>();
++    const user = await openModal(() => {
++      servePositions();
++      fakeApi.on(ROUTE, () => held.promise);
++    });
++    await choosePositionBasis(user);
++    await choose(user, "Подразделение", "Команда");
++    await user.click(combobox("Должность"));
++    await user.click(
++      await screen.findByText("Руководитель", {
++        selector: ".ant-select-item-option-content *",
++      }),
++    );
++    const locked = () =>
++      lockedControls({
++        basis: screen.getAllByRole("radio"),
++        unit: [combobox("Подразделение")],
++        position: [combobox("Должность")],
++      });
++    expect(locked()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
++    expect(locked()).toEqual(["basis", "unit", "position"]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(locked()).toEqual([]);
++  });
++});
+diff --git a/web/src/features/career/MatrixCreateModal.tsx b/web/src/features/career/MatrixCreateModal.tsx
+index a99ff46..afd818c 100644
+--- a/web/src/features/career/MatrixCreateModal.tsx
++++ b/web/src/features/career/MatrixCreateModal.tsx
+@@ -50,6 +50,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
+       <Form
+         form={form}
+         name="matrix-create"
++        disabled={isSubmitting}
+         layout="vertical"
+         onFinish={submit}
+       >
+@@ -92,6 +93,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
+             name="positionId"
+             label="Должность"
+             rules={[{ required: true, message: "Выберите должность" }]}
++            extra={!orgUnitId ? "Сначала выберите подразделение" : undefined}
+           >
+             <MatrixPositionSelect orgUnitId={orgUnitId} />
+           </Form.Item>
+@@ -125,7 +127,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
+                   directionId: directionId ?? undefined,
+                   forOrgUnitId: orgUnitId,
+                 }}
+-                disabled={!directionId || !orgUnitId}
++                disabled={!directionId || !orgUnitId || undefined}
+               />
+             </Form.Item>
+           </>
+diff --git a/web/src/features/career/MatrixEditor.tsx b/web/src/features/career/MatrixEditor.tsx
+index 8d82b04..788ea01 100644
+--- a/web/src/features/career/MatrixEditor.tsx
++++ b/web/src/features/career/MatrixEditor.tsx
+@@ -14,6 +14,7 @@ import {
+   Card,
+   ConfigProvider,
+   Flex,
++  Grid,
+   Select,
+   Space,
+   Table,
+@@ -30,7 +31,7 @@ import { useEditBase } from "../../app/useEditBase";
+ import { BuilderFooter, type BuilderStepControls } from "./BuilderFooter";
+ import { CatalogStatusTag } from "./CatalogParts";
+ import { type CatalogStatus, competencyQuery, levelsQuery } from "./catalogApi";
+-import { CompetencyTypeLabel, CompetencyTypeSelect } from "./competencyType";
++import { COMPETENCY_TYPES, CompetencyTypeSelect } from "./competencyType";
+ import { MatrixBlocks } from "./MatrixBlocks";
+ import { MatrixChanges } from "./MatrixChanges";
+ import { MatrixErrorAlert } from "./MatrixErrorAlert";
+@@ -145,8 +146,8 @@ interface MatrixEditorBodyProps extends MatrixEditorProps {
+ }
+ 
+ /**
+- * Names and kinds of the competencies the grid refers to: the version's entries, and for any other, such as one just
+- * added or one the approver removed, the catalogue entry read by its id.
++ * Names, statuses and scales of the competencies the grid refers to: the version's entries, and for any other, such as
++ * one just added or one the approver removed, the catalogue entry read by its id.
+  */
+ export function useCompetencies(
+   entries: MatrixVersion["entries"],
+@@ -175,6 +176,7 @@ function MatrixEditorBody({
+   isCompact: isCompactRequested = false,
+ }: MatrixEditorBodyProps) {
+   const { token } = theme.useToken();
++  const isWide = Grid.useBreakpoint().lg === true;
+   const isCompact = isCompactRequested || builder !== undefined;
+   const queryClient = useQueryClient();
+   const isEditable = version.actions.includes("Edit");
+@@ -248,11 +250,6 @@ function MatrixEditorBody({
+     ...shownCompetencyIds,
+     ...(diff?.before.competencies ?? []).map((item) => item.competencyId),
+   ]);
+-  const hasRequirement = (competencyId: string) =>
+-    shown.requirements.some(
+-      (item) =>
+-        item.competencyId === competencyId && item.requiredScore != null,
+-    );
+   const outsideIds = shown.competencies
+     .filter((item) => item.blockId === null)
+     .map((item) => item.competencyId);
+@@ -349,15 +346,6 @@ function MatrixEditorBody({
+               />
+             </Tooltip>
+           )}
+-          {!isFrozen && !hasRequirement(competencyId) && (
+-            <Tooltip title="Нет требований">
+-              <WarningOutlined
+-                role="img"
+-                aria-label="Нет требований"
+-                className="matrix-mark"
+-              />
+-            </Tooltip>
+-          )}
+           {changed.competencies.has(competencyId) && (
+             <Tooltip title={CHANGED_NOTE}>
+               <EditOutlined
+@@ -394,7 +382,7 @@ function MatrixEditorBody({
+             }
+           />
+         ) : (
+-          <CompetencyTypeLabel type={type} />
++          COMPETENCY_TYPES[type]
+         )}
+       </Space>
+     );
+@@ -625,7 +613,13 @@ function MatrixEditorBody({
+         )}
+         {isGridShown &&
+           (builder ? (
+-            <div className="matrix-step-columns">
++            <div
++              className={
++                isWide
++                  ? "matrix-step-columns matrix-step-columns--wide"
++                  : "matrix-step-columns"
++              }
++            >
+               <Card size="small" styles={{ body: { padding: 0 } }}>
+                 {grid}
+               </Card>
+diff --git a/web/src/features/career/MatrixPage.test.tsx b/web/src/features/career/MatrixPage.test.tsx
+index 385d9b5..a73bc78 100644
+--- a/web/src/features/career/MatrixPage.test.tsx
++++ b/web/src/features/career/MatrixPage.test.tsx
+@@ -1,8 +1,18 @@
+ import { act, render, screen, waitFor, within } from "@testing-library/react";
+ import userEvent from "@testing-library/user-event";
+-import { MemoryRouter, Route, Routes, useParams } from "react-router";
++import {
++  createMemoryRouter,
++  createRoutesFromElements,
++  MemoryRouter,
++  Outlet,
++  Route,
++  RouterProvider,
++  Routes,
++  useParams,
++} from "react-router";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
++import { LeaveGuardProvider } from "../../app/leaveGuard";
+ import { Providers } from "../../app/Providers";
+ import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+@@ -112,15 +122,36 @@ function DeskStub() {
+   return <p>{`desk:${scenario}:${id}`}</p>;
+ }
+ 
+-async function openPage() {
++async function openPage({ guarded = false } = {}) {
++  const routes = (
++    <>
++      <Route path="/career/matrices/:id" element={<MatrixPage />} />
++      <Route path="/desk/:scenario/:id" element={<DeskStub />} />
++    </>
++  );
+   render(
+     <Providers>
+-      <MemoryRouter initialEntries={["/career/matrices/matrix"]}>
+-        <Routes>
+-          <Route path="/career/matrices/:id" element={<MatrixPage />} />
+-          <Route path="/desk/:scenario/:id" element={<DeskStub />} />
+-        </Routes>
+-      </MemoryRouter>
++      {guarded ? (
++        <RouterProvider
++          router={createMemoryRouter(
++            [
++              {
++                element: (
++                  <LeaveGuardProvider>
++                    <Outlet />
++                  </LeaveGuardProvider>
++                ),
++                children: createRoutesFromElements(routes),
++              },
++            ],
++            { initialEntries: ["/career/matrices/matrix"] },
++          )}
++        />
++      ) : (
++        <MemoryRouter initialEntries={["/career/matrices/matrix"]}>
++          <Routes>{routes}</Routes>
++        </MemoryRouter>
++      )}
+     </Providers>,
+   );
+   await screen.findByRole("heading", { name: "Матрица «Бэкенд» — Отдел" });
+@@ -132,12 +163,11 @@ async function openPage() {
+   return userEvent.setup();
+ }
+ 
+-async function openHistory(user: ReturnType<typeof userEvent.setup>) {
+-  const history = screen.queryByRole("button", { name: "История" });
+-  if (history) {
+-    await user.click(history);
+-    return;
+-  }
++/** «История» of a returned version with three more actions before it: it sits behind the «…» menu, not in view. */
++async function openHistoryFromMenu(user: ReturnType<typeof userEvent.setup>) {
++  expect(
++    screen.queryByRole("button", { name: "История" }),
++  ).not.toBeInTheDocument();
+   await user.click(screen.getByRole("button", { name: "Действия с версией" }));
+   await user.click(await screen.findByRole("menuitem", { name: "История" }));
+ }
+@@ -645,7 +675,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
+       );
+       const user = await openPage();
+ 
+-      await openHistory(user);
++      await openHistoryFromMenu(user);
+       const history = await dialogTitled("История");
+       await user.click(within(history).getByRole("button", { name: /Автор/ }));
+ 
+@@ -696,7 +726,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
+       );
+       const user = await openPage();
+ 
+-      await openHistory(user);
++      await openHistoryFromMenu(user);
+       const history = await dialogTitled("История");
+       await user.click(
+         within(history).getByRole("button", { name: /Согласующий/ }),
+@@ -722,7 +752,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
+       );
+       const user = await openPage();
+ 
+-      await openHistory(user);
++      await openHistoryFromMenu(user);
+       const history = await dialogTitled("История");
+       await user.click(within(history).getByRole("button", { name: /Автор/ }));
+ 
+@@ -815,6 +845,23 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
+     return { opened, saved };
+   }
+ 
++  it("marks no competency as lacking a requirement (AC-57), since its cell shows the lowest score of the scale", async () => {
++    const { opened } = editorWithACompetency();
++    serveEditor({
++      ...opened,
++      content: { ...opened.content, requirements: [] },
++    });
++    await openPage();
++
++    const row = (await screen.findByText("Проектирование")).closest(
++      "tr",
++    ) as HTMLElement;
++
++    expect(
++      within(row).queryByRole("img", { name: "Нет требований" }),
++    ).not.toBeInTheDocument();
++  });
++
+   it("locks every control of the editor while the content is being saved, so that nothing typed then is lost, and frees them once it is saved", async () => {
+     const held = deferred<Response>();
+     const { opened, saved } = editorWithACompetency();
+@@ -903,6 +950,8 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
+ 
+   describe("while the form has edits that are not saved (AC-15, AC-17)", () => {
+     const UNSAVED_REASON = "Сначала сохраните изменения";
++    const leaveQuestion = () =>
++      screen.queryByRole("dialog", { name: "Перейти без сохранения?" });
+     const SUBMIT = "Перейти к отправке в мастере";
+     const DESK = `desk:matrix-builder:${VERSION_ID}`;
+     const deskLink = (label: string) =>
+@@ -918,7 +967,7 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
+       });
+     const RETURN = "Вернуть с правками";
+ 
+-    it("keeps the link to the desk scenario open with unsaved edits, since leaving goes through the confirmation", async () => {
++    it("keeps the link to the desk scenario enabled with unsaved edits, and following it leads there", async () => {
+       serveEditor();
+       const user = await openPage();
+       const threshold = await screen.findByRole("spinbutton", {
+@@ -932,6 +981,66 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
+       expect(await screen.findByText(DESK)).toBeInTheDocument();
+     });
+ 
++    it("asks before another version is chosen over unsaved edits, stays on the version and the value on «Остаться», and asks no more once they are saved", async () => {
++      const other = version({
++        id: "other",
++        number: 2,
++        status: "Published",
++        step: null,
++        actions: [],
++      });
++      serveEditor();
++      fakeApi.on("GET /api/v1/career/matrices/matrix/versions", () =>
++        Response.json(
++          [draft(), other].map(({ id, number, status }) => ({
++            id,
++            number,
++            status,
++            authorId: "author",
++            authorName: "Автор",
++            createdAt: "2026-10-01T10:00:00Z",
++            publishedAt: null,
++          })),
++        ),
++      );
++      fakeApi.on("GET /api/v1/career/matrix-versions/other", () =>
++        Response.json(other),
++      );
++      fakeApi.on("GET /api/v1/career/matrix-versions/other/history", () =>
++        Response.json({ variants: [], decisions: [] }),
++      );
++      const user = await openPage({ guarded: true });
++      const threshold = await screen.findByRole("spinbutton", {
++        name: THRESHOLD,
++      });
++      await user.type(threshold, "60");
++      const chooseOther = async () => {
++        await user.click(screen.getByRole("combobox", { name: "Версия" }));
++        await user.click(
++          await screen.findByText("Версия 2", {
++            selector: ".ant-select-item-option-content",
++          }),
++        );
++      };
++
++      await chooseOther();
++      await user.click(await screen.findByRole("button", { name: "Остаться" }));
++
++      await waitFor(() => expect(leaveQuestion()).not.toBeInTheDocument());
++      expect(screen.getByText("Черновик")).toBeInTheDocument();
++      expect(threshold).toHaveValue("60");
++
++      await user.click(screen.getByRole("button", { name: "Сохранить" }));
++      await waitFor(() => expect(fakeApi.calls(CONTENT_ROUTE)).toHaveLength(1));
++      await waitFor(() =>
++        expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument(),
++      );
++      await chooseOther();
++
++      expect(await screen.findByText("Опубликована")).toBeInTheDocument();
++      expect(leaveQuestion()).not.toBeInTheDocument();
++    });
++
+     it("holds the actions on the saved version back while a save is in flight, even when nothing was changed", async () => {
+       const held = deferred<Response>();
+       serveEditor(REVIEW());
+diff --git a/web/src/features/career/MatrixPositionSelect.tsx b/web/src/features/career/MatrixPositionSelect.tsx
+index ad3a260..60ec2bf 100644
+--- a/web/src/features/career/MatrixPositionSelect.tsx
++++ b/web/src/features/career/MatrixPositionSelect.tsx
+@@ -53,7 +53,7 @@ export function MatrixPositionSelect({
+     <Select<string, { value: string; label: string; item: MatrixPosition }>
+       id={id}
+       value={value}
+-      disabled={orgUnitId === undefined}
++      disabled={orgUnitId === undefined || undefined}
+       loading={read.isFetching}
+       placeholder="Выберите должность"
+       showSearch={{ filterOption: false, onSearch: setSearch }}
+diff --git a/web/src/features/career/NameModal.test.tsx b/web/src/features/career/NameModal.test.tsx
+new file mode 100644
+index 0000000..c2b4921
+--- /dev/null
++++ b/web/src/features/career/NameModal.test.tsx
+@@ -0,0 +1,56 @@
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { MemoryRouter } from "react-router";
++import { beforeEach, describe, expect, it, vi } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import { NameModal } from "./NameModal";
++
++const ROUTE = "POST /api/v1/career/directions";
++
++const lockedControls = () =>
++  screen.getByRole("textbox", { name: "Название" }).hasAttribute("disabled")
++    ? ["name"]
++    : [];
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("name form while the entry is being saved (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("holds the name while the save is in flight, and frees it when it is refused", async () => {
++    const held = deferred<Response>();
++    fakeApi.on(ROUTE, () => held.promise);
++    render(
++      <Providers>
++        <MemoryRouter>
++          <NameModal
++            segment="directions"
++            title="Новая область"
++            onClose={vi.fn()}
++          />
++        </MemoryRouter>
++      </Providers>,
++    );
++    const user = userEvent.setup();
++    await user.type(
++      await screen.findByRole("textbox", { name: "Название" }),
++      "Разработка",
++    );
++    expect(lockedControls()).toEqual([]);
++
++    await user.click(screen.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
++    expect(lockedControls()).toEqual(["name"]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(lockedControls()).toEqual([]);
++  });
++});
+diff --git a/web/src/features/career/NameModal.tsx b/web/src/features/career/NameModal.tsx
+index 19f47ab..4e3c1ee 100644
+--- a/web/src/features/career/NameModal.tsx
++++ b/web/src/features/career/NameModal.tsx
+@@ -78,6 +78,7 @@ function NameForm({ name, onSubmit, onCancel }: NameFormProps) {
+     <Form
+       form={form}
+       name="catalog-name"
++      disabled={isSubmitting}
+       layout="vertical"
+       initialValues={{ name }}
+       onFinish={submit}
+diff --git a/web/src/features/career/ScaleModal.test.tsx b/web/src/features/career/ScaleModal.test.tsx
+index 5ae4773..fdac9bb 100644
+--- a/web/src/features/career/ScaleModal.test.tsx
++++ b/web/src/features/career/ScaleModal.test.tsx
+@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router";
+ import { beforeEach, describe, expect, it, vi } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi, problem } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import type { Scale } from "./catalogApi";
+ import { ScaleModal } from "./ScaleModal";
+@@ -137,3 +137,48 @@ describe("scale form (AC-13)", { timeout: LONG_FLOW_TIMEOUT }, () => {
+     expect(onClose).not.toHaveBeenCalled();
+   });
+ });
++
++describe("scale form while the scale is being saved (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  function lockedControls() {
++    const controls: [string, HTMLElement[]][] = [
++      ["name", [screen.getByLabelText("Название")]],
++      ["scores", screen.getAllByLabelText("Балл")],
++      ["labels", screen.getAllByLabelText("Значение")],
++      ["remove point", screen.getAllByRole("button", { name: "Удалить" })],
++      ["add point", [screen.getByRole("button", { name: "Добавить балл" })]],
++    ];
++    return controls
++      .filter(([, group]) =>
++        group.every((item) => item.hasAttribute("disabled")),
++      )
++      .map(([kind]) => kind);
++  }
++
++  it("holds the name and every point while the save is in flight, and frees them when it is refused", async () => {
++    const held = deferred<Response>();
++    fakeApi.on("PUT /api/v1/career/scales/scale", () => held.promise);
++    const { user } = open(EXISTING);
++    await screen.findByDisplayValue("Расширенная");
++    expect(lockedControls()).toEqual([]);
++
++    await save(user);
++
++    await waitFor(() =>
++      expect(fakeApi.calls("PUT /api/v1/career/scales/scale")).toHaveLength(1),
++    );
++    expect(lockedControls()).toEqual([
++      "name",
++      "scores",
++      "labels",
++      "remove point",
++      "add point",
++    ]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(lockedControls()).toEqual([]);
++  });
++});
+diff --git a/web/src/features/career/ScaleModal.tsx b/web/src/features/career/ScaleModal.tsx
+index cf9668b..d9e7ba1 100644
+--- a/web/src/features/career/ScaleModal.tsx
++++ b/web/src/features/career/ScaleModal.tsx
+@@ -105,6 +105,7 @@ function ScaleForm({ scale, onSubmit, onCancel }: ScaleFormProps) {
+     <Form
+       form={form}
+       name="scale"
++      disabled={isSubmitting}
+       layout="vertical"
+       initialValues={{
+         name: scale?.name ?? "",
+diff --git a/web/src/features/career/TrackModal.test.tsx b/web/src/features/career/TrackModal.test.tsx
+index e23fd52..2187815 100644
+--- a/web/src/features/career/TrackModal.test.tsx
++++ b/web/src/features/career/TrackModal.test.tsx
+@@ -1,10 +1,11 @@
+ import { act, render, screen, waitFor, within } from "@testing-library/react";
+ import userEvent from "@testing-library/user-event";
+-import { MemoryRouter } from "react-router";
++import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
+ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+ import { queryClient } from "../../api/queryClient";
++import { LeaveGuardProvider } from "../../app/leaveGuard";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi, problem } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { stubRowLayout } from "../../test/stubRowLayout";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import { currentUserQueryKey } from "../auth/useCurrentUser";
+@@ -500,3 +501,122 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
+     expect(fakeApi.calls(TRACK_ROUTE)).toHaveLength(0);
+   });
+ });
++
++describe("closing the track dialog (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  const ASK = "Перейти без сохранения?";
++
++  async function openGuarded(onClose: () => void) {
++    serve();
++    render(
++      <Providers>
++        <RouterProvider
++          router={createMemoryRouter([
++            {
++              path: "/",
++              element: (
++                <LeaveGuardProvider>
++                  <TrackModal directionId={DIRECTION_ID} onClose={onClose} />
++                </LeaveGuardProvider>
++              ),
++            },
++          ])}
++        />
++      </Providers>,
++    );
++    await rightsLoaded();
++    await screen.findByRole("combobox", { name: "Подразделение" });
++    await act(async () => undefined);
++    return userEvent.setup();
++  }
++
++  const close = (user: ReturnType<typeof userEvent.setup>) =>
++    user.click(screen.getByRole("button", { name: /Close|Закрыть/ }));
++
++  it("closes a new track nothing was typed in at once, without a question", async () => {
++    const onClose = vi.fn();
++    const user = await openGuarded(onClose);
++
++    await close(user);
++
++    expect(onClose).toHaveBeenCalledOnce();
++    expect(
++      screen.queryByText(ASK, { selector: ".ant-modal-confirm-title" }),
++    ).not.toBeInTheDocument();
++  });
++
++  it("asks before closing a new track once a name was typed", async () => {
++    const onClose = vi.fn();
++    const user = await openGuarded(onClose);
++    await user.type(
++      screen.getByRole("textbox", { name: "Название" }),
++      "Бэкенд",
++    );
++
++    await close(user);
++
++    expect(
++      await screen.findByText(ASK, { selector: ".ant-modal-confirm-title" }),
++    ).toBeInTheDocument();
++    expect(onClose).not.toHaveBeenCalled();
++  });
++});
++
++describe("the track dialog while the track is being saved (AC-61)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  function lockedControls() {
++    const controls: [string, HTMLElement | null][] = [
++      ["name", screen.queryByRole("textbox", { name: "Название" })],
++      ["unit", screen.queryByRole("combobox", { name: "Подразделение" })],
++      ["direction", screen.queryByRole("combobox", { name: "Область" })],
++      ["add level", screen.queryByRole("button", { name: "Добавить уровень" })],
++      [
++        "move level",
++        screen.queryByRole("button", { name: "Перетащить уровень «Младший»" }),
++      ],
++      [
++        "level actions",
++        screen.queryByRole("button", { name: "Действия с «Младший»" }),
++      ],
++    ];
++    return controls
++      .filter(([, control]) => control?.hasAttribute("disabled"))
++      .map(([kind]) => kind);
++  }
++
++  it("holds the fields and the list of levels while the save is in flight, and frees them when it is refused", async () => {
++    serve();
++    const held = deferred<Response>();
++    fakeApi.on(TRACK_ROUTE, () => held.promise);
++    render(
++      <Providers>
++        <MemoryRouter>
++          <TrackModal directionId={DIRECTION_ID} onClose={vi.fn()} />
++        </MemoryRouter>
++      </Providers>,
++    );
++    const user = userEvent.setup();
++    await fillNewTrack(user, "Бэкенд");
++    await addLevel(user, "Младший");
++    expect(lockedControls()).toEqual([]);
++
++    await save(user);
++
++    await waitFor(() => expect(fakeApi.calls(TRACK_ROUTE)).toHaveLength(1));
++    expect(lockedControls()).toEqual([
++      "name",
++      "unit",
++      "direction",
++      "add level",
++      "move level",
++      "level actions",
++    ]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    expect(
++      await screen.findByText("Не удалось сохранить запись"),
++    ).toBeInTheDocument();
++    expect(lockedControls()).toEqual([]);
++  });
++});
+diff --git a/web/src/features/career/TrackModal.tsx b/web/src/features/career/TrackModal.tsx
+index 679ee64..7a944f2 100644
+--- a/web/src/features/career/TrackModal.tsx
++++ b/web/src/features/career/TrackModal.tsx
+@@ -129,7 +129,7 @@ export function TrackModal({
+       isUnsaved={
+         pending.length > 0 ||
+         order !== undefined ||
+-        (name !== undefined && name !== current?.name)
++        (name !== undefined && name !== (current?.name ?? ""))
+       }
+       onClose={onClose}
+     >
+@@ -137,6 +137,7 @@ export function TrackModal({
+         key={base?.version}
+         form={form}
+         name="career-track"
++        disabled={isSubmitting}
+         layout="vertical"
+         initialValues={{
+           name: current?.name ?? "",
+diff --git a/web/src/features/career/catalogApi.ts b/web/src/features/career/catalogApi.ts
+index 04c4ab9..728113c 100644
+--- a/web/src/features/career/catalogApi.ts
++++ b/web/src/features/career/catalogApi.ts
+@@ -77,7 +77,6 @@ export interface ScaleListParams extends CatalogListParams {
+ 
+ /** Column filters of the shared block list. */
+ export interface BlockListParams extends CatalogListParams {
+-  scaleId?: string;
+   /** Blocks of this unit. */
+   scopeUnitId?: string;
+   /** Blocks for every unit. */
+@@ -404,11 +403,6 @@ export async function changeCatalogStatus(
+   );
+ }
+ 
+-/** Approves a draft the drafts list names, under the version the list showed. */
+-export async function approveDraft(draft: CatalogDraft) {
+-  return changeCatalogStatus(SEGMENT_OF_KIND[draft.kind], draft, "approve");
+-}
+-
+ /** Values of a form that names an entry of a catalogue with nothing else to it. */
+ export interface NamedEntryValues {
+   name: string;
+diff --git a/web/src/features/career/catalogRoutes.test.ts b/web/src/features/career/catalogRoutes.test.ts
+index df83140..b847c9d 100644
+--- a/web/src/features/career/catalogRoutes.test.ts
++++ b/web/src/features/career/catalogRoutes.test.ts
+@@ -5,9 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { fakeApi } from "../../test/fakeApi";
+ import {
+-  approveDraft,
+   type CatalogAction,
+-  type CatalogKind,
+   type CatalogSegment,
+   changeCatalogStatus,
+   deleteEntry,
+@@ -36,14 +34,6 @@ const ACTIONS = Object.keys({
+   activate: true,
+ } satisfies Record<CatalogAction, true>) as CatalogAction[];
+ 
+-const DRAFT_KINDS = Object.keys({
+-  Direction: true,
+-  Track: true,
+-  Competency: true,
+-  Scale: true,
+-  Block: true,
+-} satisfies Record<CatalogKind, true>) as CatalogKind[];
+-
+ const TRANSITIONS = Object.keys({
+   submit: true,
+   approve: true,
+@@ -103,18 +93,6 @@ describe("requests whose path is assembled at run time are routes of the contrac
+     },
+   );
+ 
+-  it.each(DRAFT_KINDS)("approves a draft %s", async (kind) => {
+-    await expect(
+-      approveDraft({
+-        kind,
+-        id: "id",
+-        name: "Имя",
+-        ownerOrgUnitName: null,
+-        authorName: null,
+-      } as never),
+-    ).resolves.toBeDefined();
+-  });
+-
+   it.each(TRANSITIONS)("moves a matrix version by %s", async (transition) => {
+     await expect(
+       transitMatrixVersion({ id: "id", version: 1 } as never, transition),
+diff --git a/web/src/features/career/catalogueTables.test.tsx b/web/src/features/career/catalogueTables.test.tsx
+index bb6ca0b..7fe11ce 100644
+--- a/web/src/features/career/catalogueTables.test.tsx
++++ b/web/src/features/career/catalogueTables.test.tsx
+@@ -7,7 +7,9 @@ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+ import { fakeApi } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import { BlocksTab } from "./BlocksTab";
+ import { CompetenciesTab } from "./CompetenciesTab";
++import { MAX_PAGE_SIZE } from "./catalogApi";
+ import { DirectionsTracksTab } from "./DirectionsTracksTab";
+ import { DraftsSection } from "./DraftsSection";
+ import { MatricesTab } from "./MatricesTab";
+@@ -59,6 +61,17 @@ const TABLES: PagedTable[] = [
+       versionNumber: 1,
+     }),
+   },
++  {
++    table: "blocks",
++    show: () => <BlocksTab />,
++    route: "GET /api/v1/career/blocks",
++    row: (index) => ({
++      ...entry(index),
++      scopeUnitId: null,
++      scopeUnitName: null,
++      competencies: [],
++    }),
++  },
+   {
+     table: "matrices",
+     show: () => <MatricesTab />,
+@@ -120,27 +133,56 @@ beforeEach(() => {
+ describe("a catalogue table pages on the server (AC-24)", {
+   timeout: LONG_FLOW_TIMEOUT,
+ }, () => {
++  function servePaged({ route, row }: PagedTable) {
++    serveRole("GlobalAdmin");
++    fakeApi.on("GET /api/v1/career/directions", () =>
++      Response.json(page([{ ...entry(0), name: "Разработка" }])),
++    );
++    fakeApi.on(route, (request) => {
++      const query = new URL(request.url).searchParams;
++      const number = Number(query.get("page"));
++      const size = Number(query.get("pageSize"));
++      const items = Array.from({ length: TOTAL }, (_, index) => row(index + 1));
++      return Response.json({
++        items: items.slice((number - 1) * size, number * size),
++        total: TOTAL,
++        page: number,
++        pageSize: size,
++      });
++    });
++  }
++
++  it("asks for the first page of the chosen size when the page size is changed on a later page", async () => {
++    const scales = TABLES.find(({ table }) => table === "scales") as PagedTable;
++    servePaged(scales);
++    const user = showTable(scales.show());
++    await user.click(await screen.findByTitle("2"));
++    expect(await screen.findByText(FIRST_OF_SECOND_PAGE)).toBeInTheDocument();
++
++    await user.click(
++      document.querySelector(
++        ".ant-pagination-options .ant-select",
++      ) as HTMLElement,
++    );
++    await user.click(
++      await screen.findByText(/^50/, {
++        selector: ".ant-select-item-option-content",
++      }),
++    );
++
++    await waitFor(() =>
++      expect(queries(scales.route).at(-1)).toMatchObject({
++        page: "1",
++        pageSize: "50",
++      }),
++    );
++  });
++
+   it.each(TABLES)(
+     "$table: 20 rows to a page, the next page asked from the server",
+-    async ({ show, route, row }) => {
+-      serveRole("GlobalAdmin");
+-      fakeApi.on("GET /api/v1/career/directions", () =>
+-        Response.json(page([{ ...entry(0), name: "Разработка" }])),
+-      );
+-      fakeApi.on(route, (request) => {
+-        const query = new URL(request.url).searchParams;
+-        const number = Number(query.get("page"));
+-        const size = Number(query.get("pageSize"));
+-        const items = Array.from({ length: TOTAL }, (_, index) =>
+-          row(index + 1),
+-        );
+-        return Response.json({
+-          items: items.slice((number - 1) * size, number * size),
+-          total: TOTAL,
+-          page: number,
+-          pageSize: size,
+-        });
+-      });
++    async (table) => {
++      const { show, route } = table;
++      servePaged(table);
+       const user = showTable(show());
+       const scope: HTMLElement = document.body;
+       expect(await within(scope).findByText("Запись 1")).toBeInTheDocument();
+@@ -427,7 +469,6 @@ describe("the row actions of the catalogues (AC-19, AC-25)", {
+             name: "Проектирование",
+             status: "Draft",
+             description: null,
+-            categoryId: "c",
+             directionId: null,
+             scaleId: "s",
+             createdAt: "2026-10-01T10:00:00Z",
+@@ -443,6 +484,89 @@ describe("the row actions of the catalogues (AC-19, AC-25)", {
+     expect(visible).toEqual(["История версий", "Изменить"]);
+     expect(menu).toEqual(["Согласовать", "Деактивировать", "Удалить"]);
+   });
++
++  it.each([
++    {
++      rights: "may edit and delete",
++      row: { canEdit: true, canDelete: true },
++      visible: ["Сделать по умолчанию", "Изменить"],
++      menu: ["Деактивировать", "Удалить"],
++    },
++    {
++      rights: "may only delete",
++      row: { canEdit: false, canDelete: true },
++      visible: ["Сделать по умолчанию"],
++      menu: ["Деактивировать", "Удалить"],
++    },
++    {
++      rights: "may neither edit nor delete",
++      row: { canEdit: false, canDelete: false },
++      visible: ["Сделать по умолчанию", "Деактивировать"],
++      menu: [],
++    },
++  ])(
++    "offers «Изменить» and «Удалить» as the server allows them: a scale the user $rights",
++    async ({ row, visible, menu }) => {
++      serveRole("GlobalAdmin");
++      fakeApi.on("GET /api/v1/career/scales", () =>
++        Response.json(
++          page([
++            editable({ ...row, name: "Шкала", points: [], isDefault: false }),
++          ]),
++        ),
++      );
++      const user = showTable(<ScalesTab />);
++
++      expect(await actionsOf(user, "Шкала")).toEqual({ visible, menu });
++    },
++  );
++
++  describe("an action from the menu of a row carries the version of the row", () => {
++    function serveScale() {
++      serveRole("GlobalAdmin");
++      fakeApi.on("GET /api/v1/career/scales", () =>
++        Response.json(
++          page([editable({ name: "Шкала", points: [], isDefault: false })]),
++        ),
++      );
++    }
++
++    it("deactivates against it", async () => {
++      const route = "POST /api/v1/career/scales/entry/deactivate";
++      serveScale();
++      fakeApi.on(route, () => Response.json(editable({ status: "Inactive" })));
++      const user = showTable(<ScalesTab />);
++      await actionsOf(user, "Шкала");
++
++      await user.click(
++        await screen.findByRole("menuitem", { name: "Деактивировать" }),
++      );
++
++      await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
++      expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe('"3"');
++    });
++
++    it("deletes against it once the question is confirmed", async () => {
++      const route = "DELETE /api/v1/career/scales/entry";
++      serveScale();
++      fakeApi.on(route, () => new Response(null, { status: 204 }));
++      const user = showTable(<ScalesTab />);
++      await actionsOf(user, "Шкала");
++
++      await user.click(
++        await screen.findByRole("menuitem", { name: "Удалить" }),
++      );
++      expect(fakeApi.calls(route)).toHaveLength(0);
++      await user.click(
++        within(await screen.findByRole("dialog")).getByRole("button", {
++          name: "Удалить",
++        }),
++      );
++
++      await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
++      expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe('"3"');
++    });
++  });
+ });
+ 
+ describe("the empty tables of the catalogues (AC-19)", {
+@@ -461,6 +585,47 @@ describe("the empty tables of the catalogues (AC-19)", {
+     ).toEqual(["Шкал пока нет"]);
+   });
+ 
++  it("reads the tracks of a direction in one request of the largest page, and says how many are shown of how many when there are more", async () => {
++    const route = "GET /api/v1/career/tracks";
++    const SHOWN = 3;
++    const ALL = 250;
++    serveRole("GlobalAdmin");
++    fakeApi.on("GET /api/v1/career/directions", () =>
++      Response.json(page([editable({ name: "Разработка" })])),
++    );
++    fakeApi.on(route, () =>
++      Response.json({
++        items: Array.from({ length: SHOWN }, (_, index) => ({
++          ...entry(index + 1),
++          directionId: "entry",
++          ownerOrgUnitId: "unit",
++          ownerOrgUnitName: "Отдел",
++        })),
++        total: ALL,
++        page: 1,
++        pageSize: MAX_PAGE_SIZE,
++      }),
++    );
++    const user = showTable(<DirectionsTracksTab />);
++
++    await user.click(
++      await waitFor(() => {
++        const expander = document.querySelector(".ant-table-row-expand-icon");
++        expect(expander).not.toBeNull();
++        return expander as HTMLElement;
++      }),
++    );
++
++    expect(
++      await screen.findByText(
++        `Показаны первые ${SHOWN} из ${ALL} — уточните поиск.`,
++      ),
++    ).toBeVisible();
++    expect(queries(route)[0]).toMatchObject({
++      pageSize: String(MAX_PAGE_SIZE),
++    });
++  });
++
+   it("says «Треков пока нет» in the tracks of a direction that has none", async () => {
+     serveRole("GlobalAdmin");
+     fakeApi.on("GET /api/v1/career/directions", () =>
+diff --git a/web/src/features/career/columnFilterWiring.test.tsx b/web/src/features/career/columnFilterWiring.test.tsx
+index 69ee5be..9f69c74 100644
+--- a/web/src/features/career/columnFilterWiring.test.tsx
++++ b/web/src/features/career/columnFilterWiring.test.tsx
+@@ -8,6 +8,7 @@ import { Providers } from "../../app/Providers";
+ import { fakeApi } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import { ApprovalsSection } from "./ApprovalsSection";
++import { BlocksTab } from "./BlocksTab";
+ import { CompetenciesTab } from "./CompetenciesTab";
+ import { DirectionsTracksTab } from "./DirectionsTracksTab";
+ import { DraftsSection } from "./DraftsSection";
+@@ -74,6 +75,7 @@ function serve() {
+   fakeApi.on("GET /api/v1/career/tracks", () => Response.json(page([TRACK])));
+   fakeApi.on("GET /api/v1/career/competencies", () => Response.json(page([])));
+   fakeApi.on("GET /api/v1/career/matrices", () => Response.json(page([])));
++  fakeApi.on("GET /api/v1/career/blocks", () => Response.json(page([])));
+   fakeApi.on("GET /api/v1/career/approvals", () => Response.json([]));
+   fakeApi.on("GET /api/v1/career/drafts", () => Response.json([]));
+ }
+@@ -85,7 +87,11 @@ interface FilterCase {
+   column: string;
+   /** Accessible name of the control inside the filter when it differs from the column title. */
+   control?: string;
+-  choose: { option: string } | { entry: string } | { unit: string };
++  choose:
++    | { option: string }
++    | { entry: string }
++    | { unit: string }
++    | { checkbox: string };
+   param: string;
+   value: string;
+   inNestedTable?: boolean;
+@@ -166,6 +172,24 @@ const CASES: FilterCase[] = [
+     param: "status",
+     value: "Active",
+   },
++  {
++    table: "blocks by unit",
++    show: () => <BlocksTab />,
++    route: "GET /api/v1/career/blocks",
++    column: "Действует для",
++    choose: { unit: "Компания" },
++    param: "scopeUnitId",
++    value: "company",
++  },
++  {
++    table: "blocks for every unit",
++    show: () => <BlocksTab />,
++    route: "GET /api/v1/career/blocks",
++    column: "Действует для",
++    choose: { checkbox: "Для всех" },
++    param: "forAll",
++    value: "true",
++  },
+   {
+     table: "matrices by unit",
+     show: () => <MatricesTab />,
+@@ -303,6 +327,10 @@ describe("column filters send their value under the param the server reads (AC-2
+         await screen.findByRole("menuitem", { name: filter.choose.option }),
+       );
+       await user.click(screen.getByRole("button", { name: "OK" }));
++    } else if ("checkbox" in filter.choose) {
++      await user.click(
++        screen.getByRole("checkbox", { name: filter.choose.checkbox }),
++      );
+     } else if ("entry" in filter.choose) {
+       await user.click(
+         screen.getByRole("combobox", { name: filter.control ?? filter.column }),
+@@ -313,7 +341,11 @@ describe("column filters send their value under the param the server reads (AC-2
+         }),
+       );
+     } else {
+-      await user.click(screen.getByRole("combobox", { name: "Подразделение" }));
++      await user.click(
++        within(
++          document.querySelector(".ant-table-filter-dropdown") as HTMLElement,
++        ).getByRole("combobox"),
++      );
+       await user.click(
+         await screen.findByText(filter.choose.unit, {
+           selector: ".ant-select-tree-title",
+diff --git a/web/src/features/career/competencyType.tsx b/web/src/features/career/competencyType.tsx
+index 6d67a37..2867143 100644
+--- a/web/src/features/career/competencyType.tsx
++++ b/web/src/features/career/competencyType.tsx
+@@ -11,13 +11,8 @@ export const COMPETENCY_TYPES: Record<CompetencyType, string> = {
+ /** The type a competency has in a matrix until the author changes it. */
+ export const DEFAULT_COMPETENCY_TYPE: CompetencyType = "Profile";
+ 
+-/** The type in words; every type looks the same. */
+-export function CompetencyTypeLabel({ type }: { type: CompetencyType }) {
+-  return COMPETENCY_TYPES[type];
+-}
+-
+ const OPTIONS = (Object.keys(COMPETENCY_TYPES) as CompetencyType[]).map(
+-  (type) => ({ value: type, label: <CompetencyTypeLabel type={type} /> }),
++  (type) => ({ value: type, label: COMPETENCY_TYPES[type] }),
+ );
+ 
+ interface CompetencyTypeSelectProps {
+diff --git a/web/src/features/career/matrix.css b/web/src/features/career/matrix.css
+index 6abd1a9..f3968bd 100644
+--- a/web/src/features/career/matrix.css
++++ b/web/src/features/career/matrix.css
+@@ -3,7 +3,6 @@
+ .matrix-legend {
+   --matrix-row-height: 48px;
+   --matrix-cell-min-width: 72px;
+-  --matrix-name-column-width: 280px;
+   --rating-level-0: var(--ant-color-fill-tertiary);
+   --rating-level-1: #c7d0fb;
+   --rating-level-2: #9ba8f9;
+@@ -43,28 +42,6 @@
+   background: var(--ant-color-warning-bg);
+ }
+ 
+-.matrix-cell-button {
+-  display: inline-flex;
+-  align-items: center;
+-  justify-content: center;
+-  gap: var(--ant-margin-xxs);
+-  width: 100%;
+-  min-height: calc(var(--matrix-row-height) - var(--ant-padding-xs) * 2);
+-  padding: 0;
+-  border: 0;
+-  background: transparent;
+-  color: inherit;
+-  cursor: pointer;
+-}
+-
+-.matrix-cell-button:hover:not(:disabled) {
+-  background: var(--ant-color-primary-bg);
+-}
+-
+-.matrix-cell-button:disabled {
+-  cursor: not-allowed;
+-}
+-
+ .rating-chip {
+   display: inline-flex;
+   align-items: center;
+@@ -112,15 +89,13 @@
+ 
+ .matrix-step-columns {
+   display: grid;
+-  grid-template-columns: minmax(0, 1fr) calc(var(--ant-size-xxl) * 6);
++  grid-template-columns: minmax(0, 1fr);
+   gap: var(--ant-margin);
+   align-items: start;
+ }
+ 
+-@media (width < 992px) {
+-  .matrix-step-columns {
+-    grid-template-columns: minmax(0, 1fr);
+-  }
++.matrix-step-columns--wide {
++  grid-template-columns: minmax(0, 1fr) calc(var(--ant-size-xxl) * 6);
+ }
+ 
+ .matrix-legend li {
+diff --git a/web/src/features/career/useCatalogRights.ts b/web/src/features/career/useCatalogRights.ts
+index dc81a26..6663d90 100644
+--- a/web/src/features/career/useCatalogRights.ts
++++ b/web/src/features/career/useCatalogRights.ts
+@@ -8,6 +8,8 @@ import { useProcessRoles } from "./careerApi";
+  * entry may be edited or deleted the server tells with the entry itself.
+  * Directions, competencies and scales belong to no unit: administrators and accounts with the HR role keep them and heads of
+  * units add drafts. A track and its levels belong to the track's unit: its HR and administrators keep them, its head edits drafts.
++ * Adding a track needs a unit to put it in. `canManage` takes the unit of the track an entry is or belongs to, none for an
++ * entry without a unit.
+  */
+ export function useCatalogRights() {
+   const isAdmin = useIsAdmin();
+@@ -30,11 +32,8 @@ export function useCatalogRights() {
+       isAdmin,
+       isHr,
+       ownerUnits,
+-      /** Whether the user may add a direction, competency or scale. */
+       canCreate: isHr || headed.size > 0,
+-      /** Whether the user may add a track: they need a unit to put it in. */
+       canCreateTrack: isAdmin || ownerUnits.length > 0,
+-      /** `unitId` is the unit of the track the entry is, or belongs to; omitted for an entry without a unit. */
+       canManage: (unitId?: string) =>
+         unitId === undefined ? isHr : keeps(unitId),
+     };
+diff --git a/web/src/features/career/usePublishEntry.test.tsx b/web/src/features/career/usePublishEntry.test.tsx
+index 4779442..2110775 100644
+--- a/web/src/features/career/usePublishEntry.test.tsx
++++ b/web/src/features/career/usePublishEntry.test.tsx
+@@ -104,9 +104,9 @@ describe("approving an entry under the list of what is published with it (AC-110
+     const request = fakeApi.calls(APPROVE_ROUTE)[0];
+     expect(request?.headers.get("If-Match")).toBe('"4"');
+     expect(queryOf(request).get("cascade")).toBe("tag-empty");
++    await waitFor(() => expect(isCatalogStale()).toBe(true));
+     expect(document.querySelector(".ant-modal-confirm")).toBeNull();
+     expect(document.querySelector(".ant-message-notice")).toBeNull();
+-    await waitFor(() => expect(isCatalogStale()).toBe(true));
+   });
+ 
+   it("names every draft that goes with the entry and approves under their tag once confirmed", async () => {
+@@ -469,9 +469,12 @@ describe("the offer to approve a draft right after it was created (AC-115)", ()
+       const user = renderHarness();
+ 
+       await user.click(screen.getByRole("button", { name: "предложить" }));
+-
+       await waitFor(() => expect(fakeApi.calls(PREVIEW_ROUTE)).toHaveLength(1));
+-      expect(document.querySelector(".ant-modal-confirm")).toBeNull();
++      fakeApi.on(PREVIEW_ROUTE, () => preview("tag-later"));
++      await user.click(screen.getByRole("button", { name: "предложить" }));
++
++      await confirmDialog();
++      expect(document.querySelectorAll(".ant-modal-confirm")).toHaveLength(1);
+       expect(document.querySelector(".ant-message-notice")).toBeNull();
+     },
+   );
+diff --git a/web/src/features/career/usePublishEntry.tsx b/web/src/features/career/usePublishEntry.tsx
+index 0088dbe..cd9d5b3 100644
+--- a/web/src/features/career/usePublishEntry.tsx
++++ b/web/src/features/career/usePublishEntry.tsx
+@@ -293,9 +293,10 @@ function publicationBlockers(error: ApiError) {
+ }
+ 
+ /**
+- * Approving and returning to work an entry of the catalogues, and the offer made right after an entry was created as a
+- * draft. The list of what is published with the entry is read first; an empty one needs no question, otherwise a window
+- * names the entries. The action carries the tag of the list the user saw. A refusal (409) is explained with what blocks;
++ * Approving and returning to work an entry of the catalogues (`publish`), approving it under the list the caller already
++ * shows (`approveShown`), and the approval offered right after an entry was created as a draft (`offerApproval`: none
++ * for an entry that is not a draft or that the user may not approve). The list of what is published with the entry is
++ * read first; an empty one needs no question, otherwise a window names the entries. The action carries the tag of the list the user saw. A refusal (409) is explained with what blocks;
+  * a 412 that names a fresh preview shows the new list for confirmation again, with no retry of its own, while a 412 on
+  * the entry's version only rereads the tables.
+  */
+@@ -339,7 +340,6 @@ export function usePublishEntry() {
+     return `${isTrack ? "Трек" : "Запись"} «${target.entry.name}» нельзя ${action === "approve" ? `сделать ${done}` : "вернуть в работу"}`;
+   }
+ 
+-  /** Runs the action under the confirmed tag; true when the list changed meanwhile and must be confirmed again. */
+   async function execute(
+     target: PublishTarget,
+     action: PublishAction,
+@@ -415,7 +415,6 @@ export function usePublishEntry() {
+     });
+   }
+ 
+-  /** Approves or returns to work an entry, after the list of what is published with it was shown if there is one. */
+   async function publish(
+     target: PublishTarget,
+     action: PublishAction,
+@@ -447,10 +446,6 @@ export function usePublishEntry() {
+     }
+   }
+ 
+-  /**
+-   * Approves an entry under the list the user is looking at, which the caller shows; a list that changed meanwhile is
+-   * confirmed again, with the new list, before anything is done.
+-   */
+   async function approveShown(
+     target: PublishTarget,
+     preview: PublicationPreview,
+@@ -464,10 +459,6 @@ export function usePublishEntry() {
+     }
+   }
+ 
+-  /**
+-   * After an entry was created: one made a draft only for lack of the right to approve it, or not referring to drafts,
+-   * gets no offer; one the user may approve is offered the approval with the list of what goes with it.
+-   */
+   async function offerApproval(target: PublishTarget, status: CatalogStatus) {
+     if (status !== "Draft") return;
+     try {
+diff --git a/web/src/features/org-structure/UnitHrModal.test.tsx b/web/src/features/org-structure/UnitHrModal.test.tsx
+index 9e31613..60102df 100644
+--- a/web/src/features/org-structure/UnitHrModal.test.tsx
++++ b/web/src/features/org-structure/UnitHrModal.test.tsx
+@@ -177,6 +177,27 @@ describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
+         "Учётная запись заблокирована или не завершила регистрацию",
+       ),
+     ).toBeInTheDocument();
++    expect(document.querySelector(".ant-message-notice")).toBeNull();
++  });
++
++  it("tells the administrator, and keeps the dialog, when assigning fails for a reason that names no field", async () => {
++    serve("GlobalAdmin", { assigned: null, inherited: null });
++    fakeApi.on("PUT /api/v1/career/org-units/sales/hr", () =>
++      problem(500, { title: "Сбой" }),
++    );
++    const user = await openModal();
++    await screen.findByText("HR не назначен");
++
++    await user.click(screen.getByRole("combobox", { name: "Сотрудник" }));
++    await user.click(await screen.findByText("Петров Пётр"));
++    await user.click(screen.getByRole("button", { name: "Закрепить" }));
++
++    await waitFor(() =>
++      expect(document.querySelector(".ant-message-notice")).not.toBeNull(),
++    );
++    expect(
++      await dialogTitled("HR подразделения «Продажи»"),
++    ).toBeInTheDocument();
+   });
+ 
+   it("removes the assignment after a confirmation that names what follows, focused on «Отмена»", async () => {
+diff --git a/web/src/features/org-structure/UnitHrModal.tsx b/web/src/features/org-structure/UnitHrModal.tsx
+index 8bf87df..753b7eb 100644
+--- a/web/src/features/org-structure/UnitHrModal.tsx
++++ b/web/src/features/org-structure/UnitHrModal.tsx
+@@ -17,6 +17,7 @@ import {
+ } from "antd";
+ import { useState } from "react";
+ import { Link } from "react-router";
++import { ApiError } from "../../api/ApiError";
+ import { api } from "../../api/client";
+ import { unwrap } from "../../api/unwrap";
+ import { AppModal } from "../../app/AppModal";
+@@ -209,8 +210,8 @@ function hrCandidatesQuery(text: string) {
+ }
+ 
+ /**
+- * Remote-search choice of an employee and the button that assigns them as the unit's HR; a refusal shows under the field and
+- * rereads the list. With no candidates at all the field gives way to a pointer to the account screen.
++ * Remote-search choice of an employee and the button that assigns them as the unit's HR; a refusal naming the employee
++ * shows under the field, any other failure as a message, and either rereads the list. With no candidates at all the field gives way to a pointer to the account screen.
+  */
+ function AssignHrForm({
+   onAssign,
+@@ -218,12 +219,16 @@ function AssignHrForm({
+   onAssign: (employeeId: string) => Promise<unknown>;
+ }) {
+   const queryClient = useQueryClient();
++  const { message } = App.useApp();
+   const [form] = Form.useForm<AssignHrValues>();
+   const { isSubmitting, submit } = useFormSubmit(form, async (values) => {
+     try {
+       await onAssign(values.employeeId);
+     } catch (failure) {
+       await queryClient.invalidateQueries({ queryKey: CANDIDATES_QUERY_KEY });
++      if (!(failure instanceof ApiError && failure.errors?.employeeId)) {
++        message.error(describeApiError(failure));
++      }
+       throw failure;
+     }
+   });

@@ -15,14 +15,12 @@ public sealed class CareerAuditTests(CareerHost fixture) : IClassFixture<CareerH
     public async Task Ac17_EveryCatalogueEntry_IsJournaledOnCreationAndOnRename_WithTheActorAndTheEntryIdentifier()
     {
         var org = await fixture.OrgAsync();
-        var categoryId = await org.Admin.CategoryIdAsync();
         var direction = await org.Admin.MakeDirectionAsync();
         var created = new (string Type, ApiResponse Entry, string Path)[]
         {
             ("CareerDirection", direction, "directions"),
-            ("CompetencyCategory", await org.Admin.MakeCategoryAsync(), "categories"),
             ("CompetencyScale", await org.Admin.MakeScaleAsync(), "scales"),
-            ("CareerCompetency", await org.Admin.MakeCompetencyAsync(categoryId), "competencies"),
+            ("CareerCompetency", await org.Admin.MakeCompetencyAsync(), "competencies"),
             ("CareerTrack", await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id), "tracks"),
         };
 
@@ -34,13 +32,13 @@ public sealed class CareerAuditTests(CareerHost fixture) : IClassFixture<CareerH
             creation["actor"]!.GetValue<string>().Should().Be((await org.Admin.GetAsync("/api/v1/auth/me")).Id.ToString());
             creation["role"]!.GetValue<string>().Should().Be(Scenarios.GlobalAdmin);
             creation["newValue"]!["name"]!.GetValue<string>().Should().Be(entry.Json!["name"]!.GetValue<string>());
-            creation["newValue"]!["status"]!.GetValue<string>().Should().Be("Active");
+            creation["newValue"]!["status"]!.GetValue<string>().Should().Be(type == "CareerTrack" ? "Draft" : "Active", "a track starts as a draft until it is approved");
             creation["newValue"]!.AsObject().ContainsKey("version").Should().BeFalse("only allow-listed properties are written");
 
             var body = path == "scales"
                 ? (object)new { name = Scenarios.Unique("Новая"), points = CareerScenarios.Points() }
                 : path == "competencies"
-                    ? new { name = Scenarios.Unique("Новая"), description = (string?)null, categoryId, directionId = (Guid?)null, type = "Profile", scaleId = (Guid?)null }
+                    ? new { name = Scenarios.Unique("Новая"), description = (string?)null, directionId = (Guid?)null, scaleId = (Guid?)null }
                     : new { name = Scenarios.Unique("Новая") };
             var renamed = (await org.Admin.PutAsync($"/api/v1/career/{path}/{entry.Id}", body, entry.ETag)).Expect(HttpStatusCode.OK);
             var change = (await org.Admin.AuditOfRequestAsync(renamed.RequestId!)).Single(row => row!["entityType"]!.GetValue<string>() == type)!;
@@ -89,12 +87,12 @@ public sealed class CareerAuditTests(CareerHost fixture) : IClassFixture<CareerH
         var kit = await MatrixKit.CreateAsync(org);
 
         var creation = await org.Admin.AuditOfRequestAsync(kit.Matrix.RequestId!);
-        var edited = (await kit.SaveAsync(org.TeamHead.Client, kit.Content("Секретное поведение"))).Expect(HttpStatusCode.OK);
+        var edited = (await kit.SaveAsync(org.TeamHead.Client, kit.Content(4))).Expect(HttpStatusCode.OK);
         var edit = await org.Admin.AuditOfRequestAsync(edited.RequestId!);
 
         creation.Actions().Should().Equal("CompetencyMatrix.Created", "MatrixVersion.Created");
         edit.Actions().Should().Equal("MatrixVersion.ContentUpdated");
-        (await fixture.Host.ScalarAsync<long>("SELECT count(*) FROM audit_events WHERE concat_ws(' ', old_value::text, new_value::text, reason) LIKE '%Секретное поведение%'"))
+        (await fixture.Host.ScalarAsync<long>("SELECT count(*) FROM audit_events WHERE concat_ws(' ', old_value::text, new_value::text, reason) LIKE '%blockWeights%'"))
             .Should().Be(0, "the document is not journaled");
     }
 

@@ -1,15 +1,16 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// A competency of a matrix version with the name of its category and the number of its version at the time.
+/// A competency of a matrix version with the number of its version at the time, its own scale, which its scores are points of, its type
+/// in the version and its evidence examples.
 /// </summary>
 internal sealed record MatrixCompetencyEntry(
     Guid Id,
     string Name,
     string? Description,
-    Guid CategoryId,
-    string CategoryName,
     Guid? DirectionId,
     CompetencyType Type,
     int VersionNumber,
-    CatalogStatus Status);
+    CatalogStatus Status,
+    Guid? ScaleId = null,
+    string? EvidenceExamples = null);

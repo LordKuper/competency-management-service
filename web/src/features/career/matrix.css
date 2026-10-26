@@ -3,7 +3,6 @@
 .matrix-legend {
   --matrix-row-height: 48px;
   --matrix-cell-min-width: 72px;
-  --matrix-name-column-width: 280px;
   --rating-level-0: var(--ant-color-fill-tertiary);
   --rating-level-1: #c7d0fb;
   --rating-level-2: #9ba8f9;
@@ -30,9 +29,6 @@
 }
 
 .matrix-grid .matrix-name-cell {
-  width: var(--matrix-name-column-width);
-  min-width: var(--matrix-name-column-width);
-  max-width: var(--matrix-name-column-width);
   padding: var(--ant-padding-sm);
 }
 
@@ -44,28 +40,6 @@
 .matrix-grid .ant-table-tbody > tr > td.matrix-changed,
 .matrix-grid .ant-table-tbody > tr.matrix-changed-row > td.matrix-name-cell {
   background: var(--ant-color-warning-bg);
-}
-
-.matrix-cell-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ant-margin-xxs);
-  width: 100%;
-  min-height: calc(var(--matrix-row-height) - var(--ant-padding-xs) * 2);
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.matrix-cell-button:hover:not(:disabled) {
-  background: var(--ant-color-primary-bg);
-}
-
-.matrix-cell-button:disabled {
-  cursor: not-allowed;
 }
 
 .rating-chip {
@@ -107,8 +81,49 @@
   list-style: none;
 }
 
+.matrix-legend--vertical {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: var(--ant-margin-xs);
+}
+
+.matrix-step-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ant-margin);
+  align-items: start;
+}
+
+.matrix-step-columns--wide {
+  grid-template-columns: minmax(0, 1fr) calc(var(--ant-size-xxl) * 6);
+}
+
 .matrix-legend li {
   display: inline-flex;
   align-items: center;
+  gap: var(--ant-margin-xs);
+}
+
+.matrix-grid .matrix-group-row > td {
+  background: var(--ant-color-fill-tertiary);
+}
+
+.matrix-grid .matrix-type-cell {
+  min-width: calc(var(--ant-control-height) * 6);
+  vertical-align: middle;
+}
+
+.matrix-score-select {
+  width: 100%;
+}
+
+.matrix-mark {
+  color: var(--ant-color-warning);
+}
+
+.matrix-legend--vertical li {
+  display: grid;
+  grid-template-columns: var(--ant-control-height) minmax(0, 1fr);
+  align-items: start;
   gap: var(--ant-margin-xs);
 }

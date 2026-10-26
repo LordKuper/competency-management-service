@@ -16,7 +16,7 @@ import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { CatalogStatusTag, EntryActions, entryColumns } from "./CatalogParts";
 import { catalogFilter } from "./CatalogSelect";
-import { COMPETENCY_TYPES, CompetencyModal } from "./CompetencyModal";
+import { CompetencyModal } from "./CompetencyModal";
 import {
   type Competency,
   type CompetencyListParams,
@@ -26,7 +26,7 @@ import {
   entryQuery,
   FIRST_PAGE,
 } from "./catalogApi";
-import { choiceFilter, onFilterChange, pageProps } from "./columnFilters";
+import { onFilterChange, pageProps } from "./columnFilters";
 import { useCatalogRights } from "./useCatalogRights";
 
 const SEARCH_LABEL = "Найти компетенцию";
@@ -53,39 +53,15 @@ export function CompetenciesTab() {
   const columns: TableColumnsType<Competency> = [
     { title: "Название", dataIndex: "name" },
     {
-      title: "Категория",
-      dataIndex: "categoryId",
-      ...catalogFilter(
-        "categoryId",
-        "categories",
-        params.categoryId,
-        "Категория",
-      ),
-      render: (_, competency) => competency.categoryName,
-    },
-    {
-      title: "Направление",
+      title: "Область",
       dataIndex: "directionId",
       ...catalogFilter(
         "directionId",
         "directions",
         params.directionId,
-        "Направление",
+        "Область",
       ),
       render: (_, competency) => competency.directionName ?? "Общая",
-    },
-    {
-      title: "Тип",
-      dataIndex: "type",
-      ...choiceFilter(
-        "type",
-        params.type,
-        Object.entries(COMPETENCY_TYPES).map(([value, text]) => ({
-          text,
-          value,
-        })),
-      ),
-      render: (type) => COMPETENCY_TYPES[type as Competency["type"]],
     },
     {
       title: "Шкала",
@@ -193,10 +169,6 @@ function VersionsModal({
   const [number, setNumber] = useState<number>();
   const chosen =
     data?.find((version) => version.number === number) ?? data?.[0];
-  const category = useQuery({
-    ...entryQuery("categories", chosen?.categoryId ?? ""),
-    enabled: chosen !== undefined,
-  });
   const direction = useQuery({
     ...entryQuery("directions", chosen?.directionId ?? ""),
     enabled: !!chosen?.directionId,
@@ -237,19 +209,9 @@ function VersionsModal({
                 children: chosen.description,
               },
               {
-                key: "category",
-                label: "Категория",
-                children: category.data?.name,
-              },
-              {
                 key: "direction",
-                label: "Направление",
+                label: "Область",
                 children: chosen.directionId ? direction.data?.name : "Общая",
-              },
-              {
-                key: "type",
-                label: "Тип",
-                children: COMPETENCY_TYPES[chosen.type],
               },
               { key: "scale", label: "Шкала", children: scale.data?.name },
               {

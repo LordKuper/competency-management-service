@@ -10,7 +10,8 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// The API of career levels, the parts of a track: whoever may edit the track creates, renames and deletes its levels, and a level is kept by
-/// its track's keepers. Level names are unique within their track. Lists give levels in track order. A level no matrix uses can be deleted.
+/// its track's keepers. Level names are unique within their track. Lists give levels in track order. A level no matrix uses can be deleted,
+/// and its links to positions go with it.
 /// </summary>
 internal static class CareerLevelEndpoints
 {
@@ -30,11 +31,11 @@ internal static class CareerLevelEndpoints
         group.MapPost(string.Empty, CreateAsync).WithName("CreateCareerLevel").ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        group.MapEntryEndpoints(Kind, mapRename: true);
-        group.MapDeleteEntry(Kind, InUseAsync);
+        group.MapEntryEndpoints(Kind, Route, mapRename: true, mapPublication: false);
+        group.MapDeleteEntry(Kind, RemoveLinksAsync);
     }
 
-    private static async Task<string?> InUseAsync(
+    private static async Task<string?> RemoveLinksAsync(
         CareerLevel level,
         DeletionBlockers blockers,
         AppDbContext context,
@@ -42,7 +43,14 @@ internal static class CareerLevelEndpoints
         CancellationToken cancellationToken)
     {
         await blockers.AddMatricesAsync(store.MatricesUsing(level));
-        return blockers.Any ? InUseMessage : null;
+        if (blockers.Any)
+        {
+            return InUseMessage;
+        }
+
+        var id = level.Id;
+        context.RemoveRange(await context.Set<CareerLevelPosition>().Where(link => link.LevelId == id).ToListAsync(cancellationToken));
+        return null;
     }
 
     private static Task<Results<Ok<PageResponse<CareerLevelResponse>>, ValidationProblem>> ListAsync(

@@ -7,8 +7,9 @@ import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
 import { fakeApi } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
-import { CategoriesTab } from "./CategoriesTab";
+import { BlocksTab } from "./BlocksTab";
 import { CompetenciesTab } from "./CompetenciesTab";
+import { MAX_PAGE_SIZE } from "./catalogApi";
 import { DirectionsTracksTab } from "./DirectionsTracksTab";
 import { DraftsSection } from "./DraftsSection";
 import { MatricesTab } from "./MatricesTab";
@@ -32,7 +33,6 @@ interface PagedTable {
   show: () => ReactElement;
   route: string;
   row: (index: number) => object;
-  isNested?: boolean;
 }
 
 const TABLES: PagedTable[] = [
@@ -40,24 +40,6 @@ const TABLES: PagedTable[] = [
     table: "directions",
     show: () => <DirectionsTracksTab />,
     route: "GET /api/v1/career/directions",
-    row: entry,
-  },
-  {
-    table: "tracks of a direction",
-    show: () => <DirectionsTracksTab />,
-    route: "GET /api/v1/career/tracks",
-    row: (index) => ({
-      ...entry(index),
-      directionId: "direction",
-      ownerOrgUnitId: "unit",
-      ownerOrgUnitName: "Отдел",
-    }),
-    isNested: true,
-  },
-  {
-    table: "categories",
-    show: () => <CategoriesTab />,
-    route: "GET /api/v1/career/categories",
     row: entry,
   },
   {
@@ -73,12 +55,21 @@ const TABLES: PagedTable[] = [
     row: (index) => ({
       ...entry(index),
       description: null,
-      categoryId: "category",
       directionId: null,
-      type: "Profile",
       scaleId: "scale",
       createdAt: "2026-10-01T10:00:00Z",
       versionNumber: 1,
+    }),
+  },
+  {
+    table: "blocks",
+    show: () => <BlocksTab />,
+    route: "GET /api/v1/career/blocks",
+    row: (index) => ({
+      ...entry(index),
+      scopeUnitId: null,
+      scopeUnitName: null,
+      competencies: [],
     }),
   },
   {
@@ -107,7 +98,11 @@ const queries = (route: string) =>
 
 function serveRole(role: "GlobalAdmin" | "User") {
   fakeApi.on("GET /api/v1/auth/me", () =>
-    Response.json({ id: "account", email: "who@test.local", role }),
+    Response.json({
+      id: "account",
+      email: "who@test.local",
+      roles: role === "User" ? [] : [role],
+    }),
   );
   fakeApi.on("GET /api/v1/career/me", () =>
     Response.json({ headedUnits: [], hrUnits: [] }),
@@ -138,44 +133,58 @@ beforeEach(() => {
 describe("a catalogue table pages on the server (AC-24)", {
   timeout: LONG_FLOW_TIMEOUT,
 }, () => {
+  function servePaged({ route, row }: PagedTable) {
+    serveRole("GlobalAdmin");
+    fakeApi.on("GET /api/v1/career/directions", () =>
+      Response.json(page([{ ...entry(0), name: "Разработка" }])),
+    );
+    fakeApi.on(route, (request) => {
+      const query = new URL(request.url).searchParams;
+      const number = Number(query.get("page"));
+      const size = Number(query.get("pageSize"));
+      const items = Array.from({ length: TOTAL }, (_, index) => row(index + 1));
+      return Response.json({
+        items: items.slice((number - 1) * size, number * size),
+        total: TOTAL,
+        page: number,
+        pageSize: size,
+      });
+    });
+  }
+
+  it("asks for the first page of the chosen size when the page size is changed on a later page", async () => {
+    const scales = TABLES.find(({ table }) => table === "scales") as PagedTable;
+    servePaged(scales);
+    const user = showTable(scales.show());
+    await user.click(await screen.findByTitle("2"));
+    expect(await screen.findByText(FIRST_OF_SECOND_PAGE)).toBeInTheDocument();
+
+    await user.click(
+      document.querySelector(
+        ".ant-pagination-options .ant-select",
+      ) as HTMLElement,
+    );
+    await user.click(
+      await screen.findByText(/^50/, {
+        selector: ".ant-select-item-option-content",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(queries(scales.route).at(-1)).toMatchObject({
+        page: "1",
+        pageSize: "50",
+      }),
+    );
+  });
+
   it.each(TABLES)(
     "$table: 20 rows to a page, the next page asked from the server",
-    async ({ show, route, row, isNested }) => {
-      serveRole("GlobalAdmin");
-      fakeApi.on("GET /api/v1/career/directions", () =>
-        Response.json(page([{ ...entry(0), name: "Разработка" }])),
-      );
-      fakeApi.on(route, (request) => {
-        const query = new URL(request.url).searchParams;
-        const number = Number(query.get("page"));
-        const size = Number(query.get("pageSize"));
-        const items = Array.from({ length: TOTAL }, (_, index) =>
-          row(index + 1),
-        );
-        return Response.json({
-          items: items.slice((number - 1) * size, number * size),
-          total: TOTAL,
-          page: number,
-          pageSize: size,
-        });
-      });
+    async (table) => {
+      const { show, route } = table;
+      servePaged(table);
       const user = showTable(show());
-      let scope: HTMLElement = document.body;
-      if (isNested) {
-        await user.click(
-          await waitFor(() => {
-            const expander = document.querySelector(
-              ".ant-table-row-expand-icon",
-            );
-            expect(expander).not.toBeNull();
-            return expander as HTMLElement;
-          }),
-        );
-        await screen.findByText("Запись 1");
-        scope = document.querySelector(
-          ".ant-table-expanded-row .ant-table-wrapper",
-        ) as HTMLElement;
-      }
+      const scope: HTMLElement = document.body;
       expect(await within(scope).findByText("Запись 1")).toBeInTheDocument();
       expect(within(scope).queryByText(FIRST_OF_SECOND_PAGE)).toBeNull();
       expect(queries(route)[0]).toMatchObject({
@@ -194,80 +203,6 @@ describe("a catalogue table pages on the server (AC-24)", {
       });
     },
   );
-});
-
-describe("the page size of a catalogue table (AC-24)", {
-  timeout: LONG_FLOW_TIMEOUT,
-}, () => {
-  it("is asked from the server as chosen, from the first page", async () => {
-    serveRole("GlobalAdmin");
-    fakeApi.on("GET /api/v1/career/categories", (request) => {
-      const query = new URL(request.url).searchParams;
-      return Response.json({
-        items: Array.from({ length: PAGE_SIZE }, (_, index) =>
-          entry(index + 1),
-        ),
-        total: TOTAL,
-        page: Number(query.get("page")),
-        pageSize: Number(query.get("pageSize")),
-      });
-    });
-    const user = showTable(<CategoriesTab />);
-    await screen.findByText("Запись 1");
-
-    await user.click(screen.getByTitle("2"));
-    await user.click(
-      document.querySelector(
-        ".ant-pagination-options .ant-select",
-      ) as HTMLElement,
-    );
-    await user.click(
-      await screen.findByText(/^50/, {
-        selector: ".ant-select-item-option-content",
-      }),
-    );
-
-    await waitFor(() =>
-      expect(queries("GET /api/v1/career/categories").at(-1)).toMatchObject({
-        page: "1",
-        pageSize: "50",
-      }),
-    );
-  });
-});
-
-describe("the actions of a catalogue row follow what the server says the user may do (AC-19, AC-25)", {
-  timeout: LONG_FLOW_TIMEOUT,
-}, () => {
-  it("offers «Изменить» and «Удалить» by canEdit and canDelete of each entry, whatever the roles of the user", async () => {
-    serveRole("User");
-    fakeApi.on("GET /api/v1/career/categories", () =>
-      Response.json(
-        page([
-          { ...entry(1), name: "Своя", canEdit: true, canDelete: true },
-          {
-            ...entry(2),
-            name: "Только удаление",
-            canEdit: false,
-            canDelete: true,
-          },
-          { ...entry(3), name: "Чужая", canEdit: false, canDelete: false },
-        ]),
-      ),
-    );
-    showTable(<CategoriesTab />);
-
-    const actionsOf = async (name: string) => {
-      const row = (await screen.findByText(name)).closest("tr") as HTMLElement;
-      return within(row)
-        .queryAllByRole("button")
-        .map((button) => button.textContent);
-    };
-
-    expect(await actionsOf("Своя")).toEqual(["Изменить", "Удалить"]);
-    expect(await actionsOf("Только удаление")).toEqual(["Удалить"]);
-    expect(await actionsOf("Чужая")).toEqual([]);
-  });
 });
 
 describe("an action taken from a list row carries the tag of the row the user saw (AC-17)", {
@@ -340,6 +275,15 @@ describe("an action taken from a list row carries the tag of the row the user sa
     fakeApi.on("GET /api/v1/career/directions/draft", () =>
       Response.json({ ...entry(1), id: "draft", version: 9 }),
     );
+    fakeApi.on("GET /api/v1/career/directions/draft/publication", () =>
+      Response.json({
+        entries: [],
+        hiddenEntryCount: 0,
+        blockers: [],
+        moreCount: 0,
+        cascadeTag: "tag",
+      }),
+    );
     fakeApi.on(route, () => Response.json({ ...entry(1), id: "draft" }));
     const user = showTable(<DraftsSection />);
 
@@ -363,8 +307,6 @@ describe("the competency table and its version history (AC-12, AC-24)", {
     id,
     name: `Проектирование ${id}`,
     description: "Описание",
-    categoryId: "category",
-    categoryName: "Профессиональные",
     directionId,
     directionName: directionId ? "Разработка" : null,
     type: "Critical",
@@ -381,9 +323,7 @@ describe("the competency table and its version history (AC-12, AC-24)", {
     number,
     name: "Проектирование",
     description: null,
-    categoryId: "category",
     directionId: null,
-    type: "Profile",
     scaleId: "scale",
     status: "Active",
     changedById: null,
@@ -399,12 +339,6 @@ describe("the competency table and its version history (AC-12, AC-24)", {
         page([competency("first", "direction"), competency("second", null)]),
       ),
     );
-    fakeApi.on("GET /api/v1/career/categories/category", () =>
-      Response.json(named("category", "Профессиональные")),
-    );
-    fakeApi.on("GET /api/v1/career/categories/old-category", () =>
-      Response.json(named("old-category", "Прежняя категория")),
-    );
     fakeApi.on("GET /api/v1/career/directions/direction", () =>
       Response.json(named("direction", "Разработка")),
     );
@@ -413,7 +347,7 @@ describe("the competency table and its version history (AC-12, AC-24)", {
     );
   }
 
-  it("names the category, the direction and the scale of each row from the list response without reading each, and calls a competency of no direction «Общая»", async () => {
+  it("names the direction and the scale of each row from the list response without reading each, and calls a competency of no direction «Общая»", async () => {
     serveCompetencies();
     showTable(<CompetenciesTab />);
 
@@ -424,15 +358,10 @@ describe("the competency table and its version history (AC-12, AC-24)", {
       "tr",
     ) as HTMLElement;
 
-    expect(await within(first).findByText("Профессиональные")).toBeVisible();
-    expect(within(first).getByText("Разработка")).toBeVisible();
+    expect(await within(first).findByText("Разработка")).toBeVisible();
     expect(within(first).getByText("Базовая 0–4")).toBeVisible();
     expect(within(second).getByText("Общая")).toBeVisible();
-    for (const route of [
-      "categories/category",
-      "directions/direction",
-      "scales/scale",
-    ]) {
+    for (const route of ["directions/direction", "scales/scale"]) {
       expect(fakeApi.calls(`GET /api/v1/career/${route}`)).toHaveLength(0);
     }
   });
@@ -445,9 +374,8 @@ describe("the competency table and its version history (AC-12, AC-24)", {
           name: "Проектирование систем",
           description: "Новое описание",
           directionId: "direction",
-          type: "Critical",
         }),
-        version(1, { categoryId: "old-category", status: "Draft" }),
+        version(1, { status: "Draft" }),
       ]),
     );
     const user = showTable(<CompetenciesTab />);
@@ -467,11 +395,7 @@ describe("the competency table and its version history (AC-12, AC-24)", {
       await within(dialog).findByText("Проектирование систем"),
     ).toBeInTheDocument();
     expect(within(dialog).getByText("Новое описание")).toBeInTheDocument();
-    expect(
-      await within(dialog).findByText("Профессиональные"),
-    ).toBeInTheDocument();
-    expect(within(dialog).getByText("Разработка")).toBeInTheDocument();
-    expect(within(dialog).getByText("Критическая")).toBeInTheDocument();
+    expect(await within(dialog).findByText("Разработка")).toBeInTheDocument();
     expect(within(dialog).getByText("Базовая 0–4")).toBeInTheDocument();
     expect(within(dialog).queryByRole("textbox")).toBeNull();
 
@@ -482,11 +406,7 @@ describe("the competency table and its version history (AC-12, AC-24)", {
       }),
     );
 
-    expect(
-      await within(dialog).findByText("Прежняя категория"),
-    ).toBeInTheDocument();
-    expect(within(dialog).getByText("Общая")).toBeInTheDocument();
-    expect(within(dialog).getByText("Профильная")).toBeInTheDocument();
+    expect(await within(dialog).findByText("Общая")).toBeInTheDocument();
     expect(within(dialog).getByText("Черновик")).toBeInTheDocument();
     expect(within(dialog).queryByText("Новое описание")).toBeNull();
   });
@@ -522,43 +442,9 @@ async function actionsOf(
   return { visible, menu };
 }
 
-/** The confirmation of a deletion: antd gives every modal of the test the same title id, so it is found by its text. */
-async function askedToDelete() {
-  const title = await screen.findByText("Удалить категорию «Черновая»?", {
-    selector: ".ant-modal-confirm-title",
-  });
-  return title.closest('[role="dialog"]') as HTMLElement;
-}
-
 describe("the row actions of the catalogues (AC-19, AC-25)", {
   timeout: LONG_FLOW_TIMEOUT,
 }, () => {
-  it("a draft category: «Изменить» and «Согласовать» visible, «Деактивировать» and «Удалить» in the menu", async () => {
-    serveRole("GlobalAdmin");
-    fakeApi.on("GET /api/v1/career/categories", () =>
-      Response.json(page([editable({ name: "Черновая", status: "Draft" })])),
-    );
-    const user = showTable(<CategoriesTab />);
-
-    const { visible, menu } = await actionsOf(user, "Черновая");
-
-    expect(visible).toEqual(["Изменить", "Согласовать"]);
-    expect(menu).toEqual(["Деактивировать", "Удалить"]);
-  });
-
-  it("an inactive category: «Изменить» and «Вернуть в работу» visible, «Удалить» in the menu", async () => {
-    serveRole("GlobalAdmin");
-    fakeApi.on("GET /api/v1/career/categories", () =>
-      Response.json(page([editable({ name: "Старая", status: "Inactive" })])),
-    );
-    const user = showTable(<CategoriesTab />);
-
-    const { visible, menu } = await actionsOf(user, "Старая");
-
-    expect(visible).toEqual(["Изменить", "Вернуть в работу"]);
-    expect(menu).toEqual(["Удалить"]);
-  });
-
   it("an active scale that is not the default: «Сделать по умолчанию» and «Изменить» visible", async () => {
     serveRole("GlobalAdmin");
     fakeApi.on("GET /api/v1/career/scales", () =>
@@ -583,9 +469,7 @@ describe("the row actions of the catalogues (AC-19, AC-25)", {
             name: "Проектирование",
             status: "Draft",
             description: null,
-            categoryId: "c",
             directionId: null,
-            type: "Profile",
             scaleId: "s",
             createdAt: "2026-10-01T10:00:00Z",
             versionNumber: 1,
@@ -601,69 +485,87 @@ describe("the row actions of the catalogues (AC-19, AC-25)", {
     expect(menu).toEqual(["Согласовать", "Деактивировать", "Удалить"]);
   });
 
-  it("deactivates from the menu against the version of the row", async () => {
-    const route = "POST /api/v1/career/categories/entry/deactivate";
-    serveRole("GlobalAdmin");
-    fakeApi.on("GET /api/v1/career/categories", () =>
-      Response.json(page([editable({ name: "Черновая", status: "Draft" })])),
-    );
-    fakeApi.on(route, () => Response.json(editable()));
-    const user = showTable(<CategoriesTab />);
-    await actionsOf(user, "Черновая");
+  it.each([
+    {
+      rights: "may edit and delete",
+      row: { canEdit: true, canDelete: true },
+      visible: ["Сделать по умолчанию", "Изменить"],
+      menu: ["Деактивировать", "Удалить"],
+    },
+    {
+      rights: "may only delete",
+      row: { canEdit: false, canDelete: true },
+      visible: ["Сделать по умолчанию"],
+      menu: ["Деактивировать", "Удалить"],
+    },
+    {
+      rights: "may neither edit nor delete",
+      row: { canEdit: false, canDelete: false },
+      visible: ["Сделать по умолчанию", "Деактивировать"],
+      menu: [],
+    },
+  ])(
+    "offers «Изменить» and «Удалить» as the server allows them: a scale the user $rights",
+    async ({ row, visible, menu }) => {
+      serveRole("GlobalAdmin");
+      fakeApi.on("GET /api/v1/career/scales", () =>
+        Response.json(
+          page([
+            editable({ ...row, name: "Шкала", points: [], isDefault: false }),
+          ]),
+        ),
+      );
+      const user = showTable(<ScalesTab />);
 
-    await user.click(
-      await screen.findByRole("menuitem", { name: "Деактивировать" }),
-    );
+      expect(await actionsOf(user, "Шкала")).toEqual({ visible, menu });
+    },
+  );
 
-    await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
-    expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe('"3"');
-  });
+  describe("an action from the menu of a row carries the version of the row", () => {
+    function serveScale() {
+      serveRole("GlobalAdmin");
+      fakeApi.on("GET /api/v1/career/scales", () =>
+        Response.json(
+          page([editable({ name: "Шкала", points: [], isDefault: false })]),
+        ),
+      );
+    }
 
-  async function openDeletionFromMenu(route: string) {
-    serveRole("GlobalAdmin");
-    fakeApi.on("GET /api/v1/career/categories", () =>
-      Response.json(page([editable({ name: "Черновая", status: "Draft" })])),
-    );
-    fakeApi.on(route, () => new Response(null, { status: 204 }));
-    const user = showTable(<CategoriesTab />);
-    await actionsOf(user, "Черновая");
-    await user.click(await screen.findByRole("menuitem", { name: "Удалить" }));
-    return { user, asked: await askedToDelete() };
-  }
+    it("deactivates against it", async () => {
+      const route = "POST /api/v1/career/scales/entry/deactivate";
+      serveScale();
+      fakeApi.on(route, () => Response.json(editable({ status: "Inactive" })));
+      const user = showTable(<ScalesTab />);
+      await actionsOf(user, "Шкала");
 
-  it("«Удалить» in the menu asks first, with the focus on «Отмена», and «Отмена» deletes nothing", async () => {
-    const route = "DELETE /api/v1/career/categories/entry";
-    const { user, asked } = await openDeletionFromMenu(route);
+      await user.click(
+        await screen.findByRole("menuitem", { name: "Деактивировать" }),
+      );
 
-    expect(within(asked).getByRole("button", { name: "Отмена" })).toHaveFocus();
-    await user.click(within(asked).getByRole("button", { name: "Отмена" }));
+      await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
+      expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe('"3"');
+    });
 
-    expect(fakeApi.calls(route)).toHaveLength(0);
-  });
+    it("deletes against it once the question is confirmed", async () => {
+      const route = "DELETE /api/v1/career/scales/entry";
+      serveScale();
+      fakeApi.on(route, () => new Response(null, { status: 204 }));
+      const user = showTable(<ScalesTab />);
+      await actionsOf(user, "Шкала");
 
-  it("«Удалить» in the confirmation deletes against the version of the row", async () => {
-    const route = "DELETE /api/v1/career/categories/entry";
-    const { user, asked } = await openDeletionFromMenu(route);
+      await user.click(
+        await screen.findByRole("menuitem", { name: "Удалить" }),
+      );
+      expect(fakeApi.calls(route)).toHaveLength(0);
+      await user.click(
+        within(await screen.findByRole("dialog")).getByRole("button", {
+          name: "Удалить",
+        }),
+      );
 
-    await user.click(within(asked).getByRole("button", { name: "Удалить" }));
-
-    await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
-    expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe('"3"');
-  });
-
-  it("offers no «…» to a user who may do nothing with the row", async () => {
-    serveRole("User");
-    fakeApi.on("GET /api/v1/career/categories", () =>
-      Response.json(
-        page([editable({ name: "Чужая", canEdit: false, canDelete: false })]),
-      ),
-    );
-    const user = showTable(<CategoriesTab />);
-
-    const { visible, menu } = await actionsOf(user, "Чужая");
-
-    expect(visible).toEqual([]);
-    expect(menu).toEqual([]);
+      await waitFor(() => expect(fakeApi.calls(route)).toHaveLength(1));
+      expect(fakeApi.calls(route)[0]?.headers.get("If-Match")).toBe('"3"');
+    });
   });
 });
 
@@ -681,6 +583,47 @@ describe("the empty tables of the catalogues (AC-19)", {
         (description) => description.textContent,
       ),
     ).toEqual(["Шкал пока нет"]);
+  });
+
+  it("reads the tracks of a direction in one request of the largest page, and says how many are shown of how many when there are more", async () => {
+    const route = "GET /api/v1/career/tracks";
+    const SHOWN = 3;
+    const ALL = 250;
+    serveRole("GlobalAdmin");
+    fakeApi.on("GET /api/v1/career/directions", () =>
+      Response.json(page([editable({ name: "Разработка" })])),
+    );
+    fakeApi.on(route, () =>
+      Response.json({
+        items: Array.from({ length: SHOWN }, (_, index) => ({
+          ...entry(index + 1),
+          directionId: "entry",
+          ownerOrgUnitId: "unit",
+          ownerOrgUnitName: "Отдел",
+        })),
+        total: ALL,
+        page: 1,
+        pageSize: MAX_PAGE_SIZE,
+      }),
+    );
+    const user = showTable(<DirectionsTracksTab />);
+
+    await user.click(
+      await waitFor(() => {
+        const expander = document.querySelector(".ant-table-row-expand-icon");
+        expect(expander).not.toBeNull();
+        return expander as HTMLElement;
+      }),
+    );
+
+    expect(
+      await screen.findByText(
+        `Показаны первые ${SHOWN} из ${ALL} — уточните поиск.`,
+      ),
+    ).toBeVisible();
+    expect(queries(route)[0]).toMatchObject({
+      pageSize: String(MAX_PAGE_SIZE),
+    });
   });
 
   it("says «Треков пока нет» in the tracks of a direction that has none", async () => {

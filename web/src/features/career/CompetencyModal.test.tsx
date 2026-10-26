@@ -1,9 +1,10 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { CompetencyModal } from "./CompetencyModal";
 import type { Competency } from "./catalogApi";
@@ -30,22 +31,12 @@ const OTHER_SCALE = {
   isDefault: false,
 };
 
-const CATEGORY = {
-  id: "category",
-  name: "Профессиональные",
-  status: "Active",
-  version: 1,
-};
-
 const EXISTING: Competency = {
   id: "competency",
   name: "Проектирование",
   description: null,
-  categoryId: CATEGORY.id,
-  categoryName: CATEGORY.name,
   directionId: null,
   directionName: null,
-  type: "Profile",
   scaleId: OTHER_SCALE.id,
   scaleName: OTHER_SCALE.name,
   status: "Active",
@@ -61,14 +52,11 @@ function serve() {
     Response.json({
       id: "account",
       email: "admin@test.local",
-      role: "GlobalAdmin",
+      roles: ["GlobalAdmin"],
     }),
   );
   fakeApi.on("GET /api/v1/career/me", () =>
     Response.json({ headedUnits: [], hrUnits: [] }),
-  );
-  fakeApi.on("GET /api/v1/career/categories", () =>
-    Response.json(page([CATEGORY])),
   );
   fakeApi.on("GET /api/v1/career/directions", () => Response.json(page([])));
   fakeApi.on("GET /api/v1/career/scales", () =>
@@ -81,7 +69,9 @@ function open(competency?: Competency, override: () => void = () => undefined) {
   override();
   render(
     <Providers>
-      <CompetencyModal competency={competency} onClose={() => undefined} />
+      <MemoryRouter>
+        <CompetencyModal competency={competency} onClose={() => undefined} />
+      </MemoryRouter>
     </Providers>,
   );
   return userEvent.setup();
@@ -95,15 +85,13 @@ async function choose(
   await user.click(screen.getByRole("combobox", { name: field }));
   await user.click(
     await screen.findByText(option, {
-      selector: ".ant-select-item-option-content",
+      selector: ".ant-select-item-option-content *",
     }),
   );
 }
 
 async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
   await user.type(await screen.findByLabelText("Название"), "Проектирование");
-  await choose(user, "Категория", CATEGORY.name);
-  await choose(user, "Тип", "Профильная");
 }
 
 beforeEach(() => {
@@ -135,7 +123,7 @@ describe("scale of a new competency (AC-22)", {
     );
     expect(
       await fakeApi.calls("POST /api/v1/career/competencies")[0]?.json(),
-    ).toMatchObject({ scaleId: BASE_SCALE.id, type: "Profile" });
+    ).toMatchObject({ scaleId: BASE_SCALE.id });
   });
 
   it("keeps the scale the user picks instead of the default", async () => {
@@ -209,7 +197,7 @@ describe("scale of a new competency (AC-22)", {
       expect(
         within(
           screen
-            .getByRole("combobox", { name: "Направление" })
+            .getByRole("combobox", { name: "Область" })
             .closest(".ant-select") as HTMLElement,
         ).getByText("Дальнее направление"),
       ).toBeInTheDocument(),
@@ -242,5 +230,66 @@ describe("scale of a new competency (AC-22)", {
     const call = fakeApi.calls("PUT /api/v1/career/competencies/competency")[0];
     expect(call?.headers.get("If-Match")).toBe('"7"');
     expect(await call?.json()).toMatchObject({ scaleId: OTHER_SCALE.id });
+  });
+});
+
+describe("competency form while the competency is being saved (AC-61)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
+  const ROUTE = "PUT /api/v1/career/competencies/competency";
+
+  function lockedControls() {
+    const controls: [string, HTMLElement][] = [
+      ["name", screen.getByLabelText("Название")],
+      ["description", screen.getByLabelText("Описание")],
+      ["evidence", screen.getByLabelText("Примеры подтверждений")],
+      ["direction", screen.getByRole("combobox", { name: "Область" })],
+      ["scale", screen.getByRole("combobox", { name: "Шкала" })],
+    ];
+    return controls
+      .filter(([, control]) => control.hasAttribute("disabled"))
+      .map(([kind]) => kind);
+  }
+
+  it("holds every field while the save is in flight, and frees them when it is refused", async () => {
+    const held = deferred<Response>();
+    const user = open(EXISTING, () => fakeApi.on(ROUTE, () => held.promise));
+    await screen.findByDisplayValue("Проектирование");
+    expect(lockedControls()).toEqual([]);
+
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+    await waitFor(() => expect(fakeApi.calls(ROUTE)).toHaveLength(1));
+    expect(lockedControls()).toEqual([
+      "name",
+      "description",
+      "evidence",
+      "direction",
+      "scale",
+    ]);
+    held.resolve(problem(500, { title: "Сбой" }));
+    expect(
+      await screen.findByText("Не удалось сохранить запись"),
+    ).toBeInTheDocument();
+    expect(lockedControls()).toEqual([]);
+  });
+
+  it("moves the focus to the first field the server rejects, once the form is enabled again", async () => {
+    const held = deferred<Response>();
+    const user = open(EXISTING, () => fakeApi.on(ROUTE, () => held.promise));
+    await screen.findByDisplayValue("Проектирование");
+
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Примеры подтверждений")).toBeDisabled(),
+    );
+    held.resolve(
+      problem(400, { errors: { evidenceExamples: ["Слишком длинно"] } }),
+    );
+    expect(await screen.findByText("Слишком длинно")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByLabelText("Примеры подтверждений")).toHaveFocus(),
+    );
   });
 });

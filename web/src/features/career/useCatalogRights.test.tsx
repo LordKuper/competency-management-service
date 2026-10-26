@@ -12,11 +12,15 @@ const UNIT = { id: "own-unit", name: "Свой отдел" };
 const OTHER_UNIT = "other-unit";
 
 async function rightsOf(
-  role: "GlobalAdmin" | "User",
+  role: "GlobalAdmin" | "Hr" | "User",
   roles: { headedUnits?: object[]; hrUnits?: object[] } = {},
 ) {
   fakeApi.on("GET /api/v1/auth/me", () =>
-    Response.json({ id: "account", email: "user@test.local", role }),
+    Response.json({
+      id: "account",
+      email: "user@test.local",
+      roles: role === "User" ? [] : [role],
+    }),
   );
   fakeApi.on("GET /api/v1/career/me", () =>
     Response.json({ headedUnits: [], hrUnits: [], ...roles }),
@@ -51,7 +55,7 @@ describe("what the catalogue tables offer to whom (AC-9, AC-19)", () => {
   });
 
   it("lets the HR of a unit keep the entries without a unit and the tracks of that unit only", async () => {
-    const rights = (await rightsOf("User", { hrUnits: [UNIT] })).current;
+    const rights = (await rightsOf("Hr", { hrUnits: [UNIT] })).current;
 
     expect(rights.isAdmin).toBe(false);
     expect(rights.isHr).toBe(true);

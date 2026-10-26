@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace Competency.OrgStructure;
 
 /// <summary>
-/// The position catalogue API. Any signed-in user reads active positions; only global administrators read inactive ones
+/// The position catalogue API. Any signed-in user reads active positions; only global administrators and HR read inactive ones
 /// and create, rename, deactivate and reactivate positions, under the tree lock, because a unit's list and an employee's
 /// position are checked against the catalogue under the same lock, and with <c>If-Match</c>. Positions are never deleted.
 /// </summary>
@@ -30,20 +30,20 @@ internal static class PositionEndpoints
         readers.MapGet(string.Empty, ListAsync).WithName("ListPositions");
         readers.MapGet("/{id:guid}", GetAsync).WithName("GetPosition").ProducesETag().ProducesProblem(StatusCodes.Status404NotFound);
 
-        var administrators = readers.MapGroup(string.Empty)
-            .RequireAuthorization(AuthorizationPolicies.GlobalAdmin)
+        var keepers = readers.MapGroup(string.Empty)
+            .RequireAuthorization(AuthorizationPolicies.GlobalAdminOrHr)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        administrators.MapPost(string.Empty, CreateAsync).WithName("CreatePosition").ProducesETag()
+        keepers.MapPost(string.Empty, CreateAsync).WithName("CreatePosition").ProducesETag()
             .ProducesProblem(StatusCodes.Status409Conflict);
-        administrators.MapPut("/{id:guid}", RenameAsync).WithName("RenamePosition").ProducesETag()
+        keepers.MapPut("/{id:guid}", RenameAsync).WithName("RenamePosition").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        administrators.MapPost("/{id:guid}/deactivate", DeactivateAsync).WithName("DeactivatePosition").ProducesETag()
+        keepers.MapPost("/{id:guid}/deactivate", DeactivateAsync).WithName("DeactivatePosition").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound);
-        administrators.MapPost("/{id:guid}/activate", ActivateAsync).WithName("ActivatePosition").ProducesETag()
+        keepers.MapPost("/{id:guid}/activate", ActivateAsync).WithName("ActivatePosition").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound);
-        administrators.MapGet("/{id:guid}/impact", ImpactAsync).WithName("GetPositionImpact")
+        keepers.MapGet("/{id:guid}/impact", ImpactAsync).WithName("GetPositionImpact")
             .ProducesProblem(StatusCodes.Status404NotFound);
     }
 

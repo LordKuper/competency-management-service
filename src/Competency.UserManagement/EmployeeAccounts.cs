@@ -34,7 +34,11 @@ internal sealed class EmployeeAccounts(AppDbContext context) : IEmployeeAccounts
 
     public async Task<bool> IsLastActiveAdministratorAsync(Guid employeeId, CancellationToken cancellationToken = default)
     {
-        var user = await context.Set<AppUser>().AsNoTracking().FirstOrDefaultAsync(candidate => candidate.EmployeeId == employeeId, cancellationToken);
-        return user is not null && user.IsActiveAdministrator() && !await context.HasOtherAsync(user.Id, cancellationToken);
+        var administratorId = await context.Set<AppUser>()
+            .Where(candidate => candidate.EmployeeId == employeeId)
+            .Where(ActiveAdministrators.IsActive)
+            .Select(candidate => (Guid?)candidate.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        return administratorId is { } id && !await context.HasOtherAsync(id, cancellationToken);
     }
 }

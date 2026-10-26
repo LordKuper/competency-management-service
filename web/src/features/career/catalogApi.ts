@@ -1,4 +1,8 @@
-import { type QueryClient, queryOptions } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  type QueryClient,
+  queryOptions,
+} from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import type { components } from "../../api/schema";
@@ -7,7 +11,7 @@ import { careerQueryKey } from "./careerApi";
 
 type Schemas = components["schemas"];
 
-/** The fields every career catalogue entry has: directions and categories carry no more. */
+/** The fields every career catalogue entry has: directions carry no more. */
 export type CatalogEntry = Schemas["CatalogEntryResponse"];
 export type CatalogStatus = Schemas["CatalogStatus"];
 export type CareerTrack = Schemas["CareerTrackResponse"];
@@ -16,9 +20,17 @@ export type Competency = Schemas["CompetencyResponse"];
 export type CompetencyType = Schemas["CompetencyType"];
 export type CompetencyVersion = Schemas["CompetencyVersionResponse"];
 export type Scale = Schemas["CompetencyScaleResponse"];
+export type CompetencyBlock = Schemas["CompetencyBlockResponse"];
 export type ScalePoint = Schemas["ScalePoint"];
 export type CatalogDraft = Schemas["CatalogDraftResponse"];
 export type CatalogKind = Schemas["CatalogEntryKind"];
+export type PublicationPreview = Schemas["PublicationPreviewResponse"];
+export type PublicationBlocker = Schemas["PublicationBlocker"];
+export type PublicationEntry = Schemas["PublicationEntry"];
+export type TrackPositions = Schemas["TrackPositionsResponse"];
+export type AvailablePosition = Schemas["AvailablePositionResponse"];
+export type UnusedEntry = Schemas["UnusedEntryResponse"];
+export type EntryMatrix = Schemas["EntryMatrixResponse"];
 
 /** Cache key prefix of every catalogue query, so one invalidation rereads whatever a change touched. */
 export const catalogQueryKey = [...careerQueryKey, "catalog"] as const;
@@ -28,16 +40,16 @@ export type CatalogSegment =
   | "directions"
   | "tracks"
   | "levels"
-  | "categories"
   | "competencies"
-  | "scales";
+  | "scales"
+  | "blocks";
 
-const SEGMENT_OF_KIND: Record<CatalogKind, CatalogSegment> = {
+export const SEGMENT_OF_KIND: Record<CatalogKind, PublishableSegment> = {
   Direction: "directions",
   Track: "tracks",
-  Category: "categories",
   Competency: "competencies",
   Scale: "scales",
+  Block: "blocks",
 };
 
 /** Paging and search of a catalogue list; pages count from 1. */
@@ -50,15 +62,29 @@ export interface CatalogListParams {
 
 /** Column filters of the competency list. */
 export interface CompetencyListParams extends CatalogListParams {
-  categoryId?: string;
   directionId?: string;
   scaleId?: string;
-  type?: CompetencyType;
+  /** Leaves out the inactive entries. */
+  inWork?: boolean;
+  /** Adds the competencies that belong to no direction to those of `directionId`. */
+  withGeneral?: boolean;
 }
 
 /** Column filters of the scale list. */
 export interface ScaleListParams extends CatalogListParams {
   isDefault?: boolean;
+}
+
+/** Column filters of the shared block list. */
+export interface BlockListParams extends CatalogListParams {
+  /** Blocks of this unit. */
+  scopeUnitId?: string;
+  /** Blocks for every unit. */
+  forAll?: boolean;
+  /** Blocks a matrix of this unit may include. */
+  availableFor?: string;
+  /** Leaves out the inactive entries. */
+  inWork?: boolean;
 }
 
 /** Column filters of the track list: the direction, and the unit that owns the track, match exactly. */
@@ -72,6 +98,9 @@ export interface DraftListParams {
   kind?: CatalogKind;
   orgUnitId?: string;
 }
+
+/** Most records the API returns in one page; a list already scoped by an object is read in one request of this size. */
+export const MAX_PAGE_SIZE = 200;
 
 /** The first page of a catalogue table. */
 export const FIRST_PAGE: CatalogListParams = { page: 1, pageSize: 20 };
@@ -122,15 +151,36 @@ export function levelsQuery(trackId: string) {
   });
 }
 
-export function categoriesQuery(params: CatalogListParams) {
+/** How many level names the name field of a level offers. */
+const LEVEL_NAME_SUGGESTIONS = 10;
+
+/**
+ * The names of levels already made in any track that contain the text, each once whatever its case, the first ten; with
+ * no text, the first ten names. Offered as suggestions only: any name may still be typed.
+ */
+export function levelNamesQuery(text: string) {
   return queryOptions({
-    queryKey: [...catalogQueryKey, "categories", params],
-    queryFn: async () =>
-      unwrap(
-        await api.GET("/api/v1/career/categories", {
-          params: { query: params },
+    queryKey: [...catalogQueryKey, "levels", "names", text],
+    queryFn: async () => {
+      const read = unwrap(
+        await api.GET("/api/v1/career/levels", {
+          params: {
+            query: { q: text || undefined, page: 1, pageSize: MAX_PAGE_SIZE },
+          },
         }),
-      ),
+      );
+      const seen = new Set<string>();
+      return read.items
+        .map((level) => level.name)
+        .filter((name) => {
+          const key = name.toLocaleLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, LEVEL_NAME_SUGGESTIONS);
+    },
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -199,6 +249,56 @@ export function scalesQuery(params: ScaleListParams) {
   });
 }
 
+export function blocksQuery(params: BlockListParams) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "blocks", params],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/blocks", { params: { query: params } }),
+      ),
+  });
+}
+
+/** A shared block as it stands now, with its composition. */
+export function blockQuery(id: string) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "blocks", "block", id],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/blocks/{id}", {
+          params: { path: { id } },
+        }),
+      ),
+    retry: false,
+  });
+}
+
+/** The fields of a shared block a form saves. */
+export interface BlockValues {
+  name: string;
+  /** The unit the block is for; null for every unit. */
+  scopeUnitId: string | null;
+  competencyIds: string[];
+}
+
+/** Creates a shared block, or with `base` changes it under the version the form was built from. */
+export async function saveBlock(
+  values: BlockValues,
+  base: { id: string; version: number } | undefined,
+) {
+  return unwrap(
+    base
+      ? await api.PUT("/api/v1/career/blocks/{id}", {
+          params: {
+            path: { id: base.id },
+            header: { "If-Match": ifMatchOf(base.version) },
+          },
+          body: values,
+        })
+      : await api.POST("/api/v1/career/blocks", { body: values }),
+  );
+}
+
 /** Draft entries waiting for the signed-in HR. */
 export function draftsQuery(params: DraftListParams = {}) {
   return queryOptions({
@@ -210,6 +310,34 @@ export function draftsQuery(params: DraftListParams = {}) {
   });
 }
 
+/** The first `limit` catalogue entries nothing uses, read again from the start as entries leave; only HR and administrators may read them. */
+export function unusedEntriesQuery(limit: number, kind?: CatalogKind) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "unused", kind, limit],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/unused-entries", {
+          params: { query: { kind, page: 1, pageSize: limit } },
+        }),
+      ),
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** The matrices and versions that use an entry, only those the user may read. */
+export function entryMatricesQuery(segment: CatalogSegment, id: string) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, segment, "matrices", id],
+    queryFn: async () =>
+      unwrap(
+        await api.GET(
+          `/api/v1/career/${segment}/{id}/matrices` as "/api/v1/career/directions/{id}/matrices",
+          { params: { path: { id } } },
+        ),
+      ),
+  });
+}
+
 /** Rereads every catalogue query after a change. */
 export function invalidateCatalogs(queryClient: QueryClient) {
   return queryClient.invalidateQueries({ queryKey: catalogQueryKey });
@@ -217,14 +345,49 @@ export function invalidateCatalogs(queryClient: QueryClient) {
 
 export type CatalogAction = "approve" | "deactivate" | "activate";
 
+/** Catalogues whose entries publish others with them, so they have a publication preview. */
+export type PublishableSegment = Exclude<CatalogSegment, "levels">;
+
+/** What approving an entry would publish with it, as a query that follows the entry's version. */
+export function publicationPreviewQuery(
+  segment: PublishableSegment,
+  entry: { id: string; version: number },
+) {
+  return queryOptions({
+    queryKey: [
+      ...catalogQueryKey,
+      segment,
+      "publication",
+      entry.id,
+      entry.version,
+    ],
+    queryFn: () => publicationPreview(segment, entry.id),
+    retry: false,
+  });
+}
+
+/** What approving or returning to work an entry would publish with it; read-only, takes no lock. */
+export async function publicationPreview(
+  segment: PublishableSegment,
+  id: string,
+) {
+  return unwrap(
+    await api.GET(
+      `/api/v1/career/${segment}/{id}/publication` as "/api/v1/career/directions/{id}/publication",
+      { params: { path: { id } } },
+    ),
+  );
+}
+
 /**
  * Approves, deactivates or reactivates an entry of any catalogue: the three endpoints have one shape in every catalogue,
- * so the path is typed by the first catalogue's.
+ * so the path is typed by the first catalogue's. `cascade` is the tag of the publication list the user confirmed.
  */
 export async function changeCatalogStatus(
   segment: CatalogSegment,
   entry: { id: string; version: number },
   action: CatalogAction,
+  cascade?: string,
 ) {
   return unwrap(
     await api.POST(
@@ -233,15 +396,11 @@ export async function changeCatalogStatus(
         params: {
           path: { id: entry.id },
           header: { "If-Match": ifMatchOf(entry.version) },
+          ...(cascade === undefined ? {} : { query: { cascade } }),
         },
       },
     ),
   );
-}
-
-/** Approves a draft the drafts list names, under the version the list showed. */
-export async function approveDraft(draft: CatalogDraft) {
-  return changeCatalogStatus(SEGMENT_OF_KIND[draft.kind], draft, "approve");
 }
 
 /** Values of a form that names an entry of a catalogue with nothing else to it. */
@@ -253,11 +412,11 @@ export interface NamedEntryValues {
 }
 
 /**
- * Creates (no `base`) or renames a direction, track or category. A track is created in a unit and a direction; the
- * three catalogues share the rename endpoint's shape and a direction and a category the creation's.
+ * Creates (no `base`) or renames a direction or a track. A track is created in a unit and a direction; the two
+ * catalogues share the rename endpoint's shape.
  */
 export async function saveNamedEntry(
-  segment: "directions" | "tracks" | "categories",
+  segment: "directions" | "tracks",
   values: NamedEntryValues,
   base: { id: string; version: number } | undefined,
 ) {
@@ -312,7 +471,7 @@ export async function deleteEntry(
 ) {
   return unwrap(
     await api.DELETE(
-      `/api/v1/career/${segment}/{id}` as "/api/v1/career/categories/{id}",
+      `/api/v1/career/${segment}/{id}` as "/api/v1/career/directions/{id}",
       {
         params: {
           path: { id: entry.id },
@@ -330,6 +489,29 @@ export async function readTrack(id: string) {
   );
 }
 
+/** A scale as it stands now, with its points. */
+export function scaleQuery(id: string) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "scales", "scale", id],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/scales/{id}", {
+          params: { path: { id } },
+        }),
+      ),
+    retry: false,
+  });
+}
+
+/** A track as it stands now, with the user's rights on it; an unreadable track is a 404. */
+export function trackQuery(id: string) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "tracks", "track", id],
+    queryFn: () => readTrack(id),
+    retry: false,
+  });
+}
+
 /** Puts the track's levels in the given order, the most junior first; the track takes a new version. */
 export async function orderLevels(
   track: { id: string; version: number },
@@ -342,6 +524,78 @@ export async function orderLevels(
         header: { "If-Match": ifMatchOf(track.version) },
       },
       body: { levelIds },
+    }),
+  );
+}
+
+/** Levels of a track with their linked positions and the track version rights; the level `version` is the `If-Match` of its links. */
+export function trackPositionsQuery(trackId: string) {
+  return queryOptions({
+    queryKey: [...catalogQueryKey, "track-positions", trackId],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/tracks/{id}/positions", {
+          params: { path: { id: trackId } },
+        }),
+      ),
+  });
+}
+
+/** Active positions the track's unit can still link to one of its levels, found by name. */
+export function availablePositionsQuery(
+  trackId: string,
+  q: string,
+  page = 1,
+  pageSize = 20,
+) {
+  return queryOptions({
+    queryKey: [
+      ...catalogQueryKey,
+      "available-positions",
+      trackId,
+      q,
+      page,
+      pageSize,
+    ],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/tracks/{id}/available-positions", {
+          params: {
+            path: { id: trackId },
+            query: { q: q || undefined, page, pageSize },
+          },
+        }),
+      ),
+  });
+}
+
+/** Links a position to a level under the level version the dialog showed; repeating a pair changes nothing. */
+export async function linkLevelPosition(
+  level: { id: string; version: number },
+  positionId: string,
+) {
+  return unwrap(
+    await api.POST("/api/v1/career/levels/{id}/positions", {
+      params: {
+        path: { id: level.id },
+        header: { "If-Match": ifMatchOf(level.version) },
+      },
+      body: { positionId },
+    }),
+  );
+}
+
+/** Unlinks a position from a level; the server refuses with the level named when it was the last active one of an active track. */
+export async function unlinkLevelPosition(
+  level: { id: string; version: number },
+  positionId: string,
+) {
+  return unwrap(
+    await api.DELETE("/api/v1/career/levels/{id}/positions/{positionId}", {
+      params: {
+        path: { id: level.id, positionId },
+        header: { "If-Match": ifMatchOf(level.version) },
+      },
     }),
   );
 }

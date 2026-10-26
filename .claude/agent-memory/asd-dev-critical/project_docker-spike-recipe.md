@@ -1,11 +1,13 @@
 ---
 name: docker-spike-recipe
-description: How the Task 10 Docker spike was run on Windows (Git Bash + Docker Desktop) and the host-side gotchas that cost time; results themselves live in the postgres-image tech-reference note
+description: impl-test / tester only - how the Docker spike was run on Windows (Git Bash + Docker Desktop) and the host-side gotchas that cost time; results themselves live in the postgres-image tech-reference note
 metadata:
   type: project
 ---
 
-Sprint 001 Task 10 deferred portion (MS-1 done) was run 2026-10-06; results are in `docs/architecture/tech-reference/postgres-image-18.6-trixie.md` ("Проверено на Docker") and the docker/sdk/aspnet/node notes. Not repeated here. What is worth knowing to rerun it:
+**impl-test / tester only.** Impl runs no containers or real-backend requests; it verifies by build, lint, `ef migrations has-pending-model-changes` and `check:api` (custom-coding-rules "Verification depth in impl").
+
+The Docker spike was run 2026-10-06; results are in `docs/architecture/tech-reference/postgres-image-18.6-trixie.md` ("Проверено на Docker") and the docker/sdk/aspnet/node notes. Not repeated here. What is worth knowing to rerun it:
 
 - **docker.exe is not on PATH** in the tool shell: `export PATH="/c/Users/Michieru/AppData/Local/Programs/DockerDesktop/resources/bin:$PATH"` first (also holds `docker-credential-desktop`).
 - **Git Bash mangles `/c/...` arguments** for `docker cp` and `docker exec <path>`: feed files through stdin instead (`docker exec -i ... psql ... < file.sql`); `MSYS_NO_PATHCONV=1` alone does not fix `/c/` style paths, and an in-container path like `/var/lib/...` passed to a host-side `ls` gets rewritten to `C:/Program Files/Git/...` unless that variable is set.
@@ -18,4 +20,4 @@ Sprint 001 Task 10 deferred portion (MS-1 done) was run 2026-10-06; results are 
 - BuildKit with the containerd image store keeps base images by digest after a digest-pinned build: `docker image inspect <tag>` can say "No such image" although the build worked.
 
 **Why:** the spike is expensive to redo blind; these were the stalls.
-**How to apply:** a re-dispatch for impl-test Testcontainers or a Dockerfile/manifest change; read the tech-reference note for outcomes first.
+**How to apply:** only when dispatched as impl-test / tester (Testcontainers, an image or manifest check), never as impl verification; read the tech-reference note for outcomes first.

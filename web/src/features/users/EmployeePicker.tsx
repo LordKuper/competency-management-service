@@ -8,6 +8,7 @@ import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { employeesQueryKey } from "../org-structure/orgStructureApi";
 
 const PICKER_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 200;
 
 interface EmployeeOption {
   value: string;
@@ -48,7 +49,7 @@ export function EmployeePicker({
               q: text || undefined,
               isActive: true,
               orgUnitId,
-              pageSize: PICKER_PAGE_SIZE,
+              pageSize: orgUnitId ? MAX_PAGE_SIZE : PICKER_PAGE_SIZE,
             },
           },
         }),
@@ -84,9 +85,15 @@ export function EmployeePicker({
       }
       optionRender={(option) => (
         <Flex vertical>
-          <span>{option.label}</span>
+          <span className="option-truncate" title={String(option.label)}>
+            {option.label}
+          </span>
           {option.data.detail && (
-            <Typography.Text type="secondary">
+            <Typography.Text
+              type="secondary"
+              className="option-truncate"
+              title={option.data.detail}
+            >
               {option.data.detail}
             </Typography.Text>
           )}

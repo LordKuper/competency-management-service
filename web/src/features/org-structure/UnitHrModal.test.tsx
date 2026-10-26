@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi, problem } from "../../test/fakeApi";
+import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import type { OrgUnit } from "./orgStructureApi";
 import { UnitHrModal } from "./UnitHrModal";
@@ -18,15 +18,28 @@ const UNIT: OrgUnit = {
 };
 
 const person = (
-  userId: string,
+  employeeId: string,
   name: string,
   unit: string,
   unitName: string,
 ) => ({
-  userId,
+  employeeId,
   name,
   orgUnitId: unit,
   orgUnitName: unitName,
+});
+
+const employee = (id: string, fullName: string, email: string) => ({
+  id,
+  lastName: fullName.split(" ")[0],
+  firstName: fullName.split(" ")[1],
+  middleName: null,
+  fullName,
+  email,
+  orgUnitId: "sales",
+  orgUnitName: "Продажи",
+  positionId: "position",
+  position: "Менеджер",
 });
 
 function serve(
@@ -34,14 +47,18 @@ function serve(
   hr: { assigned: unknown; inherited: unknown },
 ) {
   fakeApi.on("GET /api/v1/auth/me", () =>
-    Response.json({ id: "a", email: "a@test.local", role }),
+    Response.json({
+      id: "a",
+      email: "a@test.local",
+      roles: role === "User" ? [] : [role],
+    }),
   );
   fakeApi.on("GET /api/v1/career/org-units/sales/hr", () => Response.json(hr));
-  fakeApi.on("GET /api/v1/users", () =>
+  fakeApi.on("GET /api/v1/employees", () =>
     Response.json({
       items: [
-        { id: "u1", email: "ivanova@test.local", employeeName: "Иванова Анна" },
-        { id: "u2", email: "petrov@test.local", employeeName: null },
+        employee("e1", "Иванова Анна", "ivanova@test.local"),
+        employee("e2", "Петров Пётр", "petrov@test.local"),
       ],
       total: 2,
       page: 1,
@@ -66,6 +83,16 @@ async function dialogTitled(title: string) {
   return heading?.closest('[role="dialog"]') as HTMLElement;
 }
 
+function lockedControls() {
+  const controls: [string, HTMLElement][] = [
+    ["employee", screen.getByRole("combobox", { name: "Сотрудник" })],
+    ["assign", screen.getByRole("button", { name: /Закрепить/ })],
+  ];
+  return controls
+    .filter(([, control]) => control.hasAttribute("disabled"))
+    .map(([kind]) => kind);
+}
+
 beforeEach(() => {
   queryClient.clear();
 });
@@ -73,8 +100,8 @@ beforeEach(() => {
 describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
   it("shows the assigned HR and the one inherited from above", async () => {
     serve("User", {
-      assigned: person("u1", "Иванова Анна", "sales", "Продажи"),
-      inherited: person("u2", "Петров Пётр", "company", "Компания"),
+      assigned: person("e1", "Иванова Анна", "sales", "Продажи"),
+      inherited: person("e2", "Петров Пётр", "company", "Компания"),
     });
     await openModal();
 
@@ -96,7 +123,7 @@ describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
 
   it("leaves assigning and removing to administrators", async () => {
     serve("User", {
-      assigned: person("u1", "Иванова Анна", "sales", "Продажи"),
+      assigned: person("e1", "Иванова Анна", "sales", "Продажи"),
       inherited: null,
     });
     await openModal();
@@ -110,7 +137,7 @@ describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
     ).not.toBeInTheDocument();
   });
 
-  it("assigns the chosen account, offering accounts by employee name and e-mail", async () => {
+  it("assigns the chosen employee, offering only the candidates the server names", async () => {
     serve("GlobalAdmin", { assigned: null, inherited: null });
     fakeApi.on(
       "PUT /api/v1/career/org-units/sales/hr",
@@ -119,9 +146,9 @@ describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
     const user = await openModal();
     await screen.findByText("HR не назначен");
 
-    await user.click(screen.getByRole("combobox", { name: "Пользователь" }));
-    expect(await screen.findByText("petrov@test.local")).toBeInTheDocument();
-    await user.click(screen.getByText("Иванова Анна (ivanova@test.local)"));
+    await user.click(screen.getByRole("combobox", { name: "Сотрудник" }));
+    expect(await screen.findByText(/petrov@test\.local/)).toBeInTheDocument();
+    await user.click(screen.getByText("Иванова Анна"));
     await user.click(screen.getByRole("button", { name: "Закрепить" }));
 
     await waitFor(() =>
@@ -131,25 +158,28 @@ describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
     );
     expect(
       await fakeApi.calls("PUT /api/v1/career/org-units/sales/hr")[0]?.json(),
-    ).toEqual({
-      userId: "u1",
-    });
+    ).toEqual({ employeeId: "e1" });
+    expect(fakeApi.calls("GET /api/v1/employees").at(-1)?.url).toContain(
+      "hrCandidate=true",
+    );
   });
 
-  it("shows the refusal of an account that cannot act under the field", async () => {
+  it("shows the refusal of an employee who cannot act under the field", async () => {
     serve("GlobalAdmin", { assigned: null, inherited: null });
     fakeApi.on("PUT /api/v1/career/org-units/sales/hr", () =>
       problem(400, {
         errors: {
-          userId: ["Учётная запись заблокирована или не завершила регистрацию"],
+          employeeId: [
+            "Учётная запись заблокирована или не завершила регистрацию",
+          ],
         },
       }),
     );
     const user = await openModal();
     await screen.findByText("HR не назначен");
 
-    await user.click(screen.getByRole("combobox", { name: "Пользователь" }));
-    await user.click(await screen.findByText("petrov@test.local"));
+    await user.click(screen.getByRole("combobox", { name: "Сотрудник" }));
+    await user.click(await screen.findByText("Петров Пётр"));
     await user.click(screen.getByRole("button", { name: "Закрепить" }));
 
     expect(
@@ -157,11 +187,55 @@ describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
         "Учётная запись заблокирована или не завершила регистрацию",
       ),
     ).toBeInTheDocument();
+    expect(document.querySelector(".ant-message-notice")).toBeNull();
+  });
+
+  it("tells the administrator, and keeps the dialog, when assigning fails for a reason that names no field", async () => {
+    serve("GlobalAdmin", { assigned: null, inherited: null });
+    fakeApi.on("PUT /api/v1/career/org-units/sales/hr", () =>
+      problem(500, { title: "Сбой" }),
+    );
+    const user = await openModal();
+    await screen.findByText("HR не назначен");
+
+    await user.click(screen.getByRole("combobox", { name: "Сотрудник" }));
+    await user.click(await screen.findByText("Петров Пётр"));
+    await user.click(screen.getByRole("button", { name: "Закрепить" }));
+
+    await waitFor(() =>
+      expect(document.querySelector(".ant-message-notice")).not.toBeNull(),
+    );
+    expect(
+      await dialogTitled("HR подразделения «Продажи»"),
+    ).toBeInTheDocument();
+  });
+
+  it("holds the employee choice while the assignment is in flight, and frees it when it is refused (AC-61)", async () => {
+    serve("GlobalAdmin", { assigned: null, inherited: null });
+    const held = deferred<Response>();
+    fakeApi.on("PUT /api/v1/career/org-units/sales/hr", () => held.promise);
+    const user = await openModal();
+    await screen.findByText("HR не назначен");
+    expect(lockedControls()).toEqual([]);
+    await user.click(screen.getByRole("combobox", { name: "Сотрудник" }));
+    await user.click(await screen.findByText("Петров Пётр"));
+
+    await user.click(screen.getByRole("button", { name: "Закрепить" }));
+
+    await waitFor(() =>
+      expect(
+        fakeApi.calls("PUT /api/v1/career/org-units/sales/hr"),
+      ).toHaveLength(1),
+    );
+    expect(lockedControls()).toEqual(["employee", "assign"]);
+    held.resolve(problem(500, { title: "Сбой" }));
+    await waitFor(() => expect(lockedControls()).toEqual([]));
+    expect(document.querySelector(".ant-message-notice")).not.toBeNull();
   });
 
   it("removes the assignment after a confirmation that names what follows, focused on «Отмена»", async () => {
     serve("GlobalAdmin", {
-      assigned: person("u1", "Иванова Анна", "sales", "Продажи"),
+      assigned: person("e1", "Иванова Анна", "sales", "Продажи"),
       inherited: null,
     });
     fakeApi.on(
@@ -195,7 +269,7 @@ describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
   it("offers no removal for a unit that only inherits its HR", async () => {
     serve("GlobalAdmin", {
       assigned: null,
-      inherited: person("u2", "Петров Пётр", "company", "Компания"),
+      inherited: person("e2", "Петров Пётр", "company", "Компания"),
     });
     await openModal();
 

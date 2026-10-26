@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Form, Input, Select, Typography, theme } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isStaleVersion, useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
@@ -13,22 +13,29 @@ import {
   readTrack,
   saveNamedEntry,
 } from "./catalogApi";
+import { DirectionSelect } from "./DirectionSelect";
 import { createLevel } from "./LevelModal";
 import { arrangeLevels, type PendingLevel, TrackLevels } from "./TrackLevels";
 import { useCatalogRights } from "./useCatalogRights";
 
 const NAME_MAX_LENGTH = 200;
-const FIELDS = ["name", "ownerOrgUnitId"] as const;
+const FIELDS = ["name", "ownerOrgUnitId", "directionId"] as const;
 
 interface TrackValues {
   name: string;
   ownerOrgUnitId?: string;
+  directionId?: string;
 }
 
 interface TrackModalProps {
-  directionId: string;
+  /** Direction a new track starts with, which the user may change; omitted when the dialog asks for it. */
+  directionId?: string;
   /** Track being edited as the cache holds it now; omitted when one is created. */
   track?: CareerTrack;
+  /** The unit a new track is created in, when the user has no choice of it. */
+  fixedOwner?: { id: string; name: string };
+  /** Called with the track a save produced, as the dialog closes. */
+  onSaved?: (track: CareerTrack) => void;
   onClose: () => void;
 }
 
@@ -39,10 +46,14 @@ interface TrackModalProps {
  * left, and a second «Сохранить» retries the rest without creating the track again. The track is the one saved here when
  * the dialog created it, read again after a stale-version refusal, and otherwise the newer of the one saved here and the
  * form base, which moves to the reread track after such a refusal; either way the next save sends the reread version.
+ * The name field shows that track's name whenever the track changes, so a reread name replaces the refused one; the
+ * pending levels stay.
  */
 export function TrackModal({
   directionId,
   track: latest,
+  fixedOwner,
+  onSaved,
   onClose,
 }: TrackModalProps) {
   const queryClient = useQueryClient();
@@ -50,6 +61,7 @@ export function TrackModal({
   const rights = useCatalogRights();
   const [form] = Form.useForm<TrackValues>();
   const { base, noteSaveFailure } = useEditBase(latest);
+  const name = Form.useWatch("name", form);
   const [saved, setSaved] = useState<CareerTrack>();
   const [pending, setPending] = useState<PendingLevel[]>([]);
   const [order, setOrder] = useState<string[]>();
@@ -59,6 +71,9 @@ export function TrackModal({
     ...levelsQuery(current?.id ?? ""),
     enabled: current !== undefined,
   });
+  useEffect(() => {
+    form.setFieldValue("name", current?.name ?? "");
+  }, [form, current]);
   const rows = arrangeLevels(
     current ? (levels.data?.items ?? []) : [],
     pending,
@@ -71,7 +86,7 @@ export function TrackModal({
         if (!track || values.name !== track.name) {
           track = (await saveNamedEntry(
             "tracks",
-            { ...values, directionId },
+            values,
             track,
           )) as CareerTrack;
           setSaved(track);
@@ -88,13 +103,13 @@ export function TrackModal({
           );
         }
         if (order) {
-          setSaved(
-            await orderLevels(
-              track,
-              rows.map((row) => createdIds.get(row.key) ?? row.key),
-            ),
+          track = await orderLevels(
+            track,
+            rows.map((row) => createdIds.get(row.key) ?? row.key),
           );
+          setSaved(track);
         }
+        return track;
       } catch (error) {
         if (!latest && track && isStaleVersion(error)) {
           await readTrack(track.id).then(setSaved, () => undefined);
@@ -102,7 +117,10 @@ export function TrackModal({
         throw error;
       }
     },
-    onSuccess: onClose,
+    onSuccess: (saved) => {
+      onSaved?.(saved);
+      onClose();
+    },
     onError: noteSaveFailure,
     onSettled: () => invalidateCatalogs(queryClient),
   });
@@ -113,14 +131,24 @@ export function TrackModal({
       title={latest ? "Изменение трека" : "Новый трек"}
       error={save.error}
       fields={FIELDS}
+      isUnsaved={
+        pending.length > 0 ||
+        order !== undefined ||
+        (name !== undefined && name !== (current?.name ?? ""))
+      }
       onClose={onClose}
     >
       <Form
         key={base?.version}
         form={form}
         name="career-track"
+        disabled={isSubmitting}
         layout="vertical"
-        initialValues={{ name: current?.name ?? "" }}
+        initialValues={{
+          name: current?.name ?? "",
+          ownerOrgUnitId: fixedOwner?.id,
+          directionId,
+        }}
         onFinish={submit}
       >
         {!current && (
@@ -128,8 +156,14 @@ export function TrackModal({
             name="ownerOrgUnitId"
             label="Подразделение"
             rules={[{ required: true }]}
+            extra={fixedOwner && "Трек создаётся в вашем подразделении."}
           >
-            {rights.isAdmin ? (
+            {fixedOwner ? (
+              <Select
+                disabled
+                options={[{ value: fixedOwner.id, label: fixedOwner.name }]}
+              />
+            ) : rights.isAdmin ? (
               <OrgUnitSelect isActiveRequired />
             ) : (
               <Select
@@ -139,6 +173,15 @@ export function TrackModal({
                 }))}
               />
             )}
+          </Form.Item>
+        )}
+        {!current && (
+          <Form.Item
+            name="directionId"
+            label="Область"
+            rules={[{ required: true }]}
+          >
+            <DirectionSelect />
           </Form.Item>
         )}
         <Form.Item

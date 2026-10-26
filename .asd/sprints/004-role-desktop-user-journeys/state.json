@@ -1,0 +1,1599 @@
+{
+  "sprint_id": "004-role-desktop-user-journeys",
+  "branch": "sprint/004-role-desktop-user-journeys",
+  "phase": "pr",
+  "workflow": "standard",
+  "documents": {
+    "audit": true,
+    "prd": true,
+    "ux_spec": true,
+    "adr": true,
+    "c4": true
+  },
+  "user_gates": "adaptive",
+  "gate_decisions": [
+    {
+      "gate": "workflow choice",
+      "decision_actor": "user",
+      "decision": "standard",
+      "reason": "user chose recommended standard",
+      "evidence": "decisions-log.md 2026-10-12 workflow"
+    },
+    {
+      "gate": "scope clarification",
+      "decision_actor": "user",
+      "decision": "desktop is home, tables secondary; roles manager, HR, admin, employee; orchestrator proposes journeys; header counter plus email",
+      "reason": "ambiguity blocking concrete scope",
+      "evidence": "decisions-log.md 2026-10-12 scope answers"
+    },
+    {
+      "gate": "retro intake dispositions",
+      "decision_actor": "user",
+      "decision": "003#A-6,003#P-2,003#P-1,003#A-4,002#A-2 included (AC-19..23); 001#P-2 rejected",
+      "reason": "cost 0 iterations / 0 fix rounds (new criteria)",
+      "evidence": ".asd/project/retro-backlog.md"
+    },
+    {
+      "gate": "scope",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "sprint.md AC-1..23; one sprint, split declined; no document skips",
+      "evidence": "decisions-log.md 2026-10-12 scope accepted",
+      "artifact_revision": "sprint.md 2026-10-12"
+    },
+    {
+      "gate": "audit contradictions C-1..C-3",
+      "decision_actor": "user",
+      "decision": "C-1 draft track allowed for matrix, publication blocked until track active (AC-8 amended); C-2 age only for event kinds (AC-2); C-3 resend button on desktop (AC-6)",
+      "reason": "no canonical side; cost AC-2, AC-6, AC-8: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-12 audit contradictions"
+    },
+    {
+      "gate": "audit ambiguities A-4,A-6..A-9,A-11..A-13,A-15",
+      "decision_actor": "user",
+      "decision": "all recommendations accepted",
+      "reason": "authority/preference-only",
+      "evidence": "audit.md Решения по противоречиям и неоднозначностям"
+    },
+    {
+      "gate": "audit",
+      "decision_actor": "orchestrator",
+      "decision": "accept",
+      "reason": "audit.md complete; all contradictions and authority ambiguities settled by user; source-resolvable A-5, A-10, A-14 settled from cited sources",
+      "evidence": "audit.md",
+      "artifact_revision": "audit.md 2026-10-12"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-24..AC-34 added (position-level link model A, publication bans, role checks 1-22 + level without position, no-duplicates absorption, scenarios link positions / catalog order / org order, general publication rule with explicit cascade); AC-2, AC-8, AC-14, AC-20 amended",
+      "reason": "user remarks at PRD review; cost AC-2, AC-8, AC-14, AC-20: 0 iterations / 0 fix rounds (no review yet)",
+      "evidence": "decisions-log.md 2026-10-12 scope amendment position-level link"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-25: submit of matrix version banned while a track level lacks an active position (completeness); AC-24: link kept on position deactivation or list exclusion, level with only inactive positions counts as without position",
+      "reason": "user answers at PRD review; cost AC-24, AC-25: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-12 PRD accepted"
+    },
+    {
+      "gate": "PRD",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "prd.html AC-1..AC-34, derived decisions 1-14 accepted; two answers applied as edit without another round",
+      "evidence": "decisions-log.md 2026-10-12 PRD accepted",
+      "artifact_revision": "prd.html 2026-10-12"
+    },
+    {
+      "gate": "UX-spec",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "ux-spec.html 22 mockups, U-1..U-23; no DESIGN.md token change; two layout fixes applied (document text shell colours, id columns no wrap)",
+      "evidence": "decisions-log.md 2026-10-13 ux-spec accepted",
+      "artifact_revision": "ux-spec.html 7c16627"
+    },
+    {
+      "gate": "new subsystem desk",
+      "decision_actor": "user",
+      "decision": "approve: Competency.Desk, contract IDeskSource in Platform, web/src/features/desk; registry at design-promote",
+      "reason": "ADR-1 hard gate",
+      "evidence": "decisions-log.md 2026-10-13 ADR accepted"
+    },
+    {
+      "gate": "material contract/compatibility: API 3.1.0",
+      "decision_actor": "user",
+      "decision": "3.1.0 as is; POST /career/tracks always creates draft; cascade publication; draft track matrix; completeness needs active position per level",
+      "reason": "ADR-3, ADR-4, ADR-6 behaviour changes, additive shape",
+      "evidence": "decisions-log.md 2026-10-13 ADR accepted"
+    },
+    {
+      "gate": "material architecture: mail delivery",
+      "decision_actor": "user",
+      "decision": "in-memory bounded queue, loss on restart accepted",
+      "reason": "ADR-5; PasswordResetQueue precedent",
+      "evidence": "decisions-log.md 2026-10-13 ADR accepted"
+    },
+    {
+      "gate": "ADR",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "adr.html ADR-1..ADR-6 incl. complication approvals IDeskSource, FindOrgSnapshotAsync, CareerMailQueue",
+      "evidence": "decisions-log.md 2026-10-13 ADR accepted",
+      "artifact_revision": "adr.html f1d2df3"
+    },
+    {
+      "gate": "mechanical design-system update",
+      "decision_actor": "orchestrator",
+      "decision": "design-md-delta.yaml documentation-only entries (accent on primary contrast row, horizontal Steps note)",
+      "reason": "no token added or changed; routine in adaptive",
+      "evidence": "decisions-log.md 2026-10-13 design-md-delta"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-34: a record created directly active that references drafts is created as a draft and offered for approval with the cascade list; accept-changes publishes and shows the cascade when the HR step auto-approves (author is responsible HR)",
+      "reason": "design-review iter-02 documentation question 1 and external #1; cost AC-34: 2 iterations (lower bound) / 1 fix round",
+      "evidence": "decisions-log.md 2026-10-13 design-review iter-02 answers"
+    },
+    {
+      "gate": "design-review FAIL escalation (external iter-03 #1)",
+      "decision_actor": "user",
+      "decision": "accept fix: a transition that actually publishes without a matching cascade tag returns 412 and the screen re-previews for confirmation; listed in 3.1.0 behaviour changes",
+      "reason": "Complication Approval presented; tag-with-route and accept-risk rejected",
+      "evidence": "decisions-log.md 2026-10-13 design-review iter-03 answers"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-34: editing an active record to reference a draft is rejected 400 (field error); version closure walks through active competencies to their draft references",
+      "reason": "correctness iter-03 question 1; cost AC-34: 3 iterations (lower bound) / 2 fix rounds",
+      "evidence": "decisions-log.md 2026-10-13 design-review iter-03 answers"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "existing MatrixPage loses submit/approve/accept-changes buttons; links to desk scenarios instead; page keeps view, content edit and non-publishing actions",
+      "reason": "correctness iter-04 question 1; cost AC-34: 4 iterations (lower bound) / 3 fix rounds",
+      "evidence": "decisions-log.md 2026-10-13 design-review iter-04 answer"
+    },
+    {
+      "gate": "design-review green handoff",
+      "decision_actor": "orchestrator",
+      "decision": "advance to design-promote",
+      "reason": "iter-05 all reviewers APPROVE or latched (efficiency 2, documentation 3, external 4, correctness 5); all user questions and the FAIL escalation answered",
+      "evidence": "reviews/design/iter-05; decisions-log.md 2026-10-13 design-review DoD"
+    },
+    {
+      "gate": "decomposition",
+      "decision_actor": "orchestrator",
+      "decision": "promote approved subsystem desk (Competency.Desk); career-framework, org-structure, user-management, audit changed (ports, endpoints, mail kinds); platform IDeskSource contract",
+      "reason": "subsystem desk approved by the user (hard gate) 2026-10-13; no further new subsystem or boundary",
+      "evidence": "decisions-log.003.md 2026-10-13 ADR accepted",
+      "artifact_revision": "HEAD 7174e51"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-21 retired; rule User-visible texts approval removed from custom-common-rules.md (Task 1); AC-15/AC-17 plan-approval clauses dropped; retro 002#P-1 and 003#P-1 rejected",
+      "reason": "user instruction at plan gate; cost AC-15, AC-17, AC-21: 0 iterations (design-review findings did not cite them) / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-13 plan gate: texts approval rule removed"
+    },
+    {
+      "gate": "plan",
+      "decision_actor": "user",
+      "decision": "accept",
+      "reason": "plan.md Task 1-13, 9 waves; plan decisions P-1 (draft track of own unit for matrix regardless of track author) and P-2 (scenario availability from server actions)",
+      "evidence": "decisions-log.md 2026-10-13 plan accepted",
+      "artifact_revision": "plan.md 2131768"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-35 compact scenario screens, AC-36 back to previous step / reselect object in every scenario, AC-37 rename professional direction to professional area (UI «Область»); Task 14 (UX docs), Task 15 (requirements) wave 10, Task 16 (SPA + mail texts) wave 11",
+      "reason": "user remarks at impl assessment; cost AC-35..37: 0 iterations / 0 fix rounds (new criteria, no impl review yet)",
+      "evidence": "decisions-log.md 2026-10-13 scope amendment at impl assessment"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-38 step ruler in every multi-step wizard (total, names, current, done/remaining, jump to done step); folded into Task 14, 15, 16",
+      "reason": "user instruction at impl assessment; cost AC-38: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-13 AC-38 step ruler"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-39 no «Шаг n из N», AC-40 «Добавить шкалу», AC-41 scale points popover, AC-42 area on the spot in track form, AC-43 level name autocomplete; Task 17, 18 wave 12, Task 19 wave 13",
+      "reason": "user remarks at impl assessment; cost: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-14 scope amendment: wizard scale, area, level"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "impl-review of this sprint by the combined reviewer (lite roster) while workflow stays standard",
+      "reason": "user decision; frozen workflow cannot change (F-5)",
+      "evidence": "decisions-log.md 2026-10-14 impl-review по схеме lite"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-44 position matrix (unit + position, one column), AC-45 shared competency block (composition only), AC-46 block change: drafts at once, published via desk item, AC-47 competencies outside blocks; Task 20 wave 14, Task 21-22 wave 15, Task 23 wave 16, Task 24 wave 17; material architecture, public contract and migration change accepted",
+      "reason": "user decision at impl assessment (options 3 and 4 of the head-of-unit matrix discussion), in this sprint; cost AC-44..47: 0 iterations / 0 fix rounds (no impl review yet)",
+      "evidence": "decisions-log.md 2026-10-14 scope amendment: position matrix, shared blocks"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-48 unit-owned shared block created by the unit head on wizard step 2 + step 2 texts; AC-49 matrix has no scale (AC-40 retired); Task 25 wave 18, Task 26-27 wave 19, Task 28 wave 20, Task 29 wave 21; contract and migration change accepted",
+      "reason": "user remarks at impl assessment; block ownership modelled like tracks (owner unit, available to owner and descendant units) — orchestrator default, open to user correction; cost: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-15 scope amendment: unit block, matrix without scale"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-50 shared block without a scale, mixed scales allowed (reverses one-scale-per-block); Task 30-32 wave 22, Task 33 wave 23, Task 34 wave 24; contract and migration change accepted",
+      "reason": "user remark at impl assessment; cost: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-15 scope amendment: block without scale"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-51 remove competency categories entirely (data dropped by migration), AC-52 wider block window; Task 35-37 wave 25, Task 38 wave 26, Task 39 wave 27; contract and migration change accepted",
+      "reason": "user remark at impl assessment; cost: 0 iterations / 0 fix rounds",
+      "evidence": "decisions-log.md 2026-10-20 scope amendment: no categories"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-53 create a competency from the shared block window; Task 40, Task 41 wave 28",
+      "reason": "user remark at impl assessment; cost 0",
+      "evidence": "decisions-log.md 2026-10-20 AC-53"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-54 create a professional area from the competency window; Task 42, Task 43 wave 29",
+      "reason": "user remark at impl assessment; cost 0",
+      "evidence": "decisions-log.md 2026-10-20 AC-54"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-55 competency type moves from the catalog record to the matrix version; Task 44-46 wave 30, Task 47 wave 31, Task 48 wave 32; contract and migration change accepted",
+      "reason": "user remark at impl assessment; cost 0",
+      "evidence": "decisions-log.md 2026-10-20 AC-55"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-56 requirements step redesign: type column, inline scores, grouping by blocks without assignment (assignment on step 2), requirement = score only (no weight, mandatory, behaviour, date, min level; critical score is the threshold), evidence examples on the competency; Task 49 wave 33, Task 50-51 wave 34, Task 52 wave 35, Task 53 wave 36",
+      "reason": "user decisions at impl assessment (inline, equal weights, merge with type, blocks assigned on step 2); cost 0",
+      "evidence": "decisions-log.md 2026-10-20 AC-56"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-57 required score always set (min of scale by default, no \"not set\"); AC-58 no backward compatibility before 1.0: contract 1.0.0, deprecated removed, migrations squashed into one InitialCreate, backward_compat none; Task 54 wave 37, Task 55-57 wave 38, Task 58 wave 39, Task 59 wave 40; plus assessment remarks (step 3 note removed, unsaved-changes wording) and Pkcs 10.0.13 pin",
+      "reason": "user remarks at impl assessment 3; cost 0",
+      "evidence": "decisions-log.md 2026-10-21 AC-57, AC-58"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-59 desk scenario cards shown only when their prerequisites exist (hidden otherwise); cards \"add first unit\" / \"add first position\" while none exist; Task 60-62 wave 41, Task 63 wave 42, Task 64 wave 43",
+      "reason": "user remark at impl assessment 4; cost 0",
+      "evidence": "decisions-log.md 2026-10-21 AC-59"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-60 connect-unit card needs at least one employee; org queue findings get a meaningful primary action (onboard with preselected unit/position), deactivation secondary; Task 65-67 wave 44, Task 68 wave 45, Task 69 wave 46",
+      "reason": "user remarks at impl assessment 6; cost 0",
+      "evidence": "decisions-log.md 2026-10-21 AC-60"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-61 unsaved edits never block navigation: confirm-to-discard on any leave incl. wizard steps, beforeunload on tab close; AC-20 coding rule changed; Task 70-72 wave 47, Task 73 wave 48",
+      "reason": "user remark at impl assessment 8; cost 0",
+      "evidence": "decisions-log.md 2026-10-21 AC-61"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-62 new account role HR assigned by admin; responsible HR is picked as an employee whose bound active account has role HR; server checks on assignment; role removal blocked while assigned; Task 74-76 wave 49, Task 77 wave 50, Task 78 wave 51",
+      "reason": "user remark at impl assessment 10; cost 0",
+      "evidence": "decisions-log.md 2026-10-21 AC-62"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "decision": "AC-63 incremental DB migrations until release (data transfer where the dev DB needs it), squash and recreate right before release; API still without backward compat; Task 77 schema change as a migration over InitialCreate 20261021091246; Task 79 wave 52, Task 80 wave 53",
+      "reason": "user decision 2026-10-21; cost 0",
+      "evidence": "decisions-log.md 2026-10-21 AC-63"
+    },
+    {
+      "gate": "initial impl assessment",
+      "decision_actor": "user",
+      "decision": "approve",
+      "reason": "user approved after build-card and onboarding-cancel round",
+      "evidence": "decisions-log.md 2026-10-22 impl assessment approved",
+      "artifact_revision": "e6a5588"
+    },
+    {
+      "gate": "review escalation: requirement change AC-110",
+      "decision_actor": "user",
+      "decision": "hide unreadable entries, show count; AC-112 over full cascade",
+      "reason": "external wave-1/iter-03 finding 1 conflicts with AC-110",
+      "evidence": "decisions-log.md 2026-10-22 AC-110 amendment",
+      "artifact_revision": "6003748"
+    },
+    {
+      "gate": "impl-review green handoff",
+      "decision_actor": "orchestrator",
+      "reason": "all three waves met reviewer DoD; terminal full suite green; user asked to continue",
+      "evidence": "test-plan.md Suite run; decisions-log 2026-10-26 impl-review DoD met",
+      "artifact_revision": "c3e6ce4"
+    },
+    {
+      "gate": "PR publication",
+      "decision_actor": "user",
+      "decision": "push branch and open PR",
+      "reason": "user approved in chat",
+      "evidence": "decisions-log.md 2026-10-26 PR opened",
+      "artifact_revision": "1e45045"
+    }
+  ],
+  "task_routing": {
+    "Task 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 2": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "owner asd-dev-critical",
+      "resolved_model": "opus"
+    },
+    "Task 3": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:lock ordering",
+      "resolved_model": "opus"
+    },
+    "Task 4": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:migration",
+      "resolved_model": "opus"
+    },
+    "Task 5": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:workflow state machine",
+      "resolved_model": "opus"
+    },
+    "Task 6": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:migration",
+      "resolved_model": "opus"
+    },
+    "Task 7": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:lock ordering",
+      "resolved_model": "opus"
+    },
+    "Task 8": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
+    },
+    "Task 9": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:perf",
+      "resolved_model": "opus"
+    },
+    "Task 10": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "opus"
+    },
+    "Task 11": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 12": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 13": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 14": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 15": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 16": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 16 assessment-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 16 assessment-fix 2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 14 assessment-fix 2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 16 assessment-fix 3": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 14 assessment-fix 3": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 16 assessment-fix 4": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 14 assessment-fix 4": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 15 assessment-fix 4": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 16 assessment-fix 5": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 16 assessment-fix 6": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 14 assessment-fix 6": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 15 assessment-fix 6": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 16 assessment-fix 7": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 15 assessment-fix 7": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 17": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 18": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 19": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 19 assessment-fix 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 17 assessment-fix 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 19 assessment-fix 2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 20": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 20 decisions-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 21": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 22": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 23": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
+    },
+    "Task 22 arch-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 23 test-compile": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 24": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 24 assessment-fix 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 25": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 25 decisions-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 25 rename": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 26": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 27": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 28": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
+    },
+    "Task 29": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 30": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 31": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 32": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 33": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
+    },
+    "Task 34": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 35": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 36": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 37": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 38": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
+    },
+    "Task 39": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 39 test-compile": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 40": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 41": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 42": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 43": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 29 assessment-fix 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 29 assessment-fix 2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 29 assessment-fix 3": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 44": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 45": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 46": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 47": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
+    },
+    "Task 44 migration-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 48": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 49": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 49 blocks-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 50": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 51": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 52": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
+    },
+    "Task 53": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 52 name-fix": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:migration",
+      "resolved_model": "opus"
+    },
+    "Task 53 test-compile": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 53 assessment-fix 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 54": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 55": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 56": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract; owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 57": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 55 completeness-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 56 completeness-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 58": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
+    },
+    "Task 59": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 59 block-name-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 59 block-name-fix 2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 58-59 test-compile": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 60": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 61": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract; owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 62": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 60 prereq-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 63": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
+    },
+    "Task 64": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 64 assessment-fix 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 62 assessment-fix 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 65": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 66": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract; owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 67": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 65 reactivate-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 68": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:public contract",
+      "resolved_model": "opus"
+    },
+    "Task 69": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 67 assessment-fix 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 69 assessment-fix 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 70": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 71": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 72": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 71 close-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 73": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 73 assessment-fix 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 74": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 75": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:authorization; owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 76": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 74 roles-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 74 rights-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 74 tracks-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 75 tracks-fix": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:authorization; owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 76 tracks-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 77": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:authorization",
+      "resolved_model": "opus"
+    },
+    "Task 74 positions-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 75 positions-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 76 positions-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 78": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 77-78 test-compile": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 79": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:migration; owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 73 held-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 80": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:migration",
+      "resolved_model": "opus"
+    },
+    "Task 80 test-compile": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:migration",
+      "resolved_model": "sonnet"
+    },
+    "Task 70 cancel-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 72 cancel-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 71 cancel-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-architect (docs/architecture)",
+      "resolved_model": "opus"
+    },
+    "Task 73 cancel-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 76 roles-select-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 78 roles-select-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 73 submit-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 76 hr-close-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 69 own-hr-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 67 own-hr-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 60 empty-card-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 62 empty-card-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 64 empty-card-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 60 build-card-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "Task 62 build-card-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "Task 64 build-card-fix": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 1": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "test-fix D-1, D-2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-1/iter-01": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "opus"
+    },
+    "review-fix wave-1/iter-01 tests": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 3": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-1/iter-02": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "opus"
+    },
+    "review-fix wave-1/iter-02 tests": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 4": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-1/iter-03 requirements": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ba (docs/product)",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-1/iter-03": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "opus"
+    },
+    "impl-test entry 5": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-2/iter-01": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "opus"
+    },
+    "review-fix wave-2/iter-01 tests": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-2/iter-01 ux": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "owner asd-ux (docs/ux)",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 6": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-2/iter-02": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "opus"
+    },
+    "impl-test entry 7": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-3/iter-01": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "opus"
+    },
+    "review-fix wave-3/iter-01 tests": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 8": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "test-fix D-3": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "impl-test entry 9": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-3/iter-02": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "opus"
+    },
+    "impl-test entry 10": {
+      "execution": "agent",
+      "tier": "critical",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "impl-review wave-3/iter-03 suite": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    }
+  },
+  "skipped_phases": [],
+  "reviews": {
+    "design": {
+      "iteration": 5,
+      "verdicts": {
+        "iter-01": {
+          "correctness": "CONCERNS",
+          "efficiency": "CONCERNS",
+          "documentation": "CONCERNS",
+          "external": "CONCERNS"
+        },
+        "iter-02": {
+          "correctness": "CONCERNS",
+          "efficiency": "APPROVE",
+          "documentation": "CONCERNS",
+          "external": "CONCERNS"
+        },
+        "iter-03": {
+          "correctness": "CONCERNS",
+          "efficiency": "APPROVE",
+          "documentation": "APPROVE",
+          "external": "FAIL"
+        },
+        "iter-04": {
+          "correctness": "CONCERNS",
+          "efficiency": "APPROVE",
+          "documentation": "APPROVE",
+          "external": "APPROVE"
+        },
+        "iter-05": {
+          "correctness": "APPROVE",
+          "efficiency": "APPROVE",
+          "documentation": "APPROVE",
+          "external": "APPROVE"
+        }
+      },
+      "latched": {
+        "efficiency": 2,
+        "documentation": 3,
+        "external": 4,
+        "correctness": 5
+      }
+    },
+    "impl": {
+      "wave": 3,
+      "waves": [
+        {
+          "iteration": 4,
+          "verdicts": {
+            "iter-01": {
+              "correctness": "APPROVE",
+              "efficiency": "CONCERNS",
+              "testing": "CONCERNS",
+              "documentation": "CONCERNS",
+              "external": "CONCERNS"
+            },
+            "iter-02": {
+              "correctness": "APPROVE",
+              "efficiency": "APPROVE",
+              "testing": "CONCERNS",
+              "documentation": "CONCERNS",
+              "external": "CONCERNS"
+            },
+            "iter-03": {
+              "correctness": "APPROVE",
+              "efficiency": "APPROVE",
+              "testing": "APPROVE",
+              "documentation": "APPROVE",
+              "external": "CONCERNS"
+            },
+            "iter-04": {
+              "correctness": "APPROVE",
+              "efficiency": "APPROVE",
+              "testing": "APPROVE",
+              "documentation": "APPROVE",
+              "external": "APPROVE"
+            }
+          },
+          "iteration_heads": {
+            "iter-01": "2eca62ff61abd477559607cdca75abddb0e980a4",
+            "iter-02": "adddc192cc5e3cea80b74eaeeaf95825d53eba3d",
+            "iter-03": "a78f8b00476bd94a87ef7a3cffbc134eda59b698",
+            "iter-04": "26e259871eaeb50fab1d369e0a37eb0912e3df7f"
+          },
+          "latched": {
+            "correctness": 1,
+            "efficiency": 2,
+            "testing": 3,
+            "documentation": 3,
+            "external": 4
+          }
+        },
+        {
+          "iteration": 3,
+          "verdicts": {
+            "iter-01": {
+              "correctness": "CONCERNS",
+              "efficiency": "CONCERNS",
+              "testing": "CONCERNS",
+              "documentation": "CONCERNS",
+              "external": "CONCERNS"
+            },
+            "iter-02": {
+              "correctness": "CONCERNS",
+              "efficiency": "CONCERNS",
+              "testing": "APPROVE",
+              "documentation": "APPROVE",
+              "external": "CONCERNS"
+            },
+            "iter-03": {
+              "correctness": "APPROVE",
+              "efficiency": "APPROVE",
+              "testing": "APPROVE",
+              "documentation": "APPROVE",
+              "external": "APPROVE"
+            }
+          },
+          "iteration_heads": {
+            "iter-01": "b478840398a32d8351bbfd869201d19066a5f1c7",
+            "iter-02": "6f02006fcb7ce1cdeda5c45b7873a47113fd9197",
+            "iter-03": "fca2153df6ee35adf5b9cd2fee76d0fbad112881"
+          },
+          "latched": {
+            "testing": 2,
+            "documentation": 2,
+            "correctness": 3,
+            "efficiency": 3,
+            "external": 3
+          }
+        },
+        {
+          "iteration": 3,
+          "verdicts": {
+            "iter-01": {
+              "correctness": "CONCERNS",
+              "efficiency": "CONCERNS",
+              "testing": "CONCERNS",
+              "documentation": "CONCERNS",
+              "external": "CONCERNS"
+            },
+            "iter-02": {
+              "correctness": "CONCERNS",
+              "efficiency": "APPROVE",
+              "testing": "APPROVE",
+              "documentation": "CONCERNS",
+              "external": "CONCERNS"
+            },
+            "iter-03": {
+              "correctness": "APPROVE",
+              "efficiency": "APPROVE",
+              "testing": "APPROVE",
+              "documentation": "APPROVE",
+              "external": "APPROVE"
+            }
+          },
+          "iteration_heads": {
+            "iter-01": "2444b60483d62ad1bf25e2f808a3379dcbe9ab05",
+            "iter-02": "3621dca4640557e6fb7932536dc9a17aae9594a1",
+            "iter-03": "a4d5e11fcb1fe5a0a6acef66c7bd59e1c06a22c5"
+          },
+          "latched": {
+            "efficiency": 2,
+            "testing": 2,
+            "correctness": 3,
+            "documentation": 3,
+            "external": 3
+          }
+        }
+      ]
+    }
+  },
+  "created_at": "2026-10-12T13:55:09.000Z",
+  "updated_at": "2026-10-26T09:06:41.988Z",
+  "review_fixes_pending": null,
+  "test_defects_pending": null,
+  "pr": {
+    "number": 7,
+    "url": "https://github.com/LordKuper/competency-management-service/pull/7",
+    "state": "open"
+  },
+  "archived_at": null
+}

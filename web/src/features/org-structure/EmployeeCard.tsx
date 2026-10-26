@@ -97,7 +97,7 @@ function EmployeeActions({
 
 /**
  * Compact card of an employee inside the unit hierarchy. Next to the position it shows the e-mail of the employee's
- * account, when there is one. Administrators also see the status of a person who no longer works and the menu of
+ * account, when there is one. Administrators and HR also see the mark of a person who no longer works, and administrators the menu of
  * actions; the restricted projection of an ordinary user has no status, and such a user only reads.
  * A unit may hold thousands of employees, so the card is plain markup styled from the theme variables: antd's own
  * card, avatar and text components cost several times more to render.
@@ -122,7 +122,7 @@ export const EmployeeCard = memo(function EmployeeCard({
           <strong>
             <Highlighted text={employee.fullName} needle={needle} />
           </strong>
-          {isAdmin && employee.isActive === false && <EmployeeStatusTag />}
+          {employee.isActive === false && <EmployeeStatusTag />}
         </div>
         <span className="org-employee__details">
           <Highlighted text={details.join(" · ")} needle={needle} />

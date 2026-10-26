@@ -12,13 +12,12 @@ namespace Competency.Tests;
 /// </summary>
 public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<CareerHost>
 {
-    private const string DirectionInUse = "Направление используют треки, компетенции или матрицы — удалить нельзя";
+    private const string DirectionInUse = "Область используют треки, компетенции или матрицы — удалить нельзя";
     private const string TrackInUse = "Трек используют матрицы — удалить нельзя";
     private const string LevelInUse = "Уровень используют матрицы — удалить нельзя";
     private const string CompetencyInUse = "Компетенцию используют матрицы — удалить нельзя";
-    private const string ScaleInUse = "Шкалу используют компетенции или матрицы — удалить нельзя";
+    private const string ScaleInUse = "Шкалу используют компетенции — удалить нельзя";
     private const string DefaultScale = "Шкалу по умолчанию удалить нельзя";
-    private const string CategoryInUse = "Категорию используют компетенции — удалить нельзя";
     private const string MatrixPublished = "Матрицу с опубликованными версиями удалить нельзя";
 
     [Fact]
@@ -39,7 +38,6 @@ public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<Car
 
     [Theory]
     [InlineData("directions", HttpStatusCode.NoContent, HttpStatusCode.NoContent)]
-    [InlineData("categories", HttpStatusCode.NoContent, HttpStatusCode.NoContent)]
     [InlineData("scales", HttpStatusCode.NoContent, HttpStatusCode.NoContent)]
     [InlineData("competencies", HttpStatusCode.NoContent, HttpStatusCode.NoContent)]
     [InlineData("tracks", HttpStatusCode.NotFound, HttpStatusCode.Forbidden)]
@@ -77,11 +75,11 @@ public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<Car
     {
         var org = await fixture.OrgAsync();
         var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
-        var history = await org.Admin.MakeCompetencyAsync(await org.Admin.CategoryIdAsync(), Scenarios.Unique("Была"), kit.Direction.Id);
+        var history = await org.Admin.MakeCompetencyAsync(Scenarios.Unique("Была"), kit.Direction.Id);
         var other = await org.Admin.MakeDirectionAsync();
         (await org.Admin.PutAsync(
             $"/api/v1/career/competencies/{history.Id}",
-            new { name = history.Json!["name"]!.GetValue<string>(), description = (string?)null, categoryId = history.Json["categoryId"]!.GetValue<Guid>(), directionId = other.Id, type = "Profile", scaleId = (Guid?)null },
+            new { name = history.Json!["name"]!.GetValue<string>(), description = (string?)null, directionId = other.Id, scaleId = (Guid?)null },
             history.ETag)).Expect(HttpStatusCode.OK);
 
         var refused = await org.Admin.DeleteAsync($"/api/v1/career/directions/{kit.Direction.Id}", kit.Direction.ETag);
@@ -142,7 +140,7 @@ public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<Car
         withoutJunior["requirements"]!.AsArray().RemoveAt(0);
         (await inVariant.SaveAsync(org.TeamHead.Client, withoutJunior)).Expect(HttpStatusCode.OK);
         await inSnapshot.PublishAsync();
-        await fixture.Host.ExecuteAsync($"UPDATE matrix_versions SET content = '{{\"levels\":[],\"blocks\":[],\"competencies\":[],\"blockWeights\":[],\"requirements\":[]}}'::jsonb WHERE id = '{inSnapshot.VersionId}'");
+        await fixture.Host.ExecuteAsync($"UPDATE matrix_versions SET content = '{{\"levels\":[],\"competencies\":[],\"blockWeights\":[],\"requirements\":[]}}'::jsonb WHERE id = '{inSnapshot.VersionId}'");
 
         var byVersion = await org.Admin.DeleteAsync($"/api/v1/career/levels/{inVersion.Junior.Id}", inVersion.Junior.ETag);
         var byVariant = await org.Admin.DeleteAsync($"/api/v1/career/levels/{inVariant.Junior.Id}", inVariant.Junior.ETag);
@@ -164,11 +162,10 @@ public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<Car
     {
         var org = await fixture.OrgAsync();
         var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
-        var categoryId = await org.Admin.CategoryIdAsync();
-        var free = await org.Admin.MakeCompetencyAsync(categoryId);
+        var free = await org.Admin.MakeCompetencyAsync();
         var renamed = (await org.Admin.PutAsync(
             $"/api/v1/career/competencies/{free.Id}",
-            new { name = Scenarios.Unique("Новое"), description = (string?)null, categoryId, directionId = (Guid?)null, type = "Profile", scaleId = (Guid?)null },
+            new { name = Scenarios.Unique("Новое"), description = (string?)null, directionId = (Guid?)null, scaleId = (Guid?)null },
             free.ETag)).Expect(HttpStatusCode.OK);
 
         var refused = await org.Admin.DeleteAsync($"/api/v1/career/competencies/{kit.Critical.Id}", kit.Critical.ETag);
@@ -185,14 +182,13 @@ public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<Car
     public async Task Ac25_AScale_IsRefusedWhileItIsTheDefaultOrCompetenciesTheirHistoryOrVersionsUseIt()
     {
         var org = await fixture.OrgAsync();
-        var categoryId = await org.Admin.CategoryIdAsync();
         var byCompetency = await org.Admin.MakeScaleAsync();
-        var competency = await org.Admin.MakeCompetencyAsync(categoryId, scaleId: byCompetency.Id);
+        var competency = await org.Admin.MakeCompetencyAsync(scaleId: byCompetency.Id);
         var byHistory = await org.Admin.MakeScaleAsync();
-        var moved = await org.Admin.MakeCompetencyAsync(categoryId, scaleId: byHistory.Id);
+        var moved = await org.Admin.MakeCompetencyAsync(scaleId: byHistory.Id);
         (await org.Admin.PutAsync(
             $"/api/v1/career/competencies/{moved.Id}",
-            new { name = moved.Json!["name"]!.GetValue<string>(), description = (string?)null, categoryId, directionId = (Guid?)null, type = "Profile", scaleId = (Guid?)null },
+            new { name = moved.Json!["name"]!.GetValue<string>(), description = (string?)null, directionId = (Guid?)null, scaleId = (Guid?)null },
             moved.ETag)).Expect(HttpStatusCode.OK);
         var byMatrix = await org.Admin.MakeScaleAsync();
         var kit = await MatrixKit.CreateAsync(org, scaleId: byMatrix.Id);
@@ -214,35 +210,8 @@ public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<Car
         Blockers(usedByHistory).Should().Equal($"CompetencyVersion:{moved.Json["name"]!.GetValue<string>()}");
         Blockers(usedByMatrix).Should().Equal(
             $"Competency:{kit.Critical.Json!["name"]!.GetValue<string>()}",
-            $"Competency:{kit.Profile.Json!["name"]!.GetValue<string>()}",
-            $"Matrix:{kit.Track.Json!["name"]!.GetValue<string>()}");
+            $"Competency:{kit.Profile.Json!["name"]!.GetValue<string>()}");
         free.Status.Should().Be(HttpStatusCode.NoContent, free.Body);
-    }
-
-    [Fact]
-    public async Task Ac23_ACategory_IsDeletedUnlessCompetenciesOrTheirHistoryUseIt()
-    {
-        var org = await fixture.OrgAsync();
-        var used = await org.Admin.MakeCategoryAsync();
-        var inHistory = await org.Admin.MakeCategoryAsync();
-        var unused = await org.Admin.MakeCategoryAsync();
-        var competency = await org.Admin.MakeCompetencyAsync(used.Id);
-        var moved = await org.Admin.MakeCompetencyAsync(inHistory.Id);
-        (await org.Admin.PutAsync(
-            $"/api/v1/career/competencies/{moved.Id}",
-            new { name = moved.Json!["name"]!.GetValue<string>(), description = (string?)null, categoryId = used.Id, directionId = (Guid?)null, type = "Profile", scaleId = (Guid?)null },
-            moved.ETag)).Expect(HttpStatusCode.OK);
-
-        var byCompetency = await org.Admin.DeleteAsync($"/api/v1/career/categories/{used.Id}", used.ETag);
-        var byHistory = await org.Hr.Client.DeleteAsync($"/api/v1/career/categories/{inHistory.Id}", inHistory.ETag);
-        var free = (await org.Hr.Client.DeleteAsync($"/api/v1/career/categories/{unused.Id}", unused.ETag)).Expect(HttpStatusCode.NoContent);
-
-        byCompetency.Status.Should().Be(HttpStatusCode.Conflict);
-        byCompetency.Json!["detail"]!.GetValue<string>().Should().Be(CategoryInUse);
-        Blockers(byCompetency).Should().BeEquivalentTo([$"Competency:{competency.Json!["name"]!.GetValue<string>()}", $"Competency:{moved.Json["name"]!.GetValue<string>()}"]);
-        byHistory.Status.Should().Be(HttpStatusCode.Conflict);
-        Blockers(byHistory).Should().Equal($"CompetencyVersion:{moved.Json["name"]!.GetValue<string>()}");
-        (await org.Admin.AuditOfRequestAsync(free.RequestId!)).Actions().Should().Equal("CompetencyCategory.Deleted");
     }
 
     [Fact]
@@ -335,7 +304,7 @@ public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<Car
         var tracks = new List<ApiResponse>();
         foreach (var letter in new[] { "Ж", "Б", "Д", "А", "Г", "В", "Е" })
         {
-            tracks.Add(await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id, $"{letter}-трек"));
+            tracks.Add(await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id, $"{letter}-трек"));
         }
 
         var refused = await org.Admin.DeleteAsync($"/api/v1/career/directions/{direction.Id}", direction.ETag);
@@ -350,7 +319,7 @@ public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<Car
     {
         var org = await fixture.OrgAsync();
         var direction = await org.Admin.MakeDirectionAsync();
-        var visible = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id, Scenarios.Unique("Видимый"));
+        var visible = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id, Scenarios.Unique("Видимый"));
         var secret = Scenarios.Unique("Секретный");
         var draft = (await org.TeamHead.Client.PostAsync("/api/v1/career/tracks", new { name = secret, ownerOrgUnitId = org.Team.Id, directionId = direction.Id })).Expect(HttpStatusCode.Created);
 
@@ -379,7 +348,6 @@ public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<Car
             $"/api/v1/career/levels/{kit.Junior.Id}",
             $"/api/v1/career/competencies/{kit.Critical.Id}",
             $"/api/v1/career/scales/{CareerScenarios.BaseScaleId}",
-            $"/api/v1/career/categories/{await org.Admin.CategoryIdAsync()}",
             $"/api/v1/career/matrices/{kit.MatrixId}",
         };
 
@@ -406,9 +374,13 @@ public sealed class CatalogDeletionTests(CareerHost fixture) : IClassFixture<Car
     private static Func<ApiClient, Task<ApiResponse>> Maker(string kind, CareerOrg org) => kind switch
     {
         "directions" => client => client.MakeDirectionAsync(),
-        "categories" => client => client.MakeCategoryAsync(),
         "scales" => client => client.MakeScaleAsync(),
-        "competencies" => async client => await client.MakeCompetencyAsync(await org.Admin.CategoryIdAsync()),
-        _ => async client => await client.MakeTrackAsync(client == org.SiblingHead.Client ? org.Sibling.Id : org.Team.Id, (await org.Admin.MakeDirectionAsync()).Id),
+        "competencies" => async client => await client.MakeCompetencyAsync(),
+        _ => async client =>
+        {
+            var unitId = client == org.SiblingHead.Client ? org.Sibling.Id : org.Team.Id;
+            var directionId = (await org.Admin.MakeDirectionAsync()).Id;
+            return client == org.Admin ? await client.MakeActiveTrackAsync(unitId, directionId) : await client.MakeTrackAsync(unitId, directionId);
+        },
     };
 }

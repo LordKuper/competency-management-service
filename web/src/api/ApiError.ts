@@ -9,6 +9,8 @@ export class ApiError extends Error {
   readonly blockers: readonly components["schemas"]["DeletionBlocker"][];
   /** How many more blocking records exist beyond `blockers`. */
   readonly moreCount: number;
+  /** Address of the fresh publication preview, sent with a 412 that means "the list of what is published changed". */
+  readonly publication: string | undefined;
   /** Validation messages per field name, present only on validation problems. */
   readonly errors: Readonly<Record<string, readonly string[]>> | undefined;
 
@@ -21,6 +23,7 @@ export class ApiError extends Error {
     this.status = status;
     this.title = title;
     this.detail = readString(fields.detail);
+    this.publication = readString(fields.publication);
     this.errors = readFieldErrors(fields.errors);
     this.blockers = Array.isArray(fields.blockers) ? fields.blockers : [];
     this.moreCount =

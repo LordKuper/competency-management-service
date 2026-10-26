@@ -115,13 +115,13 @@ internal static class AuthEndpoints
         if (user is null)
         {
             SpendHashingTime(users, request.Password);
-            return await DenyAsync(audit, null, LoginDenial.UnknownUser, cancellationToken);
+            return await DenyAsync(users, audit, null, LoginDenial.UnknownUser, cancellationToken);
         }
 
         if (user.IsInvited)
         {
             SpendHashingTime(users, request.Password);
-            return await DenyAsync(audit, user, LoginDenial.Invited, cancellationToken);
+            return await DenyAsync(users, audit, user, LoginDenial.Invited, cancellationToken);
         }
 
         var denial = await VerifyPasswordAsync(users, context, user, request.Password, cancellationToken);
@@ -131,14 +131,15 @@ internal static class AuthEndpoints
         denial ??= CheckAccount(user, employee);
         if (denial is { } reason)
         {
-            return await DenyAsync(audit, user, reason, cancellationToken);
+            return await DenyAsync(users, audit, user, reason, cancellationToken);
         }
 
-        await httpContext.SignInAsync(SessionAuthentication.Scheme, SessionAuthentication.CreatePrincipal(user));
+        var roles = await users.RolesAsync(user);
+        await httpContext.SignInAsync(SessionAuthentication.Scheme, SessionAuthentication.CreatePrincipal(user, roles));
         await audit.WriteAsync(
-            new AuditEntry(LoginSucceededAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString()),
+            new AuditEntry(LoginSucceededAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: AccountRoles.JournalRole(roles)),
             cancellationToken);
-        return TypedResults.Ok(CurrentUserResponse.From(user, employee));
+        return TypedResults.Ok(CurrentUserResponse.From(user, roles, employee));
     }
 
     /// <summary>
@@ -167,7 +168,7 @@ internal static class AuthEndpoints
         }
 
         var employee = user.EmployeeId is { } employeeId ? await employees.FindAsync(employeeId, cancellationToken) : null;
-        return TypedResults.Ok(CurrentUserResponse.From(user, employee));
+        return TypedResults.Ok(CurrentUserResponse.From(user, await users.RolesAsync(user), employee));
     }
 
     /// <summary>
@@ -199,7 +200,7 @@ internal static class AuthEndpoints
         {
             if (denial == LoginDenial.LockoutStarted)
             {
-                await AuditLockoutAsync(audit, user, cancellationToken);
+                await AuditLockoutAsync(users, audit, user, cancellationToken);
             }
 
             return Rejections.From(IdentityResult.Failed(users.ErrorDescriber.PasswordMismatch()));
@@ -221,7 +222,7 @@ internal static class AuthEndpoints
             return Rejections.From(result);
         }
 
-        await httpContext.SignInAsync(SessionAuthentication.Scheme, SessionAuthentication.CreatePrincipal(user));
+        await httpContext.SignInAsync(SessionAuthentication.Scheme, SessionAuthentication.CreatePrincipal(user, await users.RolesAsync(user)));
         return TypedResults.NoContent();
     }
 
@@ -321,7 +322,7 @@ internal static class AuthEndpoints
         user.ClearLink();
         user.EndSessions();
         audit.Stage(
-            new AuditEntry(use.Action, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString()),
+            new AuditEntry(use.Action, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: await users.JournalRoleAsync(user)),
             context);
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -407,17 +408,22 @@ internal static class AuthEndpoints
     /// Journals a refused attempt under the account's own identity, or under <c>unknown</c> when no such account exists,
     /// so that nothing the client typed, which may be a password in the wrong field, enters the journal.
     /// </summary>
-    private static async Task<ProblemHttpResult> DenyAsync(IAuditWriter audit, AppUser? user, LoginDenial denial, CancellationToken cancellationToken)
+    private static async Task<ProblemHttpResult> DenyAsync(
+        UserManager<AppUser> users,
+        IAuditWriter audit,
+        AppUser? user,
+        LoginDenial denial,
+        CancellationToken cancellationToken)
     {
         var actor = user?.Id.ToString() ?? UnknownActor;
-        var role = user?.Role.ToString() ?? AnonymousRole;
+        var role = user is null ? AnonymousRole : await users.JournalRoleAsync(user);
         var reason = denial == LoginDenial.LockoutStarted ? LoginDenial.WrongPassword : denial;
         await audit.WriteAsync(
             new AuditEntry(LoginFailedAction, nameof(AppUser), user?.Id.ToString(), Reason: reason.ToString(), Actor: actor, Role: role),
             cancellationToken);
         if (denial == LoginDenial.LockoutStarted && user is not null)
         {
-            await AuditLockoutAsync(audit, user, cancellationToken);
+            await AuditLockoutAsync(users, audit, user, cancellationToken);
         }
 
         return TypedResults.Problem(detail: LoginFailedDetail, statusCode: StatusCodes.Status401Unauthorized, title: LoginFailedTitle);
@@ -426,8 +432,8 @@ internal static class AuthEndpoints
     /// <summary>
     /// Journals the lockout that the account's failed attempt just started, from a sign-in or from a password change.
     /// </summary>
-    private static Task AuditLockoutAsync(IAuditWriter audit, AppUser user, CancellationToken cancellationToken) =>
-        audit.WriteAsync(
-            new AuditEntry(LockedOutAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: user.Role.ToString()),
+    private static async Task AuditLockoutAsync(UserManager<AppUser> users, IAuditWriter audit, AppUser user, CancellationToken cancellationToken) =>
+        await audit.WriteAsync(
+            new AuditEntry(LockedOutAction, nameof(AppUser), user.Id.ToString(), Actor: user.Id.ToString(), Role: await users.JournalRoleAsync(user)),
             cancellationToken);
 }

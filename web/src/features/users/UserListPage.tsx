@@ -24,8 +24,7 @@ import {
 } from "antd";
 import { useState } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import type { UserRole } from "../../app/featureContract";
-import { ROLE_LABEL, ROLE_OPTIONS } from "./roles";
+import { formatRoles, ROLE_FILTER_OPTIONS, type UserRoleFilter } from "./roles";
 import { UserModal } from "./UserModal";
 import { UserStatusTag } from "./UserStatusTag";
 import { useBlockUser } from "./useBlockUser";
@@ -72,9 +71,9 @@ export function UserListPage() {
   const columns: TableColumnsType<UserResponse> = [
     { title: "E-mail", dataIndex: "email" },
     {
-      title: "Роль",
-      dataIndex: "role",
-      render: (role: UserRole) => ROLE_LABEL[role],
+      title: "Роли",
+      dataIndex: "roles",
+      render: formatRoles,
     },
     {
       title: "Сотрудник",
@@ -169,9 +168,9 @@ export function UserListPage() {
             allowClear
             aria-label="Фильтр по роли"
             placeholder="Роль"
-            options={ROLE_OPTIONS}
+            options={ROLE_FILTER_OPTIONS}
             style={{ width: "100%" }}
-            onChange={(role?: UserRole) =>
+            onChange={(role?: UserRoleFilter) =>
               setParams((previous) => ({ ...previous, role, page: 1 }))
             }
           />

@@ -4,6 +4,16 @@ import type { MatrixDecision, MatrixVersionStatus } from "./matrixApi";
 /** Step of the route a version is at; `null` means no approval step (the author's or the end). */
 export type ApprovalStep = components["schemas"]["ApprovalStep"];
 
+/** What a matrix is called with its unit: «Матрица «трек»» or, for a position matrix, «Матрица должности «должность»». */
+export function matrixName(subject: {
+  trackName?: string | null;
+  positionName?: string | null;
+}): string {
+  return subject.trackName
+    ? `Матрица «${subject.trackName}»`
+    : `Матрица должности «${subject.positionName ?? ""}»`;
+}
+
 export const SKIPPED_NOTE = "Пропущен — нет руководителя с учётной записью";
 export const AUTO_APPROVED_NOTE =
   "Согласован автоматически — HR является автором";

@@ -10,33 +10,28 @@
 
 # ASD Sprint
 
+## Purpose
+
+Start a new sprint or resume the active one: dispatch the matching phase skill, route its signal to the user.
+
 ## Preconditions
-- `.asd/project/config.yaml` exists (else: tell user `/asd-init`)
-- ≤1 active sprint. A sprint counts as active while `state.json.phase != "done"`, whether its folder lives at `.asd/sprints/<NNN-slug>/` or, legacy, at `.asd/sprints/archived/<NNN-slug>/` (archived before closure by an older workflow version). Exempt: a merged-unclosed sprint (Step 1), which the next sprint's scope archives (`sprint-lifecycle.md` "PR phase").
 
-## Operations used
-- Read files / search repo — detect active sprint; read state.json, its frozen workflow definition `.asd/workflows/<workflow>.json` (`sprint-lifecycle.md` "Workflows"), config.yaml, custom-common-rules.md
-- Run command — Step 0's `git fetch` and `git merge --ff-only`; `git status`, `git branch --show-current`; `gh pr view`/`gh pr list` (merged-unclosed detection), `git fetch`/`git show`/`git log`/`git ls-remote --tags origin`/`gh release view` (release retry check), `gh pr merge` (a legacy finalize PR only); decisions-log rotation (rename, copy template, commit those paths); `update.js --check-version`; `runtime.js timing`/`timing-recover`
-- Request user decision — new-sprint confirm, resume/abort choice, release retry or continue, ASD update or continue (never free-form scope text)
-- Delegate to skill — phase skills, plus `asd-init` per "Skills dispatched"
-- No other writes — phase skills and their inline orchestrator own writes
+```json
+{"requires": [".asd/project/config.yaml exists", "at most 1 active sprint (Step 1)"], "else": "no config: tell user /asd-init; more than 1 active: Step 1 FAILED", "ops": ["read files: custom-common-rules.md", "run command: git branch --show-current; git fetch, git show, git log, git ls-remote --tags origin, gh release view (release retry check)", "no other writes: phase skills and their inline orchestrator own writes"]}
+```
 
-## Workflow
-
-Before a phase-skill delegation below, rotate the decisions log when `.asd/rules/artifact-layout.md` "Decisions log" requires it.
-
-Phase ops (`sprint-lifecycle.md` "Operation timing"): before each phase-skill delegation run `node .asd/runtime.js timing --ledger <sprint>/timing.jsonl --open <phase> --kind phase`, Step 3 closing the returned phase in the same call (`--close <phase>`); on return close it `done` on `COMPLETED`, `--outcome interrupted` on `FAILED`/`ABORT`; a `QUESTION` halt leaves it open: the relayed question opens a `user-wait` (`gate`: short question label) closed once the answer is processed, and the re-delegation reuses the open phase op (a repeat open is skipped). None for new-sprint scope (its step 1 opens its own), on pr open mode's return (it closed its own), for merge mode (resume at `phase="pr"`, `pr.state="open"`) or the release retry.
+## Steps
 
 ### Step 0: fast-forward the base branch
 Before Step 1, fast-forward local `git.base_branch` exactly as `git-strategy.md` "Branch" states: a refusal halts and asks the user; an unreachable remote warns and continues on local state. Rules, workflows and phase skills are read only after this step; this skill's own text and the session-start files are the pre-fetch copy.
 
 ### Step 1: detect active sprint
-- Search repo for `.asd/sprints/*/state.json` (excluding `archived/`) UNION `.asd/sprints/archived/*/state.json` where `phase != "done"` (legacy archived-non-done shape)
+- A sprint is active while `state.json.phase != "done"`, its folder at `.asd/sprints/<NNN-slug>/` or, legacy, `.asd/sprints/archived/<NNN-slug>/` (archived before closure by an older workflow version). Search repo for `.asd/sprints/*/state.json` (excluding `archived/`) UNION `.asd/sprints/archived/*/state.json` where `phase != "done"`
 - Each, whatever its `phase`: `gh pr view <pr.number> --json state,mergeCommit` reporting `MERGED` — or, with no `pr.number`, a `MERGED` hit of `gh pr list --head <state.branch> --state all --json number,state,mergeCommit` (`sprint-lifecycle.md` "PR phase" "Merged-unclosed"), its number carried to the closure write — makes it **merged-unclosed**, whatever `pr.state` records (legacy `closure-pending` included) — unless `gh pr list --head chore/finalize-sprint-<NNN-slug> --state all` finds a legacy companion PR: an `OPEN` one is merged per `git-strategy.md` "Merging a PR"; an `OPEN` or `MERGED` one closes the sprint on `git.base_branch`, so it is no longer active and gets no closure write.
 - A `CLOSED` head-branch hit counts as no hit. A head-branch lookup that cannot reach `gh` outside `phase="pr"` warns and resumes the sprint ("Merged-unclosed"); any other `gh` failure is FAILED naming the fix for its cause (`git-strategy.md` "PR creation").
 - 0 active → new-sprint flow
 - 1 active, merged-unclosed, `self_hosting: enabled`, its release commit, `v<asd_version>` tag or release missing → release retry ("Merged-unclosed"): request user decision, each time — retry dispatches `asd-phase-pr` with the confirmed PR number, its merge mode running only the release; continue takes the route below, carrying that choice
-- 1 active, merged-unclosed otherwise → new-sprint flow (Step 2A), carrying its path and the merged PR's number detection confirmed, whichever copy or lookup it came from
+- 1 active, merged-unclosed otherwise → new-sprint flow (Step 2A), carrying its path and the merged PR's number detection confirmed, whichever copy or lookup it came from; exempt from the one-active limit, the next sprint's scope archives it (`sprint-lifecycle.md` "PR phase")
 - 1 active otherwise → resume flow; an `OPEN` head-branch hit changes nothing here, pr open mode adopting it at `phase="pr"` only ("Merged-unclosed")
 - >1 → emit FAILED "multiple active sprints found, manual cleanup needed"
 
@@ -58,20 +53,36 @@ Before Step 1, fast-forward local `git.base_branch` exactly as `git-strategy.md`
 After any phase skill returns:
 - `COMPLETED` → read the phase skill's `NEXT:` field; a target outside the frozen definition's `next[<phase>]` → relay FAILED, halt; else dispatch that phase skill. `NEXT:` is authoritative — follows the definition's `phases` order except the design-block collapse (`audit` returns `NEXT: plan` under the collapse test; `design` returns `NEXT: plan` on its defensive-fallback no-op) and the `impl`/`impl-test`/`impl-review` cycle: `impl` always returns `NEXT: impl-test`; `impl-test` returns `NEXT: impl` on code defects (routes to impl test-fix mode) or `NEXT: impl-review` on a green suite; `impl-review` returns `NEXT: impl` on unresolved findings (routes to impl review-fix mode) or the next phase of `phases` on DoD met; `retro` always returns `NEXT: pr`, on its analysed and its empty-log branch alike. The `pr` phase ends the chain in two steps: open mode returns `NEXT: await-merge` (PR open, sprint at its active path, `phase="pr"` — halt, no further dispatch); a later resume re-enters `pr` in merge mode, which returns `NEXT: done` once the merge is confirmed and, self-hosting, the release published → halt; the next sprint's scope archives it (`sprint-lifecycle.md` "PR phase").
 - `FAILED` → relay, halt
-- `QUESTION` → relay pending question, halt until reply
+- `QUESTION` → relay per `agent-protocol.md` "Relay" `QUESTION`; halt until the reply, then re-delegate the phase skill
 - `ABORT — precondition not met` → relay, halt
 
-User may interrupt anytime; asd-sprint re-detects state on next invocation.
+## Rules
 
-## Skills dispatched
-Phase skills of the frozen workflow's `phases` (`.asd/workflows/<workflow>.json`), plus `asd-init` sprint-mediated mode for a plan-declared settings change (`asd-phase-impl.md` step 6) and `asd-update` sprint-mediated mode on the Step 2A update choice (`asd-phase-scope.md` step 1). No other skill set.
+- must: before a phase-skill delegation, rotate the decisions log when `.asd/rules/artifact-layout.md` "Decisions log" requires it.
+- must: phase ops (`sprint-lifecycle.md` "Operation timing"): before each phase-skill delegation run `node .asd/runtime.js timing --ledger <sprint>/timing.jsonl --open <phase> --kind phase`, Step 3 closing the returned phase in the same call (`--close <phase>`); on return close it `done` on `COMPLETED`, `--outcome interrupted` on `FAILED`/`ABORT`; a `QUESTION` halt leaves it open: the relayed question opens a `user-wait` (`gate`: short question label) closed once the answer is processed, and the re-delegation reuses the open phase op (a repeat open is skipped). None for new-sprint scope (its step 1 opens its own), on pr open mode's return (it closed its own), for merge mode (resume at `phase="pr"`, `pr.state="open"`) or the release retry.
+- must: re-detect state on every invocation; the user may interrupt anytime.
+- never: delegate to a skill outside `## Delegates`.
 
-## Return contract (single line)
+## Delegates
+
+```json
+{"agents": [], "skills": ["asd-phase-* of the frozen workflow's phases (.asd/workflows/<workflow>.json)", "asd-init sprint-mediated mode: plan-declared settings change (asd-phase-impl.md step 6)", "asd-update sprint-mediated mode: Step 2A update choice (asd-phase-scope.md step 1)"]}
 ```
-SPRINT: <NNN-slug> | PHASE: <phase> | STATUS: <complete|in-progress|blocked|aborted> | NEXT: <next-phase|await-merge|done|halted-on-question|halted-on-failure>
+
+## Outputs
+
+```json
+["<sprint>/decisions-log.md rotation (artifact-layout.md Decisions log)", "<sprint>/timing.jsonl phase ops (runtime.js timing)"]
+```
+
+## Return
+
+```
+SKILL: asd-sprint | SPRINT: <NNN-slug> | PHASE: <phase> | STATUS: <complete|in-progress|blocked|aborted> | NEXT: <next-phase|await-merge|done|halted-on-question|halted-on-failure>
 ```
 
 ## References
-- `.asd/rules/sprint-lifecycle.md` (phase chain, signals, exit criteria)
+- `.asd/rules/sprint-lifecycle.md` (phase chain, exit criteria)
+- `.asd/rules/agent-protocol.md` (signals, relay)
 - `.asd/rules/checkpoints.md` (precondition chain, auto-abort)
 - `.asd/rules/core.md` (interaction protocol)

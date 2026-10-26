@@ -12,7 +12,7 @@ namespace Competency.Tests;
 /// </summary>
 public sealed class CatalogPickerTests(CareerHost fixture) : IClassFixture<CareerHost>
 {
-    public static TheoryData<string> Kinds => new() { "directions", "categories", "scales", "competencies", "tracks" };
+    public static TheoryData<string> Kinds => new() { "directions", "scales", "competencies", "tracks" };
 
     [Theory]
     [MemberData(nameof(Kinds))]
@@ -40,7 +40,6 @@ public sealed class CatalogPickerTests(CareerHost fixture) : IClassFixture<Caree
         var org = await fixture.OrgAsync();
         var direction = await org.Admin.MakeDirectionAsync();
         var other = await org.Admin.MakeDirectionAsync();
-        var categoryId = await org.Admin.CategoryIdAsync();
         var baseScale = Guid.Parse(CareerScenarios.BaseScaleId);
         var otherScale = (await org.Admin.MakeScaleAsync()).Id;
         var prefix = Scenarios.Unique("Общие");
@@ -52,11 +51,11 @@ public sealed class CatalogPickerTests(CareerHost fixture) : IClassFixture<Caree
             OnOtherScale = $"{prefix}-другая шкала",
             Inactive = $"{prefix}-выключена",
         };
-        await org.Admin.MakeCompetencyAsync(categoryId, names.Own, direction.Id, scaleId: baseScale);
-        await org.Admin.MakeCompetencyAsync(categoryId, names.General, scaleId: baseScale);
-        await org.Admin.MakeCompetencyAsync(categoryId, names.OfOther, other.Id, scaleId: baseScale);
-        await org.Admin.MakeCompetencyAsync(categoryId, names.OnOtherScale, scaleId: otherScale);
-        var inactive = await org.Admin.MakeCompetencyAsync(categoryId, names.Inactive, scaleId: baseScale);
+        await org.Admin.MakeCompetencyAsync(names.Own, direction.Id, scaleId: baseScale);
+        await org.Admin.MakeCompetencyAsync(names.General, scaleId: baseScale);
+        await org.Admin.MakeCompetencyAsync(names.OfOther, other.Id, scaleId: baseScale);
+        await org.Admin.MakeCompetencyAsync(names.OnOtherScale, scaleId: otherScale);
+        var inactive = await org.Admin.MakeCompetencyAsync(names.Inactive, scaleId: baseScale);
         (await org.Admin.PostAsync($"/api/v1/career/competencies/{inactive.Id}/deactivate", ifMatch: inactive.ETag)).Expect(HttpStatusCode.OK);
 
         async Task<string[]> Listed(string filter) =>
@@ -73,12 +72,12 @@ public sealed class CatalogPickerTests(CareerHost fixture) : IClassFixture<Caree
         var org = await fixture.OrgAsync();
         var direction = await org.Admin.MakeDirectionAsync();
         var other = await org.Admin.MakeDirectionAsync();
-        var ofRoot = await org.Admin.MakeTrackAsync(org.Root.Id, direction.Id);
-        var ofDepartment = await org.Admin.MakeTrackAsync(org.Department.Id, direction.Id);
-        var ofTeam = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
-        var ofSibling = await org.Admin.MakeTrackAsync(org.Sibling.Id, direction.Id);
-        await org.Admin.MakeTrackAsync(org.Team.Id, other.Id);
-        var inactive = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
+        var ofRoot = await org.Admin.MakeActiveTrackAsync(org.Root.Id, direction.Id);
+        var ofDepartment = await org.Admin.MakeActiveTrackAsync(org.Department.Id, direction.Id);
+        var ofTeam = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
+        var ofSibling = await org.Admin.MakeActiveTrackAsync(org.Sibling.Id, direction.Id);
+        await org.Admin.MakeActiveTrackAsync(org.Team.Id, other.Id);
+        var inactive = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
         (await org.Admin.PostAsync($"/api/v1/career/tracks/{inactive.Id}/deactivate", ifMatch: inactive.ETag)).Expect(HttpStatusCode.OK);
 
         async Task<string[]> ForUnit(Guid unitId, string filter = "") =>
@@ -98,9 +97,9 @@ public sealed class CatalogPickerTests(CareerHost fixture) : IClassFixture<Caree
     {
         object body = kind switch
         {
-            "directions" or "categories" => new { name },
+            "directions" => new { name },
             "scales" => new { name, points = CareerScenarios.Points() },
-            "competencies" => new { name, description = (string?)null, categoryId = await org.Admin.CategoryIdAsync(), directionId = (Guid?)null, type = "Profile", scaleId = (Guid?)null },
+            "competencies" => new { name, description = (string?)null, directionId = (Guid?)null, scaleId = (Guid?)null },
             _ => new { name, ownerOrgUnitId = org.Team.Id, directionId = (await org.Admin.MakeDirectionAsync()).Id },
         };
         return (await client.PostAsync($"/api/v1/career/{kind}", body)).Expect(HttpStatusCode.Created);

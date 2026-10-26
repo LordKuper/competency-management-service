@@ -38,7 +38,7 @@ internal sealed class DeletionBlockers(CatalogViewer viewer, AppDbContext contex
         AddAsync(entries, entry => new DeletionBlocker(kind, entry.Id, entry.Name, null));
 
     /// <summary>
-    /// Adds matrices, oldest first, each named by its track and unit; every signed-in user reads matrices.
+    /// Adds matrices, oldest first, each named by its track or position and its unit; every signed-in user reads matrices.
     /// </summary>
     /// <param name="matrices">The referring matrices.</param>
     /// <returns>A task that completes when they are counted.</returns>
@@ -60,14 +60,16 @@ internal sealed class DeletionBlockers(CatalogViewer viewer, AppDbContext contex
             {
                 matrix.Id,
                 matrix.OrgUnitId,
+                matrix.PositionId,
                 Track = tracks.Where(track => track.Id == matrix.TrackId).Select(track => track.Name).FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
         var unitNames = await store.UnitNamesAsync(rows.Select(row => (Guid?)row.OrgUnitId), cancellationToken);
+        var positionNames = await store.PositionNamesAsync(rows.Select(row => row.PositionId), cancellationToken);
         shown.AddRange(rows.Select(row => new DeletionBlocker(
             DeletionBlockerKind.Matrix,
             row.Id,
-            row.Track ?? string.Empty,
+            row.Track ?? (row.PositionId is { } positionId ? positionNames.GetValueOrDefault(positionId) : null) ?? string.Empty,
             unitNames.GetValueOrDefault(row.OrgUnitId))));
     }
 

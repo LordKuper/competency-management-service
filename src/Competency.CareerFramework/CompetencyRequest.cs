@@ -1,20 +1,22 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The fields of a new competency or of a change of one; every field but the scale must be sent, an absent value as null.
+/// The fields of a new competency or of a change of one; every field but the scale and the evidence examples must be sent, an absent
+/// value as null.
 /// </summary>
 internal record CompetencyRequest : CatalogNameRequest
 {
     public required string? Description { get; init; }
 
-    public required Guid CategoryId { get; init; }
+    /// <summary>
+    /// Examples of what shows the competency; absent or null keeps the examples the competency has, an empty text clears them.
+    /// </summary>
+    public string? EvidenceExamples { get; init; }
 
     /// <summary>
     /// The direction whose matrices may use the competency; null for a general competency.
     /// </summary>
     public required Guid? DirectionId { get; init; }
-
-    public required CompetencyType Type { get; init; }
 
     /// <summary>
     /// The scale; absent or null for the default scale.
@@ -26,10 +28,7 @@ internal record CompetencyRequest : CatalogNameRequest
     {
         var errors = base.Validate();
         CheckText(errors, "description", Description, CareerCompetency.DescriptionMaxLength, missingMessage: null);
-        if (!Enum.IsDefined(Type))
-        {
-            errors["type"] = ["Укажите допустимый тип"];
-        }
+        CheckText(errors, "evidenceExamples", EvidenceExamples, CareerCompetency.DescriptionMaxLength, missingMessage: null);
 
         return errors;
     }
@@ -43,9 +42,12 @@ internal record CompetencyRequest : CatalogNameRequest
     {
         competency.Name = TrimmedName();
         competency.Description = OptionalText(Description);
-        competency.CategoryId = CategoryId;
+        if (EvidenceExamples is not null)
+        {
+            competency.EvidenceExamples = OptionalText(EvidenceExamples);
+        }
+
         competency.DirectionId = DirectionId;
-        competency.Type = Type;
         competency.ScaleId = scaleId;
     }
 }

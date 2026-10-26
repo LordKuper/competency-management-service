@@ -1,0 +1,3644 @@
+diff --git a/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-05.md b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-05.md
+new file mode 100644
+index 0000000..270efcd
+--- /dev/null
++++ b/.asd/sprints/004-role-desktop-user-journeys/test-plan.entry-05.md
+@@ -0,0 +1,77 @@
++---
++responsibility:
++  owns: test approach for sprint change scope, removal reasons, no-test decisions, suite run result, code defects found by tests, manual-verification spec (single home — never duplicated in a review file)
++  excludes: task breakdown, requirements, review verdicts, code, change surface (derivable from the diff)
++  delegates_to: plan.md (tasks), persistent docs (requirements), reviews/impl/wave-<K>/iter-NN/testing.md (verdict)
++---
++
++# Test plan — sprint 004-role-desktop-user-journeys, entry 5 (rotated)
++
++Строки записи 5 и строки тестировщика ревью-фикса волны 2, итерация 01 (TST-W2-1…8): у них нет своей строки `Entry log`, они перенесены сюда вместе со строками записи 5. Строка удаления ревью-фикса осталась и в живом файле: удаление выполняет запись 6.
++
++## Risk → check decisions
++
++Дельта записи 5 — `git diff d8c397f...HEAD`: изменение требований AC-110/AC-112 (`d329d7c`: перечень публикации называет только читаемые публикующим записи, остальные показаны числом «и ещё N»; подтверждение остаётся над всем каскадом), правка `impl` по замечанию внешнего ревью (`e692120`: `PublicationPlan.Describe(reader)` отбирает записи и помехи одной `SeesLoaded`, поле контракта `hiddenEntryCount`; web считает каскад целиком и показывает «и ещё N») и заметка памяти dev (`68c1a40`). Тесты этих коммитов не менялись. Safety valve применён: правка затрагивает общий контракт (`openapi.json`, `schema.d.ts`), общий `PublicationPlan` (оба предпросмотра) и общие web-компоненты (`usePublishEntry`, `CascadeTable`, `useVersionTransition`), поэтому набор backend и набор web запущены целиком.
++
++| Change | Material risk | Chosen check | Decision | Reason |
++|---|---|---|---|---|
++| `PublicationPlan.Describe(reader)` — `entries` только читаемые, остальные числом `hiddenEntryCount` (предпросмотр версии; предпросмотр записи идёт тем же методом) | change: security — вышестоящий согласующий видел идентификатор и название черновика, который читать не вправе; число скрытых неверно | contract | add | `PublicationCascadeTests.Ac110_Ac112_APreviewOfAVersion_…`: версия на шаге вышестоящего согласующего (автор — ответственный HR), в треке черновой уровень вне содержимого версии. Вышестоящий согласующий видит трек и два уровня версии, `hiddenEntryCount = 1`, идентификатора и названия скрытого уровня нет ни в одной строке тела; ответственный HR и администратор видят все четыре записи, `hiddenEntryCount = 0`; тег один у всех троих. Мутанты — ниже |
++| Подтверждение над всем каскадом: `Tag`, `IsConfirmedBy` (AC-112; код не менялся, смысл — тег остаётся по полному перечню, когда перечень читателя короче) | change: workflow state machine — тег по видимой части дал бы опубликовать скрытые черновики без подтверждения того, что изменилось | contract | add | `Ac112_ApprovingUnderThePreviewOfAReaderWhoCannotReadADraft_…`: тот же вышестоящий согласующий подтверждает по тегу своего предпросмотра; скрытый уровень переименован → 412 с `publication`, версия остаётся «на согласовании», уровень — черновиком; новый предпросмотр даёт другой тег, подтверждение по нему публикует и скрытый уровень (три `CareerLevel.Approved` в журнале). Страж: кроме нового поля до правки зелёный, поэтому его держат мутанты |
++| Предпросмотр записи (`GET /{segment}/{id}/publication`), читающий вправе утвердить корень | change: security | contract | add | одна проверка в существующем `Ac107_Ac110_Ac113_Ac114_ApprovingACompetency_…`: у HR `hiddenEntryCount = 0` на маршруте записи. Что хранитель читает весь свой каскад, уже закрепляют `Entries(preview)` в `Ac107_…` и `Ac109_Ac113_…` |
++| Предпросмотр записи: читающий вправе утвердить корень, но не вправе читать черновик каскада (пункт 1 списка dev) | change: security | — | none | предпосылка не достижима. Каскад записи — направление, шкала, компетенции (без подразделения) и уровни трека-корня. Утвердить корень вправе администратор, ответственный HR подразделения трека (учётная запись с ролью HR) и любой HR для записи без подразделения. `CatalogViewer.Sees` показывает черновик без подразделения каждому HR и администратору, а уровень — ответственному HR подразделения его трека. Скрытое возникает только в предпросмотре версии, где читает вышестоящий согласующий, не хранитель; этот случай — первая строка. Сузятся права чтения HR — красными станут строка выше и `Entries(...)` существующих тестов |
++| `usePublishEntry`: `publishedCount`, `hiddenDraftsText`, `EntryList`, решение «спросить или утвердить сразу» (`publish`), подпись кнопки, число в вопросе и в сообщении | change: workflow state machine — публикующее действие без подтверждения, когда читаемый список пуст, а скрытые записи есть; неверное число | component | add | `usePublishEntry.test.tsx`: два теста — читаемые вместе со скрытыми (подпись «вместе с 3 записями», строка «и ещё 2 черновые записи», тег целого перечня, сообщение «опубликовано записей: 3») и только скрытые (окно открывается, до подтверждения запроса нет, списка `<ul>` нет) |
++| `CascadeTable` — таблица читаемых записей и строка «и ещё N» (общая для четырёх экранов) | change: public contract — при одних скрытых таблица не показывается, при нуле скрытых строки нет | component | add | `CascadeTable.test.tsx`: три сочетания — только читаемые, читаемые и скрытые, только число |
++| `useVersionTransition`: число в вопросе, `CascadeTable` в окне, число в `onDone` | change: workflow state machine | component | add | `useVersionTransition.test.tsx`: при пустом читаемом перечне хук спрашивает первым и публикует по тегу (число 2); решение под перечнем, который показал экран, выполняется сразу, число 3 |
++| Экраны `DraftsQueuePage` (подпись кнопки, фраза «Других черновых записей…»), `BuilderSubmitStep` (фраза, таблица, отправка без окна), `ReviewPage` (блок «Будет опубликовано вместе с версией») | change: workflow state machine — на `DraftsQueuePage` и `BuilderSubmitStep` экран и есть подтверждение, окна нет | component | add | по два теста на экран (скрытые записи и пустой перечень), сеть `fakeApi`. Запись 1 оставила страницы сценариев целиком на `none` (потолок); здесь закреплены только изменённые блоки, остальные части страниц и `ReworkPage` по-прежнему вне проверок |
++| Фикстуры предпросмотра без `hiddenEntryCount` (`usePublishEntry.test.tsx`, `catalogueTables.test.tsx`) | дефект теста: ответы строятся `Response.json` без типа, `tsc` нового поля не видит, `entries.length + undefined` — `NaN`, и пустой перечень не распознаётся | component | add | поле добавлено в обе фикстуры; до правки 9 красных (`approves at once under the tag of an empty list, …` и ещё семь тестов `usePublishEntry.test.tsx`, `approves a draft against the version its row shows, …` в `catalogueTables.test.tsx`) — дефект теста, не кода, `D-N` нет |
++| Контракт: `hiddenEntryCount` в `PublicationPreviewResponse` и `MatrixPublicationResponse` (`openapi.json`, `schema.d.ts`) | change: public contract | contract | keep | `ContractTests` в наборе backend зелёные; `npm --prefix web run check:api` без расхождений |
++| Документы (`docs/product`, `docs/architecture`, `docs/ux`), заметка памяти dev (`68c1a40`) | нет поведения | — | none | тексты не исполняются; заметка памяти верна — фикстуры, о которых она, исправлены строкой выше. Попаданий в память агентов нет: проверено поиском `cascadeTag`, `PublicationPreviewResponse`, `moreCount` по `.claude/agent-memory` (только память тестировщика, описания приёмов верны) |
++| Ревью-фикс волны 2, итерация 01 (TST-W2-1…8). Строка-замена описания записи 1 для `deskTexts`: запись 1 называла `deskTexts` проверкой «по каждому виду и причине», а покрывала только адреса (мутанты E1–E5) | change: workflow state machine — слово причины, объект, давность и срок ссылки не проверялись, ошибка ветки или флага `isDated` проходила набор | unit + component | add | `deskTexts.test.ts`: `reasonLines` (по представителю на ветку: единственное и множественное число, `hrHint` только у справочного пункта, `linkState` с датой и без, ранний трек), `objectContext`, `objectTitle`, `typeLabelOf`; `DeskPage.test.tsx` «columns of a group»: давность у датированных групп, нет у прочих, нет ячейки у датированного пункта без `occurredAt`, «Скоро истечёт» и «Истекла». Пинятся токены ветвления, не проза целиком |
++| Адреса переходов: `itemAction`, `itemLink`, карточки `DeskScenarios` (TST-W2-2) | change: public contract — переход по первой причине, адрес карточки | unit + component | add | таблицы `Record<DeskKind, string \| null>` (`tsc` требует каждый вид, ручной перечень убран) для `itemAction` и справочного `itemLink`; пункт с двумя причинами (AC-160): ссылка по первой, кнопка приглашения остаётся; `DeskScenarios.test.tsx` утверждает `href` карточек первого шага и всех карточек сценариев |
++| Сборка `SessionRoles` в `DeskPage` (`headedUnits`, `hrUnits`, `employeeId`, роль `Hr`) (TST-W2-3) | change: security — карточка не той роли | component | add | `DeskPage.test.tsx` «scenario cards follow the session roles»: по случаю на источник роли; название теста неудачного чтения стола приведено к проверке (карточка руководителя остаётся без стола) |
++| `DeskCounter` «shows nothing at zero» (TST-W2-4) | дефект теста: отсутствие утверждалось до того, как ответ дошёл до компонента | component | add | тест начинает с положительного перехода («3»), затем ответ 0 при переходе на другой адрес, ожидание исчезновения «3» и только потом пустое содержимое |
++| `useSendUserMail`: отказ сервера (412) (TST-W2-5) | change: workflow state machine — после 412 запись перечитывается и показывается, автоповтора нет | component | add | `userMail.test.tsx`: сообщение об ошибке, второй `GET /api/v1/users`, ровно один POST |
++| SPA-часть ролей HR: `roles.ts` (`formatRoles`, `formatRecordedRoles`), `UserModal.rolesRefusal` (TST-W2-6) | change: разбор формата журнала и ветвление отказа 409 при снятии роли HR | unit + component | add | `roles.test.ts`: роли через запятую, `User`, пустое, неизвестное имя; `UserModal.test.tsx`: 409 без `errors` при снятии роли HR виден под полем «Роли» без общего алерта и с сохранёнными выбранными ролями; тот же 409 без снятия роли и отказ не 409 — общий алерт; 409 с `errors` — под своим полем. `UserForm` (множественный выбор) и столбец роли `AuditPage` — `none`: отдельной логики нет, выбор закрыт тестом модального окна, форматирование — `roles.test.ts` |
++| `builderContent.ts` (шаг 2 мастера) (TST-W2-7). Строка-замена решения `none` записи 1 для страниц сценариев SPA | change: workflow state machine — для `builderContent.ts` «ничего не вычисляют» неверно | unit | add | `builderContent.test.ts`: уровни трека только в пустую версию и без неактивных; снятие невыбранной компетенции с требованиями; новая вне блоков; снятие блока с коэффициентами и требованиями, принесёнными только им; повторный вызов без изменений. Прочие страницы сценариев (`ConnectUnitPage`, `OnboardEmployeePage`, `OrgFinding`, `CatalogCleanupPage`) остаются `none` по причине «потолок и дешёвый уровень» (компонентные тесты длинных многошаговых страниц с сетью не окупаются при отсутствии вычислений), не «e2e не принят» |
++| Метка числа действий у заголовка «Ожидают вашего действия» (TST-W2-8) | дефект теста: название шире проверки, мутант «убрать метку» выживал | component | add | две группы (12 и 3), `actionCount` 15: метка 15 утверждается у заголовка блока отдельно от чисел групп |
++
++## Removed tests
++
++Записью 5 не удалён ни один тест; ревью-фикс не оставил строк на удаление.
++
++| Test | Reason | In change scope |
++|---|---|---|
++| `deskTexts.test.ts`: четыре `it.each` с ручным перечнем видов (версии, `UnitWithoutHead`…, `TrackWithoutPositions`…, `PositionOutsideList`…) и объединённый тест `itemLink` (ревью-фикс волны 2, TST-W2-2) | заменены таблицами `Record<DeskKind, string \| null>`: покрывают те же виды и остальные, перечень берётся из типа | да |
++
++## Added tests
++
++Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
++
++Fail-first. Backend: `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj --filter-method "*Ac110_Ac112_APreviewOfAVersion*" --filter-method "*Ac112_ApprovingUnderThePreview*" --filter-method "*Ac107_Ac110_Ac113_Ac114_ApprovingACompetency*"` в копии `git archive e692120~1` (src, tests, openapi; родитель исправления `e692120`) с `PublicationCascadeTests.cs` рабочего дерева → exit 2, итог 3: 3 красных. Web: `node node_modules/vitest/vitest.mjs run <семь файлов> --reporter=verbose` в копии `git archive e692120~1 web` (node_modules — junction) с тестами рабочего дерева → exit 1, красных 10 из 13 новых тестов; три теста «пустой перечень» зелёные до правки (стражи, чтобы экран не показывал список всегда).
++
++Мутации — в копиях `git archive HEAD` с тестами рабочего дерева. Backend: тот же `dotnet test --project … --filter-method` (три имени выше), `runs` — число мутационных прогонов; контрольный прогон без мутации 3 из 3, exit 0. Web: `node node_modules/vitest/vitest.mjs run <семь файлов> --reporter=json`; контрольный прогон 38 из 38, exit 0. «Убит» — runner вернул ненулевой код и назвал упавший тест; в ячейке — первая упавшая проверка из отчёта runner.
++
++| Test | Regression proof |
++|---|---|
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac110_Ac112_APreviewOfAVersion_…`) | до правки: `Expected HiddenEntryCount(full) to be 0 because whoever may read every draft sees them all, but found -1 (difference of -1).` (поля нет; в том же прогоне `Expected Entries(bySuperior) to be a collection with 3 item(s), but` и идентификатор скрытого уровня в теле). Мутации (каждая exit 2): `S1` (предпросмотр перечисляет весь каскад) → `Expected Entries(bySuperior) to be a collection with 3 item(s), but`; `S2` (`hiddenEntryCount` всегда 0) → `Expected HiddenEntryCount(bySuperior) to be 1 because the level outside the version is counted but not listed, but found 0 (difference of -1).`; `S3` (число — весь каскад) → `Expected HiddenEntryCount(full) to be 0 because whoever may read every draft sees them all, but found 4 (difference of 4).`; `S4` (ответ версии теряет число) → строка `S2`; runs: 4 |
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac112_ApprovingUnderThePreviewOfAReaderWhoCannotReadADraft_…`) | до правки красен одним новым полем: `Expected HiddenEntryCount(fresh) to be 1, but found -1 (difference of -2).`; 412, неизменность данных, новый тег и публикация скрытого уровня до правки зелёные — страж, его держит мутация `S5` (тег не включает последний черновик каскада — скрытый уровень), exit 2, 1 красный: `Expected stale.Status to be HttpStatusCode.PreconditionFailed {value: 412} because a change of the draft the reader cannot read changes the list they confirmed, but found HttpStatusCode.OK {value: 200}.`; `S1`–`S4` краснят его только строкой `HiddenEntryCount(fresh)`; runs: 1 |
++| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac107_Ac110_Ac113_Ac114_ApprovingACompetency_…`, проверка `hiddenEntryCount`) | до правки: `Expected HiddenEntryCount(preview) to be 0 because a keeper reads every draft the approval publishes, but found -1 (difference of -1).` Мутации (каждая exit 2): `S3` → `… but found 2 (difference of 2).`; `S6` (предпросмотр записи описан для читателя без роли HR) → `Expected Entries(preview) to be a collection with 2 item(s), but found an empty collection.`; runs: 2 |
++| `web/src/features/career/usePublishEntry.test.tsx` (`names the drafts the user may read, counts the ones they may not, …`, `asks before approving when every draft of the list is one the user may not read, …`) | до правки (exit 1): `Error: expect(element).toHaveTextContent()` («3 черновые записи») и `AssertionError: expected null not to be null` (окно не открылось, утверждение ушло сразу). Мутации (каждая exit 1): `U1` (`publishedCount` без скрытых) → 7 красных, оба новых среди них; `U2` (`publish` решает по `entries.length`) → `AssertionError: expected null not to be null`; `U3` (текст окна по читаемым) → `Error: expect(element).toHaveTextContent()`; `U4` (`execute` сообщает читаемые) → `Unable to find an element with the text: /вместе с ней опубликовано записей: 3/`; `U5` (подпись кнопки по читаемым) → `Unable to find an accessible element with the role "button" and name "Утвердить вместе с 3 записями"`; `U6` (нет строки «и ещё») → `Error: expect(element).toHaveTextContent()`; `U7` (из строки убрано «и») → 8 красных; `U8` (пустой `<ul>` при одних скрытых) → `AssertionError: expected <ul></ul> to be null`; runs: 8 |
++| `web/src/features/desk/CascadeTable.test.tsx` | до правки все три красные `TypeError: entries is not iterable` (проп переименован в `drafts`, по поведению до правки проверить нечем). Мутации (каждая exit 1): `C1` (таблица при нуле читаемых) → `AssertionError: expected <table …(1)>…(2)</table> to be null`; `C2` (строка при нуле скрытых) → `AssertionError: expected <p></p> to be null`; `C3` (строка без числа) → `Unable to find an element with the text: и ещё 2 черновые записи.`; runs: 3 |
++| `web/src/features/desk/useVersionTransition.test.tsx` | до правки: `Error: expect(element).toHaveTextContent()` («записей: 2») и `AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining {"id": "v1"}, 3 ]`. Мутации (каждая exit 1): `V1` (вопрос по читаемым) → `Error: expect(element).toHaveTextContent()`; `V2` (подтверждённое решение сообщает читаемые) → `expected "vi.fn()" to be called with arguments: [ ObjectContaining {"id": "v1"}, 2 ]`; `V3` (прямое решение) → то же с `3`; `C1` краснит и его (таблица в окне); runs: 3 |
++| `web/src/features/desk/DraftsQueuePage.test.tsx` | до правки: `TestingLibraryElementError: Unable to find role="button" and name "Утвердить вместе с 2 записями"`; тест «пустой перечень» — страж, зелёный до правки. Мутации (каждая exit 1): `Q1` (счёт по читаемым) → та же строка; `Q2` (список только при читаемых) → `Unable to find an element with the text: и ещё 2 черновые записи.`; runs: 2 |
++| `web/src/features/desk/BuilderSubmitStep.test.tsx` | до правки: `Unable to find an element with the text: /и вместе с ней 3 черновые записи/`; тест «нет черновых записей» — страж. Мутации (каждая exit 1): `B1` (счёт по читаемым) → та же строка; `B2` (таблица только при читаемых) → `Unable to find an element with the text: и ещё 3 черновые записи.`; `V3` краснит и проверку сообщения «опубликовано записей: 3»; runs: 2 |
++| `web/src/features/desk/ReviewPage.test.tsx` | до правки: `Unable to find an element with the text: и ещё 2 черновые записи.`; тест «версия уходит одна» — страж. Мутация `R1` (блок только при читаемых) → exit 1, та же строка; runs: 1 |
++| `web/src/features/career/usePublishEntry.test.tsx`, `web/src/features/career/catalogueTables.test.tsx` (фикстуры предпросмотра) | исправление дефекта теста, не новый тест. Команда `npm --prefix web test` на дереве `07dc3df`: exit 1, 9 красных из 492; первая — `approves a draft against the version its row shows, and reads no entry on the way`: `AssertionError: expected [] to have a length of 1 but got +0`; после правки обе фикстуры зелёные |
++
++Ревью-фикс волны 2, итерация 01 (TST-W2-1…8). Тесты закрывают существующее поведение (пробелы покрытия), поэтому доказательство — мутации в копии `git archive HEAD web` (`node_modules` — junction) с тестами рабочего дерева; рабочее дерево не мутировалось. Команда мутации: `node node_modules/vitest/vitest.mjs run <файлы теста мутанта> --reporter=json`, каждая — exit 1, «Убит» = runner назвал упавший тест; контрольный прогон 8 файлов, 195 из 195, exit 0. Полный набор web на дереве правки: 632 из 632, exit 0; `npm --prefix web run lint` exit 0.
++
++| Test | Regression proof |
++|---|---|
++| `web/src/features/desk/deskTexts.test.ts` (TST-W2-1, TST-W2-2) | мутации: `D5` (порог множественного числа компетенций `> 2`) → `MatrixCompetencyChanged: puts one entry in the singular and several in the plural`; `D6` (ветка комментария в `returnedWith` убрана) → `says what a returned version came back with: {"hasComment":true}`; `D7` (подсказка об ответственном HR у любого пункта) → `TrackWithoutLevels: points a reference item to the responsible HR, and an action item to nobody` (4 красных); `D8` (метка у приглашения) → `tags no invitation, whose address says what it is`; `D9` (разделитель контекста) → `puts the units above a unit under it, and nothing when it has none`; `D10` (дата в предложении инвертирована) → `dates the link in the sentence outside the invitation group, …`; `D11` (ранний трек для любого вида) → `flags a draft track as too early to approve …`; `D12` (порог «уровней») → `puts a level with no position in the singular and several in the plural`; `A1` (действие общего блока без `matrixId`) → `opens a MatrixSharedBlockChanged item on the screen /desk/matrix-builder?matrixId=…`; `A2` (справочный `ResponsibleUnitWithoutHead` без обзора) → `leads a reference ResponsibleUnitWithoutHead item, …`; `A3` (адрес `MatrixLevelsChanged` без матрицы) → `opens a MatrixLevelsChanged item on the screen /career/matrices/…` (2 красных); runs: 11 |
++| `web/src/features/desk/DeskPage.test.tsx` (TST-W2-1, TST-W2-3, TST-W2-8, AC-160) | мутации: `D1` (у датированной группы нет колонки) → `the columns of a group … shows how long ago it was in a dated group, only for the item that has a date`; `D2` (колонка у недатированной группы) → `… shows no age in a group whose items are not dated events, …`; `D3` (ячейка без стража даты) → `the scenario cards follow the session roles … gives a head of a unit the card to build a matrix` (4 красных, ячейка падает на пункте без даты); `D4` (срок ссылки инвертирован) → `… shows an invitation link that is about to end and one that has ended, …`; `A6` (кнопка приглашения только без ссылки сценария) → `… keeps the link to the scenario and the button to send the invitation again on an item with two reasons`; `R1` (`isHead` из `hrUnits`) → `reports a failed read of the desk with a way to retry, …` (3 красных); `R2` (`isUnitHr` из `headedUnits`) → `gives an HR of a unit the review, and not the card to build a matrix that a head has`; `R3` (`isBound` всегда false) → `gives an account bound to an employee the card of their place in the company`; `R4` (`isHr` потерян) → `gives the HR role the queue of drafts and none of the cards of an administrator`; `L1` (метка числа действий убрана) → `shows the groups of expected actions with their full counts, and the count of actions apart from them`; runs: 9 |
++| `web/src/features/desk/DeskScenarios.test.tsx` (TST-W2-2) | мутации: `A4` (карточка первой должности ведёт на «Пользователи») → `sends each first-step card to the screen that closes its gap …`; `A5` (карточка «Доработать» ведёт на согласование) → `sends each scenario card to its own screen, and the ones that work on a version to the first version waiting`; runs: 2 |
++| `web/src/features/desk/DeskCounter.test.tsx` (`shows nothing at zero`, TST-W2-4) | `Z1` (проверка нуля убрана) → exit 1, `the desk counter in the menu … shows nothing at zero` (2 красных); тест синхронизируется по исчезновению «3», затем утверждает пустоту; runs: 1 |
++| `web/src/features/users/userMail.test.tsx` (отказ 412, TST-W2-5) | `M1` (`invalidateQueries` только при успехе) → `row menu … resend-invitation: sends the row's version, reports the mail as sent and rereads the list` и новый тест `tells the administrator a refused send, rereads the list …` (3 красных); `M2` (`message.error` потерян) → `tells the administrator a refused send, rereads the list to show the account as it is, and sends once`; runs: 2 |
++| `web/src/features/users/roles.test.ts`, `web/src/features/users/UserModal.test.tsx` (TST-W2-6) | мутации: `F1` (подпись «Пользователь» потеряна) → `lists the roles by name, in the order the form offers them, and an account with none as a plain user` (3 красных); `F2` (разбор журнала по `;`) → `reads the roles of an audit record as the account list does`; `F3` (неизвестное имя роли печатается) → то же имя; `P1` (отказ роли не под полем) → `shows the refusal under the roles, keeps the roles as the administrator left them and adds no alert`; `P2` (отказ роли при любом сохранении) → `shows the same refusal as a general alert when the HR role is not being removed`; `P3` (отказ роли не только для конфликта) → `leaves a conflict that names a field to that field, and any other failure to the alert`; runs: 6 |
++| `web/src/features/desk/builderContent.test.ts` (TST-W2-7) | мутации: `B1` (неактивный уровень трека добавлен) → `gives a version that is still empty the active levels of the track, and no inactive one`; `B2` (уровни трека всегда) → `leaves the levels of a version that already has some` (2 красных); `B3` (невыбранная компетенция остаётся) → `takes out a competency that is no longer chosen with its requirements, …`; `B4` (новая компетенция в блоке) → `puts a newly chosen competency outside every block`; `B5` (снятый блок остаётся) → `takes a block out with its coefficients and the requirements only it brought`; `B6` (блок добавляется повторно) → то же имя (3 красных); `B7` (требования снятого блока остаются, `matrixContent.ts`) → то же имя; runs: 7 |
+diff --git a/.asd/sprints/004-role-desktop-user-journeys/test-plan.md b/.asd/sprints/004-role-desktop-user-journeys/test-plan.md
+index 2768b24..3de31e1 100644
+--- a/.asd/sprints/004-role-desktop-user-journeys/test-plan.md
++++ b/.asd/sprints/004-role-desktop-user-journeys/test-plan.md
+@@ -16,60 +16,71 @@ responsibility:
+ | 3 | f72d32e | delta since entry 2 |
+ | 4 | d8c397f | delta since entry 3 |
+ | 5 | 7b8de3c | delta since entry 4 |
++| 6 | ce9240f | delta since entry 5 |
+ 
+ ## Risk → check decisions
+ 
+-Дельта записи 5 — `git diff d8c397f...HEAD`: изменение требований AC-110/AC-112 (`d329d7c`: перечень публикации называет только читаемые публикующим записи, остальные показаны числом «и ещё N»; подтверждение остаётся над всем каскадом), правка `impl` по замечанию внешнего ревью (`e692120`: `PublicationPlan.Describe(reader)` отбирает записи и помехи одной `SeesLoaded`, поле контракта `hiddenEntryCount`; web считает каскад целиком и показывает «и ещё N») и заметка памяти dev (`68c1a40`). Тесты этих коммитов не менялись. Safety valve применён: правка затрагивает общий контракт (`openapi.json`, `schema.d.ts`), общий `PublicationPlan` (оба предпросмотра) и общие web-компоненты (`usePublishEntry`, `CascadeTable`, `useVersionTransition`), поэтому набор backend и набор web запущены целиком.
++Дельта записи 6 — `git diff 7b8de3c...HEAD`: правки dev по замечаниям ревью волны 2, итерации 01 (`c990cfa`…`7a75da6`, 22 коммита: код `web/`, комментарии, документы и память dev), тест-коммит ревью-фикса (`7c5de21`, его строки — в `test-plan.entry-05.md`), документы (`a6b8d6a`, `94cd163`, `b73f3ff`, `30d6eba`) и заметки памяти dev и ревьюера. Файлов backend, `openapi/` и конфигурации сборки в дельте нет. Safety valve применён: правка затрагивает общие web-компоненты (`LinkButton`, `StepRuler`, `QueueLayout`, `OrgFinding`, `UserForm`, `EmployeeForm`, `CreateAccountForm`, `useVersionTransition`), поэтому набор web запущен целиком; набор backend не запускался: код и тесты backend не менялись с записи 5.
++
++Замечания ревью — дефекты уже написанного кода, поэтому каждое исправленное поведение получает регрессионный тест (`code-style.md` §17), кроме строк `none` ниже. Страницы сценариев записи 1 и 5 держали на `none` («потолок и дешёвый уровень»), пока дефектов на них не было; теперь дефекты есть, и причина снята. Компонентный тест страницы с сетью `fakeApi` — самый дешёвый уровень, на котором эти поведения наблюдаемы: чистой функции в исправлениях нет.
+ 
+ | Change | Material risk | Chosen check | Decision | Reason |
+ |---|---|---|---|---|
+-| `PublicationPlan.Describe(reader)` — `entries` только читаемые, остальные числом `hiddenEntryCount` (предпросмотр версии; предпросмотр записи идёт тем же методом) | change: security — вышестоящий согласующий видел идентификатор и название черновика, который читать не вправе; число скрытых неверно | contract | add | `PublicationCascadeTests.Ac110_Ac112_APreviewOfAVersion_…`: версия на шаге вышестоящего согласующего (автор — ответственный HR), в треке черновой уровень вне содержимого версии. Вышестоящий согласующий видит трек и два уровня версии, `hiddenEntryCount = 1`, идентификатора и названия скрытого уровня нет ни в одной строке тела; ответственный HR и администратор видят все четыре записи, `hiddenEntryCount = 0`; тег один у всех троих. Мутанты — ниже |
+-| Подтверждение над всем каскадом: `Tag`, `IsConfirmedBy` (AC-112; код не менялся, смысл — тег остаётся по полному перечню, когда перечень читателя короче) | change: workflow state machine — тег по видимой части дал бы опубликовать скрытые черновики без подтверждения того, что изменилось | contract | add | `Ac112_ApprovingUnderThePreviewOfAReaderWhoCannotReadADraft_…`: тот же вышестоящий согласующий подтверждает по тегу своего предпросмотра; скрытый уровень переименован → 412 с `publication`, версия остаётся «на согласовании», уровень — черновиком; новый предпросмотр даёт другой тег, подтверждение по нему публикует и скрытый уровень (три `CareerLevel.Approved` в журнале). Страж: кроме нового поля до правки зелёный, поэтому его держат мутанты |
+-| Предпросмотр записи (`GET /{segment}/{id}/publication`), читающий вправе утвердить корень | change: security | contract | add | одна проверка в существующем `Ac107_Ac110_Ac113_Ac114_ApprovingACompetency_…`: у HR `hiddenEntryCount = 0` на маршруте записи. Что хранитель читает весь свой каскад, уже закрепляют `Entries(preview)` в `Ac107_…` и `Ac109_Ac113_…` |
+-| Предпросмотр записи: читающий вправе утвердить корень, но не вправе читать черновик каскада (пункт 1 списка dev) | change: security | — | none | предпосылка не достижима. Каскад записи — направление, шкала, компетенции (без подразделения) и уровни трека-корня. Утвердить корень вправе администратор, ответственный HR подразделения трека (учётная запись с ролью HR) и любой HR для записи без подразделения. `CatalogViewer.Sees` показывает черновик без подразделения каждому HR и администратору, а уровень — ответственному HR подразделения его трека. Скрытое возникает только в предпросмотре версии, где читает вышестоящий согласующий, не хранитель; этот случай — первая строка. Сузятся права чтения HR — красными станут строка выше и `Entries(...)` существующих тестов |
+-| `usePublishEntry`: `publishedCount`, `hiddenDraftsText`, `EntryList`, решение «спросить или утвердить сразу» (`publish`), подпись кнопки, число в вопросе и в сообщении | change: workflow state machine — публикующее действие без подтверждения, когда читаемый список пуст, а скрытые записи есть; неверное число | component | add | `usePublishEntry.test.tsx`: два теста — читаемые вместе со скрытыми (подпись «вместе с 3 записями», строка «и ещё 2 черновые записи», тег целого перечня, сообщение «опубликовано записей: 3») и только скрытые (окно открывается, до подтверждения запроса нет, списка `<ul>` нет) |
+-| `CascadeTable` — таблица читаемых записей и строка «и ещё N» (общая для четырёх экранов) | change: public contract — при одних скрытых таблица не показывается, при нуле скрытых строки нет | component | add | `CascadeTable.test.tsx`: три сочетания — только читаемые, читаемые и скрытые, только число |
+-| `useVersionTransition`: число в вопросе, `CascadeTable` в окне, число в `onDone` | change: workflow state machine | component | add | `useVersionTransition.test.tsx`: при пустом читаемом перечне хук спрашивает первым и публикует по тегу (число 2); решение под перечнем, который показал экран, выполняется сразу, число 3 |
+-| Экраны `DraftsQueuePage` (подпись кнопки, фраза «Других черновых записей…»), `BuilderSubmitStep` (фраза, таблица, отправка без окна), `ReviewPage` (блок «Будет опубликовано вместе с версией») | change: workflow state machine — на `DraftsQueuePage` и `BuilderSubmitStep` экран и есть подтверждение, окна нет | component | add | по два теста на экран (скрытые записи и пустой перечень), сеть `fakeApi`. Запись 1 оставила страницы сценариев целиком на `none` (потолок); здесь закреплены только изменённые блоки, остальные части страниц и `ReworkPage` по-прежнему вне проверок |
+-| Фикстуры предпросмотра без `hiddenEntryCount` (`usePublishEntry.test.tsx`, `catalogueTables.test.tsx`) | дефект теста: ответы строятся `Response.json` без типа, `tsc` нового поля не видит, `entries.length + undefined` — `NaN`, и пустой перечень не распознаётся | component | add | поле добавлено в обе фикстуры; до правки 9 красных (`approves at once under the tag of an empty list, …` и ещё семь тестов `usePublishEntry.test.tsx`, `approves a draft against the version its row shows, …` в `catalogueTables.test.tsx`) — дефект теста, не кода, `D-N` нет |
+-| Контракт: `hiddenEntryCount` в `PublicationPreviewResponse` и `MatrixPublicationResponse` (`openapi.json`, `schema.d.ts`) | change: public contract | contract | keep | `ContractTests` в наборе backend зелёные; `npm --prefix web run check:api` без расхождений |
+-| Документы (`docs/product`, `docs/architecture`, `docs/ux`), заметка памяти dev (`68c1a40`) | нет поведения | — | none | тексты не исполняются; заметка памяти верна — фикстуры, о которых она, исправлены строкой выше. Попаданий в память агентов нет: проверено поиском `cascadeTag`, `PublicationPreviewResponse`, `moreCount` по `.claude/agent-memory` (только память тестировщика, описания приёмов верны) |
++| `LinkButton`: перехват только обычного левого щелчка (`4260021`) | change: щелчок с Ctrl, Cmd, Shift, Alt и средней кнопкой открывал экран в текущей вкладке; нельзя сломать и обычный щелчок | component | add | `LinkButton.test.tsx`: обычный щелчок — переход внутри приложения и отменённое умолчание браузера; пять щелчков (Ctrl, Meta, Shift, Alt, средняя кнопка) — умолчание не отменено, перехода нет. Отмена умолчания читается слушателем на `document`, он же её и ставит, поэтому jsdom не пытается открыть адрес |
++| `MyPlacePage`: свой HR или унаследованный по `orgUnitId`, не по названию (`fe5be3a`) | change: закрепление вышестоящего подразделения с тем же названием называлось «закрепление за вашим подразделением» | component | add | `MyPlacePage.test.tsx`: вышестоящее подразделение с тем же названием → «унаследовано из «Команда»»; закрепление за своим подразделением → «закрепление за вашим подразделением» (страж) |
++| `AddBlockModal`: общий блок с компетенцией чужой области недоступен, называется компетенция, каталог не читается (`7a75da6`) | change: public contract — блок виден доступным или причина без названия; лишние `GET /competencies/{id}` на каждый блок | component | add | `AddBlockModal.test.tsx`: кнопка блока выключена с текстом «Недоступен: в составе компетенция «…» другой области», блок без чужих компетенций включён; чтений `GET /competencies/c-foreign` нет (синхронизация по строке блока и пустой `act`, иначе проверка «чтений нет» проходила бы вхолостую); без ограничения по области доступны все блоки (страж ветки `allowedIds &&`) |
++| `useQueueSelection.wasRequestedFound`: плашка «уже утверждена другим» судит по первому чтению очереди (`03da677`) | change: workflow state machine — после своего утверждения записи, открытой по ссылке, и после смены вида показывалась ложная плашка | component | add | `DraftsQueuePage.test.tsx`: утверждение открытой по ссылке записи → следующая открывается, плашки нет; смена «Вида» на вид без этой записи → плашки нет; записи нет при первом чтении → плашка есть (страж). `OrgCleanupPage` и `CatalogCleanupPage` пользуются тем же хуком, но `wasRequestedFound` не читают |
++| `BuilderSubmitStep`, `ReviewPage`, `ReworkPage`: сбой чтения полноты, перечня публикации, истории — `LoadFailure` с «Повторить», решения выключены с причиной (`5e864b4`) | change: workflow state machine — экран навсегда оставался заглушкой без ошибки и повтора, решение выключалось без причины | component | add | `BuilderSubmitStep.test.tsx` (обе причины; «Назад» остаётся; повтор перечитывает оба запроса), `ReviewPage.test.tsx` (обе причины; повтор; пока перечень читается — причина «Проверяем, что будет опубликовано…»), `ReworkPage.test.tsx` (история, полнота, перечень; два решения без проверки освобождаются, когда читается история). Сбой сети строится ответом 403: ответ 5xx query повторяет три раза с задержкой, 403 — нет |
++| `ConnectUnitPage`, `AccountModal`, `UserForm.lockedTo.roles`: учётная запись HR создаётся для HR с ролью «HR»; причина выключенного выбора на время отправки письма (`bd6b93b`, `95b2ed9`) | change: identity — запись создавалась для руководителя, а не для закреплённого HR, и без роли «HR» закрепление не действует; кнопка предлагалась только при наличии руководителя | component | add | `ConnectUnitPage.test.tsx`: строка «Учётная запись HR» открывает окно «Учётная запись HR» и отправляет `POST /users` с `roles: ["Hr"]` и `employeeId` HR; строка руководителя — как прежде, `roles: []` и `employeeId` руководителя; без руководителя создание для HR предлагается, без HR — для руководителя; пока идёт отправка письма, виден текст причины и выбор подразделения выключен |
++| `OnboardEmployeePage`, `EmployeeForm`, `CreateAccountForm`: «Отмена» только до создания сотрудника; после 412 карточка перечитывается и следующее сохранение несёт новую версию; шаги, «Назад» и «Пропустить» заперты, пока создаётся учётная запись (`8252b63`, `97aea99`, `0cae570`) | change: workflow state machine — «Отмена» уводила со стола без подтверждения и отбрасывала правки; каждое следующее сохранение получало 412; смена шага во время запроса давала итог поверх новых правок | component | add | `OnboardEmployeePage.test.tsx`: после «Назад» к карточке созданного сотрудника кнопки «Отмена» нет (до создания есть); после 412 поля показывают перечитанные значения; следующий `PUT` несёт `If-Match: "2"`; во время `POST /users` «Назад», «Пропустить» и все три шага линейки выключены. Сотрудник и должность приходят в адресе, поэтому выбор подразделения и должности через списки не нужен |
++| `OrgCleanupPage`, `ChangePositionForm`, `OrgFinding.LinkAccount`: смена находки или вида при несохранённом выборе спрашивает, «Остаться» оставляет выбор (`fb69a83`) | change: workflow state machine — выбранная, но не сохранённая должность или сотрудник пропадали молча | component | add | `OrgCleanupPage.test.tsx` (экран под `LeaveGuardProvider`): выбранная должность + другая находка → окно «Перейти без сохранения?», «Остаться» оставляет находку и выбор, повторный выбор и «Перейти без сохранения» открывают другую; то же для выбранного сотрудника привязки учётной записи; смена «Вида» при несохранённом выборе → окно, после «Остаться» нового запроса с одним видом нет; без несохранённого — вид меняется сразу (страж). Окно ищется по заголовку `.ant-modal-title`: в тестах `useId` antd даёт один `id` (`test-id`) и окну, и полю выбора, поэтому поиск роли `dialog` с именем на экране с полем не находит окно |
++| `TrackPositionsPage`: поиск треков на сервере (`27df728`) | change: перечень треков читался одной страницей и фильтровался на клиенте — трек со следующей страницы нельзя найти | component | add | `TrackPositionsPage.test.tsx`: набранный текст уходит параметром `q`; найденные сервером треки предлагаются; «не найден» называет текст; после закрытия списка предлагается весь перечень |
++| `BuilderCompetenciesStep.attach`: пересечение блока считается по текущему выбору, не по сохранённой версии (`3ebe02c`) | change: сняв сохранённую компетенцию и создав блок с ней, автор получал «создан черновиком, но к версии не подключён» | component | add | `BuilderCompetenciesStep.test.tsx`: снять сохранённую компетенцию, «Создать блок», отметить её в составе, «Сохранить» → один `PUT /content` с блоком в `sharedBlocks` и без компетенции в `competencies`, предупреждения нет. Проверка пересечения в `attach` вне этого случая недостижима из интерфейса: окно блока не даёт отметить занятую компетенцию (`takenIds` — то же множество), мутант «множество пусто» выживает, это записано |
++| `MatrixBuilderPage`, `BuilderCheckStep`, `BuilderSubmitStep`: шаги линейки заперты, пока идёт переход от проверки к отправке и пока отправляется версия (`cedf93e`) | change: workflow state machine — уйдя на предыдущий шаг во время запроса, автор получал переключение на отправку поверх новых правок | component | add | `MatrixBuilderPage.test.tsx`: пока `PUT /content` шага 5 в полёте, все шесть шагов линейки выключены, после ответа свободны; пока `POST /submit` в полёте, все шесть выключены. Линейка читается по классу `ant-steps-item-disabled` (доступного имени у шагов нет); на шаге 5 один шаг (6-й) выключен и без запроса, поэтому проверяется число 6 |
++| Размеры по токенам (`c990cfa`: `ChangePositionForm`, `QueueLayout`, `OnboardEmployeePage`, `OrgCleanupPage`, `DraftsQueuePage`, `CatalogCleanupPage`, `scenario.css`) | нет поведения: подстановка `calc(var(--ant-control-height) * N)` и `var(--ant-margin-xxs)` вместо чисел | — | none | вид, не поведение; отдельных расчётов нет. Раскладку jsdom не считает, а стили, импортируемые файлом, vitest здесь не применяет, поэтому сверить ширины нечем. Закреплять строкой `calc(...)` значит закреплять реализацию. Владелец проверки — ревью соответствия UI (оно эти размеры и нашло), потолок записан |
++| `scenario.css`: `.queue-row-selected` после `.queue-row`, выбранная строка очереди сохраняет заливку (`25ea70e`) | нет поведения: порядок правил каскада | — | none | вид; каскад подключённого файла в этих тестах не применяется (см. строку выше), порядок правил читать из файла значит закреплять форму правки (`.queue-row.queue-row-selected` тоже верна). Ручной проверки не заводил: заливка выбранной строки видна на любом экране очереди и отдельной реакции пользователя не требует; решение о ручной строке — за ревью |
++| Подсказка «Трек можно выбрать или добавить после выбора подразделения» (`BuilderTrackStep`, `95b2ed9`) | нет поведения: статичный текст под уже существующим условием `unit` | — | none | один условный литерал без вычислений; условие в тексте не дублируется |
++| Рефакторинги и тексты: `cancelLabel` (`058c2c5`), `clearError` (`2039ec9`), doc-комментарии (`30d6eba`, `b73f3ff`), документы (`a6b8d6a`, `94cd163`), заметки памяти dev и ревьюера | нет поведения | — | none | удалённые параметр и поле никто не читал: `tsc` и весь набор web зелёные. Поиск удалённых имён (`cancelLabel`, `clearError`, `foreignReads`, `directionOf`, фраза «в составе компетенции другой области») по репозиторию и `.claude/agent-memory`: попаданий нет, кроме `decisions-log.md` и временных файлов `.asd/tmp` |
+ 
+ ## Removed tests
+ 
+-Записью 5 не удалён ни один тест; ревью-фикс не оставил строк на удаление.
++Записью 6 не удалён ни один тест. Строка ревью-фикса перенесена из прежней записи и подтверждена: удаление выполнено на месте в `7c5de21`.
+ 
+ | Test | Reason | In change scope |
+ |---|---|---|
++| `deskTexts.test.ts`: четыре `it.each` с ручным перечнем видов (версии, `UnitWithoutHead`…, `TrackWithoutPositions`…, `PositionOutsideList`…) и объединённый тест `itemLink` (ревью-фикс волны 2, TST-W2-2) | заменены таблицами `Record<DeskKind, string \| null>`: покрывают те же виды и остальные, перечень берётся из типа. Запись 6: файл зелёный в обоих прогонах, прежних it.each в нём нет | да |
+ 
+ ## Added tests
+ 
+ Level and AC/risk covered are visible in the test file itself (name, path) — not restated here.
+ 
+-Fail-first. Backend: `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj --filter-method "*Ac110_Ac112_APreviewOfAVersion*" --filter-method "*Ac112_ApprovingUnderThePreview*" --filter-method "*Ac107_Ac110_Ac113_Ac114_ApprovingACompetency*"` в копии `git archive e692120~1` (src, tests, openapi; родитель исправления `e692120`) с `PublicationCascadeTests.cs` рабочего дерева → exit 2, итог 3: 3 красных. Web: `node node_modules/vitest/vitest.mjs run <семь файлов> --reporter=verbose` в копии `git archive e692120~1 web` (node_modules — junction) с тестами рабочего дерева → exit 1, красных 10 из 13 новых тестов; три теста «пустой перечень» зелёные до правки (стражи, чтобы экран не показывал список всегда).
++Fail-first. `node node_modules/vitest/vitest.mjs run <13 файлов> --reporter=verbose` в копии `git archive 552407b web` (родитель первого исправления `c990cfa`; `node_modules` — junction) с тестами рабочего дерева → exit 1, 36 красных из 50 тестов этих файлов (44 новых и 6 прежних). Зелёные до правки: 6 прежних и 8 новых стражей (названы в ячейках: они держат, чтобы исправление не переехало на обычный путь). Vitest типы не проверяет, поэтому тесты новых свойств идут против старого кода и падают на утверждениях.
+ 
+-Мутации — в копиях `git archive HEAD` с тестами рабочего дерева. Backend: тот же `dotnet test --project … --filter-method` (три имени выше), `runs` — число мутационных прогонов; контрольный прогон без мутации 3 из 3, exit 0. Web: `node node_modules/vitest/vitest.mjs run <семь файлов> --reporter=json`; контрольный прогон 38 из 38, exit 0. «Убит» — runner вернул ненулевой код и назвал упавший тест; в ячейке — первая упавшая проверка из отчёта runner.
++Мутации — в копии `git archive HEAD web` (`node_modules` — junction) с тестами рабочего дерева; один якорь на мутацию (число попаданий проверяется), файл восстанавливается в `finally`; рабочее дерево не мутировалось. Команда: `node node_modules/vitest/vitest.mjs run <файлы теста> --reporter=json`; контрольный прогон без мутации — exit 0 на всех строках. «Убит» = exit 1 и runner назвал упавший тест; в ячейке — первая упавшая проверка из отчёта runner, `runs` — число мутационных прогонов.
+ 
+ | Test | Regression proof |
+ |---|---|
+-| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac110_Ac112_APreviewOfAVersion_…`) | до правки: `Expected HiddenEntryCount(full) to be 0 because whoever may read every draft sees them all, but found -1 (difference of -1).` (поля нет; в том же прогоне `Expected Entries(bySuperior) to be a collection with 3 item(s), but` и идентификатор скрытого уровня в теле). Мутации (каждая exit 2): `S1` (предпросмотр перечисляет весь каскад) → `Expected Entries(bySuperior) to be a collection with 3 item(s), but`; `S2` (`hiddenEntryCount` всегда 0) → `Expected HiddenEntryCount(bySuperior) to be 1 because the level outside the version is counted but not listed, but found 0 (difference of -1).`; `S3` (число — весь каскад) → `Expected HiddenEntryCount(full) to be 0 because whoever may read every draft sees them all, but found 4 (difference of 4).`; `S4` (ответ версии теряет число) → строка `S2`; runs: 4 |
+-| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac112_ApprovingUnderThePreviewOfAReaderWhoCannotReadADraft_…`) | до правки красен одним новым полем: `Expected HiddenEntryCount(fresh) to be 1, but found -1 (difference of -2).`; 412, неизменность данных, новый тег и публикация скрытого уровня до правки зелёные — страж, его держит мутация `S5` (тег не включает последний черновик каскада — скрытый уровень), exit 2, 1 красный: `Expected stale.Status to be HttpStatusCode.PreconditionFailed {value: 412} because a change of the draft the reader cannot read changes the list they confirmed, but found HttpStatusCode.OK {value: 200}.`; `S1`–`S4` краснят его только строкой `HiddenEntryCount(fresh)`; runs: 1 |
+-| `tests/Competency.Tests/PublicationCascadeTests.cs` (`Ac107_Ac110_Ac113_Ac114_ApprovingACompetency_…`, проверка `hiddenEntryCount`) | до правки: `Expected HiddenEntryCount(preview) to be 0 because a keeper reads every draft the approval publishes, but found -1 (difference of -1).` Мутации (каждая exit 2): `S3` → `… but found 2 (difference of 2).`; `S6` (предпросмотр записи описан для читателя без роли HR) → `Expected Entries(preview) to be a collection with 2 item(s), but found an empty collection.`; runs: 2 |
+-| `web/src/features/career/usePublishEntry.test.tsx` (`names the drafts the user may read, counts the ones they may not, …`, `asks before approving when every draft of the list is one the user may not read, …`) | до правки (exit 1): `Error: expect(element).toHaveTextContent()` («3 черновые записи») и `AssertionError: expected null not to be null` (окно не открылось, утверждение ушло сразу). Мутации (каждая exit 1): `U1` (`publishedCount` без скрытых) → 7 красных, оба новых среди них; `U2` (`publish` решает по `entries.length`) → `AssertionError: expected null not to be null`; `U3` (текст окна по читаемым) → `Error: expect(element).toHaveTextContent()`; `U4` (`execute` сообщает читаемые) → `Unable to find an element with the text: /вместе с ней опубликовано записей: 3/`; `U5` (подпись кнопки по читаемым) → `Unable to find an accessible element with the role "button" and name "Утвердить вместе с 3 записями"`; `U6` (нет строки «и ещё») → `Error: expect(element).toHaveTextContent()`; `U7` (из строки убрано «и») → 8 красных; `U8` (пустой `<ul>` при одних скрытых) → `AssertionError: expected <ul></ul> to be null`; runs: 8 |
+-| `web/src/features/desk/CascadeTable.test.tsx` | до правки все три красные `TypeError: entries is not iterable` (проп переименован в `drafts`, по поведению до правки проверить нечем). Мутации (каждая exit 1): `C1` (таблица при нуле читаемых) → `AssertionError: expected <table …(1)>…(2)</table> to be null`; `C2` (строка при нуле скрытых) → `AssertionError: expected <p></p> to be null`; `C3` (строка без числа) → `Unable to find an element with the text: и ещё 2 черновые записи.`; runs: 3 |
+-| `web/src/features/desk/useVersionTransition.test.tsx` | до правки: `Error: expect(element).toHaveTextContent()` («записей: 2») и `AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining {"id": "v1"}, 3 ]`. Мутации (каждая exit 1): `V1` (вопрос по читаемым) → `Error: expect(element).toHaveTextContent()`; `V2` (подтверждённое решение сообщает читаемые) → `expected "vi.fn()" to be called with arguments: [ ObjectContaining {"id": "v1"}, 2 ]`; `V3` (прямое решение) → то же с `3`; `C1` краснит и его (таблица в окне); runs: 3 |
+-| `web/src/features/desk/DraftsQueuePage.test.tsx` | до правки: `TestingLibraryElementError: Unable to find role="button" and name "Утвердить вместе с 2 записями"`; тест «пустой перечень» — страж, зелёный до правки. Мутации (каждая exit 1): `Q1` (счёт по читаемым) → та же строка; `Q2` (список только при читаемых) → `Unable to find an element with the text: и ещё 2 черновые записи.`; runs: 2 |
+-| `web/src/features/desk/BuilderSubmitStep.test.tsx` | до правки: `Unable to find an element with the text: /и вместе с ней 3 черновые записи/`; тест «нет черновых записей» — страж. Мутации (каждая exit 1): `B1` (счёт по читаемым) → та же строка; `B2` (таблица только при читаемых) → `Unable to find an element with the text: и ещё 3 черновые записи.`; `V3` краснит и проверку сообщения «опубликовано записей: 3»; runs: 2 |
+-| `web/src/features/desk/ReviewPage.test.tsx` | до правки: `Unable to find an element with the text: и ещё 2 черновые записи.`; тест «версия уходит одна» — страж. Мутация `R1` (блок только при читаемых) → exit 1, та же строка; runs: 1 |
+-| `web/src/features/career/usePublishEntry.test.tsx`, `web/src/features/career/catalogueTables.test.tsx` (фикстуры предпросмотра) | исправление дефекта теста, не новый тест. Команда `npm --prefix web test` на дереве `07dc3df`: exit 1, 9 красных из 492; первая — `approves a draft against the version its row shows, and reads no entry on the way`: `AssertionError: expected [] to have a length of 1 but got +0`; после правки обе фикстуры зелёные |
++| `web/src/features/desk/LinkButton.test.tsx` | до правки: пять красных из шести — `leaves a click with Ctrl held to the browser, which opens the address its own way` и ещё четыре (Meta, Shift, Alt, средняя кнопка): `AssertionError: expected true to be false // Object.is equality`; `navigates in place and takes the click over on a plain left click` — страж. Мутации (каждая exit 1, 1 красный): `L1` (нет проверки кнопки) → тест средней кнопки; `L2`…`L5` (нет Ctrl / Meta / Shift / Alt) → тест своей клавиши, та же строка; `L6` (нет `preventDefault`) → `AssertionError: expected false to be true // Object.is equality`; `L7` (нет `navigate`) → `Unable to find an element with the text: экран назначения`; runs: 7 |
++| `web/src/features/desk/MyPlacePage.test.tsx` | до правки: `calls the assignment inherited when the superior unit that holds it has the same name as the own unit` → `Unable to find an element with the text: Петрова Анна Сергеевна · унаследовано из «Команда»`; тест «своё подразделение» — страж. Мутации: `P1` (всегда «своё») → тест «унаследовано»; `P2` (всегда «унаследовано») → тест «своё подразделение»: `Unable to find an element with the text: Петрова Анна Сергеевна · закрепление за вашим подразделением`; `P3` (сравнение по названию, как до правки) → тест «унаследовано»; runs: 3 |
++| `web/src/features/desk/AddBlockModal.test.tsx` | до правки: `turns the block off and names the competency that keeps it out` → `Unable to find an element with the text: Недоступен: в составе компетенция «Продажи по телефону» другой области`; `reads no competency of the catalogue to name the one that keeps it out` → `AssertionError: expected [ …(1) ] to have a length of +0 but got 1`; тест «без ограничения» — страж. Мутации: `A1` (ни один блок не чужой) → `expect(element).toBeDisabled()`; `A2` (причина без названия) → `Unable to find an element with the text: Недоступен: в составе компетенция «Продажи по телефону» другой области`; `A3` (без ограничения всё чужое) → `expect(element).toBeEnabled()` в тесте «без ограничения»; `A4` (кнопка не выключена) → `toBeDisabled()`; runs: 4. Проверка «чтений нет» отдельного мутанта не имеет: возвращение `useQueries` равнозначно копии до правки, где она красная |
++| `web/src/features/desk/DraftsQueuePage.test.tsx` | до правки: `says nothing when the user approves the record they opened by link, and opens the next one` и `says nothing when the user narrows the queue to a kind that does not hold the record they opened by link` → `AssertionError: expected <div class="ant-alert-title"></div> to be null`; `says the record is gone when the first read of the queue does not hold the record asked for` — страж. Мутации: `Q1` (оценка по текущему перечню, как до правки) → те же два теста; `Q2` (плашка не показывается) → `Unable to find an element with the text: Запись уже утверждена другим пользователем или недоступна вам.`; `Q3` (первое чтение записано пустым) → те же два; `Q4` (нет защиты до первого чтения) → `Unable to find role="heading" and name "Компетенция Работа в команде"` (страница падает на `firstKeys.includes`), три красных; runs: 4 |
++| `web/src/features/desk/BuilderSubmitStep.test.tsx` | до правки: обе строки `it.each` (сбой проверки полноты, сбой перечня) → `Unable to find an element with the text: Не удалось подготовить отправку`; `reads both again on a retry and offers the sending once they are read` → `Unable to find role="button" and name "Повторить"`. Мутации: `S1` (показан только сбой проверки) → строка сбоя перечня; `S2` (только сбой перечня) → строка сбоя проверки; `S3` / `S4` (повтор читает только перечень / только проверку; в тесте повтора падают оба запроса) → `expect(element).not.toBeInTheDocument()`; `S5` (нет «Назад») → `Unable to find an accessible element with the role "button" and name "Назад"`; `S6` (отправка не выключена) → `expect(element).toBeDisabled()`; `S7` (нет текста причины) → `Unable to find an element with the text: /Отправка недоступна, пока не загружены/`; `S8` (сбой не показывается, как до правки) → три красных; runs: 8 |
++| `web/src/features/desk/ReviewPage.test.tsx` | до правки: обе строки `it.each` → `Unable to find an element with the text: Не удалось выполнить проверку полноты` и `…Не удалось загрузить перечень публикации`; `holds the approval off and says why while the list of what it publishes is being read` → `Unable to find an element with the text: Проверяем, что будет опубликовано…`. Мутации: `RV1` (причина только при сбое проверки) → строка перечня: `Unable to find an element with the text: Согласовать недоступно: не загрузились проверка полноты или перечень публикации`; `RV2` (причина только при сбое перечня) → строка проверки: `expect(element).toBeDisabled()`; `RV3` (нет причины на время чтения) → тест ожидания; `RV4` / `RV5` (сбой проверки / перечня не показан) → строка своего сбоя; `RV6` / `RV7` (повтор читает не тот запрос) → `AssertionError: expected <div class="ant-alert-title"></div> to be null` и `Unable to find an element with the text: Черновых записей нет: публикуется только версия.`; runs: 7 |
++| `web/src/features/desk/ReworkPage.test.tsx` | до правки: все три красные — `Unable to find an element with the text: Не удалось загрузить комментарий и правки согласующего` (история), `…Не удалось выполнить проверку полноты`, `…Не удалось загрузить перечень публикации`. Мутации: `W1`…`W3` (принятие правок не выключено сбоем истории / проверки / перечня) → тест своего сбоя: `Unable to find an element with the text: Недоступно: не загрузились история версии, проверка полноты или перечень публикации.`; `W4` (нет причины истории у двух других решений), `W5`, `W6` (одно из двух решений не выключено) → `expect(element).toBeDisabled()`; `W7`…`W9` (сбой истории / проверки / перечня не показан) → тест своего сбоя; `W10`…`W12` (повтор читает не тот запрос) → `Unable to find an element with the text: Нужны правки` и `expected <div class="ant-alert-title"></div> to be null`; runs: 12 |
++| `web/src/features/desk/TrackPositionsPage.test.tsx` | до правки: все три красные — `AssertionError: expected null to be 'Аналитик' // Object.is equality` (запрос без `q`), `Unable to find an element with the text: Трек «Хранитель» не найден среди тех, связи которых вы вправе править.`, `Unable to find an element with the text: Аналитик данных — Команда`. Мутации: `T1` (текст не уходит на сервер) → три красных, первый — строка выше; `T3` (текст «не найден» без поискового текста) → тест «не найден»; `T4` (ответ сервера фильтруется на клиенте ещё раз) → `Unable to find an element with the text: Аналитик данных — Команда`, два красных; runs: 4. Выжили `T2` (`setSearch(search)` при закрытии списка) и `T2b` (обработчик `onOpenChange` удалён): rc-select сам вызывает `onSearch("")` при закрытии списка, обработчик в `TrackPositionsPage` равнозначен его отсутствию; тест «после закрытия списка» держит видимое поведение, а не обработчик; записано как кандидат в удаление |
++| `web/src/features/desk/ConnectUnitPage.test.tsx` | до правки: `names the HR in the dialog opened from the row of their account` → `Unable to find an element with the text: Учётная запись HR, which matches selector '.ant-modal-title'`; `creates the account of the HR with the roles of the row, bound to them` → `AssertionError: expected { email: 'who@test.local', …(2) } to deeply equal { email: 'who@test.local', …(2) }`; `offers to create the account of the HR when the unit has no head, and only that one` → `Unable to find role="button" and name "Создать и отправить приглашение"`; `shows the reason and turns the choice of the unit off until the letter is sent` → `Unable to find an element with the text: Пока идёт отправка письма, выбор подразделения и повторная отправка в других строках недоступны.`; строки руководителя и «без HR» — стражи. Мутации: `C1` (владелец строки HR — руководитель) → тест «без руководителя»; `C2` (строка HR открывает окно руководителя), `C5` (окно HR с заголовком руководителя), `C10` (текст окна без роли) → тест названия окна HR; `C3` (окно HR привязывает другого сотрудника), `C4` (нет роли), `C6` (форма теряет роли) → `AssertionError: expected { email: 'who@test.local', …(2) } to deeply equal …`; `C7` (нет текста причины) → `Unable to find an element with the text: Пока идёт отправка письма…`; `C8` (выбор подразделения не выключен) → `expect(element).toBeDisabled()`; `C9` (владелец строки руководителя — HR) → тест «без HR»; runs: 10. Строки идут по порядку страницы (первая кнопка — руководитель, вторая — HR): порядок строк задаёт фикстура ответа |
++| `web/src/features/desk/OnboardEmployeePage.test.tsx` | до правки (exit 1, все четыре красные): `offers «Отмена» on the first step only until the employee exists` → `AssertionError: expected <button type="button" …(1)>…(1)</button> to be null`; `rereads the employee after a refused save and shows what the card holds now` и `sends the version it reread with the save that follows a refused one` → `expect(element).toHaveValue(Сидоров)`; `holds the steps, «Назад» и «Пропустить» while the account is being created` → `expect(element).toBeDisabled()`. Мутации: `O1` (форма получает отмену всегда), `O2` (форма всегда рисует отмену) → тест «Отмена»; `O3` (перечитанная запись не заменяет сохранённую), `O4` (форма не пересоздаётся) → два теста перечитывания: `expect(element).toHaveValue(Сидоров)`; `O5` (следующее сохранение несёт версию первого) → `AssertionError: expected '"1"' to be '"2"'` (до правки тест версии останавливается на синхронизации по значению поля, поэтому утверждение `If-Match` держит этот мутант); `O6` / `O7` («Назад» / «Пропустить» не выключены) → `expect(element).toBeDisabled()`; `O8` (запись о сохранении не доходит до страницы), `O10` (линейка не заперта) → `expected [ <div …(1)>…(1)</div>, …(1) ] to have a length of 3 but got 2`; `O9` (форма не сообщает о сохранении) → `toBeDisabled()`; runs: 10 |
++| `web/src/features/desk/OrgCleanupPage.test.tsx` | до правки: три красные — `Unable to find an element with the text: Перейти без сохранения?, which matches selector '.ant-modal-title'` (смена находки с выбранной должностью, смена находки с выбранным сотрудником, смена вида); `applies the filter at once when nothing is left unsaved` — страж. Мутации: `G1` (смена находки не спрашивает) → два теста находки; `G2` (смена вида не спрашивает) → тест вида; `G3` (форма должности не регистрирует правки) → тесты находки и вида с должностью; `G4` (форма привязки не регистрирует) → тест сотрудника; `G5` / `G6` (выбор не помечен как правка) → те же тесты; `G7` / `G8` (после вопроса находка / вид меняются всё равно) → `Unable to find an accessible element with the role "heading"…` и `…role "combobox"…`; runs: 9 (из них `G9` — выжил, ниже). `G9` (`setIsDirty(false)` убран из `onSuccess` формы должности) выжил: успешная смена убирает находку из очереди, форма размонтируется вместе с регистрацией в охране, а выбор предлагает только должности, разрешённые подразделением, — находка не переживёт сохранение; записано как недостижимое |
++| `web/src/features/desk/MatrixBuilderPage.test.tsx` | до правки: оба красные — `AssertionError: expected [ <div …(1)>…(1)</div> ] to have a length of 6 but got 1` и `AssertionError: expected [] to have a length of 6 but got +0`. Мутации (каждая exit 1): `B1` (шаг проверки не сообщает о сохранении) → первый тест; `B2` (шаг отправки не сообщает), `B3` (мастер не передаёт шагу отправки обработчик) → второй тест; `B4` (шаги мастера ничего не сообщают) → первый; `B5` (линейка не заперта), `B6` (`StepRuler` игнорирует запирание) → оба; runs: 6 |
++| `web/src/features/desk/BuilderCompetenciesStep.test.tsx` | до правки: `AssertionError: expected [] to have a length of 1 but got +0` (`PUT /content` не вызван: подключение блока отклонено как пересечение). Мутации: `K1` (занятые — и сохранённые компетенции, как до правки) → та же строка; `K3` (в сохранённом содержимом остаётся снятая компетенция) → `AssertionError: expected [ { competencyId: 'c1', …(2) } ] to deeply equal []`; runs: 3. `K2` (множество занятых пусто) выжил: окно блока не даёт отметить занятую компетенцию, проверка в `attach` недостижима из интерфейса; записано как оборона, не как пробел теста |
+ 
+ ## Suite run
+ 
+-Command (запись 5): `dotnet test --solution Competency.slnx --artifacts-path <scratch>` — весь набор backend и `npm --prefix web test` — весь набор web. Safety valve применён: правка затрагивает общий контракт, `PublicationPlan` обоих предпросмотров и общие web-компоненты, поэтому ни один набор не сужался.
+-Scope: full (backend и web); impacted-набор вырождается в полный.
+-Result: pass — backend 682 теста: 682 успешно, 0 упало, 0 пропущено, exit 0, 2 мин 23 с; web 505 тестов в 52 файлах: 505 успешно, 0 упало, exit 0, 30 с. Это 680 и 492 прежних плюс 2 и 13 добавленных записью. Сырой ход: до стратегии на дереве `07dc3df` backend 680 из 680, exit 0, 2 мин 25 с, web 483 из 492, 9 красных, exit 1 — все девять от фикстур теста без нового поля (см. «Risk → check decisions»), кода среди них нет; после авторства на дереве `6581783` оба набора зелёные. Новых кодовых дефектов нет.
+-Lint / build: pass — `npm --prefix web run lint` (biome ci + tsc) exit 0; `dotnet build Competency.slnx --tl:off` — предупреждений 0, ошибок 0 (`TreatWarningsAsErrors`); `npm --prefix web run build` exit 0; `npm --prefix web run check:api` без расхождений.
+-HEAD: 6581783 (прогон измеряет дерево этого коммита; после него менялись только `test-plan.md`, `test-plan.entry-04.md` и память тестировщика)
++Command (запись 6): `npm --prefix web test` — весь набор web. Safety valve применён: правка затрагивает общие web-компоненты, поэтому impacted-набор вырождается в весь набор web; backend не запускался (не менялся с записи 5).
++Scope: full web (impacted-набор вырождается в полный).
++Result: pass — до стратегии на дереве `50a18a5` web 632 теста в 55 файлах: 632 успешно, 0 упало, exit 0, 30 с; после авторства на дереве `d9ea24a` web 676 тестов в 65 файлах: 676 успешно, 0 упало, exit 0, 32 с. Это 632 прежних и 44 добавленных записью; удалённых тестов нет. Три подряд прогона 13 затронутых файлов — по 50 из 50 (нестабильности нет). Новых кодовых дефектов нет.
++Lint / build: pass — `npm --prefix web run lint` (biome ci + tsc) exit 0; `npm --prefix web run build` exit 0; `npm --prefix web run check:api` exit 0 без расхождений; `dotnet build Competency.slnx --tl:off` — предупреждений 0, ошибок 0 (`TreatWarningsAsErrors`; backend не менялся).
++HEAD: d9ea24a (прогон измеряет дерево этого коммита; после него менялись только `test-plan.md`, `test-plan.entry-05.md` и память тестировщика)
+ 
+ Замер стола на сиде `tests/perf/seed-10k.sql` (10 000 работающих сотрудников, 1 000 подразделений, 348 учётных записей, 625 версий матриц; сборка `Debug`, один процесс, 60 замеров после 5 прогревочных; число SQL-команд — команды приложения, без `DISCARD ALL` сброса соединения Npgsql):
+ 
+@@ -82,7 +93,7 @@ HEAD: 6581783 (прогон измеряет дерево этого комми
+ 
+ Бюджеты соблюдены (≤ 300 мс, ≤ 600 мс, ≤ 25 SQL-команд, наибольшая группа 1077 < 2000). Сырой счёт строк журнала PostgreSQL вдвое больше (44 / 44 / 38 / 22) из-за `DISCARD ALL` после каждой команды; для администратора три раза читаются учётные записи и сотрудники и два раза — справочники (запас до 25 небольшой).
+ 
+-Замер сделан в записи 3 и не повторялся: код стола в дельтах записей 4 и 5 не менялся (запись 5 меняет `PublicationPlan`, ответы предпросмотров публикации и web), а `CatalogStore.ViewerAsync` из записи 4 стол не вызывает.
++Замер сделан в записи 3 и не повторялся: код стола в дельтах записей 4–6 не менялся (запись 5 меняет `PublicationPlan`, ответы предпросмотров публикации и web, запись 6 — только web и его тесты), а `CatalogStore.ViewerAsync` из записи 4 стол не вызывает.
+ 
+ ## Defects
+ 
+diff --git a/web/src/features/desk/AddBlockModal.test.tsx b/web/src/features/desk/AddBlockModal.test.tsx
+new file mode 100644
+index 0000000..c02b6ff
+--- /dev/null
++++ b/web/src/features/desk/AddBlockModal.test.tsx
+@@ -0,0 +1,114 @@
++import { act, render, screen, within } from "@testing-library/react";
++import { beforeEach, describe, expect, it, vi } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi } from "../../test/fakeApi";
++import type { MatrixVersion } from "../career/matrixApi";
++import { AddBlockModal } from "./AddBlockModal";
++
++const ALLOWED = { id: "c-allowed", name: "Работа в команде" };
++const FOREIGN = { id: "c-foreign", name: "Продажи по телефону" };
++const FOREIGN_READ = `GET /api/v1/career/competencies/${FOREIGN.id}`;
++const ENTRIES = {
++  direction: null,
++  track: null,
++  levels: [],
++  competencies: [],
++  position: null,
++  sharedBlocks: [],
++  scales: [],
++} as unknown as MatrixVersion["entries"];
++
++function block(
++  id: string,
++  name: string,
++  competencies: { id: string; name: string }[],
++) {
++  return {
++    id,
++    name,
++    competencies,
++    status: "Active",
++    version: 1,
++    canEdit: false,
++    canDelete: false,
++    scopeUnitId: null,
++    scopeUnitName: null,
++  };
++}
++
++function serveBlocks() {
++  fakeApi.on("GET /api/v1/career/blocks", () =>
++    Response.json({
++      items: [
++        block("b-fits", "Командный блок", [ALLOWED]),
++        block("b-foreign", "Смешанный блок", [ALLOWED, FOREIGN]),
++      ],
++      total: 2,
++      page: 1,
++      pageSize: 200,
++    }),
++  );
++}
++
++function renderModal(allowedIds?: ReadonlySet<string>) {
++  render(
++    <Providers>
++      <AddBlockModal
++        entries={ENTRIES}
++        reasonOf={() => undefined}
++        allowedIds={allowedIds}
++        onPick={vi.fn()}
++        onClose={vi.fn()}
++      />
++    </Providers>,
++  );
++}
++
++function rowOf(blockName: string) {
++  const row = screen.getByText(blockName).closest("li");
++  if (!row) throw new Error(`No row of the block ${blockName}`);
++  return within(row);
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("a shared block with a competency of another direction is not offered to a track matrix (AC-38)", () => {
++  it("turns the block off and names the competency that keeps it out", async () => {
++    serveBlocks();
++    renderModal(new Set([ALLOWED.id]));
++
++    await screen.findByText("Смешанный блок");
++
++    const foreign = rowOf("Смешанный блок");
++    expect(foreign.getByRole("button")).toBeDisabled();
++    expect(
++      foreign.getByText(
++        `Недоступен: в составе компетенция «${FOREIGN.name}» другой области`,
++      ),
++    ).toBeInTheDocument();
++    expect(rowOf("Командный блок").getByRole("button")).toBeEnabled();
++  });
++
++  it("reads no competency of the catalogue to name the one that keeps it out", async () => {
++    serveBlocks();
++    renderModal(new Set([ALLOWED.id]));
++
++    await screen.findByText("Смешанный блок");
++    await act(async () => undefined);
++
++    expect(fakeApi.calls(FOREIGN_READ)).toHaveLength(0);
++  });
++
++  it("offers every block when the version names no competencies it is limited to", async () => {
++    serveBlocks();
++    renderModal();
++
++    await screen.findByText("Смешанный блок");
++
++    expect(rowOf("Смешанный блок").getByRole("button")).toBeEnabled();
++    expect(screen.queryByText(/Недоступен/)).toBeNull();
++  });
++});
+diff --git a/web/src/features/desk/BuilderCompetenciesStep.test.tsx b/web/src/features/desk/BuilderCompetenciesStep.test.tsx
+new file mode 100644
+index 0000000..ee37a31
+--- /dev/null
++++ b/web/src/features/desk/BuilderCompetenciesStep.test.tsx
+@@ -0,0 +1,191 @@
++import { render, screen, waitFor, within } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it, vi } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi, problem } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import type { MatrixVersion } from "../career/matrixApi";
++import { BuilderCompetenciesStep } from "./BuilderCompetenciesStep";
++
++const CONTENT_ROUTE = "PUT /api/v1/career/matrix-versions/v1/content";
++const UNIT = { id: "u1", name: "Команда" };
++const SAVED_COMPETENCY = { id: "c1", name: "Работа в команде" };
++const OTHER_COMPETENCY = { id: "c2", name: "Ответственность" };
++const BLOCK = { id: "b1", name: "Командный блок" };
++const NOT_ATTACHED = /создан черновиком, но к версии не подключён/;
++const VERSION = {
++  id: "v1",
++  matrixId: "m1",
++  number: 2,
++  version: 3,
++  status: "Draft",
++  builderStep: 2,
++  content: {
++    levels: [],
++    competencies: [
++      { competencyId: SAVED_COMPETENCY.id, blockId: null, type: "Profile" },
++    ],
++    sharedBlocks: [],
++    blockWeights: [],
++    requirements: [],
++  },
++  entries: {
++    direction: null,
++    track: null,
++    levels: [],
++    competencies: [],
++    position: null,
++    sharedBlocks: [],
++    scales: [],
++  },
++  superiorApprover: null,
++  hr: null,
++  actions: ["Edit"],
++} as unknown as MatrixVersion;
++
++function competency({ id, name }: { id: string; name: string }) {
++  return {
++    id,
++    name,
++    description: null,
++    directionId: null,
++    directionName: null,
++    scaleId: "s1",
++    scaleName: "Шкала",
++    status: "Active",
++    createdAt: "2026-10-01T10:00:00Z",
++    versionNumber: 1,
++    version: 1,
++    canEdit: false,
++    canDelete: false,
++  };
++}
++
++function serve() {
++  fakeApi.on("GET /api/v1/auth/me", () =>
++    Response.json({ id: "head", email: "head@test.local", roles: [] }),
++  );
++  fakeApi.on("GET /api/v1/career/me", () =>
++    Response.json({ headedUnits: [UNIT], hrUnits: [] }),
++  );
++  fakeApi.on("GET /api/v1/career/matrices/m1", () =>
++    Response.json({ id: "m1", orgUnitId: UNIT.id, orgUnitName: UNIT.name }),
++  );
++  fakeApi.on("GET /api/v1/career/matrix-versions/v1/changes", () =>
++    Response.json({
++      number: 1,
++      previousNumber: null,
++      before: VERSION.content,
++      after: VERSION.content,
++      changes: [],
++    }),
++  );
++  fakeApi.on("GET /api/v1/career/competencies", () =>
++    Response.json({
++      items: [competency(SAVED_COMPETENCY), competency(OTHER_COMPETENCY)],
++      total: 2,
++      page: 1,
++      pageSize: 200,
++    }),
++  );
++  fakeApi.on("GET /api/v1/org-units/tree", () =>
++    Response.json([
++      {
++        id: UNIT.id,
++        name: UNIT.name,
++        parentId: null,
++        headEmployeeId: null,
++        isActive: true,
++        version: 1,
++      },
++    ]),
++  );
++  fakeApi.on("POST /api/v1/career/blocks", () =>
++    Response.json({
++      ...BLOCK,
++      competencies: [SAVED_COMPETENCY],
++      status: "Draft",
++      version: 0,
++      canEdit: true,
++      canDelete: true,
++      scopeUnitId: UNIT.id,
++      scopeUnitName: UNIT.name,
++    }),
++  );
++  fakeApi.on(`GET /api/v1/career/blocks/${BLOCK.id}/publication`, () =>
++    problem(403),
++  );
++  fakeApi.on(CONTENT_ROUTE, () =>
++    Response.json({ ...VERSION, version: 4, builderStep: 2 }),
++  );
++}
++
++function renderStep() {
++  render(
++    <Providers>
++      <RouterProvider
++        router={createMemoryRouter([
++          {
++            path: "/",
++            element: (
++              <BuilderCompetenciesStep
++                version={VERSION}
++                step={2}
++                onBack={vi.fn()}
++                onSaved={vi.fn()}
++                onSkip={vi.fn()}
++                onEditsChange={vi.fn()}
++              />
++            ),
++          },
++        ])}
++      />
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++function checkboxOf(scope: Pick<typeof screen, "getByText">, name: string) {
++  const row = scope.getByText(name).closest("tr");
++  if (!row) throw new Error(`No row of ${name}`);
++  return within(row).getByRole("checkbox");
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("a block created in the wizard from a competency the author took out of the version is connected to it (AC-38)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("saves the version with the new block and without the competency outside every block, and reports no overlap", async () => {
++    serve();
++    const user = renderStep();
++    const own = await screen.findByText(SAVED_COMPETENCY.name);
++    expect(own).toBeInTheDocument();
++    await waitFor(() =>
++      expect(checkboxOf(screen, SAVED_COMPETENCY.name)).toBeChecked(),
++    );
++    await user.click(checkboxOf(screen, SAVED_COMPETENCY.name));
++    await user.click(
++      await screen.findByRole("button", { name: "Создать блок" }),
++    );
++    const dialog = await screen.findByRole("dialog");
++    await user.type(within(dialog).getByLabelText("Название"), BLOCK.name);
++    await user.click(
++      await waitFor(() => checkboxOf(within(dialog), SAVED_COMPETENCY.name)),
++    );
++
++    await user.click(within(dialog).getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() => expect(fakeApi.calls(CONTENT_ROUTE)).toHaveLength(1));
++    const saved = await fakeApi.calls(CONTENT_ROUTE)[0]?.json();
++    expect(
++      saved.sharedBlocks.map((block: { blockId: string }) => block.blockId),
++    ).toEqual([BLOCK.id]);
++    expect(saved.competencies).toEqual([]);
++    expect(screen.queryByText(NOT_ATTACHED)).toBeNull();
++  });
++});
+diff --git a/web/src/features/desk/BuilderSubmitStep.test.tsx b/web/src/features/desk/BuilderSubmitStep.test.tsx
+index 0b72148..953df4d 100644
+--- a/web/src/features/desk/BuilderSubmitStep.test.tsx
++++ b/web/src/features/desk/BuilderSubmitStep.test.tsx
+@@ -1,10 +1,10 @@
+ import { render, screen, waitFor } from "@testing-library/react";
+ import userEvent from "@testing-library/user-event";
+ import { createMemoryRouter, RouterProvider } from "react-router";
+-import { beforeEach, describe, expect, it } from "vitest";
++import { beforeEach, describe, expect, it, vi } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi } from "../../test/fakeApi";
++import { fakeApi, problem } from "../../test/fakeApi";
+ import type { MatrixVersion } from "../career/matrixApi";
+ import { BuilderSubmitStep } from "./BuilderSubmitStep";
+ import { deskPaths } from "./deskTexts";
+@@ -51,14 +51,14 @@ function serve(hiddenEntryCount: number) {
+   );
+ }
+ 
+-function renderStep() {
++function renderStep(onBack: () => void = () => {}) {
+   render(
+     <Providers>
+       <RouterProvider
+         router={createMemoryRouter([
+           {
+             path: "/",
+-            element: <BuilderSubmitStep version={VERSION} onBack={() => {}} />,
++            element: <BuilderSubmitStep version={VERSION} onBack={onBack} />,
+           },
+           { path: deskPaths.desk, element: <p>рабочий стол</p> },
+         ])}
+@@ -106,3 +106,58 @@ describe("sending a version whose publication carries drafts the user may not re
+     expect(screen.queryByText(/и ещё/)).toBeNull();
+   });
+ });
++
++const CHECK_ROUTE = "GET /api/v1/career/matrix-versions/v1/completeness";
++const LIST_ROUTE = "GET /api/v1/career/matrix-versions/v1/publication";
++const FAILED_READS: Record<string, string> = {
++  "the completeness check": CHECK_ROUTE,
++  "the list of what the sending publishes": LIST_ROUTE,
++};
++
++describe("the sending of a version whose preparation could not be read (AC-52)", () => {
++  it.each(Object.entries(FAILED_READS))(
++    "shows the failure of %s with a retry, holds the sending off with the reason, and keeps the way back",
++    async (_, route) => {
++      serve(0);
++      fakeApi.on(route, () => problem(403, { title: "Нет доступа" }));
++      const onBack = vi.fn();
++      const user = renderStep(onBack);
++
++      expect(
++        await screen.findByText("Не удалось подготовить отправку"),
++      ).toBeInTheDocument();
++
++      expect(screen.getByRole("button", { name: "Повторить" })).toBeEnabled();
++      expect(
++        screen.getByRole("button", { name: "Отправить на согласование" }),
++      ).toBeDisabled();
++      expect(
++        screen.getByText(/Отправка недоступна, пока не загружены/),
++      ).toBeInTheDocument();
++      await user.click(screen.getByRole("button", { name: "Назад" }));
++      expect(onBack).toHaveBeenCalledOnce();
++    },
++  );
++
++  it("reads both again on a retry and offers the sending once they are read", async () => {
++    serve(0);
++    for (const route of Object.values(FAILED_READS)) {
++      fakeApi.on(route, () => problem(403, { title: "Нет доступа" }));
++    }
++    const user = renderStep();
++    const retry = await screen.findByRole("button", { name: "Повторить" });
++    serve(0);
++    await user.click(retry);
++
++    await waitFor(() =>
++      expect(
++        screen.queryByText("Не удалось подготовить отправку"),
++      ).not.toBeInTheDocument(),
++    );
++
++    expect(await screen.findByText(/без черновых записей/)).toBeInTheDocument();
++    expect(
++      screen.getByRole("button", { name: "Отправить и опубликовать" }),
++    ).toBeEnabled();
++  });
++});
+diff --git a/web/src/features/desk/ConnectUnitPage.test.tsx b/web/src/features/desk/ConnectUnitPage.test.tsx
+new file mode 100644
+index 0000000..3dc5d1c
+--- /dev/null
++++ b/web/src/features/desk/ConnectUnitPage.test.tsx
+@@ -0,0 +1,243 @@
++import { render, screen, waitFor, within } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { deferred, fakeApi } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import { ConnectUnitPage } from "./ConnectUnitPage";
++
++const SETUP_ROUTE = "GET /api/v1/career/org-units/u1/setup";
++const CREATE_ROUTE = "POST /api/v1/users";
++const RESEND_ROUTE = "POST /api/v1/users/acc-head/resend-invitation";
++const CREATE_LABEL = "Создать и отправить приглашение";
++const SENDING_TEXT =
++  "Пока идёт отправка письма, выбор подразделения и повторная отправка в других строках недоступны.";
++const HEAD = { id: "e-head", fullName: "Иванов Иван Иванович" };
++const HR = {
++  employeeId: "e-hr",
++  name: "Петрова Анна Сергеевна",
++  orgUnitId: "u1",
++  orgUnitName: "Команда",
++};
++const NO_ACCOUNT = { id: null, email: null, state: "None", version: null };
++const INVITED_HEAD_ACCOUNT = {
++  id: "acc-head",
++  email: "head@test.local",
++  state: "Invited",
++  version: 2,
++};
++
++/** The part of the setup answer that differs between the arrangements of the tests. */
++type SetupRows = Record<string, unknown>;
++
++const BOTH_PRESENT: SetupRows = {
++  head: HEAD,
++  headAccount: NO_ACCOUNT,
++  hr: { ...HR, account: NO_ACCOUNT },
++  rows: [
++    { row: "Head", status: "Ready" },
++    { row: "HeadAccount", status: "Missing" },
++    { row: "Hr", status: "Ready" },
++    { row: "HrAccount", status: "Missing" },
++    { row: "Positions", status: "Ready" },
++  ],
++};
++const WITHOUT_HEAD: SetupRows = {
++  ...BOTH_PRESENT,
++  head: null,
++  headAccount: null,
++  rows: [
++    { row: "Head", status: "Missing" },
++    { row: "HeadAccount", status: "Waiting" },
++    { row: "Hr", status: "Ready" },
++    { row: "HrAccount", status: "Missing" },
++    { row: "Positions", status: "Ready" },
++  ],
++};
++const WITHOUT_HR: SetupRows = {
++  ...BOTH_PRESENT,
++  hr: null,
++  rows: [
++    { row: "Head", status: "Ready" },
++    { row: "HeadAccount", status: "Missing" },
++    { row: "Hr", status: "Missing" },
++    { row: "HrAccount", status: "Waiting" },
++    { row: "Positions", status: "Ready" },
++  ],
++};
++
++function setupOf(rows: SetupRows) {
++  return {
++    unit: [{ id: "u1", name: "Команда" }],
++    employees: 3,
++    positions: { own: [], inherited: [] },
++    ...rows,
++  };
++}
++
++function serve(rows: SetupRows = BOTH_PRESENT) {
++  fakeApi.on("GET /api/v1/auth/me", () =>
++    Response.json({ id: "a", email: "a@test.local", roles: ["GlobalAdmin"] }),
++  );
++  fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([]));
++  fakeApi.on(SETUP_ROUTE, () => Response.json(setupOf(rows)));
++  fakeApi.on(CREATE_ROUTE, () =>
++    Response.json({ id: "created", mailSent: true }),
++  );
++}
++
++function renderPage() {
++  render(
++    <Providers>
++      <RouterProvider
++        router={createMemoryRouter(
++          [
++            {
++              path: "/desk/connect-unit/:unitId",
++              element: <ConnectUnitPage />,
++            },
++          ],
++          { initialEntries: ["/desk/connect-unit/u1"] },
++        )}
++      />
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++const HEAD_ACCOUNT_ROW = 0;
++const HR_ACCOUNT_ROW = 1;
++
++/** Opens the dialog of the account row at the given place among the rows that offer to create an account, in the order of the page. */
++async function openAccountDialog(
++  user: ReturnType<typeof userEvent.setup>,
++  place: number,
++) {
++  const buttons = await screen.findAllByRole("button", { name: CREATE_LABEL });
++  expect(buttons).toHaveLength(2);
++  await user.click(buttons[place] as HTMLElement);
++}
++
++async function createdBody() {
++  await waitFor(() => expect(fakeApi.calls(CREATE_ROUTE)).toHaveLength(1));
++  return fakeApi.calls(CREATE_ROUTE)[0]?.json();
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++const ACCOUNT_ROWS = [
++  {
++    who: "head",
++    place: HEAD_ACCOUNT_ROW,
++    title: "Учётная запись руководителя",
++    intro: `У ${HEAD.fullName} нет учётной записи. Она будет создана с приглашением по почте и привязана к нему.`,
++    sent: { roles: [], employeeId: HEAD.id },
++  },
++  {
++    who: "HR",
++    place: HR_ACCOUNT_ROW,
++    title: "Учётная запись HR",
++    intro: `У ${HR.name} нет учётной записи. Она будет создана с ролью «HR» и с приглашением по почте и привязана к нему.`,
++    sent: { roles: ["Hr"], employeeId: HR.employeeId },
++  },
++];
++
++describe("a gap in the account of the unit's head or HR is closed on the spot for the person the row is about (AC-83)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it.each(ACCOUNT_ROWS)(
++    "names the $who in the dialog opened from the row of their account",
++    async ({ place, title, intro }) => {
++      serve();
++      const user = renderPage();
++
++      await openAccountDialog(user, place);
++
++      expect(
++        await screen.findByText(title, { selector: ".ant-modal-title" }),
++      ).toBeInTheDocument();
++      expect(screen.getByText(intro)).toBeInTheDocument();
++    },
++  );
++
++  it.each(ACCOUNT_ROWS)(
++    "creates the account of the $who with the roles of the row, bound to them",
++    async ({ place, sent }) => {
++      serve();
++      const user = renderPage();
++      await openAccountDialog(user, place);
++      await user.type(await screen.findByLabelText("E-mail"), "who@test.local");
++
++      await user.click(
++        within(screen.getByRole("dialog")).getByRole("button", {
++          name: CREATE_LABEL,
++        }),
++      );
++
++      expect(await createdBody()).toEqual({ email: "who@test.local", ...sent });
++    },
++  );
++});
++
++const ONE_PRESENT = [
++  {
++    who: "HR when the unit has no head",
++    rows: WITHOUT_HEAD,
++    title: "Учётная запись HR",
++  },
++  {
++    who: "head when the unit has no HR",
++    rows: WITHOUT_HR,
++    title: "Учётная запись руководителя",
++  },
++];
++
++describe("the account of the one who is assigned is offered whether or not the other is (AC-83)", () => {
++  it.each(ONE_PRESENT)(
++    "offers to create the account of the $who, and only that one",
++    async ({ rows, title }) => {
++      serve(rows);
++      const user = renderPage();
++      const buttons = await screen.findAllByRole("button", {
++        name: CREATE_LABEL,
++      });
++      expect(buttons).toHaveLength(1);
++
++      await user.click(buttons[0] as HTMLElement);
++
++      expect(
++        await screen.findByText(title, { selector: ".ant-modal-title" }),
++      ).toBeInTheDocument();
++    },
++  );
++});
++
++describe("the unit page says why its choices are off while an invitation is being sent (AC-83)", () => {
++  it("shows the reason and turns the choice of the unit off until the letter is sent", async () => {
++    serve({ ...BOTH_PRESENT, headAccount: INVITED_HEAD_ACCOUNT });
++    const sent = deferred<Response>();
++    fakeApi.on(RESEND_ROUTE, () => sent.promise);
++    const user = renderPage();
++    await user.click(
++      await screen.findByRole("button", {
++        name: "Отправить приглашение повторно",
++      }),
++    );
++
++    expect(await screen.findByText(SENDING_TEXT)).toBeInTheDocument();
++    expect(screen.getByRole("combobox")).toBeDisabled();
++    sent.resolve(
++      Response.json({
++        id: "acc-head",
++        email: "head@test.local",
++        mailSent: true,
++      }),
++    );
++    await waitFor(() => expect(screen.queryByText(SENDING_TEXT)).toBeNull());
++    expect(screen.getByRole("combobox")).toBeEnabled();
++  });
++});
+diff --git a/web/src/features/desk/DeskCounter.test.tsx b/web/src/features/desk/DeskCounter.test.tsx
+index 93cfdf6..9dcd734 100644
+--- a/web/src/features/desk/DeskCounter.test.tsx
++++ b/web/src/features/desk/DeskCounter.test.tsx
+@@ -64,19 +64,18 @@ describe("the desk counter in the menu (AC-16…AC-21)", () => {
+   });
+ 
+   it("shows nothing at zero", async () => {
+-    answerCount(0);
++    let count = 3;
++    fakeApi.on(COUNT_ROUTE, () => Response.json({ actionCount: count }));
++    const router = renderAt();
++    expect(await screen.findByText("3")).toBeInTheDocument();
++    count = 0;
+ 
+-    const { container } = render(
+-      <Providers>
+-        <RouterProvider
+-          router={createMemoryRouter([{ path: "/", element: <DeskCounter /> }])}
+-        />
+-      </Providers>,
+-    );
++    await act(() => router.navigate("/other"));
+ 
+-    await waitFor(() => expect(fakeApi.calls(COUNT_ROUTE)).toHaveLength(1));
+-    await act(async () => undefined);
+-    expect(container.textContent).toBe("");
++    await waitFor(() =>
++      expect(screen.queryByText("3")).not.toBeInTheDocument(),
++    );
++    expect(document.body.textContent).toBe("");
+   });
+ 
+   it("shows nothing before the first answer and after a failed read", async () => {
+diff --git a/web/src/features/desk/DeskPage.test.tsx b/web/src/features/desk/DeskPage.test.tsx
+index dc9f797..afcadd6 100644
+--- a/web/src/features/desk/DeskPage.test.tsx
++++ b/web/src/features/desk/DeskPage.test.tsx
+@@ -45,10 +45,29 @@ function manyItems(group: DeskGroup, count: number): DeskItem[] {
+   );
+ }
+ 
+-function answerWith(desk: Desk, roles: string[] = []) {
+-  fakeApi.on("GET /api/v1/auth/me", () => Response.json({ ...ACCOUNT, roles }));
++const UNIT = { id: "unit", name: "Отдел" };
++
++function answerWith(
++  desk: Desk,
++  roles: string[] = [],
++  session: {
++    headedUnits?: object[];
++    hrUnits?: object[];
++    employeeId?: string;
++  } = {},
++) {
++  fakeApi.on("GET /api/v1/auth/me", () =>
++    Response.json({
++      ...ACCOUNT,
++      roles,
++      employeeId: session.employeeId ?? null,
++    }),
++  );
+   fakeApi.on("GET /api/v1/career/me", () =>
+-    Response.json({ headedUnits: [], hrUnits: [] }),
++    Response.json({
++      headedUnits: session.headedUnits ?? [],
++      hrUnits: session.hrUnits ?? [],
++    }),
+   );
+   fakeApi.on("GET /api/v1/desk", () => Response.json(desk));
+ }
+@@ -68,10 +87,10 @@ beforeEach(() => {
+ });
+ 
+ describe("the desk page (AC-2…AC-9)", () => {
+-  it("shows the groups of expected actions with their full counts, and the count of actions", async () => {
++  it("shows the groups of expected actions with their full counts, and the count of actions apart from them", async () => {
+     answerWith(
+       {
+-        actionCount: 12,
++        actionCount: 15,
+         prerequisites: [],
+         groups: [
+           {
+@@ -80,6 +99,16 @@ describe("the desk page (AC-2…AC-9)", () => {
+             total: 12,
+             items: manyItems("UnitsToConnect", FIRST_ITEMS),
+           },
++          {
++            group: "Invitations",
++            isReference: false,
++            total: 3,
++            items: [
++              item("Invitations", "InvitationNotAccepted", "a@test.local", {
++                type: "UserAccount",
++              }),
++            ],
++          },
+         ],
+       },
+       ["GlobalAdmin"],
+@@ -93,6 +122,18 @@ describe("the desk page (AC-2…AC-9)", () => {
+     expect(
+       within(heading.parentElement as HTMLElement).getByText("12"),
+     ).toBeInTheDocument();
++    const invitations = screen.getByRole("heading", {
++      name: "Приглашения не приняты",
++    });
++    expect(
++      within(invitations.parentElement as HTMLElement).getByText("3"),
++    ).toBeInTheDocument();
++    const expected = screen.getByRole("heading", {
++      name: "Ожидают вашего действия",
++    });
++    expect(
++      within(expected.parentElement as HTMLElement).getByText("15"),
++    ).toBeInTheDocument();
+     expect(screen.getByText("Показано 10 из 12")).toBeInTheDocument();
+     expect(
+       await screen.findAllByRole("link", { name: "Подключить" }),
+@@ -219,13 +260,10 @@ describe("the desk page (AC-2…AC-9)", () => {
+     ).not.toBeInTheDocument();
+   });
+ 
+-  it("reports a failed read of the desk with a way to retry, without hiding the scenarios of the user's roles", async () => {
+-    fakeApi.on("GET /api/v1/auth/me", () =>
+-      Response.json({ ...ACCOUNT, roles: ["GlobalAdmin"] }),
+-    );
+-    fakeApi.on("GET /api/v1/career/me", () =>
+-      Response.json({ headedUnits: [], hrUnits: [] }),
+-    );
++  it("reports a failed read of the desk with a way to retry, keeping the cards that need no desk and no neutral text", async () => {
++    answerWith({ actionCount: 0, prerequisites: [], groups: [] }, [], {
++      headedUnits: [UNIT],
++    });
+     fakeApi.on("GET /api/v1/desk", () => problem(403));
+     const user = userEvent.setup();
+     renderDesk();
+@@ -233,6 +271,11 @@ describe("the desk page (AC-2…AC-9)", () => {
+     expect(
+       await screen.findByText("Не удалось загрузить ожидаемые действия"),
+     ).toBeInTheDocument();
++    expect(
++      await screen.findByRole("link", {
++        name: "Построить матрицу компетенций",
++      }),
++    ).toBeInTheDocument();
+     expect(screen.queryByText("Сейчас начать нечего")).not.toBeInTheDocument();
+     fakeApi.on("GET /api/v1/desk", () =>
+       Response.json({ actionCount: 0, prerequisites: [], groups: [] }),
+@@ -242,6 +285,209 @@ describe("the desk page (AC-2…AC-9)", () => {
+   });
+ });
+ 
++describe("the scenario cards follow the session roles (AC-204…AC-208)", () => {
++  const WAITING_VERSION: DeskItem = {
++    object: { type: "Matrix", id: "matrix", name: "Матрица" },
++    group: "VersionsToApprove",
++    isReference: false,
++    reasons: [{ kind: "VersionAwaitsHeadApproval" }],
++    target: { type: "MatrixVersion", id: "version", name: "Версия" },
++  };
++  const WAITING_DRAFT: DeskItem = {
++    object: { type: "Competency", id: "draft", name: "Черновик" },
++    group: "DraftsToApprove",
++    isReference: false,
++    reasons: [{ kind: "DraftAwaitsApproval" }],
++  };
++  const deskWith = (...waiting: DeskItem[]): Desk => ({
++    actionCount: waiting.length,
++    prerequisites: [],
++    groups: waiting.map((one) => ({
++      group: one.group,
++      isReference: false,
++      total: 1,
++      items: [one],
++    })),
++  });
++  const card = (name: string) => screen.findByRole("link", { name });
++  const expectNoCard = (name: string) =>
++    expect(screen.queryByRole("link", { name })).not.toBeInTheDocument();
++
++  it("gives a head of a unit the card to build a matrix", async () => {
++    answerWith(deskWith(WAITING_VERSION), [], { headedUnits: [UNIT] });
++
++    renderDesk();
++
++    expect(await card("Построить матрицу компетенций")).toBeInTheDocument();
++    expect(await card("Согласовать версию")).toBeInTheDocument();
++  });
++
++  it("gives an HR of a unit the review, and not the card to build a matrix that a head has", async () => {
++    answerWith(deskWith(WAITING_VERSION), [], { hrUnits: [UNIT] });
++
++    renderDesk();
++
++    expect(await card("Согласовать версию")).toBeInTheDocument();
++    expectNoCard("Построить матрицу компетенций");
++  });
++
++  it("gives an account bound to an employee the card of their place in the company", async () => {
++    answerWith(deskWith(), [], { employeeId: "employee" });
++
++    renderDesk();
++
++    expect(await card("Моё место в компании")).toBeInTheDocument();
++  });
++
++  it("gives the HR role the queue of drafts and none of the cards of an administrator", async () => {
++    answerWith(deskWith(WAITING_DRAFT), ["Hr"]);
++
++    renderDesk();
++
++    expect(await card("Утвердить черновые записи")).toBeInTheDocument();
++    expectNoCard("Принять сотрудника");
++    expectNoCard("Подключить подразделение");
++  });
++});
++
++describe("the columns of a group (AC-7, AC-8, AC-160)", () => {
++  const AGO = new Date(Date.now() - 5.5 * 24 * 3_600_000).toISOString();
++  const IN_TWO_DAYS = new Date(Date.now() + 2 * 24 * 3_600_000).toISOString();
++
++  function deskOf(...groups: Desk["groups"]): Desk {
++    return { actionCount: groups.length, prerequisites: [], groups };
++  }
++
++  function returnedItem(name: string, occurredAt?: string): DeskItem {
++    return {
++      object: { type: "Matrix", id: `id-${name}`, name },
++      group: "ReturnedVersions",
++      isReference: false,
++      reasons: [{ kind: "VersionReturned", occurredAt }],
++      target: { type: "MatrixVersion", id: "version", name },
++    };
++  }
++
++  const rowOf = (text: string) =>
++    screen.getByText(text).closest("tr")?.textContent ?? "";
++
++  it("shows how long ago it was in a dated group, only for the item that has a date", async () => {
++    answerWith(
++      deskOf({
++        group: "ReturnedVersions",
++        isReference: false,
++        total: 2,
++        items: [returnedItem("Датированная", AGO), returnedItem("Без даты")],
++      }),
++    );
++
++    renderDesk();
++
++    await screen.findByText(/Датированная/);
++    expect(
++      screen.getByRole("columnheader", { name: "Давность" }),
++    ).toBeInTheDocument();
++    expect(rowOf("Матрица «Датированная»")).toContain("назад");
++    expect(rowOf("Матрица «Без даты»")).not.toContain("назад");
++  });
++
++  it("shows no age in a group whose items are not dated events, even when the reason has a moment", async () => {
++    answerWith(
++      deskOf({
++        group: "UnitsToConnect",
++        isReference: false,
++        total: 1,
++        items: [
++          {
++            ...item("UnitsToConnect", "UnitWithoutHead", "Отдел"),
++            reasons: [{ kind: "UnitWithoutHead", occurredAt: AGO }],
++          },
++        ],
++      }),
++    );
++
++    renderDesk();
++
++    await screen.findByText(/Отдел/);
++    expect(
++      screen.queryByRole("columnheader", { name: "Давность" }),
++    ).not.toBeInTheDocument();
++    expect(screen.queryByText(/назад/)).not.toBeInTheDocument();
++  });
++
++  it("shows an invitation link that is about to end and one that has ended, in a column of their own", async () => {
++    const invited = (name: string, linkState: "ExpiringSoon" | "Expired") => ({
++      ...item("Invitations", "InvitationNotAccepted", name, {
++        type: "UserAccount" as const,
++      }),
++      reasons: [
++        {
++          kind: "InvitationNotAccepted" as const,
++          occurredAt: linkState === "Expired" ? AGO : IN_TWO_DAYS,
++          details: { linkState },
++        },
++      ],
++    });
++    answerWith(
++      deskOf({
++        group: "Invitations",
++        isReference: false,
++        total: 2,
++        items: [
++          invited("soon@test.local", "ExpiringSoon"),
++          invited("gone@test.local", "Expired"),
++        ],
++      }),
++    );
++
++    renderDesk();
++
++    await screen.findByText("soon@test.local");
++    expect(
++      screen.getByRole("columnheader", { name: "Срок ссылки" }),
++    ).toBeInTheDocument();
++    expect(rowOf("soon@test.local")).toContain("Скоро истечёт");
++    expect(rowOf("gone@test.local")).toContain("Истекла");
++    expect(rowOf("gone@test.local")).not.toContain("Скоро истечёт");
++  });
++
++  it("keeps the link to the scenario and the button to send the invitation again on an item with two reasons", async () => {
++    answerWith(
++      deskOf({
++        group: "UnitsToConnect",
++        isReference: false,
++        total: 1,
++        items: [
++          {
++            ...item("UnitsToConnect", "UnitWithoutHead", "Отдел"),
++            reasons: [
++              { kind: "UnitWithoutHead" },
++              {
++                kind: "InvitationNotAccepted",
++                details: { linkState: "Expired" },
++              },
++            ],
++            invitation: { accountId: "account-1", version: 2 },
++          },
++        ],
++      }),
++      ["GlobalAdmin"],
++    );
++
++    renderDesk();
++
++    const row = (await screen.findByText(/Отдел/)).closest("tr") as HTMLElement;
++    expect(
++      within(row).getByRole("link", { name: "Подключить" }),
++    ).toHaveAttribute("href", "/desk/connect-unit/id-Отдел");
++    expect(
++      within(row).getByRole("button", {
++        name: "Отправить приглашение повторно",
++      }),
++    ).toBeInTheDocument();
++  });
++});
++
+ describe("an invitation sent again from the desk (AC-39, AC-40)", () => {
+   const INVITED: DeskItem = {
+     object: {
+diff --git a/web/src/features/desk/DeskScenarios.test.tsx b/web/src/features/desk/DeskScenarios.test.tsx
+index 2b70e06..8980327 100644
+--- a/web/src/features/desk/DeskScenarios.test.tsx
++++ b/web/src/features/desk/DeskScenarios.test.tsx
+@@ -1,6 +1,7 @@
+ import { render, screen } from "@testing-library/react";
+ import { MemoryRouter } from "react-router";
+ import { describe, expect, it } from "vitest";
++import { paths as orgPaths } from "../org-structure/paths";
+ import { DeskScenarios, type SessionRoles } from "./DeskScenarios";
+ import type {
+   Desk,
+@@ -9,6 +10,7 @@ import type {
+   DeskKind,
+   DeskPrerequisite,
+ } from "./deskApi";
++import { deskPaths } from "./deskTexts";
+ 
+ const NO_ROLES: SessionRoles = {
+   isAdmin: false,
+@@ -87,6 +89,9 @@ function titlesShownFor(roles: SessionRoles, desk: Desk | undefined) {
+     .map((h) => h.textContent);
+ }
+ 
++const hrefOf = (title: string) =>
++  screen.getByRole("link", { name: title }).getAttribute("href");
++
+ describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
+   it("shows an administrator the first-step cards for what the system lacks, and no scenario that needs it", () => {
+     const titles = titlesShownFor({ ...NO_ROLES, isAdmin: true }, deskWith([]));
+@@ -207,6 +212,46 @@ describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
+     expect(titles).toEqual([MY_PLACE, BUILD]);
+   });
+ 
++  it("sends each first-step card to the screen that closes its gap (AC-204, AC-209, AC-210)", () => {
++    titlesShownFor({ ...NO_ROLES, isAdmin: true }, deskWith([]));
++
++    expect(hrefOf(FIRST_UNIT)).toBe(orgPaths.tree);
++    expect(hrefOf(FIRST_POSITION)).toBe(deskPaths.positions);
++    expect(hrefOf(ASSIGN_HR)).toBe(deskPaths.users);
++  });
++
++  it("sends each scenario card to its own screen, and the ones that work on a version to the first version waiting (AC-218)", () => {
++    titlesShownFor(
++      {
++        isAdmin: true,
++        isHead: true,
++        isHr: true,
++        isUnitHr: true,
++        isBound: true,
++      },
++      deskWith(ALL_PREREQUISITES, {
++        ReturnedVersions: 1,
++        VersionsToApprove: 1,
++        UnitsToConnect: 1,
++        PositionsToLink: 1,
++        DraftsToApprove: 1,
++        UnusedCatalogEntries: 1,
++        OrgCleanup: 1,
++      }),
++    );
++
++    expect(hrefOf(MY_PLACE)).toBe(deskPaths.myPlace);
++    expect(hrefOf(BUILD)).toBe(deskPaths.matrixBuilder);
++    expect(hrefOf(REWORK)).toBe(deskPaths.rework("version"));
++    expect(hrefOf(REVIEW)).toBe(deskPaths.review("version"));
++    expect(hrefOf(DRAFTS)).toBe(deskPaths.drafts);
++    expect(hrefOf(CONNECT)).toBe(deskPaths.connectUnit);
++    expect(hrefOf(ONBOARD)).toBe(deskPaths.onboardEmployee);
++    expect(hrefOf(LINK)).toBe(deskPaths.trackPositions);
++    expect(hrefOf(CATALOG)).toBe(deskPaths.catalogCleanup);
++    expect(hrefOf(ORG)).toBe(deskPaths.orgCleanup);
++  });
++
+   it("counts a queue as waiting in the queue and the rest as waiting for the user", () => {
+     titlesShownFor(
+       { ...NO_ROLES, isAdmin: true },
+diff --git a/web/src/features/desk/DraftsQueuePage.test.tsx b/web/src/features/desk/DraftsQueuePage.test.tsx
+index 14b69ef..85fd6ef 100644
+--- a/web/src/features/desk/DraftsQueuePage.test.tsx
++++ b/web/src/features/desk/DraftsQueuePage.test.tsx
+@@ -93,3 +93,120 @@ describe("the queue of drafts to approve shows what an approval publishes (AC-77
+     expect(screen.queryByText(/и ещё/)).toBeNull();
+   });
+ });
++
++const NOTICE = "Запись уже утверждена другим пользователем или недоступна вам.";
++const SECOND_DRAFT = {
++  ...DRAFT,
++  id: "c2",
++  name: "Ответственность",
++  version: 2,
++};
++const TRACK_DRAFT = {
++  ...DRAFT,
++  kind: "Track",
++  id: "t1",
++  name: "Инженер-аналитик",
++  readiness: { hasLevels: true, levelsWithoutActivePosition: [] },
++};
++const HEADING_OF_FIRST = "Компетенция Работа в команде";
++const HEADING_OF_SECOND = "Компетенция Ответственность";
++
++function serveQueue() {
++  let approved = false;
++  fakeApi.on("GET /api/v1/auth/me", () =>
++    Response.json({ id: "hr", email: "hr@test.local", roles: ["Hr"] }),
++  );
++  fakeApi.on("GET /api/v1/career/me", () =>
++    Response.json({ headedUnits: [], hrUnits: [] }),
++  );
++  fakeApi.on("GET /api/v1/career/drafts", (request) => {
++    const kind = new URL(request.url).searchParams.get("kind");
++    if (kind === "Track") return Response.json([TRACK_DRAFT]);
++    return Response.json(
++      approved
++        ? [SECOND_DRAFT, TRACK_DRAFT]
++        : [DRAFT, SECOND_DRAFT, TRACK_DRAFT],
++    );
++  });
++  for (const id of [DRAFT.id, SECOND_DRAFT.id]) {
++    fakeApi.on(`GET /api/v1/career/competencies/${id}/matrices`, () =>
++      Response.json([]),
++    );
++    fakeApi.on(`GET /api/v1/career/competencies/${id}/publication`, () =>
++      Response.json({
++        entries: [],
++        hiddenEntryCount: 0,
++        blockers: [],
++        moreCount: 0,
++        cascadeTag: `tag-${id}`,
++      }),
++    );
++  }
++  fakeApi.on(APPROVE_ROUTE, () => {
++    approved = true;
++    return Response.json({ id: DRAFT.id });
++  });
++}
++
++function renderQueueAt(path: string) {
++  render(
++    <Providers>
++      <RouterProvider
++        router={createMemoryRouter(
++          [
++            { path: "/desk/drafts", element: <DraftsQueuePage /> },
++            {
++              path: "/desk/drafts/:kind/:entryId",
++              element: <DraftsQueuePage />,
++            },
++          ],
++          { initialEntries: [path] },
++        )}
++      />
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++describe("the notice that a record asked for by link is gone judges the first read of the queue only (AC-76)", () => {
++  it("says nothing when the user approves the record they opened by link, and opens the next one", async () => {
++    serveQueue();
++    const user = renderQueueAt("/desk/drafts/competency/c1");
++    await screen.findByRole("heading", { name: HEADING_OF_FIRST });
++
++    await user.click(await screen.findByRole("button", { name: "Утвердить" }));
++
++    expect(
++      await screen.findByRole("heading", { name: HEADING_OF_SECOND }),
++    ).toBeInTheDocument();
++    expect(screen.queryByText(NOTICE)).toBeNull();
++  });
++
++  it("says nothing when the user narrows the queue to a kind that does not hold the record they opened by link", async () => {
++    serveQueue();
++    const user = renderQueueAt("/desk/drafts/competency/c1");
++    await screen.findByRole("heading", { name: HEADING_OF_FIRST });
++
++    await user.click(screen.getByRole("combobox", { name: "Вид" }));
++    await user.click(
++      await screen.findByText("Трек", {
++        selector: ".ant-select-item-option-content",
++      }),
++    );
++
++    expect(
++      await screen.findByRole("heading", { name: "Трек Инженер-аналитик" }),
++    ).toBeInTheDocument();
++    expect(screen.queryByText(NOTICE)).toBeNull();
++  });
++
++  it("says the record is gone when the first read of the queue does not hold the record asked for", async () => {
++    serveQueue();
++    renderQueueAt("/desk/drafts/competency/missing");
++
++    expect(await screen.findByText(NOTICE)).toBeInTheDocument();
++    expect(
++      await screen.findByRole("heading", { name: HEADING_OF_FIRST }),
++    ).toBeInTheDocument();
++  });
++});
+diff --git a/web/src/features/desk/LinkButton.test.tsx b/web/src/features/desk/LinkButton.test.tsx
+new file mode 100644
+index 0000000..aa295d9
+--- /dev/null
++++ b/web/src/features/desk/LinkButton.test.tsx
+@@ -0,0 +1,72 @@
++import { act, render, screen } from "@testing-library/react";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { describe, expect, it } from "vitest";
++import { LinkButton } from "./LinkButton";
++
++const LABEL = "Открыть";
++const TARGET_TEXT = "экран назначения";
++const BROWSER_OWN_CLICKS: Record<string, MouseEventInit> = {
++  "with Ctrl held": { ctrlKey: true },
++  "with Meta held": { metaKey: true },
++  "with Shift held": { shiftKey: true },
++  "with Alt held": { altKey: true },
++  "of the middle button": { button: 1 },
++};
++
++function renderLink() {
++  render(
++    <RouterProvider
++      router={createMemoryRouter([
++        {
++          path: "/",
++          element: <LinkButton to="/target">{LABEL}</LinkButton>,
++        },
++        { path: "/target", element: <p>{TARGET_TEXT}</p> },
++      ])}
++    />,
++  );
++  return screen.getByRole("link", { name: LABEL });
++}
++
++/**
++ * Sends a click and reports whether the link had already cancelled the browser's own handling when the event reached the
++ * document; the document then cancels it, so jsdom does not try to open the address.
++ */
++function clickAndReadDefault(link: HTMLElement, init: MouseEventInit) {
++  let wasCancelledByLink = false;
++  const cancelAtDocument = (event: Event) => {
++    wasCancelledByLink = event.defaultPrevented;
++    event.preventDefault();
++  };
++  document.addEventListener("click", cancelAtDocument);
++  act(() => {
++    link.dispatchEvent(
++      new MouseEvent("click", { bubbles: true, cancelable: true, ...init }),
++    );
++  });
++  document.removeEventListener("click", cancelAtDocument);
++  return wasCancelledByLink;
++}
++
++describe("a link that looks like a button opens inside the application on a plain click only", () => {
++  it("navigates in place and takes the click over on a plain left click", async () => {
++    const link = renderLink();
++
++    const wasCancelled = clickAndReadDefault(link, {});
++
++    expect(wasCancelled).toBe(true);
++    expect(await screen.findByText(TARGET_TEXT)).toBeInTheDocument();
++  });
++
++  it.each(Object.entries(BROWSER_OWN_CLICKS))(
++    "leaves a click %s to the browser, which opens the address its own way",
++    (_, init) => {
++      const link = renderLink();
++
++      const wasCancelled = clickAndReadDefault(link, init);
++
++      expect(wasCancelled).toBe(false);
++      expect(screen.queryByText(TARGET_TEXT)).toBeNull();
++    },
++  );
++});
+diff --git a/web/src/features/desk/MatrixBuilderPage.test.tsx b/web/src/features/desk/MatrixBuilderPage.test.tsx
+new file mode 100644
+index 0000000..edd5790
+--- /dev/null
++++ b/web/src/features/desk/MatrixBuilderPage.test.tsx
+@@ -0,0 +1,143 @@
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { deferred, fakeApi } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import { MatrixBuilderPage } from "./MatrixBuilderPage";
++
++const CONTENT_ROUTE = "PUT /api/v1/career/matrix-versions/v1/content";
++const SUBMIT_ROUTE = "POST /api/v1/career/matrix-versions/v1/submit";
++const STEP_COUNT = 6;
++const VERSION = {
++  id: "v1",
++  matrixId: "m1",
++  number: 2,
++  version: 3,
++  status: "Draft",
++  step: null,
++  builderStep: 5,
++  authorId: "author",
++  authorName: "Иванов Иван Иванович",
++  createdAt: "2026-10-01T10:00:00Z",
++  publishedAt: null,
++  content: {
++    levels: [],
++    competencies: [],
++    sharedBlocks: [],
++    blockWeights: [],
++    requirements: [],
++  },
++  entries: {
++    direction: null,
++    track: null,
++    levels: [],
++    competencies: [],
++    position: null,
++    sharedBlocks: [],
++    scales: [],
++  },
++  superiorApprover: null,
++  hr: null,
++  returnedWithChanges: false,
++  actions: ["Edit", "Submit"],
++};
++
++function serve() {
++  fakeApi.on("GET /api/v1/career/matrix-versions/v1", () =>
++    Response.json(VERSION),
++  );
++  fakeApi.on("GET /api/v1/career/matrices/m1", () =>
++    Response.json({ id: "m1", orgUnitName: "Команда", publishedVersion: null }),
++  );
++  fakeApi.on("GET /api/v1/career/matrix-versions/v1/completeness", () =>
++    Response.json({ problems: [] }),
++  );
++  fakeApi.on("GET /api/v1/career/matrix-versions/v1/publication", () =>
++    Response.json({
++      publishingActions: [],
++      entries: [],
++      hiddenEntryCount: 0,
++      blockers: [],
++      moreCount: 0,
++      cascadeTag: "tag-builder",
++    }),
++  );
++}
++
++function renderBuilder() {
++  render(
++    <Providers>
++      <RouterProvider
++        router={createMemoryRouter(
++          [
++            {
++              path: "/desk/matrix-builder/:versionId",
++              element: <MatrixBuilderPage />,
++            },
++            { path: "/desk", element: <p>рабочий стол</p> },
++          ],
++          { initialEntries: ["/desk/matrix-builder/v1?step=5"] },
++        )}
++      />
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++function lockedSteps() {
++  return Array.from(document.querySelectorAll(".ant-steps-item")).filter(
++    (step) => step.classList.contains("ant-steps-item-disabled"),
++  );
++}
++
++async function enabledButton(name: string) {
++  const button = await screen.findByRole("button", { name });
++  await waitFor(() => expect(button).toBeEnabled());
++  return button;
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("the steps of the matrix wizard are held while a move to the sending is saved or the version is sent (AC-187)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("holds every step while the move from the check to the sending is being saved, and frees them once it is saved", async () => {
++    serve();
++    const saved = deferred<Response>();
++    fakeApi.on(CONTENT_ROUTE, () => saved.promise);
++    const user = renderBuilder();
++    const forward = await enabledButton("Перейти к отправке");
++    expect(lockedSteps()).toHaveLength(1);
++
++    await user.click(forward);
++
++    await waitFor(() => expect(lockedSteps()).toHaveLength(STEP_COUNT));
++    saved.resolve(Response.json({ ...VERSION, version: 4, builderStep: 6 }));
++    await enabledButton("Отправить на согласование");
++    expect(lockedSteps()).toHaveLength(0);
++  });
++
++  it("holds every step while the version is being sent", async () => {
++    serve();
++    const sent = deferred<Response>();
++    fakeApi.on(SUBMIT_ROUTE, () => sent.promise);
++    fakeApi.on(CONTENT_ROUTE, () =>
++      Response.json({ ...VERSION, version: 4, builderStep: 6 }),
++    );
++    const user = renderBuilder();
++    await user.click(await enabledButton("Перейти к отправке"));
++    const send = await enabledButton("Отправить на согласование");
++    expect(lockedSteps()).toHaveLength(0);
++
++    await user.click(send);
++
++    await waitFor(() => expect(lockedSteps()).toHaveLength(STEP_COUNT));
++    sent.resolve(Response.json({ ...VERSION, version: 5, status: "OnReview" }));
++    expect(await screen.findByText("рабочий стол")).toBeInTheDocument();
++  });
++});
+diff --git a/web/src/features/desk/MyPlacePage.test.tsx b/web/src/features/desk/MyPlacePage.test.tsx
+new file mode 100644
+index 0000000..55aac12
+--- /dev/null
++++ b/web/src/features/desk/MyPlacePage.test.tsx
+@@ -0,0 +1,69 @@
++import { render, screen } from "@testing-library/react";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi } from "../../test/fakeApi";
++import { MyPlacePage } from "./MyPlacePage";
++
++const SAME_NAME = "Команда";
++const OWN_UNIT = { id: "unit-own", name: SAME_NAME };
++const SUPERIOR_UNIT = { id: "unit-superior", name: SAME_NAME };
++
++function servePlace(hrUnit: { id: string; name: string }) {
++  fakeApi.on("GET /api/v1/career/me/place", () =>
++    Response.json({
++      employee: { id: "employee", fullName: "Иванов Иван Иванович" },
++      unit: [SUPERIOR_UNIT, OWN_UNIT],
++      position: null,
++      head: null,
++      responsibleHr: {
++        employeeId: "hr",
++        name: "Петрова Анна Сергеевна",
++        orgUnitId: hrUnit.id,
++        orgUnitName: hrUnit.name,
++      },
++      tracks: [],
++      publishedMatrices: [],
++      noTrack: true,
++    }),
++  );
++}
++
++function renderPlace() {
++  render(
++    <Providers>
++      <RouterProvider
++        router={createMemoryRouter([{ path: "/", element: <MyPlacePage /> }])}
++      />
++    </Providers>,
++  );
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("the place of the signed-in employee tells their own HR from an inherited one by the unit, not its name (AC-91)", () => {
++  it("calls the assignment inherited when the superior unit that holds it has the same name as the own unit", async () => {
++    servePlace(SUPERIOR_UNIT);
++    renderPlace();
++
++    expect(
++      await screen.findByText(
++        `Петрова Анна Сергеевна · унаследовано из «${SAME_NAME}»`,
++      ),
++    ).toBeInTheDocument();
++  });
++
++  it("calls the assignment the unit's own when it is held by the unit the employee works in", async () => {
++    servePlace(OWN_UNIT);
++    renderPlace();
++
++    expect(
++      await screen.findByText(
++        "Петрова Анна Сергеевна · закрепление за вашим подразделением",
++      ),
++    ).toBeInTheDocument();
++  });
++});
+diff --git a/web/src/features/desk/OnboardEmployeePage.test.tsx b/web/src/features/desk/OnboardEmployeePage.test.tsx
+new file mode 100644
+index 0000000..2398a80
+--- /dev/null
++++ b/web/src/features/desk/OnboardEmployeePage.test.tsx
+@@ -0,0 +1,218 @@
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import { OnboardEmployeePage } from "./OnboardEmployeePage";
++
++const EMPLOYEE_ROUTE = "GET /api/v1/employees/e1";
++const CREATE_EMPLOYEE_ROUTE = "POST /api/v1/employees";
++const UPDATE_EMPLOYEE_ROUTE = "PUT /api/v1/employees/e1";
++const CREATE_ACCOUNT_ROUTE = "POST /api/v1/users";
++const CREATE_LABEL = "Создать сотрудника и продолжить";
++const SAVE_LABEL = "Сохранить и далее";
++const ACCOUNT_LABEL = "Создать учётную запись и отправить приглашение";
++const UNIT = { id: "u1", name: "Команда" };
++const POSITION = { id: "p1", name: "Инженер" };
++
++function employee(version: number, lastName: string) {
++  return {
++    id: "e1",
++    lastName,
++    firstName: "Иван",
++    middleName: null,
++    fullName: `${lastName} Иван`,
++    email: null,
++    orgUnitId: UNIT.id,
++    orgUnitName: UNIT.name,
++    positionId: POSITION.id,
++    position: POSITION.name,
++    isActive: true,
++    version,
++  };
++}
++
++function serve() {
++  let stored = employee(1, "Иванов");
++  fakeApi.on("GET /api/v1/auth/me", () =>
++    Response.json({ id: "a", email: "a@test.local", roles: ["GlobalAdmin"] }),
++  );
++  fakeApi.on("GET /api/v1/org-units/tree", () =>
++    Response.json([
++      {
++        id: UNIT.id,
++        name: UNIT.name,
++        parentId: null,
++        headEmployeeId: null,
++        isActive: true,
++        version: 1,
++      },
++    ]),
++  );
++  fakeApi.on(`GET /api/v1/positions/${POSITION.id}`, () =>
++    Response.json({ id: POSITION.id, name: POSITION.name, isActive: true }),
++  );
++  fakeApi.on(`GET /api/v1/org-units/${UNIT.id}/positions`, () =>
++    Response.json([
++      {
++        positionId: POSITION.id,
++        name: POSITION.name,
++        isActive: true,
++        orgUnitId: UNIT.id,
++        orgUnitName: UNIT.name,
++      },
++    ]),
++  );
++  fakeApi.on(CREATE_EMPLOYEE_ROUTE, () => Response.json(stored));
++  fakeApi.on(EMPLOYEE_ROUTE, () => Response.json(stored));
++  return {
++    changeBehindTheBack: (lastName: string) => {
++      stored = employee(stored.version + 1, lastName);
++    },
++    saveAs: (lastName: string) => {
++      stored = employee(stored.version + 1, lastName);
++      return stored;
++    },
++  };
++}
++
++function renderPage() {
++  render(
++    <Providers>
++      <RouterProvider
++        router={createMemoryRouter(
++          [
++            {
++              path: "/desk/onboard-employee",
++              element: <OnboardEmployeePage />,
++            },
++          ],
++          {
++            initialEntries: [
++              `/desk/onboard-employee?unitId=${UNIT.id}&positionId=${POSITION.id}`,
++            ],
++          },
++        )}
++      />
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++type User = ReturnType<typeof userEvent.setup>;
++
++async function createEmployee(user: User) {
++  await user.type(await screen.findByLabelText("Фамилия"), "Иванов");
++  await user.type(screen.getByLabelText("Имя"), "Иван");
++  await user.click(screen.getByRole("button", { name: CREATE_LABEL }));
++  await screen.findByText("Сотрудник создан:");
++}
++
++async function backToTheEmployee(user: User) {
++  await user.click(screen.getByRole("button", { name: "Назад" }));
++  await screen.findByRole("button", { name: SAVE_LABEL });
++}
++
++async function refuseTheSecondSave(user: User, card: ReturnType<typeof serve>) {
++  await createEmployee(user);
++  await backToTheEmployee(user);
++  fakeApi.on(UPDATE_EMPLOYEE_ROUTE, () => {
++    card.changeBehindTheBack("Сидоров");
++    return problem(412);
++  });
++  await user.type(screen.getByLabelText("Фамилия"), "ов");
++  await user.click(screen.getByRole("button", { name: SAVE_LABEL }));
++}
++
++function stepRuler() {
++  return Array.from(document.querySelectorAll(".ant-steps-item"));
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("the scenario that takes an employee on", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("offers «Отмена» on the first step only until the employee exists (AC-86)", async () => {
++    serve();
++    const user = renderPage();
++    expect(
++      await screen.findByRole("button", { name: "Отмена" }),
++    ).toBeInTheDocument();
++
++    await createEmployee(user);
++    await backToTheEmployee(user);
++
++    expect(screen.queryByRole("button", { name: "Отмена" })).toBeNull();
++  });
++
++  it("rereads the employee after a refused save and shows what the card holds now (AC-86)", async () => {
++    const card = serve();
++    const user = renderPage();
++
++    await refuseTheSecondSave(user, card);
++
++    await waitFor(() =>
++      expect(screen.getByLabelText("Фамилия")).toHaveValue("Сидоров"),
++    );
++    expect(
++      screen.getByText("Карточка сотрудника не обновлена"),
++    ).toBeInTheDocument();
++  });
++
++  it("sends the version it reread with the save that follows a refused one (AC-86)", async () => {
++    const card = serve();
++    const user = renderPage();
++    await refuseTheSecondSave(user, card);
++    await waitFor(() =>
++      expect(screen.getByLabelText("Фамилия")).toHaveValue("Сидоров"),
++    );
++    fakeApi.on(UPDATE_EMPLOYEE_ROUTE, () =>
++      Response.json(card.saveAs("Кузнецов")),
++    );
++
++    await user.clear(screen.getByLabelText("Фамилия"));
++    await user.type(screen.getByLabelText("Фамилия"), "Кузнецов");
++    await user.click(screen.getByRole("button", { name: SAVE_LABEL }));
++
++    await waitFor(() =>
++      expect(fakeApi.calls(UPDATE_EMPLOYEE_ROUTE)).toHaveLength(2),
++    );
++    const [refused, accepted] = fakeApi.calls(UPDATE_EMPLOYEE_ROUTE);
++    expect(refused?.headers.get("If-Match")).toBe('"1"');
++    expect(accepted?.headers.get("If-Match")).toBe('"2"');
++  });
++
++  it("holds the steps, «Назад» and «Пропустить» while the account is being created (AC-187)", async () => {
++    serve();
++    const created = deferred<Response>();
++    fakeApi.on(CREATE_ACCOUNT_ROUTE, () => created.promise);
++    const user = renderPage();
++    await createEmployee(user);
++    await user.type(await screen.findByLabelText("E-mail"), "new@test.local");
++
++    await user.click(screen.getByRole("button", { name: ACCOUNT_LABEL }));
++
++    await waitFor(() =>
++      expect(fakeApi.calls(CREATE_ACCOUNT_ROUTE)).toHaveLength(1),
++    );
++    expect(screen.getByRole("button", { name: "Назад" })).toBeDisabled();
++    expect(screen.getByRole("button", { name: "Пропустить" })).toBeDisabled();
++    expect(
++      stepRuler().filter((step) =>
++        step.classList.contains("ant-steps-item-disabled"),
++      ),
++    ).toHaveLength(3);
++    created.resolve(Response.json({ id: "acc", mailSent: true }));
++    await waitFor(() =>
++      expect(
++        screen.queryByRole("button", { name: ACCOUNT_LABEL }),
++      ).not.toBeInTheDocument(),
++    );
++  });
++});
+diff --git a/web/src/features/desk/OrgCleanupPage.test.tsx b/web/src/features/desk/OrgCleanupPage.test.tsx
+new file mode 100644
+index 0000000..2950e00
+--- /dev/null
++++ b/web/src/features/desk/OrgCleanupPage.test.tsx
+@@ -0,0 +1,288 @@
++import {
++  fireEvent,
++  render,
++  screen,
++  waitFor,
++  within,
++} from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { LeaveGuardProvider } from "../../app/leaveGuard";
++import { Providers } from "../../app/Providers";
++import { fakeApi } from "../../test/fakeApi";
++import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
++import { OrgCleanupPage } from "./OrgCleanupPage";
++
++const ITEMS_ROUTE = "GET /api/v1/desk/items";
++const DIALOG_TITLE = "Перейти без сохранения?";
++const LEAVE = "Перейти без сохранения";
++const STAY = "Остаться";
++const POSITION_CHOICE = "Старший инженер";
++const EMPLOYEE_CHOICE = "Петров Пётр";
++const FILTER_LABEL = "Подразделение не подключено";
++
++const POSITION_FINDING = {
++  object: { type: "Employee", id: "e1", name: "Иванов Иван" },
++  group: "OrgCleanup",
++  isReference: false,
++  reasons: [
++    {
++      kind: "PositionOutsideList",
++      details: {
++        entries: [
++          { type: "Position", id: "p1", name: "Инженер" },
++          { type: "OrgUnit", id: "u1", name: "Команда" },
++        ],
++      },
++    },
++  ],
++};
++const ACCOUNT_FINDING = {
++  object: { type: "UserAccount", id: "acc1", name: "lost@test.local" },
++  group: "OrgCleanup",
++  isReference: false,
++  reasons: [{ kind: "AccountWithoutEmployee" }],
++};
++const UNIT_FINDING = {
++  object: { type: "OrgUnit", id: "u2", name: "Склад" },
++  group: "UnitsToConnect",
++  isReference: false,
++  reasons: [{ kind: "UnitWithoutHead" }],
++};
++const FINDINGS = [POSITION_FINDING, ACCOUNT_FINDING, UNIT_FINDING];
++
++function serve() {
++  fakeApi.on(ITEMS_ROUTE, (request) => {
++    const groups = new URL(request.url).searchParams.getAll("group");
++    const items = FINDINGS.filter((item) => groups.includes(item.group));
++    return Response.json({ items, total: items.length });
++  });
++  fakeApi.on("GET /api/v1/employees/e1", () =>
++    Response.json({
++      id: "e1",
++      lastName: "Иванов",
++      firstName: "Иван",
++      middleName: null,
++      fullName: "Иванов Иван",
++      email: null,
++      orgUnitId: "u1",
++      orgUnitName: "Команда",
++      positionId: "p0",
++      position: "Прежняя",
++      version: 3,
++    }),
++  );
++  fakeApi.on("GET /api/v1/org-units/u1/positions", () =>
++    Response.json([
++      {
++        positionId: "p2",
++        name: POSITION_CHOICE,
++        isActive: true,
++        orgUnitId: "u1",
++        orgUnitName: "Команда",
++      },
++    ]),
++  );
++  fakeApi.on("GET /api/v1/users/acc1", () =>
++    Response.json({
++      id: "acc1",
++      email: "lost@test.local",
++      roles: [],
++      employeeId: null,
++      version: 2,
++    }),
++  );
++  fakeApi.on("GET /api/v1/employees", () =>
++    Response.json({
++      items: [
++        {
++          id: "e2",
++          lastName: "Петров",
++          firstName: "Пётр",
++          middleName: null,
++          fullName: EMPLOYEE_CHOICE,
++          email: null,
++          orgUnitId: "u1",
++          orgUnitName: "Команда",
++          positionId: "p0",
++          position: "Инженер",
++        },
++      ],
++      total: 1,
++      page: 1,
++      pageSize: 20,
++    }),
++  );
++}
++
++function renderQueue() {
++  render(
++    <Providers>
++      <RouterProvider
++        router={createMemoryRouter([
++          {
++            path: "/",
++            element: (
++              <LeaveGuardProvider>
++                <OrgCleanupPage />
++              </LeaveGuardProvider>
++            ),
++          },
++        ])}
++      />
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++type User = ReturnType<typeof userEvent.setup>;
++
++/** jsdom plays no animation, so the end of the closing animation, which removes the dialog, is sent until the dialog is gone. */
++async function dialogGone() {
++  await waitFor(() => {
++    const panel = document.querySelector(".ant-modal");
++    if (panel) {
++      fireEvent.animationEnd(panel);
++      fireEvent.transitionEnd(panel);
++    }
++    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
++  });
++}
++
++async function openFinding(user: User, name: string) {
++  await user.click(
++    await screen.findByRole("button", { name: new RegExp(name) }),
++  );
++  await screen.findByRole("heading", { name: new RegExp(name) });
++}
++
++async function choosePosition(user: User) {
++  await user.click(
++    await screen.findByRole("combobox", { name: "Новая должность" }),
++  );
++  await user.click(
++    await screen.findByText(POSITION_CHOICE, {
++      selector: ".ant-select-item-option-content",
++    }),
++  );
++}
++
++async function chooseEmployee(user: User) {
++  await user.click(await screen.findByRole("combobox", { name: "Сотрудник" }));
++  await user.click(
++    await screen.findByText(EMPLOYEE_CHOICE, {
++      selector: ".option-truncate",
++    }),
++  );
++}
++
++function selectedIn(label: string) {
++  const select = screen
++    .getByRole("combobox", { name: label })
++    .closest(".ant-select");
++  if (!(select instanceof HTMLElement)) throw new Error(`No select ${label}`);
++  return within(select);
++}
++
++async function openFilter(user: User) {
++  await user.click(screen.getByRole("combobox", { name: "Вид" }));
++  await user.click(
++    await screen.findByText(FILTER_LABEL, {
++      selector: ".ant-select-item-option-content",
++    }),
++  );
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("the queue of the organisation structure asks before a choice not yet saved is dropped (AC-47)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it("asks before another finding opens over a new position chosen and not saved, and keeps the choice when the user stays", async () => {
++    serve();
++    const user = renderQueue();
++    await screen.findByRole("heading", { name: /Иванов Иван/ });
++    await choosePosition(user);
++
++    await user.click(screen.getByRole("button", { name: /Склад/ }));
++    expect(
++      await screen.findByText(DIALOG_TITLE, { selector: ".ant-modal-title" }),
++    ).toBeInTheDocument();
++    await user.click(screen.getByRole("button", { name: STAY }));
++    await dialogGone();
++    expect(
++      screen.getByRole("heading", { name: /Иванов Иван/ }),
++    ).toBeInTheDocument();
++    expect(
++      selectedIn("Новая должность").getByTitle(POSITION_CHOICE),
++    ).toBeInTheDocument();
++    await user.click(screen.getByRole("button", { name: /Склад/ }));
++    await user.click(await screen.findByRole("button", { name: LEAVE }));
++    expect(
++      await screen.findByRole("heading", { name: /Склад/ }),
++    ).toBeInTheDocument();
++  });
++
++  it("asks before another finding opens over an employee chosen for an account and not saved, and keeps the choice when the user stays", async () => {
++    serve();
++    const user = renderQueue();
++    await openFinding(user, "lost@test.local");
++    await chooseEmployee(user);
++
++    await user.click(screen.getByRole("button", { name: /Склад/ }));
++
++    expect(
++      await screen.findByText(DIALOG_TITLE, { selector: ".ant-modal-title" }),
++    ).toBeInTheDocument();
++    await user.click(screen.getByRole("button", { name: STAY }));
++    await dialogGone();
++    expect(
++      screen.getByRole("heading", { name: /lost@test.local/ }),
++    ).toBeInTheDocument();
++    expect(
++      selectedIn("Сотрудник").getByTitle(EMPLOYEE_CHOICE),
++    ).toBeInTheDocument();
++  });
++
++  it("asks before the kind filter changes over a choice not saved, and leaves the filter as it was when the user stays", async () => {
++    serve();
++    const user = renderQueue();
++    await screen.findByRole("heading", { name: /Иванов Иван/ });
++    await choosePosition(user);
++
++    await openFilter(user);
++
++    expect(
++      await screen.findByText(DIALOG_TITLE, { selector: ".ant-modal-title" }),
++    ).toBeInTheDocument();
++    await user.click(screen.getByRole("button", { name: STAY }));
++    await dialogGone();
++    expect(
++      selectedIn("Новая должность").getByTitle(POSITION_CHOICE),
++    ).toBeInTheDocument();
++    const narrowed = fakeApi
++      .calls(ITEMS_ROUTE)
++      .filter(
++        (request) =>
++          new URL(request.url).searchParams.getAll("group").length === 1,
++      );
++    expect(narrowed).toHaveLength(0);
++  });
++
++  it("applies the filter at once when nothing is left unsaved", async () => {
++    serve();
++    const user = renderQueue();
++    await screen.findByRole("heading", { name: /Иванов Иван/ });
++
++    await openFilter(user);
++
++    expect(
++      await screen.findByRole("heading", { name: /Склад/ }),
++    ).toBeInTheDocument();
++    expect(screen.queryByRole("dialog")).toBeNull();
++  });
++});
+diff --git a/web/src/features/desk/ReviewPage.test.tsx b/web/src/features/desk/ReviewPage.test.tsx
+index 5f8f667..3a48906 100644
+--- a/web/src/features/desk/ReviewPage.test.tsx
++++ b/web/src/features/desk/ReviewPage.test.tsx
+@@ -1,9 +1,10 @@
+ import { render, screen } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
+ import { createMemoryRouter, RouterProvider } from "react-router";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { ReviewPage } from "./ReviewPage";
+ 
+ const NO_DRAFTS = "Черновых записей нет: публикуется только версия.";
+@@ -63,6 +64,7 @@ function serve(hiddenEntryCount: number) {
+ }
+ 
+ function renderReview() {
++  const user = userEvent.setup();
+   render(
+     <Providers>
+       <RouterProvider
+@@ -73,6 +75,7 @@ function renderReview() {
+       />
+     </Providers>,
+   );
++  return user;
+ }
+ 
+ beforeEach(() => {
+@@ -100,3 +103,58 @@ describe("the review of a version lists what its approval publishes (AC-65, AC-1
+     expect(screen.queryByText(/и ещё/)).toBeNull();
+   });
+ });
++
++const CHECK_ROUTE = "GET /api/v1/career/matrix-versions/v1/completeness";
++const LIST_ROUTE = "GET /api/v1/career/matrix-versions/v1/publication";
++const APPROVE_BUTTON = { name: /^Согласовать( и опубликовать)?$/ };
++const FAILED_READS = [
++  {
++    read: "the completeness check",
++    route: CHECK_ROUTE,
++    title: "Не удалось выполнить проверку полноты",
++  },
++  {
++    read: "the list of what the approval publishes",
++    route: LIST_ROUTE,
++    title: "Не удалось загрузить перечень публикации",
++  },
++];
++
++describe("the review of a version whose preparation could not be read (AC-65)", () => {
++  it.each(FAILED_READS)(
++    "shows the failure of $read with a retry, holds the approval off with the reason, and approves once a retry reads it",
++    async ({ route, title }) => {
++      serve(0);
++      fakeApi.on(route, () => problem(403, { title: "Нет доступа" }));
++      const user = renderReview();
++
++      expect(await screen.findByText(title)).toBeInTheDocument();
++
++      expect(screen.getByRole("button", APPROVE_BUTTON)).toBeDisabled();
++      expect(
++        screen.getByText(
++          "Согласовать недоступно: не загрузились проверка полноты или перечень публикации",
++        ),
++      ).toBeInTheDocument();
++      const retry = screen.getByRole("button", { name: "Повторить" });
++      serve(0);
++      await user.click(retry);
++      expect(await screen.findByText(NO_DRAFTS)).toBeInTheDocument();
++      expect(screen.queryByText(title)).toBeNull();
++      expect(screen.getByRole("button", APPROVE_BUTTON)).toBeEnabled();
++    },
++  );
++
++  it("holds the approval off and says why while the list of what it publishes is being read", async () => {
++    serve(0);
++    const list = deferred<Response>();
++    fakeApi.on(LIST_ROUTE, () => list.promise);
++    renderReview();
++
++    expect(
++      await screen.findByText("Проверяем, что будет опубликовано…"),
++    ).toBeInTheDocument();
++
++    expect(screen.getByRole("button", APPROVE_BUTTON)).toBeDisabled();
++  });
++});
+diff --git a/web/src/features/desk/ReworkPage.test.tsx b/web/src/features/desk/ReworkPage.test.tsx
+new file mode 100644
+index 0000000..6cd5232
+--- /dev/null
++++ b/web/src/features/desk/ReworkPage.test.tsx
+@@ -0,0 +1,169 @@
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi, problem } from "../../test/fakeApi";
++import { ReworkPage } from "./ReworkPage";
++
++const VERSION_ROUTE = "GET /api/v1/career/matrix-versions/v1";
++const HISTORY_ROUTE = "GET /api/v1/career/matrix-versions/v1/history";
++const CHECK_ROUTE = "GET /api/v1/career/matrix-versions/v1/completeness";
++const LIST_ROUTE = "GET /api/v1/career/matrix-versions/v1/publication";
++const HISTORY_TITLE = "Не удалось загрузить комментарий и правки согласующего";
++const HISTORY_REASON = "Недоступно: не загрузилась история версии.";
++const ACCEPT_REASON =
++  "Недоступно: не загрузились история версии, проверка полноты или перечень публикации.";
++const VERSION = {
++  id: "v1",
++  matrixId: "m1",
++  number: 2,
++  version: 3,
++  status: "Returned",
++  step: null,
++  authorId: "author",
++  authorName: "Иванов Иван Иванович",
++  createdAt: "2026-10-01T10:00:00Z",
++  publishedAt: null,
++  content: {
++    levels: [],
++    competencies: [],
++    sharedBlocks: [],
++    blockWeights: [],
++    requirements: [],
++  },
++  entries: {
++    direction: null,
++    track: null,
++    levels: [],
++    competencies: [],
++    position: null,
++    sharedBlocks: [],
++    scales: [],
++  },
++  superiorApprover: null,
++  hr: null,
++  returnedWithChanges: true,
++  actions: ["AcceptChanges", "AcceptAndRevise", "RollbackChanges"],
++};
++const HISTORY = {
++  variants: [],
++  decisions: [
++    {
++      sequence: 1,
++      kind: "Returned",
++      step: "Superior",
++      actorId: null,
++      actorName: "Петров Пётр Петрович",
++      at: "2026-10-02T10:00:00Z",
++      comment: "Нужны правки",
++      variantNumber: null,
++    },
++  ],
++};
++const FAILED_READS = [
++  {
++    read: "the completeness check",
++    route: CHECK_ROUTE,
++    title: "Не удалось выполнить проверку полноты",
++  },
++  {
++    read: "the list it publishes",
++    route: LIST_ROUTE,
++    title: "Не удалось загрузить перечень публикации",
++  },
++];
++
++function serve() {
++  fakeApi.on(VERSION_ROUTE, () => Response.json(VERSION));
++  fakeApi.on("GET /api/v1/career/matrices/m1", () =>
++    Response.json({ id: "m1", orgUnitName: "Команда", publishedVersion: null }),
++  );
++  fakeApi.on(HISTORY_ROUTE, () => Response.json(HISTORY));
++  fakeApi.on(CHECK_ROUTE, () => Response.json({ problems: [] }));
++  fakeApi.on(LIST_ROUTE, () =>
++    Response.json({
++      publishingActions: [],
++      entries: [],
++      hiddenEntryCount: 0,
++      blockers: [],
++      moreCount: 0,
++      cascadeTag: "tag-rework",
++    }),
++  );
++}
++
++function renderRework() {
++  render(
++    <Providers>
++      <RouterProvider
++        router={createMemoryRouter(
++          [{ path: "/desk/rework/:versionId", element: <ReworkPage /> }],
++          { initialEntries: ["/desk/rework/v1"] },
++        )}
++      />
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("the rework of a returned version whose history, check or list could not be read (AC-56)", () => {
++  it("shows the failure of the history with a retry, holds every decision off with the reason, and frees the two that need no check once it is read", async () => {
++    serve();
++    fakeApi.on(HISTORY_ROUTE, () => problem(403, { title: "Нет доступа" }));
++    const user = renderRework();
++
++    expect(await screen.findByText(HISTORY_TITLE)).toBeInTheDocument();
++
++    expect(
++      screen.getByRole("button", { name: "Принять правки" }),
++    ).toBeDisabled();
++    expect(
++      screen.getByRole("button", { name: "Принять и доработать" }),
++    ).toBeDisabled();
++    expect(
++      screen.getByRole("button", { name: "Откатить правки" }),
++    ).toBeDisabled();
++    expect(screen.getByText(ACCEPT_REASON)).toBeInTheDocument();
++    expect(screen.getAllByText(HISTORY_REASON)).toHaveLength(2);
++    const retry = screen.getByRole("button", { name: "Повторить" });
++    serve();
++    await user.click(retry);
++    expect(await screen.findByText("Нужны правки")).toBeInTheDocument();
++    expect(screen.queryByText(HISTORY_TITLE)).toBeNull();
++    expect(screen.queryByText(HISTORY_REASON)).toBeNull();
++    expect(screen.queryByText(ACCEPT_REASON)).toBeNull();
++    expect(
++      screen.getByRole("button", { name: "Принять и доработать" }),
++    ).toBeEnabled();
++    expect(
++      screen.getByRole("button", { name: "Откатить правки" }),
++    ).toBeEnabled();
++  });
++
++  it.each(FAILED_READS)(
++    "shows the failure of $read with a retry and holds the acceptance of the changes off with the reason",
++    async ({ route, title }) => {
++      serve();
++      fakeApi.on(route, () => problem(403, { title: "Нет доступа" }));
++      const user = renderRework();
++
++      expect(await screen.findByText(title)).toBeInTheDocument();
++
++      expect(
++        screen.getByRole("button", { name: "Принять правки" }),
++      ).toBeDisabled();
++      expect(screen.getByText(ACCEPT_REASON)).toBeInTheDocument();
++      const retry = screen.getByRole("button", { name: "Повторить" });
++      serve();
++      await user.click(retry);
++      await waitFor(() => expect(screen.queryByText(title)).toBeNull());
++      expect(screen.queryByText(ACCEPT_REASON)).toBeNull();
++    },
++  );
++});
+diff --git a/web/src/features/desk/TrackPositionsPage.test.tsx b/web/src/features/desk/TrackPositionsPage.test.tsx
+new file mode 100644
+index 0000000..ae6adf9
+--- /dev/null
++++ b/web/src/features/desk/TrackPositionsPage.test.tsx
+@@ -0,0 +1,114 @@
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi } from "../../test/fakeApi";
++import { TrackPositionsPage } from "./TrackPositionsPage";
++
++const TRACKS_ROUTE = "GET /api/v1/career/tracks";
++const SEARCH_TEXT = "Аналитик";
++
++function track(id: string, name: string) {
++  return {
++    id,
++    name,
++    ownerOrgUnitName: "Команда",
++    status: "Active",
++    canEdit: true,
++  };
++}
++
++const FIRST_PAGE = [track("first", "Инженер")];
++const SEARCHED = [track("far", "Аналитик данных")];
++const NOT_FOUND_TEXT = "Хранитель";
++
++function serveTracks() {
++  fakeApi.on(TRACKS_ROUTE, (request) => {
++    const searched = new URL(request.url).searchParams.get("q");
++    const items =
++      searched === NOT_FOUND_TEXT ? [] : searched ? SEARCHED : FIRST_PAGE;
++    return Response.json({
++      items,
++      total: items.length,
++      page: 1,
++      pageSize: 200,
++    });
++  });
++}
++
++function searchedTexts() {
++  return fakeApi
++    .calls(TRACKS_ROUTE)
++    .map((request) => new URL(request.url).searchParams.get("q"));
++}
++
++function renderPage() {
++  render(
++    <Providers>
++      <RouterProvider
++        router={createMemoryRouter(
++          [
++            { path: "/desk/track-positions", element: <TrackPositionsPage /> },
++            {
++              path: "/desk/track-positions/:trackId",
++              element: <TrackPositionsPage />,
++            },
++          ],
++          { initialEntries: ["/desk/track-positions"] },
++        )}
++      />
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("the choice of a track to link positions to is searched on the server (AC-162)", () => {
++  it("sends what the user types as the search of the track list, and offers the tracks found", async () => {
++    serveTracks();
++    const user = renderPage();
++    const combobox = await screen.findByRole("combobox", { name: "Трек" });
++    await waitFor(() => expect(fakeApi.calls(TRACKS_ROUTE)).toHaveLength(1));
++    expect(searchedTexts()).toEqual([null]);
++
++    await user.type(combobox, SEARCH_TEXT);
++
++    await waitFor(() => expect(searchedTexts().at(-1)).toBe(SEARCH_TEXT));
++    expect(
++      await screen.findByText("Аналитик данных — Команда"),
++    ).toBeInTheDocument();
++  });
++
++  it("names the text searched for when no track the user may edit matches it", async () => {
++    serveTracks();
++    const user = renderPage();
++    const combobox = await screen.findByRole("combobox", { name: "Трек" });
++
++    await user.type(combobox, NOT_FOUND_TEXT);
++
++    expect(
++      await screen.findByText(
++        `Трек «${NOT_FOUND_TEXT}» не найден среди тех, связи которых вы вправе править.`,
++      ),
++    ).toBeInTheDocument();
++  });
++
++  it("offers the whole list again once the list is closed, without the text searched for", async () => {
++    serveTracks();
++    const user = renderPage();
++    const combobox = await screen.findByRole("combobox", { name: "Трек" });
++    await user.type(combobox, SEARCH_TEXT);
++    await screen.findByText("Аналитик данных — Команда");
++
++    await user.click(document.body);
++    await user.click(combobox);
++
++    expect(await screen.findByText("Инженер — Команда")).toBeInTheDocument();
++    expect(screen.queryByText("Аналитик данных — Команда")).toBeNull();
++  });
++});
+diff --git a/web/src/features/desk/builderContent.test.ts b/web/src/features/desk/builderContent.test.ts
+new file mode 100644
+index 0000000..36ba24c
+--- /dev/null
++++ b/web/src/features/desk/builderContent.test.ts
+@@ -0,0 +1,189 @@
++import { describe, expect, it } from "vitest";
++import type { CareerLevel } from "../career/catalogApi";
++import type { MatrixContent } from "../career/matrixApi";
++import {
++  competencyIdsOf,
++  sharedBlockIdsOf,
++  withChosenCompetencies,
++  withSharedBlocks,
++} from "./builderContent";
++
++const FIRST_LEVEL = "level-1";
++const INACTIVE_LEVEL = "level-2";
++const THIRD_LEVEL = "level-3";
++const OWN = "competency-own";
++const DROPPED = "competency-dropped";
++const ADDED = "competency-added";
++const BLOCK_A = "block-a";
++const BLOCK_B = "block-b";
++const BLOCK_C = "block-c";
++const ONLY_IN_A = "member-only-a";
++const IN_A_AND_B = "member-a-b";
++const ONLY_IN_B = "member-only-b";
++const ONLY_IN_C = "member-only-c";
++const COMPOSITIONS = new Map([
++  [BLOCK_A, [ONLY_IN_A, IN_A_AND_B]],
++  [BLOCK_B, [IN_A_AND_B, ONLY_IN_B]],
++  [BLOCK_C, [ONLY_IN_C]],
++]);
++
++const levelOf = (id: string, status: CareerLevel["status"]): CareerLevel => ({
++  id,
++  name: id,
++  directionId: "direction",
++  trackId: "track",
++  position: 1,
++  status,
++  version: 1,
++  canEdit: true,
++  canDelete: true,
++});
++const TRACK_LEVELS = [
++  levelOf(FIRST_LEVEL, "Active"),
++  levelOf(INACTIVE_LEVEL, "Inactive"),
++  levelOf(THIRD_LEVEL, "Active"),
++];
++
++const EMPTY: MatrixContent = {
++  levels: [],
++  competencies: [],
++  blockWeights: [],
++  requirements: [],
++};
++
++const requirement = (competencyId: string) => ({
++  levelId: FIRST_LEVEL,
++  competencyId,
++  requiredScore: 3,
++});
++
++describe("the competencies chosen in step two of the matrix builder", () => {
++  it("gives a version that is still empty the active levels of the track, and no inactive one", () => {
++    const next = withChosenCompetencies(EMPTY, new Set([OWN]), TRACK_LEVELS);
++
++    expect(next.levels.map((level) => level.levelId)).toEqual([
++      FIRST_LEVEL,
++      THIRD_LEVEL,
++    ]);
++  });
++
++  it("leaves the levels of a version that already has some", () => {
++    const content = {
++      ...EMPTY,
++      levels: [{ levelId: THIRD_LEVEL, minOverallPercent: 50 }],
++    };
++
++    const next = withChosenCompetencies(content, new Set([OWN]), TRACK_LEVELS);
++
++    expect(next.levels).toEqual(content.levels);
++  });
++
++  it("takes out a competency that is no longer chosen with its requirements, and keeps the ones that are", () => {
++    const content: MatrixContent = {
++      ...EMPTY,
++      levels: [{ levelId: FIRST_LEVEL, minOverallPercent: null }],
++      competencies: [
++        { competencyId: OWN, blockId: "own-block" },
++        { competencyId: DROPPED, blockId: null },
++      ],
++      requirements: [requirement(OWN), requirement(DROPPED)],
++    };
++
++    const next = withChosenCompetencies(content, new Set([OWN]), TRACK_LEVELS);
++
++    expect(next.competencies).toEqual([
++      { competencyId: OWN, blockId: "own-block" },
++    ]);
++    expect(next.requirements).toEqual([requirement(OWN)]);
++  });
++
++  it("puts a newly chosen competency outside every block", () => {
++    const content: MatrixContent = {
++      ...EMPTY,
++      levels: [{ levelId: FIRST_LEVEL, minOverallPercent: null }],
++      competencies: [{ competencyId: OWN, blockId: "own-block" }],
++    };
++
++    const next = withChosenCompetencies(
++      content,
++      new Set([OWN, ADDED]),
++      TRACK_LEVELS,
++    );
++
++    expect(
++      next.competencies.map((item) => [item.competencyId, item.blockId]),
++    ).toEqual([
++      [OWN, "own-block"],
++      [ADDED, null],
++    ]);
++  });
++
++  it("changes nothing when the choice is what the version already holds", () => {
++    const content: MatrixContent = {
++      ...EMPTY,
++      levels: [{ levelId: FIRST_LEVEL, minOverallPercent: null }],
++      competencies: [{ competencyId: OWN, blockId: null }],
++      requirements: [requirement(OWN)],
++    };
++
++    expect(
++      withChosenCompetencies(content, new Set([OWN]), TRACK_LEVELS),
++    ).toEqual(content);
++  });
++});
++
++describe("the shared blocks chosen in step two of the matrix builder", () => {
++  const withBlocks: MatrixContent = {
++    ...EMPTY,
++    levels: [{ levelId: FIRST_LEVEL, minOverallPercent: null }],
++    competencies: [{ competencyId: OWN, blockId: null }],
++    sharedBlocks: [{ blockId: BLOCK_A }, { blockId: BLOCK_B }],
++    blockWeights: [
++      { levelId: FIRST_LEVEL, blockId: BLOCK_A, percent: 40 },
++      { levelId: FIRST_LEVEL, blockId: BLOCK_B, percent: 60 },
++    ],
++    requirements: [
++      requirement(OWN),
++      requirement(ONLY_IN_A),
++      requirement(IN_A_AND_B),
++      requirement(ONLY_IN_B),
++    ],
++  };
++
++  it("takes a block out with its coefficients and the requirements only it brought", () => {
++    const next = withSharedBlocks(withBlocks, [BLOCK_B], COMPOSITIONS);
++
++    expect(sharedBlockIdsOf(next)).toEqual([BLOCK_B]);
++    expect(next.blockWeights.map((weight) => weight.blockId)).toEqual([
++      BLOCK_B,
++    ]);
++    expect(next.requirements.map((item) => item.competencyId).sort()).toEqual(
++      [IN_A_AND_B, ONLY_IN_B, OWN].sort(),
++    );
++  });
++
++  it("includes a new block by reference after the ones already there", () => {
++    const next = withSharedBlocks(
++      withBlocks,
++      [BLOCK_A, BLOCK_B, BLOCK_C],
++      COMPOSITIONS,
++    );
++
++    expect(sharedBlockIdsOf(next)).toEqual([BLOCK_A, BLOCK_B, BLOCK_C]);
++    expect(next.competencies).toEqual(withBlocks.competencies);
++  });
++
++  it("changes nothing when the choice is what the version already holds", () => {
++    expect(
++      withSharedBlocks(withBlocks, [BLOCK_A, BLOCK_B], COMPOSITIONS),
++    ).toEqual(withBlocks);
++  });
++
++  it("reads a document written before shared blocks existed as one without blocks", () => {
++    expect(sharedBlockIdsOf(EMPTY)).toEqual([]);
++    expect(
++      sharedBlockIdsOf(withSharedBlocks(EMPTY, [BLOCK_C], COMPOSITIONS)),
++    ).toEqual([BLOCK_C]);
++    expect(competencyIdsOf(withBlocks)).toEqual(new Set([OWN]));
++  });
++});
+diff --git a/web/src/features/desk/deskTexts.test.ts b/web/src/features/desk/deskTexts.test.ts
+index 51f8f3c..62a80b9 100644
+--- a/web/src/features/desk/deskTexts.test.ts
++++ b/web/src/features/desk/deskTexts.test.ts
+@@ -1,13 +1,34 @@
+ import { describe, expect, it } from "vitest";
+-import type { DeskGroup, DeskItem, DeskKind, DeskObject } from "./deskApi";
+-import { deskPaths, itemAction, itemLink } from "./deskTexts";
++import { paths as orgPaths } from "../org-structure/paths";
++import type {
++  DeskGroup,
++  DeskItem,
++  DeskKind,
++  DeskObject,
++  DeskReason,
++} from "./deskApi";
++import {
++  deskPaths,
++  itemAction,
++  itemLink,
++  objectContext,
++  objectTitle,
++  reasonLines,
++  typeLabelOf,
++} from "./deskTexts";
+ 
+ const OBJECT_ID = "8f1c0a52-0000-4000-8000-000000000001";
+ const VERSION_ID = "8f1c0a52-0000-4000-8000-000000000002";
+ const OTHER_ID = "8f1c0a52-0000-4000-8000-000000000003";
++const NOON_UTC = "2026-10-09T12:00:00Z";
++const NOON_DATE = /09\.10\.2026/;
+ 
+-function objectOf(type: DeskObject["type"], id = OBJECT_ID): DeskObject {
+-  return { type, id, name: "Имя" };
++function objectOf(
++  type: DeskObject["type"],
++  id = OBJECT_ID,
++  name = "Имя",
++): DeskObject {
++  return { type, id, name };
+ }
+ 
+ function itemOf(
+@@ -34,7 +55,26 @@ function itemOf(
+   };
+ }
+ 
++function withReason(
++  kind: DeskKind,
++  reason: Omit<DeskReason, "kind"> = {},
++  item: Partial<DeskItem> = {},
++): DeskItem {
++  return {
++    object: objectOf("Matrix"),
++    group: "ReturnedVersions",
++    isReference: false,
++    ...item,
++    reasons: [{ kind, ...reason }],
++  };
++}
++
++const textsOf = (item: DeskItem) => reasonLines(item).map((line) => line.text);
++const firstTextOf = (item: DeskItem) => textsOf(item)[0] ?? "";
++
+ const VERSION = objectOf("MatrixVersion", VERSION_ID);
++const PERSON = objectOf("Employee", OTHER_ID, "Иванов Иван Иванович");
++const SHORT_PERSON = "Иванов И. И.";
+ 
+ describe("the addresses the e-mails link to (AC-110)", () => {
+   it("keeps the review, rework and drafts routes the mail letters are built from", () => {
+@@ -46,15 +86,68 @@ describe("the addresses the e-mails link to (AC-110)", () => {
+   });
+ });
+ 
+-describe("the screen an action item opens (AC-6, AC-160)", () => {
+-  it.each([
+-    ["VersionReturned", `/desk/rework/${VERSION_ID}`],
+-    ["VersionNotSubmitted", `/desk/matrix-builder/${VERSION_ID}`],
+-    ["VersionAwaitsHeadApproval", `/desk/review/${VERSION_ID}`],
+-    ["VersionAwaitsHrApproval", `/desk/review/${VERSION_ID}`],
+-  ] as const)("opens a %s item on the version the item names", (kind, path) => {
+-    expect(itemAction(itemOf(kind, { target: VERSION }))?.path).toBe(path);
+-  });
++const ACTION_PATH: Record<DeskKind, string | null> = {
++  VersionReturned: `/desk/rework/${VERSION_ID}`,
++  VersionNotSubmitted: `/desk/matrix-builder/${VERSION_ID}`,
++  VersionAwaitsHeadApproval: `/desk/review/${VERSION_ID}`,
++  VersionAwaitsHrApproval: `/desk/review/${VERSION_ID}`,
++  MatrixLevelsChanged: `/career/matrices/${OBJECT_ID}`,
++  MatrixUsesInactive: `/career/matrices/${OBJECT_ID}`,
++  MatrixCompetencyChanged: null,
++  MatrixSharedBlockChanged: `/desk/matrix-builder?matrixId=${OBJECT_ID}`,
++  OwnVersionInApproval: null,
++  VersionStuckAtHead: null,
++  UnitWithoutMatrix: `/desk/matrix-builder?unitId=${OBJECT_ID}`,
++  ResponsibleUnitWithoutMatrix: null,
++  UnitWithoutHead: `/desk/connect-unit/${OBJECT_ID}`,
++  ResponsibleUnitWithoutHead: null,
++  UnitWithoutHr: `/desk/connect-unit/${OBJECT_ID}`,
++  UnitWithoutPositions: `/desk/connect-unit/${OBJECT_ID}`,
++  HeadWithoutAccount: `/desk/connect-unit/${OBJECT_ID}`,
++  HeadAccountInvited: `/desk/connect-unit/${OBJECT_ID}`,
++  HeadAccountBlocked: `/desk/connect-unit/${OBJECT_ID}`,
++  EmptyUnit: null,
++  DraftAwaitsApproval: deskPaths.drafts,
++  TrackWithoutLevels: "/career",
++  TrackWithOneLevel: "/career",
++  TrackWithoutPositions: `/desk/track-positions/${OBJECT_ID}`,
++  LevelWithoutPosition: `/desk/track-positions/${OBJECT_ID}`,
++  OwnDraftAwaitsApproval: null,
++  UnusedCompetency: null,
++  UnusedScale: null,
++  DirectionWithoutTracks: null,
++  PositionWithoutTrack: deskPaths.trackPositions,
++  InactivePositionInUse: null,
++  UnusedPosition: null,
++  PositionOutsideList: deskPaths.orgCleanup,
++  NoTrackForPosition: null,
++  AccountWithoutEmployee: deskPaths.orgCleanup,
++  InvitationNotAccepted: null,
++};
++
++const REFERENCE_PATH: Partial<Record<DeskKind, string>> = {
++  ResponsibleUnitWithoutMatrix: `${orgPaths.tree}?unit=${OBJECT_ID}`,
++  ResponsibleUnitWithoutHead: `${orgPaths.tree}?unit=${OBJECT_ID}`,
++  OwnVersionInApproval: `/career/matrices/${OBJECT_ID}`,
++  VersionStuckAtHead: `/career/matrices/${OBJECT_ID}`,
++  MatrixCompetencyChanged: `/career/matrices/${OBJECT_ID}`,
++  OwnDraftAwaitsApproval: "/career",
++  NoTrackForPosition: deskPaths.myPlace,
++  TrackWithoutLevels: `/desk/track-positions/${OBJECT_ID}`,
++  TrackWithOneLevel: `/desk/track-positions/${OBJECT_ID}`,
++  TrackWithoutPositions: `/desk/track-positions/${OBJECT_ID}`,
++  LevelWithoutPosition: `/desk/track-positions/${OBJECT_ID}`,
++};
++
++describe("the screen an action item opens (AC-6, AC-160, AC-209, AC-210, AC-218)", () => {
++  it.each(Object.entries(ACTION_PATH))(
++    "opens a %s item on the screen %s",
++    (kind, path) => {
++      const opened = itemAction(itemOf(kind as DeskKind, { target: VERSION }));
++
++      expect(opened?.path ?? null).toBe(path);
++    },
++  );
+ 
+   it("opens no scenario for a version item that names no version", () => {
+     expect(itemAction(itemOf("VersionReturned", { target: null }))).toBeNull();
+@@ -101,84 +194,433 @@ describe("the screen an action item opens (AC-6, AC-160)", () => {
+     );
+   });
+ 
+-  it.each([
+-    "UnitWithoutHead",
+-    "HeadWithoutAccount",
+-    "HeadAccountInvited",
+-    "HeadAccountBlocked",
+-    "UnitWithoutHr",
+-    "UnitWithoutPositions",
+-  ] as const)("sends %s to connecting the unit it is about", (kind) => {
+-    expect(itemAction(itemOf(kind, { type: "OrgUnit" }))?.path).toBe(
+-      `/desk/connect-unit/${OBJECT_ID}`,
+-    );
++  it("follows the first reason of an item with two, whatever the second asks (AC-160)", () => {
++    const item: DeskItem = {
++      ...itemOf("UnitWithoutHead", { type: "OrgUnit" }),
++      reasons: [
++        { kind: "UnitWithoutHead" },
++        { kind: "InvitationNotAccepted", details: { linkState: "Expired" } },
++      ],
++      invitation: { accountId: OTHER_ID, version: 1 },
++    };
++
++    expect(itemAction(item)?.path).toBe(`/desk/connect-unit/${OBJECT_ID}`);
++    expect(itemLink(item)).toBe(`/desk/connect-unit/${OBJECT_ID}`);
+   });
++});
+ 
+-  it.each(["TrackWithoutPositions", "LevelWithoutPosition"] as const)(
+-    "sends %s to linking the positions of the track",
++describe("where an item's name leads (AC-6)", () => {
++  it.each(Object.keys(ACTION_PATH) as DeskKind[])(
++    "leads a reference %s item, in a group with no queue, where its kind says",
+     (kind) => {
+-      expect(itemAction(itemOf(kind, { type: "Track" }))?.path).toBe(
+-        `/desk/track-positions/${OBJECT_ID}`,
+-      );
+-    },
+-  );
++      const item = itemOf(kind, {
++        isReference: true,
++        group: "NoTrack",
++      });
+ 
+-  it.each(["PositionOutsideList", "AccountWithoutEmployee"] as const)(
+-    "sends %s to the organisation queue",
+-    (kind) => {
+-      expect(itemAction(itemOf(kind))?.path).toBe(deskPaths.orgCleanup);
++      expect(itemLink(item)).toBe(REFERENCE_PATH[kind] ?? null);
+     },
+   );
+ 
+-  it("leaves an item whose action is on the desk itself without a screen", () => {
+-    expect(
+-      itemAction(itemOf("InvitationNotAccepted", { type: "UserAccount" })),
+-    ).toBeNull();
+-  });
+-});
+-
+-describe("where an item's name leads (AC-6)", () => {
+-  it("leads an action to its scenario and a note for reference to a view of the object", () => {
++  it("leads an action to its scenario", () => {
+     expect(itemLink(itemOf("VersionReturned", { target: VERSION }))).toBe(
+       `/desk/rework/${VERSION_ID}`,
+     );
++  });
++
++  it("leads a reference item of a group with a queue to the queue", () => {
+     expect(
+       itemLink(
+-        itemOf("OwnVersionInApproval", {
++        itemOf("UnusedCompetency", {
++          type: "Competency",
+           isReference: true,
+-          group: "VersionsInApproval",
++          group: "UnusedCatalogEntries",
+         }),
+       ),
+-    ).toBe(`/career/matrices/${OBJECT_ID}`);
++    ).toBe(deskPaths.catalogCleanup);
++  });
++});
++
++describe("what the row shows of the object (AC-5)", () => {
++  it.each([
++    ["Matrix", null],
++    ["MatrixVersion", null],
++    ["OrgUnit", null],
++    ["Track", "Трек"],
++    ["Position", "Должность"],
++    ["UserAccount", "Учётная запись"],
++  ] as const)("tags a %s with %s", (type, label) => {
+     expect(
+-      itemLink(
+-        itemOf("NoTrackForPosition", {
+-          type: "Employee",
+-          isReference: true,
+-          group: "NoTrack",
++      typeLabelOf({ ...withReason("EmptyUnit"), object: objectOf(type) }),
++    ).toBe(label);
++  });
++
++  it("tags no invitation, whose address says what it is", () => {
++    expect(
++      typeLabelOf({
++        ...withReason("InvitationNotAccepted"),
++        object: objectOf("UserAccount"),
++        group: "Invitations",
++      }),
++    ).toBeNull();
++  });
++
++  it("names a matrix with the last place of its context, a unit with its type, others as they are", () => {
++    expect(
++      objectTitle({ ...objectOf("Matrix"), context: ["Верх", "Низ"] }),
++    ).toMatch(/^Матрица «Имя».*Низ$/);
++    expect(objectTitle(objectOf("Matrix"))).toBe("Матрица «Имя»");
++    expect(objectTitle(objectOf("OrgUnit"))).toMatch(/^Подразделение «Имя»$/);
++    expect(objectTitle(objectOf("Track"))).toBe("Имя");
++  });
++
++  it("puts the version number, and the state it is in, under a matrix", () => {
++    const context = (kind: DeskKind, details: DeskReason["details"]) =>
++      objectContext(withReason(kind, { details }));
++
++    expect(context("VersionReturned", { number: 3, hasChanges: true })).toMatch(
++      /3.*Возвращена с правками/,
++    );
++    expect(context("VersionReturned", { number: 3 })).not.toMatch(/правками/);
++    expect(context("VersionNotSubmitted", { number: 3 })).toMatch(/Черновик/);
++    expect(
++      context("VersionAwaitsHeadApproval", { number: 3, person: PERSON }),
++    ).toContain(`автор ${SHORT_PERSON}`);
++    expect(context("MatrixUsesInactive", { number: 3 })).toMatch(
++      /^Опубликована, версия 3$/,
++    );
++    expect(context("VersionStuckAtHead", { number: 3 })).toMatch(/^Версия 3$/);
++    expect(context("VersionReturned", {})).toBeNull();
++  });
++
++  it("puts the units above a unit under it, and nothing when it has none", () => {
++    const unit = (context: string[] | undefined): DeskItem => ({
++      ...withReason("EmptyUnit"),
++      object: { ...objectOf("OrgUnit"), context },
++    });
++
++    expect(objectContext(unit(["Верх", "Низ"]))).toBe("Верх → Низ");
++    expect(objectContext(unit([]))).toBeNull();
++  });
++
++  it("puts the direction of a track and, for a draft, its author under it", () => {
++    const track = (kind: DeskKind, details?: DeskReason["details"]) =>
++      objectContext({
++        ...withReason(kind, { details }),
++        object: { ...objectOf("Track"), context: ["Область"] },
++      });
++
++    expect(track("TrackWithoutLevels")).toBe("Область");
++    expect(track("DraftAwaitsApproval", { person: PERSON })).toBe(
++      `Область · автор ${SHORT_PERSON}`,
++    );
++  });
++
++  it("says a draft of another kind is common and names its author", () => {
++    const entry = withReason("DraftAwaitsApproval", {
++      details: { person: PERSON },
++    });
++
++    expect(objectContext({ ...entry, object: objectOf("Scale") })).toBe(
++      `Общая · автор ${SHORT_PERSON}`,
++    );
++    expect(
++      objectContext({
++        ...withReason("UnusedScale"),
++        object: { ...objectOf("Scale"), context: ["А", "Б"] },
++      }),
++    ).toBe("А · Б");
++  });
++});
++
++describe("the reasons an item states (AC-5, AC-160)", () => {
++  it.each<[DeskReason["details"], string[]]>([
++    [{ hasChanges: true, hasComment: true }, ["правками", "комментарием"]],
++    [{ hasChanges: true }, ["правками"]],
++    [{ hasComment: true }, ["комментарием"]],
++    [{}, []],
++  ])("says what a returned version came back with: %j", (details, tokens) => {
++    const text = firstTextOf(withReason("VersionReturned", { details }));
++
++    for (const token of ["правками", "комментарием"]) {
++      expect(text.includes(token)).toBe(tokens.includes(token));
++    }
++  });
++
++  it("names the step a draft stopped at, and none when the step is not known", () => {
++    expect(
++      firstTextOf(withReason("VersionNotSubmitted", { details: { step: 2 } })),
++    ).toMatch(/шаге 2 «Компетенции»/);
++    expect(firstTextOf(withReason("VersionNotSubmitted"))).not.toMatch(/шаге/);
++  });
++
++  it("tells the approver which step is theirs", () => {
++    expect(firstTextOf(withReason("VersionAwaitsHeadApproval"))).toMatch(
++      /шаг 1/,
++    );
++    expect(firstTextOf(withReason("VersionAwaitsHrApproval"))).toMatch(/шаг 2/);
++  });
++
++  it("puts a single inactive entry in its own gender and several in the plural", () => {
++    const inactive = (entries: DeskObject[]) =>
++      firstTextOf(withReason("MatrixUsesInactive", { details: { entries } }));
++
++    expect(inactive([objectOf("Track")])).toMatch(/трек «Имя» неактивен$/);
++    expect(inactive([objectOf("Competency")])).toMatch(/неактивна$/);
++    expect(inactive([objectOf("Track"), objectOf("Competency")])).toMatch(
++      /неактивны$/,
++    );
++  });
++
++  it("lists the level changes of a track, each kind in the singular or the plural, and only those that happened", () => {
++    const levels = (...names: string[]) =>
++      names.map((name) => objectOf("Level", OTHER_ID, name));
++    const changed = (details: DeskReason["details"]) =>
++      firstTextOf(withReason("MatrixLevelsChanged", { details }));
++
++    const text = changed({
++      addedLevels: levels("Один"),
++      removedLevels: levels("Два", "Три"),
++      movedLevels: [],
++    });
++
++    expect(text).toContain("добавлен «Один»");
++    expect(text).toContain("удалены «Два», «Три»");
++    expect(text).not.toContain("переставлен");
++    expect(changed({ movedLevels: levels("Один") })).toContain("переставлен ");
++  });
++
++  it("gives every changed shared block its own line", () => {
++    const lines = textsOf(
++      withReason("MatrixSharedBlockChanged", {
++        details: {
++          entries: [
++            objectOf("Block", OTHER_ID, "А"),
++            objectOf("Block", "b", "Б"),
++          ],
++        },
++      }),
++    );
++
++    expect(lines).toHaveLength(2);
++    expect(lines[0]).toContain("«А»");
++    expect(lines[1]).toContain("«Б»");
++  });
++
++  it.each([
++    ["MatrixCompetencyChanged", /^Компетенция /, /^Компетенции /],
++    ["UnitWithoutMatrix", /действующий трек/, /действующие треки/],
++  ] as const)(
++    "%s: puts one entry in the singular and several in the plural",
++    (kind, one, many) => {
++      const named = (count: number) =>
++        firstTextOf(
++          withReason(kind, {
++            details: {
++              entries: Array.from({ length: count }, (_, index) =>
++                objectOf("Competency", `id-${index}`, `Имя ${index}`),
++              ),
++            },
++          }),
++        );
++
++      expect(named(1)).toMatch(one);
++      expect(named(2)).toMatch(many);
++      expect(named(2)).toContain("«Имя 0», «Имя 1»");
++    },
++  );
++
++  it("names whose move it is, and which step, for a version of the user's own", () => {
++    expect(
++      firstTextOf(
++        withReason("OwnVersionInApproval", {
++          details: { person: PERSON, step: 2 },
+         }),
+       ),
+-    ).toBe(deskPaths.myPlace);
++    ).toContain(`${SHORT_PERSON} (шаг 2)`);
++    expect(firstTextOf(withReason("OwnVersionInApproval"))).toMatch(
++      /ход у согласующего \(шаг 1\)/,
++    );
++    expect(firstTextOf(withReason("VersionStuckAtHead"))).not.toContain(
++      "ход у",
++    );
+     expect(
+-      itemLink(
+-        itemOf("LevelWithoutPosition", {
+-          type: "Track",
+-          isReference: true,
+-          group: "PositionLinksInfo",
++      firstTextOf(
++        withReason("VersionStuckAtHead", { details: { person: PERSON } }),
++      ),
++    ).toContain(`ход у ${SHORT_PERSON}`);
++  });
++
++  it("names the head of a unit without a matrix in full when the reader may see it", () => {
++    expect(
++      firstTextOf(
++        withReason("ResponsibleUnitWithoutMatrix", {
++          details: { person: PERSON },
+         }),
+       ),
+-    ).toBe(`/desk/track-positions/${OBJECT_ID}`);
++    ).toContain(`Руководитель: ${PERSON.name}`);
++    expect(
++      firstTextOf(withReason("ResponsibleUnitWithoutMatrix")),
++    ).not.toContain("Руководитель");
+   });
+ 
+-  it("leads a reference item of a group with a queue to the queue", () => {
++  it("adds to a unit without a head that only an administrator may assign one, when the reader is responsible", () => {
++    expect(firstTextOf(withReason("UnitWithoutHead"))).not.toMatch(
++      /администратор/,
++    );
++    expect(firstTextOf(withReason("ResponsibleUnitWithoutHead"))).toMatch(
++      /администратор/,
++    );
++  });
++
++  it.each([
++    ["Blocked", "заблокирована"],
++    ["Invited", "не приняла приглашение"],
++    ["NoHrRole", "«HR»"],
++    ["None", "не может действовать"],
++  ] as const)(
++    "says why the assigned HR of a unit cannot act: %s",
++    (accountState, token) => {
++      expect(
++        firstTextOf(withReason("UnitWithoutHr", { details: { accountState } })),
++      ).toContain(token);
++      expect(firstTextOf(withReason("UnitWithoutHr"))).not.toContain(":");
++    },
++  );
++
++  it("counts the employees of a unit with no positions, and a missing count as none", () => {
+     expect(
+-      itemLink(
+-        itemOf("UnusedCompetency", {
+-          type: "Competency",
+-          isReference: true,
+-          group: "UnusedCatalogEntries",
++      firstTextOf(
++        withReason("UnitWithoutPositions", { details: { employeeCount: 4 } }),
++      ),
++    ).toMatch(/: 4$/);
++    expect(firstTextOf(withReason("UnitWithoutPositions"))).toMatch(/: 0$/);
++  });
++
++  it.each([
++    ["HeadWithoutAccount", "нет учётной записи"],
++    ["HeadAccountInvited", "приглашение не принято"],
++    ["HeadAccountBlocked", "заблокирована"],
++  ] as const)(
++    "says what is wrong with the account of the head: %s",
++    (kind, token) => {
++      const text = firstTextOf(
++        withReason(kind, { details: { person: PERSON } }),
++      );
++
++      expect(text).toContain(SHORT_PERSON);
++      expect(text).toContain(token);
++    },
++  );
++
++  it("flags a draft track as too early to approve when it has no levels or a level with no position", () => {
++    const draft = (type: DeskObject["type"], details: DeskReason["details"]) =>
++      reasonLines(
++        withReason(
++          "DraftAwaitsApproval",
++          { details },
++          { object: objectOf(type) },
++        ),
++      );
++
++    expect(
++      draft("Track", { levelCount: 0 }).map((line) => line.isEarly),
++    ).toEqual([undefined, true]);
++    expect(
++      draft("Track", { levelCount: 2, entries: [objectOf("Level")] }).at(-1)
++        ?.isEarly,
++    ).toBe(true);
++    expect(draft("Track", { levelCount: 2 })).toHaveLength(1);
++    expect(draft("Scale", { levelCount: 0 })).toHaveLength(1);
++  });
++
++  it.each([
++    ["TrackWithoutLevels"],
++    ["TrackWithOneLevel"],
++    ["TrackWithoutPositions"],
++    ["PositionWithoutTrack"],
++  ] as const)(
++    "%s: points a reference item to the responsible HR, and an action item to nobody",
++    (kind) => {
++      const reference = withReason(
++        kind,
++        { details: { person: PERSON } },
++        { isReference: true },
++      );
++
++      expect(firstTextOf(reference)).toContain(
++        `ответственный HR: ${SHORT_PERSON}`,
++      );
++      expect(firstTextOf({ ...reference, isReference: false })).not.toContain(
++        "HR",
++      );
++      expect(
++        firstTextOf(withReason(kind, {}, { isReference: true })),
++      ).not.toContain("HR");
++    },
++  );
++
++  it("puts a level with no position in the singular and several in the plural", () => {
++    const levels = (count: number) =>
++      firstTextOf(
++        withReason("LevelWithoutPosition", {
++          details: {
++            entries: Array.from({ length: count }, (_, index) =>
++              objectOf("Level", `id-${index}`, `У ${index}`),
++            ),
++          },
++        }),
++      );
++
++    expect(levels(1)).toMatch(/^У уровня /);
++    expect(levels(2)).toMatch(/^У уровней /);
++  });
++
++  it("names the position and the unit that does not list it", () => {
++    expect(
++      firstTextOf(
++        withReason("PositionOutsideList", {
++          details: {
++            entries: [
++              objectOf("Position", "p", "Должность 1"),
++              objectOf("OrgUnit", "u", "Отдел 1"),
++            ],
++          },
+         }),
+       ),
+-    ).toBe(deskPaths.catalogCleanup);
++    ).toMatch(/«Должность 1».*«Отдел 1»/);
++  });
++
++  it("adds the missing-card line to an account without an employee only when it has the HR role", () => {
++    expect(textsOf(withReason("AccountWithoutEmployee"))).toHaveLength(1);
++    expect(
++      textsOf(
++        withReason("AccountWithoutEmployee", { details: { hasHrRole: true } }),
++      ),
++    ).toHaveLength(2);
++  });
++
++  it("dates the link in the sentence outside the invitation group, whose own column carries the term", () => {
++    const link = (
++      linkState: "Expired" | "ExpiringSoon" | "Revoked" | null,
++      group: DeskGroup,
++    ) =>
++      firstTextOf(
++        withReason(
++          "InvitationNotAccepted",
++          { occurredAt: NOON_UTC, details: { linkState } },
++          { group },
++        ),
++      );
++
++    expect(link("Expired", "UnitsToConnect")).toMatch(/истекла.*09.10.2026/);
++    expect(link("ExpiringSoon", "UnitsToConnect")).toMatch(
++      /истечёт.*09.10.2026/,
++    );
++    expect(link("Revoked", "UnitsToConnect")).toMatch(/отменена/);
++    expect(link("ExpiringSoon", "Invitations")).toMatch(/скоро истечёт/);
++    expect(link("ExpiringSoon", "Invitations")).not.toMatch(NOON_DATE);
++    expect(link("Expired", "Invitations")).not.toMatch(NOON_DATE);
++    expect(link(null, "Invitations")).toMatch(/истекла$/);
+   });
+ });
+diff --git a/web/src/features/users/UserModal.test.tsx b/web/src/features/users/UserModal.test.tsx
+new file mode 100644
+index 0000000..ebac539
+--- /dev/null
++++ b/web/src/features/users/UserModal.test.tsx
+@@ -0,0 +1,109 @@
++import { render, screen, waitFor, within } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi, problem } from "../../test/fakeApi";
++import { UserModal } from "./UserModal";
++
++const USER_ID = "user-1";
++const REFUSAL = "HR отвечает за подразделения: сначала передайте их другому";
++const SAVE_FAILED = "Не удалось сохранить пользователя";
++const HR_ACCOUNT = {
++  id: USER_ID,
++  email: "hr@test.local",
++  roles: ["Hr"],
++  isBlocked: false,
++  isInvited: false,
++  employeeId: null,
++  employeeName: null,
++  version: 4,
++  mailSent: null,
++};
++
++const noop = () => undefined;
++
++async function openAccount() {
++  fakeApi.on(`GET /api/v1/users/${USER_ID}`, () => Response.json(HR_ACCOUNT));
++  fakeApi.on("GET /api/v1/employees", () =>
++    Response.json({ items: [], total: 0, page: 1, pageSize: 20 }),
++  );
++  render(
++    <Providers>
++      <UserModal userId={USER_ID} onClose={noop} />
++    </Providers>,
++  );
++  return within(await screen.findByRole("dialog"));
++}
++
++async function removeHrRole(dialog: ReturnType<typeof within>) {
++  const tag = (await dialog.findByText("HR")).closest(
++    ".ant-select-selection-item",
++  );
++  await userEvent.click(
++    (tag as HTMLElement).querySelector(
++      ".ant-select-selection-item-remove",
++    ) as HTMLElement,
++  );
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("removing the HR role from an account (user-management AC-50, AC-51)", () => {
++  it("shows the refusal under the roles, keeps the roles as the administrator left them and adds no alert", async () => {
++    fakeApi.on(`PUT /api/v1/users/${USER_ID}`, () =>
++      problem(409, { detail: REFUSAL }),
++    );
++    const dialog = await openAccount();
++    await dialog.findByText("HR");
++
++    await removeHrRole(dialog);
++    await userEvent.click(dialog.getByRole("button", { name: "Сохранить" }));
++
++    expect(await dialog.findByText(REFUSAL)).toBeInTheDocument();
++    expect(dialog.queryByText("HR")).not.toBeInTheDocument();
++    expect(dialog.queryByText(SAVE_FAILED)).not.toBeInTheDocument();
++    expect(
++      await fakeApi.calls(`PUT /api/v1/users/${USER_ID}`)[0]?.json(),
++    ).toMatchObject({ roles: [] });
++  });
++
++  it("leaves a conflict that names a field to that field, and any other failure to the alert", async () => {
++    fakeApi.on(`PUT /api/v1/users/${USER_ID}`, () =>
++      problem(409, { detail: REFUSAL, errors: { email: ["E-mail занят"] } }),
++    );
++    const dialog = await openAccount();
++    await removeHrRole(dialog);
++
++    await userEvent.click(dialog.getByRole("button", { name: "Сохранить" }));
++
++    expect(await dialog.findByText("E-mail занят")).toBeInTheDocument();
++    expect(dialog.queryByText(REFUSAL)).not.toBeInTheDocument();
++    expect(dialog.queryByText(SAVE_FAILED)).not.toBeInTheDocument();
++    fakeApi.on(`PUT /api/v1/users/${USER_ID}`, () =>
++      problem(500, { detail: REFUSAL }),
++    );
++
++    await userEvent.click(dialog.getByRole("button", { name: "Сохранить" }));
++
++    expect(await dialog.findByText(SAVE_FAILED)).toBeInTheDocument();
++    expect(dialog.queryByText(REFUSAL)).not.toBeInTheDocument();
++  });
++
++  it("shows the same refusal as a general alert when the HR role is not being removed", async () => {
++    fakeApi.on(`PUT /api/v1/users/${USER_ID}`, () =>
++      problem(409, { detail: REFUSAL }),
++    );
++    const dialog = await openAccount();
++    await dialog.findByText("HR");
++
++    await userEvent.click(dialog.getByRole("button", { name: "Сохранить" }));
++
++    await waitFor(() =>
++      expect(fakeApi.calls(`PUT /api/v1/users/${USER_ID}`)).toHaveLength(1),
++    );
++    expect(await dialog.findByText(SAVE_FAILED)).toBeInTheDocument();
++  });
++});
+diff --git a/web/src/features/users/roles.test.ts b/web/src/features/users/roles.test.ts
+new file mode 100644
+index 0000000..38685ec
+--- /dev/null
++++ b/web/src/features/users/roles.test.ts
+@@ -0,0 +1,26 @@
++import { describe, expect, it } from "vitest";
++import { formatRecordedRoles, formatRoles, PLAIN_USER_LABEL } from "./roles";
++
++describe("the roles of an account in words (user-management AC-50)", () => {
++  it("lists the roles by name, in the order the form offers them, and an account with none as a plain user", () => {
++    expect(formatRoles(["Hr", "GlobalAdmin"])).toBe(
++      "Глобальный администратор, HR",
++    );
++    expect(formatRoles(["Hr"])).toBe("HR");
++    expect(formatRoles([])).toBe(PLAIN_USER_LABEL);
++  });
++
++  it("reads the roles of an audit record as the account list does", () => {
++    expect(formatRecordedRoles("GlobalAdmin,Hr")).toBe(
++      formatRoles(["GlobalAdmin", "Hr"]),
++    );
++    expect(formatRecordedRoles("Hr")).toBe("HR");
++    expect(formatRecordedRoles("User")).toBe(PLAIN_USER_LABEL);
++    expect(formatRecordedRoles("")).toBe(PLAIN_USER_LABEL);
++  });
++
++  it("leaves out a role name it does not know instead of printing it", () => {
++    expect(formatRecordedRoles("Hr,Removed")).toBe("HR");
++    expect(formatRecordedRoles("Removed")).toBe(PLAIN_USER_LABEL);
++  });
++});
+diff --git a/web/src/features/users/userMail.test.tsx b/web/src/features/users/userMail.test.tsx
+index 1184d36..f78c789 100644
+--- a/web/src/features/users/userMail.test.tsx
++++ b/web/src/features/users/userMail.test.tsx
+@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { deferred, fakeApi } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { UserListPage } from "./UserListPage";
+ import type { UserResponse } from "./usersApi";
+ 
+@@ -236,6 +236,28 @@ describe("row menu (AC-6, AC-9, AC-11)", () => {
+       screen.queryByText("Приглашение отправлено повторно"),
+     ).not.toBeInTheDocument();
+   });
++
++  it("tells the administrator a refused send, rereads the list to show the account as it is, and sends once", async () => {
++    fakeApi.on(`POST /api/v1/users/${INVITED.id}/resend-invitation`, () =>
++      problem(412),
++    );
++    await openUsers();
++    const user = userEvent.setup();
++
++    await openMenuOf(user, INVITED);
++    await user.click(await screen.findByRole("menuitem", { name: RESEND }));
++
++    expect(
++      await screen.findByText(/Данные изменены другим пользователем/),
++    ).toBeInTheDocument();
++    await waitFor(() =>
++      expect(fakeApi.calls("GET /api/v1/users")).toHaveLength(2),
++    );
++    expect(
++      fakeApi.calls(`POST /api/v1/users/${INVITED.id}/resend-invitation`),
++    ).toHaveLength(1);
++    expect(screen.queryByText(MAIL_NOT_SENT)).not.toBeInTheDocument();
++  });
+ });
+ 
+ describe("new account (AC-4, AC-11)", () => {

@@ -19,12 +19,21 @@ const UNIT: OrgUnitTreeNode = {
   employeeCount: 3,
 };
 
-const person = (name: string, isActive?: boolean) => ({
-  userId: name,
+const person = (name: string, canAct?: boolean) => ({
+  employeeId: name,
   name,
   orgUnitId: "sales",
   orgUnitName: "Продажи",
-  ...(isActive === undefined ? {} : { isActive }),
+  ...(canAct === undefined
+    ? {}
+    : {
+        account: {
+          id: name,
+          email: `${name}@test.local`,
+          state: canAct ? "Active" : "Blocked",
+          version: 1,
+        },
+      }),
 });
 
 function show(hr: { assigned: unknown; inherited: unknown }, isAdmin = false) {

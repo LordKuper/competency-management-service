@@ -1,5 +1,5 @@
 import { Outlet } from "react-router";
-import { useIsAdmin } from "../features/auth/useCurrentUser";
+import { useIsAdmin, useIsHr } from "../features/auth/useCurrentUser";
 import { NotFoundPage } from "./NotFoundPage";
 
 /**
@@ -8,4 +8,12 @@ import { NotFoundPage } from "./NotFoundPage";
  */
 export function AdminOnly() {
   return useIsAdmin() ? <Outlet /> : <NotFoundPage />;
+}
+
+/** Layout route for sections global administrators and HR use; others see the not-found page. */
+export function AdminOrHrOnly() {
+  const isAdmin = useIsAdmin();
+  const isHr = useIsHr();
+  const hasAccess = isAdmin || isHr;
+  return hasAccess ? <Outlet /> : <NotFoundPage />;
 }

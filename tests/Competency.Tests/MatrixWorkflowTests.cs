@@ -53,7 +53,7 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
 
         var submitted = (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
         var returned = (await kit.TransitAsync(org.DepartmentHead.Client, "return", new { comment = "Доработайте раздел" })).Expect(HttpStatusCode.OK);
-        var edited = (await kit.SaveAsync(org.TeamHead.Client, kit.Content("Другое"), await kit.ETagAsync())).Status;
+        var edited = (await kit.SaveAsync(org.TeamHead.Client, kit.Content(4), await kit.ETagAsync())).Status;
 
         var submittedRows = await org.Admin.AuditOfRequestAsync(submitted.RequestId!);
         var returnedRows = await org.Admin.AuditOfRequestAsync(returned.RequestId!);
@@ -62,7 +62,7 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         returnedRows.Single(row => row!["action"]!.GetValue<string>() == "MatrixVersion.Returned")!["reason"]!.GetValue<string>().Should().Be("Доработайте раздел");
         foreach (var row in submittedRows.Concat(returnedRows))
         {
-            row!.ToJsonString().Should().NotContain("expectedBehavior", "the document is not written to the journal");
+            row!.ToJsonString().Should().NotContain("requirements", "the document is not written to the journal");
         }
 
         edited.Should().Be(HttpStatusCode.Conflict, "the head cannot edit a returned version, only decide on it");
@@ -73,33 +73,22 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
     {
         var org = await fixture.OrgAsync();
         var empty = await MatrixKit.CreateAsync(org);
-        var noRequirements = await MatrixKit.CreateAsync(org);
         var badWeights = await MatrixKit.CreateAsync(org);
-        var noMinimum = await MatrixKit.CreateAsync(org);
         var inactive = await MatrixKit.CreateAsync(org);
 
-        var withoutRequirements = noRequirements.Content();
-        withoutRequirements["requirements"]!.AsArray().RemoveAt(3);
-        withoutRequirements["requirements"]!.AsArray().RemoveAt(2);
         var weights = badWeights.Content();
         weights["blockWeights"]![0]!["percent"] = 99.5m;
         weights["blockWeights"]!.AsArray().RemoveAt(1);
-        var minimum = noMinimum.Content();
-        minimum["requirements"]![0]!["requiredScore"] = null;
-        (await noRequirements.SaveAsync(org.TeamHead.Client, withoutRequirements)).Expect(HttpStatusCode.OK);
         (await badWeights.SaveAsync(org.TeamHead.Client, weights)).Expect(HttpStatusCode.OK);
-        (await noMinimum.SaveAsync(org.TeamHead.Client, minimum)).Expect(HttpStatusCode.OK);
         await inactive.PrepareAsync();
         (await org.Admin.PostAsync($"/api/v1/career/competencies/{inactive.Profile.Id}/deactivate", ifMatch: inactive.Profile.ETag)).Expect(HttpStatusCode.OK);
 
         var cases = new (MatrixKit Kit, string[] Problems)[]
         {
             (empty, ["В версии нет уровней"]),
-            (noRequirements, [$"У уровня «{noRequirements.Senior.Json!["name"]!.GetValue<string>()}» нет требований"]),
             (badWeights, [
                 $"Коэффициенты блоков уровня «{badWeights.Junior.Json!["name"]!.GetValue<string>()}» дают в сумме 99,5 %, нужно 100 %",
                 $"Коэффициенты блоков уровня «{badWeights.Senior.Json!["name"]!.GetValue<string>()}» дают в сумме 0 %, нужно 100 %"]),
-            (noMinimum, [$"У критической компетенции «{noMinimum.Critical.Json!["name"]!.GetValue<string>()}» не задан минимальный уровень"]),
             (inactive, [$"В версии есть неактивная запись «{inactive.Profile.Json!["name"]!.GetValue<string>()}»"]),
         };
 
@@ -200,9 +189,10 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var kit = await ReadyAsync(org);
-        (await org.Admin.PutAsync($"/api/v1/career/org-units/{org.Team.Id}/hr", new { userId = org.TeamHead.Id })).Expect(HttpStatusCode.NoContent);
+        var teamHead = await org.Admin.GrantHrRoleAsync(fixture.Host, org.TeamHead);
+        (await org.Admin.AssignHrAsync(org.Team.Id, teamHead.EmployeeId)).Expect(HttpStatusCode.NoContent);
 
-        var submitted = (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
+        var submitted = (await kit.TransitAsync(teamHead.Client, "submit")).Expect(HttpStatusCode.OK);
         var approved = (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
 
         submitted.Json!["step"]!.GetValue<string>().Should().Be("Superior", "the superior still decides");
@@ -216,9 +206,10 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var kit = await ReadyAsync(org);
         await BlockAsync(org, org.DepartmentHead, org.RootHead);
-        (await org.Admin.PutAsync($"/api/v1/career/org-units/{org.Team.Id}/hr", new { userId = org.TeamHead.Id })).Expect(HttpStatusCode.NoContent);
+        var teamHead = await org.Admin.GrantHrRoleAsync(fixture.Host, org.TeamHead);
+        (await org.Admin.AssignHrAsync(org.Team.Id, teamHead.EmployeeId)).Expect(HttpStatusCode.NoContent);
 
-        var submitted = (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
+        var submitted = (await kit.TransitAsync(teamHead.Client, "submit")).Expect(HttpStatusCode.OK);
 
         submitted.Json!["status"]!.GetValue<string>().Should().Be("Published");
         (await kit.DecisionsAsync()).Should().Equal("Submitted", "Skipped@Superior", "AutoApproved@Hr", "Published");
@@ -229,11 +220,12 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var kit = await ReadyAsync(org);
-        (await org.Admin.PutAsync($"/api/v1/career/org-units/{org.Team.Id}/hr", new { userId = org.DepartmentHead.Id })).Expect(HttpStatusCode.NoContent);
+        var departmentHead = await org.Admin.GrantHrRoleAsync(fixture.Host, org.DepartmentHead);
+        (await org.Admin.AssignHrAsync(org.Team.Id, departmentHead.EmployeeId)).Expect(HttpStatusCode.NoContent);
         (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
 
-        var first = (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
-        var second = (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
+        var first = (await kit.TransitAsync(departmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
+        var second = (await kit.TransitAsync(departmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
 
         first.Json!["step"]!.GetValue<string>().Should().Be("Hr");
         second.Json!["status"]!.GetValue<string>().Should().Be("Published");
@@ -271,7 +263,7 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var org = await fixture.OrgAsync();
         var kit = await ReadyAsync(org);
         (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
-        (await kit.SaveAsync(org.DepartmentHead.Client, kit.Content("Правка согласующего"))).Expect(HttpStatusCode.OK);
+        (await kit.SaveAsync(org.DepartmentHead.Client, kit.Content(4))).Expect(HttpStatusCode.OK);
         (await kit.TransitAsync(org.DepartmentHead.Client, "return", new { comment = (string?)null })).Expect(HttpStatusCode.OK);
 
         var revising = await kit.TransitAsync(org.TeamHead.Client, "accept-and-revise");
@@ -279,7 +271,7 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         revising.Status.Should().Be(HttpStatusCode.OK, revising.Body);
         revising.Json!["status"]!.GetValue<string>().Should().Be("Draft");
         revising.Json["step"].Should().BeNull();
-        revising.Json["content"]!["requirements"]![0]!["expectedBehavior"]!.GetValue<string>().Should().Be("Правка согласующего");
+        revising.Json["content"]!["requirements"]![2]!["requiredScore"]!.GetValue<int>().Should().Be(4);
         (await kit.DecisionsAsync()).Should().Equal("Submitted", "Returned@Superior", "AcceptedAndRevising@Superior");
         MatrixKit.Actions(revising).Should().BeEquivalentTo(["Edit", "Submit"]);
     }
@@ -307,7 +299,7 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var org = await fixture.OrgAsync();
         var kit = await ReadyAsync(org);
         (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
-        (await kit.SaveAsync(org.DepartmentHead.Client, kit.Content("Правка согласующего"))).Expect(HttpStatusCode.OK);
+        (await kit.SaveAsync(org.DepartmentHead.Client, kit.Content(4))).Expect(HttpStatusCode.OK);
 
         var approval = await kit.TransitAsync(org.DepartmentHead.Client, "approve");
         var returned = (await kit.TransitAsync(org.DepartmentHead.Client, "return", new { comment = (string?)null })).Expect(HttpStatusCode.OK);
@@ -324,9 +316,9 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         diff["number"]!.GetValue<int>().Should().Be(2);
         diff["previousNumber"]!.GetValue<int>().Should().Be(1);
         diff["changes"]!.AsArray().Select(change => $"{change!["kind"]!.GetValue<string>()}/{change["type"]!.GetValue<string>()}")
-            .Should().Equal("Requirement/Changed", "Requirement/Changed", "Requirement/Changed", "Requirement/Changed");
-        diff["before"]!["requirements"]![0]!["expectedBehavior"]!.GetValue<string>().Should().Be("Делает самостоятельно");
-        diff["after"]!["requirements"]![0]!["expectedBehavior"]!.GetValue<string>().Should().Be("Правка согласующего");
+            .Should().Equal("Requirement/Changed");
+        diff["before"]!["requirements"]![2]!["requiredScore"]!.GetValue<int>().Should().Be(3);
+        diff["after"]!["requirements"]![2]!["requiredScore"]!.GetValue<int>().Should().Be(4);
     }
 
     [Fact]
@@ -335,7 +327,7 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var org = await fixture.OrgAsync();
         var kit = await ReadyAsync(org);
         (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
-        (await kit.SaveAsync(org.DepartmentHead.Client, kit.Content("Правка согласующего"))).Expect(HttpStatusCode.OK);
+        (await kit.SaveAsync(org.DepartmentHead.Client, kit.Content(4))).Expect(HttpStatusCode.OK);
         (await kit.TransitAsync(org.DepartmentHead.Client, "return", new { comment = (string?)null })).Expect(HttpStatusCode.OK);
 
         var accepted = (await kit.TransitAsync(org.TeamHead.Client, "accept-changes")).Expect(HttpStatusCode.OK);
@@ -343,7 +335,7 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
 
         accepted.Json!["status"]!.GetValue<string>().Should().Be("OnReview");
         accepted.Json["step"]!.GetValue<string>().Should().Be("Hr");
-        published.Json!["content"]!["requirements"]![0]!["expectedBehavior"]!.GetValue<string>().Should().Be("Правка согласующего");
+        published.Json!["content"]!["requirements"]![2]!["requiredScore"]!.GetValue<int>().Should().Be(4);
         (await kit.DecisionsAsync()).Should().Equal("Submitted", "Returned@Superior", "AcceptedChanges@Superior", "Approved@Hr", "Published");
     }
 
@@ -354,13 +346,13 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var kit = await ReadyAsync(org);
         (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
         (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
-        (await kit.SaveAsync(org.Hr.Client, kit.Content("Правка HR"))).Expect(HttpStatusCode.OK);
+        (await kit.SaveAsync(org.Hr.Client, kit.Content(4))).Expect(HttpStatusCode.OK);
         (await kit.TransitAsync(org.Hr.Client, "return", new { comment = "Поправил" })).Expect(HttpStatusCode.OK);
 
         var accepted = (await kit.TransitAsync(org.TeamHead.Client, "accept-changes")).Expect(HttpStatusCode.OK);
 
         accepted.Json!["status"]!.GetValue<string>().Should().Be("Published");
-        accepted.Json["content"]!["requirements"]![0]!["expectedBehavior"]!.GetValue<string>().Should().Be("Правка HR");
+        accepted.Json["content"]!["requirements"]![2]!["requiredScore"]!.GetValue<int>().Should().Be(4);
         (await kit.DecisionsAsync()).Should().Equal("Submitted", "Approved@Superior", "Returned@Hr", "AcceptedChanges@Hr", "Published");
     }
 
@@ -370,7 +362,7 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var org = await fixture.OrgAsync();
         var kit = await ReadyAsync(org);
         (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
-        (await kit.SaveAsync(org.DepartmentHead.Client, kit.Content("Правка согласующего"))).Expect(HttpStatusCode.OK);
+        (await kit.SaveAsync(org.DepartmentHead.Client, kit.Content(4))).Expect(HttpStatusCode.OK);
         (await kit.TransitAsync(org.DepartmentHead.Client, "return", new { comment = (string?)null })).Expect(HttpStatusCode.OK);
         (await kit.TransitAsync(org.TeamHead.Client, "accept-changes")).Expect(HttpStatusCode.OK);
         (await kit.TransitAsync(org.Hr.Client, "return", new { comment = "Нужны примеры" })).Expect(HttpStatusCode.OK);
@@ -392,13 +384,13 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var org = await fixture.OrgAsync();
         var kit = await ReadyAsync(org);
         (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
-        (await kit.SaveAsync(org.DepartmentHead.Client, kit.Content("Правка согласующего"))).Expect(HttpStatusCode.OK);
+        (await kit.SaveAsync(org.DepartmentHead.Client, kit.Content(4))).Expect(HttpStatusCode.OK);
         (await kit.TransitAsync(org.DepartmentHead.Client, "return", new { comment = (string?)null })).Expect(HttpStatusCode.OK);
 
         var back = (await kit.TransitAsync(org.TeamHead.Client, "rollback-changes")).Expect(HttpStatusCode.OK);
 
         back.Json!["status"]!.GetValue<string>().Should().Be("Draft");
-        back.Json["content"]!["requirements"]![0]!["expectedBehavior"]!.GetValue<string>().Should().Be("Делает самостоятельно");
+        back.Json["content"]!["requirements"]![2]!["requiredScore"]!.GetValue<int>().Should().Be(3);
         (await kit.DecisionsAsync()).Should().Equal("Submitted", "Returned@Superior", "RolledBack@Superior");
     }
 
@@ -427,15 +419,15 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var kit = await ReadyAsync(org);
         (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
         var incomplete = kit.Content();
-        incomplete["requirements"]!.AsArray().RemoveAt(3);
-        incomplete["requirements"]!.AsArray().RemoveAt(2);
+        incomplete["competencies"]!.AsArray().Clear();
+        incomplete["requirements"]!.AsArray().Clear();
         (await kit.SaveAsync(org.DepartmentHead.Client, incomplete)).Expect(HttpStatusCode.OK);
 
         var refused = await kit.TransitAsync(org.DepartmentHead.Client, "return", new { comment = "Убрал" });
 
         refused.Status.Should().Be(HttpStatusCode.Conflict);
         refused.Json!["errors"]!["content"]!.AsArray().Select(problem => problem!.GetValue<string>())
-            .Should().Equal([$"У уровня «{kit.Senior.Json!["name"]!.GetValue<string>()}» нет требований"]);
+            .Should().Equal(["В матрице нет компетенций"]);
         (await kit.StatusAsync()).Should().Be("OnReview");
     }
 
@@ -457,7 +449,11 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
 
         second.Json["number"]!.GetValue<int>().Should().Be(2);
         second.Json["status"]!.GetValue<string>().Should().Be("Draft");
-        second.Json["content"]!.ToJsonString().Should().Be(kit.Content().ToJsonString(), "the new version copies the published document");
+        foreach (var part in new[] { "levels", "competencies", "blockWeights", "requirements" })
+        {
+            second.Json["content"]![part]!.ToJsonString().Should().Be(kit.Content()[part]!.ToJsonString(), $"the new version copies the published {part}");
+        }
+
         third.Status.Should().Be(HttpStatusCode.Conflict);
         third.Json!["detail"]!.GetValue<string>().Should().Be("У матрицы уже есть версия в работе");
         byHr.Status.Should().Be(HttpStatusCode.Forbidden);
@@ -486,7 +482,7 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
 
         foreach (var id in new[] { published, next })
         {
-            var edit = await kit.SaveAsync(org.TeamHead.Client, kit.Content("Задним числом"), versionId: id);
+            var edit = await kit.SaveAsync(org.TeamHead.Client, kit.Content(4), versionId: id);
             var submit = await kit.TransitAsync(org.TeamHead.Client, "submit", versionId: id);
             var approve = await kit.TransitAsync(org.Hr.Client, "approve", versionId: id);
 
@@ -497,7 +493,7 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
             }
         }
 
-        (await kit.GetVersionAsync(org.Admin, published)).Json!["content"]!["requirements"]![0]!["expectedBehavior"]!.GetValue<string>().Should().Be("Делает самостоятельно");
+        (await kit.GetVersionAsync(org.Admin, published)).Json!["content"]!["requirements"]![2]!["requiredScore"]!.GetValue<int>().Should().Be(3);
     }
 
     [Fact]
@@ -509,7 +505,7 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var published = kit.VersionId;
         var oldName = kit.Junior.Json!["name"]!.GetValue<string>();
         var newName = Scenarios.Unique("Переименованный");
-        (await org.Admin.PutAsync($"/api/v1/career/levels/{kit.Junior.Id}", new { name = newName }, kit.Junior.ETag)).Expect(HttpStatusCode.OK);
+        (await org.Admin.PutAsync($"/api/v1/career/levels/{kit.Junior.Id}", new { name = newName }, (await org.Admin.GetAsync($"/api/v1/career/levels/{kit.Junior.Id}")).ETag)).Expect(HttpStatusCode.OK);
         (await org.Admin.PutAsync(
             $"/api/v1/career/tracks/{kit.Track.Id}",
             new { name = Scenarios.Unique("ТрекНовый") },
@@ -556,7 +552,8 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var refused = await kit.TransitAsync(org.Hr.Client, "approve");
 
         refused.Status.Should().Be(HttpStatusCode.Conflict, refused.Body);
-        refused.Json!["detail"]!.GetValue<string>().Should().Be($"Запись с таким названием уже есть: «{scaleName}»");
+        refused.Json!["detail"]!.GetValue<string>().Should().Be("Версию нельзя опубликовать");
+        refused.Json["blockers"]!.AsArray().Select(blocker => blocker!["name"]!.GetValue<string>()).Should().Contain(scaleName);
         (await kit.StatusAsync()).Should().Be("OnReview");
         (await org.Admin.GetAsync($"/api/v1/career/scales/{scale.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Draft");
     }
@@ -566,14 +563,11 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var kit = await MatrixKit.CreateAsync(org, competencyAuthor: org.TeamHead.Client);
-        var categoryId = await org.Admin.CategoryIdAsync();
         var body = new
         {
             name = kit.Critical.Json!["name"]!.GetValue<string>(),
             description = (string?)null,
-            categoryId,
             directionId = (Guid?)null,
-            type = "Profile",
             scaleId = Guid.Parse(CareerScenarios.BaseScaleId),
         };
         (await org.TeamHead.Client.PutAsync($"/api/v1/career/competencies/{kit.Profile.Id}", body, kit.Profile.ETag)).Expect(HttpStatusCode.OK);
@@ -587,65 +581,19 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
     }
 
     [Fact]
-    public async Task Ac9_TheDraftCategoryOfAUsedCompetency_IsReadByTheRouteWhileInWork_AndMadeActiveAndJournaledByPublication()
-    {
-        var org = await fixture.OrgAsync();
-        var kit = await MatrixKit.CreateAsync(org, competencyAuthor: org.TeamHead.Client);
-        var category = await UseDraftCategoryAsync(org, kit);
-        await kit.PrepareAsync();
-
-        foreach (var reader in new[] { org.TeamHead, org.DepartmentHead, org.Hr })
-        {
-            (await reader.Client.GetAsync($"/api/v1/career/categories/{category.Id}")).Status.Should().Be(HttpStatusCode.OK, reader.User.Email);
-        }
-
-        foreach (var stranger in new[] { org.Plain, org.SiblingHead, org.RootHead })
-        {
-            (await stranger.Client.GetAsync($"/api/v1/career/categories/{category.Id}")).Status.Should().Be(HttpStatusCode.NotFound, stranger.User.Email);
-        }
-
-        (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
-        (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
-        var published = (await kit.TransitAsync(org.Hr.Client, "approve")).Expect(HttpStatusCode.OK);
-
-        (await org.Plain.Client.GetAsync($"/api/v1/career/categories/{category.Id}")).Expect(HttpStatusCode.OK).Json!["status"]!.GetValue<string>().Should().Be("Active");
-        (await org.Admin.AuditOfRequestAsync(published.RequestId!)).Actions().Count(action => action == "CompetencyCategory.Approved").Should().Be(1);
-    }
-
-    [Fact]
-    public async Task Ac9_Publication_IsRefusedWhenTheDraftCategoryOfAUsedCompetencyWouldTakeANameAnActiveCategoryHasNow()
-    {
-        var org = await fixture.OrgAsync();
-        var kit = await MatrixKit.CreateAsync(org, competencyAuthor: org.TeamHead.Client);
-        var category = await UseDraftCategoryAsync(org, kit);
-        var categoryName = category.Json!["name"]!.GetValue<string>();
-        await kit.PrepareAsync();
-        (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
-        (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
-        (await org.Admin.PostAsync("/api/v1/career/categories", new { name = categoryName.ToUpperInvariant() })).Expect(HttpStatusCode.Created);
-
-        var refused = await kit.TransitAsync(org.Hr.Client, "approve");
-
-        refused.Status.Should().Be(HttpStatusCode.Conflict, refused.Body);
-        refused.Json!["detail"]!.GetValue<string>().Should().Be($"Запись с таким названием уже есть: «{categoryName}»");
-        (await kit.StatusAsync()).Should().Be("OnReview");
-        (await org.Admin.GetAsync($"/api/v1/career/categories/{category.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Draft");
-    }
-
-    [Fact]
     public async Task Ac16_Actions_AreOpenOnlyToTheParticipantWhoseTurnItIs()
     {
         var org = await fixture.OrgAsync();
         var kit = await ReadyAsync(org);
 
         var draftByApprover = await kit.TransitAsync(org.DepartmentHead.Client, "submit");
-        var draftEditByApprover = await kit.SaveAsync(org.DepartmentHead.Client, kit.Content("Чужая"));
+        var draftEditByApprover = await kit.SaveAsync(org.DepartmentHead.Client, kit.Content(4));
         var draftByAdmin = await kit.TransitAsync(org.Admin, "submit");
         (await kit.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
         var approveByHr = await kit.TransitAsync(org.Hr.Client, "approve");
         var approveByAuthor = await kit.TransitAsync(org.TeamHead.Client, "approve");
         var approveByAdmin = await kit.TransitAsync(org.Admin, "approve");
-        var editByAuthor = await kit.SaveAsync(org.TeamHead.Client, kit.Content("Свои"));
+        var editByAuthor = await kit.SaveAsync(org.TeamHead.Client, kit.Content(4));
         var approveByStranger = await kit.TransitAsync(org.Plain.Client, "approve");
         var approveByOtherHr = await kit.TransitAsync(org.SiblingHr.Client, "approve");
 
@@ -666,7 +614,7 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var org = await fixture.OrgAsync();
         var kit = await ReadyAsync(org);
         var opened = await kit.ETagAsync();
-        (await kit.SaveAsync(org.TeamHead.Client, kit.Content("Свежая"), opened)).Expect(HttpStatusCode.OK);
+        (await kit.SaveAsync(org.TeamHead.Client, kit.Content(4), opened)).Expect(HttpStatusCode.OK);
 
         var stale = await kit.TransitAsync(org.TeamHead.Client, "submit", etag: opened);
 
@@ -682,8 +630,8 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var kit = await MatrixKit.CreateAsync(org);
         var opened = await kit.ETagAsync();
         var incomplete = kit.Content();
-        incomplete["requirements"]!.AsArray().RemoveAt(3);
-        incomplete["requirements"]!.AsArray().RemoveAt(2);
+        incomplete["competencies"]!.AsArray().Clear();
+        incomplete["requirements"]!.AsArray().Clear();
         (await kit.SaveAsync(org.TeamHead.Client, incomplete, opened)).Expect(HttpStatusCode.OK);
 
         var stale = await kit.TransitAsync(org.TeamHead.Client, "submit", etag: opened);
@@ -750,11 +698,11 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
         await kit.PublishAsync();
-        (await org.Admin.PostAsync($"/api/v1/career/tracks/{kit.Track.Id}/deactivate", ifMatch: kit.Track.ETag)).Expect(HttpStatusCode.OK);
+        (await org.Admin.PostAsync($"/api/v1/career/tracks/{kit.Track.Id}/deactivate", ifMatch: (await org.Admin.GetAsync($"/api/v1/career/tracks/{kit.Track.Id}")).ETag)).Expect(HttpStatusCode.OK);
         (await org.Admin.PostAsync($"/api/v1/career/directions/{kit.Direction.Id}/deactivate", ifMatch: kit.Direction.ETag)).Expect(HttpStatusCode.OK);
 
         var next = await org.TeamHead.Client.PostAsync($"/api/v1/career/matrices/{kit.MatrixId}/versions");
-        var another = await org.TeamHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Team.Id, directionId = kit.Direction.Id, trackId = kit.Track.Id, scaleId = CareerScenarios.BaseScaleId });
+        var another = await org.TeamHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Team.Id, directionId = kit.Direction.Id, trackId = kit.Track.Id });
 
         next.Status.Should().Be(HttpStatusCode.Created, next.Body);
         another.Status.Should().Be(HttpStatusCode.BadRequest, "an inactive track or direction is closed to new matrices only");
@@ -762,25 +710,6 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
     }
 
     private async Task<MatrixKit> ReadyAsync(CareerOrg org) => await (await MatrixKit.CreateAsync(org)).PrepareAsync();
-
-    /// <summary>
-    /// Moves the kit's critical competency, a draft of the team's head, to a new draft category of the same head, and returns the category.
-    /// </summary>
-    private static async Task<ApiResponse> UseDraftCategoryAsync(CareerOrg org, MatrixKit kit)
-    {
-        var category = (await org.TeamHead.Client.PostAsync("/api/v1/career/categories", new { name = Scenarios.Unique("Своя категория") })).Expect(HttpStatusCode.Created);
-        var body = new
-        {
-            name = kit.Critical.Json!["name"]!.GetValue<string>(),
-            description = (string?)null,
-            categoryId = category.Id,
-            directionId = kit.Direction.Id,
-            type = "Critical",
-            scaleId = Guid.Parse(CareerScenarios.BaseScaleId),
-        };
-        (await org.TeamHead.Client.PutAsync($"/api/v1/career/competencies/{kit.Critical.Id}", body, kit.Critical.ETag)).Expect(HttpStatusCode.OK);
-        return category;
-    }
 
     private static async Task BlockAsync(CareerOrg org, params Member[] members)
     {

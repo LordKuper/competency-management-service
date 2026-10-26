@@ -1,9 +1,11 @@
 ---
 name: web-cdp-real-backend-smoke-facts
-description: Driving the real SPA through headless Chrome (CDP) against a scratch PostgreSQL and API - antd DOM ids, animation waits, real mouse events for selects, proxy and CSRF facts, shell quoting trap, harmless dev warnings
+description: impl-test / tester only - driving the real SPA through headless Chrome (CDP) against a scratch PostgreSQL and API - antd DOM ids, animation waits, real mouse events for selects, proxy and CSRF facts, shell quoting trap, harmless dev warnings
 metadata:
   type: project
 ---
+
+**impl-test / tester only.** Impl runs no real-backend API or UI smoke and takes no screenshots; it verifies by build, lint, `ef migrations has-pending-model-changes` and `check:api` (custom-coding-rules "Verification depth in impl").
 
 Method for a UI smoke of the whole stack (scratch `postgres:18.6-trixie` container on 127.0.0.1:35432, Release API on 127.0.0.1:35080 from `src/Competency.Api`, scratch Vite on 5900 with `API_PROXY_TARGET=http://127.0.0.1:35080`, Chrome driven from a node script). Facts that cost a failed run:
 
@@ -16,4 +18,4 @@ Method for a UI smoke of the whole stack (scratch `postgres:18.6-trixie` contain
 - `docker rm -fv <container>` frees the scratch container's anonymous volume; an anonymous volume that predates the run belongs to someone else, leave it.
 
 **Why:** each was found by a failed or misleading scripted run.
-**How to apply:** any later browser-level check of `web/` against the real API (see also [[web-org-card-hierarchy-facts]], [[scratch-process-control]], [[vs-debug-build-lock-and-release-config]], [[docker-spike-recipe]]).
+**How to apply:** a browser-level check of `web/` against the real API when dispatched as impl-test / tester, never in impl (see also [[web-org-card-hierarchy-facts]], [[scratch-process-control]], [[vs-debug-build-lock-and-release-config]], [[docker-spike-recipe]]).

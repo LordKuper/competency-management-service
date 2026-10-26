@@ -1,0 +1,1285 @@
+diff --git a/.claude/agent-memory/asd-dev-critical/project_web-ui-test-and-form-gotchas.md b/.claude/agent-memory/asd-dev-critical/project_web-ui-test-and-form-gotchas.md
+index 84fe30a..3b67314 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_web-ui-test-and-form-gotchas.md
++++ b/.claude/agent-memory/asd-dev-critical/project_web-ui-test-and-form-gotchas.md
+@@ -14,6 +14,7 @@ Facts that cost a round while building the SPA shell and the account screens, no
+ - `npm run lint` cannot take arguments (they go to the typecheck step). For Biome format/import-order diffs run `npx biome ci --colors=off --error-on-warnings <paths>` inside `web/` and hand-apply the shown diff; its import sort puts `Avatar, theme as antdTheme, Button` (not by the alias).
+ - A Vite dev server started for a curl check: find the PID with `netstat -ano | grep :<port>` and stop it with `taskkill //PID <pid> //F //T`.
+ - antd 6.6.5 Select: the top-level `searchValue`, `onSearch`, `filterOption` and `optionFilterProp` are deprecated in `@rc-component/select`; pass them in the `showSearch` object (`showSearch={{ filterOption: false, onSearch }}` for server search). Under `noUncheckedIndexedAccess`, `bytes[6] & 0x0f` on a `Uint8Array` fails the typecheck; set bytes with `.map((byte, index) => ...)`.
++- Web tests mock API responses with untyped `Response.json({...})`, so `tsc` does not catch a new required response field missing from a fixture; at run time it is `undefined` and arithmetic on it is `NaN` (`NaN === 0` and `NaN > 0` both false). After adding a contract field, list in the report which fixtures impl-test must extend.
+ 
+ **Why:** each was found only by running the throwaway scenarios or the linter.
+ 
+diff --git a/.claude/agent-memory/asd-tester-critical/MEMORY.md b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+index 2adcf46..efa4bf2 100644
+--- a/.claude/agent-memory/asd-tester-critical/MEMORY.md
++++ b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+@@ -1,4 +1,4 @@
+ - [Fail-first and `none` honesty](feedback_fail-first-and-none-honesty.md) — transcribe the first-failing assertion, never justify `none` with "it's prose", never assert a qualifier where the substance is assertable
+ - [Mutation runs trip the hash ledger](project_mutation-runs-trip-the-hash-ledger.md) — editing a managed_paths file to prove a mutation also fails upstream_hashes; expected noise
+ - [Testability envelope](project_testability-envelope.md) — what is testable here, honest `none` decisions, mutation and fixture traps, and the §7 in-body-comment ban.
+-- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/antd Select and pager/filter-wiring web traps, web pre-fix copy and mutation runner, fake fetch, forcing a 5xx, class-shared org, antd disabled-context locks, container connection limit (53300), guard tests vs fail-first, draft-read, cascade-right, hidden-blocker and HR-superior arrangements
++- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/antd Select and pager/filter-wiring web traps, web pre-fix copy and mutation runner, fake fetch, forcing a 5xx, class-shared org, antd disabled-context locks, container connection limit (53300), guard tests vs fail-first, draft-read, cascade-right, hidden-blocker, HR-superior and unlisted-draft arrangements, desk-page web tests
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index 6726f97..43c82ee 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -1,6 +1,6 @@
+ ---
+ name: competency-test-harness
+-description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate, migration data-transfer tests, multi-save atomicity by trigger, throwaway Postgres for seed scripts, the shared container's connection limit, guard tests versus fail-first, reusable arrangements for draft-entry reads, cascade rights, hidden publication blockers and an HR-role superior approver
++description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate, migration data-transfer tests, multi-save atomicity by trigger, throwaway Postgres for seed scripts, the shared container's connection limit, guard tests versus fail-first, reusable arrangements for draft-entry reads, cascade rights, hidden publication blockers, an HR-role superior approver, unlisted drafts of a publication list and desk-page web tests
+ metadata:
+   type: project
+ ---
+@@ -75,3 +75,6 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Arrangements worth reusing: `MatrixKit`'s track is a draft (the admin creates it, nothing approves it), so the superior approver's read of it is testable without extra setup, and the matrix direction is always active (a matrix is created only on an active one), so a draft direction never reaches an approval route. A block written by the head above for the matrix unit is a draft; its read by the unit's head is the head-visible case. A scoped draft block outside the responsible HR's units: assign an HR on the team itself (units = the team), grant the team head the HR role after the head made a draft competency, let that head create the block for the department with the competency in it, and flip the responsible HR's roles between two identical accept requests as the control (409 NoRight, then 200).
+ - A position linked to a draft track of one unit, listed on the department's list, shows the track name to that unit's head and hides it from a sibling head (refusal text of the position matrix and `linkedTrack` of `matrix-positions`); two blocker kinds in one publication preview (a draft direction whose name an active one took, plus a level with no position) exercise the per-type cache of the visibility filter.
+ - Hidden blocker of a publication list: a matrix version's plan holds every draft level of its draft track, whether the version content names it or not. A level takes its track's status, and two draft levels of one name by different authors are both allowed on creation and both flagged `NameTaken` at publication (the plan flips every entry to active while it checks names). So the team head creates a level named like the admin's `Junior` in upper case, outside the content: the superior approver names the one in the content and gets `moreCount` 1 for the other, the responsible HR and the administrator get both. Preview is `GET matrix-versions/{id}/publication`; the refusal of a publishing step needs the responsible HR as author: grant the team head the HR role, `AssignHrAsync(team)`, create the kit with `author:` that member's client, submit, and the department head's approve answers 409. An HR role with no assignment (`GrantHrRoleAsync` on the department head) is the superior approver who is an HR outside the unit; `org.SiblingHr` is the HR with no route, for the control.
++- Hidden draft of a publication list, as the superior approver reads it: the responsible HR (team head granted the HR role, assigned to the team) authors the kit and adds a second draft level to the kit's track outside the version document, linked to a position and uniquely named so no blocker arises; after `submit` the department head's `approve` is a publishing action. Department head: that level unlisted, `hiddenEntryCount` 1; responsible HR and administrator: all four entries, 0; one `cascadeTag` for all three. An entry preview (`GET /{segment}/{id}/publication`) can never hide anything, because whoever may approve the root reads every draft of its cascade (unit-less drafts as any HR, levels as the track unit's HR): pin only `hiddenEntryCount = 0` there, and record the hidden case as unreachable rather than inventing an arrangement. "Nowhere in the body" is asserted by walking the parsed JSON for strings (`JsonNode.ToJsonString` escapes Cyrillic); a missing field reads as a sentinel (-1) so the pre-fix copy names an assertion instead of throwing, and `AssertionScope` lists every one.
++- Desk scenario pages (`DraftsQueuePage`, `ReviewPage`, `BuilderSubmitStep`) mount in vitest with `Providers`, `createMemoryRouter` and `fakeApi` on a handful of routes; unhandled routes answer 599 and only their own sections fail. A `MatrixVersion` fixture needs `entries.levels`, `entries.competencies` and `entries.scales` arrays or `useVersionNames` throws on `.map`. A disabled button exists before its data: `findByRole` on its plain name resolves early, so wait for the text that arrives with the data. A component whose prop was renamed by the fix goes red on the pre-fix copy with a TypeError, not on behaviour, so its proof is mutation; say so in the plan.
++- Close a `suite` timing op right after its run (`--close`): closing after authoring stretches it over work that is not the run.
+diff --git a/openapi/openapi.json b/openapi/openapi.json
+index 5797f32..5224736 100644
+--- a/openapi/openapi.json
++++ b/openapi/openapi.json
+@@ -14894,6 +14894,7 @@
+         "required": [
+           "publishingActions",
+           "entries",
++          "hiddenEntryCount",
+           "blockers",
+           "moreCount",
+           "cascadeTag"
+@@ -14912,6 +14913,10 @@
+               "$ref": "#/components/schemas/PublicationEntry"
+             }
+           },
++          "hiddenEntryCount": {
++            "type": "integer",
++            "format": "int32"
++          },
+           "blockers": {
+             "type": "array",
+             "items": {
+@@ -16627,6 +16632,7 @@
+       "PublicationPreviewResponse": {
+         "required": [
+           "entries",
++          "hiddenEntryCount",
+           "blockers",
+           "moreCount",
+           "cascadeTag"
+@@ -16639,6 +16645,10 @@
+               "$ref": "#/components/schemas/PublicationEntry"
+             }
+           },
++          "hiddenEntryCount": {
++            "type": "integer",
++            "format": "int32"
++          },
+           "blockers": {
+             "type": "array",
+             "items": {
+diff --git a/src/Competency.CareerFramework/MatrixPublicationResponse.cs b/src/Competency.CareerFramework/MatrixPublicationResponse.cs
+index 3fb0aff..b6f949f 100644
+--- a/src/Competency.CareerFramework/MatrixPublicationResponse.cs
++++ b/src/Competency.CareerFramework/MatrixPublicationResponse.cs
+@@ -4,13 +4,15 @@ namespace Competency.CareerFramework;
+ /// What publishing a matrix version would make active now, which of the user's actions would publish it, and what keeps it from being published.
+ /// </summary>
+ /// <param name="PublishingActions">The actions open to the user now that would publish the version; the client does not work them out itself.</param>
+-/// <param name="Entries">The drafts that become active with the version.</param>
++/// <param name="Entries">The drafts that become active with the version the user can read.</param>
++/// <param name="HiddenEntryCount">The number of drafts that become active with the version the user cannot read, so not listed.</param>
+ /// <param name="Blockers">At most five entries in the way the user can read, judged by the right of the responsible HR of the matrix unit.</param>
+ /// <param name="MoreCount">The number of entries in the way not listed, the ones the user cannot read included.</param>
+ /// <param name="CascadeTag">The tag a publishing action sends back in <c>?cascade=</c> to publish exactly this list.</param>
+ internal sealed record MatrixPublicationResponse(
+     IReadOnlyList<MatrixAction> PublishingActions,
+     IReadOnlyList<PublicationEntry> Entries,
++    int HiddenEntryCount,
+     IReadOnlyList<PublicationBlocker> Blockers,
+     int MoreCount,
+     string CascadeTag);
+diff --git a/src/Competency.CareerFramework/PublicationPlan.cs b/src/Competency.CareerFramework/PublicationPlan.cs
+index fb1127e..59a116b 100644
+--- a/src/Competency.CareerFramework/PublicationPlan.cs
++++ b/src/Competency.CareerFramework/PublicationPlan.cs
+@@ -34,7 +34,7 @@ internal sealed record PublicationPlan(
+     /// <returns>A 409 response.</returns>
+     public ProblemHttpResult Refuse(string detail, CatalogViewer reader)
+     {
+-        var visible = Visible(reader);
++        var visible = Visible(reader.SeesLoaded());
+         return PublicationRefusal.Refuse(detail, visible, Blockers.Count - visible.Count);
+     }
+ 
+@@ -45,9 +45,12 @@ internal sealed record PublicationPlan(
+     /// <returns>The preview.</returns>
+     public PublicationPreviewResponse Describe(CatalogViewer reader)
+     {
+-        var visible = Visible(reader);
++        var canSee = reader.SeesLoaded();
++        var visible = Visible(canSee);
++        var entries = DescribeEntries(canSee);
+         return new PublicationPreviewResponse(
+-            DescribeEntries(),
++            entries,
++            Entries.Count - entries.Count,
+             [.. visible.Take(PublicationRefusal.ShownLimit)],
+             Blockers.Count - Math.Min(visible.Count, PublicationRefusal.ShownLimit),
+             Tag);
+@@ -62,15 +65,13 @@ internal sealed record PublicationPlan(
+     public MatrixPublicationResponse Describe(IReadOnlyList<MatrixAction> publishingActions, CatalogViewer reader)
+     {
+         var preview = Describe(reader);
+-        return new MatrixPublicationResponse(publishingActions, preview.Entries, preview.Blockers, preview.MoreCount, preview.CascadeTag);
++        return new MatrixPublicationResponse(
++            publishingActions, preview.Entries, preview.HiddenEntryCount, preview.Blockers, preview.MoreCount, preview.CascadeTag);
+     }
+ 
+-    private List<PublicationEntry> DescribeEntries() =>
+-        [.. Entries.Select(entry => new PublicationEntry(CatalogPublication.KindOf(entry), entry.Id, entry.Name, CatalogPublication.ContextOf(entry)))];
++    private List<PublicationEntry> DescribeEntries(Func<CatalogEntry, bool> canSee) =>
++        [.. Entries.Where(canSee).Select(entry => new PublicationEntry(CatalogPublication.KindOf(entry), entry.Id, entry.Name, CatalogPublication.ContextOf(entry)))];
+ 
+-    private List<PublicationBlocker> Visible(CatalogViewer reader)
+-    {
+-        var canSee = reader.SeesLoaded();
+-        return [.. Blockers.Where(blocker => canSee(blocker.Entry)).Select(blocker => blocker.Blocker)];
+-    }
++    private List<PublicationBlocker> Visible(Func<CatalogEntry, bool> canSee) =>
++        [.. Blockers.Where(blocker => canSee(blocker.Entry)).Select(blocker => blocker.Blocker)];
+ }
+diff --git a/src/Competency.CareerFramework/PublicationPreviewResponse.cs b/src/Competency.CareerFramework/PublicationPreviewResponse.cs
+index 76afe80..9c5bc3d 100644
+--- a/src/Competency.CareerFramework/PublicationPreviewResponse.cs
++++ b/src/Competency.CareerFramework/PublicationPreviewResponse.cs
+@@ -3,12 +3,14 @@ namespace Competency.CareerFramework;
+ /// <summary>
+ /// What approving or reactivating a catalogue entry would publish now, and what keeps it from being published.
+ /// </summary>
+-/// <param name="Entries">The drafts that become active with the entry.</param>
++/// <param name="Entries">The drafts that become active with the entry the user can read.</param>
++/// <param name="HiddenEntryCount">The number of drafts that become active with the entry the user cannot read, so not listed.</param>
+ /// <param name="Blockers">At most five entries in the way the user can read.</param>
+ /// <param name="MoreCount">The number of entries in the way not listed, the ones the user cannot read included.</param>
+ /// <param name="CascadeTag">The tag the action sends back in <c>?cascade=</c> to publish exactly this list.</param>
+ internal sealed record PublicationPreviewResponse(
+     IReadOnlyList<PublicationEntry> Entries,
++    int HiddenEntryCount,
+     IReadOnlyList<PublicationBlocker> Blockers,
+     int MoreCount,
+     string CascadeTag);
+diff --git a/tests/Competency.Tests/PublicationCascadeTests.cs b/tests/Competency.Tests/PublicationCascadeTests.cs
+index f1751fc..2e41513 100644
+--- a/tests/Competency.Tests/PublicationCascadeTests.cs
++++ b/tests/Competency.Tests/PublicationCascadeTests.cs
+@@ -1,6 +1,7 @@
+ using System.Net;
+ using System.Text.Json.Nodes;
+ using AwesomeAssertions;
++using AwesomeAssertions.Execution;
+ using Competency.Tests.Infrastructure;
+ using Xunit;
+ 
+@@ -14,6 +15,7 @@ namespace Competency.Tests;
+ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<CareerHost>
+ {
+     private const string DraftReference = "Выбрана черновая запись — сначала утвердите её";
++    private const int FieldAbsent = -1;
+ 
+     [Fact]
+     public async Task Ac107_Ac110_Ac113_Ac114_ApprovingACompetency_PublishesTheDraftsItReferstoOnTheTagOfTheListShown_EachJournaledOnItsOwn()
+@@ -35,6 +37,7 @@ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<
+         Entries(preview).Should().BeEquivalentTo([("Direction", direction.Id), ("Scale", scale.Id)]);
+         preview["blockers"]!.AsArray().Should().BeEmpty();
+         preview["moreCount"]!.GetValue<int>().Should().Be(0);
++        HiddenEntryCount(preview).Should().Be(0, "a keeper reads every draft the approval publishes");
+         foreach (var refused in new[] { withoutTag, wrongTag, staleTag })
+         {
+             refused.Status.Should().Be(HttpStatusCode.PreconditionFailed);
+@@ -271,6 +274,69 @@ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<
+         refused.Json!["moreCount"]!.GetValue<int>().Should().Be(1);
+     }
+ 
++    [Fact]
++    public async Task Ac110_Ac112_APreviewOfAVersion_ListsOnlyTheDraftsItsReaderMayRead_CountsTheRest_AndCarriesOneTagForTheWholeList()
++    {
++        var hidden = await HiddenLevelAsync();
++        var kit = hidden.Kit;
++
++        var bySuperior = (await hidden.Org.DepartmentHead.Client.GetAsync(hidden.PreviewPath)).Expect(HttpStatusCode.OK).Json!;
++        var byResponsible = (await hidden.Responsible.Client.GetAsync(hidden.PreviewPath)).Expect(HttpStatusCode.OK).Json!;
++        var byAdmin = (await hidden.Org.Admin.GetAsync(hidden.PreviewPath)).Expect(HttpStatusCode.OK).Json!;
++
++        using var scope = new AssertionScope();
++        (string Kind, Guid Id)[] whole = [("Track", kit.Track.Id), ("Level", kit.Junior.Id), ("Level", kit.Senior.Id), ("Level", hidden.Outside.Id)];
++        foreach (var full in new[] { byResponsible, byAdmin })
++        {
++            Entries(full).Should().BeEquivalentTo(whole);
++            HiddenEntryCount(full).Should().Be(0, "whoever may read every draft sees them all");
++            full["cascadeTag"]!.GetValue<string>().Should().Be(bySuperior["cascadeTag"]!.GetValue<string>(), "one tag stands for the whole list, whoever reads it");
++        }
++
++        Entries(bySuperior).Should().BeEquivalentTo(whole.Where(entry => entry.Id != hidden.Outside.Id));
++        HiddenEntryCount(bySuperior).Should().Be(1, "the level outside the version is counted but not listed");
++        Strings(bySuperior).Where(text => text.Contains(hidden.Outside.Id.ToString()) || text.Contains(hidden.Name)).Should()
++            .BeEmpty("nothing of a draft the reader may not read is shown");
++        Blockers(bySuperior).Should().BeEmpty();
++        bySuperior["moreCount"]!.GetValue<int>().Should().Be(0);
++        bySuperior["publishingActions"]!.AsArray().Select(action => action!.GetValue<string>()).Should().Equal("Approve");
++    }
++
++    [Fact]
++    public async Task Ac112_ApprovingUnderThePreviewOfAReaderWhoCannotReadADraft_PublishesTheWholeList_AndIsRefusedOnceThatDraftChanged()
++    {
++        var hidden = await HiddenLevelAsync();
++        var kit = hidden.Kit;
++        var superior = hidden.Org.DepartmentHead.Client;
++        var approve = $"/api/v1/career/matrix-versions/{kit.VersionId}/approve";
++
++        var shown = (await superior.GetAsync(hidden.PreviewPath)).Expect(HttpStatusCode.OK).Json!;
++        (await hidden.Responsible.Client.PutAsync(
++            $"/api/v1/career/levels/{hidden.Outside.Id}",
++            new { name = Scenarios.Unique("Переименован") },
++            hidden.Outside.ETag)).Expect(HttpStatusCode.OK);
++        var stale = await superior.PostAsync(
++            $"{approve}?cascade={Uri.EscapeDataString(shown["cascadeTag"]!.GetValue<string>())}",
++            ifMatch: await kit.ETagAsync());
++        var afterStale = (await kit.StatusAsync(), await StatusAsync(hidden.Org.Admin, "levels", hidden.Outside.Id));
++        var fresh = (await superior.GetAsync(hidden.PreviewPath)).Expect(HttpStatusCode.OK).Json!;
++        var published = await superior.PostAsync(
++            $"{approve}?cascade={Uri.EscapeDataString(fresh["cascadeTag"]!.GetValue<string>())}",
++            ifMatch: await kit.ETagAsync());
++
++        using var scope = new AssertionScope();
++        stale.Status.Should().Be(HttpStatusCode.PreconditionFailed, "a change of the draft the reader cannot read changes the list they confirmed");
++        stale.Json!["publication"]!.GetValue<string>().Should().Be(hidden.PreviewPath);
++        afterStale.Should().Be(("OnReview", "Draft"), "a refused publication changes nothing");
++        HiddenEntryCount(fresh).Should().Be(1);
++        fresh["cascadeTag"]!.GetValue<string>().Should().NotBe(shown["cascadeTag"]!.GetValue<string>(), "the version of the unlisted draft is part of the tag");
++        published.Status.Should().Be(HttpStatusCode.OK, published.Body);
++        published.Json!["status"]!.GetValue<string>().Should().Be("Published");
++        (await StatusAsync(hidden.Org.Admin, "levels", hidden.Outside.Id)).Should().Be("Active", "the unlisted draft is published with the rest");
++        (await hidden.Org.Admin.AuditOfRequestAsync(published.RequestId!)).Actions().Where(action => action.EndsWith(".Approved", StringComparison.Ordinal))
++            .Should().BeEquivalentTo(["MatrixVersion.Approved", "CareerTrack.Approved", "CareerLevel.Approved", "CareerLevel.Approved", "CareerLevel.Approved"]);
++    }
++
+     private static async Task AddAdministratorRoleAsync(ApiClient admin, Member member)
+     {
+         var current = await admin.GetUserAsync(member.Id);
+@@ -302,6 +368,32 @@ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<
+         [.. (await client.GetAsync($"/api/v1/career/competencies/{competencyId}/versions")).Expect(HttpStatusCode.OK).Json!.AsArray()
+             .Select(version => (version!["number"]!.GetValue<int>(), version["status"]!.GetValue<string>()))];
+ 
++    /// <summary>
++    /// A version of the team's matrix in the superior approver's step, whose track holds a draft level outside the version's document, so the
++    /// version publishes it though its superior approver cannot read it. The responsible HR is the author, so the superior's approval publishes.
++    /// </summary>
++    private async Task<HiddenLevel> HiddenLevelAsync()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var responsible = await org.Admin.GrantHrRoleAsync(fixture.Host, org.TeamHead);
++        (await org.Admin.AssignHrAsync(org.Team.Id, responsible.EmployeeId)).Expect(HttpStatusCode.NoContent);
++        var kit = await (await MatrixKit.CreateAsync(org, author: responsible.Client)).PrepareAsync();
++        var name = Scenarios.Unique("Скрытый");
++        var outside = await org.Admin.LinkToNewPositionAsync(await responsible.Client.MakeLevelAsync(kit.Track.Id, name), org.Team.Id);
++        (await kit.TransitAsync(responsible.Client, "submit")).Expect(HttpStatusCode.OK);
++        return new HiddenLevel(org, kit, responsible, outside, name);
++    }
++
++    private static int HiddenEntryCount(JsonNode preview) => preview["hiddenEntryCount"]?.GetValue<int>() ?? FieldAbsent;
++
++    private static IEnumerable<string> Strings(JsonNode? node) => node switch
++    {
++        JsonValue value when value.TryGetValue<string>(out var text) => [text],
++        JsonObject properties => properties.SelectMany(property => Strings(property.Value)),
++        JsonArray items => items.SelectMany(Strings),
++        _ => [],
++    };
++
+     private static string[] Blockers(JsonNode body) =>
+         [.. body["blockers"]!.AsArray().Select(blocker => $"{blocker!["kind"]}/{blocker["reason"]}/{blocker["id"]}")];
+ 
+@@ -321,4 +413,9 @@ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<
+             new { name = Scenarios.Unique("Компетенция"), description = (string?)null, directionId = (Guid?)direction.Id, scaleId = (Guid?)scale.Id })).Expect(HttpStatusCode.Created);
+         return (direction, scale, competency);
+     }
++
++    private sealed record HiddenLevel(CareerOrg Org, MatrixKit Kit, Member Responsible, ApiResponse Outside, string Name)
++    {
++        public string PreviewPath => $"/api/v1/career/matrix-versions/{Kit.VersionId}/publication";
++    }
+ }
+diff --git a/web/src/api/schema.d.ts b/web/src/api/schema.d.ts
+index 420fa9f..b14d334 100644
+--- a/web/src/api/schema.d.ts
++++ b/web/src/api/schema.d.ts
+@@ -2460,6 +2460,8 @@ export interface components {
+         MatrixPublicationResponse: {
+             publishingActions: components["schemas"]["MatrixAction"][];
+             entries: components["schemas"]["PublicationEntry"][];
++            /** Format: int32 */
++            hiddenEntryCount: number;
+             blockers: components["schemas"]["PublicationBlocker"][];
+             /** Format: int32 */
+             moreCount: number;
+@@ -2926,6 +2928,8 @@ export interface components {
+         PublicationEntryKind: "Direction" | "Track" | "Level" | "Competency" | "Scale" | "Block";
+         PublicationPreviewResponse: {
+             entries: components["schemas"]["PublicationEntry"][];
++            /** Format: int32 */
++            hiddenEntryCount: number;
+             blockers: components["schemas"]["PublicationBlocker"][];
+             /** Format: int32 */
+             moreCount: number;
+diff --git a/web/src/features/career/catalogueTables.test.tsx b/web/src/features/career/catalogueTables.test.tsx
+index 0ddf149..bb6ca0b 100644
+--- a/web/src/features/career/catalogueTables.test.tsx
++++ b/web/src/features/career/catalogueTables.test.tsx
+@@ -236,6 +236,7 @@ describe("an action taken from a list row carries the tag of the row the user sa
+     fakeApi.on("GET /api/v1/career/directions/draft/publication", () =>
+       Response.json({
+         entries: [],
++        hiddenEntryCount: 0,
+         blockers: [],
+         moreCount: 0,
+         cascadeTag: "tag",
+diff --git a/web/src/features/career/usePublishEntry.test.tsx b/web/src/features/career/usePublishEntry.test.tsx
+index 7964980..4779442 100644
+--- a/web/src/features/career/usePublishEntry.test.tsx
++++ b/web/src/features/career/usePublishEntry.test.tsx
+@@ -21,12 +21,14 @@ function preview(
+   cascadeTag: string,
+   options: {
+     entries?: readonly object[];
++    hiddenEntryCount?: number;
+     blockers?: readonly object[];
+     moreCount?: number;
+   } = {},
+ ) {
+   return Response.json({
+     entries: options.entries ?? [],
++    hiddenEntryCount: options.hiddenEntryCount ?? 0,
+     blockers: options.blockers ?? [],
+     moreCount: options.moreCount ?? 0,
+     cascadeTag,
+@@ -138,6 +140,61 @@ describe("approving an entry under the list of what is published with it (AC-110
+     ).toBeInTheDocument();
+   });
+ 
++  it("names the drafts the user may read, counts the ones they may not, and approves under the tag of the whole list", async () => {
++    fakeApi.on(PREVIEW_ROUTE, () =>
++      preview("tag-whole", { entries: [DIRECTION], hiddenEntryCount: 2 }),
++    );
++    fakeApi.on(APPROVE_ROUTE, () => Response.json({ id: "c1" }));
++    const user = renderHarness();
++
++    await user.click(screen.getByRole("button", { name: "утвердить" }));
++
++    const dialog = await confirmDialog();
++    expect(dialog).toHaveTextContent(
++      "Вместе с ней станут действующими 3 черновые записи",
++    );
++    expect(dialog).toHaveTextContent("Область Разработка");
++    expect(dialog).toHaveTextContent("и ещё 2 черновые записи");
++    await user.click(
++      screen.getByRole("button", { name: "Утвердить вместе с 3 записями" }),
++    );
++    await waitFor(() => expect(fakeApi.calls(APPROVE_ROUTE)).toHaveLength(1));
++    expect(queryOf(fakeApi.calls(APPROVE_ROUTE)[0]).get("cascade")).toBe(
++      "tag-whole",
++    );
++    expect(
++      await screen.findByText(/вместе с ней опубликовано записей: 3/),
++    ).toBeInTheDocument();
++  });
++
++  it("asks before approving when every draft of the list is one the user may not read, and sends nothing until they confirm", async () => {
++    fakeApi.on(PREVIEW_ROUTE, () =>
++      preview("tag-unseen", { hiddenEntryCount: 1 }),
++    );
++    fakeApi.on(APPROVE_ROUTE, () => Response.json({ id: "c1" }));
++    const user = renderHarness();
++
++    await user.click(screen.getByRole("button", { name: "утвердить" }));
++
++    const dialog = await confirmDialog();
++    expect(dialog).toHaveTextContent(
++      "Вместе с ней станут действующими 1 черновая запись",
++    );
++    expect(dialog).toHaveTextContent("и ещё 1 черновая запись");
++    expect(dialog.querySelector("ul")).toBeNull();
++    expect(fakeApi.calls(APPROVE_ROUTE)).toHaveLength(0);
++    await user.click(
++      screen.getByRole("button", { name: "Утвердить вместе с 1 записью" }),
++    );
++    await waitFor(() => expect(fakeApi.calls(APPROVE_ROUTE)).toHaveLength(1));
++    expect(queryOf(fakeApi.calls(APPROVE_ROUTE)[0]).get("cascade")).toBe(
++      "tag-unseen",
++    );
++    expect(
++      await screen.findByText(/вместе с ней опубликовано записей: 1/),
++    ).toBeInTheDocument();
++  });
++
+   it("shows the new list, saying it changed, when the server refuses the tag, and does not retry by itself", async () => {
+     let reads = 0;
+     fakeApi.on(PREVIEW_ROUTE, () => {
+diff --git a/web/src/features/career/usePublishEntry.tsx b/web/src/features/career/usePublishEntry.tsx
+index a32e635..0088dbe 100644
+--- a/web/src/features/career/usePublishEntry.tsx
++++ b/web/src/features/career/usePublishEntry.tsx
+@@ -78,6 +78,22 @@ export function recordsInstrumental(count: number): string {
+   return `${count} ${PLURAL.select(count) === "one" ? "записью" : "записями"}`;
+ }
+ 
++/** The listed drafts of a publication and how many more the user may not read, as an entry's and a version's preview carry them. */
++export type PublishedDrafts = Pick<
++  PublicationPreview,
++  "entries" | "hiddenEntryCount"
++>;
++
++/** How many drafts a publication makes active, the unlisted ones the user may not read included. */
++export function publishedCount(drafts: PublishedDrafts): number {
++  return drafts.entries.length + drafts.hiddenEntryCount;
++}
++
++/** «и ещё 2 черновые записи»: the drafts of a publication the user may not read, named by number only. */
++export function hiddenDraftsText(count: number): string {
++  return `и ещё ${draftRecords(count)}`;
++}
++
+ /** What is published together with an entry, and why it may not be. */
+ export interface PublishTarget {
+   segment: PublishableSegment;
+@@ -110,16 +126,21 @@ export function ChangedNoticeAlert({ notice }: { notice: ChangedNotice }) {
+   );
+ }
+ 
+-function EntryList({ entries }: { entries: readonly PublicationEntry[] }) {
++function EntryList({ entries, hiddenEntryCount }: PublishedDrafts) {
+   return (
+-    <ul>
+-      {entries.map((item) => (
+-        <li key={`${item.kind}:${item.id}`}>
+-          {`${KIND_LABELS[item.kind]} ${item.name}`}
+-          {item.context ? ` (${item.context})` : ""}
+-        </li>
+-      ))}
+-    </ul>
++    <>
++      {entries.length > 0 && (
++        <ul>
++          {entries.map((item) => (
++            <li key={`${item.kind}:${item.id}`}>
++              {`${KIND_LABELS[item.kind]} ${item.name}`}
++              {item.context ? ` (${item.context})` : ""}
++            </li>
++          ))}
++        </ul>
++      )}
++      {hiddenEntryCount > 0 && <p>{hiddenDraftsText(hiddenEntryCount)}</p>}
++    </>
+   );
+ }
+ 
+@@ -137,14 +158,14 @@ function ConfirmContent({
+   notice,
+   isOffer,
+ }: ConfirmContentProps) {
+-  const { entries } = preview;
++  const count = publishedCount(preview);
+   const lead = isOffer
+     ? "Запись ссылается на черновые записи, поэтому сразу действующей не стала. "
+     : "";
+   return (
+     <Space orientation="vertical" size="small" style={{ display: "flex" }}>
+       {notice && <ChangedNoticeAlert notice={notice} />}
+-      {entries.length === 0 ? (
++      {count === 0 ? (
+         <p>
+           {action === "approve"
+             ? "Запись станет действующей."
+@@ -154,10 +175,13 @@ function ConfirmContent({
+         <>
+           <p>
+             {isOffer
+-              ? `${lead}Утвердить её можно сейчас: вместе с ней станут действующими ${draftRecords(entries.length)}:`
+-              : `${action === "approve" ? "Запись станет действующей" : "Запись вернётся в работу"}. Вместе с ней станут действующими ${draftRecords(entries.length)}:`}
++              ? `${lead}Утвердить её можно сейчас: вместе с ней станут действующими ${draftRecords(count)}:`
++              : `${action === "approve" ? "Запись станет действующей" : "Запись вернётся в работу"}. Вместе с ней станут действующими ${draftRecords(count)}:`}
+           </p>
+-          <EntryList entries={entries} />
++          <EntryList
++            entries={preview.entries}
++            hiddenEntryCount={preview.hiddenEntryCount}
++          />
+           <p>Всё публикуется сразу или не публикуется ничего.</p>
+           {isOffer && (
+             <p>
+@@ -321,7 +345,7 @@ export function usePublishEntry() {
+     action: PublishAction,
+     preview: PublicationPreview,
+   ): Promise<ChangedNotice | undefined> {
+-    const count = preview.entries.length;
++    const count = publishedCount(preview);
+     try {
+       await changeCatalogStatus(
+         target.segment,
+@@ -365,7 +389,7 @@ export function usePublishEntry() {
+     notice?: ChangedNotice,
+     isOffer?: boolean,
+   ) {
+-    const count = preview.entries.length;
++    const count = publishedCount(preview);
+     const verb = action === "approve" ? "Утвердить" : "Вернуть в работу";
+     modal.confirm({
+       title: isOffer
+@@ -409,7 +433,7 @@ export function usePublishEntry() {
+         );
+         return;
+       }
+-      if (preview.entries.length === 0 && !notice) {
++      if (publishedCount(preview) === 0 && !notice) {
+         const again = await execute(target, action, preview);
+         if (again) await publish(target, action, again);
+         return;
+diff --git a/web/src/features/desk/BuilderSubmitStep.test.tsx b/web/src/features/desk/BuilderSubmitStep.test.tsx
+new file mode 100644
+index 0000000..0b72148
+--- /dev/null
++++ b/web/src/features/desk/BuilderSubmitStep.test.tsx
+@@ -0,0 +1,108 @@
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi } from "../../test/fakeApi";
++import type { MatrixVersion } from "../career/matrixApi";
++import { BuilderSubmitStep } from "./BuilderSubmitStep";
++import { deskPaths } from "./deskTexts";
++
++const SUBMIT_ROUTE = "POST /api/v1/career/matrix-versions/v1/submit";
++const VERSION = {
++  id: "v1",
++  matrixId: "m1",
++  number: 2,
++  version: 3,
++  authorName: "Иванов Иван Иванович",
++  content: {
++    levels: [],
++    competencies: [],
++    sharedBlocks: [],
++    blockWeights: [],
++    requirements: [],
++  },
++  entries: { track: null, position: null, sharedBlocks: [] },
++  superiorApprover: null,
++  hr: null,
++  actions: ["Submit"],
++} as unknown as MatrixVersion;
++
++function serve(hiddenEntryCount: number) {
++  fakeApi.on("GET /api/v1/career/matrices/m1", () =>
++    Response.json({ id: "m1", orgUnitName: "Команда" }),
++  );
++  fakeApi.on("GET /api/v1/career/matrix-versions/v1/completeness", () =>
++    Response.json({ problems: [] }),
++  );
++  fakeApi.on("GET /api/v1/career/matrix-versions/v1/publication", () =>
++    Response.json({
++      publishingActions: ["Submit"],
++      entries: [],
++      hiddenEntryCount,
++      blockers: [],
++      moreCount: 0,
++      cascadeTag: "tag-submit",
++    }),
++  );
++  fakeApi.on(SUBMIT_ROUTE, () =>
++    Response.json({ id: "v1", version: 4, status: "Published" }),
++  );
++}
++
++function renderStep() {
++  render(
++    <Providers>
++      <RouterProvider
++        router={createMemoryRouter([
++          {
++            path: "/",
++            element: <BuilderSubmitStep version={VERSION} onBack={() => {}} />,
++          },
++          { path: deskPaths.desk, element: <p>рабочий стол</p> },
++        ])}
++      />
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("sending a version whose publication carries drafts the user may not read (AC-52, AC-110, AC-112)", () => {
++  it("says the version goes with them, counts them under the list, and sends under the tag of the whole list", async () => {
++    serve(3);
++    const user = renderStep();
++
++    expect(
++      await screen.findByText(/и вместе с ней 3 черновые записи/),
++    ).toBeInTheDocument();
++
++    expect(screen.getByText("и ещё 3 черновые записи")).toBeInTheDocument();
++    await user.click(
++      screen.getByRole("button", { name: "Отправить и опубликовать" }),
++    );
++    await waitFor(() => expect(fakeApi.calls(SUBMIT_ROUTE)).toHaveLength(1));
++    const request = fakeApi.calls(SUBMIT_ROUTE)[0];
++    expect(
++      new URL(request?.url ?? "http://x").searchParams.get("cascade"),
++    ).toBe("tag-submit");
++    expect(
++      await screen.findByText(
++        "Версия опубликована; вместе с ней опубликовано записей: 3",
++      ),
++    ).toBeInTheDocument();
++  });
++
++  it("says no drafts go with the version when none does, and lists none", async () => {
++    serve(0);
++    renderStep();
++
++    expect(await screen.findByText(/без черновых записей/)).toBeInTheDocument();
++
++    expect(screen.queryByText(/и ещё/)).toBeNull();
++  });
++});
+diff --git a/web/src/features/desk/BuilderSubmitStep.tsx b/web/src/features/desk/BuilderSubmitStep.tsx
+index 979b1de..43f9f42 100644
+--- a/web/src/features/desk/BuilderSubmitStep.tsx
++++ b/web/src/features/desk/BuilderSubmitStep.tsx
+@@ -12,7 +12,7 @@ import {
+ import { sharedBlocksOf } from "../career/matrixContent";
+ import { versionCompetencyIds } from "../career/matrixGroups";
+ import { SKIPPED_NOTE } from "../career/matrixLabels";
+-import { draftRecords } from "../career/usePublishEntry";
++import { draftRecords, publishedCount } from "../career/usePublishEntry";
+ import { CascadeTable } from "./CascadeTable";
+ import { CompletenessBlock } from "./CompletenessBlock";
+ import { DecisionError } from "./DecisionError";
+@@ -83,6 +83,7 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
+   }
+ 
+   if (problems === null || !preview) return <Skeleton active />;
++  const cascadeCount = publishedCount(preview);
+ 
+   return (
+     <Flex vertical gap="middle">
+@@ -123,14 +124,12 @@ export function BuilderSubmitStep({ version, onBack }: BuilderSubmitStepProps) {
+             type="warning"
+             lead="Отправка опубликует версию"
+             text={
+-              preview.entries.length > 0
+-                ? `и вместе с ней ${draftRecords(preview.entries.length)}: вы — ответственный HR этого подразделения, шаг 2 согласуется автоматически.`
++              cascadeCount > 0
++                ? `и вместе с ней ${draftRecords(cascadeCount)}: вы — ответственный HR этого подразделения, шаг 2 согласуется автоматически.`
+                 : "без черновых записей: вы — ответственный HR этого подразделения, шаг 2 согласуется автоматически."
+             }
+           />
+-          {preview.entries.length > 0 && (
+-            <CascadeTable entries={preview.entries} />
+-          )}
++          {cascadeCount > 0 && <CascadeTable drafts={preview} />}
+         </Flex>
+       ) : (
+         <section>
+diff --git a/web/src/features/desk/CascadeTable.test.tsx b/web/src/features/desk/CascadeTable.test.tsx
+new file mode 100644
+index 0000000..0efceb2
+--- /dev/null
++++ b/web/src/features/desk/CascadeTable.test.tsx
+@@ -0,0 +1,52 @@
++import { render, screen } from "@testing-library/react";
++import { describe, expect, it } from "vitest";
++import type { PublicationEntry } from "../career/catalogApi";
++import { CascadeTable } from "./CascadeTable";
++
++const DIRECTION: PublicationEntry = {
++  kind: "Direction",
++  id: "d1",
++  name: "Разработка",
++  context: null,
++};
++const LEVEL: PublicationEntry = {
++  kind: "Level",
++  id: "l1",
++  name: "Старший",
++  context: "Бэкенд",
++};
++const HIDDEN_TEXT = /и ещё/;
++
++describe("the records a decision publishes with its object (AC-110, AC-65, AC-77)", () => {
++  it("names each record the user may read with its kind and state, and says nothing of others when there are none", () => {
++    render(
++      <CascadeTable
++        drafts={{ entries: [DIRECTION, LEVEL], hiddenEntryCount: 0 }}
++      />,
++    );
++
++    expect(screen.getAllByRole("row")).toHaveLength(3);
++    expect(screen.getByText("Область")).toBeInTheDocument();
++    expect(screen.getByText("Разработка")).toBeInTheDocument();
++    expect(screen.getByText("Старший (Бэкенд)")).toBeInTheDocument();
++    expect(screen.getAllByText("Черновик")).toHaveLength(2);
++    expect(screen.queryByText(HIDDEN_TEXT)).toBeNull();
++  });
++
++  it("counts the records the user may not read under the table, by number only", () => {
++    render(
++      <CascadeTable drafts={{ entries: [DIRECTION], hiddenEntryCount: 2 }} />,
++    );
++
++    expect(screen.getAllByRole("row")).toHaveLength(2);
++    expect(screen.getByText("Разработка")).toBeInTheDocument();
++    expect(screen.getByText("и ещё 2 черновые записи")).toBeInTheDocument();
++  });
++
++  it("shows no table at all when the user may read none of the records, only their number", () => {
++    render(<CascadeTable drafts={{ entries: [], hiddenEntryCount: 5 }} />);
++
++    expect(screen.queryByRole("table")).toBeNull();
++    expect(screen.getByText("и ещё 5 черновых записей")).toBeInTheDocument();
++  });
++});
+diff --git a/web/src/features/desk/CascadeTable.tsx b/web/src/features/desk/CascadeTable.tsx
+index dcfcbba..a9c790f 100644
+--- a/web/src/features/desk/CascadeTable.tsx
++++ b/web/src/features/desk/CascadeTable.tsx
+@@ -1,6 +1,10 @@
+ import { Table, type TableColumnsType } from "antd";
+ import type { PublicationEntry } from "../career/catalogApi";
+-import { KIND_LABELS } from "../career/usePublishEntry";
++import {
++  hiddenDraftsText,
++  KIND_LABELS,
++  type PublishedDrafts,
++} from "../career/usePublishEntry";
+ 
+ const COLUMNS: TableColumnsType<PublicationEntry> = [
+   {
+@@ -19,19 +23,29 @@ const COLUMNS: TableColumnsType<PublicationEntry> = [
+ 
+ interface CascadeTableProps {
+   /** The draft records that become active together with the action. */
+-  entries: readonly PublicationEntry[];
++  drafts: PublishedDrafts;
+ }
+ 
+-/** The records an action publishes with its object, one row each, always with the word for their state. */
+-export function CascadeTable({ entries }: CascadeTableProps) {
++/**
++ * The records an action publishes with its object, one row each, always with the word for their state; the ones the
++ * user may not read only by number under the table.
++ */
++export function CascadeTable({ drafts }: CascadeTableProps) {
+   return (
+-    <Table<PublicationEntry>
+-      size="small"
+-      rowKey={(entry) => `${entry.kind}:${entry.id}`}
+-      columns={COLUMNS}
+-      dataSource={[...entries]}
+-      pagination={false}
+-      className="desk-table"
+-    />
++    <>
++      {drafts.entries.length > 0 && (
++        <Table<PublicationEntry>
++          size="small"
++          rowKey={(entry) => `${entry.kind}:${entry.id}`}
++          columns={COLUMNS}
++          dataSource={[...drafts.entries]}
++          pagination={false}
++          className="desk-table"
++        />
++      )}
++      {drafts.hiddenEntryCount > 0 && (
++        <p>{hiddenDraftsText(drafts.hiddenEntryCount)}</p>
++      )}
++    </>
+   );
+ }
+diff --git a/web/src/features/desk/DraftsQueuePage.test.tsx b/web/src/features/desk/DraftsQueuePage.test.tsx
+new file mode 100644
+index 0000000..14b69ef
+--- /dev/null
++++ b/web/src/features/desk/DraftsQueuePage.test.tsx
+@@ -0,0 +1,95 @@
++import { render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi } from "../../test/fakeApi";
++import { DraftsQueuePage } from "./DraftsQueuePage";
++
++const PREVIEW_ROUTE = "GET /api/v1/career/competencies/c1/publication";
++const APPROVE_ROUTE = "POST /api/v1/career/competencies/c1/approve";
++const NO_OTHER_DRAFTS = "Других черновых записей публикация не затронет.";
++const DRAFT = {
++  kind: "Competency",
++  id: "c1",
++  name: "Работа в команде",
++  ownerOrgUnitId: null,
++  ownerOrgUnitName: null,
++  authorId: "author",
++  authorName: "Иванов Иван Иванович",
++  createdAt: "2026-10-01T10:00:00Z",
++  version: 4,
++};
++
++function serve(hiddenEntryCount: number) {
++  fakeApi.on("GET /api/v1/auth/me", () =>
++    Response.json({ id: "hr", email: "hr@test.local", roles: ["Hr"] }),
++  );
++  fakeApi.on("GET /api/v1/career/me", () =>
++    Response.json({ headedUnits: [], hrUnits: [] }),
++  );
++  fakeApi.on("GET /api/v1/career/drafts", () => Response.json([DRAFT]));
++  fakeApi.on("GET /api/v1/career/competencies/c1/matrices", () =>
++    Response.json([]),
++  );
++  fakeApi.on(PREVIEW_ROUTE, () =>
++    Response.json({
++      entries: [],
++      hiddenEntryCount,
++      blockers: [],
++      moreCount: 0,
++      cascadeTag: "tag-queue",
++    }),
++  );
++  fakeApi.on(APPROVE_ROUTE, () => Response.json({ id: "c1" }));
++}
++
++function renderQueue() {
++  render(
++    <Providers>
++      <RouterProvider
++        router={createMemoryRouter(
++          [{ path: "/desk/drafts", element: <DraftsQueuePage /> }],
++          { initialEntries: ["/desk/drafts"] },
++        )}
++      />
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("the queue of drafts to approve shows what an approval publishes (AC-77, AC-112)", () => {
++  it("counts the drafts the user may not read in the button and under the list, and approves under the tag of the whole list", async () => {
++    serve(2);
++    const user = renderQueue();
++
++    const approve = await screen.findByRole("button", {
++      name: "Утвердить вместе с 2 записями",
++    });
++
++    expect(screen.getByText("и ещё 2 черновые записи")).toBeInTheDocument();
++    expect(screen.queryByText(NO_OTHER_DRAFTS)).toBeNull();
++    await user.click(approve);
++    await waitFor(() => expect(fakeApi.calls(APPROVE_ROUTE)).toHaveLength(1));
++    const request = fakeApi.calls(APPROVE_ROUTE)[0];
++    expect(
++      new URL(request?.url ?? "http://x").searchParams.get("cascade"),
++    ).toBe("tag-queue");
++    expect(request?.headers.get("If-Match")).toBe('"4"');
++  });
++
++  it("says nothing else is published, and offers a plain approval, when the list is empty", async () => {
++    serve(0);
++    renderQueue();
++
++    expect(await screen.findByText(NO_OTHER_DRAFTS)).toBeInTheDocument();
++
++    expect(screen.getByRole("button", { name: "Утвердить" })).toBeEnabled();
++    expect(screen.queryByText(/и ещё/)).toBeNull();
++  });
++});
+diff --git a/web/src/features/desk/DraftsQueuePage.tsx b/web/src/features/desk/DraftsQueuePage.tsx
+index 04039b1..a34afda 100644
+--- a/web/src/features/desk/DraftsQueuePage.tsx
++++ b/web/src/features/desk/DraftsQueuePage.tsx
+@@ -28,6 +28,7 @@ import { KIND_LABELS } from "../career/DraftsSection";
+ import { matrixName, VERSION_STATUS_LABELS } from "../career/matrixLabels";
+ import { useCatalogRights } from "../career/useCatalogRights";
+ import {
++  publishedCount,
+   RefusalContent,
+   recordsInstrumental,
+   usePublishEntry,
+@@ -224,10 +225,10 @@ function DraftRecord({ draft, position, total, headingRef }: DraftRecordProps) {
+   const reason = earlyReason(draft);
+   const isEarly = reason !== null;
+   const canApprove = rights.canManage(draft.ownerOrgUnitId ?? undefined);
+-  const entries = preview.data?.entries ?? [];
++  const cascadeCount = preview.data ? publishedCount(preview.data) : 0;
+   const label =
+-    entries.length > 0
+-      ? `Утвердить вместе с ${recordsInstrumental(entries.length)}`
++    cascadeCount > 0
++      ? `Утвердить вместе с ${recordsInstrumental(cascadeCount)}`
+       : "Утвердить";
+   const back = {
+     to: location.pathname + location.search,
+@@ -314,8 +315,8 @@ function DraftRecord({ draft, position, total, headingRef }: DraftRecordProps) {
+           <Skeleton active />
+         ) : (
+           <Flex vertical gap="small">
+-            {entries.length > 0 ? (
+-              <CascadeTable entries={entries} />
++            {cascadeCount > 0 ? (
++              <CascadeTable drafts={preview.data} />
+             ) : (
+               <Typography.Paragraph>
+                 Других черновых записей публикация не затронет.
+diff --git a/web/src/features/desk/ReviewPage.test.tsx b/web/src/features/desk/ReviewPage.test.tsx
+new file mode 100644
+index 0000000..5f8f667
+--- /dev/null
++++ b/web/src/features/desk/ReviewPage.test.tsx
+@@ -0,0 +1,102 @@
++import { render, screen } from "@testing-library/react";
++import { createMemoryRouter, RouterProvider } from "react-router";
++import { beforeEach, describe, expect, it } from "vitest";
++import { queryClient } from "../../api/queryClient";
++import { Providers } from "../../app/Providers";
++import { fakeApi } from "../../test/fakeApi";
++import { ReviewPage } from "./ReviewPage";
++
++const NO_DRAFTS = "Черновых записей нет: публикуется только версия.";
++const VERSION = {
++  id: "v1",
++  matrixId: "m1",
++  number: 2,
++  version: 3,
++  status: "OnReview",
++  step: "Superior",
++  authorId: "author",
++  authorName: "Иванов Иван Иванович",
++  createdAt: "2026-10-01T10:00:00Z",
++  publishedAt: null,
++  content: {
++    levels: [],
++    competencies: [],
++    sharedBlocks: [],
++    blockWeights: [],
++    requirements: [],
++  },
++  entries: {
++    direction: null,
++    track: null,
++    levels: [],
++    competencies: [],
++    position: null,
++    sharedBlocks: [],
++    scales: [],
++  },
++  superiorApprover: null,
++  hr: null,
++  returnedWithChanges: false,
++  actions: ["Approve", "Return"],
++};
++
++function serve(hiddenEntryCount: number) {
++  fakeApi.on("GET /api/v1/career/matrix-versions/v1", () =>
++    Response.json(VERSION),
++  );
++  fakeApi.on("GET /api/v1/career/matrices/m1", () =>
++    Response.json({ id: "m1", orgUnitName: "Команда", publishedVersion: null }),
++  );
++  fakeApi.on("GET /api/v1/career/matrix-versions/v1/completeness", () =>
++    Response.json({ problems: [] }),
++  );
++  fakeApi.on("GET /api/v1/career/matrix-versions/v1/publication", () =>
++    Response.json({
++      publishingActions: ["Approve"],
++      entries: [],
++      hiddenEntryCount,
++      blockers: [],
++      moreCount: 0,
++      cascadeTag: "tag-review",
++    }),
++  );
++}
++
++function renderReview() {
++  render(
++    <Providers>
++      <RouterProvider
++        router={createMemoryRouter(
++          [{ path: "/desk/review/:versionId", element: <ReviewPage /> }],
++          { initialEntries: ["/desk/review/v1"] },
++        )}
++      />
++    </Providers>,
++  );
++}
++
++beforeEach(() => {
++  queryClient.clear();
++});
++
++describe("the review of a version lists what its approval publishes (AC-65, AC-110)", () => {
++  it("counts the drafts the approver may not read, and does not say the version goes alone", async () => {
++    serve(2);
++    renderReview();
++
++    expect(
++      await screen.findByText("и ещё 2 черновые записи"),
++    ).toBeInTheDocument();
++
++    expect(screen.queryByText(NO_DRAFTS)).toBeNull();
++  });
++
++  it("says the version goes alone when no draft goes with it", async () => {
++    serve(0);
++    renderReview();
++
++    expect(await screen.findByText(NO_DRAFTS)).toBeInTheDocument();
++
++    expect(screen.queryByText(/и ещё/)).toBeNull();
++  });
++});
+diff --git a/web/src/features/desk/ReviewPage.tsx b/web/src/features/desk/ReviewPage.tsx
+index 037d051..653170b 100644
+--- a/web/src/features/desk/ReviewPage.tsx
++++ b/web/src/features/desk/ReviewPage.tsx
+@@ -19,7 +19,11 @@ import {
+ import { scaleOfCompetency } from "../career/matrixGroups";
+ import { matrixName, VERSION_STATUS_LABELS } from "../career/matrixLabels";
+ import { useBlockNames } from "../career/useBlockNames";
+-import { draftRecords, RefusalContent } from "../career/usePublishEntry";
++import {
++  draftRecords,
++  publishedCount,
++  RefusalContent,
++} from "../career/usePublishEntry";
+ import { CascadeTable } from "./CascadeTable";
+ import { ChangesBlock } from "./ChangesBlock";
+ import { CompletenessBlock } from "./CompletenessBlock";
+@@ -90,7 +94,6 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
+   const isWaitingForUser = can("Approve") || can("Return");
+   const problems = completeness.data?.problems ?? null;
+   const isPublishing = publication.data?.publishingActions.includes("Approve");
+-  const entries = publication.data?.entries ?? [];
+   const approverChanges =
+     lastVariant?.kind === "Approver" ? approverDiff.data : undefined;
+   const isFirstVersion = changes.data?.previousNumber === null;
+@@ -238,14 +241,14 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
+             Будет опубликовано вместе с версией
+           </Typography.Title>
+           <Flex vertical gap="small">
+-            {entries.length > 0 ? (
++            {publishedCount(publication.data) > 0 ? (
+               <>
+                 <Typography.Text>
+                   Эти черновые записи станут действующими одновременно с
+                   версией. Право утвердить их проверяется у ответственного HR
+                   подразделения матрицы; отказать по одной нельзя.
+                 </Typography.Text>
+-                <CascadeTable entries={entries} />
++                <CascadeTable drafts={publication.data} />
+               </>
+             ) : (
+               <Typography.Text>
+diff --git a/web/src/features/desk/useVersionTransition.test.tsx b/web/src/features/desk/useVersionTransition.test.tsx
+new file mode 100644
+index 0000000..3c7bacf
+--- /dev/null
++++ b/web/src/features/desk/useVersionTransition.test.tsx
+@@ -0,0 +1,126 @@
++import { fireEvent, render, screen, waitFor } from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import { describe, expect, it, vi } from "vitest";
++import { Providers } from "../../app/Providers";
++import { fakeApi } from "../../test/fakeApi";
++import type { PublicationEntry } from "../career/catalogApi";
++import type { MatrixPublication, MatrixVersion } from "../career/matrixApi";
++import { type Decision, useVersionTransition } from "./useVersionTransition";
++
++const VERSION = { id: "v1", version: 5 } as MatrixVersion;
++const APPROVE_ROUTE = "POST /api/v1/career/matrix-versions/v1/approve";
++const DIRECTION: PublicationEntry = {
++  kind: "Direction",
++  id: "d1",
++  name: "Разработка",
++  context: null,
++};
++
++function publication(
++  hiddenEntryCount: number,
++  entries: PublicationEntry[] = [],
++): MatrixPublication {
++  return {
++    publishingActions: ["Approve"],
++    entries,
++    hiddenEntryCount,
++    blockers: [],
++    moreCount: 0,
++    cascadeTag: "tag-version",
++  };
++}
++
++function Harness({ decision }: { decision: Decision }) {
++  const { decide } = useVersionTransition();
++  return (
++    <button type="button" onClick={() => void decide(decision)}>
++      решить
++    </button>
++  );
++}
++
++function decisionOf(
++  preview: MatrixPublication,
++  isAskedFirst: boolean,
++  onDone: Decision["onDone"],
++): Decision {
++  return {
++    version: VERSION,
++    transition: "approve",
++    preview,
++    publishing: {
++      title: "Согласовать и опубликовать версию?",
++      okText: "Согласовать",
++      isAskedFirst,
++      lead: (count) => `Станут действующими записей: ${count}.`,
++    },
++    onDone,
++  };
++}
++
++function renderDecision(decision: Decision) {
++  render(
++    <Providers>
++      <Harness decision={decision} />
++    </Providers>,
++  );
++  return userEvent.setup();
++}
++
++/** jsdom plays no animation: the end of the opening animation is sent so the dialog counts as open. */
++async function confirmDialog() {
++  return waitFor(() => {
++    const panel = document.querySelector(".ant-modal-confirm");
++    expect(panel).not.toBeNull();
++    const modal = panel as HTMLElement;
++    fireEvent.animationEnd(modal);
++    return modal;
++  });
++}
++
++function cascadeOf(request: Request | undefined) {
++  return new URL(request?.url ?? "http://x").searchParams.get("cascade");
++}
++
++describe("a decision on a version that publishes drafts the user may not read (AC-110, AC-112)", () => {
++  it("asks first, counting the whole list and naming none of it, and publishes under its tag once confirmed", async () => {
++    const onDone = vi.fn();
++    fakeApi.on(APPROVE_ROUTE, () => Response.json({ id: "v1", version: 6 }));
++    const user = renderDecision(decisionOf(publication(2), true, onDone));
++
++    await user.click(screen.getByRole("button", { name: "решить" }));
++
++    const dialog = await confirmDialog();
++    expect(dialog).toHaveTextContent("Станут действующими записей: 2.");
++    expect(dialog).toHaveTextContent("и ещё 2 черновые записи");
++    expect(dialog).toHaveTextContent("Всё публикуется сразу");
++    expect(dialog.querySelector("table")).toBeNull();
++    expect(fakeApi.calls(APPROVE_ROUTE)).toHaveLength(0);
++    await user.click(screen.getByRole("button", { name: "Согласовать" }));
++    await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
++    expect(cascadeOf(fakeApi.calls(APPROVE_ROUTE)[0])).toBe("tag-version");
++    expect(onDone).toHaveBeenCalledWith(
++      expect.objectContaining({ id: "v1" }),
++      2,
++    );
++  });
++
++  it("takes a decision under the list its screen showed, at once, and reports the whole count of what it published", async () => {
++    const onDone = vi.fn();
++    fakeApi.on(APPROVE_ROUTE, () => Response.json({ id: "v1", version: 6 }));
++    const user = renderDecision(
++      decisionOf(publication(2, [DIRECTION]), false, onDone),
++    );
++
++    await user.click(screen.getByRole("button", { name: "решить" }));
++
++    await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
++    expect(document.querySelector(".ant-modal-confirm")).toBeNull();
++    expect(fakeApi.calls(APPROVE_ROUTE)).toHaveLength(1);
++    expect(cascadeOf(fakeApi.calls(APPROVE_ROUTE)[0])).toBe("tag-version");
++    expect(onDone).toHaveBeenCalledWith(
++      expect.objectContaining({ id: "v1" }),
++      3,
++    );
++  });
++});
+diff --git a/web/src/features/desk/useVersionTransition.tsx b/web/src/features/desk/useVersionTransition.tsx
+index 8deeaf5..3a676f2 100644
+--- a/web/src/features/desk/useVersionTransition.tsx
++++ b/web/src/features/desk/useVersionTransition.tsx
+@@ -16,6 +16,7 @@ import {
+ import {
+   type ChangedNotice,
+   ChangedNoticeAlert,
++  publishedCount,
+ } from "../career/usePublishEntry";
+ import { CascadeTable } from "./CascadeTable";
+ 
+@@ -78,13 +79,14 @@ function PublishingContent({
+   preview,
+   notice,
+ }: PublishingContentProps) {
++  const count = publishedCount(preview);
+   return (
+     <Space orientation="vertical" size="small" style={{ display: "flex" }}>
+       {notice && <ChangedNoticeAlert notice={notice} />}
+-      <div>{question.lead(preview.entries.length)}</div>
+-      {preview.entries.length > 0 && (
++      <div>{question.lead(count)}</div>
++      {count > 0 && (
+         <>
+-          <CascadeTable entries={preview.entries} />
++          <CascadeTable drafts={preview} />
+           <p>Всё публикуется сразу или не публикуется ничего.</p>
+         </>
+       )}
+@@ -163,7 +165,7 @@ export function useVersionTransition() {
+       onOk: () =>
+         run(decision, {
+           tag: preview.cascadeTag,
+-          count: preview.entries.length,
++          count: publishedCount(preview),
+         }),
+     });
+   }
+@@ -184,7 +186,7 @@ export function useVersionTransition() {
+       }
+       await run(decision, {
+         tag: preview.cascadeTag,
+-        count: preview.entries.length,
++        count: publishedCount(preview),
+       });
+       return;
+     }

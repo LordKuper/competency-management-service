@@ -3,22 +3,22 @@ using Competency.OrgStructure;
 namespace Competency.UserManagement;
 
 /// <summary>
-/// The signed-in account as the interface needs it to adapt to the role and to name the user.
+/// The signed-in account as the interface needs it to adapt to its roles and to name the user.
 /// </summary>
 internal sealed record CurrentUserResponse(
     Guid Id,
     string Email,
-    UserRole Role,
+    IReadOnlyList<UserRole> Roles,
     Guid? EmployeeId,
     string? EmployeeName,
     string? EmployeeLastName,
     string? EmployeeFirstName,
     string? EmployeeMiddleName)
 {
-    public static CurrentUserResponse From(AppUser user, EmployeeStatus? employee) => new(
+    public static CurrentUserResponse From(AppUser user, IReadOnlyList<UserRole> roles, EmployeeStatus? employee) => new(
         user.Id,
         user.Email!,
-        user.Role,
+        roles,
         user.EmployeeId,
         employee?.FullName,
         employee?.LastName,

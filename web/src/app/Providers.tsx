@@ -12,7 +12,12 @@ dayjs.locale("ru");
 /** Application-wide context: Russian locale, design tokens, antd feedback context and the server-state cache. */
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ConfigProvider locale={ru_RU} theme={theme} wave={{ disabled: true }}>
+    <ConfigProvider
+      locale={ru_RU}
+      theme={theme}
+      wave={{ disabled: true }}
+      popupMatchSelectWidth={false}
+    >
       <App>
         <QueryClientProvider client={queryClient}>
           {children}

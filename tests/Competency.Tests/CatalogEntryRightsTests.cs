@@ -17,7 +17,7 @@ public sealed class CatalogEntryRightsTests(CareerHost fixture) : IClassFixture<
 
     private static readonly Flags Neither = new(false, false);
 
-    public static TheoryData<string> Kinds => new() { "directions", "categories", "scales", "competencies", "tracks", "levels" };
+    public static TheoryData<string> Kinds => new() { "directions", "scales", "competencies", "tracks", "levels" };
 
     [Theory]
     [MemberData(nameof(Kinds))]
@@ -135,10 +135,8 @@ public sealed class CatalogEntryRightsTests(CareerHost fixture) : IClassFixture<
         {
             name = Scenarios.Unique("Правка"),
             description = (string?)null,
-            categoryId = entry.Json!["categoryId"]!.GetValue<Guid>(),
             directionId = (Guid?)null,
-            type = "Profile",
-            scaleId = entry.Json["scaleId"]!.GetValue<Guid>(),
+            scaleId = entry.Json!["scaleId"]!.GetValue<Guid>(),
         },
         _ => new { name = Scenarios.Unique("Правка") },
     };
@@ -151,19 +149,16 @@ public sealed class CatalogEntryRightsTests(CareerHost fixture) : IClassFixture<
         {
             case "directions":
                 return new Entries(await admin.MakeDirectionAsync(), await head.MakeDirectionAsync());
-            case "categories":
-                return new Entries(await admin.MakeCategoryAsync(), await head.MakeCategoryAsync());
             case "scales":
                 return new Entries(await admin.MakeScaleAsync(), await head.MakeScaleAsync());
             case "competencies":
-                var categoryId = await admin.CategoryIdAsync();
-                return new Entries(await admin.MakeCompetencyAsync(categoryId), await head.MakeCompetencyAsync(categoryId));
+                return new Entries(await admin.MakeCompetencyAsync(), await head.MakeCompetencyAsync());
             case "tracks":
                 var direction = await admin.MakeDirectionAsync();
-                return new Entries(await admin.MakeTrackAsync(org.Team.Id, direction.Id), await head.MakeTrackAsync(org.Team.Id, direction.Id));
+                return new Entries(await admin.MakeActiveTrackAsync(org.Team.Id, direction.Id), await head.MakeTrackAsync(org.Team.Id, direction.Id));
             default:
                 var levelDirection = await admin.MakeDirectionAsync();
-                var activeTrack = await admin.MakeTrackAsync(org.Team.Id, levelDirection.Id);
+                var activeTrack = await admin.MakeActiveTrackAsync(org.Team.Id, levelDirection.Id);
                 var draftTrack = await head.MakeTrackAsync(org.Team.Id, levelDirection.Id);
                 return new Entries(await admin.MakeLevelAsync(activeTrack.Id), await head.MakeLevelAsync(draftTrack.Id));
         }

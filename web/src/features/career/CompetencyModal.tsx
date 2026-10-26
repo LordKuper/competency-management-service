@@ -1,72 +1,67 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Form, Input, Select } from "antd";
-import { useEffect } from "react";
+import { Form, Input } from "antd";
+import { useEffect, useState } from "react";
+import { ApiError } from "../../api/ApiError";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { CatalogModal, FormActions } from "./CatalogModal";
-import { CatalogSelect, IN_WORK } from "./CatalogSelect";
-import { CategorySelect } from "./CategorySelect";
-import {
-  type Competency,
-  type CompetencyType,
-  invalidateCatalogs,
-  scalesQuery,
-} from "./catalogApi";
+import { type Competency, invalidateCatalogs, scalesQuery } from "./catalogApi";
+import { DirectionSelect } from "./DirectionSelect";
+import { ScaleSelect } from "./ScaleSelect";
+import { usePublishEntry } from "./usePublishEntry";
 
 const NAME_MAX_LENGTH = 200;
+const EVIDENCE_MAX_LENGTH = 4000;
 const FIELDS = [
   "name",
   "description",
-  "categoryId",
+  "evidenceExamples",
   "directionId",
-  "type",
   "scaleId",
 ] as const;
-
-export const COMPETENCY_TYPES: Record<CompetencyType, string> = {
-  Critical: "Критическая",
-  Profile: "Профильная",
-  Additional: "Дополнительная",
-};
-
-const TYPE_OPTIONS = Object.entries(COMPETENCY_TYPES).map(([value, label]) => ({
-  value: value as CompetencyType,
-  label,
-}));
 
 interface CompetencyValues {
   name: string;
   description?: string | null;
-  categoryId: string;
+  evidenceExamples?: string | null;
   directionId?: string | null;
-  type: CompetencyType;
   scaleId?: string;
+}
+
+/** The first field a rejected save names, if any. */
+function firstRejectedField(error: unknown) {
+  return error instanceof ApiError && error.errors
+    ? Object.keys(error.errors)[0]
+    : undefined;
 }
 
 interface CompetencyModalProps {
   /** Competency being edited as the cache holds it now; omitted when one is created. */
   competency?: Competency;
+  /** Called with the competency a save produced, as the dialog closes. */
+  onSaved?: (competency: Competency) => void;
   onClose: () => void;
 }
 
 /** Dialog that creates a competency or edits one; every saved change becomes a new version. */
 export function CompetencyModal({
   competency: latest,
+  onSaved,
   onClose,
 }: CompetencyModalProps) {
   const queryClient = useQueryClient();
+  const { offerApproval } = usePublishEntry();
   const { base: competency, noteSaveFailure } = useEditBase(latest);
   const save = useMutation({
     mutationFn: async (values: CompetencyValues) => {
       const body = {
         name: values.name,
         description: values.description?.trim() || null,
-        categoryId: values.categoryId,
+        evidenceExamples: values.evidenceExamples?.trim() || null,
         directionId: values.directionId ?? null,
-        type: values.type,
         scaleId: values.scaleId ?? null,
       };
       return unwrap(
@@ -81,7 +76,16 @@ export function CompetencyModal({
           : await api.POST("/api/v1/career/competencies", { body }),
       );
     },
-    onSuccess: onClose,
+    onSuccess: (saved) => {
+      onClose();
+      onSaved?.(saved);
+      if (!competency) {
+        void offerApproval(
+          { segment: "competencies", entry: saved },
+          saved.status,
+        );
+      }
+    },
     onError: noteSaveFailure,
     onSettled: () => invalidateCatalogs(queryClient),
   });
@@ -111,7 +115,8 @@ interface CompetencyFormProps {
 
 /**
  * Fields of a competency. The default scale arrives after the form opens, so a new competency gets it then, unless the
- * user has chosen a scale first.
+ * user has chosen a scale first. The first field a rejected save names gets the focus once the form is enabled again,
+ * since a disabled field cannot take it.
  */
 function CompetencyForm({
   competency,
@@ -119,7 +124,21 @@ function CompetencyForm({
   onCancel,
 }: CompetencyFormProps) {
   const [form] = Form.useForm<CompetencyValues>();
-  const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
+  const [rejectedField, setRejectedField] = useState<string>();
+  const { isSubmitting, submit } = useFormSubmit(form, async (values) => {
+    try {
+      return await onSubmit(values);
+    } catch (error) {
+      setRejectedField(firstRejectedField(error));
+      throw error;
+    }
+  });
+
+  useEffect(() => {
+    if (isSubmitting || !rejectedField) return;
+    form.scrollToField(rejectedField, { focus: true });
+    setRejectedField(undefined);
+  }, [isSubmitting, rejectedField, form]);
   const defaultScale = useQuery({
     ...scalesQuery({ page: 1, pageSize: 1, isDefault: true }),
     enabled: !competency,
@@ -136,13 +155,13 @@ function CompetencyForm({
     <Form
       form={form}
       name="competency"
+      disabled={isSubmitting}
       layout="vertical"
       initialValues={{
         name: competency?.name ?? "",
         description: competency?.description ?? "",
-        categoryId: competency?.categoryId,
+        evidenceExamples: competency?.evidenceExamples ?? "",
         directionId: competency?.directionId ?? undefined,
-        type: competency?.type,
         scaleId: competency?.scaleId,
       }}
       onFinish={submit}
@@ -164,25 +183,23 @@ function CompetencyForm({
         <Input.TextArea autoSize={{ minRows: 3 }} />
       </Form.Item>
       <Form.Item
-        name="categoryId"
-        label="Категория"
-        rules={[{ required: true }]}
+        name="evidenceExamples"
+        label="Примеры подтверждений"
+        extra="Необязательно: чем можно подтвердить компетенцию; показывается рядом с требованиями матриц."
+        rules={[
+          {
+            max: EVIDENCE_MAX_LENGTH,
+            message: `Не длиннее ${EVIDENCE_MAX_LENGTH} символов`,
+          },
+        ]}
       >
-        <CategorySelect />
+        <Input.TextArea autoSize={{ minRows: 3 }} />
       </Form.Item>
-      <Form.Item name="directionId" label="Направление">
-        <CatalogSelect
-          segment="directions"
-          filters={IN_WORK}
-          allowClear
-          placeholder="Общая"
-        />
-      </Form.Item>
-      <Form.Item name="type" label="Тип" rules={[{ required: true }]}>
-        <Select options={TYPE_OPTIONS} />
+      <Form.Item name="directionId" label="Область">
+        <DirectionSelect allowClear placeholder="Общая" />
       </Form.Item>
       <Form.Item name="scaleId" label="Шкала" rules={[{ required: true }]}>
-        <CatalogSelect segment="scales" filters={IN_WORK} />
+        <ScaleSelect />
       </Form.Item>
       <FormActions isSubmitting={isSubmitting} onCancel={onCancel} />
     </Form>

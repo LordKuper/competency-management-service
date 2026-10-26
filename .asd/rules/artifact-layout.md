@@ -27,6 +27,7 @@ Set by `project.subsystem_decomposition` in config (`enabled` | `disabled`). Lay
 │   └── sprints/
 │       ├── <NNN-slug>/
 │       │   ├── sprint.md
+│       │   ├── research.md                    # scope, "Research"
 │       │   ├── state.json
 │       │   ├── decisions-log.md
 │       │   ├── decisions-log.NNN.md          # rotated segments, "Decisions log"
@@ -92,7 +93,7 @@ No registry, no `<subsystem>.md`, no `c4/` directory. No subsystem subfolders.
 
 ## Agent memory
 
-Agent memory lives at the provider-view root — `.claude/agent-memory/<agent>/` (`MEMORY.md` index + one file per memory) — always, whatever working directory a dispatch names. Never inside a sprint tree (path map above). One directory per dispatched agent name, tier variants included: distinct agents never share a memory file, so co-authorship arises only between concurrent dispatches of the same agent, which share that directory and its single `MEMORY.md`. Before a write lands, the writing agent checks it against its own definition (declared tool policy: `providers.md` "Role-scoped context"); a practice that contradicts the definition is never recorded.
+Agent memory lives at the provider-view root — `.claude/agent-memory/<agent>/` (`MEMORY.md` index + one file per memory) — always, whatever working directory a dispatch names. Never inside a sprint tree (path map above). One directory per dispatched agent name, tier variants included: distinct agents never share a memory file, so co-authorship arises only between concurrent dispatches of the same agent, which share that directory and its single `MEMORY.md`. Before a write lands, the writing agent checks it against its own definition (declared tool policy: `providers.md` "Declared tool policy"); a practice that contradicts the definition is never recorded.
 
 **Content**: memory holds method only; it never records a sprint id, a Task, a wave, an iteration or a review verdict — that history belongs in the sprint's artefacts. Checked at the orchestrator's memory commit: `git-strategy.md` "Commit before review".
 
@@ -100,7 +101,7 @@ Agent memory lives at the provider-view root — `.claude/agent-memory/<agent>/`
 
 **In the review surface, both modes**: agent memory is hand-authored source, not generated output, so it is never an exclusion in any review scope — `self_hosting` enabled or disabled alike. Sole statement of the property; `sprint-lifecycle.md` "Self-hosting", `external-review.md` "Phase-scoped payload" and `t_prompt-external-impl.md` cite it, never restate it. A memory file loads on every dispatch of its agent, so a false line in one is paid again per dispatch until a review catches it. How such a write reaches a reviewed diff at all: `review-policy.md` "Change-surface rule".
 
-**Leftover-term check**: a sprint that removes a mechanism or term searches, at its first `impl-test` entry, for every remaining mention of it anywhere in the repo, `.claude/agent-memory/**` included, directories of no longer existing agents too. The check pins the exact sentences and terms the sprint removed, taken from its own diff's removed lines, never a free-phrasing regex.
+**Leftover-term check**: a sprint that removes a mechanism or term searches, at its first `impl-test` entry, for every remaining mention of it anywhere in the repo, `.claude/agent-memory/**` included, directories of no longer existing agents too. The check pins the exact sentences and terms the sprint removed, taken from its own diff's removed lines, never a free-phrasing regex. A hit in agent memory is fixed inside that entry (`review-policy.md` "Memory-fix dispatch").
 
 ## Scratch directory
 
@@ -110,7 +111,7 @@ Agent memory lives at the provider-view root — `.claude/agent-memory/<agent>/`
 
 When decomposition enabled, `docs/architecture/subsystems.md` (`t_subsystems.md`) is the sole subsystem registry — which subsystems exist and their ids — whatever `project.diagram_tool`. Each entry links `docs/architecture/<id>.md` (`t_subsystem.md`: purpose, key paths), and every registered subsystem has one. Reserved, never a subsystem id (they collide in flat `docs/architecture/`): `subsystems`, `stack`, `c4`, `tech-reference`.
 
-`/asd-init` seeds the registry empty; only Architect fills it. A subsystem is added at `design-promote` (`sprint-lifecycle.md` "Design-promote phase"), or at `audit` when the registry is absent (`sprint-lifecycle.md` "Audit phase") — each addition with explicit user approval (hard gate).
+`/asd-init` seeds the registry empty; only Architect fills it. A subsystem is added at `design-promote` (`sprint-lifecycle.md` "Design-promote phase"), or at `audit` when the registry is absent (`asd-phase-audit.md` "Rules", step 3a) — each addition with explicit user approval (hard gate).
 
 Diagram per `project.diagram_tool`; with `none`, no diagram is written and `docs/architecture/c4/` is never created:
 
@@ -193,7 +194,7 @@ Manual step = operational action a human must perform for the plan to complete (
 
 ## Test plan
 
-`<sprint>/test-plan.md` per `t_test-plan.md`. Per-sprint: entry 1 writes it fresh; every re-entry amends it (Defects section carried over with resolved entries kept for the record). Owner: the `impl-test` Tester — it alone appends the `Entry log` and rotates. A `Defects` row's `Status` is flipped by its test-fix fixer; for a memory `D-N`, by the orchestrator (`review-policy.md` "Autofix vs escalation"). A review-fix tester (`asd-phase-impl.md` step 5) amends only `Risk → check decisions` and `Added tests` rows. It never deletes a test: it records a removal finding as a `Risk → check decisions` row, and the next `impl-test` entry, which always follows `impl`, performs the removal and records its reason under `Removed tests`. An impl-review in-place tester (`review-policy.md` "Low-severity test-only findings") has the same reach and reports a finding outside it unfixed.
+`<sprint>/test-plan.md` per `t_test-plan.md`. Per-sprint: entry 1 writes it fresh; every re-entry amends it (Defects section carried over with resolved entries kept for the record). Owner: the `impl-test` Tester — it alone appends the `Entry log` and rotates. A `Defects` row's `Status` is flipped by its test-fix fixer. A review-fix tester (`asd-phase-impl.md` step 5) amends only `Risk → check decisions` and `Added tests` rows. It never deletes a test: it records a removal finding as a `Risk → check decisions` row, and the next `impl-test` entry, which always follows `impl`, performs the removal and records its reason under `Removed tests`. An impl-review in-place tester (`review-policy.md` "Low-severity test-only findings") has the same reach and reports a finding outside it unfixed.
 
 **Rotation**: at a re-entry's strategy pass, before any new row and never when resuming an interrupted current entry (`asd-phase-impl-test.md` step 1), the Tester moves the `Risk → check decisions`, `Removed tests` and `Added tests` rows of the previous `Entry log` entry N, if any, plus the review-fix and impl-review in-place tester rows added since (they have no `Entry log` row of their own), into `test-plan.entry-NN.md` (same section headings, N zero-padded to 2) when that file is absent, leaving those tables empty in the live file. Live `test-plan.md` keeps the `Entry log`, `Suite run`, `Defects` and `Manual verification`. A segment is never edited: a fix that changes a rotated row's risk gets a superseding row in the live file. Readers: "Decisions log" below.
 
@@ -205,13 +206,17 @@ SSoT for two things invisible in the diff: **why** a test was removed, and **why
 
 `<sprint>/friction-log.md` per `t_friction-log.md`. Workflow/machine Markdown — same class as `plan.md`, `test-plan.md`, `manual-steps.md`, so the HTML-only representation rule above does not reach it. Owner: the dispatching phase workflow (appends). Scope, entry format, boundary against adjacent owners and writer mechanism are normative in `sprint-lifecycle.md` "Friction log".
 
+## Research
+
+`<sprint>/research.md` per `t_research.md`, written at scope (`sprint-lifecycle.md` "Staged solution design"). Workflow Markdown, same class as `audit.md` and `plan.md`, so the HTML-only representation rule does not reach it. Owner: main orchestrator. Readers: `sprint-lifecycle.md` "Input sources" `research`.
+
 ## Retrospective
 
-`<sprint>/retrospective.html` per `t_retrospective.html`. User-facing HTML, shell-wrapped like every other. **Derived analysis, never a rendering of the log** — references `F-N` ids, never a second copy of the entries. Owner: `retro` phase; semantics in `sprint-lifecycle.md` "Retro phase".
+`<sprint>/retrospective.html` per `t_retrospective.html`. User-facing HTML, shell-wrapped like every other. **Derived analysis, never a rendering of the log** — references `F-N` ids, never a second copy of the entries. Owner: `retro` phase; semantics in `asd-phase-retro.md`.
 
 ## Retro backlog
 
-`.asd/project/retro-backlog.md` per `t_retro-backlog.md`: the cross-sprint disposition of each retro row, one line per row, updated in place. Owner: main orchestrator. Created lazily at the first retro-intake write — `asd-init` seeds none, no migration creates it, `/asd-update` never touches it. Semantics: `sprint-lifecycle.md` "Retro intake".
+`.asd/project/retro-backlog.md` per `t_retro-backlog.md`: the cross-sprint disposition of each retro row, one line per row, updated in place. Owner: main orchestrator. Created lazily at the first retro-intake write — `asd-init` seeds none, no migration creates it, `/asd-update` never touches it. Semantics: `asd-phase-scope.md` step 2a.
 
 ## Single Source of Truth (iron rule)
 

@@ -8,10 +8,15 @@ function relatedChanges(
   impact: EmployeeImpact,
   action: DepartureAction,
 ): string[] {
-  const { headOfUnits, account } = impact;
-  const changes = headOfUnits.map(
-    (unit) => `Подразделение «${unit.name}» останется без руководителя`,
-  );
+  const { headOfUnits, hrUnits, account } = impact;
+  const changes = [
+    ...headOfUnits.map(
+      (unit) => `Подразделение «${unit.name}» останется без руководителя`,
+    ),
+    ...hrUnits.map(
+      (name) => `Подразделение «${name}» потеряет ответственного HR`,
+    ),
+  ];
   if (account && !account.isBlocked) {
     changes.push(
       `Будет заблокирована учётная запись ${account.email}, её действующие сессии завершатся`,

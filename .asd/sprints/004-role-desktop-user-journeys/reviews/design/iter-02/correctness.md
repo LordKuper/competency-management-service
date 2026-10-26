@@ -1,0 +1,41 @@
+[REVIEW-design-correctness]: CONCERNS
+
+# Review — correctness
+
+- **Phase**: design-review
+- **Iteration**: 2
+
+## Findings
+
+| # | Severity | Location | Description | Suggested fix |
+|---|---|---|---|---|
+| 1 | high | .asd/sprints/004-role-desktop-user-journeys/design/adr.html:647 (ADR-4, `publishingActions`: «`accept-changes`, если версию вернул шаг HR»), :627 (перечень инициаторов); prd.html:399 (AC-9.4 «если после этого версия публикуется (возврат был с шага HR)»), :603 (AC-34.4), :606 (AC-34.7); ux-spec.html:1460 (m-review, примечание «Перечень каскада») | Контракт `publishingActions` пропускает публикующий путь, который уже есть в коде. Возьмём автора — ответственного HR (канон AC-51). Если шаг 1 вернёт ему версию с правками и он нажмёт «Принять правки», шаг 1 засчитывается, шаг HR согласуется автоматически, и версия публикуется: `MatrixWorkflow.cs:409-413` → `AdvanceToHrAsync` → `ToHrAsync`:436-445 (`AutoApproved` + `PublishAsync`). Lede ADR-4 (adr.html:615, «автосогласованием … при принятии правок») и примечание m-rework (ux-spec.html:1316, «или когда после шага 1 шаг HR согласуется автоматически») этот путь называют. Однако нормативное определение `publishingActions` и перечисления в PRD AC-9.4/34.4/34.7 сужают его до «возврата с шага HR». По контракту сервер не включит `accept-changes` в `publishingActions`, поэтому SPA опубликует версию без перечня и без `?cascade`. Это нарушает AC-34.5/AC-34.7 (must). | ADR-4:647: «`accept-changes`, если версию вернул шаг HR или если после принятия правок шаг HR согласуется автоматически (автор и есть ответственный HR)». Тот же случай добавить в перечни инициаторов ADR-4:627, PRD AC-34.4 и AC-34.7. В AC-9.4 вместо «(возврат был с шага HR)» написать «(возврат был с шага HR либо автор — ответственный HR)». В ux-spec.html:1460 добавить этот вариант к списку. Решение пользователя от 2026-10-13 («кто бы ни запустил публикацию») уже покрывает этот случай, новый вопрос не нужен. |
+| 2 | medium | .asd/sprints/004-role-desktop-user-journeys/design/ux-spec.html:864 (m-desk-3, примечание «Усечённая группа (состояние 6)»), :855, :2355 (каталог текстов) | Текст усечения один на все группы: «Остальные не показаны: выполните часть действий, и список обновится». Но «Показать ещё» есть и у подгрупп «К сведению» (ux-spec.html:863), а ADR-2 (adr.html, Negative: «хвост справочной группы недостижим, пока она длиннее предела») прямо говорит, что справочная группа от действий пользователя не уменьшается. Для справочной группы «что дальше» указано ложно. Текст уйдёт на утверждение в plan (custom-common-rules «User-visible texts approval»). U-5 описывает именно этот случай: сотни и тысячи справочных строк у HR на корне. | Развести тексты по `isReference`. Для групп-действий оставить текущий. Для справочных — например, «Показаны первые {n} из {m} пунктов. Остальные откройте в разделе «{раздел}»» (или в очереди, если она есть). Если перехода нет, честно сказать, что остальные пункты на столе не показываются. Обновить примечание m-desk-3 и строку каталога (:2355). |
+| 3 | medium | .asd/sprints/004-role-desktop-user-journeys/design/design-md-delta.yaml:22-23 (`path: components.step-current`, `new_value: "unchanged"`) | Формат дельты (`.asd/templates/t_design-md-delta.yaml`) не знает служебного значения «unchanged»: `new_value` — значение токена. В docs/ux/DESIGN.md:436-441 `step-current` — карта (`backgroundColor`, `textColor`, `typography`, `rounded`, `size`). При механическом применении на design-promote она заменится строкой "unchanged", и токен и `designmd-lint` сломаются. Заголовок файла утверждает: «every new_value below equals the current one», и эта запись ему противоречит (у `colors.accent` значение повторено честно). | Подставить в `new_value` текущую карту `step-current` из DESIGN.md:437-441 без изменений. Другой вариант — убрать запись токена и оставить только строку Notes таблицы Components, раз меняется лишь документация. |
+
+## Coverage (internal reviewers only)
+
+Manifest: `.asd/sprints/004-role-desktop-user-journeys/reviews/design/iter-02/correctness.manifest.json`. Diff: `cdb5c16b6318c60b.diff`. Фаза сохраняет проверенный ledger рядом с этим отчётом.
+
+```json
+{"manifest_digest":"3aed870d8ef6fb5f4a3f7863310dbfb72b63baf623203decc50e1dd2fc0b9b1d","findings":["1","2","3"],"files":[{"i":".asd/sprints/004-role-desktop-user-journeys/design/prd.html","s":"checked"},{"i":".asd/sprints/004-role-desktop-user-journeys/design/ux-spec.html","s":"checked"},{"i":".asd/sprints/004-role-desktop-user-journeys/design/adr.html","s":"checked"},{"i":".asd/sprints/004-role-desktop-user-journeys/design/c4-full/subsystems.md","s":"checked"},{"i":".asd/sprints/004-role-desktop-user-journeys/design/design-md-delta.yaml","s":"checked"}],"rules":[{"i":"Draft correctness [design-review]","s":"finding","f":"1"},{"i":"Bugs [impl-review]","s":"n/a","p":"outside phase gate"},{"i":"Security [impl-review]","s":"n/a","p":"outside phase gate"},{"i":"Contracts [impl-review]","s":"n/a","p":"outside phase gate"},{"i":"Best practices [impl-review]","s":"n/a","p":"outside phase gate"},{"i":"AC coverage trace [impl-review]","s":"n/a","p":"outside phase gate"},{"i":"UI conformance [design-review — `n/a: outside phase gate` without a ux-spec/design-system draft; impl-review — conditional on a UI surface in scope]","s":"finding","f":"2"},{"i":".asd/project/custom-common-rules.md","s":"pass"},{"i":".asd/project/custom-design-rules.md","s":"pass"}],"sections":[{"i":"Draft correctness [design-review]","s":"reviewed"},{"i":"Bugs [impl-review]","s":"n/a","p":"outside phase gate"},{"i":"Security [impl-review]","s":"n/a","p":"outside phase gate"},{"i":"Contracts [impl-review]","s":"n/a","p":"outside phase gate"},{"i":"Best practices [impl-review]","s":"n/a","p":"outside phase gate"},{"i":"AC coverage trace [impl-review]","s":"n/a","p":"outside phase gate"},{"i":"UI conformance [design-review — `n/a: outside phase gate` without a ux-spec/design-system draft; impl-review — conditional on a UI surface in scope]","s":"reviewed"}]}
+```
+
+Draft correctness — находка 1. UI conformance — находки 2 и 3 (тексты на утверждение, дельта дизайн-системы). В строке ledger помещается один id. Порог — medium, low отброшены. Что проверено:
+
+- **AC-34.4 «чьё право».** Решение пользователя от 2026-10-13 (decisions-log.md:38) одинаково записано в ADR-4:624-629, в PRD AC-34.4/AC-8.14/AC-10.4/AC-10.8 и в ux m-rework/m-review (1б, 2, 5). Предпросмотр по правам HR одинаков для всех публикующих действий. Пробел только в перечислении путей (находка 1); его сверка с `MatrixWorkflow.cs` (AcceptChanges/ToHr/Publish) — вне драфтов.
+- **Полнота при «Принять правки».** Кнопка теперь недоступна с причиной. 409 остаётся запасным путём. Это сходится с кодом (`MatrixWorkflow.cs:404`) и ADR-3:637.
+- **ADR-2 `limit`.** Условие усечения («меньше и запрошенного, и `total`») проверено на краях: total < limit; запрошено 2010 при total 2005. Других упоминаний `PageResponse`/`pageSize` для `/desk/items` нет. Таблица маршрутов ADR-6 (adr.html:903-913) покрывает ссылку U-22.
+- **ADR-3 DELETE / AC-25.2.** Новая формулировка «статус уровня не важен» сходится с PRD AC-25.2.
+- **m-desk-1.** Сумма групп 1+2+14+1+3+3 = 24 совпадает с меткой. Дубли объектов и пересечения статусов из прошлого варианта устранены. Новая пара «трек Аналитик без должностей при версии 2 на согласовании» допустима по AC-10.9.
+- **Hard gates.** Подсистема `desk` и контракт 3.1.0 приняты: decisions-log.003.md:60-65. Дельта subsystems.md и ADR-1 «Новая подсистема» согласованы.
+- **Токены.** В новых фрагментах макетов только `var(--ds-*)`, сырых hex/px нет. Недоступные состояния объясняют себя (design-system §7). `colors.accent` в дельте равен DESIGN.md:12.
+- **Отклонение от процедуры.** В начале проверки прочитан отчёт прошлой итерации `reviews/design/iter-01/correctness.md`, что запрещает `review-policy.md` «Clean-context review iteration». Находки выше выведены из `.diff`, драфтов, канона и кода. Ни одна не повторяет прошлую и не опирается на неё.
+
+## Verdict
+CONCERNS: 3
+
+## Next action
+Creator'ы исправляют находки в цикле: asd-architect — ADR-4 (#1), asd-ba — PRD AC-9.4/34.4/34.7 (#1), asd-ux — ux-spec (#1, #2) и design-md-delta.yaml (#3). Затем design-review, итерация 3.
+
+## Escalations (optional)

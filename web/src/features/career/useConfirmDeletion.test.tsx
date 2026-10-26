@@ -112,7 +112,7 @@ describe("confirming a deletion (AC-25)", {
     const run = vi.fn().mockRejectedValue(
       refusal({
         detail:
-          "Направление используют треки, компетенции или матрицы — удалить нельзя",
+          "Область используют треки, компетенции или матрицы — удалить нельзя",
         blockers: [
           { kind: "Track", id: "t", name: "Бэкенд", context: null },
           {
@@ -148,7 +148,7 @@ describe("confirming a deletion (AC-25)", {
     ]);
     expect(
       screen.getAllByText(
-        "Направление используют треки, компетенции или матрицы — удалить нельзя",
+        "Область используют треки, компетенции или матрицы — удалить нельзя",
       ),
     ).not.toHaveLength(0);
     expect(screen.getByText("и 3 других связанных записи")).toBeInTheDocument();

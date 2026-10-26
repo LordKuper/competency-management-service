@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.OrgStructure;
 
 /// <summary>
-/// An employee as the API returns it, in one of two projections chosen by the caller's role.
-/// Global administrators get everything. Other users get the name, e-mail, unit and position only;
+/// An employee as the API returns it, in one of two projections chosen by the caller's roles.
+/// Global administrators and HR get everything. Other users get the name, e-mail, unit and position only;
 /// the status and version are then absent from the JSON, and are never read from the database.
 /// The full name is the display form of the name parts, derived by the database and read-only.
 /// The e-mail is the one of the account bound to the employee, read in the same query, and is null when there is no account.
@@ -47,7 +47,7 @@ internal sealed record EmployeeResponse(
 
     public static Expression<Func<Employee, EmployeeResponse>> ProjectionFor(AppDbContext context, ICurrentActor actor)
     {
-        if (actor.IsGlobalAdmin())
+        if (actor.SeesAll())
         {
             return FullProjection(context);
         }

@@ -36,7 +36,7 @@
 - Workload `db` — одна реплика, PVC; `app` подключается по настраиваемой строке подключения (путь к внешней БД позже). Тип ресурса (StatefulSet/Deployment), Service, `fsGroup` — в design.
 - PVC монтируется **только** в `/var/lib/postgresql`; `PGDATA` не переопределять. Монтирование в `/var/lib/postgresql/data` на образе 18 недопустимо: проверено запуском — entrypoint завершается с кодом 1 и сообщением «there appears to be PostgreSQL data in /var/lib/postgresql/data (unused mount/volume)» (контейнер не стартует; данные не пишутся ни в том, ни в слой контейнера). Прежнее предположение «данные окажутся вне тома» этим опровергнуто.
 - Образ собирается/забирается на сборочном хосте вне контура (с интернетом), в контур доставляется готовым (registry либо tar-импорт на узлы, Q11); целевая платформа linux/amd64 (Q10); перед переносом — сканирование и SBOM; версии меняются только через спринт.
-- Образ тестов Testcontainers — тот же тег (`testcontainers-postgresql-4.15.0.md`).
+- Образ тестов Testcontainers — тот же тег, параметры сервера свои: тестовый контейнер переопределяет `max_connections` (`testcontainers-postgresql-4.15.0.md`).
 - Секреты — только из Kubernetes Secrets, не в образе и не в репозитории (stack.html).
 
 ## Known issues and workarounds
@@ -54,7 +54,7 @@
 
 **Запуск и хранение**
 - Инициализация без ошибок; кластер — в `/var/lib/postgresql/18/docker` (`drwx------ postgres`), `/dev/shm` — tmpfs 256 МБ. Именованный том Docker наследует права каталога из образа (`/var/lib/postgresql` в образе — `drwxrwxrwt postgres:postgres`), поэтому в Docker `fsGroup` не нужен; в Kubernetes PVC этого не наследует — `fsGroup: 999` из манифеста **не проверялось** (нет кластера).
-- `POSTGRES_USER` (`competency`) — суперпользователь кластера (`rolsuper = t`); `shared_buffers = 128MB`, `max_connections = 100`, `dynamic_shared_memory_type = posix`.
+- `POSTGRES_USER` (`competency`) — суперпользователь кластера (`rolsuper = t`); `shared_buffers = 128MB`, `max_connections = 100` (тестовый контейнер его переопределяет, `testcontainers-postgresql-4.15.0.md`), `dynamic_shared_memory_type = posix`.
 - `docker stop` → `STOPSIGNAL SIGINT` → «received fast shutdown request», выход с кодом 0; следующий старт без crash recovery («database system was shut down at …»); данные на месте (10 057 сотрудников до и после).
 - Монтирование тома в `/var/lib/postgresql/data` (и от root, и от uid 999): контейнер завершается с кодом 1 и сообщением entrypoint (см. «Project conventions»).
 - Проба манифеста (`sh -c 'pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'`) работает в образе (выход 0, «accepting connections»; переменные окружения доступны `exec`-пробе). При первой инициализации тома `pg_isready` по сокету отвечает «готов» на опрос раньше, чем по TCP (временный сервер entrypoint слушает только сокет), поэтому проба по `127.0.0.1` не пропускает трафик раньше времени.

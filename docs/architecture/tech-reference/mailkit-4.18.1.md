@@ -7,7 +7,7 @@ responsibility:
 
 # MailKit @ 4.18.1
 
-Область: SMTP-клиент (`MailKit.Net.Smtp.SmtpClient`) для писем через корпоративный SMTP relay — приглашения и ссылки сброса пароля (`user-management`); письма строит MimeKit 4.18.1 (транзитивно). IMAP/POP3 и `IEmailSender<TUser>` Identity не используются.
+Область: SMTP-клиент (`MailKit.Net.Smtp.SmtpClient`) для писем через корпоративный SMTP relay — приглашения и ссылки сброса пароля (`user-management`), напоминания участникам согласования (`career-framework`); письма строит MimeKit 4.18.1 (транзитивно). IMAP/POP3 и `IEmailSender<TUser>` Identity не используются.
 
 ## Canonical source
 - Репозиторий и README: https://github.com/jstedfast/MailKit
@@ -16,6 +16,7 @@ responsibility:
 - Исходник `MailService` (умолчание `CheckCertificateRevocation`): https://raw.githubusercontent.com/jstedfast/MailKit/master/MailKit/MailService.cs
 - NuGet (nuspec 4.18.1): https://api.nuget.org/v3-flatcontainer/mailkit/4.18.1/mailkit.nuspec — лицензия MIT; цели .NET Framework 4.6.2/4.7/4.8, .NET Standard 2.0/2.1, `net8.0`, `net10.0`; группа `net10.0`: `MimeKit` 4.18.1, `System.Formats.Asn1` 10.0.0. Версии ≥ 4.15: 4.15.0, 4.15.1, 4.16.0, 4.17.0, 4.18.0, 4.18.1 (последняя стабильная на 2026-10-05).
 - Граф `net10.0` в lock-файлах проекта: MailKit 4.18.1 → MimeKit 4.18.1 (MIT; https://api.nuget.org/v3-flatcontainer/mimekit/4.18.1/mimekit.nuspec, группа `net10.0`) → `BouncyCastle.Cryptography` 2.7.0 (MIT, без зависимостей) и `System.Security.Cryptography.Pkcs` 10.0.0 (MIT, группа `net10.0` пуста). `System.Formats.Asn1` в lock-файлах нет: библиотека входит в платформу .NET 10.
+- `System.Security.Cryptography.Pkcs` закреплён прямой ссылкой 10.0.13 в `Competency.Platform.csproj` (в lock-файлах `Direct`, 10.0.13): 10.0.0–10.0.12 подвержены https://github.com/advisories/GHSA-846f-f764-76mx (CVE-2026-84008, high, отказ в обслуживании в `SignedCms.CheckSignature`) и https://github.com/advisories/GHSA-2fmv-rv2c-59x7 (CVE-2026-70162, moderate), исправлено в 10.0.13 (рекомендации сверены 2026-10-22). Без закрепления restore снова даёт NU1902/NU1903. Закрепление снимается, когда MimeKit сам потребует Pkcs 10.0.13 или новее.
 - Last verified: 2026-10-08
 - Оценка риска знаний (Phase 5): **MEDIUM** — 4.15–4.18 (2026-02…2026-09) новее среза знаний; сверены release notes.
 
@@ -47,7 +48,7 @@ responsibility:
 ## Project conventions
 - Один конкретный класс `MailSender` в `Competency.Platform`, без интерфейса, singleton: соединение не держит, поэтому общий для запросов и фоновой очереди; `SmtpClient` — новый на каждое письмо и не используется из нескольких потоков.
 - Настройки `Smtp`: `Host`, `Port`, `SecureSocketOptions`, `UserName` и `Password` (только из Secret, оба или ни одного; без логина `AuthenticateAsync` не вызывается), `From`, `Timeout` (по умолчанию 15 с), `CheckCertificateRevocation`. Проверяются при старте вне build-time генерации OpenAPI: имя хоста, порт, **определённое** значение `SecureSocketOptions` (`Enum.IsDefined` — неизвестное число иначе связалось бы и отправляло без TLS), `0 < Timeout ≤ 49.17:02:47.294` (предел `CancelAfter`, `uint.MaxValue - 1` мс), адрес `From` с доменом.
-- Когда отправлять (решение пользователя 2026-10-08, вместо прежнего «отправка не блокирует HTTP-запрос»): письма по действиям администратора — синхронно сразу после фиксации транзакции, не дольше `Smtp:Timeout`, итог возвращается в ответе (`mailSent`); анонимный «Не помню пароль» — фоновая очередь в памяти (`Channel` + `BackgroundService`, `PasswordResetQueue`), потеря при перезапуске принята. Outbox и автоматических повторов нет. Никогда не отправлять внутри транзакции БД или под блокировкой.
+- Когда отправлять (решение пользователя 2026-10-08, вместо прежнего «отправка не блокирует HTTP-запрос»): письма по действиям администратора — синхронно сразу после фиксации транзакции, не дольше `Smtp:Timeout`, итог возвращается в ответе (`mailSent`); анонимный «Не помню пароль» — фоновая очередь в памяти (`Channel` + `BackgroundService`, `PasswordResetQueue`), потеря при перезапуске принята; напоминания карьерной модели — так же (`CareerMailQueue`, решение пользователя 2026-10-13). Outbox и автоматических повторов нет. Никогда не отправлять внутри транзакции БД или под блокировкой.
 - Отказ: `SendAsync` возвращает `false` на любое исключение, кроме отмены вызывающим, и пишет в лог только тип исключения — без адресов, текста письма и ответа сервера. `ProtocolLogger` не используется (содержимое писем, ссылки и данные аутентификации).
 - Тексты и темы писем — русские, строковыми константами в коде модуля (`src/Competency.UserManagement/AccountMail.cs`), не `.resx`: писем два; вернуться к ресурсам, когда писем станет много или появится редактор шаблонов.
 - Адрес получателя проверяется на границе API до построения `MailboxAddress`.

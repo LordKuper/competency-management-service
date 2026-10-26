@@ -7,6 +7,12 @@ import { describeApiError } from "../../app/apiErrors";
 import { destructiveConfirm } from "../../app/destructiveConfirm";
 import { type UserResponse, usersQueryKey } from "./usersApi";
 
+/** What blocking or unblocking an account uses of it, so a screen that knows only these fields can call it. */
+type BlockableUser = Pick<
+  UserResponse,
+  "id" | "email" | "isBlocked" | "version"
+>;
+
 /**
  * Returns the action that asks for confirmation, then blocks the given account or lifts its block.
  * The accounts are reread whatever the outcome, so a stale version shows the current state.
@@ -17,7 +23,7 @@ export function useBlockUser() {
   const { modal, message } = App.useApp();
   const queryClient = useQueryClient();
   const change = useMutation({
-    mutationFn: async (user: UserResponse) => {
+    mutationFn: async (user: BlockableUser) => {
       const params = {
         path: { id: user.id },
         header: { "If-Match": ifMatchOf(user.version) },
@@ -31,7 +37,7 @@ export function useBlockUser() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: usersQueryKey }),
   });
 
-  return (user: UserResponse) =>
+  return (user: BlockableUser) =>
     modal.confirm({
       title: user.isBlocked
         ? `Разблокировать пользователя «${user.email}»?`

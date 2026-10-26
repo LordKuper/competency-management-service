@@ -35,8 +35,6 @@ public sealed class MatrixKit
     /// </summary>
     public ApiClient Author { get; private init; } = null!;
 
-    public Guid BlockId { get; } = Guid.NewGuid();
-
     public Guid MatrixId => Matrix.Id;
 
     public Guid VersionId => Matrix.Json!["inWorkVersion"]!["id"]!.GetValue<Guid>();
@@ -47,7 +45,7 @@ public sealed class MatrixKit
     /// <param name="org">The people and units.</param>
     /// <param name="unitId">The unit of the matrix; the team by default.</param>
     /// <param name="author">Who creates the matrix; the team's head by default.</param>
-    /// <param name="scaleId">The scale of the version and of its competencies; the base scale by default.</param>
+    /// <param name="scaleId">The scale of the competencies; the base scale by default.</param>
     /// <param name="competencyAuthor">Who creates the competencies, so a head makes them drafts; an administrator by default.</param>
     /// <returns>The kit.</returns>
     public static async Task<MatrixKit> CreateAsync(CareerOrg org, Guid? unitId = null, ApiClient? author = null, Guid? scaleId = null, ApiClient? competencyAuthor = null)
@@ -56,16 +54,16 @@ public sealed class MatrixKit
         var unit = unitId ?? org.Team.Id;
         var direction = await admin.MakeDirectionAsync();
         var track = await admin.MakeTrackAsync(unit, direction.Id);
-        var junior = await admin.MakeLevelAsync(track.Id, Scenarios.Unique("Младший"));
-        var senior = await admin.MakeLevelAsync(track.Id, Scenarios.Unique("Старший"));
-        var categoryId = await admin.CategoryIdAsync();
+        var junior = await admin.LinkToNewPositionAsync(await admin.MakeLevelAsync(track.Id, Scenarios.Unique("Младший")), unit);
+        var senior = await admin.LinkToNewPositionAsync(await admin.MakeLevelAsync(track.Id, Scenarios.Unique("Старший")), unit);
+        track = (await admin.GetAsync($"/api/v1/career/tracks/{track.Id}")).Expect(HttpStatusCode.OK);
         var scale = scaleId ?? Guid.Parse(CareerScenarios.BaseScaleId);
-        var critical = await (competencyAuthor ?? admin).MakeCompetencyAsync(categoryId, Scenarios.Unique("Критичная"), direction.Id, "Critical", scale);
-        var profile = await (competencyAuthor ?? admin).MakeCompetencyAsync(categoryId, Scenarios.Unique("Профильная"), null, "Profile", scale);
+        var critical = await (competencyAuthor ?? admin).MakeCompetencyAsync(Scenarios.Unique("Критичная"), direction.Id, scale);
+        var profile = await (competencyAuthor ?? admin).MakeCompetencyAsync(Scenarios.Unique("Профильная"), null, scale);
         var head = author ?? org.TeamHead.Client;
         var matrix = (await head.PostAsync(
             "/api/v1/career/matrices",
-            new { orgUnitId = unit, directionId = direction.Id, trackId = track.Id, scaleId = scale })).Expect(HttpStatusCode.Created);
+            new { orgUnitId = unit, directionId = direction.Id, trackId = track.Id })).Expect(HttpStatusCode.Created);
         return new MatrixKit
         {
             Org = org,
@@ -81,22 +79,22 @@ public sealed class MatrixKit
     }
 
     /// <summary>
-    /// The complete document: both levels with their thresholds, one mandatory block with both competencies, the whole of each level's rating
-    /// in that block, and a requirement for every pair of a level and a competency.
+    /// The complete document: both levels with their thresholds, both competencies outside blocks with their types in the version, the whole
+    /// of each level's rating in that group, and a required score for every pair of a level and a competency.
     /// </summary>
-    public JsonObject Content(string behavior = "Делает самостоятельно") => new()
+    /// <param name="seniorCriticalScore">The score the senior level requires of the critical competency; another value makes another document.</param>
+    public JsonObject Content(int seniorCriticalScore = 3) => new()
     {
         ["levels"] = new JsonArray(Level(Junior.Id, 60), Level(Senior.Id, 70)),
-        ["blocks"] = new JsonArray(new JsonObject { ["id"] = BlockId, ["name"] = "Основные", ["isMandatory"] = true }),
         ["competencies"] = new JsonArray(
-            new JsonObject { ["competencyId"] = Critical.Id, ["blockId"] = BlockId },
-            new JsonObject { ["competencyId"] = Profile.Id, ["blockId"] = BlockId }),
+            new JsonObject { ["competencyId"] = Critical.Id, ["blockId"] = null, ["type"] = "Critical" },
+            new JsonObject { ["competencyId"] = Profile.Id, ["blockId"] = null, ["type"] = "Profile" }),
         ["blockWeights"] = new JsonArray(Weight(Junior.Id, 100), Weight(Senior.Id, 100)),
         ["requirements"] = new JsonArray(
-            Requirement(Junior.Id, Critical.Id, 2, "Critical", behavior),
-            Requirement(Junior.Id, Profile.Id, 1, "Profile", behavior),
-            Requirement(Senior.Id, Critical.Id, 3, "Critical", behavior),
-            Requirement(Senior.Id, Profile.Id, 2, "Profile", behavior)),
+            Requirement(Junior.Id, Critical.Id, 2),
+            Requirement(Junior.Id, Profile.Id, 1),
+            Requirement(Senior.Id, Critical.Id, seniorCriticalScore),
+            Requirement(Senior.Id, Profile.Id, 2)),
     };
 
     /// <summary>
@@ -120,8 +118,21 @@ public sealed class MatrixKit
     /// <summary>
     /// Performs an action of the approval route as the given user, against the version's current entity tag unless one is given.
     /// </summary>
-    public async Task<ApiResponse> TransitAsync(ApiClient who, string action, object? body = null, string? etag = null, Guid? versionId = null) =>
-        await who.PostAsync($"/api/v1/career/matrix-versions/{versionId ?? VersionId}/{action}", body, etag ?? await ETagAsync(versionId));
+    public async Task<ApiResponse> TransitAsync(ApiClient who, string action, object? body = null, string? etag = null, Guid? versionId = null)
+    {
+        var path = $"/api/v1/career/matrix-versions/{versionId ?? VersionId}";
+        var cascade = action is "submit" or "approve" or "accept-changes" ? await CascadeAsync(who, path) : string.Empty;
+        return await who.PostAsync($"{path}/{action}{cascade}", body, etag ?? await ETagAsync(versionId));
+    }
+
+    /// <summary>
+    /// The query that confirms the publication list a step reads; empty when the user cannot read the version.
+    /// </summary>
+    private static async Task<string> CascadeAsync(ApiClient who, string versionPath)
+    {
+        var publication = await who.GetAsync($"{versionPath}/publication");
+        return publication.Status == HttpStatusCode.OK ? $"?cascade={Uri.EscapeDataString(publication.Json!["cascadeTag"]!.GetValue<string>())}" : string.Empty;
+    }
 
     /// <summary>
     /// Saves the complete document as the head, which is all a version needs to be handed on.
@@ -157,19 +168,9 @@ public sealed class MatrixKit
 
     private static JsonObject Level(Guid id, decimal threshold) => new() { ["levelId"] = id, ["minOverallPercent"] = threshold };
 
-    private JsonObject Weight(Guid levelId, decimal percent) =>
-        new() { ["levelId"] = levelId, ["blockId"] = BlockId, ["percent"] = percent, ["minPercent"] = 50 };
+    private static JsonObject Weight(Guid levelId, decimal percent) =>
+        new() { ["levelId"] = levelId, ["blockId"] = null, ["percent"] = percent };
 
-    private static JsonObject Requirement(Guid levelId, Guid competencyId, int score, string type, string behavior) => new()
-    {
-        ["levelId"] = levelId,
-        ["competencyId"] = competencyId,
-        ["requiredScore"] = score,
-        ["type"] = type,
-        ["weight"] = 1,
-        ["isMandatory"] = true,
-        ["expectedBehavior"] = behavior,
-        ["evidenceExamples"] = null,
-        ["validFrom"] = null,
-    };
+    private static JsonObject Requirement(Guid levelId, Guid competencyId, int score) =>
+        new() { ["levelId"] = levelId, ["competencyId"] = competencyId, ["requiredScore"] = score };
 }

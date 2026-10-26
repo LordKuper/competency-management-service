@@ -60,6 +60,19 @@ function ChangedUser({
   return <UserEditor existing={user} onClose={onClose} />;
 }
 
+/** The refusal to remove the HR role from an account that is the responsible HR of units; the server states it as a plain conflict. */
+function rolesRefusal(
+  error: unknown,
+  existing: UserResponse | undefined,
+  input: UserInput | undefined,
+): string | undefined {
+  const isHrRemoved =
+    existing?.roles.includes("Hr") === true && !input?.roles.includes("Hr");
+  if (!isHrRemoved) return undefined;
+  if (!(error instanceof ApiError) || error.status !== 409) return undefined;
+  return error.errors === undefined ? error.detail : undefined;
+}
+
 /** A conflict that names a field, such as a taken e-mail, is shown under that field, so an alert would only repeat it. */
 function isShownUnderField(error: unknown): boolean {
   return (
@@ -114,9 +127,13 @@ function UserEditor({ existing: latest, onClose }: UserEditorProps) {
       ]),
   });
 
+  const rolesError = save.isError
+    ? rolesRefusal(save.error, existing, save.variables)
+    : undefined;
+
   return (
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>
-      {save.isError && !isShownUnderField(save.error) && (
+      {save.isError && !rolesError && !isShownUnderField(save.error) && (
         <ErrorAlert
           title="Не удалось сохранить пользователя"
           error={save.error}
@@ -127,7 +144,7 @@ function UserEditor({ existing: latest, onClose }: UserEditorProps) {
         initialValues={
           existing && {
             email: existing.email,
-            role: existing.role,
+            roles: existing.roles,
             employeeId: existing.employeeId ?? undefined,
           }
         }
@@ -136,6 +153,7 @@ function UserEditor({ existing: latest, onClose }: UserEditorProps) {
             ? { id: existing.employeeId, name: existing.employeeName }
             : undefined
         }
+        rolesError={rolesError}
         isNew={!existing}
         submitLabel={existing ? "Сохранить" : "Создать"}
         onSubmit={(input) => save.mutateAsync(input)}

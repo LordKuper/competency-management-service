@@ -1,0 +1,1 @@
+- [Bulk PRD promotion scripting](feedback_promote-scripting.md) — private scratchpad subfolder, Write tool for scripts, id map and xref checks

@@ -6,7 +6,12 @@ import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
 import { describeApiError } from "../../app/apiErrors";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
-import { type CatalogSegment, catalogQueryKey, entryQuery } from "./catalogApi";
+import {
+  type CatalogEntry,
+  type CatalogSegment,
+  catalogQueryKey,
+  entryQuery,
+} from "./catalogApi";
 
 const PICKER_PAGE_SIZE = 20;
 /** The largest page the server gives. */
@@ -26,6 +31,8 @@ export const IN_WORK: PickerFilters = { inWork: true };
 export interface PickerOption {
   value: string;
   label: string;
+  /** The catalogue entry the option stands for, for pickers that show more than its name. */
+  entry?: CatalogEntry;
 }
 
 /**
@@ -72,7 +79,7 @@ export function useCatalogSearch(
     ...items,
   ]
     .filter((entry) => !exclude.includes(entry.id))
-    .map((entry) => ({ value: entry.id, label: entry.name }));
+    .map((entry) => ({ value: entry.id, label: entry.name, entry }));
   return {
     search,
     setSearch,

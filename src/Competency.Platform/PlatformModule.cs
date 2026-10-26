@@ -196,6 +196,9 @@ public static class PlatformModule
             .AddPolicy(
                 AuthorizationPolicies.GlobalAdmin,
                 policy => policy.RequireAuthenticatedUser().RequireClaim(PlatformClaims.Role, PlatformClaims.GlobalAdminRole))
+            .AddPolicy(
+                AuthorizationPolicies.GlobalAdminOrHr,
+                policy => policy.RequireAuthenticatedUser().RequireClaim(PlatformClaims.Role, PlatformClaims.GlobalAdminRole, PlatformClaims.HrRole))
             .SetFallbackPolicy(authenticated);
         services.AddSingleton<IAuthorizationMiddlewareResultHandler, StatusAuthorizationResultHandler>();
     }

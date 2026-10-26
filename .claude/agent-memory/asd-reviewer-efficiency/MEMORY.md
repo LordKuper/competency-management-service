@@ -2,3 +2,7 @@
 - [No-shell change surface](feedback_no-shell-incremental-scope.md) — manifest list = scope, fingerprint .diff = change content (impl every iter, design iter 2+), no git, no parts; memory bloat and test micro-costs not raised.
 - [MEMORY-FIX fallback is AC-mandated](project_memory-fix-fallback-keep.md) — owner-without-write-tool branch never fires for canon agents, but AC-14 requires it; keep-as-is, don't raise.
 - [020 workflow definition keys](project_020-workflow-definition-keys.md) — stored `next`/`rollback_reset` judged keep-as-is; persist-review parses Findings columns by position (Category goes last).
+- [Design-review gate outcomes](feedback_design-review-gate-outcomes.md) — read rotated decisions-log segments for settled ADR gates; approved ones stay, leftover fallback branches are dead text.
+- [Large-diff read method](feedback_large-diff-read-method.md) — map with `^diff --git` grep, read src in ~1000-line chunks, skip generated migrations; ledger/table parsing rules for the report.
+- [Redundant gate pair](feedback_redundant-gate-pair-keep.md) — two one-conjunct gates, each sufficient alone (query enabled plus adoption condition): keep-as-is, not an OE hit.
+- [Dead-after-redesign sweep](feedback_dead-after-redesign-sweep.md) — grep exports, CSS classes and vars whose last caller the diff removed; one `f` per rule row, merge same-kind findings.

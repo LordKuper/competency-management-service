@@ -12,7 +12,7 @@ namespace Competency.UserManagement;
 
 /// <summary>
 /// The cookie session: how it is configured, which claims it carries, and the check every request makes
-/// so that blocking an account, changing its credentials or role, or a leaving employee ends the session at once.
+/// so that blocking an account, changing its credentials or roles, or a leaving employee ends the session at once.
 /// </summary>
 internal static class SessionAuthentication
 {
@@ -36,18 +36,20 @@ internal static class SessionAuthentication
     }
 
     /// <summary>
-    /// Builds the principal a session carries: the account, its role, and the security stamp the session was issued under.
+    /// Builds the principal a session carries: the account, one role claim per role it holds (none for an account without roles),
+    /// and the security stamp the session was issued under.
     /// </summary>
     /// <param name="user">The account that signed in.</param>
+    /// <param name="roles">The account's roles.</param>
     /// <returns>The authenticated principal to sign in with.</returns>
-    public static ClaimsPrincipal CreatePrincipal(AppUser user)
+    public static ClaimsPrincipal CreatePrincipal(AppUser user, IReadOnlyList<UserRole> roles)
     {
-        var claims = new List<Claim>
-        {
+        List<Claim> claims =
+        [
             new(PlatformClaims.Subject, user.Id.ToString()),
-            new(PlatformClaims.Role, user.Role.ToString()),
+            .. roles.Select(role => new Claim(PlatformClaims.Role, role.ToString())),
             new(SecurityStampClaim, user.SecurityStamp!),
-        };
+        ];
 
         return new ClaimsPrincipal(new ClaimsIdentity(claims, Scheme, nameType: null, roleType: PlatformClaims.Role));
     }

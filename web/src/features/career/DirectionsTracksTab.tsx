@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button, Empty, Flex, Space, Table, type TableColumnsType } from "antd";
 import { useState } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { TruncationNote } from "../../app/TruncationNote";
 import { EntryActions, entryColumns } from "./CatalogParts";
 import {
   type CareerTrack,
@@ -9,6 +10,7 @@ import {
   type CatalogListParams,
   directionsQuery,
   FIRST_PAGE,
+  MAX_PAGE_SIZE,
   type TrackListParams,
   tracksQuery,
 } from "./catalogApi";
@@ -55,13 +57,13 @@ export function DirectionsTracksTab() {
       {rights.canCreate && (
         <Flex>
           <Button type="primary" onClick={() => setDialog("create")}>
-            Добавить направление
+            Добавить область
           </Button>
         </Flex>
       )}
       {error && (
         <ErrorAlert
-          title="Не удалось загрузить направления"
+          title="Не удалось загрузить области"
           error={error}
           onRetry={() => void refetch()}
         />
@@ -83,7 +85,7 @@ export function DirectionsTracksTab() {
           emptyText: (
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Направлений пока нет"
+              description="Областей пока нет"
             />
           ),
         }}
@@ -91,14 +93,14 @@ export function DirectionsTracksTab() {
       {dialog === "create" && (
         <NameModal
           segment="directions"
-          title="Новое направление"
+          title="Новая область"
           onClose={() => setDialog(null)}
         />
       )}
       {edited && (
         <NameModal
           segment="directions"
-          title="Изменение направления"
+          title="Изменение области"
           entry={edited}
           onClose={() => setDialog(null)}
         />
@@ -112,6 +114,7 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
   const [dialog, setDialog] = useState<Dialog>(null);
   const [params, setParams] = useState<TrackListParams>({
     ...FIRST_PAGE,
+    pageSize: MAX_PAGE_SIZE,
     directionId: direction.id,
   });
   const { data, error, isFetching, refetch } = useQuery({
@@ -156,12 +159,13 @@ function TracksTable({ direction }: { direction: CatalogEntry }) {
           onRetry={() => void refetch()}
         />
       )}
+      <TruncationNote shown={data?.items.length ?? 0} total={data?.total} />
       <Table<CareerTrack>
         rowKey="id"
         columns={columns}
         dataSource={data?.items}
         loading={isFetching}
-        pagination={pageProps(params, data?.total, setParams)}
+        pagination={false}
         scroll={{ x: "max-content" }}
         onChange={onFilterChange(setParams)}
         expandable={{

@@ -10,7 +10,8 @@ namespace Competency.CareerFramework;
 public static class CareerFrameworkModule
 {
     /// <summary>
-    /// Registers the CareerFramework module services. Its table refers to units and accounts, so the host adds the module after OrgStructure and UserManagement.
+    /// Registers the CareerFramework module services. Its table refers to units, employees and accounts, so the host adds the module after OrgStructure and UserManagement; it also implements
+    /// <see cref="IHrAssignments"/> for them.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
     /// <returns>The same collection, for chaining.</returns>
@@ -20,8 +21,14 @@ public static class CareerFrameworkModule
         services.AddScoped<ProcessRoles>();
         services.AddScoped<CatalogStore>();
         services.AddScoped<MatrixRoute>();
+        services.AddScoped<CatalogPublication>();
         services.AddScoped<MatrixCatalog>();
         services.AddScoped<MatrixWorkflow>();
+        services.AddScoped<CareerMail>();
+        services.AddScoped<IDeskSource, CareerDeskSource>();
+        services.AddScoped<IHrAssignments, HrAssignments>();
+        services.AddSingleton<CareerMailQueue>();
+        services.AddHostedService(provider => provider.GetRequiredService<CareerMailQueue>());
         return services;
     }
 
@@ -33,14 +40,19 @@ public static class CareerFrameworkModule
     public static IEndpointRouteBuilder MapCareerFrameworkEndpoints(this IEndpointRouteBuilder endpoints)
     {
         OrgUnitHrEndpoints.Map(endpoints);
+        OrgUnitSetupEndpoints.Map(endpoints);
         ProcessRoleEndpoints.Map(endpoints);
+        MyPlaceEndpoints.Map(endpoints);
         CareerDirectionEndpoints.Map(endpoints);
         CareerTrackEndpoints.Map(endpoints);
         CareerLevelEndpoints.Map(endpoints);
-        CompetencyCategoryEndpoints.Map(endpoints);
+        CareerLevelPositionEndpoints.Map(endpoints);
         CompetencyEndpoints.Map(endpoints);
         CompetencyScaleEndpoints.Map(endpoints);
+        CompetencyBlockEndpoints.Map(endpoints);
+
         CatalogDraftEndpoints.Map(endpoints);
+        UnusedEntryEndpoints.Map(endpoints);
         MatrixEndpoints.Map(endpoints);
         MatrixVersionEndpoints.Map(endpoints);
         MatrixApprovalEndpoints.Map(endpoints);

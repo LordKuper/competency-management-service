@@ -34,6 +34,10 @@ interface PositionSelectProps {
   orgUnitId?: string;
   /** The position the employee holds now, listed by name even when it is no longer allowed or active, so an unrelated edit keeps it; the caller passes it only while the unit is unchanged. */
   current?: { id: string; name: string };
+  /** A position chosen before the form was opened, offered under any unit and never cleared by the unit's list. */
+  preselected?: { id: string; name: string };
+  /** Told when the form adds a position to the unit's list, so a scenario can report it. */
+  onAdded?: (position: { id: string; name: string }) => void;
 }
 
 /** The server's reason a name was refused, which belongs to the name field the dialog does not show. */
@@ -55,6 +59,8 @@ export function PositionSelect({
   onChange,
   orgUnitId,
   current,
+  preselected,
+  onAdded,
 }: PositionSelectProps) {
   const queryClient = useQueryClient();
   const { message } = App.useApp();
@@ -75,6 +81,7 @@ export function PositionSelect({
     onSuccess: (position, { unitId }) => {
       setAdded({ value: position.id, label: position.name, orgUnitId: unitId });
       onChange?.(position.id);
+      onAdded?.({ id: position.id, name: position.name });
     },
     onError: (failure) => {
       message.error(describeAddFailure(failure));
@@ -93,6 +100,7 @@ export function PositionSelect({
   }
   for (const extra of [
     current && { value: current.id, label: current.name },
+    preselected && { value: preselected.id, label: preselected.name },
     added?.orgUnitId === orgUnitId && added,
   ]) {
     if (extra && !options.has(extra.value)) options.set(extra.value, extra);
@@ -133,7 +141,7 @@ export function PositionSelect({
         if (!isOpen) setSearch("");
       }}
       loading={isFetching || quickAdd.isPending}
-      disabled={quickAdd.isPending}
+      disabled={quickAdd.isPending || undefined}
       placeholder="Выберите должность"
       notFoundContent={error ? describeApiError(error) : undefined}
     />

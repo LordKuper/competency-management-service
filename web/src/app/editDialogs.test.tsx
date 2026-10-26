@@ -56,7 +56,7 @@ const dialogs: Dialog[] = [
     answer: (version, text) => ({
       id: "user-1",
       email: text,
-      role: "User",
+      roles: [],
       isBlocked: false,
       employeeId: null,
       employeeName: null,

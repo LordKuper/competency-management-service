@@ -3,7 +3,7 @@ using Competency.Platform;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The HR a global administrator assigned to a unit. The unit and the units below it inherit the assignment down to the first unit
+/// The employee a global administrator assigned to a unit as its responsible HR; the assignment acts through the account bound to the employee at the moment. The unit and the units below it inherit the assignment down to the first unit
 /// with an assignment of its own. Removing the assignment deletes the row.
 /// </summary>
 [Audited]
@@ -13,5 +13,5 @@ internal sealed class OrgUnitHr
     public Guid OrgUnitId { get; init; }
 
     [Audited]
-    public Guid UserId { get; set; }
+    public Guid EmployeeId { get; set; }
 }

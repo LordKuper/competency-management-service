@@ -42,12 +42,13 @@ internal static class MatrixApprovalEndpoints
             .GroupBy(decision => decision.VersionId)
             .Select(group => new { VersionId = group.Key, At = group.Max(decision => decision.At) })
             .ToDictionaryAsync(item => item.VersionId, item => item.At, cancellationToken);
-        var trackIds = awaiting.Select(item => item.Version.Matrix.TrackId).Distinct().ToList();
+        var trackIds = awaiting.Select(item => item.Version.Matrix.TrackId).OfType<Guid>().Distinct().ToList();
         var trackNames = await context.Set<CareerTrack>()
             .AsNoTracking()
             .Where(track => trackIds.Contains(track.Id))
             .ToDictionaryAsync(track => track.Id, track => track.Name, cancellationToken);
         var unitNames = await store.UnitNamesAsync(awaiting.Select(item => (Guid?)item.Version.Matrix.OrgUnitId), cancellationToken);
+        var positionNames = await store.PositionNamesAsync(awaiting.Select(item => item.Version.Matrix.PositionId), cancellationToken);
 
         return TypedResults.Ok(awaiting
             .Select(item => new ApprovalResponse(
@@ -55,11 +56,14 @@ internal static class MatrixApprovalEndpoints
                 item.Version.MatrixId,
                 item.Version.Number,
                 item.Version.Matrix.TrackId,
-                trackNames.GetValueOrDefault(item.Version.Matrix.TrackId, string.Empty),
+                item.Version.Matrix.TrackId is { } trackId ? trackNames.GetValueOrDefault(trackId, string.Empty) : null,
                 item.Version.Matrix.OrgUnitId,
                 unitNames.GetValueOrDefault(item.Version.Matrix.OrgUnitId, string.Empty),
                 item.Turn.Step,
-                submittedAt.TryGetValue(item.Version.Id, out var at) ? at : null))
+                submittedAt.TryGetValue(item.Version.Id, out var at) ? at : null,
+                item.Version.Matrix.PositionId,
+                item.Version.Matrix.PositionId is { } positionId ? positionNames.GetValueOrDefault(positionId, string.Empty) : null))
+
             .OrderBy(approval => approval.SubmittedAt)
             .ThenBy(approval => approval.VersionId)
             .ToList());

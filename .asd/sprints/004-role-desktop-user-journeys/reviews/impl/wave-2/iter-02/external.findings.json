@@ -1,0 +1,1 @@
+[{"id":"1","severity":"high","location":"web/src/features/desk/OnboardEmployeePage.tsx:289"},{"id":"2","severity":"high","location":"web/src/features/users/UserForm.tsx:89"},{"id":"3","severity":"high","location":"web/src/features/org-structure/EmployeeForm.tsx:128"},{"id":"4","severity":"high","location":"web/src/features/desk/BuilderCompetenciesStep.tsx:433"}]

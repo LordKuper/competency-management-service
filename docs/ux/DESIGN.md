@@ -9,7 +9,7 @@ colors:
   primary-hover: "#2338C2"     # hover of primary button/link
   primary-active: "#182CC2"    # pressed state of primary button/link
   primary-subtle: "#EBF2FD"    # selected table row, hovered menu item, selected-card background, light highlight
-  accent: "#FBAE40"            # brand highlight FILLS only (progress, badge fill) and the keyboard focus ring on the dark header; never text on light surfaces
+  accent: "#FBAE40"            # brand highlight FILLS only (progress, badge fill incl. the header count badge: accent fill, surface-inverse text 9.6:1, on nav-item-active primary 3.7:1 non-text) and the keyboard focus ring on the dark header; never text on light surfaces
   # --- text ---
   text-primary: "#292929"      # body text, headings, table cell content
   text-secondary: "#4B4B4C"    # supporting text, form labels, table header text
@@ -433,7 +433,7 @@ components:
   tab-active:                   # current tab (primary text and 2px primary indicator line)
     backgroundColor: "{colors.surface-panel}"
     textColor: "{colors.primary}"
-  step-current:                 # wave stage in progress
+  step-current:                 # wave stage in progress; also the current step of a horizontal wizard (titles always visible)
     backgroundColor: "{colors.primary}"
     textColor: "{colors.text-inverse}"
     typography: "{typography.body-strong}"
@@ -606,6 +606,7 @@ AA thresholds: 4.5:1 normal text, 3:1 large text (>= 24px, or >= 18.66px bold) a
 | `surface-inverse` on `rating-level-0` / `-1` / `-2` | 15.5 / 11.8 / 8.0 | AA, AAA |
 | `text-inverse` on `rating-level-3` / `-4` | 7.0 / 17.9 | AA, AAA |
 | `surface-inverse` on `accent` | 9.6 | AA, AAA |
+| `accent` fill on `primary` (count badge on the active nav item; badge text is `surface-inverse` on `accent`, 9.6) | 3.73 | AA non-text (>= 3:1) |
 | `text-primary` on `accent` | 7.8 | AA, AAA |
 | `border-control` on `surface-panel` / `surface-page` (non-text) | 3.7 / 3.5 | AA non-text (>= 3:1) |
 | `primary` focus ring on `surface-panel`; `accent` focus ring on `surface-inverse` | 7.0 / 9.6 | AA non-text |
@@ -863,7 +864,7 @@ Components are the ones the concept needs (an internal HR and competency-matrix 
 | Card without a session (`brand-wordmark`, `brand-logo-size-auth`; panel from `surface-panel`, `rounded-lg`, `space-xl` padding) | `Card` centered on `surface-page` (`Row`/`Col`) | one; shared by sign-in, forgot password and set password | no header and no navigation. Top row, centered: the logo (`brand-logo-size-auth` square, empty alt because the name is next to it) and the product name in `brand-wordmark` / `text-primary`, wrapping under the logo on a narrow card; below it the screen title `heading-1`, then the form. No tagline. The only link of the card (for example "Не помню пароль") sits under the primary button, centered, in `primary` |
 | Breadcrumb (`breadcrumb`, `-current`) | `Breadcrumb` | link / current | 8.1:1 and 13.4:1 on `surface-page`; current page is plain text, not a link |
 | Tabs (`tab`, `-hover`, `-active`) | `Tabs` | default / hover / active / focus / disabled | 8.7:1, 14.6:1, 7.0:1; active adds a 2px `primary` indicator line |
-| Steps (`step-current`, `-done`, `-upcoming`) | `Steps` | current / done / upcoming | wave stages (12 statuses): vertical on detail pages, titles always visible, done = check icon, current = filled number; contrast 7.0:1, 6.2:1, 7.5:1 |
+| Steps (`step-current`, `-done`, `-upcoming`) | `Steps` | current / done / upcoming | wave stages (12 statuses): vertical on detail pages, titles always visible, done = check icon, current = filled number; contrast 7.0:1, 6.2:1, 7.5:1; may also be laid out horizontally for wizards (above the form, titles always visible, current = filled number, done = check icon), same tokens and contrast |
 
 ### Buttons
 
@@ -921,6 +922,7 @@ Tags are labels, not buttons. The text of a tag always names the state in words.
 |---|---|---|---|
 | Modal (`modal`, `scrim`) | `Modal` | default / confirm / danger confirm | title `heading-2`, 24px padding; scrim is `overlay-scrim` |
 | Confirm dialog (destructive) | `Modal.confirm` via `App.useApp()` | danger | title states the action and object, body states the consequence and whether it can be undone, primary button is `button-danger` with a verb label, the safe action is `button-default` (Cancel) |
+| Leave-confirmation dialog (`modal`, `scrim`) | `Modal.confirm` via `App.useApp()` plus a router blocker | one dialog for the whole app, no variants | the only reaction to unsaved edits when the user leaves a screen or closes a modal that holds a changed form with the close icon, Esc or a scrim click (the explicit Cancel button closes the modal without this dialog); a link, menu item, breadcrumb or step is never disabled for this reason. Title asks the question, body says the unsaved edits will be lost and how to keep them. "Stay" is the safe action: `button-primary`, initial focus, and what Esc, scrim click and close do. "Leave without saving" is `button-default`, not `button-danger`, because nothing is deleted from the system. Shown only when the form differs from its saved state. Closing or reloading the browser tab uses the browser's own warning, no custom UI. Copy and layout: desk.html (general states, 2) |
 | Drawer (`drawer`, `scrim`) | `Drawer` | right-side, 480px to 720px wide | record details, filters, evidence preview; title `heading-3` |
 | Dropdown item (`dropdown-item`, `-hover`, `-selected`) | `Dropdown`, `Select` popup, `DatePicker` popup | default / hover / selected / disabled | 14.6:1 and 12.9:1; selected also shows a check icon; popup uses `elevation-popup` |
 | Tooltip (`tooltip`) | `Tooltip` | hover | 17.9:1; short text only; never the only carrier of a label or disabled reason; antd `colorBgSpotlight` = `surface-inverse` (default is a translucent black) |
@@ -979,6 +981,7 @@ Each rule restates a decision made in the sections above; none is new.
 - Don't use weights 500 or 600, italics, uppercase transforms or letter-spacing on Cyrillic labels, or `compactAlgorithm`.
 - Don't rely on color alone, on a tooltip alone, or on a shadow alone to carry meaning or a boundary.
 - Don't show a disabled control without a reason, and don't remove the focus ring without an equal replacement.
+- Don't block navigation because of unsaved edits (no disabled link, menu item, breadcrumb or step with a hint); ask once with the leave-confirmation dialog.
 - Don't add shadows to static panels, tables or cards, and don't raise cards on hover.
 - Don't animate data (matrix cells, ratings, rankings), use transitions longer than 300ms, bounce easing, click ripple or looping decoration; honor `prefers-reduced-motion`.
 - Don't recolor a rating chip to show the target-level comparison; use a status tag or icon beside it.

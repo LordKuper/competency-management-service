@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Button,
   Descriptions,
   Flex,
   Form,
@@ -16,15 +15,15 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { AppModal } from "../../app/AppModal";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { NO_LEAVE_EDITS, useLeaveGuard } from "../../app/leaveGuard";
 import { useProcessRoles } from "./careerApi";
-import { MatrixDeleteButton } from "./MatrixDeleteButton";
+import { hasHeldActions, MatrixActions, RETURN_LABEL } from "./MatrixActions";
 import { MatrixEditor } from "./MatrixEditor";
 import { MatrixErrorAlert } from "./MatrixErrorAlert";
 import { MatrixHistoryModal } from "./MatrixHistory";
 import {
   createMatrixVersion,
   invalidateMatrices,
-  type MatrixAction,
   type MatrixDecision,
   type MatrixTransition,
   type MatrixVersion,
@@ -42,8 +41,6 @@ import {
   VERSION_STATUS_LABELS,
 } from "./matrixLabels";
 
-const RETURN_LABEL = "Вернуть с правками";
-
 const STATUS_COLORS: Record<MatrixVersion["status"], string | undefined> = {
   Draft: undefined,
   OnReview: "processing",
@@ -52,44 +49,6 @@ const STATUS_COLORS: Record<MatrixVersion["status"], string | undefined> = {
   Published: "success",
   Archived: undefined,
 };
-
-const TRANSITION_BUTTONS: readonly {
-  action: MatrixAction;
-  transition: MatrixTransition;
-  label: string;
-  isPrimary: boolean;
-}[] = [
-  {
-    action: "Submit",
-    transition: "submit",
-    label: "Отправить на согласование",
-    isPrimary: true,
-  },
-  {
-    action: "Approve",
-    transition: "approve",
-    label: "Согласовать",
-    isPrimary: true,
-  },
-  {
-    action: "AcceptChanges",
-    transition: "accept-changes",
-    label: "Принять правки",
-    isPrimary: false,
-  },
-  {
-    action: "AcceptAndRevise",
-    transition: "accept-and-revise",
-    label: "Принять и доработать",
-    isPrimary: false,
-  },
-  {
-    action: "RollbackChanges",
-    transition: "rollback-changes",
-    label: "Откатить правки",
-    isPrimary: false,
-  },
-];
 
 const DATE_TIME = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "short",
@@ -156,11 +115,19 @@ function RouteSteps({ version, decisions }: RouteStepsProps) {
 
 interface ReturnModalProps {
   isPending: boolean;
+  /** Why the last attempt failed, shown over the field. */
+  error?: unknown;
   onReturn: (comment: string) => void;
   onClose: () => void;
 }
 
-function ReturnModal({ isPending, onReturn, onClose }: ReturnModalProps) {
+/** Dialog that asks for the comment a version is returned with. */
+export function ReturnModal({
+  isPending,
+  error,
+  onReturn,
+  onClose,
+}: ReturnModalProps) {
   const [form] = Form.useForm<{ comment?: string }>();
   return (
     <AppModal
@@ -172,6 +139,9 @@ function ReturnModal({ isPending, onReturn, onClose }: ReturnModalProps) {
       onOk={() => form.submit()}
       onCancel={onClose}
     >
+      {error != null && (
+        <MatrixErrorAlert title="Версию не удалось вернуть" error={error} />
+      )}
       <Form
         form={form}
         name="matrix-return"
@@ -197,7 +167,9 @@ export function MatrixPage() {
   const [chosenId, setChosenId] = useState<string>();
   const [session, setSession] = useState(0);
   const [dialog, setDialog] = useState<"return" | "history" | null>(null);
-  const [hasUnsaved, setHasUnsaved] = useState(false);
+  const [edits, setEdits] = useState(NO_LEAVE_EDITS);
+  const { confirmLeave, leaveAfterSave } = useLeaveGuard(edits);
+  const hasUnsaved = edits.isUnsaved || !!edits.isSaving;
 
   const matrix = matrixRead.data;
   const latestVersionId = [...(versionsRead.data ?? [])].sort(
@@ -273,32 +245,28 @@ export function MatrixPage() {
   const isNextVersionOffered =
     isHead && !!matrix.publishedVersion && !matrix.inWorkVersion;
   const isBusy = transit.isPending || startVersion.isPending;
-  const transitions = TRANSITION_BUTTONS.filter((button) =>
-    version.actions.includes(button.action),
-  );
-  const canReturn = version.actions.includes("Return");
-  const isHeldBack = hasUnsaved && (transitions.length > 0 || canReturn);
+  const isHeldBack =
+    hasUnsaved && hasHeldActions(version, isNextVersionOffered);
 
   return (
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>
       <Link to="/career">Карьерная модель</Link>
       <Typography.Title level={1}>
-        {`Матрица «${matrix.trackName}» — ${matrix.orgUnitName}`}
+        {matrix.positionId
+          ? `Матрица должности «${matrix.positionName}» — ${matrix.orgUnitName}`
+          : `Матрица «${matrix.trackName}» — ${matrix.orgUnitName}`}
       </Typography.Title>
-      <Descriptions
-        items={[
-          {
-            key: "direction",
-            label: "Направление",
-            children: matrix.directionName,
-          },
-          {
-            key: "scale",
-            label: "Шкала",
-            children: version.entries.scale.name,
-          },
-        ]}
-      />
+      {!matrix.positionId && (
+        <Descriptions
+          items={[
+            {
+              key: "direction",
+              label: "Область",
+              children: matrix.directionName,
+            },
+          ]}
+        />
+      )}
       <Flex gap="middle" align="center" wrap>
         <Select
           aria-label="Версия"
@@ -309,47 +277,23 @@ export function MatrixPage() {
               value: item.id,
               label: `Версия ${item.number}`,
             }))}
-          onChange={setChosenId}
+          onChange={(next) => confirmLeave(() => setChosenId(next))}
         />
         <Tag color={STATUS_COLORS[version.status]}>
           {VERSION_STATUS_LABELS[version.status]}
         </Tag>
-        {transitions.map((button) => (
-          <Button
-            key={button.action}
-            type={button.isPrimary ? "primary" : "default"}
-            disabled={isBusy || hasUnsaved}
-            onClick={() =>
-              transit.mutate({ version, transition: button.transition })
-            }
-          >
-            {button.label}
-          </Button>
-        ))}
-        {canReturn && (
-          <Button
-            disabled={isBusy || hasUnsaved}
-            onClick={() => setDialog("return")}
-          >
-            {RETURN_LABEL}
-          </Button>
-        )}
-        {isNextVersionOffered && (
-          <Button disabled={isBusy} onClick={() => startVersion.mutate()}>
-            Создать новую версию
-          </Button>
-        )}
-        {history && (
-          <Button onClick={() => setDialog("history")}>История</Button>
-        )}
-        <MatrixDeleteButton
+        <MatrixActions
           matrix={matrix}
-          inWorkTag={
-            version.id === matrix.inWorkVersion?.id
-              ? version.version
-              : undefined
-          }
-          onDeleted={() => void navigate("/career")}
+          version={version}
+          hasHistory={!!history}
+          isNextVersionOffered={isNextVersionOffered}
+          isBusy={isBusy}
+          hasUnsaved={hasUnsaved}
+          onTransit={(transition) => transit.mutate({ version, transition })}
+          onReturn={() => setDialog("return")}
+          onNewVersion={() => startVersion.mutate()}
+          onHistory={() => setDialog("history")}
+          onDeleted={() => leaveAfterSave(() => void navigate("/career"))}
         />
       </Flex>
       {isHeldBack && (
@@ -375,7 +319,7 @@ export function MatrixPage() {
         version={version}
         diff={diffRead.data}
         onSaved={() => setSession((previous) => previous + 1)}
-        onUnsavedChange={setHasUnsaved}
+        onEditsChange={setEdits}
       />
       {dialog === "return" && (
         <ReturnModal

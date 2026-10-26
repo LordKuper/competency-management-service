@@ -1,0 +1,750 @@
+{"op":"open","id":"scope#1","kind":"phase","parent":null,"start":"2026-10-12T13:49:22.475Z","attrs":{}}
+{"op":"open","id":"wait workflow choice","kind":"user-wait","parent":"scope#1","start":"2026-10-12T13:49:22.541Z","attrs":{"gate":"workflow choice"}}
+{"op":"close","id":"wait workflow choice","kind":"user-wait","parent":"scope#1","start":"2026-10-12T13:49:22.541Z","end":"2026-10-12T13:49:51.755Z","outcome":"done","attrs":{"gate":"workflow choice"}}
+{"op":"open","id":"wait scope clarification","kind":"user-wait","parent":"scope#1","start":"2026-10-12T13:50:27.012Z","attrs":{"gate":"scope clarification"}}
+{"op":"close","id":"wait scope clarification","kind":"user-wait","parent":"scope#1","start":"2026-10-12T13:50:27.012Z","end":"2026-10-12T13:53:24.815Z","outcome":"done","attrs":{"gate":"scope clarification"}}
+{"op":"open","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-12T13:55:28.014Z","attrs":{"gate":"scope"}}
+{"op":"close","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-12T13:55:28.014Z","end":"2026-10-12T14:08:28.771Z","outcome":"done","attrs":{"gate":"scope"}}
+{"op":"close","id":"scope#1","kind":"phase","parent":null,"start":"2026-10-12T13:49:22.475Z","end":"2026-10-12T14:08:35.899Z","outcome":"done","attrs":{}}
+{"op":"open","id":"audit#1","kind":"phase","parent":null,"start":"2026-10-12T14:08:41.998Z","attrs":{}}
+{"op":"open","id":"asd-architect audit#1","kind":"dispatch","parent":"audit#1","start":"2026-10-12T14:08:54.403Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-architect audit#1","kind":"dispatch","parent":"audit#1","start":"2026-10-12T14:08:54.403Z","end":"2026-10-12T14:24:31.280Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"open","id":"wait audit contradictions","kind":"user-wait","parent":"audit#1","start":"2026-10-12T14:26:09.777Z","attrs":{"gate":"audit contradictions C-1..C-3"}}
+{"op":"close","id":"wait audit contradictions","kind":"user-wait","parent":"audit#1","start":"2026-10-12T14:26:09.777Z","end":"2026-10-12T14:47:34.897Z","outcome":"done","attrs":{"gate":"audit contradictions C-1..C-3"}}
+{"op":"close","id":"audit#1","kind":"phase","parent":null,"start":"2026-10-12T14:08:41.998Z","end":"2026-10-12T14:48:10.577Z","outcome":"done","attrs":{}}
+{"op":"open","id":"design#1","kind":"phase","parent":null,"start":"2026-10-12T14:48:17.244Z","attrs":{}}
+{"op":"open","id":"asd-ba design#1","kind":"dispatch","parent":"design#1","start":"2026-10-12T14:48:30.107Z","attrs":{"agent":"asd-ba","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-ba design#1","kind":"dispatch","parent":"design#1","start":"2026-10-12T14:48:30.107Z","end":"2026-10-12T14:54:37.694Z","outcome":"done","attrs":{"agent":"asd-ba","tier":"standard","model":"opus"}}
+{"op":"open","id":"wait prd accept","kind":"user-wait","parent":"design#1","start":"2026-10-12T14:54:37.764Z","attrs":{"gate":"PRD"}}
+{"op":"close","id":"wait prd accept","kind":"user-wait","parent":"design#1","start":"2026-10-12T14:54:37.764Z","end":"2026-10-12T15:17:10.227Z","outcome":"done","attrs":{"gate":"PRD"}}
+{"op":"open","id":"asd-ba design#2","kind":"dispatch","parent":"design#1","start":"2026-10-12T15:17:10.292Z","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ba design#2","kind":"dispatch","parent":"design#1","start":"2026-10-12T15:17:10.292Z","end":"2026-10-12T15:32:40.490Z","outcome":"done","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"wait prd accept 2","kind":"user-wait","parent":"design#1","start":"2026-10-12T15:32:40.554Z","attrs":{"gate":"PRD"}}
+{"op":"close","id":"wait prd accept 2","kind":"user-wait","parent":"design#1","start":"2026-10-12T15:32:40.554Z","end":"2026-10-12T15:36:27.569Z","outcome":"done","attrs":{"gate":"PRD"}}
+{"op":"open","id":"asd-ba design#3","kind":"dispatch","parent":"design#1","start":"2026-10-12T15:36:27.856Z","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ba design#3","kind":"dispatch","parent":"design#1","start":"2026-10-12T15:36:27.856Z","end":"2026-10-12T15:38:30.597Z","outcome":"done","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"asd-ux design#1","kind":"dispatch","parent":"design#1","start":"2026-10-12T15:38:42.755Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ux design#1","kind":"dispatch","parent":"design#1","start":"2026-10-12T15:38:42.755Z","end":"2026-10-12T16:02:53.903Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"wait ux accept","kind":"user-wait","parent":"design#1","start":"2026-10-12T16:02:53.993Z","attrs":{"gate":"UX-spec"}}
+{"op":"open","id":"asd-ux design#2","kind":"dispatch","parent":"design#1","start":"2026-10-13T08:45:32.496Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ux design#2","kind":"dispatch","parent":"design#1","start":"2026-10-13T08:45:32.496Z","end":"2026-10-13T08:47:00.568Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"wait ux accept","kind":"user-wait","parent":"design#1","start":"2026-10-12T16:02:53.993Z","end":"2026-10-13T08:54:42.121Z","outcome":"done","attrs":{"gate":"UX-spec"}}
+{"op":"open","id":"asd-architect design#1","kind":"dispatch","parent":"design#1","start":"2026-10-13T08:54:42.428Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-architect design#1","kind":"dispatch","parent":"design#1","start":"2026-10-13T08:54:42.428Z","end":"2026-10-13T09:22:35.527Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"open","id":"wait adr accept","kind":"user-wait","parent":"design#1","start":"2026-10-13T09:22:35.599Z","attrs":{"gate":"ADR"}}
+{"op":"close","id":"wait adr accept","kind":"user-wait","parent":"design#1","start":"2026-10-13T09:22:35.599Z","end":"2026-10-13T09:56:42.371Z","outcome":"done","attrs":{"gate":"ADR"}}
+{"op":"open","id":"asd-architect design#2","kind":"dispatch","parent":"design#1","start":"2026-10-13T09:56:42.679Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-architect design#2","kind":"dispatch","parent":"design#1","start":"2026-10-13T09:56:42.679Z","end":"2026-10-13T09:59:25.151Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"design#1","kind":"phase","parent":null,"start":"2026-10-12T14:48:17.244Z","end":"2026-10-13T09:59:25.417Z","outcome":"done","attrs":{}}
+{"op":"open","id":"design-review#1","kind":"phase","parent":null,"start":"2026-10-13T09:59:25.684Z","attrs":{}}
+{"op":"open","id":"design-review iter-01","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T10:00:04.457Z","attrs":{"iteration":"1"}}
+{"op":"open","id":"documentation iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"efficiency iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"correctness iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"external iter-01","kind":"external-review","parent":"design-review iter-01","start":"2026-10-13T10:00:04.584Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"external iter-01","kind":"external-review","parent":"design-review iter-01","start":"2026-10-13T10:00:04.584Z","end":"2026-10-13T10:08:16.852Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"correctness iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","end":"2026-10-13T10:08:31.305Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"close","id":"efficiency iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","end":"2026-10-13T10:10:06.322Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"close","id":"documentation iter-01","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:00:04.520Z","end":"2026-10-13T10:14:32.020Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"wait cascade right","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T10:14:56.360Z","attrs":{"gate":"cascade approver right"}}
+{"op":"close","id":"wait cascade right","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T10:14:56.360Z","end":"2026-10-13T10:57:10.153Z","outcome":"done","attrs":{"gate":"cascade approver right"}}
+{"op":"open","id":"asd-architect design-review#1","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:57:18.094Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-architect design-review#1","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T10:57:18.094Z","end":"2026-10-13T11:03:50.232Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"open","id":"asd-ba design-review#1","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T11:04:01.482Z","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ba design-review#1","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T11:04:01.482Z","end":"2026-10-13T11:04:54.005Z","outcome":"done","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"asd-ux design-review#1","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T11:04:54.208Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ux design-review#1","kind":"dispatch","parent":"design-review iter-01","start":"2026-10-13T11:04:54.208Z","end":"2026-10-13T11:10:17.041Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"design-review iter-01","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T10:00:04.457Z","end":"2026-10-13T11:10:17.109Z","outcome":"done","attrs":{"iteration":"1"}}
+{"op":"open","id":"design-review iter-02","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T11:10:29.673Z","attrs":{"iteration":"2"}}
+{"op":"open","id":"documentation iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"efficiency iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"correctness iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"external iter-02","kind":"external-review","parent":"design-review iter-02","start":"2026-10-13T11:10:29.804Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"efficiency iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","end":"2026-10-13T11:14:35.408Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"close","id":"correctness iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","end":"2026-10-13T11:16:13.422Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"close","id":"external iter-02","kind":"external-review","parent":"design-review iter-02","start":"2026-10-13T11:10:29.804Z","end":"2026-10-13T11:17:49.393Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"documentation iter-02","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:10:29.740Z","end":"2026-10-13T11:20:06.976Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"wait iter-02 questions","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T11:20:07.331Z","attrs":{"gate":"design-review iter-02 questions"}}
+{"op":"close","id":"wait iter-02 questions","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T11:20:07.331Z","end":"2026-10-13T11:39:28.572Z","outcome":"done","attrs":{"gate":"design-review iter-02 questions"}}
+{"op":"open","id":"asd-architect design-review#2","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:39:28.941Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-architect design-review#2","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:39:28.941Z","end":"2026-10-13T11:43:32.948Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"open","id":"asd-ba design-review#2","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:43:33.182Z","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ba design-review#2","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:43:33.182Z","end":"2026-10-13T11:44:22.515Z","outcome":"done","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"asd-ux design-review#2","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:44:22.721Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ux design-review#2","kind":"dispatch","parent":"design-review iter-02","start":"2026-10-13T11:44:22.721Z","end":"2026-10-13T11:47:31.055Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"design-review iter-02","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T11:10:29.673Z","end":"2026-10-13T11:47:31.120Z","outcome":"done","attrs":{"iteration":"2"}}
+{"op":"open","id":"design-review iter-03","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T11:47:36.309Z","attrs":{"iteration":"3"}}
+{"op":"open","id":"documentation iter-03","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T11:47:36.374Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"correctness iter-03","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T11:47:36.374Z","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"open","id":"external iter-03","kind":"external-review","parent":"design-review iter-03","start":"2026-10-13T11:47:36.444Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"correctness iter-03","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T11:47:36.374Z","end":"2026-10-13T11:51:58.815Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"close","id":"documentation iter-03","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T11:47:36.374Z","end":"2026-10-13T11:55:08.755Z","outcome":"done","attrs":{"tier":"standard","model":"sonnet"}}
+{"op":"close","id":"external iter-03","kind":"external-review","parent":"design-review iter-03","start":"2026-10-13T11:47:36.444Z","end":"2026-10-13T11:55:31.005Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"open","id":"wait iter-03 escalation","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T11:55:31.367Z","attrs":{"gate":"design-review iter-03 FAIL and question"}}
+{"op":"close","id":"wait iter-03 escalation","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T11:55:31.367Z","end":"2026-10-13T11:58:21.675Z","outcome":"done","attrs":{"gate":"design-review iter-03 FAIL and question"}}
+{"op":"open","id":"asd-architect design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T11:58:22.120Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-architect design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T11:58:22.120Z","end":"2026-10-13T12:04:45.057Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"open","id":"asd-ba design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T12:04:45.275Z","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ba design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T12:04:45.275Z","end":"2026-10-13T12:05:21.510Z","outcome":"done","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"asd-ux design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T12:05:21.715Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ux design-review#3","kind":"dispatch","parent":"design-review iter-03","start":"2026-10-13T12:05:21.715Z","end":"2026-10-13T12:08:17.151Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"design-review iter-03","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T11:47:36.309Z","end":"2026-10-13T12:08:17.211Z","outcome":"done","attrs":{"iteration":"3"}}
+{"op":"open","id":"design-review iter-04","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T12:08:18.127Z","attrs":{"iteration":"4"}}
+{"op":"open","id":"correctness iter-04","kind":"dispatch","parent":"design-review iter-04","start":"2026-10-13T12:08:18.189Z","attrs":{"tier":"standard","model":"opus"}}
+{"op":"open","id":"external iter-04","kind":"external-review","parent":"design-review iter-04","start":"2026-10-13T12:08:18.254Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"external iter-04","kind":"external-review","parent":"design-review iter-04","start":"2026-10-13T12:08:18.254Z","end":"2026-10-13T12:13:53.122Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"correctness iter-04","kind":"dispatch","parent":"design-review iter-04","start":"2026-10-13T12:08:18.189Z","end":"2026-10-13T12:14:35.728Z","outcome":"done","attrs":{"tier":"standard","model":"opus"}}
+{"op":"open","id":"wait iter-04 question","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T12:14:36.052Z","attrs":{"gate":"design-review iter-04 question"}}
+{"op":"close","id":"wait iter-04 question","kind":"user-wait","parent":"design-review#1","start":"2026-10-13T12:14:36.052Z","end":"2026-10-13T12:15:50.349Z","outcome":"done","attrs":{"gate":"design-review iter-04 question"}}
+{"op":"open","id":"asd-ux design-review#4","kind":"dispatch","parent":"design-review iter-04","start":"2026-10-13T12:15:50.741Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ux design-review#4","kind":"dispatch","parent":"design-review iter-04","start":"2026-10-13T12:15:50.741Z","end":"2026-10-13T12:18:45.510Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"asd-architect design-review#4","kind":"dispatch","parent":"design-review iter-04","start":"2026-10-13T12:18:45.776Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-architect design-review#4","kind":"dispatch","parent":"design-review iter-04","start":"2026-10-13T12:18:45.776Z","end":"2026-10-13T12:21:17.005Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"open","id":"asd-ba design-review#4","kind":"dispatch","parent":"design-review iter-04","start":"2026-10-13T12:21:17.251Z","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ba design-review#4","kind":"dispatch","parent":"design-review iter-04","start":"2026-10-13T12:21:17.251Z","end":"2026-10-13T12:22:49.254Z","outcome":"done","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"design-review iter-04","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T12:08:18.127Z","end":"2026-10-13T12:22:49.321Z","outcome":"done","attrs":{"iteration":"4"}}
+{"op":"open","id":"design-review iter-05","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T12:22:49.908Z","attrs":{"iteration":"5"}}
+{"op":"open","id":"correctness iter-05","kind":"dispatch","parent":"design-review iter-05","start":"2026-10-13T12:22:49.986Z","attrs":{"tier":"standard","model":"opus"}}
+{"op":"close","id":"correctness iter-05","kind":"dispatch","parent":"design-review iter-05","start":"2026-10-13T12:22:49.986Z","end":"2026-10-13T12:25:30.687Z","outcome":"done","attrs":{"tier":"standard","model":"opus"}}
+{"op":"close","id":"design-review iter-05","kind":"review-iteration","parent":"design-review#1","start":"2026-10-13T12:22:49.908Z","end":"2026-10-13T12:25:30.752Z","outcome":"done","attrs":{"iteration":"5"}}
+{"op":"close","id":"design-review#1","kind":"phase","parent":null,"start":"2026-10-13T09:59:25.684Z","end":"2026-10-13T12:25:31.071Z","outcome":"done","attrs":{}}
+{"op":"open","id":"design-promote#1","kind":"phase","parent":null,"start":"2026-10-13T12:25:31.331Z","attrs":{}}
+{"op":"open","id":"asd-architect design-promote#1","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:25:48.850Z","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-architect design-promote#1","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:25:48.850Z","end":"2026-10-13T12:27:40.922Z","outcome":"done","attrs":{"agent":"asd-architect","tier":"standard","model":"opus"}}
+{"op":"open","id":"asd-ba design-promote#1","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:27:41.137Z","attrs":{"tier":"standard"}}
+{"op":"open","id":"asd-architect design-promote#2","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:27:41.137Z","attrs":{"tier":"standard"}}
+{"op":"open","id":"asd-ux design-promote#1","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:27:41.137Z","attrs":{"tier":"standard"}}
+{"op":"close","id":"asd-ba design-promote#1","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:27:41.137Z","end":"2026-10-13T12:44:44.792Z","outcome":"done","attrs":{"tier":"standard"}}
+{"op":"close","id":"asd-architect design-promote#2","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:27:41.137Z","end":"2026-10-13T12:44:44.792Z","outcome":"done","attrs":{"tier":"standard"}}
+{"op":"close","id":"asd-ux design-promote#1","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:27:41.137Z","end":"2026-10-13T12:44:44.857Z","outcome":"interrupted","attrs":{"tier":"standard"}}
+{"op":"open","id":"asd-ux design-promote#2","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:44:45.188Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"asd-ux design-promote#2","kind":"dispatch","parent":"design-promote#1","start":"2026-10-13T12:44:45.188Z","end":"2026-10-13T12:45:26.617Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"design-promote#1","kind":"phase","parent":null,"start":"2026-10-13T12:25:31.331Z","end":"2026-10-13T12:45:26.909Z","outcome":"done","attrs":{}}
+{"op":"open","id":"plan#1","kind":"phase","parent":null,"start":"2026-10-13T12:45:32.970Z","attrs":{}}
+{"op":"open","id":"wait plan accept","kind":"user-wait","parent":"plan#1","start":"2026-10-13T12:48:39.510Z","attrs":{"gate":"plan"}}
+{"op":"close","id":"wait plan accept","kind":"user-wait","parent":"plan#1","start":"2026-10-13T12:48:39.510Z","end":"2026-10-13T14:05:43.267Z","outcome":"done","attrs":{"gate":"plan"}}
+{"op":"open","id":"wait plan accept 2","kind":"user-wait","parent":"plan#1","start":"2026-10-13T14:05:43.635Z","attrs":{"gate":"plan"}}
+{"op":"close","id":"wait plan accept 2","kind":"user-wait","parent":"plan#1","start":"2026-10-13T14:05:43.635Z","end":"2026-10-13T14:06:31.424Z","outcome":"done","attrs":{"gate":"plan"}}
+{"op":"close","id":"plan#1","kind":"phase","parent":null,"start":"2026-10-13T12:45:32.970Z","end":"2026-10-13T14:06:31.702Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#1","kind":"phase","parent":null,"start":"2026-10-13T14:06:36.439Z","attrs":{}}
+{"op":"open","id":"Task 1","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:06:59.725Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"Task 2","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:06:59.791Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 3","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:06:59.791Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 1","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:06:59.725Z","end":"2026-10-13T14:07:30.211Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 2","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:06:59.791Z","end":"2026-10-13T14:09:51.410Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 3","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:06:59.791Z","end":"2026-10-13T14:11:17.983Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 4","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:11:25.162Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 4","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:11:25.162Z","end":"2026-10-13T14:22:52.878Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 5","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:23:01.437Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 5","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:23:01.437Z","end":"2026-10-13T14:41:13.470Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 6","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:41:20.635Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 6","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:41:20.635Z","end":"2026-10-13T14:58:07.147Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 7","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:58:07.714Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 8","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:58:07.714Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 7","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:58:07.714Z","end":"2026-10-13T15:05:36.688Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 8","kind":"dispatch","parent":"impl#1","start":"2026-10-13T14:58:07.714Z","end":"2026-10-13T15:14:01.547Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 9","kind":"dispatch","parent":"impl#1","start":"2026-10-13T15:14:19.777Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"close","id":"Task 9","kind":"dispatch","parent":"impl#1","start":"2026-10-13T15:14:19.777Z","end":"2026-10-13T15:42:00.297Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 10","kind":"dispatch","parent":"impl#1","start":"2026-10-13T15:42:00.854Z","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 11","kind":"dispatch","parent":"impl#1","start":"2026-10-13T15:42:00.916Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 11","kind":"dispatch","parent":"impl#1","start":"2026-10-13T15:42:00.916Z","end":"2026-10-13T15:49:51.623Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 10","kind":"dispatch","parent":"impl#1","start":"2026-10-13T15:42:00.854Z","end":"2026-10-13T15:58:20.862Z","outcome":"done","attrs":{"agent":"asd-dev-critical","tier":"critical","model":"opus"}}
+{"op":"open","id":"Task 12","kind":"dispatch","parent":"impl#1","start":"2026-10-13T15:58:21.761Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 12","kind":"dispatch","parent":"impl#1","start":"2026-10-13T15:58:21.761Z","end":"2026-10-13T16:21:53.424Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"Task 13","kind":"dispatch","parent":"impl#1","start":"2026-10-13T16:21:54.206Z","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 13","kind":"dispatch","parent":"impl#1","start":"2026-10-13T16:21:54.206Z","end":"2026-10-13T16:31:41.249Z","outcome":"done","attrs":{"agent":"asd-dev","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-13T16:32:58.737Z","attrs":{"gate":"impl assessment"}}
+{"op":"close","id":"wait impl assessment","kind":"user-wait","parent":"impl#1","start":"2026-10-13T16:32:58.737Z","end":"2026-10-13T18:06:37.594Z","outcome":"done","attrs":{"gate":"impl assessment"}}
+{"op":"open","id":"Task 14","kind":"dispatch","parent":"impl#1","start":"2026-10-13T18:06:45.678Z","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"Task 15","kind":"dispatch","parent":"impl#1","start":"2026-10-13T18:06:45.763Z","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 15","kind":"dispatch","parent":"impl#1","start":"2026-10-13T18:06:45.763Z","end":"2026-10-13T18:09:31.528Z","outcome":"done","attrs":{"agent":"asd-ba","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"Task 14","kind":"dispatch","parent":"impl#1","start":"2026-10-13T18:06:45.678Z","end":"2026-10-13T18:22:42.737Z","outcome":"done","attrs":{"agent":"asd-ux","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"Task 16","kind":"dispatch","parent":"impl#1","start":"2026-10-13T18:23:13.038Z","attrs":{}}
+{"op":"close","id":"Task 16","kind":"dispatch","parent":"impl#1","start":"2026-10-13T18:23:13.038Z","end":"2026-10-13T18:44:21.956Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 2","kind":"user-wait","parent":"impl#1","start":"2026-10-13T18:45:13.813Z","attrs":{}}
+{"op":"open","id":"Task 16 assessment-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-13T20:44:34.655Z","attrs":{}}
+{"op":"close","id":"Task 16 assessment-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-13T20:44:34.655Z","end":"2026-10-13T20:47:29.446Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 14 assessment-fix 2","kind":"dispatch","parent":"impl#1","start":"2026-10-13T20:57:23.679Z","attrs":{}}
+{"op":"open","id":"Task 16 assessment-fix 2","kind":"dispatch","parent":"impl#1","start":"2026-10-13T20:57:23.744Z","attrs":{}}
+{"op":"close","id":"Task 16 assessment-fix 2","kind":"dispatch","parent":"impl#1","start":"2026-10-13T20:57:23.744Z","end":"2026-10-13T20:59:21.382Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 14 assessment-fix 2","kind":"dispatch","parent":"impl#1","start":"2026-10-13T20:57:23.679Z","end":"2026-10-13T21:00:10.200Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 14 assessment-fix 3","kind":"dispatch","parent":"impl#1","start":"2026-10-13T21:10:25.348Z","attrs":{}}
+{"op":"open","id":"Task 16 assessment-fix 3","kind":"dispatch","parent":"impl#1","start":"2026-10-13T21:10:25.430Z","attrs":{}}
+{"op":"close","id":"Task 14 assessment-fix 3","kind":"dispatch","parent":"impl#1","start":"2026-10-13T21:10:25.348Z","end":"2026-10-13T21:11:40.632Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 16 assessment-fix 3","kind":"dispatch","parent":"impl#1","start":"2026-10-13T21:10:25.430Z","end":"2026-10-13T21:11:57.546Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 14 assessment-fix 4","kind":"dispatch","parent":"impl#1","start":"2026-10-13T21:18:54.948Z","attrs":{}}
+{"op":"open","id":"Task 15 assessment-fix 4","kind":"dispatch","parent":"impl#1","start":"2026-10-13T21:18:55.014Z","attrs":{}}
+{"op":"open","id":"Task 16 assessment-fix 4","kind":"dispatch","parent":"impl#1","start":"2026-10-13T21:18:55.078Z","attrs":{}}
+{"op":"close","id":"Task 16 assessment-fix 4","kind":"dispatch","parent":"impl#1","start":"2026-10-13T21:18:55.078Z","end":"2026-10-13T21:19:45.617Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 14 assessment-fix 4","kind":"dispatch","parent":"impl#1","start":"2026-10-13T21:18:54.948Z","end":"2026-10-13T21:19:50.469Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 15 assessment-fix 4","kind":"dispatch","parent":"impl#1","start":"2026-10-13T21:18:55.014Z","end":"2026-10-13T21:19:50.533Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 16 assessment-fix 5","kind":"dispatch","parent":"impl#1","start":"2026-10-13T21:26:59.338Z","attrs":{}}
+{"op":"close","id":"Task 16 assessment-fix 5","kind":"dispatch","parent":"impl#1","start":"2026-10-13T21:26:59.338Z","end":"2026-10-13T21:28:16.902Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 14 assessment-fix 6","kind":"dispatch","parent":"impl#1","start":"2026-10-13T22:12:35.163Z","attrs":{}}
+{"op":"open","id":"Task 15 assessment-fix 6","kind":"dispatch","parent":"impl#1","start":"2026-10-13T22:12:35.235Z","attrs":{}}
+{"op":"open","id":"Task 16 assessment-fix 6","kind":"dispatch","parent":"impl#1","start":"2026-10-13T22:12:35.301Z","attrs":{}}
+{"op":"close","id":"Task 15 assessment-fix 6","kind":"dispatch","parent":"impl#1","start":"2026-10-13T22:12:35.235Z","end":"2026-10-13T22:13:15.595Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 14 assessment-fix 6","kind":"dispatch","parent":"impl#1","start":"2026-10-13T22:12:35.163Z","end":"2026-10-13T22:13:28.923Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 16 assessment-fix 6","kind":"dispatch","parent":"impl#1","start":"2026-10-13T22:12:35.301Z","end":"2026-10-13T22:15:30.139Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 15 assessment-fix 7","kind":"dispatch","parent":"impl#1","start":"2026-10-13T22:15:30.294Z","attrs":{}}
+{"op":"open","id":"Task 16 assessment-fix 7","kind":"dispatch","parent":"impl#1","start":"2026-10-13T22:15:30.359Z","attrs":{}}
+{"op":"close","id":"Task 15 assessment-fix 7","kind":"dispatch","parent":"impl#1","start":"2026-10-13T22:15:30.294Z","end":"2026-10-13T22:16:20.480Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 16 assessment-fix 7","kind":"dispatch","parent":"impl#1","start":"2026-10-13T22:15:30.359Z","end":"2026-10-13T22:16:29.317Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 17","kind":"dispatch","parent":"impl#1","start":"2026-10-14T17:41:06.588Z","attrs":{}}
+{"op":"open","id":"Task 18","kind":"dispatch","parent":"impl#1","start":"2026-10-14T17:41:06.657Z","attrs":{}}
+{"op":"close","id":"Task 18","kind":"dispatch","parent":"impl#1","start":"2026-10-14T17:41:06.657Z","end":"2026-10-14T17:42:45.399Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 17","kind":"dispatch","parent":"impl#1","start":"2026-10-14T17:41:06.588Z","end":"2026-10-14T17:46:11.070Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 19","kind":"dispatch","parent":"impl#1","start":"2026-10-14T17:46:11.350Z","attrs":{}}
+{"op":"close","id":"Task 19","kind":"dispatch","parent":"impl#1","start":"2026-10-14T17:46:11.350Z","end":"2026-10-14T17:53:39.516Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 19 assessment-fix 1","kind":"dispatch","parent":"impl#1","start":"2026-10-14T17:55:11.197Z","attrs":{}}
+{"op":"close","id":"Task 19 assessment-fix 1","kind":"dispatch","parent":"impl#1","start":"2026-10-14T17:55:11.197Z","end":"2026-10-14T18:03:03.488Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 17 assessment-fix 1","kind":"dispatch","parent":"impl#1","start":"2026-10-14T18:31:34.450Z","attrs":{}}
+{"op":"close","id":"Task 17 assessment-fix 1","kind":"dispatch","parent":"impl#1","start":"2026-10-14T18:31:34.450Z","end":"2026-10-14T18:35:03.212Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 19 assessment-fix 2","kind":"dispatch","parent":"impl#1","start":"2026-10-14T18:35:03.323Z","attrs":{}}
+{"op":"close","id":"Task 19 assessment-fix 2","kind":"dispatch","parent":"impl#1","start":"2026-10-14T18:35:03.323Z","end":"2026-10-14T18:40:02.699Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 20","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:10:44.820Z","attrs":{}}
+{"op":"close","id":"Task 20","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:10:44.820Z","end":"2026-10-14T19:18:04.952Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 20 decisions","kind":"user-wait","parent":"impl#1","start":"2026-10-14T19:18:05.251Z","attrs":{}}
+{"op":"close","id":"Task 20 decisions","kind":"user-wait","parent":"impl#1","start":"2026-10-14T19:18:05.251Z","end":"2026-10-14T19:32:50.563Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 20 decisions-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:32:50.700Z","attrs":{}}
+{"op":"close","id":"Task 20 decisions-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:32:50.700Z","end":"2026-10-14T19:35:53.219Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 20 decisions 2","kind":"user-wait","parent":"impl#1","start":"2026-10-14T19:35:53.433Z","attrs":{}}
+{"op":"close","id":"Task 20 decisions 2","kind":"user-wait","parent":"impl#1","start":"2026-10-14T19:35:53.433Z","end":"2026-10-14T19:37:38.160Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 21","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:37:38.296Z","attrs":{}}
+{"op":"open","id":"Task 22","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:37:38.357Z","attrs":{}}
+{"op":"close","id":"Task 22","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:37:38.357Z","end":"2026-10-14T19:47:10.521Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 21","kind":"dispatch","parent":"impl#1","start":"2026-10-14T19:37:38.296Z","end":"2026-10-14T20:05:22.830Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 23","kind":"dispatch","parent":"impl#1","start":"2026-10-14T20:05:33.104Z","attrs":{}}
+{"op":"open","id":"Task 22 arch-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-14T20:05:33.177Z","attrs":{}}
+{"op":"close","id":"Task 22 arch-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-14T20:05:33.177Z","end":"2026-10-14T20:07:01.982Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 23","kind":"dispatch","parent":"impl#1","start":"2026-10-14T20:05:33.104Z","end":"2026-10-14T20:44:53.168Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 23 test-compile","kind":"dispatch","parent":"impl#1","start":"2026-10-14T20:44:53.311Z","attrs":{}}
+{"op":"close","id":"Task 23 test-compile","kind":"dispatch","parent":"impl#1","start":"2026-10-14T20:44:53.311Z","end":"2026-10-14T20:45:39.274Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 24","kind":"dispatch","parent":"impl#1","start":"2026-10-14T20:45:39.479Z","attrs":{}}
+{"op":"close","id":"Task 24","kind":"dispatch","parent":"impl#1","start":"2026-10-14T20:45:39.479Z","end":"2026-10-14T21:06:07.767Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 24 assessment-fix 1","kind":"dispatch","parent":"impl#1","start":"2026-10-14T21:10:42.591Z","attrs":{}}
+{"op":"close","id":"Task 24 assessment-fix 1","kind":"dispatch","parent":"impl#1","start":"2026-10-14T21:10:42.591Z","end":"2026-10-14T21:13:21.307Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 25","kind":"dispatch","parent":"impl#1","start":"2026-10-14T21:24:52.906Z","attrs":{}}
+{"op":"close","id":"Task 25","kind":"dispatch","parent":"impl#1","start":"2026-10-14T21:24:52.906Z","end":"2026-10-14T21:27:59.970Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 25 decisions","kind":"user-wait","parent":"impl#1","start":"2026-10-14T21:28:00.361Z","attrs":{}}
+{"op":"close","id":"Task 25 decisions","kind":"user-wait","parent":"impl#1","start":"2026-10-14T21:28:00.361Z","end":"2026-10-14T21:42:53.070Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 25 decisions-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-14T21:42:53.197Z","attrs":{}}
+{"op":"close","id":"Task 25 decisions-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-14T21:42:53.197Z","end":"2026-10-14T21:44:02.578Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 25 decisions 2","kind":"user-wait","parent":"impl#1","start":"2026-10-14T21:44:02.813Z","attrs":{}}
+{"op":"close","id":"Task 25 decisions 2","kind":"user-wait","parent":"impl#1","start":"2026-10-14T21:44:02.813Z","end":"2026-10-14T22:02:53.277Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 25 rename","kind":"dispatch","parent":"impl#1","start":"2026-10-14T22:02:53.460Z","attrs":{}}
+{"op":"open","id":"Task 26","kind":"dispatch","parent":"impl#1","start":"2026-10-14T22:02:53.534Z","attrs":{}}
+{"op":"open","id":"Task 27","kind":"dispatch","parent":"impl#1","start":"2026-10-14T22:02:53.605Z","attrs":{}}
+{"op":"close","id":"Task 25 rename","kind":"dispatch","parent":"impl#1","start":"2026-10-14T22:02:53.460Z","end":"2026-10-14T22:04:01.572Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 27","kind":"dispatch","parent":"impl#1","start":"2026-10-14T22:02:53.605Z","end":"2026-10-14T22:08:51.512Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 26","kind":"dispatch","parent":"impl#1","start":"2026-10-14T22:02:53.534Z","end":"2026-10-14T22:16:00.217Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 28","kind":"dispatch","parent":"impl#1","start":"2026-10-14T22:16:00.485Z","attrs":{}}
+{"op":"close","id":"Task 28","kind":"dispatch","parent":"impl#1","start":"2026-10-14T22:16:00.485Z","end":"2026-10-14T22:34:27.021Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 29","kind":"dispatch","parent":"impl#1","start":"2026-10-14T22:34:27.189Z","attrs":{}}
+{"op":"close","id":"Task 29","kind":"dispatch","parent":"impl#1","start":"2026-10-14T22:34:27.189Z","end":"2026-10-14T22:45:16.656Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 30","kind":"dispatch","parent":"impl#1","start":"2026-10-14T23:03:50.821Z","attrs":{}}
+{"op":"open","id":"Task 31","kind":"dispatch","parent":"impl#1","start":"2026-10-14T23:03:50.970Z","attrs":{}}
+{"op":"open","id":"Task 32","kind":"dispatch","parent":"impl#1","start":"2026-10-14T23:03:51.106Z","attrs":{}}
+{"op":"close","id":"Task 30","kind":"dispatch","parent":"impl#1","start":"2026-10-14T23:03:50.821Z","end":"2026-10-14T23:05:38.209Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 31","kind":"dispatch","parent":"impl#1","start":"2026-10-14T23:03:50.970Z","end":"2026-10-14T23:08:02.612Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 33","kind":"dispatch","parent":"impl#1","start":"2026-10-14T23:08:02.877Z","attrs":{}}
+{"op":"close","id":"Task 32","kind":"dispatch","parent":"impl#1","start":"2026-10-14T23:03:51.106Z","end":"2026-10-14T23:08:15.158Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 33","kind":"dispatch","parent":"impl#1","start":"2026-10-14T23:08:02.877Z","end":"2026-10-14T23:17:18.179Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 34","kind":"dispatch","parent":"impl#1","start":"2026-10-14T23:17:18.453Z","attrs":{}}
+{"op":"close","id":"Task 34","kind":"dispatch","parent":"impl#1","start":"2026-10-14T23:17:18.453Z","end":"2026-10-14T23:22:08.681Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 35","kind":"dispatch","parent":"impl#1","start":"2026-10-20T08:50:45.667Z","attrs":{}}
+{"op":"open","id":"Task 36","kind":"dispatch","parent":"impl#1","start":"2026-10-20T08:50:45.736Z","attrs":{}}
+{"op":"open","id":"Task 37","kind":"dispatch","parent":"impl#1","start":"2026-10-20T08:50:45.825Z","attrs":{}}
+{"op":"close","id":"Task 35","kind":"dispatch","parent":"impl#1","start":"2026-10-20T08:50:45.667Z","end":"2026-10-20T08:52:39.209Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 37","kind":"dispatch","parent":"impl#1","start":"2026-10-20T08:50:45.825Z","end":"2026-10-20T08:55:48.698Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 36","kind":"dispatch","parent":"impl#1","start":"2026-10-20T08:50:45.736Z","end":"2026-10-20T08:58:12.778Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 38","kind":"dispatch","parent":"impl#1","start":"2026-10-20T08:58:12.895Z","attrs":{}}
+{"op":"close","id":"Task 38","kind":"dispatch","parent":"impl#1","start":"2026-10-20T08:58:12.895Z","end":"2026-10-20T09:07:36.102Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 39","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:07:36.219Z","attrs":{}}
+{"op":"close","id":"Task 39","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:07:36.219Z","end":"2026-10-20T09:10:00.238Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 39 test-compile","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:10:00.367Z","attrs":{}}
+{"op":"close","id":"Task 39 test-compile","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:10:00.367Z","end":"2026-10-20T09:12:34.748Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 40","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:16:28.367Z","attrs":{}}
+{"op":"open","id":"Task 41","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:16:28.417Z","attrs":{}}
+{"op":"close","id":"Task 40","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:16:28.367Z","end":"2026-10-20T09:17:18.164Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 41","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:16:28.417Z","end":"2026-10-20T09:18:22.079Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 42","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:20:49.637Z","attrs":{}}
+{"op":"open","id":"Task 43","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:20:49.700Z","attrs":{}}
+{"op":"close","id":"Task 42","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:20:49.637Z","end":"2026-10-20T09:21:15.370Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 43","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:20:49.700Z","end":"2026-10-20T09:22:08.831Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 29 assessment-fix 1","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:28:20.532Z","attrs":{}}
+{"op":"close","id":"Task 29 assessment-fix 1","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:28:20.532Z","end":"2026-10-20T09:30:09.578Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 29 assessment-fix 2","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:35:19.863Z","attrs":{}}
+{"op":"close","id":"Task 29 assessment-fix 2","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:35:19.863Z","end":"2026-10-20T09:37:44.143Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 29 assessment-fix 3","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:59:34.814Z","attrs":{}}
+{"op":"close","id":"Task 29 assessment-fix 3","kind":"dispatch","parent":"impl#1","start":"2026-10-20T09:59:34.814Z","end":"2026-10-20T10:01:25.783Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 44","kind":"dispatch","parent":"impl#1","start":"2026-10-20T10:48:58.436Z","attrs":{}}
+{"op":"open","id":"Task 45","kind":"dispatch","parent":"impl#1","start":"2026-10-20T10:48:58.529Z","attrs":{}}
+{"op":"open","id":"Task 46","kind":"dispatch","parent":"impl#1","start":"2026-10-20T10:48:58.619Z","attrs":{}}
+{"op":"close","id":"Task 44","kind":"dispatch","parent":"impl#1","start":"2026-10-20T10:48:58.436Z","end":"2026-10-20T10:50:43.807Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 46","kind":"dispatch","parent":"impl#1","start":"2026-10-20T10:48:58.619Z","end":"2026-10-20T10:51:59.733Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 45","kind":"dispatch","parent":"impl#1","start":"2026-10-20T10:48:58.529Z","end":"2026-10-20T10:55:50.801Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 47","kind":"dispatch","parent":"impl#1","start":"2026-10-20T10:55:50.975Z","attrs":{}}
+{"op":"open","id":"Task 44 migration-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-20T10:55:51.053Z","attrs":{}}
+{"op":"close","id":"Task 44 migration-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-20T10:55:51.053Z","end":"2026-10-20T10:56:25.045Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 47","kind":"dispatch","parent":"impl#1","start":"2026-10-20T10:55:50.975Z","end":"2026-10-20T11:06:05.726Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 48","kind":"dispatch","parent":"impl#1","start":"2026-10-20T11:06:05.861Z","attrs":{}}
+{"op":"close","id":"Task 48","kind":"dispatch","parent":"impl#1","start":"2026-10-20T11:06:05.861Z","end":"2026-10-20T11:09:05.280Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 16 assessment-fix 7","kind":"dispatch","parent":"impl#1","start":"2026-10-20T11:15:01.505Z","attrs":{}}
+{"op":"close","id":"Task 16 assessment-fix 7","kind":"dispatch","parent":"impl#1","start":"2026-10-20T11:15:01.505Z","end":"2026-10-20T11:16:15.097Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 49","kind":"dispatch","parent":"impl#1","start":"2026-10-20T12:44:20.715Z","attrs":{}}
+{"op":"close","id":"Task 49","kind":"dispatch","parent":"impl#1","start":"2026-10-20T12:44:20.715Z","end":"2026-10-20T12:47:10.799Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 49 decisions","kind":"user-wait","parent":"impl#1","start":"2026-10-20T12:47:10.973Z","attrs":{}}
+{"op":"close","id":"Task 49 decisions","kind":"user-wait","parent":"impl#1","start":"2026-10-20T12:47:10.973Z","end":"2026-10-20T13:03:54.253Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 49 blocks-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:17:03.152Z","attrs":{}}
+{"op":"open","id":"Task 50","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:17:03.295Z","attrs":{}}
+{"op":"open","id":"Task 51","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:17:03.365Z","attrs":{}}
+{"op":"close","id":"Task 49 blocks-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:17:03.152Z","end":"2026-10-20T13:18:04.537Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 51","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:17:03.365Z","end":"2026-10-20T13:22:48.830Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 50","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:17:03.295Z","end":"2026-10-20T13:25:44.992Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 52","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:25:45.173Z","attrs":{}}
+{"op":"close","id":"Task 52","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:25:45.173Z","end":"2026-10-20T13:39:43.623Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 53","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:39:43.861Z","attrs":{}}
+{"op":"open","id":"Task 52 name-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:39:43.954Z","attrs":{}}
+{"op":"close","id":"Task 52 name-fix","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:39:43.954Z","end":"2026-10-20T13:40:43.286Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 53","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:39:43.861Z","end":"2026-10-20T13:45:46.642Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 53 test-compile","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:45:46.810Z","attrs":{}}
+{"op":"close","id":"Task 53 test-compile","kind":"dispatch","parent":"impl#1","start":"2026-10-20T13:45:46.810Z","end":"2026-10-20T13:49:02.630Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 53 assessment-fix 1","kind":"dispatch","parent":"impl#1","start":"2026-10-20T14:06:18.117Z","attrs":{}}
+{"op":"close","id":"Task 53 assessment-fix 1","kind":"dispatch","parent":"impl#1","start":"2026-10-20T14:06:18.117Z","end":"2026-10-20T14:09:58.140Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl#1","kind":"phase","parent":null,"start":"2026-10-13T14:06:36.439Z","end":"2026-10-21T08:30:06.000Z","outcome":"interrupted","attrs":{}}
+{"op":"close","id":"impl assessment 2","kind":"user-wait","parent":"impl#1","start":"2026-10-13T18:45:13.813Z","end":"2026-10-21T08:30:06.000Z","outcome":"interrupted","attrs":{}}
+{"op":"open","id":"impl#2","kind":"phase","parent":null,"start":"2026-10-21T08:31:13.145Z","attrs":{}}
+{"op":"open","id":"impl assessment 3","kind":"user-wait","parent":"impl#2","start":"2026-10-21T08:34:08.746Z","attrs":{}}
+{"op":"close","id":"impl assessment 3","kind":"user-wait","parent":"impl#2","start":"2026-10-21T08:34:08.746Z","end":"2026-10-21T08:44:33.065Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 54","kind":"dispatch","parent":"impl#2","start":"2026-10-21T08:45:19.518Z","attrs":{}}
+{"op":"close","id":"Task 54","kind":"dispatch","parent":"impl#2","start":"2026-10-21T08:45:19.518Z","end":"2026-10-21T08:45:54.994Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 55","kind":"dispatch","parent":"impl#2","start":"2026-10-21T08:46:02.785Z","attrs":{}}
+{"op":"open","id":"Task 56","kind":"dispatch","parent":"impl#2","start":"2026-10-21T08:46:02.838Z","attrs":{}}
+{"op":"open","id":"Task 57","kind":"dispatch","parent":"impl#2","start":"2026-10-21T08:46:02.890Z","attrs":{}}
+{"op":"close","id":"Task 57","kind":"dispatch","parent":"impl#2","start":"2026-10-21T08:46:02.890Z","end":"2026-10-21T08:49:30.413Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 55","kind":"dispatch","parent":"impl#2","start":"2026-10-21T08:46:02.785Z","end":"2026-10-21T08:50:31.529Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 56","kind":"dispatch","parent":"impl#2","start":"2026-10-21T08:46:02.838Z","end":"2026-10-21T09:00:06.494Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 55 completeness-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:00:28.184Z","attrs":{}}
+{"op":"open","id":"Task 56 completeness-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:00:28.244Z","attrs":{}}
+{"op":"close","id":"Task 55 completeness-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:00:28.184Z","end":"2026-10-21T09:01:01.696Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 56 completeness-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:00:28.244Z","end":"2026-10-21T09:02:10.308Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 58","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:02:10.695Z","attrs":{}}
+{"op":"close","id":"Task 58","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:02:10.695Z","end":"2026-10-21T09:16:54.921Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 59","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:17:05.517Z","attrs":{}}
+{"op":"close","id":"Task 59","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:17:05.517Z","end":"2026-10-21T09:20:56.754Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 59 block-name-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:20:56.896Z","attrs":{}}
+{"op":"close","id":"Task 59 block-name-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:20:56.896Z","end":"2026-10-21T09:22:20.355Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 59 block-name-fix 2","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:22:20.413Z","attrs":{}}
+{"op":"close","id":"Task 59 block-name-fix 2","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:22:20.413Z","end":"2026-10-21T09:23:25.349Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 58-59 test-compile","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:23:25.770Z","attrs":{}}
+{"op":"close","id":"Task 58-59 test-compile","kind":"dispatch","parent":"impl#2","start":"2026-10-21T09:23:25.770Z","end":"2026-10-21T10:14:59.386Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 4","kind":"user-wait","parent":"impl#2","start":"2026-10-21T10:15:49.913Z","attrs":{}}
+{"op":"close","id":"impl assessment 4","kind":"user-wait","parent":"impl#2","start":"2026-10-21T10:15:49.913Z","end":"2026-10-21T11:27:58.822Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 60","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:28:07.875Z","attrs":{}}
+{"op":"open","id":"Task 61","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:28:07.932Z","attrs":{}}
+{"op":"open","id":"Task 62","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:28:07.988Z","attrs":{}}
+{"op":"close","id":"Task 60","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:28:07.875Z","end":"2026-10-21T11:30:47.946Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 60 prereq-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:30:48.006Z","attrs":{}}
+{"op":"close","id":"Task 60 prereq-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:30:48.006Z","end":"2026-10-21T11:30:58.647Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 62","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:28:07.988Z","end":"2026-10-21T11:33:10.342Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 61","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:28:07.932Z","end":"2026-10-21T11:36:21.420Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 63","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:36:22.017Z","attrs":{}}
+{"op":"close","id":"Task 63","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:36:22.017Z","end":"2026-10-21T11:40:52.135Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 64","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:40:52.582Z","attrs":{}}
+{"op":"close","id":"Task 64","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:40:52.582Z","end":"2026-10-21T11:42:40.071Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 5","kind":"user-wait","parent":"impl#2","start":"2026-10-21T11:43:04.142Z","attrs":{}}
+{"op":"close","id":"impl assessment 5","kind":"user-wait","parent":"impl#2","start":"2026-10-21T11:43:04.142Z","end":"2026-10-21T11:48:43.337Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 62 assessment-fix 1","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:48:43.473Z","attrs":{}}
+{"op":"open","id":"Task 64 assessment-fix 1","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:48:43.520Z","attrs":{}}
+{"op":"close","id":"Task 62 assessment-fix 1","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:48:43.473Z","end":"2026-10-21T11:49:17.427Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 64 assessment-fix 1","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:48:43.520Z","end":"2026-10-21T11:49:50.428Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 6","kind":"user-wait","parent":"impl#2","start":"2026-10-21T11:50:02.542Z","attrs":{}}
+{"op":"close","id":"impl assessment 6","kind":"user-wait","parent":"impl#2","start":"2026-10-21T11:50:02.542Z","end":"2026-10-21T11:57:14.515Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 65","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:57:14.805Z","attrs":{}}
+{"op":"open","id":"Task 66","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:57:14.857Z","attrs":{}}
+{"op":"open","id":"Task 67","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:57:14.913Z","attrs":{}}
+{"op":"close","id":"Task 65","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:57:14.805Z","end":"2026-10-21T12:00:06.188Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 65 reactivate-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:00:48.327Z","attrs":{}}
+{"op":"close","id":"Task 65 reactivate-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:00:48.327Z","end":"2026-10-21T12:01:29.764Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 67","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:57:14.913Z","end":"2026-10-21T12:02:22.271Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 66","kind":"dispatch","parent":"impl#2","start":"2026-10-21T11:57:14.857Z","end":"2026-10-21T12:04:29.767Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 68","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:04:30.165Z","attrs":{}}
+{"op":"close","id":"Task 68","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:04:30.165Z","end":"2026-10-21T12:06:24.658Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 69","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:06:24.972Z","attrs":{}}
+{"op":"close","id":"Task 69","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:06:24.972Z","end":"2026-10-21T12:09:23.309Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 7","kind":"user-wait","parent":"impl#2","start":"2026-10-21T12:09:48.331Z","attrs":{}}
+{"op":"close","id":"impl assessment 7","kind":"user-wait","parent":"impl#2","start":"2026-10-21T12:09:48.331Z","end":"2026-10-21T12:16:04.464Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 67 assessment-fix 1","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:16:04.597Z","attrs":{}}
+{"op":"open","id":"Task 69 assessment-fix 1","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:16:04.648Z","attrs":{}}
+{"op":"close","id":"Task 67 assessment-fix 1","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:16:04.597Z","end":"2026-10-21T12:16:37.636Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 69 assessment-fix 1","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:16:04.648Z","end":"2026-10-21T12:16:52.217Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 8","kind":"user-wait","parent":"impl#2","start":"2026-10-21T12:17:04.112Z","attrs":{}}
+{"op":"close","id":"impl assessment 8","kind":"user-wait","parent":"impl#2","start":"2026-10-21T12:17:04.112Z","end":"2026-10-21T12:22:30.335Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 70","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:22:30.839Z","attrs":{}}
+{"op":"open","id":"Task 71","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:22:30.893Z","attrs":{}}
+{"op":"open","id":"Task 72","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:22:30.948Z","attrs":{}}
+{"op":"close","id":"Task 70","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:22:30.839Z","end":"2026-10-21T12:25:01.037Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 72","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:22:30.948Z","end":"2026-10-21T12:28:11.491Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 71","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:22:30.893Z","end":"2026-10-21T12:39:41.622Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 71 close-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:39:41.675Z","attrs":{}}
+{"op":"close","id":"Task 71 close-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:39:41.675Z","end":"2026-10-21T12:41:57.883Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 73","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:41:58.374Z","attrs":{}}
+{"op":"close","id":"Task 73","kind":"dispatch","parent":"impl#2","start":"2026-10-21T12:41:58.374Z","end":"2026-10-21T12:50:37.879Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 9","kind":"user-wait","parent":"impl#2","start":"2026-10-21T12:50:58.411Z","attrs":{}}
+{"op":"close","id":"impl assessment 9","kind":"user-wait","parent":"impl#2","start":"2026-10-21T12:50:58.411Z","end":"2026-10-21T13:28:45.776Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 73 assessment-fix 1","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:28:45.907Z","attrs":{}}
+{"op":"close","id":"Task 73 assessment-fix 1","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:28:45.907Z","end":"2026-10-21T13:29:26.561Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 10","kind":"user-wait","parent":"impl#2","start":"2026-10-21T13:29:26.756Z","attrs":{}}
+{"op":"close","id":"impl assessment 10","kind":"user-wait","parent":"impl#2","start":"2026-10-21T13:29:26.756Z","end":"2026-10-21T13:34:14.244Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 74","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:34:14.560Z","attrs":{}}
+{"op":"open","id":"Task 75","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:34:14.618Z","attrs":{}}
+{"op":"open","id":"Task 76","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:34:14.681Z","attrs":{}}
+{"op":"close","id":"Task 74","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:34:14.560Z","end":"2026-10-21T13:39:24.246Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 74 roles-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:40:03.707Z","attrs":{}}
+{"op":"close","id":"Task 74 roles-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:40:03.707Z","end":"2026-10-21T13:41:02.748Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 74 rights-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:42:27.090Z","attrs":{}}
+{"op":"close","id":"Task 76","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:34:14.681Z","end":"2026-10-21T13:45:19.675Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 74 rights-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:42:27.090Z","end":"2026-10-21T13:46:06.899Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 75","kind":"dispatch","parent":"impl#2","start":"2026-10-21T13:34:14.618Z","end":"2026-10-21T14:10:06.759Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 74 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.861Z","attrs":{}}
+{"op":"open","id":"Task 75 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.914Z","attrs":{}}
+{"op":"open","id":"Task 76 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.967Z","attrs":{}}
+{"op":"close","id":"Task 74 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.861Z","end":"2026-10-21T14:11:12.827Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 75 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.914Z","end":"2026-10-21T14:11:52.435Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 76 tracks-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:10:06.967Z","end":"2026-10-21T14:12:35.816Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 77","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:12:36.434Z","attrs":{}}
+{"op":"open","id":"Task 74 positions-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:15:00.269Z","attrs":{}}
+{"op":"open","id":"Task 75 positions-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:15:00.326Z","attrs":{}}
+{"op":"open","id":"Task 76 positions-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:15:00.384Z","attrs":{}}
+{"op":"close","id":"Task 76 positions-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:15:00.384Z","end":"2026-10-21T14:16:16.758Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 74 positions-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:15:00.269Z","end":"2026-10-21T14:16:23.842Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 75 positions-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:15:00.326Z","end":"2026-10-21T14:16:34.491Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 77","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:12:36.434Z","end":"2026-10-21T14:31:06.080Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 78","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:31:06.414Z","attrs":{}}
+{"op":"close","id":"Task 78","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:31:06.414Z","end":"2026-10-21T14:38:08.273Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 77-78 test-compile","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:38:08.615Z","attrs":{}}
+{"op":"open","id":"Task 79","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:58:38.995Z","attrs":{}}
+{"op":"close","id":"Task 77-78 test-compile","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:38:08.615Z","end":"2026-10-21T15:13:07.816Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 73 held-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T15:13:07.963Z","attrs":{}}
+{"op":"close","id":"Task 73 held-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-21T15:13:07.963Z","end":"2026-10-21T15:14:44.394Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 79","kind":"dispatch","parent":"impl#2","start":"2026-10-21T14:58:38.995Z","end":"2026-10-21T15:16:57.009Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 80","kind":"dispatch","parent":"impl#2","start":"2026-10-21T15:16:57.600Z","attrs":{}}
+{"op":"close","id":"Task 80","kind":"dispatch","parent":"impl#2","start":"2026-10-21T15:16:57.600Z","end":"2026-10-21T15:31:39.601Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 80 test-compile","kind":"dispatch","parent":"impl#2","start":"2026-10-21T15:31:40.003Z","attrs":{}}
+{"op":"close","id":"Task 80 test-compile","kind":"dispatch","parent":"impl#2","start":"2026-10-21T15:31:40.003Z","end":"2026-10-21T15:55:50.726Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 11","kind":"user-wait","parent":"impl#2","start":"2026-10-21T15:56:16.304Z","attrs":{}}
+{"op":"close","id":"impl assessment 11","kind":"user-wait","parent":"impl#2","start":"2026-10-21T15:56:16.304Z","end":"2026-10-22T07:59:51.459Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 70 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:51.968Z","attrs":{}}
+{"op":"open","id":"Task 71 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.020Z","attrs":{}}
+{"op":"open","id":"Task 72 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.096Z","attrs":{}}
+{"op":"open","id":"Task 73 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.164Z","attrs":{}}
+{"op":"close","id":"Task 70 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:51.968Z","end":"2026-10-22T08:00:34.414Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 72 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.096Z","end":"2026-10-22T08:00:48.094Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 73 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.164Z","end":"2026-10-22T08:02:02.995Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 71 cancel-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T07:59:52.020Z","end":"2026-10-22T08:02:28.172Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 12","kind":"user-wait","parent":"impl#2","start":"2026-10-22T08:03:16.800Z","attrs":{}}
+{"op":"close","id":"impl assessment 12","kind":"user-wait","parent":"impl#2","start":"2026-10-22T08:03:16.800Z","end":"2026-10-22T09:17:11.048Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 76 roles-select-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:17:11.290Z","attrs":{}}
+{"op":"open","id":"Task 78 roles-select-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:17:11.346Z","attrs":{}}
+{"op":"close","id":"Task 78 roles-select-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:17:11.346Z","end":"2026-10-22T09:18:04.298Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 76 roles-select-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:17:11.290Z","end":"2026-10-22T09:19:04.235Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 13","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:19:44.250Z","attrs":{}}
+{"op":"close","id":"impl assessment 13","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:19:44.250Z","end":"2026-10-22T09:26:56.287Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 73 submit-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:26:56.438Z","attrs":{}}
+{"op":"open","id":"Task 76 hr-close-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:26:56.500Z","attrs":{}}
+{"op":"close","id":"Task 76 hr-close-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:26:56.500Z","end":"2026-10-22T09:27:51.104Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 73 submit-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:26:56.438Z","end":"2026-10-22T09:28:10.138Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 14","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:28:53.886Z","attrs":{}}
+{"op":"close","id":"impl assessment 14","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:28:53.886Z","end":"2026-10-22T09:31:57.376Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 69 own-hr-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:31:57.527Z","attrs":{}}
+{"op":"open","id":"Task 67 own-hr-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:31:57.588Z","attrs":{}}
+{"op":"close","id":"Task 69 own-hr-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:31:57.527Z","end":"2026-10-22T09:32:32.885Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 67 own-hr-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:31:57.588Z","end":"2026-10-22T09:32:57.260Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 15","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:33:09.197Z","attrs":{}}
+{"op":"close","id":"impl assessment 15","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:33:09.197Z","end":"2026-10-22T09:33:44.941Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 60 empty-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:33:45.275Z","attrs":{}}
+{"op":"open","id":"Task 62 empty-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:33:45.334Z","attrs":{}}
+{"op":"open","id":"Task 64 empty-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:33:45.395Z","attrs":{}}
+{"op":"close","id":"Task 64 empty-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:33:45.395Z","end":"2026-10-22T09:35:02.624Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 60 empty-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:33:45.275Z","end":"2026-10-22T09:35:34.421Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 62 empty-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:33:45.334Z","end":"2026-10-22T09:37:18.380Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 60 build-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:37:18.560Z","attrs":{}}
+{"op":"open","id":"Task 62 build-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:37:18.617Z","attrs":{}}
+{"op":"open","id":"Task 64 build-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:37:18.671Z","attrs":{}}
+{"op":"close","id":"Task 60 build-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:37:18.560Z","end":"2026-10-22T09:38:51.478Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 64 build-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:37:18.671Z","end":"2026-10-22T09:39:15.259Z","outcome":"done","attrs":{}}
+{"op":"close","id":"Task 62 build-card-fix","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:37:18.617Z","end":"2026-10-22T09:40:02.650Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 60 build-card-fix 2","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:40:02.705Z","attrs":{}}
+{"op":"close","id":"Task 60 build-card-fix 2","kind":"dispatch","parent":"impl#2","start":"2026-10-22T09:40:02.705Z","end":"2026-10-22T09:40:29.564Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment 16","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:41:06.248Z","attrs":{}}
+{"op":"close","id":"impl#2","kind":"phase","parent":null,"start":"2026-10-21T08:31:13.145Z","end":"2026-10-22T11:43:04.000Z","outcome":"interrupted","attrs":{}}
+{"op":"close","id":"impl assessment 16","kind":"user-wait","parent":"impl#2","start":"2026-10-22T09:41:06.248Z","end":"2026-10-22T11:43:04.000Z","outcome":"interrupted","attrs":{}}
+{"op":"open","id":"impl#3","kind":"phase","parent":null,"start":"2026-10-22T11:48:18.603Z","attrs":{}}
+{"op":"close","id":"impl#3","kind":"phase","parent":null,"start":"2026-10-22T11:48:18.603Z","end":"2026-10-22T11:50:48.116Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#1","kind":"phase","parent":null,"start":"2026-10-22T11:50:48.116Z","attrs":{}}
+{"op":"open","id":"impl-test entry 1","kind":"dispatch","parent":"impl-test#1","start":"2026-10-22T11:51:34.282Z","attrs":{}}
+{"op":"open","id":"suite impl-test#1","kind":"suite","parent":"impl-test entry 1","start":"2026-10-22T11:53:39.325Z","attrs":{}}
+{"op":"close","id":"suite impl-test#1","kind":"suite","parent":"impl-test entry 1","start":"2026-10-22T11:53:39.325Z","end":"2026-10-22T11:56:39.158Z","outcome":"done","attrs":{}}
+{"op":"open","id":"suite impl-test#2","kind":"suite","parent":"impl-test entry 1","start":"2026-10-22T13:32:02.536Z","attrs":{}}
+{"op":"close","id":"suite impl-test#2","kind":"suite","parent":"impl-test entry 1","start":"2026-10-22T13:32:02.536Z","end":"2026-10-22T13:35:34.958Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test entry 1","kind":"dispatch","parent":"impl-test#1","start":"2026-10-22T11:51:34.282Z","end":"2026-10-22T13:47:42.367Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#1","kind":"phase","parent":null,"start":"2026-10-22T11:50:48.116Z","end":"2026-10-22T13:49:59.448Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#4","kind":"phase","parent":null,"start":"2026-10-22T13:50:08.615Z","attrs":{}}
+{"op":"open","id":"test-fix D-1","kind":"dispatch","parent":"impl#4","start":"2026-10-22T13:50:19.132Z","attrs":{}}
+{"op":"open","id":"D-2","kind":"dispatch","parent":"impl#4","start":"2026-10-22T13:50:19.132Z","attrs":{}}
+{"op":"close","id":"test-fix D-1","kind":"dispatch","parent":"impl#4","start":"2026-10-22T13:50:19.132Z","end":"2026-10-22T13:52:37.071Z","outcome":"done","attrs":{}}
+{"op":"close","id":"D-2","kind":"dispatch","parent":"impl#4","start":"2026-10-22T13:50:19.132Z","end":"2026-10-22T13:52:37.135Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl#4","kind":"phase","parent":null,"start":"2026-10-22T13:50:08.615Z","end":"2026-10-22T13:53:06.425Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#2","kind":"phase","parent":null,"start":"2026-10-22T13:53:06.425Z","attrs":{}}
+{"op":"open","id":"impl-test entry 2","kind":"dispatch","parent":"impl-test#2","start":"2026-10-22T13:53:06.887Z","attrs":{}}
+{"op":"open","id":"suite impl-test#3","kind":"suite","parent":"impl-test entry 2","start":"2026-10-22T13:54:05.134Z","attrs":{"scope":"impacted"}}
+{"op":"close","id":"suite impl-test#3","kind":"suite","parent":"impl-test entry 2","start":"2026-10-22T13:54:05.134Z","end":"2026-10-22T13:57:15.862Z","outcome":"done","attrs":{"scope":"impacted"}}
+{"op":"close","id":"impl-test entry 2","kind":"dispatch","parent":"impl-test#2","start":"2026-10-22T13:53:06.887Z","end":"2026-10-22T13:57:40.371Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#2","kind":"phase","parent":null,"start":"2026-10-22T13:53:06.425Z","end":"2026-10-22T13:57:40.558Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#1","kind":"phase","parent":null,"start":"2026-10-22T13:57:40.558Z","attrs":{}}
+{"op":"open","id":"impl-review wave-1/iter-01","kind":"review-iteration","parent":"impl-review#1","start":"2026-10-22T13:59:42.531Z","attrs":{}}
+{"op":"open","id":"correctness wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-22T13:59:50.304Z","attrs":{}}
+{"op":"open","id":"efficiency wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-22T13:59:50.367Z","attrs":{}}
+{"op":"open","id":"testing wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-22T13:59:50.427Z","attrs":{}}
+{"op":"open","id":"documentation wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-22T13:59:50.485Z","attrs":{}}
+{"op":"open","id":"external wave-1/iter-01","kind":"external-review","parent":"impl-review wave-1/iter-01","start":"2026-10-22T13:59:50.544Z","attrs":{}}
+{"op":"close","id":"external wave-1/iter-01","kind":"external-review","parent":"impl-review wave-1/iter-01","start":"2026-10-22T13:59:50.544Z","end":"2026-10-22T14:18:19.102Z","outcome":"interrupted","attrs":{}}
+{"op":"close","id":"correctness wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-22T13:59:50.304Z","end":"2026-10-22T14:18:19.178Z","outcome":"done","attrs":{}}
+{"op":"close","id":"efficiency wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-22T13:59:50.367Z","end":"2026-10-22T14:18:19.253Z","outcome":"done","attrs":{}}
+{"op":"close","id":"testing wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-22T13:59:50.427Z","end":"2026-10-22T14:18:19.326Z","outcome":"done","attrs":{}}
+{"op":"close","id":"documentation wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-22T13:59:50.485Z","end":"2026-10-22T14:18:19.400Z","outcome":"done","attrs":{}}
+{"op":"open","id":"external wave-1/iter-01 #2","kind":"external-review","parent":"impl-review wave-1/iter-01","start":"2026-10-22T14:18:19.474Z","attrs":{}}
+{"op":"close","id":"external wave-1/iter-01 #2","kind":"external-review","parent":"impl-review wave-1/iter-01","start":"2026-10-22T14:18:19.474Z","end":"2026-10-22T14:33:02.203Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review wave-1/iter-01","kind":"review-iteration","parent":"impl-review#1","start":"2026-10-22T13:59:42.531Z","end":"2026-10-22T14:33:33.007Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review#1","kind":"phase","parent":null,"start":"2026-10-22T13:57:40.558Z","end":"2026-10-22T14:33:33.074Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#5","kind":"phase","parent":null,"start":"2026-10-22T14:33:33.074Z","attrs":{}}
+{"op":"open","id":"review-fix wave-1/iter-01","kind":"dispatch","parent":"impl#5","start":"2026-10-22T14:33:59.910Z","attrs":{}}
+{"op":"close","id":"review-fix wave-1/iter-01","kind":"dispatch","parent":"impl#5","start":"2026-10-22T14:33:59.910Z","end":"2026-10-22T14:51:23.707Z","outcome":"done","attrs":{}}
+{"op":"open","id":"review-fix wave-1/iter-01 tests","kind":"dispatch","parent":"impl#5","start":"2026-10-22T14:51:23.843Z","attrs":{}}
+{"op":"close","id":"review-fix wave-1/iter-01 tests","kind":"dispatch","parent":"impl#5","start":"2026-10-22T14:51:23.843Z","end":"2026-10-22T15:17:12.101Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl#5","kind":"phase","parent":null,"start":"2026-10-22T14:33:33.074Z","end":"2026-10-22T15:17:41.921Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#3","kind":"phase","parent":null,"start":"2026-10-22T15:17:41.921Z","attrs":{}}
+{"op":"open","id":"impl-test entry 3","kind":"dispatch","parent":"impl-test#3","start":"2026-10-22T15:17:42.221Z","attrs":{}}
+{"op":"open","id":"suite impl-test#4","kind":"suite","parent":"impl-test entry 3","start":"2026-10-22T15:22:10.890Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#4","kind":"suite","parent":"impl-test entry 3","start":"2026-10-22T15:22:10.890Z","end":"2026-10-22T15:25:07.064Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#5","kind":"suite","parent":"impl-test entry 3","start":"2026-10-22T15:44:31.684Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#5","kind":"suite","parent":"impl-test entry 3","start":"2026-10-22T15:44:31.684Z","end":"2026-10-22T15:48:40.790Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#6","kind":"suite","parent":"impl-test entry 3","start":"2026-10-22T15:48:40.851Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#6","kind":"suite","parent":"impl-test entry 3","start":"2026-10-22T15:48:40.851Z","end":"2026-10-22T15:51:56.385Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-test entry 3","kind":"dispatch","parent":"impl-test#3","start":"2026-10-22T15:17:42.221Z","end":"2026-10-22T15:54:25.881Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#3","kind":"phase","parent":null,"start":"2026-10-22T15:17:41.921Z","end":"2026-10-22T15:54:26.077Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#2","kind":"phase","parent":null,"start":"2026-10-22T15:54:26.077Z","attrs":{}}
+{"op":"open","id":"impl-review wave-1/iter-02","kind":"review-iteration","parent":"impl-review#2","start":"2026-10-22T15:54:48.809Z","attrs":{}}
+{"op":"open","id":"efficiency wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:48.871Z","attrs":{}}
+{"op":"open","id":"testing wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:48.935Z","attrs":{}}
+{"op":"open","id":"documentation wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:49.000Z","attrs":{}}
+{"op":"open","id":"external wave-1/iter-02","kind":"external-review","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:49.063Z","attrs":{}}
+{"op":"close","id":"efficiency wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:48.871Z","end":"2026-10-22T16:12:31.348Z","outcome":"done","attrs":{}}
+{"op":"close","id":"testing wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:48.935Z","end":"2026-10-22T16:12:31.482Z","outcome":"done","attrs":{}}
+{"op":"close","id":"documentation wave-1/iter-02","kind":"dispatch","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:49.000Z","end":"2026-10-22T16:12:31.645Z","outcome":"done","attrs":{}}
+{"op":"close","id":"external wave-1/iter-02","kind":"external-review","parent":"impl-review wave-1/iter-02","start":"2026-10-22T15:54:49.063Z","end":"2026-10-22T16:12:31.799Z","outcome":"done","attrs":{}}
+{"op":"open","id":"external wave-1/iter-02 #2","kind":"external-review","parent":"impl-review wave-1/iter-02","start":"2026-10-22T16:12:40.246Z","attrs":{}}
+{"op":"close","id":"external wave-1/iter-02 #2","kind":"external-review","parent":"impl-review wave-1/iter-02","start":"2026-10-22T16:12:40.246Z","end":"2026-10-22T16:19:23.905Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review wave-1/iter-02","kind":"review-iteration","parent":"impl-review#2","start":"2026-10-22T15:54:48.809Z","end":"2026-10-22T16:19:24.080Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review#2","kind":"phase","parent":null,"start":"2026-10-22T15:54:26.077Z","end":"2026-10-22T16:19:24.139Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#6","kind":"phase","parent":null,"start":"2026-10-22T16:19:24.139Z","attrs":{}}
+{"op":"open","id":"review-fix wave-1/iter-02","kind":"dispatch","parent":"impl#6","start":"2026-10-22T16:19:37.080Z","attrs":{}}
+{"op":"close","id":"review-fix wave-1/iter-02","kind":"dispatch","parent":"impl#6","start":"2026-10-22T16:19:37.080Z","end":"2026-10-22T16:27:14.937Z","outcome":"done","attrs":{}}
+{"op":"open","id":"review-fix wave-1/iter-02 tests","kind":"dispatch","parent":"impl#6","start":"2026-10-22T16:27:15.098Z","attrs":{}}
+{"op":"close","id":"review-fix wave-1/iter-02 tests","kind":"dispatch","parent":"impl#6","start":"2026-10-22T16:27:15.098Z","end":"2026-10-22T16:29:29.934Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl#6","kind":"phase","parent":null,"start":"2026-10-22T16:19:24.139Z","end":"2026-10-22T16:29:52.678Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#4","kind":"phase","parent":null,"start":"2026-10-22T16:29:52.678Z","attrs":{}}
+{"op":"open","id":"impl-test entry 4","kind":"dispatch","parent":"impl-test#4","start":"2026-10-22T16:29:52.984Z","attrs":{}}
+{"op":"open","id":"suite impl-test#7","kind":"suite","parent":"impl-test entry 4","start":"2026-10-22T16:31:15.060Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#7","kind":"suite","parent":"impl-test entry 4","start":"2026-10-22T16:31:15.060Z","end":"2026-10-22T16:34:14.375Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#8","kind":"suite","parent":"impl-test entry 4","start":"2026-10-22T16:46:22.850Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#8","kind":"suite","parent":"impl-test entry 4","start":"2026-10-22T16:46:22.850Z","end":"2026-10-22T16:49:04.197Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-test entry 4","kind":"dispatch","parent":"impl-test#4","start":"2026-10-22T16:29:52.984Z","end":"2026-10-22T16:52:21.836Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#4","kind":"phase","parent":null,"start":"2026-10-22T16:29:52.678Z","end":"2026-10-22T16:52:22.013Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#3","kind":"phase","parent":null,"start":"2026-10-22T16:52:22.013Z","attrs":{}}
+{"op":"open","id":"impl-review wave-1/iter-03","kind":"review-iteration","parent":"impl-review#3","start":"2026-10-22T16:52:37.509Z","attrs":{}}
+{"op":"open","id":"testing wave-1/iter-03","kind":"dispatch","parent":"impl-review wave-1/iter-03","start":"2026-10-22T16:52:37.570Z","attrs":{}}
+{"op":"open","id":"documentation wave-1/iter-03","kind":"dispatch","parent":"impl-review wave-1/iter-03","start":"2026-10-22T16:52:37.629Z","attrs":{}}
+{"op":"open","id":"external wave-1/iter-03","kind":"external-review","parent":"impl-review wave-1/iter-03","start":"2026-10-22T16:52:37.690Z","attrs":{}}
+{"op":"close","id":"testing wave-1/iter-03","kind":"dispatch","parent":"impl-review wave-1/iter-03","start":"2026-10-22T16:52:37.570Z","end":"2026-10-22T17:02:07.530Z","outcome":"done","attrs":{}}
+{"op":"close","id":"documentation wave-1/iter-03","kind":"dispatch","parent":"impl-review wave-1/iter-03","start":"2026-10-22T16:52:37.629Z","end":"2026-10-22T17:02:07.680Z","outcome":"done","attrs":{}}
+{"op":"close","id":"external wave-1/iter-03","kind":"external-review","parent":"impl-review wave-1/iter-03","start":"2026-10-22T16:52:37.690Z","end":"2026-10-22T17:02:07.823Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review wave-1/iter-03","kind":"review-iteration","parent":"impl-review#3","start":"2026-10-22T16:52:37.509Z","end":"2026-10-22T17:02:07.937Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review#3","kind":"phase","parent":null,"start":"2026-10-22T16:52:22.013Z","end":"2026-10-22T17:02:07.995Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#7","kind":"phase","parent":null,"start":"2026-10-22T17:02:07.995Z","attrs":{}}
+{"op":"open","id":"review-fix wave-1/iter-03 requirements","kind":"dispatch","parent":"impl#7","start":"2026-10-22T18:00:43.349Z","attrs":{}}
+{"op":"close","id":"review-fix wave-1/iter-03 requirements","kind":"dispatch","parent":"impl#7","start":"2026-10-22T18:00:43.349Z","end":"2026-10-22T18:02:44.111Z","outcome":"done","attrs":{}}
+{"op":"open","id":"review-fix wave-1/iter-03","kind":"dispatch","parent":"impl#7","start":"2026-10-22T18:02:44.277Z","attrs":{}}
+{"op":"close","id":"review-fix wave-1/iter-03","kind":"dispatch","parent":"impl#7","start":"2026-10-22T18:02:44.277Z","end":"2026-10-22T18:10:22.879Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl#7","kind":"phase","parent":null,"start":"2026-10-22T17:02:07.995Z","end":"2026-10-22T18:10:53.439Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#5","kind":"phase","parent":null,"start":"2026-10-22T18:10:53.439Z","attrs":{}}
+{"op":"open","id":"impl-test entry 5","kind":"dispatch","parent":"impl-test#5","start":"2026-10-22T18:10:53.772Z","attrs":{}}
+{"op":"open","id":"suite impl-test#9","kind":"suite","parent":"impl-test entry 5","start":"2026-10-22T18:16:18.487Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#9","kind":"suite","parent":"impl-test entry 5","start":"2026-10-22T18:16:18.487Z","end":"2026-10-22T18:32:28.263Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#10","kind":"suite","parent":"impl-test entry 5","start":"2026-10-22T18:32:28.325Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#10","kind":"suite","parent":"impl-test entry 5","start":"2026-10-22T18:32:28.325Z","end":"2026-10-22T18:39:31.588Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-test entry 5","kind":"dispatch","parent":"impl-test#5","start":"2026-10-22T18:10:53.772Z","end":"2026-10-22T18:41:08.580Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#5","kind":"phase","parent":null,"start":"2026-10-22T18:10:53.439Z","end":"2026-10-22T18:41:08.746Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#4","kind":"phase","parent":null,"start":"2026-10-22T18:41:08.746Z","attrs":{}}
+{"op":"open","id":"impl-review wave-1/iter-04","kind":"review-iteration","parent":"impl-review#4","start":"2026-10-22T18:41:09.635Z","attrs":{}}
+{"op":"open","id":"external wave-1/iter-04","kind":"external-review","parent":"impl-review wave-1/iter-04","start":"2026-10-22T18:41:09.698Z","attrs":{}}
+{"op":"close","id":"external wave-1/iter-04","kind":"external-review","parent":"impl-review wave-1/iter-04","start":"2026-10-22T18:41:09.698Z","end":"2026-10-22T18:44:26.036Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review wave-1/iter-04","kind":"review-iteration","parent":"impl-review#4","start":"2026-10-22T18:41:09.635Z","end":"2026-10-22T18:44:26.098Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review wave-2/iter-01","kind":"review-iteration","parent":"impl-review#4","start":"2026-10-22T18:44:47.543Z","attrs":{}}
+{"op":"open","id":"correctness wave-2/iter-01","kind":"dispatch","parent":"impl-review wave-2/iter-01","start":"2026-10-22T18:44:47.602Z","attrs":{}}
+{"op":"open","id":"efficiency wave-2/iter-01","kind":"dispatch","parent":"impl-review wave-2/iter-01","start":"2026-10-22T18:44:47.663Z","attrs":{}}
+{"op":"open","id":"testing wave-2/iter-01","kind":"dispatch","parent":"impl-review wave-2/iter-01","start":"2026-10-22T18:44:47.724Z","attrs":{}}
+{"op":"open","id":"documentation wave-2/iter-01","kind":"dispatch","parent":"impl-review wave-2/iter-01","start":"2026-10-22T18:44:47.785Z","attrs":{}}
+{"op":"open","id":"external wave-2/iter-01","kind":"external-review","parent":"impl-review wave-2/iter-01","start":"2026-10-22T18:44:47.845Z","attrs":{}}
+{"op":"close","id":"correctness wave-2/iter-01","kind":"dispatch","parent":"impl-review wave-2/iter-01","start":"2026-10-22T18:44:47.602Z","end":"2026-10-22T18:59:20.520Z","outcome":"done","attrs":{}}
+{"op":"close","id":"efficiency wave-2/iter-01","kind":"dispatch","parent":"impl-review wave-2/iter-01","start":"2026-10-22T18:44:47.663Z","end":"2026-10-22T18:59:20.655Z","outcome":"done","attrs":{}}
+{"op":"close","id":"testing wave-2/iter-01","kind":"dispatch","parent":"impl-review wave-2/iter-01","start":"2026-10-22T18:44:47.724Z","end":"2026-10-22T18:59:20.794Z","outcome":"done","attrs":{}}
+{"op":"close","id":"documentation wave-2/iter-01","kind":"dispatch","parent":"impl-review wave-2/iter-01","start":"2026-10-22T18:44:47.785Z","end":"2026-10-22T18:59:20.936Z","outcome":"done","attrs":{}}
+{"op":"close","id":"external wave-2/iter-01","kind":"external-review","parent":"impl-review wave-2/iter-01","start":"2026-10-22T18:44:47.845Z","end":"2026-10-22T18:59:21.073Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review wave-2/iter-01","kind":"review-iteration","parent":"impl-review#4","start":"2026-10-22T18:44:47.543Z","end":"2026-10-22T18:59:41.857Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review#4","kind":"phase","parent":null,"start":"2026-10-22T18:41:08.746Z","end":"2026-10-22T18:59:41.918Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#8","kind":"phase","parent":null,"start":"2026-10-22T18:59:41.918Z","attrs":{}}
+{"op":"open","id":"review-fix wave-2/iter-01","kind":"dispatch","parent":"impl#8","start":"2026-10-22T18:59:42.308Z","attrs":{}}
+{"op":"close","id":"review-fix wave-2/iter-01","kind":"dispatch","parent":"impl#8","start":"2026-10-22T18:59:42.308Z","end":"2026-10-22T19:27:11.933Z","outcome":"done","attrs":{}}
+{"op":"open","id":"review-fix wave-2/iter-01 ux","kind":"dispatch","parent":"impl#8","start":"2026-10-22T19:27:12.159Z","attrs":{}}
+{"op":"close","id":"review-fix wave-2/iter-01 ux","kind":"dispatch","parent":"impl#8","start":"2026-10-22T19:27:12.159Z","end":"2026-10-22T19:28:30.402Z","outcome":"done","attrs":{}}
+{"op":"open","id":"review-fix wave-2/iter-01 tests","kind":"dispatch","parent":"impl#8","start":"2026-10-22T19:28:30.467Z","attrs":{}}
+{"op":"close","id":"review-fix wave-2/iter-01 tests","kind":"dispatch","parent":"impl#8","start":"2026-10-22T19:28:30.467Z","end":"2026-10-22T19:44:40.803Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl#8","kind":"phase","parent":null,"start":"2026-10-22T18:59:41.918Z","end":"2026-10-22T19:45:05.363Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#6","kind":"phase","parent":null,"start":"2026-10-22T19:45:05.363Z","attrs":{}}
+{"op":"open","id":"impl-test entry 6","kind":"dispatch","parent":"impl-test#6","start":"2026-10-22T19:45:05.701Z","attrs":{}}
+{"op":"open","id":"suite impl-test#11","kind":"suite","parent":"impl-test entry 6","start":"2026-10-22T19:47:08.597Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#11","kind":"suite","parent":"impl-test entry 6","start":"2026-10-22T19:47:08.597Z","end":"2026-10-22T19:47:45.470Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#12","kind":"suite","parent":"impl-test entry 6","start":"2026-10-22T20:28:06.481Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#12","kind":"suite","parent":"impl-test entry 6","start":"2026-10-22T20:28:06.481Z","end":"2026-10-22T20:28:40.912Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#13","kind":"suite","parent":"impl-test entry 6","start":"2026-10-22T20:32:08.152Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#13","kind":"suite","parent":"impl-test entry 6","start":"2026-10-22T20:32:08.152Z","end":"2026-10-22T20:32:41.306Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-test entry 6","kind":"dispatch","parent":"impl-test#6","start":"2026-10-22T19:45:05.701Z","end":"2026-10-22T20:37:44.056Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#6","kind":"phase","parent":null,"start":"2026-10-22T19:45:05.363Z","end":"2026-10-22T20:37:44.232Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#5","kind":"phase","parent":null,"start":"2026-10-22T20:37:44.232Z","attrs":{}}
+{"op":"open","id":"impl-review wave-2/iter-02","kind":"review-iteration","parent":"impl-review#5","start":"2026-10-22T20:37:45.805Z","attrs":{}}
+{"op":"open","id":"correctness wave-2/iter-02","kind":"dispatch","parent":"impl-review wave-2/iter-02","start":"2026-10-22T20:37:45.871Z","attrs":{}}
+{"op":"open","id":"efficiency wave-2/iter-02","kind":"dispatch","parent":"impl-review wave-2/iter-02","start":"2026-10-22T20:37:45.933Z","attrs":{}}
+{"op":"open","id":"testing wave-2/iter-02","kind":"dispatch","parent":"impl-review wave-2/iter-02","start":"2026-10-22T20:37:45.995Z","attrs":{}}
+{"op":"open","id":"documentation wave-2/iter-02","kind":"dispatch","parent":"impl-review wave-2/iter-02","start":"2026-10-22T20:37:46.056Z","attrs":{}}
+{"op":"open","id":"external wave-2/iter-02","kind":"external-review","parent":"impl-review wave-2/iter-02","start":"2026-10-22T20:37:46.121Z","attrs":{}}
+{"op":"close","id":"correctness wave-2/iter-02","kind":"dispatch","parent":"impl-review wave-2/iter-02","start":"2026-10-22T20:37:45.871Z","end":"2026-10-22T21:05:06.100Z","outcome":"done","attrs":{}}
+{"op":"close","id":"efficiency wave-2/iter-02","kind":"dispatch","parent":"impl-review wave-2/iter-02","start":"2026-10-22T20:37:45.933Z","end":"2026-10-22T21:05:06.248Z","outcome":"done","attrs":{}}
+{"op":"close","id":"testing wave-2/iter-02","kind":"dispatch","parent":"impl-review wave-2/iter-02","start":"2026-10-22T20:37:45.995Z","end":"2026-10-22T21:05:06.392Z","outcome":"done","attrs":{}}
+{"op":"close","id":"documentation wave-2/iter-02","kind":"dispatch","parent":"impl-review wave-2/iter-02","start":"2026-10-22T20:37:46.056Z","end":"2026-10-22T21:05:06.544Z","outcome":"done","attrs":{}}
+{"op":"close","id":"external wave-2/iter-02","kind":"external-review","parent":"impl-review wave-2/iter-02","start":"2026-10-22T20:37:46.121Z","end":"2026-10-22T21:05:06.682Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review wave-2/iter-02","kind":"review-iteration","parent":"impl-review#5","start":"2026-10-22T20:37:45.805Z","end":"2026-10-22T21:05:06.912Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review#5","kind":"phase","parent":null,"start":"2026-10-22T20:37:44.232Z","end":"2026-10-22T21:05:06.975Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#9","kind":"phase","parent":null,"start":"2026-10-22T21:05:06.975Z","attrs":{}}
+{"op":"open","id":"review-fix wave-2/iter-02","kind":"dispatch","parent":"impl#9","start":"2026-10-22T21:05:07.338Z","attrs":{}}
+{"op":"close","id":"review-fix wave-2/iter-02","kind":"dispatch","parent":"impl#9","start":"2026-10-22T21:05:07.338Z","end":"2026-10-22T21:11:58.833Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl#9","kind":"phase","parent":null,"start":"2026-10-22T21:05:06.975Z","end":"2026-10-22T21:12:11.143Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#7","kind":"phase","parent":null,"start":"2026-10-22T21:12:11.143Z","attrs":{}}
+{"op":"open","id":"impl-test entry 7","kind":"dispatch","parent":"impl-test#7","start":"2026-10-22T21:12:11.460Z","attrs":{}}
+{"op":"open","id":"suite impl-test#14","kind":"suite","parent":"impl-test entry 7","start":"2026-10-22T21:13:25.611Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#14","kind":"suite","parent":"impl-test entry 7","start":"2026-10-22T21:13:25.611Z","end":"2026-10-22T21:13:59.241Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#15","kind":"suite","parent":"impl-test entry 7","start":"2026-10-22T21:36:07.589Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#15","kind":"suite","parent":"impl-test entry 7","start":"2026-10-22T21:36:07.589Z","end":"2026-10-22T21:36:47.675Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#16","kind":"suite","parent":"impl-test entry 7","start":"2026-10-22T21:37:51.361Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#16","kind":"suite","parent":"impl-test entry 7","start":"2026-10-22T21:37:51.361Z","end":"2026-10-22T21:38:29.010Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-test entry 7","kind":"dispatch","parent":"impl-test#7","start":"2026-10-22T21:12:11.460Z","end":"2026-10-22T21:43:13.344Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#7","kind":"phase","parent":null,"start":"2026-10-22T21:12:11.143Z","end":"2026-10-22T21:43:13.509Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#6","kind":"phase","parent":null,"start":"2026-10-22T21:43:13.509Z","attrs":{}}
+{"op":"open","id":"impl-review wave-2/iter-03","kind":"review-iteration","parent":"impl-review#6","start":"2026-10-22T21:43:14.656Z","attrs":{}}
+{"op":"open","id":"correctness wave-2/iter-03","kind":"dispatch","parent":"impl-review wave-2/iter-03","start":"2026-10-22T21:43:14.716Z","attrs":{}}
+{"op":"open","id":"efficiency wave-2/iter-03","kind":"dispatch","parent":"impl-review wave-2/iter-03","start":"2026-10-22T21:43:14.780Z","attrs":{}}
+{"op":"open","id":"external wave-2/iter-03","kind":"external-review","parent":"impl-review wave-2/iter-03","start":"2026-10-22T21:43:14.838Z","attrs":{}}
+{"op":"close","id":"correctness wave-2/iter-03","kind":"dispatch","parent":"impl-review wave-2/iter-03","start":"2026-10-22T21:43:14.716Z","end":"2026-10-22T21:50:09.102Z","outcome":"done","attrs":{}}
+{"op":"close","id":"efficiency wave-2/iter-03","kind":"dispatch","parent":"impl-review wave-2/iter-03","start":"2026-10-22T21:43:14.780Z","end":"2026-10-22T21:50:09.240Z","outcome":"done","attrs":{}}
+{"op":"close","id":"external wave-2/iter-03","kind":"external-review","parent":"impl-review wave-2/iter-03","start":"2026-10-22T21:43:14.838Z","end":"2026-10-22T21:50:09.377Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review wave-2/iter-03","kind":"review-iteration","parent":"impl-review#6","start":"2026-10-22T21:43:14.656Z","end":"2026-10-22T21:50:09.437Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review wave-3/iter-01","kind":"review-iteration","parent":"impl-review#6","start":"2026-10-22T21:51:00.830Z","attrs":{}}
+{"op":"open","id":"correctness wave-3/iter-01","kind":"dispatch","parent":"impl-review wave-3/iter-01","start":"2026-10-22T21:51:00.888Z","attrs":{}}
+{"op":"open","id":"efficiency wave-3/iter-01","kind":"dispatch","parent":"impl-review wave-3/iter-01","start":"2026-10-22T21:51:00.947Z","attrs":{}}
+{"op":"open","id":"testing wave-3/iter-01","kind":"dispatch","parent":"impl-review wave-3/iter-01","start":"2026-10-22T21:51:01.008Z","attrs":{}}
+{"op":"open","id":"documentation wave-3/iter-01","kind":"dispatch","parent":"impl-review wave-3/iter-01","start":"2026-10-22T21:51:01.068Z","attrs":{}}
+{"op":"open","id":"external wave-3/iter-01","kind":"external-review","parent":"impl-review wave-3/iter-01","start":"2026-10-22T21:51:01.130Z","attrs":{}}
+{"op":"close","id":"correctness wave-3/iter-01","kind":"dispatch","parent":"impl-review wave-3/iter-01","start":"2026-10-22T21:51:00.888Z","end":"2026-10-22T22:05:25.883Z","outcome":"done","attrs":{}}
+{"op":"close","id":"efficiency wave-3/iter-01","kind":"dispatch","parent":"impl-review wave-3/iter-01","start":"2026-10-22T21:51:00.947Z","end":"2026-10-22T22:05:26.023Z","outcome":"done","attrs":{}}
+{"op":"close","id":"documentation wave-3/iter-01","kind":"dispatch","parent":"impl-review wave-3/iter-01","start":"2026-10-22T21:51:01.068Z","end":"2026-10-22T22:05:26.165Z","outcome":"done","attrs":{}}
+{"op":"close","id":"external wave-3/iter-01","kind":"external-review","parent":"impl-review wave-3/iter-01","start":"2026-10-22T21:51:01.130Z","end":"2026-10-22T22:05:26.316Z","outcome":"done","attrs":{}}
+{"op":"close","id":"testing wave-3/iter-01","kind":"dispatch","parent":"impl-review wave-3/iter-01","start":"2026-10-22T21:51:01.008Z","end":"2026-10-22T22:05:26.381Z","outcome":"interrupted","attrs":{}}
+{"op":"close","id":"impl-review#6","kind":"phase","parent":null,"start":"2026-10-22T21:43:13.509Z","end":"2026-10-22T22:05:26.381Z","outcome":"interrupted","attrs":{}}
+{"op":"close","id":"impl-review wave-3/iter-01","kind":"review-iteration","parent":"impl-review#6","start":"2026-10-22T21:51:00.830Z","end":"2026-10-22T22:05:26.381Z","outcome":"interrupted","attrs":{}}
+{"op":"open","id":"impl-review#7","kind":"phase","parent":null,"start":"2026-10-26T06:35:12.300Z","attrs":{}}
+{"op":"open","id":"impl-review wave-3/iter-01 #2","kind":"review-iteration","parent":"impl-review#7","start":"2026-10-26T06:35:12.386Z","attrs":{}}
+{"op":"open","id":"testing wave-3/iter-01 #2","kind":"dispatch","parent":"impl-review wave-3/iter-01 #2","start":"2026-10-26T06:35:12.489Z","attrs":{}}
+{"op":"close","id":"testing wave-3/iter-01 #2","kind":"dispatch","parent":"impl-review wave-3/iter-01 #2","start":"2026-10-26T06:35:12.489Z","end":"2026-10-26T06:44:44.964Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review wave-3/iter-01 #2","kind":"review-iteration","parent":"impl-review#7","start":"2026-10-26T06:35:12.386Z","end":"2026-10-26T06:54:09.476Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review#7","kind":"phase","parent":null,"start":"2026-10-26T06:35:12.300Z","end":"2026-10-26T06:54:09.540Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#10","kind":"phase","parent":null,"start":"2026-10-26T06:54:09.540Z","attrs":{}}
+{"op":"open","id":"review-fix wave-3/iter-01","kind":"dispatch","parent":"impl#10","start":"2026-10-26T06:54:09.918Z","attrs":{}}
+{"op":"close","id":"review-fix wave-3/iter-01","kind":"dispatch","parent":"impl#10","start":"2026-10-26T06:54:09.918Z","end":"2026-10-26T07:03:20.904Z","outcome":"done","attrs":{}}
+{"op":"open","id":"review-fix wave-3/iter-01 tests","kind":"dispatch","parent":"impl#10","start":"2026-10-26T07:03:21.135Z","attrs":{}}
+{"op":"close","id":"review-fix wave-3/iter-01 tests","kind":"dispatch","parent":"impl#10","start":"2026-10-26T07:03:21.135Z","end":"2026-10-26T07:19:56.694Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl#10","kind":"phase","parent":null,"start":"2026-10-26T06:54:09.540Z","end":"2026-10-26T07:20:11.273Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#8","kind":"phase","parent":null,"start":"2026-10-26T07:20:11.273Z","attrs":{}}
+{"op":"open","id":"impl-test entry 8","kind":"dispatch","parent":"impl-test#8","start":"2026-10-26T07:20:11.593Z","attrs":{}}
+{"op":"open","id":"suite impl-test#17","kind":"suite","parent":"impl-test entry 8","start":"2026-10-26T07:21:12.087Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#17","kind":"suite","parent":"impl-test entry 8","start":"2026-10-26T07:21:12.087Z","end":"2026-10-26T07:21:49.826Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#18","kind":"suite","parent":"impl-test entry 8","start":"2026-10-26T07:39:25.074Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#18","kind":"suite","parent":"impl-test entry 8","start":"2026-10-26T07:39:25.074Z","end":"2026-10-26T07:40:14.204Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-test entry 8","kind":"dispatch","parent":"impl-test#8","start":"2026-10-26T07:20:11.593Z","end":"2026-10-26T07:48:54.455Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#8","kind":"phase","parent":null,"start":"2026-10-26T07:20:11.273Z","end":"2026-10-26T07:48:54.831Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#11","kind":"phase","parent":null,"start":"2026-10-26T07:48:54.831Z","attrs":{}}
+{"op":"open","id":"test-fix D-3","kind":"dispatch","parent":"impl#11","start":"2026-10-26T07:48:55.152Z","attrs":{}}
+{"op":"close","id":"test-fix D-3","kind":"dispatch","parent":"impl#11","start":"2026-10-26T07:48:55.152Z","end":"2026-10-26T07:50:57.110Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl#11","kind":"phase","parent":null,"start":"2026-10-26T07:48:54.831Z","end":"2026-10-26T07:51:10.843Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#9","kind":"phase","parent":null,"start":"2026-10-26T07:51:10.843Z","attrs":{}}
+{"op":"open","id":"impl-test entry 9","kind":"dispatch","parent":"impl-test#9","start":"2026-10-26T07:51:11.171Z","attrs":{}}
+{"op":"open","id":"suite impl-test#19","kind":"suite","parent":"impl-test entry 9","start":"2026-10-26T07:52:22.617Z","attrs":{"scope":"impacted"}}
+{"op":"close","id":"suite impl-test#19","kind":"suite","parent":"impl-test entry 9","start":"2026-10-26T07:52:22.617Z","end":"2026-10-26T07:52:47.674Z","outcome":"done","attrs":{"scope":"impacted"}}
+{"op":"close","id":"impl-test entry 9","kind":"dispatch","parent":"impl-test#9","start":"2026-10-26T07:51:11.171Z","end":"2026-10-26T07:54:11.245Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#9","kind":"phase","parent":null,"start":"2026-10-26T07:51:10.843Z","end":"2026-10-26T07:54:11.422Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#8","kind":"phase","parent":null,"start":"2026-10-26T07:54:11.422Z","attrs":{}}
+{"op":"open","id":"impl-review wave-3/iter-02","kind":"review-iteration","parent":"impl-review#8","start":"2026-10-26T07:54:13.175Z","attrs":{}}
+{"op":"open","id":"correctness wave-3/iter-02","kind":"dispatch","parent":"impl-review wave-3/iter-02","start":"2026-10-26T07:54:13.242Z","attrs":{}}
+{"op":"open","id":"efficiency wave-3/iter-02","kind":"dispatch","parent":"impl-review wave-3/iter-02","start":"2026-10-26T07:54:13.323Z","attrs":{}}
+{"op":"open","id":"testing wave-3/iter-02","kind":"dispatch","parent":"impl-review wave-3/iter-02","start":"2026-10-26T07:54:13.399Z","attrs":{}}
+{"op":"open","id":"documentation wave-3/iter-02","kind":"dispatch","parent":"impl-review wave-3/iter-02","start":"2026-10-26T07:54:13.465Z","attrs":{}}
+{"op":"open","id":"external wave-3/iter-02","kind":"external-review","parent":"impl-review wave-3/iter-02","start":"2026-10-26T07:54:13.530Z","attrs":{}}
+{"op":"close","id":"external wave-3/iter-02","kind":"external-review","parent":"impl-review wave-3/iter-02","start":"2026-10-26T07:54:13.530Z","end":"2026-10-26T08:13:51.958Z","outcome":"interrupted","attrs":{}}
+{"op":"close","id":"correctness wave-3/iter-02","kind":"dispatch","parent":"impl-review wave-3/iter-02","start":"2026-10-26T07:54:13.242Z","end":"2026-10-26T08:13:52.117Z","outcome":"done","attrs":{}}
+{"op":"close","id":"efficiency wave-3/iter-02","kind":"dispatch","parent":"impl-review wave-3/iter-02","start":"2026-10-26T07:54:13.323Z","end":"2026-10-26T08:13:52.272Z","outcome":"done","attrs":{}}
+{"op":"close","id":"testing wave-3/iter-02","kind":"dispatch","parent":"impl-review wave-3/iter-02","start":"2026-10-26T07:54:13.399Z","end":"2026-10-26T08:13:52.425Z","outcome":"done","attrs":{}}
+{"op":"close","id":"documentation wave-3/iter-02","kind":"dispatch","parent":"impl-review wave-3/iter-02","start":"2026-10-26T07:54:13.465Z","end":"2026-10-26T08:13:52.586Z","outcome":"done","attrs":{}}
+{"op":"open","id":"external wave-3/iter-02 #2","kind":"external-review","parent":"impl-review wave-3/iter-02","start":"2026-10-26T08:13:52.658Z","attrs":{}}
+{"op":"close","id":"external wave-3/iter-02 #2","kind":"external-review","parent":"impl-review wave-3/iter-02","start":"2026-10-26T08:13:52.658Z","end":"2026-10-26T08:22:19.532Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review wave-3/iter-02","kind":"review-iteration","parent":"impl-review#8","start":"2026-10-26T07:54:13.175Z","end":"2026-10-26T08:22:19.772Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review#8","kind":"phase","parent":null,"start":"2026-10-26T07:54:11.422Z","end":"2026-10-26T08:22:19.831Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#12","kind":"phase","parent":null,"start":"2026-10-26T08:22:19.831Z","attrs":{}}
+{"op":"open","id":"review-fix wave-3/iter-02","kind":"dispatch","parent":"impl#12","start":"2026-10-26T08:22:20.190Z","attrs":{}}
+{"op":"close","id":"review-fix wave-3/iter-02","kind":"dispatch","parent":"impl#12","start":"2026-10-26T08:22:20.190Z","end":"2026-10-26T08:27:10.196Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl#12","kind":"phase","parent":null,"start":"2026-10-26T08:22:19.831Z","end":"2026-10-26T08:27:23.628Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#10","kind":"phase","parent":null,"start":"2026-10-26T08:27:23.628Z","attrs":{}}
+{"op":"open","id":"impl-test entry 10","kind":"dispatch","parent":"impl-test#10","start":"2026-10-26T08:27:23.951Z","attrs":{}}
+{"op":"open","id":"suite impl-test#20","kind":"suite","parent":"impl-test entry 10","start":"2026-10-26T08:30:47.259Z","attrs":{"scope":"impacted"}}
+{"op":"close","id":"suite impl-test#20","kind":"suite","parent":"impl-test entry 10","start":"2026-10-26T08:30:47.259Z","end":"2026-10-26T08:31:49.672Z","outcome":"done","attrs":{"scope":"impacted"}}
+{"op":"open","id":"suite impl-test#21","kind":"suite","parent":"impl-test entry 10","start":"2026-10-26T08:37:48.531Z","attrs":{"scope":"impacted"}}
+{"op":"close","id":"suite impl-test#21","kind":"suite","parent":"impl-test entry 10","start":"2026-10-26T08:37:48.531Z","end":"2026-10-26T08:38:18.136Z","outcome":"done","attrs":{"scope":"impacted"}}
+{"op":"close","id":"impl-test entry 10","kind":"dispatch","parent":"impl-test#10","start":"2026-10-26T08:27:23.951Z","end":"2026-10-26T08:42:17.899Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#10","kind":"phase","parent":null,"start":"2026-10-26T08:27:23.628Z","end":"2026-10-26T08:42:18.088Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#9","kind":"phase","parent":null,"start":"2026-10-26T08:42:18.088Z","attrs":{}}
+{"op":"open","id":"impl-review wave-3/iter-03","kind":"review-iteration","parent":"impl-review#9","start":"2026-10-26T08:42:19.435Z","attrs":{}}
+{"op":"open","id":"correctness wave-3/iter-03","kind":"dispatch","parent":"impl-review wave-3/iter-03","start":"2026-10-26T08:42:19.500Z","attrs":{}}
+{"op":"open","id":"documentation wave-3/iter-03","kind":"dispatch","parent":"impl-review wave-3/iter-03","start":"2026-10-26T08:42:19.562Z","attrs":{}}
+{"op":"open","id":"external wave-3/iter-03","kind":"external-review","parent":"impl-review wave-3/iter-03","start":"2026-10-26T08:42:19.623Z","attrs":{}}
+{"op":"close","id":"correctness wave-3/iter-03","kind":"dispatch","parent":"impl-review wave-3/iter-03","start":"2026-10-26T08:42:19.500Z","end":"2026-10-26T08:46:38.817Z","outcome":"done","attrs":{}}
+{"op":"close","id":"documentation wave-3/iter-03","kind":"dispatch","parent":"impl-review wave-3/iter-03","start":"2026-10-26T08:42:19.562Z","end":"2026-10-26T08:46:38.970Z","outcome":"done","attrs":{}}
+{"op":"close","id":"external wave-3/iter-03","kind":"external-review","parent":"impl-review wave-3/iter-03","start":"2026-10-26T08:42:19.623Z","end":"2026-10-26T08:46:39.119Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review wave-3/iter-03","kind":"review-iteration","parent":"impl-review#9","start":"2026-10-26T08:42:19.435Z","end":"2026-10-26T08:46:39.179Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review wave-3/iter-03 suite","kind":"dispatch","parent":"impl-review#9","start":"2026-10-26T08:46:53.590Z","attrs":{}}
+{"op":"open","id":"suite-wave3-iter03-full","kind":"suite","parent":"impl-review wave-3/iter-03 suite","start":"2026-10-26T08:47:30.019Z","attrs":{}}
+{"op":"close","id":"suite-wave3-iter03-full","kind":"suite","parent":"impl-review wave-3/iter-03 suite","start":"2026-10-26T08:47:30.019Z","end":"2026-10-26T08:57:30.390Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review wave-3/iter-03 suite","kind":"dispatch","parent":"impl-review#9","start":"2026-10-26T08:46:53.590Z","end":"2026-10-26T08:58:18.365Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review#9","kind":"phase","parent":null,"start":"2026-10-26T08:42:18.088Z","end":"2026-10-26T08:58:31.974Z","outcome":"done","attrs":{}}
+{"op":"open","id":"retro#1","kind":"phase","parent":null,"start":"2026-10-26T08:58:31.974Z","attrs":{}}
+{"op":"close","id":"retro#1","kind":"phase","parent":null,"start":"2026-10-26T08:58:31.974Z","end":"2026-10-26T09:02:07.066Z","outcome":"done","attrs":{}}
+{"op":"open","id":"pr#1","kind":"phase","parent":null,"start":"2026-10-26T09:02:07.066Z","attrs":{}}
+{"op":"close","id":"pr#1","kind":"phase","parent":null,"start":"2026-10-26T09:02:07.066Z","end":"2026-10-26T09:06:42.050Z","outcome":"done","attrs":{}}

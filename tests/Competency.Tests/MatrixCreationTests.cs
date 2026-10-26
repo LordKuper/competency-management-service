@@ -30,7 +30,6 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
         kit.Matrix.Json["trackName"]!.GetValue<string>().Should().Be(kit.Track.Json!["name"]!.GetValue<string>());
         var version = (await kit.GetVersionAsync(org.TeamHead.Client)).Expect(HttpStatusCode.OK);
         version.Json!["content"]!["levels"]!.AsArray().Should().BeEmpty();
-        version.Json["scaleId"]!.GetValue<string>().Should().Be(CareerScenarios.BaseScaleId);
         version.Json["authorId"]!.GetValue<Guid>().Should().Be(org.TeamHead.Id);
         MatrixKit.Actions(version).Should().BeEquivalentTo(["Edit", "Submit"]);
     }
@@ -40,7 +39,7 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
     {
         var org = await fixture.OrgAsync();
         var direction = await org.Admin.MakeDirectionAsync();
-        var track = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
+        var track = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
 
         foreach (var member in new[] { org.Hr, org.DepartmentHead, org.SiblingHead, org.Plain })
         {
@@ -56,9 +55,9 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
     {
         var org = await fixture.OrgAsync();
         var direction = await org.Admin.MakeDirectionAsync();
-        var ofDepartment = await org.Admin.MakeTrackAsync(org.Department.Id, direction.Id);
-        var ofTeam = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
-        var ofSibling = await org.Admin.MakeTrackAsync(org.Sibling.Id, direction.Id);
+        var ofDepartment = await org.Admin.MakeActiveTrackAsync(org.Department.Id, direction.Id);
+        var ofTeam = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
+        var ofSibling = await org.Admin.MakeActiveTrackAsync(org.Sibling.Id, direction.Id);
 
         var teamOnDepartmentsTrack = await org.TeamHead.Client.PostAsync("/api/v1/career/matrices", Request(org.Team.Id, direction.Id, ofDepartment.Id));
         var siblingOnDepartmentsTrack = await org.SiblingHead.Client.PostAsync("/api/v1/career/matrices", Request(org.Sibling.Id, direction.Id, ofDepartment.Id));
@@ -78,7 +77,7 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
         var kit = await MatrixKit.CreateAsync(org);
 
         var again = await org.TeamHead.Client.PostAsync("/api/v1/career/matrices", Request(org.Team.Id, kit.Direction.Id, kit.Track.Id));
-        var otherTrack = await org.Admin.MakeTrackAsync(org.Team.Id, kit.Direction.Id);
+        var otherTrack = await org.Admin.MakeActiveTrackAsync(org.Team.Id, kit.Direction.Id);
         var next = await org.TeamHead.Client.PostAsync("/api/v1/career/matrices", Request(org.Team.Id, kit.Direction.Id, otherTrack.Id));
 
         again.Status.Should().Be(HttpStatusCode.Conflict);
@@ -88,59 +87,43 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
     }
 
     [Fact]
-    public async Task Ac14_Create_NeedsAnActiveDirectionAnActiveTrackOfIt_AndAScaleTheAuthorMayUse()
+    public async Task Ac14_Create_NeedsAnActiveDirectionAndAnActiveTrackOfIt()
     {
         var org = await fixture.OrgAsync();
         var direction = await org.Admin.MakeDirectionAsync();
         var other = await org.Admin.MakeDirectionAsync();
-        var track = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
+        var track = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
         var inactiveDirection = await org.Admin.MakeDirectionAsync();
         (await org.Admin.PostAsync($"/api/v1/career/directions/{inactiveDirection.Id}/deactivate", ifMatch: inactiveDirection.ETag)).Expect(HttpStatusCode.OK);
-        var inactiveTrack = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
+        var inactiveTrack = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
         (await org.Admin.PostAsync($"/api/v1/career/tracks/{inactiveTrack.Id}/deactivate", ifMatch: inactiveTrack.ETag)).Expect(HttpStatusCode.OK);
-        var inactiveScale = await org.Admin.MakeScaleAsync();
-        (await org.Admin.PostAsync($"/api/v1/career/scales/{inactiveScale.Id}/deactivate", ifMatch: inactiveScale.ETag)).Expect(HttpStatusCode.OK);
-        var othersDraftScale = (await org.SiblingHead.Client.PostAsync("/api/v1/career/scales", new { name = Scenarios.Unique("Чужая"), points = CareerScenarios.Points() })).Expect(HttpStatusCode.Created);
-        var ownDraftScale = (await org.TeamHead.Client.PostAsync("/api/v1/career/scales", new { name = Scenarios.Unique("Своя"), points = CareerScenarios.Points() })).Expect(HttpStatusCode.Created);
-
         var unknownDirection = await Create(org, Guid.NewGuid(), track.Id);
         var inactiveDirectionRequest = await Create(org, inactiveDirection.Id, track.Id);
         var wrongDirection = await Create(org, other.Id, track.Id);
         var inactiveTrackRequest = await Create(org, direction.Id, inactiveTrack.Id);
         var unknownTrack = await Create(org, direction.Id, Guid.NewGuid());
-        var inactiveScaleRequest = await Create(org, direction.Id, track.Id, inactiveScale.Id);
-        var othersScale = await Create(org, direction.Id, track.Id, othersDraftScale.Id);
-        var ownScale = await Create(org, direction.Id, track.Id, ownDraftScale.Id);
+        var valid = await Create(org, direction.Id, track.Id);
 
         unknownDirection.FieldErrors("directionId").Should().Equal([UnavailableMessage]);
         inactiveDirectionRequest.FieldErrors("directionId").Should().Equal([UnavailableMessage]);
         wrongDirection.FieldErrors("trackId").Should().Equal([UnavailableMessage]);
         inactiveTrackRequest.FieldErrors("trackId").Should().Equal([UnavailableMessage]);
         unknownTrack.FieldErrors("trackId").Should().Equal([UnavailableMessage]);
-        inactiveScaleRequest.FieldErrors("scaleId").Should().Equal([UnavailableMessage]);
-        othersScale.FieldErrors("scaleId").Should().Equal([UnavailableMessage]);
-        ownScale.Status.Should().Be(HttpStatusCode.Created, ownScale.Body);
+        valid.Status.Should().Be(HttpStatusCode.Created, valid.Body);
     }
 
     [Fact]
-    public async Task Ac14_Document_IsStoredAsSent_WithTextsTrimmed_AndReadBackWithItsBlocksWeightsAndRequirements()
+    public async Task Ac14_Document_IsStoredAsSent_AndReadBackWithItsCompetenciesWeightsAndRequiredScores()
     {
         var org = await fixture.OrgAsync();
         var kit = await MatrixKit.CreateAsync(org);
-        var content = kit.Content("  Делает самостоятельно  ");
-        content["blocks"]![0]!["name"] = "  Основные  ";
-        content["requirements"]![0]!["evidenceExamples"] = "   ";
-        content["requirements"]![0]!["validFrom"] = "2026-01-01";
+        var content = kit.Content();
 
         var saved = (await kit.SaveAsync(org.TeamHead.Client, content)).Expect(HttpStatusCode.OK);
 
         var stored = saved.Json!["content"]!;
-        stored["blocks"]![0]!["name"]!.GetValue<string>().Should().Be("Основные");
-        stored["blocks"]![0]!["isMandatory"]!.GetValue<bool>().Should().BeTrue();
-        stored["requirements"]![0]!["expectedBehavior"]!.GetValue<string>().Should().Be("Делает самостоятельно");
-        stored["requirements"]![0]!["evidenceExamples"].Should().BeNull("a blank text is stored as none");
-        stored["requirements"]![0]!["validFrom"]!.GetValue<string>().Should().Be("2026-01-01");
-        stored["requirements"]![0]!["type"]!.GetValue<string>().Should().Be("Critical");
+        stored["requirements"]!.AsArray().Select(item => item!["requiredScore"]!.GetValue<int>()).Should().Equal(2, 1, 3, 2);
+        stored["competencies"]!.AsArray().Select(item => item!["type"]!.GetValue<string>()).Should().Equal("Critical", "Profile");
         stored["levels"]!.AsArray().Select(level => level!["minOverallPercent"]!.GetValue<decimal>()).Should().Equal(60m, 70m);
         stored["blockWeights"]!.AsArray().Should().HaveCount(2);
         saved.Json["entries"]!["levels"]!.AsArray().Select(level => level!["name"]!.GetValue<string>())
@@ -158,16 +141,17 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
         {
             ("a repeated level", c => c["levels"]!.AsArray().Add(c["levels"]![0]!.DeepClone()), "Уровни, блоки, компетенции и требования не должны повторяться"),
             ("a repeated requirement", c => c["requirements"]!.AsArray().Add(c["requirements"]![0]!.DeepClone()), "Уровни, блоки, компетенции и требования не должны повторяться"),
-            ("a competency without a block of the version", c => c["competencies"]![0]!["blockId"] = Guid.NewGuid(), "Каждая компетенция должна входить в блок версии"),
+            ("a competency in a block of its own", c => c["competencies"]![0]!["blockId"] = Guid.NewGuid(), "Собственных блоков у версии нет: компетенцию добавляют вне блоков или в составе общего блока"),
             ("a coefficient of a level outside the version", c => c["blockWeights"]![0]!["levelId"] = Guid.NewGuid(), "Коэффициент относится к уровню или блоку не из версии"),
             ("a requirement of a competency outside the version", c => c["requirements"]![0]!["competencyId"] = Guid.NewGuid(), "Требование относится к уровню или компетенции не из версии"),
-            ("a blank block name", c => c["blocks"]![0]!["name"] = "  ", "Укажите название блока"),
-            ("a long block name", c => c["blocks"]![0]!["name"] = new string('я', 201), "Название блока — не длиннее 200 символов"),
             ("a threshold above 100", c => c["levels"]![0]!["minOverallPercent"] = 100.5m, "Коэффициенты и пороги — от 0 до 100 %"),
             ("a negative coefficient", c => c["blockWeights"]![0]!["percent"] = -1, "Коэффициенты и пороги — от 0 до 100 %"),
-            ("a negative weight", c => c["requirements"]![0]!["weight"] = -1, "Вес не может быть отрицательным"),
-            ("a number that is no requirement type", c => c["requirements"]![0]!["type"] = 999, "Укажите допустимый тип требования"),
-            ("a long description", c => c["requirements"]![0]!["expectedBehavior"] = new string('я', 4001), "Описание и примеры — не длиннее 4000 символов"),
+            ("a competency type that names no type", c => c["competencies"]![0]!["type"] = 999, "Укажите допустимый тип компетенции"),
+            ("a type that names no type inside a shared block", c => c["sharedBlocks"] = new JsonArray(new JsonObject
+            {
+                ["blockId"] = Guid.NewGuid(),
+                ["competencyTypes"] = new JsonArray(new JsonObject { ["competencyId"] = Guid.NewGuid(), ["type"] = 999 }),
+            }), "Укажите допустимый тип компетенции"),
         };
 
         foreach (var (reason, breakIt, message) in cases)
@@ -185,33 +169,30 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
     }
 
     [Fact]
-    public async Task Ac14_Document_MayReferOnlyToTheTrackLevelsAndToCompetenciesOfTheScaleAndDirection()
+    public async Task Ac14_Document_MayReferOnlyToTheTrackLevelsAndToCompetenciesOfTheDirection()
     {
         var org = await fixture.OrgAsync();
         var kit = await MatrixKit.CreateAsync(org);
-        var categoryId = await org.Admin.CategoryIdAsync();
-        var otherTrack = await org.Admin.MakeTrackAsync(org.Team.Id, kit.Direction.Id);
+        var otherTrack = await org.Admin.MakeActiveTrackAsync(org.Team.Id, kit.Direction.Id);
         var foreignLevel = await org.Admin.MakeLevelAsync(otherTrack.Id);
-        var otherScale = await org.Admin.MakeScaleAsync();
-        var onOtherScale = await org.Admin.MakeCompetencyAsync(categoryId, scaleId: otherScale.Id);
         var otherDirection = await org.Admin.MakeDirectionAsync();
-        var ofOtherDirection = await org.Admin.MakeCompetencyAsync(categoryId, directionId: otherDirection.Id);
-        var inactive = await org.Admin.MakeCompetencyAsync(categoryId, directionId: kit.Direction.Id);
+        var ofOtherDirection = await org.Admin.MakeCompetencyAsync(directionId: otherDirection.Id);
+        var inactive = await org.Admin.MakeCompetencyAsync(directionId: kit.Direction.Id);
         (await org.Admin.PostAsync($"/api/v1/career/competencies/{inactive.Id}/deactivate", ifMatch: inactive.ETag)).Expect(HttpStatusCode.OK);
         var othersDraft = (await org.SiblingHead.Client.PostAsync(
             "/api/v1/career/competencies",
-            new { name = Scenarios.Unique("Чужая"), description = (string?)null, categoryId, directionId = (Guid?)null, type = "Profile", scaleId = (Guid?)null })).Expect(HttpStatusCode.Created);
+            new { name = Scenarios.Unique("Чужая"), description = (string?)null, directionId = (Guid?)null, scaleId = (Guid?)null })).Expect(HttpStatusCode.Created);
 
+        var baseScale = (await org.Admin.GetAsync($"/api/v1/career/scales/{CareerScenarios.BaseScaleId}")).Expect(HttpStatusCode.OK);
         var cases = new (string Reason, Action<JsonObject> Change, string Message)[]
         {
             ("a level of another track", c => c["levels"]!.AsArray().Add(new JsonObject { ["levelId"] = foreignLevel.Id, ["minOverallPercent"] = 50 }), "Уровень не из трека матрицы"),
             ("an unknown level", c => c["levels"]!.AsArray().Add(new JsonObject { ["levelId"] = Guid.NewGuid(), ["minOverallPercent"] = 50 }), "Уровень не из трека матрицы"),
-            ("a competency of another scale", c => c["competencies"]!.AsArray().Add(Competency(onOtherScale.Id, kit.BlockId)), "Компетенция не на шкале версии или не из направления матрицы"),
-            ("a competency of another direction", c => c["competencies"]!.AsArray().Add(Competency(ofOtherDirection.Id, kit.BlockId)), "Компетенция не на шкале версии или не из направления матрицы"),
-            ("an unknown competency", c => c["competencies"]!.AsArray().Add(Competency(Guid.NewGuid(), kit.BlockId)), "Компетенция не на шкале версии или не из направления матрицы"),
-            ("an inactive competency", c => c["competencies"]!.AsArray().Add(Competency(inactive.Id, kit.BlockId)), UnavailableMessage),
-            ("a draft of another author", c => c["competencies"]!.AsArray().Add(Competency(othersDraft.Id, kit.BlockId)), UnavailableMessage),
-            ("a score the scale does not have", c => c["requirements"]![0]!["requiredScore"] = 9, "Требуемого уровня нет в шкале версии"),
+            ("a competency of another direction", c => c["competencies"]!.AsArray().Add(Competency(ofOtherDirection.Id)), "Компетенция не из области матрицы"),
+            ("an unknown competency", c => c["competencies"]!.AsArray().Add(Competency(Guid.NewGuid())), UnavailableMessage),
+            ("an inactive competency", c => c["competencies"]!.AsArray().Add(Competency(inactive.Id)), UnavailableMessage),
+            ("a draft of another author", c => c["competencies"]!.AsArray().Add(Competency(othersDraft.Id)), UnavailableMessage),
+            ("a score the scale does not have", c => c["requirements"]![0]!["requiredScore"] = 9, $"Требуемого уровня нет в шкале «{baseScale.Json!["name"]!.GetValue<string>()}»"),
         };
 
         foreach (var (reason, change, message) in cases)
@@ -232,12 +213,12 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
         var org = await fixture.OrgAsync();
         var kit = await MatrixKit.CreateAsync(org);
         var opened = await kit.ETagAsync();
-        (await kit.SaveAsync(org.TeamHead.Client, kit.Content("Первая правка"), opened)).Expect(HttpStatusCode.OK);
+        (await kit.SaveAsync(org.TeamHead.Client, kit.Content(4), opened)).Expect(HttpStatusCode.OK);
 
-        var stale = await kit.SaveAsync(org.TeamHead.Client, kit.Content("Вторая правка"), opened);
+        var stale = await kit.SaveAsync(org.TeamHead.Client, kit.Content(1), opened);
 
         stale.Status.Should().Be(HttpStatusCode.PreconditionFailed);
-        (await kit.GetVersionAsync(org.Admin)).Json!["content"]!["requirements"]![0]!["expectedBehavior"]!.GetValue<string>().Should().Be("Первая правка");
+        (await kit.GetVersionAsync(org.Admin)).Json!["content"]!["requirements"]![2]!["requiredScore"]!.GetValue<int>().Should().Be(4);
     }
 
     [Fact]
@@ -246,10 +227,10 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
         var org = await fixture.OrgAsync();
         var kit = await MatrixKit.CreateAsync(org);
         var opened = await kit.ETagAsync();
-        var first = (await kit.SaveAsync(org.TeamHead.Client, kit.Content("Первая правка"), opened)).Expect(HttpStatusCode.OK);
+        var first = (await kit.SaveAsync(org.TeamHead.Client, kit.Content(4), opened)).Expect(HttpStatusCode.OK);
 
-        var stale = await kit.SaveAsync(org.TeamHead.Client, kit.Content("Первая правка"), opened);
-        var current = await kit.SaveAsync(org.TeamHead.Client, kit.Content("Первая правка"), first.ETag);
+        var stale = await kit.SaveAsync(org.TeamHead.Client, kit.Content(4), opened);
+        var current = await kit.SaveAsync(org.TeamHead.Client, kit.Content(4), first.ETag);
 
         stale.Status.Should().Be(HttpStatusCode.PreconditionFailed, stale.Body);
         current.Status.Should().Be(HttpStatusCode.OK, current.Body);
@@ -270,11 +251,11 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
         same.ETag.Should().Be(changed.ETag, "a save that changes nothing is not a change");
     }
 
-    private static JsonObject Competency(Guid competencyId, Guid blockId) => new() { ["competencyId"] = competencyId, ["blockId"] = blockId };
+    private static JsonObject Competency(Guid competencyId) => new() { ["competencyId"] = competencyId, ["blockId"] = null };
 
-    private static object Request(Guid unitId, Guid directionId, Guid trackId, string? scaleId = null) =>
-        new { orgUnitId = unitId, directionId, trackId, scaleId = scaleId ?? CareerScenarios.BaseScaleId };
+    private static object Request(Guid unitId, Guid directionId, Guid trackId) =>
+        new { orgUnitId = unitId, directionId, trackId };
 
-    private static Task<ApiResponse> Create(CareerOrg org, Guid directionId, Guid trackId, Guid? scaleId = null) =>
-        org.TeamHead.Client.PostAsync("/api/v1/career/matrices", Request(org.Team.Id, directionId, trackId, scaleId?.ToString()));
+    private static Task<ApiResponse> Create(CareerOrg org, Guid directionId, Guid trackId) =>
+        org.TeamHead.Client.PostAsync("/api/v1/career/matrices", Request(org.Team.Id, directionId, trackId));
 }

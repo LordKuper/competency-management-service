@@ -22,6 +22,16 @@ public static class Scenarios
     public const string UserPassword = "Valid-Pass-12345!";
     public const string User = "User";
     public const string GlobalAdmin = "GlobalAdmin";
+    public const string Hr = "Hr";
+
+    /// <summary>The role set of an account with no special role.</summary>
+    public static readonly string[] NoRoles = [];
+
+    /// <summary>The role set of a global administrator.</summary>
+    public static readonly string[] AdminRoles = [GlobalAdmin];
+
+    /// <summary>The role set a role name stands for: <see cref="User"/> is the empty set.</summary>
+    public static string[] RolesOf(string role) => role == User ? NoRoles : [role];
 
     private static readonly Lazy<string> UserPasswordHash = new(() => new PasswordHasher<object>().HashPassword(new object(), UserPassword));
 
@@ -55,7 +65,7 @@ public static class Scenarios
     public static async Task<TestUser> InviteUserAsync(this ApiClient admin, string role = User, Guid? employeeId = null, string? email = null)
     {
         var address = email ?? $"{Unique("user")}@test.local";
-        var created = (await admin.PostAsync("/api/v1/users", new { email = address, role, employeeId })).Expect(HttpStatusCode.Created);
+        var created = (await admin.PostAsync("/api/v1/users", new { email = address, roles = RolesOf(role), employeeId })).Expect(HttpStatusCode.Created);
         return new TestUser(created.Id, address, UserPassword, created.ETag!);
     }
 

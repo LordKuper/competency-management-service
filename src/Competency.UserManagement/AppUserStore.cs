@@ -11,7 +11,7 @@ namespace Competency.UserManagement;
 /// Users must be loaded through the same context, which Identity's own managers always do.
 /// </summary>
 internal sealed class AppUserStore(AppDbContext context, IdentityErrorDescriber describer)
-    : UserOnlyStore<AppUser, AppDbContext, Guid>(context, describer)
+    : UserStore<AppUser, IdentityRole<Guid>, AppDbContext, Guid>(context, describer)
 {
     public override async Task<IdentityResult> UpdateAsync(AppUser user, CancellationToken cancellationToken = default)
     {

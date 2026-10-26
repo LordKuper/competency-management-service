@@ -220,6 +220,10 @@ provenance: original
 -->
 
 <div class="ds" style="--ds-primary:#2B42E5;--ds-primary-hover:#2338C2;--ds-primary-active:#182CC2;--ds-primary-subtle:#EBF2FD;--ds-accent:#FBAE40;--ds-text-primary:#292929;--ds-text-secondary:#4B4B4C;--ds-text-muted:#5F6670;--ds-text-disabled:#A3A9B1;--ds-text-inverse:#FFFFFF;--ds-text-inverse-muted:#9BA8F9;--ds-surface-page:#F5F6F8;--ds-surface-panel:#FFFFFF;--ds-surface-muted:#EEEEEE;--ds-surface-inverse:#081240;--ds-border-subtle:#DDE1E6;--ds-border-control:#7D8590;--ds-overlay-scrim:#08124073;--ds-success:#197A4A;--ds-success-bg:#E6F4EC;--ds-warning:#A85800;--ds-warning-bg:#FFF4DF;--ds-danger:#C62832;--ds-danger-bg:#FDECEC;--ds-info:#1B64C8;--ds-info-bg:#EBF2FD;--ds-xxs:4px;--ds-xs:8px;--ds-sm:12px;--ds-md:16px;--ds-lg:20px;--ds-xl:24px;--ds-xxl:32px;--ds-xxxl:48px;--ds-header-h:56px;--ds-h-sm:24px;--ds-h-md:32px;--ds-h-lg:40px;--ds-r-xs:2px;--ds-r-md:4px;--ds-r-lg:8px;--ds-r-full:9999px;--ds-bw:1px;--ds-el-popup:0 4px 12px rgba(8,18,64,0.12);--ds-el-modal:0 8px 24px rgba(8,18,64,0.16);--ds-font-ui:'PT Sans','Segoe UI',Roboto,Arial,sans-serif;--ds-font-mono:'PT Mono',Consolas,'Courier New',monospace;--ds-t-h1:700 30px/38px var(--ds-font-ui);--ds-t-h2:700 24px/32px var(--ds-font-ui);--ds-t-h3:700 20px/28px var(--ds-font-ui);--ds-t-body-md:400 14px/22px var(--ds-font-ui);--ds-t-body-strong:700 14px/22px var(--ds-font-ui);--ds-t-body-sm:400 12px/20px var(--ds-font-ui);--ds-t-code:400 13px/20px var(--ds-font-mono);">
+<style>
+/* previews keep the light app surface in the OS dark scheme; document text keeps shell colours */
+@media (prefers-color-scheme:dark){.ds .mockup-preview{background:var(--ds-surface-page);}}
+</style>
 
 <style>
 .ds .o-pg{background:var(--ds-surface-page);padding:var(--ds-xl);font:var(--ds-t-body-md);color:var(--ds-text-primary);}
@@ -261,7 +265,7 @@ provenance: original
 
 <section id="flows" class="hero">
   <h2>Сценарии</h2>
-  <p class="lede">Раздел «Оргструктура» — одна страница с иерархией карточек двух видов: подразделение и сотрудник (AC-17). Отдельной страницы сотрудников, правой панели деталей и компонента-дерева нет. Все видят иерархию; создание, правку, перенос, деактивацию, увольнение и удаление выполняет только глобальный администратор, прямо с карточек (AC-9, AC-10, AC-18, AC-19). Роль «пользователь» видит только активные подразделения и работающих сотрудников — ФИО, e-mail учётной записи, подразделение, должность (AC-12); статус и действия над подразделениями и сотрудниками ему недоступны, а меню карточки подразделения у него есть и содержит только «Должности» и «HR» — просмотр перечня допустимых должностей и ответственного HR. Должность сотрудника выбирается из справочника должностей; справочник ведёт глобальный администратор на странице «Должности» (раздел «Администрирование»).</p>
+  <p class="lede">Раздел «Оргструктура» — одна страница с иерархией карточек двух видов: подразделение и сотрудник (AC-17). Отдельной страницы сотрудников, правой панели деталей и компонента-дерева нет. Все видят иерархию; создание, правку, перенос, деактивацию, увольнение и удаление выполняет только глобальный администратор, прямо с карточек (AC-9, AC-10, AC-18, AC-19). Роль «пользователь» видит только активные подразделения и работающих сотрудников — ФИО, e-mail учётной записи, подразделение, должность (AC-12); статус и действия над подразделениями и сотрудниками ему недоступны, а меню карточки подразделения у него есть и содержит только «Должности» и «HR» — просмотр перечня допустимых должностей и ответственного HR. Роль «HR» видит оргструктуру целиком, как администратор, — неактивные подразделения и сотрудников с меткой «Не работает», — но без действий над подразделениями и сотрудниками: кнопок страницы у неё нет, меню карточки подразделения то же («Должности», «HR»), меню сотрудника нет. Должность сотрудника выбирается из справочника должностей; справочник ведут глобальный администратор (страница «Должности», раздел «Администрирование») и роль «HR» (та же страница из списка «Справочники», с теми же действиями).</p>
 
   <h3>Просмотр и поиск (все роли)</h3>
   <pre class="mermaid">
@@ -329,8 +333,11 @@ flowchart TD
   G -- "администратор: выбрать должность справочника, Добавить" --> H["Должность в собственном перечне"]
   G -- "администратор: Исключить" --> I["Запрос числа работающих сотрудников подразделения и дочерних, подтверждение, фокус на Отмена"]
   K["Карточка подразделения, меню: HR (все роли)"] --> L["Окно HR подразделения: закреплённый, унаследованный или не назначен"]
-  L -- "администратор: выбрать пользователя, Закрепить" --> N["Закрепление; строка HR на карточке обновляется"]
+  L -- "администратор: выбрать сотрудника с ролью HR, Закрепить" --> N["Окно закрывается, сообщение «HR закреплён»; строка HR на карточке обновляется"]
+  L -- "ошибка сохранения" --> LE["Окно остаётся, ошибка сервера под полем"]
+  L -- "администратор: в списке нет сотрудников с ролью HR" --> EL["Пустой список: подсказка и ссылка Пользователи"]
   L -- "администратор: Снять закрепление" --> O["Подтверждение, фокус на Отмена"]
+  O -- "подтвердить" --> OK["Окно закрывается, сообщение «Закрепление HR снято»; строка HR на карточке обновляется"]
   </pre>
 
   <h3>Должность сотрудника</h3>
@@ -385,6 +392,7 @@ flowchart TD
       <li>Иерархия свёрнута по умолчанию. Загруженные узлы — все подразделения сразу, сотрудники подгружаются только при раскрытии подразделения.</li>
       <li><b>Кнопки страницы</b> (только администратору): «Добавить подразделение» — главное действие (<code>primary</code>), «Добавить сотрудника» — вторичное. Родитель и подразделение в этих окнах выбирает пользователь; из меню карточки подставляются сами.</li>
       <li><b>Роль «пользователь»</b>: без кнопок страницы; меню «⋮» подразделения содержит только «Должности» и «HR»; видит только активные подразделения и работающих сотрудников; метки статуса сотрудников у него нет.</li>
+      <li><b>Роль «HR»</b>: оргструктура видна целиком, как администратору, — неактивные подразделения с меткой «Неактивно», уволенные сотрудники с меткой «Не работает»; поиск находит и их. Над подразделениями и сотрудниками только чтение: кнопок страницы нет, меню «⋮» подразделения — «Должности» и «HR», меню сотрудника нет, «Закрепить» в окне HR недоступно (закрепляет только администратор).</li>
       <li><b>Строка «HR: {имя}»</b> стоит в конце строки сведений карточки подразделения: показывается ответственный HR — закреплённый за подразделением или, если за ним никого нет, унаследованный от вышестоящего. Если ответственного нет, строка не показывается вовсе (в отличие от «Руководитель: не назначен»). HR, чья учётная запись не может действовать, строкой не показывается.</li>
       <li><b>Адрес с параметром <code>unit</code></b> раскрывает путь до подразделения и прокручивает к нему; его карточка выделена рамкой <code>primary</code> и заливкой <code>primary-subtle</code> и помечена как текущая для вспомогательных технологий. Так показываются новая запись после создания и общая ссылка.</li>
     </ul>
@@ -533,7 +541,7 @@ flowchart TD
       <li><b>Разрушающее действие</b> («Деактивировать», «Удалить») — красный пункт после разделителя. «Уволить» разрушающим не окрашен: оно обратимо («Вернуть на работу»).</li>
       <li><b>Недоступный пункт объясняет причину текстом в самой подписи</b> — «(подразделение неактивно)»; цвет и состояние «недоступно» не единственный носитель смысла (DESIGN.md → Cross-component rules).</li>
       <li><b>Меню сотрудника</b> не создаётся, пока не нужно: до первого нажатия «⋮» — обычная кнопка, после нажатия меню открывается сразу, а фокус остаётся на кнопке. Так тысячи карточек отрисовываются быстро; пользователь разницы не видит.</li>
-      <li><b>«Должности» и «HR»</b> стоят после «Перенести» и доступны всем ролям: открывают окна перечня должностей и ответственного HR (макет «Окна подразделения: должности и HR»). Роль «пользователь» получает меню только из этих двух пунктов; меню сотрудника у неё нет. Подпись кнопки «Изменить» одинакова во всём приложении.</li>
+      <li><b>«Должности» и «HR»</b> стоят после «Перенести» и доступны всем ролям: открывают окна перечня должностей и ответственного HR (макет «Окна подразделения: должности и HR»). Роль «пользователь» получает меню только из этих двух пунктов; меню сотрудника у неё нет — так же и у роли «HR». Подпись кнопки «Изменить» одинакова во всём приложении.</li>
     </ul>
   </article>
 
@@ -558,7 +566,7 @@ flowchart TD
           <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
             <div style="font:var(--ds-t-h2);margin-bottom:var(--ds-md);">Новое подразделение</div>
             <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Название</div><div style="display:flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);"></div></div>
-            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Родительское подразделение</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">Без родителя: корневое подразделение<span aria-hidden="true">▾</span></div><div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">Оставьте поле пустым, чтобы создать корневое подразделение.</div></div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Родительское подразделение</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">Без родителя: корневое подразделение<span aria-hidden="true">▾</span></div></div>
             <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Руководитель</div><span style="color:var(--ds-text-secondary);">Руководителя можно назначить после добавления сотрудников.</span></div>
             <div style="display:flex;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Создать</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span></div>
           </div>
@@ -566,7 +574,7 @@ flowchart TD
         <div style="background:var(--ds-overlay-scrim);padding:var(--ds-md);">
           <div style="background:var(--ds-surface-panel);border-radius:var(--ds-r-lg);box-shadow:var(--ds-el-modal);padding:var(--ds-xl);">
             <div style="font:var(--ds-t-h2);margin-bottom:var(--ds-md);">Перенос подразделения</div>
-            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Новое родительское подразделение</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">Без родителя: корневое подразделение<span aria-hidden="true">▾</span></div><div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">Подразделение переносится вместе со всеми дочерними. Очистите поле, чтобы сделать его корневым.</div></div>
+            <div style="margin-bottom:var(--ds-md);"><div style="font:var(--ds-t-body-strong);color:var(--ds-text-secondary);margin-bottom:var(--ds-xs);">Новое родительское подразделение</div><div style="display:flex;align-items:center;justify-content:space-between;height:var(--ds-h-md);padding:0 var(--ds-sm);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);color:var(--ds-text-muted);">Без родителя: корневое подразделение<span aria-hidden="true">▾</span></div><div style="font:var(--ds-t-body-sm);color:var(--ds-text-muted);margin-top:var(--ds-xxs);">Подразделение переносится вместе со всеми дочерними.</div></div>
             <div style="display:flex;gap:var(--ds-xs);"><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-primary);color:var(--ds-text-inverse);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Перенести</span><span style="display:inline-flex;align-items:center;height:var(--ds-h-md);padding:0 var(--ds-md);background:var(--ds-surface-panel);border:var(--ds-bw) solid var(--ds-border-control);border-radius:var(--ds-r-md);font:var(--ds-t-body-strong);">Отмена</span></div>
           </div>
         </div>
@@ -707,7 +715,7 @@ flowchart TD
     <h3>Страница «Должности»: справочник, переименование, деактивация</h3>
     <dl class="screen-meta">
       <dt><b>Purpose</b></dt><dd>Вести общий справочник должностей: найти, добавить, переименовать, деактивировать и вернуть в работу.</dd>
-      <dt><b>Entry from</b></dt><dd>Пункт «Должности» меню «Администрирование» в шапке (только глобальный администратор).</dd>
+      <dt><b>Entry from</b></dt><dd>Пункт «Должности» меню «Администрирование» в шапке (глобальный администратор); пункт «Должности» списка «Справочники» (роль «HR», те же действия).</dd>
       <dt><b>Exit to</b></dt><dd>Окна названия и подтверждение деактивации.</dd>
     </dl>
     <div class="mockup-preview">
@@ -737,6 +745,7 @@ flowchart TD
     </div>
     <p><b>Notes</b>:</p>
     <ul>
+      <li><b>Роль «HR» ведёт справочник так же, как администратор.</b> Страница та же: «Добавить должность», меню «⋮» строки, переименование, деактивация и возврат в работу, окна и подтверждения без отличий. Различается только вход: у администратора пункт «Должности» в «Администрировании», у HR (без роли администратора) — в списке «Справочники». Перечни должностей подразделений (окно «Должности подразделения») этим не меняются.</li>
       <li><b>Список</b>: заголовок «Должности» и главная кнопка «Добавить должность»; поиск по названию «Найти должность» (по Enter или кнопке поиска); столбцы «Название», «Статус» с фильтром в заголовке (теги «Активна» — <code>tag-success</code>, «Неактивна» — <code>tag-neutral</code>), «Действия»; страницы по 20 с выбором размера. По умолчанию включён фильтр «Активна»: чтобы увидеть неактивные, фильтр меняют в заголовке столбца (устройство фильтров — <a href="career-framework.html">career-framework.html</a>). Физического удаления должности нет.</li>
       <li><b>Окна.</b> «Новая должность» и «Переименование должности»: поле «Название» (обязательное, до 200 символов — «Укажите название», «Не длиннее 200 символов»; уникально без учёта регистра — «Должность с таким названием уже есть» под полем), «Сохранить», «Отмена». Фокус при открытии в поле названия.</li>
       <li><b>Деактивация сначала показывает последствия.</b> Запрос возвращает число работающих сотрудников, занимающих должность, и подтверждение называет его; кнопка красная, фокус при открытии на «Отмене». Сотрудники сохраняют должность; выбрать её для других нельзя. «Вернуть в работу» выполняется сразу. Ошибки действий — всплывающее сообщение с причиной; ошибка загрузки — предупреждение «Не удалось загрузить должности» с «Повторить»; пусто — «Должностей пока нет».</li>
@@ -779,12 +788,12 @@ flowchart TD
     </ul>
   </article>
 
-  <article class="mockup">
+  <article class="mockup" id="m-unit-hr">
     <h3>Окно «HR подразделения»</h3>
     <dl class="screen-meta">
-      <dt><b>Purpose</b></dt><dd>Узнать, кто из HR отвечает за подразделение; администратору — закрепить за подразделением пользователя или снять закрепление.</dd>
+      <dt><b>Purpose</b></dt><dd>Узнать, кто из HR отвечает за подразделение; администратору — закрепить за подразделением сотрудника с ролью «HR» или снять закрепление.</dd>
       <dt><b>Entry from</b></dt><dd>Пункт «HR» меню карточки подразделения (все роли).</dd>
-      <dt><b>Exit to</b></dt><dd>Иерархия; строка «HR: {имя}» на карточке обновляется.</dd>
+      <dt><b>Exit to</b></dt><dd>Иерархия: окно закрывается после успешного «Закрепить» или «Снять закрепление», строка «HR: {имя}» на карточке обновляется. Чтобы сменить или убрать HR, окно открывают заново.</dd>
     </dl>
     <div class="mockup-preview">
       <div class="o-cols">
@@ -792,9 +801,8 @@ flowchart TD
           <div class="o-h2">HR подразделения «Департамент разработки»</div>
           <p style="margin:0 0 var(--ds-xs);">Закреплён: Сидорова Анна Игоревна</p>
           <p style="margin:0 0 var(--ds-md);">Унаследован из «Генеральная дирекция»: Козлов Игорь Павлович</p>
-          <div class="o-fld"><div class="o-lbl">Пользователь</div><div class="o-inp on foc"><span class="o-ph"></span><span aria-hidden="true">▾</span></div>
-            <div class="o-pop" style="margin-top:var(--ds-xxs);"><div class="o-opt">Сидорова Анна Игоревна (sidorova@example.com)</div><div class="o-opt sel">petrov@example.com</div></div>
-            <div class="o-ferr">⊗ Учётная запись заблокирована или не завершила регистрацию</div></div>
+          <div class="o-fld"><div class="o-lbl">Сотрудник</div><div class="o-inp on foc"><span class="o-ph">Начните вводить ФИО</span><span aria-hidden="true">▾</span></div>
+            <div class="o-pop" style="margin-top:var(--ds-xxs);"><div class="o-opt"><span>Сидорова Анна Игоревна<br><span class="o-sec" style="font:var(--ds-t-body-md);">Отдел кадров, HR-менеджер · sidorova@example.com</span></span></div><div class="o-opt sel"><span>Белова Ирина Сергеевна<br><span class="o-sec" style="font:var(--ds-t-body-md);">Департамент разработки, HR-партнёр · belova@example.com</span></span></div><div class="o-opt"><span>Козлов Игорь Павлович<br><span class="o-sec" style="font:var(--ds-t-body-md);">Генеральная дирекция, Директор по персоналу · kozlov@example.com</span></span></div></div></div>
           <div class="o-row"><span class="o-btn">Закрепить</span><span class="o-btn" style="border-color:var(--ds-danger);color:var(--ds-danger);">Снять закрепление</span></div>
         </div></div>
         <div class="o-scrim"><div class="o-modal">
@@ -803,12 +811,34 @@ flowchart TD
           <div class="o-row" style="justify-content:flex-end;"><span class="o-btn dng">Снять закрепление</span><span class="o-btn foc">Отмена</span></div>
           <div class="o-help" style="margin-top:var(--ds-md);">Без закрепления и без унаследованного HR окно говорит «HR не назначен».</div>
         </div></div>
+        <div class="o-scrim"><div class="o-modal">
+          <div class="o-h2">HR подразделения «Отдел закупок»</div>
+          <p style="margin:0 0 var(--ds-md);" class="o-sec">HR не назначен</p>
+          <div class="o-fld"><div class="o-lbl">Сотрудник</div>
+            <div style="display:flex;gap:var(--ds-xs);align-items:flex-start;padding:var(--ds-sm);border-radius:var(--ds-r-md);background:var(--ds-info-bg);"><span style="color:var(--ds-info);" aria-hidden="true">ⓘ</span><span><b style="font:var(--ds-t-body-strong);">Некого закрепить</b><br>Нужен работающий сотрудник с действующей учётной записью и ролью «HR», а таких в системе нет. Отметьте роль «HR» у нужной учётной записи в разделе <span class="o-lnk" style="margin:0;">Пользователи</span> и убедитесь, что запись привязана к сотруднику, не заблокирована и завершила регистрацию.</span></div></div>
+        </div></div>
+        <div class="o-scrim"><div class="o-modal">
+          <div class="o-h2">HR подразделения «Отдел качества»</div>
+          <p style="margin:0 0 var(--ds-xs);">Закреплён: Морозов Виктор Андреевич</p>
+          <div style="display:flex;gap:var(--ds-xs);align-items:flex-start;padding:var(--ds-sm);margin-bottom:var(--ds-md);border-radius:var(--ds-r-md);background:var(--ds-warning-bg);"><span style="color:var(--ds-warning);" aria-hidden="true">⚠</span><span><b style="font:var(--ds-t-body-strong);">Закрепление не действует</b><br>Учётная запись v.morozov@example.com заблокирована, поэтому у подразделения нет ответственного HR. Разблокируйте запись в разделе <span class="o-lnk" style="margin:0;">Пользователи</span> или закрепите другого сотрудника.</span></div>
+          <div class="o-fld"><div class="o-lbl">Сотрудник</div><div class="o-inp"><span class="o-ph">Начните вводить ФИО</span><span aria-hidden="true">▾</span></div></div>
+          <div class="o-row"><span class="o-btn">Закрепить</span><span class="o-btn" style="border-color:var(--ds-danger);color:var(--ds-danger);">Снять закрепление</span></div>
+        </div></div>
+        <div class="o-scrim"><div class="o-modal">
+          <div class="o-h2">HR подразделения «Департамент разработки»</div>
+          <div class="o-fld"><div class="o-lbl">Сотрудник</div><div class="o-inp er"><span>Белова Ирина Сергеевна</span><span aria-hidden="true">⊗ ▾</span></div>
+            <div class="o-ferr">⊗ Сотрудник больше не подходит: нет действующей учётной записи с ролью «HR» или он уволен. Выберите другого сотрудника из обновлённого списка.</div></div>
+          <div class="o-row"><span class="o-btn">Закрепить</span></div>
+        </div></div>
       </div>
     </div>
     <p><b>Notes</b>:</p>
     <ul>
-      <li><b>Состояние</b> сказано строками: «Закреплён: {имя}» (закреплён за этим подразделением), «Унаследован из «{подразделение}»: {имя}» (закреплён за ближайшим вышестоящим), «HR не назначен». Закрепление действует для подразделения и всех дочерних, пока ниже не закреплён другой HR; за одним пользователем можно закрепить несколько подразделений. Остальным ролям окно доступно только для чтения.</li>
-      <li><b>Закрепление</b> — только администратору: поле «Пользователь» (поиск на сервере, первые 20 совпадений; подпись «{ФИО} ({e-mail})» или e-mail) и кнопка «Закрепить»; заблокированная или не завершившая регистрацию учётная запись отклоняется с сообщением под полем. «Снять закрепление» (красная контурная) спрашивает подтверждения; красная кнопка подтверждения, фокус при открытии на «Отмене».</li>
+      <li><b>Состояние</b> сказано строками: «Закреплён: {имя}» (закреплён за этим подразделением), «Унаследован из «{подразделение}»: {имя}» (закреплён за ближайшим вышестоящим), «HR не назначен». Закрепление действует для подразделения и всех дочерних, пока ниже не закреплён другой HR; за одним сотрудником можно закрепить несколько подразделений. Остальным ролям окно доступно только для чтения.</li>
+      <li><b>Закрепление</b> — только администратору: поле «Сотрудник» (поиск на сервере, первые 20 совпадений) и кнопка «Закрепить». В списке только работающие сотрудники с привязанной действующей (не заблокированной, зарегистрированной) учётной записью с ролью «HR»; роль выдаётся в «Пользователях». Пункт — «{ФИО}» и второй строкой «{подразделение}, {должность} · {e-mail}»: подразделение, должность и e-mail различают однофамильцев и тёзок (e-mail уникален). Поиск — по ФИО и по e-mail, порядок — по ФИО. Сервер проверяет то же при закреплении: если за время выбора сотрудник перестал подходить (уволен, запись заблокирована, роль снята), отказ показывается под полем (пятое окно макета), список перечитывается. «Снять закрепление» (красная контурная) спрашивает подтверждения; красная кнопка подтверждения, фокус при открытии на «Отмене».</li>
+      <li><b>Некого закрепить (третье окно макета).</b> Если в системе нет ни одного кандидата, вместо поля и кнопки «Закрепить» стоит блок <code>alert-info</code>: что — «Некого закрепить»; почему — нужен работающий сотрудник с действующей учётной записью и ролью «HR»; что делать и как — выдать роль в «Пользователях» (ссылка), проверив привязку к сотруднику, блокировку и регистрацию. Выбрать и сохранить нечего, поэтому кнопки нет, а не серой кнопки. Ссылка стоит всегда: закреплять может только администратор; ввода в окне нет, переход сразу. Если кандидаты есть, но запрос никого не нашёл, поле остаётся, а его список говорит «Никого не найдено. Измените запрос» без ссылки. Ошибка загрузки списка показывается в нём же текстом причины.</li>
+      <li><b>Закрепление, которое не действует (четвёртое окно макета).</b> Закреплённый сотрудник, чья учётная запись заблокирована, не завершила регистрацию, отвязана от сотрудника или лишена роли «HR», остаётся в строке «Закреплён: {имя}», но администратор видит под ней предупреждение <code>alert-warning</code> с причиной и следующим шагом; у подразделения тогда нет ответственного HR, закрепление вышестоящего не наследуется. Остальные роли видят «HR не назначен». Закрепление возобновляется само, когда причина устранена. Сотрудник с недействующим закреплением в списке кандидатов не предлагается.</li>
+      <li><b>Закрытие после успеха.</b> Успешное «Закрепить» закрывает окно и показывает сообщение (<code>toast</code>) «HR закреплён»; успешное «Снять закрепление» (после подтверждения) закрывает и подтверждение, и окно, сообщение — «Закрепление HR снято». Окно не остаётся открытым с новым состоянием: чтобы сменить или снять HR, его открывают заново. Неудачное сохранение окно не закрывает: ошибка сервера стоит под полем (пятое окно макета), выбор сохраняется.</li>
       <li>Загрузка — заглушка; ошибка — «Не удалось загрузить HR подразделения» с «Повторить».</li>
     </ul>
   </article>

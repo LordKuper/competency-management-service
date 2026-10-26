@@ -1,8 +1,18 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
+import {
+  createMemoryRouter,
+  createRoutesFromElements,
+  MemoryRouter,
+  Outlet,
+  Route,
+  RouterProvider,
+  Routes,
+  useParams,
+} from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../../api/queryClient";
+import { LeaveGuardProvider } from "../../app/leaveGuard";
 import { Providers } from "../../app/Providers";
 import { deferred, fakeApi, problem } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
@@ -13,6 +23,11 @@ import type { MatrixAction, MatrixVersion } from "./matrixApi";
 const UNIT = { id: "unit", name: "Отдел" };
 const VERSION_ID = "version";
 const VERSION_TAG = 5;
+const POINTS = [
+  { score: 0, label: "Нет" },
+  { score: 2, label: "Уверенно" },
+  { score: 4, label: "Эксперт" },
+];
 
 function version(fields: Partial<MatrixVersion> = {}): MatrixVersion {
   return {
@@ -21,14 +36,12 @@ function version(fields: Partial<MatrixVersion> = {}): MatrixVersion {
     number: 1,
     status: "OnReview",
     step: "Superior",
-    scaleId: "scale",
     authorId: "author",
     authorName: "Автор",
     createdAt: "2026-10-01T10:00:00Z",
     publishedAt: null,
     content: {
       levels: [{ levelId: "junior", minOverallPercent: null }],
-      blocks: [],
       competencies: [],
       blockWeights: [],
       requirements: [],
@@ -36,7 +49,9 @@ function version(fields: Partial<MatrixVersion> = {}): MatrixVersion {
     entries: {
       direction: { id: "direction", name: "Разработка", status: "Active" },
       track: { id: "track", name: "Бэкенд", status: "Active" },
-      scale: { id: "scale", name: "Базовая", points: [], status: "Active" },
+      scales: [
+        { id: "scale", name: "Базовая", points: POINTS, status: "Active" },
+      ],
       levels: [{ id: "junior", name: "Младший", status: "Active" }],
       competencies: [],
     },
@@ -102,23 +117,59 @@ function serve(
   );
 }
 
-async function openPage() {
+function DeskStub() {
+  const { scenario, id } = useParams();
+  return <p>{`desk:${scenario}:${id}`}</p>;
+}
+
+async function openPage({ guarded = false } = {}) {
+  const routes = (
+    <>
+      <Route path="/career/matrices/:id" element={<MatrixPage />} />
+      <Route path="/desk/:scenario/:id" element={<DeskStub />} />
+    </>
+  );
   render(
     <Providers>
-      <MemoryRouter initialEntries={["/career/matrices/matrix"]}>
-        <Routes>
-          <Route path="/career/matrices/:id" element={<MatrixPage />} />
-        </Routes>
-      </MemoryRouter>
+      {guarded ? (
+        <RouterProvider
+          router={createMemoryRouter(
+            [
+              {
+                element: (
+                  <LeaveGuardProvider>
+                    <Outlet />
+                  </LeaveGuardProvider>
+                ),
+                children: createRoutesFromElements(routes),
+              },
+            ],
+            { initialEntries: ["/career/matrices/matrix"] },
+          )}
+        />
+      ) : (
+        <MemoryRouter initialEntries={["/career/matrices/matrix"]}>
+          <Routes>{routes}</Routes>
+        </MemoryRouter>
+      )}
     </Providers>,
   );
   await screen.findByRole("heading", { name: "Матрица «Бэкенд» — Отдел" });
-  await screen.findByRole("button", { name: "История" });
+  await screen.findByRole("combobox", { name: "Версия" });
   await waitFor(() =>
     expect(queryClient.getQueryData([...careerQueryKey, "me"])).toBeDefined(),
   );
   await act(async () => undefined);
   return userEvent.setup();
+}
+
+/** «История» of a returned version with three more actions before it: it sits behind the «…» menu, not in view. */
+async function openHistoryFromMenu(user: ReturnType<typeof userEvent.setup>) {
+  expect(
+    screen.queryByRole("button", { name: "История" }),
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Действия с версией" }));
+  await user.click(await screen.findByRole("menuitem", { name: "История" }));
 }
 
 async function dialogTitled(title: string) {
@@ -138,9 +189,6 @@ describe("actions on a matrix version (AC-15, AC-16, AC-19)", {
   timeout: LONG_FLOW_TIMEOUT,
 }, () => {
   it.each<[MatrixAction, string, string]>([
-    ["Submit", "Отправить на согласование", "submit"],
-    ["Approve", "Согласовать", "approve"],
-    ["AcceptChanges", "Принять правки", "accept-changes"],
     ["AcceptAndRevise", "Принять и доработать", "accept-and-revise"],
     ["RollbackChanges", "Откатить правки", "rollback-changes"],
   ])(
@@ -166,15 +214,33 @@ describe("actions on a matrix version (AC-15, AC-16, AC-19)", {
     },
   );
 
+  it.each<[MatrixAction, string, string]>([
+    ["Submit", "Перейти к отправке в мастере", "matrix-builder"],
+    ["Approve", "Согласовать версию", "review"],
+    ["AcceptChanges", "Доработать возвращённую версию", "rework"],
+  ])(
+    "%s is offered as «%s» and leads to the %s screen of the desk",
+    async (action, label, scenario) => {
+      serve(version({ actions: [action] }));
+      const user = await openPage();
+
+      await user.click(screen.getByRole("link", { name: label }));
+
+      expect(
+        await screen.findByText(`desk:${scenario}:${VERSION_ID}`),
+      ).toBeInTheDocument();
+    },
+  );
+
   it("offers only the actions the server lists, and none when it lists none", async () => {
     serve(version({ actions: [] }));
     await openPage();
 
     for (const label of [
-      "Отправить на согласование",
-      "Согласовать",
+      "Перейти к отправке в мастере",
+      "Согласовать версию",
       "Вернуть с правками",
-      "Принять правки",
+      "Доработать возвращённую версию",
       "Принять и доработать",
       "Откатить правки",
       "Создать новую версию",
@@ -228,8 +294,8 @@ describe("actions on a matrix version (AC-15, AC-16, AC-19)", {
   });
 
   it("shows a refusal by turn in the server's words and keeps the action", async () => {
-    const route = `POST /api/v1/career/matrix-versions/${VERSION_ID}/approve`;
-    serve(version({ actions: ["Approve"] }));
+    const route = `POST /api/v1/career/matrix-versions/${VERSION_ID}/accept-and-revise`;
+    serve(version({ actions: ["AcceptAndRevise"] }));
     fakeApi.on(route, () =>
       Response.json(
         {
@@ -241,7 +307,9 @@ describe("actions on a matrix version (AC-15, AC-16, AC-19)", {
     );
     const user = await openPage();
 
-    await user.click(screen.getByRole("button", { name: "Согласовать" }));
+    await user.click(
+      screen.getByRole("button", { name: "Принять и доработать" }),
+    );
 
     expect(
       await screen.findByText("Не удалось выполнить действие"),
@@ -249,20 +317,22 @@ describe("actions on a matrix version (AC-15, AC-16, AC-19)", {
     expect(
       screen.getByText("Сейчас ход другого участника согласования"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Согласовать" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Принять и доработать" }),
+    ).toBeEnabled();
   });
 
   it("lists every problem that keeps a version from being handed over, as the server wrote them", async () => {
-    const route = `POST /api/v1/career/matrix-versions/${VERSION_ID}/submit`;
-    serve(version({ actions: ["Submit"] }));
+    const route = `POST /api/v1/career/matrix-versions/${VERSION_ID}/accept-and-revise`;
+    serve(version({ actions: ["AcceptAndRevise"] }));
     fakeApi.on(route, () =>
       Response.json(
         {
           title: "One or more validation errors occurred.",
           errors: {
             content: [
-              "У уровня «Младший» нет требований",
-              "У критической компетенции «Проектирование» не задан минимальный уровень",
+              "У уровня «Младший» нет активной должности",
+              "В матрице нет компетенций",
             ],
           },
         },
@@ -272,14 +342,16 @@ describe("actions on a matrix version (AC-15, AC-16, AC-19)", {
     const user = await openPage();
 
     await user.click(
-      screen.getByRole("button", { name: "Отправить на согласование" }),
+      screen.getByRole("button", { name: "Принять и доработать" }),
     );
 
     expect(
-      (await screen.findAllByRole("listitem")).map((item) => item.textContent),
+      within(await screen.findByRole("alert"))
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
     ).toEqual([
-      "У уровня «Младший» нет требований",
-      "У критической компетенции «Проектирование» не задан минимальный уровень",
+      "У уровня «Младший» нет активной должности",
+      "В матрице нет компетенций",
     ]);
   });
 });
@@ -343,12 +415,6 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
     levelId: JUNIOR_LEVEL,
     competencyId: DESIGN,
     requiredScore: 2,
-    type: "Profile",
-    weight: 1,
-    isMandatory: false,
-    expectedBehavior: null,
-    evidenceExamples: null,
-    validFrom: null,
   } as const;
 
   const returned = () => {
@@ -362,16 +428,8 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
       ...shown,
       content: {
         levels: [{ levelId: JUNIOR_LEVEL, minOverallPercent: null }],
-        blocks: [{ id: "core", name: "Основные", isMandatory: true }],
-        competencies: [{ competencyId: DESIGN, blockId: "core" }],
-        blockWeights: [
-          {
-            levelId: JUNIOR_LEVEL,
-            blockId: "core",
-            percent: 100,
-            minPercent: null,
-          },
-        ],
+        competencies: [{ competencyId: DESIGN, blockId: null }],
+        blockWeights: [{ levelId: JUNIOR_LEVEL, blockId: null, percent: 100 }],
         requirements: [requirement],
       },
       entries: {
@@ -381,12 +439,11 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
             id: DESIGN,
             name: "Проектирование",
             description: null,
-            categoryId: "category",
-            categoryName: "Профессиональные",
             directionId: null,
             type: "Profile",
             versionNumber: 1,
             status: "Active",
+            scaleId: "scale",
           },
         ],
       },
@@ -430,16 +487,16 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
     );
     await openPage();
 
-    const cell = await screen.findByRole("button", {
-      name: "Проектирование, Младший",
-    });
+    const row = (await screen.findByText("Проектирование")).closest(
+      "tr",
+    ) as HTMLElement;
+    await waitFor(() => expect(row).toHaveClass("matrix-changed-row"));
+    const cell = row.querySelector("td.matrix-changed") as HTMLElement;
     expect(
       within(cell).getByRole("img", { name: "Изменено согласующим" }),
     ).toBeInTheDocument();
-    const row = cell.closest("tr") as HTMLElement;
-    expect(row).toHaveClass("matrix-changed-row");
     expect(
-      within(row).getAllByText("Изменено согласующим").length,
+      within(row).getAllByRole("img", { name: "Изменено согласующим" }).length,
     ).toBeGreaterThan(0);
   });
 
@@ -450,11 +507,9 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
     );
     await openPage();
 
-    const cell = await screen.findByRole("button", {
-      name: "Проектирование, Младший",
-    });
+    const row = (await screen.findByText("Проектирование")).closest("tr");
     expect(screen.queryByText("Изменено согласующим")).not.toBeInTheDocument();
-    expect(cell.closest("tr")).not.toHaveClass("matrix-changed-row");
+    expect(row).not.toHaveClass("matrix-changed-row");
     expect(
       fakeApi.calls(
         `GET /api/v1/career/matrix-versions/${VERSION_ID}/variants/1/diff`,
@@ -470,10 +525,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
     const after = {
       ...before,
       levels: [{ levelId: JUNIOR_LEVEL, minOverallPercent: 75 }],
-      blocks: [
-        ...before.blocks,
-        { id: "extra", name: "Дополнительные", isMandatory: false },
-      ],
+      sharedBlocks: [{ blockId: "extra" }],
       competencies: [],
       requirements: [],
     };
@@ -481,7 +533,18 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
     serve({
       ...shown,
       content: after,
-      entries: { ...shown.entries, competencies: [] },
+      entries: {
+        ...shown.entries,
+        competencies: [],
+        sharedBlocks: [
+          {
+            id: "extra",
+            name: "Дополнительные",
+            status: "Active",
+            competencyIds: [],
+          },
+        ],
+      },
     });
     fakeApi.on(`GET /api/v1/career/matrix-versions/${VERSION_ID}/history`, () =>
       Response.json({
@@ -534,7 +597,6 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
         id: DESIGN,
         name: "Проектирование",
         description: null,
-        categoryId: "category",
         directionId: null,
         type: "Profile",
         scaleId: "scale",
@@ -560,19 +622,21 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
     expect(
       screen.getByText("Добавлено: блок «Дополнительные»"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Стало: «Дополнительные»")).toBeInTheDocument();
+    expect(
+      screen.getByText("Стало: Блок «Дополнительные»"),
+    ).toBeInTheDocument();
     expect(
       await screen.findByText("Удалено: компетенция «Проектирование»"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Было: Блок «Основные»")).toBeInTheDocument();
+    expect(
+      screen.getByText("Было: Блок «Вне блоков»; Тип: Профильная"),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Удалено: требование «Проектирование», уровень «Младший»",
+        "Удалено: требуемый балл «Проектирование», уровень «Младший»",
       ),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("Было: Требуемый уровень: 2; Тип: Профильная; Вес: 1"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Было: Требуемый балл: 2")).toBeInTheDocument();
   });
 
   describe("the history of a version", () => {
@@ -611,7 +675,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
       );
       const user = await openPage();
 
-      await user.click(screen.getByRole("button", { name: "История" }));
+      await openHistoryFromMenu(user);
       const history = await dialogTitled("История");
       await user.click(within(history).getByRole("button", { name: /Автор/ }));
 
@@ -662,7 +726,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
       );
       const user = await openPage();
 
-      await user.click(screen.getByRole("button", { name: "История" }));
+      await openHistoryFromMenu(user);
       const history = await dialogTitled("История");
       await user.click(
         within(history).getByRole("button", { name: /Согласующий/ }),
@@ -688,7 +752,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
       );
       const user = await openPage();
 
-      await user.click(screen.getByRole("button", { name: "История" }));
+      await openHistoryFromMenu(user);
       const history = await dialogTitled("История");
       await user.click(within(history).getByRole("button", { name: /Автор/ }));
 
@@ -730,7 +794,7 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     const user = await openPage();
 
     const threshold = await screen.findByRole("spinbutton", {
-      name: "Минимальный общий порог: Младший",
+      name: "Минимальный общий порог, %: Младший",
     });
     await user.type(threshold, "60");
     await user.click(screen.getByRole("button", { name: "Сохранить" }));
@@ -744,50 +808,14 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     ]);
   });
 
-  it("adds a named block, mandatory or not, and saves it with the content", async () => {
-    serveEditor();
-    const user = await openPage();
-
-    await user.click(
-      await screen.findByRole("button", { name: "Добавить блок" }),
-    );
-    await user.type(await screen.findByLabelText("Название блока"), "Основные");
-    await user.click(
-      screen.getByRole("checkbox", { name: "Обязательный блок" }),
-    );
-    await user.click(screen.getByRole("button", { name: "Сохранить" }));
-
-    await waitFor(() => expect(fakeApi.calls(CONTENT_ROUTE)).toHaveLength(1));
-    const saved = await fakeApi.calls(CONTENT_ROUTE)[0]?.json();
-    expect(saved.blocks).toEqual([
-      { id: expect.any(String), name: "Основные", isMandatory: true },
-    ]);
-  });
-
   function editorWithACompetency() {
     const shown = draft();
     const content = (minOverallPercent: number | null) => ({
       levels: [{ levelId: "junior", minOverallPercent }],
-      blocks: [
-        { id: "core", name: "Основные", isMandatory: true },
-        { id: "extra", name: "Дополнительные", isMandatory: false },
-      ],
-      competencies: [{ competencyId: "design", blockId: "core" }],
-      blockWeights: [
-        { levelId: "junior", blockId: "core", percent: 100, minPercent: null },
-      ],
+      competencies: [{ competencyId: "design", blockId: null }],
+      blockWeights: [{ levelId: "junior", blockId: null, percent: 100 }],
       requirements: [
-        {
-          levelId: "junior",
-          competencyId: "design",
-          requiredScore: 2,
-          type: "Profile" as const,
-          weight: 1,
-          isMandatory: false,
-          expectedBehavior: null,
-          evidenceExamples: null,
-          validFrom: null,
-        },
+        { levelId: "junior", competencyId: "design", requiredScore: 2 },
       ],
     });
     const opened = {
@@ -800,12 +828,11 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
             id: "design",
             name: "Проектирование",
             description: null,
-            categoryId: "category",
-            categoryName: "Профессиональные",
             directionId: null,
             type: "Profile" as const,
             versionNumber: 1,
             status: "Active" as const,
+            scaleId: "scale",
           },
         ],
       },
@@ -818,6 +845,23 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     return { opened, saved };
   }
 
+  it("marks no competency as lacking a requirement (AC-57), since its cell shows the lowest score of the scale", async () => {
+    const { opened } = editorWithACompetency();
+    serveEditor({
+      ...opened,
+      content: { ...opened.content, requirements: [] },
+    });
+    await openPage();
+
+    const row = (await screen.findByText("Проектирование")).closest(
+      "tr",
+    ) as HTMLElement;
+
+    expect(
+      within(row).queryByRole("img", { name: "Нет требований" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("locks every control of the editor while the content is being saved, so that nothing typed then is lost, and frees them once it is saved", async () => {
     const held = deferred<Response>();
     const { opened, saved } = editorWithACompetency();
@@ -825,7 +869,7 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     fakeApi.on(CONTENT_ROUTE, () => held.promise);
     const user = await openPage();
     const threshold = await screen.findByRole("spinbutton", {
-      name: "Минимальный общий порог: Младший",
+      name: "Минимальный общий порог, %: Младший",
     });
     await user.type(threshold, "60");
 
@@ -836,25 +880,12 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     const controls: [string, HTMLElement[]][] = [
       ["percent field", screen.getAllByRole("spinbutton")],
       [
-        "block name",
-        screen.getAllByRole("textbox", { name: "Название блока" }),
-      ],
-      [
-        "mandatory checkbox",
-        screen.getAllByRole("checkbox", { name: "Обязательный блок" }),
-      ],
-      [
-        "block choice",
-        screen.getAllByRole("combobox", { name: "Блок компетенций" }),
+        "competency type",
+        [screen.getByRole("combobox", { name: /Тип компетенции/ })],
       ],
       [
         "requirement cell",
-        [screen.getByRole("button", { name: "Проектирование, Младший" })],
-      ],
-      ["add block", [screen.getByRole("button", { name: /Добавить блок/ })]],
-      [
-        "add competency",
-        [screen.getByRole("button", { name: /Добавить компетенцию/ })],
+        [screen.getByRole("combobox", { name: "Проектирование, Младший" })],
       ],
       ["add level", [screen.getByRole("button", { name: /Добавить уровень/ })]],
       ["save", [screen.getByRole("button", { name: /Сохранить/ })]],
@@ -875,11 +906,11 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: /Добавить блок/ }),
+        screen.getByRole("button", { name: /Добавить уровень/ }),
       ).toBeEnabled(),
     );
     const freed = screen.getByRole("spinbutton", {
-      name: "Минимальный общий порог: Младший",
+      name: "Минимальный общий порог, %: Младший",
     });
     expect(freed).toBeEnabled();
     expect(freed).toHaveValue("60");
@@ -890,7 +921,7 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     fakeApi.on(CONTENT_ROUTE, () => problem(500, { title: "Сбой" }));
     const user = await openPage();
     const threshold = await screen.findByRole("spinbutton", {
-      name: "Минимальный общий порог: Младший",
+      name: "Минимальный общий порог, %: Младший",
     });
     await user.type(threshold, "60");
 
@@ -912,72 +943,127 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
       screen.queryByRole("button", { name: "Сохранить" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Добавить блок" }),
+      screen.queryByRole("button", { name: "Добавить уровень" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
   });
 
   describe("while the form has edits that are not saved (AC-15, AC-17)", () => {
     const UNSAVED_REASON = "Сначала сохраните изменения";
-    const SUBMIT = "Отправить на согласование";
-    const THRESHOLD = "Минимальный общий порог: Младший";
+    const leaveQuestion = () =>
+      screen.queryByRole("dialog", { name: "Перейти без сохранения?" });
+    const SUBMIT = "Перейти к отправке в мастере";
+    const DESK = `desk:matrix-builder:${VERSION_ID}`;
+    const deskLink = (label: string) =>
+      screen.getByText(label).closest("a") as HTMLElement;
+    const handOver = () => deskLink(SUBMIT);
+    const THRESHOLD = "Минимальный общий порог, %: Младший";
 
-    it("holds the hand-over back, says why, and frees it once the edits are saved", async () => {
-      const submitRoute = `POST /api/v1/career/matrix-versions/${VERSION_ID}/submit`;
+    const REVIEW = () =>
+      version({
+        status: "OnReview",
+        step: "Superior",
+        actions: ["Edit", "Approve", "Return"],
+      });
+    const RETURN = "Вернуть с правками";
+
+    it("keeps the link to the desk scenario enabled with unsaved edits, and following it leads there", async () => {
       serveEditor();
-      fakeApi.on(submitRoute, () => Response.json(afterAction()));
       const user = await openPage();
       const threshold = await screen.findByRole("spinbutton", {
         name: THRESHOLD,
       });
-      expect(screen.getByRole("button", { name: SUBMIT })).toBeEnabled();
-      expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
 
       await user.type(threshold, "60");
 
-      expect(screen.getByRole("button", { name: SUBMIT })).toBeDisabled();
-      expect(screen.getByText(UNSAVED_REASON)).toBeInTheDocument();
-      await user.click(screen.getByRole("button", { name: SUBMIT }));
-      expect(fakeApi.calls(submitRoute)).toHaveLength(0);
-
-      await user.click(screen.getByRole("button", { name: "Сохранить" }));
-
-      await waitFor(() =>
-        expect(screen.getByRole("button", { name: SUBMIT })).toBeEnabled(),
-      );
-      expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
-      await user.click(screen.getByRole("button", { name: SUBMIT }));
-      await waitFor(() => expect(fakeApi.calls(submitRoute)).toHaveLength(1));
+      expect(handOver()).not.toHaveAttribute("aria-disabled", "true");
+      await user.click(handOver());
+      expect(await screen.findByText(DESK)).toBeInTheDocument();
     });
 
-    it("holds the hand-over back while a save is in flight, even when nothing was changed", async () => {
-      const held = deferred<Response>();
+    it("asks before another version is chosen over unsaved edits, stays on the version and the value on «Остаться», and asks no more once they are saved", async () => {
+      const other = version({
+        id: "other",
+        number: 2,
+        status: "Published",
+        step: null,
+        actions: [],
+      });
       serveEditor();
+      fakeApi.on("GET /api/v1/career/matrices/matrix/versions", () =>
+        Response.json(
+          [draft(), other].map(({ id, number, status }) => ({
+            id,
+            number,
+            status,
+            authorId: "author",
+            authorName: "Автор",
+            createdAt: "2026-10-01T10:00:00Z",
+            publishedAt: null,
+          })),
+        ),
+      );
+      fakeApi.on("GET /api/v1/career/matrix-versions/other", () =>
+        Response.json(other),
+      );
+      fakeApi.on("GET /api/v1/career/matrix-versions/other/history", () =>
+        Response.json({ variants: [], decisions: [] }),
+      );
+      const user = await openPage({ guarded: true });
+      const threshold = await screen.findByRole("spinbutton", {
+        name: THRESHOLD,
+      });
+      await user.type(threshold, "60");
+      const chooseOther = async () => {
+        await user.click(screen.getByRole("combobox", { name: "Версия" }));
+        await user.click(
+          await screen.findByText("Версия 2", {
+            selector: ".ant-select-item-option-content",
+          }),
+        );
+      };
+
+      await chooseOther();
+      await user.click(await screen.findByRole("button", { name: "Остаться" }));
+
+      await waitFor(() => expect(leaveQuestion()).not.toBeInTheDocument());
+      expect(screen.getByText("Черновик")).toBeInTheDocument();
+      expect(threshold).toHaveValue("60");
+
+      await user.click(screen.getByRole("button", { name: "Сохранить" }));
+      await waitFor(() => expect(fakeApi.calls(CONTENT_ROUTE)).toHaveLength(1));
+      await waitFor(() =>
+        expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument(),
+      );
+      await chooseOther();
+
+      expect(await screen.findByText("Опубликована")).toBeInTheDocument();
+      expect(leaveQuestion()).not.toBeInTheDocument();
+    });
+
+    it("holds the actions on the saved version back while a save is in flight, even when nothing was changed", async () => {
+      const held = deferred<Response>();
+      serveEditor(REVIEW());
       fakeApi.on(CONTENT_ROUTE, () => held.promise);
       const user = await openPage();
       await screen.findByRole("spinbutton", { name: THRESHOLD });
+      expect(screen.getByRole("button", { name: RETURN })).toBeEnabled();
 
       await user.click(screen.getByRole("button", { name: "Сохранить" }));
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: SUBMIT })).toBeDisabled(),
+        expect(screen.getByRole("button", { name: RETURN })).toBeDisabled(),
       );
       expect(screen.getByText(UNSAVED_REASON)).toBeInTheDocument();
       held.resolve(Response.json({ ...draft(), version: VERSION_TAG + 1 }));
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: SUBMIT })).toBeEnabled(),
+        expect(screen.getByRole("button", { name: RETURN })).toBeEnabled(),
       );
       expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
     });
 
-    it("holds an approval and a return back too, for an approver who changed the content", async () => {
-      serveEditor(
-        version({
-          status: "OnReview",
-          step: "Superior",
-          actions: ["Edit", "Approve", "Return"],
-        }),
-      );
+    it("holds a return back, says why, and frees it once the edits are saved", async () => {
+      serveEditor(REVIEW());
       const user = await openPage();
 
       await user.type(
@@ -985,13 +1071,19 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
         "60",
       );
 
-      expect(
-        screen.getByRole("button", { name: "Согласовать" }),
-      ).toBeDisabled();
-      expect(
-        screen.getByRole("button", { name: "Вернуть с правками" }),
-      ).toBeDisabled();
+      expect(screen.getByRole("button", { name: RETURN })).toBeDisabled();
       expect(screen.getByText(UNSAVED_REASON)).toBeInTheDocument();
+      expect(deskLink("Согласовать версию")).not.toHaveAttribute(
+        "aria-disabled",
+        "true",
+      );
+
+      await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: RETURN })).toBeEnabled(),
+      );
+      expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
     });
 
     it("gives the reason only where there is a blocked button to explain, not when the user can only edit", async () => {
@@ -1011,142 +1103,11 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
       serve(version({ status: "OnReview", actions: ["Approve"] }));
       await openPage();
 
-      expect(screen.getByRole("button", { name: "Согласовать" })).toBeEnabled();
+      expect(deskLink("Согласовать версию")).not.toHaveAttribute(
+        "aria-disabled",
+        "true",
+      );
       expect(screen.queryByText(UNSAVED_REASON)).not.toBeInTheDocument();
-    });
-  });
-
-  it("says why a block that still has competencies cannot be deleted, and only beside that block", async () => {
-    const shown = draft();
-    serveEditor({
-      ...shown,
-      content: {
-        ...shown.content,
-        blocks: [
-          { id: "core", name: "Основные", isMandatory: true },
-          { id: "extra", name: "Дополнительные", isMandatory: false },
-        ],
-        competencies: [{ competencyId: "design", blockId: "core" }],
-      },
-      entries: {
-        ...shown.entries,
-        competencies: [
-          {
-            id: "design",
-            name: "Проектирование",
-            description: null,
-            categoryId: "category",
-            categoryName: "Профессиональные",
-            directionId: null,
-            type: "Profile",
-            versionNumber: 1,
-            status: "Active",
-          },
-        ],
-      },
-    });
-    await openPage();
-
-    await screen.findByText("Сначала уберите компетенции блока");
-    const removals = screen.getAllByLabelText("Название блока").map((name) =>
-      within(name.closest("tr") as HTMLElement).getByRole("button", {
-        name: "Удалить",
-      }),
-    );
-    expect(removals.map((button) => button.hasAttribute("disabled"))).toEqual([
-      true,
-      false,
-    ]);
-    expect(
-      within(removals[0]?.closest("tr") as HTMLElement).getByText(
-        "Сначала уберите компетенции блока",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByText("Сначала уберите компетенции блока"),
-    ).toHaveLength(1);
-  });
-
-  it("offers the competencies a matrix of this version may use, searched on the server, and not those already in it", async () => {
-    const shown = draft();
-    const competency = (id: string, name: string) => ({
-      id,
-      name,
-      description: null,
-      categoryId: "category",
-      directionId: null,
-      type: "Profile",
-      scaleId: "scale",
-      status: "Active",
-      createdAt: "2026-10-01T10:00:00Z",
-      versionNumber: 1,
-      version: 1,
-      canEdit: false,
-      canDelete: false,
-    });
-    serveEditor({
-      ...shown,
-      content: {
-        ...shown.content,
-        blocks: [{ id: "core", name: "Основные", isMandatory: true }],
-        competencies: [{ competencyId: "design", blockId: "core" }],
-      },
-      entries: {
-        ...shown.entries,
-        competencies: [
-          {
-            id: "design",
-            name: "Проектирование",
-            description: null,
-            categoryId: "category",
-            categoryName: "Профессиональные",
-            directionId: null,
-            type: "Profile",
-            versionNumber: 1,
-            status: "Active",
-          },
-        ],
-      },
-    });
-    fakeApi.on("GET /api/v1/career/competencies", () =>
-      Response.json({
-        items: [
-          competency("design", "Проектирование"),
-          competency("testing", "Тестирование"),
-        ],
-        total: 2,
-        page: 1,
-        pageSize: 20,
-      }),
-    );
-    const user = await openPage();
-
-    await user.click(
-      await screen.findByRole("button", { name: "Добавить компетенцию" }),
-    );
-    const dialog = await dialogTitled("Добавить компетенцию");
-    await user.click(
-      within(dialog).getByRole("combobox", { name: "Компетенции" }),
-    );
-
-    expect(
-      await screen.findByText("Тестирование", {
-        selector: ".ant-select-item-option-content",
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText("Проектирование", {
-        selector: ".ant-select-item-option-content",
-      }),
-    ).not.toBeInTheDocument();
-    const asked = fakeApi.calls("GET /api/v1/career/competencies").at(-1);
-    expect(Object.fromEntries(new URL(asked?.url ?? "").searchParams)).toEqual({
-      scaleId: "scale",
-      directionId: "direction",
-      withGeneral: "true",
-      inWork: "true",
-      page: "1",
-      pageSize: "21",
     });
   });
 
@@ -1162,10 +1123,10 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
       Response.json({ ...draft(), version: VERSION_TAG + 1 }),
     );
 
-    const [matrixDeletion] = await screen.findAllByRole("button", {
-      name: "Удалить",
-    });
-    await user.click(matrixDeletion as HTMLElement);
+    await user.click(
+      screen.getByRole("button", { name: "Действия с версией" }),
+    );
+    await user.click(await screen.findByRole("menuitem", { name: "Удалить" }));
     await user.click(
       within(await screen.findByRole("dialog")).getByRole("button", {
         name: "Удалить",
@@ -1204,7 +1165,6 @@ describe("the levels of a version in the order of the track (AC-11, AC-17)", {
           { levelId: "senior", minOverallPercent: null },
           { levelId: "junior", minOverallPercent: null },
         ],
-        blocks: [],
         competencies: [],
         blockWeights: [],
         requirements: [],
@@ -1229,7 +1189,7 @@ describe("the levels of a version in the order of the track (AC-11, AC-17)", {
     await openPage();
     const grid = document.querySelector(".matrix-grid") as HTMLElement;
     await waitFor(() =>
-      expect(within(grid).getAllByRole("columnheader")).toHaveLength(3),
+      expect(within(grid).getAllByRole("columnheader")).toHaveLength(4),
     );
     return within(grid)
       .getAllByRole("columnheader")
@@ -1240,7 +1200,8 @@ describe("the levels of a version in the order of the track (AC-11, AC-17)", {
     "shows a %s version's levels in the order they had when it was published, although the track has been put in another order since",
     async (status) => {
       expect(await levelColumns(status)).toEqual([
-        "Компетенции",
+        "Компетенция",
+        "Тип",
         "Младший",
         "Старший",
       ]);
@@ -1249,7 +1210,8 @@ describe("the levels of a version in the order of the track (AC-11, AC-17)", {
 
   it("shows a version that is not published yet in the order the track has now", async () => {
     expect(await levelColumns("OnReview")).toEqual([
-      "Компетенции",
+      "Компетенция",
+      "Тип",
       "Старший",
       "Младший",
     ]);

@@ -1,15 +1,12 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import type {
   MatrixChange,
   MatrixContent,
   MatrixRequirement,
 } from "./matrixApi";
 import {
-  addBlock,
   cellKey,
   changedPlaces,
-  hasCompetencies,
-  removeBlock,
   removeCompetency,
   removeLevel,
   setBlockWeight,
@@ -26,18 +23,12 @@ const TESTING = "testing";
 function requirement(
   levelId: string,
   competencyId: string,
-  requiredScore: number | null = 2,
+  requiredScore = 2,
 ): MatrixRequirement {
   return {
     levelId,
     competencyId,
     requiredScore,
-    type: "Profile",
-    weight: 1,
-    isMandatory: false,
-    expectedBehavior: null,
-    evidenceExamples: null,
-    validFrom: null,
   };
 }
 
@@ -47,18 +38,14 @@ function content(): MatrixContent {
       { levelId: JUNIOR, minOverallPercent: 60 },
       { levelId: SENIOR, minOverallPercent: 70 },
     ],
-    blocks: [
-      { id: CORE, name: "Основные", isMandatory: true },
-      { id: EXTRA, name: "Дополнительные", isMandatory: false },
-    ],
     competencies: [
       { competencyId: DESIGN, blockId: CORE },
       { competencyId: TESTING, blockId: EXTRA },
     ],
     blockWeights: [
-      { levelId: JUNIOR, blockId: CORE, percent: 100, minPercent: 50 },
-      { levelId: SENIOR, blockId: CORE, percent: 70, minPercent: null },
-      { levelId: SENIOR, blockId: EXTRA, percent: 30, minPercent: null },
+      { levelId: JUNIOR, blockId: CORE, percent: 100 },
+      { levelId: SENIOR, blockId: CORE, percent: 70 },
+      { levelId: SENIOR, blockId: EXTRA, percent: 30 },
     ],
     requirements: [
       requirement(JUNIOR, DESIGN),
@@ -94,63 +81,23 @@ describe("editing the matrix document leaves no reference to what was removed (A
     ).toEqual([`${JUNIOR}:${DESIGN}`, `${SENIOR}:${DESIGN}`]);
     expect(edited.blockWeights).toHaveLength(3);
   });
-
-  it("drops the coefficients of a removed block, and tells a block with competencies from an empty one", () => {
-    const matrix = removeCompetency(content(), TESTING);
-
-    expect(hasCompetencies(matrix, CORE)).toBe(true);
-    expect(hasCompetencies(matrix, EXTRA)).toBe(false);
-    const edited = removeBlock(matrix, EXTRA);
-    expect(edited.blocks.map((block) => block.id)).toEqual([CORE]);
-    expect(edited.blockWeights.map((weight) => weight.blockId)).not.toContain(
-      EXTRA,
-    );
-  });
 });
 
-describe("block coefficients and thresholds of a level (AC-14)", () => {
-  it("changes the coefficient of a pair without touching its threshold or the other pairs", () => {
-    const edited = setBlockWeight(content(), JUNIOR, CORE, "percent", 80);
+describe("block coefficients of a level (AC-14)", () => {
+  it("changes the coefficient of a pair without touching the other pairs", () => {
+    const edited = setBlockWeight(content(), JUNIOR, CORE, 80);
 
     expect(
       edited.blockWeights.find(
         (w) => w.levelId === JUNIOR && w.blockId === CORE,
       ),
-    ).toEqual({ levelId: JUNIOR, blockId: CORE, percent: 80, minPercent: 50 });
+    ).toEqual({ levelId: JUNIOR, blockId: CORE, percent: 80 });
     expect(edited.blockWeights).toHaveLength(3);
   });
 
-  it("creates the pair when a threshold is set for a block the level had no coefficient for", () => {
-    const edited = setBlockWeight(content(), JUNIOR, EXTRA, "minPercent", 40);
+  it("removes the pair once the coefficient is cleared", () => {
+    const cleared = setBlockWeight(content(), JUNIOR, CORE, null);
 
-    expect(
-      edited.blockWeights.find(
-        (w) => w.levelId === JUNIOR && w.blockId === EXTRA,
-      ),
-    ).toEqual({ levelId: JUNIOR, blockId: EXTRA, percent: 0, minPercent: 40 });
-  });
-
-  it("removes the pair once both the coefficient and the threshold are cleared, and not before", () => {
-    const withoutPercent = setBlockWeight(
-      content(),
-      JUNIOR,
-      CORE,
-      "percent",
-      null,
-    );
-    expect(
-      withoutPercent.blockWeights.some(
-        (w) => w.levelId === JUNIOR && w.blockId === CORE,
-      ),
-    ).toBe(true);
-
-    const cleared = setBlockWeight(
-      withoutPercent,
-      JUNIOR,
-      CORE,
-      "minPercent",
-      null,
-    );
     expect(
       cleared.blockWeights.some(
         (w) => w.levelId === JUNIOR && w.blockId === CORE,
@@ -217,24 +164,4 @@ describe("the places an approver changed (AC-19)", () => {
     expect(places.requirementCells.size).toBe(0);
     expect(places.weightCells.size).toBe(0);
   });
-});
-
-describe("a new block gets an identifier on a page served over plain HTTP (AC-14)", () => {
-  afterEach(() => vi.unstubAllGlobals());
-
-  it.each([
-    [0x00, "00000000-0000-4000-8000-000000000000"],
-    [0xff, "ffffffff-ffff-4fff-bfff-ffffffffffff"],
-  ])(
-    "builds a UUID v4 from random values alone, without crypto.randomUUID (bytes of %i)",
-    (byte, expected) => {
-      vi.stubGlobal("crypto", {
-        getRandomValues: (values: Uint8Array) => values.fill(byte),
-      });
-
-      const added = addBlock(content()).blocks.at(-1);
-
-      expect(added?.id).toBe(expected);
-    },
-  );
 });

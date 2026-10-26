@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { queryClient } from "../../api/queryClient";
 import { Providers } from "../../app/Providers";
-import { fakeApi } from "../../test/fakeApi";
+import { deferred, fakeApi } from "../../test/fakeApi";
 import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
 import { EmployeeForm } from "./EmployeeForm";
 
@@ -41,9 +41,11 @@ function serve() {
   );
 }
 
-async function openForm(held = FORMER) {
+async function openForm(
+  held = FORMER,
+  onSubmit = vi.fn().mockResolvedValue(undefined),
+) {
   serve();
-  const onSubmit = vi.fn().mockResolvedValue(undefined);
   render(
     <Providers>
       <EmployeeForm
@@ -80,6 +82,19 @@ async function transferTo(
       fakeApi.calls("GET /api/v1/org-units/support/positions"),
     ).toHaveLength(1),
   );
+}
+
+function lockedFields() {
+  const fields: [string, HTMLElement][] = [
+    ["surname", screen.getByLabelText("Фамилия")],
+    ["name", screen.getByLabelText("Имя")],
+    ["patronymic", screen.getByLabelText("Отчество")],
+    ["unit", screen.getByRole("combobox", { name: "Подразделение" })],
+    ["position", screen.getByRole("combobox", { name: "Должность" })],
+  ];
+  return fields
+    .filter(([, field]) => field.hasAttribute("disabled"))
+    .map(([kind]) => kind);
 }
 
 beforeEach(() => {
@@ -208,5 +223,29 @@ describe("the position after a transfer in the employee form (AC-3, AC-4)", {
       ).toBeInTheDocument(),
     );
     expect(within(position()).queryByText("Аналитик")).not.toBeInTheDocument();
+  });
+});
+
+describe("the employee form is held while the employee is being saved (AC-20)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
+  it("holds every field, the unit and the position choices included, and frees them once the save is over", async () => {
+    const saved = deferred<undefined>();
+    const onSubmit = vi.fn(() => saved.promise);
+    const { user } = await openForm(FORMER, onSubmit);
+    expect(lockedFields()).toEqual([]);
+
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    expect(lockedFields()).toEqual([
+      "surname",
+      "name",
+      "patronymic",
+      "unit",
+      "position",
+    ]);
+    saved.resolve(undefined);
+    await waitFor(() => expect(lockedFields()).toEqual([]));
   });
 });

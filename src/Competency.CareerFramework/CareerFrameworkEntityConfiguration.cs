@@ -8,16 +8,18 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// Contributes the CareerFramework tables to the shared model: the <see cref="OrgUnitHr"/> assignments, the career catalogues and the matrices,
+/// Contributes the CareerFramework tables to the shared model: the <see cref="OrgUnitHr"/> assignments, the career catalogues with the shared blocks, the links of levels to positions and the matrices,
 /// with snake_case names, statuses and types stored as their names, and foreign keys that never cascade.
 /// </summary>
 internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationContributor
 {
     /// <summary>
-    /// The unit and account entities are named rather than typed because their modules keep them internal; both must be configured before this contributor runs.
+    /// The unit, position, employee and account entities are named rather than typed because their modules keep them internal; all must be configured before this contributor runs.
     /// </summary>
     private const string OrgUnitEntityName = "Competency.OrgStructure.OrgUnit";
 
+    private const string PositionEntityName = "Competency.OrgStructure.Position";
+    private const string EmployeeEntityName = "Competency.OrgStructure.Employee";
     private const string UserEntityName = "Competency.UserManagement.AppUser";
     private const int EnumMaxLength = 16;
 
@@ -27,7 +29,6 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
     private const int DecisionKindMaxLength = 32;
 
     private static readonly string StatusCheckSql = EnumCheckSql<CatalogStatus>("status");
-    private static readonly string TypeCheckSql = EnumCheckSql<CompetencyType>("type");
     private static readonly JsonSerializerOptions PointsJson = new(JsonSerializerDefaults.Web);
     private static readonly JsonSerializerOptions DocumentJson = new(JsonSerializerDefaults.Web);
 
@@ -47,10 +48,10 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
             entity.ToTable("org_unit_hr");
             entity.HasKey(e => e.OrgUnitId);
             entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.EmployeeId).HasColumnName("employee_id");
 
             entity.HasOne(OrgUnitEntityName, navigationName: null).WithOne().HasForeignKey(typeof(OrgUnitHr), nameof(OrgUnitHr.OrgUnitId)).OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(UserEntityName, navigationName: null).WithMany().HasForeignKey(nameof(OrgUnitHr.UserId)).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(EmployeeEntityName, navigationName: null).WithMany().HasForeignKey(nameof(OrgUnitHr.EmployeeId)).OnDelete(DeleteBehavior.Restrict);
         });
 
         ConfigureEntry<CareerDirection>(modelBuilder, "career_directions", _ => { });
@@ -65,20 +66,32 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
 
         ConfigureEntry<CareerLevel>(modelBuilder, "career_levels", ConfigureLevel);
 
-        ConfigureEntry<CompetencyCategory>(modelBuilder, "competency_categories", _ => { });
+        modelBuilder.Entity<CareerLevelPosition>(entity =>
+        {
+            entity.ToTable("career_level_positions");
+            entity.HasKey(e => new { e.LevelId, e.PositionId });
+            entity.Property(e => e.LevelId).HasColumnName("level_id");
+            entity.Property(e => e.PositionId).HasColumnName("position_id");
+            entity.Property(e => e.TrackId).HasColumnName("track_id");
+            entity.HasIndex(e => new { e.TrackId, e.PositionId }).IsUnique();
+            entity.HasIndex(e => e.PositionId);
+
+            entity.HasOne<CareerLevel>().WithMany().HasForeignKey(e => e.LevelId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<CareerTrack>().WithMany().HasForeignKey(e => e.TrackId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(PositionEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CareerLevelPosition.PositionId)).OnDelete(DeleteBehavior.Restrict);
+        });
 
         ConfigureEntry<CompetencyScale>(modelBuilder, "competency_scales", ConfigureScale);
 
+        ConfigureEntry<CompetencyBlock>(modelBuilder, "competency_blocks", ConfigureBlock);
+
         ConfigureEntry<CareerCompetency>(modelBuilder, "competencies", entity =>
         {
-            entity.ToTable(table => table.HasCheckConstraint("ck_competencies_type", TypeCheckSql));
             entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(CareerCompetency.DescriptionMaxLength);
-            entity.Property(e => e.CategoryId).HasColumnName("category_id");
+            entity.Property(e => e.EvidenceExamples).HasColumnName("evidence_examples").HasMaxLength(CareerCompetency.DescriptionMaxLength);
             entity.Property(e => e.DirectionId).HasColumnName("direction_id");
-            entity.Property(e => e.Type).HasColumnName("type").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.ScaleId).HasColumnName("scale_id");
 
-            entity.HasOne<CompetencyCategory>().WithMany().HasForeignKey(e => e.CategoryId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<CareerDirection>().WithMany().HasForeignKey(e => e.DirectionId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<CompetencyScale>().WithMany().HasForeignKey(e => e.ScaleId).OnDelete(DeleteBehavior.Restrict);
         });
@@ -91,9 +104,8 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
             entity.Property(e => e.Number).HasColumnName("number");
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(CatalogEntry.NameMaxLength);
             entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(CareerCompetency.DescriptionMaxLength);
-            entity.Property(e => e.CategoryId).HasColumnName("category_id");
+            entity.Property(e => e.EvidenceExamples).HasColumnName("evidence_examples").HasMaxLength(CareerCompetency.DescriptionMaxLength);
             entity.Property(e => e.DirectionId).HasColumnName("direction_id");
-            entity.Property(e => e.Type).HasColumnName("type").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.ScaleId).HasColumnName("scale_id");
             entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.ChangedById).HasColumnName("changed_by_id");
@@ -114,18 +126,23 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
     {
         modelBuilder.Entity<CompetencyMatrix>(entity =>
         {
-            entity.ToTable("competency_matrices");
+            entity.ToTable("competency_matrices", table => table.HasCheckConstraint(
+                "ck_competency_matrices_kind",
+                "(direction_id IS NOT NULL AND track_id IS NOT NULL AND position_id IS NULL) OR (direction_id IS NULL AND track_id IS NULL AND position_id IS NOT NULL)"));
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Version).HasColumnName("version");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at");
             entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
             entity.Property(e => e.DirectionId).HasColumnName("direction_id");
             entity.Property(e => e.TrackId).HasColumnName("track_id");
+            entity.Property(e => e.PositionId).HasColumnName("position_id");
             entity.HasIndex(e => new { e.OrgUnitId, e.TrackId }).IsUnique();
+            entity.HasIndex(e => new { e.OrgUnitId, e.PositionId }).IsUnique();
 
             entity.HasOne(OrgUnitEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CompetencyMatrix.OrgUnitId)).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<CareerDirection>().WithMany().HasForeignKey(e => e.DirectionId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<CareerTrack>().WithMany().HasForeignKey(e => e.TrackId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(PositionEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CompetencyMatrix.PositionId)).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<MatrixVersion>(entity =>
@@ -142,21 +159,19 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
             entity.Property(e => e.Number).HasColumnName("number");
             entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.Step).HasColumnName("step").HasConversion<string>().HasMaxLength(EnumMaxLength);
-            entity.Property(e => e.ScaleId).HasColumnName("scale_id");
             entity.Property(e => e.AuthorId).HasColumnName("author_id");
             entity.Property(e => e.Content).HasColumnName("content").HasColumnType("jsonb").HasConversion(ContentConverter, ContentComparer);
             entity.Property(e => e.Snapshot).HasColumnName("snapshot").HasColumnType("jsonb").HasConversion(
                 snapshot => JsonSerializer.Serialize(snapshot, DocumentJson),
                 json => JsonSerializer.Deserialize<MatrixEntries>(json, DocumentJson));
             entity.Property(e => e.PublishedAt).HasColumnName("published_at");
+            entity.Property(e => e.BuilderStep).HasColumnName("builder_step");
             entity.HasIndex(e => new { e.MatrixId, e.Number }).IsUnique();
             entity.HasIndex(e => e.MatrixId, "ux_matrix_versions_published").IsUnique().HasFilter("status = 'Published'");
             entity.HasIndex(e => e.MatrixId, "ux_matrix_versions_in_work").IsUnique().HasFilter("status IN ('Draft', 'OnReview', 'Returned')");
-            entity.HasIndex(e => e.ScaleId);
 
             entity.HasOne(e => e.Matrix).WithMany().HasForeignKey(e => e.MatrixId).OnDelete(DeleteBehavior.Restrict);
             entity.Navigation(e => e.Matrix).AutoInclude();
-            entity.HasOne<CompetencyScale>().WithMany().HasForeignKey(e => e.ScaleId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(UserEntityName, navigationName: null).WithMany().HasForeignKey(nameof(MatrixVersion.AuthorId)).OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -225,6 +240,27 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
                     points => points.ToList()));
         entity.Property(e => e.IsDefault).HasColumnName("is_default");
         entity.HasIndex(e => e.IsDefault, "ux_competency_scales_default").IsUnique().HasFilter("is_default");
+    }
+
+    /// <summary>
+    /// Maps the unit a shared block applies to and its composition, a jsonb array of competency identifiers on the block's row,
+    /// so a change of the composition is one change of the block and one journal event.
+    /// </summary>
+    private static void ConfigureBlock(EntityTypeBuilder<CompetencyBlock> entity)
+    {
+        entity.Property(e => e.ScopeUnitId).HasColumnName("scope_unit_id");
+        entity.Property(e => e.CompetencyIds)
+            .HasColumnName("competency_ids")
+            .HasColumnType("jsonb")
+            .HasConversion(
+                ids => JsonSerializer.Serialize(ids, DocumentJson),
+                json => JsonSerializer.Deserialize<List<Guid>>(json, DocumentJson) ?? new List<Guid>(),
+                new ValueComparer<List<Guid>>(
+                    (left, right) => left!.SequenceEqual(right!),
+                    ids => ids.Aggregate(0, (hash, id) => HashCode.Combine(hash, id)),
+                    ids => ids.ToList()));
+
+        entity.HasOne(OrgUnitEntityName, navigationName: null).WithMany().HasForeignKey(nameof(CompetencyBlock.ScopeUnitId)).OnDelete(DeleteBehavior.Restrict);
     }
 
     /// <summary>

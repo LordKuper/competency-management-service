@@ -15,7 +15,7 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
     private const string UnavailableMessage = "Запись не найдена или недоступна";
 
     [Fact]
-    public async Task Ac9_NewTrack_IsActiveFromAdministratorsAndTheUnitsResponsibleHr_ADraftFromTheUnitsHead_AndRefusedToTheRest()
+    public async Task Ac9_NewTrack_IsADraftFromAdministratorsTheUnitsResponsibleHrAndTheUnitsHead_AndRefusedToTheRest()
     {
         var org = await fixture.OrgAsync();
         var direction = await org.Admin.MakeDirectionAsync();
@@ -28,8 +28,8 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
         var byHeadAbove = await CreateTrackAsync(org.DepartmentHead.Client, org.Team.Id, direction.Id);
         var byPlain = await CreateTrackAsync(org.Plain.Client, org.Team.Id, direction.Id);
 
-        byAdmin.Expect(HttpStatusCode.Created).Json!["status"]!.GetValue<string>().Should().Be("Active");
-        byHr.Expect(HttpStatusCode.Created).Json!["status"]!.GetValue<string>().Should().Be("Active");
+        byAdmin.Expect(HttpStatusCode.Created).Json!["status"]!.GetValue<string>().Should().Be("Draft", "a track is approved once it has levels with positions");
+        byHr.Expect(HttpStatusCode.Created).Json!["status"]!.GetValue<string>().Should().Be("Draft");
         byHead.Expect(HttpStatusCode.Created).Json!["status"]!.GetValue<string>().Should().Be("Draft");
         byHead.Json!["ownerOrgUnitId"]!.GetValue<Guid>().Should().Be(org.Team.Id);
         byHead.Json["ownerOrgUnitName"]!.GetValue<string>().Should().Be(org.Team.Json!["name"]!.GetValue<string>());
@@ -93,8 +93,8 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
     {
         var org = await fixture.OrgAsync();
         var direction = await org.Admin.MakeDirectionAsync();
-        var active = (await CreateTrackAsync(org.Admin, org.Team.Id, direction.Id)).Expect(HttpStatusCode.Created);
-        var inactive = (await CreateTrackAsync(org.Admin, org.Team.Id, direction.Id)).Expect(HttpStatusCode.Created);
+        var active = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
+        var inactive = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
         (await org.Admin.PostAsync($"/api/v1/career/tracks/{inactive.Id}/deactivate", ifMatch: inactive.ETag)).Expect(HttpStatusCode.OK);
 
         (await org.Plain.Client.GetAsync($"/api/v1/career/tracks/{active.Id}")).Status.Should().Be(HttpStatusCode.OK);
@@ -114,7 +114,8 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
         var byHrOfAnotherUnit = await RenameAsync(org.SiblingHr.Client, byHead, Scenarios.Unique("Чужая"));
         var byHeadAbove = await RenameAsync(org.DepartmentHead.Client, byHead, Scenarios.Unique("Чужая"));
         var byHr = await RenameAsync(org.Hr.Client, byHead, Scenarios.Unique("HR"));
-        (await org.Hr.Client.PostAsync($"/api/v1/career/tracks/{draft.Id}/approve", ifMatch: byHr.ETag)).Expect(HttpStatusCode.OK);
+        await org.Admin.MakeLevelAsync(draft.Id);
+        await org.Admin.ActivateAsync(draft, org.Team.Id, org.Hr.Client);
         var approved = (await org.Admin.GetAsync($"/api/v1/career/tracks/{draft.Id}")).Expect(HttpStatusCode.OK);
         var afterApproval = await RenameAsync(org.TeamHead.Client, approved, Scenarios.Unique("Поздно"));
         var visibleToOtherHr = await RenameAsync(org.SiblingHr.Client, approved, Scenarios.Unique("Чужая"));
@@ -165,15 +166,15 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
     {
         var org = await fixture.OrgAsync();
         var direction = await org.Admin.MakeDirectionAsync();
-        var active = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
+        var active = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
         var draft = (await CreateTrackAsync(org.TeamHead.Client, org.Team.Id, direction.Id)).Expect(HttpStatusCode.Created);
 
         var first = await org.Admin.MakeLevelAsync(active.Id);
         var second = await org.Hr.Client.MakeLevelAsync(active.Id);
         var ofDraft = await org.TeamHead.Client.MakeLevelAsync(draft.Id);
 
-        first.Json!["position"]!.GetValue<int>().Should().Be(1);
-        second.Json!["position"]!.GetValue<int>().Should().Be(2);
+        first.Json!["position"]!.GetValue<int>().Should().Be(2, "the active track already has the level that made it ready");
+        second.Json!["position"]!.GetValue<int>().Should().Be(3);
         second.Json["trackId"]!.GetValue<Guid>().Should().Be(active.Id);
         second.Json["directionId"]!.GetValue<Guid>().Should().Be(direction.Id);
         first.Json["status"]!.GetValue<string>().Should().Be("Active");
@@ -185,9 +186,9 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
     {
         var org = await fixture.OrgAsync();
         var direction = await org.Admin.MakeDirectionAsync();
-        var active = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
+        var active = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
         var draft = (await CreateTrackAsync(org.TeamHead.Client, org.Team.Id, direction.Id)).Expect(HttpStatusCode.Created);
-        var inactive = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
+        var inactive = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
         (await org.Admin.PostAsync($"/api/v1/career/tracks/{inactive.Id}/deactivate", ifMatch: inactive.ETag)).Expect(HttpStatusCode.OK);
 
         var headOnActive = await NewLevelAsync(org.TeamHead.Client, active.Id);
@@ -212,8 +213,8 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
     {
         var org = await fixture.OrgAsync();
         var direction = await org.Admin.MakeDirectionAsync();
-        var track = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
-        var other = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
+        var track = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
+        var other = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
         var level = await org.Admin.MakeLevelAsync(track.Id, "Старший");
 
         var duplicate = await org.Admin.PostAsync("/api/v1/career/levels", new { name = "СТАРШИЙ", trackId = track.Id });
@@ -237,7 +238,7 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
         var junior = await org.TeamHead.Client.MakeLevelAsync(draft.Id);
         var senior = await org.TeamHead.Client.MakeLevelAsync(draft.Id);
 
-        var approved = (await org.Hr.Client.PostAsync($"/api/v1/career/tracks/{draft.Id}/approve", ifMatch: draft.ETag)).Expect(HttpStatusCode.OK);
+        var approved = await org.Admin.ActivateAsync(draft, org.Team.Id, org.Hr.Client);
 
         (await org.Plain.Client.GetAsync($"/api/v1/career/levels/{junior.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Active");
         (await org.Plain.Client.GetAsync($"/api/v1/career/levels/{senior.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Active");
@@ -256,7 +257,7 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
         var refused = await org.Hr.Client.PostAsync($"/api/v1/career/tracks/{draft.Id}/approve", ifMatch: draft.ETag);
 
         refused.Status.Should().Be(HttpStatusCode.Conflict, refused.Body);
-        refused.Json!["detail"]!.GetValue<string>().Should().StartWith("Запись с таким названием уже есть");
+        refused.Json!["blockers"]!.AsArray().Select(blocker => blocker!["reason"]!.GetValue<string>()).Should().Contain("NameTaken");
         (await org.Admin.GetAsync($"/api/v1/career/tracks/{draft.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Draft");
         (await org.Admin.GetAsync($"/api/v1/career/levels/{byHead.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Draft");
         (await org.Admin.GetAsync($"/api/v1/career/levels/{byHr.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Draft");
@@ -270,9 +271,10 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
         var draft = (await CreateTrackAsync(org.TeamHead.Client, org.Team.Id, direction.Id)).Expect(HttpStatusCode.Created);
         var junior = await org.TeamHead.Client.MakeLevelAsync(draft.Id);
         var senior = await org.TeamHead.Client.MakeLevelAsync(draft.Id);
-        var deactivated = (await org.Admin.PostAsync($"/api/v1/career/tracks/{draft.Id}/deactivate", ifMatch: draft.ETag)).Expect(HttpStatusCode.OK);
+        await org.Admin.LinkLevelsAsync(draft.Id, org.Team.Id);
+        (await org.Admin.PostAsync($"/api/v1/career/tracks/{draft.Id}/deactivate", ifMatch: (await org.Admin.GetAsync($"/api/v1/career/tracks/{draft.Id}")).ETag)).Expect(HttpStatusCode.OK);
 
-        var activated = (await org.Hr.Client.PostAsync($"/api/v1/career/tracks/{draft.Id}/activate", ifMatch: deactivated.ETag)).Expect(HttpStatusCode.OK);
+        var activated = await org.Admin.ActivateAsync(draft, org.Team.Id, org.Hr.Client);
 
         (await org.Plain.Client.GetAsync($"/api/v1/career/levels/{junior.Id}")).Expect(HttpStatusCode.OK).Json!["status"]!.GetValue<string>().Should().Be("Active");
         (await org.Plain.Client.GetAsync($"/api/v1/career/levels/{senior.Id}")).Expect(HttpStatusCode.OK).Json!["status"]!.GetValue<string>().Should().Be("Active");
@@ -292,7 +294,7 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
         var refused = await org.Hr.Client.PostAsync($"/api/v1/career/tracks/{draft.Id}/activate", ifMatch: deactivated.ETag);
 
         refused.Status.Should().Be(HttpStatusCode.Conflict, refused.Body);
-        refused.Json!["detail"]!.GetValue<string>().Should().StartWith("Запись с таким названием уже есть");
+        refused.Json!["blockers"]!.AsArray().Select(blocker => blocker!["reason"]!.GetValue<string>()).Should().Contain("NameTaken");
         (await org.Admin.GetAsync($"/api/v1/career/tracks/{draft.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Inactive");
         (await org.Admin.GetAsync($"/api/v1/career/levels/{byHead.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Draft");
         (await org.Admin.GetAsync($"/api/v1/career/levels/{byHr.Id}")).Json!["status"]!.GetValue<string>().Should().Be("Draft");
@@ -310,6 +312,7 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
             levels.Add(await org.Admin.MakeLevelAsync(track.Id, name));
         }
 
+        track = await org.Admin.ActivateAsync(track, org.Team.Id);
         var reordered = (await org.Admin.PutAsync($"/api/v1/career/tracks/{track.Id}/level-order", new { levelIds = new[] { levels[2].Id, levels[0].Id } }, track.ETag)).Expect(HttpStatusCode.OK);
         (await LevelsOfAsync(org.Admin, track.Id)).Should().Equal("Три", "Один", "Два", "Четыре");
         var partial = (await org.Hr.Client.PutAsync($"/api/v1/career/tracks/{track.Id}/level-order", new { levelIds = new[] { levels[3].Id } }, reordered.ETag)).Expect(HttpStatusCode.OK);
@@ -328,6 +331,7 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
         var other = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
         var level = await org.Admin.MakeLevelAsync(track.Id);
         var foreign = await org.Admin.MakeLevelAsync(other.Id);
+        track = await org.Admin.ActivateAsync(track, org.Team.Id);
 
         var unknown = await org.Admin.PutAsync($"/api/v1/career/tracks/{track.Id}/level-order", new { levelIds = new[] { Guid.NewGuid() } }, track.ETag);
         var ofAnotherTrack = await org.Admin.PutAsync($"/api/v1/career/tracks/{track.Id}/level-order", new { levelIds = new[] { foreign.Id } }, track.ETag);
@@ -401,6 +405,7 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
         var first = await org.Admin.MakeLevelAsync(track.Id, "Я-первый");
         var second = await org.Admin.MakeLevelAsync(track.Id, "А-второй");
         await org.Admin.MakeLevelAsync(other.Id);
+        await org.Admin.ActivateAsync(track, org.Team.Id);
 
         var listed = (await org.Plain.Client.GetAsync($"/api/v1/career/levels?trackId={track.Id}")).Expect(HttpStatusCode.OK);
 
@@ -413,7 +418,7 @@ public sealed class TrackAndLevelTests(CareerHost fixture) : IClassFixture<Caree
         var org = await fixture.OrgAsync();
         var direction = await org.Admin.MakeDirectionAsync();
         var other = await org.Admin.MakeDirectionAsync();
-        var ofTeam = await org.Admin.MakeTrackAsync(org.Team.Id, direction.Id);
+        var ofTeam = await org.Admin.MakeActiveTrackAsync(org.Team.Id, direction.Id);
         var ofSibling = await org.Admin.MakeTrackAsync(org.Sibling.Id, direction.Id);
         var ofOther = await org.Admin.MakeTrackAsync(org.Team.Id, other.Id);
         (await org.Admin.PostAsync($"/api/v1/career/tracks/{ofSibling.Id}/deactivate", ifMatch: ofSibling.ETag)).Expect(HttpStatusCode.OK);

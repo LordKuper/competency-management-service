@@ -50,7 +50,7 @@ public sealed class MatrixAccessTests(CareerHost fixture) : IClassFixture<Career
             {
                 var version = (await kit.GetVersionAsync(reader.Client, id)).Expect(HttpStatusCode.OK);
                 version.Json!["entries"]!["levels"]!.AsArray().Should().HaveCount(2);
-                version.Json["entries"]!["scale"]!["points"]!.AsArray().Should().HaveCount(5);
+                version.Json["entries"]!["scales"]!.AsArray().Single()!["points"]!.AsArray().Should().HaveCount(5);
             }
         }
 
@@ -227,6 +227,56 @@ public sealed class MatrixAccessTests(CareerHost fixture) : IClassFixture<Career
             (await stranger.Client.GetAsync($"/api/v1/career/scales/{scale.Id}")).Status.Should().Be(HttpStatusCode.NotFound, stranger.User.Email);
             (await stranger.Client.GetAsync($"/api/v1/career/competencies/{kit.Critical.Id}")).Status.Should().Be(HttpStatusCode.NotFound, stranger.User.Email);
         }
+    }
+
+    [Fact]
+    public async Task Ac18_TheDraftTrackOfAVersionInWork_IsReadByTheSuperiorApprover_AndByNoOneOutsideTheRoute()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
+        var path = $"/api/v1/career/tracks/{kit.Track.Id}";
+
+        kit.Track.Json!["status"]!.GetValue<string>().Should().Be("Draft");
+        foreach (var reader in new[] { org.TeamHead, org.DepartmentHead, org.Hr })
+        {
+            (await reader.Client.GetAsync(path)).Status.Should().Be(HttpStatusCode.OK, reader.User.Email);
+        }
+
+        foreach (var stranger in new[] { org.Plain, org.SiblingHead, org.RootHead })
+        {
+            (await stranger.Client.GetAsync(path)).Status.Should().Be(HttpStatusCode.NotFound, stranger.User.Email);
+        }
+    }
+
+    [Fact]
+    public async Task Ac18_TheDraftTrackAndLevelsOfAVersionInWork_AreReadByTheSuperiorApproverWhoHoldsTheHrRole_AndByNoHrOutsideTheRoute()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
+        var superior = await org.Admin.GrantHrRoleAsync(fixture.Host, org.DepartmentHead);
+        var trackName = kit.Track.Json!["name"]!.GetValue<string>();
+        var levelIds = new[] { kit.Junior.Id, kit.Senior.Id };
+
+        (await superior.Client.GetAsync($"/api/v1/career/tracks/{kit.Track.Id}")).Status.Should().Be(HttpStatusCode.OK, "the superior approver reads the track of the version");
+        foreach (var levelId in levelIds)
+        {
+            (await superior.Client.GetAsync($"/api/v1/career/levels/{levelId}")).Status.Should().Be(HttpStatusCode.OK);
+        }
+
+        (await superior.Client.GetAsync($"/api/v1/career/tracks?q={Uri.EscapeDataString(trackName)}&pageSize=200")).Expect(HttpStatusCode.OK)
+            .ItemIds().Should().Equal(kit.Track.Id.ToString());
+        (await superior.Client.GetAsync($"/api/v1/career/levels?trackId={kit.Track.Id}&pageSize=200")).Expect(HttpStatusCode.OK)
+            .ItemIds().Should().BeEquivalentTo(levelIds.Select(levelId => levelId.ToString()));
+
+        var outsider = org.SiblingHr.Client;
+        (await outsider.GetAsync($"/api/v1/career/tracks/{kit.Track.Id}")).Status.Should().Be(HttpStatusCode.NotFound, "an HR of another unit is not on the route");
+        foreach (var levelId in levelIds)
+        {
+            (await outsider.GetAsync($"/api/v1/career/levels/{levelId}")).Status.Should().Be(HttpStatusCode.NotFound);
+        }
+
+        (await outsider.GetAsync($"/api/v1/career/tracks?q={Uri.EscapeDataString(trackName)}&pageSize=200")).Expect(HttpStatusCode.OK).ItemIds().Should().BeEmpty();
+        (await outsider.GetAsync($"/api/v1/career/levels?trackId={kit.Track.Id}&pageSize=200")).Expect(HttpStatusCode.OK).ItemIds().Should().BeEmpty();
     }
 
     [Fact]

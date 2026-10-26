@@ -19,7 +19,8 @@ namespace Competency.UserManagement;
 /// A new account is invited: it has no password and is e-mailed a link to set one. Administrators never set passwords: they send a registered account
 /// a password reset link instead, which leaves its password as it is. A repeated invitation and a reset link lock only the account row.
 /// Links are e-mailed after the change is committed and its locks released, and the response tells whether the mail server accepted them.
-/// Accounts are never deleted: blocking ends them. Blocking and a change of role or employee end the account's sessions.
+/// Accounts are never deleted: blocking ends them. Blocking and a change of roles or employee end the account's sessions.
+/// The HR role stays while the account's employee is the responsible HR of any unit, checked under the same tree lock that assigning an HR takes.
 /// </summary>
 internal static class UserEndpoints
 {
@@ -31,6 +32,11 @@ internal static class UserEndpoints
         "Ссылку для сброса пароля можно отправить только учётной записи, которая уже задала пароль, не заблокирована и привязана к работающему сотруднику или ни к кому.";
     private const string UnblockNeedsWorkingEmployee =
         "Нельзя разблокировать учётную запись, пока привязанный сотрудник не работает. Сначала верните сотрудника на работу или отвяжите от него учётную запись.";
+
+    /// <summary>
+    /// How many units the refusal to remove the HR role names before it only counts the rest.
+    /// </summary>
+    private const int HrUnitsNamed = 5;
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -78,10 +84,13 @@ internal static class UserEndpoints
         }
 
         var users = context.Set<AppUser>().AsNoTracking();
-        if (query.Role is { } role)
+        users = query.Role switch
         {
-            users = users.Where(user => user.Role == role);
-        }
+            UserRoleFilter.GlobalAdmin => users.Where(user => user.UserRoles.Any(role => role.RoleId == UserRoleIds.Of(UserRole.GlobalAdmin))),
+            UserRoleFilter.Hr => users.Where(user => user.UserRoles.Any(role => role.RoleId == UserRoleIds.Of(UserRole.Hr))),
+            UserRoleFilter.User => users.Where(user => !user.UserRoles.Any()),
+            _ => users,
+        };
 
         if (query.IsBlocked is { } isBlocked)
         {
@@ -141,6 +150,7 @@ internal static class UserEndpoints
         UserManager<AppUser> users,
         AppDbContext context,
         IEmployeeDirectory employees,
+        IAuditWriter audit,
         AccountMail mail,
         IOptions<AccountLinkOptions> links,
         TimeProvider time,
@@ -167,9 +177,14 @@ internal static class UserEndpoints
             }
         }
 
-        var user = new AppUser { Role = request.Role, EmployeeId = request.EmployeeId };
+        var user = new AppUser { EmployeeId = request.EmployeeId };
         user.SetEmail(request.Email.Trim());
         var result = await users.CreateAsync(user);
+        if (result.Succeeded)
+        {
+            result = await users.SetRolesAsync(user, request.Roles, audit, context);
+        }
+
         if (!result.Succeeded)
         {
             return Rejections.From(result);
@@ -179,7 +194,7 @@ internal static class UserEndpoints
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         var mailSent = await mail.SendInvitationAsync(user, token, isRepeat: false, cancellationToken);
-        var created = await RespondAsync(user, employees, response, cancellationToken) with { MailSent = mailSent };
+        var created = await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken) with { MailSent = mailSent };
         return TypedResults.Created($"{Route}/{created.Id}", created);
     }
 
@@ -220,7 +235,7 @@ internal static class UserEndpoints
 
         await transaction.CommitAsync(cancellationToken);
         var mailSent = await mail.SendInvitationAsync(user, token, isRepeat: true, cancellationToken);
-        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken) with { MailSent = mailSent });
+        return TypedResults.Ok(await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken) with { MailSent = mailSent });
     }
 
     private static async Task<Results<Ok<UserResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateAsync(
@@ -230,6 +245,8 @@ internal static class UserEndpoints
         UserManager<AppUser> users,
         AppDbContext context,
         IEmployeeDirectory employees,
+        IHrAssignments hrAssignments,
+        IAuditWriter audit,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -259,26 +276,41 @@ internal static class UserEndpoints
             }
         }
 
-        if (user.IsActiveAdministrator() && request.Role != UserRole.GlobalAdmin
+        var rolesBefore = await users.RolesAsync(user);
+        if (user.IsActiveAdministrator(rolesBefore) && !request.Roles.Contains(UserRole.GlobalAdmin)
             && !await context.HasOtherAsync(user.Id, cancellationToken))
         {
             return Rejection.Conflict(ActiveAdministrators.LastOneMessage);
         }
 
-        ifMatch.ApplyTo(context, user);
-        var endsSessions = user.Role != request.Role || user.EmployeeId != request.EmployeeId;
-        user.SetEmail(request.Email.Trim());
-        user.Role = request.Role;
-        user.EmployeeId = request.EmployeeId;
+        if (rolesBefore.Contains(UserRole.Hr) && !request.Roles.Contains(UserRole.Hr)
+            && request.EmployeeId is { } boundEmployeeId
+            && await hrAssignments.UnitNamesAsync(boundEmployeeId, cancellationToken) is { Count: > 0 } hrUnits)
+        {
+            return Rejection.Conflict(HrRoleKeptMessage(hrUnits));
+        }
 
-        var result = endsSessions ? await users.UpdateSecurityStampAsync(user) : await users.UpdateAsync(user);
+        ifMatch.ApplyTo(context, user);
+        if (!request.Roles.ToHashSet().SetEquals(rolesBefore) || request.EmployeeId != user.EmployeeId)
+        {
+            user.EndSessions();
+        }
+
+        user.SetEmail(request.Email.Trim());
+        user.EmployeeId = request.EmployeeId;
+        var result = await users.UpdateAsync(user);
+        if (result.Succeeded)
+        {
+            result = await users.SetRolesAsync(user, request.Roles, audit, context);
+        }
+
         if (!result.Succeeded)
         {
             return Rejections.From(result);
         }
 
         await transaction.CommitAsync(cancellationToken);
-        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken));
+        return TypedResults.Ok(await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken));
     }
 
     private static async Task<Results<Ok<UserResponse>, NotFound, ProblemHttpResult>> BlockAsync(
@@ -297,7 +329,8 @@ internal static class UserEndpoints
             return TypedResults.NotFound();
         }
 
-        if (user.IsActiveAdministrator() && !await context.HasOtherAsync(user.Id, cancellationToken))
+        var roles = await users.RolesAsync(user);
+        if (user.IsActiveAdministrator(roles) && !await context.HasOtherAsync(user.Id, cancellationToken))
         {
             return Rejection.Conflict(ActiveAdministrators.LastOneMessage);
         }
@@ -311,7 +344,7 @@ internal static class UserEndpoints
         }
 
         await transaction.CommitAsync(cancellationToken);
-        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken));
+        return TypedResults.Ok(await RespondAsync(user, roles, employees, response, cancellationToken));
     }
 
     private static async Task<Results<Ok<UserResponse>, NotFound, ProblemHttpResult>> UnblockAsync(
@@ -345,7 +378,7 @@ internal static class UserEndpoints
         }
 
         await transaction.CommitAsync(cancellationToken);
-        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken));
+        return TypedResults.Ok(await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken));
     }
 
     /// <summary>
@@ -388,16 +421,27 @@ internal static class UserEndpoints
 
         await transaction.CommitAsync(cancellationToken);
         var mailSent = await mail.SendPasswordResetAsync(user, token, requestId: null, cancellationToken);
-        return TypedResults.Ok(await RespondAsync(user, employees, response, cancellationToken) with { MailSent = mailSent });
+        return TypedResults.Ok(await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken) with { MailSent = mailSent });
+    }
+
+    /// <summary>
+    /// Why the HR role stays: the account's employee is the responsible HR of the named units, the first few of them by name.
+    /// </summary>
+    private static string HrRoleKeptMessage(IReadOnlyList<string> unitNames)
+    {
+        var named = string.Join(", ", unitNames.Take(HrUnitsNamed).Select(name => $"«{name}»"));
+        var rest = unitNames.Count > HrUnitsNamed ? $" и ещё {unitNames.Count - HrUnitsNamed}" : string.Empty;
+        return $"Роль «HR» нельзя снять: сотрудник учётной записи закреплён ответственным HR подразделений {named}{rest}. Сначала закрепите за ними другого HR.";
     }
 
     private static async Task<UserResponse> RespondAsync(
         AppUser user,
+        IReadOnlyList<UserRole> roles,
         IEmployeeDirectory employees,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
         response.SetETag(user.Version);
-        return UserResponse.From(user, await employees.NameAsync(user.EmployeeId, cancellationToken));
+        return UserResponse.From(user, roles, await employees.NameAsync(user.EmployeeId, cancellationToken));
     }
 }

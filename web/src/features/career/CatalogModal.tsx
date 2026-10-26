@@ -14,6 +14,10 @@ interface CatalogModalProps {
   fields: readonly string[];
   /** Shown instead of the generic alert when the save is refused as a conflict with no field to blame. */
   conflictNotice?: string;
+  /** Width of the dialog when its content needs more than the usual one. */
+  width?: number | string;
+  /** The form holds changes the dialog cannot see by itself, such as an edited list of levels. */
+  isUnsaved?: boolean;
   onClose: () => void;
   children: ReactNode;
 }
@@ -35,6 +39,8 @@ export function CatalogModal({
   error,
   fields,
   conflictNotice,
+  width,
+  isUnsaved,
   onClose,
   children,
 }: CatalogModalProps) {
@@ -47,9 +53,9 @@ export function CatalogModal({
     <AppModal
       open
       title={title}
-      onCancel={(event) => {
-        if (!event.defaultPrevented) onClose();
-      }}
+      width={width}
+      isUnsaved={isUnsaved}
+      onCancel={onClose}
       footer={null}
     >
       <Space orientation="vertical" size="large" style={{ display: "flex" }}>

@@ -8,7 +8,7 @@ namespace Competency.UserManagement;
 
 /// <summary>
 /// A local account that signs in with an e-mail address and password.
-/// An account may be bound to one employee, whatever its role, and one employee has at most one account.
+/// An account holds any set of roles and may be bound to one employee, whatever its roles, and one employee has at most one account.
 /// Accounts are never deleted: blocking ends them.
 /// The properties Identity maintains (hash, stamps, lockout) and the e-mailed link are deliberately not audited.
 /// </summary>
@@ -28,9 +28,6 @@ internal sealed class AppUser : IdentityUser<Guid>, IVersioned
     /// </summary>
     [Audited]
     public override string? Email { get; set; }
-
-    [Audited]
-    public UserRole Role { get; set; }
 
     /// <summary>
     /// Whether an administrator has blocked the account; a blocked account cannot sign in and its sessions end.
@@ -62,6 +59,11 @@ internal sealed class AppUser : IdentityUser<Guid>, IVersioned
     /// An account without a password has been invited and has not yet set one through its invitation link; it cannot sign in.
     /// </summary>
     public bool IsInvited => PasswordHash is null;
+
+    /// <summary>
+    /// The account's role rows, for queries only: it is never loaded with the account, and roles change only through <see cref="AccountRoles.SetRolesAsync"/>.
+    /// </summary>
+    public ICollection<IdentityUserRole<Guid>> UserRoles { get; set; } = [];
 
     /// <summary>
     /// Sets the e-mail and the Identity user name to the same value: the user name is internal, kept so that Identity's own

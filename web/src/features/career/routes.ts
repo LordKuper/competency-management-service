@@ -5,7 +5,13 @@ import { MatrixPage } from "./MatrixPage";
 
 /** Every signed-in user opens the career model, after the organisation structure. */
 export const navItems: NavItem[] = [
-  { key: "career", label: "Карьерная модель", path: "/career", order: 20 },
+  {
+    key: "career",
+    label: "Карьерная модель",
+    path: "/career",
+    order: 20,
+    group: "reference",
+  },
 ];
 
 /** The section page with its tabs, and the page of one matrix. */

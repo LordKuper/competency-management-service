@@ -13,17 +13,17 @@ internal sealed class CareerCompetency : CatalogEntry
     [Audited]
     public string? Description { get; set; }
 
+    /// <summary>
+    /// Examples of what shows the competency, which every matrix that uses it shows with it.
+    /// </summary>
     [Audited]
-    public Guid CategoryId { get; set; }
+    public string? EvidenceExamples { get; set; }
 
     /// <summary>
     /// The direction whose matrices may use the competency; null for a general competency any matrix may use.
     /// </summary>
     [Audited]
     public Guid? DirectionId { get; set; }
-
-    [Audited]
-    public CompetencyType Type { get; set; }
 
     [Audited]
     public Guid ScaleId { get; set; }

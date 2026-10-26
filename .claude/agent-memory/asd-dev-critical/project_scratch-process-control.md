@@ -1,9 +1,11 @@
 ---
 name: scratch-process-control
-description: Running and stopping scratch API/Vite/compose processes on this Windows box without hitting the user's stack - kill by PID, never `down -v` on the dev compose, scratch-only volume, content root of dotnet dll, closed-port timing, background pattern
+description: impl-test / tester only - running and stopping scratch API/Vite/compose processes on this Windows box without hitting the user's stack - kill by PID, never `down -v` on the dev compose, scratch-only volume, content root of dotnet dll, closed-port timing, background pattern
 metadata:
   type: project
 ---
+
+**impl-test / tester only.** Impl starts no scratch API, Vite or database; it verifies by build, lint, `ef migrations has-pending-model-changes` and `check:api` (custom-coding-rules "Verification depth in impl"). The docker safety bullets below hold for anyone who does touch the stack.
 
 - **Never run `docker compose ... down -v` (or `docker volume rm`/`prune`) against `deploy/dev/docker-compose.yml` or `deploy/`.** The dev compose pins its data volume by a fixed name (`competency-dev-pgdata`), so `-p <other project>` does NOT isolate it: `up` attaches to the user's real dev database and `down -v` deletes it. Remove only volumes this run created, by their exact scratch name.
 - **Scratch database from the dev compose file**: write a scratch-only override in the scratchpad (never in the repo) that renames the volume, and pass both files:
@@ -15,4 +17,4 @@ metadata:
 - `-e`/heredoc node snippets with `\\` lose a backslash; put such checks in a `.cjs` file via the write tool.
 
 **Why:** a `-p` project name looked like isolation but the compose file hard-codes the volume name, so a documented cleanup step would have wiped the user's dev data; the other facts each cost a failed run or risked the user's processes.
-**How to apply:** any scratch run of the API, Vite or the dev compose stack; read the first two bullets before touching docker.
+**How to apply:** a scratch run of the API, Vite or the dev compose stack when dispatched as impl-test / tester, never in impl; read the first two bullets before touching docker.

@@ -10,6 +10,7 @@
 ## API surface used in project
 - `new PostgreSqlBuilder("postgres:18.6-trixie").Build()` — **образ передаётся явно** (конструктор с `string image` или `IImage`); example:
   `var pg = new PostgreSqlBuilder("postgres:18.6-trixie").Build(); await pg.StartAsync(); var cs = pg.GetConnectionString();`
+- `WithCommand("-c", "max_connections=500")` — параметр сервера в команде контейнера. `WithCommand` добавляет аргументы (`AppendEnumerable`) к собственным `-c` флагам модуля, а не заменяет их: `fsync=off`, `full_page_writes=off`, `synchronous_commit=off` сохраняются.
 - Значения по умолчанию: БД `postgres`, пользователь `postgres`, пароль `postgres`, порт `5432`; переопределение — `WithDatabase`, `WithUsername`, `WithPassword` (ставят `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD`); `WithSsl(cert, key[, ca])`.
 - `GetConnectionString()` возвращает строку Npgsql (`Host`, `Port` — отображённый публичный порт, `Database`, `Username`, `Password`). `ExecScriptAsync(string, ct)` выполняет SQL-скрипт через `psql` в контейнере.
 - Ожидание готовности — встроенная стратегия на `pg_isready --host localhost --dbname <db> --username <user>` (если в образе нет `pg_isready` — `NotSupportedException`); `Build()` требует непустой пароль.
@@ -30,10 +31,10 @@
 - 4.11.0: breaking только для CosmosDb (не используется). 4.14.0: исправлена уязвимость SSH.NET через обновление зависимостей.
 
 ## Project conventions
-- Образ тестов совпадает с боевым: `postgres:18.6-trixie` (`postgres-image-18.6-trixie.md`); версия тега берётся из одного места и обновляется вместе с образом `db`.
+- Образ тестов совпадает с боевым: `postgres:18.6-trixie` (`postgres-image-18.6-trixie.md`); версия тега берётся из одного места и обновляется вместе с образом `db`. Параметры сервера у тестового контейнера свои: флаги модуля и `max_connections` (ниже).
 - Контейнер поднимается на сборочном/CI-хосте **вне контура** (Docker daemon + доступ в интернет для pull образа, stack.html); в контуре тесты не запускаются.
 - Контейнер — один на коллекцию/сборку через fixture xunit (`xunit.v3-4.0.1.md`, `AssemblyFixture` / `ICollectionFixture`), строка подключения из `GetConnectionString()` подставляется в конфигурацию приложения/DbContext.
-- Как сделано в `tests/Competency.Tests`: один `PostgreSqlContainer` на прогон (`TestEnvironment`, `AssemblyFixture`); каждому запускаемому хосту API — своя пустая база (`CREATE DATABASE`), миграции и первого администратора применяет сам хост при старте. API стартует дочерним процессом из сборки `Competency.Api` (настоящие Kestrel и middleware), а не через `WebApplicationFactory`; строка подключения передаётся переменной `ConnectionStrings__Default` с `GSS Encryption Mode=Disable`.
+- Как сделано в `tests/Competency.Tests`: один `PostgreSqlContainer` на прогон (`TestEnvironment`, `AssemblyFixture`); каждому запускаемому хосту API — своя пустая база (`CREATE DATABASE`), миграции и первого администратора применяет сам хост при старте. API стартует дочерним процессом из сборки `Competency.Api` (настоящие Kestrel и middleware), а не через `WebApplicationFactory`; строка подключения передаётся переменной `ConnectionStrings__Default` с `GSS Encryption Mode=Disable`. Контейнер стартует с `max_connections=500` (`WithCommand`, константа `ConnectionLimitSetting` в `TestEnvironment`) вместо умолчательных 100: хосты параллельно идущих классов стартуют одновременно и держат соединения пулов, и при 100 хост или тест падает с `53300: sorry, too many clients already`.
 - Не мокать БД: доступ к данным (FTS `russian`, `pg_trgm`, `SKIP LOCKED`, миграции) проверяется на реальном PostgreSQL 18.6.
 
 ## Known issues and workarounds

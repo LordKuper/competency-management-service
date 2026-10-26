@@ -74,14 +74,13 @@ public sealed class ProcessRoleTests(CareerHost fixture) : IClassFixture<CareerH
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var unit = await org.Admin.CreateUnitAsync(org.Root.Id);
-        var other = await org.Admin.CreateUserAsync();
-        var session = await other.SignInAsync(fixture.Host);
-        (await org.Admin.PutAsync($"/api/v1/career/org-units/{unit.Id}/hr", new { userId = other.Id })).Expect(HttpStatusCode.NoContent);
-        (await MeAsync(new Member(other, session))).Hr.Should().Equal(unit.Id);
+        var other = await org.Admin.HrCandidateAsync(fixture.Host, org.Team.Id);
+        (await org.Admin.AssignHrAsync(unit.Id, other.EmployeeId)).Expect(HttpStatusCode.NoContent);
+        (await MeAsync(other)).Hr.Should().Equal(unit.Id);
 
         (await org.Admin.PostAsync($"/api/v1/org-units/{unit.Id}/deactivate", ifMatch: unit.ETag)).Expect(HttpStatusCode.OK);
 
-        (await MeAsync(new Member(other, session))).Hr.Should().BeEmpty();
+        (await MeAsync(other)).Hr.Should().BeEmpty();
     }
 
     [Fact]

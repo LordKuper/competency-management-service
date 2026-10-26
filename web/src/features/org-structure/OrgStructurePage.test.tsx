@@ -72,7 +72,7 @@ const searchCalls = () =>
 
 function serve(searchAnswer: () => Response | Promise<Response>) {
   fakeApi.on("GET /api/v1/auth/me", () =>
-    Response.json({ id: "account", email: "user@test.local", role: "User" }),
+    Response.json({ id: "account", email: "user@test.local", roles: [] }),
   );
   fakeApi.on("GET /api/v1/org-units/tree", () => Response.json(UNITS));
   for (const { id } of UNITS) {

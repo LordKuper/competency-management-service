@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,8 +23,8 @@ internal static class CatalogDraftEndpoints
         .WithName("ListCatalogDrafts");
 
     /// <summary>
-    /// The drafts, oldest first, optionally of one kind or of one unit; only a track has a unit. The filters apply after every draft is
-    /// loaded, because drafts wait for approval and the list stays short.
+    /// The drafts, oldest first, optionally of one kind or of one unit; only a track and a shared block that applies to a unit have one.
+    /// The filters apply after every draft is loaded, because drafts wait for approval and the list stays short.
     /// </summary>
     private static async Task<Ok<List<CatalogDraftResponse>>> ListAsync(
         [FromQuery(Name = "kind")] CatalogEntryKind? kind,
@@ -45,14 +46,17 @@ internal static class CatalogDraftEndpoints
             .. await DraftsAsync(
                 context.Set<CareerTrack>().WhereIf(!viewer.IsAdmin, track => hrUnitIds.Contains(track.OwnerOrgUnitId)),
                 cancellationToken),
-            .. await DraftsAsync(context.Set<CompetencyCategory>(), cancellationToken),
             .. await DraftsAsync(context.Set<CareerCompetency>(), cancellationToken),
             .. await DraftsAsync(context.Set<CompetencyScale>(), cancellationToken),
+            .. await DraftsAsync(context.Set<CompetencyBlock>(), cancellationToken),
         ];
 
-        var drafts = all.Where(draft => (kind is null || KindOf(draft) == kind) && (orgUnitId is null || draft.UnitId == orgUnitId)).ToList();
-        var unitNames = await store.UnitNamesAsync(drafts.Select(draft => draft.UnitId), cancellationToken);
+        var drafts = all.Where(draft => (kind is null || KindOf(draft) == kind) && (orgUnitId is null || draft.ListedUnitId == orgUnitId)).ToList();
+        var unitNames = await store.UnitNamesAsync(drafts.Select(draft => draft.ListedUnitId), cancellationToken);
         var authorNames = await store.UserNamesAsync(drafts.Select(draft => draft.AuthorId), cancellationToken);
+        var trackIds = drafts.OfType<CareerTrack>().Select(track => track.Id).ToList();
+        var readiness = trackIds.Count == 0 ? new Dictionary<Guid, TrackReadiness>() : await store.ReadinessAsync(trackIds, cancellationToken);
+
         return TypedResults.Ok(drafts
             .OrderBy(draft => draft.CreatedAt)
             .ThenBy(draft => draft.Id)
@@ -60,12 +64,13 @@ internal static class CatalogDraftEndpoints
                 KindOf(draft),
                 draft.Id,
                 draft.Name,
-                draft.UnitId,
-                draft.UnitId is { } unitId ? unitNames.GetValueOrDefault(unitId) : null,
+                draft.ListedUnitId,
+                draft.ListedUnitId is { } unitId ? unitNames.GetValueOrDefault(unitId) : null,
                 draft.AuthorId,
                 draft.AuthorId is { } authorId ? authorNames.GetValueOrDefault(authorId) : null,
                 draft.CreatedAt,
-                draft.Version))
+                draft.Version,
+                readiness.TryGetValue(draft.Id, out var trackReadiness) ? TrackReadinessResponse.Of(trackReadiness) : null))
             .ToList());
     }
 
@@ -73,12 +78,13 @@ internal static class CatalogDraftEndpoints
         where T : CatalogEntry =>
         source.AsNoTracking().Where(entry => entry.Status == CatalogStatus.Draft).ToListAsync(cancellationToken);
 
-    private static CatalogEntryKind KindOf(CatalogEntry entry) => entry switch
+    internal static CatalogEntryKind KindOf(CatalogEntry entry) => entry switch
     {
         CareerDirection => CatalogEntryKind.Direction,
         CareerTrack => CatalogEntryKind.Track,
-        CompetencyCategory => CatalogEntryKind.Category,
         CareerCompetency => CatalogEntryKind.Competency,
-        _ => CatalogEntryKind.Scale,
+        CompetencyScale => CatalogEntryKind.Scale,
+        CompetencyBlock => CatalogEntryKind.Block,
+        _ => throw new UnreachableException($"No catalogue kind lists entries of type {entry.GetType().Name}."),
     };
 }

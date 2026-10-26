@@ -15,10 +15,14 @@ Phase-scoped rules go elsewhere — design constraints to `custom-design-rules.m
 
 - Agents never run destructive Docker commands (`down -v`, `volume rm`, `volume prune`) against the user's dev stack or volumes with a fixed name. Temporary runs use only their own named volumes and delete them by exact name.
 
-## User-visible texts approval
+## Agent memory edits
 
-- A sprint with user-visible texts (emails, hints, headings, labels) lists those texts and the brand elements in plan for user approval before impl starts, not after the first smoke check. (`002-mail-invite-password-reset#P-1`)
+- Agents change an existing memory file with a targeted edit and never overwrite a memory file whole. (`002-mail-invite-password-reset#A-2`)
 
 ## No financial data
 
 - The system stores no financial information: salaries, salary ranges, budgets. No field, column, endpoint or screen carries it.
+
+## No backward compatibility before 1.0
+
+- Until release 1.0 the project keeps no API backward compatibility: the contract version stays 1.0.0 and is not bumped before release; obsolete surface is deleted, never marked deprecated. The DB schema changes by incremental EF migrations, with data transfer where the working development database would otherwise fail to migrate or lose meaning; right before release the migrations are squashed into one InitialCreate and every database is recreated (`docs/architecture/stack.html` «Контракт из кода»). (`004-role-desktop-user-journeys#AC-58`, `#AC-63`)

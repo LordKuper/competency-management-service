@@ -11,7 +11,7 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// The API of career tracks. A track belongs to one unit; track names are unique within their direction. Whoever may edit a track puts its
-/// levels in order. Deleting a track deletes its levels.
+/// levels in order. Deleting a track deletes its levels and their links to positions.
 /// </summary>
 internal static class CareerTrackEndpoints
 {
@@ -22,7 +22,7 @@ internal static class CareerTrackEndpoints
     private const string LevelsField = "levelIds";
     private const string InUseMessage = "Трек используют матрицы — удалить нельзя";
 
-    private static readonly CatalogKind<CareerTrack, CareerTrackResponse> Kind = new(
+    internal static readonly CatalogKind<CareerTrack, CareerTrackResponse> Kind = new(
         "CareerTrack",
         (track, names, viewer) => CareerTrackResponse.From(track, names.GetValueOrDefault(track.OwnerOrgUnitId), viewer),
         track => other => other.DirectionId == track.DirectionId);
@@ -34,7 +34,7 @@ internal static class CareerTrackEndpoints
         group.MapPost(string.Empty, CreateAsync).WithName("CreateCareerTrack").ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        group.MapEntryEndpoints(Kind, mapRename: true);
+        group.MapEntryEndpoints(Kind, Route, mapRename: true);
         group.MapPut("/{id:guid}/level-order", OrderLevelsAsync).WithName("OrderCareerTrackLevels").ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
@@ -42,7 +42,7 @@ internal static class CareerTrackEndpoints
     }
 
     /// <summary>
-    /// A track goes with its levels, unless a matrix is built on it.
+    /// A track goes with its levels and their links to positions, unless a matrix is built on it.
     /// </summary>
     private static async Task<string?> RemoveLevelsAsync(
         CareerTrack track,
@@ -58,6 +58,7 @@ internal static class CareerTrackEndpoints
             return InUseMessage;
         }
 
+        context.RemoveRange(await context.Set<CareerLevelPosition>().Where(link => link.TrackId == id).ToListAsync(cancellationToken));
         context.RemoveRange(await context.Set<CareerLevel>().Where(level => level.TrackId == id).ToListAsync(cancellationToken));
         return null;
     }
@@ -128,11 +129,15 @@ internal static class CareerTrackEndpoints
             cancellationToken);
     }
 
+    /// <summary>
+    /// Creates a draft track, also for its keepers: a new track has no levels yet, and a track becomes active only once every level has a position.
+    /// </summary>
     private static async Task<Results<Created<CareerTrackResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
         NewCareerTrackRequest request,
         AppDbContext context,
         CatalogStore store,
         IEmployeeDirectory employees,
+        CareerMail mail,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -149,7 +154,7 @@ internal static class CareerTrackEndpoints
         }
 
         var viewer = await store.ViewerAsync(cancellationToken);
-        if (viewer.StatusOfNew(request.OwnerOrgUnitId) is not { } status)
+        if (viewer.StatusOfNew(request.OwnerOrgUnitId) is null)
         {
             return Rejection.Forbidden();
         }
@@ -163,7 +168,7 @@ internal static class CareerTrackEndpoints
         {
             Name = request.TrimmedName(),
             OwnerOrgUnitId = request.OwnerOrgUnitId,
-            Status = status,
+            Status = CatalogStatus.Draft,
             AuthorId = viewer.UserId,
             DirectionId = request.DirectionId,
         };
@@ -174,6 +179,7 @@ internal static class CareerTrackEndpoints
 
         context.Add(track);
         var created = await CatalogEndpoints.CommitAsync(track, Kind, viewer, store, transaction, response, cancellationToken);
+        await mail.DraftCreatedAsync(track, viewer, cancellationToken);
         return TypedResults.Created($"{Route}/{track.Id}", created);
     }
 }

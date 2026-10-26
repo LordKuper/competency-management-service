@@ -65,6 +65,15 @@ public interface IEmployeeDirectory
     Task<IReadOnlyList<OrgUnitStatus>> FindHeadedUnitsAsync(Guid employeeId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Reads the whole organization structure in a fixed number of queries, for callers that check many units at once and would
+    /// otherwise query per unit. The snapshot is remembered for the rest of the request; taking the tree lock through this directory
+    /// forgets it, so a caller holding the lock reads one the lock protects. The caller's own changes do not refresh it.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The snapshot, with the module's tree and position rules.</returns>
+    Task<OrgSnapshot> FindOrgSnapshotAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Starts a transaction and takes the lock every employee and unit change holds, until the transaction ends, so that what the caller
     /// then reads about employees, such as whether one works, cannot change before the caller commits. A caller that also locks the
     /// active administrators must take this lock first, as dismissing an employee does, or the two could wait for each other.

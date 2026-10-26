@@ -1,6 +1,7 @@
 import type { FormInstance } from "antd";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { showFieldErrors } from "./apiErrors";
+import { ModalSavedContext } from "./modalSaved";
 
 /**
  * The submit handler of a form whose save is asynchronous: it marks the form as submitting while the save runs and
@@ -11,11 +12,13 @@ export function useFormSubmit<TValues>(
   onSubmit: (values: TValues) => Promise<unknown>,
 ) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const markSaved = useContext(ModalSavedContext);
 
   async function submit(values: TValues) {
     setIsSubmitting(true);
     try {
       await onSubmit(values);
+      markSaved();
     } catch (error) {
       showFieldErrors(form, error);
     } finally {

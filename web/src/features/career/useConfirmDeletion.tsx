@@ -8,7 +8,7 @@ import { invalidateCatalogs } from "./catalogApi";
 import { invalidateMatrices } from "./matrixApi";
 
 interface Deletion {
-  /** The kind of record in the accusative: «направление», «матрицу». */
+  /** The kind of record in the accusative: «область», «матрицу». */
   kind: string;
   name: string;
   /** Extra line under the question. */
@@ -24,6 +24,7 @@ const KIND_LABELS: Record<Blocker["kind"], string> = {
   Competency: "Компетенция",
   CompetencyVersion: "Версия компетенции",
   Matrix: "Матрица",
+  Block: "Общий блок",
 };
 
 const PLURAL = new Intl.PluralRules("ru-RU");

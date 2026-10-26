@@ -8,11 +8,10 @@ internal sealed record CompetencyVersionResponse(
     int Number,
     string Name,
     string? Description,
-    Guid CategoryId,
     Guid? DirectionId,
-    CompetencyType Type,
     Guid ScaleId,
     CatalogStatus Status,
     Guid? ChangedById,
     string? ChangedByName,
-    DateTimeOffset ChangedAt);
+    DateTimeOffset ChangedAt,
+    string? EvidenceExamples = null);

@@ -12,7 +12,8 @@ export type MatrixVersion = Schemas["MatrixVersionResponse"];
 export type MatrixVersionStatus = Schemas["MatrixVersionStatus"];
 export type MatrixContent = Schemas["MatrixContent"];
 export type MatrixRequirement = Schemas["MatrixRequirement"];
-export type MatrixBlock = Schemas["MatrixBlock"];
+export type MatrixPosition = Schemas["MatrixPositionResponse"];
+export type MatrixSharedBlockEntry = Schemas["MatrixSharedBlockEntry"];
 export type MatrixAction = Schemas["MatrixAction"];
 export type MatrixHistory = Schemas["MatrixHistoryResponse"];
 export type MatrixDecision = Schemas["MatrixDecisionResponse"];
@@ -20,6 +21,8 @@ export type MatrixDiff = Schemas["MatrixDiffResponse"];
 export type MatrixChange = Schemas["MatrixChange"];
 export type Approval = Schemas["ApprovalResponse"];
 export type NewMatrix = Schemas["NewMatrixRequest"];
+export type MatrixProblem = Schemas["MatrixProblem"];
+export type MatrixPublication = Schemas["MatrixPublicationResponse"];
 
 /** Cache key prefix of every matrix query, so one invalidation rereads whatever a transition touched. */
 export const matrixQueryKey = [...careerQueryKey, "matrices"] as const;
@@ -37,6 +40,7 @@ export interface MatrixListParams {
   orgUnitId?: string;
   directionId?: string;
   trackId?: string;
+  positionId?: string;
   page: number;
   pageSize: number;
 }
@@ -47,6 +51,27 @@ export function matricesQuery(params: MatrixListParams) {
     queryFn: async () =>
       unwrap(
         await api.GET("/api/v1/career/matrices", { params: { query: params } }),
+      ),
+  });
+}
+
+/** The positions a unit may build a position matrix for, with the track each is already linked to; searched on the server. */
+export function matrixPositionsQuery(
+  orgUnitId: string,
+  q: string,
+  page = 1,
+  pageSize = 20,
+) {
+  return queryOptions({
+    queryKey: [...matrixQueryKey, "positions", orgUnitId, q, page, pageSize],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/org-units/{id}/matrix-positions", {
+          params: {
+            path: { id: orgUnitId },
+            query: { q: q || undefined, page, pageSize },
+          },
+        }),
       ),
   });
 }
@@ -130,6 +155,48 @@ export function matrixDiffQuery(versionId: string, number: number) {
   });
 }
 
+/** Everything that keeps a version from being sent or published, read from the saved draft. */
+export function matrixCompletenessQuery(versionId: string) {
+  return queryOptions({
+    queryKey: [...matrixQueryKey, "completeness", versionId],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/matrix-versions/{id}/completeness", {
+          params: { path: { id: versionId } },
+        }),
+      ),
+  });
+}
+
+/** What the version changes against the published one; for a first version the other side is empty. */
+export function matrixChangesQuery(versionId: string) {
+  return queryOptions({
+    queryKey: [...matrixQueryKey, "changes", versionId],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/career/matrix-versions/{id}/changes", {
+          params: { path: { id: versionId } },
+        }),
+      ),
+  });
+}
+
+/** Reads what the actions of a version would publish with it, with the actions that publish. */
+export async function readMatrixPublication(versionId: string) {
+  return unwrap(
+    await api.GET("/api/v1/career/matrix-versions/{id}/publication", {
+      params: { path: { id: versionId } },
+    }),
+  );
+}
+
+export function matrixPublicationQuery(versionId: string) {
+  return queryOptions({
+    queryKey: [...matrixQueryKey, "publication", versionId],
+    queryFn: () => readMatrixPublication(versionId),
+  });
+}
+
 /** Column filters of the approvals list. */
 export interface ApprovalListParams {
   orgUnitId?: string;
@@ -147,6 +214,19 @@ export function approvalsQuery(params: ApprovalListParams = {}) {
         }),
       ),
   });
+}
+
+/**
+ * Puts a version a save returned into the cache as the one every screen reads. A read of the version still in flight is
+ * cancelled first, so a response from before the save cannot land after it and bring an older version back.
+ */
+export async function storeSavedVersion(
+  queryClient: QueryClient,
+  saved: MatrixVersion,
+) {
+  const { queryKey } = matrixVersionQuery(saved.id);
+  await queryClient.cancelQueries({ queryKey });
+  queryClient.setQueryData(queryKey, saved);
 }
 
 /** Rereads every matrix query after a change. */
@@ -167,26 +247,32 @@ export async function createMatrixVersion(matrixId: string) {
   );
 }
 
-/** Saves the content of a version under the version the form was built from. */
+/** Saves the content of a version under the version the form was built from; `builderStep` records where the wizard stopped. */
 export async function saveMatrixContent(
   version: MatrixVersion,
   content: MatrixContent,
+  builderStep?: number,
 ) {
   return unwrap(
     await api.PUT("/api/v1/career/matrix-versions/{id}/content", {
       params: {
         path: { id: version.id },
         header: { "If-Match": ifMatchOf(version.version) },
+        ...(builderStep === undefined ? {} : { query: { builderStep } }),
       },
       body: content,
     }),
   );
 }
 
-/** Moves a version along its route; the transitions share one shape, so the path is typed by the first. */
+/**
+ * Moves a version along its route; the transitions share one shape, so the path is typed by the first. `cascade` is the
+ * tag of the publication list the user confirmed, which a transition that publishes requires.
+ */
 export async function transitMatrixVersion(
   version: MatrixVersion,
   transition: MatrixTransition,
+  cascade?: string,
 ) {
   return unwrap(
     await api.POST(
@@ -195,6 +281,7 @@ export async function transitMatrixVersion(
         params: {
           path: { id: version.id },
           header: { "If-Match": ifMatchOf(version.version) },
+          ...(cascade === undefined ? {} : { query: { cascade } }),
         },
       },
     ),

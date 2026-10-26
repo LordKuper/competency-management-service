@@ -1,5 +1,7 @@
-import { Modal, type ModalProps } from "antd";
-import { useEffect, useRef } from "react";
+import { Form, Modal, type ModalProps } from "antd";
+import { useEffect, useRef, useState } from "react";
+import { useLeaveGuard } from "./leaveGuard";
+import { ModalSavedContext } from "./modalSaved";
 
 // Select and picker inputs are read-only unless searchable, yet they are the controls to focus.
 const FIELD =
@@ -26,15 +28,26 @@ function focusEntry(dialog: HTMLElement, body: HTMLElement) {
 /**
  * The application's dialog: antd `Modal` that, once opened, moves focus to its first form field, or to the primary
  * footer button when it has no field. A field that appears after the opening, as when a record is still loading, gets
- * the focus too, unless the user has already moved it inside the dialog. Re-renders never move focus.
+ * the focus too, unless the user has already moved it inside the dialog. Re-renders never move focus. A form changed
+ * in the dialog, or `isUnsaved`, makes closing it by the cross, Escape or the scrim ask for confirmation.
  */
-export function AppModal({ afterOpenChange, children, ...props }: ModalProps) {
+export function AppModal({
+  afterOpenChange,
+  children,
+  isUnsaved = false,
+  onCancel,
+  ...props
+}: ModalProps & { isUnsaved?: boolean }) {
+  const [isTouched, setIsTouched] = useState(false);
+  const isModalUnsaved = !!props.open && (isTouched || isUnsaved);
+  const { confirmLeave } = useLeaveGuard({ isUnsaved: isModalUnsaved });
   const bodyRef = useRef<HTMLDivElement>(null);
   const stopWaiting = useRef<() => void>(() => {});
   useEffect(() => () => stopWaiting.current(), []);
 
   function handleOpenChange(isOpen: boolean) {
     afterOpenChange?.(isOpen);
+    if (!isOpen) setIsTouched(false);
     stopWaiting.current();
     const body = bodyRef.current;
     const dialog = body?.closest<HTMLElement>('[role="dialog"]');
@@ -56,8 +69,27 @@ export function AppModal({ afterOpenChange, children, ...props }: ModalProps) {
   }
 
   return (
-    <Modal {...props} afterOpenChange={handleOpenChange}>
-      <div ref={bodyRef}>{children}</div>
+    <Modal
+      {...props}
+      afterOpenChange={handleOpenChange}
+      onCancel={(event) => {
+        if (event.defaultPrevented) return;
+        const close = () => onCancel?.(event);
+        if (isModalUnsaved) confirmLeave(close);
+        else close();
+      }}
+    >
+      <Form.Provider
+        onFormChange={(_, { changedFields }) => {
+          if (changedFields.some((field) => field.touched)) {
+            setIsTouched(true);
+          }
+        }}
+      >
+        <ModalSavedContext value={() => setIsTouched(false)}>
+          <div ref={bodyRef}>{children}</div>
+        </ModalSavedContext>
+      </Form.Provider>
     </Modal>
   );
 }

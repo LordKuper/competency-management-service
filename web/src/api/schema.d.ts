@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/career/org-units/{id}/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetOrgUnitSetup"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/career/me": {
         parameters: {
             query?: never;
@@ -28,6 +44,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["GetCareerRoles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/me/place": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMyPlace"];
         put?: never;
         post?: never;
         delete?: never;
@@ -676,6 +708,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/career/directions/{id}/matrices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListCareerDirectionMatrices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/career/directions/{id}/approve": {
         parameters: {
             query?: never;
@@ -724,6 +772,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/career/directions/{id}/publication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetCareerDirectionPublication"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/career/tracks": {
         parameters: {
             query?: never;
@@ -751,6 +815,22 @@ export interface paths {
         put: operations["UpdateCareerTrack"];
         post?: never;
         delete: operations["DeleteCareerTrack"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/tracks/{id}/matrices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListCareerTrackMatrices"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -798,6 +878,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["ActivateCareerTrack"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/tracks/{id}/publication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetCareerTrackPublication"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -852,6 +948,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/career/levels/{id}/matrices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListCareerLevelMatrices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/career/levels/{id}/approve": {
         parameters: {
             query?: never;
@@ -900,71 +1012,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/career/categories": {
+    "/api/v1/career/tracks/{id}/positions": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["ListCompetencyCategories"];
+        get: operations["ListCareerTrackPositions"];
         put?: never;
-        post: operations["CreateCompetencyCategory"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/career/categories/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["GetCompetencyCategory"];
-        put: operations["UpdateCompetencyCategory"];
         post?: never;
-        delete: operations["DeleteCompetencyCategory"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/career/categories/{id}/approve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["ApproveCompetencyCategory"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/career/categories/{id}/deactivate": {
+    "/api/v1/career/tracks/{id}/available-positions": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["ListCareerTrackAvailablePositions"];
         put?: never;
-        post: operations["DeactivateCompetencyCategory"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/career/categories/{id}/activate": {
+    "/api/v1/career/levels/{id}/positions": {
         parameters: {
             query?: never;
             header?: never;
@@ -973,7 +1053,39 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["ActivateCompetencyCategory"];
+        post: operations["LinkCareerLevelPosition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/levels/{id}/positions/{positionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["UnlinkCareerLevelPosition"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/org-units/{id}/matrix-positions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListOrgUnitMatrixPositions"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1020,6 +1132,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["ListCompetencyVersions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/competencies/{id}/matrices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListCompetencyMatrices"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1076,6 +1204,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/career/competencies/{id}/publication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetCompetencyPublication"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/career/scales": {
         parameters: {
             query?: never;
@@ -1118,6 +1262,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["MakeCompetencyScaleDefault"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/scales/{id}/matrices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListCompetencyScaleMatrices"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1172,6 +1332,134 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/career/scales/{id}/publication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetCompetencyScalePublication"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListCompetencyBlocks"];
+        put?: never;
+        post: operations["CreateCompetencyBlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/blocks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetCompetencyBlock"];
+        put: operations["UpdateCompetencyBlock"];
+        post?: never;
+        delete: operations["DeleteCompetencyBlock"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/blocks/{id}/matrices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListCompetencyBlockMatrices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/blocks/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ApproveCompetencyBlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/blocks/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DeactivateCompetencyBlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/blocks/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ActivateCompetencyBlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/blocks/{id}/publication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetCompetencyBlockPublication"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/career/drafts": {
         parameters: {
             query?: never;
@@ -1180,6 +1468,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["ListCatalogDrafts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/unused-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListUnusedCatalogEntries"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1261,6 +1565,54 @@ export interface paths {
         };
         get?: never;
         put: operations["UpdateMatrixVersionContent"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/completeness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMatrixVersionCompleteness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMatrixVersionChanges"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/career/matrix-versions/{id}/publication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMatrixVersionPublication"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1428,6 +1780,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/desk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetDesk"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/desk/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListDeskItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/desk/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetDeskCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1440,14 +1840,17 @@ export interface components {
             /** Format: int32 */
             number: number;
             /** Format: uuid */
-            trackId: string;
-            trackName: string;
+            trackId: null | string;
+            trackName: null | string;
             /** Format: uuid */
             orgUnitId: string;
             orgUnitName: string;
             step: components["schemas"]["ApprovalStep"];
             /** Format: date-time */
             submittedAt: null | string;
+            /** Format: uuid */
+            positionId?: null | string;
+            positionName?: null | string;
         };
         /** @enum {unknown} */
         ApprovalStep: "Superior" | "Hr" | null;
@@ -1475,6 +1878,18 @@ export interface components {
             /** Format: int32 */
             pageSize: number;
         };
+        AvailablePositionResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: int32 */
+            employeeCount: number;
+        };
+        CareerEmployeeResponse: {
+            /** Format: uuid */
+            id: string;
+            fullName: string;
+        };
         CareerLevelResponse: {
             /** Format: uuid */
             id: string;
@@ -1490,6 +1905,11 @@ export interface components {
             version: number;
             canEdit: boolean;
             canDelete: boolean;
+        };
+        CareerNamedResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
         };
         CareerPersonResponse: {
             /** Format: uuid */
@@ -1531,9 +1951,10 @@ export interface components {
             createdAt: string;
             /** Format: int32 */
             version: number;
+            readiness?: null | components["schemas"]["TrackReadinessResponse"];
         };
         /** @enum {unknown} */
-        CatalogEntryKind: "Direction" | "Track" | "Category" | "Competency" | "Scale";
+        CatalogEntryKind: "Direction" | "Track" | "Competency" | "Scale" | "Block";
         CatalogEntryResponse: {
             /** Format: uuid */
             id: string;
@@ -1553,13 +1974,31 @@ export interface components {
             currentPassword: string;
             newPassword: string;
         };
+        CompetencyBlockRequest: {
+            /** Format: uuid */
+            scopeUnitId?: null | string;
+            competencyIds: string[];
+            name: string;
+        };
+        CompetencyBlockResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            competencies: components["schemas"]["CareerNamedResponse"][];
+            status: components["schemas"]["CatalogStatus"];
+            /** Format: int32 */
+            version: number;
+            canEdit: boolean;
+            canDelete: boolean;
+            /** Format: uuid */
+            scopeUnitId?: null | string;
+            scopeUnitName?: null | string;
+        };
         CompetencyRequest: {
             description: null | string;
-            /** Format: uuid */
-            categoryId: string;
+            evidenceExamples?: null | string;
             /** Format: uuid */
             directionId: null | string;
-            type: components["schemas"]["CompetencyType"];
             /** Format: uuid */
             scaleId?: null | string;
             name: string;
@@ -1570,12 +2009,8 @@ export interface components {
             name: string;
             description: null | string;
             /** Format: uuid */
-            categoryId: string;
-            categoryName: string;
-            /** Format: uuid */
             directionId: null | string;
             directionName: null | string;
-            type: components["schemas"]["CompetencyType"];
             /** Format: uuid */
             scaleId: string;
             scaleName: string;
@@ -1588,6 +2023,7 @@ export interface components {
             version: number;
             canEdit: boolean;
             canDelete: boolean;
+            evidenceExamples?: null | string;
         };
         CompetencyScaleRequest: {
             points: components["schemas"]["ScalePoint"][];
@@ -1613,10 +2049,7 @@ export interface components {
             name: string;
             description: null | string;
             /** Format: uuid */
-            categoryId: string;
-            /** Format: uuid */
             directionId: null | string;
-            type: components["schemas"]["CompetencyType"];
             /** Format: uuid */
             scaleId: string;
             status: components["schemas"]["CatalogStatus"];
@@ -1625,6 +2058,7 @@ export interface components {
             changedByName: null | string;
             /** Format: date-time */
             changedAt: string;
+            evidenceExamples?: null | string;
         };
         CreateOrgUnitRequest: {
             name: string;
@@ -1633,7 +2067,7 @@ export interface components {
         };
         CreateUserRequest: {
             email: string;
-            role: components["schemas"]["UserRole"];
+            roles: components["schemas"]["UserRole"][];
             /** Format: uuid */
             employeeId: null | string;
         };
@@ -1641,7 +2075,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             email: string;
-            role: components["schemas"]["UserRole"];
+            roles: components["schemas"]["UserRole"][];
             /** Format: uuid */
             employeeId: null | string;
             employeeName: null | string;
@@ -1657,7 +2091,7 @@ export interface components {
             context: null | string;
         };
         /** @enum {unknown} */
-        DeletionBlockerKind: "Track" | "Competency" | "CompetencyVersion" | "Matrix";
+        DeletionBlockerKind: "Track" | "Competency" | "CompetencyVersion" | "Matrix" | "Block";
         DeletionRefusal: {
             type?: null | string;
             title?: null | string;
@@ -1669,6 +2103,132 @@ export interface components {
             /** Format: int32 */
             moreCount: number;
         };
+        /** @enum {unknown} */
+        DeskAccountState: "None" | "Invited" | "Blocked" | "NoHrRole" | null;
+        DeskCountResponse: {
+            /** Format: int32 */
+            actionCount: number;
+        };
+        /** @description The values a desk finding's reason names; the client words the reason from its kind, so each kind fills only the values it names. */
+        DeskDetails: {
+            /**
+             * Format: int32
+             * @description The number of working employees the reason counts.
+             */
+            employeeCount?: null | number;
+            /**
+             * Format: int32
+             * @description The step the reason names: of the matrix builder, or of the approval route.
+             */
+            step?: null | number;
+            person?: null | components["schemas"]["DeskObject"];
+            accountState?: null | components["schemas"]["DeskAccountState"];
+            linkState?: null | components["schemas"]["DeskLinkState"];
+            /** @description The other records the reason names, in the order it names them. */
+            entries?: null | components["schemas"]["DeskObject"][];
+            /**
+             * Format: int32
+             * @description The number of the matrix version the reason is about.
+             */
+            number?: null | number;
+            /** @description Whether the approver returned the version with changes of their own. */
+            hasChanges?: null | boolean;
+            /** @description Whether the approver returned the version with a comment. */
+            hasComment?: null | boolean;
+            /**
+             * Format: int32
+             * @description The number of levels of the track the reason is about, inactive ones aside.
+             */
+            levelCount?: null | number;
+            /** @description The levels a track gained since its matrix was published, in track order. */
+            addedLevels?: null | components["schemas"]["DeskObject"][];
+            /** @description The levels a published matrix lists that its track no longer has in use, in matrix order. */
+            removedLevels?: null | components["schemas"]["DeskObject"][];
+            /** @description The levels whose place in the track changed since its matrix was published, in track order. */
+            movedLevels?: null | components["schemas"]["DeskObject"][];
+            /** @description Whether the account the reason is about has the HR role. */
+            hasHrRole?: null | boolean;
+        };
+        /** @enum {unknown} */
+        DeskGroup: "ReturnedVersions" | "VersionsToApprove" | "UnsubmittedVersions" | "DraftsToApprove" | "MatricesToBuild" | "PositionsToLink" | "UnitsToConnect" | "Invitations" | "OrgCleanup" | "UnitsWithoutMatrix" | "VersionsInApproval" | "StuckVersions" | "ChangedCompetencies" | "OwnDrafts" | "PositionLinksInfo" | "UnusedCatalogEntries" | "InactivePositions" | "UnusedPositions" | "EmptyUnits" | "NoTrack";
+        DeskGroupResponse: {
+            group: components["schemas"]["DeskGroup"];
+            isReference: boolean;
+            /** Format: int32 */
+            total: number;
+            items: components["schemas"]["DeskItemResponse"][];
+        };
+        /** @description An invitation the user can send again right from the desk, with the account version the request sends back in `If-Match`. */
+        DeskInvitation: {
+            /**
+             * Format: uuid
+             * @description The invited account.
+             */
+            accountId: string;
+            /**
+             * Format: int32
+             * @description The account's version.
+             */
+            version: number;
+        };
+        DeskItemResponse: {
+            object: components["schemas"]["DeskObject"];
+            group: components["schemas"]["DeskGroup"];
+            isReference: boolean;
+            reasons: components["schemas"]["DeskReasonResponse"][];
+            target?: null | components["schemas"]["DeskObject"];
+            invitation?: null | components["schemas"]["DeskInvitation"];
+        };
+        DeskItemsResponse: {
+            items: components["schemas"]["DeskItemResponse"][];
+            /** Format: int32 */
+            total: number;
+        };
+        /**
+         * @description What a desk finding is. Variants of one finding that the desk absorbs differently are separate members.
+         *     Member names are sent in the API, so renaming one changes it; a new member also needs its place in the desk's rules.
+         * @enum {unknown}
+         */
+        DeskKind: "VersionReturned" | "VersionNotSubmitted" | "VersionAwaitsHeadApproval" | "VersionAwaitsHrApproval" | "MatrixLevelsChanged" | "MatrixUsesInactive" | "MatrixCompetencyChanged" | "MatrixSharedBlockChanged" | "OwnVersionInApproval" | "VersionStuckAtHead" | "UnitWithoutMatrix" | "ResponsibleUnitWithoutMatrix" | "UnitWithoutHead" | "ResponsibleUnitWithoutHead" | "UnitWithoutHr" | "UnitWithoutPositions" | "HeadWithoutAccount" | "HeadAccountInvited" | "HeadAccountBlocked" | "EmptyUnit" | "DraftAwaitsApproval" | "TrackWithoutLevels" | "TrackWithOneLevel" | "TrackWithoutPositions" | "LevelWithoutPosition" | "OwnDraftAwaitsApproval" | "UnusedCompetency" | "UnusedScale" | "DirectionWithoutTracks" | "PositionWithoutTrack" | "InactivePositionInUse" | "UnusedPosition" | "PositionOutsideList" | "NoTrackForPosition" | "AccountWithoutEmployee" | "InvitationNotAccepted";
+        /** @enum {unknown} */
+        DeskLinkState: "Expired" | "ExpiringSoon" | "Revoked" | null;
+        /** @description A record a desk finding is about or names, with what the desk shows of it. */
+        DeskObject: {
+            /** @description What kind of record it is. */
+            type: components["schemas"]["DeskObjectType"];
+            /**
+             * Format: uuid
+             * @description The record identifier.
+             */
+            id: string;
+            /** @description The record's name as shown: a title, a full name or an e-mail address. */
+            name: string;
+            /** @description What places the record, such as the units above a unit from the root down; null when the name is enough. */
+            context?: null | string[];
+        };
+        /**
+         * @description The kinds of records desk findings are about or name. Member names are sent in the API, so renaming one changes it.
+         * @enum {unknown}
+         */
+        DeskObjectType: "Matrix" | "MatrixVersion" | "OrgUnit" | "Track" | "Level" | "Direction" | "Competency" | "Scale" | "Block" | "Position" | "Employee" | "UserAccount";
+        /**
+         * @description A fact about the current data that a desk scenario needs before the user can start it.
+         *     Member names are sent in the API, so renaming one changes it; a new member also needs a source that knows it.
+         * @enum {unknown}
+         */
+        DeskPrerequisite: "ActiveUnit" | "ActivePosition" | "WorkingEmployee" | "VisibleTrack" | "HrAccount";
+        DeskReasonResponse: {
+            kind: components["schemas"]["DeskKind"];
+            /** Format: date-time */
+            occurredAt?: null | string;
+            details?: null | components["schemas"]["DeskDetails"];
+        };
+        DeskResponse: {
+            /** Format: int32 */
+            actionCount: number;
+            groups: components["schemas"]["DeskGroupResponse"][];
+            prerequisites: components["schemas"]["DeskPrerequisite"][];
+        };
         EmployeeImpactAccount: {
             email: string;
             isBlocked: boolean;
@@ -1676,6 +2236,7 @@ export interface components {
         };
         EmployeeImpactResponse: {
             headOfUnits: components["schemas"]["OrgUnitResponse"][];
+            hrUnits: string[];
             account: null | components["schemas"]["EmployeeImpactAccount"];
         };
         EmployeeRequest: {
@@ -1705,6 +2266,24 @@ export interface components {
             /** Format: int32 */
             version?: null | number;
         };
+        EntryMatrixResponse: {
+            /** Format: uuid */
+            matrixId: string;
+            /** Format: uuid */
+            orgUnitId: string;
+            orgUnitName: string;
+            /** Format: uuid */
+            trackId: null | string;
+            trackName: null | string;
+            /** Format: uuid */
+            versionId: string;
+            /** Format: int32 */
+            number: number;
+            status: components["schemas"]["MatrixVersionStatus"];
+            /** Format: uuid */
+            positionId?: null | string;
+            positionName?: null | string;
+        };
         ForgotPasswordRequest: {
             email: string;
         };
@@ -1723,6 +2302,19 @@ export interface components {
         LevelOrderRequest: {
             levelIds: string[];
         };
+        LevelPositionRequest: {
+            /** Format: uuid */
+            positionId: string;
+        };
+        LinkedPositionResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            isActive: boolean;
+            /** Format: int32 */
+            employeeCount: number;
+            canUnlink: boolean;
+        };
         LinkPasswordRequest: {
             token: string;
             password: string;
@@ -1733,21 +2325,13 @@ export interface components {
         };
         /** @enum {unknown} */
         MatrixAction: "Edit" | "Submit" | "Approve" | "Return" | "AcceptChanges" | "AcceptAndRevise" | "RollbackChanges";
-        MatrixBlock: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            isMandatory: boolean;
-        };
         MatrixBlockWeight: {
             /** Format: uuid */
             levelId: string;
             /** Format: uuid */
-            blockId: string;
+            blockId: null | string;
             /** Format: double */
             percent: number;
-            /** Format: double */
-            minPercent: null | number;
         };
         MatrixChange: {
             kind: components["schemas"]["MatrixChangeKind"];
@@ -1767,7 +2351,8 @@ export interface components {
             /** Format: uuid */
             competencyId: string;
             /** Format: uuid */
-            blockId: string;
+            blockId: null | string;
+            type?: null | components["schemas"]["CompetencyType"];
         };
         MatrixCompetencyEntry: {
             /** Format: uuid */
@@ -1775,21 +2360,29 @@ export interface components {
             name: string;
             description: null | string;
             /** Format: uuid */
-            categoryId: string;
-            categoryName: string;
-            /** Format: uuid */
             directionId: null | string;
             type: components["schemas"]["CompetencyType"];
             /** Format: int32 */
             versionNumber: number;
             status: components["schemas"]["CatalogStatus"];
+            /** Format: uuid */
+            scaleId?: null | string;
+            evidenceExamples?: null | string;
+        };
+        MatrixCompetencyType: {
+            /** Format: uuid */
+            competencyId: string;
+            type: components["schemas"]["CompetencyType"];
+        };
+        MatrixCompletenessResponse: {
+            problems: components["schemas"]["MatrixProblem"][];
         };
         MatrixContent: {
             levels: components["schemas"]["MatrixLevel"][];
-            blocks: components["schemas"]["MatrixBlock"][];
             competencies: components["schemas"]["MatrixCompetency"][];
             blockWeights: components["schemas"]["MatrixBlockWeight"][];
             requirements: components["schemas"]["MatrixRequirement"][];
+            sharedBlocks?: null | components["schemas"]["MatrixSharedBlock"][];
         };
         /** @enum {unknown} */
         MatrixDecisionKind: "Submitted" | "Skipped" | "Approved" | "AutoApproved" | "Returned" | "AcceptedChanges" | "AcceptedAndRevising" | "RolledBack" | "Published";
@@ -1817,11 +2410,13 @@ export interface components {
             changes: components["schemas"]["MatrixChange"][];
         };
         MatrixEntries: {
-            direction: components["schemas"]["MatrixNamedEntry"];
-            track: components["schemas"]["MatrixNamedEntry"];
-            scale: components["schemas"]["MatrixScaleEntry"];
+            direction: null | components["schemas"]["MatrixNamedEntry"];
+            track: null | components["schemas"]["MatrixNamedEntry"];
             levels: components["schemas"]["MatrixLevelEntry"][];
             competencies: components["schemas"]["MatrixCompetencyEntry"][];
+            position?: null | components["schemas"]["MatrixNamedEntry"];
+            sharedBlocks?: null | components["schemas"]["MatrixSharedBlockEntry"][];
+            scales?: null | components["schemas"]["MatrixScaleEntry"][];
         };
         MatrixHistoryResponse: {
             variants: components["schemas"]["MatrixVariantSummaryResponse"][];
@@ -1845,21 +2440,40 @@ export interface components {
             name: string;
             status: components["schemas"]["CatalogStatus"];
         };
+        MatrixPositionResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            isLinked: boolean;
+            linkedTrack: null | components["schemas"]["CareerNamedResponse"];
+        };
+        MatrixProblem: {
+            code: components["schemas"]["MatrixProblemCode"];
+            message: string;
+            /** Format: uuid */
+            levelId?: null | string;
+            /** Format: uuid */
+            competencyId?: null | string;
+        };
+        /** @enum {unknown} */
+        MatrixProblemCode: "NoLevels" | "BlockWeights" | "InactiveEntry" | "ForeignCompetency" | "ScoreOutOfScale" | "LevelWithoutActivePosition" | "NoCompetencies" | "DuplicateCompetency" | "PositionUnavailable" | "SharedBlockUnavailable";
+        MatrixPublicationResponse: {
+            publishingActions: components["schemas"]["MatrixAction"][];
+            entries: components["schemas"]["PublicationEntry"][];
+            /** Format: int32 */
+            hiddenEntryCount: number;
+            blockers: components["schemas"]["PublicationBlocker"][];
+            /** Format: int32 */
+            moreCount: number;
+            cascadeTag: string;
+        };
         MatrixRequirement: {
             /** Format: uuid */
             levelId: string;
             /** Format: uuid */
             competencyId: string;
             /** Format: int32 */
-            requiredScore: null | number;
-            type: components["schemas"]["CompetencyType"];
-            /** Format: double */
-            weight: number;
-            isMandatory: boolean;
-            expectedBehavior: null | string;
-            evidenceExamples: null | string;
-            /** Format: date */
-            validFrom: null | string;
+            requiredScore: number;
         };
         MatrixResponse: {
             /** Format: uuid */
@@ -1868,15 +2482,18 @@ export interface components {
             orgUnitId: string;
             orgUnitName: string;
             /** Format: uuid */
-            directionId: string;
-            directionName: string;
+            directionId: null | string;
+            directionName: null | string;
             /** Format: uuid */
-            trackId: string;
-            trackName: string;
+            trackId: null | string;
+            trackName: null | string;
             publishedVersion: null | components["schemas"]["MatrixVersionRef"];
             inWorkVersion: null | components["schemas"]["MatrixVersionRef"];
             /** Format: date-time */
             createdAt: string;
+            /** Format: uuid */
+            positionId?: null | string;
+            positionName?: null | string;
         };
         MatrixReturnRequest: {
             comment: null | string;
@@ -1887,6 +2504,18 @@ export interface components {
             name: string;
             points: components["schemas"]["ScalePoint"][];
             status: components["schemas"]["CatalogStatus"];
+        };
+        MatrixSharedBlock: {
+            /** Format: uuid */
+            blockId: string;
+            competencyTypes?: null | components["schemas"]["MatrixCompetencyType"][];
+        };
+        MatrixSharedBlockEntry: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            status: components["schemas"]["CatalogStatus"];
+            competencyIds: string[];
         };
         /** @enum {unknown} */
         MatrixVariantKind: "Author" | "Approver";
@@ -1930,8 +2559,6 @@ export interface components {
             status: components["schemas"]["MatrixVersionStatus"];
             step: null | components["schemas"]["ApprovalStep"];
             /** Format: uuid */
-            scaleId: string;
-            /** Format: uuid */
             authorId: string;
             authorName: null | string;
             /** Format: date-time */
@@ -1946,6 +2573,8 @@ export interface components {
             actions: components["schemas"]["MatrixAction"][];
             /** Format: int32 */
             version: number;
+            /** Format: int32 */
+            builderStep?: null | number;
         };
         /** @enum {unknown} */
         MatrixVersionStatus: "Draft" | "OnReview" | "Returned" | "Approved" | "Published" | "Archived";
@@ -1967,6 +2596,64 @@ export interface components {
             /** Format: uuid */
             parentId: null | string;
         };
+        MyPlaceLevelResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            requirements: null | components["schemas"]["MyPlaceRequirementResponse"][];
+        };
+        MyPlaceMatrixResponse: {
+            /** Format: uuid */
+            matrixId: string;
+            /** Format: uuid */
+            trackId: string;
+            trackName: string;
+            /** Format: uuid */
+            versionId: string;
+            /** Format: int32 */
+            number: number;
+            /** Format: date-time */
+            publishedAt: null | string;
+        };
+        MyPlacePositionMatrixResponse: {
+            /** Format: uuid */
+            matrixId: string;
+            positionName: string;
+            /** Format: uuid */
+            versionId: string;
+            /** Format: int32 */
+            number: number;
+            /** Format: date-time */
+            publishedAt: null | string;
+            requirements: components["schemas"]["MyPlaceRequirementResponse"][];
+        };
+        MyPlaceRequirementResponse: {
+            /** Format: uuid */
+            competencyId: string;
+            competencyName: string;
+            /** Format: int32 */
+            requiredScore: number;
+            scoreLabel: null | string;
+            type: components["schemas"]["CompetencyType"];
+        };
+        MyPlaceResponse: {
+            employee: null | components["schemas"]["CareerEmployeeResponse"];
+            unit: components["schemas"]["CareerUnitResponse"][];
+            position: null | components["schemas"]["CareerNamedResponse"];
+            head: null | components["schemas"]["CareerEmployeeResponse"];
+            responsibleHr: null | components["schemas"]["OrgUnitHrPersonResponse"];
+            tracks: components["schemas"]["MyPlaceTrackResponse"][];
+            publishedMatrices: components["schemas"]["MyPlaceMatrixResponse"][];
+            noTrack: boolean;
+            positionMatrix?: null | components["schemas"]["MyPlacePositionMatrixResponse"];
+        };
+        MyPlaceTrackResponse: {
+            track: components["schemas"]["CareerNamedResponse"];
+            direction: components["schemas"]["CareerNamedResponse"];
+            currentLevel: components["schemas"]["CareerNamedResponse"];
+            matrix: null | components["schemas"]["MyPlaceMatrixResponse"];
+            nextLevels: components["schemas"]["MyPlaceLevelResponse"][];
+        };
         NewCareerLevelRequest: {
             /** Format: uuid */
             trackId: string;
@@ -1983,24 +2670,24 @@ export interface components {
             /** Format: uuid */
             orgUnitId: string;
             /** Format: uuid */
-            directionId: string;
+            directionId?: null | string;
             /** Format: uuid */
-            trackId: string;
+            trackId?: null | string;
             /** Format: uuid */
-            scaleId: string;
+            positionId?: null | string;
         };
         OrgUnitHrPersonResponse: {
             /** Format: uuid */
-            userId: string;
+            employeeId: string;
             name: string;
             /** Format: uuid */
             orgUnitId: string;
             orgUnitName: string;
-            isActive?: null | boolean;
+            account?: null | components["schemas"]["UnitAccountResponse"];
         };
         OrgUnitHrRequest: {
             /** Format: uuid */
-            userId: string;
+            employeeId: string;
         };
         OrgUnitHrResponse: {
             assigned: null | components["schemas"]["OrgUnitHrPersonResponse"];
@@ -2054,6 +2741,15 @@ export interface components {
             /** Format: int32 */
             employeeCount: number;
         };
+        PageResponseOfAvailablePositionResponse: {
+            items: components["schemas"]["AvailablePositionResponse"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+        };
         PageResponseOfCareerLevelResponse: {
             items: components["schemas"]["CareerLevelResponse"][];
             /** Format: int32 */
@@ -2074,6 +2770,15 @@ export interface components {
         };
         PageResponseOfCatalogEntryResponse: {
             items: components["schemas"]["CatalogEntryResponse"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+        };
+        PageResponseOfCompetencyBlockResponse: {
+            items: components["schemas"]["CompetencyBlockResponse"][];
             /** Format: int32 */
             total: number;
             /** Format: int32 */
@@ -2108,6 +2813,15 @@ export interface components {
             /** Format: int32 */
             pageSize: number;
         };
+        PageResponseOfMatrixPositionResponse: {
+            items: components["schemas"]["MatrixPositionResponse"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+        };
         PageResponseOfMatrixResponse: {
             items: components["schemas"]["MatrixResponse"][];
             /** Format: int32 */
@@ -2128,6 +2842,15 @@ export interface components {
         };
         PageResponseOfPositionResponse: {
             items: components["schemas"]["PositionResponse"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+        };
+        PageResponseOfUnusedEntryResponse: {
+            items: components["schemas"]["UnusedEntryResponse"][];
             /** Format: int32 */
             total: number;
             /** Format: int32 */
@@ -2175,10 +2898,125 @@ export interface components {
             headedUnits: components["schemas"]["CareerUnitResponse"][];
             hrUnits: components["schemas"]["CareerUnitResponse"][];
         };
+        PublicationBlocker: {
+            kind: components["schemas"]["PublicationEntryKind"];
+            /** Format: uuid */
+            id: string;
+            name: string;
+            reason: components["schemas"]["PublicationBlockerReason"];
+            context: null | string;
+        };
+        /** @enum {unknown} */
+        PublicationBlockerReason: "NoRight" | "NoLevels" | "NoActivePosition" | "NameTaken" | "EmptyBlock";
+        PublicationChanged: {
+            type?: null | string;
+            title?: null | string;
+            /** Format: int32 */
+            status?: null | number;
+            detail?: null | string;
+            instance?: null | string;
+            publication?: null | string;
+        };
+        PublicationEntry: {
+            kind: components["schemas"]["PublicationEntryKind"];
+            /** Format: uuid */
+            id: string;
+            name: string;
+            context: null | string;
+        };
+        /** @enum {unknown} */
+        PublicationEntryKind: "Direction" | "Track" | "Level" | "Competency" | "Scale" | "Block";
+        PublicationPreviewResponse: {
+            entries: components["schemas"]["PublicationEntry"][];
+            /** Format: int32 */
+            hiddenEntryCount: number;
+            blockers: components["schemas"]["PublicationBlocker"][];
+            /** Format: int32 */
+            moreCount: number;
+            cascadeTag: string;
+        };
+        PublicationRefusal: {
+            type?: null | string;
+            title?: null | string;
+            /** Format: int32 */
+            status?: null | number;
+            detail?: null | string;
+            instance?: null | string;
+            blockers: components["schemas"]["PublicationBlocker"][];
+            /** Format: int32 */
+            moreCount: number;
+        };
         ScalePoint: {
             /** Format: int32 */
             score: number;
             label: string;
+        };
+        TrackLevelPositionsResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            status: components["schemas"]["CatalogStatus"];
+            /** Format: int32 */
+            version: number;
+            hasActivePosition: boolean;
+            positions: components["schemas"]["LinkedPositionResponse"][];
+        };
+        TrackPositionsResponse: {
+            canEdit: boolean;
+            levels: components["schemas"]["TrackLevelPositionsResponse"][];
+        };
+        TrackReadinessResponse: {
+            hasLevels: boolean;
+            levelsWithoutActivePosition: components["schemas"]["CareerNamedResponse"][];
+        };
+        UnitAccountResponse: {
+            /** Format: uuid */
+            id: null | string;
+            email: null | string;
+            state: components["schemas"]["UnitAccountState"];
+            /** Format: int32 */
+            version: null | number;
+        };
+        /** @enum {unknown} */
+        UnitAccountState: "None" | "Invited" | "Blocked" | "NoHrRole" | "Active";
+        UnitPositionResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            isActive: boolean;
+        };
+        UnitPositionsResponse: {
+            own: components["schemas"]["UnitPositionResponse"][];
+            inherited: components["schemas"]["UnitPositionResponse"][];
+        };
+        /** @enum {unknown} */
+        UnitSetupReason: "NoHead" | "NoAccount" | "Invited" | "Blocked" | "NoHr" | "NoHrCandidates" | "HrCannotAct" | "NoHrRole" | "NoPositions" | null;
+        UnitSetupResponse: {
+            unit: components["schemas"]["CareerUnitResponse"][];
+            /** Format: int32 */
+            employees: number;
+            head: null | components["schemas"]["CareerEmployeeResponse"];
+            headAccount: null | components["schemas"]["UnitAccountResponse"];
+            hr: null | components["schemas"]["OrgUnitHrPersonResponse"];
+            positions: components["schemas"]["UnitPositionsResponse"];
+            rows: components["schemas"]["UnitSetupRowResponse"][];
+        };
+        /** @enum {unknown} */
+        UnitSetupRow: "Head" | "HeadAccount" | "Hr" | "HrAccount" | "Positions";
+        UnitSetupRowResponse: {
+            row: components["schemas"]["UnitSetupRow"];
+            status: components["schemas"]["UnitSetupStatus"];
+            reason?: null | components["schemas"]["UnitSetupReason"];
+        };
+        /** @enum {unknown} */
+        UnitSetupStatus: "Ready" | "Missing" | "Waiting";
+        UnusedEntryResponse: {
+            kind: components["schemas"]["CatalogEntryKind"];
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: int32 */
+            version: number;
         };
         UpdateOrgUnitRequest: {
             name: string;
@@ -2187,7 +3025,7 @@ export interface components {
         };
         UpdateUserRequest: {
             email: string;
-            role: components["schemas"]["UserRole"];
+            roles: components["schemas"]["UserRole"][];
             /** Format: uuid */
             employeeId: null | string;
         };
@@ -2195,7 +3033,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             email: string;
-            role: components["schemas"]["UserRole"];
+            roles: components["schemas"]["UserRole"][];
             isBlocked: boolean;
             isInvited: boolean;
             /** Format: uuid */
@@ -2206,7 +3044,9 @@ export interface components {
             mailSent: null | boolean;
         };
         /** @enum {unknown} */
-        UserRole: "User" | "GlobalAdmin";
+        UserRole: "GlobalAdmin" | "Hr";
+        /** @enum {unknown} */
+        UserRoleFilter: "User" | "GlobalAdmin" | "Hr" | null;
     };
     responses: never;
     parameters: never;
@@ -2236,6 +3076,55 @@ export interface operations {
             };
         };
     };
+    GetOrgUnitSetup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitSetupResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     GetCareerRoles: {
         parameters: {
             query?: never;
@@ -2252,6 +3141,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProcessRolesResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetMyPlace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyPlaceResponse"];
                 };
             };
             /** @description Unauthorized */
@@ -2976,6 +3894,7 @@ export interface operations {
                 isActive?: boolean;
                 orgUnitId?: string;
                 includeDescendants?: boolean;
+                hrCandidate?: boolean;
                 page?: number;
                 pageSize?: number;
             };
@@ -3005,6 +3924,15 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4486,7 +5414,7 @@ export interface operations {
         parameters: {
             query?: {
                 q?: string;
-                role?: components["schemas"]["UserRole"];
+                role?: components["schemas"]["UserRoleFilter"];
                 isBlocked?: boolean;
                 isInvited?: boolean;
                 page?: number;
@@ -5574,9 +6502,51 @@ export interface operations {
             };
         };
     };
-    ApproveCareerDirection: {
+    ListCareerDirectionMatrices: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryMatrixResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ApproveCareerDirection: {
+        parameters: {
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -5641,7 +6611,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -5650,7 +6620,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
                 };
             };
             /** @description Precondition Required */
@@ -5756,7 +6726,9 @@ export interface operations {
     };
     ActivateCareerDirection: {
         parameters: {
-            query?: never;
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -5821,7 +6793,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -5830,11 +6802,60 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
                 };
             };
             /** @description Precondition Required */
             428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetCareerDirectionPublication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationPreviewResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6175,9 +7196,51 @@ export interface operations {
             };
         };
     };
-    ApproveCareerTrack: {
+    ListCareerTrackMatrices: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryMatrixResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ApproveCareerTrack: {
+        parameters: {
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -6242,7 +7305,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -6251,7 +7314,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
                 };
             };
             /** @description Precondition Required */
@@ -6357,7 +7420,9 @@ export interface operations {
     };
     ActivateCareerTrack: {
         parameters: {
-            query?: never;
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -6422,7 +7487,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -6431,11 +7496,60 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
                 };
             };
             /** @description Precondition Required */
             428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetCareerTrackPublication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationPreviewResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6859,9 +7973,51 @@ export interface operations {
             };
         };
     };
-    ApproveCareerLevel: {
+    ListCareerLevelMatrices: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryMatrixResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ApproveCareerLevel: {
+        parameters: {
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -6926,7 +8082,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -6935,7 +8091,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
                 };
             };
             /** @description Precondition Required */
@@ -7041,7 +8197,9 @@ export interface operations {
     };
     ActivateCareerLevel: {
         parameters: {
-            query?: never;
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -7106,7 +8264,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -7115,7 +8273,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
                 };
             };
             /** @description Precondition Required */
@@ -7129,116 +8287,54 @@ export interface operations {
             };
         };
     };
-    ListCompetencyCategories: {
+    ListCareerTrackPositions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackPositionsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListCareerTrackAvailablePositions: {
         parameters: {
             query?: {
                 q?: string;
-                status?: components["schemas"]["CatalogStatus"];
-                inWork?: boolean;
                 page?: number;
                 pageSize?: number;
             };
             header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PageResponseOfCatalogEntryResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    CreateCompetencyCategory: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CatalogNameRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CatalogEntryResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    GetCompetencyCategory: {
-        parameters: {
-            query?: never;
-            header?: never;
             path: {
                 id: string;
             };
@@ -7249,12 +8345,19 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CatalogEntryResponse"];
+                    "application/json": components["schemas"]["PageResponseOfAvailablePositionResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Unauthorized */
@@ -7277,7 +8380,7 @@ export interface operations {
             };
         };
     };
-    UpdateCompetencyCategory: {
+    LinkCareerLevelPosition: {
         parameters: {
             query?: never;
             header: {
@@ -7291,7 +8394,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CatalogNameRequest"];
+                "application/json": components["schemas"]["LevelPositionRequest"];
             };
         };
         responses: {
@@ -7303,7 +8406,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CatalogEntryResponse"];
+                    "application/json": components["schemas"]["CareerLevelResponse"];
                 };
             };
             /** @description Bad Request */
@@ -7371,7 +8474,7 @@ export interface operations {
             };
         };
     };
-    DeleteCompetencyCategory: {
+    UnlinkCareerLevelPosition: {
         parameters: {
             query?: never;
             header: {
@@ -7380,17 +8483,22 @@ export interface operations {
             };
             path: {
                 id: string;
+                positionId: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description No Content */
-            204: {
+            /** @description OK */
+            200: {
                 headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["CareerLevelResponse"];
+                };
             };
             /** @description Bad Request */
             400: {
@@ -7434,7 +8542,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["DeletionRefusal"];
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -7457,13 +8565,14 @@ export interface operations {
             };
         };
     };
-    ApproveCompetencyCategory: {
+    ListOrgUnitMatrixPositions: {
         parameters: {
-            query?: never;
-            header: {
-                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
-                "If-Match": string;
+            query?: {
+                q?: string;
+                page?: number;
+                pageSize?: number;
             };
+            header?: never;
             path: {
                 id: string;
             };
@@ -7474,12 +8583,10 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CatalogEntryResponse"];
+                    "application/json": components["schemas"]["PageResponseOfMatrixPositionResponse"];
                 };
             };
             /** @description Bad Request */
@@ -7488,7 +8595,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Unauthorized */
@@ -7500,224 +8607,8 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
             /** @description Not Found */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Precondition Failed */
-            412: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Precondition Required */
-            428: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    DeactivateCompetencyCategory: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
-                "If-Match": string;
-            };
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CatalogEntryResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Precondition Failed */
-            412: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Precondition Required */
-            428: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    ActivateCompetencyCategory: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
-                "If-Match": string;
-            };
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
-                    ETag?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CatalogEntryResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Precondition Failed */
-            412: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Precondition Required */
-            428: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7735,11 +8626,9 @@ export interface operations {
                 inWork?: boolean;
                 page?: number;
                 pageSize?: number;
-                categoryId?: string;
                 directionId?: string;
                 withGeneral?: boolean;
                 scaleId?: string;
-                type?: components["schemas"]["CompetencyType"];
             };
             header?: never;
             path?: never;
@@ -8100,9 +8989,51 @@ export interface operations {
             };
         };
     };
-    ApproveCompetency: {
+    ListCompetencyMatrices: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryMatrixResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ApproveCompetency: {
+        parameters: {
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -8167,7 +9098,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -8176,7 +9107,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
                 };
             };
             /** @description Precondition Required */
@@ -8282,7 +9213,9 @@ export interface operations {
     };
     ActivateCompetency: {
         parameters: {
-            query?: never;
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -8347,7 +9280,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -8356,11 +9289,60 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
                 };
             };
             /** @description Precondition Required */
             428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetCompetencyPublication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationPreviewResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8789,9 +9771,51 @@ export interface operations {
             };
         };
     };
-    ApproveCompetencyScale: {
+    ListCompetencyScaleMatrices: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryMatrixResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ApproveCompetencyScale: {
+        parameters: {
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -8856,7 +9880,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -8865,7 +9889,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
                 };
             };
             /** @description Precondition Required */
@@ -8971,7 +9995,9 @@ export interface operations {
     };
     ActivateCompetencyScale: {
         parameters: {
-            query?: never;
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -8992,6 +10018,608 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompetencyScaleResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetCompetencyScalePublication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationPreviewResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListCompetencyBlocks: {
+        parameters: {
+            query?: {
+                q?: string;
+                status?: components["schemas"]["CatalogStatus"];
+                inWork?: boolean;
+                page?: number;
+                pageSize?: number;
+                scopeUnitId?: string;
+                forAll?: boolean;
+                availableFor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageResponseOfCompetencyBlockResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    CreateCompetencyBlock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompetencyBlockRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompetencyBlockResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetCompetencyBlock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompetencyBlockResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateCompetencyBlock: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompetencyBlockRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompetencyBlockResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteCompetencyBlock: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DeletionRefusal"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListCompetencyBlockMatrices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryMatrixResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ApproveCompetencyBlock: {
+        parameters: {
+            query?: {
+                cascade?: string;
+            };
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompetencyBlockResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeactivateCompetencyBlock: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompetencyBlockResponse"];
                 };
             };
             /** @description Bad Request */
@@ -9059,6 +10687,147 @@ export interface operations {
             };
         };
     };
+    ActivateCompetencyBlock: {
+        parameters: {
+            query?: {
+                cascade?: string;
+            };
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompetencyBlockResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicationRefusal"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetCompetencyBlockPublication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationPreviewResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ListCatalogDrafts: {
         parameters: {
             query?: {
@@ -9091,12 +10860,64 @@ export interface operations {
             };
         };
     };
+    ListUnusedCatalogEntries: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["CatalogEntryKind"];
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageResponseOfUnusedEntryResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ListMatrices: {
         parameters: {
             query?: {
                 orgUnitId?: string;
                 directionId?: string;
                 trackId?: string;
+                positionId?: string;
                 page?: number;
                 pageSize?: number;
             };
@@ -9465,7 +11286,9 @@ export interface operations {
     };
     UpdateMatrixVersionContent: {
         parameters: {
-            query?: never;
+            query?: {
+                builderStep?: number;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -9557,9 +11380,131 @@ export interface operations {
             };
         };
     };
-    SubmitMatrixVersion: {
+    GetMatrixVersionCompleteness: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixCompletenessResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetMatrixVersionChanges: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixDiffResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetMatrixVersionPublication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatrixPublicationResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    SubmitMatrixVersion: {
+        parameters: {
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -9633,7 +11578,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
                 };
             };
             /** @description Precondition Required */
@@ -9649,7 +11594,9 @@ export interface operations {
     };
     ApproveMatrixVersion: {
         parameters: {
-            query?: never;
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -9723,7 +11670,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
                 };
             };
             /** @description Precondition Required */
@@ -9833,7 +11780,9 @@ export interface operations {
     };
     AcceptMatrixVersionChanges: {
         parameters: {
-            query?: never;
+            query?: {
+                cascade?: string;
+            };
             header: {
                 /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
                 "If-Match": string;
@@ -9907,7 +11856,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["PublicationChanged"];
                 };
             };
             /** @description Precondition Required */
@@ -10242,6 +12191,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApprovalResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetDesk: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeskResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListDeskItems: {
+        parameters: {
+            query?: {
+                group?: components["schemas"]["DeskGroup"][];
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeskItemsResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetDeskCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeskCountResponse"];
                 };
             };
             /** @description Unauthorized */

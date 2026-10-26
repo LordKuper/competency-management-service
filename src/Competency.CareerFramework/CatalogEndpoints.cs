@@ -20,12 +20,12 @@ internal static class CatalogEndpoints
     public const string UnavailableMessage = "Запись не найдена или недоступна";
 
     private const string Tag = "Career";
-    private const string ProblemContentType = "application/problem+json";
+    public const string ProblemContentType = "application/problem+json";
     public const string DuplicateNameMessage = "Запись с таким названием уже есть";
     private const string NotDraftMessage = "Согласовать можно только черновую запись";
     private const string DraftActivationMessage = "Черновую запись нужно согласовать";
     private const string DefaultScaleDeactivationMessage = "Шкалу по умолчанию нельзя деактивировать — сначала сделайте по умолчанию другую шкалу";
-    private const string ApprovedAction = "Approved";
+    private const string CascadeParameter = "cascade";
 
     public static RouteGroupBuilder MapCatalogGroup(this IEndpointRouteBuilder endpoints, string route) => endpoints.MapGroup(route)
         .WithTags(Tag)
@@ -52,21 +52,26 @@ internal static class CatalogEndpoints
             .WithName(listName);
         group.MapPost(
                 string.Empty,
-                (CatalogNameRequest request, AppDbContext context, CatalogStore store, HttpResponse response, CancellationToken cancellationToken) =>
-                    CreateNamedAsync(request, route, create, kind, context, store, response, cancellationToken))
+                (CatalogNameRequest request, AppDbContext context, CatalogStore store, CareerMail mail, HttpResponse response, CancellationToken cancellationToken) =>
+                    CreateNamedAsync(request, route, create, kind, context, store, mail, response, cancellationToken))
             .WithName($"Create{kind.Name}")
             .ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        group.MapEntryEndpoints(kind, mapRename: true);
+        group.MapEntryEndpoints(kind, route, mapRename: true);
         return group;
     }
 
     /// <summary>
-    /// Maps reading one entry, renaming it when <paramref name="mapRename"/> is set, and its status changes: approving a draft,
-    /// deactivating and reactivating.
+    /// Maps reading one entry and the matrix versions using it, renaming it when <paramref name="mapRename"/> is set, its status changes: approving a draft,
+    /// deactivating and reactivating, and the preview of what approving or reactivating it would publish when <paramref name="mapPublication"/> is set.
     /// </summary>
-    public static void MapEntryEndpoints<TEntry, TResponse>(this RouteGroupBuilder group, CatalogKind<TEntry, TResponse> kind, bool mapRename = false)
+    public static void MapEntryEndpoints<TEntry, TResponse>(
+        this RouteGroupBuilder group,
+        CatalogKind<TEntry, TResponse> kind,
+        string route,
+        bool mapRename = false,
+        bool mapPublication = true)
         where TEntry : CatalogEntry
     {
         group.MapGet(
@@ -76,6 +81,8 @@ internal static class CatalogEndpoints
             .WithName($"Get{kind.Name}")
             .ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapEntryMatrices(kind);
 
         if (mapRename)
         {
@@ -92,24 +99,37 @@ internal static class CatalogEndpoints
 
         group.MapPost(
                 "/{id:guid}/approve",
-                (Guid id, IfMatch ifMatch, AppDbContext context, CatalogStore store, IAuditWriter audit, HttpResponse response, CancellationToken cancellationToken) =>
-                    ApproveAsync(id, ifMatch, kind, context, store, audit, response, cancellationToken))
+                (Guid id, IfMatch ifMatch, [FromQuery(Name = CascadeParameter)] string? cascade, AppDbContext context, CatalogStore store,
+                        CatalogPublication publication, HttpResponse response, CancellationToken cancellationToken) =>
+                    PublishAsync(id, isApproval: true, ifMatch, cascade, route, kind, context, store, publication, response, cancellationToken))
             .WithName($"Approve{kind.Name}")
-            .ProducesStatusChange();
+            .ProducesPublication();
 
         group.MapPost(
                 "/{id:guid}/deactivate",
-                (Guid id, IfMatch ifMatch, AppDbContext context, CatalogStore store, IAuditWriter audit, HttpResponse response, CancellationToken cancellationToken) =>
-                    SetStatusAsync(id, CatalogStatus.Inactive, ifMatch, kind, context, store, audit, response, cancellationToken))
+                (Guid id, IfMatch ifMatch, AppDbContext context, CatalogStore store, HttpResponse response, CancellationToken cancellationToken) =>
+                    DeactivateAsync(id, ifMatch, kind, context, store, response, cancellationToken))
             .WithName($"Deactivate{kind.Name}")
             .ProducesStatusChange();
 
         group.MapPost(
                 "/{id:guid}/activate",
-                (Guid id, IfMatch ifMatch, AppDbContext context, CatalogStore store, IAuditWriter audit, HttpResponse response, CancellationToken cancellationToken) =>
-                    SetStatusAsync(id, CatalogStatus.Active, ifMatch, kind, context, store, audit, response, cancellationToken))
+                (Guid id, IfMatch ifMatch, [FromQuery(Name = CascadeParameter)] string? cascade, AppDbContext context, CatalogStore store,
+                        CatalogPublication publication, HttpResponse response, CancellationToken cancellationToken) =>
+                    PublishAsync(id, isApproval: false, ifMatch, cascade, route, kind, context, store, publication, response, cancellationToken))
             .WithName($"Activate{kind.Name}")
-            .ProducesStatusChange();
+            .ProducesPublication();
+
+        if (mapPublication)
+        {
+            group.MapGet(
+                    "/{id:guid}/publication",
+                    (Guid id, CatalogStore store, CatalogPublication publication, CancellationToken cancellationToken) =>
+                        PreviewAsync<TEntry>(id, store, publication, cancellationToken))
+                .WithName($"Get{kind.Name}Publication")
+                .ProducesProblem(StatusCodes.Status403Forbidden)
+                .ProducesProblem(StatusCodes.Status404NotFound);
+        }
     }
 
     /// <summary>
@@ -195,7 +215,7 @@ internal static class CatalogEndpoints
         CancellationToken cancellationToken)
         where TEntry : CatalogEntry
     {
-        await store.SaveAsync(entry, transaction, cancellationToken);
+        await store.SaveAsync(transaction, cancellationToken);
         return await DescribeAsync(entry, kind, viewer, store, response, cancellationToken);
     }
 
@@ -223,7 +243,7 @@ internal static class CatalogEndpoints
         CancellationToken cancellationToken)
         where TEntry : CatalogEntry
     {
-        var unitNames = await store.UnitNamesAsync(entries.Select(entry => entry.UnitId), cancellationToken);
+        var unitNames = await store.UnitNamesAsync(entries.Select(entry => entry.ListedUnitId), cancellationToken);
         if (kind.References is not { } references)
         {
             return unitNames;
@@ -238,6 +258,17 @@ internal static class CatalogEndpoints
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict);
+
+    /// <summary>
+    /// Declares the responses of a change that makes an entry active: its 409 may list what keeps it from being active, and its 412 may
+    /// point to the fresh preview when the confirmed list no longer matches.
+    /// </summary>
+    private static RouteHandlerBuilder ProducesPublication(this RouteHandlerBuilder builder) => builder
+        .ProducesETag()
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .Produces<PublicationRefusal>(StatusCodes.Status409Conflict, ProblemContentType)
+        .Produces<PublicationChanged>(StatusCodes.Status412PreconditionFailed, ProblemContentType);
 
     private static async Task<Results<Ok<TResponse>, NotFound>> GetAsync<TEntry, TResponse>(
         Guid id,
@@ -261,6 +292,7 @@ internal static class CatalogEndpoints
         CatalogKind<TEntry, CatalogEntryResponse> kind,
         AppDbContext context,
         CatalogStore store,
+        CareerMail mail,
         HttpResponse response,
         CancellationToken cancellationToken)
         where TEntry : CatalogEntry
@@ -286,6 +318,7 @@ internal static class CatalogEndpoints
 
         context.Add(entry);
         var created = await CommitAsync(entry, kind, viewer, store, transaction, response, cancellationToken);
+        await mail.DraftCreatedAsync(entry, viewer, cancellationToken);
         return TypedResults.Created($"{route}/{entry.Id}", created);
     }
 
@@ -357,26 +390,20 @@ internal static class CatalogEndpoints
 
         ifMatch.ApplyTo(context, entry);
         context.Remove(entry);
-        await store.SaveAsync(entry, transaction, cancellationToken);
+        await store.SaveAsync(transaction, cancellationToken);
         return TypedResults.NoContent();
     }
 
     /// <summary>
-    /// Makes a draft active and journals the approval as an event of its own; approving a track approves its draft levels with it.
-    /// Names are checked again, because the drafts of other authors did not compete with them while they were drafts.
+    /// What approving or reactivating the entry would publish now and what is in the way, for whoever may manage it; nothing is locked or saved.
     /// </summary>
-    private static async Task<Results<Ok<TResponse>, NotFound, ProblemHttpResult>> ApproveAsync<TEntry, TResponse>(
+    private static async Task<Results<Ok<PublicationPreviewResponse>, NotFound, ProblemHttpResult>> PreviewAsync<TEntry>(
         Guid id,
-        IfMatch ifMatch,
-        CatalogKind<TEntry, TResponse> kind,
-        AppDbContext context,
         CatalogStore store,
-        IAuditWriter audit,
-        HttpResponse response,
+        CatalogPublication publication,
         CancellationToken cancellationToken)
         where TEntry : CatalogEntry
     {
-        await using var transaction = await store.BeginWriteAsync(cancellationToken);
         var viewer = await store.ViewerAsync(cancellationToken);
         if (await store.FindVisibleAsync<TEntry>(id, viewer, cancellationToken) is not { } entry)
         {
@@ -388,71 +415,25 @@ internal static class CatalogEndpoints
             return Rejection.Forbidden();
         }
 
-        if (entry.Status != CatalogStatus.Draft)
-        {
-            return Rejection.Conflict(NotDraftMessage);
-        }
-
-        ifMatch.ApplyTo(context, entry);
-        entry.Status = CatalogStatus.Active;
-        if (await NameProblemAsync(entry, kind, store, cancellationToken) is { } taken)
-        {
-            return taken;
-        }
-
-        if (entry is CareerTrack track && await ApproveLevelsAsync(track, context, store, audit, cancellationToken) is { } levelTaken)
-        {
-            return levelTaken;
-        }
-
-        StageApproval(entry, context, audit);
-        return TypedResults.Ok(await CommitAsync(entry, kind, viewer, store, transaction, response, cancellationToken));
-    }
-
-    private static async Task<ProblemHttpResult?> ApproveLevelsAsync(
-        CareerTrack track,
-        AppDbContext context,
-        CatalogStore store,
-        IAuditWriter audit,
-        CancellationToken cancellationToken)
-    {
-        var drafts = await context.Set<CareerLevel>()
-            .Where(level => level.TrackId == track.Id && level.Status == CatalogStatus.Draft)
-            .ToListAsync(cancellationToken);
-        foreach (var level in drafts)
-        {
-            level.Status = CatalogStatus.Active;
-            if (await store.IsNameTakenAsync(level, CareerLevelEndpoints.Kind.SameScope?.Invoke(level), cancellationToken))
-            {
-                return Rejection.Conflict($"{DuplicateNameMessage}: «{level.Name}»");
-            }
-
-            StageApproval(level, context, audit);
-        }
-
-        return null;
-    }
-
-    private static void StageApproval(CatalogEntry entry, AppDbContext context, IAuditWriter audit)
-    {
-        var entityType = entry.GetType().Name;
-        audit.Stage(new AuditEntry($"{entityType}.{ApprovedAction}", entityType, entry.Id.ToString()), context);
+        var plan = await publication.PlanAsync(entry, viewer, cancellationToken);
+        return TypedResults.Ok(plan.Describe(viewer));
     }
 
     /// <summary>
-    /// Deactivates an entry or brings an inactive one back; setting the status an entry already has changes nothing.
-    /// A draft becomes active only by approval, and the default scale stays active, because new competencies get it. A deactivated draft
-    /// stops being a draft, so its name is checked like an approved one's. A track that left the draft status that way keeps its draft
-    /// levels, and reactivating it approves them as approving the track would have.
+    /// Approves a draft, or reactivates an inactive entry, by the one publication rule: the drafts the entry refers to become active with
+    /// it, or nothing does. When drafts go with it, the action needs the tag of the list the user confirmed. Reactivating an active entry
+    /// changes nothing. The approval of the entry itself is journaled as an event of its own.
     /// </summary>
-    private static async Task<Results<Ok<TResponse>, NotFound, ProblemHttpResult>> SetStatusAsync<TEntry, TResponse>(
+    private static async Task<Results<Ok<TResponse>, NotFound, ProblemHttpResult>> PublishAsync<TEntry, TResponse>(
         Guid id,
-        CatalogStatus status,
+        bool isApproval,
         IfMatch ifMatch,
+        string? cascade,
+        string route,
         CatalogKind<TEntry, TResponse> kind,
         AppDbContext context,
         CatalogStore store,
-        IAuditWriter audit,
+        CatalogPublication publication,
         HttpResponse response,
         CancellationToken cancellationToken)
         where TEntry : CatalogEntry
@@ -469,27 +450,71 @@ internal static class CatalogEndpoints
             return Rejection.Forbidden();
         }
 
-        if (entry.Status == CatalogStatus.Draft && status == CatalogStatus.Active)
+        if (isApproval != (entry.Status == CatalogStatus.Draft))
         {
-            return Rejection.Conflict(DraftActivationMessage);
+            return PublicationRefusal.Refuse(isApproval ? NotDraftMessage : DraftActivationMessage, []);
         }
 
-        if (status == CatalogStatus.Inactive && entry is CompetencyScale { IsDefault: true })
+        var plan = await publication.PlanAsync(entry, viewer, cancellationToken);
+        if (plan.IsRefused)
+        {
+            return plan.Refuse(isApproval ? $"Запись «{entry.Name}» не утверждена" : $"Запись «{entry.Name}» не возвращена в работу", viewer);
+        }
+
+        ifMatch.ApplyTo(context, entry);
+        if (plan.Entries.Count > 0 && !plan.IsConfirmedBy(cascade))
+        {
+            return PublicationChanged.Refuse($"{route}/{id}/publication");
+        }
+
+        entry.Status = CatalogStatus.Active;
+        publication.Apply(plan, entry.GetType().Name, entry.Id);
+        if (isApproval)
+        {
+            publication.StageApproved(entry);
+        }
+
+        return TypedResults.Ok(await CommitAsync(entry, kind, viewer, store, transaction, response, cancellationToken));
+    }
+
+    /// <summary>
+    /// Deactivates an entry; deactivating an inactive one changes nothing. The default scale stays active, because new competencies get it.
+    /// A deactivated draft stops being a draft, so its name is checked like an approved one's; a track that leaves the draft status this way
+    /// keeps its draft levels, which reactivating it publishes.
+    /// </summary>
+    private static async Task<Results<Ok<TResponse>, NotFound, ProblemHttpResult>> DeactivateAsync<TEntry, TResponse>(
+        Guid id,
+        IfMatch ifMatch,
+        CatalogKind<TEntry, TResponse> kind,
+        AppDbContext context,
+        CatalogStore store,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+        where TEntry : CatalogEntry
+    {
+        await using var transaction = await store.BeginWriteAsync(cancellationToken);
+        var viewer = await store.ViewerAsync(cancellationToken);
+        if (await store.FindVisibleAsync<TEntry>(id, viewer, cancellationToken) is not { } entry)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (!viewer.CanManage(entry))
+        {
+            return Rejection.Forbidden();
+        }
+
+        if (entry is CompetencyScale { IsDefault: true })
         {
             return Rejection.Conflict(DefaultScaleDeactivationMessage);
         }
 
         var leavesDraft = entry.Status == CatalogStatus.Draft;
         ifMatch.ApplyTo(context, entry);
-        entry.Status = status;
+        entry.Status = CatalogStatus.Inactive;
         if (leavesDraft && await NameProblemAsync(entry, kind, store, cancellationToken) is { } taken)
         {
             return taken;
-        }
-
-        if (status == CatalogStatus.Active && entry is CareerTrack track && await ApproveLevelsAsync(track, context, store, audit, cancellationToken) is { } levelTaken)
-        {
-            return levelTaken;
         }
 
         return TypedResults.Ok(await CommitAsync(entry, kind, viewer, store, transaction, response, cancellationToken));

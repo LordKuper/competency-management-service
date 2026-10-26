@@ -9,4 +9,7 @@ namespace Competency.OrgStructure;
 /// <param name="FirstName">The employee's first name.</param>
 /// <param name="MiddleName">The employee's patronymic; null when the person has none or it is not known.</param>
 /// <param name="IsActive">Whether the employee works in the organization.</param>
-public sealed record EmployeeStatus(Guid Id, string FullName, string LastName, string FirstName, string? MiddleName, bool IsActive);
+/// <param name="OrgUnitId">The unit the employee belongs to.</param>
+/// <param name="PositionId">The employee's position from the catalogue.</param>
+public sealed record EmployeeStatus(
+    Guid Id, string FullName, string LastName, string FirstName, string? MiddleName, bool IsActive, Guid OrgUnitId, Guid PositionId);

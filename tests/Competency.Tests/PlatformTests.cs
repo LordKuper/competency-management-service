@@ -11,15 +11,13 @@ namespace Competency.Tests;
 
 /// <summary>
 /// The platform on a real database: schema applied from an empty database, probes, the mail and link settings it refuses to start with,
-/// what the logs carry, the account role limited in the database itself, the columns wide enough for every value a check constraint
+/// what the logs carry, the columns wide enough for every value a check constraint
 /// admits, and the journal append-only in the database itself,
 /// for the application account too.
 /// </summary>
 public sealed class PlatformTests(TestEnvironment environment)
 {
     private const string RestrictViolation = "23001";
-    private const string CheckViolation = "23514";
-    private const string UnknownRole = "Auditor";
     private const string FailureLogCategory = "Competency.Platform.ProblemExceptionHandler";
     private const string LongestSmtpTimeout = "49.17:02:47.294";
     private const string OneMillisecondOverTheLongestSmtpTimeout = "49.17:02:47.295";
@@ -39,7 +37,7 @@ public sealed class PlatformTests(TestEnvironment environment)
         trigram.Should().Be(1);
 
         var me = (await (await host.AdminAsync()).GetAsync("/api/v1/auth/me")).Expect(HttpStatusCode.OK);
-        me.Json!["role"]!.GetValue<string>().Should().Be(Scenarios.GlobalAdmin);
+        me.Json!["roles"]!.AsArray().Select(role => role!.GetValue<string>()).Should().Equal(Scenarios.GlobalAdmin);
         me.Json["email"]!.GetValue<string>().Should().Be(ApiHost.AdminEmail);
         me.Json["employeeId"].Should().BeNull("the bootstrap administrator is created without an employee");
     }
@@ -117,7 +115,7 @@ public sealed class PlatformTests(TestEnvironment environment)
         await using var host = await environment.StartHostAsync(new Dictionary<string, string> { ["Smtp__Timeout"] = LongestSmtpTimeout });
         var email = $"{Scenarios.Unique("longest")}@test.local";
 
-        var created = (await (await host.AdminAsync()).PostAsync("/api/v1/users", new { email, role = Scenarios.User, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
+        var created = (await (await host.AdminAsync()).PostAsync("/api/v1/users", new { email, roles = Scenarios.NoRoles, employeeId = (Guid?)null })).Expect(HttpStatusCode.Created);
 
         created.Json!["mailSent"]!.GetValue<bool>().Should().BeTrue("the send timer accepts the longest timeout the start allows");
         (await environment.Mail.WaitForAsync(email)).Should().ContainSingle();
@@ -161,7 +159,7 @@ public sealed class PlatformTests(TestEnvironment environment)
         var wrongPassword = $"Wrong-{Guid.NewGuid():N}-2!";
         var unit = await admin.CreateUnitAsync(name: Scenarios.Unique("Отдел-лог"));
         var employee = await admin.CreateEmployeeAsync(unit.Id, lastName: Scenarios.Unique("Логов"));
-        (await admin.PostAsync("/api/v1/users", new { email, role = Scenarios.User, employeeId = employee.Id })).Expect(HttpStatusCode.Created);
+        (await admin.PostAsync("/api/v1/users", new { email, roles = Scenarios.NoRoles, employeeId = employee.Id })).Expect(HttpStatusCode.Created);
         var invitation = (await environment.Mail.WaitForAsync(email))[0];
         (await host.Anonymous().PostAsync("/api/v1/auth/accept-invitation", new { token = invitation.Token, password })).Expect(HttpStatusCode.NoContent);
         (await host.Anonymous().PostAsync("/api/v1/auth/forgot-password", new { email })).Expect(HttpStatusCode.Accepted);
@@ -224,21 +222,6 @@ public sealed class PlatformTests(TestEnvironment environment)
     }
 
     [Fact]
-    public async Task Ac7_UserRole_IsLimitedToTheKnownValuesInTheDatabaseItself()
-    {
-        var host = await environment.SharedHostAsync();
-        var admin = await host.AdminAsync();
-        var account = await admin.CreateUserAsync();
-
-        var rejection = await FluentActions.Awaiting(() => host.ScalarAsync<long>($"UPDATE users SET role = '{UnknownRole}' WHERE id = '{account.Id}'"))
-            .Should().ThrowAsync<PostgresException>();
-
-        rejection.Which.SqlState.Should().Be(CheckViolation);
-        rejection.Which.ConstraintName.Should().Be("ck_users_role");
-        (await admin.GetUserAsync(account.Id)).Json!["role"]!.GetValue<string>().Should().Be(Scenarios.User);
-    }
-
-    [Fact]
     public async Task Ac16_EveryValueACheckConstraintAdmitsToAColumn_FitsTheColumnItChecks()
     {
         const string CheckedColumns = """
@@ -255,7 +238,7 @@ public sealed class PlatformTests(TestEnvironment environment)
         var tooNarrow = await host.ScalarAsync<string>(
             $"SELECT string_agg(t.relname || '.' || a.attname || ' admits ' || literal.longest || ' letters but holds ' || (a.atttypmod - 4), ', ') {CheckedColumns} AND literal.longest > a.atttypmod - 4");
 
-        reached.Should().ContainAll(["matrix_version_decisions.kind", "users.role"], "the sweep must reach the columns whose values are enumeration members, or it passes without looking");
+        reached.Should().ContainAll(["matrix_version_decisions.kind", "career_tracks.status"], "the sweep must reach the columns whose values are enumeration members, or it passes without looking");
         tooNarrow.Should().BeNull("a member longer than its column is refused by the database when first saved, as AcceptedAndRevising was");
     }
 

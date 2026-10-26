@@ -1,6 +1,5 @@
 import { Button, Form, Select, Space } from "antd";
 import { CatalogModal } from "./CatalogModal";
-import { CatalogSelect, type PickerFilters } from "./CatalogSelect";
 
 interface Option {
   value: string;
@@ -54,63 +53,6 @@ export function AddLevelModal({
             loading={isLoading}
             options={[...options]}
           />
-        </Form.Item>
-        <PickerActions onCancel={onClose} />
-      </Form>
-    </CatalogModal>
-  );
-}
-
-interface AddCompetencyModalProps {
-  /** The competencies a matrix of this version may use: its scale, its direction or general, in work. */
-  filters: PickerFilters;
-  /** Competencies already in the matrix, which are not offered again. */
-  usedIds: readonly string[];
-  blocks: readonly Option[];
-  onPick: (competencyId: string, blockId: string) => void;
-  onClose: () => void;
-}
-
-/** Dialog that picks a catalogue competency, searched on the server, and the block of the matrix it joins. */
-export function AddCompetencyModal({
-  filters,
-  usedIds,
-  blocks,
-  onPick,
-  onClose,
-}: AddCompetencyModalProps) {
-  return (
-    <CatalogModal
-      title="Добавить компетенцию"
-      error={null}
-      fields={[]}
-      onClose={onClose}
-    >
-      <Form
-        name="matrix-add-competency"
-        layout="vertical"
-        initialValues={{ blockId: blocks[0]?.value }}
-        onFinish={(values: { competencyId: string; blockId: string }) =>
-          onPick(values.competencyId, values.blockId)
-        }
-      >
-        <Form.Item
-          name="competencyId"
-          label="Компетенции"
-          rules={[{ required: true }]}
-        >
-          <CatalogSelect
-            segment="competencies"
-            filters={filters}
-            exclude={usedIds}
-          />
-        </Form.Item>
-        <Form.Item
-          name="blockId"
-          label="Блоки компетенций"
-          rules={[{ required: true }]}
-        >
-          <Select options={[...blocks]} />
         </Form.Item>
         <PickerActions onCancel={onClose} />
       </Form>

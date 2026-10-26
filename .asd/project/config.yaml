@@ -29,7 +29,7 @@ language:
 # migration — breaking changes allowed with a documented migration path and deprecation notice.
 # none      — free hand, breaking changes allowed without ceremony.
 # Values: strict | migration | none
-backward_compat: migration
+backward_compat: none
 
 review:
   # External review via the other provider's CLI (Codex CLI wrapped in a Claude

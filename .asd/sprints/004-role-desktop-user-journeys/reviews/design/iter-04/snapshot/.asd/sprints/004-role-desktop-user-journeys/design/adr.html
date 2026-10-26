@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<!--
+responsibility:
+  owns: html shell wrap for all asd user-facing html docs
+  excludes: doc content, doc-specific structure
+  delegates_to: fragment templates (t_prd, t_adr, t_ux-spec, t_concept, t_stack, t_design-system, t_accessibility, t_retrospective)
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="ASD workflow">
+  <meta name="doc-type" content="ADR">
+  <meta name="subsystem" content="project">
+  <meta name="sprint-id" content="004-role-desktop-user-journeys">
+  <meta name="status" content="in-review">
+  <meta name="updated" content="2026-10-13">
+  <meta name="responsibility" content="architecture decisions for this sprint only (sprint-scoped; never a standalone persistent document — folded at design-promote per sprint-lifecycle.md &quot;Design-promote phase&quot;)">
+  <meta name="provenance" content="original">
+  <meta name="source" content="">
+  <title>ADRs — Sprint 004 · role-desktop-user-journeys</title>
+  <style>
+    :root {
+      --fg: #1a1c1e; --bg: #fff; --muted: #5b6770; --accent: #0066cc;
+      --code-bg: #f4f6f8; --border: #d0d7de; --max: 1040px;
+      --card-bg: #fafbfc;
+      --ok: #1a7f37; --warn: #b35900; --danger: #cf222e; --info: #0969da; --neutral: #5b6770;
+      --ok-tint: rgba(31,136,61,0.07); --danger-tint: rgba(207,34,46,0.06);
+      --chip-must-bg: #ffebe9; --chip-must-fg: #cf222e;
+      --chip-should-bg: #fff5e1; --chip-should-fg: #9a6700;
+      --chip-may-bg: #ddf4ff; --chip-may-fg: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e6e6e6; --bg: #0e1116; --muted: #9aa4ad; --code-bg: #161b22; --border: #30363d;
+        --card-bg: #161b22;
+        --accent: #58a6ff; --ok: #3fb950; --warn: #d29922; --danger: #f85149; --info: #79c0ff; --neutral: #8b949e;
+        --ok-tint: rgba(63,185,80,0.12); --danger-tint: rgba(248,81,73,0.10);
+        --chip-must-bg: #3b1416; --chip-must-fg: #ff7b72;
+        --chip-should-bg: #2d2410; --chip-should-fg: #e3b341;
+        --chip-may-bg: #0d2538; --chip-may-fg: #58a6ff;
+      }
+    }
+    html, body { margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100vh; }
+    .layout:has(> nav.toc) { grid-template-columns: 260px minmax(0, 1fr); }
+    nav.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 12px; border-right: 1px solid var(--border); font-size: 0.85rem; }
+    nav.toc .toc-title { font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
+    nav.toc ol { list-style: none; margin: 0; padding: 0; }
+    nav.toc li { margin: 2px 0; }
+    nav.toc a { color: var(--fg); text-decoration: none; display: block; padding: 3px 6px; border-radius: 4px; }
+    nav.toc a:hover { background: var(--code-bg); color: var(--accent); }
+    @media (max-width: 880px) { nav.toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } }
+    @media print { nav.toc { display: none; } }
+    .content { min-width: 0; }
+    header, main, footer { max-width: var(--max); margin: 0 auto; padding: 16px 24px; }
+    header { border-bottom: 1px solid var(--border); }
+    header h1 { margin: 4px 0 8px; font-size: 1.9rem; }
+    .badges span { display: inline-block; padding: 2px 8px; margin-right: 6px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--bg); }
+    .badges .provenance-reverse-engineered, .badges .provenance-migrated { color: var(--warn); border-color: var(--warn); }
+    .badges .status-draft       { color: var(--neutral); border-color: var(--neutral); }
+    .badges .status-in-review   { color: var(--warn);    border-color: var(--warn); }
+    .badges .status-approved    { color: var(--ok);      border-color: var(--ok); }
+    .badges .status-locked      { color: var(--info);    border-color: var(--info); }
+    .stats { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+    .stats .chip { display: inline-block; padding: 1px 8px; margin-right: 6px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); }
+    @media (max-width: 880px) {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+    }
+    h2, h3, h4 { line-height: 1.25; margin-top: 1.6em; }
+    h2 { border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    a { color: var(--accent); }
+    code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: var(--code-bg); padding: 12px; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--code-bg); position: sticky; top: 0; z-index: 1; }
+    tbody tr:nth-child(even) td { background: var(--card-bg); }
+    blockquote { border-left: 3px solid var(--accent); margin: 0; padding: 4px 14px; color: var(--muted); }
+    .mermaid { background: var(--bg); text-align: center; margin: 16px 0; }
+    footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+    /* fragment-shared utilities */
+    .lede { font-size: 1.08rem; color: var(--fg); }
+    section.hero { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+    section.callout { border-left: 4px solid var(--border); padding: 8px 14px; background: var(--card-bg); border-radius: 4px; }
+    section.callout.warn { border-left-color: var(--warn); }
+    section.callout.warn h2::before { content: "⊘ "; color: var(--warn); }
+
+    ol.goal-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    ol.goal-grid li { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; display: flex; gap: 10px; }
+    ol.goal-grid .num { flex: 0 0 auto; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    ol.goal-grid p { margin: 0; }
+
+    details.role-group { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; background: var(--card-bg); }
+    details.role-group > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+    details.role-group > summary .count { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+    details.role-group ul.stories { margin: 0; padding: 4px 16px 12px 28px; }
+    ul.stories li { margin: 4px 0; }
+    ul.stories b { color: var(--accent); font-weight: 600; }
+
+    table.ac-table td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .chip.area { background: var(--code-bg); color: var(--muted); }
+    .chip.prio-must   { background: var(--chip-must-bg);   color: var(--chip-must-fg); border-color: var(--chip-must-fg); }
+    .chip.prio-should { background: var(--chip-should-bg); color: var(--chip-should-fg); border-color: var(--chip-should-fg); }
+    .chip.prio-may    { background: var(--chip-may-bg);    color: var(--chip-may-fg); border-color: var(--chip-may-fg); }
+
+    ul.non-goals { margin: 0; padding-left: 22px; }
+    ul.non-goals li::marker { content: "⊘  "; color: var(--warn); }
+
+    /* definition-list pattern: Purpose / Entry / Exit / Notes */
+    dl.def-list { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0; }
+    dl.def-list dt { font-weight: 600; color: var(--muted); }
+    dl.def-list dd { margin: 0; }
+
+    /* ADR */
+    .adr { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    .adr > .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+    .adr h2 { margin-top: 0.4em; border-bottom: none; font-size: 1.3rem; }
+    .adr h3 { margin-top: 1.1em; border-bottom: none; font-size: 1.15rem; }
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .status-proposed   { color: var(--warn);    border-color: var(--warn); }
+    .status-accepted   { color: var(--ok);      border-color: var(--ok); }
+    .consequences { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .consequences .pros, .consequences .cons { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+    .consequences .pros { background: var(--ok-tint); border-left: 3px solid var(--ok); }
+    .consequences .cons { background: var(--danger-tint); border-left: 3px solid var(--danger); }
+    .consequences h4 { margin: 0 0 4px; font-size: 1rem; color: var(--muted); }
+    .consequences ul { margin: 0; padding-left: 20px; }
+    @media (max-width: 720px) { .consequences { grid-template-columns: 1fr; } }
+    ul.alt-list li { margin: 4px 0; }
+    ul.alt-list li strong { color: var(--fg); }
+
+    /* UX-spec mockup */
+    article.mockup { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    article.mockup > h3 { margin-top: 0; }
+    .mockup-preview { background: var(--bg); border: 1px dashed var(--border); border-radius: 6px; padding: 16px; margin: 10px 0; min-height: 80px; }
+    .screen-meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 6px 0 10px; font-size: 0.92rem; }
+    .screen-meta b { color: var(--muted); font-weight: 600; }
+
+    /* Concept */
+    .pillar-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .pillar-grid li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; }
+    .pillar-grid li strong { display: block; margin-bottom: 4px; color: var(--accent); }
+    .anti-pillar-grid li { border-left-color: var(--danger); }
+    .anti-pillar-grid li strong { color: var(--danger); }
+    ul.user-segments { list-style: none; padding: 0; }
+    ul.user-segments li { padding: 8px 12px; margin: 6px 0; border-left: 3px solid var(--accent); background: var(--card-bg); border-radius: 4px; }
+    ul.user-segments li b { color: var(--accent); }
+    ul.metrics li { margin: 4px 0; }
+    ul.metrics li .target { float: right; color: var(--ok); font-variant-numeric: tabular-nums; }
+
+    /* Stack */
+    table.tech-table .ver { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .principle-list { list-style: none; padding: 0; }
+    .principle-list li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    .principle-list li strong { color: var(--info); }
+
+    /* Accessibility */
+    section.a11y-domain { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; margin: 14px 0; }
+    section.a11y-domain h2 { border-bottom: 1px dashed var(--border); }
+    .limitation { background: var(--chip-should-bg); border-left: 3px solid var(--warn); padding: 8px 12px; margin: 6px 0; border-radius: 4px; }
+    .limitation b { color: var(--warn); }
+
+    /* Design system */
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .swatch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+    .swatch .chip-color { height: 80px; border-radius: 4px; border: 1px solid var(--border); }
+    .swatch code { font-size: 0.78rem; }
+    .swatch small { color: var(--muted); }
+    .spacing-scale { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); }
+    .spacing-scale > div { background: var(--accent); width: 24px; border-radius: 2px 2px 0 0; }
+    article.component-preview { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 14px 0; background: var(--card-bg); }
+    .preview { padding: 16px; border: 1px dashed var(--border); border-radius: 6px; background: var(--bg); }
+
+    @media print {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+      a { color: inherit; text-decoration: none; }
+      footer { page-break-before: always; }
+      details.role-group[open] > summary { list-style: none; }
+      details.role-group { break-inside: avoid; }
+      tr, li { break-inside: avoid; }
+    }
+  </style>
+
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Содержание</div>
+      <ol>
+        <li><a href="#adr-1-title">ADR-1: Подсистема «Рабочий стол» и вклад модулей</a></li>
+        <li><a href="#adr-2-title">ADR-2: API стола и счётчика, доступ, производительность</a></li>
+        <li><a href="#adr-3-title">ADR-3: Связь «должность — карьерный уровень»</a></li>
+        <li><a href="#adr-4-title">ADR-4: Общее правило публикации с каскадом</a></li>
+        <li><a href="#adr-5-title">ADR-5: Письма-напоминания и возврат на цель после входа</a></li>
+        <li><a href="#adr-6-title">ADR-6: Методы чтения сценариев, контракт 3.1.0, маршруты SPA</a></li>
+      </ol>
+    </nav>
+    <div class="content">
+      <header>
+        <div class="badges">
+          <span>ADR</span>
+          <span>project</span>
+          <span class="status-in-review">in-review</span>
+        </div>
+        <h1>ADRs — Sprint 004 · role-desktop-user-journeys</h1>
+        <div class="stats">6 decisions · desk, career-framework, org-structure, user-management, audit · updated 2026-10-13</div>
+      </header>
+      <main>
+<!--
+responsibility:
+  owns: architecture decisions for this sprint only (sprint-scoped; never a standalone persistent document — folded at design-promote per sprint-lifecycle.md "Design-promote phase")
+  excludes: requirements, ux, code
+  delegates_to: prd.html (requirements), ux-spec.html (ux), code (implementation)
+provenance: original
+source: ""
+-->
+
+<article class="adr" id="adr-1">
+  <div class="meta">
+    <span class="status-chip status-accepted">accepted</span>
+    <span class="chip area">subsystem: desk</span>
+    <span class="chip">ADR-1</span>
+  </div>
+
+  <h2 id="adr-1-title">ADR-1: Подсистема «Рабочий стол» (<code>desk</code>); модули отдают находки через контракт Platform</h2>
+
+  <h3 id="adr-1-context">Context</h3>
+  <p>Стол (AC-2, AC-3, AC-30) собирает находки трёх модулей. Данные <code>career-framework</code> дают виды AC-4, AC-5, 6.1, 6.3/6.4, AC-26, AC-27, AC-29; данные <code>org-structure</code> — 6.2, 28.1–28.4, 28.7; данные <code>user-management</code> — 6.5, 28.5 и состояние учётной записи руководителя из 28.6. Правило «один объект — один пункт» и поглощение работают поперёк модулей (таблица 1 PRD): 6.2 ⊃ 5.3; 28.7 ⊃ 6.2, 6.3, 5.3, 27.3; 28.1 ⊃ 29; 6.5 по учётной записи поглощает причину «приглашена» из 28.6 в пункте подразделения; действие поглощает справочное по тому же объекту. Счётчик равен числу пунктов-действий <em>после</em> слияния, поэтому по модулям отдельно его не посчитать.</p>
+  <p>Ограничения (<code>stack.html</code>, «Архитектурные принципы»): Platform не ссылается на модули; OrgStructure → Platform; UserManagement → OrgStructure; CareerFramework → OrgStructure, UserManagement; обратных ссылок нет. Наружу модуль выставляет только <code>Add…Module</code>, <code>Map…Endpoints</code> и опубликованные порты; у <code>career-framework</code> опубликованных портов нет. Образец «контракт в Platform, реализация в модуле» уже есть: <code>IAuditWriter</code>. Варианты размещения перечислены в <code>audit.md</code> («Subsystems map», (а)–(г)); новая подсистема — отдельный hard gate (<code>sprint.md</code>, допущение 3), принят пользователем 2026-10-13.</p>
+
+  <h3 id="adr-1-decision">Decision</h3>
+  <p class="lede">Каждый модуль вычисляет находки своих видов по своим данным и отдаёт их через контракт в Platform (<code>IDeskSource</code>). Слияние, поглощение, порядок причин, группы и счётчик живут в новой подсистеме <code>desk</code> (модуль <code>Competency.Desk</code>, зависит только от Platform). Она владеет правилами AC-2, AC-3, AC-30 и API стола (ADR-2).</p>
+  <ul>
+    <li><strong>Контракт в Platform.</strong> Метод <code>IDeskSource.FindAsync(CancellationToken)</code> возвращает <code>IReadOnlyList&lt;DeskFinding&gt;</code> вошедшего пользователя (<code>ICurrentActor</code>). <code>DeskFinding</code> несёт:
+      <ul>
+        <li>вид (<code>DeskKind</code>): по члену на вид PRD, а варианты одного вида с разным поглощением — отдельными членами («трек без уровней» и «трек с одним уровнем»; «учётная запись руководителя: нет / приглашена / заблокирована»);</li>
+        <li>объект: тип, id, название, контекст;</li>
+        <li>необязательный «предмет» — объект другого типа, к которому относится находка. Например, учётная запись руководителя в 28.6 или должность пользователя в 29. Он нужен для поглощения поперёк объектов;</li>
+        <li>признак «действие» или «справочно»;</li>
+        <li>момент события — только у событийных видов (AC-2.5);</li>
+        <li>типизированные параметры причины;</li>
+        <li>идентификаторы перехода и встроенного действия: учётную запись и её <code>version</code> для «Отправить приглашение повторно».</li>
+      </ul></li>
+    <li><strong>Источники в модулях.</strong> Каждый — внутренний класс модуля, который модуль регистрирует в своём <code>Add…Module</code>.
+      <ul>
+        <li><code>org-structure</code>: 6.2, 28.1, 28.2, 28.3, 28.4, 28.7 — только администратору.</li>
+        <li><code>user-management</code>: 6.5, 28.5, 28.6 — только администратору. Руководителей подразделений источник берёт из <code>IEmployeeDirectory</code>.</li>
+        <li><code>career-framework</code>: 4.1–4.4, 5.1–5.3, 6.1, 6.3 (с причиной 6.4), 26.1–26.9, 27.1, 27.3–27.8, 29. Здесь же подавления, которым нужны данные модуля: версия в работе подавляет 4.4, 5.3, 26.5–26.7, даже если о самой версии пользователю ничего не показано (AC-30.9); черновой трек на утверждении получает пометку «утверждать рано» вместо 26.2–26.4 (AC-27.2).</li>
+      </ul>
+      Источник сам ограничивает область видимости (AC-16.6) и берёт те же функции прав, которыми модуль проверяет действие: <code>ProcessRoles</code>, <code>MatrixRoute</code>, <code>CatalogViewer</code>, правило <code>/drafts</code>. Второй копии правил нет.</li>
+    <li><strong>Слияние в <code>desk</code>.</strong> Модуль собирает все <code>IDeskSource</code> и выполняет шаги строго в этом порядке:
+      <ol>
+        <li>убирает повтор одной находки, пришедшей по нескольким ролям (AC-30.5);</li>
+        <li>применяет явные пары поглощения таблицы 1, в том числе через «предмет»;</li>
+        <li>применяет общее правило «действие поглощает справочное по тому же объекту» (AC-30.4). Если поменять шаги 2 и 3 местами, не сработает исключение 28.7 ⊃ 6.2;</li>
+        <li>упорядочивает причины по таблице 2;</li>
+        <li>определяет группу пункта по первой видимой причине (U-3);</li>
+        <li>считает пункты-действия.</li>
+      </ol>
+      Таблицы 1 и 2 занимают одно место в коде <code>desk</code>. Таблиц БД и миграций у <code>desk</code> нет.</li>
+    <li><strong>Регистрация.</strong> Хост регистрирует модуль <code>desk</code> вместе с остальными.</li>
+  </ul>
+
+  <h4>Новая подсистема <code>desk</code> — принята пользователем 2026-10-13</h4>
+  <p>Из этого блока на design-promote пишется <code>docs/architecture/desk.md</code> (<code>t_subsystem.md</code>).</p>
+  <dl class="def-list">
+    <dt>id</dt><dd><code>desk</code> (не зарезервирован; совпадает с префиксом маршрутов <code>/desk/…</code>)</dd>
+    <dt>Название</dt><dd>Рабочий стол</dd>
+    <dt>Назначение</dt><dd>Ожидаемые действия пользователя из всех подсистем: сбор находок, «один объект — один пункт», поглощение и порядок причин, группы, счётчик, API стола (ADR-2). Стол вычисляется на сервере при каждом запросе; собственных таблиц, миграций и кэша нет. Зависит только от Platform, модули о нём не знают.</dd>
+    <dt>Key paths</dt><dd><code>src/Competency.Desk/</code> — слияние, таблицы 1–2, группы, счётчик, методы <code>/api/v1/desk*</code>; наружу только <code>Add…Module</code> и <code>Map…Endpoints</code>. Контракт <code>IDeskSource</code>, <code>DeskFinding</code>, <code>DeskKind</code>, <code>DeskObjectType</code> — в <code>src/Competency.Platform/</code>; реализации — внутренние классы <code>org-structure</code>, <code>user-management</code>, <code>career-framework</code>. <code>web/src/features/desk/</code> — стол и экраны сценариев <code>/desk/…</code>, маршруты в <code>routes.ts</code> (ADR-6)</dd>
+    <dt>Диаграмма</dt><dd><a href="c4-full/subsystems.md">c4-full/subsystems.md</a></dd>
+  </dl>
+
+  <h4>Complication Approval</h4>
+  <dl class="def-list">
+    <dt>Что</dt><dd>Интерфейс <code>IDeskSource</code> и типы <code>DeskFinding</code>, <code>DeskKind</code>, <code>DeskObjectType</code> в Platform; новый модуль <code>Competency.Desk</code>.</dd>
+    <dt>Зачем</dt><dd>Поглощение и счётчик требуют всех находок в одном месте, а модули не могут ссылаться друг на друга вверх по направлению зависимостей.</dd>
+    <dt>Обоснование</dt><dd>У интерфейса с первого дня три реализации, это не абстракция ради одной. Образец — <code>IAuditWriter</code>. Новых пакетов нет. Правила таблиц 1–2 меняются вместе и лежат в одном файле.</dd>
+    <dt>Альтернативы</dt><dd>См. «Alternatives considered»: В2, (б), (г), слияние в хосте, порт <code>career-framework</code> без контракта Platform.</dd>
+  </dl>
+
+  <h3 id="adr-1-consequences">Consequences</h3>
+  <div class="consequences">
+    <div class="pros">
+      <h4>Positive</h4>
+      <ul>
+        <li>Правила стола собраны в одном месте. Предикаты целостности остаются у владельцев данных: оргструктура считает свои проверки, учётные записи — свои.</li>
+        <li>Направление зависимостей сохраняется: <code>desk</code> зависит только от Platform, модули о нём не знают. <code>career-framework</code> по-прежнему без опубликованных портов.</li>
+        <li>Будущие виды (волны, оценки — out of scope) подключаются ещё одной реализацией <code>IDeskSource</code>.</li>
+        <li><code>career-framework</code> (уже около 5,7 тыс. строк) не становится «модулем всего».</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>Negative</h4>
+      <ul>
+        <li>Прибавляются новый проект, строка реестра, <code>desk.md</code> и узел диаграммы; хост регистрирует ещё один модуль.</li>
+        <li>Platform знает перечень видов (<code>DeskKind</code>): новый вид требует правки Platform и таблиц <code>desk</code>.</li>
+        <li>Каждый запрос стола опрашивает все источники; стоимость и бюджет — в ADR-2.</li>
+        <li>Три источника нужно держать в согласии с проверками действий. Нужны тесты: что стол показывает, сервер не отклоняет 403/409, и наоборот.</li>
+      </ul>
+    </div>
+  </div>
+  <p><strong>Обратимость:</strong> умеренная — перенос слияния в <code>career-framework</code> (В2) механический. <strong>Пересмотр:</strong> если столу понадобится собственное хранение (история уведомлений, дайджесты, отметки «прочитано»).</p>
+
+  <h3 id="adr-1-alternatives">Alternatives considered (optional)</h3>
+  <ul class="alt-list">
+    <li><strong>В2 — слияние и API стола в <code>career-framework</code>, тот же контракт Platform</strong> — отклонён: модуль карьерной модели получил бы правила о находках оргструктуры и учётных записей и их поглощении.</li>
+    <li><strong>(б) всё в <code>career-framework</code> через расширение портов <code>IEmployeeDirectory</code>/<code>IUserDirectory</code> сырыми данными</strong> — отклонён: предикаты оргструктуры и учётных записей (должность вне перечня, приглашение не принято) переехали бы в чужой модуль и дублировали его правила.</li>
+    <li><strong>(г) свой endpoint «мои находки» в каждом модуле, SPA сливает</strong> — отклонён: поглощение и счётчик оказались бы в браузере, а на каждый переход шли бы три запроса | binding — «Сервер — единственный источник истины» (<code>stack.html</code>).</li>
+    <li><strong>Слияние в хосте <code>Competency.Api</code></strong> — отклонён: хост только собирает модули, продуктовым правилам там не место.</li>
+    <li><strong>Порт <code>career-framework</code> плюс порты двух других модулей без общего контракта (<code>desk</code> ссылается на три модуля)</strong> — отклонён: пришлось бы сводить три разные формы результата, а <code>career-framework</code> открыл бы первый порт только ради стола.</li>
+  </ul>
+
+  <h3 id="adr-1-related">Related ADRs (optional)</h3>
+  <ul>
+    <li><a href="#adr-2">ADR-2</a>: API, доступ и производительность того же вычисления.</li>
+    <li><a href="#adr-6">ADR-6</a>: экраны сценариев <code>/desk/…</code> в <code>web/src/features/desk/</code>.</li>
+  </ul>
+
+  <h3 id="adr-1-fold-target">Fold target (optional)</h3>
+  <p><code>docs/architecture/subsystems.md</code> — justified by its <code>responsibility.owns</code> clause: "which subsystems exist and their ids (sole subsystem registry); diagram_tool mermaid: the subsystem diagram". Новый <code>docs/architecture/desk.md</code> (<code>t_subsystem.md</code>) — из блока «Новая подсистема <code>desk</code>»; правило зависимостей модулей — <code>docs/architecture/stack.html</code>, «Архитектурные принципы».</p>
+</article>
+
+<article class="adr" id="adr-2">
+  <div class="meta">
+    <span class="status-chip status-accepted">accepted</span>
+    <span class="chip area">subsystem: desk</span>
+    <span class="chip">ADR-2</span>
+  </div>
+
+  <h2 id="adr-2-title">ADR-2: API стола и счётчика, доступ и производительность</h2>
+
+  <h3 id="adr-2-context">Context</h3>
+  <p>AC-2 и AC-3 требуют, чтобы счётчик обновлялся после каждого действия, при переходе и при возврате фокуса, без таймера и push. Остальные входы:</p>
+  <ul>
+    <li>AC-16 (доступ), AC-30 (дубли), решения UX U-2–U-6 и U-23.</li>
+    <li>Длинные группы (U-4): видно 10 строк, затем «Показать ещё 20», в заголовке — полное число. У администратора группа «Подключить подразделения» бывает на сотни строк, у HR на корне справочных строк тоже сотни. <code>stack.html</code> разрешает отдавать целиком только короткие личные списки.</li>
+    <li>Риски <code>audit.md</code>: <code>MatrixRoute.AwaitingAsync</code> зовёт <code>TurnAsync</code> на каждую версию (3–8 запросов); <code>ProcessRoles.HrUnitsAsync</code> читает поддерево на каждое закрепление; «нет HR» и «нет матрицы» читают цепочку предков на каждое подразделение.</li>
+    <li><code>custom-coding-rules.md</code>: производительность меряется только у Task с объявленным perf-риском, на переиспользуемом сиде 10 000+ сотрудников.</li>
+  </ul>
+
+  <h3 id="adr-2-decision">Decision</h3>
+  <p class="lede">Стол вычисляется на сервере при каждом запросе из текущих данных и отдаётся тремя методами <code>desk</code>. Счётчик — та же вычисленная выборка, отданная числом. Источники читают данные наборными запросами с постоянным числом обращений к БД и считают правила в памяти теми же функциями, что проверяют действия.</p>
+  <h4>API (все методы — только аутентифицированному и только про себя)</h4>
+  <ul>
+    <li><code>GET /api/v1/desk</code> → <code>{ actionCount, groups: [{ group, isReference, total, items }] }</code>. Только непустые группы; в <code>items</code> — первые 10 пунктов (константа U-4).</li>
+    <li><code>GET /api/v1/desk/items?group=…&amp;group=…&amp;limit=</code> → <code>{ items, total }</code>. <code>limit</code> — число строк с начала выборки; «Показать ещё» перечитывает группу с начала на 10 + 20·k строк. <code>total</code> — полное число пунктов выборки. Пункты исчезают по мере выполнения, но пропусков и повторов строк при этом не будет. Очередь «Навести порядок в оргструктуре» (AC-33) — та же выборка по её группам.
+      <ul>
+        <li>Предел <code>limit</code> — собственная константа <code>desk</code>, 2 000 строк, а не <code>ListRequest</code>: его 200 строк меньше обычных групп на сотни строк. <code>limit</code> меньше 1 — 400 с ошибкой поля; больше предела — сервер отдаёт предел строк.</li>
+        <li>Предел — документированный потолок стола, а не страница: продолжения выборки нет, и строки группы за пределом на столе недостижимы по построению. Хвост группы действий открывается по мере выполнения пунктов. Объекты справочной группы за пределом остаются доступны в очередях сценариев и вторичных разделах, но не на столе.</li>
+        <li>Perf-Task проверяет на сиде, что самая большая группа каждого из четырёх пользователей замера меньше предела.</li>
+        <li>Если строк пришло меньше и запрошенного, и <code>total</code>, группа усечена пределом: SPA пишет об этом под таблицей и прячет «Показать ещё».</li>
+      </ul></li>
+    <li><code>GET /api/v1/desk/count</code> → <code>{ actionCount }</code>.</li>
+    <li><strong><code>DeskItem</code></strong> несёт:
+      <ul>
+        <li>объект: тип, id, название, контекст;</li>
+        <li><code>group</code> и <code>isReference</code>;</li>
+        <li>причины по порядку таблицы 2: вид, момент события (только у событийных видов), типизированные параметры;</li>
+        <li>идентификаторы для переходов;</li>
+        <li>встроенное действие: учётную запись и её <code>version</code> для <code>resend-invitation</code>.</li>
+      </ul>
+      Тексты причин и названия групп SPA рисует по виду из каталога текстов, утверждённого в plan; сервер отдаёт данные, а не фразы. Строки группы идут в устойчивом порядке: момент события по возрастанию (кто ждёт дольше — первым), затем название, затем id.</li>
+    <li><strong>Доступ.</strong> Параметра «чей стол» нет — получить чужой стол невозможно по построению (AC-16.3). Состав ограничен областью ролей каждого источника (AC-16.6). Неопубликованное попадает только к тем, кто читает его по правилам <code>career-framework</code>: источники фильтруют через <code>MatrixRoute.ReadableAsync</code> и <code>CatalogViewer.Sees</code> (AC-16.5).</li>
+    <li><strong>Блок «Что можно сделать».</strong> Карточки SPA строит по ролям сессии (<code>/auth/me</code>, <code>/career/me</code>), подписи «Ждут вас: N» берёт из <code>total</code> групп. Отдельного API карточек нет.</li>
+  </ul>
+  <h4>Вычисление и производительность</h4>
+  <ul>
+    <li><strong>Снимок оргструктуры на запрос.</strong> Новый метод порта <code>IEmployeeDirectory.FindOrgSnapshotAsync</code> (<code>org-structure</code>) одним вызовом отдаёт:
+      <ul>
+        <li>все подразделения: id, родитель, руководитель, активность;</li>
+        <li>собственные перечни должностей подразделений;</li>
+        <li>должности: название, активность;</li>
+        <li>число работающих сотрудников по паре «подразделение — должность».</li>
+      </ul>
+      У записи снимка есть методы-правила <code>org-structure</code>: предки, поддерево, «доступные подразделению должности» (свой перечень и перечни предков). Это правило остаётся у владельца. Реализация порта scoped и запоминает снимок на время запроса, поэтому <code>career-framework</code> и <code>user-management</code> читают его один раз.</li>
+    <li><strong>Одни правила для стола и для действий.</strong> Ближайший ответственный HR, согласующий шага 1, «может ли учётная запись руководителя действовать» — чистые функции, вынесенные из <code>ProcessRoles</code> и <code>MatrixRoute</code>. Путь действия вызывает их на прочитанной цепочке предков, путь стола — на снимке. Правило одно, способов загрузки два; так закрыт риск расхождения стола с правами сервера.</li>
+    <li><strong>Данные <code>career-framework</code>:</strong> версии в работе и опубликованные, решения, черновики, треки, уровни, связи, закрепления HR, учётные записи руководителей и HR. Их читают несколько наборных запросов на источник, без циклов с запросами внутри.</li>
+    <li><strong>Бюджет на сиде:</strong>
+      <ul>
+        <li><code>GET /desk/count</code> — p95 ≤ 300 мс;</li>
+        <li><code>GET /desk</code> — p95 ≤ 600 мс;</li>
+        <li>замер для четырёх пользователей: администратор, HR с закреплением на корне, руководитель верхнего подразделения, сотрудник;</li>
+        <li>SQL-команд на запрос не больше 25, и их число не зависит от объёма данных.</li>
+      </ul>
+      Если вычисление длится дольше 1 с, в лог пишется предупреждение: роль, время по источникам, без ПДн.</li>
+    <li><strong>Task с perf-риском (назначает plan): вычисление стола и счётчика.</strong> Task создаёт переиспользуемый сид <code>tests/perf/seed-10k.sql</code> — SQL на <code>generate_series</code> поверх пустой мигрированной БД. Состав сида:
+      <ul>
+        <li>10 000 работающих и 200 уволенных сотрудников;</li>
+        <li>около 1 000 подразделений глубиной до 7;</li>
+        <li>около 400 должностей с перечнями;</li>
+        <li>закрепления HR на корне и примерно на 50 подразделениях;</li>
+        <li>около 300 учётных записей, часть из них приглашены с истёкшими ссылками или заблокированы;</li>
+        <li>около 60 треков по 3–6 уровней, связи заведены частично;</li>
+        <li>около 500 матриц с опубликованными и рабочими версиями;</li>
+        <li>около 1 500 компетенций и черновики.</li>
+      </ul>
+      Замер — в impl-test. Последующие Task с perf-риском берут тот же сид.</li>
+    <li><strong>Кэш.</strong> Серверного кэша нет: собственное действие должно сразу менять счётчик (AC-3.4), а сбрасывать кэш по изменениям трёх модулей сложнее, чем пересчитать.</li>
+    <li><strong>Клиент.</strong> Ключ <code>['desk']</code> в TanStack Query:
+      <ul>
+        <li><code>MutationCache.onSuccess</code> сбрасывает <code>['desk']</code> после любой успешной мутации (AC-3.4);</li>
+        <li>смена адреса перечитывает счётчик (AC-3.5);</li>
+        <li><code>refetchOnWindowFocus</code> включён (значение по умолчанию);</li>
+        <li>опроса по таймеру и push нет (AC-3.6);</li>
+        <li>до первого ответа и при ошибке метки нет (U-2).</li>
+      </ul></li>
+  </ul>
+
+  <h4>Complication Approval (метод порта <code>org-structure</code>)</h4>
+  <dl class="def-list">
+    <dt>Что</dt><dd>Метод <code>IEmployeeDirectory.FindOrgSnapshotAsync</code> и публичная запись <code>OrgSnapshot</code> с методами-правилами (предки, поддерево, доступные должности). Записи <code>EmployeeStatus</code> аддитивно получают <code>OrgUnitId</code> и <code>PositionId</code> — для AC-14 и AC-29.</dd>
+    <dt>Зачем</dt><dd>Без наборного чтения стол делает N+1 запросов по подразделениям и версиям — главный риск производительности из <code>audit.md</code>.</dd>
+    <dt>Обоснование</dt><dd>Это расширение уже опубликованного порта, только чтение, scoped. Снимок используют источники стола <code>career-framework</code> и <code>user-management</code>, экраны AC-12, AC-14, AC-31. Правило «доступные подразделению должности» остаётся у владельца данных.</dd>
+    <dt>Альтернативы</dt><dd>Несколько узких методов: больше вызовов, те же данные. Прямой SQL из <code>career-framework</code> к таблицам <code>org-structure</code>: ломает границу модуля.</dd>
+  </dl>
+
+  <h3 id="adr-2-consequences">Consequences</h3>
+  <div class="consequences">
+    <div class="pros">
+      <h4>Positive</h4>
+      <ul>
+        <li>Счётчик по построению равен числу пунктов-действий; второго алгоритма подсчёта нет.</li>
+        <li>Нет хранилища задач и новых таблиц (AC-2.12, AC-2.13).</li>
+        <li>N+1 устранён одинаково для стола и для экранов сценариев; правила действий и стола общие.</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>Negative</h4>
+      <ul>
+        <li>Каждый переход пересчитывает стол целиком. Стоимость ограничена бюджетом, но растёт линейно с размером организации.</li>
+        <li>Вынос правил <code>ProcessRoles</code>/<code>MatrixRoute</code> в чистые функции затрагивает пути действий. Риск регрессии закрывают существующие тесты маршрута и ролей.</li>
+        <li>Снимок читает всю оргструктуру на запрос. Для 10 000 сотрудников это приемлемо; при росте на порядок нужна загрузка по поддереву.</li>
+        <li>«Показать ещё» пересчитывает весь стол ради одной группы.</li>
+        <li>Группа длиннее потолка <code>desk</code> показывается на столе не до конца; хвост справочной группы на столе недостижим, пока она длиннее потолка.</li>
+      </ul>
+    </div>
+  </div>
+  <p><strong>Обратимость:</strong> лёгкая — контракт аддитивный; кэш или режим «только число» добавляются без смены контракта. <strong>Пересмотр:</strong> бюджет не выполнен на сиде — тогда короткая память результата на пользователя со сбросом после его мутаций; либо рост организации на порядок; либо группа на сиде или в эксплуатации упирается в предел <code>desk</code>.</p>
+
+  <h3 id="adr-2-alternatives">Alternatives considered (optional)</h3>
+  <ul class="alt-list">
+    <li><strong>Хранимые задачи (таблица действий, которую обновляют события модулей)</strong> — отклонено: действия вычисляются из данных и не закрываются вручную | binding — AC-2.12, AC-2.13.</li>
+    <li><strong>Отдельный упрощённый подсчёт для счётчика</strong> — отклонено: без поглощения между модулями число разошлось бы со списком (AC-3.2, AC-30.6).</li>
+    <li><strong>Весь стол одним ответом</strong> — отклонено: сотни и тысячи справочных строк; <code>stack.html</code> разрешает отдавать целиком только короткие личные списки.</li>
+    <li><strong>Страницы со смещением</strong> — отклонено: строки исчезают по мере выполнения (U-4), поэтому группа перечитывается с начала.</li>
+    <li><strong><code>PageResponse</code> с пределами <code>ListRequest</code> (200 строк) и ссылка «Открыть очередь» у каждой большой группы</strong> — отклонено: меняет принятый U-4, а справочные строки не исчезают, и без ссылки до хвоста группы не добраться.</li>
+    <li><strong>Готовые фразы причин с сервера</strong> — отклонено: тексты жили бы в двух местах; SPA уже рисует статусы и метки по коду.</li>
+  </ul>
+
+  <h3 id="adr-2-related">Related ADRs (optional)</h3>
+  <ul>
+    <li><a href="#adr-1">ADR-1</a>: источники и слияние, которые обслуживает этот API.</li>
+    <li><a href="#adr-6">ADR-6</a>: очереди сценариев и маршруты, построенные на <code>/desk/items</code>.</li>
+  </ul>
+
+  <h3 id="adr-2-fold-target">Fold target (optional)</h3>
+  <p><code>docs/architecture/desk.md</code> — justified by its <code>responsibility.owns</code> clause: "one subsystem's purpose and the paths holding its key parts"; метод снимка — <code>docs/architecture/org-structure.md</code> по тому же clause.</p>
+</article>
+
+<article class="adr" id="adr-3">
+  <div class="meta">
+    <span class="status-chip status-accepted">accepted</span>
+    <span class="chip area">subsystem: career-framework</span>
+    <span class="chip">ADR-3</span>
+  </div>
+
+  <h2 id="adr-3-title">ADR-3: Связь «должность — карьерный уровень»: таблица, права, блокировки, запреты AC-24/AC-25</h2>
+
+  <h3 id="adr-3-context">Context</h3>
+  <p>Требования — AC-24.1–24.10, AC-25.1–25.7, AC-31. Принятый скоуп отменяет канон <code>career-framework.md</code> «карьерный уровень с должностью не связан»; правка документа — на design-promote. Факты, от которых зависит решение:</p>
+  <ul>
+    <li>Должности и перечни подразделений принадлежат <code>org-structure</code> (таблицы <code>positions</code>, <code>org_unit_positions</code>; должность не удаляется, только деактивируется).</li>
+    <li>Зависимость <code>career-framework</code> → <code>org-structure</code> разрешена. Внешний ключ на чужую таблицу задаётся по имени сущности, как <code>career_tracks.owner_org_unit_id</code>.</li>
+    <li>Строки-связи удаляются физически и журналируются: <code>OrgUnitPosition</code>, <code>OrgUnitHr</code>.</li>
+    <li>Изменяющие запросы требуют <code>If-Match</code>.</li>
+    <li>Порядок блокировок: дерево 5001001 → справочники 5003001 → строка матрицы.</li>
+    <li>Правило проекта «Multi-row invariant locking»: каждая блокировка инварианта объявляется со своим местом в порядке и получает детерминированный тест гонки.</li>
+  </ul>
+  <p>Отдельно: новый трек не имеет уровней, а AC-25.6 запрещает делать действующим трек без уровней. Поэтому «создать сразу действующим» (AC-25.1) у хранителей трека — HR и администратора — теперь невозможно ни при каких данных.</p>
+
+  <h3 id="adr-3-decision">Decision</h3>
+  <p class="lede">Связь хранит <code>career-framework</code> в таблице <code>career_level_positions</code>: ссылки на свои уровень и трек и на должность <code>org-structure</code> (внешний ключ по имени сущности). Правят связь два метода уровня под блокировкой справочников с <code>If-Match</code> уровня. «Уровень без должности» и готовность трека считает одна функция; ею пользуются запреты, проверка полноты, публикация, стол и экраны.</p>
+  <h4>Данные</h4>
+  <ul>
+    <li><strong>Колонки <code>career_level_positions</code>:</strong>
+      <ul>
+        <li><code>level_id</code> — внешний ключ на <code>career_levels</code>, <code>RESTRICT</code>;</li>
+        <li><code>position_id</code> — внешний ключ на <code>positions</code> по имени сущности <code>Competency.OrgStructure.Position</code>, <code>RESTRICT</code>;</li>
+        <li><code>track_id</code> — внешний ключ на <code>career_tracks</code>, <code>RESTRICT</code>. Это копия <code>TrackId</code> уровня, а он после создания не меняется.</li>
+      </ul></li>
+    <li><strong>Ключи и индексы:</strong>
+      <ul>
+        <li>первичный ключ <code>(level_id, position_id)</code>;</li>
+        <li>уникальный индекс <code>(track_id, position_id)</code> — страховка AC-24.2 (в пределах трека должность связана не больше чем с одним уровнем);</li>
+        <li>индекс <code>position_id</code> — для обратного вопроса «в каких треках моя должность» (AC-14.7, AC-26.1, AC-29).</li>
+      </ul>
+      Колонки <code>Version</code> нет: это строка-связь, как <code>org_unit_positions</code>.</li>
+    <li><strong>Журнал.</strong> Сущность <code>CareerLevelPosition</code> помечена <code>[Audited]</code> (уровень, должность, трек). Перехватчик журнала пишет <code>CareerLevelPosition.Created</code> и <code>CareerLevelPosition.Deleted</code> (AC-24.7).</li>
+    <li><strong>Миграция <code>CareerLevelPositions</code>:</strong> только схема, связи не заполняются (AC-24.8). <code>Down</code> удаляет таблицу. Опубликованные матрицы и действующие треки не трогаются (AC-25.5).</li>
+    <li><strong><code>org-structure</code> не меняется.</strong> Деактивация должности и исключение её из перечня связь не снимают и не блокируются (AC-24.9). Должности не удаляются, поэтому <code>RESTRICT</code> на <code>positions</code> никогда не срабатывает. Должности, перечни и численность <code>career-framework</code> читает только через порт — снимок оргструктуры, ADR-2.</li>
+  </ul>
+  <h4>Методы</h4>
+  <ul>
+    <li><code>GET /api/v1/career/tracks/{id}/positions</code> — уровни в порядке трека, у каждого:
+      <ul>
+        <li><code>version</code>;</li>
+        <li>связанные должности: название, активность, число работающих сотрудников в поддереве подразделения трека, признак <code>canUnlink</code>, вычисленный сервером по тому же правилу AC-25.2, что и <code>DELETE</code> (U-16);</li>
+        <li>признак «нет действующей должности».</li>
+      </ul>
+      Плюс <code>canEdit</code> трека. Читать может тот, кто видит трек; остальным — 404.</li>
+    <li><code>GET /api/v1/career/tracks/{id}/available-positions?q=&amp;page=&amp;pageSize=</code> — серверные страницы (<code>ListRequest</code>) с числом сотрудников. В выборку попадают действующие должности, которые доступны подразделению трека или любому его дочернему, и ещё не связаны ни с одним уровнем этого трека (AC-24.4, AC-31.3). Доступность — по правилу снимка оргструктуры: собственные перечни поддерева плюс собственные перечни предков подразделения трека.</li>
+    <li><code>POST /api/v1/career/levels/{id}/positions { positionId }</code>, <code>If-Match</code> уровня. Повтор той же пары ничего не меняет. Отказы:
+      <ul>
+        <li>400 с ошибкой поля <code>positionId</code> — должность неактивна или недоступна треку;</li>
+        <li>409 — должность уже связана с другим уровнем трека (AC-24.2).</li>
+      </ul></li>
+    <li><code>DELETE /api/v1/career/levels/{id}/positions/{positionId}</code>, <code>If-Match</code> уровня. 409 по AC-25.2 — если трек действующий и снимается последняя действующая должность уровня; статус самого уровня (черновой, действующий, неактивный) не важен. Тело отказа — <code>PublicationRefusal</code> (ADR-4) с этим уровнем (AC-25.4).</li>
+    <li><strong>Ответ и <code>If-Match</code>.</strong> Изменение связи увеличивает <code>Version</code> уровня — так же, как перестановка уровней увеличивает <code>Version</code> трека. Ответ — строка уровня с новым <code>ETag</code>. На 412 действует правило AC-20: перечитать, без автоповтора. Окно трека и сценарий AC-31 вызывают одни и те же методы (AC-24.6).</li>
+    <li><strong>Права</strong> — права правки трека (<code>CatalogViewer.CanEdit</code>): хранители всегда, руководитель — черновой трек своего подразделения (AC-24.5). Остальным — 403.</li>
+    <li><strong>Удаление уровня или трека</strong> удаляет их связи построчно в той же транзакции; каждая строка — событие журнала.</li>
+  </ul>
+  <h4>Готовность трека — одна функция</h4>
+  <p>Функция проверяет уровни трека, кроме неактивных. Результат: «нет уровней», либо перечень уровней без связанной <em>действующей</em> должности (<code>positions.is_active</code>, AC-24.10). Её используют:</p>
+  <ul>
+    <li>утверждение и «Вернуть в работу» трека — 409 <code>PublicationRefusal</code> со списком уровней (AC-25.1, AC-25.4, AC-25.6);</li>
+    <li><code>POST /career/tracks</code> — трек теперь всегда создаётся черновым, у хранителей тоже: у нового трека нет уровней (AC-25.6). Хранитель утверждает его после уровней и связей. Это изменение поведения существующего метода, см. ADR-6;</li>
+    <li>снятие связи — запрет AC-25.2: её проверка «нет связанной действующей должности» применяется к снимаемому уровню любого статуса;</li>
+    <li>проверка полноты версии: «у уровня «X» трека «Y» нет связанной действующей должности» по уровням трека матрицы (AC-25.7, AC-8.15). Значит, запрет действует во всех местах, где полнота проверяется сейчас: отправка, согласование обоих шагов, возврат с правками, принятие правок; и при публикации (AC-25.3, AC-10.9);</li>
+    <li>стол: виды 26.2, 26.3 и пометка 27.2; очередь черновиков (поле <code>readiness</code>, ADR-6); экраны AC-31; шаги 1 и 5 мастера.</li>
+  </ul>
+  <h4>Блокировки</h4>
+  <ul>
+    <li>Все изменения связей идут через <code>store.BeginWriteAsync</code>: дерево разделяемо (5001001), затем справочники эксклюзивно (5003001). Новой блокировки нет; место в порядке — шаг 2 из <code>stack.html</code>.</li>
+    <li>Под разделяемой блокировкой дерева должности и перечни не меняются — <code>org-structure</code> меняет их под эксклюзивной. Поэтому проверки AC-24.4, AC-25.1 и AC-25.2 видят устойчивые данные.</li>
+    <li>Утверждение трека и снятие связи сериализуются блокировкой справочников.</li>
+    <li>Тесты гонок (по правилу проекта):
+      <ol>
+        <li>два параллельных снятия двух последних действующих должностей одного уровня действующего трека — одно из них получает 409;</li>
+        <li>снятие связи против утверждения того же чернового трека — утверждение видит итог снятия;</li>
+        <li>одна должность параллельно связывается с двумя уровнями трека — одна попытка получает 409, уникальный индекс страхует.</li>
+      </ol></li>
+  </ul>
+
+  <h3 id="adr-3-consequences">Consequences</h3>
+  <div class="consequences">
+    <div class="pros">
+      <h4>Positive</h4>
+      <ul>
+        <li>Модель А живёт в одной таблице с ограничениями БД. Направление зависимостей сохраняется: внешний ключ идёт из <code>career-framework</code> в <code>org-structure</code>, а <code>org-structure</code> о связи не знает.</li>
+        <li>Одна функция готовности: запреты, полнота, стол и экраны не расходятся.</li>
+        <li>Новых блокировок и новых шагов порядка блокировок нет.</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>Negative</h4>
+      <ul>
+        <li><code>ETag</code> уровня меняется при каждом изменении связей. Открытая форма правки уровня после этого получит 412 (по правилу AC-20 — допустимо).</li>
+        <li><code>track_id</code> денормализован и держится на неизменности <code>TrackId</code> уровня.</li>
+        <li>После выката связей нет, и новые версии матриц по существующим трекам не отправляются, пока связи не заведут. Побочный эффект принят пользователем 2026-10-12.</li>
+        <li>У HR и администратора на шаг больше: новый трек — черновик, его нужно утвердить.</li>
+      </ul>
+    </div>
+  </div>
+  <p><strong>Обратимость:</strong> умеренная — до заполнения пользователями таблица пуста, после этого это данные. <strong>Пересмотр:</strong> если понадобится прямая связь сотрудника с уровнем (out of scope) или история связей.</p>
+
+  <h3 id="adr-3-alternatives">Alternatives considered (optional)</h3>
+  <ul class="alt-list">
+    <li><strong>Уровень хранится колонкой у должности (<code>positions</code>)</strong> — отклонено: должность входит в треки разных подразделений (AC-24.3), а <code>org-structure</code> пришлось бы ссылаться на <code>career-framework</code> | binding — направление зависимостей модулей (<code>stack.html</code>).</li>
+    <li><strong>Связи в <code>jsonb</code> трека</strong> — отклонено: нет внешних ключей и уникального индекса; единственность держал бы код, а удаление должностей проверялось бы запросом по документу.</li>
+    <li><strong><code>If-Match</code> трека вместо уровня</strong> — отклонено: каждая связь меняла бы <code>ETag</code> трека и ломала бы сохранение открытого окна трека, которое шлёт <code>If-Match</code> трека при переименовании и перестановке уровней.</li>
+    <li><strong>Отказывать хранителям 409 на <code>POST /career/tracks</code></strong> — отклонено: HR и администратор не смогли бы создавать треки. <strong>Запрос «трек сразу с уровнями и связями»</strong> — отклонено: новая форма запроса ради одного случая.</li>
+    <li><strong>Отдельная блокировка на трек</strong> — отклонено: лишняя ступень в едином порядке блокировок, а эксклюзивная блокировка справочников уже сериализует.</li>
+  </ul>
+
+  <h3 id="adr-3-related">Related ADRs (optional)</h3>
+  <ul>
+    <li><a href="#adr-4">ADR-4</a>: функция готовности — условие публикации трека и версии; общий формат отказа.</li>
+    <li><a href="#adr-6">ADR-6</a>: изменение поведения <code>POST /career/tracks</code> и миграция в контракте 3.1.0.</li>
+  </ul>
+
+  <h3 id="adr-3-fold-target">Fold target (optional)</h3>
+  <p><code>docs/architecture/career-framework.md</code> — justified by its <code>responsibility.owns</code> clause: "one subsystem's purpose and the paths holding its key parts"; новые инварианты и место в порядке блокировок — <code>docs/architecture/stack.html</code>, «Целостность на уровне данных».</p>
+</article>
+
+<article class="adr" id="adr-4">
+  <div class="meta">
+    <span class="status-chip status-accepted">accepted</span>
+    <span class="chip area">subsystem: career-framework</span>
+    <span class="chip">ADR-4</span>
+  </div>
+
+  <h2 id="adr-4-title">ADR-4: Общее правило публикации: каскад, перечень до подтверждения, отказ 409</h2>
+
+  <h3 id="adr-4-context">Context</h3>
+  <p>Требования — AC-34.1–34.10, AC-8.13 и AC-8.14 (решение C-1 с поправкой скоупа), AC-10.4, AC-10.8, AC-11.7–11.9; решения UX U-10–U-12 и U-21. Что есть сейчас:</p>
+  <ul>
+    <li>Утверждение трека утверждает его черновые уровни.</li>
+    <li>Публикация версии делает действующими черновые уровни, компетенции, категории этих компетенций и шкалу (<code>MatrixCatalog.DraftsAsync</code>). Трек в этот набор не входит: матрица допускается только по действующему треку.</li>
+    <li>Утверждение остальных записей ничего за собой не публикует, хотя черновик может ссылаться на собственные черновики автора (<code>IsUsable</code>).</li>
+    <li>Хранитель (HR, администратор) создаёт запись сразу действующей (<code>CatalogViewer.StatusOfNew</code>), даже если она ссылается на его черновики.</li>
+    <li>Правка компетенции проверяет новые ссылки тем же правилом «действующая или черновик автора записи» (<code>CompetencyEndpoints.ReferenceProblemAsync</code> → <code>CatalogStore.IsUsableAsync</code>), поэтому HR может назначить действующей компетенции черновую ссылку её автора.</li>
+  </ul>
+  <p>Образцы, на которые опирается решение:</p>
+  <ul>
+    <li>отказ <code>DeletionRefusal</code>: до 5 видимых мешающих записей и <code>moreCount</code>;</li>
+    <li><code>EmployeeImpact</code>: подтверждение и исполнение считает один код, поэтому показанное совпадает с выполненным.</li>
+  </ul>
+
+  <h3 id="adr-4-decision">Decision</h3>
+  <p class="lede">Все публикации идут через одну функцию <code>career-framework</code>. Публикацией считаются утверждение и «Вернуть в работу» записи и публикация версии любым действием из <code>publishingActions</code> (ниже). Создание записи каскадом не публикует (ниже). Функция строит транзитивное замыкание черновых ссылок и проверяет право и условия каждой сущности. Затем она либо публикует всё в текущей транзакции, либо отказывает 409 со списком. Та же функция без записи отвечает на предпросмотр.</p>
+  <ul>
+    <li><strong>Ссылки каскада (AC-34.3):</strong>
+      <ul>
+        <li>версия → трек матрицы и все его уровни; уровни и компетенции содержимого; шкала версии;</li>
+        <li>трек → направление и черновые уровни трека: утверждение трека утверждает их и сейчас (канон <code>career-framework</code> AC-19), правило сохраняется;</li>
+        <li>компетенция → категория, направление, шкала.</li>
+      </ul>
+      Каскад идёт транзитивно по черновым сущностям. Исключение — компетенции содержимого версии: замыкание версии проходит и через действующие компетенции к их черновым категориям, направлениям и шкалам (AC-34.3). Так сейчас <code>MatrixCatalog.DraftsAsync</code> подбирает черновые категории действующих компетенций; такие ссылки остаются в прежних данных, новые запрещает пункт «Запись хранителем» (ниже). Сами действующие и неактивные ссылки не публикуются; неактивная запись в версии остаётся проблемой полноты, как сейчас. Черновые уровни трека, который утверждается сам, входят в замыкание, перечень, проверки, <code>cascadeTag</code> и исполнение так же, как уровни трека версии.</li>
+    <li><strong>Чьё право «вправе утвердить» (AC-34.4)</strong> — решение пользователя 2026-10-13:
+      <ul>
+        <li>публикация записи (утверждение, «Вернуть в работу») — право действующего пользователя;</li>
+        <li>публикация версии — право ответственного HR подразделения матрицы (<code>ProcessRoles.ResponsibleHrAsync</code>, согласующий шага HR), чей шаг засчитывается согласованным, — какое бы действие из <code>publishingActions</code> её ни запустило и кто бы его ни выполнил.</li>
+      </ul>
+      Права этого HR строит тот же <code>CatalogViewer</code> по его учётной записи. Если ответственного HR нет, каждая черновая сущность каскада получает <code>NoRight</code>.</li>
+    <li><strong>Запись хранителем (AC-34.1, AC-34.10)</strong> — решения пользователя 2026-10-13. Действующая запись не получает черновых ссылок в обход каскада:
+      <ul>
+        <li><code>POST</code>. Создание каскадом не публикует. Запись, которую <code>StatusOfNew</code> создал бы действующей, проверяется на черновые ссылки по ссылкам каскада (выше). Если они есть, запись создаётся черновиком: ответ 201 несёт <code>status = Draft</code>, и SPA предлагает «Утвердить» с перечнем через предпросмотр записи (ниже). Если нет — запись создаётся действующей, как сейчас. Отдельного предпросмотра для несохранённой записи нет. Трек хранитель всегда создаёт черновиком (ADR-3).</li>
+        <li><code>PUT</code> действующей записи. Ссылка, которую правка задаёт заново, должна быть действующей. Черновая ссылка — 400 с ошибкой поля, как у недоступной ссылки сейчас; запись остаётся действующей и не меняется. Проверка — в общем месте: <code>ReferenceProblemAsync</code> для действующей записи требует от <code>CatalogStore.IsUsableAsync</code> действующую ссылку вместо «действующая или черновик автора». У черновика правило прежнее.</li>
+      </ul></li>
+    <li><strong>Проверки каждой сущности каскада:</strong>
+      <ul>
+        <li><code>CanManage</code> того, чьё право проверяется (выше);</li>
+        <li>повтор названия с учётом всего, что публикуется вместе, — через <code>ChangeTracker</code>, как сейчас;</li>
+        <li>у трека — готовность по ADR-3 (AC-25.1, AC-25.6);</li>
+        <li>если корень — версия, сначала проверяется полнота (существующий 409 со строками; он уже включает AC-25.3 и AC-25.7), затем каскад.</li>
+      </ul></li>
+    <li><strong>Исполнение.</strong> Всё идёт в транзакции действия под уже взятыми блокировками: у записи — дерево разделяемо и справочники эксклюзивно; у версии — ещё и строка матрицы <code>FOR UPDATE</code>. Новых блокировок нет. Отдельные <code>SaveChanges</code> остаются только там, где они есть сейчас (архивирование прежней опубликованной версии). Отказ откатывает всё (AC-34.8).</li>
+    <li><strong>Журнал.</strong> Каждая сущность, опубликованная каскадом, получает своё событие <code>&lt;Тип&gt;.Approved</code>, как сейчас; в <code>Reason</code> — ссылка на корень «каскад &lt;Тип&gt; &lt;id&gt;» (AC-34.9). События корня прежние. Компетенции получают строку истории версий, как при утверждении.</li>
+    <li><strong>Отказ 409 — <code>PublicationRefusal</code>.</strong> Это ProblemDetails с полями:
+      <ul>
+        <li><code>blockers</code> — вид (направление, трек, уровень, категория, компетенция, шкала), id, название, причина (<code>NoRight</code> | <code>NoLevels</code> | <code>NoActivePosition</code> | <code>NameTaken</code>), контекст;</li>
+        <li><code>moreCount</code>.</li>
+      </ul>
+      Видимых — не больше 5, невидимые пользователю учитываются только в числе, как в <code>DeletionRefusal</code>. <code>detail</code> — русская фраза для заголовка отказа (UX, «Общие состояния», п. 4).</li>
+    <li><strong>Предпросмотр — только чтение, без блокировок:</strong>
+      <ul>
+        <li><code>GET /api/v1/career/matrix-versions/{id}/publication</code> → <code>{ publishingActions, entries, blockers, moreCount, cascadeTag }</code>. <code>publishingActions</code> — единственный перечень действий, публикующих версию: какие из доступных пользователю сейчас <code>actions</code> версии её опубликуют. Это <code>approve</code> на шаге HR; <code>accept-changes</code>, если версию вернул шаг HR; <code>submit</code>, <code>approve</code> шага 1 и <code>accept-changes</code> после возврата с шага 1, если следующим шагом будет автосогласование HR (автор и есть ответственный HR; <code>MatrixWorkflow.ToHrAsync</code>). SPA этого сама не вычисляет (AC-34.7). Мешающие <code>NoRight</code> считаются по праву из пункта «Чьё право» (выше), поэтому предпросмотр одинаков для любого действия из перечня. Читать может тот, кто читает версию; иначе 404.</li>
+        <li><code>GET /api/v1/career/{directions|tracks|categories|competencies|scales}/{id}/publication</code> → <code>{ entries, blockers, moreCount, cascadeTag }</code>. Невидимая запись — 404; без права утверждать — 403.</li>
+      </ul></li>
+    <li><strong>Совпадение показанного и выполненного.</strong> <code>cascadeTag</code> — хэш корня (id, version) и упорядоченных пар (id, version) сущностей перечня. <code>If-Match</code> корня ловит изменения самого корня, тег — изменения вокруг него: новый черновой уровень трека, другую категорию у компетенции. Тег передаётся параметром <code>?cascade=&lt;tag&gt;</code>. Отказ из-за тега — 412, ничего не меняется; поле <code>publication</code> — адрес свежего предпросмотра корня, по нему SPA отличает этот 412 от 412 по <code>If-Match</code>.
+      <ul>
+        <li>Записи — решение пользователя 2026-10-13. <code>approve</code> и <code>activate</code>, которые под блокировками публикуют непустой каскад (что-то кроме самой записи), без тега или с тегом, который не совпал с пересчитанным, — 412. Если каскад пуст и публикуется только сама запись, тег не проверяется.</li>
+        <li>Версия — решение пользователя 2026-10-13. Публикует ли переход (<code>submit</code>, <code>approve</code>, <code>accept-changes</code>), решается под блокировками в момент исполнения, что бы ни показал предпросмотр. Публикующее исполнение без тега или с тегом, который не совпал с пересчитанным, — 412. Непубликующее исполнение тег не проверяет. Так ловится и смена маршрута после предпросмотра: например, ответственным HR назначили автора, и согласование шага 1 стало публикующим.</li>
+        <li>SPA передаёт тег с утверждением и «Вернуть в работу» записи всегда, в том числе при пустом перечне (U-21), а с переходом версии — только с действием из <code>publishingActions</code>, перечень которого пользователь подтвердил. На 412 из-за тега SPA заново вызывает предпросмотр и просит подтвердить перечень, без автоповтора (правило AC-20).</li>
+      </ul></li>
+    <li><strong>Матрица по черновому треку (AC-8.13, AC-8.14).</strong>
+      <ul>
+        <li><code>POST /career/matrices</code> принимает действующий трек своего или вышестоящего подразделения, как сейчас, либо черновой трек, принадлежащий подразделению матрицы.</li>
+        <li>Направление — только действующее (канон AC-36 не меняется).</li>
+        <li>Черновые уровни трека матрицы пригодны для содержимого независимо от автора: уровни этого трека правит и HR.</li>
+        <li>При публикации такой версии каскад делает трек и его уровни действующими либо отказывает с названием трека и его уровнями без должностей.</li>
+      </ul></li>
+    <li><strong>Подтверждение у версии (AC-34.5, AC-34.7).</strong> Перед каждым действием из <code>publishingActions</code> SPA показывает перечень и просит инициатора действия подтвердить его. Действие, которого нет в <code>publishingActions</code>, перечня не показывает и идёт без тега. Если под блокировками оно оказалось публикующим, оно ничего не публикует: ответ 412, и SPA показывает перечень (пункт «Совпадение показанного и выполненного»).</li>
+    <li><strong>Существующие разделы (AC-34.6, U-21).</strong> Перед утверждением SPA вызывает предпросмотр. Если перечень пуст и мешающих нет — утверждает сразу; иначе показывает окно с перечнем.</li>
+  </ul>
+
+  <h3 id="adr-4-consequences">Consequences</h3>
+  <div class="consequences">
+    <div class="pros">
+      <h4>Positive</h4>
+      <ul>
+        <li>Один путь кода: предпросмотр совпадает с исполнением, у матрицы и справочников одни правила.</li>
+        <li>AC-25 и AC-34 проверяются при любой публикации, включая автосогласование и «Вернуть в работу».</li>
+        <li>Один формат отказа для прав, уровней без должностей и названий.</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>Negative</h4>
+      <ul>
+        <li>Перед каждым утверждением в разделах — лишний GET предпросмотра (U-21).</li>
+        <li>Утверждение записи теперь может опубликовать больше, чем раньше. Это изменение поведения существующих методов, оно описано в ADR-6.</li>
+        <li>Публикующие методы получают параметр <code>cascade</code>. Он обязателен, когда исполнение публикует: у переходов версии — всегда, у записей — при непустом каскаде. Внешний клиент API перед таким действием должен вызвать предпросмотр. Действие, которое после предпросмотра стало публикующим или получило каскад, требует второго подтверждения.</li>
+        <li>Когда публикацию версии запускает не сам ответственный HR, черновики публикуются его правом, хотя он в этот момент ничего не делает. Права HR загружаются отдельно от прав действующего пользователя.</li>
+        <li>Хранитель, чья новая запись ссылается на его черновики, получает черновик и утверждает его вторым шагом.</li>
+        <li>Правку действующей компетенции с черновой ссылкой не сохранить, пока черновик не утверждён.</li>
+        <li>Замыкание читает черновики по цепочке; глубина ограничена тремя ссылками (версия → компетенция → категория).</li>
+      </ul>
+    </div>
+  </div>
+  <p><strong>Обратимость:</strong> умеренная. <strong>Пересмотр:</strong> появятся сущности с длинными цепочками ссылок или понадобится частичный каскад «опубликовать без …» — сейчас его запрещает AC-34.8.</p>
+
+  <h3 id="adr-4-alternatives">Alternatives considered (optional)</h3>
+  <ul class="alt-list">
+    <li><strong>Без каскада — просто запрет публикации со ссылками на черновики</strong> — отклонено | binding — AC-34.2 (принятый скоуп).</li>
+    <li><strong>Право действующего пользователя и при публикации версии</strong> — отклонено: руководитель черновики не утверждает (канон AC-19), поэтому публикация версии, запущенная не HR, при любом черновике в каскаде отвечала бы 409 <code>NoRight</code> вопреки AC-9.4 | binding — решение пользователя 2026-10-13.</li>
+    <li><strong>Каскад при создании записи с предпросмотром несохранённой записи</strong> — отклонено: понадобился бы новый метод предпросмотра по телу запроса, а утверждение созданного черновика показывает тот же перечень существующим предпросмотром | binding — решение пользователя 2026-10-13.</li>
+    <li><strong>Отдельные форматы 409 для прав, уровней и названий</strong> — отклонено: SPA разбирала бы три вида отказа ради одного окна.</li>
+    <li><strong>Обобщить <code>DeletionRefusal</code> в общий тип</strong> — отклонено: переименование схемы контракта ради экономии одного класса.</li>
+    <li><strong>Без тега — публиковать текущее замыкание</strong> — отклонено: допускает публикацию того, что пользователь не видел (AC-34.5).</li>
+    <li><strong>Тег с результатом маршрута и ответственным HR, передаваемый при каждом переходе версии</strong> — отклонено: предпросмотр и тег понадобились бы и непубликующим переходам, а смена ответственного HR отклоняла бы переходы, которые ничего не публикуют | binding — решение пользователя 2026-10-13.</li>
+    <li><strong>Принять риск: тег у переходов версии необязателен</strong> — отклонено: переход, ставший публикующим после предпросмотра, опубликовал бы перечень, которого инициатор не подтверждал (AC-34.5, AC-34.7) | binding — решение пользователя 2026-10-13.</li>
+    <li><strong>Правка действующей записи с черновой ссылкой переводит её в черновик (как AC-34.10)</strong> — отклонено: действующая компетенция выпала бы из опубликованных матриц до утверждения | binding — решение пользователя 2026-10-13.</li>
+    <li><strong>Тег в теле запроса или в <code>If-Match</code></strong> — отклонено: у публикующих методов нет тела, а <code>If-Match</code> уже занят версией корня.</li>
+    <li><strong>Перечень каскада в ответе <code>GET</code> версии или записи</strong> — отклонено: каждый просмотр считал бы каскад.</li>
+  </ul>
+
+  <h3 id="adr-4-related">Related ADRs (optional)</h3>
+  <ul>
+    <li><a href="#adr-3">ADR-3</a>: функция готовности трека — одно из условий каскада.</li>
+    <li><a href="#adr-6">ADR-6</a>: контракт 3.1.0, изменения поведения существующих методов.</li>
+  </ul>
+
+  <h3 id="adr-4-fold-target">Fold target (optional)</h3>
+  <p><code>docs/architecture/career-framework.md</code> — justified by its <code>responsibility.owns</code> clause: "one subsystem's purpose and the paths holding its key parts"; формулировка «публикация делает черновики действующими; каскад — всё или ничего» — <code>docs/architecture/stack.html</code>, «Целостность на уровне данных».</p>
+</article>
+
+<article class="adr" id="adr-5">
+  <div class="meta">
+    <span class="status-chip status-accepted">accepted</span>
+    <span class="chip area">subsystem: career-framework</span>
+    <span class="chip">ADR-5</span>
+  </div>
+
+  <h2 id="adr-5-title">ADR-5: Письма-напоминания (AC-15): получатели, отправка после фиксации через фоновую очередь, возврат на цель после входа</h2>
+
+  <h3 id="adr-5-context">Context</h3>
+  <p>Требования — AC-15.1–15.14, решения audit A-4, A-5, A-11, A-12, решения UX U-17–U-19. Ограничения и факты:</p>
+  <ul>
+    <li><code>stack.html</code>: <code>MailSender</code> вызывается после фиксации транзакции и не под блокировкой; ссылки строятся от <code>App:PublicBaseUrl</code>.</li>
+    <li><code>MailSender</code> синхронный: соединение на каждое письмо, до <code>Smtp:Timeout</code> = 15 с. При недоступном relay переходы версий и создание черновиков тянулись бы 15–45 с (риск из <code>audit.md</code>).</li>
+    <li>Прецедент — <code>PasswordResetQueue</code>: очередь в памяти, потерю при перезапуске пользователь принял. Outbox — non-goal требований <code>user-management</code>.</li>
+    <li><code>Mail.SendFailed</code> журналируется с видом письма и без адреса.</li>
+    <li><code>career-framework</code> пока писем не шлёт.</li>
+    <li>SPA: обработчик 401 уводит на <code>/login</code>, не запоминая цель, а <code>LoginPage</code> после входа всегда идёт на <code>/</code>.</li>
+  </ul>
+
+  <h3 id="adr-5-decision">Decision</h3>
+  <p class="lede">После фиксации действия <code>career-framework</code> определяет получателей по состоянию после действия и кладёт готовые письма в ограниченную очередь в памяти. Фоновый обработчик перед отправкой проверяет, что учётная запись может действовать, отправляет письмо через <code>MailSender</code> и журналирует отказ. Возврат на цель после входа делает только SPA, по проверенному относительному пути.</p>
+  <table>
+    <thead><tr><th>Событие</th><th>Получатель</th><th>Письма нет</th></tr></thead>
+    <tbody>
+      <tr><td><code>submit</code>, версия ушла на шаг 1 или 2</td><td>согласующий хода: шаг 1 — вышестоящий руководитель, шаг 2 — ответственный HR</td><td>автосогласование и публикация</td></tr>
+      <tr><td>согласование шага 1, версия ушла на шаг HR</td><td>ответственный HR</td><td>автосогласование (автор и есть HR) и публикация</td></tr>
+      <tr><td><code>accept-changes</code>, версия пошла дальше по маршруту</td><td>согласующий следующего хода (HR)</td><td>публикация</td></tr>
+      <tr><td><code>return</code></td><td>текущий руководитель (или руководители) подразделения матрицы — <code>HeadAccountAsync</code>, а не <code>AuthorId</code> (A-5)</td><td>—</td></tr>
+      <tr><td>руководитель (не хранитель записи) создал черновую запись: направление, трек, категорию, компетенцию, шкалу</td><td>ответственные HR подразделений, которыми автор руководит сейчас, без повторов; для трека — HR подразделения трека (A-4)</td><td>уровни; HR нет; автор больше не руководит; запись создал хранитель (в том числе черновой трек HR или администратора, ADR-3)</td></tr>
+    </tbody>
+  </table>
+  <p>Для всех событий: письмо не уходит тому, кто сам совершил действие (A-12). Не уходит оно и заблокированной учётной записи, приглашённой (без пароля) и учётной записи уволенного сотрудника (AC-15.8): это проверяется при отправке по <code>UserStatus.IsActive</code> и по тому, работает ли привязанный сотрудник. Других писем нет (AC-15.6).</p>
+  <ul>
+    <li><strong>Когда считаются получатели.</strong> После <code>CommitAsync</code>, когда блокировки уже сняты. Получатели берутся из состояния после действия: ход и так вычисляется для ответа (<code>StateAsync</code>).</li>
+    <li><strong>Текст и ссылка.</strong> Текст — константы, как в <code>AccountMail</code>; тексты утверждаются в plan. Ссылка — <code>App:PublicBaseUrl</code> плюс маршрут SPA (ADR-6): <code>/desk/review/{versionId}</code>, <code>/desk/rework/{versionId}</code>, <code>/desk/drafts/{kind}/{entryId}</code>. В письме нет комментария согласующего, разницы и состава версии (U-17, AC-16.5), нет токенов и адресов.</li>
+    <li><strong>Очередь.</strong> Ограниченный <code>Channel</code> на 1 000 писем: при переполнении письмо отбрасывается с предупреждением в лог. Один читатель — <code>BackgroundService</code> в <code>career-framework</code>, письма по одному. Элемент очереди: id получателя, вид, тема, текст, кто совершил действие, <code>request_id</code> исходного запроса.</li>
+    <li><strong>Обработчик</strong> работает в своём scope:
+      <ol>
+        <li>перечитывает учётную запись и сотрудника;</li>
+        <li>отправляет через <code>MailSender.SendAsync</code>;</li>
+        <li>при <code>false</code> пишет <code>IAuditWriter.WriteAsync(Mail.SendFailed)</code>: тип сущности <code>AppUser</code>, id получателя, <code>Reason</code> = <code>MatrixAwaitingApproval</code> | <code>MatrixReturned</code> | <code>DraftAwaitingApproval</code>, <code>Actor</code> — кто совершил действие, <code>RequestId</code> — исходный (AC-15.11; <code>audit.md</code> получает новые виды).</li>
+      </ol>
+      Исключения ловятся внутри цикла и пишутся в лог типом.</li>
+    <li><strong>Связь с действием.</strong> Ответ действия не ждёт SMTP. Отказ SMTP действие не откатывает (AC-15.10): оно зафиксировано до постановки письма в очередь.</li>
+    <li><strong>Возврат на цель (SPA, сервер не меняется).</strong>
+      <ul>
+        <li>Обработчик 401 переводит на <code>/login?returnTo=&lt;pathname+search&gt;</code> текущего адреса, кроме страниц входа.</li>
+        <li><code>LoginPage</code> после входа переходит на цель, если она прошла проверку, иначе на <code>/desk</code>. Подсказка на экране входа показывается, только когда цель есть (U-19).</li>
+        <li>Проверка цели: разобрать <code>new URL(value, location.origin)</code>. Принимается только тот же origin и путь, который начинается с одного «/» — не «//», без «\» и управляющих символов. Страницы входа (<code>/login</code>, <code>/forgot-password</code>, <code>/accept-invitation</code>, <code>/reset-password</code>) целью быть не могут.</li>
+        <li>Переход идёт по разобранным <code>pathname + search</code>, а не по исходной строке. Основание — OWASP Cheat Sheet Series, <a href="https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html">Unvalidated Redirects and Forwards Cheat Sheet</a>, раздел «Validating URLs» (проверено 2026-10-13): сравнивать разобранные схему, хост и порт с разрешённым значением, отклонять неоднозначный ввод, перенаправлять по проверенному URL (AC-15.13, AC-15.14). Запрет «//», «\» и управляющих символов — решение проекта.</li>
+      </ul></li>
+  </ul>
+
+  <h4>Complication Approval (фоновая очередь писем)</h4>
+  <dl class="def-list">
+    <dt>Что</dt><dd><code>CareerMailQueue</code> — ограниченная очередь в памяти и <code>BackgroundService</code> в <code>career-framework</code>.</dd>
+    <dt>Зачем</dt><dd>Синхронная отправка держит ответ согласования и создания черновика до 15 с на каждое письмо при недоступном SMTP, а у черновика бывает несколько получателей.</dd>
+    <dt>Обоснование</dt><dd>Тот же механизм, что <code>PasswordResetQueue</code>: <code>System.Threading.Channels</code> и встроенный <code>BackgroundService</code>, без пакетов и таблиц. Письмо — только напоминание, источник правды — стол и счётчик (AC-2.12). Потеря письма при перезапуске не теряет действие.</dd>
+    <dt>Альтернативы</dt><dd>Синхронно после фиксации — проще, но ответ тянется 15–45 с при сбое relay. Outbox в БД с воркером — гарантированная доставка, но это non-goal, плюс код и таблица. Общая очередь писем в Platform — преждевременно, вызывающая сторона одна.</dd>
+  </dl>
+
+  <h3 id="adr-5-consequences">Consequences</h3>
+  <div class="consequences">
+    <div class="pros">
+      <h4>Positive</h4>
+      <ul>
+        <li>Действия быстрые при любом состоянии SMTP; правило «не под блокировкой и не в транзакции» соблюдено по построению.</li>
+        <li>Получатели и фильтры собраны в одном месте; отказы журналируются по виду письма.</li>
+        <li>Возврат на цель не открывает перенаправление на чужой сайт.</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>Negative</h4>
+      <ul>
+        <li>Письма теряются при перезапуске процесса и при переполнении очереди. Риск тот же, что принят для сброса пароля.</li>
+        <li>Пользователь не видит, ушло ли письмо (в отличие от приглашения, AC-6.9).</li>
+        <li>В процессе ещё один фоновый компонент. Тесты ждут письмо в Mailpit асинхронно (<code>MailCatcher</code>).</li>
+        <li>Цель возврата видна в адресе страницы входа.</li>
+      </ul>
+    </div>
+  </div>
+  <p><strong>Обратимость:</strong> лёгкая — замена очереди на outbox внутренняя, контракт не меняется. <strong>Пересмотр:</strong> жалобы на потерянные напоминания или требование гарантированной доставки.</p>
+
+  <h3 id="adr-5-alternatives">Alternatives considered (optional)</h3>
+  <ul class="alt-list">
+    <li><strong>Синхронная отправка сразу после фиксации, как у писем администратора</strong> — отклонено: 15 с на письмо при недоступном relay на переходах версий и создании черновиков.</li>
+    <li><strong>Outbox в БД</strong> — отклонено: гарантированная доставка вне скоупа (non-goal <code>user-management</code>), лишние таблица и воркер.</li>
+    <li><strong>Получатель возврата — <code>AuthorId</code> версии</strong> — отклонено: автор — текущий руководитель подразделения матрицы | binding — A-5, канон <code>career-framework</code> AC-44.</li>
+    <li><strong>Хранить цель возврата в состоянии навигации или в <code>sessionStorage</code></strong> — отклонено: состояние навигации теряется при перезагрузке страницы входа, а <code>sessionStorage</code> — скрытое состояние, которое тоже пришлось бы проверять.</li>
+  </ul>
+
+  <h3 id="adr-5-related">Related ADRs (optional)</h3>
+  <ul>
+    <li><a href="#adr-6">ADR-6</a>: маршруты SPA, на которые ведут ссылки писем.</li>
+    <li><a href="#adr-3">ADR-3</a>: черновые треки хранителей писем не порождают.</li>
+  </ul>
+
+  <h3 id="adr-5-fold-target">Fold target (optional)</h3>
+  <p><code>docs/architecture/career-framework.md</code> — justified by its <code>responsibility.owns</code> clause: "one subsystem's purpose and the paths holding its key parts"; виды <code>Mail.SendFailed</code> — <code>docs/architecture/audit.md</code> (тот же clause); правило «Почта» — <code>docs/architecture/stack.html</code>, «Архитектурные принципы»; возврат после входа — <code>docs/architecture/user-management.md</code> (тот же clause; экран входа принадлежит подсистеме).</p>
+</article>
+
+<article class="adr" id="adr-6">
+  <div class="meta">
+    <span class="status-chip status-accepted">accepted</span>
+    <span class="chip area">subsystem: N/A</span>
+    <span class="chip">ADR-6</span>
+  </div>
+
+  <h2 id="adr-6-title">ADR-6: Новые методы чтения сценариев, шаг мастера, контракт API 3.1.0 и окончательные маршруты SPA</h2>
+
+  <h3 id="adr-6-context">Context</h3>
+  <p>Сценарии AC-8–AC-14 и AC-31–AC-33 опираются на существующие методы, но <code>audit.md</code> («Gaps») нашёл недостающие чтения:</p>
+  <ul>
+    <li>проверка полноты без действия;</li>
+    <li>разница с действующей опубликованной версией;</li>
+    <li>матрицы, использующие черновик, с фильтром читаемости;</li>
+    <li>состояние подключения подразделения;</li>
+    <li>шаг мастера, который нигде не хранится.</li>
+  </ul>
+  <p>Ограничения: AC-18 и <code>backward_compat: migration</code> — существующие методы не ломаются, новые описаны в документе подсистемы и в OpenAPI. Сейчас <code>ContractVersion</code> = 3.0.0 (<code>Program.cs</code>); прежние переходы описаны разделами «Переход на контракт API N» в документах подсистем. Маршруты <code>/desk/…</code> заданы таблицей маршрутов ниже, а письма (ADR-5) делают их публичными.</p>
+
+  <h3 id="adr-6-decision">Decision</h3>
+  <p class="lede">Сценарии собираются из существующих методов, новых методов чтения <code>career-framework</code> (список ниже) и методов ADR-2–ADR-4. Форма существующих методов меняется только аддитивно. Изменения поведения следуют из принятых AC и описываются в документах подсистем. Контракт — 3.1.0. Маршруты сценариев — под <code>/desk/…</code>; адреса из писем — часть публичного контракта.</p>
+  <table>
+    <thead><tr><th>Сценарий</th><th>Методы (новые — <strong>жирным</strong>)</th></tr></thead>
+    <tbody>
+      <tr><td>AC-8 Построить матрицу</td><td><code>POST /career/matrices</code> (черновой трек своего подразделения, ADR-4), <code>POST /career/matrices/{id}/versions</code>, <code>POST /career/tracks</code> и <code>/levels</code>, <code>POST /career/competencies</code>, <code>GET</code> и <code>PUT /career/matrix-versions/{id}/content</code> (<strong><code>?builderStep=</code></strong>), <strong><code>…/completeness</code></strong>, <strong><code>…/publication</code></strong>, <code>…/submit</code>; экран AC-31</td></tr>
+      <tr><td>AC-9 Доработать</td><td><code>GET</code> версии, <code>…/variants/{n}/diff</code>, <strong><code>…/completeness</code></strong>, <strong><code>…/publication</code></strong> (для <code>accept-changes</code>), переходы</td></tr>
+      <tr><td>AC-10 Согласовать</td><td><code>GET</code> версии, <strong><code>…/changes</code></strong>, <strong><code>…/completeness</code></strong>, <strong><code>…/publication</code></strong>, <code>approve</code>/<code>return</code>; «Внести правки» — существующая страница матрицы</td></tr>
+      <tr><td>AC-11 Утвердить черновики</td><td><code>GET /career/drafts</code> (аддитивно: <code>readiness</code> у трека — «нет уровней» или уровни без действующей должности), <code>GET</code> записи, <strong><code>GET /career/{catalog}/{id}/matrices</code></strong>, <strong><code>…/publication</code></strong>, <code>PUT</code> записи и <code>approve</code></td></tr>
+      <tr><td>AC-12 Подключить подразделение</td><td><strong><code>GET /career/org-units/{id}/setup</code></strong> (только <code>GlobalAdmin</code>); действия — существующие методы <code>org-structure</code>, <code>user-management</code> и <code>/career/org-units/{id}/hr</code></td></tr>
+      <tr><td>AC-13 Принять сотрудника</td><td>существующие <code>quick-add</code>, <code>POST /employees</code>, <code>POST /users</code> (<code>mailSent</code>); без общей транзакции (U-14)</td></tr>
+      <tr><td>AC-14 Моё место</td><td><strong><code>GET /career/me/place</code></strong></td></tr>
+      <tr><td>AC-31 Связать должности</td><td><strong><code>GET /career/tracks/{id}/positions</code></strong>, <strong><code>…/available-positions</code></strong>, <code>POST</code>/<code>DELETE /career/levels/{id}/positions</code> (ADR-3)</td></tr>
+      <tr><td>AC-32 Привести каталог в порядок</td><td><strong><code>GET /career/unused-entries?kind=&amp;page=&amp;pageSize=</code></strong> (HR и администратор, иначе 403); действия — существующие <code>delete</code>/<code>deactivate</code></td></tr>
+      <tr><td>AC-33 Навести порядок в оргструктуре</td><td><code>GET /desk/items</code> по группам оргструктуры (ADR-2); действия — существующие методы</td></tr>
+      <tr><td>AC-6.8 Приглашение со стола</td><td>существующий <code>POST /users/{id}/resend-invitation</code> (<code>version</code> берётся из пункта стола)</td></tr>
+    </tbody>
+  </table>
+  <h4>Новые методы чтения (<code>career-framework</code>)</h4>
+  <ul>
+    <li><code>GET /matrix-versions/{id}/completeness</code> → <code>{ problems: [{ code, message, levelId?, competencyId? }] }</code>. Та же функция, что у переходов. Коды: <code>NoLevels</code>, <code>LevelWithoutRequirements</code>, <code>BlockWeights</code>, <code>CriticalWithoutScore</code>, <code>InactiveEntry</code>, <code>ForeignCompetency</code>, <code>ScoreOutOfScale</code>, <code>LevelWithoutActivePosition</code>. Переходы по-прежнему отвечают 409 со строками в <code>errors.content</code>, с теми же <code>message</code>. Читать может тот, кто читает версию; иначе 404.</li>
+    <li><code>GET /matrix-versions/{id}/changes</code> → существующий <code>MatrixDiffResponse</code> (<code>MatrixChange.Between</code>). <code>Before</code> — содержимое действующей опубликованной версии матрицы; для первой версии — пустое содержимое и <code>previousNumber = null</code>. <code>After</code> — эта версия.</li>
+    <li><code>GET /matrix-versions/{id}/publication</code> и <code>GET /{catalog}/{id}/publication</code> — см. ADR-4.</li>
+    <li><code>GET /{catalog}/{id}/matrices</code> — матрицы и версии, которые используют запись: трек — по матрице; уровень и компетенция — <code>MatricesUsing</code>; категория — через компетенции; шкала — по версиям; направление — по матрицам. Отдаются только читаемые пользователем (<code>MatrixRoute.ReadableAsync</code>); скрытые не называются и не считаются (AC-11.3).</li>
+    <li><code>GET /unused-entries</code> — виды 27.5–27.8, та же функция, что у источника стола. Отдельный метод нужен потому, что администратору стол эти виды не выводит (AC-28.9), а очередь AC-32 ему доступна.</li>
+    <li><code>GET /org-units/{id}/setup</code> → <code>{ unit (путь), employees, head, headAccount, hr, hrAccount, positions, rows }</code>:
+      <ul>
+        <li><code>head</code>, <code>hr</code> — у HR указано, свой он или унаследованный, и откуда;</li>
+        <li><code>headAccount</code>, <code>hrAccount</code> — <code>{ id, email, state: None | Invited | Blocked | Active, version }</code>;</li>
+        <li><code>positions</code> — <code>{ own, inherited }</code>;</li>
+        <li><code>rows</code> — <code>[{ row, status: Ready | Missing | Waiting, reason }]</code>.</li>
+      </ul>
+      Статусы считает сервер по тем же данным и определениям, что виды 6.2, 28.6, 6.3/6.4, 28.2: снимок оргструктуры, ближайшее закрепление HR, <code>UserStatus.IsActive</code>. Пустой перечень отмечается и у подразделения без сотрудников (AC-12.5). <code>UserStatus</code> порта <code>IUserDirectory</code> аддитивно получает <code>Version</code>.</li>
+    <li><code>GET /me/place</code> → <code>{ employee | null, unit (путь), position, head, responsibleHr (свой или унаследованный и откуда), tracks, publishedMatrices, noTrack }</code>:
+      <ul>
+        <li>каждый элемент <code>tracks</code>: трек, направление, текущий уровень, следующие уровни — с требованиями из <code>snapshot</code> опубликованной версии матрицы своего подразделения по этому треку либо без требований;</li>
+        <li><code>noTrack</code> — справочный пункт AC-29;</li>
+        <li>пользователь без привязки получает 200 с <code>employee = null</code> (AC-14.6);</li>
+        <li>только опубликованные версии собственного подразделения (AC-14.3, A-8).</li>
+      </ul></li>
+    <li><code>GET /tracks/{id}/positions</code>, <code>GET /tracks/{id}/available-positions</code> — см. ADR-3.</li>
+    <li><strong>Шаг мастера (AC-8.11).</strong>
+      <ul>
+        <li>Колонка <code>matrix_versions.builder_step</code> (<code>smallint</code>, <code>NULL</code>, без журнала: это состояние сценария, а не модели); миграция без заполнения.</li>
+        <li><code>PUT …/content</code> принимает необязательный <code>?builderStep=2..6</code> и сохраняет его даже без изменения содержимого. <code>Version</code> растёт, <code>If-Match</code> — как у правки содержимого.</li>
+        <li><code>MatrixVersionResponse.builderStep</code> — аддитивное поле. <code>null</code> означает, что версия создана вне мастера; мастер тогда открывает шаг 2.</li>
+      </ul></li>
+  </ul>
+  <h4>Контракт API 3.0.0 → 3.1.0</h4>
+  <ul>
+    <li><strong>Аддитивно:</strong>
+      <ul>
+        <li>новые методы <code>career-framework</code> и <code>/api/v1/desk*</code>;</li>
+        <li>необязательные поля ответов: <code>builderStep</code>, <code>readiness</code> у <code>/drafts</code>;</li>
+        <li>новые члены перечислений;</li>
+        <li>параметр <code>?cascade</code> (когда он обязателен — см. изменения поведения) и необязательный <code>?builderStep</code>;</li>
+        <li>новое тело 409 <code>PublicationRefusal</code> — наследник ProblemDetails;</li>
+        <li>поле <code>publication</code> у 412 из-за тега.</li>
+      </ul></li>
+    <li><strong>Изменения поведения без изменения формы</strong> — они следуют из принятых AC:
+      <ul>
+        <li><code>POST /career/tracks</code> всегда создаёт черновик (AC-25.1, AC-25.6);</li>
+        <li><code>POST</code> направлений, категорий, компетенций и шкал у HR и администратора создаёт черновик, если запись ссылается на черновики, — <code>status</code> в ответе 201 (ADR-4);</li>
+        <li><code>PUT</code> действующей компетенции с новой черновой ссылкой (категория, направление, шкала) отвечает 400 с ошибкой поля; компетенция остаётся действующей (ADR-4);</li>
+        <li><code>approve</code> и <code>activate</code> записей и переходы версии публикуют каскад или отвечают 409 (AC-25, AC-34);</li>
+        <li>публикующее действие без совпадающего <code>?cascade</code> отвечает 412 и ничего не меняет. Это <code>submit</code>, <code>approve</code> и <code>accept-changes</code> версии, если под блокировками переход оказался публикующим, и <code>approve</code> и <code>activate</code> записи с непустым каскадом; запись без каскада тега не требует. Внешний клиент API перед таким действием должен вызвать предпросмотр и передать его тег (ADR-4);</li>
+        <li>полнота включает уровни без действующей должности (AC-25.7): до заведения связей отправка версий по существующим трекам отклоняется;</li>
+        <li><code>POST /career/matrices</code> принимает черновой трек своего подразделения (AC-8.13);</li>
+        <li>удаление уровня или трека удаляет их связи.</li>
+      </ul></li>
+    <li><strong>Документирование:</strong> раздел «Переход на контракт API 3.1.0» в <code>career-framework.md</code> (и в <code>desk.md</code>); OpenAPI строится из кода. Шагов оператора нет: миграции применяются при старте и данных не переносят.</li>
+  </ul>
+  <h4>Маршруты SPA</h4>
+  <table>
+    <thead><tr><th>Адрес</th><th>Экран</th></tr></thead>
+    <tbody>
+      <tr><td><code>/</code></td><td>перенаправление на <code>/desk</code> (вместо <code>LandingPage</code>)</td></tr>
+      <tr><td><code>/desk</code></td><td>Рабочий стол</td></tr>
+      <tr><td><code>/desk/review/:versionId</code></td><td>Согласовать версию — <strong>ссылка в письме</strong></td></tr>
+      <tr><td><code>/desk/rework/:versionId</code></td><td>Доработать возвращённую версию — <strong>ссылка в письме</strong></td></tr>
+      <tr><td><code>/desk/drafts</code>, <code>/desk/drafts/:kind/:entryId</code></td><td>Утвердить черновые записи; <code>kind</code> ∈ <code>direction</code>, <code>track</code>, <code>category</code>, <code>competency</code>, <code>scale</code> — <strong>ссылка в письме</strong></td></tr>
+      <tr><td><code>/desk/matrix-builder</code></td><td>Построить матрицу: новая матрица; <code>?unitId=&amp;trackId=</code> — предвыбор из пункта стола</td></tr>
+      <tr><td><code>/desk/matrix-builder/:versionId</code></td><td>продолжение; <code>?step=3</code> или <code>?step=5</code> — вход из «Доработать» (U-10), иначе — <code>builderStep</code></td></tr>
+      <tr><td><code>/desk/connect-unit</code>, <code>/desk/connect-unit/:unitId</code></td><td>Подключить подразделение</td></tr>
+      <tr><td><code>/desk/onboard-employee</code></td><td>Принять сотрудника</td></tr>
+      <tr><td><code>/desk/my-place</code></td><td>Моё место в компании</td></tr>
+      <tr><td><code>/desk/track-positions</code>, <code>/desk/track-positions/:trackId</code></td><td>Связать должности с треком; кнопка возврата выбирается по состоянию навигации, а не по адресу</td></tr>
+      <tr><td><code>/desk/catalog-cleanup</code></td><td>Привести каталог в порядок</td></tr>
+      <tr><td><code>/desk/org-cleanup</code></td><td>Навести порядок в оргструктуре</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>Маршруты регистрирует <code>web/src/features/desk/routes.ts</code> по соглашению фич. Пункт «Рабочий стол» со счётчиком стоит первым; группа «Справочники» — расширение <code>featureContract.NavItem.group</code>; раздел меню определяется по началу адреса. Экраны переиспользуют компоненты <code>career</code>, <code>org-structure</code> и <code>users</code>, копий нет.</li>
+    <li>Прежние адреса работают (AC-1.5).</li>
+    <li>Адреса из писем — <code>/desk/review/…</code>, <code>/desk/rework/…</code>, <code>/desk/drafts/…/…</code> — публичный контракт: переименовать их можно только с перенаправлением со старого адреса.</li>
+  </ul>
+
+  <h3 id="adr-6-consequences">Consequences</h3>
+  <div class="consequences">
+    <div class="pros">
+      <h4>Positive</h4>
+      <ul>
+        <li>Нет транзакций через несколько модулей: экраны собраны из существующих изменяющих методов.</li>
+        <li>Всё, что решает доступность действий, считает сервер: статусы строк AC-12, полнота, публикующие действия, <code>canUnlink</code>.</li>
+        <li>Контракт остаётся обратно совместимым по форме.</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>Negative</h4>
+      <ul>
+        <li><code>career-framework</code> получает новые методы чтения (список в Decision). Метод <code>/org-units/{id}/setup</code> описывает готовность подразделения, но живёт в <code>career-framework</code>: только этот модуль видит закрепление HR, оргструктуру и учётные записи.</li>
+        <li>Колонка <code>builder_step</code> хранит состояние сценария в таблице модели.</li>
+        <li>Изменения поведения существующих методов нужно описать в документах подсистемы, а разделы «Карьерная модель» должны вызывать предпросмотр.</li>
+        <li>Клиент, который публиковал версию или запись с каскадом без предпросмотра, получит 412: теперь нужен тег предпросмотра.</li>
+        <li>Адреса из писем трудно менять: старые ссылки остаются в почтовых ящиках.</li>
+      </ul>
+    </div>
+  </div>
+  <p><strong>Обратимость:</strong> лёгкая для методов чтения; тяжёлая для адресов из писем. <strong>Пересмотр:</strong> при появлении внешних потребителей API изменения поведения существующих методов повышают major-версию.</p>
+
+  <h3 id="adr-6-alternatives">Alternatives considered (optional)</h3>
+  <ul class="alt-list">
+    <li><strong>Контракт 4.0.0 из-за изменения поведения <code>POST /career/tracks</code>, новых 409 и обязательного тега у публикующих действий</strong> — отклонено: форма запросов и ответов не меняется, 409 и 412 у этих методов уже объявлены, единственный клиент — своя SPA. Контракт 3.1.0 принят пользователем 2026-10-13.</li>
+    <li><strong>Шаг мастера в <code>localStorage</code></strong> — отклонено: не переживает смену устройства и не даёт столу текста «остановились на шаге N». <strong>Отдельная таблица прогресса</strong> — лишняя сущность ради одного числа. <strong>Отдельный метод <code>PUT …/builder-step</code></strong> — два запроса на одно «Сохранить и далее».</li>
+    <li><strong>Экран AC-12 из четырёх запросов в SPA</strong> — отклонено: статусы строк считались бы в браузере | binding — «Сервер — единственный источник истины» (<code>stack.html</code>).</li>
+    <li><strong>Очередь AC-32 через <code>/desk/items</code></strong> — отклонено: администратору стол не выводит 27.5–27.8 (AC-28.9).</li>
+    <li><strong>Маршруты сценариев без префикса <code>/desk</code></strong> — отклонено: раздел меню «Рабочий стол» не определялся бы по началу адреса (U-22).</li>
+  </ul>
+
+  <h3 id="adr-6-related">Related ADRs (optional)</h3>
+  <ul>
+    <li><a href="#adr-2">ADR-2</a>: методы <code>/api/v1/desk*</code>.</li>
+    <li><a href="#adr-3">ADR-3</a>: методы связей и изменение <code>POST /career/tracks</code>.</li>
+    <li><a href="#adr-4">ADR-4</a>: предпросмотр публикации, <code>PublicationRefusal</code>, <code>?cascade</code>.</li>
+    <li><a href="#adr-5">ADR-5</a>: ссылки писем и возврат после входа.</li>
+  </ul>
+
+  <h3 id="adr-6-fold-target">Fold target (optional)</h3>
+  <p><code>docs/architecture/career-framework.md</code> — justified by its <code>responsibility.owns</code> clause: "one subsystem's purpose and the paths holding its key parts" (key paths и раздел «Переход на контракт API 3.1.0»); маршруты и <code>web/src/features/desk/</code> — <code>docs/architecture/desk.md</code> (тот же clause); описание методов — <code>openapi/openapi.json</code>, project-generated OpenAPI artifact.</p>
+</article>
+
+      </main>
+      <footer>by ASD workflow | 2026-10-13 | sprint 004-role-desktop-user-journeys</footer>
+    </div>
+  </div>
+</body>
+</html>

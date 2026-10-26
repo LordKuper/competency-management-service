@@ -1,0 +1,352 @@
+diff --git a/.claude/agent-memory/asd-dev-critical/MEMORY.md b/.claude/agent-memory/asd-dev-critical/MEMORY.md
+index f9af937..90c76aa 100644
+--- a/.claude/agent-memory/asd-dev-critical/MEMORY.md
++++ b/.claude/agent-memory/asd-dev-critical/MEMORY.md
+@@ -48,7 +48,7 @@
+ - [EF save-batch ordering](project_ef-save-batch-ordering-facts.md) — unique-index swap cycle, FK error before 412, name check blind to tracked drafts, enum ceilings, trailer -m
+ - [Scripted insert orphans a summary](project_scripted-insert-doc-orphan.md) — inserting before a signature moves its XML doc onto the new member; anchor on `}` or `/// <summary>`
+ - [Level-position links](project_level-position-links-facts.md) — readiness via org snapshot, approve/activate 409 union, refusal before If-Match, draft-only tracks break scenarios
+-- [Publication cascade](project_publication-cascade-facts.md) — plan mutates tracked statuses (no save before refusal check), 412 override, tag always for versions, test fallout
++- [Publication cascade](project_publication-cascade-facts.md) — checks flip statuses then restore them (blocker visibility), Apply activates, 412 override, tag always for versions, test fallout
+ - [TEMP root is shared](project_temp-root-shared.md) — never glob-move `$TEMP/*`; VS logs and other agents' files live there, use the scratchpad
+ - [Scenario reads](project_scenario-read-facts.md) — shared rules for desk sources (nearest HR, unused entries, account state), setup/my-place choices, unverified SQL
+ - [Career reminder mail](project_career-reminder-mail-facts.md) — CareerMail/CareerMailQueue call sites, turn-based awaiting rule, no e-mail in From line, Audit has no kind list
+@@ -56,4 +56,4 @@
+ - [Career desk source](project_career-desk-source-facts.md) — 25-command budget incl. 2 auth, rule functions on snapshot, HrUnitsAsync reads snapshot, seed run order
+ - [Position matrix + shared blocks](project_position-matrix-shared-block-facts.md) — CompositionsOf, per-competency ScaleOf (no version scale), HeadedSubtreeIds only via ViewerAsync, unrun SQL, test pin
+ - [Contract reset + squash](project_contract-reset-and-squash-facts.md) — 1.0.0 reset, incremental migrations + hand-ordered transfer, release squash recipe, JsonRequired probe
+-- [Role set + HR by employee](project_role-set-hr-assignment-facts.md) — Identity roles via AccountRoles, ToQueryString probe, CanBeHr x3, ViewerAsync HR skip, run-time test breaks
++- [Role set + HR by employee](project_role-set-hr-assignment-facts.md) — Identity roles via AccountRoles, ToQueryString probe, CanBeHr x3, ViewerAsync skips only admins, run-time test breaks
+diff --git a/.claude/agent-memory/asd-dev-critical/project_publication-cascade-facts.md b/.claude/agent-memory/asd-dev-critical/project_publication-cascade-facts.md
+index 589a4d1..9e21c4f 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_publication-cascade-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_publication-cascade-facts.md
+@@ -1,13 +1,13 @@
+ ---
+ name: publication-cascade-facts
+-description: Sprint 004 Task 5 cascade publication - plan mutates tracked statuses and relies on no save, 412 metadata override, tag always required for version publishing, HR viewer admin flag, test fallout
++description: Sprint 004 Task 5 cascade publication - checks flip statuses only while running, no save before refusal, 412 metadata override, tag always required for version publishing, HR viewer admin flag, test fallout
+ metadata:
+   type: project
+ ---
+ 
+ Sprint 004 Task 5 (2026-10-13), commits 0453509, 2969c5f. Not run against PostgreSQL:
+ 
+-- `CatalogPublication.PlanAsync` sets `Status = Active` on the tracked root and drafts before the checks, so name checks see the whole batch through `ChangeTracker`. A refusal is safe only because no `SaveChanges` runs before `plan.IsRefused` is checked. The preview endpoints mutate tracked entities the same way and never save.
++- `CatalogPublication.CheckAsync` sets `Status = Active` on the tracked root and drafts only while the checks run (name checks see the whole batch through `ChangeTracker`), then restores the statuses as read: blocker visibility (`SeesLoaded`) must see drafts as drafts, or every draft blocker leaks through the active branch. `Apply` sets the drafts active; a catalogue root is set active by its caller. Still never save between planning and the refusal check.
+ - `.Produces<PublicationChanged>(412, ...)` after the `IfMatch` parameter wins in the generated OpenAPI: the 412 schema becomes `PublicationChanged` with an optional `publication`. No duplicate-status error was raised.
+ - A publishing version transition needs `?cascade` even when nothing but the version is published. Records need it only when the closure is non-empty. Every existing test that publishes a version (HR approve, auto-approval) or approves a track with draft levels or a competency with draft references now gets 412 until it calls the preview first.
+ - Name-taken on approve is now a `NameTaken` blocker, not `errors.name`. NotDraft and draft-activation 409s are `PublicationRefusal` with empty `blockers`.
+diff --git a/.claude/agent-memory/asd-dev-critical/project_role-set-hr-assignment-facts.md b/.claude/agent-memory/asd-dev-critical/project_role-set-hr-assignment-facts.md
+index ca3f42f..fd73cd2 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_role-set-hr-assignment-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_role-set-hr-assignment-facts.md
+@@ -8,7 +8,7 @@ metadata:
+ - Roles are Identity roles (`roles`/`user_roles`, fixed ids in `UserRoleIds`); read by `AccountRoles.RolesAsync`, changed only by `AccountRoles.SetRolesAsync` (diff only: Identity errors on a repeated add or a missing remove; each Identity call saves the user, so `Version` moves 1-2 extra). `AppUser.UserRoles` is never loaded: LINQ uses `UserRoles.Any(r => r.RoleId == id)`; `UserResponse.Projection` passes `UserRoles.Select(r => r.RoleId).ToList()` to a static mapper, which EF translates as a LEFT JOIN collection (checked with `ToQueryString`), while the in-memory `From` takes roles explicitly. Journal role string: `PlatformClaims.JournalRole` (`GlobalAdmin,Hr`, `User` when none); access checks only via `ICurrentActor.IsInRole` / `IsGlobalAdmin()` / `IsHr()` in Platform.
+ - `ToQueryString` without a database: a file-based probe `Competency.Tests.cs` (the name matches `InternalsVisibleTo`) with `#:project src/Competency.Api/Competency.Api.csproj`, `#:property PublishAot=false`, run with `dotnet run <file> -c Release`, building the context from `new Competency.Api.AppDbContextFactory().CreateDbContext([])`.
+ - `org_unit_hr.employee_id` holds the assignment; it acts through the account bound now, `UserStatus.CanBeHr`. The rule exists three times on purpose: `UserStatus.CanBeHr`, `UserDirectory.HasHrCandidateAsync` (LINQ) and the keyless `EmployeeAccount.can_be_hr` SQL in OrgStructure. Change one, change all three.
+-- `CatalogStore.ViewerAsync` skips route entries for HR on purpose: draft levels only belong to draft tracks, which no matrix uses, and HR reads every no-unit draft. Do not "fix" the early return.
++- `CatalogStore.ViewerAsync` skips the route walk for administrators only. HR needs it: a matrix may use a draft track of its unit, and an HR who is the superior approver but not that unit's responsible HR reads the track and its draft levels only through `RouteEntryIds`.
+ - Career desk source: own account by id, then one `FindByEmployeeIdsAsync` for assigned HR and heads, skipped when neither admin nor involved, so the command count stays as before for plain users; an admin with assignments pays one extra command.
+ - Contract changes here never break `dotnet build` of `tests/Competency.Tests` (tests go through JSON and SQL strings); they break at run time, and `tests/perf/seed-10k.sql` and `tests/Competency.Tests/Infrastructure/RowLock.cs` hold raw `users`/`org_unit_hr` SQL. Web `typecheck` (part of `lint` and `build`) does break.
+ 
+diff --git a/.claude/agent-memory/asd-reviewer-testing/MEMORY.md b/.claude/agent-memory/asd-reviewer-testing/MEMORY.md
+index 9f6e8a1..dbeb07d 100644
+--- a/.claude/agent-memory/asd-reviewer-testing/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-testing/MEMORY.md
+@@ -8,3 +8,4 @@
+ - [Value-removal sprints](feedback_value-removal-sprints.md) — swapped fixtures must hit the same disjunct; hand-enumerated sets on touched asserts = §17 low; pr-deferred ACs need a plan line
+ - [Workflow-definition sprints](feedback_workflow-definition-sprints.md) — predecessor + collapse acting sites pinned (closed, 020 wave-1 review-fix); grep+compare per new workflow; name-guard target; memory dir swept
+ - [.NET API test review](feedback_dotnet-api-test-review.md) — xUnit API tests: neutered precedence tests, false equivalent mutants, moved validations, new fields, race tests, ledger shape
++- [Review isolation + log-window tests](feedback_review-isolation-and-log-window-tests.md) — scope sprint-dir greps with a glob (reviews/ leaks); log-count tests race unless synced
+diff --git a/.claude/agent-memory/asd-reviewer-testing/feedback_review-isolation-and-log-window-tests.md b/.claude/agent-memory/asd-reviewer-testing/feedback_review-isolation-and-log-window-tests.md
+new file mode 100644
+index 0000000..2f275b6
+--- /dev/null
++++ b/.claude/agent-memory/asd-reviewer-testing/feedback_review-isolation-and-log-window-tests.md
+@@ -0,0 +1,14 @@
++---
++name: review-isolation-and-log-window-tests
++description: A Grep over the sprint dir surfaces earlier iterations' review files (clean-context breach) - scope every sprint-dir grep with a glob; tests that count host log records (EF command count) race unless the window start is synced after a probe request
++metadata:
++  type: feedback
++---
++
++**1. Scope sprint-dir greps.** `.asd/sprints/<sprint>/` holds `reviews/impl/wave-K/iter-NN/*.md` of earlier iterations, and a content grep (ids such as `TST-9`, AC numbers, test names) matches them. A reviewer must not read another iteration's review files (`review-policy.md` "Clean-context review iteration"). **How to apply:** pass `glob` (`test-plan*.md`, `decisions-log*.md`, `plan.md`, `sprint.md`) or an exact file path; never grep the sprint root without a glob. If a match slips through, do not use it as input and say so in the report.
++
++**2. Log-window count tests.** The backend tests run the API as a child process whose console is captured (`ApiHost.Logs`, `LogsAfterAsync`). A test that counts records (EF `"EventId":20101,`) between two points is sound only if the start snapshot (`Logs.Length`) is taken after the console has caught up with the previous request. The console logger and the pipe are asynchronous, and the last EF commands of a request are logged right before its response is written, so a snapshot taken straight after a setup request can precede their arrival and inflate the next window. **How to apply:** for each measured window, check that a probe request (its own `... - 200` finish line awaited) precedes the snapshot; the existing warm-up before the "small" measurement is the pattern, and a second measurement after more setup needs its own.
++
++**3. Per-class host is the isolation unit.** `HostFixture`/`CareerHost` give each test class its own database and run its tests one after another, so "no HR account yet", "nobody touched the default scale" and totals-add-up assertions are safe inside a class whose doc says it has the walk alone; the same assertions in a class sharing the lazily started host are not. **How to apply:** before calling a global-state assertion flaky, read the class doc and the fixture type.
++
++See [[dotnet-api-test-review]], [[no-shell-review-method]].
+diff --git a/.claude/agent-memory/asd-tester-critical/MEMORY.md b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+index 4fd4a3f..2adcf46 100644
+--- a/.claude/agent-memory/asd-tester-critical/MEMORY.md
++++ b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+@@ -1,4 +1,4 @@
+ - [Fail-first and `none` honesty](feedback_fail-first-and-none-honesty.md) — transcribe the first-failing assertion, never justify `none` with "it's prose", never assert a qualifier where the substance is assertable
+ - [Mutation runs trip the hash ledger](project_mutation-runs-trip-the-hash-ledger.md) — editing a managed_paths file to prove a mutation also fails upstream_hashes; expected noise
+ - [Testability envelope](project_testability-envelope.md) — what is testable here, honest `none` decisions, mutation and fixture traps, and the §7 in-body-comment ban.
+-- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/antd Select and pager/filter-wiring web traps, web pre-fix copy and mutation runner, fake fetch, forcing a 5xx, class-shared org, antd disabled-context locks, container connection limit (53300), guard tests vs fail-first, draft-read and cascade-right arrangements
++- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/antd Select and pager/filter-wiring web traps, web pre-fix copy and mutation runner, fake fetch, forcing a 5xx, class-shared org, antd disabled-context locks, container connection limit (53300), guard tests vs fail-first, draft-read, cascade-right, hidden-blocker and HR-superior arrangements
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index 3c54fa3..6726f97 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -1,6 +1,6 @@
+ ---
+ name: competency-test-harness
+-description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate, migration data-transfer tests, multi-save atomicity by trigger, throwaway Postgres for seed scripts, the shared container's connection limit, guard tests versus fail-first, reusable arrangements for draft-entry reads and cascade rights
++description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate, migration data-transfer tests, multi-save atomicity by trigger, throwaway Postgres for seed scripts, the shared container's connection limit, guard tests versus fail-first, reusable arrangements for draft-entry reads, cascade rights, hidden publication blockers and an HR-role superior approver
+ metadata:
+   type: project
+ ---
+@@ -39,7 +39,7 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - `docs/architecture/tech-reference/` gates test libraries too: Playwright and `Microsoft.AspNetCore.Mvc.Testing` have no reference, so the Tester may not implement with them until the Architect adds one. Check the directory before planning e2e.
+ - Last-administrator race (`LastAdministratorTests`): `RowLock.HoldActiveAdministratorsAsync` runs the SQL of `ActiveAdministrators.LockAsync`, so the test also holds the victims' rows. Block and dismissal each take the tree advisory lock (`OrgTree`) and then the administrators lock, and either one serializes them alone: dropping just one is an equivalent mutant (green), only dropping both, or `password_hash != null` in `HasOtherAsync`, reddens (the loser answers 200, not 409). The loser must answer 409, never 401: its session was valid when it queued. Wait with `Task.WhenAny(waiting, request)` and assert `request.IsCompleted` is false, so a path that does not wait fails on an assertion, not on the 30 s timeout; run each theory row alone in a mutation, because the first red leaves the shared `AdministratorsHost` without an administrator.
+ - Held-lock tests (`RowLock.HoldAdvisoryAsync` plus `StartWaitingAsync`) redden at once when a lock is removed, with "The request did not wait for the lock, it was answered: …", under a second a row, so a lock mutation over the whole class costs about a minute. An operation that also touches the held row (a DELETE of the matrix row, an INSERT of a child under its foreign key) waits on that row anyway: dropping `FOR UPDATE` leaves those rows green (equivalent mutants) and reddens only an operation that merely updates a child row.
+-- Backend mutation runner for production code: extract `git archive HEAD src tests openapi Directory.Build.props global.json .config` into a fresh scratchpad directory; one Node script applies `[id, file, from, to, class names]`, runs `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj --filter-class '*A*' --filter-class '*B*'` (repeated `--filter-class` ORs) and restores the file in `finally`; the output is Russian (`сбой <Name>`, `итог`/`сбой`/`успешно`). Start exactly one runner with the tool's background flag: a second runner on the same copy fails builds with "being used by another process" and garbles the results file; a runner killed with `Stop-Process` skips its `finally`, so re-extract; a directory a build-server process still holds cannot be deleted, so take a new name. `TreatWarningsAsErrors` makes an unread primary-constructor parameter (CS9113) a build failure, so a mutation keeps every parameter read. A bash heredoc turns `\n` inside a JS string into a real newline: anchor on one line.
++- Backend mutation runner for production code: extract `git archive HEAD src tests openapi Directory.Build.props global.json .config` into a fresh scratchpad directory; one Node script applies `[id, file, from, to, class names]`, runs `dotnet test --project tests/Competency.Tests/Competency.Tests.csproj --filter-class '*A*' --filter-class '*B*'` (repeated `--filter-class` ORs) and restores the file in `finally`; the output is Russian (`сбой <Name>`, `итог`/`сбой`/`успешно`). Start exactly one runner with the tool's background flag: a second runner on the same copy fails builds with "being used by another process" and garbles the results file; a runner killed with `Stop-Process` skips its `finally`, so re-extract; a directory a build-server process still holds cannot be deleted, so take a new name. `TreatWarningsAsErrors` makes an unread primary-constructor parameter (CS9113) a build failure, so a mutation keeps every parameter read. A bash heredoc turns `\n` inside a JS string into a real newline: anchor on one line. Write the runner with the Write tool and let it turn the `\n` of each anchor into the file's own line ending (archived src is CRLF), so multi-line anchors work and the hit count stays checkable.
+ - To see why a request answered 500, add a throwaway test that throws `host.Logs`: the lines are JSON, read `State.ExceptionType`, `State.SqlState` and the application frames of `State.StackTrace`. Delete the file at once.
+ - `defect-stalemate` compares the failure line verbatim, so an assertion message that embeds a response body (`traceId`) or random fixture names never repeats and the comparison is blind for those symptoms.
+ - A test that expects an order decided by a random fixture name (a `Scenarios.Unique` unit name as the last tie-break) fails about half the runs: assert tied rows as a set.
+@@ -57,7 +57,7 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - A python or JS patch script written through a bash heredoc loses backslashes silently (a `replace` anchor stopped matching and nothing failed): write scripts with the Write tool, build line-ending separators with `String.fromCharCode(13)` and `grep -c` the result.
+ - Line endings: count CRLF pairs with python on the bytes (`count` of carriage return plus line feed); `grep -c` with a CR pattern reports 0 for a fully CRLF file in this shell. Worktree test files are a mix (some CRLF, most LF); the Edit tool and `open(..., newline='')` keep each file's own.
+ - Web pre-fix proof: `git archive <commit before the first fix> web` into a scratch directory, a junction for `node_modules` (`cmd //c "mklink /J node_modules <absolute path>"`), copy only the changed test files over it, `npx vitest run <files> --reporter=verbose`. Vitest does not typecheck, so new tests run against old code and fail on assertions. A wholesale-copied test file also brings the older tests of that file that the fix commit adapted: they go red too, so separate them by name before counting. Web mutation runner: one Node script, a single-anchor check per mutation, `vitest run <files> --reporter=json --outputFile=...`, read `assertionResults` with status failed, restore the file in `finally`; multi-line anchors are fine in a `git archive` web copy (LF). The runner starts `node node_modules/vitest/vitest.mjs run …` with an argument array, never `npx` with `shell: true`: the shell splits a `-t` pattern with spaces or `|` into file filters, the wrong tests run and the failures still look plausible.
+-- `dotnet test --filter-class` and `--filter-method` together are ANDed: a class filter plus a method filter of another class runs zero tests (exit 8). Run the two kinds in separate invocations. The Windows console codepage breaks Cyrillic runner output piped through Python (`UnicodeEncodeError`): write the extracted summary to a UTF-8 file and read it with the Read tool.
++- `dotnet test --filter-class` and `--filter-method` together are ANDed: a class filter plus a method filter of another class runs zero tests (exit 8). Run the two kinds in separate invocations. The Windows console codepage breaks Cyrillic runner output piped through Python (`UnicodeEncodeError`), and a `print` of Cyrillic text from a Python script fails the same way: set `PYTHONIOENCODING=utf-8` or print `ascii(...)`, and write an extracted summary to a UTF-8 file and read it with the Read tool.
+ - Web test traps met with server-search pickers and paged tables: antd `Select` options are virtualised, so never count them, assert the request (`q`, `page`, `pageSize`) instead; the selected text also sits in the hidden dropdown, so scope it with `within(combobox.closest(".ant-select"))`; `getAllByRole` throws when nothing matches, use `queryAllByRole` for "no actions"; `findByRole("dialog", { name })` found nothing for `AppModal`, locate it by the `.ant-modal-title` text and `closest('[role="dialog"]')`; a pagination item is `getByTitle("2")` and its size changer `.ant-pagination-options .ant-select`; `toBeVisible()` fails inside modal bodies in jsdom, use `toBeInTheDocument()`; `Form.useWatch` is `undefined` on the first render, so a guard that clears a value must wait for the data of the watched unit (removing it reddens the control test). A mutation that keeps every excluded option can fail on the free option missing from the window of about eight rendered rows before it reaches the "excluded are absent" assert; keep one excluded option (`exclude.slice(1)`) to reach it.
+ - Removing `crypto.randomUUID` for a plain-HTTP test: `vi.stubGlobal("crypto", { getRandomValues: real.getRandomValues.bind(real) })` (a typed `(values: Uint8Array)` wrapper fails `tsc`), `vi.unstubAllGlobals()` in `afterEach`; a UUID builder is pinned by filling the bytes with 0x00 and 0xff, which shows the version and variant bits and the 8-4-4-4-12 layout.
+ - A mutation that survives once is a missing guard, not a nuisance: two web survivors (a reason text shown without a blocked button; the page-size argument of the pager) each got a test and were killed on the rerun. `useQueries` callers that de-duplicate ids by hand are an equivalent mutant, because react-query already collapses equal keys. A flags-by-role matrix test (kinds times readers, collecting every deviation into one `wrong` list, with `missing` printed for an absent field) names the absent field on the pre-fix copy at once.
+@@ -74,3 +74,4 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Order the assertions of a test that changes state so every status assert comes before the next `Expect(OK)` that depends on that state: a mutant that wrongly accepts the first request moves the entity tag and the later `Expect(OK)` then fails with 412, which hides the property under test.
+ - Arrangements worth reusing: `MatrixKit`'s track is a draft (the admin creates it, nothing approves it), so the superior approver's read of it is testable without extra setup, and the matrix direction is always active (a matrix is created only on an active one), so a draft direction never reaches an approval route. A block written by the head above for the matrix unit is a draft; its read by the unit's head is the head-visible case. A scoped draft block outside the responsible HR's units: assign an HR on the team itself (units = the team), grant the team head the HR role after the head made a draft competency, let that head create the block for the department with the competency in it, and flip the responsible HR's roles between two identical accept requests as the control (409 NoRight, then 200).
+ - A position linked to a draft track of one unit, listed on the department's list, shows the track name to that unit's head and hides it from a sibling head (refusal text of the position matrix and `linkedTrack` of `matrix-positions`); two blocker kinds in one publication preview (a draft direction whose name an active one took, plus a level with no position) exercise the per-type cache of the visibility filter.
++- Hidden blocker of a publication list: a matrix version's plan holds every draft level of its draft track, whether the version content names it or not. A level takes its track's status, and two draft levels of one name by different authors are both allowed on creation and both flagged `NameTaken` at publication (the plan flips every entry to active while it checks names). So the team head creates a level named like the admin's `Junior` in upper case, outside the content: the superior approver names the one in the content and gets `moreCount` 1 for the other, the responsible HR and the administrator get both. Preview is `GET matrix-versions/{id}/publication`; the refusal of a publishing step needs the responsible HR as author: grant the team head the HR role, `AssignHrAsync(team)`, create the kit with `author:` that member's client, submit, and the department head's approve answers 409. An HR role with no assignment (`GrantHrRoleAsync` on the department head) is the superior approver who is an HR outside the unit; `org.SiblingHr` is the HR with no route, for the control.
+diff --git a/src/Competency.CareerFramework/CatalogEndpoints.cs b/src/Competency.CareerFramework/CatalogEndpoints.cs
+index 4760938..a235933 100644
+--- a/src/Competency.CareerFramework/CatalogEndpoints.cs
++++ b/src/Competency.CareerFramework/CatalogEndpoints.cs
+@@ -467,6 +467,7 @@ internal static class CatalogEndpoints
+             return PublicationChanged.Refuse($"{route}/{id}/publication");
+         }
+ 
++        entry.Status = CatalogStatus.Active;
+         publication.Apply(plan, entry.GetType().Name, entry.Id);
+         if (isApproval)
+         {
+diff --git a/src/Competency.CareerFramework/CatalogPublication.cs b/src/Competency.CareerFramework/CatalogPublication.cs
+index 654dc96..a7b2760 100644
+--- a/src/Competency.CareerFramework/CatalogPublication.cs
++++ b/src/Competency.CareerFramework/CatalogPublication.cs
+@@ -45,7 +45,6 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
+ 
+     /// <summary>
+     /// Plans making a draft or inactive entry active by the right of the given user; an entry that is already active publishes nothing.
+-    /// The root and its drafts are set active on the tracked entries, so names are checked against everything published together.
+     /// </summary>
+     /// <param name="root">The tracked entry; the caller has checked that the user may manage it.</param>
+     /// <param name="approver">The rights of the user who publishes.</param>
+@@ -71,7 +70,6 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
+     /// <summary>
+     /// Plans publishing the version by the right of the responsible HR of the matrix unit, with that HR's own roles, whoever starts it;
+     /// without that HR no draft may be approved. A responsible HR always holds the HR role, since an assignment acts only through such an account.
+-    /// The drafts are set active on the tracked entries.
+     /// </summary>
+     /// <param name="version">The version, with its matrix.</param>
+     /// <param name="cancellationToken">Cancels the queries.</param>
+@@ -116,7 +114,8 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
+     }
+ 
+     /// <summary>
+-    /// Journals each draft of the plan as approved together with the root; the caller saves them with its own change.
++    /// Sets each draft of the plan active and journals it as approved together with the root; the caller saves them with its own change
++    /// and sets a catalogue root active itself.
+     /// </summary>
+     /// <param name="plan">A plan with no blockers.</param>
+     /// <param name="rootType">The root's entity type, such as <c>MatrixVersion</c>.</param>
+@@ -126,6 +125,7 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
+         var reason = $"каскад {rootType} {rootId}";
+         foreach (var entry in plan.Entries)
+         {
++            entry.Status = CatalogStatus.Active;
+             StageApproved(entry, reason);
+         }
+     }
+@@ -153,8 +153,10 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
+         (entry, new PublicationBlocker(KindOf(entry), entry.Id, entry.Name, reason, ContextOf(entry)));
+ 
+     /// <summary>
+-    /// Sets the root and its drafts active and finds what is in the way: drafts the approver may not approve, tracks that are not ready,
+-    /// shared blocks without competencies, and names taken, the root's only when it leaves the draft status. The tag is taken from the versions as read.
++    /// Finds what is in the way: drafts the approver may not approve, tracks that are not ready, shared blocks without competencies, and
++    /// names taken, the root's only when it leaves the draft status. The root and its drafts are active on the tracked entries only while
++    /// the checks run, so names are checked against everything published together, and keep the statuses as read afterwards, by which a
++    /// reader's right to see a blocker is decided. The tag is taken from the versions as read.
+     /// </summary>
+     private async Task<PublicationPlan> CheckAsync(
+         Guid rootId,
+@@ -171,6 +173,7 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
+             .ThenBy(entry => entry.Name, StringComparer.Ordinal)];
+         List<CatalogEntry> named = [.. root is { Status: CatalogStatus.Draft } ? [root] : Array.Empty<CatalogEntry>(), .. entries];
+         List<CatalogEntry> published = [.. root is null ? Array.Empty<CatalogEntry>() : [root], .. entries];
++        List<CatalogStatus> statusesAsRead = [.. published.Select(entry => entry.Status)];
+         foreach (var entry in published)
+         {
+             entry.Status = CatalogStatus.Active;
+@@ -195,6 +198,11 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
+             }
+         }
+ 
++        foreach (var (entry, status) in published.Zip(statusesAsRead))
++        {
++            entry.Status = status;
++        }
++
+         return new PublicationPlan(entries, blockers, TagOf(rootId, rootVersion, entries));
+     }
+ 
+diff --git a/src/Competency.CareerFramework/CatalogStore.cs b/src/Competency.CareerFramework/CatalogStore.cs
+index 23d6128..f50ec77 100644
+--- a/src/Competency.CareerFramework/CatalogStore.cs
++++ b/src/Competency.CareerFramework/CatalogStore.cs
+@@ -54,15 +54,15 @@ internal sealed class CatalogStore(
+     /// <summary>
+     /// Works out the signed-in user's rights in the catalogues, including the drafts they read through the matrix versions they take part in
+     /// and the subtrees of the units they head, which bound their rights over shared blocks; both come from one walk of those subtrees.
+-    /// Neither is worked out for global administrators and HR, who read every draft a matrix version can use, the drafts of no unit anyway
+-    /// and draft levels belonging to draft tracks, which no matrix uses, and who keep every shared block.
++    /// Neither is worked out for global administrators, who read every draft and keep every shared block. HR is not skipped: it reads every
++    /// draft of no unit, but a draft track and its levels outside its own units only through the route.
+     /// </summary>
+     /// <param name="cancellationToken">Cancels the lookups.</param>
+     /// <returns>The user's rights.</returns>
+     public async Task<CatalogViewer> ViewerAsync(CancellationToken cancellationToken)
+     {
+         var viewer = await CatalogViewer.LoadAsync(actor, roles, cancellationToken);
+-        if (viewer.IsAdmin || viewer.IsHr)
++        if (viewer.IsAdmin)
+         {
+             return viewer;
+         }
+diff --git a/src/Competency.CareerFramework/PublicationPlan.cs b/src/Competency.CareerFramework/PublicationPlan.cs
+index 119292c..fb1127e 100644
+--- a/src/Competency.CareerFramework/PublicationPlan.cs
++++ b/src/Competency.CareerFramework/PublicationPlan.cs
+@@ -6,7 +6,7 @@ namespace Competency.CareerFramework;
+ /// One publication as worked out under the current data: the drafts that become active with the root, what keeps it from happening,
+ /// and the tag of the list. A refusal and a preview list the same entries in the way, so what the user saw is what was refused.
+ /// </summary>
+-/// <param name="Entries">The tracked drafts published with the root, in the order the list shows them, already set active in memory.</param>
++/// <param name="Entries">The tracked drafts published with the root, in the order the list shows them, still drafts until the plan is applied.</param>
+ /// <param name="Blockers">Every entry in the way with the reason; empty when the publication may go ahead.</param>
+ /// <param name="Tag">The hash of the root and of every draft with its version.</param>
+ internal sealed record PublicationPlan(
+diff --git a/tests/Competency.Tests/DeskQueryCountTests.cs b/tests/Competency.Tests/DeskQueryCountTests.cs
+index 4ce797d..ab38678 100644
+--- a/tests/Competency.Tests/DeskQueryCountTests.cs
++++ b/tests/Competency.Tests/DeskQueryCountTests.cs
+@@ -25,6 +25,7 @@ public sealed class DeskQueryCountTests(DeskQueryCountTests.SqlLoggingHost fixtu
+         var small = await CommandsAsync(admin, route);
+ 
+         await AddUnitsAsync(admin, 12);
++        await CommandsAsync(admin, route);
+         var large = await CommandsAsync(admin, route);
+ 
+         small.Should().BeInRange(1, CommandBudget);
+diff --git a/tests/Competency.Tests/MatrixAccessTests.cs b/tests/Competency.Tests/MatrixAccessTests.cs
+index c8ecad5..5d025a1 100644
+--- a/tests/Competency.Tests/MatrixAccessTests.cs
++++ b/tests/Competency.Tests/MatrixAccessTests.cs
+@@ -248,6 +248,37 @@ public sealed class MatrixAccessTests(CareerHost fixture) : IClassFixture<Career
+         }
+     }
+ 
++    [Fact]
++    public async Task Ac18_TheDraftTrackAndLevelsOfAVersionInWork_AreReadByTheSuperiorApproverWhoHoldsTheHrRole_AndByNoHrOutsideTheRoute()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
++        var superior = await org.Admin.GrantHrRoleAsync(fixture.Host, org.DepartmentHead);
++        var trackName = kit.Track.Json!["name"]!.GetValue<string>();
++        var levelIds = new[] { kit.Junior.Id, kit.Senior.Id };
++
++        (await superior.Client.GetAsync($"/api/v1/career/tracks/{kit.Track.Id}")).Status.Should().Be(HttpStatusCode.OK, "the superior approver reads the track of the version");
++        foreach (var levelId in levelIds)
++        {
++            (await superior.Client.GetAsync($"/api/v1/career/levels/{levelId}")).Status.Should().Be(HttpStatusCode.OK);
++        }
++
++        (await superior.Client.GetAsync($"/api/v1/career/tracks?q={Uri.EscapeDataString(trackName)}&pageSize=200")).Expect(HttpStatusCode.OK)
++            .ItemIds().Should().Equal(kit.Track.Id.ToString());
++        (await superior.Client.GetAsync($"/api/v1/career/levels?trackId={kit.Track.Id}&pageSize=200")).Expect(HttpStatusCode.OK)
++            .ItemIds().Should().BeEquivalentTo(levelIds.Select(levelId => levelId.ToString()));
++
++        var outsider = org.SiblingHr.Client;
++        (await outsider.GetAsync($"/api/v1/career/tracks/{kit.Track.Id}")).Status.Should().Be(HttpStatusCode.NotFound, "an HR of another unit is not on the route");
++        foreach (var levelId in levelIds)
++        {
++            (await outsider.GetAsync($"/api/v1/career/levels/{levelId}")).Status.Should().Be(HttpStatusCode.NotFound);
++        }
++
++        (await outsider.GetAsync($"/api/v1/career/tracks?q={Uri.EscapeDataString(trackName)}&pageSize=200")).Expect(HttpStatusCode.OK).ItemIds().Should().BeEmpty();
++        (await outsider.GetAsync($"/api/v1/career/levels?trackId={kit.Track.Id}&pageSize=200")).Expect(HttpStatusCode.OK).ItemIds().Should().BeEmpty();
++    }
++
+     [Fact]
+     public async Task Ac16_Approvals_ListTheVersionsWaitingForTheUser_LongestWaitingFirst_AndFilterByUnitAndStep()
+     {
+diff --git a/tests/Competency.Tests/PublicationCascadeTests.cs b/tests/Competency.Tests/PublicationCascadeTests.cs
+index bd48d61..f1751fc 100644
+--- a/tests/Competency.Tests/PublicationCascadeTests.cs
++++ b/tests/Competency.Tests/PublicationCascadeTests.cs
+@@ -239,6 +239,38 @@ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<
+             .BeEquivalentTo([$"Direction/NameTaken/{direction.Id}", $"Level/NoActivePosition/{level.Id}"]);
+     }
+ 
++    [Fact]
++    public async Task Ac109_Ac110_ABlockerOfALevelOutsideTheVersion_IsNotNamedToTheSuperiorApproverWhoCannotReadIt_InThePreviewNorInTheRefusal()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var responsible = await org.Admin.GrantHrRoleAsync(fixture.Host, org.TeamHead);
++        (await org.Admin.AssignHrAsync(org.Team.Id, responsible.EmployeeId)).Expect(HttpStatusCode.NoContent);
++        var kit = await (await MatrixKit.CreateAsync(org, author: responsible.Client)).PrepareAsync();
++        var outside = await responsible.Client.MakeLevelAsync(kit.Track.Id, kit.Junior.Json!["name"]!.GetValue<string>().ToUpperInvariant());
++        await org.Admin.LinkToNewPositionAsync(outside, org.Team.Id);
++        (await kit.TransitAsync(responsible.Client, "submit")).Expect(HttpStatusCode.OK);
++        var path = $"/api/v1/career/matrix-versions/{kit.VersionId}/publication";
++        var inContent = $"Level/NameTaken/{kit.Junior.Id}";
++        var notInContent = $"Level/NameTaken/{outside.Id}";
++
++        var bySuperior = (await org.DepartmentHead.Client.GetAsync(path)).Expect(HttpStatusCode.OK).Json!;
++        var byResponsible = (await responsible.Client.GetAsync(path)).Expect(HttpStatusCode.OK).Json!;
++        var byAdmin = (await org.Admin.GetAsync(path)).Expect(HttpStatusCode.OK).Json!;
++        var refused = await kit.TransitAsync(org.DepartmentHead.Client, "approve");
++
++        foreach (var full in new[] { byResponsible, byAdmin })
++        {
++            Blockers(full).Should().BeEquivalentTo([inContent, notInContent]);
++            full["moreCount"]!.GetValue<int>().Should().Be(0);
++        }
++
++        Blockers(bySuperior).Should().Equal(inContent);
++        bySuperior["moreCount"]!.GetValue<int>().Should().Be(1, "the level outside the version is counted but not named");
++        refused.Status.Should().Be(HttpStatusCode.Conflict, refused.Body);
++        Blockers(refused.Json!).Should().Equal(inContent);
++        refused.Json!["moreCount"]!.GetValue<int>().Should().Be(1);
++    }
++
+     private static async Task AddAdministratorRoleAsync(ApiClient admin, Member member)
+     {
+         var current = await admin.GetUserAsync(member.Id);
+@@ -270,6 +302,9 @@ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<
+         [.. (await client.GetAsync($"/api/v1/career/competencies/{competencyId}/versions")).Expect(HttpStatusCode.OK).Json!.AsArray()
+             .Select(version => (version!["number"]!.GetValue<int>(), version["status"]!.GetValue<string>()))];
+ 
++    private static string[] Blockers(JsonNode body) =>
++        [.. body["blockers"]!.AsArray().Select(blocker => $"{blocker!["kind"]}/{blocker["reason"]}/{blocker["id"]}")];
++
+     private static (string Kind, Guid Id)[] Entries(JsonNode preview) =>
+         [.. preview["entries"]!.AsArray().Select(entry => (entry!["kind"]!.GetValue<string>(), entry["id"]!.GetValue<Guid>()))];
+ 

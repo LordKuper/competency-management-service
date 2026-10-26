@@ -1,11 +1,11 @@
 ---
 name: host-agent-liveness
-description: What each host actually exposes to observe/stop a running subagent (Claude transcript jsonl, Monitor, CronCreate, TaskStop; Codex wait_agent/close_agent) — verified 2026-09-29 for sprint 021 AC-7
+description: What each host actually exposes to observe/stop a running subagent (Claude transcript jsonl, Monitor, CronCreate, TaskStop; Codex wait_agent/close_agent) — verified 2026-09-29
 metadata:
   type: reference
 ---
 
-Verified 2026-09-29 (sprint 021 audit, Claude Code desktop on Windows):
+Verified 2026-09-29 (Claude Code desktop on Windows):
 
 - Claude progress signal: `~/.claude/projects/<project-slug>/<sessionId>/subagents/agent-<agentId>.jsonl` (documented in code.claude.com/docs/en/sub-agents). Live: it grows once per tool call and does NOT grow while a tool call is in flight (a 20 s Bash call left size/mtime unchanged). Sibling `agent-<id>.meta.json` holds agentType/description/requestShape.
 - Not a signal: background agent `tasks/<id>.output` is 0 bytes running or finished (orchestrator observation). `ListAgents` shows `running` + elapsed only (not in the tools reference).

@@ -16,7 +16,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
 
     private static readonly (string Method, string Path, object? Body)[] VersionedEndpoints =
     [
-        ("PUT", "/api/v1/users/{id}", new { email = "a@test.local", role = Scenarios.User, employeeId = (Guid?)null }),
+        ("PUT", "/api/v1/users/{id}", new { email = "a@test.local", roles = Scenarios.NoRoles, employeeId = (Guid?)null }),
         ("POST", "/api/v1/users/{id}/block", null),
         ("POST", "/api/v1/users/{id}/unblock", null),
         ("POST", "/api/v1/users/{id}/resend-invitation", null),
@@ -33,7 +33,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
 
     private static readonly (string Method, string Path, object? Body)[] CatalogueEndpoints =
     [
-        .. new[] { "directions", "categories", "tracks", "levels", "scales", "competencies" }.SelectMany(kind => new (string, string, object?)[]
+        .. new[] { "directions", "tracks", "levels", "scales", "competencies", "blocks" }.SelectMany(kind => new (string, string, object?)[]
         {
             ("POST", $"/api/v1/career/{kind}/{{id}}/approve", null),
             ("POST", $"/api/v1/career/{kind}/{{id}}/deactivate", null),
@@ -41,15 +41,17 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
             ("DELETE", $"/api/v1/career/{kind}/{{id}}", null),
         }),
         ("PUT", "/api/v1/career/directions/{id}", new { name = "Направление" }),
-        ("PUT", "/api/v1/career/categories/{id}", new { name = "Категория" }),
         ("PUT", "/api/v1/career/tracks/{id}", new { name = "Трек" }),
         ("PUT", "/api/v1/career/levels/{id}", new { name = "Уровень" }),
         ("PUT", "/api/v1/career/scales/{id}", new { name = "Шкала", points = CareerScenarios.Points() }),
-        ("PUT", "/api/v1/career/competencies/{id}", new { name = "Навык", description = (string?)null, categoryId = UnknownId, directionId = (Guid?)null, type = "Profile", scaleId = (Guid?)null }),
+        ("PUT", "/api/v1/career/competencies/{id}", new { name = "Навык", description = (string?)null, directionId = (Guid?)null, scaleId = (Guid?)null }),
+        ("PUT", "/api/v1/career/blocks/{id}", new { name = "Блок", scopeUnitId = (Guid?)null, competencyIds = Array.Empty<Guid>() }),
+        ("POST", "/api/v1/career/levels/{id}/positions", new { positionId = UnknownId }),
+        ("DELETE", "/api/v1/career/levels/{id}/positions/{id}", null),
         ("POST", "/api/v1/career/scales/{id}/make-default", null),
         ("PUT", "/api/v1/career/tracks/{id}/level-order", new { levelIds = Array.Empty<Guid>() }),
         ("DELETE", "/api/v1/career/matrices/{id}", null),
-        ("PUT", "/api/v1/career/matrix-versions/{id}/content", new { levels = Array.Empty<object>(), blocks = Array.Empty<object>(), competencies = Array.Empty<object>(), blockWeights = Array.Empty<object>(), requirements = Array.Empty<object>() }),
+        ("PUT", "/api/v1/career/matrix-versions/{id}/content", new { levels = Array.Empty<object>(), competencies = Array.Empty<object>(), blockWeights = Array.Empty<object>(), requirements = Array.Empty<object>() }),
         ("POST", "/api/v1/career/matrix-versions/{id}/submit", null),
         ("POST", "/api/v1/career/matrix-versions/{id}/approve", null),
         ("POST", "/api/v1/career/matrix-versions/{id}/return", new { comment = (string?)null }),
@@ -77,6 +79,19 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         }
 
         wrong.Should().BeEmpty("a write without If-Match must be refused with 428 problem+json before anything is read");
+    }
+
+    [Fact]
+    public void Ac5_EveryOperationOfTheContractThatTakesIfMatch_IsCheckedHere_AndNoCheckedRowIsOfARouteThatIsGone()
+    {
+        var versioned = ApiContract.Operations()
+            .Where(operation => operation.Operation["parameters"]?.AsArray().Any(parameter => parameter!["name"]!.GetValue<string>() == "If-Match") == true)
+            .Select(operation => (operation.Method, operation.Path))
+            .ToHashSet();
+        var listed = VersionedEndpoints.Concat(CatalogueEndpoints).Select(row => (row.Method, Path: ApiContract.Normalize(row.Path))).ToHashSet();
+
+        versioned.Except(listed).Should().BeEmpty("an endpoint that takes If-Match must be listed above, so that its 428 is tested");
+        listed.Except(versioned).Should().BeEmpty("a listed endpoint that takes no If-Match is a stale row");
     }
 
     [Theory]
@@ -121,12 +136,12 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         var user = action == "resend-invitation" ? await admin.InviteUserAsync() : await admin.CreateUserAsync();
         var bumped = (await admin.PutAsync(
             $"/api/v1/users/{user.Id}",
-            new { email = $"{Scenarios.Unique("moved")}@test.local", role = Scenarios.User, employeeId = (Guid?)null },
+            new { email = $"{Scenarios.Unique("moved")}@test.local", roles = Scenarios.NoRoles, employeeId = (Guid?)null },
             user.ETag)).Expect(HttpStatusCode.OK);
 
         var stale = action switch
         {
-            "update" => await admin.PutAsync($"/api/v1/users/{user.Id}", new { email = user.Email, role = Scenarios.GlobalAdmin, employeeId = (Guid?)null }, user.ETag),
+            "update" => await admin.PutAsync($"/api/v1/users/{user.Id}", new { email = user.Email, roles = Scenarios.AdminRoles, employeeId = (Guid?)null }, user.ETag),
             "block" => await admin.PostAsync($"/api/v1/users/{user.Id}/block", ifMatch: user.ETag),
             _ => await admin.PostAsync($"/api/v1/users/{user.Id}/{action}", ifMatch: user.ETag),
         };
@@ -135,7 +150,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         stale.ContentType.Should().Be(ProblemJson);
         var after = await admin.GetUserAsync(user.Id);
         after.ETag.Should().Be(bumped.ETag, "a refused write must not change the account");
-        after.Json!["role"]!.GetValue<string>().Should().Be(Scenarios.User);
+        after.Json!["roles"]!.AsArray().Should().BeEmpty();
         after.Json["isBlocked"]!.GetValue<bool>().Should().BeFalse();
     }
 

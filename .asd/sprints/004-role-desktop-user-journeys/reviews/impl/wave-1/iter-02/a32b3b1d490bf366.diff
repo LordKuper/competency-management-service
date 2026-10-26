@@ -1,0 +1,1593 @@
+diff --git a/.claude/agent-memory/asd-reviewer-correctness/MEMORY.md b/.claude/agent-memory/asd-reviewer-correctness/MEMORY.md
+index 6e4483b..89d0c35 100644
+--- a/.claude/agent-memory/asd-reviewer-correctness/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-correctness/MEMORY.md
+@@ -9,3 +9,4 @@
+ - [persist-review return shape](reference_persist-review-return-shape.md) — write return verbatim to payload's `.asd/tmp/` file; first table parsed by column; bare APPROVE keeps only `—` row
+ - [Product design-review: derived actor paths](feedback_design-review-derived-actor-paths.md) — actor-keyed rights on indirect paths, sibling write paths, existing SPA callers of a tightened contract, mockup samples
+ - [No prior-iteration reports](feedback_no-prior-iteration-reports.md) — never open reviews/*/iter-<other>/ files; Glob only the current iter dir (violated twice in sprint 004)
++- [Check persistent AC text before raising](feedback_check-persistent-ac-text-before-raising.md) — odd rights/scope rule in code is often literal requirement text; read the AC row first
+diff --git a/.claude/agent-memory/asd-reviewer-correctness/feedback_check-persistent-ac-text-before-raising.md b/.claude/agent-memory/asd-reviewer-correctness/feedback_check-persistent-ac-text-before-raising.md
+new file mode 100644
+index 0000000..b34e821
+--- /dev/null
++++ b/.claude/agent-memory/asd-reviewer-correctness/feedback_check-persistent-ac-text-before-raising.md
+@@ -0,0 +1,18 @@
++---
++name: check-persistent-ac-text-before-raising
++description: Product impl-review in this app - an odd-looking rights or scope rule in code is usually the literal text of a persistent requirement; read the AC row in docs/product/requirements/*.html before raising it
++metadata:
++  type: feedback
++---
++
++Before you raise a rights, visibility or scope rule that looks inconsistent, read the matching AC row in `docs/product/requirements/<subsystem>.html`. Do this whenever the code's doc comment states the rule on purpose ("whatever the level's own status", "except in a cascade").
++
++Persistent AC ids are not the sprint's `sprint.md` AC-N. After design-promote the ids are renumbered per subsystem. Grep `id="AC-<n>"` plus a key phrase instead of mapping by number. A long row comes back as "[Omitted long matching line]"; Read that one line by offset.
++
++**Why:** in a backend impl-review wave, four suspected asymmetries each turned out to be the literal requirement text, so none was a defect:
++- any HR approves a unit-scoped shared block directly, but in a cascade only the unit's responsible HR may approve it;
++- "no track for your position" is checked across all units;
++- unlinking the last active position of an inactive level is refused;
++- the HR-role removal check is keyed on the requested employee binding, because unbinding is explicitly allowed.
++
++**How to apply:** for each candidate finding, quote the AC row. Raise it only when the code contradicts the row, or when no row covers the case. The architecture doc `docs/architecture/<subsystem>.md` also states endpoint contracts, such as which actions are `publishingActions`; check it before you raise a Contracts finding. Related: [[design-review-derived-actor-paths]], [[review-method-no-shell]].
+diff --git a/.claude/agent-memory/asd-reviewer-efficiency/MEMORY.md b/.claude/agent-memory/asd-reviewer-efficiency/MEMORY.md
+index 490c01f..9fcb208 100644
+--- a/.claude/agent-memory/asd-reviewer-efficiency/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-efficiency/MEMORY.md
+@@ -3,3 +3,4 @@
+ - [MEMORY-FIX fallback is AC-mandated](project_memory-fix-fallback-keep.md) — owner-without-write-tool branch never fires for canon agents, but AC-14 requires it; keep-as-is, don't raise.
+ - [020 workflow definition keys](project_020-workflow-definition-keys.md) — stored `next`/`rollback_reset` judged keep-as-is; persist-review parses Findings columns by position (Category goes last).
+ - [Design-review gate outcomes](feedback_design-review-gate-outcomes.md) — read rotated decisions-log segments for settled ADR gates; approved ones stay, leftover fallback branches are dead text.
++- [Large-diff read method](feedback_large-diff-read-method.md) — map with `^diff --git` grep, read src in ~1000-line chunks, skip generated migrations; ledger/table parsing rules for the report.
+diff --git a/.claude/agent-memory/asd-reviewer-efficiency/feedback_large-diff-read-method.md b/.claude/agent-memory/asd-reviewer-efficiency/feedback_large-diff-read-method.md
+new file mode 100644
+index 0000000..ba439de
+--- /dev/null
++++ b/.claude/agent-memory/asd-reviewer-efficiency/feedback_large-diff-read-method.md
+@@ -0,0 +1,16 @@
++---
++name: large-diff-read-method
++description: How to cover a very large impl-review diff within the turn budget and how the persisted report/ledger are parsed
++metadata:
++  type: feedback
++---
++
++Map the diff first with a `^diff --git` grep (line numbers per file), then read hand-authored source in ~1000-line chunks — a single Read is capped near 25-29k tokens whatever `allow_large` says. Generated EF `*.Designer.cs`, deleted old migrations and `AppDbContextModelSnapshot.cs` need only a glance at the snapshot (indexes, FKs, check constraints); `packages.lock.json` needs none.
++
++**Why:** a ~35k-line diff is mostly generated migrations; reading them whole burns the turn budget without finding anything.
++
++**How to apply:**
++- No shell is available, so the ledger's file rows are transcribed by hand from the manifest's `ledger.files`; copy ids verbatim and count them against the manifest.
++- `persist-review` reads the first `|` table of the returned text by column position (id, severity, location), so no other table may come before the Findings table; ledger `findings` must equal that table's ids, and only a rule/section row with status `finding` may carry one `f`.
++- Verify a perf claim in the working tree (file:line) before citing it; the diff's own line numbers are not file lines.
++- Measured perf evidence lives in `test-plan.md` (Suite run), not in `custom-coding-rules.md`, when the project defines no budgets.
+diff --git a/.claude/agent-memory/asd-reviewer-testing/MEMORY.md b/.claude/agent-memory/asd-reviewer-testing/MEMORY.md
+index 1f97654..9f6e8a1 100644
+--- a/.claude/agent-memory/asd-reviewer-testing/MEMORY.md
++++ b/.claude/agent-memory/asd-reviewer-testing/MEMORY.md
+@@ -7,3 +7,4 @@
+ - [Temp-repo git determinism](feedback_temp-repo-git-determinism.md) — runtime-spawned git inherits host config (diff.noprefix); Testing manifest = the wave's isTest files + test-plan (sprints 015/017); resolve rows from it
+ - [Value-removal sprints](feedback_value-removal-sprints.md) — swapped fixtures must hit the same disjunct; hand-enumerated sets on touched asserts = §17 low; pr-deferred ACs need a plan line
+ - [Workflow-definition sprints](feedback_workflow-definition-sprints.md) — predecessor + collapse acting sites pinned (closed, 020 wave-1 review-fix); grep+compare per new workflow; name-guard target; memory dir swept
++- [.NET API test review](feedback_dotnet-api-test-review.md) — xUnit API tests: neutered precedence tests, false equivalent mutants, moved validations, new fields, race tests, ledger shape
+diff --git a/.claude/agent-memory/asd-reviewer-testing/feedback_dotnet-api-test-review.md b/.claude/agent-memory/asd-reviewer-testing/feedback_dotnet-api-test-review.md
+new file mode 100644
+index 0000000..e2f23a9
+--- /dev/null
++++ b/.claude/agent-memory/asd-reviewer-testing/feedback_dotnet-api-test-review.md
+@@ -0,0 +1,29 @@
++---
++name: dotnet-api-test-review
++description: Reviewing this repo's xUnit API-integration tests without a shell - checks that catch neutered tests, false "equivalent mutant" claims, untested moved validations and new fields, missing race tests, and record gaps; plus ledger/persist-review shape facts
++metadata:
++  type: feedback
++---
++
++Backend tests here are HTTP tests against a real API process and PostgreSQL (`tests/Competency.Tests`), one `IClassFixture` host per class, helpers in `Infrastructure/`. Review them from the manifest `.diff` plus whole-file reads; production code is context only.
++
++**1. A mechanical fixture swap can turn a precedence test into a duplicate.** When a field or rule is removed, the dev rewrites the document the test saves (`Content("text")` to `Content(4)`). For a test named "X is refused before Y judges the input", re-derive whether the swapped document still triggers Y. If the document is now valid, the test cannot fail for its claim and equals a sibling. **How to apply:** grep the sibling tests in the same file for the same save-then-act sequence; compare how a neighbouring test builds an incomplete document.
++
++**2. "Equivalent mutant" claims are falsifiable by reading the upstream filter.** Read the production predicate and the query that feeds it. A conjunct redundant for one account state (blocked, filtered out by SQL) can be the only guard for another (invited, in the result set). List the states the API can create (blocked, invited, unbound, dismissed, inactive, draft) and check each against the survivor. Do the same for C# restatements of a rule whose SQL twin is tested.
++
++**3. A validation that moved with a field loses its test silently.** The case list of a data-driven "is refused when malformed" test shrinks when the field is removed; the new location of the same check (another JSON path) is rarely re-added. **How to apply:** take the production error message, grep `tests/` for it; zero hits means untested.
++
++**4. New request fields: grep the field name in `tests/`.** Zero hits for a field with keep-when-absent / clear-when-empty semantics, trimming and a length cap is a coverage gap on a persisted contract.
++
++**5. Rules guarding several rows need a race test (project rule "Multi-row invariant locking").** For each new "cannot remove X while Y refers to it" or "can assign only with Z" rule, look in `CareerLockTests`-style tests for both orders (`RowLock.HoldAdvisoryAsync` + `StartWaitingAsync`). The shape to copy is the existing assign-versus-block race. Sequential tests do not count.
++
++**6. Deleted data-migration test classes may carry the only pin on seed data.** Read the removed test bodies for assertions about shipped seed rows (texts, ids, "not journaled") and grep the remaining tests for those literals. The seed now lives in the squashed initial migration.
++
++**7. `none` decisions: split the reason by property.** A reason about wall-clock nondeterminism says nothing about deterministic parts of the same budget (SQL command count, constant query count). The API host is a child process whose console log is captured (`ApiHost.Logs`, `LogsAfterAsync`), so command counting is feasible.
++
++**8. Corroborating `runs: N` in the Added-tests table without a shell.** `runs` can be a multi-class batch total. Sum test methods per class (facts, plus theory rows: InlineData lines, member-data rows, enum member count via `Grep -c` on the enum file) and check single-class rows exactly; batch rows should equal a sum of whole classes.
++
++**9. Ledger facts for this reviewer.** `persist-review` reads the FIRST table in the returned text as the Findings table, so no table may precede it. File rows take only `checked`/`n/a` (no finding reference); only rule rows carry `f`, one finding id per row. The validator requires the ledger `findings` list to equal the table ids, not every finding to be referenced by a row. The manifest may authorize no `n/a` at all.
++
++**Why:** each of these was a defect or a false record that a green suite and a plausible mutation table hid.
++**How to apply:** at the start of each backend wave, run points 3, 4 and 5 as greps before reading bodies; run 1 and 2 while reading rewritten tests and survivor notes. See [[no-shell-review-method]], [[review-fix-defect-proof]].
+diff --git a/.claude/agent-memory/asd-tester-critical/MEMORY.md b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+index 3786d0d..4fd4a3f 100644
+--- a/.claude/agent-memory/asd-tester-critical/MEMORY.md
++++ b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+@@ -1,4 +1,4 @@
+ - [Fail-first and `none` honesty](feedback_fail-first-and-none-honesty.md) — transcribe the first-failing assertion, never justify `none` with "it's prose", never assert a qualifier where the substance is assertable
+ - [Mutation runs trip the hash ledger](project_mutation-runs-trip-the-hash-ledger.md) — editing a managed_paths file to prove a mutation also fails upstream_hashes; expected noise
+ - [Testability envelope](project_testability-envelope.md) — what is testable here, honest `none` decisions, mutation and fixture traps, and the §7 in-body-comment ban.
+-- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/antd Select and pager/filter-wiring web traps, web pre-fix copy and mutation runner, fake fetch, forcing a 5xx, class-shared org, antd disabled-context locks
++- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/antd Select and pager/filter-wiring web traps, web pre-fix copy and mutation runner, fake fetch, forcing a 5xx, class-shared org, antd disabled-context locks, container connection limit (53300), guard tests vs fail-first, draft-read and cascade-right arrangements
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index e36a572..3c54fa3 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -1,6 +1,6 @@
+ ---
+ name: competency-test-harness
+-description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate, migration data-transfer tests, multi-save atomicity by trigger, throwaway Postgres for seed scripts
++description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate, migration data-transfer tests, multi-save atomicity by trigger, throwaway Postgres for seed scripts, the shared container's connection limit, guard tests versus fail-first, reusable arrangements for draft-entry reads and cascade rights
+ metadata:
+   type: project
+ ---
+@@ -69,3 +69,8 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - SQL-command budget on a throwaway Postgres with `log_statement=all`: Npgsql resets a pooled connection with `DISCARD ALL`, logged as a `statement:` line after every command, so the raw count is double. Count application commands only (drop `DISCARD ALL` and the readiness probe line); dump the statements of one request to see repeats before judging the budget.
+ - A test that is red because of a code defect cannot prove its own mutants (every mutant is "killed" by the standing failure). Prove them on a copy where the defect is patched as the first of the runner's `edits` (here `<Link>` to `<a>` in a modal), and check that patch alone is green; mutants that still survive then need their own test.
+ - antd `modal.confirm/error` content is rendered from the `App` context, outside `RouterProvider` when `Providers` wraps the router, so a `<Link>` in it throws `useContext(...) is null`. Mount the hook under the same `Providers > RouterProvider` as production; `MemoryRouter` inside `Providers` hides the crash.
++- Connection limit of the shared container: the default `max_connections=100` runs out in a full run (dozens of class hosts migrate and pool at once), and the symptom is random classes red with `53300: sorry, too many clients already` or a bare 500 from a host, while each class is green alone. Prove it by sampling `docker exec <pg container> psql -U postgres -tAc "select count(*) from pg_stat_activity where backend_type = 'client backend'"` every 2 s next to the run (find the container by `docker ps --filter ancestor=postgres:18.6-trixie`, skip the dev stack's `competency-dev-db-1`). `.WithCommand("-c", "max_connections=500")` on the builder appends to the module's own `-c fsync=off` (`show fsync` stayed off); a pool cap per host would break the held-lock tests that count waiters.
++- Guard versus fail-first: a perf rewrite keeps behaviour, so its new tests are green on the pre-fix copy and only mutations prove them; say so in the plan. Run the pre-fix copy first with every new test, sort the reds (fixes) from the greens (guards), then aim one mutant at each branch the rewrite introduced (first-only check, status filter dropped, kind constant swapped, version zeroed, per-type cache key). A mutant that survives on the existing classes (the per-type cache key of the compiled visibility filter survived 60 tests) is a missing pin, not a nuisance.
++- Order the assertions of a test that changes state so every status assert comes before the next `Expect(OK)` that depends on that state: a mutant that wrongly accepts the first request moves the entity tag and the later `Expect(OK)` then fails with 412, which hides the property under test.
++- Arrangements worth reusing: `MatrixKit`'s track is a draft (the admin creates it, nothing approves it), so the superior approver's read of it is testable without extra setup, and the matrix direction is always active (a matrix is created only on an active one), so a draft direction never reaches an approval route. A block written by the head above for the matrix unit is a draft; its read by the unit's head is the head-visible case. A scoped draft block outside the responsible HR's units: assign an HR on the team itself (units = the team), grant the team head the HR role after the head made a draft competency, let that head create the block for the department with the competency in it, and flip the responsible HR's roles between two identical accept requests as the control (409 NoRight, then 200).
++- A position linked to a draft track of one unit, listed on the department's list, shows the track name to that unit's head and hides it from a sibling head (refusal text of the position matrix and `linkedTrack` of `matrix-positions`); two blocker kinds in one publication preview (a draft direction whose name an active one took, plus a level with no position) exercise the per-type cache of the visibility filter.
+diff --git a/.claude/agent-memory/asd-tester/project_backend-tests-scratch-build.md b/.claude/agent-memory/asd-tester/project_backend-tests-scratch-build.md
+index 2d34475..734cc4c 100644
+--- a/.claude/agent-memory/asd-tester/project_backend-tests-scratch-build.md
++++ b/.claude/agent-memory/asd-tester/project_backend-tests-scratch-build.md
+@@ -15,3 +15,5 @@ In-place `dotnet test` fails with MSB3021 while the user's Competency.Api or Vis
+ - HR is assigned by employee: `HrCandidateAsync` (employee plus Hr-role account) and `AssignHrAsync` in CareerScenarios; changing an account's roles ends its sessions, so re-sign in (`GrantHrRoleAsync` returns the refreshed member). A unit with working employees cannot be deactivated, so build HR candidates in another unit.
+ - Perf seed check: start the scratch-build Api against a throwaway `postgres:18.6-trixie` container (needs `Smtp__Host/Port/SecureSocketOptions/From`, `App__PublicBaseUrl`, bootstrap admin env), apply `tests/perf/seed-10k.sql` with `docker exec -i ... psql`, read it back through the API, then `docker rm -f -v` the container by name.
+ - Python edit scripts with Cyrillic literals: write them to a file and run it; keep file EOL (`\r\n` check) when rewriting.
++- Mutation proofs: edit the production file in place, run `dotnet test --solution Competency.slnx --artifacts-path <scratch> --filter-class "*Class"` (flag repeats for several classes), and `git checkout -- <file>` in the same command (try/finally in a script). Source files are often CRLF while shell heredocs are LF: anchor on a normalised copy and write back with the file's EOL; a `str.index` on a repeated line mutates the wrong method.
++- Counting SQL commands of a request: start the host with `Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command=Information` and `...Microsoft.AspNetCore.Hosting.Diagnostics=Information` (`HostFixture` subclass with settings); the console is JSON, so count `"EventId":20101,` (a message appears twice per record); wait for the unique `?probe=<guid> - 200` end-of-request line with `ApiHost.LogsAfterAsync`.
+diff --git a/src/Competency.CareerFramework/CareerDeskScan.cs b/src/Competency.CareerFramework/CareerDeskScan.cs
+index 2856180..b842cce 100644
+--- a/src/Competency.CareerFramework/CareerDeskScan.cs
++++ b/src/Competency.CareerFramework/CareerDeskScan.cs
+@@ -75,16 +75,13 @@ internal sealed class CareerDeskScan(
+     /// </summary>
+     /// <param name="unused">The unused entries.</param>
+     /// <returns>One finding per entry, for reference.</returns>
+-    public static IEnumerable<DeskFinding> UnusedFindings(IEnumerable<CatalogEntry> unused) => unused.Select(entry => new DeskFinding(
+-        entry switch
+-        {
+-            CareerCompetency => DeskKind.UnusedCompetency,
+-            CompetencyScale => DeskKind.UnusedScale,
+-            CareerDirection => DeskKind.DirectionWithoutTracks,
+-            _ => throw new UnreachableException($"Unused entries are never of type {entry.GetType().Name}."),
+-        },
+-        new DeskObject(TypeOf(entry), entry.Id, entry.Name),
+-        IsAction: false));
++    public static IEnumerable<DeskFinding> UnusedFindings(IEnumerable<UnusedEntryResponse> unused) => unused.Select(entry => entry.Kind switch
++    {
++        CatalogEntryKind.Competency => new DeskFinding(DeskKind.UnusedCompetency, new DeskObject(DeskObjectType.Competency, entry.Id, entry.Name), IsAction: false),
++        CatalogEntryKind.Scale => new DeskFinding(DeskKind.UnusedScale, new DeskObject(DeskObjectType.Scale, entry.Id, entry.Name), IsAction: false),
++        CatalogEntryKind.Direction => new DeskFinding(DeskKind.DirectionWithoutTracks, new DeskObject(DeskObjectType.Direction, entry.Id, entry.Name), IsAction: false),
++        _ => throw new UnreachableException($"Unused entries are never of kind {entry.Kind}."),
++    });
+ 
+     /// <summary>
+     /// Units without a responsible HR who can act, for a global administrator; units the user heads that have no track matrix in force
+diff --git a/src/Competency.CareerFramework/CareerDeskSource.cs b/src/Competency.CareerFramework/CareerDeskSource.cs
+index e6b8e5a..8805d21 100644
+--- a/src/Competency.CareerFramework/CareerDeskSource.cs
++++ b/src/Competency.CareerFramework/CareerDeskSource.cs
+@@ -88,7 +88,7 @@ internal sealed class CareerDeskSource(
+                 .. scan.TrackFindings(),
+                 .. scan.PositionFindings(),
+                 .. scan.DraftFindings(catalog.Drafts),
+-                .. viewer.IsHr || viewer.IsAdmin ? CareerDeskScan.UnusedFindings(await store.UnusedEntriesAsync(cancellationToken)) : [],
++                .. viewer.IsHr || viewer.IsAdmin ? CareerDeskScan.UnusedFindings(await store.UnusedEntriesAsync(kind: null, cancellationToken)) : [],
+                 .. self is null ? [] : await NoTrackFindingsAsync(scan, self, versions, isInvolved, cancellationToken),
+             ],
+             prerequisites);
+diff --git a/src/Competency.CareerFramework/CareerLevelPositionEndpoints.cs b/src/Competency.CareerFramework/CareerLevelPositionEndpoints.cs
+index e89bda8..9df16b1 100644
+--- a/src/Competency.CareerFramework/CareerLevelPositionEndpoints.cs
++++ b/src/Competency.CareerFramework/CareerLevelPositionEndpoints.cs
+@@ -85,12 +85,13 @@ internal static class CareerLevelPositionEndpoints
+         var shown = matching.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+         var viewer = await store.ViewerAsync(cancellationToken);
+         var tracks = await store.LinkedTracksAsync([.. shown.Select(position => position.Id)], cancellationToken);
++        var canSee = viewer.SeesLoaded();
+         var items = shown
+             .Select(position => new MatrixPositionResponse(
+                 position.Id,
+                 position.Name,
+                 tracks[position.Id].Any(),
+-                tracks[position.Id].FirstOrDefault(viewer.CanSee) is { } track ? new CareerNamedResponse(track.Id, track.Name) : null))
++                tracks[position.Id].FirstOrDefault(canSee) is { } track ? new CareerNamedResponse(track.Id, track.Name) : null))
+             .ToList();
+         return TypedResults.Ok(new PageResponse<MatrixPositionResponse>(items, matching.Count, page, pageSize));
+     }
+diff --git a/src/Competency.CareerFramework/CatalogDraftEndpoints.cs b/src/Competency.CareerFramework/CatalogDraftEndpoints.cs
+index 0d8d576..aef3515 100644
+--- a/src/Competency.CareerFramework/CatalogDraftEndpoints.cs
++++ b/src/Competency.CareerFramework/CatalogDraftEndpoints.cs
+@@ -54,11 +54,8 @@ internal static class CatalogDraftEndpoints
+         var drafts = all.Where(draft => (kind is null || KindOf(draft) == kind) && (orgUnitId is null || draft.ListedUnitId == orgUnitId)).ToList();
+         var unitNames = await store.UnitNamesAsync(drafts.Select(draft => draft.ListedUnitId), cancellationToken);
+         var authorNames = await store.UserNamesAsync(drafts.Select(draft => draft.AuthorId), cancellationToken);
+-        var readiness = new Dictionary<Guid, TrackReadinessResponse?>();
+-        foreach (var track in drafts.OfType<CareerTrack>())
+-        {
+-            readiness[track.Id] = TrackReadinessResponse.Of(await store.ReadinessAsync(track.Id, cancellationToken));
+-        }
++        var trackIds = drafts.OfType<CareerTrack>().Select(track => track.Id).ToList();
++        var readiness = trackIds.Count == 0 ? new Dictionary<Guid, TrackReadiness>() : await store.ReadinessAsync(trackIds, cancellationToken);
+ 
+         return TypedResults.Ok(drafts
+             .OrderBy(draft => draft.CreatedAt)
+@@ -73,7 +70,7 @@ internal static class CatalogDraftEndpoints
+                 draft.AuthorId is { } authorId ? authorNames.GetValueOrDefault(authorId) : null,
+                 draft.CreatedAt,
+                 draft.Version,
+-                readiness.GetValueOrDefault(draft.Id)))
++                readiness.TryGetValue(draft.Id, out var trackReadiness) ? TrackReadinessResponse.Of(trackReadiness) : null))
+             .ToList());
+     }
+ 
+diff --git a/src/Competency.CareerFramework/CatalogEndpoints.cs b/src/Competency.CareerFramework/CatalogEndpoints.cs
+index 04c6cba..4760938 100644
+--- a/src/Competency.CareerFramework/CatalogEndpoints.cs
++++ b/src/Competency.CareerFramework/CatalogEndpoints.cs
+@@ -215,7 +215,7 @@ internal static class CatalogEndpoints
+         CancellationToken cancellationToken)
+         where TEntry : CatalogEntry
+     {
+-        await store.SaveAsync(entry, transaction, cancellationToken);
++        await store.SaveAsync(transaction, cancellationToken);
+         return await DescribeAsync(entry, kind, viewer, store, response, cancellationToken);
+     }
+ 
+@@ -390,7 +390,7 @@ internal static class CatalogEndpoints
+ 
+         ifMatch.ApplyTo(context, entry);
+         context.Remove(entry);
+-        await store.SaveAsync(entry, transaction, cancellationToken);
++        await store.SaveAsync(transaction, cancellationToken);
+         return TypedResults.NoContent();
+     }
+ 
+diff --git a/src/Competency.CareerFramework/CatalogPublication.cs b/src/Competency.CareerFramework/CatalogPublication.cs
+index 17637f0..654dc96 100644
+--- a/src/Competency.CareerFramework/CatalogPublication.cs
++++ b/src/Competency.CareerFramework/CatalogPublication.cs
+@@ -2,6 +2,7 @@ using System.Diagnostics;
+ using System.Security.Cryptography;
+ using System.Text;
+ using Competency.Platform;
++using Competency.UserManagement;
+ using Microsoft.EntityFrameworkCore;
+ 
+ namespace Competency.CareerFramework;
+@@ -15,7 +16,7 @@ namespace Competency.CareerFramework;
+ /// a track be ready, and as a shared block have competencies. The plan runs under the caller's locks for an action, and without locks
+ /// for a preview, which then changes nothing because nobody saves it.
+ /// </summary>
+-internal sealed class CatalogPublication(AppDbContext context, CatalogStore store, ProcessRoles roles, IAuditWriter audit, ICurrentActor actor)
++internal sealed class CatalogPublication(AppDbContext context, CatalogStore store, ProcessRoles roles, IAuditWriter audit, IUserDirectory users)
+ {
+     private const string ApprovedAction = "Approved";
+ 
+@@ -68,8 +69,8 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
+     }
+ 
+     /// <summary>
+-    /// Plans publishing the version by the right of the responsible HR of the matrix unit, whoever starts it; without that HR no draft
+-    /// may be approved. A responsible HR always holds the HR role, since an assignment acts only through such an account.
++    /// Plans publishing the version by the right of the responsible HR of the matrix unit, with that HR's own roles, whoever starts it;
++    /// without that HR no draft may be approved. A responsible HR always holds the HR role, since an assignment acts only through such an account.
+     /// The drafts are set active on the tracked entries.
+     /// </summary>
+     /// <param name="version">The version, with its matrix.</param>
+@@ -77,10 +78,12 @@ internal sealed class CatalogPublication(AppDbContext context, CatalogStore stor
+     /// <returns>The plan; nothing is saved.</returns>
+     public async Task<PublicationPlan> PlanAsync(MatrixVersion version, CancellationToken cancellationToken)
+     {
+-        var hrId = await roles.ResponsibleHrAsync(version.Matrix.OrgUnitId, cancellationToken);
+-        var approver = hrId is { } id
+-            ? await CatalogViewer.LoadAsync(id, id == actor.UserId && actor.IsGlobalAdmin(), isHr: true, roles, cancellationToken)
++        var hr = await roles.ResponsibleHrAsync(version.Matrix.OrgUnitId, cancellationToken) is { } hrId
++            ? await users.FindAsync(hrId, cancellationToken)
+             : null;
++        var approver = hr is null
++            ? null
++            : await CatalogViewer.LoadAsync(hr.Id, hr.IsGlobalAdmin, isHr: true, roles, cancellationToken);
+ 
+         var blocks = await NotInactiveAsync<CompetencyBlock>([.. version.Content.SharedBlocks.Select(block => block.BlockId)], cancellationToken);
+         var competencies = await NotInactiveAsync<CareerCompetency>([.. version.Content.Competencies.Select(competency => competency.CompetencyId)], cancellationToken);
+diff --git a/src/Competency.CareerFramework/CatalogStore.cs b/src/Competency.CareerFramework/CatalogStore.cs
+index 57449b0..23d6128 100644
+--- a/src/Competency.CareerFramework/CatalogStore.cs
++++ b/src/Competency.CareerFramework/CatalogStore.cs
+@@ -133,13 +133,27 @@ internal sealed class CatalogStore(
+     /// <param name="draftAuthorId">The author whose drafts may be referred to; null when only an active entry may, as for a referring entry that is active.</param>
+     /// <param name="cancellationToken">Cancels the query.</param>
+     /// <returns>True when the reference is allowed; false also when the entry does not exist.</returns>
+-    public Task<bool> IsUsableAsync<T>(Guid id, Guid? draftAuthorId, CancellationToken cancellationToken)
++    public async Task<bool> IsUsableAsync<T>(Guid id, Guid? draftAuthorId, CancellationToken cancellationToken)
+         where T : CatalogEntry =>
+-        context.Set<T>().AnyAsync(
+-            entry => entry.Id == id
++        (await UsableIdsAsync<T>([id], draftAuthorId, cancellationToken)).Contains(id);
++
++    /// <summary>
++    /// The entries among the given ones an entry may refer to, by the rule of <see cref="IsUsableAsync"/>, in one query.
++    /// </summary>
++    /// <typeparam name="T">The referenced entry type.</typeparam>
++    /// <param name="ids">The referenced entries.</param>
++    /// <param name="draftAuthorId">The author whose drafts may be referred to; null when only active entries may.</param>
++    /// <param name="cancellationToken">Cancels the query.</param>
++    /// <returns>The identifiers of the usable entries; those of entries that do not exist are absent.</returns>
++    public async Task<IReadOnlySet<Guid>> UsableIdsAsync<T>(List<Guid> ids, Guid? draftAuthorId, CancellationToken cancellationToken)
++        where T : CatalogEntry =>
++        (await context.Set<T>()
++            .Where(entry => ids.Contains(entry.Id)
+                 && (entry.Status == CatalogStatus.Active
+-                    || (draftAuthorId != null && entry.Status == CatalogStatus.Draft && entry.AuthorId == draftAuthorId)),
+-            cancellationToken);
++                    || (draftAuthorId != null && entry.Status == CatalogStatus.Draft && entry.AuthorId == draftAuthorId)))
++            .Select(entry => entry.Id)
++            .ToListAsync(cancellationToken))
++        .ToHashSet();
+ 
+     /// <summary>
+     /// Whether the entry is a draft, to tell a draft reference from a missing or inactive one.
+@@ -159,19 +173,30 @@ internal sealed class CatalogStore(
+     /// <param name="trackId">The track.</param>
+     /// <param name="cancellationToken">Cancels the queries.</param>
+     /// <returns>The track's readiness.</returns>
+-    public async Task<TrackReadiness> ReadinessAsync(Guid trackId, CancellationToken cancellationToken)
++    public async Task<TrackReadiness> ReadinessAsync(Guid trackId, CancellationToken cancellationToken) =>
++        (await ReadinessAsync([trackId], cancellationToken))[trackId];
++
++    /// <summary>
++    /// Works out the readiness of many tracks by the rule of <see cref="ReadinessAsync(Guid, CancellationToken)"/>, with the same queries as for one.
++    /// </summary>
++    /// <param name="trackIds">The tracks.</param>
++    /// <param name="cancellationToken">Cancels the queries.</param>
++    /// <returns>The readiness of each track, by track.</returns>
++    public async Task<IReadOnlyDictionary<Guid, TrackReadiness>> ReadinessAsync(List<Guid> trackIds, CancellationToken cancellationToken)
+     {
+-        var levels = await context.Set<CareerLevel>()
+-            .AsNoTracking()
+-            .Where(level => level.TrackId == trackId && level.Status != CatalogStatus.Inactive)
+-            .OrderBy(level => level.Position)
+-            .ToListAsync(cancellationToken);
++        var levels = (await context.Set<CareerLevel>()
++                .AsNoTracking()
++                .Where(level => trackIds.Contains(level.TrackId) && level.Status != CatalogStatus.Inactive)
++                .OrderBy(level => level.Position)
++                .ToListAsync(cancellationToken))
++            .ToLookup(level => level.TrackId);
+         var links = (await context.Set<CareerLevelPosition>()
+                 .AsNoTracking()
+-                .Where(link => link.TrackId == trackId)
++                .Where(link => trackIds.Contains(link.TrackId))
+                 .ToListAsync(cancellationToken))
+             .ToLookup(link => link.LevelId, link => link.PositionId);
+-        return TrackReadiness.Of(levels, links, (await employees.FindOrgSnapshotAsync(cancellationToken)).Positions);
++        var positions = (await employees.FindOrgSnapshotAsync(cancellationToken)).Positions;
++        return trackIds.Distinct().ToDictionary(trackId => trackId, trackId => TrackReadiness.Of([.. levels[trackId]], links, positions));
+     }
+ 
+     /// <summary>
+@@ -288,12 +313,15 @@ internal sealed class CatalogStore(
+     /// <summary>
+     /// The active entries nothing uses, the one definition every list of them shares: competencies no matrix version, variant or
+     /// published snapshot lists, directly or in the composition of a shared block a version or variant includes; scales other than the
+-    /// default that no competency is on, in its current version or in its history; directions without tracks.
++    /// default that no competency is on, in its current version or in its history; directions without tracks. Only the kind, identifier,
++    /// name and version of each entry are read, and only the queries of the asked kind run.
+     /// </summary>
++    /// <param name="kind">The kind to list; null for every kind.</param>
+     /// <param name="cancellationToken">Cancels the queries.</param>
+     /// <returns>The competencies, then the scales and directions, each in name order.</returns>
+-    public async Task<List<CatalogEntry>> UnusedEntriesAsync(CancellationToken cancellationToken)
++    public async Task<List<UnusedEntryResponse>> UnusedEntriesAsync(CatalogEntryKind? kind, CancellationToken cancellationToken)
+     {
++        List<UnusedEntryResponse> unused = [];
+         var usedCompetencyIds = context.Database.SqlQuery<Guid>($"""
+             SELECT (item ->> 'competencyId')::uuid AS "Value" FROM matrix_versions, jsonb_array_elements(content -> 'competencies') AS item
+             UNION SELECT (item ->> 'competencyId')::uuid FROM matrix_version_variants, jsonb_array_elements(content -> 'competencies') AS item
+@@ -309,16 +337,33 @@ internal sealed class CatalogStore(
+         var competencies = context.Set<CareerCompetency>();
+         var tracks = context.Set<CareerTrack>();
+         var competencyVersions = context.Set<CompetencyVersion>();
+-        return
+-        [
+-            .. await ActiveByName(competencies.Where(competency => !usedCompetencyIds.Contains(competency.Id)), cancellationToken),
+-            .. await ActiveByName(
++        if (kind is null or CatalogEntryKind.Competency)
++        {
++            unused.AddRange(await ActiveByName(
++                competencies.Where(competency => !usedCompetencyIds.Contains(competency.Id)),
++                CatalogEntryKind.Competency,
++                cancellationToken));
++        }
++
++        if (kind is null or CatalogEntryKind.Scale)
++        {
++            unused.AddRange(await ActiveByName(
+                 context.Set<CompetencyScale>().Where(scale => !scale.IsDefault
+                     && !competencies.Any(competency => competency.ScaleId == scale.Id)
+                     && !competencyVersions.Any(version => version.ScaleId == scale.Id)),
+-                cancellationToken),
+-            .. await ActiveByName(context.Set<CareerDirection>().Where(direction => !tracks.Any(track => track.DirectionId == direction.Id)), cancellationToken),
+-        ];
++                CatalogEntryKind.Scale,
++                cancellationToken));
++        }
++
++        if (kind is null or CatalogEntryKind.Direction)
++        {
++            unused.AddRange(await ActiveByName(
++                context.Set<CareerDirection>().Where(direction => !tracks.Any(track => track.DirectionId == direction.Id)),
++                CatalogEntryKind.Direction,
++                cancellationToken));
++        }
++
++        return unused;
+     }
+ 
+     /// <summary>
+@@ -359,30 +404,35 @@ internal sealed class CatalogStore(
+     }
+ 
+     /// <summary>
+-    /// Saves the change and commits. A changed competency also gets its next version row, numbered after the version the save gave it.
++    /// Saves the change and commits. Every competency the save creates or changes, the entry itself or a draft published with it, also
++    /// gets its next version row, numbered after the version the save gave it.
+     /// </summary>
+-    /// <param name="entry">The entry that was created or changed.</param>
+     /// <param name="transaction">The transaction to commit.</param>
+     /// <param name="cancellationToken">Cancels the save.</param>
+-    public async Task SaveAsync(CatalogEntry entry, IDbContextTransaction transaction, CancellationToken cancellationToken)
++    public async Task SaveAsync(IDbContextTransaction transaction, CancellationToken cancellationToken)
+     {
+-        var isChanged = context.Entry(entry).State is EntityState.Added or EntityState.Modified;
++        var changed = context.ChangeTracker.Entries<CareerCompetency>()
++            .Where(tracked => tracked.State is EntityState.Added or EntityState.Modified)
++            .Select(tracked => tracked.Entity)
++            .ToList();
+         await context.SaveChangesAsync(cancellationToken);
+-        if (isChanged && entry is CareerCompetency competency)
++        if (changed.Count > 0)
+         {
+-            context.Add(CompetencyVersion.Of(competency, actor.UserId, time.GetUtcNow()));
++            var now = time.GetUtcNow();
++            context.AddRange(changed.Select(competency => CompetencyVersion.Of(competency, actor.UserId, now)));
+             await context.SaveChangesAsync(cancellationToken);
+         }
+ 
+         await transaction.CommitAsync(cancellationToken);
+     }
+ 
+-    private static Task<List<T>> ActiveByName<T>(IQueryable<T> entries, CancellationToken cancellationToken)
++    private static Task<List<UnusedEntryResponse>> ActiveByName<T>(IQueryable<T> entries, CatalogEntryKind kind, CancellationToken cancellationToken)
+         where T : CatalogEntry =>
+         entries.AsNoTracking()
+             .Where(entry => entry.Status == CatalogStatus.Active)
+             .OrderBy(entry => entry.Name)
+             .ThenBy(entry => entry.Id)
++            .Select(entry => new UnusedEntryResponse(kind, entry.Id, entry.Name, entry.Version))
+             .ToListAsync(cancellationToken);
+ 
+     /// <summary>
+diff --git a/src/Competency.CareerFramework/CatalogViewer.cs b/src/Competency.CareerFramework/CatalogViewer.cs
+index e0a153e..f266610 100644
+--- a/src/Competency.CareerFramework/CatalogViewer.cs
++++ b/src/Competency.CareerFramework/CatalogViewer.cs
+@@ -85,7 +85,8 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, bool IsHr, IRead
+             : typeof(T) == typeof(CareerTrack)
+             ? (Expression<Func<CareerTrack, bool>>)(track => track.Status == CatalogStatus.Active
+                 || (track.Status == CatalogStatus.Inactive && seesInactive)
+-                || (track.Status == CatalogStatus.Draft && (isAdmin || track.AuthorId == userId || unitIds.Contains(track.OwnerOrgUnitId))))
++                || (track.Status == CatalogStatus.Draft
++                    && (isAdmin || track.AuthorId == userId || unitIds.Contains(track.OwnerOrgUnitId) || routeEntryIds.Contains(track.Id))))
+             : typeof(T) == typeof(CareerLevel)
+                 ? (Expression<Func<CareerLevel, bool>>)(level => level.Status == CatalogStatus.Active
+                     || (level.Status == CatalogStatus.Inactive && seesInactive)
+@@ -98,20 +99,24 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, bool IsHr, IRead
+     }
+ 
+     /// <summary>
+-    /// Whether the user may read an entry already loaded, by the same filter as <see cref="Sees{T}"/>.
++    /// The check whether the user may read entries already loaded, by the same filter as <see cref="Sees{T}"/>. Compiling a filter costs
++    /// far more than applying it, so the check compiles each entry type's filter once, on its first entry; take one per list of entries.
+     /// </summary>
+-    /// <param name="entry">The entry; a level with its track loaded.</param>
+-    /// <returns>True when the user may read it.</returns>
+-    public bool CanSee(CatalogEntry entry) => entry switch
++    /// <returns>The check, given an entry and, for a level, its track loaded.</returns>
++    public Func<CatalogEntry, bool> SeesLoaded()
+     {
+-        CareerDirection direction => SeesEntry(direction),
+-        CareerTrack track => SeesEntry(track),
+-        CareerLevel level => SeesEntry(level),
+-        CareerCompetency competency => SeesEntry(competency),
+-        CompetencyScale scale => SeesEntry(scale),
+-        CompetencyBlock block => SeesEntry(block),
+-        _ => throw new UnreachableException($"Unknown catalogue entry type {entry.GetType().Name}."),
+-    };
++        var compiled = new Dictionary<Type, Func<CatalogEntry, bool>>();
++        return entry =>
++        {
++            if (!compiled.TryGetValue(entry.GetType(), out var sees))
++            {
++                sees = Compiled(entry);
++                compiled[entry.GetType()] = sees;
++            }
++
++            return sees(entry);
++        };
++    }
+ 
+     /// <summary>
+     /// Whether the user may change the entry's fields: its keepers, and while it is a draft the head of its unit, or for an entry of no unit
+@@ -180,8 +185,23 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, bool IsHr, IRead
+         ? CatalogStatus.Active
+         : Heads(unitId) ? CatalogStatus.Draft : null;
+ 
+-    private bool SeesEntry<T>(T entry)
+-        where T : CatalogEntry => Sees<T>().Compile()(entry);
++    private Func<CatalogEntry, bool> Compiled(CatalogEntry entry) => entry switch
++    {
++        CareerDirection => Compiled<CareerDirection>(),
++        CareerTrack => Compiled<CareerTrack>(),
++        CareerLevel => Compiled<CareerLevel>(),
++        CareerCompetency => Compiled<CareerCompetency>(),
++        CompetencyScale => Compiled<CompetencyScale>(),
++        CompetencyBlock => Compiled<CompetencyBlock>(),
++        _ => throw new UnreachableException($"Unknown catalogue entry type {entry.GetType().Name}."),
++    };
++
++    private Func<CatalogEntry, bool> Compiled<T>()
++        where T : CatalogEntry
++    {
++        var sees = Sees<T>().Compile();
++        return entry => sees((T)entry);
++    }
+ 
+     private bool Keeps(Guid? unitId) => IsAdmin || (unitId is { } id ? HrUnitIds.Contains(id) : IsHr);
+ 
+diff --git a/src/Competency.CareerFramework/CompetencyBlockEndpoints.cs b/src/Competency.CareerFramework/CompetencyBlockEndpoints.cs
+index 76d9002..883cac1 100644
+--- a/src/Competency.CareerFramework/CompetencyBlockEndpoints.cs
++++ b/src/Competency.CareerFramework/CompetencyBlockEndpoints.cs
+@@ -230,15 +230,14 @@ internal static class CompetencyBlockEndpoints
+         CatalogStore store,
+         CancellationToken cancellationToken)
+     {
+-        foreach (var competencyId in competencyIds.Where(competencyId => !previousIds.Contains(competencyId)))
++        var added = competencyIds.Where(competencyId => !previousIds.Contains(competencyId)).ToList();
++        var usable = added.Count == 0 ? new HashSet<Guid>() : await store.UsableIdsAsync<CareerCompetency>(added, draftAuthorId, cancellationToken);
++        if (added.Where(competencyId => !usable.Contains(competencyId)).Select(competencyId => (Guid?)competencyId).FirstOrDefault() is not { } unusable)
+         {
+-            if (!await store.IsUsableAsync<CareerCompetency>(competencyId, draftAuthorId, cancellationToken))
+-            {
+-                var isDraft = draftAuthorId is null && await store.IsDraftAsync<CareerCompetency>(competencyId, cancellationToken);
+-                return Rejection.Invalid(CompetencyBlockRequest.CompetenciesField, isDraft ? DraftReferenceMessage : CatalogEndpoints.UnavailableMessage);
+-            }
++            return null;
+         }
+ 
+-        return null;
++        var isDraft = draftAuthorId is null && await store.IsDraftAsync<CareerCompetency>(unusable, cancellationToken);
++        return Rejection.Invalid(CompetencyBlockRequest.CompetenciesField, isDraft ? DraftReferenceMessage : CatalogEndpoints.UnavailableMessage);
+     }
+ }
+diff --git a/src/Competency.CareerFramework/CompetencyBlockRequest.cs b/src/Competency.CareerFramework/CompetencyBlockRequest.cs
+index 09684a9..27dad52 100644
+--- a/src/Competency.CareerFramework/CompetencyBlockRequest.cs
++++ b/src/Competency.CareerFramework/CompetencyBlockRequest.cs
+@@ -19,8 +19,11 @@ internal sealed record CompetencyBlockRequest : CatalogNameRequest
+     public override Dictionary<string, string[]> Validate()
+     {
+         var errors = base.Validate();
+-        var ids = CompetencyIds ?? [];
+-        if (ids.Distinct().Count() != ids.Count)
++        if (CompetencyIds is null)
++        {
++            errors[CompetenciesField] = ["Укажите состав блока"];
++        }
++        else if (CompetencyIds.Distinct().Count() != CompetencyIds.Count)
+         {
+             errors[CompetenciesField] = ["Компетенция входит в состав блока не больше одного раза"];
+         }
+diff --git a/src/Competency.CareerFramework/MatrixCatalog.cs b/src/Competency.CareerFramework/MatrixCatalog.cs
+index 563bde0..d69f763 100644
+--- a/src/Competency.CareerFramework/MatrixCatalog.cs
++++ b/src/Competency.CareerFramework/MatrixCatalog.cs
+@@ -9,7 +9,8 @@ namespace Competency.CareerFramework;
+ /// The catalogue side of matrix versions: which entries a version may refer to, whether a version is complete enough to be handed on,
+ /// and the entries it refers to as they stand. A track matrix version refers to the levels of its track; a position matrix version has
+ /// one column, its position. A version refers to shared blocks available to the matrix unit and to competencies of any scale, for a track
+-/// matrix of the matrix direction or general ones, and to entries that are active or drafts whose author heads the matrix unit. Draft
++/// matrix of the matrix direction or general ones, and to entries that are active or drafts whose author heads the matrix unit. A draft
++/// shared block is also usable when it applies to a unit the matrix unit's head heads, since that head sees it whoever wrote it. Draft
+ /// levels of the matrix track are usable whoever wrote them, because a matrix may be built on a draft track of its unit, which its HR edits
+ /// too. Neither a version nor a shared block has a scale: a required score is a point of the competency's own scale.
+ /// The competencies of a version include the compositions of its shared blocks; a requirement of a competency that has left its block
+@@ -58,7 +59,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
+         {
+             problem = ForeignCompetencyMessage;
+         }
+-        else if (referenced.Any(entry => entry is null || (!previousIds.Contains(entry.Id) && !IsUsable(entry, headId))))
++        else if (referenced.Any(entry => entry is null || (!previousIds.Contains(entry.Id) && !IsUsable(entry, headId, entries))))
+         {
+             problem = CatalogEndpoints.UnavailableMessage;
+         }
+@@ -236,7 +237,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
+     private static IEnumerable<MatrixProblem> EntryProblems(MatrixVersion version, LoadedEntries entries, Guid? headId)
+     {
+         IEnumerable<CatalogEntry> all = [.. entries.Levels.Values, .. entries.Competencies.Values, .. entries.Blocks.Values];
+-        foreach (var entry in all.Where(entry => !IsUsable(entry, headId)))
++        foreach (var entry in all.Where(entry => !IsUsable(entry, headId, entries)))
+         {
+             yield return new MatrixProblem(
+                 MatrixProblemCode.InactiveEntry,
+@@ -256,9 +257,16 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
+         }
+     }
+ 
+-    private static bool IsUsable(CatalogEntry entry, Guid? headId) =>
++    /// <summary>
++    /// Whether the version may refer to the entry: an active one, a draft level, or a draft the matrix unit's head may see as its author
++    /// or, for a shared block, as the head of the unit it applies to.
++    /// </summary>
++    private static bool IsUsable(CatalogEntry entry, Guid? headId, LoadedEntries entries) =>
+         entry.Status == CatalogStatus.Active
+-        || (entry.Status == CatalogStatus.Draft && (entry is CareerLevel || (headId is not null && entry.AuthorId == headId)));
++        || (entry.Status == CatalogStatus.Draft
++            && (entry is CareerLevel
++                || (headId is not null
++                    && (entry.AuthorId == headId || (entry is CompetencyBlock { ScopeUnitId: { } scopeUnitId } && entries.HeadedScopeIds.Contains(scopeUnitId))))));
+ 
+     private static bool IsOfDirection(CareerCompetency competency, CompetencyMatrix matrix) =>
+         matrix.DirectionId is null || competency.DirectionId is null || competency.DirectionId == matrix.DirectionId;
+@@ -379,9 +387,10 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
+             .ToDictionaryAsync(competency => competency.Id, cancellationToken);
+         var scaleIds = competencies.Values.Select(competency => competency.ScaleId).Distinct().ToList();
+         var scales = await context.Set<CompetencyScale>().AsNoTracking().Where(scale => scaleIds.Contains(scale.Id)).ToDictionaryAsync(scale => scale.Id, cancellationToken);
+-        var availableScopeIds = blocks.Values.Any(block => block.ScopeUnitId is not null)
+-            ? (await employees.FindAncestryAsync(version.Matrix.OrgUnitId, cancellationToken)).Select(unit => unit.Id).ToHashSet()
++        var ancestry = blocks.Values.Any(block => block.ScopeUnitId is not null)
++            ? await employees.FindAncestryAsync(version.Matrix.OrgUnitId, cancellationToken)
+             : [];
++        var headEmployeeId = ancestry.FirstOrDefault()?.HeadEmployeeId;
+         return new LoadedEntries(
+             scales,
+             levelIds.Count == 0
+@@ -390,7 +399,8 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
+             competencies,
+             blocks,
+             set,
+-            availableScopeIds);
++            ancestry.Select(unit => unit.Id).ToHashSet(),
++            ancestry.Where(unit => unit.IsActive && headEmployeeId is not null && unit.HeadEmployeeId == headEmployeeId).Select(unit => unit.Id).ToHashSet());
+     }
+ 
+     /// <summary>
+@@ -402,13 +412,15 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
+     /// <param name="Blocks">The shared blocks the content includes, by identifier.</param>
+     /// <param name="Set">Every competency of the version with its group, in content order, a competency in two groups twice.</param>
+     /// <param name="AvailableScopeIds">The matrix unit and the units above it, read when a shared block applies to a unit.</param>
++    /// <param name="HeadedScopeIds">The units among them the matrix unit's head heads, whose draft blocks the head sees.</param>
+     private sealed record LoadedEntries(
+         Dictionary<Guid, CompetencyScale> Scales,
+         Dictionary<Guid, CareerLevel> Levels,
+         Dictionary<Guid, CareerCompetency> Competencies,
+         Dictionary<Guid, CompetencyBlock> Blocks,
+         List<MatrixCompetency> Set,
+-        HashSet<Guid> AvailableScopeIds)
++        HashSet<Guid> AvailableScopeIds,
++        HashSet<Guid> HeadedScopeIds)
+     {
+         /// <summary>
+         /// Whether a matrix of the unit may include the block: one that applies to all, or to the matrix unit or a unit above it.
+diff --git a/src/Competency.CareerFramework/MatrixEndpoints.cs b/src/Competency.CareerFramework/MatrixEndpoints.cs
+index 5ebef57..3363d3b 100644
+--- a/src/Competency.CareerFramework/MatrixEndpoints.cs
++++ b/src/Competency.CareerFramework/MatrixEndpoints.cs
+@@ -140,7 +140,7 @@ internal static class MatrixEndpoints
+             if ((await store.LinkedTracksAsync([positionId], cancellationToken))[positionId].ToList() is { Count: > 0 } linkedTracks)
+             {
+                 var positionName = snapshot.Positions[positionId].Name;
+-                return Rejection.Conflict(linkedTracks.FirstOrDefault(viewer.CanSee) is { } track
++                return Rejection.Conflict(linkedTracks.FirstOrDefault(viewer.SeesLoaded()) is { } track
+                     ? $"Должность «{positionName}» связана с уровнем трека «{track.Name}» — матрица должности для неё невозможна"
+                     : $"Должность «{positionName}» связана с уровнем трека — матрица должности для неё невозможна");
+             }
+diff --git a/src/Competency.CareerFramework/MatrixRoute.cs b/src/Competency.CareerFramework/MatrixRoute.cs
+index fa46254..47c2fe6 100644
+--- a/src/Competency.CareerFramework/MatrixRoute.cs
++++ b/src/Competency.CareerFramework/MatrixRoute.cs
+@@ -137,7 +137,8 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
+     /// <param name="viewer">The user's rights.</param>
+     /// <param name="below">The units strictly below the user's headed units, as <see cref="UnitsBelowHeadedAsync"/> finds them.</param>
+     /// <param name="cancellationToken">Cancels the lookups.</param>
+-    /// <returns>The identifiers of the levels, shared blocks, competencies with those of the blocks and scales of those competencies.</returns>
++    /// <returns>The identifiers of the matrix tracks and directions, the levels, shared blocks, competencies with those of the blocks, and
++    /// the scales and directions of those competencies.</returns>
+     public async Task<IReadOnlySet<Guid>> RouteEntryIdsAsync(
+         CatalogViewer viewer,
+         IReadOnlyDictionary<Guid, OrgUnitStatus> below,
+@@ -156,6 +157,7 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
+         var competencyIds = new HashSet<Guid>();
+         foreach (var version in versions)
+         {
++            ids.UnionWith(new[] { version.Matrix.TrackId, version.Matrix.DirectionId }.OfType<Guid>());
+             ids.UnionWith(version.Content.Levels.Select(level => level.LevelId));
+             ids.UnionWith(version.Content.SharedBlocks.Select(block => block.BlockId));
+             competencyIds.UnionWith(version.Content.Competencies.Select(competency => competency.CompetencyId));
+@@ -174,10 +176,13 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
+         {
+             var used = competencyIds.ToList();
+             ids.UnionWith(used);
+-            ids.UnionWith(await context.Set<CareerCompetency>()
++            foreach (var references in await context.Set<CareerCompetency>()
+                 .Where(competency => used.Contains(competency.Id))
+-                .Select(competency => competency.ScaleId)
+-                .ToListAsync(cancellationToken));
++                .Select(competency => new { competency.ScaleId, competency.DirectionId })
++                .ToListAsync(cancellationToken))
++            {
++                ids.UnionWith(new[] { references.ScaleId, references.DirectionId }.OfType<Guid>());
++            }
+         }
+ 
+         return ids;
+diff --git a/src/Competency.CareerFramework/PublicationPlan.cs b/src/Competency.CareerFramework/PublicationPlan.cs
+index 8f6342c..119292c 100644
+--- a/src/Competency.CareerFramework/PublicationPlan.cs
++++ b/src/Competency.CareerFramework/PublicationPlan.cs
+@@ -68,6 +68,9 @@ internal sealed record PublicationPlan(
+     private List<PublicationEntry> DescribeEntries() =>
+         [.. Entries.Select(entry => new PublicationEntry(CatalogPublication.KindOf(entry), entry.Id, entry.Name, CatalogPublication.ContextOf(entry)))];
+ 
+-    private List<PublicationBlocker> Visible(CatalogViewer reader) =>
+-        [.. Blockers.Where(blocker => reader.CanSee(blocker.Entry)).Select(blocker => blocker.Blocker)];
++    private List<PublicationBlocker> Visible(CatalogViewer reader)
++    {
++        var canSee = reader.SeesLoaded();
++        return [.. Blockers.Where(blocker => canSee(blocker.Entry)).Select(blocker => blocker.Blocker)];
++    }
+ }
+diff --git a/src/Competency.CareerFramework/UnusedEntryEndpoints.cs b/src/Competency.CareerFramework/UnusedEntryEndpoints.cs
+index 4650952..112b35c 100644
+--- a/src/Competency.CareerFramework/UnusedEntryEndpoints.cs
++++ b/src/Competency.CareerFramework/UnusedEntryEndpoints.cs
+@@ -20,7 +20,8 @@ internal static class UnusedEntryEndpoints
+         .ProducesProblem(StatusCodes.Status403Forbidden);
+ 
+     /// <summary>
+-    /// One page of the unused entries, optionally of one kind. The whole list is worked out and then paged, because it stays short.
++    /// One page of the unused entries, optionally of one kind. The light rows of the kind are read whole and paged in memory, which holds
++    /// while the list stays within the ceiling the desk reads it under.
+     /// </summary>
+     private static async Task<Results<Ok<PageResponse<UnusedEntryResponse>>, ValidationProblem, ProblemHttpResult>> ListAsync(
+         [FromQuery(Name = "kind")] CatalogEntryKind? kind,
+@@ -41,10 +42,7 @@ internal static class UnusedEntryEndpoints
+             return Rejection.Forbidden();
+         }
+ 
+-        var entries = (await store.UnusedEntriesAsync(cancellationToken))
+-            .Select(entry => new UnusedEntryResponse(CatalogDraftEndpoints.KindOf(entry), entry.Id, entry.Name, entry.Version))
+-            .Where(entry => kind is null || entry.Kind == kind)
+-            .ToList();
++        var entries = await store.UnusedEntriesAsync(kind, cancellationToken);
+         return TypedResults.Ok(new PageResponse<UnusedEntryResponse>(
+             [.. entries.Skip((page - 1) * pageSize).Take(pageSize)],
+             entries.Count,
+diff --git a/src/Competency.OrgStructure/Employee.cs b/src/Competency.OrgStructure/Employee.cs
+index 39b1079..0d50366 100644
+--- a/src/Competency.OrgStructure/Employee.cs
++++ b/src/Competency.OrgStructure/Employee.cs
+@@ -40,7 +40,7 @@ internal sealed class Employee : EntityBase
+     public Position Position { get; set; } = null!;
+ 
+     /// <summary>
+-    /// Whether the employee works in the organization; visible to global administrators only.
++    /// Whether the employee works in the organization; visible to global administrators and HR.
+     /// </summary>
+     [Audited]
+     public bool IsActive { get; set; } = true;
+diff --git a/src/Competency.OrgStructure/OrgUnitEndpoints.cs b/src/Competency.OrgStructure/OrgUnitEndpoints.cs
+index 3904cdd..4e4f46e 100644
+--- a/src/Competency.OrgStructure/OrgUnitEndpoints.cs
++++ b/src/Competency.OrgStructure/OrgUnitEndpoints.cs
+@@ -11,7 +11,7 @@ namespace Competency.OrgStructure;
+ 
+ /// <summary>
+ /// The unit API. Any signed-in user reads the tree; only global administrators change it, under the tree lock and with <c>If-Match</c>.
+-/// Units are never deleted: they are deactivated, and a deactivated unit stays readable for administrators.
++/// Units are never deleted: they are deactivated, and a deactivated unit stays readable for global administrators and HR.
+ /// </summary>
+ internal static class OrgUnitEndpoints
+ {
+diff --git a/src/Competency.UserManagement/UserDirectory.cs b/src/Competency.UserManagement/UserDirectory.cs
+index bf262ce..78dbd95 100644
+--- a/src/Competency.UserManagement/UserDirectory.cs
++++ b/src/Competency.UserManagement/UserDirectory.cs
+@@ -11,6 +11,8 @@ internal sealed class UserDirectory(AppDbContext context) : IUserDirectory
+ {
+     private static readonly Guid HrRoleId = UserRoleIds.Of(UserRole.Hr);
+ 
++    private static readonly Guid GlobalAdminRoleId = UserRoleIds.Of(UserRole.GlobalAdmin);
++
+     private static readonly Expression<Func<AppUser, UserStatus>> StatusProjection = user => new UserStatus(
+         user.Id,
+         user.Email!,
+@@ -18,6 +20,7 @@ internal sealed class UserDirectory(AppDbContext context) : IUserDirectory
+         user.IsBlocked,
+         user.PasswordHash != null,
+         user.UserRoles.Any(role => role.RoleId == HrRoleId),
++        user.UserRoles.Any(role => role.RoleId == GlobalAdminRoleId),
+         user.Version);
+ 
+     public Task<UserStatus?> FindAsync(Guid userId, CancellationToken cancellationToken = default) => context
+diff --git a/src/Competency.UserManagement/UserManagementDeskSource.cs b/src/Competency.UserManagement/UserManagementDeskSource.cs
+index e5dbd60..3b8f2df 100644
+--- a/src/Competency.UserManagement/UserManagementDeskSource.cs
++++ b/src/Competency.UserManagement/UserManagementDeskSource.cs
+@@ -72,7 +72,7 @@ internal sealed class UserManagementDeskSource(ICurrentActor actor, AppDbContext
+                 || (row.IsHr && !row.User.IsBlocked && row.User.PasswordHash != null)
+                 || (row.User.EmployeeId != null && heads.Contains(row.User.EmployeeId.Value)))
+             .Select(row => new AccountRow(
+-                new UserStatus(row.User.Id, row.User.Email!, row.User.EmployeeId, row.User.IsBlocked, row.User.PasswordHash != null, row.IsHr, row.User.Version),
++                new UserStatus(row.User.Id, row.User.Email!, row.User.EmployeeId, row.User.IsBlocked, row.User.PasswordHash != null, row.IsHr, row.IsGlobalAdmin, row.User.Version),
+                 row.IsGlobalAdmin,
+                 row.User.LinkTokenHash != null && row.User.LinkSecurityStamp == row.User.SecurityStamp,
+                 row.User.LinkExpiresAt))
+diff --git a/src/Competency.UserManagement/UserStatus.cs b/src/Competency.UserManagement/UserStatus.cs
+index 80d1b11..c5fa7a8 100644
+--- a/src/Competency.UserManagement/UserStatus.cs
++++ b/src/Competency.UserManagement/UserStatus.cs
+@@ -9,8 +9,9 @@ namespace Competency.UserManagement;
+ /// <param name="IsBlocked">Whether an administrator has blocked the account.</param>
+ /// <param name="IsRegistered">Whether the account has a password, rather than an invitation not yet accepted.</param>
+ /// <param name="IsHr">Whether the account has the HR role.</param>
++/// <param name="IsGlobalAdmin">Whether the account has the global administrator role.</param>
+ /// <param name="Version">The account's version, which an action on the account sends back in <c>If-Match</c>.</param>
+-public sealed record UserStatus(Guid Id, string Email, Guid? EmployeeId, bool IsBlocked, bool IsRegistered, bool IsHr, int Version)
++public sealed record UserStatus(Guid Id, string Email, Guid? EmployeeId, bool IsBlocked, bool IsRegistered, bool IsHr, bool IsGlobalAdmin, int Version)
+ {
+     /// <summary>
+     /// Whether the account can act at all: neither blocked nor still invited.
+diff --git a/tests/Competency.Tests/BaseScaleSeedTests.cs b/tests/Competency.Tests/BaseScaleSeedTests.cs
+new file mode 100644
+index 0000000..7ac9fee
+--- /dev/null
++++ b/tests/Competency.Tests/BaseScaleSeedTests.cs
+@@ -0,0 +1,42 @@
++using System.Net;
++using AwesomeAssertions;
++using Competency.Tests.Infrastructure;
++using Xunit;
++
++namespace Competency.Tests;
++
++/// <summary>
++/// The scale the deployment creates: its points with their texts are the contract of the initial data, and the creation leaves no audit record.
++/// The class has a host of its own, so no other test has touched the scale.
++/// </summary>
++public sealed class BaseScaleSeedTests(CareerHost fixture) : IClassFixture<CareerHost>
++{
++    private static readonly (int Score, string Label)[] BasePoints =
++    [
++        (0, "Компетенция не подтверждена"),
++        (1, "Выполняет работу преимущественно с поддержкой"),
++        (2, "Самостоятельно решает типовые задачи"),
++        (3, "Самостоятельно решает сложные и неопределённые задачи, способен помогать другим"),
++        (4, "Формирует подходы и стандарты, решает наиболее сложные задачи и развивает других"),
++    ];
++
++    [Fact]
++    public async Task Ac25_TheBaseScale_IsActiveAndTheDefault_WithTheFivePointsOfTheSource()
++    {
++        var admin = await fixture.Host.AdminAsync();
++
++        var scale = (await admin.GetAsync($"/api/v1/career/scales/{CareerScenarios.BaseScaleId}")).Expect(HttpStatusCode.OK).Json!;
++
++        scale["isDefault"]!.GetValue<bool>().Should().BeTrue();
++        scale["status"]!.GetValue<string>().Should().Be("Active");
++        scale["points"]!.AsArray().Select(point => (point!["score"]!.GetValue<int>(), point["label"]!.GetValue<string>())).Should().Equal(BasePoints);
++    }
++
++    [Fact]
++    public async Task Ac25_TheCreationOfTheBaseScale_LeavesNoAuditRecord()
++    {
++        var recorded = await fixture.Host.ScalarAsync<long>($"SELECT count(*) FROM audit_events WHERE entity_id = '{CareerScenarios.BaseScaleId}'");
++
++        recorded.Should().Be(0);
++    }
++}
+diff --git a/tests/Competency.Tests/CareerLockTests.cs b/tests/Competency.Tests/CareerLockTests.cs
+index 1544711..775c4ff 100644
+--- a/tests/Competency.Tests/CareerLockTests.cs
++++ b/tests/Competency.Tests/CareerLockTests.cs
+@@ -222,6 +222,38 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
+         blocked.Status.Should().Be(HttpStatusCode.OK, blocked.Body);
+     }
+ 
++    [Theory]
++    [InlineData(true, HttpStatusCode.NoContent, HttpStatusCode.Conflict)]
++    [InlineData(false, HttpStatusCode.BadRequest, HttpStatusCode.OK)]
++    public async Task Ac62_AnAssignmentRacingTheRemovalOfTheHrRole_IsDecidedByWhichRequestIsFirst(bool assignmentFirst, HttpStatusCode assignmentStatus, HttpStatusCode removalStatus)
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var unit = await org.Admin.CreateUnitAsync(org.Root.Id);
++        var account = await org.Admin.HrCandidateAsync(fixture.Host, unit.Id);
++        var assign = () => org.Admin.AssignHrAsync(unit.Id, account.EmployeeId);
++        var removeRole = () => org.Admin.PutAsync(
++            $"/api/v1/users/{account.Id}",
++            new { email = account.User.Email, roles = Scenarios.NoRoles, employeeId = (Guid?)account.EmployeeId },
++            account.User.ETag);
++
++        await using var gate = await RowLock.HoldAdvisoryAsync(fixture.Host, RowLock.TreeKey);
++        var first = await RowLock.StartWaitingAsync(fixture.Host, 1, assignmentFirst ? assign : removeRole);
++        var second = await RowLock.StartWaitingAsync(fixture.Host, 2, assignmentFirst ? removeRole : assign);
++        await gate.ReleaseAsync();
++        var (assigned, removed) = assignmentFirst ? (await first, await second) : (await second, await first);
++
++        assigned.Status.Should().Be(assignmentStatus, assigned.Body);
++        removed.Status.Should().Be(removalStatus, removed.Body);
++        if (assignmentFirst)
++        {
++            removed.Json!["detail"]!.GetValue<string>().Should().Contain("Роль «HR» нельзя снять").And.Contain($"«{unit.Json!["name"]!.GetValue<string>()}»");
++        }
++        else
++        {
++            assigned.FieldErrors("employeeId").Should().Equal("У учётной записи нет роли «HR»");
++        }
++    }
++
+     [Theory]
+     [InlineData(true, HttpStatusCode.Created)]
+     [InlineData(false, HttpStatusCode.Forbidden)]
+diff --git a/tests/Competency.Tests/CatalogDraftTests.cs b/tests/Competency.Tests/CatalogDraftTests.cs
+index 42f8da3..64346a0 100644
+--- a/tests/Competency.Tests/CatalogDraftTests.cs
++++ b/tests/Competency.Tests/CatalogDraftTests.cs
+@@ -1,4 +1,5 @@
+ using System.Net;
++using System.Text.Json.Nodes;
+ using AwesomeAssertions;
+ using Competency.Tests.Infrastructure;
+ using Xunit;
+@@ -113,6 +114,35 @@ public sealed class CatalogDraftTests(CareerHost fixture) : IClassFixture<Career
+         }
+     }
+ 
++    [Fact]
++    public async Task Ac9_TheDraftList_ShowsEachDraftTrackItsOwnReadiness_AmongSeveralTracks()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var direction = await org.Admin.MakeDirectionAsync();
++        var head = org.TeamHead.Client;
++        var ready = await head.MakeTrackAsync(org.Team.Id, direction.Id);
++        await org.Admin.LinkToNewPositionAsync(await head.MakeLevelAsync(ready.Id), org.Team.Id);
++        var withoutLevels = await head.MakeTrackAsync(org.Team.Id, direction.Id);
++        var partial = await head.MakeTrackAsync(org.Team.Id, direction.Id);
++        await org.Admin.LinkToNewPositionAsync(await head.MakeLevelAsync(partial.Id), org.Team.Id);
++        var bare = await head.MakeLevelAsync(partial.Id);
++
++        var rows = (await org.Hr.Client.GetAsync("/api/v1/career/drafts?kind=Track")).Expect(HttpStatusCode.OK).Json!.AsArray();
++
++        JsonNode? ReadinessOf(Guid trackId) => rows.Single(row => row!["id"]!.GetValue<Guid>() == trackId)!["readiness"];
++
++        var withoutLevelsReadiness = ReadinessOf(withoutLevels.Id);
++        var partialReadiness = ReadinessOf(partial.Id);
++
++        ReadinessOf(ready.Id).Should().BeNull("a ready track has nothing to report");
++        withoutLevelsReadiness.Should().NotBeNull("a track without levels is not ready");
++        withoutLevelsReadiness!["hasLevels"]!.GetValue<bool>().Should().BeFalse();
++        withoutLevelsReadiness["levelsWithoutActivePosition"]!.AsArray().Should().BeEmpty();
++        partialReadiness.Should().NotBeNull("a track with a level without a position is not ready");
++        partialReadiness!["hasLevels"]!.GetValue<bool>().Should().BeTrue();
++        partialReadiness["levelsWithoutActivePosition"]!.AsArray().Select(level => level!["id"]!.GetValue<Guid>()).Should().Equal(bare.Id);
++    }
++
+     private static async Task<string> CascadeAsync(ApiClient client, string path)
+     {
+         var publication = await client.GetAsync($"{path}/publication");
+diff --git a/tests/Competency.Tests/CompetencyBlockTests.cs b/tests/Competency.Tests/CompetencyBlockTests.cs
+index 3b17bdc..354ae88 100644
+--- a/tests/Competency.Tests/CompetencyBlockTests.cs
++++ b/tests/Competency.Tests/CompetencyBlockTests.cs
+@@ -168,6 +168,84 @@ public sealed class CompetencyBlockTests(CareerHost fixture) : IClassFixture<Car
+         changed.Json!["competencies"]!.AsArray().Should().HaveCount(1);
+     }
+ 
++    [Fact]
++    public async Task Ac128_Ac130_ADraftBlockForTheMatrixUnitWrittenByTheHeadAbove_IsIncludedByTheUnitsHead_AndOneTheHeadCannotSeeIsNot()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var kit = await MatrixKit.CreateAsync(org);
++        var superior = org.DepartmentHead.Client;
++        var forTeam = (await CreateAsync(superior, [kit.Critical.Id, kit.Profile.Id], org.Team.Id)).Expect(HttpStatusCode.Created);
++        var forDepartment = (await CreateAsync(superior, [kit.Critical.Id, kit.Profile.Id], org.Department.Id)).Expect(HttpStatusCode.Created);
++
++        var unseen = await kit.SaveAsync(org.TeamHead.Client, WithBlock(kit, forDepartment.Id, kit.Critical.Id, kit.Profile.Id));
++        var included = await kit.SaveAsync(org.TeamHead.Client, WithBlock(kit, forTeam.Id, kit.Critical.Id, kit.Profile.Id));
++        var problems = await ProblemsAsync(kit);
++
++        forTeam.Json!["status"]!.GetValue<string>().Should().Be("Draft");
++        unseen.Status.Should().Be(HttpStatusCode.BadRequest, unseen.Body);
++        unseen.FieldErrors("content").Should().NotBeEmpty();
++        included.Status.Should().Be(HttpStatusCode.OK, included.Body);
++        problems.Should().BeEmpty();
++    }
++
++    [Fact]
++    public async Task Ac127_ABlockRequestWithNoComposition_IsRefusedAsAFieldError_OnCreationAndOnChange_AndChangesNothing()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var competency = await org.Admin.MakeCompetencyAsync();
++        var block = (await CreateAsync(org.Admin, [competency.Id])).Expect(HttpStatusCode.Created);
++
++        var created = await org.Admin.PostAsync("/api/v1/career/blocks", new { name = Scenarios.Unique("Блок"), scopeUnitId = (Guid?)null, competencyIds = (Guid[]?)null });
++        var changed = await org.Admin.PutAsync(
++            $"/api/v1/career/blocks/{block.Id}",
++            new { name = block.Json!["name"]!.GetValue<string>(), scopeUnitId = (Guid?)null, competencyIds = (Guid[]?)null },
++            block.ETag);
++        var after = (await org.Admin.GetAsync($"/api/v1/career/blocks/{block.Id}")).Expect(HttpStatusCode.OK);
++
++        foreach (var refused in new[] { created, changed })
++        {
++            refused.Status.Should().Be(HttpStatusCode.BadRequest, refused.Body);
++            refused.FieldErrors("competencyIds").Should().NotBeEmpty(refused.Body);
++        }
++
++        after.ETag.Should().Be(block.ETag);
++        after.Json!["competencies"]!.AsArray().Select(entry => entry!["id"]!.GetValue<Guid>()).Should().Equal(competency.Id);
++    }
++
++    [Fact]
++    public async Task Ac127_AnUnusableCompetencyAmongSeveralAdded_RefusesTheWholeChange_AndUsableOnesAddedTogetherPass()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var kept = await org.Admin.MakeCompetencyAsync();
++        var first = await org.Admin.MakeCompetencyAsync();
++        var second = await org.Admin.MakeCompetencyAsync();
++        var draft = await org.TeamHead.Client.MakeCompetencyAsync();
++        var block = (await CreateAsync(org.Admin, [kept.Id])).Expect(HttpStatusCode.Created);
++
++        var withDraft = await ReplaceAsync(org.Admin, block, [kept.Id, first.Id, draft.Id]);
++        var withMissing = await ReplaceAsync(org.Admin, block, [kept.Id, Guid.NewGuid(), first.Id]);
++        var createdWithMissing = await CreateAsync(org.Admin, [first.Id, second.Id, Guid.NewGuid()]);
++        var unchanged = (await org.Admin.GetAsync($"/api/v1/career/blocks/{block.Id}")).Expect(HttpStatusCode.OK);
++
++        withDraft.Status.Should().Be(HttpStatusCode.BadRequest, withDraft.Body);
++        withDraft.FieldErrors("competencyIds").Should().Equal(DraftReference);
++        withMissing.Status.Should().Be(HttpStatusCode.BadRequest, withMissing.Body);
++        withMissing.FieldErrors("competencyIds").Should().NotBeEmpty().And.NotContain(DraftReference);
++        createdWithMissing.Status.Should().Be(HttpStatusCode.BadRequest, createdWithMissing.Body);
++        createdWithMissing.FieldErrors("competencyIds").Should().NotBeEmpty();
++        unchanged.ETag.Should().Be(block.ETag);
++
++        var together = (await ReplaceAsync(org.Admin, block, [kept.Id, first.Id, second.Id])).Expect(HttpStatusCode.OK);
++
++        together.Json!["competencies"]!.AsArray().Select(entry => entry!["id"]!.GetValue<Guid>()).Should().Equal(kept.Id, first.Id, second.Id);
++    }
++
++    private static Task<ApiResponse> ReplaceAsync(ApiClient client, ApiResponse block, Guid[] competencyIds) =>
++        client.PutAsync(
++            $"/api/v1/career/blocks/{block.Id}",
++            new { name = block.Json!["name"]!.GetValue<string>(), scopeUnitId = (Guid?)null, competencyIds },
++            block.ETag);
++
+     private static Task<ApiResponse> CreateAsync(ApiClient client, Guid[] competencyIds, Guid? scopeUnitId = null, string? name = null) =>
+         client.PostAsync("/api/v1/career/blocks", new { name = name ?? Scenarios.Unique("Блок"), scopeUnitId, competencyIds });
+ 
+diff --git a/tests/Competency.Tests/CompetencyTests.cs b/tests/Competency.Tests/CompetencyTests.cs
+index faf079b..f0d836c 100644
+--- a/tests/Competency.Tests/CompetencyTests.cs
++++ b/tests/Competency.Tests/CompetencyTests.cs
+@@ -54,6 +54,28 @@ public sealed class CompetencyTests(CareerHost fixture) : IClassFixture<CareerHo
+         blankDescription.Json["versionNumber"]!.GetValue<int>().Should().Be(2);
+     }
+ 
++    [Fact]
++    public async Task Ac12_EvidenceExamples_AreKept_ReturnedAndWrittenToTheHistory_AbsentKeepsThemAndBlankClearsThem()
++    {
++        var org = await fixture.OrgAsync();
++
++        var created = (await org.Admin.PostAsync(
++            "/api/v1/career/competencies",
++            new { name = Scenarios.Unique("Навык"), description = (string?)null, evidenceExamples = "  Провёл ревью  ", directionId = (Guid?)null })).Expect(HttpStatusCode.Created);
++        var withoutField = (await org.Admin.PutAsync($"/api/v1/career/competencies/{created.Id}", Body(Name(created), null, description: "Описание"), created.ETag)).Expect(HttpStatusCode.OK);
++        var blank = (await org.Admin.PutAsync(
++            $"/api/v1/career/competencies/{created.Id}",
++            new { name = Name(created), description = "Описание", evidenceExamples = "   ", directionId = (Guid?)null },
++            withoutField.ETag)).Expect(HttpStatusCode.OK);
++
++        var versions = (await org.Admin.GetAsync($"/api/v1/career/competencies/{created.Id}/versions")).Expect(HttpStatusCode.OK).Json!.AsArray();
++
++        created.Json!["evidenceExamples"]!.GetValue<string>().Should().Be("Провёл ревью");
++        withoutField.Json!["evidenceExamples"]!.GetValue<string>().Should().Be("Провёл ревью", "a change that sends no examples keeps them");
++        blank.Json!["evidenceExamples"].Should().BeNull("an empty text clears the examples");
++        versions.Select(version => version!["evidenceExamples"]?.GetValue<string>()).Should().Equal(null, "Провёл ревью", "Провёл ревью");
++    }
++
+     [Fact]
+     public async Task Ac12_Competency_IsValidated()
+     {
+@@ -64,10 +86,15 @@ public sealed class CompetencyTests(CareerHost fixture) : IClassFixture<CareerHo
+         var longDescription = await org.Admin.PostAsync("/api/v1/career/competencies", Body(Scenarios.Unique("Навык"), null, description: new string('я', 4001)));
+         var longestDescription = await org.Admin.PostAsync("/api/v1/career/competencies", Body(Scenarios.Unique("Навык"), null, description: new string('я', 4000)));
+ 
++        var longExamples = await org.Admin.PostAsync("/api/v1/career/competencies", new { name = Scenarios.Unique("Навык"), evidenceExamples = new string('я', 4001), description = (string?)null, directionId = (Guid?)null });
++        var longestExamples = await org.Admin.PostAsync("/api/v1/career/competencies", new { name = Scenarios.Unique("Навык"), evidenceExamples = new string('я', 4000), description = (string?)null, directionId = (Guid?)null });
++
+         blank.FieldErrors("name").Should().Equal("Укажите название");
+         longName.FieldErrors("name").Should().Equal("Не длиннее 200 символов");
+         longDescription.FieldErrors("description").Should().Equal("Не длиннее 4000 символов");
+         longestDescription.Status.Should().Be(HttpStatusCode.Created, longestDescription.Body);
++        longExamples.FieldErrors("evidenceExamples").Should().Equal("Не длиннее 4000 символов");
++        longestExamples.Status.Should().Be(HttpStatusCode.Created, longestExamples.Body);
+     }
+ 
+     [Fact]
+diff --git a/tests/Competency.Tests/DeskCatalogTests.cs b/tests/Competency.Tests/DeskCatalogTests.cs
+index dbc846a..5a14de2 100644
+--- a/tests/Competency.Tests/DeskCatalogTests.cs
++++ b/tests/Competency.Tests/DeskCatalogTests.cs
+@@ -115,6 +115,35 @@ public sealed class DeskCatalogTests(CareerHost fixture) : IClassFixture<CareerH
+         }
+     }
+ 
++    [Fact]
++    public async Task Ac137_Ac138_AnUnusedScaleAndADirectionWithoutTracks_AreForReference_ToHrAndAdministratorsAlone()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var scale = await org.Admin.MakeScaleAsync();
++        var direction = await org.Admin.MakeDirectionAsync();
++
++        foreach (var client in new[] { org.Hr.Client, org.Admin })
++        {
++            var items = await client.ItemsAsync();
++            var unusedScale = items.ItemFor(scale.Id);
++            var emptyDirection = items.ItemFor(direction.Id);
++
++            unusedScale.Kinds().Should().Equal("UnusedScale");
++            unusedScale["object"]!["type"]!.GetValue<string>().Should().Be("Scale");
++            unusedScale["isReference"]!.GetValue<bool>().Should().BeTrue();
++            emptyDirection.Kinds().Should().Equal("DirectionWithoutTracks");
++            emptyDirection["object"]!["type"]!.GetValue<string>().Should().Be("Direction");
++            emptyDirection["isReference"]!.GetValue<bool>().Should().BeTrue();
++        }
++
++        foreach (var client in new[] { org.TeamHead.Client, org.Plain.Client })
++        {
++            var items = await client.ItemsAsync();
++            items.ItemOf(scale.Id).Should().BeNull();
++            items.ItemOf(direction.Id).Should().BeNull();
++        }
++    }
++
+     [Fact]
+     public async Task Ac113_TheDraftsTheDeskAsksToApprove_AreTheDraftsTheServerLetsTheUserApprove_LevelsAside()
+     {
+diff --git a/tests/Competency.Tests/DeskPrerequisiteTests.cs b/tests/Competency.Tests/DeskPrerequisiteTests.cs
+index 96fb2ea..0a8bd28 100644
+--- a/tests/Competency.Tests/DeskPrerequisiteTests.cs
++++ b/tests/Competency.Tests/DeskPrerequisiteTests.cs
+@@ -31,6 +31,8 @@ public sealed class DeskPrerequisiteTests(CareerHost fixture) : IClassFixture<Ca
+         await admin.MakeLevelAsync(track.Id);
+         (await admin.ActivateAsync(track, unit.Id)).Expect(HttpStatusCode.OK);
+         var plainAfterApproval = await PrerequisitesAsync(plain);
++        await admin.InviteUserAsync(Scenarios.Hr);
++        var withInvitedHr = await PrerequisitesAsync(admin);
+         var hr = await admin.CreateUserAsync(Scenarios.Hr);
+         var withHr = await PrerequisitesAsync(admin);
+         var plainWithHr = await PrerequisitesAsync(plain);
+@@ -48,6 +50,7 @@ public sealed class DeskPrerequisiteTests(CareerHost fixture) : IClassFixture<Ca
+         adminSeesDraft.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
+         plainBeforeApproval.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee");
+         plainAfterApproval.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
++        withInvitedHr.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
+         withHr.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack", "HrAccount");
+         plainWithHr.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
+         blockedHr.Should().Equal("ActiveUnit", "ActivePosition", "WorkingEmployee", "VisibleTrack");
+diff --git a/tests/Competency.Tests/DeskQueryCountTests.cs b/tests/Competency.Tests/DeskQueryCountTests.cs
+new file mode 100644
+index 0000000..4ce797d
+--- /dev/null
++++ b/tests/Competency.Tests/DeskQueryCountTests.cs
+@@ -0,0 +1,65 @@
++using System.Net;
++using AwesomeAssertions;
++using Competency.Tests.Infrastructure;
++using Xunit;
++
++namespace Competency.Tests;
++
++/// <summary>
++/// The number of SQL commands a desk request sends does not depend on how much data the desk is built from: counted in the host's own log of
++/// database commands, once on a small set of units and once on a larger one.
++/// </summary>
++public sealed class DeskQueryCountTests(DeskQueryCountTests.SqlLoggingHost fixture) : IClassFixture<DeskQueryCountTests.SqlLoggingHost>
++{
++    private const int CommandBudget = 25;
++    private const string CommandRecord = "\"EventId\":20101,";
++
++    [Theory]
++    [InlineData("/api/v1/desk")]
++    [InlineData("/api/v1/desk/count")]
++    public async Task Ac4_TheSqlCommandsOfADeskRequest_AreFewAndTheSameOnSmallAndOnLargerData(string route)
++    {
++        var admin = await fixture.Host.AdminAsync();
++        await AddUnitsAsync(admin, 1);
++        await CommandsAsync(admin, route);
++        var small = await CommandsAsync(admin, route);
++
++        await AddUnitsAsync(admin, 12);
++        var large = await CommandsAsync(admin, route);
++
++        small.Should().BeInRange(1, CommandBudget);
++        large.Should().Be(small, "the desk reads each source in sets, not once per unit");
++    }
++
++    private async Task<int> CommandsAsync(ApiClient client, string route)
++    {
++        var probe = Guid.NewGuid().ToString("N");
++        var before = fixture.Host.Logs.Length;
++
++        (await client.GetAsync($"{route}?probe={probe}")).Expect(HttpStatusCode.OK);
++        var logs = await fixture.Host.LogsAfterAsync($"{probe} - 200");
++
++        return logs[before..].Split(CommandRecord).Length - 1;
++    }
++
++    private static async Task AddUnitsAsync(ApiClient admin, int count)
++    {
++        for (var index = 0; index < count; index++)
++        {
++            var unit = await admin.CreateUnitAsync();
++            var head = await admin.CreateEmployeeAsync(unit.Id);
++            (await admin.SetHeadAsync(unit, head.Id)).Expect(HttpStatusCode.OK);
++            await admin.InviteUserAsync(employeeId: head.Id);
++        }
++    }
++
++    /// <summary>
++    /// A host that logs the SQL commands it sends and the end of each request, the latter to tell when the console has caught up.
++    /// </summary>
++    /// <param name="environment">The shared environment that supplies the database.</param>
++    public sealed class SqlLoggingHost(TestEnvironment environment) : HostFixture(environment, new Dictionary<string, string>
++    {
++        ["Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command"] = "Information",
++        ["Logging__LogLevel__Microsoft.AspNetCore.Hosting.Diagnostics"] = "Information",
++    });
++}
+diff --git a/tests/Competency.Tests/Infrastructure/TestEnvironment.cs b/tests/Competency.Tests/Infrastructure/TestEnvironment.cs
+index cad5890..88c32a5 100644
+--- a/tests/Competency.Tests/Infrastructure/TestEnvironment.cs
++++ b/tests/Competency.Tests/Infrastructure/TestEnvironment.cs
+@@ -16,7 +16,13 @@ public sealed class TestEnvironment : IAsyncLifetime
+     private const string PostgresImage = "postgres:18.6-trixie";
+     private const string GssSetting = "GSS Encryption Mode=Disable";
+ 
+-    private readonly PostgreSqlContainer container = new PostgreSqlBuilder(PostgresImage).Build();
++    /// <summary>
++    /// The server's connection limit. The default of 100 runs out while the hosts of the classes that run in parallel start together
++    /// and keep their pooled connections, and a host or a test then fails with "too many clients".
++    /// </summary>
++    private const string ConnectionLimitSetting = "max_connections=500";
++
++    private readonly PostgreSqlContainer container = new PostgreSqlBuilder(PostgresImage).WithCommand("-c", ConnectionLimitSetting).Build();
+     private readonly Lazy<Task<ApiHost>> shared;
+ 
+     public TestEnvironment()
+diff --git a/tests/Competency.Tests/LevelPositionTests.cs b/tests/Competency.Tests/LevelPositionTests.cs
+index 3e4764c..baaf2dc 100644
+--- a/tests/Competency.Tests/LevelPositionTests.cs
++++ b/tests/Competency.Tests/LevelPositionTests.cs
+@@ -1,4 +1,5 @@
+ using System.Net;
++using System.Text.Json.Nodes;
+ using AwesomeAssertions;
+ using Competency.Tests.Infrastructure;
+ using Xunit;
+@@ -46,6 +47,28 @@ public sealed class LevelPositionTests(CareerHost fixture) : IClassFixture<Caree
+             .Should().Be(HttpStatusCode.NotFound, "the link is gone");
+     }
+ 
++    [Fact]
++    public async Task Ac90_TheTrackAPositionIsLinkedTo_IsNamedToWhoCanSeeIt_AndNotToWhoCannot()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var (track, level) = await DraftTrackWithLevelAsync(org);
++        var position = await PositionAsync(org, org.Department.Id);
++        (await LinkAsync(org.Admin, level, position)).Expect(HttpStatusCode.OK);
++
++        var namedRefusal = await org.TeamHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Team.Id, positionId = position });
++        var unnamedRefusal = await org.SiblingHead.Client.PostAsync("/api/v1/career/matrices", new { orgUnitId = org.Sibling.Id, positionId = position });
++        var listedForTeam = await LinkedTrackOfAsync(org.TeamHead.Client, org.Team.Id, position);
++        var listedForSibling = await LinkedTrackOfAsync(org.SiblingHead.Client, org.Sibling.Id, position);
++
++        var trackName = track.Json!["name"]!.GetValue<string>();
++        namedRefusal.Status.Should().Be(HttpStatusCode.Conflict, namedRefusal.Body);
++        namedRefusal.Json!["detail"]!.GetValue<string>().Should().Contain(trackName);
++        unnamedRefusal.Status.Should().Be(HttpStatusCode.Conflict, unnamedRefusal.Body);
++        unnamedRefusal.Json!["detail"]!.GetValue<string>().Should().Contain("связана с уровнем трека").And.NotContain(trackName);
++        listedForTeam!["id"]!.GetValue<Guid>().Should().Be(track.Id);
++        listedForSibling.Should().BeNull("a draft track of another unit is not shown to its head");
++    }
++
+     [Fact]
+     public async Task Ac91_AnActiveTrack_HasItsLinksChangedByTheHrAndTheAdministratorOnly_AndItsHeadMayReadThem()
+     {
+@@ -336,6 +359,10 @@ public sealed class LevelPositionTests(CareerHost fixture) : IClassFixture<Caree
+         return (track, await org.Admin.MakeLevelAsync(track.Id));
+     }
+ 
++    private static async Task<JsonNode?> LinkedTrackOfAsync(ApiClient client, Guid unitId, Guid positionId) =>
++        (await client.GetAsync($"/api/v1/career/org-units/{unitId}/matrix-positions?pageSize=200")).Expect(HttpStatusCode.OK).Json!["items"]!.AsArray()
++            .Single(item => item!["id"]!.GetValue<Guid>() == positionId)!["linkedTrack"];
++
+     private static async Task<Guid> PositionAsync(CareerOrg org, Guid unitId) => await org.Admin.PositionAsync(unitId, Scenarios.Unique("Должность"));
+ 
+     private static Task<ApiResponse> LinkAsync(ApiClient client, ApiResponse level, Guid positionId) =>
+diff --git a/tests/Competency.Tests/MatrixAccessTests.cs b/tests/Competency.Tests/MatrixAccessTests.cs
+index eecfbff..c8ecad5 100644
+--- a/tests/Competency.Tests/MatrixAccessTests.cs
++++ b/tests/Competency.Tests/MatrixAccessTests.cs
+@@ -229,6 +229,25 @@ public sealed class MatrixAccessTests(CareerHost fixture) : IClassFixture<Career
+         }
+     }
+ 
++    [Fact]
++    public async Task Ac18_TheDraftTrackOfAVersionInWork_IsReadByTheSuperiorApprover_AndByNoOneOutsideTheRoute()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var kit = await (await MatrixKit.CreateAsync(org)).PrepareAsync();
++        var path = $"/api/v1/career/tracks/{kit.Track.Id}";
++
++        kit.Track.Json!["status"]!.GetValue<string>().Should().Be("Draft");
++        foreach (var reader in new[] { org.TeamHead, org.DepartmentHead, org.Hr })
++        {
++            (await reader.Client.GetAsync(path)).Status.Should().Be(HttpStatusCode.OK, reader.User.Email);
++        }
++
++        foreach (var stranger in new[] { org.Plain, org.SiblingHead, org.RootHead })
++        {
++            (await stranger.Client.GetAsync(path)).Status.Should().Be(HttpStatusCode.NotFound, stranger.User.Email);
++        }
++    }
++
+     [Fact]
+     public async Task Ac16_Approvals_ListTheVersionsWaitingForTheUser_LongestWaitingFirst_AndFilterByUnitAndStep()
+     {
+diff --git a/tests/Competency.Tests/MatrixCreationTests.cs b/tests/Competency.Tests/MatrixCreationTests.cs
+index d9da09f..9755acd 100644
+--- a/tests/Competency.Tests/MatrixCreationTests.cs
++++ b/tests/Competency.Tests/MatrixCreationTests.cs
+@@ -146,6 +146,12 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
+             ("a requirement of a competency outside the version", c => c["requirements"]![0]!["competencyId"] = Guid.NewGuid(), "Требование относится к уровню или компетенции не из версии"),
+             ("a threshold above 100", c => c["levels"]![0]!["minOverallPercent"] = 100.5m, "Коэффициенты и пороги — от 0 до 100 %"),
+             ("a negative coefficient", c => c["blockWeights"]![0]!["percent"] = -1, "Коэффициенты и пороги — от 0 до 100 %"),
++            ("a competency type that names no type", c => c["competencies"]![0]!["type"] = 999, "Укажите допустимый тип компетенции"),
++            ("a type that names no type inside a shared block", c => c["sharedBlocks"] = new JsonArray(new JsonObject
++            {
++                ["blockId"] = Guid.NewGuid(),
++                ["competencyTypes"] = new JsonArray(new JsonObject { ["competencyId"] = Guid.NewGuid(), ["type"] = 999 }),
++            }), "Укажите допустимый тип компетенции"),
+         };
+ 
+         foreach (var (reason, breakIt, message) in cases)
+diff --git a/tests/Competency.Tests/MatrixWorkflowTests.cs b/tests/Competency.Tests/MatrixWorkflowTests.cs
+index 173475a..aab9ad0 100644
+--- a/tests/Competency.Tests/MatrixWorkflowTests.cs
++++ b/tests/Competency.Tests/MatrixWorkflowTests.cs
+@@ -629,7 +629,10 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
+         var org = await fixture.OrgAsync();
+         var kit = await MatrixKit.CreateAsync(org);
+         var opened = await kit.ETagAsync();
+-        (await kit.SaveAsync(org.TeamHead.Client, kit.Content(4), opened)).Expect(HttpStatusCode.OK);
++        var incomplete = kit.Content();
++        incomplete["competencies"]!.AsArray().Clear();
++        incomplete["requirements"]!.AsArray().Clear();
++        (await kit.SaveAsync(org.TeamHead.Client, incomplete, opened)).Expect(HttpStatusCode.OK);
+ 
+         var stale = await kit.TransitAsync(org.TeamHead.Client, "submit", etag: opened);
+ 
+diff --git a/tests/Competency.Tests/PublicationCascadeTests.cs b/tests/Competency.Tests/PublicationCascadeTests.cs
+index bb46704..bd48d61 100644
+--- a/tests/Competency.Tests/PublicationCascadeTests.cs
++++ b/tests/Competency.Tests/PublicationCascadeTests.cs
+@@ -169,6 +169,107 @@ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<
+         after.Json["status"]!.GetValue<string>().Should().Be("Active");
+     }
+ 
++    [Fact]
++    public async Task Ac107_Ac114_ApprovingABlock_PublishesTheDraftCompetenciesOfItsComposition_EachWithANewVersionInItsHistory()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var competency = await org.TeamHead.Client.MakeCompetencyAsync();
++        var block = (await org.TeamHead.Client.PostAsync(
++            "/api/v1/career/blocks",
++            new { name = Scenarios.Unique("Блок"), scopeUnitId = (Guid?)org.Team.Id, competencyIds = new[] { competency.Id } })).Expect(HttpStatusCode.Created);
++        var path = $"/api/v1/career/blocks/{block.Id}";
++        var before = await VersionsAsync(org.Admin, competency.Id);
++
++        var preview = (await org.Hr.Client.GetAsync($"{path}/publication")).Expect(HttpStatusCode.OK).Json!;
++        (await org.Hr.Client.PostAsync(
++            $"{path}/approve?cascade={Uri.EscapeDataString(preview["cascadeTag"]!.GetValue<string>())}",
++            ifMatch: block.ETag)).Expect(HttpStatusCode.OK);
++
++        var after = await VersionsAsync(org.Admin, competency.Id);
++        Entries(preview).Should().BeEquivalentTo([("Competency", competency.Id)]);
++        (await StatusAsync(org.Admin, "competencies", competency.Id)).Should().Be("Active");
++        before.Select(version => version.Status).Should().Equal("Draft");
++        after.Select(version => version.Status).Should().Equal("Active", "Draft");
++        after[0].Number.Should().Be(before.Single().Number + 1);
++    }
++
++    [Fact]
++    public async Task Ac144_ADraftBlockOutsideTheResponsibleHrsUnits_IsPublishedWhenThatHrIsAlsoAnAdministrator_WhoeverAcceptsTheirChanges()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var draftCompetency = await org.TeamHead.Client.MakeCompetencyAsync();
++        var head = await org.Admin.GrantHrRoleAsync(fixture.Host, org.TeamHead);
++        var block = (await head.Client.PostAsync(
++            "/api/v1/career/blocks",
++            new { name = Scenarios.Unique("Блок"), scopeUnitId = (Guid?)org.Department.Id, competencyIds = new[] { draftCompetency.Id } })).Expect(HttpStatusCode.Created);
++        var responsible = await org.Admin.HrOfAsync(fixture.Host, org.Team.Id);
++        var kit = await MatrixKit.CreateAsync(org, author: head.Client);
++        (await kit.SaveAsync(head.Client, ContentWithBlock(kit, block.Id, draftCompetency.Id, seniorScore: 3))).Expect(HttpStatusCode.OK);
++        (await kit.TransitAsync(head.Client, "submit")).Expect(HttpStatusCode.OK);
++        (await kit.TransitAsync(org.DepartmentHead.Client, "approve")).Expect(HttpStatusCode.OK);
++        (await kit.SaveAsync(responsible.Client, ContentWithBlock(kit, block.Id, draftCompetency.Id, seniorScore: 4))).Expect(HttpStatusCode.OK);
++        (await kit.TransitAsync(responsible.Client, "return", new { comment = "Поправил" })).Expect(HttpStatusCode.OK);
++
++        var asOnlyHr = await kit.TransitAsync(head.Client, "accept-changes");
++        await AddAdministratorRoleAsync(org.Admin, responsible);
++        var asAlsoAdministrator = await kit.TransitAsync(head.Client, "accept-changes");
++
++        asOnlyHr.Status.Should().Be(HttpStatusCode.Conflict, asOnlyHr.Body);
++        asOnlyHr.Json!["blockers"]!.AsArray().Select(blocker => $"{blocker!["id"]}/{blocker["reason"]}").Should().Equal($"{block.Id}/NoRight");
++        asAlsoAdministrator.Status.Should().Be(HttpStatusCode.OK, asAlsoAdministrator.Body);
++        asAlsoAdministrator.Json!["status"]!.GetValue<string>().Should().Be("Published");
++        (await StatusAsync(org.Admin, "blocks", block.Id)).Should().Be("Active");
++        (await StatusAsync(org.Admin, "competencies", draftCompetency.Id)).Should().Be("Active");
++    }
++
++    [Fact]
++    public async Task Ac109_Ac110_APreview_NamesEveryBlockerTheReaderSees_WhateverItsKind()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var head = org.TeamHead.Client;
++        var directionName = Scenarios.Unique("Область");
++        var direction = (await head.PostAsync("/api/v1/career/directions", new { name = directionName })).Expect(HttpStatusCode.Created);
++        var track = (await head.PostAsync("/api/v1/career/tracks", new { name = Scenarios.Unique("Трек"), ownerOrgUnitId = org.Team.Id, directionId = direction.Id })).Expect(HttpStatusCode.Created);
++        var level = await head.MakeLevelAsync(track.Id);
++        await org.Admin.MakeDirectionAsync(directionName.ToUpperInvariant());
++
++        var preview = (await org.Hr.Client.GetAsync($"/api/v1/career/tracks/{track.Id}/publication")).Expect(HttpStatusCode.OK).Json!;
++
++        preview["blockers"]!.AsArray().Select(blocker => $"{blocker!["kind"]}/{blocker["reason"]}/{blocker["id"]}").Should()
++            .BeEquivalentTo([$"Direction/NameTaken/{direction.Id}", $"Level/NoActivePosition/{level.Id}"]);
++    }
++
++    private static async Task AddAdministratorRoleAsync(ApiClient admin, Member member)
++    {
++        var current = await admin.GetUserAsync(member.Id);
++        (await admin.PutAsync(
++            $"/api/v1/users/{member.Id}",
++            new { email = member.User.Email, roles = new[] { Scenarios.Hr, Scenarios.GlobalAdmin }, employeeId = member.EmployeeId },
++            current.ETag)).Expect(HttpStatusCode.OK);
++    }
++
++    private static JsonObject ContentWithBlock(MatrixKit kit, Guid blockId, Guid competencyId, int seniorScore)
++    {
++        var content = kit.Content();
++        content["competencies"] = new JsonArray();
++        content["sharedBlocks"] = new JsonArray(new JsonObject
++        {
++            ["blockId"] = blockId,
++            ["competencyTypes"] = new JsonArray(new JsonObject { ["competencyId"] = competencyId, ["type"] = "Profile" }),
++        });
++        content["blockWeights"] = new JsonArray(
++            new JsonObject { ["levelId"] = kit.Junior.Id, ["blockId"] = blockId, ["percent"] = 100 },
++            new JsonObject { ["levelId"] = kit.Senior.Id, ["blockId"] = blockId, ["percent"] = 100 });
++        content["requirements"] = new JsonArray(
++            new JsonObject { ["levelId"] = kit.Junior.Id, ["competencyId"] = competencyId, ["requiredScore"] = 2 },
++            new JsonObject { ["levelId"] = kit.Senior.Id, ["competencyId"] = competencyId, ["requiredScore"] = seniorScore });
++        return content;
++    }
++
++    private static async Task<(int Number, string Status)[]> VersionsAsync(ApiClient client, Guid competencyId) =>
++        [.. (await client.GetAsync($"/api/v1/career/competencies/{competencyId}/versions")).Expect(HttpStatusCode.OK).Json!.AsArray()
++            .Select(version => (version!["number"]!.GetValue<int>(), version["status"]!.GetValue<string>()))];
++
+     private static (string Kind, Guid Id)[] Entries(JsonNode preview) =>
+         [.. preview["entries"]!.AsArray().Select(entry => (entry!["kind"]!.GetValue<string>(), entry["id"]!.GetValue<Guid>()))];
+ 
+diff --git a/tests/Competency.Tests/ScenarioReadTests.cs b/tests/Competency.Tests/ScenarioReadTests.cs
+index 88d7f31..b05b952 100644
+--- a/tests/Competency.Tests/ScenarioReadTests.cs
++++ b/tests/Competency.Tests/ScenarioReadTests.cs
+@@ -223,6 +223,47 @@ public sealed class ScenarioReadTests(CareerHost fixture) : IClassFixture<Career
+         (await org.Admin.GetAsync("/api/v1/career/unused-entries?page=0")).Status.Should().Be(HttpStatusCode.BadRequest);
+     }
+ 
++    [Fact]
++    public async Task Ac137_Ac138_Ac140_EachKindFilterOfTheUnusedEntries_ListsOnlyThatKind_WithTheEntrysVersion_AndTheTotalsOfTheKindsAddUp()
++    {
++        var org = await CareerOrg.CreateAsync(fixture.Host);
++        var competency = await org.Admin.MakeCompetencyAsync();
++        var scale = await org.Admin.MakeScaleAsync();
++        var direction = await org.Admin.MakeDirectionAsync();
++        var renamed = new Dictionary<string, ApiResponse>
++        {
++            ["Competency"] = (await org.Admin.PutAsync(
++                $"/api/v1/career/competencies/{competency.Id}",
++                new { name = Scenarios.Unique("Правка"), description = (string?)null, directionId = (Guid?)null, scaleId = (Guid?)null },
++                competency.ETag)).Expect(HttpStatusCode.OK),
++            ["Scale"] = (await org.Admin.PutAsync(
++                $"/api/v1/career/scales/{scale.Id}",
++                new { name = Scenarios.Unique("Правка"), points = CareerScenarios.Points() },
++                scale.ETag)).Expect(HttpStatusCode.OK),
++            ["Direction"] = (await org.Admin.PutAsync(
++                $"/api/v1/career/directions/{direction.Id}",
++                new { name = Scenarios.Unique("Правка") },
++                direction.ETag)).Expect(HttpStatusCode.OK),
++        };
++
++        var everything = (await org.Admin.GetAsync("/api/v1/career/unused-entries?pageSize=200")).Expect(HttpStatusCode.OK).Json!;
++        var totals = 0;
++        foreach (var (kind, entry) in renamed)
++        {
++            var listed = (await org.Admin.GetAsync($"/api/v1/career/unused-entries?kind={kind}&pageSize=200")).Expect(HttpStatusCode.OK).Json!;
++            var items = listed["items"]!.AsArray();
++            var row = items.Single(item => item!["id"]!.GetValue<Guid>() == entry.Id)!;
++
++            items.Select(item => item!["kind"]!.GetValue<string>()).Should().OnlyContain(itemKind => itemKind == kind, kind);
++            listed["total"]!.GetValue<int>().Should().Be(items.Count, kind);
++            row["name"]!.GetValue<string>().Should().Be(entry.Json!["name"]!.GetValue<string>(), kind);
++            $"\"{row["version"]!.GetValue<int>()}\"".Should().Be(entry.ETag, $"{kind}: the row carries the version the entry is changed with");
++            totals += listed["total"]!.GetValue<int>();
++        }
++
++        everything["total"]!.GetValue<int>().Should().Be(totals, "every unused entry is of exactly one of the three kinds");
++    }
++
+     private static string[] Kinds(JsonNode diff) =>
+         [.. diff["changes"]!.AsArray().Select(change => $"{change!["kind"]!.GetValue<string>()}/{change["type"]!.GetValue<string>()}")];
+ 
+diff --git a/tests/Competency.Tests/UnitSetupTests.cs b/tests/Competency.Tests/UnitSetupTests.cs
+index 9297fb9..8327102 100644
+--- a/tests/Competency.Tests/UnitSetupTests.cs
++++ b/tests/Competency.Tests/UnitSetupTests.cs
+@@ -28,7 +28,11 @@ public sealed class UnitSetupTests(CareerHost fixture) : IClassFixture<CareerHos
+         var withInvited = await SetupAsync(admin, path);
+         (await admin.PostAsync($"/api/v1/users/{invited.Id}/block", ifMatch: (await admin.GetUserAsync(invited.Id)).ETag)).Expect(HttpStatusCode.OK);
+         var withBlocked = await SetupAsync(admin, path);
+-        var candidate = await admin.HrCandidateAsync(fixture.Host, (await admin.CreateUnitAsync()).Id);
++        var otherUnit = await admin.CreateUnitAsync();
++        var invitedHrEmployee = await admin.CreateEmployeeAsync(otherUnit.Id);
++        await admin.InviteUserAsync(Scenarios.Hr, invitedHrEmployee.Id);
++        var withInvitedHr = await SetupAsync(admin, path);
++        var candidate = await admin.HrCandidateAsync(fixture.Host, otherUnit.Id);
+         var withCandidate = await SetupAsync(admin, path);
+         (await admin.AssignHrAsync(unit.Id, candidate.EmployeeId)).Expect(HttpStatusCode.NoContent);
+         var withHr = await SetupAsync(admin, path);
+@@ -43,6 +47,7 @@ public sealed class UnitSetupTests(CareerHost fixture) : IClassFixture<CareerHos
+         withHead.Json["head"]!["id"]!.GetValue<Guid>().Should().Be(employee.Id);
+         withInvited.Rows[1].Should().Be("HeadAccount/Missing/Invited");
+         withBlocked.Rows[1].Should().Be("HeadAccount/Missing/Blocked");
++        withInvitedHr.Rows[2..4].Should().Equal("Hr/Missing/NoHrCandidates", "HrAccount/Waiting/NoHr");
+         withCandidate.Rows[2..4].Should().Equal("Hr/Missing/NoHr", "HrAccount/Waiting/NoHr");
+         withHr.Rows[2..4].Should().Equal("Hr/Ready/", "HrAccount/Ready/");
+         withHr.Json["hr"]!["employeeId"]!.GetValue<Guid>().Should().Be(candidate.Employee);

@@ -1,0 +1,44 @@
+# proposed changes to docs/ux/DESIGN.md
+# applied in design-promote phase after approval under checkpoints.md
+#
+# Sprint 004: documentation/usage notes ONLY. No new token and no token value change:
+# every new_value below equals the current value in docs/ux/DESIGN.md (colors.accent: line 12;
+# components.step-current: the full map as it stands in the Components block).
+# `usage` stays the inline YAML comment of the token (design-system.md §4); `doc_patch` names
+# the exact DESIGN.md table and row text promote adds; `reason` is the why.
+# Routine mechanical design-system update;
+# docs/ux/design-system.html is regenerated from the patched DESIGN.md (design-system.md §10).
+
+add: []
+
+update:
+  # Header count badge on the "Рабочий стол" nav item (ux-spec "Использование компонентов", mockup m-shell).
+  - path: colors.accent
+    new_value: "#FBAE40"        # unchanged
+    usage: "brand highlight FILLS only (progress, badge fill incl. the header count badge: accent fill, surface-inverse text 9.6:1, on nav-item-active primary 3.7:1 non-text) and the keyboard focus ring on the dark header; never text on light surfaces"
+    doc_patch:
+      - table: "Colors > Contrast (WCAG 2.x relative luminance ...), table `Foreground on background | Ratio | Result`"
+        action: "add a row after the row `surface-inverse` on `accent`"
+        row: "| `accent` fill on `primary` (count badge on the active nav item; badge text is `surface-inverse` on `accent`, 9.6) | 3.73 | AA non-text (>= 3:1) |"
+    reason: "The header count badge is a composite element built from existing tokens (accent, surface-inverse, rounded-full, body-strong, control-height-sm); no component token. Its fill sits on the active nav item (primary), a pairing not yet in the contrast table."
+    affects_components: [nav-item-active]
+    breaking: false
+
+  # Horizontal Steps in the wizards "Построить матрицу" (6 steps) and "Принять сотрудника" (3 steps).
+  - path: components.step-current
+    new_value:                  # unchanged: the current map from DESIGN.md
+      backgroundColor: "{colors.primary}"
+      textColor: "{colors.text-inverse}"
+      typography: "{typography.body-strong}"
+      rounded: "{rounded.rounded-full}"
+      size: "{spacing.control-height-md}"
+    usage: "wave stage in progress; also the current step of a horizontal wizard (titles always visible)"
+    doc_patch:
+      - table: "Components > Shell and navigation, table `Component (tokens) | antd | Variants and states | Notes`"
+        action: "append to the Notes cell of the row `Steps (`step-current`, `-done`, `-upcoming`)`"
+        text: "; may also be laid out horizontally for wizards (above the form, titles always visible, current = filled number, done = check icon), same tokens and contrast"
+    reason: "Wizards use a horizontal Steps layout, while the row describes only the vertical one for wave stages on detail pages. Same step-current/-done/-upcoming tokens and contrast (7.0 / 6.2 / 7.5), no new token."
+    affects_components: [step-current, step-done, step-upcoming]
+    breaking: false
+
+remove: []

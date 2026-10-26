@@ -12,8 +12,6 @@ namespace Competency.Tests;
 /// </summary>
 public sealed class ContractTests(TestEnvironment environment)
 {
-    private const string SolutionFile = "Competency.slnx";
-    private const string ContractPath = "openapi/openapi.json";
     private const string RemovedPasswordMethod = "/api/v1/users/{id}/reset-password";
     private const int LongestPage = 200;
     private const int LastPage = int.MaxValue / LongestPage;
@@ -26,7 +24,7 @@ public sealed class ContractTests(TestEnvironment environment)
     ];
 
     [Fact]
-    public void Ac6_Contract_IsVersion3_WithThePositionAsAnIdentifier_AndNoFinancialData()
+    public void Ac6_Contract_StaysVersion1_WithThePositionAsAnIdentifier_AndNoFinancialData()
     {
         var contract = ReadContract();
         var schemas = contract["components"]!["schemas"]!.AsObject();
@@ -34,7 +32,7 @@ public sealed class ContractTests(TestEnvironment environment)
         var request = schemas["EmployeeRequest"]!["properties"]!.AsObject();
         var response = schemas["EmployeeResponse"]!["properties"]!.AsObject();
 
-        contract["info"]!["version"]!.GetValue<string>().Should().Be("3.0.0");
+        contract["info"]!["version"]!.GetValue<string>().Should().Be("1.0.0");
         request.ContainsKey("positionId").Should().BeTrue("an employee's input names the catalogue position");
         request.ContainsKey("position").Should().BeFalse("the free-text position left the input");
         response.ContainsKey("positionId").Should().BeTrue();
@@ -141,14 +139,5 @@ public sealed class ContractTests(TestEnvironment environment)
         longest.Status.Should().Be(HttpStatusCode.OK);
     }
 
-    private static JsonNode ReadContract()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null && !directory.EnumerateFiles(SolutionFile).Any())
-        {
-            directory = directory.Parent;
-        }
-
-        return JsonNode.Parse(File.ReadAllText(Path.Combine(directory?.FullName ?? throw new FileNotFoundException(SolutionFile), ContractPath)))!;
-    }
+    private static JsonNode ReadContract() => ApiContract.Read();
 }
