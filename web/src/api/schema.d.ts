@@ -484,6 +484,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/org-import/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PreviewOrgImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/org-import/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Form fields: file, the fingerprint of the previewed plan, and optional decisions, a JSON array of { id, decision } where decision is keep, deactivate (a unit) or dismiss (an employee); a missing unit or employee without a decision is deactivated or dismissed. A 409 whose code is planChanged means the file or the organization no longer give the previewed plan. */
+        post: operations["ApplyOrgImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -2352,6 +2385,14 @@ export interface components {
                 [key: string]: string[];
             };
         };
+        /** Format: binary */
+        IFormFile: string;
+        ImportErrorResponse: {
+            /** Format: int32 */
+            row: null | number;
+            column: null | string;
+            message: string;
+        };
         JsonElement: unknown;
         LegalEntityRequest: {
             name: string;
@@ -2654,6 +2695,20 @@ export interface components {
             /** Format: date-time */
             publishedAt: null | string;
         };
+        MissingEmployeeResponse: {
+            /** Format: uuid */
+            id: string;
+            fullName: string;
+            orgUnitIds: string[];
+            isLastActiveAdministrator: boolean;
+        };
+        MissingUnitResponse: {
+            /** Format: uuid */
+            id: string;
+            path: string;
+            /** Format: uuid */
+            parentId: null | string;
+        };
         MoveOrgUnitRequest: {
             /** Format: uuid */
             parentId: null | string;
@@ -2737,6 +2792,60 @@ export interface components {
             trackId?: null | string;
             /** Format: uuid */
             positionId?: null | string;
+        };
+        OrgImportPlanResponse: {
+            fingerprint: string;
+            newUnits: string[];
+            activatedUnits: string[];
+            newPositions: string[];
+            reactivatedPositions: string[];
+            newLegalEntities: string[];
+            newEmployees: string[];
+            rehiredEmployees: string[];
+            transfers: string[];
+            addedAssignments: string[];
+            removedAssignments: string[];
+            changedLegalEntities: string[];
+            unitPositionsAdded: string[];
+            unitPositionsRemoved: string[];
+            missingUnits: components["schemas"]["MissingUnitResponse"][];
+            missingEmployees: components["schemas"]["MissingEmployeeResponse"][];
+        };
+        OrgImportPreviewResponse: {
+            errors: components["schemas"]["ImportErrorResponse"][];
+            plan: null | components["schemas"]["OrgImportPlanResponse"];
+        };
+        OrgImportResultResponse: {
+            /** Format: int32 */
+            newUnits: number;
+            /** Format: int32 */
+            activatedUnits: number;
+            /** Format: int32 */
+            newPositions: number;
+            /** Format: int32 */
+            reactivatedPositions: number;
+            /** Format: int32 */
+            newLegalEntities: number;
+            /** Format: int32 */
+            newEmployees: number;
+            /** Format: int32 */
+            rehiredEmployees: number;
+            /** Format: int32 */
+            transfers: number;
+            /** Format: int32 */
+            addedAssignments: number;
+            /** Format: int32 */
+            removedAssignments: number;
+            /** Format: int32 */
+            changedLegalEntities: number;
+            /** Format: int32 */
+            unitPositionsAdded: number;
+            /** Format: int32 */
+            unitPositionsRemoved: number;
+            /** Format: int32 */
+            deactivatedUnits: number;
+            /** Format: int32 */
+            dismissedEmployees: number;
         };
         OrgUnitHrPersonResponse: {
             /** Format: uuid */
@@ -5298,6 +5407,116 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    PreviewOrgImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    file: components["schemas"]["IFormFile"];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrgImportPreviewResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ApplyOrgImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    file: components["schemas"]["IFormFile"];
+                } & {
+                    fingerprint: string;
+                } & {
+                    decisions?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrgImportResultResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
