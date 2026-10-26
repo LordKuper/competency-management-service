@@ -434,3 +434,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-26 — review-fix wave-3/iter-01 tester chain COMPLETED (97abdfe…0f33e68): correctness 5, TST-1…9; строка удаления теста approveDraft записана. Flagged приняты: фокус «Отмена» остаётся в useConfirmDeletion.test; ScopeFilter в BlocksTab без доступного имени — кандидат a11y для dev (следующая итерация ревью)
 - 2026-10-26 — impl fix for wave-3/iter-01: findings resolved (external 1 по решению пользователя, approveDraft — после удаления теста); gate: web build, lint, check:api чисто
 - 2026-10-26 — route impl-test entry 8: critical, dispatch HEAD 0f33e68; risk change: security
+- 2026-10-26 — impl-test entry 8 flagged приняты: раскладка шага мастера — none (jsdom без CSS), стражи с мутантами; тест approveDraft удалён (c2ea2f8), удаление функции — в test-fix вместе с D-3 (остаток efficiency E-1, принятая находка)
+- 2026-10-26 — impl-test: defects D-3 → impl test-fix (digest b5368ee1aa1a8ce88dc6ab9c137e64d956e9683a71eda3ff69f0d0ba7bb3785e)
+- 2026-10-26 — route test-fix D-3: standard, dispatch HEAD a1b6ed8; risk none via failing test

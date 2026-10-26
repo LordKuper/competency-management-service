@@ -1,7 +1,7 @@
 {
   "sprint_id": "004-role-desktop-user-journeys",
   "branch": "sprint/004-role-desktop-user-journeys",
-  "phase": "impl-test",
+  "phase": "impl",
   "workflow": "standard",
   "documents": {
     "audit": true,
@@ -1368,6 +1368,12 @@
       "tier": "critical",
       "reason": "risk:security",
       "resolved_model": "sonnet"
+    },
+    "test-fix D-3": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -1520,9 +1526,9 @@
     }
   },
   "created_at": "2026-10-12T13:55:09.000Z",
-  "updated_at": "2026-10-26T07:20:11.212Z",
+  "updated_at": "2026-10-26T07:48:54.679Z",
   "review_fixes_pending": null,
-  "test_defects_pending": null,
+  "test_defects_pending": true,
   "pr": null,
   "archived_at": null
 }

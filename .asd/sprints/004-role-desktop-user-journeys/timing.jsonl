@@ -685,3 +685,11 @@
 {"op":"close","id":"review-fix wave-3/iter-01 tests","kind":"dispatch","parent":"impl#10","start":"2026-10-26T07:03:21.135Z","end":"2026-10-26T07:19:56.694Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl#10","kind":"phase","parent":null,"start":"2026-10-26T06:54:09.540Z","end":"2026-10-26T07:20:11.273Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-test#8","kind":"phase","parent":null,"start":"2026-10-26T07:20:11.273Z","attrs":{}}
+{"op":"open","id":"impl-test entry 8","kind":"dispatch","parent":"impl-test#8","start":"2026-10-26T07:20:11.593Z","attrs":{}}
+{"op":"open","id":"suite impl-test#17","kind":"suite","parent":"impl-test entry 8","start":"2026-10-26T07:21:12.087Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#17","kind":"suite","parent":"impl-test entry 8","start":"2026-10-26T07:21:12.087Z","end":"2026-10-26T07:21:49.826Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite impl-test#18","kind":"suite","parent":"impl-test entry 8","start":"2026-10-26T07:39:25.074Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#18","kind":"suite","parent":"impl-test entry 8","start":"2026-10-26T07:39:25.074Z","end":"2026-10-26T07:40:14.204Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-test entry 8","kind":"dispatch","parent":"impl-test#8","start":"2026-10-26T07:20:11.593Z","end":"2026-10-26T07:48:54.455Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#8","kind":"phase","parent":null,"start":"2026-10-26T07:20:11.273Z","end":"2026-10-26T07:48:54.831Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#11","kind":"phase","parent":null,"start":"2026-10-26T07:48:54.831Z","attrs":{}}

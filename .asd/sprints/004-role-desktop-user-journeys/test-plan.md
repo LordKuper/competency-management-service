@@ -18,7 +18,7 @@ responsibility:
 | 5 | 7b8de3c | delta since entry 4 |
 | 6 | ce9240f | delta since entry 5 |
 | 7 | 5382584 | delta since entry 6 |
-| 8 |  | delta since entry 7 |
+| 8 | a1b6ed8 | delta since entry 7 |
 
 ## Risk → check decisions
 
