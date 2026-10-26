@@ -452,6 +452,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/legal-entities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListLegalEntities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/legal-entities/quick-add": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["QuickAddLegalEntity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -1854,6 +1886,23 @@ export interface components {
         };
         /** @enum {unknown} */
         ApprovalStep: "Superior" | "Hr" | null;
+        AssignmentRequest: {
+            /** Format: uuid */
+            orgUnitId: string;
+            /** Format: uuid */
+            positionId: string;
+            legalEntityIds: string[];
+        };
+        AssignmentResponse: {
+            /** Format: uuid */
+            orgUnitId: string;
+            orgUnitName: string;
+            /** Format: uuid */
+            positionId: string;
+            position: string;
+            legalEntities: components["schemas"]["LegalEntityResponse"][];
+            isSecondary: boolean;
+        };
         AuditEventResponse: {
             /** Format: uuid */
             id: string;
@@ -2247,6 +2296,8 @@ export interface components {
             positionId: string;
             /** Format: uuid */
             orgUnitId: string;
+            legalEntityIds: string[];
+            assignments: components["schemas"]["AssignmentRequest"][];
         };
         EmployeeResponse: {
             /** Format: uuid */
@@ -2262,6 +2313,9 @@ export interface components {
             /** Format: uuid */
             positionId: string;
             position: string;
+            legalEntities: components["schemas"]["LegalEntityResponse"][];
+            assignments: components["schemas"]["AssignmentResponse"][];
+            unitAssignments: components["schemas"]["AssignmentResponse"][];
             isActive?: null | boolean;
             /** Format: int32 */
             version?: null | number;
@@ -2299,6 +2353,14 @@ export interface components {
             };
         };
         JsonElement: unknown;
+        LegalEntityRequest: {
+            name: string;
+        };
+        LegalEntityResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
         LevelOrderRequest: {
             levelIds: string[];
         };
@@ -2806,6 +2868,15 @@ export interface components {
         };
         PageResponseOfEmployeeResponse: {
             items: components["schemas"]["EmployeeResponse"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+        };
+        PageResponseOfLegalEntityResponse: {
+            items: components["schemas"]["LegalEntityResponse"][];
             /** Format: int32 */
             total: number;
             /** Format: int32 */
@@ -5140,6 +5211,99 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ListLegalEntities: {
+        parameters: {
+            query?: {
+                q?: string;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageResponseOfLegalEntityResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    QuickAddLegalEntity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LegalEntityRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LegalEntityResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
             };
         };
     };

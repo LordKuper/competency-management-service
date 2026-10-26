@@ -2825,6 +2825,133 @@
         }
       }
     },
+    "/api/v1/legal-entities": {
+      "get": {
+        "tags": [
+          "LegalEntities"
+        ],
+        "operationId": "ListLegalEntities",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseOfLegalEntityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/legal-entities/quick-add": {
+      "post": {
+        "tags": [
+          "LegalEntities"
+        ],
+        "operationId": "QuickAddLegalEntity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LegalEntityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegalEntityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "tags": [
@@ -12540,6 +12667,67 @@
           null
         ]
       },
+      "AssignmentRequest": {
+        "required": [
+          "orgUnitId",
+          "positionId",
+          "legalEntityIds"
+        ],
+        "type": "object",
+        "properties": {
+          "orgUnitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "positionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "legalEntityIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "AssignmentResponse": {
+        "required": [
+          "orgUnitId",
+          "orgUnitName",
+          "positionId",
+          "position",
+          "legalEntities",
+          "isSecondary"
+        ],
+        "type": "object",
+        "properties": {
+          "orgUnitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orgUnitName": {
+            "type": "string"
+          },
+          "positionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "position": {
+            "type": "string"
+          },
+          "legalEntities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegalEntityResponse"
+            }
+          },
+          "isSecondary": {
+            "type": "boolean"
+          }
+        }
+      },
       "AuditEventResponse": {
         "required": [
           "id",
@@ -14001,7 +14189,9 @@
           "lastName",
           "firstName",
           "positionId",
-          "orgUnitId"
+          "orgUnitId",
+          "legalEntityIds",
+          "assignments"
         ],
         "type": "object",
         "properties": {
@@ -14024,6 +14214,19 @@
           "orgUnitId": {
             "type": "string",
             "format": "uuid"
+          },
+          "legalEntityIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentRequest"
+            }
           }
         }
       },
@@ -14038,7 +14241,10 @@
           "orgUnitId",
           "orgUnitName",
           "positionId",
-          "position"
+          "position",
+          "legalEntities",
+          "assignments",
+          "unitAssignments"
         ],
         "type": "object",
         "properties": {
@@ -14080,6 +14286,24 @@
           },
           "position": {
             "type": "string"
+          },
+          "legalEntities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegalEntityResponse"
+            }
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentResponse"
+            }
+          },
+          "unitAssignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentResponse"
+            }
           },
           "isActive": {
             "type": [
@@ -14216,6 +14440,33 @@
         }
       },
       "JsonElement": { },
+      "LegalEntityRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "LegalEntityResponse": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "LevelOrderRequest": {
         "required": [
           "levelIds"
@@ -16219,6 +16470,35 @@
           }
         }
       },
+      "PageResponseOfLegalEntityResponse": {
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegalEntityResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PageResponseOfMatrixPositionResponse": {
         "required": [
           "items",
@@ -17166,6 +17446,9 @@
     },
     {
       "name": "Positions"
+    },
+    {
+      "name": "LegalEntities"
     },
     {
       "name": "Users"
