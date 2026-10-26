@@ -105,6 +105,7 @@ function ScaleForm({ scale, onSubmit, onCancel }: ScaleFormProps) {
     <Form
       form={form}
       name="scale"
+      disabled={isSubmitting}
       layout="vertical"
       initialValues={{
         name: scale?.name ?? "",

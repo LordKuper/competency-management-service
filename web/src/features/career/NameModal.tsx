@@ -78,6 +78,7 @@ function NameForm({ name, onSubmit, onCancel }: NameFormProps) {
     <Form
       form={form}
       name="catalog-name"
+      disabled={isSubmitting}
       layout="vertical"
       initialValues={{ name }}
       onFinish={submit}

@@ -50,6 +50,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
       <Form
         form={form}
         name="matrix-create"
+        disabled={isSubmitting}
         layout="vertical"
         onFinish={submit}
       >
@@ -126,7 +127,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
                   directionId: directionId ?? undefined,
                   forOrgUnitId: orgUnitId,
                 }}
-                disabled={!directionId || !orgUnitId}
+                disabled={!directionId || !orgUnitId || undefined}
               />
             </Form.Item>
           </>

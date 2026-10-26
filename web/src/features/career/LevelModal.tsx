@@ -103,6 +103,7 @@ function LevelForm({ initialName, onSubmit, onCancel }: LevelFormProps) {
     <Form
       form={form}
       name="career-level"
+      disabled={isSubmitting}
       layout="vertical"
       initialValues={{ name: initialName }}
       onFinish={submit}

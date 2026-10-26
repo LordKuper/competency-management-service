@@ -53,7 +53,7 @@ export function MatrixPositionSelect({
     <Select<string, { value: string; label: string; item: MatrixPosition }>
       id={id}
       value={value}
-      disabled={orgUnitId === undefined}
+      disabled={orgUnitId === undefined || undefined}
       loading={read.isFetching}
       placeholder="Выберите должность"
       showSearch={{ filterOption: false, onSearch: setSearch }}

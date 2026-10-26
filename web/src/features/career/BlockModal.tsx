@@ -165,6 +165,7 @@ function BlockForm({
     <Form
       form={form}
       name="competency-block"
+      disabled={isSubmitting}
       layout="vertical"
       initialValues={{
         name: block?.name ?? "",
@@ -374,7 +375,7 @@ function CompetencyPicker({
           rowSelection={{
             selectedRowKeys: value,
             getCheckboxProps: (row) => ({
-              disabled: takenIds?.has(row.id) === true,
+              disabled: takenIds?.has(row.id) || undefined,
             }),
             onSelect: (row, isChosen) => toggle(row.id, isChosen),
             onSelectAll: (isChosen, _rows, changed) => {

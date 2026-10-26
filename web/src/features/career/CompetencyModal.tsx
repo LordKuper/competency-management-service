@@ -153,6 +153,7 @@ function CompetencyForm({
     <Form
       form={form}
       name="competency"
+      disabled={isSubmitting}
       layout="vertical"
       initialValues={{
         name: competency?.name ?? "",

@@ -137,6 +137,7 @@ export function TrackModal({
         key={base?.version}
         form={form}
         name="career-track"
+        disabled={isSubmitting}
         layout="vertical"
         initialValues={{
           name: current?.name ?? "",
