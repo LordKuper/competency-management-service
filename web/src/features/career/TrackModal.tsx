@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Form, Input, Select, Typography, theme } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isStaleVersion, useEditBase } from "../../app/useEditBase";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
@@ -46,6 +46,8 @@ interface TrackModalProps {
  * left, and a second «Сохранить» retries the rest without creating the track again. The track is the one saved here when
  * the dialog created it, read again after a stale-version refusal, and otherwise the newer of the one saved here and the
  * form base, which moves to the reread track after such a refusal; either way the next save sends the reread version.
+ * The name field shows that track's name whenever the track changes, so a reread name replaces the refused one; the
+ * pending levels stay.
  */
 export function TrackModal({
   directionId,
@@ -69,6 +71,9 @@ export function TrackModal({
     ...levelsQuery(current?.id ?? ""),
     enabled: current !== undefined,
   });
+  useEffect(() => {
+    form.setFieldValue("name", current?.name ?? "");
+  }, [form, current]);
   const rows = arrangeLevels(
     current ? (levels.data?.items ?? []) : [],
     pending,
