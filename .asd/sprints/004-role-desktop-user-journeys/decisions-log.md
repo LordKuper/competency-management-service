@@ -442,3 +442,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-26 — impl-test: impacted set green (web 142/142 в 14 файлах), 0/0 tests; D-3 подтверждён
 - 2026-10-26 — external interrupted attempt 1 in wave-3/iter-02 (codex exec exit 1, then 600 s foreground timeout; no auth/quota/reachability cause reported)
 - 2026-10-26 — impl-review wave-3/iter-02 memory-fix: asd-dev-critical (documentation 1, 2 — номер Task, коммит одной составной командой по git-strategy), asd-reviewer-correctness (documentation 3 — исключение удалено, MEMORY-FIX применён); memory-check чист
+- 2026-10-26 — impl-review wave-3/iter-02 (floor medium): efficiency, testing APPROVE (latched); correctness CONCERNS (C-1, C-2); documentation CONCERNS (1-3 закрыты memory-fix); external CONCERNS (1, 2; ext 2 = C-2) → impl review-fix (review_fixes_pending wave-3/iter-02)
+- 2026-10-26 — route review-fix wave-3/iter-02 (correctness.md C-1, C-2; external.md 1, 2): critical, dispatch HEAD 09eaf75; risk change: security
