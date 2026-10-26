@@ -17,6 +17,7 @@ import {
 } from "antd";
 import { useState } from "react";
 import { Link } from "react-router";
+import { ApiError } from "../../api/ApiError";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
 import { AppModal } from "../../app/AppModal";
@@ -209,8 +210,8 @@ function hrCandidatesQuery(text: string) {
 }
 
 /**
- * Remote-search choice of an employee and the button that assigns them as the unit's HR; a refusal shows under the field and
- * rereads the list. With no candidates at all the field gives way to a pointer to the account screen.
+ * Remote-search choice of an employee and the button that assigns them as the unit's HR; a refusal naming the employee
+ * shows under the field, any other failure as a message, and either rereads the list. With no candidates at all the field gives way to a pointer to the account screen.
  */
 function AssignHrForm({
   onAssign,
@@ -218,12 +219,16 @@ function AssignHrForm({
   onAssign: (employeeId: string) => Promise<unknown>;
 }) {
   const queryClient = useQueryClient();
+  const { message } = App.useApp();
   const [form] = Form.useForm<AssignHrValues>();
   const { isSubmitting, submit } = useFormSubmit(form, async (values) => {
     try {
       await onAssign(values.employeeId);
     } catch (failure) {
       await queryClient.invalidateQueries({ queryKey: CANDIDATES_QUERY_KEY });
+      if (!(failure instanceof ApiError && failure.errors?.employeeId)) {
+        message.error(describeApiError(failure));
+      }
       throw failure;
     }
   });
