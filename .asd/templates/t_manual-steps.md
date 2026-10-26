@@ -1,7 +1,7 @@
 ---
 responsibility:
   owns: per-sprint registry of manual operational actions a human must perform for the sprint plan to complete
-  excludes: code todo stubs (stubs.md), manual QA verification of behaviour (reviews testing.md), plan tasks (plan.md)
+  excludes: code todo stubs (stubs.md), manual QA verification of behaviour (reviews quality.md), plan tasks (plan.md)
   delegates_to: stubs.md (code stubs), plan.md (tasks + BLOCKED markers), reviews/ (manual verification of behaviour)
 ---
 

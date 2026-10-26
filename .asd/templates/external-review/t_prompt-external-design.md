@@ -68,7 +68,7 @@ Caller passes the computed floor; report only at floor severity or higher.
 - decision concrete (not "we should consider")
 - consequences include negative impacts (not only benefits)
 - alternatives present when non-trivial choice
-- when a "Fold target" line is present, it names an existing doc and a plausible `owns:` clause (not verified against the doc itself — that is the Architect's job at design-promote)
+- when a "Fold target" line is present, it names an existing doc and a plausible `owns:` clause (not verified against the doc itself — that is the main orchestrator's job at design-promote)
 
 ### design-md-delta.yaml
 - add/update/remove paths valid against DESIGN.md spec

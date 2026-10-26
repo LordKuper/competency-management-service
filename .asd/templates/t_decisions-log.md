@@ -26,6 +26,8 @@ A no-op skip, other zero-content decision, dispatch routing line or failed-dispa
 - YYYY-MM-DD — route <taskIds>: <tier>, dispatch HEAD <sha>[; risk <declaration>]
 - YYYY-MM-DD — reconstruction: landed <ids>; re-dispatched <ids>
 - YYYY-MM-DD — stall: <agent> <dispatch ids>
+- YYYY-MM-DD — cleanup checkpoint <sha>
+- YYYY-MM-DD — cleanup: removed <paths/symbols>; reverted <ids or none>; verified <build, lint, tests @sha>
 ```
 
 ## Durability rule

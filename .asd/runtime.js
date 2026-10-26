@@ -30,15 +30,15 @@ const WAVE_THRESHOLD_FILES = 34;
 const WAVE_THRESHOLD_BYTES = 180000;
 /** Files above which one review wave gets a turn plan in its reviewer payload. */
 const LARGE_WAVE_FILES = 12;
-/** An audit whose touched areas track more than this many files gets a batched-read plan in the architect payload. */
+/** An audit whose touched areas track more than this many files gets a batched-read plan, which the orchestrator follows while auditing. */
 const AUDIT_BATCH_THRESHOLD_FILES = 200;
 /** Internal reviewers, named as `emit-manifest --reviewer` takes them. */
-const INTERNAL_REVIEWERS = ['correctness', 'efficiency', 'testing', 'documentation', 'combined'];
+const INTERNAL_REVIEWERS = ['quality', 'efficiency', 'combined'];
 /** The `emit-manifest --reviewer` name that emits External Review's scope manifest instead of a coverage manifest. */
 const EXTERNAL_REVIEWER = 'external';
 /** The lite internal reviewer: its manifest composes these reviewers' rubrics by reference, in order, then its own agent's rubric. */
 const COMBINED_REVIEWER = 'combined';
-const COMBINED_RUBRICS = ['correctness', 'efficiency', 'documentation'];
+const COMBINED_RUBRICS = ['quality', 'efficiency'];
 /** Sprint workflow definitions, one `<name>.json` each, beside the phase orchestration bodies. */
 const WORKFLOWS_DIR = path.join(__dirname, 'workflows');
 /** The exact key set of a workflow definition; its semantics stay prose in the rule docs. */
@@ -61,14 +61,15 @@ const NA_PREDICATES = {
   pureRename: 'pure rename: identical content and mode',
   noDocs: 'no documentation file in scope',
 };
-/** Rubric entries each conditional predicate covers, by reviewer and id prefix, a combined manifest taking those of every rubric it composes; a prefix matching no entry fails the emit closed. A combined manifest's `no documentation file in scope` covers its whole composed Documentation part instead. */
+/** Rubric entries each conditional predicate covers, by reviewer and id prefix, a combined manifest taking those of every rubric it composes; a prefix matching no entry fails the emit closed; `docs`, the documentation entries, is granted to a combined manifest only. */
 const NA_TARGETS = {
-  ui: { correctness: ['UI conformance'] },
+  ui: { quality: ['UI conformance'] },
   perf: { efficiency: ['Perf budget compliance', 'Perf anti-patterns', 'Algorithmic complexity', 'Regression detection', 'Hot path identification'] },
   budgetCompliance: { efficiency: ['Perf budget compliance'] },
-  html: { documentation: ['HTML shell wrapping', 'Provenance', 'Traceability'] },
-  selfHosting: { documentation: ['Framework mode'] },
-  templated: { documentation: ['Template adherence'] },
+  html: { quality: ['HTML shell wrapping', 'Provenance', 'Traceability'] },
+  selfHosting: { quality: ['Framework mode'] },
+  templated: { quality: ['Template adherence'] },
+  docs: { quality: ['SSoT', 'Template adherence', 'HTML shell wrapping', 'Provenance', 'Traceability', 'Persistent actuality', 'In-code doc comments', 'Stub resolution', 'Framework mode', 'Custom rules consistency'], efficiency: ['Documentation economy'] },
 };
 const PHASES = ['design-review', 'impl-review'];
 /** A retro row's acting side; like its row id, an English literal under any docs language, so intake can filter on it. */
@@ -299,7 +300,7 @@ function recordExternalFailure(input) {
   return cache.entries[input.fingerprint];
 }
 
-/** Selects a task class without allowing a task to move to a weaker class. */
+/** Selects a task class without allowing a task to move to a weaker class; a change risk or a failed objective check only forbids `mechanical`, and a legacy `critical` prior tier reads `standard`. */
 function routeTask(input) {
   if (!input || typeof input !== 'object') fail('routing input required');
   if (!['command', 'mechanical', 'standard'].includes(input.kind)) fail('routing kind invalid');
@@ -308,15 +309,17 @@ function routeTask(input) {
   const checks = stringArray(input.checks, 'checks');
   if (!Number.isInteger(input.correctionAttempts) || input.correctionAttempts < 0) fail('correctionAttempts invalid');
   const attempted = input.correctionAttempts;
-  const ranks = { mechanical: 0, standard: 1, critical: 2 };
-  if (input.priorTier !== undefined && !Object.prototype.hasOwnProperty.call(ranks, input.priorTier)) fail('priorTier invalid');
+  const ranks = { mechanical: 0, standard: 1 };
+  const priorTier = input.priorTier === 'critical' ? 'standard' : input.priorTier;
+  if (priorTier !== undefined && !Object.prototype.hasOwnProperty.call(ranks, priorTier)) fail('priorTier invalid');
   const changeRisk = risks.find((risk) => risk.target === 'change');
   const artifactRisk = risks.find((risk) => risk.target === 'artifact');
   const deterministicCommand = input.kind === 'command' && input.objectiveInputs === true && checks.includes('deterministic-state');
   const mechanical = input.kind === 'mechanical' && input.objectiveInputs === true && checks.includes('deterministic-check') && checks.includes('exhaustive-match-validation');
-  const computedTier = changeRisk || (input.failedObjectiveCheck && attempted >= 1) ? 'critical' : deterministicCommand || mechanical ? 'mechanical' : 'standard';
-  const clamped = Boolean(input.priorTier) && ranks[input.priorTier] > ranks[computedTier];
-  const tier = clamped ? input.priorTier : computedTier;
+  const escalated = changeRisk || (input.failedObjectiveCheck && attempted >= 1);
+  const computedTier = !escalated && (deterministicCommand || mechanical) ? 'mechanical' : 'standard';
+  const clamped = Boolean(priorTier) && ranks[priorTier] > ranks[computedTier];
+  const tier = clamped ? priorTier : computedTier;
   const execution = deterministicCommand && tier === 'mechanical' && risks.length === 0 ? 'command' : 'agent';
   const reason = changeRisk ? `risk:${changeRisk.name}` : input.failedObjectiveCheck && attempted >= 1 ? 'failed-objective-check' : clamped ? 'no-downgrade' : artifactRisk ? `artifact-risk:${artifactRisk.name}` : execution === 'command' ? 'deterministic-command' : tier === 'mechanical' ? 'objective-mechanical' : 'normal';
   return { tier, execution, reason };
@@ -452,7 +455,7 @@ function standingPredicates(input, parts, ids, customRules, templates) {
   if (!input.files.some((file) => /\.html?$/i.test(file))) grant('html', NA_PREDICATES.noHtml);
   if (input.selfHosting !== true) grant('selfHosting', NA_PREDICATES.noSelfHosting);
   if (!input.files.some((file) => isTemplated(file, templates))) grant('templated', NA_PREDICATES.noTemplated);
-  if (rubrics.includes(COMBINED_REVIEWER) && !input.files.some((file) => isDocumentation(file, templates))) (parts.documentation || fail('combined manifest composes no documentation rubric')).forEach((id) => granted.get(id).push(NA_PREDICATES.noDocs));
+  if (rubrics.includes(COMBINED_REVIEWER) && !(input.scopeFiles || input.files).some((file) => isDocumentation(file, templates))) grant('docs', NA_PREDICATES.noDocs);
   if (input.phase === 'design-review') {
     if (!input.files.some((file) => /(^|\/)(ux-spec\.html|design-md-delta\.yaml)$/.test(file))) grant('ui', NA_PREDICATES.phaseGate);
     return granted;
@@ -463,7 +466,7 @@ function standingPredicates(input, parts, ids, customRules, templates) {
   return granted;
 }
 
-/** Emits one reviewer's stamped coverage manifest over its whole file list; `rubric` is its agent markdown, or a combined reviewer's `{reviewer: markdown}` map whose rubrics compose in order. */
+/** Emits one reviewer's stamped coverage manifest over its whole file list; `scopeFiles` (default `files`) is the diff scope the docs predicate judges, so appended test-plan paths never void it; `rubric` is its agent markdown, or a combined reviewer's `{reviewer: markdown}` map whose rubrics compose in order. */
 function emitCoverageManifest(input) {
   if (!input || typeof input !== 'object') fail('emit input required');
   if (!PHASES.includes(input.phase)) fail('phase must be design-review or impl-review');
@@ -488,15 +491,15 @@ function emitCoverageManifest(input) {
   });
 }
 
-/** A test file: under a `test`/`tests`/`__tests__`/`spec`/`specs` path segment or a dotted one carrying it (`Core.Tests/`, `Game.Tests.Unit/`), or a basename in a common test naming convention. Heuristic, so Correctness's full list stays the backstop for a miss. */
+/** A test file: under a `test`/`tests`/`__tests__`/`spec`/`specs` path segment or a dotted one carrying it (`Core.Tests/`, `Game.Tests.Unit/`), or a basename in a common test naming convention. Heuristic: a miss only sends a low-severity finding through review-fix instead of the in-place test fix. */
 function isTest(file) {
   return /(^|\/)([^/]*\.)?(test|tests|__tests__|spec|specs)(\.[^/]*)?\//i.test(file) || /\.(test|spec)\.|^test_|_test\.|Tests?\./.test(file.split('/').pop());
 }
 
-/** One reviewer's file list, the single selector every manifest is built from: impl-review Testing narrows to test files plus the explicitly passed test-plan paths, which the scope pathspec excludes; every other reviewer gets the whole scope. */
+/** One reviewer's file list, the single selector every manifest is built from: every reviewer gets the whole scope, impl-review Quality and Combined plus the explicitly passed test-plan paths, which the scope pathspec excludes. */
 function reviewerFiles(phase, reviewer, files, testPlan) {
-  if (phase !== 'impl-review' || reviewer !== 'testing') return files;
-  return [...new Set(files.filter(isTest).concat(testPlan))];
+  if (phase !== 'impl-review' || (reviewer !== 'quality' && reviewer !== COMBINED_REVIEWER)) return files;
+  return [...new Set(files.concat(testPlan))];
 }
 
 /** Reads a reviewer ledger from bare JSON, or from the one fenced block carrying `manifest_digest` inside the reviewer's returned text. */
@@ -913,6 +916,7 @@ function emitInternalManifest(flags, files, ranges, snapshot) {
     phase: flags.phase,
     rubric: flags.reviewer === COMBINED_REVIEWER ? Object.fromEntries(COMBINED_RUBRICS.concat(COMBINED_REVIEWER).map((reviewer) => [reviewer, rubricOf(reviewer)])) : rubricOf(flags.reviewer),
     files: reviewed,
+    scopeFiles: files,
     customRules: Object.fromEntries(customPaths.map((file) => [file, fs.readFileSync(file, 'utf8')])),
     selfHosting: flags['self-hosting'] === true,
     templates: templateNames(path.join(__dirname, 'templates')),
@@ -942,6 +946,7 @@ function patchBytes(base, head, files) {
   return rangePatchInvocations(ranges, files).reduce((total, invocation) => total + Buffer.byteLength(runGit(invocation.args)), 0);
 }
 
+/** Measures the scope and, with `--division`, records it; `--single` fixes the wave count at 1 whatever the measure says, so a one-wave division over a scope above a threshold is accepted and the reported and recorded `waves` is 1. Without it the measured count rules. */
 function reviewWavesCommand(flags) {
   if (typeof flags.files !== 'string') fail('--files <path> required');
   if ((flags.division === undefined) !== (flags.out === undefined)) fail('--division <json path> and --out <path> go together');
@@ -952,7 +957,7 @@ function reviewWavesCommand(flags) {
   const lines = numstatLines(runGit(['diff', '--numstat', '-z', '-M', `${base}...${head}`]), scope);
   const bytes = patchBytes(base, head, scope);
   const thresholds = { lines: WAVE_THRESHOLD_LINES, files: WAVE_THRESHOLD_FILES, bytes: WAVE_THRESHOLD_BYTES };
-  const measured = { lines, files, bytes, thresholds, waves: reviewWaveCount(lines, files, bytes) };
+  const measured = { lines, files, bytes, thresholds, waves: flags.single === true ? 1 : reviewWaveCount(lines, files, bytes) };
   if (flags.division === undefined) return measured;
   const waves = validateWaveDivision(JSON.parse(fs.readFileSync(flags.division, 'utf8')), scope, measured.waves);
   fs.mkdirSync(path.dirname(flags.out), { recursive: true });
@@ -1438,7 +1443,7 @@ function inputJson(flags) {
 async function main(argv) {
   const command = argv[2];
   if (command === 'timing' || command === 'timing-recover') return timingCommand(command, argv.slice(3));
-  const flags = parseFlagArgs(argv.slice(3), ['self-hosting', 'late']);
+  const flags = parseFlagArgs(argv.slice(3), ['self-hosting', 'late', 'single']);
   if (command === 'manifest-digest') {
     process.stdout.write(coverageManifestDigest(JSON.parse(fs.readFileSync(flags.manifest, 'utf8'))) + '\n');
     return 0;

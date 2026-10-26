@@ -51,7 +51,7 @@ The normal gate class is retained for `strict`, and is the fallback when an adap
 | workflow choice (scope step 1) | hard approve-before-write |
 | ASD update choice (new-sprint start) | hard approve-before-write |
 
-`c4-full/` has no standalone artifact gate. Per-section QODDA uses this same policy; it does not create a second mandatory pause.
+`cleanup` removals take no gate: test files are outside its reach, so test removal stays the gate above. `c4-full/` has no standalone artifact gate. Per-section QODDA uses this same policy; it does not create a second mandatory pause.
 
 ## Write-then-review-accept mechanic
 
@@ -60,12 +60,12 @@ Write the artifact to its real path, post its absolute path with a short delta s
 ## Precondition chain
 
 ```
-audit → design → design-review → design-promote → plan → impl ⇄ impl-test → impl-review → retro → pr
+audit → design → design-review → design-promote → plan → impl ⇄ impl-test → impl-review → cleanup → retro → pr
 ```
 
-`audit` requires accepted scope; `design` requires audit or an audit skip; `design-review` requires produced in-scope drafts; `design-promote` requires review DoD; `plan` requires promotion or the design-block collapse; `impl` requires plan or pending fix state; `impl-test` requires impl build/lint; `impl-review` requires impacted tests; `retro` requires review DoD; `pr` requires review DoD plus a completed `retro`. Missing predecessor emits `ABORT — precondition not met: <artifact>`.
+`audit` requires accepted scope; `design` requires audit or an audit skip; `design-review` requires produced in-scope drafts; `design-promote` requires review DoD; `plan` requires promotion or the design-block collapse; `impl` requires plan or pending fix state; `impl-test` requires impl build/lint; `impl-review` requires impacted tests; `cleanup` requires review DoD; `retro` requires `cleanup` or its no-op skip; `pr` requires review DoD plus a completed `retro`. Missing predecessor emits `ABORT — precondition not met: <artifact>`.
 
-The chain above is `standard`'s. In `lite` (`sprint-lifecycle.md` "Workflows") `plan` requires audit or an audit skip, `design-promote` requires impl-review DoD and `retro` requires design-promote; every other requirement is as above.
+The chain above is `standard`'s. In `lite` (`sprint-lifecycle.md` "Workflows") `plan` requires audit or an audit skip, `design-promote` requires impl-review DoD, `cleanup` requires design-promote and `retro` requires `cleanup` or its no-op skip; every other requirement is as above.
 
 ## Re-run
 

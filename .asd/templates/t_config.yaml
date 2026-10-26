@@ -7,12 +7,17 @@ user_gates: strict # adaptive | strict; hard gates always require user approval
 # Values: enabled | disabled. See .asd/rules/sprint-lifecycle.md "Self-hosting".
 self_hosting: disabled
 
+# Cleanup phase after impl-review (dead-code removal checkpoint). Absent field = enabled.
+# Values: enabled | disabled
+cleanup: enabled
+
 # Optional sprint documents and their persistent docs counterpart.
 # Defaults: see .asd/rules/sprint-lifecycle.md "Optional documents".
 documents:
   audit: auto          # auto | always | off
   prd: enabled         # enabled | disabled; design/prd.html + persistent requirements
-  ux_spec: enabled     # enabled | disabled; ux-spec, design-system gate, design-md-delta
+  ux_spec: enabled     # enabled | disabled; sprint ux-spec drafts and persistent ux-spec docs
+  design_system: enabled # enabled | disabled; design-system gate, design-md-delta. Absent within an existing documents group = ux_spec value
   adr: enabled          # enabled | disabled; adr.html (sprint-scoped only; folds into existing persistent docs at design-promote)
 
 # Language for user-facing interaction.

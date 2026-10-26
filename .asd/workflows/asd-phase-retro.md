@@ -5,7 +5,7 @@ Owner: inline orchestrator; dispatches none.
 ## Entry
 
 ```json
-{"requires": ["active sprint at .asd/sprints/<NNN-slug>/", "review DoD met at impl-review (checkpoints.md per-phase preconditions)", "state.json phase advanced from the frozen workflow's predecessor (sprint-lifecycle.md 'Workflows'): impl-review (standard) or design-promote (lite)"], "ops": ["context: node .asd/runtime.js context --phase retro --role orchestrator at entry, read it; --out per agent-protocol.md 'Dispatch payload'", "append friction: F-N to <sprint>/friction-log.md per sprint-lifecycle.md 'Friction log'"]}
+{"requires": ["active sprint at .asd/sprints/<NNN-slug>/", "review DoD met at impl-review (checkpoints.md per-phase preconditions)", "state.json phase advanced from cleanup, run or no-op skipped (checkpoints.md 'Precondition chain')"], "ops": ["context: node .asd/runtime.js context --phase retro --role orchestrator at entry, read it; --out per agent-protocol.md 'Dispatch payload'", "append friction: F-N to <sprint>/friction-log.md per sprint-lifecycle.md 'Friction log'"]}
 ```
 
 ## Inputs

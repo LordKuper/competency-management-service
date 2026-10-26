@@ -20,6 +20,7 @@ responsibility:
 |---|---|---|---|---|
 | 1 | {{low/medium/high/critical}} | {{location}} | {{description}} | {{fix}} |
 
+<!-- Row 1 shows the cell shape only, never a placeholder: with no kept findings the table is its header and separator rows only -->
 <!-- Severity cell: exactly one of low|medium|high|critical, nothing else (no CLI label) -->
 
 ## Dropped findings (counts only)

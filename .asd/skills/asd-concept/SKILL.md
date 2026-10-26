@@ -1,9 +1,9 @@
 ---
 {
   "name": "asd-concept",
-  "description": "Forms or edits the project concept document via asd-ba, branching by silent detection into one of four flows (no idea / vague idea / clear vision / brownfield extraction) and converging through a per-section lock-in loop. Use when the user runs /asd-concept, when asd-init detects a missing concept.html and suggests this skill, or when the user asks to define, draft, refine, edit, rewrite, or reverse-engineer the project concept, vision, target users, or value proposition.",
+  "description": "Forms or edits the project concept document inline, branching by silent detection into one of four flows (no idea / vague idea / clear vision / brownfield extraction) and converging through a per-section lock-in loop. Use when the user runs /asd-concept, when asd-init detects a missing concept.html and suggests this skill, or when the user asks to define, draft, refine, edit, rewrite, or reverse-engineer the project concept, vision, target users, or value proposition.",
   "claude": {
-    "allowed-tools": "Read Glob Grep AskUserQuestion Task Bash(node .asd/runtime.js:*)"
+    "allowed-tools": "Read Write Edit Glob Grep Bash AskUserQuestion"
   }
 }
 ---
@@ -12,7 +12,7 @@
 
 ## Purpose
 
-Form or edit the project concept document via `asd-ba`: create, edit or reverse-engineer `docs/product/concept.html`.
+Create, edit or reverse-engineer `docs/product/concept.html`, authored by the main orchestrator itself.
 
 ## Preconditions
 
@@ -28,6 +28,8 @@ Form or edit the project concept document via `asd-ba`: create, edit or reverse-
 
 ## Steps
 
+Build the orchestrator bundle first and read it: `node .asd/runtime.js context --role orchestrator --phase concept --out <scratch-dir>/orchestrator-concept.context.md` (`agent-protocol.md` "Dispatch payload").
+
 ### Phase 1 — silent detection (NO asking)
 
 Scan in order:
@@ -38,84 +40,58 @@ Scan in order:
 
 ### Phase 2 — variant choice (only if Phase 1 did not route to edit)
 
-Request user decision, four options:
+Request user decision, four options (a brownfield candidate defaults D; the user may override):
 - **A** — No idea yet, want to explore
 - **B** — Vague idea, need shaping
 - **C** — Clear vision, will describe
 - **D** — Work already started (brownfield), extract what exists
 
-Phase 1 brownfield candidates auto-suggest D as default; user may override.
+### Phase 3 — flow per variant
 
-### Phase 3 — flow per variant (each delegates to `asd-ba`)
+**A — divergent brainstorm**
+- Request user input, multi-field one-shot: Lens (Problem-first / User-first / Market-first / Tech-first / Capability-first), Horizon (weeks / months / 1-2 years / multi-year), Maturity (first product / shipped before / domain expert)
+- Generate 3 distinct concept directions anchored on the lens; request user decision: pick 1 of 3 / regenerate
 
-**Variant A — divergent brainstorm**
-- Request user input, multi-field one-shot:
-  - Lens: Problem-first / User-first / Market-first / Tech-first / Capability-first
-  - Horizon: weeks / months / 1-2 years / multi-year
-  - Maturity: first product / shipped before / domain expert
-- Delegate to agent `asd-ba`: generate 3 distinct concept directions anchored on chosen lens
-- Request user decision (options): pick 1 of 3 / regenerate
-- Proceed to Phase 4
+**B — seeded brainstorm**
+- Skip the lens question; generate 3 directions from the raw user hint; request user decision: pick 1 of 3 / regenerate
 
-**Variant B — seeded brainstorm**
-- Skip lens question
-- Delegate to agent `asd-ba` with raw user hint; generate 3 directions
-- Request user decision: pick 1 of 3 / regenerate
-- Proceed to Phase 4
+**C — clear vision**
+- Request user input: the concept in the user's own words; draft per `t_concept.html` (required sections first; optional offered per section)
 
-**Variant C — clear vision**
-- Request user input: describe the concept in own words
-- Delegate to agent `asd-ba` with that description
-- BA drafts per `t_concept.html` (required sections first; optional offered per-section)
-- Proceed to Phase 4
-
-**Variant D — brownfield extraction**
-- Delegate to agent `asd-ba` with payload: candidate paths (repo-search results), template
-- BA scans, extracts draft per template; each filled section tagged `source: <path:line>` or `source: inferred`
-- Draft sets `provenance: reverse-engineered` and `source: <primary origin>` in frontmatter
-- Proceed to Phase 4
+**D — brownfield extraction**
+- Scan the repo-search results; draft per template, each filled section tagged `source: <path:line>` or `source: inferred`
+- Frontmatter: `provenance: reverse-engineered`, `source: <primary origin>`
 
 ### Phase 4 — convergence (universal across variants)
 
-- Before the first section, ONLY when `docs/product/concept.html` does not yet exist (create mode) — write a skeleton per `t_concept.html`, with placeholder sections. In edit mode (file already exists), skip this step and enter the per-section loop directly against the existing file.
-- Section-by-section:
-  - BA drafts the section, translates to `language.docs`, writes it into `docs/product/concept.html` on disk
-  - Post the file path + a short delta summary of what the section now says in `language.chat` (never the full section body) per `language-policy.md`
-  - Apply `checkpoints.md`: lock in automatically only when adaptive authority/evidence covers this routine section; otherwise request **Lock in / Revise / Skip**.
-  - on B: collect feedback, BA revises, rewrites the section in place, re-posts delta summary, re-ask
-  - on C: remove that section (heading + placeholder content) from the on-disk file entirely, then continue to the next section
-  - repeat until A
-  - next section per `t_concept.html` order (required first, then per-optional inclusion choice)
+- Create mode only (`docs/product/concept.html` absent): write a skeleton per `t_concept.html` with placeholder sections first. Edit mode enters the loop against the existing file.
+- Per section, per `core.md` "Incremental writing": draft, translate to `language.docs`, write it to disk, post the path and a short delta summary in `language.chat` (never the body, `language-policy.md`).
+  - Apply `checkpoints.md`: lock in automatically only when adaptive authority/evidence covers this routine section; otherwise request **Lock in / Revise this section / Skip**.
+  - Revise: collect feedback, rewrite in place, re-post. Skip: remove the section (heading and placeholder) from the file.
+  - Next section per `t_concept.html` order (required first, then per-optional inclusion choice).
 
 ### Phase 5 — final artifact-level gate
 
-- `docs/product/concept.html` already reflects every locked-in section from Phase 4 (content write is not deferred — only this gate's `accept` is)
-- write-then-review-accept per `checkpoints.md` mechanic: post the path + a combined delta summary in chat (never the body); user replies `accept` (advance) or feedback (revise in place, re-post) — feedback naming a specific section may re-enter Phase 4 for that section before rewriting
+- The file already holds every locked-in section. Write-then-review-accept per `checkpoints.md`: post the path and a combined delta summary (never the body); `accept` advances, feedback revises in place (a feedback naming a section may re-enter Phase 4 for it)
 - emit COMPLETED
 
 ### Phase 6 — handoff
 
-- Print handoff suggestion in `language.chat`:
-  - if `docs/architecture/stack.html` absent → "Next: run `/asd-stack` to define the tech stack"
-  - else → "Next: run `/asd-sprint` to start a sprint"
-- NO auto-dispatch
+- Print in `language.chat`: `docs/architecture/stack.html` absent → "Next: run `/asd-stack` to define the tech stack"; else "Next: run `/asd-sprint` to start a sprint". NO auto-dispatch
 
 ### Edit mode (Phase 1 routed here)
 
-- Show existing concept summary
-- Request user decision: multi-select which sections to edit (per template) or add new optional
-- per chosen section: enter Phase 4 lock-in loop
-- Phase 5 + 6 as usual
+- Show the existing concept summary; request user decision: multi-select sections to edit (per template) or add optional ones
+- Per chosen section enter Phase 4; Phases 5-6 as usual
 
 ## Rules
 
 - never: mix the multi-field and options request shapes in one request.
-- must: before each `asd-ba` delegation, build `inputs.context`: `node .asd/runtime.js context --role asd-ba --phase concept --out <scratch-dir>/concept-<dispatch id>.context.md` (`agent-protocol.md` "Dispatch payload").
 
 ## Delegates
 
 ```json
-{"agents": ["asd-ba"], "skills": []}
+{"agents": [], "skills": []}
 ```
 
 ## Outputs
@@ -133,6 +109,6 @@ SKILL: asd-concept | MODE: <fresh|edit|reverse-engineered> | VARIANT: <A|B|C|D|e
 ## References
 
 - `.asd/templates/t_concept.html` (required vs optional sections — SSoT)
-- `.asd/rules/core.md` (QODDA, Simplicity Default)
-- `.asd/rules/language-policy.md` (section approval flow, chat-vs-docs)
+- `.asd/rules/core.md` (QODDA, Simplicity Default, Incremental writing)
+- `.asd/rules/language-policy.md` (chat-vs-docs)
 - `.asd/rules/artifact-layout.md` (concept.html path, provenance)

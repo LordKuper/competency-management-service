@@ -1,17 +1,17 @@
 # ASD Workflow: Scope
 
-Owner: inline orchestrator; dispatches `asd-ba`.
+Owner: inline orchestrator; dispatches `asd-advisor` only for an escalation consult (`agent-protocol.md` "Relay").
 
 ## Entry
 
 ```json
-{"requires": ["no other active sprint; a merged-unclosed sprint asd-sprint passes is exempt (step 1 closure write)"], "modes": {"new": "no sprint folder for this scope yet", "re-entry": "state.json phase=scope"}, "ops": ["context: node .asd/runtime.js context --phase scope --role orchestrator at entry, read it; --role asd-ba before the ## Dispatch delegation, passed as inputs.context; --out per agent-protocol.md 'Dispatch payload'", "append friction: F-N to <sprint>/friction-log.md per sprint-lifecycle.md 'Friction log'", "timing: a dispatch op around the ## Dispatch delegation (sprint-lifecycle.md 'Operation timing')"]}
+{"requires": ["no other active sprint; a merged-unclosed sprint asd-sprint passes is exempt (step 1 closure write)"], "modes": {"new": "no sprint folder for this scope yet", "re-entry": "state.json phase=scope"}, "ops": ["context: node .asd/runtime.js context --phase scope --role orchestrator at entry, read it; --role asd-advisor before each ## Dispatch delegation, passed as inputs.context; --out per agent-protocol.md 'Dispatch payload'", "append friction: F-N to <sprint>/friction-log.md per sprint-lifecycle.md 'Friction log'", "timing: a dispatch op around each ## Dispatch delegation (sprint-lifecycle.md 'Operation timing')"]}
 ```
 
 ## Inputs
 
 ```json
-["raw scope (plain chat message, obtained when absent)", ".asd/project/config.yaml", "active and legacy archived sprints", "asd-sprint carry: merged-unclosed sprint path and confirmed PR number, update choice, continue choice", "<sprint>/research.md (re-entry stage evidence, step 2)", "asd-ba research return (step 2 stage (b))", "retro-candidates output (step 2a)"]
+["raw scope (plain chat message, obtained when absent)", ".asd/project/config.yaml", "active and legacy archived sprints", "asd-sprint carry: merged-unclosed sprint path and confirmed PR number, update choice, continue choice", "<sprint>/research.md (re-entry stage evidence, step 2)", "retro-candidates output (step 2a)"]
 ```
 
 ## Steps
@@ -27,9 +27,8 @@ Owner: inline orchestrator; dispatches `asd-ba`.
    **Re-entry**: skip each sub-step already done — fast-forward, clean tree, branch, closure write, folder and ledger, workflow choice, state seed, Goal (it stands as the raw scope) — then continue at step 2.
 2. Seed state and decisions log; a carried ASD update choice takes a `gate_decisions` entry `gate: asd update`, `decision_actor: user`, and one decisions-log line. Then run staged solution design (`sprint-lifecycle.md` "Staged solution design") before any `AC-N` is written:
    - (a) Interview the user in chat; write the raw scope and the answers to `<sprint>/research.md` Requirements (`t_research.md`), that section only.
-   - (b) Dispatch `asd-ba` in `scope` mode (`## Dispatch`). Its `COMPLETED` → write the return body's Findings and Approaches to `research.md` at once. Its `FAILED` → request user decision: retry, skip (write Findings `no web research: <cause>` then, plus one decisions-log line) or abort [GATE hard: abort]; its `ABORT` → relay, halt.
+   - (b) Research inline, then write its Findings (each with its source URL) and Approaches to `research.md` at once. Unable to search → escalation consult, then request user decision: retry, skip (write Findings `no web research: <cause>` then, plus one decisions-log line) or abort [GATE hard: abort].
    - (c) Refinement interview, then request user decision on the approach [GATE hard: approach choice]; write the refined requirements and the `Chosen` line to `research.md`, plus one decisions-log line.
-   - BA `QUESTION` → `agent-protocol.md` "Relay" `QUESTION`; BA `ADVICE_NEEDED` → "Relay" `ADVICE_NEEDED`.
    - **Re-entry**: skip the seed once `state.json` exists, and each stage `research.md` already evidences — (a) Requirements, (b) Findings, (c) a `Chosen` line — each counting only with content and no `{{` placeholder.
 
    Then refine scope into `sprint.md` with stable `AC-N` ids from `research.md`; ask the user only for ambiguity that prevents a concrete scope. Verify every retrospective-derived criterion against current `HEAD` — one asserting host behaviour also against the host docs or a live dispatch — before writing it, and record that verification in `decisions-log.md` per `sprint-lifecycle.md` "Orchestration and adaptive gates".
@@ -41,14 +40,14 @@ Owner: inline orchestrator; dispatches `asd-ba`.
    - Each row put to the user is shown at that gate before its disposition is asked, with its root cause, its proposed edits (files and change, from the `HEAD` re-verification), and the consequences of each choice — including it (cost per `checkpoints.md` "Criterion cost surfacing", risk, saving), rejecting it (its guardrail never lands) and deferring it (not this sprint) — since a bare row id and guardrail is no basis for the decision. An `A-N` row's root cause is that of its `Addresses` F-N in the source retro's Analysis plus the source friction entry's Impact; a `P-N` row has no root-cause field, so the gate states its `Expected saving` and says so, never inventing a cause.
    - Dispositions are written to the backlog on scope acceptance (step 4) and land with the sprint PR; an aborted sprint loses them, so they are offered again.
 3. Read `documents.audit`: accept only `auto|always|off`, any other value blocks (`sprint-lifecycle.md` "Orchestration and adaptive gates"); `auto` skips only a complete mechanical scope with no behaviour, contract, migration or gate impact. Freeze the effective boolean into `state.json.documents.audit` (no separate reason field — the rule is deterministic). Reevaluate after an accepted scope expansion.
-3a. Seed the remaining state placeholders: `{{USER_GATES}}` from `config.user_gates` (accept only `adaptive|strict`; absent -> `strict`); `{{DOC_PRD}}`/`{{DOC_UX_SPEC}}`/`{{DOC_ADR}}` from normalized `documents.*` (absent group -> all enabled); `{{DOC_C4}}` as the effective diagram (`sprint-lifecycle.md` "Optional documents"). No placeholder literal may survive the write. At the scope gate (step 4) the user may skip an enabled optional document (`prd`/`ux_spec`/`adr`/`c4`) for this sprint only [GATE hard: document skip] — narrow-only: overwrite its frozen value with `false` and log one decisions-log line "<doc> skipped this sprint by user" (`sprint-lifecycle.md` "Optional documents").
+3a. Seed the remaining state placeholders: `{{USER_GATES}}` from `config.user_gates` (accept only `adaptive|strict`; absent -> `strict`); `{{DOC_PRD}}`/`{{DOC_UX_SPEC}}`/`{{DOC_DESIGN_SYSTEM}}`/`{{DOC_ADR}}` from normalized `documents.*` (absent group -> all enabled; `design_system` absent from a present group -> the `ux_spec` value); `{{CLEANUP}}` from top-level `cleanup` (absent -> enabled); `{{DOC_C4}}` as the effective diagram (`sprint-lifecycle.md` "Optional documents"). No placeholder literal may survive the write. At the scope gate (step 4) the user may skip an enabled optional document (`prd`/`ux_spec`/`design_system`/`adr`/`c4`) for this sprint only [GATE hard: document skip] — narrow-only: overwrite its frozen value with `false` and log one decisions-log line "<doc> skipped this sprint by user" (`sprint-lifecycle.md` "Optional documents").
 4. The initial scope is hard until it is explicitly accepted [GATE hard: scope], because it establishes authority for the adaptive policy. That gate offers to split unrelated strands, or `AC-N`s changing independent contracts, into consecutive sprints; a split-off part goes to `sprint.md` Out of scope plus one decisions-log line. It shows step 2a's `upstream: true` rows and its `closed` rows with their evidence, no question, and puts its other rows [GATE hard: retro intake dispositions], as step 2a requires; it is not accepted while a row put to the user lacks a choice. Afterwards record the accepted user decision and write step 2a's dispositions to `.asd/project/retro-backlog.md` (created from `t_retro-backlog.md` at the first write). A fully specified already-authorized outcome is recorded without inventing another decision.
 5. Exit per `## Exit`.
 
 ## Dispatch
 
 ```json
-[{"agent": "asd-ba", "when": "step 2 stage (b)", "payload": ["inputs.context", "inputs.research (Requirements)"], "signals": ["COMPLETED", "QUESTION", "ADVICE_NEEDED", "FAILED", "ABORT"]}]
+[{"agent": "asd-advisor", "when": "escalation consult before a user escalation (agent-protocol.md 'Relay')", "payload": ["turn_budget", "inputs.context", "question, options, context paths"], "signals": []}]
 ```
 
 ## Exit

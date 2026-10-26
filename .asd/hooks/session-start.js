@@ -131,9 +131,9 @@ function nextPhase(phases, current) {
   return phases[idx + 1];
 }
 
-// Design-block collapse test (sprint-lifecycle.md): every frozen design document is false.
+// Design-block collapse test (sprint-lifecycle.md): every frozen design document is false (an absent `design_system` takes the `ux_spec` value).
 function isDesignCollapsed(documents) {
-  return Boolean(documents) && typeof documents === 'object' && ['prd', 'ux_spec', 'adr', 'c4'].every(name => documents[name] === false);
+  return Boolean(documents) && typeof documents === 'object' && ['prd', 'ux_spec', 'design_system', 'adr', 'c4'].every(name => (name === 'design_system' && documents[name] === undefined ? documents.ux_spec : documents[name]) === false);
 }
 
 // reviews.impl is either wave-aware ({wave, waves: [node, ...]}) or the
