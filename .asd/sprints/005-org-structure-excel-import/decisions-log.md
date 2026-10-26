@@ -53,3 +53,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Каждое решение либо следует буквальному AC, либо закрывает инвариант (ноль администраторов при двух увольнениях, совмещение вне перечня), либо нужно для AC-24; замер: preview 1,9–2,9 с, apply 6,0–8,6 с на 10 000 строк.
 - **Affected docs**: [plan.md](./plan.md)
 - 2026-10-26 — route Task 4: standard, dispatch HEAD b8c9273
+
+## 2026-10-26 — Task 4: отмеченные выборы приняты
+
+- **Decision**: Мастер — в новой папке `web/src/features/org-import/`, маршрут `/desk/org-import` из `desk/routes.ts`; без отдельного диалога перед «Применить»; блок AC-18 по дочерним — только по `missingUnits.parentId`, как на сервере; случай «два администратора уволены вместе» ловит сервер (409 с причиной); `preview`/`apply` через `useMutation`; признак `planChanged` читается из ответа openapi-fetch.
+- **Rationale**: Решения на шаге «Отсутствующие» и есть подтверждение; подразделение с дочерним из файла не бывает отсутствующим; серверная проверка набора администраторов уже есть.
+- **Affected docs**: [plan.md](./plan.md)
