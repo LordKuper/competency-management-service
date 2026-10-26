@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 import { queryClient } from "../api/queryClient";
@@ -100,6 +100,21 @@ describe("the position catalogue address (AC-1, AC-19)", () => {
     expect(
       await screen.findByRole("heading", { name: "Должности" }),
     ).toBeInTheDocument();
+  });
+
+  it("opens the catalogue for an HR account and asks for the positions", async () => {
+    fakeApi.on("GET /api/v1/positions", () =>
+      Response.json({ items: [], total: 0, page: 1, pageSize: 20 }),
+    );
+
+    await openAs(["Hr"], "/positions");
+
+    expect(
+      await screen.findByRole("heading", { name: "Должности" }),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(fakeApi.calls("GET /api/v1/positions")).toHaveLength(1),
+    );
   });
 
   it("gives an ordinary user the not-found page and requests no positions", async () => {
