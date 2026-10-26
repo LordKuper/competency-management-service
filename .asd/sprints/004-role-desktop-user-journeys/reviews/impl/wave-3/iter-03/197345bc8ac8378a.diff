@@ -1,0 +1,386 @@
+diff --git a/.claude/agent-memory/asd-dev-critical/project_ef-left-join-count-and-visibility-facts.md b/.claude/agent-memory/asd-dev-critical/project_ef-left-join-count-and-visibility-facts.md
+index a2aa9bd..23ce608 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_ef-left-join-count-and-visibility-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_ef-left-join-count-and-visibility-facts.md
+@@ -1,6 +1,6 @@
+ ---
+ name: ef-left-join-count-and-visibility-facts
+-description: Unit tree head name and employee count (Task 14) - EF left join over a GroupBy count needs (int?)x.Count ?? 0, correlated subqueries vs group join plans, role-visibility rule, seeded-DB parity method
++description: Unit tree head name and employee count - EF left join over a GroupBy count needs (int?)x.Count ?? 0, correlated subqueries vs group join plans, role-visibility rule, seeded-DB parity method
+ metadata:
+   type: project
+ ---
+@@ -13,5 +13,5 @@ Verified on EF Core 10.0.12 / Npgsql 10.0.3 / PostgreSQL 18.6 with 1000 units an
+ - Parity method: seed with `generate_series` and `md5('u'||n)::uuid` ids (deterministic, joinable from SQL), an inactive-leaf rule so active units never have inactive ancestors, a few deliberately invalid active units with non-working heads to exercise the User filter, a User account created through `POST /api/v1/users` (role `User`, `employeeId`) and logins through `/auth/login` with `Sec-Fetch-Site: same-origin`; then a node script takes the `.competency.auth` cookie from the curl jar (`#HttpOnly_` prefix, tab-separated, fields 5/6) and compares `employeeCount` with `GET /employees?orgUnitId=..&includeDescendants=false&pageSize=1` `total` and `headName` with `GET /employees/{id}` for every unit.
+ - A positional record with `<param>` docs for only some parameters fails the build (CS1573 under TreatWarningsAsErrors); document such a record in its type summary only.
+ 
+-**Why:** each cost a failed run or a decision in Task 14.
++**Why:** each cost a failed run or a design decision.
+ **How to apply:** any aggregate added to a list endpoint, or a before/after check of role-dependent counts (see also [[npgsql-search-and-result-type-gotchas]], [[vs-debug-build-lock-and-release-config]]).
+diff --git a/.claude/agent-memory/asd-dev-critical/project_git-commit-only-option-order.md b/.claude/agent-memory/asd-dev-critical/project_git-commit-only-option-order.md
+index de2abc4..1b12805 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_git-commit-only-option-order.md
++++ b/.claude/agent-memory/asd-dev-critical/project_git-commit-only-option-order.md
+@@ -13,4 +13,4 @@ In `git commit --only -F - -- <paths>`, every option (`--only`, `-F -`, `-m`, 
+ 
+ A file already removed with `git rm` is no longer a valid `git add -- <path>` pathspec: one such path makes the whole `git add` fail and stage nothing. Leave it out of `git add`, but list it after `--` in `git commit --only` (HEAD knows it, so the deletion is committed).
+ 
+-`git commit --only -- <paths>` commits the worktree content of those paths, never the index, so it cannot commit part of a file. When one file carries fixes for several findings (one commit each), stage the chosen hunks with `git apply --cached --recount -` fed from `git diff -U1 -- <file>` (header + picked `@@` hunks; re-list hunks after each commit, indices shift), then a plain `git commit -F -` with nothing else in the index.
++`git commit --only -- <paths>` commits the worktree content of those paths, never the index, so it cannot commit part of a file. When one file carries fixes for several findings, commit that file once with every fix in it, one `ASD-Task:` trailer per finding id, in the same one-command form (`git add -- <paths> && git diff --cached --check -- <paths> && git commit --only -F - -- <paths>`, `git reset -q -- <paths>` on failure). Hunk staging with `git apply --cached` plus a plain `git commit` breaks that form: the index stays shared between commands, and a plain commit takes whatever a sibling dispatch staged.
+diff --git a/.claude/agent-memory/asd-dev-critical/project_web-focus-ring-and-antd-css-facts.md b/.claude/agent-memory/asd-dev-critical/project_web-focus-ring-and-antd-css-facts.md
+index 6c9370c..bb8bf2f 100644
+--- a/.claude/agent-memory/asd-dev-critical/project_web-focus-ring-and-antd-css-facts.md
++++ b/.claude/agent-memory/asd-dev-critical/project_web-focus-ring-and-antd-css-facts.md
+@@ -17,5 +17,6 @@ Facts that decided the focus-ring work in `web/`, checked in headless Chrome, no
+ - **Keyboard check with no backend**: Node 24's global `WebSocket` talks CDP directly (no `ws` package); `Fetch.enable` on `<base>/api/*` plus `Fetch.fulfillRequest` serves mock JSON; `Input.dispatchKeyEvent` (`rawKeyDown`, `char` with `text` for Enter/Space, `keyUp`) gives real Tab/Enter/arrow/Esc, and `:focus-visible` matches after such keys; `Emulation.setEmulatedMedia` with `prefers-reduced-motion` must be set before the navigation because the theme reads the media query at module load. Wait ~450 ms before reading outlines (antd transitions them).
+ 
+ - **`ConfigProvider componentDisabled` loses to an explicit `disabled={false}`** (antd 6: `customDisabled ?? contextDisabled`, same in Checkbox and `Form disabled`). To lock a whole editor through the context, children must pass `disabled={cond || undefined}`; native `<button>`s ignore the context and need their own prop.
++- **A `Form disabled={isSubmitting}` refuses focus until `useFormSubmit`'s `finally` re-renders it**: a `focus()` queued in the save's `catch` (microtask) hits the still-disabled field in a browser. Keep the field in state and focus in an effect once `!isSubmitting`. jsdom hides the bug when the mocked reply settles in microtasks, because the disabled render never commits.
+ **Why:** each cost a failed run or a wrong first fix while making keyboard focus match the design system.
+ **How to apply:** any change to global focus, ring or motion CSS, antd Dropdown/Menu keyboard behaviour, or a browser check of `web/` without the API (see also [[web-cdp-real-backend-smoke-facts]], [[web-org-card-hierarchy-facts]]).
+diff --git a/.claude/agent-memory/asd-reviewer-correctness/feedback_no-prior-iteration-reports.md b/.claude/agent-memory/asd-reviewer-correctness/feedback_no-prior-iteration-reports.md
+index bffd819..0bc832e 100644
+--- a/.claude/agent-memory/asd-reviewer-correctness/feedback_no-prior-iteration-reports.md
++++ b/.claude/agent-memory/asd-reviewer-correctness/feedback_no-prior-iteration-reports.md
+@@ -7,6 +7,6 @@ metadata:
+ 
+ Never Read any file under another iteration's review directory (`reviews/design/iter-<previous>/…`, any wave): not `correctness.md`, not `*.findings.json`, not manifests. Only the current `iter-NN/` dir plus the payload's manifest and `.diff`.
+ 
+-**Why:** `review-policy.md` "Clean-context review iteration" forbids it. I opened the previous `correctness.md` at the start of two iterations in a row, and both times I had to report it as a procedure deviation. A Glob over `reviews/design/**` lists the old reports right next to the current files, and that makes it easy to open one.
++**Why:** `review-policy.md` "Clean-context review iteration" forbids it, with no exception. Prior-iteration data reaches a reviewer only as explicit payload input from the phase workflow, never by opening old reports. I opened the previous `correctness.md` at the start of two iterations in a row, and both times I had to report it as a procedure deviation. A Glob over `reviews/design/**` lists the old reports right next to the current files, and that makes it easy to open one.
+ 
+-**How to apply:** Glob only `reviews/<phase>/iter-<current>/*` (impl-review: `reviews/impl/wave-<K>/iter-<current>/*`). To see what changed, use the `.diff` and decisions-log.md, never earlier reports. Exception: a dispatch that explicitly asks to re-check a prior iteration's finding may read that one prior report. If a prior report gets opened anyway, disclose it in the report's Coverage note. Related: [[review-method-no-shell]], [[design-review-derived-actor-paths]].
++**How to apply:** Glob only `reviews/<phase>/iter-<current>/*` (impl-review: `reviews/impl/wave-<K>/iter-<current>/*`). To see what changed, use the `.diff`, decisions-log.md and any prior-iteration data the payload supplies, never earlier reports. If a prior report gets opened anyway, disclose it in the report's Coverage note. Related: [[review-method-no-shell]], [[design-review-derived-actor-paths]].
+diff --git a/.claude/agent-memory/asd-tester-critical/MEMORY.md b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+index 0a175e8..804e233 100644
+--- a/.claude/agent-memory/asd-tester-critical/MEMORY.md
++++ b/.claude/agent-memory/asd-tester-critical/MEMORY.md
+@@ -1,4 +1,4 @@
+ - [Fail-first and `none` honesty](feedback_fail-first-and-none-honesty.md) — transcribe the first-failing assertion, never justify `none` with "it's prose", never assert a qualifier where the substance is assertable
+ - [Mutation runs trip the hash ledger](project_mutation-runs-trip-the-hash-ledger.md) — editing a managed_paths file to prove a mutation also fails upstream_hashes; expected noise
+ - [Testability envelope](project_testability-envelope.md) — what is testable here, honest `none` decisions, mutation and fixture traps, and the §7 in-body-comment ban.
+-- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/antd Select and pager/filter-wiring web traps, web pre-fix copy and mutation runner, fake fetch, forcing a 5xx, class-shared org, antd disabled-context locks, container connection limit (53300), guard tests vs fail-first, draft-read, cascade-right, hidden-blocker, HR-superior and unlisted-draft arrangements, desk-page web tests, scenario-page web tests (leave-guard dialog, forced failure and retry, step lock, 412 reread, server search), background-refresh edit-retention tests, redundant-gate mutants, form lock tests
++- [Competency test harness](project_competency-test-harness.md) — API host on shared Testcontainers, mail capture, row-lock races, backend mutation runner, journal/version stamping, schema width sweep, jsdom/dnd-kit/antd Select and pager/filter-wiring web traps, web pre-fix copy and mutation runner, fake fetch, forcing a 5xx, class-shared org, antd disabled-context locks, container connection limit (53300), guard tests vs fail-first, draft-read, cascade-right, hidden-blocker, HR-superior and unlisted-draft arrangements, desk-page web tests, scenario-page web tests (leave-guard dialog, forced failure and retry, step lock, 412 reread, server search), background-refresh edit-retention tests, redundant-gate mutants, form lock tests, focus after a refused save, 412 reread-name tests, vitest related set
+diff --git a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+index 747547e..be661b7 100644
+--- a/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
++++ b/.claude/agent-memory/asd-tester-critical/project_competency-test-harness.md
+@@ -1,6 +1,6 @@
+ ---
+ name: competency-test-harness
+-description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate, migration data-transfer tests, multi-save atomicity by trigger, throwaway Postgres for seed scripts, the shared container's connection limit, guard tests versus fail-first, reusable arrangements for draft-entry reads, cascade rights, hidden publication blockers, an HR-role superior approver, unlisted drafts of a publication list, desk-page web tests and scenario-page web tests (leave-guard dialog, forced failure and retry, step lock, 412 reread, server search), background-refresh (focus, online) edit-retention tests, redundant-gate mutants, form lock tests (table header checkbox included) and modal close-with-no-question tests
++description: How the Competency service's backend and web tests are built and the traps met building them - child-process API host, shared Testcontainers, Mailpit mail capture, row-lock race tests, scratch-copy mutation runners (backend and web) and pre-fix-sha runs (probe before a theory), delete-versus-transition race, list-versus-single read tests, jsdom, dnd-kit, antd Select, pagination and Testing Library quirks, filter-wiring tests, the class-shared org, antd disabled-context locks, the tech-reference gate, migration data-transfer tests, multi-save atomicity by trigger, throwaway Postgres for seed scripts, the shared container's connection limit, guard tests versus fail-first, reusable arrangements for draft-entry reads, cascade rights, hidden publication blockers, an HR-role superior approver, unlisted drafts of a publication list, desk-page web tests and scenario-page web tests (leave-guard dialog, forced failure and retry, step lock, 412 reread, server search), background-refresh (focus, online) edit-retention tests, redundant-gate mutants, form lock tests (table header checkbox included), modal close-with-no-question tests, focus after a refused save and 412 reread-name tests
+ metadata:
+   type: project
+ ---
+@@ -56,7 +56,7 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Read-access rewrites need a test per path: single-version reads (`GET matrix-versions/{id}`) and the matrix lists (`GET matrices`, `GET matrices/{id}`, `…/versions`) use different code. A list test over two units of one page (the head of the root unit is the superior approver of the department's matrix but not of the team's) kills a per-unit cache keyed wrongly; a participant who acted and then lost the role kills a dropped acted-on lookup; a blocked nearer head makes the farther head the superior approver for draft-entry visibility. Unfiltered `GET matrices?pageSize=200` is safe on a class host (fewer than 200 matrices).
+ - A python or JS patch script written through a bash heredoc loses backslashes silently (a `replace` anchor stopped matching and nothing failed): write scripts with the Write tool, build line-ending separators with `String.fromCharCode(13)` and `grep -c` the result.
+ - Line endings: count CRLF pairs with python on the bytes (`count` of carriage return plus line feed); `grep -c` with a CR pattern reports 0 for a fully CRLF file in this shell. Worktree test files are a mix (some CRLF, most LF); `open(..., newline='')` keeps each file's own, but an Edit-tool edit of a CRLF worktree file left it LF (the index is LF by `.gitattributes`, so `git diff --stat` stays the size of the change): count carriage returns before a scripted edit and read the file's own ending in the script.
+-- Web pre-fix proof: `git archive <commit before the first fix> web` into a scratch directory, a junction for `node_modules` (`cmd //c "mklink /J node_modules <absolute path>"`), copy only the changed test files over it, `npx vitest run <files> --reporter=verbose`. Vitest does not typecheck, so new tests run against old code and fail on assertions. A wholesale-copied test file also brings the older tests of that file that the fix commit adapted: they go red too, so separate them by name before counting. Web mutation runner: one Node script, a single-anchor check per mutation, `vitest run <files> --reporter=json --outputFile=...`, read `assertionResults` with status failed, restore the file in `finally`; multi-line anchors are fine in a `git archive` web copy (LF). The runner starts `node node_modules/vitest/vitest.mjs run …` with an argument array, never `npx` with `shell: true`: the shell splits a `-t` pattern with spaces or `|` into file filters, the wrong tests run and the failures still look plausible.
++- Web pre-fix proof: `git archive <commit before the first fix> web` into a scratch directory, a junction for `node_modules` (from Git Bash: `MSYS_NO_PATHCONV=1 cmd /c "mklink /J $(cygpath -w "$PWD/node_modules") <windows target path>"`, `rm -rf node_modules` of the archive first; a quoted `cmd //c` form printed a garbled syntax error), copy only the changed test files over it, `npx vitest run <files> --reporter=verbose`. Vitest does not typecheck, so new tests run against old code and fail on assertions. A wholesale-copied test file also brings the older tests of that file that the fix commit adapted: they go red too, so separate them by name before counting. Web mutation runner: one Node script, a single-anchor check per mutation, `vitest run <files> --reporter=json --outputFile=...`, read `assertionResults` with status failed, restore the file in `finally`; multi-line anchors are fine in a `git archive` web copy (LF). The runner starts `node node_modules/vitest/vitest.mjs run …` with an argument array, never `npx` with `shell: true`: the shell splits a `-t` pattern with spaces or `|` into file filters, the wrong tests run and the failures still look plausible.
+ - `dotnet test --filter-class` and `--filter-method` together are ANDed: a class filter plus a method filter of another class runs zero tests (exit 8). Run the two kinds in separate invocations. The Windows console codepage breaks Cyrillic runner output piped through Python (`UnicodeEncodeError`), and a `print` of Cyrillic text from a Python script fails the same way: set `PYTHONIOENCODING=utf-8` or print `ascii(...)`, and write an extracted summary to a UTF-8 file and read it with the Read tool.
+ - Web test traps met with server-search pickers and paged tables: antd `Select` options are virtualised, so never count them, assert the request (`q`, `page`, `pageSize`) instead; the selected text also sits in the hidden dropdown, so scope it with `within(combobox.closest(".ant-select"))`; `getAllByRole` throws when nothing matches, use `queryAllByRole` for "no actions"; `findByRole("dialog", { name })` found nothing for `AppModal`, locate it by the `.ant-modal-title` text and `closest('[role="dialog"]')`; a pagination item is `getByTitle("2")` and its size changer `.ant-pagination-options .ant-select`; `toBeVisible()` fails inside modal bodies in jsdom, use `toBeInTheDocument()`; `Form.useWatch` is `undefined` on the first render, so a guard that clears a value must wait for the data of the watched unit (removing it reddens the control test). A mutation that keeps every excluded option can fail on the free option missing from the window of about eight rendered rows before it reaches the "excluded are absent" assert; keep one excluded option (`exclude.slice(1)`) to reach it.
+ - Removing `crypto.randomUUID` for a plain-HTTP test: `vi.stubGlobal("crypto", { getRandomValues: real.getRandomValues.bind(real) })` (a typed `(values: Uint8Array)` wrapper fails `tsc`), `vi.unstubAllGlobals()` in `afterEach`; a UUID builder is pinned by filling the bytes with 0x00 and 0xff, which shows the version and variant bits and the 8-4-4-4-12 layout.
+@@ -87,3 +87,6 @@ Backend integration tests run the real API (`dotnet Competency.Api.dll` from the
+ - Background-refresh test (an edit must survive a refetch): trigger inside `act` with `focusManager.setFocused(false); setFocused(true)` or `onlineManager.setOnline(false); setOnline(true)`; the control that the signal reached the cache is a stale active query that rereads on focus (positions of the unit), asserted `toBeGreaterThan(reads)`, never `reads + 1` (a remounting pre-fix copy rereads twice and the run stops at the control); then type one more letter before reading the field, which flushes the notifier. Restore both managers in `beforeEach` (`setFocused(undefined)`, `setOnline(true)`): their state outlives the test.
+ - Two sufficient gates (a query `enabled` flag and an adoption condition) make each single-gate mutant equivalent and green; only a multi-edit mutant removing both reddens the test. Record the pair as a ceiling and prove with the combined mutant. A mutant that survives on the old test file and dies on the new one (`swap` of the head version of the test file in the runner, `edits` array for several anchors) is the proof that a guard row was needed.
+ - Lock tests on antd forms: collect the KIND of every locked field into one list and assert it at three moments (idle `[]`, in flight all kinds, after a refusal `[]`); an explicit `disabled={false}` on a child control beats the Form's disabled context (fixed with `cond || undefined`). `userEvent` throws on a click at an element with `pointer-events: none` (a disabled antd checkbox), so the attempt to tick it uses `userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never })`. Collect the kinds as `Record<kind, HTMLElement[]>` and call a kind locked when `every` element of it is disabled, so a half-locked group (rows locked, header not) shows. An antd `Table` `rowSelection` header checkbox ("Select all", English aria-labels "Select all" / "Select row N" even under the Russian locale) takes its `disabled` from the rows' own explicit `getCheckboxProps`, never from the form's disabled context: a form `disabled` locks the rows and leaves the header usable (clicking it changed the selected count), so list it as its own kind; a red lock test for that is a code defect, and the fix is `getTitleCheckboxProps` or explicit row `disabled`. A hold on the save is `deferred<Response>()` on the route, the refusal is `held.resolve(problem(500, …))` and the check after it waits for the error alert text.
++- Focus after a refused save: jsdom's `focus()` ignores a disabled control, so a test of "the rejected field gets the focus" with an answer that settles at once (`problem(400)` returned from the handler) never commits the disabled render and stays green on code that focuses too early. Hold the answer with `deferred()`, wait for the field `toBeDisabled()`, resolve with the 400, then wait for `toHaveFocus()`; the pre-fix copy is red with the focus on a button. A guard in a focus effect (`!isSubmitting`) next to a state set in the same async chain is an equivalent mutant, because React batches `setRejectedField` and `setIsSubmitting(false)`; record it, do not chase it.
++- A 412 reread test needs a reread record that differs in every field the form shows (name, not only version): a form instance created above a keyed `Form` keeps its store across the remount, so a reread with the same name as the typed one cannot tell "shows the reread value" from "kept its own", and the red pre-fix run appears only once the names differ. Assert the effect of keeping the old value as a missing request (`calls(PUT)` length), not only the field text. Of two dependency mutants of a name effect (`base` only, `saved` only) each is caught by a different flow (edit versus create), so keep both flows.
++- Impacted web set without a native selector: `node node_modules/vitest/vitest.mjs related --run <changed files> --reporter=json --outputFile=<f>` lists the test files that import them through the module graph (route tables pull in `AppShell` and `authFlow` tests); add the files that carry the touched requirement tag by `grep -rl`.
+diff --git a/web/src/features/career/CompetencyModal.test.tsx b/web/src/features/career/CompetencyModal.test.tsx
+index 5988cc2..ee3c64d 100644
+--- a/web/src/features/career/CompetencyModal.test.tsx
++++ b/web/src/features/career/CompetencyModal.test.tsx
+@@ -274,16 +274,19 @@ describe("competency form while the competency is being saved (AC-61)", {
+     expect(lockedControls()).toEqual([]);
+   });
+ 
+-  it("moves the focus to the first field the server rejects", async () => {
+-    const user = open(EXISTING, () =>
+-      fakeApi.on(ROUTE, () =>
+-        problem(400, { errors: { evidenceExamples: ["Слишком длинно"] } }),
+-      ),
+-    );
++  it("moves the focus to the first field the server rejects, once the form is enabled again", async () => {
++    const held = deferred<Response>();
++    const user = open(EXISTING, () => fakeApi.on(ROUTE, () => held.promise));
+     await screen.findByDisplayValue("Проектирование");
+ 
+     await user.click(screen.getByRole("button", { name: "Сохранить" }));
+ 
++    await waitFor(() =>
++      expect(screen.getByLabelText("Примеры подтверждений")).toBeDisabled(),
++    );
++    held.resolve(
++      problem(400, { errors: { evidenceExamples: ["Слишком длинно"] } }),
++    );
+     expect(await screen.findByText("Слишком длинно")).toBeInTheDocument();
+     await waitFor(() =>
+       expect(screen.getByLabelText("Примеры подтверждений")).toHaveFocus(),
+diff --git a/web/src/features/career/CompetencyModal.tsx b/web/src/features/career/CompetencyModal.tsx
+index 2737698..c1931d5 100644
+--- a/web/src/features/career/CompetencyModal.tsx
++++ b/web/src/features/career/CompetencyModal.tsx
+@@ -1,6 +1,6 @@
+ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+-import { Form, type FormInstance, Input } from "antd";
+-import { useEffect } from "react";
++import { Form, Input } from "antd";
++import { useEffect, useState } from "react";
+ import { ApiError } from "../../api/ApiError";
+ import { api } from "../../api/client";
+ import { ifMatchOf } from "../../api/ifMatch";
+@@ -31,17 +31,11 @@ interface CompetencyValues {
+   scaleId?: string;
+ }
+ 
+-/**
+- * Moves the focus to the first field a rejected save names. The messages land under the fields only after the rejection
+- * is rethrown, so the focus waits for them.
+- */
+-function focusFirstRejectedField(
+-  form: FormInstance<CompetencyValues>,
+-  error: unknown,
+-) {
+-  const field =
+-    error instanceof ApiError && error.errors && Object.keys(error.errors)[0];
+-  if (field) queueMicrotask(() => form.scrollToField(field, { focus: true }));
++/** The first field a rejected save names, if any. */
++function firstRejectedField(error: unknown) {
++  return error instanceof ApiError && error.errors
++    ? Object.keys(error.errors)[0]
++    : undefined;
+ }
+ 
+ interface CompetencyModalProps {
+@@ -121,7 +115,8 @@ interface CompetencyFormProps {
+ 
+ /**
+  * Fields of a competency. The default scale arrives after the form opens, so a new competency gets it then, unless the
+- * user has chosen a scale first.
++ * user has chosen a scale first. The first field a rejected save names gets the focus once the form is enabled again,
++ * since a disabled field cannot take it.
+  */
+ function CompetencyForm({
+   competency,
+@@ -129,14 +124,21 @@ function CompetencyForm({
+   onCancel,
+ }: CompetencyFormProps) {
+   const [form] = Form.useForm<CompetencyValues>();
++  const [rejectedField, setRejectedField] = useState<string>();
+   const { isSubmitting, submit } = useFormSubmit(form, async (values) => {
+     try {
+       return await onSubmit(values);
+     } catch (error) {
+-      focusFirstRejectedField(form, error);
++      setRejectedField(firstRejectedField(error));
+       throw error;
+     }
+   });
++
++  useEffect(() => {
++    if (isSubmitting || !rejectedField) return;
++    form.scrollToField(rejectedField, { focus: true });
++    setRejectedField(undefined);
++  }, [isSubmitting, rejectedField, form]);
+   const defaultScale = useQuery({
+     ...scalesQuery({ page: 1, pageSize: 1, isDefault: true }),
+     enabled: !competency,
+diff --git a/web/src/features/career/TrackModal.test.tsx b/web/src/features/career/TrackModal.test.tsx
+index 2187815..8e9f359 100644
+--- a/web/src/features/career/TrackModal.test.tsx
++++ b/web/src/features/career/TrackModal.test.tsx
+@@ -20,6 +20,8 @@ const LEVEL_ROUTE = "POST /api/v1/career/levels";
+ const ORDER_ROUTE = "PUT /api/v1/career/tracks/created/level-order";
+ /** The version the server gives a track it has just created: an entry is first saved as version 0. */
+ const CREATED_VERSION = 0;
++/** The name a colleague gave the track while the dialog was open. */
++const REREAD_NAME = "Бэкенд-разработка";
+ 
+ const unit = (id: string, name: string, parentId: string | null) => ({
+   id,
+@@ -299,7 +301,7 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
+     expect(fakeApi.calls(TRACK_ROUTE)).toHaveLength(1);
+   });
+ 
+-  it("creates a new track once, and after the order is refused for a stale version reads the track again and sends the version it read", async () => {
++  it("creates a new track once, and after the order is refused for a stale version reads the track again, shows the name it read and sends the version it read (AC-61)", async () => {
+     const served = serve();
+     let refusals = 1;
+     fakeApi.on(ORDER_ROUTE, async (request) => {
+@@ -307,10 +309,10 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
+       served.steps.push(`order ${body.levelIds.join(",")}`);
+       return refusals-- > 0
+         ? problem(412, { title: "Запись изменена" })
+-        : Response.json(track("created", "Бэкенд", 8));
++        : Response.json(track("created", REREAD_NAME, 8));
+     });
+     fakeApi.on("GET /api/v1/career/tracks/created", () =>
+-      Response.json(track("created", "Бэкенд", 5)),
++      Response.json(track("created", REREAD_NAME, 5)),
+     );
+     const onClose = vi.fn();
+     render(
+@@ -339,6 +341,11 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
+       await screen.findByText("Не удалось сохранить запись"),
+     ).toBeInTheDocument();
+     expect(onClose).not.toHaveBeenCalled();
++    await waitFor(() =>
++      expect(screen.getByRole("textbox", { name: "Название" })).toHaveValue(
++        REREAD_NAME,
++      ),
++    );
+     await save(user);
+ 
+     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+@@ -352,6 +359,7 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
+     expect(
+       fakeApi.calls(ORDER_ROUTE).map((call) => call.headers.get("If-Match")),
+     ).toEqual([`"${CREATED_VERSION}"`, '"5"']);
++    expect(fakeApi.calls("PUT /api/v1/career/tracks/created")).toHaveLength(0);
+   });
+ 
+   it("renames an existing track against the version it was opened with, and creates nothing else", async () => {
+@@ -414,7 +422,7 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
+     ]);
+   });
+ 
+-  it("sends the version of the track it reread after a refusal for a stale version, not the one it saved before", async () => {
++  it("shows the name and sends the version of the track it reread after a refusal for a stale version, not those it saved before (AC-61)", async () => {
+     const served = serve();
+     served.levels.push(
+       savedLevel("level-1", "Младший", "existing"),
+@@ -428,7 +436,7 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
+     fakeApi.on("PUT /api/v1/career/tracks/existing/level-order", () =>
+       refusals-- > 0
+         ? problem(412, { title: "Запись изменена" })
+-        : Response.json(track("existing", "Серверная разработка", 7)),
++        : Response.json(track("existing", REREAD_NAME, 7)),
+     );
+     const onClose = vi.fn();
+     const modal = (shown: CareerTrack) => (
+@@ -460,10 +468,10 @@ describe("saving a track together with its levels (AC-10, AC-11)", {
+     await save(user);
+ 
+     await screen.findByText("Не удалось сохранить запись");
+-    view.rerender(modal(track("existing", "Серверная разработка", 6)));
++    view.rerender(modal(track("existing", REREAD_NAME, 6)));
+     await waitFor(() =>
+       expect(screen.getByRole("textbox", { name: "Название" })).toHaveValue(
+-        "Серверная разработка",
++        REREAD_NAME,
+       ),
+     );
+     await save(user);
+diff --git a/web/src/features/career/TrackModal.tsx b/web/src/features/career/TrackModal.tsx
+index 7a944f2..8262e92 100644
+--- a/web/src/features/career/TrackModal.tsx
++++ b/web/src/features/career/TrackModal.tsx
+@@ -1,6 +1,6 @@
+ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+ import { Form, Input, Select, Typography, theme } from "antd";
+-import { useState } from "react";
++import { useEffect, useState } from "react";
+ import { isStaleVersion, useEditBase } from "../../app/useEditBase";
+ import { useFormSubmit } from "../../app/useFormSubmit";
+ import { OrgUnitSelect } from "../org-structure/OrgUnitSelect";
+@@ -46,6 +46,8 @@ interface TrackModalProps {
+  * left, and a second «Сохранить» retries the rest without creating the track again. The track is the one saved here when
+  * the dialog created it, read again after a stale-version refusal, and otherwise the newer of the one saved here and the
+  * form base, which moves to the reread track after such a refusal; either way the next save sends the reread version.
++ * The name field shows that track's name whenever the track changes, so a reread name replaces the refused one; the
++ * pending levels stay.
+  */
+ export function TrackModal({
+   directionId,
+@@ -69,6 +71,9 @@ export function TrackModal({
+     ...levelsQuery(current?.id ?? ""),
+     enabled: current !== undefined,
+   });
++  useEffect(() => {
++    form.setFieldValue("name", current?.name ?? "");
++  }, [form, current]);
+   const rows = arrangeLevels(
+     current ? (levels.data?.items ?? []) : [],
+     pending,
+diff --git a/web/src/features/org-structure/UnitHrModal.test.tsx b/web/src/features/org-structure/UnitHrModal.test.tsx
+index 60102df..9d43355 100644
+--- a/web/src/features/org-structure/UnitHrModal.test.tsx
++++ b/web/src/features/org-structure/UnitHrModal.test.tsx
+@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
+ import { beforeEach, describe, expect, it } from "vitest";
+ import { queryClient } from "../../api/queryClient";
+ import { Providers } from "../../app/Providers";
+-import { fakeApi, problem } from "../../test/fakeApi";
++import { deferred, fakeApi, problem } from "../../test/fakeApi";
+ import { LONG_FLOW_TIMEOUT } from "../../test/timeouts";
+ import type { OrgUnit } from "./orgStructureApi";
+ import { UnitHrModal } from "./UnitHrModal";
+@@ -83,6 +83,16 @@ async function dialogTitled(title: string) {
+   return heading?.closest('[role="dialog"]') as HTMLElement;
+ }
+ 
++function lockedControls() {
++  const controls: [string, HTMLElement][] = [
++    ["employee", screen.getByRole("combobox", { name: "Сотрудник" })],
++    ["assign", screen.getByRole("button", { name: /Закрепить/ })],
++  ];
++  return controls
++    .filter(([, control]) => control.hasAttribute("disabled"))
++    .map(([kind]) => kind);
++}
++
+ beforeEach(() => {
+   queryClient.clear();
+ });
+@@ -200,6 +210,29 @@ describe("HR of a unit (AC-8)", { timeout: LONG_FLOW_TIMEOUT }, () => {
+     ).toBeInTheDocument();
+   });
+ 
++  it("holds the employee choice while the assignment is in flight, and frees it when it is refused (AC-61)", async () => {
++    serve("GlobalAdmin", { assigned: null, inherited: null });
++    const held = deferred<Response>();
++    fakeApi.on("PUT /api/v1/career/org-units/sales/hr", () => held.promise);
++    const user = await openModal();
++    await screen.findByText("HR не назначен");
++    expect(lockedControls()).toEqual([]);
++    await user.click(screen.getByRole("combobox", { name: "Сотрудник" }));
++    await user.click(await screen.findByText("Петров Пётр"));
++
++    await user.click(screen.getByRole("button", { name: "Закрепить" }));
++
++    await waitFor(() =>
++      expect(
++        fakeApi.calls("PUT /api/v1/career/org-units/sales/hr"),
++      ).toHaveLength(1),
++    );
++    expect(lockedControls()).toEqual(["employee", "assign"]);
++    held.resolve(problem(500, { title: "Сбой" }));
++    await waitFor(() => expect(lockedControls()).toEqual([]));
++    expect(document.querySelector(".ant-message-notice")).not.toBeNull();
++  });
++
+   it("removes the assignment after a confirmation that names what follows, focused on «Отмена»", async () => {
+     serve("GlobalAdmin", {
+       assigned: person("e1", "Иванова Анна", "sales", "Продажи"),
+diff --git a/web/src/features/org-structure/UnitHrModal.tsx b/web/src/features/org-structure/UnitHrModal.tsx
+index 753b7eb..aa77b9a 100644
+--- a/web/src/features/org-structure/UnitHrModal.tsx
++++ b/web/src/features/org-structure/UnitHrModal.tsx
+@@ -263,7 +263,13 @@ function AssignHrForm({
+   }));
+ 
+   return (
+-    <Form form={form} name="unit-hr" layout="vertical" onFinish={submit}>
++    <Form
++      form={form}
++      name="unit-hr"
++      layout="vertical"
++      disabled={isSubmitting}
++      onFinish={submit}
++    >
+       <Form.Item
+         name="employeeId"
+         label="Сотрудник"

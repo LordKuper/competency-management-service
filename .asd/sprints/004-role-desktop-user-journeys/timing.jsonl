@@ -731,3 +731,7 @@
 {"op":"close","id":"impl-test entry 10","kind":"dispatch","parent":"impl-test#10","start":"2026-10-26T08:27:23.951Z","end":"2026-10-26T08:42:17.899Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl-test#10","kind":"phase","parent":null,"start":"2026-10-26T08:27:23.628Z","end":"2026-10-26T08:42:18.088Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-review#9","kind":"phase","parent":null,"start":"2026-10-26T08:42:18.088Z","attrs":{}}
+{"op":"open","id":"impl-review wave-3/iter-03","kind":"review-iteration","parent":"impl-review#9","start":"2026-10-26T08:42:19.435Z","attrs":{}}
+{"op":"open","id":"correctness wave-3/iter-03","kind":"dispatch","parent":"impl-review wave-3/iter-03","start":"2026-10-26T08:42:19.500Z","attrs":{}}
+{"op":"open","id":"documentation wave-3/iter-03","kind":"dispatch","parent":"impl-review wave-3/iter-03","start":"2026-10-26T08:42:19.562Z","attrs":{}}
+{"op":"open","id":"external wave-3/iter-03","kind":"external-review","parent":"impl-review wave-3/iter-03","start":"2026-10-26T08:42:19.623Z","attrs":{}}
