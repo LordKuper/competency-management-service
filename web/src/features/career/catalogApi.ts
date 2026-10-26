@@ -77,7 +77,6 @@ export interface ScaleListParams extends CatalogListParams {
 
 /** Column filters of the shared block list. */
 export interface BlockListParams extends CatalogListParams {
-  scaleId?: string;
   /** Blocks of this unit. */
   scopeUnitId?: string;
   /** Blocks for every unit. */
