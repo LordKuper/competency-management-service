@@ -25,3 +25,5 @@ CONCERNS: 3
 
 ## Next action
 Route the 3 findings to review-fix.
+
+resolved: 1 — user decision 2026-10-22 (explicit «Отмена» closes the dialog at once; docs/architecture/stack.html «Несохранённые правки в SPA», decisions-log impl assessment), 2026-10-26
