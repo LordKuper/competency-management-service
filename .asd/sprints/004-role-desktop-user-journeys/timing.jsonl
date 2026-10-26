@@ -723,3 +723,11 @@
 {"op":"close","id":"review-fix wave-3/iter-02","kind":"dispatch","parent":"impl#12","start":"2026-10-26T08:22:20.190Z","end":"2026-10-26T08:27:10.196Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl#12","kind":"phase","parent":null,"start":"2026-10-26T08:22:19.831Z","end":"2026-10-26T08:27:23.628Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-test#10","kind":"phase","parent":null,"start":"2026-10-26T08:27:23.628Z","attrs":{}}
+{"op":"open","id":"impl-test entry 10","kind":"dispatch","parent":"impl-test#10","start":"2026-10-26T08:27:23.951Z","attrs":{}}
+{"op":"open","id":"suite impl-test#20","kind":"suite","parent":"impl-test entry 10","start":"2026-10-26T08:30:47.259Z","attrs":{"scope":"impacted"}}
+{"op":"close","id":"suite impl-test#20","kind":"suite","parent":"impl-test entry 10","start":"2026-10-26T08:30:47.259Z","end":"2026-10-26T08:31:49.672Z","outcome":"done","attrs":{"scope":"impacted"}}
+{"op":"open","id":"suite impl-test#21","kind":"suite","parent":"impl-test entry 10","start":"2026-10-26T08:37:48.531Z","attrs":{"scope":"impacted"}}
+{"op":"close","id":"suite impl-test#21","kind":"suite","parent":"impl-test entry 10","start":"2026-10-26T08:37:48.531Z","end":"2026-10-26T08:38:18.136Z","outcome":"done","attrs":{"scope":"impacted"}}
+{"op":"close","id":"impl-test entry 10","kind":"dispatch","parent":"impl-test#10","start":"2026-10-26T08:27:23.951Z","end":"2026-10-26T08:42:17.899Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#10","kind":"phase","parent":null,"start":"2026-10-26T08:27:23.628Z","end":"2026-10-26T08:42:18.088Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#9","kind":"phase","parent":null,"start":"2026-10-26T08:42:18.088Z","attrs":{}}

@@ -447,3 +447,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-26 — review-fix wave-3/iter-02 dev chain COMPLETED (acb1e26…ce44112): correctness C-1, C-2; external 1, 2. Flagged приняты: TrackModal сбрасывает имя при смене current; «Снять закрепление» вне формы не тронута (вне находок)
 - 2026-10-26 — impl fix for wave-3/iter-02: findings resolved; gate: web build и lint чисто
 - 2026-10-26 — route impl-test entry 10: critical, dispatch HEAD ce44112; risk change: security
+- 2026-10-26 — impl-test entry 10 flagged приняты: темы двух коммитов 51 символ — долг без переписывания; страж фокуса записи 8 заменён удержанным вариантом (в области изменений); CF1/CF3 эквивалентны — потолок
+- 2026-10-26 — impl-test: impacted set green (web 194/194 в 25 файлах), 2/1 tests
