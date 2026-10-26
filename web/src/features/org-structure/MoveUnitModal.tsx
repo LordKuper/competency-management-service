@@ -56,6 +56,7 @@ export function MoveUnitModal({ unit, onClose }: MoveUnitModalProps) {
         form={form}
         name="move-org-unit"
         layout="vertical"
+        disabled={move.isPending}
         initialValues={{ parentId: unit.parentId ?? undefined }}
         onFinish={({ parentId }) => move.mutate(parentId ?? null)}
       >

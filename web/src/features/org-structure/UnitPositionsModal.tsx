@@ -223,7 +223,13 @@ function AddPositionForm({ ownIds, onAdd }: AddPositionFormProps) {
     .map((position) => ({ value: position.id, label: position.name }));
 
   return (
-    <Form form={form} name="unit-position" layout="vertical" onFinish={submit}>
+    <Form
+      form={form}
+      name="unit-position"
+      layout="vertical"
+      disabled={isSubmitting}
+      onFinish={submit}
+    >
       <Form.Item
         name="positionId"
         label="Должность из справочника"

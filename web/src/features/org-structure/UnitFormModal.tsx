@@ -129,6 +129,7 @@ function UnitForm({
       form={form}
       name="org-unit"
       layout="vertical"
+      disabled={isSubmitting}
       initialValues={{
         name: unit?.name ?? "",
         parentId: parentId ?? undefined,
