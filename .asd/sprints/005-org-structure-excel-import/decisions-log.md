@@ -37,3 +37,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
+
+## 2026-10-26 — `.asd/sprints/005-org-structure-excel-import/plan.md` accepted
+
+- **Decision**: План принят пользователем (accept): Task 1 (совмещения, юрлица, права HR — сервер) → Task 2 (сервер импорта) ∥ Task 3 (экраны оргструктуры) → Task 4 (мастер). Технические решения плана — основное назначение в полях `employees`, совмещения в `employee_assignments`, `preview`/`apply` без состояния с отпечатком, пределы 50 МБ тела и 1 000 записей / 256 МБ распаковки.
+- **Rationale**: Модель назначений — общая опора импорта и экранов; контракт импорта и экраны не пересекаются по файлам, мастер зависит от обоих.
+- **Affected docs**: [plan.md](./plan.md), [closedxml-0.105.1.md](../../../docs/architecture/tech-reference/closedxml-0.105.1.md), [aspnetcore-10.0.12.md](../../../docs/architecture/tech-reference/aspnetcore-10.0.12.md)

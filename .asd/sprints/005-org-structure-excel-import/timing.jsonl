@@ -15,3 +15,7 @@
 {"op":"open","id":"audit#1","kind":"phase","parent":null,"start":"2026-10-26T14:24:29.832Z","attrs":{}}
 {"op":"open","id":"wait AC-8 boundary","kind":"user-wait","parent":"audit#1","start":"2026-10-26T14:27:44.028Z","attrs":{"gate":"AC-8 boundary"}}
 {"op":"close","id":"wait AC-8 boundary","kind":"user-wait","parent":"audit#1","start":"2026-10-26T14:27:44.028Z","end":"2026-10-26T14:39:16.869Z","outcome":"done","attrs":{"gate":"AC-8 boundary"}}
+{"op":"close","id":"audit#1","kind":"phase","parent":null,"start":"2026-10-26T14:24:29.832Z","end":"2026-10-26T14:39:25.797Z","outcome":"done","attrs":{}}
+{"op":"open","id":"plan#1","kind":"phase","parent":null,"start":"2026-10-26T14:39:25.797Z","attrs":{}}
+{"op":"open","id":"wait plan","kind":"user-wait","parent":"plan#1","start":"2026-10-26T14:45:38.693Z","attrs":{"gate":"plan"}}
+{"op":"close","id":"wait plan","kind":"user-wait","parent":"plan#1","start":"2026-10-26T14:45:38.693Z","end":"2026-10-26T14:49:47.642Z","outcome":"done","attrs":{"gate":"plan"}}

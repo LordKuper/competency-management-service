@@ -13,7 +13,7 @@ responsibility:
 - Документация: https://docs.closedxml.io/en/latest/ (разделы Graphic Engine, Tips & Tricks → Missing font, Bulk insert data, Migrations)
 - Релизы (GitHub API): https://api.github.com/repos/ClosedXML/ClosedXML/releases — 0.105.1 (2026-07-25: «bound SixLabors.Fonts to version range [1.0.0,3.0.0)»), 0.105.0 (2025-05-14), 0.104.2 (2024-11-15, обновление DocumentFormat.OpenXml/RBush из-за уязвимостей), 0.104.1 (2024-09-30)
 - NuGet (nuspec 0.105.1): https://api.nuget.org/v3-flatcontainer/closedxml/0.105.1/closedxml.nuspec — лицензия MIT; `netstandard2.0`/`netstandard2.1`; зависимости: `ClosedXML.Parser` 2.0.0, `DocumentFormat.OpenXml` `[3.1.1, 4.0.0)`, `ExcelNumberFormat` 1.1.0, `RBush.Signed` 4.0.0, `SixLabors.Fonts` `[1.0.0, 3.0.0)` (+ `Microsoft.Bcl.HashCode`, `System.Buffers`, `System.Memory` на netstandard2.0). Стабильных версий ≥ 1.0 и prerelease новее 0.105.1 в реестре нет.
-- Last verified: 2026-10-05
+- Last verified: 2026-10-26 (чтение — раздел «Reading»)
 - Оценка риска знаний (Phase 5): **MEDIUM** — библиотека 0.x с нестабильным API; 0.105.1 (2026-07) новее среза знаний; документация упоминает уже миграцию 0.105 → 0.106.
 
 ## API surface used in project
@@ -35,8 +35,16 @@ responsibility:
 - 0.105.0: переписана инфраструктура ~180 функций, сортировка диапазона обновляет ссылки в формулах.
 - 0.104.1 (для справки): XLParser заменён на ClosedParser, OpenXML SDK 3.0, перестроены pivot-таблицы, пересмотрен AutoFilter.
 
+## Reading (import, sprint 005)
+- Источники: Cell API https://docs.closedxml.io/en/latest/api/cell.html , Worksheet API https://docs.closedxml.io/en/latest/api/worksheet.html (проверено 2026-10-26; 0.105.1 — последний релиз, GitHub releases).
+- Открытие: `new XLWorkbook(stream)` (перегрузка с `LoadOptions` — для graphic engine); страница Workbook API конструкторов не показывает — сигнатуру сверить по установленной сборке при подключении. Первый лист — `wb.Worksheets.First()` (`Worksheets` — коллекция листов книги).
+- Обход: `ws.LastRowUsed()` / `ws.LastColumnUsed()` (оба `null` на пустом листе), `ws.Cell(row, column)`, `ws.Row(n)`.
+- Значение ячейки как текст: `cell.GetString()` — значение строкой без формата и стиля (для пустой — пустая строка); `cell.GetFormattedString(culture)` — с форматом; `cell.GetText()` бросает `InvalidCastException`, если значение не текст; `cell.Value` (`XLCellValue`) пересчитывает формулу перед чтением; `cell.TryGetValue<T>(out T)`.
+- Безопасность и память: книга загружается в память целиком (XML-DOM OpenXML SDK). XLSX — ZIP-контейнер: заявленные в ZIP размеры записей могут лгать, поэтому до `new XLWorkbook` каждую запись распаковывать потоком через `System.IO.Compression.ZipArchive` со счётчиком байт и прерывать по пределу суммарного распакованного объёма и числа записей (OWASP File Upload Cheat Sheet: предел размера — после распаковки, https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html ). Запрет DTD в разборе XML OpenXML SDK в изученных источниках не описан — закрыть тестом с XML-бомбой (DTD с вложенными сущностями) в `xl/sharedStrings.xml`.
+
 ## Project conventions
-- Только экспорт (запись) XLSX (по `stack.html`); значения записываются как данные, формулы для экспорта не предполагаются.
+- Экспорт (запись) XLSX — по `stack.html`; значения записываются как данные, формулы для экспорта не предполагаются.
+- Чтение XLSX — только импорт оргструктуры (`org-structure`): файл из запроса читается в память, проходит проверку ZIP-записей (предел распакованного объёма и числа записей) и только затем открывается `XLWorkbook`; значения читаются `GetString()` (формат ячейки не применяется), формулы не вычисляются для логики импорта.
 - Кириллические шрифты поставляются в образе `app` (OFL/Apache); для расчёта ширины колонок при отсутствии системных шрифтов явно задавать graphic engine с шрифтом проекта (`CreateWithFontsAndSystemFonts(fontStream)`), либо выставлять ширины колонок вручную; шрифт книги по умолчанию — тот, что поставляется в образе (не Calibri/Arial).
 - Пользовательские строки, начинающиеся с `=`, `+`, `-`, `@`, при экспорте не должны превращаться в формулы (защита от formula injection): записывать как текст (явный тип/`SetValue`) — поведение присваивания `Cell.Value` для строк с `=` в доступных источниках не описано → закрыть тестом.
 - Прямых ссылок на `SixLabors.*` не добавлять; `lock`-файл проверять на `SixLabors.Fonts` 1.x.
