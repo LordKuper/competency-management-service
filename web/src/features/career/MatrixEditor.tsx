@@ -248,11 +248,6 @@ function MatrixEditorBody({
     ...shownCompetencyIds,
     ...(diff?.before.competencies ?? []).map((item) => item.competencyId),
   ]);
-  const hasRequirement = (competencyId: string) =>
-    shown.requirements.some(
-      (item) =>
-        item.competencyId === competencyId && item.requiredScore != null,
-    );
   const outsideIds = shown.competencies
     .filter((item) => item.blockId === null)
     .map((item) => item.competencyId);
@@ -345,15 +340,6 @@ function MatrixEditorBody({
               <PlusCircleOutlined
                 role="img"
                 aria-label="Добавлена в блок"
-                className="matrix-mark"
-              />
-            </Tooltip>
-          )}
-          {!isFrozen && !hasRequirement(competencyId) && (
-            <Tooltip title="Нет требований">
-              <WarningOutlined
-                role="img"
-                aria-label="Нет требований"
                 className="matrix-mark"
               />
             </Tooltip>
