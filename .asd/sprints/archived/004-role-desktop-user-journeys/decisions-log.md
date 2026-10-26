@@ -37,3 +37,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 <!-- entries appended below this line -->
 - 2026-10-26 — retro: <sprint>/retrospective.html written; 10 friction entries analysed (F-1…F-10), 9 actions (3 consumer, 6 asd), 3 systemic proposals; branch: analysed. Предложение «приёмка сценариев на живом макете до плана» не внесено — пересекается с отклонённым пользователем 001#P-2
 - 2026-10-26 — PR opened (user approved push and publication in chat): #7 https://github.com/LordKuper/competency-management-service/pull/7, title «feat(desk): role desktop and user journeys»; DoD: no code since full-suite HEAD 1446fde, all 3 review waves APPROVE, retrospective.html present
+- 2026-10-26 — sprint closed: PR #7 merged (5251a1a81023282abe7363d51ff055658591042a); archived by sprint 005 scope
