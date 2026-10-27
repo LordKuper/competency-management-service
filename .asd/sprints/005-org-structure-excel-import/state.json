@@ -69,6 +69,13 @@
       "reason": "AC-28 employee move with position added; Task 5 wave 4",
       "evidence": "decisions-log.md 2026-10-27 AC-28 amendment; iterations charged 0, fix rounds charged 0",
       "artifact_revision": "sprint.md+plan.md@working-tree"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "AC-29..AC-31 head recognition in import, head rule by any assignment; AC-1, AC-3, AC-19, AC-28 amended; out-of-scope line removed; Task 6 wave 5, Task 7 wave 6",
+      "evidence": "decisions-log.md 2026-10-27 AC-29..AC-31 amendment; iterations charged 0, fix rounds charged 0",
+      "artifact_revision": "sprint.md+plan.md@working-tree"
     }
   ],
   "task_routing": {
@@ -101,6 +108,12 @@
       "tier": "standard",
       "reason": "risk:public contract",
       "resolved_model": "sonnet"
+    },
+    "Task 6": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:public contract",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -123,7 +136,7 @@
     }
   },
   "created_at": "2026-10-26T13:39:38.279Z",
-  "updated_at": "2026-10-27T06:35:39.773Z",
+  "updated_at": "2026-10-27T07:03:11.129Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
