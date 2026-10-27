@@ -47,23 +47,13 @@ responsibility:
 
 ## Suite run
 
-Вход 3 (дельта review-fix 05af24b…b828f81):
+Полный прогон терминального impl-review wave-1/iter-02 (не impacted), HEAD: 50090b322135ffff26b0e60a3417b08ee10e86f5:
 
-- Scope: impacted, предохранитель общей инфраструктуры не сработал (изменены только `OrgStructure/Import`, `web/src/features/desk`, `org-import/ResultStep.tsx`; сборка, CI, `Platform` не затронуты)
-- Pre-strategy (чистая копия HEAD, до новых тестов): web `npx vitest run src/features/desk src/features/org-import --maxWorkers=4` → exit 0, 23 файла, 269 тестов; dotnet `dotnet test --project tests/Competency.Tests --filter-class` `OrgImportParserTests`, `OrgImportTests`, `OrgImportApplyTests`, `OrgImportHeadPositionTests`, `OrgImportRaceTests`, `HrOrgStructureTests` → exit 0, 111 из 111
-- Итог (рабочее дерево с новыми тестами): web та же команда → exit 0, 23 файла, 279 тестов пройдено, 0 сбоев, 0 пропущено; dotnet те же классы плюс `AuthorizationTests` (`--artifacts-path` в scratch: сборка в месте занята процессами пользователя) → exit 0, 120 из 120, 0 сбоев, 0 пропущено
-- Lint: `npm --prefix web run lint` → exit 0 (biome ci, typecheck); бэкенд: сборка тестового проекта с `TreatWarningsAsErrors` прошла в обоих dotnet-прогонах
-- HEAD: aee8ff4 (+ коммит входа 3)
-
-Вход 2 (дельта `PositionSelect.tsx`):
-
-- Command: `npx vitest run --maxWorkers=4` над `PositionSelect`, `EmployeeForm`, `EmployeeAssignments`, `OrgStructurePage`, `MoveEmployeeModal`, `DeskScenarios`, `OnboardEmployeePage`, `OrgCleanupPage`, `editDialogs`; `npm --prefix web run lint`
-- Scope: impacted (общая инфраструктура не затронута)
-- Result: pass, exit 0 — web 9 файлов, 74 теста пройдено, 0 сбоев, 0 пропущено; D-1-тест «swaps a secondary assignment …» зелёный
-- Lint: pass, exit 0 (biome ci, typecheck); сборка не запускалась — менялся один `.tsx`, проверенный typecheck
-- HEAD: f87c37d
-
-Вход 1 (полный набор, HEAD 78c2550): dotnet 838 из 838 пройдено; web 782 всего, 781 пройдено, 1 сбой (D-1, теперь `fixed`); lint и сборка pass. Два нестабильных теста вне области спринта (`linkScreens.test.tsx`, `catalogueTables.test.tsx`) упали по таймауту только при параллельном прогоне без `--maxWorkers=4`; подробности — `test-plan.entry-01.md`.
+- dotnet: `dotnet test --solution Competency.slnx` → exit 0, итог 843, успешно 843, сбой 0, пропущено 0
+- web: `npm --prefix web test -- --maxWorkers=4` → exit 0, 75 файлов пройдено из 75, 792 теста пройдено из 792, 0 сбоев; нестабильные `linkScreens.test.tsx` и `catalogueTables.test.tsx` не упали
+- Lint: `npm --prefix web run lint` → exit 0
+- Build: `dotnet build Competency.slnx --tl:off` → exit 0, 0 предупреждений, 0 ошибок; `npm --prefix web run build` → exit 0
+- Дефекты: новых нет
 
 ## Defects
 
