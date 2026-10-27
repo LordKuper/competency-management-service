@@ -1,7 +1,7 @@
 {
   "sprint_id": "005-org-structure-excel-import",
   "branch": "sprint/005-org-structure-excel-import",
-  "phase": "impl",
+  "phase": "impl-test",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -97,6 +97,13 @@
       "reason": "AC-33 unit deletion: empty only, any status, admin and HR; Task 9 wave 8",
       "evidence": "decisions-log.md 2026-10-27 AC-33 amendment; iterations charged 0, fix rounds charged 0",
       "artifact_revision": "sprint.md+plan.md@working-tree"
+    },
+    {
+      "gate": "initial impl assessment",
+      "decision_actor": "user",
+      "reason": "approve after Tasks 1-9 and change requests 1-2",
+      "evidence": "decisions-log.md 2026-10-27 impl assessment approved",
+      "artifact_revision": "7d26524"
     }
   ],
   "task_routing": {
@@ -187,7 +194,7 @@
     }
   },
   "created_at": "2026-10-26T13:39:38.279Z",
-  "updated_at": "2026-10-27T07:03:11.129Z",
+  "updated_at": "2026-10-27T10:20:59.523Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

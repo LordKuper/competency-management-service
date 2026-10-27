@@ -129,3 +129,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-27 — impl assessment: change requested — ревизия надписей интерфейса: убрать информацию, нерелевантную пользователю, которому она показывается
 - 2026-10-27 — route change-request-2: standard, dispatch HEAD 4ed7796
 - 2026-10-27 — impl assessment change-request-2 done: ревизия надписей SPA, 4 коммита (org-structure, org-import, career, desk); сомнительные тексты оставлены
+
+## 2026-10-27 — impl assessment approved
+
+- **Decision**: Пользователь одобрил реализацию (approve): Task 1–9 (AC-1…AC-33), правки по запросам — сокращено подтверждение удаления подразделения и проведена ревизия надписей SPA. Сборка, линт, контракт API и миграции чистые; заглушек нет.
+- **Rationale**: Все задачи плана отмечены, отмеченные выборы dev разрешены и записаны выше.
+- **Affected docs**: [plan.md](./plan.md), [sprint.md](./sprint.md)
