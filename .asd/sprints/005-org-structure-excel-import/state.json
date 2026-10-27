@@ -1,0 +1,239 @@
+{
+  "sprint_id": "005-org-structure-excel-import",
+  "branch": "sprint/005-org-structure-excel-import",
+  "phase": "pr",
+  "workflow": "lite",
+  "documents": {
+    "audit": true,
+    "prd": true,
+    "ux_spec": false,
+    "design_system": true,
+    "adr": true,
+    "c4": true
+  },
+  "cleanup": true,
+  "user_gates": "adaptive",
+  "gate_decisions": [
+    {
+      "gate": "workflow choice",
+      "decision_actor": "user",
+      "reason": "user chose lite",
+      "evidence": "decisions-log.md 2026-10-26 workflow choice",
+      "artifact_revision": "8c4c1a6"
+    },
+    {
+      "gate": "approach choice",
+      "decision_actor": "user",
+      "reason": "stateless import (file re-sent at apply, plan fingerprint check)",
+      "evidence": "research.md Approaches Chosen; decisions-log.md 2026-10-26",
+      "artifact_revision": "8c4c1a6"
+    },
+    {
+      "gate": "scope",
+      "decision_actor": "user",
+      "reason": "accepted AC-1..AC-27; one sprint; no document skip",
+      "evidence": "sprint.md; decisions-log.md 2026-10-26 scope accepted; criterion cost 0/0 for every AC (new sprint)",
+      "artifact_revision": "8c4c1a6"
+    },
+    {
+      "gate": "retro intake dispositions",
+      "decision_actor": "user",
+      "reason": "004#A-4,A-7 rejected (replaced by AC-25); 004#P-1,P-2 included (AC-26,AC-27)",
+      "evidence": ".asd/project/retro-backlog.md; decisions-log.md 2026-10-26",
+      "artifact_revision": "8c4c1a6"
+    },
+    {
+      "gate": "AC-8 boundary",
+      "decision_actor": "user",
+      "reason": "HR changes org structure only; unit HR assignment and connect-unit stay GlobalAdmin",
+      "evidence": "decisions-log.md 2026-10-26 AC-8 boundary",
+      "artifact_revision": "2185295"
+    },
+    {
+      "gate": "audit",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: all checks ran; only contradiction settled by scope acceptance; ambiguity answered by user",
+      "evidence": "audit.md; decisions-log.md 2026-10-26 audit accepted",
+      "artifact_revision": "2185295"
+    },
+    {
+      "gate": "plan",
+      "decision_actor": "user",
+      "reason": "explicit accept of plan.md (4 tasks, 3 waves)",
+      "evidence": "decisions-log.md 2026-10-26 plan accepted",
+      "artifact_revision": "plan.md@working-tree"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "AC-28 employee move with position added; Task 5 wave 4",
+      "evidence": "decisions-log.md 2026-10-27 AC-28 amendment; iterations charged 0, fix rounds charged 0",
+      "artifact_revision": "sprint.md+plan.md@working-tree"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "AC-29..AC-31 head recognition in import, head rule by any assignment; AC-1, AC-3, AC-19, AC-28 amended; out-of-scope line removed; Task 6 wave 5, Task 7 wave 6",
+      "evidence": "decisions-log.md 2026-10-27 AC-29..AC-31 amendment; iterations charged 0, fix rounds charged 0",
+      "artifact_revision": "sprint.md+plan.md@working-tree"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "AC-32 Russian ICU collation ru-u-ka-shifted for server sorting, keep current order; Task 8 wave 7",
+      "evidence": "decisions-log.md 2026-10-27 AC-32 amendment; iterations charged 0, fix rounds charged 0",
+      "artifact_revision": "sprint.md+plan.md@working-tree"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "AC-32 changed: standard ICU ru collation (punctuation significant) instead of ru-u-ka-shifted",
+      "evidence": "decisions-log.md 2026-10-27 AC-32 changed; iterations charged 0, fix rounds charged 0",
+      "artifact_revision": "sprint.md+plan.md@working-tree"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "AC-33 unit deletion: empty only, any status, admin and HR; Task 9 wave 8",
+      "evidence": "decisions-log.md 2026-10-27 AC-33 amendment; iterations charged 0, fix rounds charged 0",
+      "artifact_revision": "sprint.md+plan.md@working-tree"
+    },
+    {
+      "gate": "initial impl assessment",
+      "decision_actor": "user",
+      "reason": "approve after Tasks 1-9 and change requests 1-2",
+      "evidence": "decisions-log.md 2026-10-27 impl assessment approved",
+      "artifact_revision": "7d26524"
+    },
+    {
+      "gate": "impl-review green handoff",
+      "decision_actor": "orchestrator (adaptive)",
+      "reason": "reviewer DoD met wave-1/iter-02; full suite green",
+      "evidence": "decisions-log.md 2026-10-27 impl-review DoD met; test-plan.md Suite run 50090b3",
+      "artifact_revision": "74cd7ae"
+    }
+  ],
+  "task_routing": {
+    "Task 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:public contract",
+      "resolved_model": "sonnet"
+    },
+    "Task 2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "Task 3": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:ui shape",
+      "resolved_model": "sonnet"
+    },
+    "Task 4": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:ui shape",
+      "resolved_model": "sonnet"
+    },
+    "Task 5": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:public contract",
+      "resolved_model": "sonnet"
+    },
+    "Task 6": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:public contract",
+      "resolved_model": "sonnet"
+    },
+    "Task 7": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:ui shape",
+      "resolved_model": "sonnet"
+    },
+    "Task 8": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:migration",
+      "resolved_model": "sonnet"
+    },
+    "Task 9": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:public contract",
+      "resolved_model": "sonnet"
+    },
+    "change-request-1": {
+      "execution": "command",
+      "tier": "mechanical",
+      "reason": "deterministic-command",
+      "resolved_model": null
+    },
+    "change-request-2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:ui shape",
+      "resolved_model": "sonnet"
+    },
+    "D-1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "review-fix wave-1/iter-01": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    }
+  },
+  "skipped_phases": [],
+  "reviews": {
+    "design": {
+      "iteration": 0,
+      "verdicts": {},
+      "latched": {}
+    },
+    "impl": {
+      "wave": 1,
+      "waves": [
+        {
+          "iteration": 2,
+          "verdicts": {
+            "iter-01": {
+              "combined": "CONCERNS",
+              "external": "FAIL"
+            },
+            "iter-02": {
+              "combined": "CONCERNS",
+              "external": "APPROVE"
+            }
+          },
+          "iteration_heads": {
+            "iter-01": "54dbf3240745dad797567c15c3f1a003db09b130",
+            "iter-02": "b2cdd8960ec6a3fbebc61689868bb3fa373648a1"
+          },
+          "latched": {
+            "external": 2
+          }
+        }
+      ]
+    }
+  },
+  "created_at": "2026-10-26T13:39:38.279Z",
+  "updated_at": "2026-10-27T13:53:52.273Z",
+  "review_fixes_pending": null,
+  "test_defects_pending": null,
+  "pr": {
+    "number": 9,
+    "url": "https://github.com/LordKuper/competency-management-service/pull/9",
+    "state": "open"
+  },
+  "archived_at": null
+}

@@ -32,6 +32,7 @@ const REVIEW = "Согласовать версию";
 const DRAFTS = "Утвердить черновые записи";
 const CATALOG = "Привести каталог в порядок";
 const ORG = "Навести порядок в оргструктуре";
+const IMPORT = "Импорт оргструктуры";
 const NOTHING_TO_START = "Сейчас начать нечего";
 const UNBOUND = "Сценариев для вашей учётной записи пока нет";
 const ALL_PREREQUISITES: DeskPrerequisite[] = [
@@ -96,7 +97,7 @@ describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
   it("shows an administrator the first-step cards for what the system lacks, and no scenario that needs it", () => {
     const titles = titlesShownFor({ ...NO_ROLES, isAdmin: true }, deskWith([]));
 
-    expect(titles).toEqual([FIRST_UNIT, FIRST_POSITION, ASSIGN_HR]);
+    expect(titles).toEqual([FIRST_UNIT, FIRST_POSITION, ASSIGN_HR, IMPORT]);
   });
 
   it("drops each first-step card as its prerequisite holds, and opens the scenarios that needed it", () => {
@@ -104,7 +105,7 @@ describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
 
     const withUnit = titlesShownFor(admin, deskWith(["ActiveUnit"]));
 
-    expect(withUnit).toEqual([FIRST_POSITION, ASSIGN_HR]);
+    expect(withUnit).toEqual([FIRST_POSITION, ASSIGN_HR, IMPORT]);
   });
 
   it("opens 'Принять сотрудника' with an active unit and an active position, and 'Назначить HR' goes once an HR account is there", () => {
@@ -113,7 +114,7 @@ describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
       deskWith(["ActiveUnit", "ActivePosition", "HrAccount"]),
     );
 
-    expect(titles).toEqual([ONBOARD]);
+    expect(titles).toEqual([ONBOARD, IMPORT]);
   });
 
   it("opens 'Подключить подразделение' only with a unit, a working employee and a unit waiting to be connected", () => {
@@ -141,7 +142,7 @@ describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
 
     expect(nobodyWorks).not.toContain(CONNECT);
     expect(worksButNoneWaits).not.toContain(CONNECT);
-    expect(connectable).toEqual([CONNECT, ONBOARD, ORG]);
+    expect(connectable).toEqual([CONNECT, ONBOARD, ORG, IMPORT]);
   });
 
   it("opens 'Связать должности с треком' for whoever may edit tracks, with a position, a track they may open and something to link", () => {
@@ -199,8 +200,32 @@ describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
       deskWith(["ActiveUnit", "ActivePosition", "HrAccount"], waiting),
     );
 
-    expect(forHr).toEqual([DRAFTS, CATALOG]);
-    expect(forAdmin).toEqual([DRAFTS, ONBOARD, CATALOG, ORG]);
+    expect(forHr).toEqual([FIRST_UNIT, DRAFTS, CATALOG, ORG, IMPORT]);
+    expect(forAdmin).toEqual([DRAFTS, ONBOARD, CATALOG, ORG, IMPORT]);
+  });
+
+  it("gives HR the organisation cards of the administrator and the import wizard, and keeps the administrator's own setup cards from HR (AC-8, AC-9)", () => {
+    const prerequisites: DeskPrerequisite[] = ["ActiveUnit", "ActivePosition"];
+
+    const forHr = titlesShownFor(
+      { ...NO_ROLES, isHr: true },
+      deskWith(prerequisites, { OrgCleanup: 1 }),
+    );
+    document.body.innerHTML = "";
+    const others = [
+      { ...NO_ROLES, isHead: true },
+      { ...NO_ROLES, isUnitHr: true },
+      { ...NO_ROLES, isBound: true },
+    ].flatMap((roles) => {
+      document.body.innerHTML = "";
+      return titlesShownFor(roles, deskWith(prerequisites, { OrgCleanup: 1 }));
+    });
+
+    expect(forHr).toEqual([ONBOARD, ORG, IMPORT]);
+    expect(forHr).not.toContain(FIRST_POSITION);
+    expect(forHr).not.toContain(ASSIGN_HR);
+    expect(forHr).not.toContain(CONNECT);
+    expect(others).not.toContain(IMPORT);
   });
 
   it("puts 'Моё место в компании' first for anyone bound to an employee, whatever else they are", () => {
@@ -250,6 +275,7 @@ describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
     expect(hrefOf(LINK)).toBe(deskPaths.trackPositions);
     expect(hrefOf(CATALOG)).toBe(deskPaths.catalogCleanup);
     expect(hrefOf(ORG)).toBe(deskPaths.orgCleanup);
+    expect(hrefOf(IMPORT)).toBe(deskPaths.orgImport);
   });
 
   it("counts a queue as waiting in the queue and the rest as waiting for the user", () => {
@@ -268,7 +294,7 @@ describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
   it("shows no first-step or prerequisite card before the desk has answered", () => {
     const titles = titlesShownFor({ ...NO_ROLES, isAdmin: true }, undefined);
 
-    expect(titles).toEqual([]);
+    expect(titles).toEqual([IMPORT]);
     expect(screen.queryByText(NOTHING_TO_START)).not.toBeInTheDocument();
   });
 
@@ -280,7 +306,7 @@ describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
   });
 
   it("says neutrally that nothing can be started when every card of the roles is hidden on a loaded desk", () => {
-    titlesShownFor({ ...NO_ROLES, isHr: true }, deskWith([]));
+    titlesShownFor({ ...NO_ROLES, isUnitHr: true }, deskWith([]));
 
     expect(screen.getByText(NOTHING_TO_START)).toBeInTheDocument();
     expect(screen.queryByText(UNBOUND)).not.toBeInTheDocument();

@@ -44,7 +44,7 @@ const SCENARIOS: Scenario[] = [
     title: "Добавить первое подразделение",
     description:
       "Действующих подразделений нет: создайте верхнее подразделение компании.",
-    isFor: (roles) => roles.isAdmin,
+    isFor: (roles) => roles.isHr || roles.isAdmin,
     path: orgPaths.tree,
     holds: (prerequisites) => !prerequisites.includes("ActiveUnit"),
   },
@@ -61,7 +61,7 @@ const SCENARIOS: Scenario[] = [
     key: "assign-hr",
     title: "Назначить HR",
     description:
-      "Ни у одной действующей учётной записи нет роли «HR»: отметьте её в разделе «Пользователи», чтобы закреплять ответственных HR за подразделениями.",
+      "Ни у одной действующей учётной записи нет роли «HR»: отметьте её в разделе «Пользователи».",
     isFor: (roles) => roles.isAdmin,
     path: deskPaths.users,
     holds: (prerequisites) => !prerequisites.includes("HrAccount"),
@@ -126,7 +126,7 @@ const SCENARIOS: Scenario[] = [
     title: "Принять сотрудника",
     description:
       "Карточка сотрудника и, по желанию, учётная запись с приглашением — одним сценарием.",
-    isFor: (roles) => roles.isAdmin,
+    isFor: (roles) => roles.isHr || roles.isAdmin,
     path: deskPaths.onboardEmployee,
     holds: (prerequisites) =>
       prerequisites.includes("ActiveUnit") &&
@@ -158,15 +158,28 @@ const SCENARIOS: Scenario[] = [
     title: "Навести порядок в оргструктуре",
     description:
       "Расхождения оргструктуры и учётных записей: должности вне перечня, учётные записи без сотрудника.",
-    isFor: (roles) => roles.isAdmin,
+    isFor: (roles) => roles.isHr || roles.isAdmin,
     path: deskPaths.orgCleanup,
     groups: [...ORG_QUEUE_GROUPS],
     isQueue: true,
   },
+  {
+    key: "org-import",
+    title: "Импорт оргструктуры",
+    description:
+      "Загрузите выгрузку оргструктуры из Excel: мастер покажет, что изменится, и применит изменения только после вашего решения.",
+    isFor: (roles) => roles.isHr || roles.isAdmin,
+    path: deskPaths.orgImport,
+    isAlwaysShown: true,
+  },
 ];
 
 /** The screen a scenario opens: its own, or that of the first item waiting in its groups; null when its prerequisites fail or its groups are empty or not loaded. */
-function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
+function entryPath(
+  scenario: Scenario,
+  desk: Desk | undefined,
+  isAdmin: boolean,
+): string | null {
   if (scenario.holds && !(desk && scenario.holds(desk.prerequisites))) {
     return null;
   }
@@ -182,7 +195,7 @@ function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
   }
   if (scenario.path) return scenario.path;
   const firstItem = groups?.[0]?.items[0];
-  return (firstItem && itemAction(firstItem)?.path) ?? null;
+  return (firstItem && itemAction(firstItem, isAdmin)?.path) ?? null;
 }
 
 /**
@@ -221,7 +234,7 @@ export function DeskScenarios({
     );
   }
   const cards = scenarios.flatMap((scenario) => {
-    const path = entryPath(scenario, desk);
+    const path = entryPath(scenario, desk, roles.isAdmin);
     return path
       ? [
           <ScenarioCard
@@ -244,11 +257,10 @@ export function DeskScenarios({
                 Сейчас начать нечего
               </Typography.Title>
               <Typography.Paragraph>
-                Сценарии вашей роли появятся здесь, когда в системе будут нужные
-                им данные: например, записи, которые ждут вас, или действующие
-                должности и карьерные треки, которые вам доступны. Карточки
-                покажутся сами; если данные должны были появиться раньше,
-                обратитесь к администратору.
+                Сценарии появятся здесь, когда в системе будут нужные им данные:
+                например, записи, которые ждут вас.
+                {!roles.isAdmin &&
+                  " Если данные должны были появиться раньше, обратитесь к администратору."}
               </Typography.Paragraph>
             </>
           }

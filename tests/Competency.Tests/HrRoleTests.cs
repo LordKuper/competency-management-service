@@ -12,7 +12,7 @@ namespace Competency.Tests;
 public sealed class HrRoleTests(CareerHost fixture) : IClassFixture<CareerHost>
 {
     [Fact]
-    public async Task Ac62_AnAccountWithTheHrRole_MaintainsThePositionCatalogue_ButNotTheOrgStructureOrTheAccounts()
+    public async Task Ac62_AnAccountWithTheHrRole_MaintainsThePositionCatalogue_ButNotTheAccountsOrTheHrAssignments()
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var hr = org.Hr.Client;
@@ -24,9 +24,7 @@ public sealed class HrRoleTests(CareerHost fixture) : IClassFixture<CareerHost>
 
         foreach (var forbidden in new Func<Task<ApiResponse>>[]
         {
-            () => hr.PostAsync("/api/v1/org-units", new { name = Scenarios.Unique("Отдел"), parentId = (Guid?)null }),
             () => hr.PostAsync("/api/v1/users", new { email = $"{Scenarios.Unique("x")}@test.local", roles = Scenarios.NoRoles, employeeId = (Guid?)null }),
-            () => hr.PostAsync("/api/v1/employees", new { lastName = "Иванов", firstName = "Иван", middleName = (string?)null, positionId = created.Id, orgUnitId = org.Team.Id }),
             () => hr.PutAsync($"/api/v1/career/org-units/{org.Team.Id}/hr", new { employeeId = org.SiblingHr.EmployeeId }),
         })
         {

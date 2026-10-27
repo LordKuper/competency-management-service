@@ -135,8 +135,8 @@ public sealed class EmployeePositionTests(TestEnvironment environment)
         var admin = await (await environment.SharedHostAsync()).AdminAsync();
         var unit = await admin.CreateUnitAsync();
 
-        var missing = await admin.PostAsync("/api/v1/employees", new { lastName = "Иванов", firstName = "Иван", middleName = (string?)null, orgUnitId = unit.Id });
-        var text = await admin.PostAsync("/api/v1/employees", new { lastName = "Иванов", firstName = "Иван", middleName = (string?)null, position = "Инженер", orgUnitId = unit.Id });
+        var missing = await admin.PostAsync("/api/v1/employees", new { lastName = "Иванов", firstName = "Иван", middleName = (string?)null, orgUnitId = unit.Id, legalEntityIds = Array.Empty<Guid>(), assignments = Array.Empty<object>() });
+        var text = await admin.PostAsync("/api/v1/employees", new { lastName = "Иванов", firstName = "Иван", middleName = (string?)null, position = "Инженер", orgUnitId = unit.Id, legalEntityIds = Array.Empty<Guid>(), assignments = Array.Empty<object>() });
 
         missing.Status.Should().Be(HttpStatusCode.BadRequest);
         text.Status.Should().Be(HttpStatusCode.BadRequest, "the free-text position is no longer an input");
@@ -159,7 +159,7 @@ public sealed class EmployeePositionTests(TestEnvironment environment)
     }
 
     private static object Body(Guid positionId, Guid unitId, string lastName = "Иванов") =>
-        new { lastName, firstName = "Иван", middleName = (string?)null, positionId, orgUnitId = unitId };
+        Scenarios.EmployeeBody(lastName, "Иван", positionId, unitId);
 
     private static async Task<ApiResponse> CreatePositionAsync(ApiClient admin) =>
         (await admin.PostAsync("/api/v1/positions", new { name = Scenarios.Unique("Должность") })).Expect(HttpStatusCode.Created);

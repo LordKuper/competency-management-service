@@ -9,7 +9,7 @@ namespace Competency.OrgStructure;
 internal static class OrgAccess
 {
     /// <summary>
-    /// Whether the caller sees the whole org structure, inactive and dismissed included: a global administrator or an HR, who reads but does not change it.
+    /// Whether the caller sees the whole org structure, inactive and dismissed included: a global administrator or an HR, who both change the org structure.
     /// </summary>
     /// <param name="actor">The caller.</param>
     /// <returns><see langword="true"/> when nothing is hidden from the caller.</returns>

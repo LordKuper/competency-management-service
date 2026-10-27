@@ -18,11 +18,14 @@ import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
+import { useIsAdmin } from "../auth/useCurrentUser";
 import {
   type Employee,
+  type EmployeeAssignment,
   employeeQuery,
   employeeSearchQuery,
   invalidateOrgStructure,
+  mainAssignmentOf,
   orgUnitQuery,
   orgUnitTreeQuery,
 } from "../org-structure/orgStructureApi";
@@ -33,7 +36,13 @@ import { userQuery, usersQueryKey } from "../users/usersApi";
 import { ChangePositionForm } from "./ChangePositionForm";
 import { DecisionError } from "./DecisionError";
 import type { DeskItem } from "./deskApi";
-import { deskPaths, objectTitle, reasonLines, typeLabelOf } from "./deskTexts";
+import {
+  connectUnitTarget,
+  deskPaths,
+  objectTitle,
+  reasonLines,
+  typeLabelOf,
+} from "./deskTexts";
 import { ORG_FINDING_MUTATION, useIsFindingBusy } from "./findingBusy";
 import { LinkButton } from "./LinkButton";
 import { returnState } from "./returnLink";
@@ -92,12 +101,17 @@ function FindingAction({ item }: { item: DeskItem }) {
     case "EmptyUnit":
       return <EmptyUnit item={item} />;
     default:
-      return (
-        <LinkButton to={deskPaths.connectUnitOf(item.object.id)} type="primary">
-          Открыть «Подключить подразделение»
-        </LinkButton>
-      );
+      return <ConnectUnit unitId={item.object.id} />;
   }
+}
+
+function ConnectUnit({ unitId }: { unitId: string }) {
+  const target = connectUnitTarget(unitId, useIsAdmin());
+  return (
+    <LinkButton to={target.path} type="primary">
+      {target.buttonLabel}
+    </LinkButton>
+  );
 }
 
 function OutsideList({ item }: { item: DeskItem }) {
@@ -173,7 +187,14 @@ function OutsideList({ item }: { item: DeskItem }) {
             ) : employee.data?.version == null ? (
               <Typography.Text type="secondary">Загрузка…</Typography.Text>
             ) : (
-              <ChangePositionForm employee={employee.data} />
+              <ChangePositionForm
+                employee={employee.data}
+                assignment={
+                  position && unit
+                    ? { orgUnitId: unit.id, positionId: position.id }
+                    : undefined
+                }
+              />
             )}
           </Flex>
         </Col>
@@ -245,7 +266,7 @@ function LinkAccount({ accountId }: { accountId: string }) {
         <Form.Item
           name="employeeId"
           label="Сотрудник"
-          extra="В списке видны подразделение и должность. После привязки ссылка приглашения перестанет действовать: отправьте приглашение повторно."
+          extra="После привязки ссылка приглашения перестанет действовать: отправьте приглашение повторно."
           rules={[{ required: true, message: "Выберите сотрудника" }]}
         >
           <EmployeePicker />
@@ -269,10 +290,13 @@ function LinkAccount({ accountId }: { accountId: string }) {
  */
 function InactivePosition({ item }: { item: DeskItem }) {
   const holders = useQuery(employeeSearchQuery(item.object.name));
-  const rows = (holders.data?.items ?? []).filter(
-    (employee) =>
-      employee.positionId === item.object.id && employee.isActive !== false,
-  );
+  const rows = (holders.data?.items ?? [])
+    .filter((employee) => employee.isActive !== false)
+    .flatMap((employee) =>
+      [mainAssignmentOf(employee), ...employee.assignments]
+        .filter((assignment) => assignment.positionId === item.object.id)
+        .map((assignment) => ({ employee, assignment })),
+    );
   const queryClient = useQueryClient();
   const { message } = App.useApp();
   const isBusy = useIsFindingBusy();
@@ -331,30 +355,50 @@ function InactivePosition({ item }: { item: DeskItem }) {
   );
 }
 
+/** A working employee with one assignment that holds the position. */
+interface Holder {
+  employee: Employee;
+  assignment: EmployeeAssignment;
+}
+
 function HoldersTable({
   isLoading,
   rows,
 }: {
   isLoading: boolean;
-  rows: Employee[];
+  rows: Holder[];
 }) {
   return (
     <Table
       size="small"
-      rowKey="id"
+      rowKey={({ employee, assignment }) =>
+        `${employee.id}:${assignment.orgUnitId}`
+      }
       pagination={false}
       loading={isLoading}
       dataSource={rows}
       locale={{ emptyText: "Работающих сотрудников с этой должностью нет" }}
       columns={[
-        { title: "Сотрудник", dataIndex: "fullName" },
-        { title: "Подразделение", dataIndex: "orgUnitName" },
+        {
+          title: "Сотрудник",
+          key: "employee",
+          render: (_, { employee }) => employee.fullName,
+        },
+        {
+          title: "Подразделение",
+          key: "unit",
+          render: (_, { assignment }) => assignment.orgUnitName,
+        },
         {
           title: "Новая должность",
           key: "change",
-          render: (_, employee) =>
+          render: (_, { employee, assignment }) =>
             employee.version == null ? null : (
-              <ChangePositionForm employee={employee} isInline />
+              <ChangePositionForm
+                employee={employee}
+                assignment={assignment}
+                isInline
+              />
             ),
         },
       ]}
@@ -414,7 +458,7 @@ function UnusedPosition({ item }: { item: DeskItem }) {
         </Flex>
         {canOnboard && (
           <Typography.Text type="secondary">
-            {`«Принять сотрудника» — откроется сценарий, должность «${item.object.name}» в нём уже выбрана; «Деактивировать» — должность перестанет предлагаться.`}
+            «Деактивировать» — должность перестанет предлагаться.
           </Typography.Text>
         )}
       </Flex>
@@ -450,9 +494,6 @@ function EmptyUnit({ item }: { item: DeskItem }) {
           Деактивировать подразделение
         </Button>
       </Flex>
-      <Typography.Text type="secondary">
-        {`«Принять сотрудника» — откроется сценарий, подразделение «${item.object.name}» в нём уже выбрано; «Деактивировать» — подразделение исчезнет из дерева.`}
-      </Typography.Text>
     </Flex>
   );
 }

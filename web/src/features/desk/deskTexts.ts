@@ -38,6 +38,7 @@ export const deskPaths = {
   trackPositionsOf: (trackId: string) => `/desk/track-positions/${trackId}`,
   catalogCleanup: "/desk/catalog-cleanup",
   orgCleanup: "/desk/org-cleanup",
+  orgImport: "/desk/org-import",
   positions: "/positions",
   users: "/users",
 } as const;
@@ -568,8 +569,30 @@ function linkState(reason: DeskReason, withDate: boolean): string {
   }
 }
 
+/**
+ * Where a unit with a gap is closed: the «Подключить подразделение» scenario for an administrator, the unit card of the
+ * org structure for everyone else, since the scenario and its API are for administrators only. `buttonLabel` names the target
+ * on a button.
+ */
+export function connectUnitTarget(
+  unitId: string,
+  isAdmin: boolean,
+): DeskLink & { buttonLabel: string } {
+  return isAdmin
+    ? {
+        title: "Подключить",
+        path: deskPaths.connectUnitOf(unitId),
+        buttonLabel: "Открыть «Подключить подразделение»",
+      }
+    : {
+        title: "Открыть карточку",
+        path: `${orgPaths.tree}?${new URLSearchParams({ unit: unitId })}`,
+        buttonLabel: "Открыть карточку подразделения",
+      };
+}
+
 /** The scenario screen an action item opens, with the label of its row action; null when the action is on the desk itself. */
-export function itemAction(item: DeskItem): DeskLink | null {
+export function itemAction(item: DeskItem, isAdmin: boolean): DeskLink | null {
   const [first] = item.reasons;
   const { object, target } = item;
   const details = first?.details;
@@ -622,7 +645,7 @@ export function itemAction(item: DeskItem): DeskLink | null {
     case "HeadAccountBlocked":
     case "UnitWithoutHr":
     case "UnitWithoutPositions":
-      return { title: "Подключить", path: deskPaths.connectUnitOf(object.id) };
+      return connectUnitTarget(object.id, isAdmin);
     case "PositionOutsideList":
     case "AccountWithoutEmployee":
       return { title: "Привести в порядок", path: deskPaths.orgCleanup };
@@ -644,8 +667,8 @@ function builderPreselection(
 }
 
 /** Where an item's object name leads: the scenario of an action, or a view of the object for reference. */
-export function itemLink(item: DeskItem): string | null {
-  if (!item.isReference) return itemAction(item)?.path ?? null;
+export function itemLink(item: DeskItem, isAdmin: boolean): string | null {
+  if (!item.isReference) return itemAction(item, isAdmin)?.path ?? null;
   const { object } = item;
   switch (item.reasons[0]?.kind) {
     case "ResponsibleUnitWithoutMatrix":

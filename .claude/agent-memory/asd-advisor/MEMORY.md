@@ -1,0 +1,1 @@
+- [Review consult format](feedback_review-consult-format.md) — per finding: accept/override, minimal fix shape, one-line why, AC/contract-change flag; verify the caller's leads

@@ -108,7 +108,7 @@ internal static class OrgUnitSetupEndpoints
         .. positionIds
             .Select(snapshot.Positions.GetValueOrDefault)
             .OfType<PositionStatus>()
-            .OrderBy(position => position.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(position => position.Name, TextCollation.Comparer)
             .ThenBy(position => position.Id)
             .Select(position => new UnitPositionResponse(position.Id, position.Name, position.IsActive)),
     ];

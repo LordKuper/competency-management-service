@@ -49,12 +49,30 @@ export function describeApiError(error: unknown): string {
   }
 }
 
+/** The reason a name was refused, which belongs to a name field that the screen may not show; any other failure is described as usual. */
+export function describeNameFailure(error: unknown): string {
+  return error instanceof ApiError && error.errors?.name
+    ? error.errors.name.join(" ")
+    : describeApiError(error);
+}
+
+/** The path of a form field from the server's field name: `assignments[1].positionId` is `["assignments", 1, "positionId"]`. */
+function fieldPath(field: string): (string | number)[] {
+  return field
+    .split(/[.[\]]+/)
+    .filter(Boolean)
+    .map((part) => (/^\d+$/.test(part) ? Number(part) : part));
+}
+
 /** Puts the server's per-field validation messages under the matching form fields. */
 export function showFieldErrors(form: FormInstance, error: unknown): void {
   if (!(error instanceof ApiError) || !error.errors) return;
   form.setFields(
     Object.entries(error.errors)
       .filter(([field]) => field !== GENERAL_FIELD)
-      .map(([name, errors]) => ({ name, errors: [...errors] })),
+      .map(([field, errors]) => ({
+        name: fieldPath(field),
+        errors: [...errors],
+      })),
   );
 }

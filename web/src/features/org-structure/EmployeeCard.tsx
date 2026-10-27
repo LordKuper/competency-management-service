@@ -2,23 +2,29 @@ import {
   DeleteOutlined,
   EditOutlined,
   MoreOutlined,
+  SwapOutlined,
   UndoOutlined,
   UserDeleteOutlined,
 } from "@ant-design/icons";
 import { Dropdown } from "antd";
 import { memo, useState } from "react";
 import { Highlighted } from "./Highlighted";
-import type { Employee } from "./orgStructureApi";
-import { EmployeeStatusTag } from "./StatusTags";
+import {
+  type Employee,
+  type EmployeeAssignment,
+  mainAssignmentOf,
+} from "./orgStructureApi";
+import { EmployeeStatusTag, SecondaryAssignmentTag } from "./StatusTags";
 
-/** What an administrator can do with an employee from the card. */
-export type EmployeeAction = "edit" | "dismiss" | "rehire" | "delete";
+/** What an administrator or HR can do with an employee from the card. */
+export type EmployeeAction = "edit" | "move" | "dismiss" | "rehire" | "delete";
 
 interface EmployeeCardProps {
   employee: Employee;
   /** Lower-cased search text whose first occurrence in the name and in the position and e-mail is highlighted; blank when not searching. */
   needle?: string;
-  isAdmin: boolean;
+  /** Whether the signed-in user changes employees: administrators and HR. */
+  canEdit: boolean;
   /** Runs an action chosen in the card's menu; the callback must be stable, or every card renders again with the page. */
   onAction: (action: EmployeeAction, employee: Employee) => void;
 }
@@ -28,7 +34,7 @@ function focusWhenMounted(button: HTMLButtonElement | null) {
 }
 
 /**
- * The actions button of a card, which opens the menu of what an administrator can do with the employee.
+ * The actions button of a card, which opens the menu of what an administrator or HR can do with the employee.
  * antd's Dropdown costs about a quarter of a millisecond per instance, which adds up to seconds for the thousands of
  * cards a unit may hold, so the button is plain markup until it is first used and only then becomes a Dropdown, already open;
  * the button that replaces the used one takes its focus, so the keyboard stays on the card.
@@ -66,6 +72,16 @@ function EmployeeActions({
             label: "Изменить",
             onClick: () => onAction("edit", employee),
           },
+          ...(isDismissed
+            ? []
+            : [
+                {
+                  key: "move",
+                  icon: <SwapOutlined />,
+                  label: "Переместить",
+                  onClick: () => onAction("move", employee),
+                },
+              ]),
           isDismissed
             ? {
                 key: "rehire",
@@ -95,21 +111,44 @@ function EmployeeActions({
   );
 }
 
+/** The assignments the card shows: those the server listed for the unit, or the main one when the list was not filtered by a unit. */
+export function shownAssignments(
+  employee: Employee,
+): readonly EmployeeAssignment[] {
+  return employee.unitAssignments.length > 0
+    ? employee.unitAssignments
+    : [mainAssignmentOf(employee)];
+}
+
+/** The position of an assignment, the legal entities it is held for and, on the first line, the e-mail of the employee's account. */
+function assignmentText(
+  { position, legalEntities }: EmployeeAssignment,
+  email: string | null,
+): string {
+  return [
+    position,
+    legalEntities.length > 0 &&
+      `Юрлица: ${legalEntities.map(({ name }) => name).join(", ")}`,
+    email,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 /**
- * Compact card of an employee inside the unit hierarchy. Next to the position it shows the e-mail of the employee's
- * account, when there is one. Administrators and HR also see the mark of a person who no longer works, and administrators the menu of
- * actions; the restricted projection of an ordinary user has no status, and such a user only reads.
+ * Compact card of an employee inside the unit hierarchy. It shows each assignment the employee has in the unit: the position and the
+ * legal entities, a secondary assignment marked «Совмещение», and next to the first the e-mail of the employee's account, when there is one.
+ * Administrators and HR also see the mark of a person who no longer works and the menu of actions; the restricted projection
+ * of an ordinary user has no status, and such a user only reads.
  * A unit may hold thousands of employees, so the card is plain markup styled from the theme variables: antd's own
  * card, avatar and text components cost several times more to render.
  */
 export const EmployeeCard = memo(function EmployeeCard({
   employee,
   needle = "",
-  isAdmin,
+  canEdit,
   onAction,
 }: EmployeeCardProps) {
-  const details = [employee.position, employee.email].filter(Boolean);
-
   return (
     <div className="org-tree__item org-employee">
       <span className="org-employee__avatar">
@@ -124,11 +163,22 @@ export const EmployeeCard = memo(function EmployeeCard({
           </strong>
           {employee.isActive === false && <EmployeeStatusTag />}
         </div>
-        <span className="org-employee__details">
-          <Highlighted text={details.join(" · ")} needle={needle} />
-        </span>
+        <div className="org-employee__details">
+          {shownAssignments(employee).map((assignment, index) => (
+            <div key={`${assignment.orgUnitId}:${assignment.positionId}`}>
+              {assignment.isSecondary && <SecondaryAssignmentTag />}
+              <Highlighted
+                text={assignmentText(
+                  assignment,
+                  index === 0 ? employee.email : null,
+                )}
+                needle={needle}
+              />
+            </div>
+          ))}
+        </div>
       </div>
-      {isAdmin && <EmployeeActions employee={employee} onAction={onAction} />}
+      {canEdit && <EmployeeActions employee={employee} onAction={onAction} />}
     </div>
   );
 });

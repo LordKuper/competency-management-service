@@ -621,6 +621,107 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "OrgUnits"
+        ],
+        "operationId": "DeleteOrgUnit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitDeletionRefusal"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/org-units/{id}/subtree": {
@@ -1569,6 +1670,124 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/employees/{id}/move": {
+      "post": {
+        "tags": [
+          "Employees"
+        ],
+        "operationId": "MoveEmployee",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveEmployeeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
                 }
               }
             }
@@ -2818,6 +3037,300 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/legal-entities": {
+      "get": {
+        "tags": [
+          "LegalEntities"
+        ],
+        "operationId": "ListLegalEntities",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseOfLegalEntityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/legal-entities/quick-add": {
+      "post": {
+        "tags": [
+          "LegalEntities"
+        ],
+        "operationId": "QuickAddLegalEntity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LegalEntityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegalEntityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/org-import/preview": {
+      "post": {
+        "tags": [
+          "OrgImport"
+        ],
+        "operationId": "PreviewOrgImport",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgImportPreviewResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/org-import/apply": {
+      "post": {
+        "tags": [
+          "OrgImport"
+        ],
+        "description": "Form fields: file, the fingerprint of the previewed plan, optional decisions, a JSON array of { id, decision } where decision is keep, deactivate (a unit) or dismiss (an employee); a missing unit or employee without a decision is deactivated or dismissed; and optional heads, a JSON array of { unit, employee } with the unit key and the employee key of the preview's heads group, or null as the employee for no head. A missing employee the decisions keep may be chosen by their identifier. A unit without a head choice keeps its head if the employee still works in it, else it is left without a head; the choice is applied after the employees and dismissals, and a choice that names an employee who does not work in the unit is a 400. A 409 whose code is planChanged means the file or the organization no longer give the previewed plan.",
+        "operationId": "ApplyOrgImport",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file",
+                  "fingerprint"
+                ],
+                "type": "object",
+                "allOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "$ref": "#/components/schemas/IFormFile"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "fingerprint": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "decisions": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "heads": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgImportResultResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -12540,6 +13053,67 @@
           null
         ]
       },
+      "AssignmentRequest": {
+        "required": [
+          "orgUnitId",
+          "positionId",
+          "legalEntityIds"
+        ],
+        "type": "object",
+        "properties": {
+          "orgUnitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "positionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "legalEntityIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "AssignmentResponse": {
+        "required": [
+          "orgUnitId",
+          "orgUnitName",
+          "positionId",
+          "position",
+          "legalEntities",
+          "isSecondary"
+        ],
+        "type": "object",
+        "properties": {
+          "orgUnitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orgUnitName": {
+            "type": "string"
+          },
+          "positionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "position": {
+            "type": "string"
+          },
+          "legalEntities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegalEntityResponse"
+            }
+          },
+          "isSecondary": {
+            "type": "boolean"
+          }
+        }
+      },
       "AuditEventResponse": {
         "required": [
           "id",
@@ -14001,7 +14575,9 @@
           "lastName",
           "firstName",
           "positionId",
-          "orgUnitId"
+          "orgUnitId",
+          "legalEntityIds",
+          "assignments"
         ],
         "type": "object",
         "properties": {
@@ -14024,6 +14600,19 @@
           "orgUnitId": {
             "type": "string",
             "format": "uuid"
+          },
+          "legalEntityIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentRequest"
+            }
           }
         }
       },
@@ -14038,7 +14627,10 @@
           "orgUnitId",
           "orgUnitName",
           "positionId",
-          "position"
+          "position",
+          "legalEntities",
+          "assignments",
+          "unitAssignments"
         ],
         "type": "object",
         "properties": {
@@ -14080,6 +14672,24 @@
           },
           "position": {
             "type": "string"
+          },
+          "legalEntities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegalEntityResponse"
+            }
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentResponse"
+            }
+          },
+          "unitAssignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentResponse"
+            }
           },
           "isActive": {
             "type": [
@@ -14215,7 +14825,155 @@
           }
         }
       },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
+      },
+      "ImportErrorResponse": {
+        "required": [
+          "row",
+          "column",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "row": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "column": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ImportHeadEmployeeResponse": {
+        "required": [
+          "key",
+          "fullName"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          }
+        }
+      },
+      "ImportHeadsResponse": {
+        "required": [
+          "units",
+          "employees"
+        ],
+        "type": "object",
+        "properties": {
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportHeadUnitResponse"
+            }
+          },
+          "employees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportHeadEmployeeResponse"
+            }
+          }
+        }
+      },
+      "ImportHeadUnitResponse": {
+        "required": [
+          "key",
+          "path",
+          "unitId",
+          "currentHead",
+          "currentHeadStays",
+          "candidates",
+          "employees",
+          "suggested"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "unitId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "currentHead": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "currentHeadStays": {
+            "type": "boolean"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "employees": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "suggested": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "JsonElement": { },
+      "LegalEntityRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "LegalEntityResponse": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "LevelOrderRequest": {
         "required": [
           "levelIds"
@@ -15408,6 +16166,80 @@
           }
         }
       },
+      "MissingEmployeeResponse": {
+        "required": [
+          "id",
+          "fullName",
+          "orgUnitIds",
+          "isLastActiveAdministrator"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "orgUnitIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "isLastActiveAdministrator": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MissingUnitResponse": {
+        "required": [
+          "id",
+          "path",
+          "parentId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "path": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "MoveEmployeeRequest": {
+        "required": [
+          "fromOrgUnitId",
+          "positionId",
+          "toOrgUnitId"
+        ],
+        "type": "object",
+        "properties": {
+          "fromOrgUnitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "positionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toOrgUnitId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "MoveOrgUnitRequest": {
         "required": [
           "parentId"
@@ -15751,6 +16583,238 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "OrgImportPlanResponse": {
+        "required": [
+          "fingerprint",
+          "newUnits",
+          "activatedUnits",
+          "newPositions",
+          "reactivatedPositions",
+          "newLegalEntities",
+          "newEmployees",
+          "rehiredEmployees",
+          "transfers",
+          "addedAssignments",
+          "removedAssignments",
+          "changedLegalEntities",
+          "unitPositionsAdded",
+          "unitPositionsRemoved",
+          "missingUnits",
+          "missingEmployees",
+          "heads"
+        ],
+        "type": "object",
+        "properties": {
+          "fingerprint": {
+            "type": "string"
+          },
+          "newUnits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "activatedUnits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "newPositions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reactivatedPositions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "newLegalEntities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "newEmployees": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rehiredEmployees": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "transfers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "addedAssignments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "removedAssignments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "changedLegalEntities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unitPositionsAdded": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unitPositionsRemoved": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "missingUnits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissingUnitResponse"
+            }
+          },
+          "missingEmployees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissingEmployeeResponse"
+            }
+          },
+          "heads": {
+            "$ref": "#/components/schemas/ImportHeadsResponse"
+          }
+        }
+      },
+      "OrgImportPreviewResponse": {
+        "required": [
+          "errors",
+          "plan"
+        ],
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportErrorResponse"
+            }
+          },
+          "plan": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OrgImportPlanResponse"
+              }
+            ]
+          }
+        }
+      },
+      "OrgImportResultResponse": {
+        "required": [
+          "newUnits",
+          "activatedUnits",
+          "newPositions",
+          "reactivatedPositions",
+          "newLegalEntities",
+          "newEmployees",
+          "rehiredEmployees",
+          "transfers",
+          "addedAssignments",
+          "removedAssignments",
+          "changedLegalEntities",
+          "unitPositionsAdded",
+          "unitPositionsRemoved",
+          "deactivatedUnits",
+          "dismissedEmployees",
+          "assignedHeads"
+        ],
+        "type": "object",
+        "properties": {
+          "newUnits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activatedUnits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newPositions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reactivatedPositions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newLegalEntities": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newEmployees": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rehiredEmployees": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "transfers": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "addedAssignments": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "removedAssignments": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "changedLegalEntities": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unitPositionsAdded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unitPositionsRemoved": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deactivatedUnits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dismissedEmployees": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "assignedHeads": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -16203,6 +17267,35 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/EmployeeResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PageResponseOfLegalEntityResponse": {
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegalEntityResponse"
             }
           },
           "total": {
@@ -16845,6 +17938,51 @@
           "Active"
         ]
       },
+      "UnitDeletionRefusal": {
+        "required": [
+          "obstacles"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "obstacles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "UnitPositionResponse": {
         "required": [
           "id",
@@ -17166,6 +18304,12 @@
     },
     {
       "name": "Positions"
+    },
+    {
+      "name": "LegalEntities"
+    },
+    {
+      "name": "OrgImport"
     },
     {
       "name": "Users"

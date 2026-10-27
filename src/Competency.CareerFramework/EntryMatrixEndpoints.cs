@@ -66,8 +66,8 @@ internal static class EntryMatrixEndpoints
                 version.Status,
                 version.Matrix.PositionId,
                 version.Matrix.PositionId is { } positionId ? positionNames.GetValueOrDefault(positionId, string.Empty) : null))
-            .OrderBy(row => row.TrackName ?? row.PositionName, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(row => row.OrgUnitName, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(row => row.TrackName ?? row.PositionName, TextCollation.Comparer)
+            .ThenBy(row => row.OrgUnitName, TextCollation.Comparer)
             .ThenBy(row => row.MatrixId)
             .ThenByDescending(row => row.Number)
             .ToList());

@@ -9,3 +9,8 @@ export function UnitStatusTag() {
 export function EmployeeStatusTag() {
   return <Tag>Не работает</Tag>;
 }
+
+/** Names a secondary assignment in words, since colour alone must not carry it. */
+export function SecondaryAssignmentTag() {
+  return <Tag>Совмещение</Tag>;
+}

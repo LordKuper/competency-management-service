@@ -19,7 +19,6 @@ import { destructiveConfirm } from "../../app/destructiveConfirm";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { useFormSubmit } from "../../app/useFormSubmit";
-import { useIsAdmin } from "../auth/useCurrentUser";
 import { PositionStatusTag } from "../positions/PositionStatusTag";
 import {
   fetchUnitPositionImpact,
@@ -29,6 +28,7 @@ import {
   unitPositionsQuery,
 } from "../positions/positionsApi";
 import type { OrgUnit } from "./orgStructureApi";
+import { useCanEditOrgStructure } from "./useCanEditOrgStructure";
 
 const PICKER_PAGE_SIZE = 20;
 
@@ -39,12 +39,12 @@ interface UnitPositionsModalProps {
 }
 
 /**
- * Dialog of the positions allowed in a unit; read-only for others, while administrators change it: the unit's own list, where a position is taken off after
+ * Dialog of the positions allowed in a unit; read-only for others, while administrators and HR change it: the unit's own list, where a position is taken off after
  * showing how many employees of the unit and the units below keep it, the positions inherited from the units above with
  * the unit each comes from, and the choice of an active catalogue position to add. Mount it only while it is shown.
  */
 export function UnitPositionsModal({ unit, onClose }: UnitPositionsModalProps) {
-  const isAdmin = useIsAdmin();
+  const canEdit = useCanEditOrgStructure();
   const queryClient = useQueryClient();
   const { modal, message } = App.useApp();
   const { data, error, isPending, refetch } = useQuery(
@@ -140,7 +140,7 @@ export function UnitPositionsModal({ unit, onClose }: UnitPositionsModalProps) {
                       <PositionStatusTag isActive={false} />
                     )}
                   </Flex>
-                  {isAdmin && (
+                  {canEdit && (
                     <Button
                       type="link"
                       size="small"
@@ -178,7 +178,7 @@ export function UnitPositionsModal({ unit, onClose }: UnitPositionsModalProps) {
               ))
             )}
           </section>
-          {isAdmin && (
+          {canEdit && (
             <AddPositionForm
               ownIds={new Set(own.map((position) => position.positionId))}
               onAdd={add}
@@ -223,7 +223,13 @@ function AddPositionForm({ ownIds, onAdd }: AddPositionFormProps) {
     .map((position) => ({ value: position.id, label: position.name }));
 
   return (
-    <Form form={form} name="unit-position" layout="vertical" onFinish={submit}>
+    <Form
+      form={form}
+      name="unit-position"
+      layout="vertical"
+      disabled={isSubmitting}
+      onFinish={submit}
+    >
       <Form.Item
         name="positionId"
         label="Должность из справочника"

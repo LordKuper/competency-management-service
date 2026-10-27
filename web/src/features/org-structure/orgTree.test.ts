@@ -36,6 +36,9 @@ function employeeIn(orgUnitId: string): Employee {
     orgUnitName: "",
     positionId: "position",
     position: "Инженер",
+    legalEntities: [],
+    assignments: [],
+    unitAssignments: [],
   };
 }
 
@@ -108,6 +111,53 @@ describe("searchUnitTree (AC-17)", () => {
 
   it("shows nothing when neither a unit nor an employee matches", () => {
     expect(searchUnitTree(roots, "ничего", []).visibleIds.size).toBe(0);
+  });
+
+  it("lists an employee in every unit they have an assignment in, with only the assignments of that unit (AC-5)", () => {
+    const secondary = {
+      orgUnitId: "north",
+      orgUnitName: "Север",
+      positionId: "other",
+      position: "Аналитик",
+      legalEntities: [],
+      isSecondary: true,
+    };
+    const matched = { ...employeeIn("support"), assignments: [secondary] };
+
+    const search = searchUnitTree(roots, "иванов", [matched]);
+
+    expect([...search.employeesByUnit.keys()].sort()).toEqual([
+      "north",
+      "support",
+    ]);
+    expect(search.employeesByUnit.get("north")?.[0]?.unitAssignments).toEqual([
+      secondary,
+    ]);
+    expect(
+      search.employeesByUnit
+        .get("support")?.[0]
+        ?.unitAssignments.map(({ isSecondary }) => isSecondary),
+    ).toEqual([false]);
+    expect([...search.pathIds]).toContain("sales");
+  });
+
+  it("lists an employee with two assignments in one unit once, with both (AC-5)", () => {
+    const second = {
+      orgUnitId: "north",
+      orgUnitName: "Север",
+      positionId: "other",
+      position: "Аналитик",
+      legalEntities: [],
+      isSecondary: true,
+    };
+    const matched = { ...employeeIn("north"), assignments: [second] };
+
+    const inNorth = searchUnitTree(roots, "иванов", [
+      matched,
+    ]).employeesByUnit.get("north");
+
+    expect(inNorth).toHaveLength(1);
+    expect(inNorth?.[0]?.unitAssignments).toHaveLength(2);
   });
 });
 

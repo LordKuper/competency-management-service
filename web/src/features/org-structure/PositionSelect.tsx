@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Select } from "antd";
-import { useEffect, useState } from "react";
-import { ApiError } from "../../api/ApiError";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../api/client";
 import { unwrap } from "../../api/unwrap";
-import { describeApiError } from "../../app/apiErrors";
+import { describeApiError, describeNameFailure } from "../../app/apiErrors";
 import {
   invalidatePositions,
   unitPositionsQuery,
@@ -40,18 +39,12 @@ interface PositionSelectProps {
   onAdded?: (position: { id: string; name: string }) => void;
 }
 
-/** The server's reason a name was refused, which belongs to the name field the dialog does not show. */
-function describeAddFailure(error: unknown): string {
-  return error instanceof ApiError && error.errors?.name
-    ? error.errors.name.join(" ")
-    : describeApiError(error);
-}
-
 /**
  * Searchable choice of the active positions allowed in the chosen unit. When the typed name matches none of them, the list
  * offers to add it: the server finds or creates the position, allows it in the unit and the form picks it, without leaving the form.
  * The entry is an ordinary option, so it is reached with the arrow keys like any other. A choice the newly chosen unit does not
- * allow is cleared once its list has loaded. The server still decides whether the choice is allowed.
+ * allow is cleared once its list has loaded; a choice made together with the unit, which the form may report one render apart,
+ * is never judged against the previous unit's list. The server still decides whether the choice is allowed.
  */
 export function PositionSelect({
   id,
@@ -84,7 +77,7 @@ export function PositionSelect({
       onAdded?.({ id: position.id, name: position.name });
     },
     onError: (failure) => {
-      message.error(describeAddFailure(failure));
+      message.error(describeNameFailure(failure));
     },
     onSettled: () => invalidatePositions(queryClient),
   });
@@ -113,9 +106,13 @@ export function PositionSelect({
     );
   const choices = [...options.values()];
   const isValueOffered = value === undefined || options.has(value);
+  const chosen = useRef({ value, orgUnitId });
   useEffect(() => {
-    if (data && !isValueOffered) onChange?.(undefined);
-  }, [data, isValueOffered, onChange]);
+    if (chosen.current.value !== value) chosen.current = { value, orgUnitId };
+    const isChosenUnderOtherUnit = chosen.current.orgUnitId !== orgUnitId;
+    if (data && !isValueOffered && isChosenUnderOtherUnit)
+      onChange?.(undefined);
+  }, [data, isValueOffered, onChange, orgUnitId, value]);
   if (orgUnitId !== undefined && isNew) {
     choices.push({ value: ADD_VALUE, label: `Добавить должность «${name}»` });
   }

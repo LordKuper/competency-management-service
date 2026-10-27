@@ -1,3 +1,4 @@
+using Competency.OrgStructure.Import;
 using Competency.Platform;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +35,8 @@ public static class OrgStructureModule
         EmployeeEndpoints.Map(endpoints);
         PositionEndpoints.Map(endpoints);
         OrgUnitPositionEndpoints.Map(endpoints);
+        LegalEntityEndpoints.Map(endpoints);
+        OrgImportEndpoints.Map(endpoints);
         return endpoints;
     }
 }

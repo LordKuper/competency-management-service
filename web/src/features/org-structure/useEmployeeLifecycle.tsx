@@ -6,6 +6,7 @@ import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
 import { describeApiError } from "../../app/apiErrors";
 import { destructiveConfirm } from "../../app/destructiveConfirm";
+import { useIsAdmin } from "../auth/useCurrentUser";
 import { usersQueryKey } from "../users/usersApi";
 import type { EmployeeAction } from "./EmployeeCard";
 import { EmployeeImpactList } from "./EmployeeImpactList";
@@ -15,7 +16,7 @@ import {
   invalidateOrgStructure,
 } from "./orgStructureApi";
 
-type LifecycleAction = Exclude<EmployeeAction, "edit">;
+type LifecycleAction = Exclude<EmployeeAction, "edit" | "move">;
 
 const WORDING = {
   dismiss: {
@@ -39,7 +40,9 @@ const WORDING = {
 } as const;
 
 const REHIRE_NOTE =
-  "Привязанная учётная запись останется заблокированной: разблокируйте её в разделе «Пользователи». Подразделения, которые сотрудник возглавлял, остаются без руководителя.";
+  "Привязанная учётная запись останется заблокированной. Подразделения, которые сотрудник возглавлял, остаются без руководителя.";
+const REHIRE_ADMIN_HINT =
+  " Учётную запись можно разблокировать в разделе «Пользователи».";
 
 /**
  * Returns the action that dismisses, rehires or deletes an employee after a confirmation. Dismissal and deletion first read
@@ -51,6 +54,7 @@ const REHIRE_NOTE =
 export function useEmployeeLifecycle() {
   const { modal, message } = App.useApp();
   const queryClient = useQueryClient();
+  const isAdmin = useIsAdmin();
   const { mutateAsync: perform } = useMutation({
     mutationFn: async ({
       action,
@@ -118,7 +122,11 @@ export function useEmployeeLifecycle() {
         });
 
       if (action === "rehire") {
-        confirm(<Typography.Paragraph>{REHIRE_NOTE}</Typography.Paragraph>);
+        confirm(
+          <Typography.Paragraph>
+            {isAdmin ? REHIRE_NOTE + REHIRE_ADMIN_HINT : REHIRE_NOTE}
+          </Typography.Paragraph>,
+        );
         return;
       }
       const hideLoading = message.loading("Проверяем связанные изменения…", 0);
@@ -134,6 +142,6 @@ export function useEmployeeLifecycle() {
         hideLoading();
       }
     },
-    [modal, message, perform],
+    [modal, message, perform, isAdmin],
   );
 }

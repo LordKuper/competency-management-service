@@ -47,7 +47,7 @@ function show(hr: { assigned: unknown; inherited: unknown }, isAdmin = false) {
         openness="closed"
         isSelected={false}
         needle=""
-        isAdmin={isAdmin}
+        canEdit={isAdmin}
         onToggle={vi.fn()}
         onAction={onAction}
       />
@@ -126,5 +126,25 @@ describe("unit card (AC-2, AC-8, AC-19)", {
       expect.arrayContaining(["Должности", "HR", "Изменить", "Деактивировать"]),
     );
     expect(onAction).toHaveBeenCalledWith("hr", UNIT);
+  });
+
+  it("offers an administrator «Удалить» and passes the unit to the action (AC-33)", async () => {
+    const { onAction, user } = show({ assigned: null, inherited: null }, true);
+
+    await openMenu(user);
+    await user.click(await screen.findByRole("menuitem", { name: /Удалить/ }));
+
+    expect(onAction).toHaveBeenCalledWith("delete", UNIT);
+  });
+
+  it("does not offer «Удалить» to a user who cannot change the structure (AC-33)", async () => {
+    const { user } = show({ assigned: null, inherited: null }, false);
+
+    await openMenu(user);
+    await screen.findAllByRole("menuitem");
+
+    expect(
+      screen.queryByRole("menuitem", { name: /Удалить/ }),
+    ).not.toBeInTheDocument();
   });
 });

@@ -71,7 +71,7 @@ internal static class MyPlaceEndpoints
             [.. published
                 .Select(version => version.Matrix.TrackId is { } trackId ? MatrixOf(version, trackId) : null)
                 .OfType<MyPlaceMatrixResponse>()
-                .OrderBy(matrix => matrix.TrackName, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(matrix => matrix.TrackName, TextCollation.Comparer)
                 .ThenBy(matrix => matrix.MatrixId)],
             NoTrack: tracks.Count == 0 && positionMatrix is null,
             positionMatrix));
@@ -107,7 +107,7 @@ internal static class MyPlaceEndpoints
             .ToDictionaryAsync(direction => direction.Id, direction => direction.Name, cancellationToken);
 
         return [.. currentLevels
-            .OrderBy(level => level.Track.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(level => level.Track.Name, TextCollation.Comparer)
             .ThenBy(level => level.TrackId)
             .Select(current =>
             {

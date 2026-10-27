@@ -264,8 +264,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
               <>
                 <Typography.Text>
                   Эти черновые записи станут действующими одновременно с
-                  версией. Право утвердить их проверяется у ответственного HR
-                  подразделения матрицы; отказать по одной нельзя.
+                  версией; отказать по одной нельзя.
                 </Typography.Text>
                 <CascadeTable drafts={publication.data} />
               </>

@@ -9,7 +9,7 @@ namespace Competency.OrgStructure;
 
 /// <summary>
 /// The API of the positions allowed in a unit. Any signed-in user reads a visible unit's own and inherited positions;
-/// only global administrators change the unit's own list, under the tree lock, so an employee is never saved with a position
+/// only global administrators and HR change the unit's own list, under the tree lock, so an employee is never saved with a position
 /// taken off the list at the same moment.
 /// </summary>
 internal static class OrgUnitPositionEndpoints
@@ -27,15 +27,15 @@ internal static class OrgUnitPositionEndpoints
 
         readers.MapGet(string.Empty, ListAsync).WithName("ListOrgUnitPositions").ProducesProblem(StatusCodes.Status404NotFound);
 
-        var administrators = readers.MapGroup(string.Empty)
-            .RequireAuthorization(AuthorizationPolicies.GlobalAdmin)
+        var keepers = readers.MapGroup(string.Empty)
+            .RequireAuthorization(AuthorizationPolicies.GlobalAdminOrHr)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        administrators.MapPost(string.Empty, AddAsync).WithName("AddOrgUnitPosition");
-        administrators.MapDelete("/{positionId:guid}", RemoveAsync).WithName("RemoveOrgUnitPosition");
-        administrators.MapGet("/{positionId:guid}/impact", ImpactAsync).WithName("GetOrgUnitPositionImpact");
-        administrators.MapPost("/quick-add", QuickAddAsync).WithName("QuickAddOrgUnitPosition").ProducesETag();
+        keepers.MapPost(string.Empty, AddAsync).WithName("AddOrgUnitPosition");
+        keepers.MapDelete("/{positionId:guid}", RemoveAsync).WithName("RemoveOrgUnitPosition");
+        keepers.MapGet("/{positionId:guid}/impact", ImpactAsync).WithName("GetOrgUnitPositionImpact");
+        keepers.MapPost("/quick-add", QuickAddAsync).WithName("QuickAddOrgUnitPosition").ProducesETag();
     }
 
     /// <summary>
@@ -127,8 +127,8 @@ internal static class OrgUnitPositionEndpoints
     }
 
     /// <summary>
-    /// The number of working employees of the unit and the units below it who hold the position, shown before it is taken
-    /// off the unit's list; read-only.
+    /// The number of working employees of the unit and the units below it who hold the position in any of their assignments there,
+    /// shown before it is taken off the unit's list; read-only.
     /// </summary>
     private static async Task<Results<Ok<PositionImpactResponse>, NotFound>> ImpactAsync(
         Guid id,
@@ -142,10 +142,9 @@ internal static class OrgUnitPositionEndpoints
         }
 
         var subtreeIds = context.DescendantIds(id);
-        var count = await context.Set<Employee>()
-            .CountAsync(
-                employee => employee.IsActive && employee.PositionId == positionId && subtreeIds.Contains(employee.OrgUnitId),
-                cancellationToken);
+        var count = await context.WorkingPlacements()
+            .Where(placement => placement.PositionId == positionId && subtreeIds.Contains(placement.OrgUnitId))
+            .CountEmployeesAsync(cancellationToken);
         return TypedResults.Ok(new PositionImpactResponse(count));
     }
 

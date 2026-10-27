@@ -8,22 +8,53 @@ import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import {
   type Employee,
+  type EmployeeInput,
+  employeeInputOf,
   invalidateOrgStructure,
 } from "../org-structure/orgStructureApi";
 import { PositionSelect } from "../org-structure/PositionSelect";
 import { DecisionError } from "./DecisionError";
 import { ORG_FINDING_MUTATION, useIsFindingBusy } from "./findingBusy";
 
+/** An assignment of an employee, told apart from the others by its unit and position. */
+export interface AssignmentRef {
+  orgUnitId: string;
+  positionId: string;
+}
+
 interface ChangePositionFormProps {
   /** The employee as the server last returned them, with the version the change is based on. */
   employee: Employee;
+  /** The assignment whose position changes; the main one when omitted. */
+  assignment?: AssignmentRef;
   /** Lays the field and the button in one row, for a table cell. */
   isInline?: boolean;
 }
 
-/** The choice of a new position from the employee's unit and the button that saves it; the other fields stay as they are. */
+/** The employee's input with the position of one assignment replaced, the main one or a secondary one; everything else stays as it is. */
+function withPosition(
+  employee: Employee,
+  target: AssignmentRef,
+  positionId: string,
+): EmployeeInput {
+  const input = employeeInputOf(employee);
+  const isTarget = (held: AssignmentRef) =>
+    held.orgUnitId === target.orgUnitId &&
+    held.positionId === target.positionId;
+  return isTarget(employee)
+    ? { ...input, positionId }
+    : {
+        ...input,
+        assignments: input.assignments.map((held) =>
+          isTarget(held) ? { ...held, positionId } : held,
+        ),
+      };
+}
+
+/** The choice of a new position from the unit of the assignment and the button that saves it; the other fields and assignments stay as they are. */
 export function ChangePositionForm({
   employee,
+  assignment = employee,
   isInline = false,
 }: ChangePositionFormProps) {
   const queryClient = useQueryClient();
@@ -40,13 +71,7 @@ export function ChangePositionForm({
             path: { id: employee.id },
             header: { "If-Match": ifMatchOf(employee.version ?? 0) },
           },
-          body: {
-            lastName: employee.lastName,
-            firstName: employee.firstName,
-            middleName: employee.middleName,
-            orgUnitId: employee.orgUnitId,
-            positionId,
-          },
+          body: withPosition(employee, assignment, positionId),
         }),
       ),
     onSuccess: () => {
@@ -68,7 +93,7 @@ export function ChangePositionForm({
       <Form
         key={employee.version}
         form={form}
-        name={`employee-position-${employee.id}`}
+        name={`employee-position-${employee.id}-${assignment.orgUnitId}`}
         layout={isInline ? "inline" : "vertical"}
         disabled={isBusy}
         onFinish={submit}
@@ -84,7 +109,7 @@ export function ChangePositionForm({
               : undefined
           }
         >
-          <PositionSelect orgUnitId={employee.orgUnitId} />
+          <PositionSelect orgUnitId={assignment.orgUnitId} />
         </Form.Item>
         <Button htmlType="submit" loading={change.isPending}>
           Сменить должность

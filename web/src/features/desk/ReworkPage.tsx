@@ -191,7 +191,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
         plain: {
           title: "Принять правки?",
           okText: "Принять правки",
-          lead: `Шаг «${stepName}» (${actorName}) считается согласованным. Версия ${version.number} пойдёт дальше: ${nextStep}. Ничего не публикуется, перечня нет.`,
+          lead: `Шаг «${stepName}» (${actorName}) считается согласованным. Версия ${version.number} пойдёт дальше: ${nextStep}. Ничего не публикуется.`,
         },
         publishing: {
           isAskedFirst: true,
@@ -200,7 +200,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
           lead: (count) =>
             `Шаг «${stepName}» (${actorName}) считается согласованным. Версия ${version.number} пойдёт дальше: ${nextStep}. ${
               count > 0
-                ? `Вместе с ней станут действующими ${draftRecords(count)}. Право утвердить их проверяется у ответственного HR подразделения; перечень подтверждаете вы:`
+                ? `Вместе с ней станут действующими ${draftRecords(count)}:`
                 : "Черновых записей нет: публикуется только версия."
             }`,
         },

@@ -1,4 +1,10 @@
-import type { Employee, OrgUnit, OrgUnitTreeNode } from "./orgStructureApi";
+import {
+  type Employee,
+  type EmployeeAssignment,
+  mainAssignmentOf,
+  type OrgUnit,
+  type OrgUnitTreeNode,
+} from "./orgStructureApi";
 
 /** A unit together with the units directly below it. */
 export interface UnitNode {
@@ -19,7 +25,7 @@ export interface UnitSearch {
   visibleIds: ReadonlySet<string>;
   /** Units above a match or holding matched employees; opened so that every match is in view. */
   pathIds: ReadonlySet<string>;
-  /** The matched employees by the unit they work in. */
+  /** The matched employees by the unit they work in; one holding assignments in several units is listed in each, narrowed to that unit's assignments. */
   employeesByUnit: ReadonlyMap<string, readonly Employee[]>;
 }
 
@@ -67,6 +73,25 @@ export function ancestorIds(units: readonly OrgUnit[], id: string): string[] {
   return unit ? ancestorsIn(byId, unit) : [];
 }
 
+/** The employee once for each unit they have an assignment in, carrying only the assignments in that unit. */
+function perUnit(employee: Employee): [string, Employee][] {
+  if (employee.assignments.length === 0)
+    return [[employee.orgUnitId, employee]];
+  const byUnit = new Map<string, EmployeeAssignment[]>();
+  for (const assignment of [
+    mainAssignmentOf(employee),
+    ...employee.assignments,
+  ]) {
+    const inUnit = byUnit.get(assignment.orgUnitId);
+    if (inUnit) inUnit.push(assignment);
+    else byUnit.set(assignment.orgUnitId, [assignment]);
+  }
+  return [...byUnit].map(([unitId, unitAssignments]) => [
+    unitId,
+    { ...employee, unitAssignments },
+  ]);
+}
+
 /** Finds the units whose name contains the text, ignoring letter case, together with the units of the employees already matched to it. */
 export function searchUnitTree(
   roots: readonly UnitNode[],
@@ -78,9 +103,11 @@ export function searchUnitTree(
   const pathIds = new Set<string>();
   const employeesByUnit = new Map<string, Employee[]>();
   for (const employee of matchedEmployees) {
-    const inUnit = employeesByUnit.get(employee.orgUnitId);
-    if (inUnit) inUnit.push(employee);
-    else employeesByUnit.set(employee.orgUnitId, [employee]);
+    for (const [unitId, member] of perUnit(employee)) {
+      const inUnit = employeesByUnit.get(unitId);
+      if (inUnit) inUnit.push(member);
+      else employeesByUnit.set(unitId, [member]);
+    }
   }
 
   function visit({ unit, children }: UnitNode, isBelowMatch: boolean): boolean {

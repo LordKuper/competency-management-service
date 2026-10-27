@@ -286,3 +286,37 @@ describe("the queue of the organisation structure asks before a choice not yet s
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
+
+describe("a unit finding opens where its session can close the gap (AC-8)", {
+  timeout: LONG_FLOW_TIMEOUT,
+}, () => {
+  it.each([
+    {
+      role: "Hr",
+      label: "Открыть карточку подразделения",
+      href: "/org-structure?unit=u2",
+    },
+    {
+      role: "GlobalAdmin",
+      label: "Открыть «Подключить подразделение»",
+      href: "/desk/connect-unit/u2",
+    },
+  ])("leads a $role to $href", async ({ role, label, href }) => {
+    serve();
+    fakeApi.on("GET /api/v1/auth/me", () =>
+      Response.json({
+        id: "account",
+        email: "user@test.local",
+        roles: [role],
+        employeeId: null,
+      }),
+    );
+    const user = renderQueue();
+    await screen.findByRole("heading", { name: /Иванов Иван/ });
+    await user.click(screen.getByRole("button", { name: /Склад/ }));
+
+    const link = await screen.findByRole("link", { name: label });
+
+    await waitFor(() => expect(link).toHaveAttribute("href", href));
+  });
+});

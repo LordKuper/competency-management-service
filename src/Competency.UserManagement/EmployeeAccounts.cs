@@ -41,4 +41,12 @@ internal sealed class EmployeeAccounts(AppDbContext context) : IEmployeeAccounts
             .FirstOrDefaultAsync(cancellationToken);
         return administratorId is { } id && !await context.HasOtherAsync(id, cancellationToken);
     }
+
+    public async Task<bool> LeavesNoActiveAdministratorAsync(IReadOnlyCollection<Guid> employeeIds, CancellationToken cancellationToken = default)
+    {
+        var leaving = employeeIds.ToArray();
+        var administrators = context.Set<AppUser>().Where(ActiveAdministrators.IsActive);
+        return await administrators.AnyAsync(user => user.EmployeeId != null && leaving.Contains(user.EmployeeId.Value), cancellationToken)
+            && !await administrators.AnyAsync(user => user.EmployeeId == null || !leaving.Contains(user.EmployeeId.Value), cancellationToken);
+    }
 }

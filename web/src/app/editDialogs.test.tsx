@@ -9,6 +9,7 @@ import { orgUnitTreeQuery } from "../features/org-structure/orgStructureApi";
 import { UnitFormModal } from "../features/org-structure/UnitFormModal";
 import { UserModal } from "../features/users/UserModal";
 import { fakeApi, problem } from "../test/fakeApi";
+import { LONG_FLOW_TIMEOUT } from "../test/timeouts";
 import { Providers } from "./Providers";
 
 const OPENED = "Исходное значение";
@@ -84,6 +85,9 @@ const dialogs: Dialog[] = [
       orgUnitName: "Отдел",
       positionId: "position-1",
       position: "Инженер",
+      legalEntities: [],
+      assignments: [],
+      unitAssignments: [],
       isActive: true,
       version,
     }),
@@ -91,6 +95,9 @@ const dialogs: Dialog[] = [
       fakeApi.on("GET /api/v1/org-units/tree", () => Response.json([]));
       fakeApi.on("GET /api/v1/org-units/unit-1/positions", () =>
         Response.json([]),
+      );
+      fakeApi.on("GET /api/v1/legal-entities", () =>
+        Response.json({ items: [], total: 0, page: 1, pageSize: 20 }),
       );
     },
     element: () => (
@@ -159,76 +166,80 @@ beforeEach(() => {
   queryClient.clear();
 });
 
-describe.each(dialogs)("$name (AC-13, AC-17)", (dialog) => {
-  it("keeps the unsaved input and saves against the opening version when a background refetch brings a newer one; after a stale refusal it takes the fresh record", async () => {
-    const opened = await openDialog(dialog, () => problem(412));
+describe.each(dialogs)(
+  "$name (AC-13, AC-17)",
+  { timeout: LONG_FLOW_TIMEOUT },
+  (dialog) => {
+    it("keeps the unsaved input and saves against the opening version when a background refetch brings a newer one; after a stale refusal it takes the fresh record", async () => {
+      const opened = await openDialog(dialog, () => problem(412));
 
-    await opened.otherUserSavesInTheMeantime();
-    expect(opened.field()).toHaveValue(`${MINE}!`);
-    await opened.save();
+      await opened.otherUserSavesInTheMeantime();
+      expect(opened.field()).toHaveValue(`${MINE}!`);
+      await opened.save();
 
-    await waitFor(() =>
-      expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(1),
-    );
-    expect(fakeApi.calls(dialog.saveRoute)[0]?.headers.get("If-Match")).toBe(
-      '"1"',
-    );
-    expect((await saveBody(dialog, 0))[dialog.bodyField]).toBe(`${MINE}!`);
-    await waitFor(() => expect(opened.field()).toHaveValue(OTHERS));
-    fakeApi.on(dialog.saveRoute, () =>
-      Response.json(dialog.answer(opened.server.version, opened.server.text)),
-    );
-    await opened.save();
+      await waitFor(() =>
+        expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(1),
+      );
+      expect(fakeApi.calls(dialog.saveRoute)[0]?.headers.get("If-Match")).toBe(
+        '"1"',
+      );
+      expect((await saveBody(dialog, 0))[dialog.bodyField]).toBe(`${MINE}!`);
+      await waitFor(() => expect(opened.field()).toHaveValue(OTHERS));
+      fakeApi.on(dialog.saveRoute, () =>
+        Response.json(dialog.answer(opened.server.version, opened.server.text)),
+      );
+      await opened.save();
 
-    await waitFor(() =>
-      expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(2),
-    );
-    expect(fakeApi.calls(dialog.saveRoute)[1]?.headers.get("If-Match")).toBe(
-      '"2"',
-    );
-    expect((await saveBody(dialog, 1))[dialog.bodyField]).toBe(OTHERS);
-  });
+      await waitFor(() =>
+        expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(2),
+      );
+      expect(fakeApi.calls(dialog.saveRoute)[1]?.headers.get("If-Match")).toBe(
+        '"2"',
+      );
+      expect((await saveBody(dialog, 1))[dialog.bodyField]).toBe(OTHERS);
+    });
 
-  it("keeps the opening record and its version after a conflict, which is not a stale refusal", async () => {
-    const opened = await openDialog(dialog, () =>
-      problem(409, { title: "Конфликт" }),
-    );
-    await opened.otherUserSavesInTheMeantime();
-    await opened.save();
-    await waitFor(() =>
-      expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(1),
-    );
-    await waitFor(() =>
-      expect(fakeApi.calls(dialog.readRoute)).toHaveLength(3),
-    );
+    it("keeps the opening record and its version after a conflict, which is not a stale refusal", async () => {
+      const opened = await openDialog(dialog, () =>
+        problem(409, { title: "Конфликт" }),
+      );
+      await opened.otherUserSavesInTheMeantime();
+      await opened.save();
+      await waitFor(() =>
+        expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(1),
+      );
+      await waitFor(() =>
+        expect(fakeApi.calls(dialog.readRoute)).toHaveLength(3),
+      );
 
-    await opened.user.type(opened.field(), "?");
-    expect(opened.field()).toHaveValue(`${MINE}!?`);
-    await opened.save();
+      await opened.user.type(opened.field(), "?");
+      expect(opened.field()).toHaveValue(`${MINE}!?`);
+      await opened.save();
 
-    await waitFor(() =>
-      expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(2),
-    );
-    expect(fakeApi.calls(dialog.saveRoute)[1]?.headers.get("If-Match")).toBe(
-      '"1"',
-    );
-  });
+      await waitFor(() =>
+        expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(2),
+      );
+      expect(fakeApi.calls(dialog.saveRoute)[1]?.headers.get("If-Match")).toBe(
+        '"1"',
+      );
+    });
 
-  it("shows the server's message under the field it names and lets the user save again", async () => {
-    const message = "Сервер не принял значение.";
-    const opened = await openDialog(dialog, () =>
-      problem(400, { errors: { [dialog.bodyField]: [message] } }),
-    );
+    it("shows the server's message under the field it names and lets the user save again", async () => {
+      const message = "Сервер не принял значение.";
+      const opened = await openDialog(dialog, () =>
+        problem(400, { errors: { [dialog.bodyField]: [message] } }),
+      );
 
-    await opened.save();
+      await opened.save();
 
-    expect(await screen.findByText(message)).toBeInTheDocument();
-    await opened.save();
-    await waitFor(() =>
-      expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(2),
-    );
-  });
-});
+      expect(await screen.findByText(message)).toBeInTheDocument();
+      await opened.save();
+      await waitFor(() =>
+        expect(fakeApi.calls(dialog.saveRoute)).toHaveLength(2),
+      );
+    });
+  },
+);
 
 describe.each(dialogs.filter(readsItsRecord))(
   "$name opened again (AC-13, AC-17)",

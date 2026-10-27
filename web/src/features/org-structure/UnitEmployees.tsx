@@ -11,7 +11,7 @@ interface UnitEmployeesProps {
   /** The unit's head; listed first when among the unit's employees. */
   headEmployeeId: string | null;
   hasChildUnits: boolean;
-  isAdmin: boolean;
+  canEdit: boolean;
   onAction: (action: EmployeeAction, employee: Employee) => void;
 }
 
@@ -24,7 +24,7 @@ export const UnitEmployees = memo(function UnitEmployees({
   unitId,
   headEmployeeId,
   hasChildUnits,
-  isAdmin,
+  canEdit,
   onAction,
 }: UnitEmployeesProps) {
   const {
@@ -69,7 +69,7 @@ export const UnitEmployees = memo(function UnitEmployees({
     <EmployeeCards
       employees={employees}
       headEmployeeId={headEmployeeId}
-      isAdmin={isAdmin}
+      canEdit={canEdit}
       onAction={onAction}
     />
   );

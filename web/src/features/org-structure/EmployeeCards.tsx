@@ -8,7 +8,7 @@ interface EmployeeCardsProps {
   headEmployeeId: string | null;
   /** Lower-cased search text to highlight in the cards; blank when not searching. */
   needle?: string;
-  isAdmin: boolean;
+  canEdit: boolean;
   onAction: (action: EmployeeAction, employee: Employee) => void;
 }
 
@@ -32,7 +32,7 @@ export function EmployeeCards({
   employees,
   headEmployeeId,
   needle,
-  isAdmin,
+  canEdit,
   onAction,
 }: EmployeeCardsProps) {
   const ordered = useMemo(
@@ -44,7 +44,7 @@ export function EmployeeCards({
       <EmployeeCard
         employee={employee}
         needle={needle}
-        isAdmin={isAdmin}
+        canEdit={canEdit}
         onAction={onAction}
       />
     </li>

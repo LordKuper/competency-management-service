@@ -1,6 +1,6 @@
 ---
 name: frontend-wave-probes
-description: how a 100-120-file web/ plus agent-memory impl-review wave was finished in about 45-60 turns - read ranges, one-Grep probes that found real defects (unused exports and props, secure-context-only browser APIs, raw px and disabled-without-reason against design-system rules, Russian plurals, per-id name reads and client-side exclude in server-search pickers), diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers, JSDoc detached by a new const
+description: how a 100-120-file web/ plus agent-memory impl-review wave was finished in about 45-60 turns - read ranges, one-Grep probes that found real defects (unused exports and props, secure-context-only browser APIs, raw px and disabled-without-reason against design-system rules, Russian plurals, per-id name reads and client-side exclude in server-search pickers, wizard step numbers in doc comments), diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers, JSDoc detached by a new const
 metadata:
   type: feedback
 ---
@@ -50,6 +50,10 @@ Grep `^diff --git` over the diff first: its line numbers give every file's range
   fixed form is wrong for n ending in 1 (21, 31); `Intl.PluralRules("ru")` is the fix.
 - A review-fix that adds a module-level `const` to a hook file: check it did not land between the exported function and its
   JSDoc (`SENDING_KEY`); the doc then attaches to the const and the export has none.
+- A multi-step wizard folder (`*Step.tsx`): Grep `Step \d` over it; a step inserted mid-implementation left two components
+  documented as the same step number (low, In-code doc comments row).
+- Before raising a missing unsaved-changes guard on a modal form, read `web/src/app/AppModal.tsx`: its `Form.Provider` touch
+  tracking guards any form inside it automatically.
 
 **Re-review of a review-fix delta (about 40 turns, one finding):**
 - After a duplicated helper is hoisted into one shared module, Grep its call sites: a parameter every caller leaves at the

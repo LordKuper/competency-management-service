@@ -5,3 +5,4 @@
 - [Scripted edits on Windows](feedback_windows-scripted-edits.md) — Python text mode writes CRLF; use newline='' and the Edit tool for Cyrillic anchors.
 
 - [No screenshots, keep user browser](feedback_no-screenshots-keep-user-browser.md) — no headless renders; never kill chrome/msedge.
+- [Measure perf on a temp database](project_perf-measure-temp-db.md) — own temp DB inside the dev Postgres container, own API on a spare port, stop by PID, drop by name.

@@ -486,6 +486,33 @@ describe("the columns of a group (AC-7, AC-8, AC-160)", () => {
       }),
     ).toBeInTheDocument();
   });
+
+  it("leads HR, who cannot open the administrators' scenario, from a unit with a gap to the unit card, by the name and by the action", async () => {
+    answerWith(
+      deskOf({
+        group: "UnitsToConnect",
+        isReference: false,
+        total: 1,
+        items: [item("UnitsToConnect", "UnitWithoutHead", "Отдел")],
+      }),
+      ["Hr"],
+    );
+
+    renderDesk();
+
+    const row = (await screen.findByText(/Отдел/)).closest("tr") as HTMLElement;
+    const card = "/org-structure?unit=id-%D0%9E%D1%82%D0%B4%D0%B5%D0%BB";
+    expect(
+      within(row).getByRole("link", { name: "Открыть карточку" }),
+    ).toHaveAttribute("href", card);
+    expect(within(row).getByRole("link", { name: /Отдел/ })).toHaveAttribute(
+      "href",
+      card,
+    );
+    expect(
+      within(row).queryByRole("link", { name: "Подключить" }),
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe("an invitation sent again from the desk (AC-39, AC-40)", () => {

@@ -228,7 +228,7 @@ internal static class PositionEndpoints
     }
 
     /// <summary>
-    /// The number of working employees who hold the position, shown before it is deactivated; read-only.
+    /// The number of working employees who hold the position in any of their assignments, shown before it is deactivated; read-only.
     /// </summary>
     private static async Task<Results<Ok<PositionImpactResponse>, NotFound>> ImpactAsync(
         Guid id,
@@ -240,8 +240,9 @@ internal static class PositionEndpoints
             return TypedResults.NotFound();
         }
 
-        var count = await context.Set<Employee>()
-            .CountAsync(employee => employee.IsActive && employee.PositionId == id, cancellationToken);
+        var count = await context.WorkingPlacements()
+            .Where(placement => placement.PositionId == id)
+            .CountEmployeesAsync(cancellationToken);
         return TypedResults.Ok(new PositionImpactResponse(count));
     }
 }

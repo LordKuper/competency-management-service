@@ -26,6 +26,8 @@ A no-op skip, other zero-content decision, dispatch routing line or failed-dispa
 - YYYY-MM-DD — route <taskIds>: <tier>, dispatch HEAD <sha>[; risk <declaration>]
 - YYYY-MM-DD — reconstruction: landed <ids>; re-dispatched <ids>
 - YYYY-MM-DD — stall: <agent> <dispatch ids>
+- YYYY-MM-DD — cleanup checkpoint <sha>
+- YYYY-MM-DD — cleanup: removed <paths/symbols>; reverted <ids or none>; verified <build, lint, tests @sha>
 ```
 
 ## Durability rule
@@ -35,5 +37,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
-- 2026-10-26 — retro: <sprint>/retrospective.html written; 10 friction entries analysed (F-1…F-10), 9 actions (3 consumer, 6 asd), 3 systemic proposals; branch: analysed. Предложение «приёмка сценариев на живом макете до плана» не внесено — пересекается с отклонённым пользователем 001#P-2
-- 2026-10-26 — PR opened (user approved push and publication in chat): #7 https://github.com/LordKuper/competency-management-service/pull/7, title «feat(desk): role desktop and user journeys»; DoD: no code since full-suite HEAD 1446fde, all 3 review waves APPROVE, retrospective.html present
+
+## 2026-10-26 — `.asd/sprints/005-org-structure-excel-import/plan.md` accepted
+
+- **Decision**: План принят пользователем (accept): Task 1 (совмещения, юрлица, права HR — сервер) → Task 2 (сервер импорта) ∥ Task 3 (экраны оргструктуры) → Task 4 (мастер). Технические решения плана — основное назначение в полях `employees`, совмещения в `employee_assignments`, `preview`/`apply` без состояния с отпечатком, пределы 50 МБ тела и 1 000 записей / 256 МБ распаковки.
+- **Rationale**: Модель назначений — общая опора импорта и экранов; контракт импорта и экраны не пересекаются по файлам, мастер зависит от обоих.
+- **Affected docs**: [plan.md](./plan.md), [closedxml-0.105.1.md](../../../docs/architecture/tech-reference/closedxml-0.105.1.md), [aspnetcore-10.0.12.md](../../../docs/architecture/tech-reference/aspnetcore-10.0.12.md)

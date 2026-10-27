@@ -478,7 +478,7 @@ internal sealed class CatalogStore(
             .Join(context.Set<CareerTrack>().AsNoTracking(), link => link.TrackId, track => track.Id, (link, track) => new { link.PositionId, Track = track })
             .ToListAsync(cancellationToken);
         return rows
-            .OrderBy(row => row.Track.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(row => row.Track.Name, TextCollation.Comparer)
             .ThenBy(row => row.Track.Id)
             .ToLookup(row => row.PositionId, row => row.Track);
     }

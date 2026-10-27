@@ -129,6 +129,7 @@ function UnitForm({
       form={form}
       name="org-unit"
       layout="vertical"
+      disabled={isSubmitting}
       initialValues={{
         name: unit?.name ?? "",
         parentId: parentId ?? undefined,
@@ -158,7 +159,7 @@ function UnitForm({
         <Form.Item
           name="headEmployeeId"
           label="Руководитель"
-          extra="Руководителем может быть только работающий сотрудник этого подразделения."
+          extra="Руководителем может быть только работающий сотрудник с основным назначением или совмещением в этом подразделении."
         >
           <EmployeePicker
             orgUnitId={unit.id}

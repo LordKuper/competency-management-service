@@ -4,9 +4,9 @@ import { Button, Empty, Flex, Input, Skeleton, Space, Typography } from "antd";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
-import { useIsAdmin } from "../auth/useCurrentUser";
 import type { EmployeeAction } from "./EmployeeCard";
 import { EmployeeModal } from "./EmployeeModal";
+import { MoveEmployeeModal } from "./MoveEmployeeModal";
 import { MoveUnitModal } from "./MoveUnitModal";
 import {
   type Employee,
@@ -20,9 +20,11 @@ import { UnitFormModal } from "./UnitFormModal";
 import { UnitHrModal } from "./UnitHrModal";
 import { UnitPositionsModal } from "./UnitPositionsModal";
 import { UnitTree } from "./UnitTree";
+import { useCanEditOrgStructure } from "./useCanEditOrgStructure";
 import { useEmployeeLifecycle } from "./useEmployeeLifecycle";
 import { SEARCH_MIN_LENGTH } from "./useEmployeeSearch";
 import { useUnitActivation } from "./useUnitActivation";
+import { useUnitDeletion } from "./useUnitDeletion";
 import { useUnitExpansion } from "./useUnitExpansion";
 
 const TOO_SHORT_NOTE = `Подразделений с таким названием нет. Чтобы найти сотрудника, введите не менее ${SEARCH_MIN_LENGTH} символов.`;
@@ -31,16 +33,17 @@ type PageDialog =
   | { kind: "addUnit"; parentId: string | null }
   | { kind: "addEmployee"; orgUnitId?: string }
   | { kind: "editEmployee"; employeeId: string }
+  | { kind: "moveEmployee"; employee: Employee }
   | { kind: "edit" | "hr" | "move" | "positions"; unitId: string };
 
 /**
  * The structure screen: a hierarchy of unit and employee cards, searchable by unit name and by employee name and
  * position. The `unit` address parameter opens the path to that unit and scrolls to it, so a shared link or a new
  * unit or employee lands on the same card.
- * Administrators change units and employees from the cards. The dialogs and the confirmations live here, once for all cards.
+ * Administrators and HR change units and employees from the cards. The dialogs and the confirmations live here, once for all cards.
  */
 export function OrgStructurePage() {
-  const isAdmin = useIsAdmin();
+  const canEdit = useCanEditOrgStructure();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: units, error, isPending, refetch } = useQuery(orgUnitTreeQuery);
   const roots = useMemo(() => buildUnitTree(units ?? []), [units]);
@@ -48,6 +51,12 @@ export function OrgStructurePage() {
     useUnitExpansion(roots);
   const [dialog, setDialog] = useState<PageDialog | null>(null);
   const confirmActivation = useUnitActivation();
+  const selectParentOf = useCallback(
+    (deleted: OrgUnit) =>
+      setSearchParams(deleted.parentId ? { unit: deleted.parentId } : {}),
+    [setSearchParams],
+  );
+  const confirmDeletion = useUnitDeletion(selectParentOf);
   const confirmLifecycle = useEmployeeLifecycle();
   const selectedId = searchParams.get("unit");
 
@@ -61,18 +70,20 @@ export function OrgStructurePage() {
   const handleAction = useCallback(
     (action: UnitAction, unit: OrgUnit) => {
       if (action === "toggleActive") confirmActivation(unit);
+      else if (action === "delete") confirmDeletion(unit);
       else if (action === "addChild")
         setDialog({ kind: "addUnit", parentId: unit.id });
       else if (action === "addEmployee")
         setDialog({ kind: "addEmployee", orgUnitId: unit.id });
       else setDialog({ kind: action, unitId: unit.id });
     },
-    [confirmActivation],
+    [confirmActivation, confirmDeletion],
   );
   const handleEmployeeAction = useCallback(
     (action: EmployeeAction, employee: Employee) => {
       if (action === "edit")
         setDialog({ kind: "editEmployee", employeeId: employee.id });
+      else if (action === "move") setDialog({ kind: "moveEmployee", employee });
       else void confirmLifecycle(action, employee);
     },
     [confirmLifecycle],
@@ -92,7 +103,7 @@ export function OrgStructurePage() {
         <Typography.Title level={1} style={{ margin: 0 }}>
           Оргструктура
         </Typography.Title>
-        {isAdmin && (
+        {canEdit && (
           <Space wrap>
             <Button onClick={() => setDialog({ kind: "addEmployee" })}>
               Добавить сотрудника
@@ -154,7 +165,7 @@ export function OrgStructurePage() {
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
                 "Подразделений пока нет." +
-                (isAdmin ? " Добавьте подразделение." : "")
+                (canEdit ? " Добавьте подразделение." : "")
               }
             />
           ) : (
@@ -164,7 +175,7 @@ export function OrgStructurePage() {
                 openness,
                 search,
                 selectedId,
-                isAdmin,
+                canEdit,
                 onToggle: toggle,
                 onAction: handleAction,
                 onEmployeeAction: handleEmployeeAction,
@@ -201,6 +212,9 @@ export function OrgStructurePage() {
           onClose={closeDialog}
           onSaved={closeDialog}
         />
+      )}
+      {dialog?.kind === "moveEmployee" && (
+        <MoveEmployeeModal employee={dialog.employee} onClose={closeDialog} />
       )}
       {dialog?.kind === "edit" && dialogUnit && (
         <UnitFormModal

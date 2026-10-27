@@ -230,7 +230,7 @@ public sealed class DeskAdministratorTests(CareerHost fixture) : IClassFixture<C
     }
 
     [Fact]
-    public async Task Ac118_Ac150_TheseChecksAreTheAdministratorsAlone_AndTheyAreNotShownTheChecksOfHeadsAndHr()
+    public async Task Ac8_Ac118_Ac150_AccountChecksAreTheAdministratorsAlone_OrganisationChecksAreHrsToo_AndTheyAreNotShownTheChecksOfHeadsAndOthers()
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var admin = org.Admin;
@@ -243,13 +243,18 @@ public sealed class DeskAdministratorTests(CareerHost fixture) : IClassFixture<C
         items.ItemOf(track.Id)!.Kinds().Should().Equal("DraftAwaitsApproval");
         items.SelectMany(item => item.Kinds()).Should().NotContain(
             ["TrackWithoutLevels", "TrackWithoutPositions", "LevelWithoutPosition", "PositionWithoutTrack", "VersionNotSubmitted", "UnitWithoutMatrix"]);
-        foreach (var member in new[] { org.TeamHead, org.Hr, org.Plain })
+        foreach (var member in new[] { org.TeamHead, org.Plain })
         {
             var theirs = await member.Client.ItemsAsync();
             theirs.ItemOf(stray.Id).Should().BeNull();
             theirs.ItemOf(emptyUnit.Id).Should().BeNull();
             theirs.SelectMany(item => item.Kinds()).Should().NotContain(["AccountWithoutEmployee", "InvitationNotAccepted", "PositionOutsideList", "UnitWithoutHead", "UnitWithoutHr", "EmptyUnit"]);
         }
+
+        var seenByHr = await org.Hr.Client.ItemsAsync();
+        seenByHr.ItemOf(stray.Id).Should().BeNull();
+        seenByHr.ItemFor(emptyUnit.Id).Kinds().Should().Contain("EmptyUnit");
+        seenByHr.SelectMany(item => item.Kinds()).Should().NotContain(["AccountWithoutEmployee", "InvitationNotAccepted"]);
     }
 
     private static async Task<TestUser> InvitedAccountOfAnEmployeeAsync(ApiClient admin)

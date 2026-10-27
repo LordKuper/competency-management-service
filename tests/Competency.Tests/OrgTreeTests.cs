@@ -106,7 +106,7 @@ public sealed class OrgTreeTests(TestEnvironment environment)
         var childUnderInactiveParent = await Act(admin, child.Id, "activate");
         var hireIntoInactive = await admin.PostAsync(
             "/api/v1/employees",
-            new { lastName = "Сидоров", firstName = "Олег", middleName = (string?)null, positionId = employee.Json!["positionId"]!.GetValue<Guid>(), orgUnitId = child.Id });
+            Scenarios.EmployeeBody("Сидоров", "Олег", employee.Json!["positionId"]!.GetValue<Guid>(), child.Id));
         var rehireIntoInactive = await admin.PostAsync($"/api/v1/employees/{employee.Id}/rehire", ifMatch: (await admin.GetEmployeeAsync(employee.Id)).ETag);
         (await Act(admin, parent.Id, "activate")).Expect(HttpStatusCode.OK);
         (await Act(admin, child.Id, "activate")).Expect(HttpStatusCode.OK);
@@ -142,7 +142,7 @@ public sealed class OrgTreeTests(TestEnvironment environment)
         var cleared = (await admin.SetHeadAsync(unit, null)).Expect(HttpStatusCode.OK);
 
         fromOtherUnit.Status.Should().Be(HttpStatusCode.BadRequest, fromOtherUnit.Body);
-        fromOtherUnit.FieldErrors("headEmployeeId").Single().Should().Contain("другом подразделении");
+        fromOtherUnit.FieldErrors("headEmployeeId").Single().Should().Contain("нет назначения");
         notWorking.Status.Should().Be(HttpStatusCode.BadRequest);
         notWorking.FieldErrors("headEmployeeId").Single().Should().Contain("не работает");
         unknown.Status.Should().Be(HttpStatusCode.BadRequest);

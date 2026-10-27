@@ -1,5 +1,5 @@
 import type { RouteObject } from "react-router";
-import { AdminOnly } from "../../app/AdminOnly";
+import { AdminOnly, AdminOrHrOnly } from "../../app/AdminOnly";
 import type { NavItem } from "../../app/featureContract";
 import { DeskCounter } from "./DeskCounter";
 import { DeskPage } from "./DeskPage";
@@ -72,6 +72,11 @@ export const routes: RouteObject[] = [
     children: [
       { path: deskPaths.connectUnit, lazy: connectUnit },
       { path: "/desk/connect-unit/:unitId", lazy: connectUnit },
+    ],
+  },
+  {
+    Component: AdminOrHrOnly,
+    children: [
       {
         path: deskPaths.onboardEmployee,
         lazy: () =>
@@ -84,6 +89,13 @@ export const routes: RouteObject[] = [
         lazy: () =>
           import("./OrgCleanupPage").then((page) => ({
             Component: page.OrgCleanupPage,
+          })),
+      },
+      {
+        path: deskPaths.orgImport,
+        lazy: () =>
+          import("../org-import/OrgImportPage").then((page) => ({
+            Component: page.OrgImportPage,
           })),
       },
     ],

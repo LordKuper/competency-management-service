@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Skeleton, Space } from "antd";
+import { useState } from "react";
 import { api } from "../../api/client";
 import { ifMatchOf } from "../../api/ifMatch";
 import { unwrap } from "../../api/unwrap";
@@ -10,10 +11,15 @@ import { EmployeeForm } from "./EmployeeForm";
 import {
   type Employee,
   type EmployeeInput,
+  employeeInputOf,
   employeeQuery,
   invalidateOrgStructure,
   orgUnitTreeQuery,
 } from "./orgStructureApi";
+import {
+  headedUnitsLeft,
+  useConfirmUnitLosesHead,
+} from "./useConfirmUnitLosesHead";
 
 interface EmployeeModalProps {
   /** Employee to change; omitted when a new employee is created. */
@@ -26,7 +32,7 @@ interface EmployeeModalProps {
 }
 
 /**
- * Dialog that changes one employee or creates one. Only administrators reach it. An existing employee is read when the
+ * Dialog that changes one employee or creates one. Only administrators and HR reach it. An existing employee is read when the
  * dialog opens, so the change is based on the current version. Mount it only while it is shown, so every opening starts clean.
  */
 export function EmployeeModal({
@@ -35,9 +41,11 @@ export function EmployeeModal({
   onClose,
   onSaved,
 }: EmployeeModalProps) {
+  const [isDirty, setIsDirty] = useState(false);
   return (
     <AppModal
       open
+      isUnsaved={isDirty}
       title={
         employeeId === undefined ? "Новый сотрудник" : "Изменение сотрудника"
       }
@@ -49,12 +57,14 @@ export function EmployeeModal({
           orgUnitId={orgUnitId}
           onClose={onClose}
           onSaved={onSaved}
+          onDirtyChange={setIsDirty}
         />
       ) : (
         <ChangedEmployee
           employeeId={employeeId}
           onClose={onClose}
           onSaved={onSaved}
+          onDirtyChange={setIsDirty}
         />
       )}
     </AppModal>
@@ -65,7 +75,10 @@ function ChangedEmployee({
   employeeId,
   onClose,
   onSaved,
-}: Pick<EmployeeModalProps, "onClose" | "onSaved"> & { employeeId: string }) {
+  onDirtyChange,
+}: Pick<EmployeeEditorProps, "onClose" | "onSaved" | "onDirtyChange"> & {
+  employeeId: string;
+}) {
   const {
     data: employee,
     error,
@@ -88,6 +101,7 @@ function ChangedEmployee({
       existing={{ employee, version: employee.version }}
       onClose={onClose}
       onSaved={onSaved}
+      onDirtyChange={onDirtyChange}
     />
   );
 }
@@ -98,28 +112,27 @@ interface EmployeeEditorProps
   existing?: { employee: Employee; version: number };
   /** Unit a new employee starts in. */
   orgUnitId?: string;
+  /** Told whether the form holds input that was not saved, so closing the dialog can ask first. */
+  onDirtyChange: (isDirty: boolean) => void;
 }
 
 /**
  * The form with its save: a change is refused when the version is stale, and the employee is reread whatever the outcome.
  * The form keeps the employee it was opened with and takes the reread one only after such a refusal.
- * Moving the head of a unit to another unit is confirmed first, because the server then leaves the unit without a head.
+ * Leaving the head of a unit with no assignment in it, by a transfer or by removing a secondary assignment, is confirmed first, because the server then leaves the unit without a head.
  */
 function EmployeeEditor({
   existing: latest,
   orgUnitId,
   onClose,
   onSaved,
+  onDirtyChange,
 }: EmployeeEditorProps) {
   const queryClient = useQueryClient();
-  const { message, modal } = App.useApp();
+  const { message } = App.useApp();
+  const confirmUnitLosesHead = useConfirmUnitLosesHead();
   const { base: existing, noteSaveFailure } = useEditBase(latest);
   const { data: units } = useQuery(orgUnitTreeQuery);
-  const headedUnit = units?.find(
-    (unit) =>
-      unit.id === existing?.employee.orgUnitId &&
-      unit.headEmployeeId === existing.employee.id,
-  );
   const save = useMutation({
     mutationFn: async (input: EmployeeInput) =>
       unwrap(
@@ -144,23 +157,16 @@ function EmployeeEditor({
     },
   });
 
-  const confirmUnitLosesHead = (unitName: string) =>
-    new Promise<boolean>((resolve) =>
-      modal.confirm({
-        title: "Перевести руководителя?",
-        content: `Подразделение «${unitName}» останется без руководителя. Продолжить?`,
-        okText: "Перевести",
-        cancelText: "Отмена",
-        onOk: () => resolve(true),
-        onCancel: () => resolve(false),
-      }),
-    );
-
   async function submit(input: EmployeeInput) {
+    const lostUnits = existing
+      ? headedUnitsLeft(units, existing.employee.id, [
+          input.orgUnitId,
+          ...input.assignments.map(({ orgUnitId }) => orgUnitId),
+        ])
+      : [];
     if (
-      headedUnit &&
-      input.orgUnitId !== headedUnit.id &&
-      !(await confirmUnitLosesHead(headedUnit.name))
+      lostUnits.length > 0 &&
+      !(await confirmUnitLosesHead(lostUnits.map(({ name }) => name)))
     ) {
       return;
     }
@@ -178,16 +184,9 @@ function EmployeeEditor({
       <EmployeeForm
         key={existing?.version}
         initialValues={
-          existing
-            ? {
-                lastName: existing.employee.lastName,
-                firstName: existing.employee.firstName,
-                middleName: existing.employee.middleName ?? undefined,
-                orgUnitId: existing.employee.orgUnitId,
-                positionId: existing.employee.positionId,
-              }
-            : { orgUnitId }
+          existing ? employeeInputOf(existing.employee) : { orgUnitId }
         }
+        saved={existing?.employee}
         position={
           existing && {
             id: existing.employee.positionId,
@@ -195,6 +194,7 @@ function EmployeeEditor({
           }
         }
         email={existing?.employee.email}
+        onDirtyChange={onDirtyChange}
         submitLabel={existing ? "Сохранить" : "Создать"}
         onSubmit={submit}
         onCancel={onClose}

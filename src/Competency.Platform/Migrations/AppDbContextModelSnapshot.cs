@@ -130,7 +130,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<Guid>("ScaleId")
                         .HasColumnType("uuid")
@@ -180,7 +181,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -222,7 +224,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<int>("Position")
                         .HasColumnType("integer")
@@ -303,7 +306,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<Guid>("OwnerOrgUnitId")
                         .HasColumnType("uuid")
@@ -358,7 +362,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<Guid?>("ScopeUnitId")
                         .HasColumnType("uuid")
@@ -462,7 +467,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<string>("Points")
                         .IsRequired()
@@ -734,6 +740,23 @@ namespace Competency.Platform.Migrations
                     b.ToTable("org_unit_hr", (string)null);
                 });
 
+            modelBuilder.Entity("Competency.OrgStructure.AssignmentLegalEntity", b =>
+                {
+                    b.Property<Guid>("AssignmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assignment_id");
+
+                    b.Property<Guid>("LegalEntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("legal_entity_id");
+
+                    b.HasKey("AssignmentId", "LegalEntityId");
+
+                    b.HasIndex("LegalEntityId");
+
+                    b.ToTable("employee_assignment_legal_entities", (string)null);
+                });
+
             modelBuilder.Entity("Competency.OrgStructure.Employee", b =>
                 {
                     b.Property<Guid>("Id")
@@ -756,7 +779,8 @@ namespace Competency.Platform.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("text")
                         .HasColumnName("full_name")
-                        .HasComputedColumnSql("last_name || ' ' || first_name || coalesce(' ' || middle_name, '')", true);
+                        .HasComputedColumnSql("last_name || ' ' || first_name || coalesce(' ' || middle_name, '')", true)
+                        .UseCollation("ru-x-icu");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -836,6 +860,114 @@ namespace Competency.Platform.Migrations
                     b.ToSqlQuery("SELECT u.employee_id, u.email, u.is_blocked, NOT u.is_blocked AND u.password_hash IS NOT NULL AND EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id AND r.name = 'Hr') AS can_be_hr FROM users u WHERE u.employee_id IS NOT NULL");
                 });
 
+            modelBuilder.Entity("Competency.OrgStructure.EmployeeAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.Property<Guid>("OrgUnitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_unit_id");
+
+                    b.Property<Guid>("PositionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("position_id");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgUnitId");
+
+                    b.HasIndex("PositionId");
+
+                    b.HasIndex("EmployeeId", "OrgUnitId", "PositionId")
+                        .IsUnique();
+
+                    b.ToTable("employee_assignments", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.OrgStructure.EmployeeLegalEntity", b =>
+                {
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.Property<Guid>("LegalEntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("legal_entity_id");
+
+                    b.HasKey("EmployeeId", "LegalEntityId");
+
+                    b.HasIndex("LegalEntityId");
+
+                    b.ToTable("employee_legal_entities", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.OrgStructure.EmployeePlacement", b =>
+                {
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_main");
+
+                    b.Property<Guid>("OrgUnitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_unit_id");
+
+                    b.Property<Guid>("PositionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("position_id");
+
+                    b.ToTable((string)null);
+
+                    b.ToSqlQuery("SELECT id AS employee_id, org_unit_id, position_id, true AS is_main FROM employees UNION ALL SELECT employee_id, org_unit_id, position_id, false AS is_main FROM employee_assignments");
+                });
+
+            modelBuilder.Entity("Competency.OrgStructure.LegalEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("legal_entities", (string)null);
+                });
+
             modelBuilder.Entity("Competency.OrgStructure.OrgUnit", b =>
                 {
                     b.Property<Guid>("Id")
@@ -859,7 +991,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid")
@@ -932,7 +1065,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<NpgsqlTsVector>("SearchVector")
                         .IsRequired()
@@ -1327,6 +1461,25 @@ namespace Competency.Platform.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Competency.OrgStructure.AssignmentLegalEntity", b =>
+                {
+                    b.HasOne("Competency.OrgStructure.EmployeeAssignment", "Assignment")
+                        .WithMany("LegalEntities")
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Competency.OrgStructure.LegalEntity", "LegalEntity")
+                        .WithMany()
+                        .HasForeignKey("LegalEntityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("LegalEntity");
+                });
+
             modelBuilder.Entity("Competency.OrgStructure.Employee", b =>
                 {
                     b.HasOne("Competency.OrgStructure.OrgUnit", "OrgUnit")
@@ -1344,6 +1497,48 @@ namespace Competency.Platform.Migrations
                     b.Navigation("OrgUnit");
 
                     b.Navigation("Position");
+                });
+
+            modelBuilder.Entity("Competency.OrgStructure.EmployeeAssignment", b =>
+                {
+                    b.HasOne("Competency.OrgStructure.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Competency.OrgStructure.OrgUnit", "OrgUnit")
+                        .WithMany()
+                        .HasForeignKey("OrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.OrgStructure.Position", "Position")
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("OrgUnit");
+
+                    b.Navigation("Position");
+                });
+
+            modelBuilder.Entity("Competency.OrgStructure.EmployeeLegalEntity", b =>
+                {
+                    b.HasOne("Competency.OrgStructure.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Competency.OrgStructure.LegalEntity", "LegalEntity")
+                        .WithMany()
+                        .HasForeignKey("LegalEntityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LegalEntity");
                 });
 
             modelBuilder.Entity("Competency.OrgStructure.OrgUnit", b =>
@@ -1399,6 +1594,11 @@ namespace Competency.Platform.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.OrgStructure.EmployeeAssignment", b =>
+                {
+                    b.Navigation("LegalEntities");
                 });
 
             modelBuilder.Entity("Competency.UserManagement.AppUser", b =>

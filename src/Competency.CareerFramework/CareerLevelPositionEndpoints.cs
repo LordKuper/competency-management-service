@@ -79,7 +79,7 @@ internal static class CareerLevelPositionEndpoints
             .Select(snapshot.Positions.GetValueOrDefault)
             .OfType<PositionStatus>()
             .Where(position => position.IsActive && position.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(position => position.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(position => position.Name, TextCollation.Comparer)
             .ThenBy(position => position.Id)
             .ToList();
         var shown = matching.Skip((page - 1) * pageSize).Take(pageSize).ToList();
@@ -130,7 +130,7 @@ internal static class CareerLevelPositionEndpoints
             [.. links[level.Id]
                 .Select(snapshot.Positions.GetValueOrDefault)
                 .OfType<PositionStatus>()
-                .OrderBy(position => position.Name, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(position => position.Name, TextCollation.Comparer)
                 .Select(position => new LinkedPositionResponse(
                     position.Id,
                     position.Name,
@@ -172,7 +172,7 @@ internal static class CareerLevelPositionEndpoints
         var search = q?.Trim() ?? string.Empty;
         var matching = AvailablePositions(snapshot, track.OwnerOrgUnitId)
             .Where(position => !taken.Contains(position.Id) && position.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(position => position.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(position => position.Name, TextCollation.Comparer)
             .ThenBy(position => position.Id)
             .ToList();
         var items = matching

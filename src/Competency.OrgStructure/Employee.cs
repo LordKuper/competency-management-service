@@ -4,7 +4,8 @@ using NpgsqlTypes;
 namespace Competency.OrgStructure;
 
 /// <summary>
-/// A person in the organization directory, belonging to exactly one unit.
+/// A person in the organization directory. The unit and position are the employee's main assignment, the only one the rules about matrices, "my place" and the like read; a head may have any assignment in the unit;
+/// secondary assignments are <see cref="EmployeeAssignment"/> rows.
 /// An employee who stops working is kept with the inactive status; an administrator may also delete the employee for good.
 /// An employee has no e-mail of its own: the e-mail belongs to the account bound to the employee, if there is one.
 /// </summary>

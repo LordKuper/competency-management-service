@@ -155,7 +155,7 @@ function AllDone({ roles }: { roles: SessionRoles }) {
 
 function allDoneText(roles: SessionRoles, hasProcessRole: boolean): string {
   if (hasProcessRole) {
-    return "Действий, которые ждут вас, сейчас нет. Новые появятся здесь и в счётчике на пункте «Рабочий стол»; о части из них придёт письмо. Загляните в «Что можно сделать» ниже.";
+    return "Действий, которые ждут вас, сейчас нет. Загляните в «Что можно сделать» ниже.";
   }
   if (roles.isBound) {
     return "От вас сейчас ничего не ждут. Свои данные в компании можно посмотреть в «Моё место в компании».";

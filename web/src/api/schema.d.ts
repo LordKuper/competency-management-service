@@ -126,7 +126,7 @@ export interface paths {
         get: operations["GetOrgUnit"];
         put: operations["UpdateOrgUnit"];
         post?: never;
-        delete?: never;
+        delete: operations["DeleteOrgUnit"];
         options?: never;
         head?: never;
         patch?: never;
@@ -255,6 +255,22 @@ export interface paths {
         put: operations["UpdateEmployee"];
         post?: never;
         delete: operations["DeleteEmployee"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/employees/{id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["MoveEmployee"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -446,6 +462,71 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["QuickAddOrgUnitPosition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/legal-entities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListLegalEntities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/legal-entities/quick-add": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["QuickAddLegalEntity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/org-import/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PreviewOrgImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/org-import/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Form fields: file, the fingerprint of the previewed plan, optional decisions, a JSON array of { id, decision } where decision is keep, deactivate (a unit) or dismiss (an employee); a missing unit or employee without a decision is deactivated or dismissed; and optional heads, a JSON array of { unit, employee } with the unit key and the employee key of the preview's heads group, or null as the employee for no head. A missing employee the decisions keep may be chosen by their identifier. A unit without a head choice keeps its head if the employee still works in it, else it is left without a head; the choice is applied after the employees and dismissals, and a choice that names an employee who does not work in the unit is a 400. A 409 whose code is planChanged means the file or the organization no longer give the previewed plan. */
+        post: operations["ApplyOrgImport"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1854,6 +1935,23 @@ export interface components {
         };
         /** @enum {unknown} */
         ApprovalStep: "Superior" | "Hr" | null;
+        AssignmentRequest: {
+            /** Format: uuid */
+            orgUnitId: string;
+            /** Format: uuid */
+            positionId: string;
+            legalEntityIds: string[];
+        };
+        AssignmentResponse: {
+            /** Format: uuid */
+            orgUnitId: string;
+            orgUnitName: string;
+            /** Format: uuid */
+            positionId: string;
+            position: string;
+            legalEntities: components["schemas"]["LegalEntityResponse"][];
+            isSecondary: boolean;
+        };
         AuditEventResponse: {
             /** Format: uuid */
             id: string;
@@ -2247,6 +2345,8 @@ export interface components {
             positionId: string;
             /** Format: uuid */
             orgUnitId: string;
+            legalEntityIds: string[];
+            assignments: components["schemas"]["AssignmentRequest"][];
         };
         EmployeeResponse: {
             /** Format: uuid */
@@ -2262,6 +2362,9 @@ export interface components {
             /** Format: uuid */
             positionId: string;
             position: string;
+            legalEntities: components["schemas"]["LegalEntityResponse"][];
+            assignments: components["schemas"]["AssignmentResponse"][];
+            unitAssignments: components["schemas"]["AssignmentResponse"][];
             isActive?: null | boolean;
             /** Format: int32 */
             version?: null | number;
@@ -2298,7 +2401,42 @@ export interface components {
                 [key: string]: string[];
             };
         };
+        /** Format: binary */
+        IFormFile: string;
+        ImportErrorResponse: {
+            /** Format: int32 */
+            row: null | number;
+            column: null | string;
+            message: string;
+        };
+        ImportHeadEmployeeResponse: {
+            key: string;
+            fullName: string;
+        };
+        ImportHeadsResponse: {
+            units: components["schemas"]["ImportHeadUnitResponse"][];
+            employees: components["schemas"]["ImportHeadEmployeeResponse"][];
+        };
+        ImportHeadUnitResponse: {
+            key: string;
+            path: string;
+            /** Format: uuid */
+            unitId: null | string;
+            currentHead: null | string;
+            currentHeadStays: boolean;
+            candidates: string[];
+            employees: string[];
+            suggested: null | string;
+        };
         JsonElement: unknown;
+        LegalEntityRequest: {
+            name: string;
+        };
+        LegalEntityResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
         LevelOrderRequest: {
             levelIds: string[];
         };
@@ -2592,6 +2730,28 @@ export interface components {
             /** Format: date-time */
             publishedAt: null | string;
         };
+        MissingEmployeeResponse: {
+            /** Format: uuid */
+            id: string;
+            fullName: string;
+            orgUnitIds: string[];
+            isLastActiveAdministrator: boolean;
+        };
+        MissingUnitResponse: {
+            /** Format: uuid */
+            id: string;
+            path: string;
+            /** Format: uuid */
+            parentId: null | string;
+        };
+        MoveEmployeeRequest: {
+            /** Format: uuid */
+            fromOrgUnitId: string;
+            /** Format: uuid */
+            positionId: string;
+            /** Format: uuid */
+            toOrgUnitId: string;
+        };
         MoveOrgUnitRequest: {
             /** Format: uuid */
             parentId: null | string;
@@ -2675,6 +2835,63 @@ export interface components {
             trackId?: null | string;
             /** Format: uuid */
             positionId?: null | string;
+        };
+        OrgImportPlanResponse: {
+            fingerprint: string;
+            newUnits: string[];
+            activatedUnits: string[];
+            newPositions: string[];
+            reactivatedPositions: string[];
+            newLegalEntities: string[];
+            newEmployees: string[];
+            rehiredEmployees: string[];
+            transfers: string[];
+            addedAssignments: string[];
+            removedAssignments: string[];
+            changedLegalEntities: string[];
+            unitPositionsAdded: string[];
+            unitPositionsRemoved: string[];
+            missingUnits: components["schemas"]["MissingUnitResponse"][];
+            missingEmployees: components["schemas"]["MissingEmployeeResponse"][];
+            heads: components["schemas"]["ImportHeadsResponse"];
+        };
+        OrgImportPreviewResponse: {
+            errors: components["schemas"]["ImportErrorResponse"][];
+            plan: null | components["schemas"]["OrgImportPlanResponse"];
+        };
+        OrgImportResultResponse: {
+            /** Format: int32 */
+            newUnits: number;
+            /** Format: int32 */
+            activatedUnits: number;
+            /** Format: int32 */
+            newPositions: number;
+            /** Format: int32 */
+            reactivatedPositions: number;
+            /** Format: int32 */
+            newLegalEntities: number;
+            /** Format: int32 */
+            newEmployees: number;
+            /** Format: int32 */
+            rehiredEmployees: number;
+            /** Format: int32 */
+            transfers: number;
+            /** Format: int32 */
+            addedAssignments: number;
+            /** Format: int32 */
+            removedAssignments: number;
+            /** Format: int32 */
+            changedLegalEntities: number;
+            /** Format: int32 */
+            unitPositionsAdded: number;
+            /** Format: int32 */
+            unitPositionsRemoved: number;
+            /** Format: int32 */
+            deactivatedUnits: number;
+            /** Format: int32 */
+            dismissedEmployees: number;
+            /** Format: int32 */
+            assignedHeads: number;
         };
         OrgUnitHrPersonResponse: {
             /** Format: uuid */
@@ -2806,6 +3023,15 @@ export interface components {
         };
         PageResponseOfEmployeeResponse: {
             items: components["schemas"]["EmployeeResponse"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+        };
+        PageResponseOfLegalEntityResponse: {
+            items: components["schemas"]["LegalEntityResponse"][];
             /** Format: int32 */
             total: number;
             /** Format: int32 */
@@ -2979,6 +3205,15 @@ export interface components {
         };
         /** @enum {unknown} */
         UnitAccountState: "None" | "Invited" | "Blocked" | "NoHrRole" | "Active";
+        UnitDeletionRefusal: {
+            type?: null | string;
+            title?: null | string;
+            /** Format: int32 */
+            status?: null | number;
+            detail?: null | string;
+            instance?: null | string;
+            obstacles: string[];
+        };
         UnitPositionResponse: {
             /** Format: uuid */
             id: string;
@@ -3471,6 +3706,92 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteOrgUnit: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["UnitDeletionRefusal"];
                 };
             };
             /** @description Precondition Failed */
@@ -4181,6 +4502,91 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    MoveEmployee: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveEmployeeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5140,6 +5546,211 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ListLegalEntities: {
+        parameters: {
+            query?: {
+                q?: string;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageResponseOfLegalEntityResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    QuickAddLegalEntity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LegalEntityRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LegalEntityResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    PreviewOrgImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    file: components["schemas"]["IFormFile"];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrgImportPreviewResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ApplyOrgImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    file: components["schemas"]["IFormFile"];
+                } & {
+                    fingerprint: string;
+                } & {
+                    decisions?: string;
+                } & {
+                    heads?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrgImportResultResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
             };
         };
     };

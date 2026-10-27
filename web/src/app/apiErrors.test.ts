@@ -1,6 +1,11 @@
-import { describe, expect, it } from "vitest";
+import type { FormInstance } from "antd";
+import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "../api/ApiError";
-import { describeApiError } from "./apiErrors";
+import {
+  describeApiError,
+  describeNameFailure,
+  showFieldErrors,
+} from "./apiErrors";
 
 describe("describeApiError (AC-5, AC-13)", () => {
   it("explains a stale version as a change made by someone else and asks to check and repeat", () => {
@@ -53,5 +58,62 @@ describe("describeApiError (AC-5, AC-13)", () => {
         new ApiError(status, { title: "ignored", detail: "ignored" }),
       ),
     ).toContain(expected);
+  });
+});
+
+describe("describeNameFailure (AC-7)", () => {
+  it("gives the reason the name was refused, which belongs to a field the screen may not show", () => {
+    const error = new ApiError(400, { errors: { name: ["Укажите название"] } });
+
+    expect(describeNameFailure(error)).toBe("Укажите название");
+  });
+
+  it("describes any other failure as usual", () => {
+    expect(describeNameFailure(new ApiError(403, {}))).toContain(
+      "Недостаточно прав",
+    );
+    expect(describeNameFailure(new TypeError("Failed to fetch"))).toContain(
+      "Нет связи с сервером",
+    );
+  });
+});
+
+describe("showFieldErrors (AC-4)", () => {
+  function formSpy() {
+    const setFields = vi.fn();
+    return { form: { setFields } as unknown as FormInstance, setFields };
+  }
+
+  it("puts a message of a secondary assignment's field under that field of that assignment", () => {
+    const { form, setFields } = formSpy();
+
+    showFieldErrors(
+      form,
+      new ApiError(400, {
+        errors: {
+          "assignments[1].positionId": ["Должность недоступна"],
+          legalEntityIds: ["Юридическое лицо не найдено."],
+        },
+      }),
+    );
+
+    expect(setFields).toHaveBeenCalledWith([
+      {
+        name: ["assignments", 1, "positionId"],
+        errors: ["Должность недоступна"],
+      },
+      { name: ["legalEntityIds"], errors: ["Юридическое лицо не найдено."] },
+    ]);
+  });
+
+  it("leaves the form alone for messages that belong to no field and for failures that are not validation problems", () => {
+    const { form, setFields } = formSpy();
+
+    showFieldErrors(form, new ApiError(400, { errors: { "": ["Общее"] } }));
+    showFieldErrors(form, new ApiError(409, {}));
+    showFieldErrors(form, new TypeError("Failed to fetch"));
+
+    expect(setFields).toHaveBeenLastCalledWith([]);
+    expect(setFields).toHaveBeenCalledTimes(1);
   });
 });

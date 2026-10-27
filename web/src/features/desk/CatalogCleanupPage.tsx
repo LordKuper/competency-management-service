@@ -98,7 +98,7 @@ export function CatalogCleanupPage() {
           onShowMore={showMore}
           moreCount={MORE_COUNT}
           isLoading={list.isPending}
-          emptyText="Неиспользуемых записей каталога нет: всё, что есть, где-то используется. Если появятся, они будут на рабочем столе в группе «К сведению»."
+          emptyText="Неиспользуемых записей каталога нет: всё, что есть, где-то используется."
         >
           {list.isPending ? (
             <Skeleton active />

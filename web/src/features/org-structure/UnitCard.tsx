@@ -1,5 +1,6 @@
 import {
   CheckCircleOutlined,
+  DeleteOutlined,
   DownOutlined,
   EditOutlined,
   MoreOutlined,
@@ -20,10 +21,11 @@ import type { OrgUnit, OrgUnitTreeNode } from "./orgStructureApi";
 import type { UnitOpenness } from "./orgTree";
 import { UnitStatusTag } from "./StatusTags";
 
-/** What can be done with a unit from its card: "positions" and "hr" for everyone, the rest for administrators. */
+/** What can be done with a unit from its card: "positions" and "hr" for everyone, the rest for administrators and HR. */
 export type UnitAction =
   | "addChild"
   | "addEmployee"
+  | "delete"
   | "edit"
   | "hr"
   | "move"
@@ -39,14 +41,15 @@ interface UnitCardProps {
   isSelected: boolean;
   /** Lower-cased search text whose first occurrence in the name is highlighted; blank when not searching. */
   needle: string;
-  isAdmin: boolean;
+  /** Whether the signed-in user changes units: administrators and HR. */
+  canEdit: boolean;
   onToggle: (unitId: string, isOpen: boolean) => void;
   onAction: (action: UnitAction, unit: OrgUnit) => void;
 }
 
 /**
  * Card of a unit in the hierarchy: its name, status, counts of child units and employees and its head, all of which
- * read the same open or closed, the control that opens it, and for administrators the menu of actions.
+ * read the same open or closed, the control that opens it, and for administrators and HR the menu of actions.
  */
 export const UnitCard = memo(function UnitCard({
   unit,
@@ -54,7 +57,7 @@ export const UnitCard = memo(function UnitCard({
   openness,
   isSelected,
   needle,
-  isAdmin,
+  canEdit,
   onToggle,
   onAction,
 }: UnitCardProps) {
@@ -100,7 +103,7 @@ export const UnitCard = memo(function UnitCard({
           trigger={["click"]}
           menu={{
             items: [
-              ...(isAdmin
+              ...(canEdit
                 ? [
                     {
                       key: "addChild",
@@ -142,7 +145,7 @@ export const UnitCard = memo(function UnitCard({
                 label: "HR",
                 onClick: () => onAction("hr", unit),
               },
-              ...(isAdmin
+              ...(canEdit
                 ? [
                     { type: "divider" as const },
                     {
@@ -155,6 +158,13 @@ export const UnitCard = memo(function UnitCard({
                       danger: unit.isActive,
                       label: unit.isActive ? "Деактивировать" : "Активировать",
                       onClick: () => onAction("toggleActive", unit),
+                    },
+                    {
+                      key: "delete",
+                      icon: <DeleteOutlined />,
+                      danger: true,
+                      label: "Удалить",
+                      onClick: () => onAction("delete", unit),
                     },
                   ]
                 : []),
