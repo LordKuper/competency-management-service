@@ -52,6 +52,9 @@ function employee(id: string, fullName: string, orgUnitId: string) {
     orgUnitName: "",
     positionId: "position-sales",
     position: "Менеджер по продажам",
+    legalEntities: [],
+    assignments: [],
+    unitAssignments: [],
   };
 }
 

@@ -102,7 +102,7 @@ public sealed class EmployeeDepartureTests(TestEnvironment environment)
         var (_, admin, scene) = await ArrangeAsync();
         var bumped = (await admin.PutAsync(
             $"/api/v1/employees/{scene.Employee.Id}",
-            new { lastName = scene.Employee.Json!["lastName"]!.GetValue<string>(), firstName = "Павел", middleName = (string?)null, positionId = scene.Employee.Json["positionId"]!.GetValue<Guid>(), orgUnitId = scene.Unit.Id },
+            Scenarios.EmployeeBody(scene.Employee.Json!["lastName"]!.GetValue<string>(), "Павел", scene.Employee.Json["positionId"]!.GetValue<Guid>(), scene.Unit.Id),
             scene.Employee.ETag)).Expect(HttpStatusCode.OK);
 
         var stale = await admin.PostAsync($"/api/v1/employees/{scene.Employee.Id}/dismiss", ifMatch: scene.Employee.ETag);
@@ -122,7 +122,7 @@ public sealed class EmployeeDepartureTests(TestEnvironment environment)
 
         var moved = (await admin.PutAsync(
             $"/api/v1/employees/{scene.Employee.Id}",
-            new { lastName = scene.Employee.Json!["lastName"]!.GetValue<string>(), firstName = "Иван", middleName = (string?)null, positionId = await admin.PositionAsync(target.Id), orgUnitId = target.Id },
+            Scenarios.EmployeeBody(scene.Employee.Json!["lastName"]!.GetValue<string>(), "Иван", await admin.PositionAsync(target.Id), target.Id),
             scene.Employee.ETag)).Expect(HttpStatusCode.OK);
 
         moved.Json!["orgUnitId"]!.GetValue<string>().Should().Be(target.Id.ToString());

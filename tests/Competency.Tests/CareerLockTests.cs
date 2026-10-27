@@ -121,7 +121,7 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var positionId = await org.Admin.PositionAsync(org.Team.Id, Scenarios.Unique("Гонка"));
-        var hire = () => org.Admin.PostAsync("/api/v1/employees", new { lastName = Scenarios.Unique("Гонкин"), firstName = "Иван", middleName = (string?)null, positionId, orgUnitId = org.Team.Id });
+        var hire = () => org.Admin.PostAsync("/api/v1/employees", Scenarios.EmployeeBody(Scenarios.Unique("Гонкин"), "Иван", positionId, org.Team.Id));
         var remove = () => org.Admin.DeleteAsync($"/api/v1/org-units/{org.Team.Id}/positions/{positionId}");
 
         await using var gate = await RowLock.HoldAdvisoryAsync(fixture.Host, RowLock.TreeKey);
@@ -146,7 +146,7 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
         var org = await CareerOrg.CreateAsync(fixture.Host);
         var positionId = await org.Admin.PositionAsync(org.Team.Id, Scenarios.Unique("Гонка"));
         var position = (await org.Admin.GetAsync($"/api/v1/positions/{positionId}")).Expect(HttpStatusCode.OK);
-        var hire = () => org.Admin.PostAsync("/api/v1/employees", new { lastName = Scenarios.Unique("Гонкин"), firstName = "Иван", middleName = (string?)null, positionId, orgUnitId = org.Team.Id });
+        var hire = () => org.Admin.PostAsync("/api/v1/employees", Scenarios.EmployeeBody(Scenarios.Unique("Гонкин"), "Иван", positionId, org.Team.Id));
         var deactivate = () => org.Admin.PostAsync($"/api/v1/positions/{positionId}/deactivate", ifMatch: position.ETag);
 
         await using var gate = await RowLock.HoldAdvisoryAsync(fixture.Host, RowLock.TreeKey);
@@ -587,7 +587,7 @@ public sealed class CareerLockTests(CareerHost fixture) : IClassFixture<CareerHo
             case "employee-create":
             {
                 var positionId = await admin.PositionAsync(org.Team.Id, Scenarios.Unique("Должность"));
-                return () => admin.PostAsync("/api/v1/employees", new { lastName = Scenarios.Unique("Иванов"), firstName = "Иван", middleName = (string?)null, positionId, orgUnitId = org.Team.Id });
+                return () => admin.PostAsync("/api/v1/employees", Scenarios.EmployeeBody(Scenarios.Unique("Иванов"), "Иван", positionId, org.Team.Id));
             }
 
             case "hr-assign":

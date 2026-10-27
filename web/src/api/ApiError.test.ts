@@ -35,4 +35,26 @@ describe("ApiError (AC-25)", () => {
       moreCount: 0,
     });
   });
+
+  it("reads the list of what keeps a unit from being deleted (AC-33)", () => {
+    const error = new ApiError(409, {
+      detail: "Нельзя удалить подразделение",
+      obstacles: [
+        "Дочерние подразделения: 2",
+        "Треки карьеры подразделения: 1",
+      ],
+    });
+
+    expect(error.obstacles).toEqual([
+      "Дочерние подразделения: 2",
+      "Треки карьеры подразделения: 1",
+    ]);
+  });
+
+  it("has no obstacles when the body carries none, and drops entries that are not text (AC-33)", () => {
+    expect(new ApiError(409, { detail: "Занято" }).obstacles).toEqual([]);
+    expect(
+      new ApiError(409, { obstacles: ["Одно", 5, null] }).obstacles,
+    ).toEqual(["Одно"]);
+  });
 });

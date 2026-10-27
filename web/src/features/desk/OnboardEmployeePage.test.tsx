@@ -32,6 +32,9 @@ function employee(version: number, lastName: string) {
     orgUnitName: UNIT.name,
     positionId: POSITION.id,
     position: POSITION.name,
+    legalEntities: [],
+    assignments: [],
+    unitAssignments: [],
     isActive: true,
     version,
   };
@@ -67,6 +70,9 @@ function serve() {
         orgUnitName: UNIT.name,
       },
     ]),
+  );
+  fakeApi.on("GET /api/v1/legal-entities", () =>
+    Response.json({ items: [], total: 0, page: 1, pageSize: 20 }),
   );
   fakeApi.on(CREATE_EMPLOYEE_ROUTE, () => Response.json(stored));
   fakeApi.on(EMPLOYEE_ROUTE, () => Response.json(stored));

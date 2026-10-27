@@ -25,10 +25,12 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         ("POST", "/api/v1/org-units/{id}/move", new { parentId = (Guid?)null }),
         ("POST", "/api/v1/org-units/{id}/deactivate", null),
         ("POST", "/api/v1/org-units/{id}/activate", null),
-        ("PUT", "/api/v1/employees/{id}", new { lastName = "Иванов", firstName = "Иван", middleName = (string?)null, positionId = UnknownId, orgUnitId = UnknownId }),
+        ("PUT", "/api/v1/employees/{id}", Scenarios.EmployeeBody("Иванов", "Иван", UnknownId, UnknownId)),
         ("POST", "/api/v1/employees/{id}/dismiss", null),
         ("POST", "/api/v1/employees/{id}/rehire", null),
         ("DELETE", "/api/v1/employees/{id}", null),
+        ("POST", "/api/v1/employees/{id}/move", new { fromOrgUnitId = UnknownId, positionId = UnknownId, toOrgUnitId = UnknownId }),
+        ("DELETE", "/api/v1/org-units/{id}", null),
     ];
 
     private static readonly (string Method, string Path, object? Body)[] CatalogueEndpoints =
@@ -158,6 +160,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
     [InlineData("update")]
     [InlineData("move")]
     [InlineData("deactivate")]
+    [InlineData("delete")]
     public async Task Ac5_StaleUnitWrite_IsRefusedWith412_AndLeavesTheUnitAsItWas(string action)
     {
         var admin = await (await environment.SharedHostAsync()).AdminAsync();
@@ -170,6 +173,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         {
             "update" => await admin.PutAsync($"/api/v1/org-units/{unit.Id}", new { name = "Затёртое имя", headEmployeeId = (Guid?)null }, unit.ETag),
             "move" => await admin.PostAsync($"/api/v1/org-units/{unit.Id}/move", new { parentId = parent.Id }, unit.ETag),
+            "delete" => await admin.DeleteAsync($"/api/v1/org-units/{unit.Id}", unit.ETag),
             _ => await admin.PostAsync($"/api/v1/org-units/{unit.Id}/deactivate", ifMatch: unit.ETag),
         };
 
@@ -183,6 +187,7 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
 
     [Theory]
     [InlineData("update")]
+    [InlineData("move")]
     [InlineData("dismiss")]
     [InlineData("delete")]
     public async Task Ac5_StaleEmployeeWrite_IsRefusedWith412_AndLeavesTheEmployeeAsItWas(string action)
@@ -192,14 +197,18 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         var employee = await admin.CreateEmployeeAsync(unit.Id, firstName: "Пётр");
         var bumped = (await admin.PutAsync(
             $"/api/v1/employees/{employee.Id}",
-            new { lastName = employee.Json!["lastName"]!.GetValue<string>(), firstName = "Павел", middleName = (string?)null, positionId = employee.Json["positionId"]!.GetValue<Guid>(), orgUnitId = unit.Id },
+            Scenarios.EmployeeBody(employee.Json!["lastName"]!.GetValue<string>(), "Павел", employee.Json["positionId"]!.GetValue<Guid>(), unit.Id),
             employee.ETag)).Expect(HttpStatusCode.OK);
 
         var stale = action switch
         {
             "update" => await admin.PutAsync(
                 $"/api/v1/employees/{employee.Id}",
-                new { lastName = "Затёртый", firstName = "Пётр", middleName = (string?)null, positionId = employee.Json["positionId"]!.GetValue<Guid>(), orgUnitId = unit.Id },
+                Scenarios.EmployeeBody("Затёртый", "Пётр", employee.Json["positionId"]!.GetValue<Guid>(), unit.Id),
+                employee.ETag),
+            "move" => await admin.PostAsync(
+                $"/api/v1/employees/{employee.Id}/move",
+                new { fromOrgUnitId = unit.Id, positionId = employee.Json["positionId"]!.GetValue<Guid>(), toOrgUnitId = (await admin.CreateUnitAsync()).Id },
                 employee.ETag),
             "dismiss" => await admin.PostAsync($"/api/v1/employees/{employee.Id}/dismiss", ifMatch: employee.ETag),
             _ => await admin.DeleteAsync($"/api/v1/employees/{employee.Id}", employee.ETag),
@@ -211,5 +220,6 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         after.ETag.Should().Be(bumped.ETag);
         after.Json!["firstName"]!.GetValue<string>().Should().Be("Павел");
         after.Json["isActive"]!.GetValue<bool>().Should().BeTrue();
+        after.Json["orgUnitId"]!.GetValue<string>().Should().Be(unit.Id.ToString());
     }
 }

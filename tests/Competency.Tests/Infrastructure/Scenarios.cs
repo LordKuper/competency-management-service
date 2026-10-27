@@ -47,6 +47,12 @@ public static class Scenarios
     public static async Task<Guid> PositionAsync(this ApiClient admin, Guid unitId, string name = "Инженер") =>
         (await admin.PostAsync($"/api/v1/org-units/{unitId}/positions/quick-add", new { name })).Expect(HttpStatusCode.OK).Id;
 
+    /// <summary>
+    /// The body that creates or replaces an employee with the main assignment alone: no legal entities and no secondary assignments.
+    /// </summary>
+    public static object EmployeeBody(string lastName, string firstName, Guid positionId, Guid orgUnitId, string? middleName = null) =>
+        new { lastName, firstName, middleName, positionId, orgUnitId, legalEntityIds = Array.Empty<Guid>(), assignments = Array.Empty<object>() };
+
     public static async Task<ApiResponse> CreateEmployeeAsync(
         this ApiClient admin,
         Guid unitId,
@@ -56,7 +62,7 @@ public static class Scenarios
         string position = "Инженер") =>
         (await admin.PostAsync(
             "/api/v1/employees",
-            new { lastName = lastName ?? Unique("Иванов"), firstName, middleName, positionId = await admin.PositionAsync(unitId, position), orgUnitId = unitId }))
+            EmployeeBody(lastName ?? Unique("Иванов"), firstName, await admin.PositionAsync(unitId, position), unitId, middleName)))
         .Expect(HttpStatusCode.Created);
 
     /// <summary>
