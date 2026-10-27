@@ -37,3 +37,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
+- 2026-10-27 — route Task 1: standard, dispatch HEAD 4290e66
+- 2026-10-27 — Task 1 flagged choices accepted: CompetencyType/ScalePoint public for the port; PublishedTrackMatricesAsync keyed by matrix unit (AC-47); extra public port records; Score edges (null threshold = none, no score → share 0 and not met); education row in MatrixBlocks; no earlier disposition found

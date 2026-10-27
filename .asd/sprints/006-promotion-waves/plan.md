@@ -93,11 +93,11 @@ Orchestrator: при входе в impl, до диспатча волны 1, з�
 AC: AC-6 (чтение опубликованной и архивной версии), AC-15, AC-21 и AC-29 (расчёт), AC-49 (нет балла — доля 0).
 Material risk: change: public contract — порт `ICareerModel` и поле `requiredEducation` уровня в контракте версии матрицы
 Material risk: change: computed metric — формула рейтинга и готовности по решению «Расчёт»
-- [ ] `EducationLevel` (public) и `RequiredEducation` в `MatrixLevel`; проверка значения в `MatrixContent.Validate`; запрос и ответ содержимого версии в `MatrixVersionEndpoints` несут `requiredEducation` уровня
-- [ ] `ICareerModel` и реализация `CareerModel` по решению «Порт `ICareerModel`»; регистрация в `AddCareerFrameworkModule`; `ResponsibleUnitsAsync` и `ResponsibleHrAsync` — через `ProcessRoles`, без копии его правил
-- [ ] `Score` по решению «Расчёт»; источник шкал и составов блоков — снимок версии (`VersionAsync`)
-- [ ] Редактор версии матрицы (`web/src/features/career/MatrixEditor.tsx`, `matrixContent.ts`, `matrixLabels.ts`): необязательный выбор «Требуемое образование» у каждого уровня; показ в опубликованной версии
-- [ ] Перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts` (`gen-api`)
+- [x] `EducationLevel` (public) и `RequiredEducation` в `MatrixLevel`; проверка значения в `MatrixContent.Validate`; запрос и ответ содержимого версии в `MatrixVersionEndpoints` несут `requiredEducation` уровня
+- [x] `ICareerModel` и реализация `CareerModel` по решению «Порт `ICareerModel`»; регистрация в `AddCareerFrameworkModule`; `ResponsibleUnitsAsync` и `ResponsibleHrAsync` — через `ProcessRoles`, без копии его правил
+- [x] `Score` по решению «Расчёт»; источник шкал и составов блоков — снимок версии (`VersionAsync`)
+- [x] Редактор версии матрицы (`web/src/features/career/MatrixEditor.tsx`, `matrixContent.ts`, `matrixLabels.ts`): необязательный выбор «Требуемое образование» у каждого уровня; показ в опубликованной версии
+- [x] Перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts` (`gen-api`)
 
 ### Task 2: Модуль повышения — основа, настройки, комиссии, волны (сервер)
 AC: AC-1, AC-2, AC-3, AC-4, AC-5 (правила правки дат), AC-6 (хранение зафиксированной версии), AC-7, AC-24, AC-25, AC-26, AC-40 (волны и комиссии), AC-41.
