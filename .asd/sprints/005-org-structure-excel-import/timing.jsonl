@@ -117,3 +117,14 @@
 {"op":"close","id":"dispatch review combined w1i2","kind":"dispatch","parent":"review impl wave-1/iter-02","start":"2026-10-27T12:57:51.780Z","end":"2026-10-27T13:01:01.340Z","outcome":"done","attrs":{}}
 {"op":"close","id":"dispatch review external w1i2","kind":"external-review","parent":"review impl wave-1/iter-02","start":"2026-10-27T12:57:51.863Z","end":"2026-10-27T13:02:09.420Z","outcome":"done","attrs":{}}
 {"op":"close","id":"review impl wave-1/iter-02","kind":"review-iteration","parent":"impl-review#2","start":"2026-10-27T12:57:51.699Z","end":"2026-10-27T13:02:25.137Z","outcome":"done","attrs":{}}
+{"op":"open","id":"dispatch full suite 1","kind":"dispatch","parent":"impl-review#2","start":"2026-10-27T13:02:25.535Z","attrs":{}}
+{"op":"open","id":"suite full dotnet","kind":"suite","parent":"dispatch full suite 1","start":"2026-10-27T13:03:03.242Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite full dotnet","kind":"suite","parent":"dispatch full suite 1","start":"2026-10-27T13:03:03.242Z","end":"2026-10-27T13:07:05.346Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite full web","kind":"suite","parent":"dispatch full suite 1","start":"2026-10-27T13:07:05.429Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite full web","kind":"suite","parent":"dispatch full suite 1","start":"2026-10-27T13:07:05.429Z","end":"2026-10-27T13:09:23.514Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite full lint","kind":"suite","parent":"dispatch full suite 1","start":"2026-10-27T13:09:23.591Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite full lint","kind":"suite","parent":"dispatch full suite 1","start":"2026-10-27T13:09:23.591Z","end":"2026-10-27T13:09:34.920Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"open","id":"suite full build","kind":"suite","parent":"dispatch full suite 1","start":"2026-10-27T13:09:34.999Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite full build","kind":"suite","parent":"dispatch full suite 1","start":"2026-10-27T13:09:34.999Z","end":"2026-10-27T13:09:47.859Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"dispatch full suite 1","kind":"dispatch","parent":"impl-review#2","start":"2026-10-27T13:02:25.535Z","end":"2026-10-27T13:10:19.539Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review#2","kind":"phase","parent":null,"start":"2026-10-27T12:57:35.236Z","end":"2026-10-27T13:10:19.739Z","outcome":"done","attrs":{}}

@@ -158,3 +158,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-27 — memory-fix: combined F1 (wave-1/iter-02) — asd-advisor убрал ссылку на спринт из feedback_review-consult-format.md
 - 2026-10-27 — impl-review wave-1/iter-02: combined CONCERNS (F1 resolved — memory-fix), external APPROVE (latched); reviewer DoD met → terminal full suite
 - 2026-10-27 — route impl-review wave-1/iter-02 suite: standard, dispatch HEAD f273109
+- 2026-10-27 — impl-review DoD met: full suite green on 50090b3 (dotnet 843/843, web 792/792, lint ok, build 0/0); green handoff adaptive — evidence: reviewer verdicts wave-1/iter-02 (combined CONCERNS resolved by memory-fix, external APPROVE), suite exit 0 → design-promote

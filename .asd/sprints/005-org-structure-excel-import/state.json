@@ -104,6 +104,13 @@
       "reason": "approve after Tasks 1-9 and change requests 1-2",
       "evidence": "decisions-log.md 2026-10-27 impl assessment approved",
       "artifact_revision": "7d26524"
+    },
+    {
+      "gate": "impl-review green handoff",
+      "mode": "adaptive",
+      "decision": "pass",
+      "evidence": "full suite green 50090b3; reviewer DoD met wave-1/iter-02",
+      "date": "2026-10-27"
     }
   ],
   "task_routing": {
