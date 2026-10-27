@@ -143,3 +143,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-27 — impl test-fix: defects D-1 resolved
 - 2026-10-27 — route impl-test entry 2: standard, dispatch HEAD f87c37d
 - 2026-10-27 — impl-test: impacted set green (web 74/74, lint ok), 0/0 tests (entry 2; entry 1: +156 dotnet, +75 web)
+
+### 2026-10-27 — impl-review wave-1/iter-01: FAIL escalation
+
+- **Decision**: External review FAIL (4 находки) и combined CONCERNS (F1). Пользователь: находка 1 — исправить пределом 30 уровней подразделений (AC-11 уточнён: «не более 30 уровней», технический предел разбора по AC-10); находки 2, 3, 4 и F1 — исправить все. Override нет.
+- **Rationale**: Совет advisor: ключ пути и `PathText` растут квадратично с глубиной; без предела не обойтись без смены контракта превью. 2–4 и F1 — ошибки без изменения требований.
+- **Affected docs**: [sprint.md](./sprint.md)
+- 2026-10-27 — impl-review wave-1/iter-01 → impl review-fix (external 1–4, combined F1)

@@ -79,3 +79,13 @@
 {"op":"close","id":"dispatch impl-test entry 2","kind":"dispatch","parent":"impl-test#2","start":"2026-10-27T11:43:06.864Z","end":"2026-10-27T11:46:22.537Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl-test#2","kind":"phase","parent":null,"start":"2026-10-27T11:43:00.442Z","end":"2026-10-27T11:46:28.630Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-review#1","kind":"phase","parent":null,"start":"2026-10-27T11:46:28.698Z","attrs":{}}
+{"op":"open","id":"review impl wave-1/iter-01","kind":"review-iteration","parent":"impl-review#1","start":"2026-10-27T11:47:40.334Z","attrs":{}}
+{"op":"open","id":"dispatch review combined w1i1","kind":"dispatch","parent":"review impl wave-1/iter-01","start":"2026-10-27T11:47:40.397Z","attrs":{}}
+{"op":"open","id":"dispatch review external w1i1","kind":"external-review","parent":"review impl wave-1/iter-01","start":"2026-10-27T11:47:40.461Z","attrs":{}}
+{"op":"close","id":"dispatch review combined w1i1","kind":"dispatch","parent":"review impl wave-1/iter-01","start":"2026-10-27T11:47:40.397Z","end":"2026-10-27T11:56:42.603Z","outcome":"done","attrs":{}}
+{"op":"close","id":"dispatch review external w1i1","kind":"external-review","parent":"review impl wave-1/iter-01","start":"2026-10-27T11:47:40.461Z","end":"2026-10-27T11:57:26.581Z","outcome":"done","attrs":{}}
+{"op":"open","id":"user-wait review FAIL","kind":"user-wait","parent":"impl-review#1","start":"2026-10-27T12:03:11.164Z","attrs":{"gate":"review-fail"}}
+{"op":"close","id":"user-wait review FAIL","kind":"user-wait","parent":"impl-review#1","start":"2026-10-27T12:03:11.164Z","end":"2026-10-27T12:39:15.773Z","outcome":"done","attrs":{"gate":"review-fail"}}
+{"op":"close","id":"review impl wave-1/iter-01","kind":"review-iteration","parent":"impl-review#1","start":"2026-10-27T11:47:40.334Z","end":"2026-10-27T12:39:28.135Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-review#1","kind":"phase","parent":null,"start":"2026-10-27T11:46:28.698Z","end":"2026-10-27T12:39:28.218Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#3","kind":"phase","parent":null,"start":"2026-10-27T12:39:28.307Z","attrs":{}}

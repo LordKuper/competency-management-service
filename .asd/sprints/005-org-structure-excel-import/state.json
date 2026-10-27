@@ -1,7 +1,7 @@
 {
   "sprint_id": "005-org-structure-excel-import",
   "branch": "sprint/005-org-structure-excel-import",
-  "phase": "impl-test",
+  "phase": "impl-review",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -191,9 +191,16 @@
       "wave": 1,
       "waves": [
         {
-          "iteration": 0,
-          "verdicts": {},
-          "iteration_heads": {},
+          "iteration": 1,
+          "verdicts": {
+            "iter-01": {
+              "combined": "CONCERNS",
+              "external": "FAIL"
+            }
+          },
+          "iteration_heads": {
+            "iter-01": "54dbf3240745dad797567c15c3f1a003db09b130"
+          },
           "latched": {}
         }
       ]
@@ -201,7 +208,7 @@
   },
   "created_at": "2026-10-26T13:39:38.279Z",
   "updated_at": "2026-10-27T10:20:59.523Z",
-  "review_fixes_pending": null,
+  "review_fixes_pending": "wave-1/iter-01",
   "test_defects_pending": null,
   "pr": null,
   "archived_at": null
