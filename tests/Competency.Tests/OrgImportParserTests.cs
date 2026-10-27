@@ -58,6 +58,32 @@ public sealed class OrgImportParserTests
     }
 
     [Fact]
+    public void Ac11_AHeaderWithOneLevelColumnOverTheLimit_IsAnErrorOfTheHeaderRow_NamingThatColumn()
+    {
+        var overTheLimit = OrgImportParser.MaxLevels + 1;
+        var sheet = new OrgImportSheet(overTheLimit).Employee("Иванов Иван", "Инженер", "Отдел");
+
+        var parsed = OrgImportParser.Parse(sheet.ToBytes());
+
+        parsed.Rows.Should().BeEmpty();
+        var error = parsed.Errors.Should().ContainSingle().Subject;
+        error.Row.Should().Be(1);
+        error.Column.Should().Be(OrgImportParser.UnitColumn(overTheLimit));
+        error.Message.Should().Contain(OrgImportParser.MaxLevels.ToString());
+    }
+
+    [Fact]
+    public void Ac11_AHeaderWithExactlyTheLimitOfLevelColumns_IsAccepted()
+    {
+        var sheet = new OrgImportSheet(OrgImportParser.MaxLevels).Employee("Иванов Иван", "Инженер", "Отдел");
+
+        var parsed = OrgImportParser.Parse(sheet.ToBytes());
+
+        parsed.Errors.Should().BeEmpty();
+        parsed.Rows.Single().Path.Should().Equal([new UnitStep("Отдел", 1)]);
+    }
+
+    [Fact]
     public void Ac12_TheUnitPath_SkipsDashesAndEmptyCells_KeepsTheLevelsAndCleansTheSpaces()
     {
         var sheet = new OrgImportSheet(4)

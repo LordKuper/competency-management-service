@@ -119,6 +119,22 @@ public sealed class OrgImportTests(CareerHost fixture, TestEnvironment environme
     }
 
     [Fact]
+    public async Task Ac14_Preview_MatchesAStoredNameWithADoubleInnerSpace_ToTheNameOfTheFile_NotAsANewEmployeeAndADismissal()
+    {
+        var org = await fixture.OrgAsync();
+        var unitName = Scenarios.Unique("Отдел");
+        var unit = await org.Admin.CreateUnitAsync(name: unitName);
+        var lastName = Scenarios.Unique("Оглыев");
+        var stored = await org.Admin.CreateEmployeeAsync(unit.Id, lastName, "Иван", middleName: "Али  оглы");
+        var file = new OrgImportSheet().Employee($"{lastName} Иван Али оглы", "Инженер", unitName).ToBytes();
+
+        var plan = await org.Admin.PlanOfAsync(file);
+
+        plan.Lines("newEmployees").Should().BeEmpty();
+        plan["missingEmployees"]!.AsArray().Select(employee => employee!["id"]!.GetValue<string>()).Should().NotContain(stored.Id.ToString());
+    }
+
+    [Fact]
     public async Task Ac14_Preview_RefusesToGuess_WhenTheSystemHoldsTwoPeopleWithOneName()
     {
         await using var host = await environment.StartHostAsync();

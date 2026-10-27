@@ -8,6 +8,7 @@ import type {
   DeskReason,
 } from "./deskApi";
 import {
+  connectUnitTarget,
   deskPaths,
   itemAction,
   itemLink,
@@ -215,6 +216,35 @@ describe("the screen an action item opens (AC-6, AC-160, AC-209, AC-210, AC-218)
       `/desk/connect-unit/${OBJECT_ID}`,
     );
     expect(itemLink(item, true)).toBe(`/desk/connect-unit/${OBJECT_ID}`);
+  });
+
+  const CONNECT_UNIT_KINDS = Object.entries(ACTION_PATH)
+    .filter(([, path]) => path === `/desk/connect-unit/${OBJECT_ID}`)
+    .map(([kind]) => kind as DeskKind);
+  const UNIT_CARD = `${orgPaths.tree}?unit=${OBJECT_ID}`;
+
+  it.each(CONNECT_UNIT_KINDS)(
+    "opens the unit card, not the administrators' scenario, for a %s item when the user is not an administrator",
+    (kind) => {
+      const item = itemOf(kind, { type: "OrgUnit" });
+
+      expect(itemAction(item, false)).toMatchObject({
+        title: "Открыть карточку",
+        path: UNIT_CARD,
+      });
+      expect(itemLink(item, false)).toBe(UNIT_CARD);
+    },
+  );
+
+  it("labels the button of a unit with a gap by where it leads, for an administrator and for everyone else", () => {
+    expect(connectUnitTarget(OBJECT_ID, true)).toMatchObject({
+      path: `/desk/connect-unit/${OBJECT_ID}`,
+      buttonLabel: "Открыть «Подключить подразделение»",
+    });
+    expect(connectUnitTarget(OBJECT_ID, false)).toMatchObject({
+      path: UNIT_CARD,
+      buttonLabel: "Открыть карточку подразделения",
+    });
   });
 });
 

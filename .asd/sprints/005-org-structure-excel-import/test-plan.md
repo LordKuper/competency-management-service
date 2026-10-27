@@ -13,30 +13,47 @@ responsibility:
 |---|---|---|
 |  1 | b73aaac | full change surface (общая инфраструктура тестов изменена: схема сотрудника, `Scenarios`, хост — прогнан весь набор) |
 |  2 | a2f0821 | дельта с входа 1: `PositionSelect.tsx` (77cce66, D-1); общая инфраструктура не затронута, прогнан набор тестов, рендерящих `PositionSelect` |
+|  3 |  | дельта с входа 2 (a2f0821): правки по ревью 05af24b…b828f81 — `MaxLevels`, `ImportText.Key`, адресаты ссылок рабочего стола для не-администратора, отказ на `null` в списках `decisions`/`heads`; общая инфраструктура не затронута, прогнаны тесты импорта и рабочего стола |
 
 ## Risk → check decisions
 
-Строки входа 1 — в `test-plan.entry-01.md`.
+Строки входов 1 и 2 — в `test-plan.entry-01.md` и `test-plan.entry-02.md`.
 
 | Change | Material risk | Chosen check | Decision | Reason |
 |---|---|---|---|---|
-| `PositionSelect`: эффект сброса учитывает, под каким подразделением выбрана должность (77cce66, D-1) | Простая смена подразделения перестала бы очищать должность, которой в новом подразделении нет | component: `EmployeeForm.test.tsx` «drops the old position once another unit is chosen …», «drops a position added in one unit when the form goes back to another» | keep (новых нет) | Тесты уже есть и проходят на исправленном коде. Мутация «очистка отключена» (`isChosenUnderOtherUnit` → `false`): `npx vitest run src/features/org-structure/EmployeeForm.test.tsx` → exit 1, оба теста; runs: 1; мутация возвращена |
-| То же: смена подразделения и должности одним действием («Сделать основным») | Должность стирается до того, как форма сообщила и новое подразделение | component: `EmployeeAssignments.test.tsx` «swaps a secondary assignment …» | keep | Регрессия D-1 с доказательством fail-first на входе 1 (exit 1 на прежнем коде); на коде 77cce66 проходит |
-| То же: должность, заданная при первой отрисовке и отсутствующая в перечне подразделения, больше не очищается (принятый побочный эффект) | Устаревшая должность попадёт в сохранение | не автоматизируется | none | Принятое разработчиком поведение: тест закрепил бы побочный эффект, а не требование. Правильность решает сервер (отказ при сохранении); для текущей должности сотрудника поведение закреплено `current` («keeps listing the position the employee holds …», `PositionSelect.test.tsx`), смена подразделения очищает — тесты выше |
+| `OrgImportParser.MaxLevels = 30`, ошибка заголовка «В файле больше 30 уровней подразделений.» (external-1) | Заголовок с 31-й колонкой уровня принят или ошибка не привязана к строке заголовка и первой колонке сверх предела; ровно 30 уровней отвергнут | unit (в процессе, без БД): `OrgImportParserTests` `Ac11_AHeaderWithOneLevelColumnOverTheLimit_…`, `Ac11_AHeaderWithExactlyTheLimitOfLevelColumns_IsAccepted` | add | Граница с обеих сторон: 31 → одна ошибка (строка 1, колонка «Подразделение 31-го уровня»), 30 → принят. Предел берётся из `OrgImportParser.MaxLevels`, не числом |
+| `ImportText.Key` чистит пробелы сам (external-2) | Сохранённое ФИО с двойным пробелом внутри («Али  оглы») не совпадает с файлом: создаётся дубль, оригинал предлагается уволить | component на реальной БД: `OrgImportTests` `Ac14_Preview_MatchesAStoredNameWithADoubleInnerSpace_…` | add | Через API создаётся сотрудник с отчеством «Али  оглы», файл даёт «Али оглы»: в плане нет `newEmployees`, сотрудник не в `missingEmployees`. Существующий Ac14 (регистр, ё, пробелы в имени файла) двойной пробел в хранимом имени не покрывает |
+| `OrgImportEndpoints.TryReadList` отвергает список с `null` (external-4) | `decisions=[null]` или `heads=[null]` при верном отпечатке даёт 500 вместо 400 | component на реальной БД: `OrgImportApplyTests` `Ac18_Apply_RefusesAListWithANullElement_With400_NotAFailure` (теория: `decisions`, `heads`) | add | 400 с одной ошибкой поля, ничего не применено (`AssertNothingAppliedAsync`). Соседние Ac18-отказы `null`-элемент не задевают |
+| Ссылки рабочего стола для не-администратора в группе «подключить подразделение»: `connectUnitTarget`, `itemAction`, `itemLink`, `OrgFinding`, `DeskGroups` (external-3) | HR получает ссылку на сценарий администратора (`/desk/connect-unit/:id`), недоступный ему; администратор теряет свой сценарий | unit: `deskTexts.test.ts` (шесть видов группы выводятся из `ACTION_PATH`, не списком; подписи кнопки обоих вариантов); component: `DeskPage.test.tsx` «leads HR, who cannot open …» (имя и действие строки), `OrgCleanupPage.test.tsx` «leads a $role to $href» (Hr и GlobalAdmin) | add | Администратор по-прежнему ведёт на connect-unit: `ACTION_PATH` (с `isAdmin=true`), существующий DeskPage-тест с `GlobalAdmin`, случай `GlobalAdmin` в OrgCleanup |
+| `DeskScenarios.entryPath` передаёт `isAdmin` в `itemAction` (external-3) | Вход сценария для не-администратора ведёт на connect-unit | не автоматизируется | none | Ветка `itemAction` достижима только у сценариев без собственного `path` («Доработать», «Согласовать»), чьи группы содержат лишь версии; элементов группы «подключить подразделение» в них нет, поведение не меняется. Существующие тесты `DeskScenarios` прогнаны |
+| `ResultStep.tsx`, `ImportText.cs` — правка doc-комментариев (combined-F1) | — | не автоматизируется | none | Поведения не меняют |
 
 ## Removed tests
 
 | Test | Reason | In change scope |
 |---|---|---|
-| — | Нечего удалять: изменён один компонент, дублей и устаревших проверок нет | yes |
+| — | Нечего удалять: дельта — исправления по ревью, устаревших и дублирующих проверок нет | yes |
 
 ## Added tests
 
 | Test | Regression proof |
 |---|---|
-| — | Новых тестов нет (см. решения выше) |
+| `OrgImportParserTests.Ac11_AHeaderWithOneLevelColumnOverTheLimit_IsAnErrorOfTheHeaderRow_NamingThatColumn` (external-1) | Мутация `maxLevel > MaxLevels` → `maxLevel > MaxLevels + 1000` в копии HEAD: `dotnet test --project tests/Competency.Tests --filter-method "*Ac11_AHeader*"` → exit 2, упал этот тест (сбой 1 из 2); runs: 1; мутация только в копии, рабочее дерево не менялось |
+| `OrgImportParserTests.Ac11_AHeaderWithExactlyTheLimitOfLevelColumns_IsAccepted` (external-1) | Охранный тест границы «ровно 30»: проходит и до исправления, fail-first не применим |
+| `OrgImportTests.Ac14_Preview_MatchesAStoredNameWithADoubleInnerSpace_ToTheNameOfTheFile_NotAsANewEmployeeAndADismissal` (external-2) | Мутация `Clean(name).ToLowerInvariant()` → `name.ToLowerInvariant()` в `ImportText.Key` копии HEAD: `dotnet test --project tests/Competency.Tests --filter-method "*Ac14_Preview_MatchesAStoredName*"` → exit 2, упал этот тест; runs: 1 |
+| `OrgImportApplyTests.Ac18_Apply_RefusesAListWithANullElement_With400_NotAFailure` (теория `decisions`, `heads`; external-4) | Мутация `return requested.All(item => item is not null);` → `return true;` в копии HEAD: `dotnet test --project tests/Competency.Tests --filter-method "*Ac18_Apply_RefusesAListWithANullElement*"` → exit 2, упали оба случая `(field: "decisions")` и `(field: "heads")`, ответ 500 вместо 400; runs: 1 |
+| `deskTexts.test.ts`: «opens the unit card, not the administrators' scenario, for a <kind> item when the user is not an administrator» (6 видов), «labels the button of a unit with a gap by where it leads …»; `DeskPage.test.tsx`: «leads HR, who cannot open the administrators' scenario, from a unit with a gap to the unit card …»; `OrgCleanupPage.test.tsx`: «leads a Hr to /org-structure?unit=u2» (external-3) | Прежний код: `git archive a2f0821 web` + новые тесты, `npx vitest run src/features/desk/deskTexts.test.ts src/features/desk/DeskPage.test.tsx src/features/desk/OrgCleanupPage.test.tsx` → exit 1, 9 сбоев из 158: шесть «opens the unit card … for a UnitWithoutHead / UnitWithoutHr / UnitWithoutPositions / HeadWithoutAccount / HeadAccountInvited / HeadAccountBlocked item …», «labels the button of a unit with a gap …», «leads HR, who cannot open …», «leads a Hr to /org-structure?unit=u2»; runs: 1 |
+| `OrgCleanupPage.test.tsx`: «leads a GlobalAdmin to /desk/connect-unit/u2» (external-3) | Охранный тест: проходит и на прежнем коде (администратор там всегда вёл на connect-unit); защищает от обратной ошибки в `ConnectUnit` |
 
 ## Suite run
+
+Вход 3 (дельта review-fix 05af24b…b828f81):
+
+- Scope: impacted, предохранитель общей инфраструктуры не сработал (изменены только `OrgStructure/Import`, `web/src/features/desk`, `org-import/ResultStep.tsx`; сборка, CI, `Platform` не затронуты)
+- Pre-strategy (чистая копия HEAD, до новых тестов): web `npx vitest run src/features/desk src/features/org-import --maxWorkers=4` → exit 0, 23 файла, 269 тестов; dotnet `dotnet test --project tests/Competency.Tests --filter-class` `OrgImportParserTests`, `OrgImportTests`, `OrgImportApplyTests`, `OrgImportHeadPositionTests`, `OrgImportRaceTests`, `HrOrgStructureTests` → exit 0, 111 из 111
+- Итог (рабочее дерево с новыми тестами): web та же команда → exit 0, 23 файла, 279 тестов пройдено, 0 сбоев, 0 пропущено; dotnet те же классы плюс `AuthorizationTests` (`--artifacts-path` в scratch: сборка в месте занята процессами пользователя) → exit 0, 120 из 120, 0 сбоев, 0 пропущено
+- Lint: `npm --prefix web run lint` → exit 0 (biome ci, typecheck); бэкенд: сборка тестового проекта с `TreatWarningsAsErrors` прошла в обоих dotnet-прогонах
+- HEAD: aee8ff4 (+ коммит входа 3)
 
 Вход 2 (дельта `PositionSelect.tsx`):
 

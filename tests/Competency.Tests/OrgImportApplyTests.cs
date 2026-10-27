@@ -316,6 +316,25 @@ public sealed class OrgImportApplyTests(CareerHost fixture, TestEnvironment envi
     }
 
     [Theory]
+    [InlineData("decisions")]
+    [InlineData("heads")]
+    public async Task Ac18_Apply_RefusesAListWithANullElement_With400_NotAFailure(string field)
+    {
+        var org = await fixture.OrgAsync();
+        var name = Scenarios.Unique("Новый");
+        var file = new OrgImportSheet().Unit(name).ToBytes();
+        var plan = await org.Admin.PlanOfAsync(file);
+
+        var refused = field == "decisions"
+            ? await org.Admin.ApplyImportAsync(file, plan.FingerprintOf(), decisionsText: "[null]")
+            : await org.Admin.ApplyImportAsync(file, plan.FingerprintOf(), [], headsText: "[null]");
+
+        refused.Status.Should().Be(HttpStatusCode.BadRequest, refused.Body);
+        refused.FieldErrors(field).Should().ContainSingle();
+        await AssertNothingAppliedAsync(org.Admin, file, name, plan);
+    }
+
+    [Theory]
     [InlineData("other-file")]
     [InlineData("changed-data")]
     [InlineData("new-unit-the-file-does-not-name")]
