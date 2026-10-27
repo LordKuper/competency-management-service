@@ -39,7 +39,7 @@ Fresh and re-init only.
 ### Fresh
 
 1. Detect greenfield vs brownfield via repo search on source files
-2. Request user input, batch: chat/docs language, decomposition, compatibility, external review, self-hosting, `user_gates` (`strict` default or `adaptive`), `cleanup` (`enabled` default or `disabled`), and document settings. `documents.audit` is `auto|always|off` (`auto` default); `documents.design_system` gates the design-system gate and tokens, `documents.ux_spec` only the ux-spec docs (`sprint-lifecycle.md` "Optional documents"); other document flags keep their existing values. For self-hosting recommend audit `auto`, other documents disabled and `diagram_tool: none`.
+2. Request user input, batch: chat/docs language, decomposition, compatibility, external review, self-hosting, `user_gates` (`strict` default or `adaptive`), `cleanup` (`enabled` default or `disabled`), `upstream_issues` (`enabled` default or `disabled`; asked only when self-hosting is not enabled, else omitted), and document settings. `documents.audit` is `auto|always|off` (`auto` default); `documents.design_system` gates the design-system gate and tokens, `documents.ux_spec` only the ux-spec docs (`sprint-lifecycle.md` "Optional documents"); other document flags keep their existing values. For self-hosting recommend audit `auto`, other documents disabled and `diagram_tool: none`.
 3. If decomposition enabled → request user decision: diagram_tool (`none` | `likec4` | `mermaid`); disabled → `none`
 4. Detect OS via command execution (silent; no confirm yet) — selects step 12's OS-specific commands, never written to config
 5. Detect external tools (silent; record results, do not prompt per-tool yet):
@@ -62,12 +62,12 @@ Fresh and re-init only.
      the search-derived impacted set is the safe fallback
    Record into proposal; do not prompt per-command yet
 8a. **Consolidated proposal & edit gate** — present every auto-detected/defaulted value in one structured block in `language.chat`:
-    - OS, tools, review limits, git settings, `user_gates`, `cleanup`, audit mode, `documents.design_system`, diagram_tool, detected build/test/lint/run commands and any affected-test selector
+    - OS, tools, review limits, git settings, `user_gates`, `cleanup`, `upstream_issues` (consumer only), audit mode, `documents.design_system`, diagram_tool, detected build/test/lint/run commands and any affected-test selector
     Then request user decision: `accept-all` | `edit-section` | `abort`.
     - `edit-section` → request user decision on which section (os | tools | review | git | commands), collect new values, re-show proposal, loop until `accept-all`
     - Missing required tools → must resolve here: Node (if `documents.design_system: enabled`) → install or `documents.design_system: disabled`; likec4 (if diagram_tool=likec4) → install or diagram_tool `mermaid`/`none`; the wrapped external-review CLI (if external_review) → install, override path (`system.tools.codex_command`/`claude_command`) or `review.external_review: disabled`. Do NOT silently proceed with missing required tools.
     Only after `accept-all` proceed to write.
-9. Write `.asd/project/config.yaml` from `t_config.yaml` with approved `user_gates`, `cleanup`, audit mode, `documents.design_system`, diagram_tool and other fields.
+9. Write `.asd/project/config.yaml` from `t_config.yaml` with approved `user_gates`, `cleanup`, `upstream_issues` (omitted under self-hosting), audit mode, `documents.design_system`, diagram_tool and other fields.
 10. Request free-form user input: custom rules to add (separately for common / design / coding scopes); write three files from templates: `.asd/project/custom-common-rules.md`, `custom-design-rules.md`, `custom-coding-rules.md`. Empty scope still writes template stub (header + intro), so agents always find the file.
 11. Write `.asd/project/stubs.md` from `t_stubs.md` (empty registry — downstream phases expect the file to exist)
 12. Write `.asd/project/commands.yaml` (from `t_commands.yaml` + detected + OS-specific `custom.designmd-*` only when `documents.design_system: enabled`); `test_affected` written only when detected, omitted (not written empty/guessed) otherwise — a `.asd/project/commands.yaml` from an older ASD version without the field keeps working unchanged since the impacted set falls back to the search-derived definition
@@ -88,7 +88,7 @@ Fresh and re-init only.
 
 1. Read current `.asd/project/config.yaml`
 2. **Dump full current config to chat** in `language.chat` before any edit prompt. Render every field as structured block. Do NOT skip or summarise — full values verbatim.
-2a. List every field present in `t_config.yaml` but absent from the current config, each with its absent default (the template comment's, e.g. `self_hosting` → `disabled`), so a newly shipped field is editable
+2a. List every field present in `t_config.yaml` but absent from the current config, each with its absent default (the template comment's, e.g. `self_hosting` → `disabled`; `upstream_issues` → `enabled`, skipped when `self_hosting` is enabled), so a newly shipped field is editable
 3. Request user decision (multi-select) on which sections to edit, absent fields included
 4. Per section: ask new value → add to pending change-set (do not write yet)
 5. Show consolidated diff of all pending edits → request user decision: `accept-all` | `edit-section` | `abort`; loop until accepted

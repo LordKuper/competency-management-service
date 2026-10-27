@@ -491,7 +491,7 @@ function emitCoverageManifest(input) {
   });
 }
 
-/** A test file: under a `test`/`tests`/`__tests__`/`spec`/`specs` path segment or a dotted one carrying it (`Core.Tests/`, `Game.Tests.Unit/`), or a basename in a common test naming convention. Heuristic: a miss only sends a low-severity finding through review-fix instead of the in-place test fix. */
+/** A test file: under a `test`/`tests`/`__tests__`/`spec`/`specs` path segment or a dotted one carrying it (`Core.Tests/`, `Game.Tests.Unit/`), or a basename in a common test naming convention. Heuristic: a miss only sends a minor test-only finding through review-fix instead of the in-place test fix. */
 function isTest(file) {
   return /(^|\/)([^/]*\.)?(test|tests|__tests__|spec|specs)(\.[^/]*)?\//i.test(file) || /\.(test|spec)\.|^test_|_test\.|Tests?\./.test(file.split('/').pop());
 }

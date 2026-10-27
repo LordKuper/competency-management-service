@@ -11,6 +11,10 @@ self_hosting: disabled
 # Values: enabled | disabled
 cleanup: enabled
 
+# Retro publishes this project's open `asd` rows as issues on the ASD repo (consumer only; ignored under self_hosting). Absent field = enabled.
+# Values: enabled | disabled
+upstream_issues: enabled
+
 # Optional sprint documents and their persistent docs counterpart.
 # Defaults: see .asd/rules/sprint-lifecycle.md "Optional documents".
 documents:
