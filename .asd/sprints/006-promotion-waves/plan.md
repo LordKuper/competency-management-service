@@ -104,13 +104,13 @@ AC: AC-1, AC-2, AC-3, AC-4, AC-5 (правила правки дат), AC-6 (х�
 Material risk: change: schema — новые таблицы модуля и миграция
 Material risk: change: public contract — API волн, комиссий и настроек
 Material risk: change: concurrency — блокировка 5006001 и инварианты AC-2, AC-26
-- [ ] Проект `src/Competency.Promotion/` (csproj, `PromotionModule.cs`), подключение в `Competency.slnx`, `src/Competency.Api/Competency.Api.csproj`, `Program.cs`; `AppOptions.TimeZone` (`src/Competency.Platform/AppOptions.cs`, проверка IANA-идентификатора при старте) и его значение в `appsettings.json`
-- [ ] Сущности и конфигурация EF: `promotion_settings` (одна строка: `min_interval_months` по умолчанию 12, `stage_durations_days` по умолчанию 14, 7, 14, 7, 14, 3, 14), `promotion_waves` (автор, `starts_on`, `ends_on` этапов, `processed_stage`, `rater_reminder_sent`, `Version`), `promotion_wave_units`, `promotion_wave_matrices` (волна, подразделение, матрица, версия — заполняется в начале этапа 1), `promotion_commissions`, `promotion_commission_members`; `[Audited]`; EF-миграция в `src/Competency.Platform/Migrations/`
-- [ ] `settings` GET и PUT по «Маршруты и их охрана»
-- [ ] `commissions/{unitId}` GET и PUT: состав, председатель; вычисляемые обязательные члены в ответе с признаком «обязательный»; проверки AC-24, AC-26 под блокировкой 5006001
-- [ ] `waves` POST, GET, `waves/{id}` GET и PUT, `waves/open` GET: выбор подразделений в пределах `ResponsibleUnitsAsync` (AC-1), пересечение — 400 с ошибкой поля и названием подразделения и волны (AC-2), правила дат по решению «Даты и этапы», вычисляемый текущий этап в ответе; `waves/open` — цели из `PublishedTrackMatricesAsync` до старта и из `promotion_wave_matrices` после
-- [ ] `IUnitReferences`: OrgStructure принимает все реализации (`IEnumerable<IUnitReferences>` в `OrgUnitEndpoints.cs`), модуль повышения добавляет препятствия «волна» и «комиссия» и снимает строку комиссии удаляемого подразделения без волн
-- [ ] Перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts` (`gen-api`)
+- [x] Проект `src/Competency.Promotion/` (csproj, `PromotionModule.cs`), подключение в `Competency.slnx`, `src/Competency.Api/Competency.Api.csproj`, `Program.cs`; `AppOptions.TimeZone` (`src/Competency.Platform/AppOptions.cs`, проверка IANA-идентификатора при старте) и его значение в `appsettings.json`
+- [x] Сущности и конфигурация EF: `promotion_settings` (одна строка: `min_interval_months` по умолчанию 12, `stage_durations_days` по умолчанию 14, 7, 14, 7, 14, 3, 14), `promotion_waves` (автор, `starts_on`, `ends_on` этапов, `processed_stage`, `rater_reminder_sent`, `Version`), `promotion_wave_units`, `promotion_wave_matrices` (волна, подразделение, матрица, версия — заполняется в начале этапа 1), `promotion_commissions`, `promotion_commission_members`; `[Audited]`; EF-миграция в `src/Competency.Platform/Migrations/`
+- [x] `settings` GET и PUT по «Маршруты и их охрана»
+- [x] `commissions/{unitId}` GET и PUT: состав, председатель; вычисляемые обязательные члены в ответе с признаком «обязательный»; проверки AC-24, AC-26 под блокировкой 5006001
+- [x] `waves` POST, GET, `waves/{id}` GET и PUT, `waves/open` GET: выбор подразделений в пределах `ResponsibleUnitsAsync` (AC-1), пересечение — 400 с ошибкой поля и названием подразделения и волны (AC-2), правила дат по решению «Даты и этапы», вычисляемый текущий этап в ответе; `waves/open` — цели из `PublishedTrackMatricesAsync` до старта и из `promotion_wave_matrices` после
+- [x] `IUnitReferences`: OrgStructure принимает все реализации (`IEnumerable<IUnitReferences>` в `OrgUnitEndpoints.cs`), модуль повышения добавляет препятствия «волна» и «комиссия» и снимает строку комиссии удаляемого подразделения без волн
+- [x] Перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts` (`gen-api`)
 
 ### Task 3: Заявка, самооценка, оценивающие, формальная проверка (сервер)
 AC: AC-8, AC-10, AC-11, AC-12, AC-13, AC-14, AC-16, AC-18, AC-40 (заявки), AC-47.
