@@ -126,7 +126,7 @@ export interface paths {
         get: operations["GetOrgUnit"];
         put: operations["UpdateOrgUnit"];
         post?: never;
-        delete?: never;
+        delete: operations["DeleteOrgUnit"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3205,6 +3205,15 @@ export interface components {
         };
         /** @enum {unknown} */
         UnitAccountState: "None" | "Invited" | "Blocked" | "NoHrRole" | "Active";
+        UnitDeletionRefusal: {
+            type?: null | string;
+            title?: null | string;
+            /** Format: int32 */
+            status?: null | number;
+            detail?: null | string;
+            instance?: null | string;
+            obstacles: string[];
+        };
         UnitPositionResponse: {
             /** Format: uuid */
             id: string;
@@ -3697,6 +3706,92 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteOrgUnit: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["UnitDeletionRefusal"];
                 };
             };
             /** @description Precondition Failed */

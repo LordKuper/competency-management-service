@@ -5,7 +5,7 @@ namespace Competency.OrgStructure;
 
 /// <summary>
 /// A node of the organization tree: a unit has at most one parent, so units form a forest without cycles.
-/// Units are never deleted, only deactivated.
+/// An empty unit may be deleted for good; a unit in use is deactivated.
 /// </summary>
 [Audited]
 internal sealed class OrgUnit : EntityBase

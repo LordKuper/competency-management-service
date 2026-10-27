@@ -27,6 +27,7 @@ public static class CareerFrameworkModule
         services.AddScoped<CareerMail>();
         services.AddScoped<IDeskSource, CareerDeskSource>();
         services.AddScoped<IHrAssignments, HrAssignments>();
+        services.AddScoped<IUnitReferences, UnitReferences>();
         services.AddSingleton<CareerMailQueue>();
         services.AddHostedService(provider => provider.GetRequiredService<CareerMailQueue>());
         return services;

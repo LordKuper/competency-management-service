@@ -12,7 +12,8 @@ namespace Competency.OrgStructure;
 /// <summary>
 /// The unit API. Any signed-in user reads the tree; only global administrators and HR change it, under the tree lock and with <c>If-Match</c>.
 /// A unit's employees are those with any assignment in it, the main or a secondary one.
-/// Units are never deleted: they are deactivated, and a deactivated unit stays readable for global administrators and HR.
+/// A unit still in use is deactivated rather than deleted, and a deactivated unit stays readable for global administrators and HR;
+/// only a unit nothing refers to is deleted.
 /// </summary>
 internal static class OrgUnitEndpoints
 {
@@ -20,6 +21,8 @@ internal static class OrgUnitEndpoints
     private const string Tag = "OrgUnits";
     private const string ParentSubject = "Родительское подразделение";
     private const string HeadSubject = "Руководитель";
+    private const string ProblemContentType = "application/problem+json";
+    private const int NamedBlockersLimit = 5;
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -51,6 +54,9 @@ internal static class OrgUnitEndpoints
         keepers.MapPost("/{id:guid}/activate", ActivateAsync).WithName("ActivateOrgUnit").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+        keepers.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteOrgUnit")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .Produces<UnitDeletionRefusal>(StatusCodes.Status409Conflict, ProblemContentType);
     }
 
     private static async Task<Results<Ok<PageResponse<OrgUnitResponse>>, ValidationProblem>> ListAsync(
@@ -384,6 +390,78 @@ internal static class OrgUnitEndpoints
 
         return TypedResults.Ok(await SaveAsync(unit, context, transaction, response, cancellationToken));
     }
+
+    /// <summary>
+    /// Deletes an empty unit for good, together with its position list and its responsible HR assignment, in one transaction; the journal keeps
+    /// its earlier entries. A unit with child units, with employees having any assignment in it, dismissed ones included, or with career data
+    /// referring to it is refused with the list of what keeps it.
+    /// </summary>
+    private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> DeleteAsync(
+        Guid id,
+        IfMatch ifMatch,
+        AppDbContext context,
+        IUnitReferences references,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await context.BeginExclusiveAsync(cancellationToken);
+        var unit = await context.Set<OrgUnit>().FirstOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
+        if (unit is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var blockers = await DeletionBlockersAsync(context, id, cancellationToken);
+        blockers.AddRange(await references.BlockersAsync(id, cancellationToken));
+        if (blockers.Count > 0)
+        {
+            return TypedResults.Problem(new UnitDeletionRefusal
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = Rejection.ConflictTitle,
+                Detail = $"Нельзя удалить подразделение «{unit.Name}»: с ним связаны другие данные.",
+                Obstacles = blockers,
+            });
+        }
+
+        context.RemoveRange(await context.Set<OrgUnitPosition>().Where(entry => entry.OrgUnitId == id).ToListAsync(cancellationToken));
+        await references.ReleaseAsync(id, cancellationToken);
+        ifMatch.ApplyTo(context, unit);
+        context.Remove(unit);
+
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return TypedResults.NoContent();
+    }
+
+    /// <summary>
+    /// Describes the child units and the employees that keep a unit from being deleted, one line each, naming the first few.
+    /// </summary>
+    private static async Task<List<string>> DeletionBlockersAsync(AppDbContext context, Guid unitId, CancellationToken cancellationToken)
+    {
+        List<string> lines = [];
+        var children = context.Set<OrgUnit>().Where(child => child.ParentId == unitId);
+        var childCount = await children.CountAsync(cancellationToken);
+        if (childCount > 0)
+        {
+            var names = await children.OrderBy(child => child.Name).Select(child => child.Name).Take(NamedBlockersLimit).ToListAsync(cancellationToken);
+            lines.Add($"Дочерние подразделения, в том числе неактивные: {childCount}{NamedList(names, childCount)}");
+        }
+
+        var placements = context.Set<EmployeePlacement>().Where(placement => placement.OrgUnitId == unitId);
+        var holders = context.Set<Employee>().Where(employee => placements.Any(placement => placement.EmployeeId == employee.Id));
+        var holderCount = await holders.CountAsync(cancellationToken);
+        if (holderCount > 0)
+        {
+            var dismissedCount = await holders.CountAsync(employee => !employee.IsActive, cancellationToken);
+            var names = await holders.OrderBy(employee => employee.FullName).Select(employee => employee.FullName).Take(NamedBlockersLimit).ToListAsync(cancellationToken);
+            lines.Add($"Сотрудники с основным назначением или совмещением в подразделении: {holderCount}, из них не работают: {dismissedCount}{NamedList(names, holderCount)}");
+        }
+
+        return lines;
+    }
+
+    private static string NamedList(IReadOnlyList<string> names, int total) =>
+        $" ({string.Join(", ", names)}{(total > names.Count ? $" и ещё {total - names.Count}" : string.Empty)})";
 
     /// <summary>
     /// Says why an employee cannot head the unit: they do not exist, do not work, or have no assignment in the unit, the main or a secondary one.

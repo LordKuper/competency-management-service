@@ -99,8 +99,9 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
     }
 
     /// <summary>
-    /// Reads the rows that refer to units and positions before the units and positions themselves: those are never deleted,
-    /// so without the tree lock, when changes may commit between the queries, every unit and position referred to is still in the snapshot.
+    /// Reads the rows that refer to units and positions before the units and positions themselves, so without the tree lock, when changes may
+    /// commit between the queries, every unit and position created meanwhile and referred to is in the snapshot. Positions are never deleted;
+    /// an empty unit may be, and the rows still referring to it are dropped.
     /// </summary>
     private async Task<OrgSnapshot> ReadOrgSnapshotAsync(CancellationToken cancellationToken)
     {
@@ -109,10 +110,6 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
             .GroupBy(placement => new { placement.OrgUnitId, placement.PositionId })
             .Select(group => new { group.Key.OrgUnitId, group.Key.PositionId, Any = group.Count(), Main = group.Count(placement => placement.IsMain) })
             .ToListAsync(cancellationToken);
-        var workingEmployeeCounts = placementCounts
-            .Where(group => group.Main > 0)
-            .ToDictionary(group => (group.OrgUnitId, group.PositionId), group => group.Main);
-        var workingAssigneeCounts = placementCounts.ToDictionary(group => (group.OrgUnitId, group.PositionId), group => group.Any);
         var unitPositions = await context
             .Set<OrgUnitPosition>()
             .AsNoTracking()
@@ -128,6 +125,12 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
             .AsNoTracking()
             .Select(UnitStatusProjection)
             .ToDictionaryAsync(unit => unit.Id, cancellationToken);
-        return new OrgSnapshot(units, unitPositions.ToLookup(link => link.OrgUnitId, link => link.PositionId), positions, workingEmployeeCounts, workingAssigneeCounts);
+        var knownCounts = placementCounts.Where(group => units.ContainsKey(group.OrgUnitId)).ToList();
+        var workingEmployeeCounts = knownCounts
+            .Where(group => group.Main > 0)
+            .ToDictionary(group => (group.OrgUnitId, group.PositionId), group => group.Main);
+        var workingAssigneeCounts = knownCounts.ToDictionary(group => (group.OrgUnitId, group.PositionId), group => group.Any);
+        var knownLinks = unitPositions.Where(link => units.ContainsKey(link.OrgUnitId));
+        return new OrgSnapshot(units, knownLinks.ToLookup(link => link.OrgUnitId, link => link.PositionId), positions, workingEmployeeCounts, workingAssigneeCounts);
     }
 }
