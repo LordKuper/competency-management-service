@@ -128,3 +128,4 @@
 {"op":"close","id":"suite full build","kind":"suite","parent":"dispatch full suite 1","start":"2026-10-27T13:09:34.999Z","end":"2026-10-27T13:09:47.859Z","outcome":"done","attrs":{"scope":"full"}}
 {"op":"close","id":"dispatch full suite 1","kind":"dispatch","parent":"impl-review#2","start":"2026-10-27T13:02:25.535Z","end":"2026-10-27T13:10:19.539Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl-review#2","kind":"phase","parent":null,"start":"2026-10-27T12:57:35.236Z","end":"2026-10-27T13:10:19.739Z","outcome":"done","attrs":{}}
+{"op":"open","id":"design-promote#1","kind":"phase","parent":null,"start":"2026-10-27T13:10:31.519Z","attrs":{}}

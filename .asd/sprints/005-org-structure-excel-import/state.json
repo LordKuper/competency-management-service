@@ -107,10 +107,10 @@
     },
     {
       "gate": "impl-review green handoff",
-      "mode": "adaptive",
-      "decision": "pass",
-      "evidence": "full suite green 50090b3; reviewer DoD met wave-1/iter-02",
-      "date": "2026-10-27"
+      "decision_actor": "orchestrator (adaptive)",
+      "reason": "reviewer DoD met wave-1/iter-02; full suite green",
+      "evidence": "decisions-log.md 2026-10-27 impl-review DoD met; test-plan.md Suite run 50090b3",
+      "artifact_revision": "74cd7ae"
     }
   ],
   "task_routing": {
