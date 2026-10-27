@@ -14,7 +14,7 @@ internal sealed class EmployeeAssignment : EntityBase
     public Guid EmployeeId { get; init; }
 
     [Audited]
-    public Guid OrgUnitId { get; init; }
+    public Guid OrgUnitId { get; set; }
 
     [Audited]
     public Guid PositionId { get; init; }

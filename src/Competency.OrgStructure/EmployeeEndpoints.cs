@@ -39,6 +39,8 @@ internal static class EmployeeEndpoints
         keepers.MapPost(string.Empty, CreateAsync).WithName("CreateEmployee").ProducesETag();
         keepers.MapPut("/{id:guid}", UpdateAsync).WithName("UpdateEmployee").ProducesETag()
             .ProducesProblem(StatusCodes.Status404NotFound);
+        keepers.MapPost("/{id:guid}/move", MoveAsync).WithName("MoveEmployee").ProducesETag()
+            .ProducesProblem(StatusCodes.Status404NotFound);
         keepers.MapGet("/{id:guid}/impact", ImpactAsync).WithName("GetEmployeeImpact")
             .ProducesProblem(StatusCodes.Status404NotFound);
         keepers.MapPost("/{id:guid}/dismiss", DismissAsync).WithName("DismissEmployee").ProducesETag()
@@ -217,6 +219,80 @@ internal static class EmployeeEndpoints
         employee.OrgUnit = unit;
         assignmentChange.Apply();
 
+        return TypedResults.Ok(await SaveAsync(employee, context, transaction, response, cancellationToken));
+    }
+
+    /// <summary>
+    /// Moves one assignment, with its position and legal entities, to another active unit. A position the new unit and the units above it do not allow
+    /// is added to the new unit's own list in the same transaction. Moving the main assignment takes the employee off the headship of the unit they leave.
+    /// </summary>
+    private static async Task<Results<Ok<EmployeeResponse>, NotFound, ValidationProblem, ProblemHttpResult>> MoveAsync(
+        Guid id,
+        MoveEmployeeRequest request,
+        IfMatch ifMatch,
+        AppDbContext context,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        if (request.FromOrgUnitId == request.ToOrgUnitId)
+        {
+            return Rejection.Invalid("toOrgUnitId", "Выберите другое подразделение.");
+        }
+
+        await using var transaction = await context.BeginExclusiveAsync(cancellationToken);
+        var employee = await context.Set<Employee>().FirstOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
+        if (employee is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var isMain = employee.OrgUnitId == request.FromOrgUnitId && employee.PositionId == request.PositionId;
+        var secondary = isMain
+            ? null
+            : await context.Set<EmployeeAssignment>().FirstOrDefaultAsync(
+                assignment => assignment.EmployeeId == id && assignment.OrgUnitId == request.FromOrgUnitId && assignment.PositionId == request.PositionId,
+                cancellationToken);
+        if (!isMain && secondary is null)
+        {
+            return Rejection.Invalid("positionId", "У сотрудника нет такого назначения.");
+        }
+
+        if (await context.UnitProblemAsync(request.ToOrgUnitId, "Подразделение", cancellationToken) is { } unitProblem)
+        {
+            return Rejection.Invalid("toOrgUnitId", unitProblem);
+        }
+
+        var holdsTarget = (employee.OrgUnitId == request.ToOrgUnitId && employee.PositionId == request.PositionId)
+            || await context.Set<EmployeeAssignment>().AnyAsync(
+                assignment => assignment.EmployeeId == id && assignment.OrgUnitId == request.ToOrgUnitId && assignment.PositionId == request.PositionId,
+                cancellationToken);
+        if (holdsTarget)
+        {
+            return Rejection.Invalid("toOrgUnitId", "У сотрудника уже есть такое назначение: подразделение и должность не должны повторяться.");
+        }
+
+        if (!await context.Set<Position>().AnyAsync(position => position.Id == request.PositionId && position.IsActive, cancellationToken))
+        {
+            return Rejection.Invalid("positionId", "Должность неактивна.");
+        }
+
+        ifMatch.ApplyTo(context, employee);
+        if (await context.PositionProblemAsync(request.PositionId, request.ToOrgUnitId, cancellationToken) is not null)
+        {
+            context.Add(new OrgUnitPosition { OrgUnitId = request.ToOrgUnitId, PositionId = request.PositionId });
+        }
+
+        if (secondary is null)
+        {
+            await ReleaseHeadOfPreviousUnitAsync(context, employee, cancellationToken);
+            employee.OrgUnitId = request.ToOrgUnitId;
+        }
+        else
+        {
+            secondary.OrgUnitId = request.ToOrgUnitId;
+        }
+
+        context.Entry(employee).Property(nameof(IVersioned.Version)).IsModified = true;
         return TypedResults.Ok(await SaveAsync(employee, context, transaction, response, cancellationToken));
     }
 

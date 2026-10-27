@@ -1596,6 +1596,124 @@
         }
       }
     },
+    "/api/v1/employees/{id}/move": {
+      "post": {
+        "tags": [
+          "Employees"
+        ],
+        "operationId": "MoveEmployee",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveEmployeeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/employees/{id}/impact": {
       "get": {
         "tags": [
@@ -15896,6 +16014,28 @@
               "null",
               "string"
             ],
+            "format": "uuid"
+          }
+        }
+      },
+      "MoveEmployeeRequest": {
+        "required": [
+          "fromOrgUnitId",
+          "positionId",
+          "toOrgUnitId"
+        ],
+        "type": "object",
+        "properties": {
+          "fromOrgUnitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "positionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toOrgUnitId": {
+            "type": "string",
             "format": "uuid"
           }
         }
