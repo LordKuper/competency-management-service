@@ -155,3 +155,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-27 — impl fix for wave-1/iter-01: findings resolved (external-1…4, combined-F1; 05af24b…b828f81)
 - 2026-10-27 — route impl-test entry 3: standard, dispatch HEAD b828f81
 - 2026-10-27 — impl-test: impacted set green (dotnet 120/120, web 279/279, lint ok), 6/0 tests (entry 3)
+- 2026-10-27 — memory-fix: combined F1 (wave-1/iter-02) — asd-advisor убрал ссылку на спринт из feedback_review-consult-format.md
+- 2026-10-27 — impl-review wave-1/iter-02: combined CONCERNS (F1 resolved — memory-fix), external APPROVE (latched); reviewer DoD met → terminal full suite
+- 2026-10-27 — route impl-review wave-1/iter-02 suite: standard, dispatch HEAD f273109
