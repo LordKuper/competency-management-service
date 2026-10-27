@@ -10,3 +10,6 @@
 {"op":"open","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-27T17:31:50.087Z","attrs":{"gate":"scope"}}
 {"op":"close","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-27T17:31:50.087Z","end":"2026-10-27T18:25:45.306Z","outcome":"done","attrs":{"gate":"scope"}}
 {"op":"close","id":"scope#1","kind":"phase","parent":null,"start":"2026-10-27T16:03:47.847Z","end":"2026-10-27T18:25:45.535Z","outcome":"done","attrs":{}}
+{"op":"open","id":"audit#1","kind":"phase","parent":null,"start":"2026-10-27T18:25:54.785Z","attrs":{}}
+{"op":"open","id":"wait audit contradiction","kind":"user-wait","parent":"audit#1","start":"2026-10-27T18:29:22.491Z","attrs":{"gate":"audit contradiction"}}
+{"op":"close","id":"wait audit contradiction","kind":"user-wait","parent":"audit#1","start":"2026-10-27T18:29:22.491Z","end":"2026-10-27T18:32:54.355Z","outcome":"done","attrs":{"gate":"audit contradiction"}}

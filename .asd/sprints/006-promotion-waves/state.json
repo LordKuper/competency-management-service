@@ -1,7 +1,7 @@
 {
   "sprint_id": "006-promotion-waves",
   "branch": "sprint/006-promotion-waves",
-  "phase": "scope",
+  "phase": "audit",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -41,6 +41,27 @@
       "reason": "accept after 5 revisions",
       "evidence": "sprint.md AC-1..AC-46",
       "artifact_revision": "sprint.md accepted 2026-10-27"
+    },
+    {
+      "gate": "audit contradiction",
+      "decision_actor": "user",
+      "reason": "target and commission by wave unit matrix",
+      "evidence": "audit.md Contradictions; AC-47, AC-48",
+      "artifact_revision": "audit.md"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "AC-9, AC-27 retired; AC-47..AC-49 added at audit",
+      "evidence": "sprint.md Поправки audit; cost AC-9/27/47-49: 0 iterations, 0 fix rounds",
+      "artifact_revision": "sprint.md audit"
+    },
+    {
+      "gate": "audit",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: contradictions and ambiguity settled by user, no subsystem or migration gate pending",
+      "evidence": "audit.md",
+      "artifact_revision": "audit.md"
     }
   ],
   "task_routing": {},
@@ -64,7 +85,7 @@
     }
   },
   "created_at": "2026-10-27T16:05:59.306Z",
-  "updated_at": "2026-10-27T18:25:45.413Z",
+  "updated_at": "2026-10-27T18:32:54.437Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
