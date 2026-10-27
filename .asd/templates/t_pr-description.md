@@ -17,4 +17,4 @@
 - {{api/contract that breaks}}: {{migration path}}
 
 ## Related issues (optional)
-- {{issue reference}}
+- Refs #{{N}} (never `Closes`/`Fixes`/`Resolves`: the issue closes after the release)

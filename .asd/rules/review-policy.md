@@ -96,7 +96,7 @@ Default: the responsible fixer autofixes any reviewer issue without user prompt 
 
 **Where the fix happens:**
 - **design-review** — the main orchestrator autofixes the drafts it authored within the loop; iteration advances. A memory finding: "Memory-fix dispatch".
-- **impl-review** — fixes NOT applied inside the review phase, save "Low-severity test-only findings" (below) and "Memory-fix dispatch". impl-review routes the sprint back to `impl` (review-fix mode); the responsible dev resolves findings; sprint re-enters impl-review via `impl-test`.
+- **impl-review** — fixes NOT applied inside the review phase, save "Minor test-only findings" (below) and "Memory-fix dispatch". impl-review routes the sprint back to `impl` (review-fix mode); the responsible dev resolves findings; sprint re-enters impl-review via `impl-test`.
 
 **Escalation required** (the main orchestrator asks the user before fix — `core.md` "Request user decision"), format = Complication Approval (`core.md`):
 
@@ -105,9 +105,9 @@ Default: the responsible fixer autofixes any reviewer issue without user prompt 
 - Scope expansion beyond `sprint.md`
 - Complexity increase (any over-engineering check trips)
 
-### Low-severity test-only findings
+### Minor test-only findings
 
-Both workflows, impl-review only. Fires when the current wave iteration has no `FAIL` verdict short of satisfied (`sprint-lifecycle.md` "State recovery" "User-resolved findings") and every unresolved finding at or above floor, External Review's included, has severity `low` and a location whose every path is a test file (`.asd/runtime.js` `isTest`), `test-plan.md` or one of its segments — read from each reviewer's `persist-review` findings JSON ("Coverage ledger" Persistence); a location with no parseable path does not qualify. Otherwise the iteration routes to review-fix.
+Both workflows, impl-review only. Fires when the current wave iteration has no `FAIL` verdict short of satisfied (`sprint-lifecycle.md` "State recovery" "User-resolved findings") and every unresolved finding at or above floor, External Review's included, has severity `low` or `medium` and a location whose every path is a test file (`.asd/runtime.js` `isTest`), `test-plan.md` or one of its segments — read from each reviewer's `persist-review` findings JSON ("Coverage ledger" Persistence); a location with no parseable path does not qualify. Otherwise the iteration routes to review-fix.
 
 When it fires, impl-review dispatches a fresh `asd-tester` with those findings to fix them in place, committing with one `ASD-Task: <finding id>` trailer per finding (`git-strategy.md` "Commits"). The orchestrator appends `resolved: <finding id, …> — test-fix, <YYYY-MM-DD>` to each affected review file (`sprint-lifecycle.md` "State recovery" "User-resolved findings"), naming only findings the tester reports fixed; any other routes the iteration to review-fix. Once every finding is resolved, the wave's roster is met: the next wave starts, or after the last wave the terminal full suite runs. The fix is not re-reviewed; the terminal full suite checks it.
 
