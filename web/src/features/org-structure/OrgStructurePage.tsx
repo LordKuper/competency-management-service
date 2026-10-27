@@ -6,6 +6,7 @@ import { useSearchParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import type { EmployeeAction } from "./EmployeeCard";
 import { EmployeeModal } from "./EmployeeModal";
+import { MoveEmployeeModal } from "./MoveEmployeeModal";
 import { MoveUnitModal } from "./MoveUnitModal";
 import {
   type Employee,
@@ -31,6 +32,7 @@ type PageDialog =
   | { kind: "addUnit"; parentId: string | null }
   | { kind: "addEmployee"; orgUnitId?: string }
   | { kind: "editEmployee"; employeeId: string }
+  | { kind: "moveEmployee"; employee: Employee }
   | { kind: "edit" | "hr" | "move" | "positions"; unitId: string };
 
 /**
@@ -73,6 +75,7 @@ export function OrgStructurePage() {
     (action: EmployeeAction, employee: Employee) => {
       if (action === "edit")
         setDialog({ kind: "editEmployee", employeeId: employee.id });
+      else if (action === "move") setDialog({ kind: "moveEmployee", employee });
       else void confirmLifecycle(action, employee);
     },
     [confirmLifecycle],
@@ -201,6 +204,9 @@ export function OrgStructurePage() {
           onClose={closeDialog}
           onSaved={closeDialog}
         />
+      )}
+      {dialog?.kind === "moveEmployee" && (
+        <MoveEmployeeModal employee={dialog.employee} onClose={closeDialog} />
       )}
       {dialog?.kind === "edit" && dialogUnit && (
         <UnitFormModal

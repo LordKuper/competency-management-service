@@ -16,6 +16,7 @@ import {
   invalidateOrgStructure,
   orgUnitTreeQuery,
 } from "./orgStructureApi";
+import { useConfirmUnitLosesHead } from "./useConfirmUnitLosesHead";
 
 interface EmployeeModalProps {
   /** Employee to change; omitted when a new employee is created. */
@@ -125,7 +126,8 @@ function EmployeeEditor({
   onDirtyChange,
 }: EmployeeEditorProps) {
   const queryClient = useQueryClient();
-  const { message, modal } = App.useApp();
+  const { message } = App.useApp();
+  const confirmUnitLosesHead = useConfirmUnitLosesHead();
   const { base: existing, noteSaveFailure } = useEditBase(latest);
   const { data: units } = useQuery(orgUnitTreeQuery);
   const headedUnit = units?.find(
@@ -156,18 +158,6 @@ function EmployeeEditor({
       return invalidateOrgStructure(queryClient);
     },
   });
-
-  const confirmUnitLosesHead = (unitName: string) =>
-    new Promise<boolean>((resolve) =>
-      modal.confirm({
-        title: "Перевести руководителя?",
-        content: `Подразделение «${unitName}» останется без руководителя. Продолжить?`,
-        okText: "Перевести",
-        cancelText: "Отмена",
-        onOk: () => resolve(true),
-        onCancel: () => resolve(false),
-      }),
-    );
 
   async function submit(input: EmployeeInput) {
     if (

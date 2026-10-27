@@ -2,6 +2,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   MoreOutlined,
+  SwapOutlined,
   UndoOutlined,
   UserDeleteOutlined,
 } from "@ant-design/icons";
@@ -16,7 +17,7 @@ import {
 import { EmployeeStatusTag, SecondaryAssignmentTag } from "./StatusTags";
 
 /** What an administrator or HR can do with an employee from the card. */
-export type EmployeeAction = "edit" | "dismiss" | "rehire" | "delete";
+export type EmployeeAction = "edit" | "move" | "dismiss" | "rehire" | "delete";
 
 interface EmployeeCardProps {
   employee: Employee;
@@ -71,6 +72,16 @@ function EmployeeActions({
             label: "Изменить",
             onClick: () => onAction("edit", employee),
           },
+          ...(isDismissed
+            ? []
+            : [
+                {
+                  key: "move",
+                  icon: <SwapOutlined />,
+                  label: "Переместить",
+                  onClick: () => onAction("move", employee),
+                },
+              ]),
           isDismissed
             ? {
                 key: "rehire",
@@ -101,7 +112,9 @@ function EmployeeActions({
 }
 
 /** The assignments the card shows: those the server listed for the unit, or the main one when the list was not filtered by a unit. */
-function shownAssignments(employee: Employee): readonly EmployeeAssignment[] {
+export function shownAssignments(
+  employee: Employee,
+): readonly EmployeeAssignment[] {
   return employee.unitAssignments.length > 0
     ? employee.unitAssignments
     : [mainAssignmentOf(employee)];

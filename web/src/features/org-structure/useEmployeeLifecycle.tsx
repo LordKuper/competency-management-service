@@ -15,7 +15,7 @@ import {
   invalidateOrgStructure,
 } from "./orgStructureApi";
 
-type LifecycleAction = Exclude<EmployeeAction, "edit">;
+type LifecycleAction = Exclude<EmployeeAction, "edit" | "move">;
 
 const WORDING = {
   dismiss: {
