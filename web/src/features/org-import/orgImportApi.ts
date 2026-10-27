@@ -27,11 +27,24 @@ export interface ImportDecision {
   decision: "keep" | "deactivate" | "dismiss";
 }
 
-/** The apply request: the file and the fingerprint of the plan shown, with a decision for every missing unit and employee. */
+/** A unit of the head step: who may head it after the apply and who heads it now. */
+export type ImportHeadUnit = components["schemas"]["ImportHeadUnitResponse"];
+
+/** The head chosen for one unit of the head step, as the apply request carries it; null leaves the unit without a head. */
+export interface ImportHeadDecision {
+  unit: string;
+  employee: string | null;
+}
+
+/**
+ * The apply request: the file and the fingerprint of the plan shown, with a decision for every missing unit and employee
+ * and a head for every unit of the head step.
+ */
 export interface ApplyInput {
   file: File;
   fingerprint: string;
   decisions: readonly ImportDecision[];
+  heads: readonly ImportHeadDecision[];
 }
 
 /** The plan still held and was applied, or it changed and the file was read again: the fresh preview takes its place. */
@@ -77,11 +90,13 @@ export async function applyOrgImport({
   file,
   fingerprint,
   decisions,
+  heads,
 }: ApplyInput): Promise<ApplyOutcome> {
   const form = formOf({
     file,
     fingerprint,
     decisions: JSON.stringify(decisions),
+    heads: JSON.stringify(heads),
   });
   const result = await api.POST("/api/v1/org-import/apply", {
     body: { file: "", fingerprint },

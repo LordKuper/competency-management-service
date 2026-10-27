@@ -34,13 +34,14 @@ export const CHANGE_GROUPS: ReadonlyArray<{
   },
 ];
 
-/** The groups only an applied import counts: what the decisions about the missing units and employees did. */
+/** The groups only an applied import counts: what the decisions about the missing units and employees and the chosen heads did. */
 export const DECISION_GROUPS: ReadonlyArray<{
   key: keyof OrgImportResult;
   title: string;
 }> = [
   { key: "deactivatedUnits", title: "Деактивированные подразделения" },
   { key: "dismissedEmployees", title: "Уволенные сотрудники" },
+  { key: "assignedHeads", title: "Назначенные руководители" },
 ];
 
 /** The ids of the missing units and employees the user decided to keep; every other one is deactivated or dismissed. */

@@ -13,6 +13,12 @@ import {
 } from "../org-structure/orgStructureApi";
 import { invalidatePositions } from "../positions/positionsApi";
 import { usersQueryKey } from "../users/usersApi";
+import { HeadsStep } from "./HeadsStep";
+import {
+  choicesStillListed,
+  type HeadChoices,
+  headDecisionsOf,
+} from "./importHeads";
 import { decisionsOf, type KeptIds, keptStillMissing } from "./importPlan";
 import { MissingStep } from "./MissingStep";
 import {
@@ -27,12 +33,20 @@ import { PreviewStep } from "./PreviewStep";
 import { ResultStep } from "./ResultStep";
 import { UploadStep } from "./UploadStep";
 
-const STEPS = ["Загрузка", "Предпросмотр", "Отсутствующие", "Итог"] as const;
+const STEPS = [
+  "Загрузка",
+  "Предпросмотр",
+  "Отсутствующие",
+  "Руководители",
+  "Итог",
+] as const;
 const UPLOAD = 1;
 const PREVIEW = 2;
 const MISSING = 3;
-const RESULT = 4;
+const HEADS = 4;
+const RESULT = 5;
 const NOTHING_KEPT: KeptIds = new Set();
+const NO_CHOICES: HeadChoices = new Map();
 
 interface Loaded {
   file: File;
@@ -55,6 +69,7 @@ export function OrgImportPage() {
   const [loaded, setLoaded] = useState<Loaded>();
   const [errors, setErrors] = useState<readonly ImportError[]>([]);
   const [kept, setKept] = useState<KeptIds>(NOTHING_KEPT);
+  const [headChoices, setHeadChoices] = useState<HeadChoices>(NO_CHOICES);
   const [applied, setApplied] = useState<Applied>();
   const [isPlanStale, setIsPlanStale] = useState(false);
   const previewing = useMutation({ mutationFn: previewOrgImport });
@@ -65,12 +80,18 @@ export function OrgImportPage() {
     isSaving: applying.isPending,
   });
 
-  function show(file: File, preview: OrgImportPreview, keptBefore: KeptIds) {
+  function show(
+    file: File,
+    preview: OrgImportPreview,
+    keptBefore: KeptIds,
+    choicesBefore: HeadChoices,
+  ) {
     const { plan } = preview;
     if (plan === null || preview.errors.length > 0) {
       setLoaded(undefined);
       setErrors(preview.errors);
       setKept(NOTHING_KEPT);
+      setHeadChoices(NO_CHOICES);
       setStep(UPLOAD);
       setReached(UPLOAD);
       return;
@@ -78,6 +99,7 @@ export function OrgImportPage() {
     setLoaded({ file, plan });
     setErrors([]);
     setKept(keptStillMissing(plan, keptBefore));
+    setHeadChoices(choicesStillListed(plan, choicesBefore));
     setStep(PREVIEW);
     setReached(PREVIEW);
   }
@@ -86,10 +108,10 @@ export function OrgImportPage() {
     const load = () => {
       setIsPlanStale(false);
       previewing.mutate(file, {
-        onSuccess: (preview) => show(file, preview, NOTHING_KEPT),
+        onSuccess: (preview) => show(file, preview, NOTHING_KEPT, NO_CHOICES),
       });
     };
-    if (kept.size > 0) confirmLeave(load);
+    if (kept.size > 0 || headChoices.size > 0) confirmLeave(load);
     else load();
   }
 
@@ -102,12 +124,13 @@ export function OrgImportPage() {
         file,
         fingerprint: plan.fingerprint,
         decisions: decisionsOf(plan, kept),
+        heads: headDecisionsOf(plan, kept, headChoices),
       },
       {
         onSuccess: (outcome) => {
           if ("recomputed" in outcome) {
             setIsPlanStale(true);
-            show(file, outcome.recomputed, kept);
+            show(file, outcome.recomputed, kept, headChoices);
             return;
           }
           void Promise.all([
@@ -121,6 +144,7 @@ export function OrgImportPage() {
           setApplied({ fileName: file.name, result: outcome.applied });
           setLoaded(undefined);
           setKept(NOTHING_KEPT);
+          setHeadChoices(NO_CHOICES);
           setStep(RESULT);
           setReached(RESULT);
         },
@@ -139,6 +163,10 @@ export function OrgImportPage() {
     });
   }
 
+  function chooseHead(unitKey: string, employeeKey: string | null) {
+    setHeadChoices((previous) => new Map(previous).set(unitKey, employeeKey));
+  }
+
   return (
     <ScenarioPage title="Импорт оргструктуры">
       <Flex vertical gap="middle">
@@ -153,7 +181,7 @@ export function OrgImportPage() {
           <CompactAlert
             type="warning"
             lead="План изменился после предпросмотра."
-            text="Оргструктура или файл стали другими, поэтому предпросмотр пересчитан: проверьте его. Решения сохранены для тех, кто остался в списке отсутствующих."
+            text="Оргструктура или файл стали другими, поэтому предпросмотр пересчитан: проверьте его. Решения сохранены для тех, кто остался в списке отсутствующих, и выбор руководителей — для подразделений, оставшихся на шаге «Руководители»."
           />
         )}
         {step === UPLOAD && (
@@ -182,9 +210,22 @@ export function OrgImportPage() {
             plan={loaded.plan}
             kept={kept}
             onDecide={decide}
+            onBack={() => setStep(PREVIEW)}
+            onNext={() => {
+              setStep(HEADS);
+              setReached((previous) => Math.max(previous, HEADS));
+            }}
+          />
+        )}
+        {step === HEADS && loaded && (
+          <HeadsStep
+            plan={loaded.plan}
+            kept={kept}
+            choices={headChoices}
+            onChoose={chooseHead}
             isApplying={applying.isPending}
             failure={applying.error}
-            onBack={() => setStep(PREVIEW)}
+            onBack={() => setStep(MISSING)}
             onApply={apply}
           />
         )}

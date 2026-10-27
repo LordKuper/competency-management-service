@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   Flex,
   Radio,
@@ -9,8 +8,6 @@ import {
   Typography,
 } from "antd";
 import { type ReactNode, useMemo } from "react";
-import { ApiError } from "../../api/ApiError";
-import { describeApiError } from "../../app/apiErrors";
 import { ActionBar, CompactAlert } from "../desk/ScenarioContext";
 import { isEmployeeKept, type KeptIds, unitBlocks } from "./importPlan";
 import type {
@@ -45,34 +42,20 @@ interface MissingStepProps {
   kept: KeptIds;
   /** Sets the decision of the given entities: kept, or deactivated and dismissed. */
   onDecide: (ids: readonly string[], isKept: boolean) => void;
-  /** The apply is in flight: the decisions stay as they are until it ends. */
-  isApplying: boolean;
-  /** Why the last apply was refused, other than a changed plan. */
-  failure: unknown;
   onBack: () => void;
-  onApply: () => void;
-}
-
-/** Why an apply was refused, in the server's words: a rule of the organization, or decisions it could not read. */
-function failureText(failure: unknown): string {
-  if (failure instanceof ApiError && failure.status === 400) {
-    return failure.errors?.decisions?.join(" ") ?? describeApiError(failure);
-  }
-  return describeApiError(failure);
+  onNext: () => void;
 }
 
 /**
  * Step 3: the units and employees the system has and the file does not, each deactivated or dismissed unless kept. A
- * decision the organization's rules refuse is marked before the apply, and the apply stays off while one is.
+ * decision the organization's rules refuse is marked before the apply, and the next step stays off while one is.
  */
 export function MissingStep({
   plan,
   kept,
   onDecide,
-  isApplying,
-  failure,
   onBack,
-  onApply,
+  onNext,
 }: MissingStepProps) {
   const blocks = useMemo(() => unitBlocks(plan, kept), [plan, kept]);
   const unitPaths = useMemo(
@@ -90,7 +73,6 @@ export function MissingStep({
       render: (_value, unit) => (
         <Radio.Group
           optionType="button"
-          disabled={isApplying}
           options={UNIT_OPTIONS}
           value={kept.has(unit.id) ? KEEP : ACT}
           onChange={(event) => onDecide([unit.id], event.target.value === KEEP)}
@@ -133,7 +115,7 @@ export function MissingStep({
       render: (_value, employee) => (
         <Radio.Group
           optionType="button"
-          disabled={isApplying || employee.isLastActiveAdministrator}
+          disabled={employee.isLastActiveAdministrator}
           options={EMPLOYEE_OPTIONS}
           value={isEmployeeKept(employee, kept) ? KEEP : ACT}
           onChange={(event) =>
@@ -169,7 +151,6 @@ export function MissingStep({
       {missingUnits.length > 0 && (
         <Section
           title={`Подразделений нет в файле: ${missingUnits.length}`}
-          isLocked={isApplying}
           actLabel="Деактивировать все"
           onAll={(isKept) =>
             onDecide(
@@ -194,7 +175,6 @@ export function MissingStep({
       {missingEmployees.length > 0 && (
         <Section
           title={`Сотрудников нет в файле: ${missingEmployees.length}`}
-          isLocked={isApplying}
           actLabel="Уволить всех"
           onAll={(isKept) =>
             onDecide(
@@ -213,33 +193,14 @@ export function MissingStep({
           />
         </Section>
       )}
-      {failure != null && (
-        <Alert
-          type="error"
-          showIcon
-          title="Импорт не применён"
-          description={failureText(failure)}
-        />
-      )}
-      <ActionBar
-        start={
-          <Button disabled={isApplying} onClick={onBack}>
-            Назад
-          </Button>
-        }
-      >
+      <ActionBar start={<Button onClick={onBack}>Назад</Button>}>
         {blocks.size > 0 && (
           <Typography.Text type="secondary">
             {`Применить нельзя: исправьте решения в отмеченных подразделениях (${blocks.size}).`}
           </Typography.Text>
         )}
-        <Button
-          type="primary"
-          loading={isApplying}
-          disabled={blocks.size > 0}
-          onClick={onApply}
-        >
-          Применить
+        <Button type="primary" disabled={blocks.size > 0} onClick={onNext}>
+          Далее
         </Button>
       </ActionBar>
     </Flex>
@@ -250,12 +211,11 @@ interface SectionProps {
   title: string;
   /** The label of the button that applies the default decision to the whole group. */
   actLabel: string;
-  isLocked: boolean;
   onAll: (isKept: boolean) => void;
   children: ReactNode;
 }
 
-function Section({ title, actLabel, isLocked, onAll, children }: SectionProps) {
+function Section({ title, actLabel, onAll, children }: SectionProps) {
   return (
     <Flex vertical gap="small">
       <Flex justify="space-between" align="center" gap="small" wrap>
@@ -263,12 +223,8 @@ function Section({ title, actLabel, isLocked, onAll, children }: SectionProps) {
           {title}
         </Typography.Title>
         <Flex gap="small" wrap>
-          <Button disabled={isLocked} onClick={() => onAll(false)}>
-            {actLabel}
-          </Button>
-          <Button disabled={isLocked} onClick={() => onAll(true)}>
-            Оставить все
-          </Button>
+          <Button onClick={() => onAll(false)}>{actLabel}</Button>
+          <Button onClick={() => onAll(true)}>Оставить все</Button>
         </Flex>
       </Flex>
       {children}
