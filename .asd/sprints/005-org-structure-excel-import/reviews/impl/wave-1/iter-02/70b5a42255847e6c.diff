@@ -1,0 +1,598 @@
+diff --git a/.claude/agent-memory/asd-advisor/MEMORY.md b/.claude/agent-memory/asd-advisor/MEMORY.md
+new file mode 100644
+index 0000000..59f5fad
+--- /dev/null
++++ b/.claude/agent-memory/asd-advisor/MEMORY.md
+@@ -0,0 +1 @@
++- [Review consult format](feedback_review-consult-format.md) — per finding: accept/override, minimal fix shape, one-line why, AC/contract-change flag; verify the caller's leads
+diff --git a/.claude/agent-memory/asd-advisor/feedback_review-consult-format.md b/.claude/agent-memory/asd-advisor/feedback_review-consult-format.md
+new file mode 100644
+index 0000000..2650cdd
+--- /dev/null
++++ b/.claude/agent-memory/asd-advisor/feedback_review-consult-format.md
+@@ -0,0 +1,12 @@
++---
++name: review-consult-format
++description: How the orchestrator wants impl-review escalation consults answered — per finding accept/override, minimal fix shape, requirement-change flag, one-line rationale
++metadata:
++  type: feedback
++---
++
++For an impl-review escalation consult (external/combined review findings), answer per finding: accept-for-fix or override, the minimal fix shape (file:line), a one-line rationale, and an explicit flag when the fix narrows or changes an AC, contract or concept (that part goes to the user as Complication Approval / changed-AC hard gate).
++
++**Why:** The orchestrator in sprint 005 asked exactly this ("keep it brief: one recommendation per finding, each with a one-line rationale… flag any finding that changes a requirement, contract or concept") and supplied its own leads to verify, not assume. Verifying leads against code found two that were incomplete (a "no user-visible limit" root fix that left a second quadratic path; a link fix that needed two sites, not one).
++
++**How to apply:** Read every cited file plus the consumers of the touched symbol (grep) before agreeing with a lead; answer in the caller's order; put requirement/AC impact in its own line per finding so the orchestrator can lift it straight into the user-decision format.
+diff --git a/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md b/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
+index af9a10c..1c1f80e 100644
+--- a/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
++++ b/.claude/agent-memory/asd-reviewer-combined/feedback_frontend-wave-probes.md
+@@ -1,6 +1,6 @@
+ ---
+ name: frontend-wave-probes
+-description: how a 100-120-file web/ plus agent-memory impl-review wave was finished in about 45-60 turns - read ranges, one-Grep probes that found real defects (unused exports and props, secure-context-only browser APIs, raw px and disabled-without-reason against design-system rules, Russian plurals, per-id name reads and client-side exclude in server-search pickers), diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers, JSDoc detached by a new const
++description: how a 100-120-file web/ plus agent-memory impl-review wave was finished in about 45-60 turns - read ranges, one-Grep probes that found real defects (unused exports and props, secure-context-only browser APIs, raw px and disabled-without-reason against design-system rules, Russian plurals, per-id name reads and client-side exclude in server-search pickers, wizard step numbers in doc comments), diff-to-file line arithmetic, antd d.ts deprecation check, re-review probes for extracted helpers, JSDoc detached by a new const
+ metadata:
+   type: feedback
+ ---
+@@ -50,6 +50,10 @@ Grep `^diff --git` over the diff first: its line numbers give every file's range
+   fixed form is wrong for n ending in 1 (21, 31); `Intl.PluralRules("ru")` is the fix.
+ - A review-fix that adds a module-level `const` to a hook file: check it did not land between the exported function and its
+   JSDoc (`SENDING_KEY`); the doc then attaches to the const and the export has none.
++- A multi-step wizard folder (`*Step.tsx`): Grep `Step \d` over it; a step inserted mid-implementation left two components
++  documented as the same step number (low, In-code doc comments row).
++- Before raising a missing unsaved-changes guard on a modal form, read `web/src/app/AppModal.tsx`: its `Form.Provider` touch
++  tracking guards any form inside it automatically.
+ 
+ **Re-review of a review-fix delta (about 40 turns, one finding):**
+ - After a duplicated helper is hoisted into one shared module, Grep its call sites: a parameter every caller leaves at the
+diff --git a/src/Competency.OrgStructure/Import/ImportText.cs b/src/Competency.OrgStructure/Import/ImportText.cs
+index 6ad05bb..545453e 100644
+--- a/src/Competency.OrgStructure/Import/ImportText.cs
++++ b/src/Competency.OrgStructure/Import/ImportText.cs
+@@ -14,9 +14,9 @@ internal static class ImportText
+         value is null ? string.Empty : string.Join(' ', value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+ 
+     /// <summary>
+-    /// The comparison key of a cleaned name: lower case, with the letter «ё» equal to «е».
++    /// The comparison key of a name: cleaned by <see cref="Clean"/>, lower case, with the letter «ё» equal to «е».
+     /// </summary>
+-    /// <param name="cleaned">The name as <see cref="Clean"/> returned it.</param>
++    /// <param name="name">The name as stored or as read from the file; spacing need not be cleaned.</param>
+     /// <returns>The key.</returns>
+-    public static string Key(string cleaned) => cleaned.ToLowerInvariant().Replace('ё', 'е');
++    public static string Key(string name) => Clean(name).ToLowerInvariant().Replace('ё', 'е');
+ }
+diff --git a/src/Competency.OrgStructure/Import/OrgImportEndpoints.cs b/src/Competency.OrgStructure/Import/OrgImportEndpoints.cs
+index c1dee52..b7d93a5 100644
+--- a/src/Competency.OrgStructure/Import/OrgImportEndpoints.cs
++++ b/src/Competency.OrgStructure/Import/OrgImportEndpoints.cs
+@@ -175,7 +175,7 @@ internal static class OrgImportEndpoints
+         try
+         {
+             requested = JsonSerializer.Deserialize<List<T>>(json, WebJson) ?? [];
+-            return true;
++            return requested.All(item => item is not null);
+         }
+         catch (JsonException)
+         {
+diff --git a/src/Competency.OrgStructure/Import/OrgImportParser.cs b/src/Competency.OrgStructure/Import/OrgImportParser.cs
+index f776717..1c8656b 100644
+--- a/src/Competency.OrgStructure/Import/OrgImportParser.cs
++++ b/src/Competency.OrgStructure/Import/OrgImportParser.cs
+@@ -61,6 +61,7 @@ internal static partial class OrgImportParser
+     public const string FullNameColumn = "ФИО";
+     public const string PositionColumn = "Должность";
+     public const string LegalEntityColumn = "Юридическое лицо";
++    public const int MaxLevels = 30;
+ 
+     private const string SkippedLevel = "-";
+     private const int PersonNameMaxLength = Employee.NameMaxLength;
+@@ -159,6 +160,11 @@ internal static partial class OrgImportParser
+         }
+ 
+         var maxLevel = levels.Count == 0 ? 0 : levels.Keys.Max();
++        if (maxLevel > MaxLevels)
++        {
++            errors.Add(new ImportError(number, UnitColumn(levels.Keys.First(level => level > MaxLevels)), $"В файле больше {MaxLevels} уровней подразделений."));
++        }
++
+         var firstMissing = Enumerable.Range(1, Math.Max(maxLevel, 1)).FirstOrDefault(level => !levels.ContainsKey(level));
+         if (firstMissing != 0)
+         {
+diff --git a/tests/Competency.Tests/OrgImportApplyTests.cs b/tests/Competency.Tests/OrgImportApplyTests.cs
+index f368ddb..0e68873 100644
+--- a/tests/Competency.Tests/OrgImportApplyTests.cs
++++ b/tests/Competency.Tests/OrgImportApplyTests.cs
+@@ -315,6 +315,25 @@ public sealed class OrgImportApplyTests(CareerHost fixture, TestEnvironment envi
+         await AssertNothingAppliedAsync(org.Admin, file, name, plan);
+     }
+ 
++    [Theory]
++    [InlineData("decisions")]
++    [InlineData("heads")]
++    public async Task Ac18_Apply_RefusesAListWithANullElement_With400_NotAFailure(string field)
++    {
++        var org = await fixture.OrgAsync();
++        var name = Scenarios.Unique("Новый");
++        var file = new OrgImportSheet().Unit(name).ToBytes();
++        var plan = await org.Admin.PlanOfAsync(file);
++
++        var refused = field == "decisions"
++            ? await org.Admin.ApplyImportAsync(file, plan.FingerprintOf(), decisionsText: "[null]")
++            : await org.Admin.ApplyImportAsync(file, plan.FingerprintOf(), [], headsText: "[null]");
++
++        refused.Status.Should().Be(HttpStatusCode.BadRequest, refused.Body);
++        refused.FieldErrors(field).Should().ContainSingle();
++        await AssertNothingAppliedAsync(org.Admin, file, name, plan);
++    }
++
+     [Theory]
+     [InlineData("other-file")]
+     [InlineData("changed-data")]
+diff --git a/tests/Competency.Tests/OrgImportParserTests.cs b/tests/Competency.Tests/OrgImportParserTests.cs
+index 8f9eb25..e4a63fa 100644
+--- a/tests/Competency.Tests/OrgImportParserTests.cs
++++ b/tests/Competency.Tests/OrgImportParserTests.cs
+@@ -57,6 +57,32 @@ public sealed class OrgImportParserTests
+         parsed.Errors.Should().ContainSingle().Which.Column.Should().Be("Подразделение 2-го уровня");
+     }
+ 
++    [Fact]
++    public void Ac11_AHeaderWithOneLevelColumnOverTheLimit_IsAnErrorOfTheHeaderRow_NamingThatColumn()
++    {
++        var overTheLimit = OrgImportParser.MaxLevels + 1;
++        var sheet = new OrgImportSheet(overTheLimit).Employee("Иванов Иван", "Инженер", "Отдел");
++
++        var parsed = OrgImportParser.Parse(sheet.ToBytes());
++
++        parsed.Rows.Should().BeEmpty();
++        var error = parsed.Errors.Should().ContainSingle().Subject;
++        error.Row.Should().Be(1);
++        error.Column.Should().Be(OrgImportParser.UnitColumn(overTheLimit));
++        error.Message.Should().Contain(OrgImportParser.MaxLevels.ToString());
++    }
++
++    [Fact]
++    public void Ac11_AHeaderWithExactlyTheLimitOfLevelColumns_IsAccepted()
++    {
++        var sheet = new OrgImportSheet(OrgImportParser.MaxLevels).Employee("Иванов Иван", "Инженер", "Отдел");
++
++        var parsed = OrgImportParser.Parse(sheet.ToBytes());
++
++        parsed.Errors.Should().BeEmpty();
++        parsed.Rows.Single().Path.Should().Equal([new UnitStep("Отдел", 1)]);
++    }
++
+     [Fact]
+     public void Ac12_TheUnitPath_SkipsDashesAndEmptyCells_KeepsTheLevelsAndCleansTheSpaces()
+     {
+diff --git a/tests/Competency.Tests/OrgImportTests.cs b/tests/Competency.Tests/OrgImportTests.cs
+index bd9efa2..cb5f046 100644
+--- a/tests/Competency.Tests/OrgImportTests.cs
++++ b/tests/Competency.Tests/OrgImportTests.cs
+@@ -118,6 +118,22 @@ public sealed class OrgImportTests(CareerHost fixture, TestEnvironment environme
+         }
+     }
+ 
++    [Fact]
++    public async Task Ac14_Preview_MatchesAStoredNameWithADoubleInnerSpace_ToTheNameOfTheFile_NotAsANewEmployeeAndADismissal()
++    {
++        var org = await fixture.OrgAsync();
++        var unitName = Scenarios.Unique("Отдел");
++        var unit = await org.Admin.CreateUnitAsync(name: unitName);
++        var lastName = Scenarios.Unique("Оглыев");
++        var stored = await org.Admin.CreateEmployeeAsync(unit.Id, lastName, "Иван", middleName: "Али  оглы");
++        var file = new OrgImportSheet().Employee($"{lastName} Иван Али оглы", "Инженер", unitName).ToBytes();
++
++        var plan = await org.Admin.PlanOfAsync(file);
++
++        plan.Lines("newEmployees").Should().BeEmpty();
++        plan["missingEmployees"]!.AsArray().Select(employee => employee!["id"]!.GetValue<string>()).Should().NotContain(stored.Id.ToString());
++    }
++
+     [Fact]
+     public async Task Ac14_Preview_RefusesToGuess_WhenTheSystemHoldsTwoPeopleWithOneName()
+     {
+diff --git a/web/src/features/desk/DeskGroups.tsx b/web/src/features/desk/DeskGroups.tsx
+index 189a941..58e114e 100644
+--- a/web/src/features/desk/DeskGroups.tsx
++++ b/web/src/features/desk/DeskGroups.tsx
+@@ -16,6 +16,7 @@ import {
+ import { type CSSProperties, type ReactNode, useState } from "react";
+ import { Link } from "react-router";
+ import { ErrorAlert } from "../../app/ErrorAlert";
++import { useIsAdmin } from "../auth/useCurrentUser";
+ import {
+   type DeskGroupView,
+   type DeskItem,
+@@ -339,7 +340,8 @@ function MutedLine({ children }: { children: ReactNode }) {
+ 
+ function ObjectCell({ item }: { item: DeskItem }) {
+   const typeLabel = typeLabelOf(item);
+-  const link = itemLink(item);
++  const isAdmin = useIsAdmin();
++  const link = itemLink(item, isAdmin);
+   const title = objectTitle(item.object);
+   const context = objectContext(item);
+   return (
+@@ -435,7 +437,8 @@ function ActionsCell({
+   item: DeskItem;
+   resend: InvitationResend;
+ }) {
+-  const action = itemAction(item);
++  const isAdmin = useIsAdmin();
++  const action = itemAction(item, isAdmin);
+   const { invitation } = item;
+   const isSendingThis =
+     invitation != null && resend.sendingAccountId === invitation.accountId;
+diff --git a/web/src/features/desk/DeskPage.test.tsx b/web/src/features/desk/DeskPage.test.tsx
+index afcadd6..847c143 100644
+--- a/web/src/features/desk/DeskPage.test.tsx
++++ b/web/src/features/desk/DeskPage.test.tsx
+@@ -486,6 +486,33 @@ describe("the columns of a group (AC-7, AC-8, AC-160)", () => {
+       }),
+     ).toBeInTheDocument();
+   });
++
++  it("leads HR, who cannot open the administrators' scenario, from a unit with a gap to the unit card, by the name and by the action", async () => {
++    answerWith(
++      deskOf({
++        group: "UnitsToConnect",
++        isReference: false,
++        total: 1,
++        items: [item("UnitsToConnect", "UnitWithoutHead", "Отдел")],
++      }),
++      ["Hr"],
++    );
++
++    renderDesk();
++
++    const row = (await screen.findByText(/Отдел/)).closest("tr") as HTMLElement;
++    const card = "/org-structure?unit=id-%D0%9E%D1%82%D0%B4%D0%B5%D0%BB";
++    expect(
++      within(row).getByRole("link", { name: "Открыть карточку" }),
++    ).toHaveAttribute("href", card);
++    expect(within(row).getByRole("link", { name: /Отдел/ })).toHaveAttribute(
++      "href",
++      card,
++    );
++    expect(
++      within(row).queryByRole("link", { name: "Подключить" }),
++    ).not.toBeInTheDocument();
++  });
+ });
+ 
+ describe("an invitation sent again from the desk (AC-39, AC-40)", () => {
+diff --git a/web/src/features/desk/DeskScenarios.tsx b/web/src/features/desk/DeskScenarios.tsx
+index 4935ded..c6550f6 100644
+--- a/web/src/features/desk/DeskScenarios.tsx
++++ b/web/src/features/desk/DeskScenarios.tsx
+@@ -175,7 +175,11 @@ const SCENARIOS: Scenario[] = [
+ ];
+ 
+ /** The screen a scenario opens: its own, or that of the first item waiting in its groups; null when its prerequisites fail or its groups are empty or not loaded. */
+-function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
++function entryPath(
++  scenario: Scenario,
++  desk: Desk | undefined,
++  isAdmin: boolean,
++): string | null {
+   if (scenario.holds && !(desk && scenario.holds(desk.prerequisites))) {
+     return null;
+   }
+@@ -191,7 +195,7 @@ function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
+   }
+   if (scenario.path) return scenario.path;
+   const firstItem = groups?.[0]?.items[0];
+-  return (firstItem && itemAction(firstItem)?.path) ?? null;
++  return (firstItem && itemAction(firstItem, isAdmin)?.path) ?? null;
+ }
+ 
+ /**
+@@ -230,7 +234,7 @@ export function DeskScenarios({
+     );
+   }
+   const cards = scenarios.flatMap((scenario) => {
+-    const path = entryPath(scenario, desk);
++    const path = entryPath(scenario, desk, roles.isAdmin);
+     return path
+       ? [
+           <ScenarioCard
+diff --git a/web/src/features/desk/OrgCleanupPage.test.tsx b/web/src/features/desk/OrgCleanupPage.test.tsx
+index 2950e00..94e8522 100644
+--- a/web/src/features/desk/OrgCleanupPage.test.tsx
++++ b/web/src/features/desk/OrgCleanupPage.test.tsx
+@@ -286,3 +286,37 @@ describe("the queue of the organisation structure asks before a choice not yet s
+     expect(screen.queryByRole("dialog")).toBeNull();
+   });
+ });
++
++describe("a unit finding opens where its session can close the gap (AC-8)", {
++  timeout: LONG_FLOW_TIMEOUT,
++}, () => {
++  it.each([
++    {
++      role: "Hr",
++      label: "Открыть карточку подразделения",
++      href: "/org-structure?unit=u2",
++    },
++    {
++      role: "GlobalAdmin",
++      label: "Открыть «Подключить подразделение»",
++      href: "/desk/connect-unit/u2",
++    },
++  ])("leads a $role to $href", async ({ role, label, href }) => {
++    serve();
++    fakeApi.on("GET /api/v1/auth/me", () =>
++      Response.json({
++        id: "account",
++        email: "user@test.local",
++        roles: [role],
++        employeeId: null,
++      }),
++    );
++    const user = renderQueue();
++    await screen.findByRole("heading", { name: /Иванов Иван/ });
++    await user.click(screen.getByRole("button", { name: /Склад/ }));
++
++    const link = await screen.findByRole("link", { name: label });
++
++    await waitFor(() => expect(link).toHaveAttribute("href", href));
++  });
++});
+diff --git a/web/src/features/desk/OrgFinding.tsx b/web/src/features/desk/OrgFinding.tsx
+index a82280e..8e06e37 100644
+--- a/web/src/features/desk/OrgFinding.tsx
++++ b/web/src/features/desk/OrgFinding.tsx
+@@ -18,6 +18,7 @@ import { describeApiError } from "../../app/apiErrors";
+ import { ErrorAlert } from "../../app/ErrorAlert";
+ import { useLeaveGuard } from "../../app/leaveGuard";
+ import { useFormSubmit } from "../../app/useFormSubmit";
++import { useIsAdmin } from "../auth/useCurrentUser";
+ import {
+   type Employee,
+   type EmployeeAssignment,
+@@ -35,7 +36,13 @@ import { userQuery, usersQueryKey } from "../users/usersApi";
+ import { ChangePositionForm } from "./ChangePositionForm";
+ import { DecisionError } from "./DecisionError";
+ import type { DeskItem } from "./deskApi";
+-import { deskPaths, objectTitle, reasonLines, typeLabelOf } from "./deskTexts";
++import {
++  connectUnitTarget,
++  deskPaths,
++  objectTitle,
++  reasonLines,
++  typeLabelOf,
++} from "./deskTexts";
+ import { ORG_FINDING_MUTATION, useIsFindingBusy } from "./findingBusy";
+ import { LinkButton } from "./LinkButton";
+ import { returnState } from "./returnLink";
+@@ -94,14 +101,19 @@ function FindingAction({ item }: { item: DeskItem }) {
+     case "EmptyUnit":
+       return <EmptyUnit item={item} />;
+     default:
+-      return (
+-        <LinkButton to={deskPaths.connectUnitOf(item.object.id)} type="primary">
+-          Открыть «Подключить подразделение»
+-        </LinkButton>
+-      );
++      return <ConnectUnit unitId={item.object.id} />;
+   }
+ }
+ 
++function ConnectUnit({ unitId }: { unitId: string }) {
++  const target = connectUnitTarget(unitId, useIsAdmin());
++  return (
++    <LinkButton to={target.path} type="primary">
++      {target.buttonLabel}
++    </LinkButton>
++  );
++}
++
+ function OutsideList({ item }: { item: DeskItem }) {
+   const { token } = antdTheme.useToken();
+   const queryClient = useQueryClient();
+diff --git a/web/src/features/desk/deskTexts.test.ts b/web/src/features/desk/deskTexts.test.ts
+index 62a80b9..b21890e 100644
+--- a/web/src/features/desk/deskTexts.test.ts
++++ b/web/src/features/desk/deskTexts.test.ts
+@@ -8,6 +8,7 @@ import type {
+   DeskReason,
+ } from "./deskApi";
+ import {
++  connectUnitTarget,
+   deskPaths,
+   itemAction,
+   itemLink,
+@@ -143,14 +144,19 @@ describe("the screen an action item opens (AC-6, AC-160, AC-209, AC-210, AC-218)
+   it.each(Object.entries(ACTION_PATH))(
+     "opens a %s item on the screen %s",
+     (kind, path) => {
+-      const opened = itemAction(itemOf(kind as DeskKind, { target: VERSION }));
++      const opened = itemAction(
++        itemOf(kind as DeskKind, { target: VERSION }),
++        true,
++      );
+ 
+       expect(opened?.path ?? null).toBe(path);
+     },
+   );
+ 
+   it("opens no scenario for a version item that names no version", () => {
+-    expect(itemAction(itemOf("VersionReturned", { target: null }))).toBeNull();
++    expect(
++      itemAction(itemOf("VersionReturned", { target: null }), true),
++    ).toBeNull();
+   });
+ 
+   it.each([
+@@ -162,15 +168,15 @@ describe("the screen an action item opens (AC-6, AC-160, AC-209, AC-210, AC-218)
+   ] as const)(
+     "opens the draft %s on the queue's entry of its kind",
+     (type, kind) => {
+-      expect(itemAction(itemOf("DraftAwaitsApproval", { type }))?.path).toBe(
+-        `/desk/drafts/${kind}/${OBJECT_ID}`,
+-      );
++      expect(
++        itemAction(itemOf("DraftAwaitsApproval", { type }), true)?.path,
++      ).toBe(`/desk/drafts/${kind}/${OBJECT_ID}`);
+     },
+   );
+ 
+   it("opens the whole drafts queue for a draft of a kind the queue has no entry for", () => {
+     expect(
+-      itemAction(itemOf("DraftAwaitsApproval", { type: "Level" }))?.path,
++      itemAction(itemOf("DraftAwaitsApproval", { type: "Level" }), true)?.path,
+     ).toBe(deskPaths.drafts);
+   });
+ 
+@@ -178,12 +184,14 @@ describe("the screen an action item opens (AC-6, AC-160, AC-209, AC-210, AC-218)
+     const track = objectOf("Track", OTHER_ID);
+     const one = itemAction(
+       itemOf("UnitWithoutMatrix", { type: "OrgUnit", entries: [track] }),
++      true,
+     )?.path;
+     const several = itemAction(
+       itemOf("UnitWithoutMatrix", {
+         type: "OrgUnit",
+         entries: [track, objectOf("Track", VERSION_ID)],
+       }),
++      true,
+     )?.path;
+ 
+     expect(one).toBe(
+@@ -204,8 +212,39 @@ describe("the screen an action item opens (AC-6, AC-160, AC-209, AC-210, AC-218)
+       invitation: { accountId: OTHER_ID, version: 1 },
+     };
+ 
+-    expect(itemAction(item)?.path).toBe(`/desk/connect-unit/${OBJECT_ID}`);
+-    expect(itemLink(item)).toBe(`/desk/connect-unit/${OBJECT_ID}`);
++    expect(itemAction(item, true)?.path).toBe(
++      `/desk/connect-unit/${OBJECT_ID}`,
++    );
++    expect(itemLink(item, true)).toBe(`/desk/connect-unit/${OBJECT_ID}`);
++  });
++
++  const CONNECT_UNIT_KINDS = Object.entries(ACTION_PATH)
++    .filter(([, path]) => path === `/desk/connect-unit/${OBJECT_ID}`)
++    .map(([kind]) => kind as DeskKind);
++  const UNIT_CARD = `${orgPaths.tree}?unit=${OBJECT_ID}`;
++
++  it.each(CONNECT_UNIT_KINDS)(
++    "opens the unit card, not the administrators' scenario, for a %s item when the user is not an administrator",
++    (kind) => {
++      const item = itemOf(kind, { type: "OrgUnit" });
++
++      expect(itemAction(item, false)).toMatchObject({
++        title: "Открыть карточку",
++        path: UNIT_CARD,
++      });
++      expect(itemLink(item, false)).toBe(UNIT_CARD);
++    },
++  );
++
++  it("labels the button of a unit with a gap by where it leads, for an administrator and for everyone else", () => {
++    expect(connectUnitTarget(OBJECT_ID, true)).toMatchObject({
++      path: `/desk/connect-unit/${OBJECT_ID}`,
++      buttonLabel: "Открыть «Подключить подразделение»",
++    });
++    expect(connectUnitTarget(OBJECT_ID, false)).toMatchObject({
++      path: UNIT_CARD,
++      buttonLabel: "Открыть карточку подразделения",
++    });
+   });
+ });
+ 
+@@ -218,12 +257,12 @@ describe("where an item's name leads (AC-6)", () => {
+         group: "NoTrack",
+       });
+ 
+-      expect(itemLink(item)).toBe(REFERENCE_PATH[kind] ?? null);
++      expect(itemLink(item, true)).toBe(REFERENCE_PATH[kind] ?? null);
+     },
+   );
+ 
+   it("leads an action to its scenario", () => {
+-    expect(itemLink(itemOf("VersionReturned", { target: VERSION }))).toBe(
++    expect(itemLink(itemOf("VersionReturned", { target: VERSION }), true)).toBe(
+       `/desk/rework/${VERSION_ID}`,
+     );
+   });
+@@ -236,6 +275,7 @@ describe("where an item's name leads (AC-6)", () => {
+           isReference: true,
+           group: "UnusedCatalogEntries",
+         }),
++        true,
+       ),
+     ).toBe(deskPaths.catalogCleanup);
+   });
+diff --git a/web/src/features/desk/deskTexts.ts b/web/src/features/desk/deskTexts.ts
+index 5665147..b54ba66 100644
+--- a/web/src/features/desk/deskTexts.ts
++++ b/web/src/features/desk/deskTexts.ts
+@@ -569,8 +569,30 @@ function linkState(reason: DeskReason, withDate: boolean): string {
+   }
+ }
+ 
++/**
++ * Where a unit with a gap is closed: the «Подключить подразделение» scenario for an administrator, the unit card of the
++ * org structure for everyone else, since the scenario and its API are for administrators only. `buttonLabel` names the target
++ * on a button.
++ */
++export function connectUnitTarget(
++  unitId: string,
++  isAdmin: boolean,
++): DeskLink & { buttonLabel: string } {
++  return isAdmin
++    ? {
++        title: "Подключить",
++        path: deskPaths.connectUnitOf(unitId),
++        buttonLabel: "Открыть «Подключить подразделение»",
++      }
++    : {
++        title: "Открыть карточку",
++        path: `${orgPaths.tree}?${new URLSearchParams({ unit: unitId })}`,
++        buttonLabel: "Открыть карточку подразделения",
++      };
++}
++
+ /** The scenario screen an action item opens, with the label of its row action; null when the action is on the desk itself. */
+-export function itemAction(item: DeskItem): DeskLink | null {
++export function itemAction(item: DeskItem, isAdmin: boolean): DeskLink | null {
+   const [first] = item.reasons;
+   const { object, target } = item;
+   const details = first?.details;
+@@ -623,7 +645,7 @@ export function itemAction(item: DeskItem): DeskLink | null {
+     case "HeadAccountBlocked":
+     case "UnitWithoutHr":
+     case "UnitWithoutPositions":
+-      return { title: "Подключить", path: deskPaths.connectUnitOf(object.id) };
++      return connectUnitTarget(object.id, isAdmin);
+     case "PositionOutsideList":
+     case "AccountWithoutEmployee":
+       return { title: "Привести в порядок", path: deskPaths.orgCleanup };
+@@ -645,8 +667,8 @@ function builderPreselection(
+ }
+ 
+ /** Where an item's object name leads: the scenario of an action, or a view of the object for reference. */
+-export function itemLink(item: DeskItem): string | null {
+-  if (!item.isReference) return itemAction(item)?.path ?? null;
++export function itemLink(item: DeskItem, isAdmin: boolean): string | null {
++  if (!item.isReference) return itemAction(item, isAdmin)?.path ?? null;
+   const { object } = item;
+   switch (item.reasons[0]?.kind) {
+     case "ResponsibleUnitWithoutMatrix":
+diff --git a/web/src/features/org-import/ResultStep.tsx b/web/src/features/org-import/ResultStep.tsx
+index ce4af5d..5ba3ba3 100644
+--- a/web/src/features/org-import/ResultStep.tsx
++++ b/web/src/features/org-import/ResultStep.tsx
+@@ -22,7 +22,7 @@ interface ResultStepProps {
+   result: OrgImportResult;
+ }
+ 
+-/** Step 4: what the applied import changed, by group. */
++/** Step 5: what the applied import changed, by group. */
+ export function ResultStep({ fileName, result }: ResultStepProps) {
+   const rows: Row[] = [...CHANGE_GROUPS, ...DECISION_GROUPS].map(
+     ({ key, title }) => ({ key, title, count: result[key] }),
