@@ -105,3 +105,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Пользователь выбрал стандартную русскую коллацию ICU (`ru-x-icu`) вместо `ru-u-ka-shifted`: знаки препинания значимы, названия в кавычках встают перед остальными. Клиентский `Intl.Collator("ru")` не меняется. Task 8 переадресован работающему dev до завершения. Отменяет вариант из записи «Поправка скоупа: русская коллация (AC-32)».
 - **Rationale**: Ответ пользователя «Нет, используй стандартную ru».
 - **Affected docs**: [sprint.md](./sprint.md), [plan.md](./plan.md)
+
+## 2026-10-27 — Task 8: сортировки в памяти тоже по русским правилам
+
+- **Decision**: Сортировки по названиям в памяти сервера (`career-framework`, `desk`) переведены с `OrdinalIgnoreCase` на общий `TextCollation.Comparer` (культура `ru-RU`), совпадающий с `ru-x-icu` на проверочных примерах; сортировки импорта для отпечатка остаются `Ordinal`. Runtime-образ `aspnet:10.0.12-noble`, invariant globalization нигде не включён.
+- **Rationale**: AC-32 покрывает все списки, которые упорядочивает сервер; иначе «ё» стояла бы после «я».
+- **Affected docs**: [plan.md](./plan.md)
