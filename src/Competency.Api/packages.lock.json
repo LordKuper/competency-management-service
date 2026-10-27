@@ -352,6 +352,15 @@
           "System.Security.Cryptography.Pkcs": "[10.0.13, )"
         }
       },
+      "competency.promotion": {
+        "type": "Project",
+        "dependencies": {
+          "Competency.CareerFramework": "[1.0.0, )",
+          "Competency.OrgStructure": "[1.0.0, )",
+          "Competency.Platform": "[1.0.0, )",
+          "Competency.UserManagement": "[1.0.0, )"
+        }
+      },
       "competency.usermanagement": {
         "type": "Project",
         "dependencies": {
