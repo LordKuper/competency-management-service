@@ -141,3 +141,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-27 — route D-1: standard, dispatch HEAD 2cf1f3c
 - 2026-10-27 — D-1 flag принят: `PositionSelect` больше не очищает значение, заданное при первом рендере и отсутствующее в перечне подразделения; очистка — только после смены подразделения. Сохранённую должность и так держит `current`, допустимость проверяет сервер.
 - 2026-10-27 — impl test-fix: defects D-1 resolved
+- 2026-10-27 — route impl-test entry 2: standard, dispatch HEAD f87c37d
+- 2026-10-27 — impl-test: impacted set green (web 74/74, lint ok), 0/0 tests (entry 2; entry 1: +156 dotnet, +75 web)

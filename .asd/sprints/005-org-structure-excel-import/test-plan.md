@@ -12,7 +12,7 @@ responsibility:
 | Entry | HEAD analysed | Scope |
 |---|---|---|
 |  1 | b73aaac | full change surface (общая инфраструктура тестов изменена: схема сотрудника, `Scenarios`, хост — прогнан весь набор) |
-|  2 |  | дельта с входа 1: `PositionSelect.tsx` (77cce66, D-1); общая инфраструктура не затронута, прогнан набор тестов, рендерящих `PositionSelect` |
+|  2 | a2f0821 | дельта с входа 1: `PositionSelect.tsx` (77cce66, D-1); общая инфраструктура не затронута, прогнан набор тестов, рендерящих `PositionSelect` |
 
 ## Risk → check decisions
 
