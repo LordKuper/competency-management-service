@@ -55,3 +55,17 @@
 {"op":"close","id":"wait impl assessment 6","kind":"user-wait","parent":"impl#1","start":"2026-10-27T10:08:40.635Z","end":"2026-10-27T10:20:59.390Z","outcome":"done","attrs":{"gate":"impl-assessment"}}
 {"op":"close","id":"impl#1","kind":"phase","parent":null,"start":"2026-10-26T14:50:05.791Z","end":"2026-10-27T10:20:59.639Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-test#1","kind":"phase","parent":null,"start":"2026-10-27T10:20:59.639Z","attrs":{}}
+{"op":"open","id":"dispatch impl-test entry 1","kind":"dispatch","parent":"impl-test#1","start":"2026-10-27T10:21:25.828Z","attrs":{}}
+{"op":"open","id":"suite impl-test entry 1 pre","kind":"suite","parent":"dispatch impl-test entry 1","start":"2026-10-27T10:22:50.742Z","attrs":{}}
+{"op":"close","id":"suite impl-test entry 1 pre","kind":"suite","parent":"dispatch impl-test entry 1","start":"2026-10-27T10:22:50.742Z","end":"2026-10-27T10:26:04.556Z","outcome":"done","attrs":{}}
+{"op":"open","id":"t1-final-dotnet","kind":"suite","parent":"dispatch impl-test entry 1","start":"2026-10-27T11:14:35.113Z","attrs":{}}
+{"op":"close","id":"t1-final-dotnet","kind":"suite","parent":"dispatch impl-test entry 1","start":"2026-10-27T11:14:35.113Z","end":"2026-10-27T11:18:47.808Z","outcome":"done","attrs":{}}
+{"op":"open","id":"t1-final-web","kind":"suite","parent":"dispatch impl-test entry 1","start":"2026-10-27T11:19:21.037Z","attrs":{}}
+{"op":"close","id":"t1-final-web","kind":"suite","parent":"dispatch impl-test entry 1","start":"2026-10-27T11:19:21.037Z","end":"2026-10-27T11:20:24.179Z","outcome":"done","attrs":{}}
+{"op":"open","id":"t1-final-web2","kind":"suite","parent":"dispatch impl-test entry 1","start":"2026-10-27T11:30:51.084Z","attrs":{}}
+{"op":"close","id":"t1-final-web2","kind":"suite","parent":"dispatch impl-test entry 1","start":"2026-10-27T11:30:51.084Z","end":"2026-10-27T11:31:58.067Z","outcome":"done","attrs":{}}
+{"op":"open","id":"t1-final-web3","kind":"suite","parent":"dispatch impl-test entry 1","start":"2026-10-27T11:33:10.419Z","attrs":{}}
+{"op":"close","id":"t1-final-web3","kind":"suite","parent":"dispatch impl-test entry 1","start":"2026-10-27T11:33:10.419Z","end":"2026-10-27T11:35:33.169Z","outcome":"done","attrs":{}}
+{"op":"close","id":"dispatch impl-test entry 1","kind":"dispatch","parent":"impl-test#1","start":"2026-10-27T10:21:25.828Z","end":"2026-10-27T11:37:47.637Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#1","kind":"phase","parent":null,"start":"2026-10-27T10:20:59.639Z","end":"2026-10-27T11:38:44.103Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#2","kind":"phase","parent":null,"start":"2026-10-27T11:38:44.179Z","attrs":{}}

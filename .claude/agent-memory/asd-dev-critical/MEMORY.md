@@ -21,7 +21,6 @@
 - [Web org-structure UI facts](project_web-org-structure-ui-facts.md) — antd Tree/TreeSelect/Table in jsdom, Escape closes Modal, edit draft vs refetch, form reset after 412, throwaway test lint
 - [Packaging offline verification](project_packaging-offline-verification.md) — fresh-clone publish, npm linux dry-run, yaml parse, Secret template kept out of deploy/k8s
 - [Docker spike recipe](project_docker-spike-recipe.md) — impl-test / tester only: Git Bash docker path mangling, 10/min login limit, parallel curl pitfalls, scratch runner flags
-- [PostgreSQL behaviour facts](project_pg-behaviour-facts.md) — RESTRICT is 23001, ё vs е in ILIKE/FTS, superuser trigger bypass, no CHECK on parent_id
 - [VS F5 launch facts](project_vs-f5-launch-facts.md) — slnLaunch name/format, esproj dev server starts only via Deploy, dcproj stub in CLI, from VS binaries
 - [Scratch process control](project_scratch-process-control.md) — impl-test / tester only: never `down -v` on the dev compose (fixed volume name), scratch-only volume, kill by PID, dotnet content root, background runs
 - [Migration scratch verification](project_migration-scratch-verification-recipe.md) — DropCheckConstraint, unknown JSON members ignored, field removal = one commit; scratch-DB steps impl-test / tester only
@@ -33,7 +32,6 @@
 - [Employee name split](project_employee-name-split-facts.md) — EF scaffold is wrong for column -> generated, Up/Down SQL, heap cost, old-client 400, TEMPLATE-copy verification
 - [Employee dismissal cascade](project_employee-dismissal-cascade-facts.md) — IEmployeeAccounts port, direct stamp change, forced-failure/race checks, antd Dropdown cost per card
 - [Users row menu + modal](project_users-modal-menu-facts.md) — 409 alert suppressed for field conflicts, mail item replaced reset modal, gcTime 0 on account query, smoke facts
-- [Org head rule + order](project_org-head-rule-facts.md) — create field dropped silently, check-on-change, picker current quirk, Collator ru yo, antd 6 select DOM/click
 - [Org employee search](project_org-employee-search-facts.md) — server q is ILIKE+FTS not substring, q>200 is 400, searched units open as path only, absolute open/close choices, debounce masking
 - [Full verification cycle](project_full-verification-cycle-facts.md) — toast thenable keeps confirm open 3 s, 10 500-employee numbers; stale test, lockout trap impl-test / tester only
 - [Web focus ring and antd CSS](project_web-focus-ring-and-antd-css-facts.md) — explicit disabled beats componentDisabled; antd focus specificity vs !important and Biome, custom tokens as CSS vars, rc-dropdown keys, CDP keyboard check

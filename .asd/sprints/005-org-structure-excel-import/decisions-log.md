@@ -135,3 +135,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Пользователь одобрил реализацию (approve): Task 1–9 (AC-1…AC-33), правки по запросам — сокращено подтверждение удаления подразделения и проведена ревизия надписей SPA. Сборка, линт, контракт API и миграции чистые; заглушек нет.
 - **Rationale**: Все задачи плана отмечены, отмеченные выборы dev разрешены и записаны выше.
 - **Affected docs**: [plan.md](./plan.md), [sprint.md](./sprint.md)
+- 2026-10-27 — route impl-test entry 1: standard, dispatch HEAD 78c2550
+- 2026-10-27 — memory-fix: удалены устаревшие `.claude/agent-memory/asd-dev-critical/project_pg-behaviour-facts.md` и `project_org-head-rule-facts.md` (агента asd-dev-critical больше нет — владельца нет; факты противоречили collation `ru-x-icu` и правилу руководителя спринта 005)
+- 2026-10-27 — impl-test: defects D-1 → impl test-fix (digest 286fcfe5bdcfe6a3a1f63398c87d9f0fa8fc9e96f63674f64dcee6a6536c3776)

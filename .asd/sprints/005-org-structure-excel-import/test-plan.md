@@ -11,7 +11,7 @@ responsibility:
 
 | Entry | HEAD analysed | Scope |
 |---|---|---|
-|  1 |  | full change surface (общая инфраструктура тестов изменена: схема сотрудника, `Scenarios`, хост — прогнан весь набор) |
+|  1 | b73aaac | full change surface (общая инфраструктура тестов изменена: схема сотрудника, `Scenarios`, хост — прогнан весь набор) |
 
 ## Risk → check decisions
 
