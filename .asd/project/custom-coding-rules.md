@@ -42,3 +42,11 @@ Put here: forbidden libraries/APIs, perf budgets (latency, memory, throughput, r
 ## Contract surface changes
 
 - A Task that removes or changes a surface (contract fields, categories, old migrations) itself brings the tests back to compiling; no separate test-compile Task is planned. (`004-role-desktop-user-journeys#P-2`)
+
+## Interface labels
+
+- Interface labels tell the viewer only what they need to act: no server rules or conditions, no mention of the audit log, no facts meant for other roles. (`005-org-structure-excel-import#P-3`)
+
+## Route guards when widening role access
+
+- When a change widens a role's access to data, plan lists every link and route the newly visible items lead to and checks that route's guard for that role. (`005-org-structure-excel-import#P-4`)
