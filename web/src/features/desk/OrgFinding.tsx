@@ -18,6 +18,7 @@ import { describeApiError } from "../../app/apiErrors";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
+import { useIsAdmin } from "../auth/useCurrentUser";
 import {
   type Employee,
   type EmployeeAssignment,
@@ -35,7 +36,13 @@ import { userQuery, usersQueryKey } from "../users/usersApi";
 import { ChangePositionForm } from "./ChangePositionForm";
 import { DecisionError } from "./DecisionError";
 import type { DeskItem } from "./deskApi";
-import { deskPaths, objectTitle, reasonLines, typeLabelOf } from "./deskTexts";
+import {
+  connectUnitTarget,
+  deskPaths,
+  objectTitle,
+  reasonLines,
+  typeLabelOf,
+} from "./deskTexts";
 import { ORG_FINDING_MUTATION, useIsFindingBusy } from "./findingBusy";
 import { LinkButton } from "./LinkButton";
 import { returnState } from "./returnLink";
@@ -94,12 +101,17 @@ function FindingAction({ item }: { item: DeskItem }) {
     case "EmptyUnit":
       return <EmptyUnit item={item} />;
     default:
-      return (
-        <LinkButton to={deskPaths.connectUnitOf(item.object.id)} type="primary">
-          Открыть «Подключить подразделение»
-        </LinkButton>
-      );
+      return <ConnectUnit unitId={item.object.id} />;
   }
+}
+
+function ConnectUnit({ unitId }: { unitId: string }) {
+  const target = connectUnitTarget(unitId, useIsAdmin());
+  return (
+    <LinkButton to={target.path} type="primary">
+      {target.buttonLabel}
+    </LinkButton>
+  );
 }
 
 function OutsideList({ item }: { item: DeskItem }) {

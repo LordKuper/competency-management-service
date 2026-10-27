@@ -16,6 +16,7 @@ import {
 import { type CSSProperties, type ReactNode, useState } from "react";
 import { Link } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
+import { useIsAdmin } from "../auth/useCurrentUser";
 import {
   type DeskGroupView,
   type DeskItem,
@@ -339,7 +340,8 @@ function MutedLine({ children }: { children: ReactNode }) {
 
 function ObjectCell({ item }: { item: DeskItem }) {
   const typeLabel = typeLabelOf(item);
-  const link = itemLink(item);
+  const isAdmin = useIsAdmin();
+  const link = itemLink(item, isAdmin);
   const title = objectTitle(item.object);
   const context = objectContext(item);
   return (
@@ -435,7 +437,8 @@ function ActionsCell({
   item: DeskItem;
   resend: InvitationResend;
 }) {
-  const action = itemAction(item);
+  const isAdmin = useIsAdmin();
+  const action = itemAction(item, isAdmin);
   const { invitation } = item;
   const isSendingThis =
     invitation != null && resend.sendingAccountId === invitation.accountId;

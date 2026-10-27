@@ -175,7 +175,11 @@ const SCENARIOS: Scenario[] = [
 ];
 
 /** The screen a scenario opens: its own, or that of the first item waiting in its groups; null when its prerequisites fail or its groups are empty or not loaded. */
-function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
+function entryPath(
+  scenario: Scenario,
+  desk: Desk | undefined,
+  isAdmin: boolean,
+): string | null {
   if (scenario.holds && !(desk && scenario.holds(desk.prerequisites))) {
     return null;
   }
@@ -191,7 +195,7 @@ function entryPath(scenario: Scenario, desk: Desk | undefined): string | null {
   }
   if (scenario.path) return scenario.path;
   const firstItem = groups?.[0]?.items[0];
-  return (firstItem && itemAction(firstItem)?.path) ?? null;
+  return (firstItem && itemAction(firstItem, isAdmin)?.path) ?? null;
 }
 
 /**
@@ -230,7 +234,7 @@ export function DeskScenarios({
     );
   }
   const cards = scenarios.flatMap((scenario) => {
-    const path = entryPath(scenario, desk);
+    const path = entryPath(scenario, desk, roles.isAdmin);
     return path
       ? [
           <ScenarioCard
