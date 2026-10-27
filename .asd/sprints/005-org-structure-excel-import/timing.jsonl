@@ -69,3 +69,7 @@
 {"op":"close","id":"dispatch impl-test entry 1","kind":"dispatch","parent":"impl-test#1","start":"2026-10-27T10:21:25.828Z","end":"2026-10-27T11:37:47.637Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl-test#1","kind":"phase","parent":null,"start":"2026-10-27T10:20:59.639Z","end":"2026-10-27T11:38:44.103Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl#2","kind":"phase","parent":null,"start":"2026-10-27T11:38:44.179Z","attrs":{}}
+{"op":"open","id":"dispatch D-1","kind":"dispatch","parent":"impl#2","start":"2026-10-27T11:39:11.515Z","attrs":{}}
+{"op":"close","id":"dispatch D-1","kind":"dispatch","parent":"impl#2","start":"2026-10-27T11:39:11.515Z","end":"2026-10-27T11:42:18.536Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl#2","kind":"phase","parent":null,"start":"2026-10-27T11:38:44.179Z","end":"2026-10-27T11:43:00.369Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#2","kind":"phase","parent":null,"start":"2026-10-27T11:43:00.442Z","attrs":{}}

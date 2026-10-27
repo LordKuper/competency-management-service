@@ -138,3 +138,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-27 — route impl-test entry 1: standard, dispatch HEAD 78c2550
 - 2026-10-27 — memory-fix: удалены устаревшие `.claude/agent-memory/asd-dev-critical/project_pg-behaviour-facts.md` и `project_org-head-rule-facts.md` (агента asd-dev-critical больше нет — владельца нет; факты противоречили collation `ru-x-icu` и правилу руководителя спринта 005)
 - 2026-10-27 — impl-test: defects D-1 → impl test-fix (digest 286fcfe5bdcfe6a3a1f63398c87d9f0fa8fc9e96f63674f64dcee6a6536c3776)
+- 2026-10-27 — route D-1: standard, dispatch HEAD 2cf1f3c
+- 2026-10-27 — D-1 flag принят: `PositionSelect` больше не очищает значение, заданное при первом рендере и отсутствующее в перечне подразделения; очистка — только после смены подразделения. Сохранённую должность и так держит `current`, допустимость проверяет сервер.
+- 2026-10-27 — impl test-fix: defects D-1 resolved
