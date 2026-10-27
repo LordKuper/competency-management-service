@@ -1,7 +1,7 @@
 {
   "sprint_id": "006-promotion-waves",
   "branch": "sprint/006-promotion-waves",
-  "phase": "audit",
+  "phase": "plan",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -62,6 +62,13 @@
       "reason": "adaptive: contradictions and ambiguity settled by user, no subsystem or migration gate pending",
       "evidence": "audit.md",
       "artifact_revision": "audit.md"
+    },
+    {
+      "gate": "plan",
+      "decision_actor": "user",
+      "reason": "accept; includes new module, ICareerModel port, lock 5006001, scheduler",
+      "evidence": "plan.md",
+      "artifact_revision": "plan.md accepted 2026-10-27"
     }
   ],
   "task_routing": {},
@@ -85,7 +92,7 @@
     }
   },
   "created_at": "2026-10-27T16:05:59.306Z",
-  "updated_at": "2026-10-27T18:32:54.437Z",
+  "updated_at": "2026-10-27T18:41:20.824Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

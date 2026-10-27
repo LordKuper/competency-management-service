@@ -15,3 +15,6 @@
 {"op":"close","id":"wait audit contradiction","kind":"user-wait","parent":"audit#1","start":"2026-10-27T18:29:22.491Z","end":"2026-10-27T18:32:54.355Z","outcome":"done","attrs":{"gate":"audit contradiction"}}
 {"op":"close","id":"audit#1","kind":"phase","parent":null,"start":"2026-10-27T18:25:54.785Z","end":"2026-10-27T18:32:54.772Z","outcome":"done","attrs":{}}
 {"op":"open","id":"plan#1","kind":"phase","parent":null,"start":"2026-10-27T18:33:04.108Z","attrs":{}}
+{"op":"open","id":"wait plan","kind":"user-wait","parent":"plan#1","start":"2026-10-27T18:37:51.761Z","attrs":{"gate":"plan"}}
+{"op":"close","id":"wait plan","kind":"user-wait","parent":"plan#1","start":"2026-10-27T18:37:51.761Z","end":"2026-10-27T18:41:20.766Z","outcome":"done","attrs":{"gate":"plan"}}
+{"op":"close","id":"plan#1","kind":"phase","parent":null,"start":"2026-10-27T18:33:04.108Z","end":"2026-10-27T18:41:20.905Z","outcome":"done","attrs":{}}
