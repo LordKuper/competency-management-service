@@ -25,11 +25,18 @@ internal static class OrgImportEndpoints
     private const string AppliedAction = "OrgImport.Applied";
     private const string AuditEntityType = "OrgImport";
     private const string ApplyDescription =
-        "Form fields: file, the fingerprint of the previewed plan, and optional decisions, a JSON array of { id, decision } where decision is keep, "
-        + "deactivate (a unit) or dismiss (an employee); a missing unit or employee without a decision is deactivated or dismissed. "
+        "Form fields: file, the fingerprint of the previewed plan, optional decisions, a JSON array of { id, decision } where decision is keep, "
+        + "deactivate (a unit) or dismiss (an employee); a missing unit or employee without a decision is deactivated or dismissed; and optional heads, "
+        + "a JSON array of { unit, employee } with the unit key and the employee key of the preview's heads group, or null as the employee for no head. "
+        + "A missing employee the decisions keep may be chosen by their identifier. A unit without a head choice keeps its head if the employee still works in it, "
+        + "else it is left without a head; the choice is applied after the employees and dismissals, and a choice that names an employee who does not work in the unit is a 400. "
         + "A 409 whose code is planChanged means the file or the organization no longer give the previewed plan.";
     private const string PlanChangedMessage = "План изменился после предпросмотра: файл или оргструктура другие. Пересчитайте предпросмотр.";
-    private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web)
+    {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
+    };
 
     public static void Map(IEndpointRouteBuilder endpoints)
     {
@@ -77,21 +84,28 @@ internal static class OrgImportEndpoints
     /// <summary>
     /// Applies the plan of the workbook in one transaction under the tree lock. It plans again with the code of the preview and refuses with 409 unless the fingerprint
     /// equals the one the preview gave; a decision about an entity the plan does not list is a 400, and a decision that would break a rule of the organization is a 409
-    /// with the reason. Missing units and employees without a decision are deactivated and dismissed. The decisions are a JSON array of <c>{ id, decision }</c>.
+    /// with the reason. Missing units and employees without a decision are deactivated and dismissed. The decisions are a JSON array of <c>{ id, decision }</c>,
+    /// the head choices a JSON array of <c>{ unit, employee }</c>; a choice naming an employee who does not work in the unit after the apply is a 400.
     /// </summary>
     private static async Task<Results<Ok<OrgImportResultResponse>, ValidationProblem, ProblemHttpResult>> ApplyAsync(
         IFormFile file,
         [FromForm] string fingerprint,
         [FromForm] string? decisions,
+        [FromForm] string? heads,
         AppDbContext context,
         IEmployeeAccounts accounts,
         IHrAssignments hrAssignments,
         IAuditWriter audit,
         CancellationToken cancellationToken)
     {
-        if (!TryReadDecisions(decisions, out var requested))
+        if (!TryReadList<ImportDecisionRequest>(decisions, out var requested))
         {
             return Rejection.Invalid("decisions", "Решения переданы в неверном формате.");
+        }
+
+        if (!TryReadList<ImportHeadDecisionRequest>(heads, out var requestedHeads))
+        {
+            return Rejection.Invalid("heads", "Выбор руководителей передан в неверном формате.");
         }
 
         var content = await ReadAsync(file, cancellationToken);
@@ -120,16 +134,19 @@ internal static class OrgImportEndpoints
             return Rejection.Invalid("decisions", invalid);
         }
 
+        if (ImportHeads.Resolve(plan, shown, requestedHeads, effective, out var chosenHeads) is { } invalidHeads)
+        {
+            return Rejection.Invalid("heads", invalidHeads);
+        }
+
         if (await ImportDecisions.BrokenRuleAsync(shown, effective, data, accounts, cancellationToken) is { } broken)
         {
             return Rejection.Conflict(broken);
         }
 
-        context.ChangeTracker.AutoDetectChangesEnabled = false;
-        await new OrgImportApplier(context, accounts, hrAssignments).ApplyAsync(plan, effective, cancellationToken);
-        context.ChangeTracker.AutoDetectChangesEnabled = true;
+        var assignedHeads = await new OrgImportApplier(context, accounts, hrAssignments).ApplyAsync(plan, effective, chosenHeads, cancellationToken);
 
-        var result = OrgImportResultResponse.From(shown, effective.UnitsToDeactivate.Count, effective.EmployeesToDismiss.Count);
+        var result = OrgImportResultResponse.From(shown, effective.UnitsToDeactivate.Count, effective.EmployeesToDismiss.Count, assignedHeads);
         audit.Stage(new AuditEntry(AppliedAction, AuditEntityType, NewValue: AppliedValue(file.FileName, result)), context);
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -147,17 +164,17 @@ internal static class OrgImportEndpoints
         return content;
     }
 
-    private static bool TryReadDecisions(string? decisions, out IReadOnlyList<ImportDecisionRequest> requested)
+    private static bool TryReadList<T>(string? json, out IReadOnlyList<T> requested)
     {
         requested = [];
-        if (string.IsNullOrWhiteSpace(decisions))
+        if (string.IsNullOrWhiteSpace(json))
         {
             return true;
         }
 
         try
         {
-            requested = JsonSerializer.Deserialize<List<ImportDecisionRequest>>(decisions, WebJson) ?? [];
+            requested = JsonSerializer.Deserialize<List<T>>(json, WebJson) ?? [];
             return true;
         }
         catch (JsonException)

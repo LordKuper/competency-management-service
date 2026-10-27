@@ -99,6 +99,16 @@ internal sealed class EmployeeChange
 
     public string FullName => Existing?.FullName ?? string.Join(' ', new[] { Name.LastName, Name.FirstName, Name.MiddleName }.Where(part => part is not null));
 
+    /// <summary>
+    /// The key the head step names the employee by: the identifier of an existing employee, the normalised full name of a new one.
+    /// </summary>
+    public string Key => Existing is null ? Name.Key : Existing.Id.ToString();
+
+    /// <summary>
+    /// Every place the employee works at once the file is applied, the main one first.
+    /// </summary>
+    public IEnumerable<Placement> Placements => Secondary.Prepend(Main);
+
     public bool HasChanges =>
         Existing is null || IsRehire || IsTransfer || AddedAssignments.Count > 0 || RemovedAssignments.Count > 0
         || MainLegalEntitiesChanged || ChangedAssignmentLegalEntities.Count > 0;
@@ -169,7 +179,8 @@ internal sealed class ImportPlan
             UnitPositionsAdded: Sorted(UnitLists.SelectMany(list => list.Added.Select(position => $"{list.Unit.PathText}: {position.Name}"))),
             UnitPositionsRemoved: Sorted(UnitLists.SelectMany(list => list.RemovedPositionIds.Select(id => $"{list.Unit.PathText}: {positionNames[id]}"))),
             MissingUnits: MissingUnits,
-            MissingEmployees: MissingEmployees);
+            MissingEmployees: MissingEmployees,
+            Heads: ImportHeads.Describe(this));
     }
 
     private static IReadOnlyList<string> Sorted(IEnumerable<string> lines) => [.. lines.Order(StringComparer.Ordinal)];

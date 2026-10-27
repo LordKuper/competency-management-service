@@ -49,6 +49,7 @@ internal sealed record MissingEmployeeResponse(Guid Id, string FullName, IReadOn
 /// <param name="UnitPositionsRemoved">The positions to take off units' own lists.</param>
 /// <param name="MissingUnits">The active units the file does not name.</param>
 /// <param name="MissingEmployees">The working employees the file does not name.</param>
+/// <param name="Heads">The units of the file with head candidates or a head, and the employees they refer to.</param>
 internal sealed record OrgImportPlanResponse(
     string Fingerprint,
     IReadOnlyList<string> NewUnits,
@@ -65,7 +66,50 @@ internal sealed record OrgImportPlanResponse(
     IReadOnlyList<string> UnitPositionsAdded,
     IReadOnlyList<string> UnitPositionsRemoved,
     IReadOnlyList<MissingUnitResponse> MissingUnits,
-    IReadOnlyList<MissingEmployeeResponse> MissingEmployees);
+    IReadOnlyList<MissingEmployeeResponse> MissingEmployees,
+    ImportHeadsResponse Heads);
+
+/// <summary>
+/// An employee a head step refers to, named once however many units list them.
+/// </summary>
+/// <param name="Key">The employee key: the identifier of an existing employee, or the normalised full name of one the import creates.</param>
+/// <param name="FullName">The employee's full name.</param>
+internal sealed record ImportHeadEmployeeResponse(string Key, string FullName);
+
+/// <summary>
+/// A unit of the file that has head candidates or a head, for the user to choose its head.
+/// </summary>
+/// <param name="Key">The unit key the head decision names; opaque.</param>
+/// <param name="Path">The names from the root to the unit, joined by a slash.</param>
+/// <param name="UnitId">The unit identifier; null for a unit the import creates.</param>
+/// <param name="CurrentHead">The key of the unit's head now; null when it has none.</param>
+/// <param name="CurrentHeadStays">Whether the file keeps the current head working in the unit. False for a head the file does not name, whom the decision about the missing employees may still keep.</param>
+/// <param name="Candidates">The keys of the file's employees in the unit whose position name starts with a head word.</param>
+/// <param name="Employees">The keys of every employee of the file with an assignment in the unit, the main or a secondary one; a missing employee the user keeps is not listed, the missing list names their units.</param>
+/// <param name="Suggested">The key of the default head, ignoring the decisions about missing employees: the current head when the file keeps them in the unit, otherwise the only candidate; null when the unit is left without a head or has several candidates.</param>
+internal sealed record ImportHeadUnitResponse(
+    string Key,
+    string Path,
+    Guid? UnitId,
+    string? CurrentHead,
+    bool CurrentHeadStays,
+    IReadOnlyList<string> Candidates,
+    IReadOnlyList<string> Employees,
+    string? Suggested);
+
+/// <summary>
+/// The head step of the preview.
+/// </summary>
+/// <param name="Units">The units of the file with candidates or a head, in file order.</param>
+/// <param name="Employees">Every employee the units refer to, by key.</param>
+internal sealed record ImportHeadsResponse(IReadOnlyList<ImportHeadUnitResponse> Units, IReadOnlyList<ImportHeadEmployeeResponse> Employees);
+
+/// <summary>
+/// The user's choice of head for one unit of the head step.
+/// </summary>
+/// <param name="Unit">The unit key from the preview.</param>
+/// <param name="Employee">The employee key from the preview, or the identifier of a missing employee the user keeps; null for no head.</param>
+internal sealed record ImportHeadDecisionRequest(string Unit, string? Employee);
 
 /// <summary>
 /// The outcome of reading a file: the errors that make it unusable, or the plan when there are none.
@@ -121,6 +165,7 @@ internal enum ImportDecision
 /// <param name="UnitPositionsRemoved">The positions taken off units' own lists.</param>
 /// <param name="DeactivatedUnits">The units deactivated by decision.</param>
 /// <param name="DismissedEmployees">The employees dismissed by decision.</param>
+/// <param name="AssignedHeads">The units given a head by decision.</param>
 internal sealed record OrgImportResultResponse(
     int NewUnits,
     int ActivatedUnits,
@@ -136,9 +181,10 @@ internal sealed record OrgImportResultResponse(
     int UnitPositionsAdded,
     int UnitPositionsRemoved,
     int DeactivatedUnits,
-    int DismissedEmployees)
+    int DismissedEmployees,
+    int AssignedHeads)
 {
-    public static OrgImportResultResponse From(OrgImportPlanResponse plan, int deactivatedUnits, int dismissedEmployees) => new(
+    public static OrgImportResultResponse From(OrgImportPlanResponse plan, int deactivatedUnits, int dismissedEmployees, int assignedHeads) => new(
         plan.NewUnits.Count,
         plan.ActivatedUnits.Count,
         plan.NewPositions.Count,
@@ -153,5 +199,6 @@ internal sealed record OrgImportResultResponse(
         plan.UnitPositionsAdded.Count,
         plan.UnitPositionsRemoved.Count,
         deactivatedUnits,
-        dismissedEmployees);
+        dismissedEmployees,
+        assignedHeads);
 }

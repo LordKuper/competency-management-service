@@ -3133,7 +3133,7 @@
         "tags": [
           "OrgImport"
         ],
-        "description": "Form fields: file, the fingerprint of the previewed plan, and optional decisions, a JSON array of { id, decision } where decision is keep, deactivate (a unit) or dismiss (an employee); a missing unit or employee without a decision is deactivated or dismissed. A 409 whose code is planChanged means the file or the organization no longer give the previewed plan.",
+        "description": "Form fields: file, the fingerprint of the previewed plan, optional decisions, a JSON array of { id, decision } where decision is keep, deactivate (a unit) or dismiss (an employee); a missing unit or employee without a decision is deactivated or dismissed; and optional heads, a JSON array of { unit, employee } with the unit key and the employee key of the preview's heads group, or null as the employee for no head. A missing employee the decisions keep may be chosen by their identifier. A unit without a head choice keeps its head if the employee still works in it, else it is left without a head; the choice is applied after the employees and dismissals, and a choice that names an employee who does not work in the unit is a 400. A 409 whose code is planChanged means the file or the organization no longer give the previewed plan.",
         "operationId": "ApplyOrgImport",
         "requestBody": {
           "content": {
@@ -3165,6 +3165,14 @@
                     "type": "object",
                     "properties": {
                       "decisions": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "heads": {
                         "type": "string"
                       }
                     }
@@ -14746,6 +14754,97 @@
           }
         }
       },
+      "ImportHeadEmployeeResponse": {
+        "required": [
+          "key",
+          "fullName"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          }
+        }
+      },
+      "ImportHeadsResponse": {
+        "required": [
+          "units",
+          "employees"
+        ],
+        "type": "object",
+        "properties": {
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportHeadUnitResponse"
+            }
+          },
+          "employees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportHeadEmployeeResponse"
+            }
+          }
+        }
+      },
+      "ImportHeadUnitResponse": {
+        "required": [
+          "key",
+          "path",
+          "unitId",
+          "currentHead",
+          "currentHeadStays",
+          "candidates",
+          "employees",
+          "suggested"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "unitId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "currentHead": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "currentHeadStays": {
+            "type": "boolean"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "employees": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "suggested": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "JsonElement": { },
       "LegalEntityRequest": {
         "required": [
@@ -16403,7 +16502,8 @@
           "unitPositionsAdded",
           "unitPositionsRemoved",
           "missingUnits",
-          "missingEmployees"
+          "missingEmployees",
+          "heads"
         ],
         "type": "object",
         "properties": {
@@ -16499,6 +16599,9 @@
             "items": {
               "$ref": "#/components/schemas/MissingEmployeeResponse"
             }
+          },
+          "heads": {
+            "$ref": "#/components/schemas/ImportHeadsResponse"
           }
         }
       },
@@ -16543,7 +16646,8 @@
           "unitPositionsAdded",
           "unitPositionsRemoved",
           "deactivatedUnits",
-          "dismissedEmployees"
+          "dismissedEmployees",
+          "assignedHeads"
         ],
         "type": "object",
         "properties": {
@@ -16604,6 +16708,10 @@
             "format": "int32"
           },
           "dismissedEmployees": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "assignedHeads": {
             "type": "integer",
             "format": "int32"
           }

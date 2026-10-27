@@ -525,7 +525,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Form fields: file, the fingerprint of the previewed plan, and optional decisions, a JSON array of { id, decision } where decision is keep, deactivate (a unit) or dismiss (an employee); a missing unit or employee without a decision is deactivated or dismissed. A 409 whose code is planChanged means the file or the organization no longer give the previewed plan. */
+        /** @description Form fields: file, the fingerprint of the previewed plan, optional decisions, a JSON array of { id, decision } where decision is keep, deactivate (a unit) or dismiss (an employee); a missing unit or employee without a decision is deactivated or dismissed; and optional heads, a JSON array of { unit, employee } with the unit key and the employee key of the preview's heads group, or null as the employee for no head. A missing employee the decisions keep may be chosen by their identifier. A unit without a head choice keeps its head if the employee still works in it, else it is left without a head; the choice is applied after the employees and dismissals, and a choice that names an employee who does not work in the unit is a 400. A 409 whose code is planChanged means the file or the organization no longer give the previewed plan. */
         post: operations["ApplyOrgImport"];
         delete?: never;
         options?: never;
@@ -2409,6 +2409,25 @@ export interface components {
             column: null | string;
             message: string;
         };
+        ImportHeadEmployeeResponse: {
+            key: string;
+            fullName: string;
+        };
+        ImportHeadsResponse: {
+            units: components["schemas"]["ImportHeadUnitResponse"][];
+            employees: components["schemas"]["ImportHeadEmployeeResponse"][];
+        };
+        ImportHeadUnitResponse: {
+            key: string;
+            path: string;
+            /** Format: uuid */
+            unitId: null | string;
+            currentHead: null | string;
+            currentHeadStays: boolean;
+            candidates: string[];
+            employees: string[];
+            suggested: null | string;
+        };
         JsonElement: unknown;
         LegalEntityRequest: {
             name: string;
@@ -2834,6 +2853,7 @@ export interface components {
             unitPositionsRemoved: string[];
             missingUnits: components["schemas"]["MissingUnitResponse"][];
             missingEmployees: components["schemas"]["MissingEmployeeResponse"][];
+            heads: components["schemas"]["ImportHeadsResponse"];
         };
         OrgImportPreviewResponse: {
             errors: components["schemas"]["ImportErrorResponse"][];
@@ -2870,6 +2890,8 @@ export interface components {
             deactivatedUnits: number;
             /** Format: int32 */
             dismissedEmployees: number;
+            /** Format: int32 */
+            assignedHeads: number;
         };
         OrgUnitHrPersonResponse: {
             /** Format: uuid */
@@ -5584,6 +5606,8 @@ export interface operations {
                     fingerprint: string;
                 } & {
                     decisions?: string;
+                } & {
+                    heads?: string;
                 };
             };
         };

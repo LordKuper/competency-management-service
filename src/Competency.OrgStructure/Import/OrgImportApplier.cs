@@ -4,21 +4,26 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.OrgStructure.Import;
 
 /// <summary>
-/// Tracks every change of an import plan on the context, in the order the rules need: positions, units from the top down, units' position lists,
-/// employees, dismissals with their cascade, deactivations. The caller saves once, in its transaction under the tree lock, so everything is applied or nothing.
+/// Applies an import plan on the context, in the order the rules need: positions, units from the top down, units' position lists,
+/// employees, dismissals with their cascade, deactivations, and last the heads. The caller runs it in its transaction under the tree lock, so everything is applied or nothing.
 /// The plan guarantees what the manual rules check one by one: every unit and position it uses is active, and every position of a row is on the list of the row's unit.
 /// </summary>
 internal sealed class OrgImportApplier(AppDbContext context, IEmployeeAccounts accounts, IHrAssignments hrAssignments)
 {
+    private readonly Dictionary<string, Guid> createdEmployeeIds = [];
+
     /// <summary>
-    /// Tracks the plan and the decisions.
+    /// Saves the plan and the decisions, then tracks the chosen heads for the caller to save. The heads wait for a save of their own because a unit
+    /// the import creates and its head, an employee the import creates, refer to each other, and one save cannot insert two rows that need each other first.
     /// </summary>
     /// <param name="plan">The plan, computed under the same lock.</param>
     /// <param name="decisions">The decisions, already checked against the rules.</param>
+    /// <param name="heads">The chosen heads, already checked against the plan.</param>
     /// <param name="cancellationToken">Cancels the queries.</param>
-    /// <returns>A task that completes when every change is tracked.</returns>
-    public async Task ApplyAsync(ImportPlan plan, EffectiveDecisions decisions, CancellationToken cancellationToken)
+    /// <returns>The number of units whose head becomes another employee than before.</returns>
+    public async Task<int> ApplyAsync(ImportPlan plan, EffectiveDecisions decisions, IReadOnlyList<HeadChoice> heads, CancellationToken cancellationToken)
     {
+        context.ChangeTracker.AutoDetectChangesEnabled = false;
         await AddPositionsAsync(plan, cancellationToken);
         await AddUnitsAsync(plan, cancellationToken);
         AddLegalEntities(plan);
@@ -26,6 +31,10 @@ internal sealed class OrgImportApplier(AppDbContext context, IEmployeeAccounts a
         await ChangeEmployeesAsync(plan, cancellationToken);
         await DismissAsync(decisions.EmployeesToDismiss, cancellationToken);
         await DeactivateAsync(decisions.UnitsToDeactivate, cancellationToken);
+        context.ChangeTracker.AutoDetectChangesEnabled = true;
+        await context.SaveChangesAsync(cancellationToken);
+        context.ChangeTracker.Clear();
+        return await AssignHeadsAsync(heads, cancellationToken);
     }
 
     private async Task AddPositionsAsync(ImportPlan plan, CancellationToken cancellationToken)
@@ -120,6 +129,7 @@ internal sealed class OrgImportApplier(AppDbContext context, IEmployeeAccounts a
             PositionId = change.Main.Position.Id!.Value,
         };
         context.Add(employee);
+        createdEmployeeIds[change.Key] = employee.Id;
         context.AddRange(DistinctIds(change.LegalEntities[change.Main]).Select(id => new EmployeeLegalEntity { EmployeeId = employee.Id, LegalEntityId = id }));
         foreach (var placement in change.Secondary)
         {
@@ -139,13 +149,14 @@ internal sealed class OrgImportApplier(AppDbContext context, IEmployeeAccounts a
             employee.IsActive = true;
         }
 
+        var remainingUnitIds = change.Placements.Select(placement => placement.Unit.Id!.Value).ToHashSet();
+        foreach (var unit in headedUnits.Where(unit => !remainingUnitIds.Contains(unit.Id)))
+        {
+            unit.HeadEmployeeId = null;
+        }
+
         if (change.IsTransfer)
         {
-            foreach (var unit in headedUnits.Where(unit => unit.Id == employee.OrgUnitId))
-            {
-                unit.HeadEmployeeId = null;
-            }
-
             employee.OrgUnitId = change.Main.Unit.Id!.Value;
             employee.PositionId = change.Main.Position.Id!.Value;
         }
@@ -200,6 +211,38 @@ internal sealed class OrgImportApplier(AppDbContext context, IEmployeeAccounts a
             employee.IsActive = false;
         }
     }
+
+    /// <summary>
+    /// Sets the chosen head of each unit on the saved units, so that a unit whose head is already the chosen one stays untouched, unversioned and unjournaled.
+    /// </summary>
+    private async Task<int> AssignHeadsAsync(IReadOnlyList<HeadChoice> heads, CancellationToken cancellationToken)
+    {
+        var unitIds = heads.Select(choice => choice.Unit.Id!.Value).ToArray();
+        var units = await context.Set<OrgUnit>().Where(candidate => unitIds.Contains(candidate.Id)).ToDictionaryAsync(candidate => candidate.Id, cancellationToken);
+        var assigned = 0;
+        foreach (var choice in heads)
+        {
+            var unit = units[choice.Unit.Id!.Value];
+            var headId = choice.EmployeeKey is { } key ? EmployeeIdOf(key) : (Guid?)null;
+            if (unit.HeadEmployeeId == headId)
+            {
+                continue;
+            }
+
+            unit.HeadEmployeeId = headId;
+            if (headId is not null)
+            {
+                assigned++;
+            }
+        }
+
+        return assigned;
+    }
+
+    /// <summary>
+    /// The identifier behind an employee key: the one given to an employee the import created, else the key is the identifier of an existing employee.
+    /// </summary>
+    private Guid EmployeeIdOf(string key) => createdEmployeeIds.TryGetValue(key, out var createdId) ? createdId : Guid.Parse(key);
 
     private async Task DeactivateAsync(IReadOnlyList<MissingUnitResponse> deactivated, CancellationToken cancellationToken)
     {
