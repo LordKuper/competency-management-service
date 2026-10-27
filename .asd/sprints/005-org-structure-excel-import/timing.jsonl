@@ -49,3 +49,5 @@
 {"op":"close","id":"dispatch Task 9","kind":"dispatch","parent":"impl#1","start":"2026-10-27T09:10:19.599Z","end":"2026-10-27T09:19:39.548Z","outcome":"done","attrs":{}}
 {"op":"open","id":"wait impl assessment 5","kind":"user-wait","parent":"impl#1","start":"2026-10-27T09:20:25.947Z","attrs":{"gate":"impl-assessment"}}
 {"op":"close","id":"wait impl assessment 5","kind":"user-wait","parent":"impl#1","start":"2026-10-27T09:20:25.947Z","end":"2026-10-27T09:57:29.387Z","outcome":"done","attrs":{"gate":"impl-assessment"}}
+{"op":"open","id":"dispatch change-request-2","kind":"dispatch","parent":"impl#1","start":"2026-10-27T09:58:30.127Z","attrs":{}}
+{"op":"close","id":"dispatch change-request-2","kind":"dispatch","parent":"impl#1","start":"2026-10-27T09:58:30.127Z","end":"2026-10-27T10:08:19.714Z","outcome":"done","attrs":{}}

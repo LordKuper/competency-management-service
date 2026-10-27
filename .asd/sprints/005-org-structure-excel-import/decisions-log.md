@@ -128,3 +128,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-27 — impl assessment: change requested — убрать из подтверждения удаления подразделения предложение об условиях удаления и журнале
 - 2026-10-27 — impl assessment: change requested — ревизия надписей интерфейса: убрать информацию, нерелевантную пользователю, которому она показывается
 - 2026-10-27 — route change-request-2: standard, dispatch HEAD 4ed7796
+- 2026-10-27 — impl assessment change-request-2 done: ревизия надписей SPA, 4 коммита (org-structure, org-import, career, desk); сомнительные тексты оставлены
