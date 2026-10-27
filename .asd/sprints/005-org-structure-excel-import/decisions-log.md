@@ -154,3 +154,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-27 — review-fix flags приняты: (a) `itemAction`/`itemLink` получили обязательный `isAdmin`, вызовы в `deskTexts.test.ts` переданы `true` без изменения проверок (правило «Contract surface changes»); (b) переход HR в карточку подразделения — для всей группы «Подключить подразделение» (HeadWithoutAccount, HeadAccountInvited, HeadAccountBlocked, UnitWithoutHr, UnitWithoutHead, UnitWithoutPositions): у всех был AdminOnly-адрес; (c) ошибка глубины ставится на первую колонку уровня выше 30 и не заменяет ошибку пропущенной колонки.
 - 2026-10-27 — impl fix for wave-1/iter-01: findings resolved (external-1…4, combined-F1; 05af24b…b828f81)
 - 2026-10-27 — route impl-test entry 3: standard, dispatch HEAD b828f81
+- 2026-10-27 — impl-test: impacted set green (dotnet 120/120, web 279/279, lint ok), 6/0 tests (entry 3)

@@ -93,3 +93,21 @@
 {"op":"close","id":"dispatch review-fix w1i1","kind":"dispatch","parent":"impl#3","start":"2026-10-27T12:39:49.796Z","end":"2026-10-27T12:43:10.483Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl#3","kind":"phase","parent":null,"start":"2026-10-27T12:39:28.307Z","end":"2026-10-27T12:43:59.631Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-test#3","kind":"phase","parent":null,"start":"2026-10-27T12:43:59.703Z","attrs":{}}
+{"op":"open","id":"dispatch impl-test entry 3","kind":"dispatch","parent":"impl-test#3","start":"2026-10-27T12:44:00.180Z","attrs":{}}
+{"op":"open","id":"suite pre-strategy web","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:47:40.313Z","attrs":{}}
+{"op":"close","id":"suite pre-strategy web","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:47:40.313Z","end":"2026-10-27T12:48:44.026Z","outcome":"done","attrs":{}}
+{"op":"open","id":"suite pre-strategy dotnet","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:48:44.118Z","attrs":{}}
+{"op":"close","id":"suite pre-strategy dotnet","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:48:44.118Z","end":"2026-10-27T12:50:25.113Z","outcome":"done","attrs":{}}
+{"op":"open","id":"suite failfirst web prefix","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:50:46.859Z","attrs":{}}
+{"op":"close","id":"suite failfirst web prefix","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:50:46.859Z","end":"2026-10-27T12:51:04.788Z","outcome":"done","attrs":{}}
+{"op":"open","id":"suite failfirst dotnet parser","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:51:19.758Z","attrs":{}}
+{"op":"close","id":"suite failfirst dotnet parser","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:51:19.758Z","end":"2026-10-27T12:51:22.563Z","outcome":"done","attrs":{}}
+{"op":"open","id":"suite failfirst dotnet mutations","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:51:40.512Z","attrs":{}}
+{"op":"close","id":"suite failfirst dotnet mutations","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:51:40.512Z","end":"2026-10-27T12:52:41.820Z","outcome":"done","attrs":{}}
+{"op":"open","id":"suite web impacted","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:52:54.499Z","attrs":{}}
+{"op":"close","id":"suite web impacted","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:52:54.499Z","end":"2026-10-27T12:53:44.742Z","outcome":"done","attrs":{}}
+{"op":"open","id":"suite dotnet impacted","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:53:51.975Z","attrs":{}}
+{"op":"close","id":"suite dotnet impacted","kind":"suite","parent":"dispatch impl-test entry 3","start":"2026-10-27T12:53:51.975Z","end":"2026-10-27T12:54:53.361Z","outcome":"done","attrs":{}}
+{"op":"close","id":"dispatch impl-test entry 3","kind":"dispatch","parent":"impl-test#3","start":"2026-10-27T12:44:00.180Z","end":"2026-10-27T12:57:34.915Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#3","kind":"phase","parent":null,"start":"2026-10-27T12:43:59.703Z","end":"2026-10-27T12:57:35.158Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-review#2","kind":"phase","parent":null,"start":"2026-10-27T12:57:35.236Z","attrs":{}}
