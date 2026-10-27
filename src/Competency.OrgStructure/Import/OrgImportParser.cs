@@ -61,6 +61,7 @@ internal static partial class OrgImportParser
     public const string FullNameColumn = "ФИО";
     public const string PositionColumn = "Должность";
     public const string LegalEntityColumn = "Юридическое лицо";
+    public const int MaxLevels = 30;
 
     private const string SkippedLevel = "-";
     private const int PersonNameMaxLength = Employee.NameMaxLength;
@@ -159,6 +160,11 @@ internal static partial class OrgImportParser
         }
 
         var maxLevel = levels.Count == 0 ? 0 : levels.Keys.Max();
+        if (maxLevel > MaxLevels)
+        {
+            errors.Add(new ImportError(number, UnitColumn(levels.Keys.First(level => level > MaxLevels)), $"В файле больше {MaxLevels} уровней подразделений."));
+        }
+
         var firstMissing = Enumerable.Range(1, Math.Max(maxLevel, 1)).FirstOrDefault(level => !levels.ContainsKey(level));
         if (firstMissing != 0)
         {
