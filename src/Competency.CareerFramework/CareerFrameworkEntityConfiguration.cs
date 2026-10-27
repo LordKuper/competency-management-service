@@ -273,7 +273,7 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
         entity.Property(e => e.Id).HasColumnName("id");
         entity.Property(e => e.Version).HasColumnName("version");
         entity.Property(e => e.CreatedAt).HasColumnName("created_at");
-        entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(CatalogEntry.NameMaxLength);
+        entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(CatalogEntry.NameMaxLength).UseCollation(TextCollation.Russian);
         entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(EnumMaxLength);
         entity.Property(e => e.AuthorId).HasColumnName("author_id");
 

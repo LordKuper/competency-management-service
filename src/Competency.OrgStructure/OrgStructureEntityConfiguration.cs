@@ -27,7 +27,7 @@ internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationCont
         {
             ConfigureBase(entity);
             entity.ToTable("org_units");
-            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(OrgUnit.NameMaxLength);
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(OrgUnit.NameMaxLength).UseCollation(TextCollation.Russian);
             entity.Property(e => e.ParentId).HasColumnName("parent_id");
             entity.Property(e => e.HeadEmployeeId).HasColumnName("head_employee_id");
             entity.Property(e => e.IsActive).HasColumnName("is_active");
@@ -48,7 +48,7 @@ internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationCont
             entity.Property(e => e.LastName).HasColumnName("last_name").HasMaxLength(Employee.NameMaxLength);
             entity.Property(e => e.FirstName).HasColumnName("first_name").HasMaxLength(Employee.NameMaxLength);
             entity.Property(e => e.MiddleName).HasColumnName("middle_name").HasMaxLength(Employee.NameMaxLength);
-            entity.Property(e => e.FullName).HasColumnName("full_name").HasComputedColumnSql(FullNameSql, stored: true);
+            entity.Property(e => e.FullName).HasColumnName("full_name").HasComputedColumnSql(FullNameSql, stored: true).UseCollation(TextCollation.Russian);
             entity.Property(e => e.PositionId).HasColumnName("position_id");
             entity.Property(e => e.IsActive).HasColumnName("is_active");
             entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
@@ -66,7 +66,7 @@ internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationCont
         {
             ConfigureBase(entity);
             entity.ToTable("positions");
-            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(Position.NameMaxLength);
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(Position.NameMaxLength).UseCollation(TextCollation.Russian);
             entity.Property(e => e.IsActive).HasColumnName("is_active");
 
             entity.HasGeneratedTsVectorColumn(e => e.SearchVector, TextSearch.FullTextConfig, e => e.Name);
@@ -89,7 +89,7 @@ internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationCont
         {
             ConfigureBase(entity);
             entity.ToTable("legal_entities");
-            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(LegalEntity.NameMaxLength);
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(LegalEntity.NameMaxLength).UseCollation(TextCollation.Russian);
         });
 
         modelBuilder.Entity<EmployeeAssignment>(entity =>

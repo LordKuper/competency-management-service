@@ -130,7 +130,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<Guid>("ScaleId")
                         .HasColumnType("uuid")
@@ -180,7 +181,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -222,7 +224,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<int>("Position")
                         .HasColumnType("integer")
@@ -303,7 +306,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<Guid>("OwnerOrgUnitId")
                         .HasColumnType("uuid")
@@ -358,7 +362,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<Guid?>("ScopeUnitId")
                         .HasColumnType("uuid")
@@ -462,7 +467,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<string>("Points")
                         .IsRequired()
@@ -773,7 +779,8 @@ namespace Competency.Platform.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("text")
                         .HasColumnName("full_name")
-                        .HasComputedColumnSql("last_name || ' ' || first_name || coalesce(' ' || middle_name, '')", true);
+                        .HasComputedColumnSql("last_name || ' ' || first_name || coalesce(' ' || middle_name, '')", true)
+                        .UseCollation("ru-x-icu");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -948,7 +955,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<int>("Version")
                         .IsConcurrencyToken()
@@ -983,7 +991,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid")
@@ -1056,7 +1065,8 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasColumnName("name")
+                        .UseCollation("ru-x-icu");
 
                     b.Property<NpgsqlTsVector>("SearchVector")
                         .IsRequired()
