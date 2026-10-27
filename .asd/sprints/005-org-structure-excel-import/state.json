@@ -1,7 +1,7 @@
 {
   "sprint_id": "005-org-structure-excel-import",
   "branch": "sprint/005-org-structure-excel-import",
-  "phase": "impl-review",
+  "phase": "impl-test",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -178,6 +178,12 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "review-fix wave-1/iter-01": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -208,7 +214,7 @@
   },
   "created_at": "2026-10-26T13:39:38.279Z",
   "updated_at": "2026-10-27T10:20:59.523Z",
-  "review_fixes_pending": "wave-1/iter-01",
+  "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
   "archived_at": null

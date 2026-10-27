@@ -89,3 +89,7 @@
 {"op":"close","id":"review impl wave-1/iter-01","kind":"review-iteration","parent":"impl-review#1","start":"2026-10-27T11:47:40.334Z","end":"2026-10-27T12:39:28.135Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl-review#1","kind":"phase","parent":null,"start":"2026-10-27T11:46:28.698Z","end":"2026-10-27T12:39:28.218Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl#3","kind":"phase","parent":null,"start":"2026-10-27T12:39:28.307Z","attrs":{}}
+{"op":"open","id":"dispatch review-fix w1i1","kind":"dispatch","parent":"impl#3","start":"2026-10-27T12:39:49.796Z","attrs":{}}
+{"op":"close","id":"dispatch review-fix w1i1","kind":"dispatch","parent":"impl#3","start":"2026-10-27T12:39:49.796Z","end":"2026-10-27T12:43:10.483Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl#3","kind":"phase","parent":null,"start":"2026-10-27T12:39:28.307Z","end":"2026-10-27T12:43:59.631Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#3","kind":"phase","parent":null,"start":"2026-10-27T12:43:59.703Z","attrs":{}}

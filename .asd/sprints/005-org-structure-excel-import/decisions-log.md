@@ -150,3 +150,7 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Совет advisor: ключ пути и `PathText` растут квадратично с глубиной; без предела не обойтись без смены контракта превью. 2–4 и F1 — ошибки без изменения требований.
 - **Affected docs**: [sprint.md](./sprint.md)
 - 2026-10-27 — impl-review wave-1/iter-01 → impl review-fix (external 1–4, combined F1)
+- 2026-10-27 — route review-fix wave-1/iter-01: standard, dispatch HEAD 4d48802; risk change: security
+- 2026-10-27 — review-fix flags приняты: (a) `itemAction`/`itemLink` получили обязательный `isAdmin`, вызовы в `deskTexts.test.ts` переданы `true` без изменения проверок (правило «Contract surface changes»); (b) переход HR в карточку подразделения — для всей группы «Подключить подразделение» (HeadWithoutAccount, HeadAccountInvited, HeadAccountBlocked, UnitWithoutHr, UnitWithoutHead, UnitWithoutPositions): у всех был AdminOnly-адрес; (c) ошибка глубины ставится на первую колонку уровня выше 30 и не заменяет ошибку пропущенной колонки.
+- 2026-10-27 — impl fix for wave-1/iter-01: findings resolved (external-1…4, combined-F1; 05af24b…b828f81)
+- 2026-10-27 — route impl-test entry 3: standard, dispatch HEAD b828f81
