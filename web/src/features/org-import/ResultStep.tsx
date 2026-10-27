@@ -32,7 +32,7 @@ export function ResultStep({ fileName, result }: ResultStepProps) {
       <CompactAlert
         type="success"
         lead="Импорт применён."
-        text={`Изменения из файла «${fileName}» записаны в оргструктуру и в журнал действий.`}
+        text={`Изменения из файла «${fileName}» записаны в оргструктуру.`}
       />
       <Table<Row>
         size="small"

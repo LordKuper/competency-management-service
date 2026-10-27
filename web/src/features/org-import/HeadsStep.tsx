@@ -155,11 +155,7 @@ export function HeadsStep({
   return (
     <Flex vertical gap="middle">
       {rows.length === 0 ? (
-        <CompactAlert
-          type="info"
-          lead="Руководителей назначать не нужно."
-          text="В файле нет подразделений, где можно распознать руководителя, и у подразделений файла нет действующего руководителя."
-        />
+        <CompactAlert type="info" lead="Руководителей назначать не нужно." />
       ) : (
         <Flex vertical gap="small">
           <Flex justify="space-between" align="center" gap="small" wrap>
