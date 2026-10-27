@@ -22,7 +22,7 @@ interface ResultStepProps {
   result: OrgImportResult;
 }
 
-/** Step 4: what the applied import changed, by group. */
+/** Step 5: what the applied import changed, by group. */
 export function ResultStep({ fileName, result }: ResultStepProps) {
   const rows: Row[] = [...CHANGE_GROUPS, ...DECISION_GROUPS].map(
     ({ key, title }) => ({ key, title, count: result[key] }),
