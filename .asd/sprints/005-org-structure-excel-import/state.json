@@ -90,6 +90,13 @@
       "reason": "AC-32 changed: standard ICU ru collation (punctuation significant) instead of ru-u-ka-shifted",
       "evidence": "decisions-log.md 2026-10-27 AC-32 changed; iterations charged 0, fix rounds charged 0",
       "artifact_revision": "sprint.md+plan.md@working-tree"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "AC-33 unit deletion: empty only, any status, admin and HR; Task 9 wave 8",
+      "evidence": "decisions-log.md 2026-10-27 AC-33 amendment; iterations charged 0, fix rounds charged 0",
+      "artifact_revision": "sprint.md+plan.md@working-tree"
     }
   ],
   "task_routing": {
@@ -139,6 +146,12 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "risk:migration",
+      "resolved_model": "sonnet"
+    },
+    "Task 9": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:public contract",
       "resolved_model": "sonnet"
     }
   },
