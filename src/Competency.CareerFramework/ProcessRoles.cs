@@ -64,7 +64,7 @@ internal sealed class ProcessRoles(AppDbContext context, IEmployeeDirectory empl
         }
 
         var snapshot = await employees.FindOrgSnapshotAsync(cancellationToken);
-        return [.. HrUnits(snapshot, assigneeOf, account).OrderBy(unit => unit.Name).ThenBy(unit => unit.Id)];
+        return [.. HrUnits(snapshot, assigneeOf, account).OrderBy(unit => unit.Name, TextCollation.Comparer).ThenBy(unit => unit.Id)];
     }
 
     /// <summary>

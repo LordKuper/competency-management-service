@@ -59,7 +59,7 @@ internal static class DeskRules
             .Select(ToItem)
             .OrderBy(item => item.Group)
             .ThenBy(item => item.Reasons[0].OccurredAt)
-            .ThenBy(item => item.Object.Name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(item => item.Object.Name, TextCollation.Comparer)
             .ThenBy(item => item.Object.Id),
     ];
 

@@ -74,7 +74,7 @@ internal sealed class CareerMail(
             entry.ListedUnitId is { } listedUnitId ? [listedUnitId] : viewer.HeadedUnitIds.Select(unitId => (Guid?)unitId),
             cancellationToken);
         var unitNameOfHr = new Dictionary<Guid, string>();
-        foreach (var (unitId, unitName) in unitNames.OrderBy(unit => unit.Value).ThenBy(unit => unit.Key))
+        foreach (var (unitId, unitName) in unitNames.OrderBy(unit => unit.Value, TextCollation.Comparer).ThenBy(unit => unit.Key))
         {
             if (await roles.ResponsibleHrAsync(unitId, cancellationToken) is { } hrId && hrId != actor.UserId)
             {

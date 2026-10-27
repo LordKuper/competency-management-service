@@ -514,7 +514,7 @@ internal sealed class CareerDeskScan(
         [
             .. tracks.Where(row => row.Track.Status == CatalogStatus.Active && ancestorIds.Contains(row.Track.OwnerOrgUnitId))
                 .Select(row => TrackObject(row.Track))
-                .OrderBy(track => track.Name, StringComparer.OrdinalIgnoreCase),
+                .OrderBy(track => track.Name, TextCollation.Comparer),
         ];
     }
 

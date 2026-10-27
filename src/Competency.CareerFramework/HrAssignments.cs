@@ -23,7 +23,7 @@ internal sealed class HrAssignments(AppDbContext context, IEmployeeDirectory emp
         }
 
         var units = await employees.FindUnitsAsync(unitIds, cancellationToken);
-        return [.. units.Values.Select(unit => unit.Name).Order(StringComparer.OrdinalIgnoreCase)];
+        return [.. units.Values.Select(unit => unit.Name).Order(TextCollation.Comparer)];
     }
 
     /// <inheritdoc />
