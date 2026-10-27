@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.Promotion;
 
 /// <summary>
-/// Describes applications to those who may see them, each reader seeing only what their role needs: the candidate their own application and
-/// raters, the result only from the stage that publishes it, the responsible HR and the administration the formal data, the head and the
+/// Describes applications to those who may see them, each reader seeing only what their role needs: the candidate their own application, raters
+/// and artifacts, the result only from the stage that publishes it, the responsible HR and the administration the formal data, the head and the
 /// administration the raters. Scoped to a request, because it shares the request's database context.
 /// </summary>
 internal sealed class ApplicationReader(
@@ -37,6 +37,8 @@ internal sealed class ApplicationReader(
         var people = await employees.FindManyAsync([application.EmployeeId, .. raters.Select(rater => rater.EmployeeId)], cancellationToken);
         var stage = calendar.StageOf(wave);
         var canSeeFormal = (roles & FormalViewers) != ApplicationRole.None;
+        var isCandidate = roles == ApplicationRole.Candidate;
+        var isResultShown = isCandidate && stage >= ResultStage && application.Status is ApplicationStatus.Decided or ApplicationStatus.NoDecision;
 
         return new ApplicationResponse(
             application.Id,
@@ -53,7 +55,70 @@ internal sealed class ApplicationReader(
             RatersFor(roles, raters, people),
             canSeeFormal ? await FormalOfAsync(application, cancellationToken) : null,
             application.FormalFailures,
-            await WarningsAsync(application, facts.Level, canSeeFormal, cancellationToken));
+            await WarningsAsync(application, facts.Level, canSeeFormal, cancellationToken),
+            isCandidate ? await ArtifactsAsync(application.Id, facts.Version, cancellationToken) : null,
+            isCandidate ? await MandatoryArtifactIdsAsync(application, facts.Version, cancellationToken) : null,
+            isCandidate || canSeeFormal ? application.FeedbackReceivedAt : null,
+            isResultShown ? await ResultAsync(application, facts.Version, cancellationToken) : null);
+    }
+
+    /// <summary>
+    /// Reads the artifacts of an application.
+    /// </summary>
+    /// <param name="applicationId">The application.</param>
+    /// <param name="version">The version the application is assessed by.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The artifacts in the order of the competencies of the version.</returns>
+    public async Task<IReadOnlyList<ArtifactResponse>> ArtifactsAsync(Guid applicationId, CareerVersion version, CancellationToken cancellationToken)
+    {
+        var stored = await context.Set<PromotionArtifact>().AsNoTracking().Where(artifact => artifact.ApplicationId == applicationId).ToListAsync(cancellationToken);
+        return [.. version.Competencies
+            .Join(stored, competency => competency.Id, artifact => artifact.CompetencyId, (competency, artifact) => new ArtifactResponse(competency.Id, competency.Name, artifact.Text, artifact.Links))];
+    }
+
+    /// <summary>
+    /// Finds the competencies the candidate must give an artifact for: those the averages of the raters leave unmet, once the rating stage has been checked
+    /// and found the candidate short of the requirements; until then none.
+    /// </summary>
+    /// <param name="application">The application.</param>
+    /// <param name="version">The version the application is assessed by.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The competencies.</returns>
+    public async Task<IReadOnlyList<Guid>> MandatoryArtifactIdsAsync(PromotionApplication application, CareerVersion version, CancellationToken cancellationToken)
+    {
+        if (application.MeetsAfterRating != false)
+        {
+            return [];
+        }
+
+        var answers = await context.Set<PromotionRaterScore>().AsNoTracking().Where(answer => answer.ApplicationId == application.Id).ToListAsync(cancellationToken);
+        return CircularRating.UnmetCompetencyIds(career.Score(version, application.LevelId, CircularRating.Averages(answers)));
+    }
+
+    /// <summary>
+    /// Reads the final scores the chair gave.
+    /// </summary>
+    /// <param name="applicationId">The application.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The score by competency; empty until the chair gives scores.</returns>
+    public async Task<Dictionary<Guid, int>> FinalScoresAsync(Guid applicationId, CancellationToken cancellationToken) =>
+        await context.Set<PromotionFinalScore>()
+            .AsNoTracking()
+            .Where(score => score.ApplicationId == applicationId)
+            .ToDictionaryAsync(score => score.CompetencyId, score => score.Score, cancellationToken);
+
+    private async Task<ApplicationResultResponse> ResultAsync(PromotionApplication application, CareerVersion version, CancellationToken cancellationToken)
+    {
+        var finals = await FinalScoresAsync(application.Id, cancellationToken);
+        var standing = career.Score(version, application.LevelId, finals.ToDictionary(pair => pair.Key, pair => (decimal)pair.Value));
+        return new ApplicationResultResponse(
+            application.Decision,
+            [.. standing.Competencies.Select(competency => new ResultCompetencyResponse(
+                competency.CompetencyId,
+                version.Competencies.Single(candidate => candidate.Id == competency.CompetencyId).Name,
+                competency.RequiredScore,
+                finals.TryGetValue(competency.CompetencyId, out var score) ? score : null,
+                competency.IsMet))]);
     }
 
     /// <summary>
@@ -110,7 +175,13 @@ internal sealed class ApplicationReader(
             .ThenBy(rater => rater.EmployeeId)];
     }
 
-    private async Task<ApplicationFormalResponse> FormalOfAsync(PromotionApplication application, CancellationToken cancellationToken)
+    /// <summary>
+    /// Describes what the responsible HR entered for the formal check.
+    /// </summary>
+    /// <param name="application">The application.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The date, the interval flag and who set it.</returns>
+    public async Task<ApplicationFormalResponse> FormalOfAsync(PromotionApplication application, CancellationToken cancellationToken)
     {
         var by = application.IgnoreIntervalBy is { } userId ? (await waves.AccountNamesAsync([userId], cancellationToken)).GetValueOrDefault(userId) : null;
         return new ApplicationFormalResponse(application.HiredOrPromotedOn, application.IgnoreInterval, by, application.IgnoreIntervalAt);
@@ -132,7 +203,13 @@ internal sealed class ApplicationReader(
             .Where(warning => canSeeFormal || warning == FormalFailure.EducationBelowRequired)];
     }
 
-    private async Task<Dictionary<Guid, TargetFacts>> TargetsAsync(IReadOnlyCollection<PromotionApplication> applications, CancellationToken cancellationToken)
+    /// <summary>
+    /// Finds the target of applications: the unit, the track and the level they aim at, with the version they are assessed by.
+    /// </summary>
+    /// <param name="applications">The applications.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    /// <returns>The facts by application.</returns>
+    public async Task<Dictionary<Guid, TargetFacts>> TargetsAsync(IReadOnlyCollection<PromotionApplication> applications, CancellationToken cancellationToken)
     {
         var waveIds = applications.Select(application => application.WaveId).Distinct().ToArray();
         var matrixIds = applications.Select(application => application.MatrixId).Distinct().ToArray();
@@ -168,6 +245,4 @@ internal sealed class ApplicationReader(
                     level);
             });
     }
-
-    private sealed record TargetFacts(ApplicationTargetResponse Target, CareerVersion Version, CareerVersionLevel Level);
 }

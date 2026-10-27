@@ -43,4 +43,9 @@ internal enum ApplicationRole
     /// A member of the commission of the unit of the target, who acts; the responsible HR and the head are members.
     /// </summary>
     Member = 32,
+
+    /// <summary>
+    /// The chair of the commission of the unit of the target, who acts; the chair is a member.
+    /// </summary>
+    Chair = 64,
 }

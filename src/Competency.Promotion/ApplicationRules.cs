@@ -48,7 +48,7 @@ internal sealed class ApplicationRules(AppDbContext context, ICareerModel career
             errors[LevelField] = ["Выберите уровень из предложенных"];
         }
 
-        if (SelfScoreProblems(version, request.SelfScores) is { Count: > 0 } scoreProblems)
+        if (ScoreRules.Problems(version, [.. request.SelfScores.Select(score => (score.CompetencyId, (int?)score.Score))], allowNotObserved: false) is { Count: > 0 } scoreProblems)
         {
             errors[ScoresField] = [.. scoreProblems];
         }
@@ -87,35 +87,6 @@ internal sealed class ApplicationRules(AppDbContext context, ICareerModel career
         if (people.Values.Count(person => person.OrgUnitId != candidate.OrgUnitId) < MinRatersOutsideUnit)
         {
             problems.Add($"Не меньше {MinRatersOutsideUnit} оценивающих должны быть из других подразделений");
-        }
-
-        return problems;
-    }
-
-    private static List<string> SelfScoreProblems(CareerVersion version, SelfScoreInput[] scores)
-    {
-        List<string> problems = [];
-        if (scores.Select(score => score.CompetencyId).Distinct().Count() != scores.Length)
-        {
-            problems.Add("Каждая компетенция оценивается один раз");
-        }
-
-        if (scores.Any(score => version.Competencies.All(competency => competency.Id != score.CompetencyId)))
-        {
-            problems.Add("Среди оценённых компетенций есть не входящая в матрицу");
-        }
-
-        foreach (var competency in version.Competencies.Where(competency => competency.ScalePoints.Count > 0))
-        {
-            var given = scores.FirstOrDefault(score => score.CompetencyId == competency.Id);
-            if (given is null)
-            {
-                problems.Add($"Оцените компетенцию «{competency.Name}»");
-            }
-            else if (competency.ScalePoints.All(point => point.Score != given.Score))
-            {
-                problems.Add($"Балл компетенции «{competency.Name}» должен быть баллом её шкалы");
-            }
         }
 
         return problems;

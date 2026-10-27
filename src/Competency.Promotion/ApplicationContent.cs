@@ -34,7 +34,7 @@ internal static class ApplicationContent
     }
 
     /// <summary>
-    /// Replaces the raters of an application; those already on the list keep their source.
+    /// Replaces the raters of an application; those already on the list keep their source. A rater who leaves the list takes their answers with them.
     /// </summary>
     /// <param name="context">The context tracking the application.</param>
     /// <param name="applicationId">The application.</param>
@@ -51,10 +51,49 @@ internal static class ApplicationContent
     {
         var ids = employeeIds.Distinct().ToList();
         var stored = await context.Set<PromotionRater>().Where(rater => rater.ApplicationId == applicationId).ToListAsync(cancellationToken);
-        context.RemoveRange(stored.Where(rater => !ids.Contains(rater.EmployeeId)));
+        var removed = stored.Where(rater => !ids.Contains(rater.EmployeeId)).ToList();
+        var removedIds = removed.Select(rater => rater.EmployeeId).ToList();
+        context.RemoveRange(await context.Set<PromotionRaterScore>()
+            .Where(score => score.ApplicationId == applicationId && removedIds.Contains(score.EmployeeId))
+            .ToListAsync(cancellationToken));
+        context.RemoveRange(removed);
         context.AddRange(ids
             .Where(id => stored.All(rater => rater.EmployeeId != id))
             .Select(id => new PromotionRater { ApplicationId = applicationId, EmployeeId = id, Source = source }));
+    }
+
+    /// <summary>
+    /// Replaces the artifacts of an application; a competency left out has none afterwards.
+    /// </summary>
+    /// <param name="context">The context tracking the application.</param>
+    /// <param name="applicationId">The application.</param>
+    /// <param name="artifacts">The artifacts the application is to have.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    /// <returns>A task that ends when the changes are tracked; the caller saves them.</returns>
+    public static async Task ReplaceArtifactsAsync(
+        AppDbContext context,
+        Guid applicationId,
+        IReadOnlyCollection<ArtifactInput> artifacts,
+        CancellationToken cancellationToken)
+    {
+        var given = artifacts.ToDictionary(artifact => artifact.CompetencyId);
+        var stored = await context.Set<PromotionArtifact>().Where(artifact => artifact.ApplicationId == applicationId).ToListAsync(cancellationToken);
+        context.RemoveRange(stored.Where(artifact => !given.ContainsKey(artifact.CompetencyId)));
+        foreach (var artifact in stored.Where(artifact => given.ContainsKey(artifact.CompetencyId)))
+        {
+            artifact.Text = given[artifact.CompetencyId].Text.Trim();
+            artifact.Links = [.. given[artifact.CompetencyId].Links.Select(link => link.Trim())];
+        }
+
+        context.AddRange(given.Values
+            .Where(artifact => stored.All(item => item.CompetencyId != artifact.CompetencyId))
+            .Select(artifact => new PromotionArtifact
+            {
+                ApplicationId = applicationId,
+                CompetencyId = artifact.CompetencyId,
+                Text = artifact.Text.Trim(),
+                Links = [.. artifact.Links.Select(link => link.Trim())],
+            }));
     }
 
     private static async Task ReplaceSelfScoresAsync(

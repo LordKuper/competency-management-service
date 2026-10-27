@@ -1,3 +1,4 @@
+using Competency.CareerFramework;
 using Competency.OrgStructure;
 using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
@@ -8,9 +9,10 @@ using Microsoft.AspNetCore.Routing;
 namespace Competency.Promotion;
 
 /// <summary>
-/// The parts of an application that other roles fill in at later stages: the responsible HR of the unit of the target enters the dates for the formal
-/// check, and the raters are listed by the candidate while the wave takes applications and corrected by the head of that unit before the rating.
-/// Each change takes the promotion locks and the rows of the wave and the application.
+/// The parts of an application filled in after it is filed: the responsible HR of the unit of the target enters the dates for the formal check, the
+/// raters are listed by the candidate while the wave takes applications and corrected by the head of that unit before the rating, and the candidate
+/// adds artifacts while they are collected and marks the feedback as received. Each change takes the promotion locks and the rows of the wave and
+/// the application.
 /// </summary>
 internal static class ApplicationStageEndpoints
 {
@@ -19,9 +21,13 @@ internal static class ApplicationStageEndpoints
     private const int SubmissionStage = 1;
     private const int FormalCheckStage = 2;
     private const int RatingStage = 3;
+    private const int ArtifactStage = 4;
+    private const int FeedbackStage = 7;
     private const string DateField = "hiredOrPromotedOn";
     private const string FutureDateMessage = "Дата не позже сегодняшнего дня";
     private const string FormalClosedMessage = "Даты вносятся на этапе «Формальная проверка»";
+    private const string ArtifactsClosedMessage = "Артефакты добавляют на этапе «Сбор артефактов»";
+    private const string FeedbackClosedMessage = "Отметку можно поставить на этапе «Обратная связь»";
     private const string RatersClosedMessage = "Список оценивающих меняют кандидат на этапе «Подача заявок» и руководитель на этапе «Круговая оценка»";
 
     public static void Map(IEndpointRouteBuilder endpoints)
@@ -36,6 +42,8 @@ internal static class ApplicationStageEndpoints
 
         group.MapPut("/formal", UpdateFormalAsync).WithName("UpdatePromotionApplicationFormal").ProducesETag();
         group.MapPut("/raters", UpdateRatersAsync).WithName("UpdatePromotionApplicationRaters").ProducesETag();
+        group.MapPut("/artifacts", UpdateArtifactsAsync).WithName("UpdatePromotionApplicationArtifacts").ProducesETag();
+        group.MapPost("/feedback", MarkFeedbackAsync).WithName("MarkPromotionFeedbackReceived").ProducesETag();
     }
 
     /// <summary>
@@ -159,6 +167,112 @@ internal static class ApplicationStageEndpoints
 
         await ApplicationContent.ReplaceRatersAsync(context, application.Id, request.RaterEmployeeIds, source, cancellationToken);
         context.Entry(application).Property(entry => entry.Version).IsModified = true;
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        response.SetETag(application.Version);
+        return TypedResults.Ok(await reader.DescribeAsync(application, wave, roles, cancellationToken));
+    }
+
+    /// <summary>
+    /// Replaces the artifacts of an application while they are collected; the candidate gives them for any competency of the version.
+    /// </summary>
+    private static async Task<Results<Ok<ApplicationResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateArtifactsAsync(
+        Guid id,
+        ArtifactsRequest request,
+        IfMatch ifMatch,
+        AppDbContext context,
+        PromotionLocks locks,
+        PromotionCalendar calendar,
+        ApplicationAccess access,
+        ICareerModel career,
+        ApplicationReader reader,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        var shapeErrors = request.Validate();
+        if (shapeErrors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(shapeErrors);
+        }
+
+        await using var transaction = await locks.BeginSharedAsync(cancellationToken);
+        if (await locks.FindApplicationForUpdateAsync(id, cancellationToken) is not var (wave, application))
+        {
+            return TypedResults.NotFound();
+        }
+
+        var roles = (await access.ViewerAsync(wave, [application.OrgUnitId], cancellationToken)).RolesOf(application);
+        if (roles == ApplicationRole.None)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (roles != ApplicationRole.Candidate)
+        {
+            return Rejection.Forbidden();
+        }
+
+        if (calendar.StageOf(wave) != ArtifactStage || application.Status != ApplicationStatus.Admitted)
+        {
+            return Rejection.Conflict(ArtifactsClosedMessage);
+        }
+
+        ifMatch.ApplyTo(context, application);
+        var version = (await career.VersionAsync(application.VersionId, cancellationToken))!;
+        if (request.Artifacts.Any(artifact => version.Competencies.All(competency => competency.Id != artifact.CompetencyId)))
+        {
+            return Rejection.Invalid("artifacts", "Среди компетенций есть не входящая в матрицу");
+        }
+
+        await ApplicationContent.ReplaceArtifactsAsync(context, application.Id, request.Artifacts, cancellationToken);
+        context.Entry(application).Property(entry => entry.Version).IsModified = true;
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        response.SetETag(application.Version);
+        return TypedResults.Ok(await reader.DescribeAsync(application, wave, roles, cancellationToken));
+    }
+
+    /// <summary>
+    /// Marks that the candidate received the feedback, which they may do from the start of the feedback stage until the wave ends. Marking again changes nothing.
+    /// </summary>
+    private static async Task<Results<Ok<ApplicationResponse>, NotFound, ProblemHttpResult>> MarkFeedbackAsync(
+        Guid id,
+        IfMatch ifMatch,
+        AppDbContext context,
+        PromotionLocks locks,
+        PromotionCalendar calendar,
+        ApplicationAccess access,
+        ApplicationReader reader,
+        TimeProvider time,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await locks.BeginSharedAsync(cancellationToken);
+        if (await locks.FindApplicationForUpdateAsync(id, cancellationToken) is not var (wave, application))
+        {
+            return TypedResults.NotFound();
+        }
+
+        var roles = (await access.ViewerAsync(wave, [application.OrgUnitId], cancellationToken)).RolesOf(application);
+        if (roles == ApplicationRole.None)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (roles != ApplicationRole.Candidate)
+        {
+            return Rejection.Forbidden();
+        }
+
+        if (calendar.StageOf(wave) != FeedbackStage || application.Status is not (ApplicationStatus.Decided or ApplicationStatus.NoDecision))
+        {
+            return Rejection.Conflict(FeedbackClosedMessage);
+        }
+
+        ifMatch.ApplyTo(context, application);
+        application.FeedbackReceivedAt ??= time.GetUtcNow();
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 

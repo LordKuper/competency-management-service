@@ -53,7 +53,9 @@ internal sealed class ApplicationAccess(CommissionReader commissions, IEmployeeD
     {
         var roles = actor.UserId is not null && roster.ResponsibleHrUserId == actor.UserId ? ApplicationRole.ResponsibleHr : ApplicationRole.None;
         return employeeId is { } id && roster.Members.FirstOrDefault(member => member.EmployeeId == id && member.IsActing) is { } member
-            ? roles | ApplicationRole.Member | (member.IsHead ? ApplicationRole.Head : ApplicationRole.None)
+            ? roles | ApplicationRole.Member
+                | (member.IsHead ? ApplicationRole.Head : ApplicationRole.None)
+                | (roster.ChairEmployeeId == id ? ApplicationRole.Chair : ApplicationRole.None)
             : roles;
     }
 }

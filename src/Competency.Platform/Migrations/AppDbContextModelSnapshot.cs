@@ -1097,9 +1097,26 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<bool>("ArtifactsMissing")
+                        .HasColumnType("boolean")
+                        .HasColumnName("artifacts_missing");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DecidedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("decided_at");
+
+                    b.Property<Guid?>("DecidedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("decided_by");
+
+                    b.Property<string>("Decision")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("decision");
 
                     b.Property<string>("Education")
                         .IsRequired()
@@ -1110,6 +1127,10 @@ namespace Competency.Platform.Migrations
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid")
                         .HasColumnName("employee_id");
+
+                    b.Property<DateTimeOffset?>("FeedbackReceivedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("feedback_received_at");
 
                     b.PrimitiveCollection<string[]>("FormalFailures")
                         .IsRequired()
@@ -1140,6 +1161,10 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("matrix_id");
 
+                    b.Property<bool?>("MeetsAfterRating")
+                        .HasColumnType("boolean")
+                        .HasColumnName("meets_after_rating");
+
                     b.Property<Guid>("OrgUnitId")
                         .HasColumnType("uuid")
                         .HasColumnName("org_unit_id");
@@ -1165,6 +1190,8 @@ namespace Competency.Platform.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DecidedBy");
+
                     b.HasIndex("EmployeeId");
 
                     b.HasIndex("IgnoreIntervalBy");
@@ -1182,6 +1209,32 @@ namespace Competency.Platform.Migrations
                         .HasFilter("status IN ('Submitted', 'Admitted', 'UnderReview')");
 
                     b.ToTable("promotion_applications", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.Promotion.PromotionArtifact", b =>
+                {
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("application_id");
+
+                    b.Property<Guid>("CompetencyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("competency_id");
+
+                    b.Property<string>("Links")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("links");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("text");
+
+                    b.HasKey("ApplicationId", "CompetencyId");
+
+                    b.ToTable("promotion_artifacts", (string)null);
                 });
 
             modelBuilder.Entity("Competency.Promotion.PromotionCommission", b =>
@@ -1223,6 +1276,25 @@ namespace Competency.Platform.Migrations
                     b.ToTable("promotion_commission_members", (string)null);
                 });
 
+            modelBuilder.Entity("Competency.Promotion.PromotionFinalScore", b =>
+                {
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("application_id");
+
+                    b.Property<Guid>("CompetencyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("competency_id");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer")
+                        .HasColumnName("score");
+
+                    b.HasKey("ApplicationId", "CompetencyId");
+
+                    b.ToTable("promotion_final_scores", (string)null);
+                });
+
             modelBuilder.Entity("Competency.Promotion.PromotionRater", b =>
                 {
                     b.Property<Guid>("ApplicationId")
@@ -1244,6 +1316,29 @@ namespace Competency.Platform.Migrations
                     b.HasIndex("EmployeeId");
 
                     b.ToTable("promotion_raters", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.Promotion.PromotionRaterScore", b =>
+                {
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("application_id");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.Property<Guid>("CompetencyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("competency_id");
+
+                    b.Property<int?>("Score")
+                        .HasColumnType("integer")
+                        .HasColumnName("score");
+
+                    b.HasKey("ApplicationId", "EmployeeId", "CompetencyId");
+
+                    b.ToTable("promotion_rater_scores", (string)null);
                 });
 
             modelBuilder.Entity("Competency.Promotion.PromotionSelfScore", b =>
@@ -1900,6 +1995,11 @@ namespace Competency.Platform.Migrations
 
             modelBuilder.Entity("Competency.Promotion.PromotionApplication", b =>
                 {
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("DecidedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Competency.OrgStructure.Employee", null)
                         .WithMany()
                         .HasForeignKey("EmployeeId")
@@ -1926,6 +2026,15 @@ namespace Competency.Platform.Migrations
                     b.HasOne("Competency.Promotion.PromotionWaveMatrix", null)
                         .WithMany()
                         .HasForeignKey("WaveId", "MatrixId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.Promotion.PromotionArtifact", b =>
+                {
+                    b.HasOne("Competency.Promotion.PromotionApplication", null)
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -1959,6 +2068,15 @@ namespace Competency.Platform.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Competency.Promotion.PromotionFinalScore", b =>
+                {
+                    b.HasOne("Competency.Promotion.PromotionApplication", null)
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Competency.Promotion.PromotionRater", b =>
                 {
                     b.HasOne("Competency.Promotion.PromotionApplication", null)
@@ -1970,6 +2088,15 @@ namespace Competency.Platform.Migrations
                     b.HasOne("Competency.OrgStructure.Employee", null)
                         .WithMany()
                         .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.Promotion.PromotionRaterScore", b =>
+                {
+                    b.HasOne("Competency.Promotion.PromotionRater", null)
+                        .WithMany()
+                        .HasForeignKey("ApplicationId", "EmployeeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

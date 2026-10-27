@@ -20,6 +20,10 @@ namespace Competency.Promotion;
 /// <param name="Formal">What the responsible HR entered; null for those who do not see it.</param>
 /// <param name="FormalFailures">The conditions of the formal check the application did not meet, once the stage that checks it has ended.</param>
 /// <param name="Warnings">The conditions that stand against the application now, while it waits for the formal check; the reader sees those that concern them.</param>
+/// <param name="Artifacts">The artifacts the candidate gave; null for those who do not see them.</param>
+/// <param name="MandatoryArtifactCompetencyIds">The competencies the candidate must give an artifact for, once the rating stage has been checked; null for those who do not see them.</param>
+/// <param name="FeedbackReceivedAt">When the candidate marked the feedback as received; null until they do, and for those who do not see it.</param>
+/// <param name="Result">The final scores against the requirements and the decision, for the candidate from the stage that publishes them; null otherwise.</param>
 internal sealed record ApplicationResponse(
     Guid Id,
     Guid WaveId,
@@ -34,4 +38,8 @@ internal sealed record ApplicationResponse(
     IReadOnlyList<RaterResponse>? Raters,
     ApplicationFormalResponse? Formal,
     IReadOnlyList<FormalFailure> FormalFailures,
-    IReadOnlyList<FormalFailure> Warnings);
+    IReadOnlyList<FormalFailure> Warnings,
+    IReadOnlyList<ArtifactResponse>? Artifacts,
+    IReadOnlyList<Guid>? MandatoryArtifactCompetencyIds,
+    DateTimeOffset? FeedbackReceivedAt,
+    ApplicationResultResponse? Result);

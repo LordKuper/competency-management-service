@@ -33,6 +33,7 @@ public static class PromotionModule
         services.AddScoped<ApplicationAccess>();
         services.AddScoped<ApplicationRules>();
         services.AddScoped<ApplicationReader>();
+        services.AddScoped<ReviewReader>();
         services.AddScoped<IUnitReferences, PromotionUnitReferences>();
         return services;
     }
@@ -50,6 +51,8 @@ public static class PromotionModule
         WaveApplicationEndpoints.Map(endpoints);
         ApplicationEndpoints.Map(endpoints);
         ApplicationStageEndpoints.Map(endpoints);
+        RatingEndpoints.Map(endpoints);
+        ReviewEndpoints.Map(endpoints);
         return endpoints;
     }
 }

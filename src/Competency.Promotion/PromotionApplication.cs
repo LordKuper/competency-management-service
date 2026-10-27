@@ -15,6 +15,11 @@ internal sealed class PromotionApplication : EntityBase
     /// </summary>
     public static readonly IReadOnlyList<ApplicationStatus> UnfinishedStatuses = [ApplicationStatus.Submitted, ApplicationStatus.Admitted, ApplicationStatus.UnderReview];
 
+    /// <summary>
+    /// The statuses of an application the commission has before it or has dealt with.
+    /// </summary>
+    public static readonly IReadOnlyList<ApplicationStatus> ReviewedStatuses = [ApplicationStatus.UnderReview, ApplicationStatus.Decided, ApplicationStatus.NoDecision];
+
     [Audited]
     public Guid WaveId { get; init; }
 
@@ -82,7 +87,41 @@ internal sealed class PromotionApplication : EntityBase
     public FormalFailure[] FormalFailures { get; set; } = [];
 
     /// <summary>
-    /// Whether the candidate may still withdraw the application.
+    /// Whether the average of the raters' answers meets the mandatory requirements of the matrix version, recorded when the rating stage ends;
+    /// null until then.
     /// </summary>
-    public bool CanBeWithdrawn => UnfinishedStatuses.Contains(Status);
+    [Audited]
+    public bool? MeetsAfterRating { get; set; }
+
+    /// <summary>
+    /// Whether the candidate gave no artifact for some competency that required one, recorded when the artifact stage ends.
+    /// </summary>
+    [Audited]
+    public bool ArtifactsMissing { get; set; }
+
+    /// <summary>
+    /// The decision of the chair; null while there is none. The chair may change it until the commission stage ends.
+    /// </summary>
+    [Audited]
+    public PromotionDecision? Decision { get; set; }
+
+    /// <summary>
+    /// The account of the chair who recorded the current decision.
+    /// </summary>
+    [Audited]
+    public Guid? DecidedBy { get; set; }
+
+    [Audited]
+    public DateTimeOffset? DecidedAt { get; set; }
+
+    /// <summary>
+    /// When the candidate marked that they received the feedback; null until they do.
+    /// </summary>
+    [Audited]
+    public DateTimeOffset? FeedbackReceivedAt { get; set; }
+
+    /// <summary>
+    /// Whether the candidate may still withdraw the application: it is going and no decision is recorded.
+    /// </summary>
+    public bool CanBeWithdrawn => UnfinishedStatuses.Contains(Status) && Decision is null;
 }
