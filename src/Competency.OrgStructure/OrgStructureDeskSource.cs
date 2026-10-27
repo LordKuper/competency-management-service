@@ -6,7 +6,7 @@ namespace Competency.OrgStructure;
 /// <summary>
 /// What the organization structure expects of a global administrator or HR, who alone may change it: units without a head or without positions,
 /// employees whose position in any of their assignments their unit does not offer, positions out of use and empty units. Units and positions count
-/// the employees of every assignment, heads only the main one. Every user gets its prerequisites, other users nothing else.
+/// the employees of every assignment. Every user gets its prerequisites, other users nothing else.
 /// </summary>
 internal sealed class OrgStructureDeskSource(ICurrentActor actor, IEmployeeDirectory directory, AppDbContext context) : IDeskSource
 {

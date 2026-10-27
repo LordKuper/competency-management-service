@@ -15,7 +15,7 @@ namespace Competency.OrgStructure;
 /// and only global administrators list the candidates for responsible HR.
 /// An employee is in every unit of their main and secondary assignments, so a unit's list holds the employees with any assignment in it.
 /// Dismissal and deletion cascade to the units the employee heads, their responsible HR assignments and the bound account in the same transaction,
-/// and they preview exactly those changes first. A transfer likewise takes the employee off the headship of the unit they leave.
+/// and they preview exactly those changes first. A change of assignments likewise takes the employee off the headship of every unit where no assignment of theirs is left.
 /// </summary>
 internal static class EmployeeEndpoints
 {
@@ -207,11 +207,7 @@ internal static class EmployeeEndpoints
         }
 
         ifMatch.ApplyTo(context, employee);
-        if (unit.Id != employee.OrgUnitId)
-        {
-            await ReleaseHeadOfPreviousUnitAsync(context, employee, cancellationToken);
-        }
-
+        await ReleaseHeadsWithoutAssignmentAsync(context, id, [unit.Id, .. input.Assignments.Select(assignment => assignment.OrgUnitId)], cancellationToken);
         employee.LastName = input.LastName;
         employee.FirstName = input.FirstName;
         employee.MiddleName = input.MiddleName;
@@ -224,7 +220,7 @@ internal static class EmployeeEndpoints
 
     /// <summary>
     /// Moves one assignment, with its position and legal entities, to another active unit. A position the new unit and the units above it do not allow
-    /// is added to the new unit's own list in the same transaction. Moving the main assignment takes the employee off the headship of the unit they leave.
+    /// is added to the new unit's own list in the same transaction. The employee is taken off the headship of the unit they leave when no other assignment of theirs is left there.
     /// </summary>
     private static async Task<Results<Ok<EmployeeResponse>, NotFound, ValidationProblem, ProblemHttpResult>> MoveAsync(
         Guid id,
@@ -282,15 +278,22 @@ internal static class EmployeeEndpoints
             context.Add(new OrgUnitPosition { OrgUnitId = request.ToOrgUnitId, PositionId = request.PositionId });
         }
 
+        var secondaryUnits = await context.Set<EmployeeAssignment>()
+            .Where(assignment => assignment.EmployeeId == id)
+            .Select(assignment => new { assignment.Id, assignment.OrgUnitId })
+            .ToListAsync(cancellationToken);
         if (secondary is null)
         {
-            await ReleaseHeadOfPreviousUnitAsync(context, employee, cancellationToken);
             employee.OrgUnitId = request.ToOrgUnitId;
         }
         else
         {
             secondary.OrgUnitId = request.ToOrgUnitId;
         }
+
+        var remainingUnitIds = secondaryUnits.Where(assignment => assignment.Id != secondary?.Id).Select(assignment => assignment.OrgUnitId)
+            .Append(employee.OrgUnitId).Append(request.ToOrgUnitId).ToArray();
+        await ReleaseHeadsWithoutAssignmentAsync(context, id, remainingUnitIds, cancellationToken);
 
         context.Entry(employee).Property(nameof(IVersioned.Version)).IsModified = true;
         return TypedResults.Ok(await SaveAsync(employee, context, transaction, response, cancellationToken));
@@ -431,16 +434,25 @@ internal static class EmployeeEndpoints
     }
 
     /// <summary>
-    /// Takes the employee off the headship of the unit they work in, if they head it, because a unit is headed only by its own employee.
-    /// The unit is tracked, so its version and audit follow in the same save.
+    /// Takes the employee off the headship of every unit where they are left with no assignment, because a unit is headed only by its own employee.
+    /// The units are tracked, so their version and audit follow in the same save.
     /// </summary>
-    private static async Task ReleaseHeadOfPreviousUnitAsync(AppDbContext context, Employee employee, CancellationToken cancellationToken)
+    /// <param name="context">The context to query through.</param>
+    /// <param name="employeeId">The employee whose assignments change.</param>
+    /// <param name="remainingUnitIds">The units of the employee's assignments once the change is applied.</param>
+    /// <param name="cancellationToken">Cancels the query.</param>
+    private static async Task ReleaseHeadsWithoutAssignmentAsync(
+        AppDbContext context,
+        Guid employeeId,
+        IReadOnlyCollection<Guid> remainingUnitIds,
+        CancellationToken cancellationToken)
     {
-        var headedUnit = await context.Set<OrgUnit>()
-            .FirstOrDefaultAsync(unit => unit.Id == employee.OrgUnitId && unit.HeadEmployeeId == employee.Id, cancellationToken);
-        if (headedUnit is not null)
+        var headedUnits = await context.Set<OrgUnit>()
+            .Where(unit => unit.HeadEmployeeId == employeeId && !remainingUnitIds.Contains(unit.Id))
+            .ToListAsync(cancellationToken);
+        foreach (var unit in headedUnits)
         {
-            headedUnit.HeadEmployeeId = null;
+            unit.HeadEmployeeId = null;
         }
     }
 

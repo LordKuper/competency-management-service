@@ -48,7 +48,7 @@ public sealed class OrgSnapshot
     public IReadOnlyDictionary<Guid, PositionStatus> Positions { get; }
 
     /// <summary>
-    /// The number of working employees by the unit and position of their main assignment, the only one the rules about heads, matrices and the like read;
+    /// The number of working employees by the unit and position of their main assignment, the only one the rules about matrices, "my place" and the like read;
     /// pairs without any are absent.
     /// </summary>
     public IReadOnlyDictionary<(Guid OrgUnitId, Guid PositionId), int> WorkingEmployeeCounts { get; }

@@ -386,7 +386,7 @@ internal static class OrgUnitEndpoints
     }
 
     /// <summary>
-    /// Says why an employee cannot head the unit: they do not exist, do not work, or work in another unit.
+    /// Says why an employee cannot head the unit: they do not exist, do not work, or have no assignment in the unit, the main or a secondary one.
     /// </summary>
     private static async Task<string?> HeadProblemAsync(AppDbContext context, Guid headId, Guid unitId, CancellationToken cancellationToken)
     {
@@ -395,8 +395,8 @@ internal static class OrgUnitEndpoints
             return problem;
         }
 
-        var isInUnit = await context.Set<Employee>().AnyAsync(employee => employee.Id == headId && employee.OrgUnitId == unitId, cancellationToken);
-        return isInUnit ? null : "Сотрудник работает в другом подразделении: руководителем может быть только сотрудник этого подразделения.";
+        var isInUnit = await context.Set<EmployeePlacement>().AnyAsync(placement => placement.EmployeeId == headId && placement.OrgUnitId == unitId, cancellationToken);
+        return isInUnit ? null : "У сотрудника нет назначения в этом подразделении: руководителем может быть только сотрудник этого подразделения, с основным назначением или совмещением.";
     }
 
     private static async Task<OrgUnitResponse> SaveAsync(

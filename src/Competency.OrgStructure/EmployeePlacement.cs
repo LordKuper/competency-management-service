@@ -13,7 +13,7 @@ internal sealed class EmployeePlacement
     public required Guid PositionId { get; init; }
 
     /// <summary>
-    /// Whether this is the employee's main assignment, the only one that rules about heads, matrices and the like read.
+    /// Whether this is the employee's main assignment, the only one that rules about matrices, "my place" and the like read.
     /// </summary>
     public required bool IsMain { get; init; }
 }
