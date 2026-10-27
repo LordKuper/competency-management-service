@@ -16,7 +16,10 @@ import {
   invalidateOrgStructure,
   orgUnitTreeQuery,
 } from "./orgStructureApi";
-import { useConfirmUnitLosesHead } from "./useConfirmUnitLosesHead";
+import {
+  headedUnitsLeft,
+  useConfirmUnitLosesHead,
+} from "./useConfirmUnitLosesHead";
 
 interface EmployeeModalProps {
   /** Employee to change; omitted when a new employee is created. */
@@ -116,7 +119,7 @@ interface EmployeeEditorProps
 /**
  * The form with its save: a change is refused when the version is stale, and the employee is reread whatever the outcome.
  * The form keeps the employee it was opened with and takes the reread one only after such a refusal.
- * Moving the head of a unit out of it, by a transfer or by making another assignment the main one, is confirmed first, because the server then leaves the unit without a head.
+ * Leaving the head of a unit with no assignment in it, by a transfer or by removing a secondary assignment, is confirmed first, because the server then leaves the unit without a head.
  */
 function EmployeeEditor({
   existing: latest,
@@ -130,11 +133,6 @@ function EmployeeEditor({
   const confirmUnitLosesHead = useConfirmUnitLosesHead();
   const { base: existing, noteSaveFailure } = useEditBase(latest);
   const { data: units } = useQuery(orgUnitTreeQuery);
-  const headedUnit = units?.find(
-    (unit) =>
-      unit.id === existing?.employee.orgUnitId &&
-      unit.headEmployeeId === existing.employee.id,
-  );
   const save = useMutation({
     mutationFn: async (input: EmployeeInput) =>
       unwrap(
@@ -160,10 +158,15 @@ function EmployeeEditor({
   });
 
   async function submit(input: EmployeeInput) {
+    const lostUnits = existing
+      ? headedUnitsLeft(units, existing.employee.id, [
+          input.orgUnitId,
+          ...input.assignments.map(({ orgUnitId }) => orgUnitId),
+        ])
+      : [];
     if (
-      headedUnit &&
-      input.orgUnitId !== headedUnit.id &&
-      !(await confirmUnitLosesHead(headedUnit.name))
+      lostUnits.length > 0 &&
+      !(await confirmUnitLosesHead(lostUnits.map(({ name }) => name)))
     ) {
       return;
     }

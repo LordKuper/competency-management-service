@@ -90,7 +90,7 @@ export function AssignHeadModal({ unitId, onClose }: AssignHeadModalProps) {
             <Form.Item
               name="headEmployeeId"
               label="Сотрудник"
-              extra="Только работающие сотрудники этого подразделения."
+              extra="Только работающие сотрудники с основным назначением или совмещением в этом подразделении."
               rules={[{ required: true, message: "Выберите сотрудника" }]}
             >
               <EmployeePicker orgUnitId={unit.id} />

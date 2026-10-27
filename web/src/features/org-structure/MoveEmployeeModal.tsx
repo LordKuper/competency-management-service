@@ -28,7 +28,10 @@ import {
   mainAssignmentOf,
   orgUnitTreeQuery,
 } from "./orgStructureApi";
-import { useConfirmUnitLosesHead } from "./useConfirmUnitLosesHead";
+import {
+  headedUnitsLeft,
+  useConfirmUnitLosesHead,
+} from "./useConfirmUnitLosesHead";
 
 interface MoveFormValues {
   assignment: string;
@@ -102,7 +105,7 @@ function LoadedEmployee({ employee, onClose }: MoveEmployeeModalProps) {
 
 /**
  * The form with its save: the move is refused when the version is stale, and the employee is reread whatever the outcome.
- * Warns before saving when the position will be added to the new unit's list; moving the head of a unit out of it is confirmed first.
+ * Warns before saving when the position will be added to the new unit's list; leaving the head of a unit with no assignment in it is confirmed first.
  */
 function MoveForm({
   shown,
@@ -128,13 +131,12 @@ function MoveForm({
     [mainAssignmentOf(base.employee), ...base.employee.assignments].find(
       (one) => keyOf(one) === keyOf(chosen),
     ) ?? chosen;
-  const headedUnit = !moved.isSecondary
-    ? units?.find(
-        (unit) =>
-          unit.id === moved.orgUnitId &&
-          unit.headEmployeeId === base.employee.id,
-      )
-    : undefined;
+  const otherUnitIds = [
+    mainAssignmentOf(base.employee),
+    ...base.employee.assignments,
+  ]
+    .filter((one) => keyOf(one) !== keyOf(moved))
+    .map((one) => one.orgUnitId);
   const targetIds = useMemo(
     () =>
       new Set(
@@ -181,7 +183,16 @@ function MoveForm({
 
   async function submit({ toOrgUnitId: toId }: MoveFormValues) {
     if (toId === undefined) return;
-    if (headedUnit && !(await confirmUnitLosesHead(headedUnit.name))) return;
+    const lostUnits = headedUnitsLeft(units, base.employee.id, [
+      ...otherUnitIds,
+      toId,
+    ]);
+    if (
+      lostUnits.length > 0 &&
+      !(await confirmUnitLosesHead(lostUnits.map(({ name }) => name)))
+    ) {
+      return;
+    }
     move.mutate(toId);
   }
 
