@@ -14,9 +14,9 @@ internal static class ImportText
         value is null ? string.Empty : string.Join(' ', value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
     /// <summary>
-    /// The comparison key of a cleaned name: lower case, with the letter «ё» equal to «е».
+    /// The comparison key of a name: cleaned by <see cref="Clean"/>, lower case, with the letter «ё» equal to «е».
     /// </summary>
-    /// <param name="cleaned">The name as <see cref="Clean"/> returned it.</param>
+    /// <param name="name">The name as stored or as read from the file; spacing need not be cleaned.</param>
     /// <returns>The key.</returns>
-    public static string Key(string cleaned) => cleaned.ToLowerInvariant().Replace('ё', 'е');
+    public static string Key(string name) => Clean(name).ToLowerInvariant().Replace('ё', 'е');
 }
