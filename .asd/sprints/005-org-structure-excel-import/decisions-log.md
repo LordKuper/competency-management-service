@@ -66,3 +66,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Сейчас перевод в форме сбрасывает должность, если её нет в перечне нового подразделения; отдельная атомарная операция переносит назначение без ручной правки перечня.
 - **Affected docs**: [sprint.md](./sprint.md), [plan.md](./plan.md)
 - 2026-10-27 — route Task 5: standard, dispatch HEAD 5a05a5a
+
+## 2026-10-27 — Task 5: отмеченные выборы приняты
+
+- **Decision**: Отказы перемещения — 400 с полем (`toOrgUnitId`/`positionId`), 404 только для неизвестного сотрудника, 412 по `If-Match`; ответ — `EmployeeResponse` без признака добавления в перечень (окно предупреждает заранее); `EmployeeAssignment.OrgUnitId` изменяемый, строка совмещения сохраняет id и связи юрлиц; «Переместить» скрыт у уволенного; при нескольких назначениях карточки окно предлагает выбор; подтверждение снятия с руководства вынесено в `useConfirmUnitLosesHead`.
+- **Rationale**: Совпадает с формой ошибок `PUT` сотрудника; одно место для подтверждения снятия с руководства.
+- **Affected docs**: [plan.md](./plan.md)
