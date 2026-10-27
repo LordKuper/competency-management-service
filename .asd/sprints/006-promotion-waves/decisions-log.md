@@ -37,9 +37,3 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
-
-## 2026-10-27 — `.asd/sprints/006-promotion-waves/plan.md` accepted
-
-- **Decision**: Пользователь принял план: 10 задач в 10 волнах; новый модуль `Competency.Promotion`, публичный порт `ICareerModel` в `career-framework`, блокировка модуля 5006001, фоновая смена этапов по датам в часовом поясе организации (`AppOptions.TimeZone`), длительности этапов по умолчанию 14/7/14/7/14/3/14 дней, демо-режим на представлениях экранов.
-- **Rationale**: Явный `accept` пользователя; архитектурные решения и контракты плана — жёсткий шлюз, подтверждён им же. Связанных stubs нет (`audit.md`).
-- **Affected docs**: [plan.md](./plan.md)
