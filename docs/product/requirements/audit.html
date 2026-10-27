@@ -14,7 +14,7 @@ responsibility:
   <meta name="subsystem" content="audit">
   <meta name="sprint-id" content="">
   <meta name="status" content="approved">
-  <meta name="updated" content="2026-10-13">
+  <meta name="updated" content="2026-10-27">
   <meta name="responsibility" content="product requirements of the audit subsystem: append-only journal of actions and sign-in events, its reading by global administrators, the Journal section, operational log hygiene">
   <meta name="provenance" content="original">
   <meta name="source" content="">
@@ -208,7 +208,7 @@ responsibility:
           <span class="status-approved">approved</span>
         </div>
         <h1>Требования — Журнал аудита</h1>
-        <div class="stats">4 goals · 4 stories · 16 AC · 5 non-goals · updated 2026-10-13</div>
+        <div class="stats">4 goals · 4 stories · 16 AC · 5 non-goals · updated 2026-10-27</div>
       </header>
       <main>
 <!--
@@ -261,7 +261,7 @@ provenance: original
     <tbody>
       <tr id="AC-1"><td><a href="#AC-1">AC-1</a></td><td>Журнал только дополняется: изменение и удаление записей запрещено на уровне БД для учётной записи приложения, в том числе при переключении сессии БД в режим репликации; интерфейса и API изменения журнала нет.</td><td><span class="chip area">неизменяемость</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-2"><td><a href="#AC-2">AC-2</a></td><td>Запись журнала содержит: время, актора, роль, действие, тип сущности, идентификатор сущности, прежнее значение, новое значение, причину и идентификатор запроса.</td><td><span class="chip area">состав записи</span></td><td><span class="chip prio-must">must</span></td></tr>
-      <tr id="AC-3"><td><a href="#AC-3">AC-3</a></td><td>Каждое создание, изменение и удаление пользователей, подразделений, сотрудников, должностей, перечней должностей подразделений, закреплений HR и записей карьерной модели, включая связи «должность — уровень» (<a href="career-framework.html#AC-93">career-framework AC-93</a>), журналируется с действием вида «Сущность.Created / Updated / Deleted» и прежним и новым значениями изменённых полей (для создания — только новыми, для удаления — только прежними).</td><td><span class="chip area">мутации</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-3"><td><a href="#AC-3">AC-3</a></td><td>Каждое создание, изменение и удаление пользователей, подразделений, сотрудников и их назначений, юридических лиц, должностей, перечней должностей подразделений, закреплений HR и записей карьерной модели, включая связи «должность — уровень» (<a href="career-framework.html#AC-93">career-framework AC-93</a>), журналируется с действием вида «Сущность.Created / Updated / Deleted» и прежним и новым значениями изменённых полей (для создания — только новыми, для удаления — только прежними). Применение импорта оргструктуры, кроме этих записей, даёт одно сводное событие (<a href="org-structure.html#AC-69">org-structure AC-69</a>).</td><td><span class="chip area">мутации</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-4"><td><a href="#AC-4">AC-4</a></td><td>Запись об изменении сохраняется в одной транзакции с самим изменением: не бывает изменения без записи и записи об откатанном изменении.</td><td><span class="chip area">мутации</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-5"><td><a href="#AC-5">AC-5</a></td><td>Каждое изменение, вызванное каскадом увольнения или удаления сотрудника (<a href="org-structure.html#AC-14">org-structure AC-14…AC-16</a>), — подразделение, потерявшее руководителя; блокировка и отвязка учётной записи; сам сотрудник — журналируется отдельной записью. Привязка и отвязка учётной записи к сотруднику — запись об изменении учётной записи.</td><td><span class="chip area">мутации</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-6"><td><a href="#AC-6">AC-6</a></td><td>Журналируются события входа и паролей: успешный вход; неуспешный вход (причина отказа — в поле «причина», в том числе вход приглашённой учётной записи, не задавшей пароль); начало временной блокировки при переборе пароля, в том числе начатой неверным текущим паролем при его смене; выход; смена собственного пароля; выдача ссылки для сброса пароля существующей учётной записи (инициатор — сама запись или администратор; запрос на неизвестный адрес не журналируется); сброс пароля по ссылке; завершение регистрации по приглашению.</td><td><span class="chip area">события входа</span></td><td><span class="chip prio-must">must</span></td></tr>
@@ -290,7 +290,7 @@ provenance: original
   </ul>
 </section>
       </main>
-      <footer>by ASD workflow | 2026-10-13</footer>
+      <footer>by ASD workflow | 2026-10-27</footer>
     </div>
   </div>
 </body>
