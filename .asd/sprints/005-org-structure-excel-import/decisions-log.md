@@ -79,3 +79,10 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Ответы пользователя на три вопроса: «Первое слово должности», «Можно, без руководителя», «Разрешить по совмещению».
 - **Affected docs**: [sprint.md](./sprint.md), [plan.md](./plan.md)
 - 2026-10-27 — route Task 6: standard, dispatch HEAD f5b17aa
+
+## 2026-10-27 — Task 6: отмеченные выборы приняты
+
+- **Decision**: Руководители сохраняются вторым `SaveChanges` в той же транзакции применения (новое подразделение и новый сотрудник-руководитель ссылаются друг на друга), отступление от «`SaveChanges` один раз» в Overview плана; «всё или ничего» сохранено. Решения по руководителям — отдельное поле multipart `heads` (`[{unit, employee|null}]`), `plan.heads` = `{units, employees}` с ключами сотрудников (id или ключ ФИО). Потребители `career-framework` и стол не потребовали правок логики: проверки «руководитель работает в подразделении по основному назначению» там нет. Опции JSON `apply` отклоняют решения без обязательных полей (400).
+- **Rationale**: Циклическая ссылка не вставляется одним сохранением; транзакция и блокировка дерева те же. Замер AC-24 с руководителями: preview 3,3–3,6 с, apply 8,1–9,8 с.
+- **Affected docs**: [plan.md](./plan.md)
+- 2026-10-27 — route Task 7: standard, dispatch HEAD 0bbeee4
