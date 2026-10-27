@@ -62,6 +62,13 @@
       "reason": "explicit accept of plan.md (4 tasks, 3 waves)",
       "evidence": "decisions-log.md 2026-10-26 plan accepted",
       "artifact_revision": "plan.md@working-tree"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "AC-28 employee move with position added; Task 5 wave 4",
+      "evidence": "decisions-log.md 2026-10-27 AC-28 amendment; iterations charged 0, fix rounds charged 0",
+      "artifact_revision": "sprint.md+plan.md@working-tree"
     }
   ],
   "task_routing": {
@@ -88,6 +95,12 @@
       "tier": "standard",
       "reason": "risk:ui shape",
       "resolved_model": "sonnet"
+    },
+    "Task 5": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:public contract",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -110,7 +123,7 @@
     }
   },
   "created_at": "2026-10-26T13:39:38.279Z",
-  "updated_at": "2026-10-26T14:51:00.581Z",
+  "updated_at": "2026-10-27T06:35:39.773Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
