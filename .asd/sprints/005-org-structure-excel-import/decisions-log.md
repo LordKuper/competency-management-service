@@ -124,3 +124,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Принят порт `IUnitReferences` в `Competency.Platform` (проверка препятствий и снятие закрепления HR реализует `career-framework`); `OrgSnapshot` отбрасывает счётчики и перечни подразделений, которых нет в снимке; 409 несёт `obstacles` (строки), карьерные препятствия — счётчиками без названий. Правка `web/src/api/ApiError.ts` (поле `obstacles`, вне выданной области записи) принята как нужная для показа списка. Документы «подразделения не удаляются» обновляются в design-promote.
 - **Rationale**: Модуль оргструктуры не читает таблицы карьерной модели; снимок без блокировки больше не может опираться на «подразделения не удаляются». Проверено: dev-база не тронута, временные базы удалены.
 - **Affected docs**: [plan.md](./plan.md), [org-structure.md](../../../docs/architecture/org-structure.md)
+- 2026-10-27 — route change-request-1: mechanical, dispatch HEAD 2fe9d43
+- 2026-10-27 — impl assessment: change requested — убрать из подтверждения удаления подразделения предложение об условиях удаления и журнале

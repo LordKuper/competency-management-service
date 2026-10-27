@@ -153,6 +153,12 @@
       "tier": "standard",
       "reason": "risk:public contract",
       "resolved_model": "sonnet"
+    },
+    "change-request-1": {
+      "execution": "command",
+      "tier": "mechanical",
+      "reason": "deterministic-command",
+      "resolved_model": null
     }
   },
   "skipped_phases": [],
