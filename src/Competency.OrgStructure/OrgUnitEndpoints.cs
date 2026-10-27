@@ -2,6 +2,7 @@ using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -400,7 +401,7 @@ internal static class OrgUnitEndpoints
         Guid id,
         IfMatch ifMatch,
         AppDbContext context,
-        IUnitReferences references,
+        [FromServices] IEnumerable<IUnitReferences> references,
         CancellationToken cancellationToken)
     {
         await using var transaction = await context.BeginExclusiveAsync(cancellationToken);
@@ -411,7 +412,11 @@ internal static class OrgUnitEndpoints
         }
 
         var blockers = await DeletionBlockersAsync(context, id, cancellationToken);
-        blockers.AddRange(await references.BlockersAsync(id, cancellationToken));
+        foreach (var reference in references)
+        {
+            blockers.AddRange(await reference.BlockersAsync(id, cancellationToken));
+        }
+
         if (blockers.Count > 0)
         {
             return TypedResults.Problem(new UnitDeletionRefusal
@@ -424,7 +429,11 @@ internal static class OrgUnitEndpoints
         }
 
         context.RemoveRange(await context.Set<OrgUnitPosition>().Where(entry => entry.OrgUnitId == id).ToListAsync(cancellationToken));
-        await references.ReleaseAsync(id, cancellationToken);
+        foreach (var reference in references)
+        {
+            await reference.ReleaseAsync(id, cancellationToken);
+        }
+
         ifMatch.ApplyTo(context, unit);
         context.Remove(unit);
 
