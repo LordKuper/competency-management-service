@@ -73,7 +73,7 @@ internal sealed class WaveReader(
         var waveIds = waves.Select(wave => wave.Id).ToArray();
         var members = await context.Set<PromotionWaveUnit>().AsNoTracking().Where(member => waveIds.Contains(member.WaveId)).ToListAsync(cancellationToken);
         var units = await employees.FindUnitsAsync([.. members.Select(member => member.OrgUnitId).Distinct()], cancellationToken);
-        var authors = await AuthorNamesAsync([.. waves.Select(wave => wave.AuthorId).Distinct()], cancellationToken);
+        var authors = await AccountNamesAsync([.. waves.Select(wave => wave.AuthorId).Distinct()], cancellationToken);
         return [.. waves.Select(wave => new WaveResponse(
             wave.Id,
             wave.StartsOn,
@@ -93,7 +93,13 @@ internal sealed class WaveReader(
     private async Task<Guid[]> AnswerableUnitIdsAsync(CancellationToken cancellationToken) =>
         actor.UserId is { } userId ? [.. (await career.ResponsibleUnitsAsync(userId, cancellationToken)).Select(unit => unit.Id)] : [];
 
-    private async Task<Dictionary<Guid, string>> AuthorNamesAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken)
+    /// <summary>
+    /// Finds how people know accounts: the name of the employee an account is bound to, or else its e-mail address.
+    /// </summary>
+    /// <param name="userIds">The accounts.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    /// <returns>The name by account; accounts that do not exist are absent.</returns>
+    public async Task<Dictionary<Guid, string>> AccountNamesAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken)
     {
         var accounts = await users.FindManyAsync(userIds, cancellationToken);
         var people = await employees.FindManyAsync([.. accounts.Values.Select(account => account.EmployeeId).OfType<Guid>()], cancellationToken);

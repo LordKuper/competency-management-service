@@ -19,12 +19,14 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
     private const string MatrixVersionEntityName = "Competency.CareerFramework.MatrixVersion";
     private const string TrackEntityName = "Competency.CareerFramework.CareerTrack";
     private const int NameMaxLength = 200;
+    private const int EnumMaxLength = 30;
 
     public void Configure(ModelBuilder modelBuilder)
     {
         ConfigureSettings(modelBuilder);
         ConfigureWaves(modelBuilder);
         ConfigureCommissions(modelBuilder);
+        ConfigureApplications(modelBuilder);
     }
 
     private static void ConfigureSettings(ModelBuilder modelBuilder) =>
@@ -130,6 +132,65 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
 
             entity.HasOne<PromotionCommission>().WithMany().HasForeignKey(e => e.OrgUnitId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(EmployeeEntityName, navigationName: null).WithMany().HasForeignKey(nameof(PromotionCommissionMember.EmployeeId)).OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
+    private static void ConfigureApplications(ModelBuilder modelBuilder)
+    {
+        var unfinished = string.Join(", ", PromotionApplication.UnfinishedStatuses.Select(status => $"'{status}'"));
+        modelBuilder.Entity<PromotionApplication>(entity =>
+        {
+            entity.ToTable("promotion_applications");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Version).HasColumnName("version");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.WaveId).HasColumnName("wave_id");
+            entity.Property(e => e.EmployeeId).HasColumnName("employee_id");
+            entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
+            entity.Property(e => e.MatrixId).HasColumnName("matrix_id");
+            entity.Property(e => e.VersionId).HasColumnName("version_id");
+            entity.Property(e => e.LevelId).HasColumnName("level_id");
+            entity.Property(e => e.Education).HasColumnName("education").HasConversion<string>().HasMaxLength(EnumMaxLength);
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(EnumMaxLength);
+            entity.Property(e => e.HiredOrPromotedOn).HasColumnName("hired_or_promoted_on");
+            entity.Property(e => e.IgnoreInterval).HasColumnName("ignore_interval");
+            entity.Property(e => e.IgnoreIntervalBy).HasColumnName("ignore_interval_by");
+            entity.Property(e => e.IgnoreIntervalAt).HasColumnName("ignore_interval_at");
+            entity.PrimitiveCollection(e => e.FormalFailures).HasColumnName("formal_failures").ElementType().HasConversion<string>().HasMaxLength(EnumMaxLength);
+            entity.HasIndex(e => new { e.WaveId, e.EmployeeId }, "ux_promotion_applications_unfinished").IsUnique().HasFilter($"status IN ({unfinished})");
+            entity.HasIndex(e => e.EmployeeId);
+            entity.HasIndex(e => new { e.WaveId, e.OrgUnitId });
+            entity.HasIndex(e => e.VersionId);
+
+            entity.HasOne<PromotionWaveMatrix>().WithMany().HasForeignKey(e => new { e.WaveId, e.MatrixId }).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(EmployeeEntityName, navigationName: null).WithMany().HasForeignKey(nameof(PromotionApplication.EmployeeId)).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(OrgUnitEntityName, navigationName: null).WithMany().HasForeignKey(nameof(PromotionApplication.OrgUnitId)).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(MatrixVersionEntityName, navigationName: null).WithMany().HasForeignKey(nameof(PromotionApplication.VersionId)).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(UserEntityName, navigationName: null).WithMany().HasForeignKey(nameof(PromotionApplication.IgnoreIntervalBy)).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PromotionSelfScore>(entity =>
+        {
+            entity.ToTable("promotion_self_scores");
+            entity.HasKey(e => new { e.ApplicationId, e.CompetencyId });
+            entity.Property(e => e.ApplicationId).HasColumnName("application_id");
+            entity.Property(e => e.CompetencyId).HasColumnName("competency_id");
+            entity.Property(e => e.Score).HasColumnName("score");
+
+            entity.HasOne<PromotionApplication>().WithMany().HasForeignKey(e => e.ApplicationId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PromotionRater>(entity =>
+        {
+            entity.ToTable("promotion_raters");
+            entity.HasKey(e => new { e.ApplicationId, e.EmployeeId });
+            entity.Property(e => e.ApplicationId).HasColumnName("application_id");
+            entity.Property(e => e.EmployeeId).HasColumnName("employee_id");
+            entity.Property(e => e.Source).HasColumnName("source").HasConversion<string>().HasMaxLength(EnumMaxLength);
+            entity.HasIndex(e => e.EmployeeId);
+
+            entity.HasOne<PromotionApplication>().WithMany().HasForeignKey(e => e.ApplicationId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(EmployeeEntityName, navigationName: null).WithMany().HasForeignKey(nameof(PromotionRater.EmployeeId)).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

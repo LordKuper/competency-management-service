@@ -7,7 +7,7 @@ namespace Competency.Promotion;
 
 /// <summary>
 /// The locks of the promotion module, taken in the global order: the tree lock in shared mode first, because the rights of the actors come from
-/// the tree, then the module lock, then the row of the wave. Scoped to a request, because it shares the request's database context.
+/// the tree, then the module lock, then the row of the wave, then the row of the application. Scoped to a request, because it shares the request's database context.
 /// </summary>
 internal sealed class PromotionLocks(AppDbContext context, IEmployeeDirectory employees)
 {
@@ -48,4 +48,29 @@ internal sealed class PromotionLocks(AppDbContext context, IEmployeeDirectory em
         context.Set<PromotionWave>()
             .FromSql($"SELECT * FROM promotion_waves WHERE id = {waveId} FOR UPDATE")
             .FirstOrDefaultAsync(cancellationToken);
+
+    /// <summary>
+    /// Reads an application and locks its row after the row of its wave, until the transaction ends, both tracked for a change. Call it under a
+    /// lock of this class, and lock no wave before it.
+    /// </summary>
+    /// <param name="applicationId">The application.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    /// <returns>The wave and the application, or <see langword="null"/> when there is no such application.</returns>
+    public async Task<(PromotionWave Wave, PromotionApplication Application)?> FindApplicationForUpdateAsync(Guid applicationId, CancellationToken cancellationToken)
+    {
+        var waveId = await context.Set<PromotionApplication>()
+            .AsNoTracking()
+            .Where(application => application.Id == applicationId)
+            .Select(application => (Guid?)application.WaveId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (waveId is null || await FindWaveForUpdateAsync(waveId.Value, cancellationToken) is not { } wave)
+        {
+            return null;
+        }
+
+        var found = await context.Set<PromotionApplication>()
+            .FromSql($"SELECT * FROM promotion_applications WHERE id = {applicationId} FOR UPDATE")
+            .FirstOrDefaultAsync(cancellationToken);
+        return found is null ? null : (wave, found);
+    }
 }

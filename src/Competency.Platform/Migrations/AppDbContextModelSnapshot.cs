@@ -1090,6 +1090,100 @@ namespace Competency.Platform.Migrations
                     b.ToTable("positions", (string)null);
                 });
 
+            modelBuilder.Entity("Competency.Promotion.PromotionApplication", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Education")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("education");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.PrimitiveCollection<string[]>("FormalFailures")
+                        .IsRequired()
+                        .HasColumnType("character varying(30)[]")
+                        .HasColumnName("formal_failures");
+
+                    b.Property<DateOnly?>("HiredOrPromotedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("hired_or_promoted_on");
+
+                    b.Property<bool>("IgnoreInterval")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ignore_interval");
+
+                    b.Property<DateTimeOffset?>("IgnoreIntervalAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ignore_interval_at");
+
+                    b.Property<Guid?>("IgnoreIntervalBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ignore_interval_by");
+
+                    b.Property<Guid>("LevelId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("level_id");
+
+                    b.Property<Guid>("MatrixId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("matrix_id");
+
+                    b.Property<Guid>("OrgUnitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("org_unit_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.Property<Guid>("VersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("version_id");
+
+                    b.Property<Guid>("WaveId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("wave_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("IgnoreIntervalBy");
+
+                    b.HasIndex("OrgUnitId");
+
+                    b.HasIndex("VersionId");
+
+                    b.HasIndex("WaveId", "MatrixId");
+
+                    b.HasIndex("WaveId", "OrgUnitId");
+
+                    b.HasIndex(new[] { "WaveId", "EmployeeId" }, "ux_promotion_applications_unfinished")
+                        .IsUnique()
+                        .HasFilter("status IN ('Submitted', 'Admitted', 'UnderReview')");
+
+                    b.ToTable("promotion_applications", (string)null);
+                });
+
             modelBuilder.Entity("Competency.Promotion.PromotionCommission", b =>
                 {
                     b.Property<Guid>("OrgUnitId")
@@ -1127,6 +1221,48 @@ namespace Competency.Platform.Migrations
                     b.HasIndex("EmployeeId");
 
                     b.ToTable("promotion_commission_members", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.Promotion.PromotionRater", b =>
+                {
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("application_id");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("source");
+
+                    b.HasKey("ApplicationId", "EmployeeId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("promotion_raters", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.Promotion.PromotionSelfScore", b =>
+                {
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("application_id");
+
+                    b.Property<Guid>("CompetencyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("competency_id");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer")
+                        .HasColumnName("score");
+
+                    b.HasKey("ApplicationId", "CompetencyId");
+
+                    b.ToTable("promotion_self_scores", (string)null);
                 });
 
             modelBuilder.Entity("Competency.Promotion.PromotionSettings", b =>
@@ -1762,6 +1898,38 @@ namespace Competency.Platform.Migrations
                     b.Navigation("Position");
                 });
 
+            modelBuilder.Entity("Competency.Promotion.PromotionApplication", b =>
+                {
+                    b.HasOne("Competency.OrgStructure.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("IgnoreIntervalBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
+                        .WithMany()
+                        .HasForeignKey("OrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.CareerFramework.MatrixVersion", null)
+                        .WithMany()
+                        .HasForeignKey("VersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.Promotion.PromotionWaveMatrix", null)
+                        .WithMany()
+                        .HasForeignKey("WaveId", "MatrixId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Competency.Promotion.PromotionCommission", b =>
                 {
                     b.HasOne("Competency.OrgStructure.Employee", null)
@@ -1787,6 +1955,30 @@ namespace Competency.Platform.Migrations
                     b.HasOne("Competency.Promotion.PromotionCommission", null)
                         .WithMany()
                         .HasForeignKey("OrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.Promotion.PromotionRater", b =>
+                {
+                    b.HasOne("Competency.Promotion.PromotionApplication", null)
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Competency.OrgStructure.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Competency.Promotion.PromotionSelfScore", b =>
+                {
+                    b.HasOne("Competency.Promotion.PromotionApplication", null)
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

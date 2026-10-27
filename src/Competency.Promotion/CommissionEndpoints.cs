@@ -62,6 +62,7 @@ internal static class CommissionEndpoints
         AppDbContext context,
         PromotionLocks locks,
         CommissionReader reader,
+        ActingEmployees acting,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -86,7 +87,7 @@ internal static class CommissionEndpoints
         }
 
         var memberIds = request.MemberEmployeeIds.Distinct().ToList();
-        if (await reader.MemberProblemsAsync(memberIds, cancellationToken) is { Count: > 0 } problems)
+        if (await acting.ProblemsAsync(memberIds, cancellationToken) is { Count: > 0 } problems)
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]> { [MembersField] = [.. problems] });
         }

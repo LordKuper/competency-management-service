@@ -25,10 +25,14 @@ public static class PromotionModule
         services.AddSingleton<IEntityConfigurationContributor, PromotionEntityConfiguration>();
         services.AddSingleton<PromotionCalendar>();
         services.AddScoped<PromotionLocks>();
+        services.AddScoped<ActingEmployees>();
         services.AddScoped<CommissionReader>();
         services.AddScoped<WaveUnits>();
         services.AddScoped<WaveReader>();
         services.AddScoped<OpenWaves>();
+        services.AddScoped<ApplicationAccess>();
+        services.AddScoped<ApplicationRules>();
+        services.AddScoped<ApplicationReader>();
         services.AddScoped<IUnitReferences, PromotionUnitReferences>();
         return services;
     }
@@ -43,6 +47,9 @@ public static class PromotionModule
         SettingsEndpoints.Map(endpoints);
         CommissionEndpoints.Map(endpoints);
         WaveEndpoints.Map(endpoints);
+        WaveApplicationEndpoints.Map(endpoints);
+        ApplicationEndpoints.Map(endpoints);
+        ApplicationStageEndpoints.Map(endpoints);
         return endpoints;
     }
 }

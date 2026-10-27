@@ -13531,6 +13531,797 @@
         }
       }
     },
+    "/api/v1/promotion/waves/{waveId}/applications": {
+      "get": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "ListPromotionWaveApplications",
+        "parameters": [
+          {
+            "name": "waveId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseOfApplicationSummaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/waves/{waveId}/targets/{matrixId}": {
+      "get": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "GetPromotionTargetForm",
+        "parameters": [
+          {
+            "name": "waveId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "matrixId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetFormResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/applications": {
+      "post": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "CreatePromotionApplication",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewApplicationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/applications/mine": {
+      "get": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "ListMyPromotionApplications",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationSummaryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/applications/{id}": {
+      "get": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "GetPromotionApplication",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "UpdatePromotionApplication",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/applications/{id}/withdraw": {
+      "post": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "WithdrawPromotionApplication",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/applications/{id}/formal": {
+      "put": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "UpdatePromotionApplicationFormal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/applications/{id}/raters": {
+      "put": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "UpdatePromotionApplicationRaters",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RatersRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/desk": {
       "get": {
         "tags": [
@@ -13655,6 +14446,270 @@
   },
   "components": {
     "schemas": {
+      "ApplicationFormalResponse": {
+        "required": [
+          "hiredOrPromotedOn",
+          "ignoreInterval",
+          "ignoreIntervalByName",
+          "ignoreIntervalAt"
+        ],
+        "type": "object",
+        "properties": {
+          "hiredOrPromotedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "ignoreInterval": {
+            "type": "boolean"
+          },
+          "ignoreIntervalByName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ignoreIntervalAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "ApplicationRequest": {
+        "required": [
+          "matrixId",
+          "levelId",
+          "education",
+          "selfScores",
+          "raterEmployeeIds"
+        ],
+        "type": "object",
+        "properties": {
+          "matrixId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "levelId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "education": {
+            "$ref": "#/components/schemas/EducationLevel"
+          },
+          "selfScores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SelfScoreInput"
+            }
+          },
+          "raterEmployeeIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "ApplicationResponse": {
+        "required": [
+          "id",
+          "waveId",
+          "stage",
+          "status",
+          "roles",
+          "candidateEmployeeId",
+          "candidateName",
+          "target",
+          "education",
+          "selfScores",
+          "raters",
+          "formal",
+          "formalFailures",
+          "warnings"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "waveId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ApplicationStatus"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationRole"
+            }
+          },
+          "candidateEmployeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "candidateName": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ApplicationTargetResponse"
+          },
+          "education": {
+            "$ref": "#/components/schemas/EducationLevel"
+          },
+          "selfScores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SelfScoreResponse"
+            }
+          },
+          "raters": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/RaterResponse"
+            }
+          },
+          "formal": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApplicationFormalResponse"
+              }
+            ]
+          },
+          "formalFailures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormalFailure"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormalFailure"
+            }
+          }
+        }
+      },
+      "ApplicationRole": {
+        "type": "string"
+      },
+      "ApplicationStatus": {
+        "enum": [
+          "Submitted",
+          "Admitted",
+          "FormalRejected",
+          "UnderReview",
+          "Decided",
+          "NoDecision",
+          "Withdrawn"
+        ]
+      },
+      "ApplicationSummaryResponse": {
+        "required": [
+          "id",
+          "waveId",
+          "waveStartsOn",
+          "stage",
+          "status",
+          "candidateEmployeeId",
+          "candidateName",
+          "target",
+          "submittedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "waveId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "waveStartsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "stage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ApplicationStatus"
+          },
+          "candidateEmployeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "candidateName": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ApplicationTargetResponse"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApplicationTargetResponse": {
+        "required": [
+          "unitId",
+          "unitName",
+          "matrixId",
+          "trackId",
+          "trackName",
+          "levelId",
+          "levelName"
+        ],
+        "type": "object",
+        "properties": {
+          "unitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unitName": {
+            "type": "string"
+          },
+          "matrixId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trackId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trackName": {
+            "type": "string"
+          },
+          "levelId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "levelName": {
+            "type": "string"
+          }
+        }
+      },
       "ApprovalResponse": {
         "required": [
           "versionId",
@@ -15556,6 +16611,29 @@
           }
         }
       },
+      "FormalFailure": {
+        "enum": [
+          "MissingDate",
+          "IntervalNotPassed",
+          "EducationBelowRequired"
+        ]
+      },
+      "FormalRequest": {
+        "required": [
+          "hiredOrPromotedOn",
+          "ignoreInterval"
+        ],
+        "type": "object",
+        "properties": {
+          "hiredOrPromotedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "ignoreInterval": {
+            "type": "boolean"
+          }
+        }
+      },
       "HttpValidationProblemDetails": {
         "type": "object",
         "properties": {
@@ -17302,6 +18380,47 @@
           }
         }
       },
+      "NewApplicationRequest": {
+        "required": [
+          "waveId",
+          "matrixId",
+          "levelId",
+          "education",
+          "selfScores",
+          "raterEmployeeIds"
+        ],
+        "type": "object",
+        "properties": {
+          "waveId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "matrixId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "levelId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "education": {
+            "$ref": "#/components/schemas/EducationLevel"
+          },
+          "selfScores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SelfScoreInput"
+            }
+          },
+          "raterEmployeeIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
       "NewCareerLevelRequest": {
         "required": [
           "trackId",
@@ -17892,6 +19011,35 @@
             ]
           },
           "employeeCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PageResponseOfApplicationSummaryResponse": {
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationSummaryResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
             "type": "integer",
             "format": "int32"
           }
@@ -18682,6 +19830,47 @@
           }
         }
       },
+      "RaterResponse": {
+        "required": [
+          "employeeId",
+          "fullName",
+          "source"
+        ],
+        "type": "object",
+        "properties": {
+          "employeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/RaterSource"
+          }
+        }
+      },
+      "RaterSource": {
+        "enum": [
+          "Candidate",
+          "Head"
+        ]
+      },
+      "RatersRequest": {
+        "required": [
+          "raterEmployeeIds"
+        ],
+        "type": "object",
+        "properties": {
+          "raterEmployeeIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
       "ScalePoint": {
         "required": [
           "score",
@@ -18698,6 +19887,44 @@
           }
         },
         "description": "One point of a scale: its score and what reaching it means."
+      },
+      "SelfScoreInput": {
+        "required": [
+          "competencyId",
+          "score"
+        ],
+        "type": "object",
+        "properties": {
+          "competencyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SelfScoreResponse": {
+        "required": [
+          "competencyId",
+          "competencyName",
+          "score"
+        ],
+        "type": "object",
+        "properties": {
+          "competencyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "competencyName": {
+            "type": "string"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       },
       "SettingsRequest": {
         "required": [
@@ -18735,6 +19962,95 @@
             "items": {
               "type": "integer",
               "format": "int32"
+            }
+          }
+        }
+      },
+      "TargetFormCompetencyResponse": {
+        "required": [
+          "id",
+          "name",
+          "scalePoints"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scalePoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScalePoint"
+            }
+          }
+        }
+      },
+      "TargetFormLevelResponse": {
+        "required": [
+          "id",
+          "name",
+          "requiredEducation"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "requiredEducation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EducationLevel"
+              }
+            ]
+          }
+        }
+      },
+      "TargetFormResponse": {
+        "required": [
+          "matrixId",
+          "unitId",
+          "unitName",
+          "trackName",
+          "levels",
+          "competencies"
+        ],
+        "type": "object",
+        "properties": {
+          "matrixId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unitName": {
+            "type": "string"
+          },
+          "trackName": {
+            "type": "string"
+          },
+          "levels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetFormLevelResponse"
+            }
+          },
+          "competencies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetFormCompetencyResponse"
             }
           }
         }

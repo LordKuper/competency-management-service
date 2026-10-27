@@ -69,23 +69,6 @@ internal sealed class CommissionReader(
         return employeeId is not null && roster.Members.Any(member => member.EmployeeId == employeeId) ? CommissionRights.Read : CommissionRights.None;
     }
 
-    /// <summary>
-    /// Says why employees cannot sit in a commission: they do not exist, do not work, or have no account that can act.
-    /// </summary>
-    /// <param name="employeeIds">The employees.</param>
-    /// <param name="cancellationToken">Cancels the lookups.</param>
-    /// <returns>One line per employee who cannot, addressed to the user; empty when all can.</returns>
-    public async Task<List<string>> MemberProblemsAsync(IReadOnlyCollection<Guid> employeeIds, CancellationToken cancellationToken)
-    {
-        var people = await employees.FindManyAsync(employeeIds, cancellationToken);
-        var accounts = await users.FindByEmployeeIdsAsync(employeeIds, cancellationToken);
-        return [.. employeeIds
-            .Select(id => people.TryGetValue(id, out var person)
-                ? Acts(person, accounts) ? null : $"Сотрудник «{person.FullName}» не работает или у него нет действующей учётной записи"
-                : "Сотрудник не найден")
-            .OfType<string>()];
-    }
-
     private static CommissionRoster Compose(
         OrgUnitStatus unit,
         PromotionCommission? commission,
@@ -104,7 +87,7 @@ internal sealed class CommissionReader(
                 people[id].FullName,
                 id == responsibleHr?.EmployeeId,
                 id == unit.HeadEmployeeId,
-                Acts(people[id], accounts) && (id != unit.HeadEmployeeId || unit.IsActive)))
+                ActingEmployees.Acts(people[id], accounts) && (id != unit.HeadEmployeeId || unit.IsActive)))
             .OrderByDescending(member => member.IsRequired)
             .ThenBy(member => member.FullName, TextCollation.Comparer)
             .ThenBy(member => member.EmployeeId)
@@ -118,7 +101,4 @@ internal sealed class CommissionReader(
             responsibleHr?.UserId,
             members);
     }
-
-    private static bool Acts(EmployeeStatus person, IReadOnlyDictionary<Guid, UserStatus> accounts) =>
-        person.IsActive && accounts.TryGetValue(person.Id, out var account) && account.IsActive;
 }
