@@ -1,0 +1,12 @@
+{"op":"open","id":"scope#1","kind":"phase","parent":null,"start":"2026-10-27T16:03:47.847Z","attrs":{}}
+{"op":"open","id":"wait workflow choice","kind":"user-wait","parent":"scope#1","start":"2026-10-27T16:03:53.690Z","attrs":{"gate":"workflow choice"}}
+{"op":"close","id":"wait workflow choice","kind":"user-wait","parent":"scope#1","start":"2026-10-27T16:03:53.690Z","end":"2026-10-27T16:05:59.217Z","outcome":"done","attrs":{"gate":"workflow choice"}}
+{"op":"open","id":"wait requirements interview","kind":"user-wait","parent":"scope#1","start":"2026-10-27T16:06:46.840Z","attrs":{"gate":"requirements interview"}}
+{"op":"close","id":"wait requirements interview","kind":"user-wait","parent":"scope#1","start":"2026-10-27T16:06:46.840Z","end":"2026-10-27T16:30:22.608Z","outcome":"done","attrs":{"gate":"requirements interview"}}
+{"op":"open","id":"wait refinement interview","kind":"user-wait","parent":"scope#1","start":"2026-10-27T16:31:31.351Z","attrs":{"gate":"refinement interview"}}
+{"op":"close","id":"wait refinement interview","kind":"user-wait","parent":"scope#1","start":"2026-10-27T16:31:31.351Z","end":"2026-10-27T17:22:49.822Z","outcome":"done","attrs":{"gate":"refinement interview"}}
+{"op":"open","id":"wait approach choice","kind":"user-wait","parent":"scope#1","start":"2026-10-27T17:22:58.977Z","attrs":{"gate":"approach choice"}}
+{"op":"close","id":"wait approach choice","kind":"user-wait","parent":"scope#1","start":"2026-10-27T17:22:58.977Z","end":"2026-10-27T17:29:51.180Z","outcome":"done","attrs":{"gate":"approach choice"}}
+{"op":"open","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-27T17:31:50.087Z","attrs":{"gate":"scope"}}
+{"op":"close","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-27T17:31:50.087Z","end":"2026-10-27T18:25:45.306Z","outcome":"done","attrs":{"gate":"scope"}}
+{"op":"close","id":"scope#1","kind":"phase","parent":null,"start":"2026-10-27T16:03:47.847Z","end":"2026-10-27T18:25:45.535Z","outcome":"done","attrs":{}}
