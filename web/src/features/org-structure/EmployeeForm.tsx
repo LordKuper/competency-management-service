@@ -12,6 +12,7 @@ import {
 } from "antd";
 import type { ReactNode } from "react";
 import { useFormSubmit } from "../../app/useFormSubmit";
+import { useIsAdmin } from "../auth/useCurrentUser";
 import { AssignmentFields } from "./AssignmentFields";
 import { LegalEntitySelect } from "./LegalEntitySelect";
 import { OrgUnitSelect } from "./OrgUnitSelect";
@@ -68,6 +69,7 @@ export function EmployeeForm({
   scenarioActions,
 }: EmployeeFormProps) {
   const { token } = antdTheme.useToken();
+  const isAdmin = useIsAdmin();
   const [form] = Form.useForm<EmployeeInput>();
   const { isSubmitting, submit } = useFormSubmit(form, onSubmit);
   const orgUnitId = Form.useWatch("orgUnitId", form);
@@ -117,11 +119,7 @@ export function EmployeeForm({
     <Form.Item
       name="orgUnitId"
       label="Подразделение"
-      extra={
-        scenarioActions
-          ? hints?.orgUnit
-          : "Сотрудника можно перевести, выбрав другое подразделение."
-      }
+      extra={scenarioActions ? hints?.orgUnit : undefined}
       rules={[{ required: true, message: "Выберите подразделение" }]}
     >
       <OrgUnitSelect isActiveRequired placeholder="Выберите подразделение" />
@@ -222,7 +220,11 @@ export function EmployeeForm({
           {email !== undefined && (
             <Form.Item
               label="E-mail"
-              extra="E-mail берётся из учётной записи сотрудника и меняется в разделе «Пользователи»."
+              extra={
+                isAdmin
+                  ? "E-mail меняется в разделе «Пользователи»."
+                  : undefined
+              }
             >
               <Typography.Text>{email ?? "Нет учётной записи"}</Typography.Text>
             </Form.Item>
