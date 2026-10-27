@@ -83,7 +83,7 @@ AC-24 (замеры разработчика, не ассерты): предпр
 
 | ID | Entry | Location | Symptom | Failing test | Status | Fix commit |
 |---|---|---|---|---|---|---|
-| D-1 | 1 | web/src/features/org-structure/AssignmentFields.tsx | AssertionError: expected "vi.fn()" to be called once, but got 0 times | the assignments in the employee form (AC-1, AC-2, AC-3) > swaps a secondary assignment with the main one in one save (AC-3) | pending |  |
+| D-1 | 1 | web/src/features/org-structure/AssignmentFields.tsx | AssertionError: expected "vi.fn()" to be called once, but got 0 times | the assignments in the employee form (AC-1, AC-2, AC-3) > swaps a secondary assignment with the main one in one save (AC-3) | fixed | 77cce66 |
 
 D-1, причина: после «Сделать основным: Совмещение 1» в обоих блоках («Подразделение» и «Должность») поле должности очищается, форма не отправляется ошибкой «Выберите должность». Если у каждого подразделения свой перечень должностей (обычный случай), выбор должности в `PositionSelect` сбрасывается эффектом `onChange(undefined)` в момент, когда значение уже новое, а подразделение и «текущая» должность (`keptPosition`) ещё прежние. Проверено: если оба подразделения предлагают обе должности, тест проходит. Исправление — за разработчиком (режим test-fix); тест не ослаблялся.
 
