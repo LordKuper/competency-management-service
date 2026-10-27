@@ -126,3 +126,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Affected docs**: [plan.md](./plan.md), [org-structure.md](../../../docs/architecture/org-structure.md)
 - 2026-10-27 — route change-request-1: mechanical, dispatch HEAD 2fe9d43
 - 2026-10-27 — impl assessment: change requested — убрать из подтверждения удаления подразделения предложение об условиях удаления и журнале
+- 2026-10-27 — impl assessment: change requested — ревизия надписей интерфейса: убрать информацию, нерелевантную пользователю, которому она показывается
+- 2026-10-27 — route change-request-2: standard, dispatch HEAD 4ed7796

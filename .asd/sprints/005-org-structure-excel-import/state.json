@@ -159,6 +159,12 @@
       "tier": "mechanical",
       "reason": "deterministic-command",
       "resolved_model": null
+    },
+    "change-request-2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:ui shape",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
