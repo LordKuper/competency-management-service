@@ -175,7 +175,7 @@ internal static class OrgImportEndpoints
         try
         {
             requested = JsonSerializer.Deserialize<List<T>>(json, WebJson) ?? [];
-            return true;
+            return requested.All(item => item is not null);
         }
         catch (JsonException)
         {
