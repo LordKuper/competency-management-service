@@ -52,3 +52,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Свидетельства — ход спринта: критическая находка внешнего ревью, четыре поправки скоупа и два запроса изменений в приёмке impl, находка о переходе HR на закрытый экран. Ничего не применено; строки попадут в приём ретро следующего scope.
 - **Affected docs**: [retrospective.html](./retrospective.html)
 - 2026-10-27 — PR opened (user approved push and publication in chat): #9 https://github.com/LordKuper/competency-management-service/pull/9, title «feat(org-structure): Excel org-structure import»; DoD: only docs since full-suite HEAD 50090b3, wave-1 reviewers APPROVE/resolved, retrospective.html present
+- 2026-10-27 — sprint closure: PR #9 merged (merge commit b83da70e12cf03c1fb92c5c445f9d78141215446); folder archived, phase=done, by sprint 006 scope

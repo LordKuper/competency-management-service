@@ -1,7 +1,7 @@
 {
   "sprint_id": "005-org-structure-excel-import",
   "branch": "sprint/005-org-structure-excel-import",
-  "phase": "pr",
+  "phase": "done",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -111,6 +111,13 @@
       "reason": "reviewer DoD met wave-1/iter-02; full suite green",
       "evidence": "decisions-log.md 2026-10-27 impl-review DoD met; test-plan.md Suite run 50090b3",
       "artifact_revision": "74cd7ae"
+    },
+    {
+      "gate": "sprint-closure",
+      "decision_actor": "orchestrator",
+      "reason": "PR #9 merged",
+      "evidence": "merge commit b83da70e12cf03c1fb92c5c445f9d78141215446",
+      "artifact_revision": "b83da70"
     }
   ],
   "task_routing": {
@@ -227,13 +234,14 @@
     }
   },
   "created_at": "2026-10-26T13:39:38.279Z",
-  "updated_at": "2026-10-27T13:53:52.273Z",
+  "updated_at": "2026-10-27T16:03:39.734Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": {
     "number": 9,
     "url": "https://github.com/LordKuper/competency-management-service/pull/9",
-    "state": "open"
+    "state": "merged",
+    "merge_commit": "b83da70e12cf03c1fb92c5c445f9d78141215446"
   },
-  "archived_at": null
+  "archived_at": "2026-10-27T16:03:39.734Z"
 }
