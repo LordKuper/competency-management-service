@@ -3,7 +3,7 @@ import { COMPETENCY_TYPES } from "./competencyType";
 import type { MatrixChange, MatrixContent, MatrixDiff } from "./matrixApi";
 import { typeOfCompetency } from "./matrixContent";
 import { OUTSIDE_LABEL } from "./matrixGroups";
-import { CHANGED_NOTE } from "./matrixLabels";
+import { CHANGED_NOTE, EDUCATION_LABELS } from "./matrixLabels";
 
 const NO_VALUE = "—";
 
@@ -94,7 +94,7 @@ export function describeChanges(
         const level = content.levels.find((item) => item.levelId === levelId);
         return (
           level &&
-          `Минимальный общий порог: ${percent(level.minOverallPercent)}`
+          `Минимальный общий порог: ${percent(level.minOverallPercent)}${level.requiredEducation ? `; Требуемое образование: ${EDUCATION_LABELS[level.requiredEducation]}` : ""}`
         );
       }
       case "Block": {

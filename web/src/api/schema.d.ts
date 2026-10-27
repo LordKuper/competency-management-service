@@ -2139,7 +2139,10 @@ export interface components {
             canEdit: boolean;
             canDelete: boolean;
         };
-        /** @enum {unknown} */
+        /**
+         * @description How a competency counts towards readiness. Member names are stored and sent in the API, so renaming one changes both.
+         * @enum {unknown}
+         */
         CompetencyType: "Critical" | "Profile" | "Additional";
         CompetencyVersionResponse: {
             /** Format: int32 */
@@ -2327,6 +2330,8 @@ export interface components {
             groups: components["schemas"]["DeskGroupResponse"][];
             prerequisites: components["schemas"]["DeskPrerequisite"][];
         };
+        /** @enum {unknown} */
+        EducationLevel: "SecondaryGeneral" | "SecondaryVocational" | "Bachelor" | "SpecialistOrMaster" | "HigherQualification" | null;
         EmployeeImpactAccount: {
             email: string;
             isBlocked: boolean;
@@ -2565,6 +2570,7 @@ export interface components {
             levelId: string;
             /** Format: double */
             minOverallPercent: null | number;
+            requiredEducation?: null | components["schemas"]["EducationLevel"];
         };
         MatrixLevelEntry: {
             /** Format: uuid */
@@ -3172,6 +3178,7 @@ export interface components {
             /** Format: int32 */
             moreCount: number;
         };
+        /** @description One point of a scale: its score and what reaching it means. */
         ScalePoint: {
             /** Format: int32 */
             score: number;

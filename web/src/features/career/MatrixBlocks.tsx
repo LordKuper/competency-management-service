@@ -1,6 +1,7 @@
 import { CloseCircleOutlined, EditOutlined } from "@ant-design/icons";
 import {
   InputNumber,
+  Select,
   Space,
   Table,
   type TableColumnsType,
@@ -14,15 +15,23 @@ import {
   cellKey,
   setBlockWeight,
   setOverallMin,
+  setRequiredEducation,
 } from "./matrixContent";
 import { competenciesText, OUTSIDE_LABEL } from "./matrixGroups";
-import { CHANGED_NOTE } from "./matrixLabels";
+import {
+  CHANGED_NOTE,
+  EDUCATION_LABELS,
+  type EducationLevel,
+} from "./matrixLabels";
 
 const MAX_PERCENT = 100;
 const PERCENT_PRECISION = 100;
 const NO_VALUE = "—";
+const EDUCATION_OPTIONS = (
+  Object.keys(EDUCATION_LABELS) as EducationLevel[]
+).map((value) => ({ value, label: EDUCATION_LABELS[value] }));
 
-/** A row of the table: a shared block, the competencies outside blocks, the sum of a level or its overall threshold. */
+/** A row of the table: a shared block, the competencies outside blocks, the sum of a level, its overall threshold or its required education. */
 type Row =
   | {
       kind: "shared";
@@ -32,7 +41,8 @@ type Row =
     }
   | { kind: "outside"; key: string; blockId: null; count: number }
   | { kind: "sum"; key: string }
-  | { kind: "min"; key: string };
+  | { kind: "min"; key: string }
+  | { kind: "education"; key: string };
 
 interface MatrixBlocksProps {
   content: MatrixContent;
@@ -96,6 +106,9 @@ export function MatrixBlocks({
       : []),
     { kind: "sum", key: "sum" },
     { kind: "min", key: "min" },
+    ...(isSingleLevel
+      ? []
+      : [{ kind: "education" as const, key: "education" }]),
   ];
   const levelColumns: TableColumnsType<Row> = levelIds.map((levelId) => {
     const levelName = levelNames.get(levelId) ?? "";
@@ -127,6 +140,25 @@ export function MatrixBlocks({
             />
           ) : (
             (level?.minOverallPercent ?? NO_VALUE)
+          );
+        }
+        if (row.kind === "education") {
+          const education = content.levels.find(
+            (item) => item.levelId === levelId,
+          )?.requiredEducation;
+          return isEditable ? (
+            <Select
+              className="matrix-education-select"
+              aria-label={`Требуемое образование: ${levelName}`}
+              allowClear
+              options={EDUCATION_OPTIONS}
+              value={education ?? null}
+              onChange={(value) =>
+                onChange(setRequiredEducation(content, levelId, value ?? null))
+              }
+            />
+          ) : (
+            (education && EDUCATION_LABELS[education]) || NO_VALUE
           );
         }
         const percent =
@@ -173,6 +205,9 @@ export function MatrixBlocks({
         if (row.kind === "sum") return <strong>Сумма коэффициентов</strong>;
         if (row.kind === "min") {
           return <strong>Минимальный общий порог, %</strong>;
+        }
+        if (row.kind === "education") {
+          return <strong>Требуемое образование</strong>;
         }
         if (row.kind === "outside") {
           return (

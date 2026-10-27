@@ -52,3 +52,17 @@ export const DECISION_TEXTS: Record<MatrixDecision["kind"], string> = {
   RolledBack: "откатил правки",
   Published: "опубликовано",
 };
+
+/** A level of education a matrix level can require. */
+export type EducationLevel = NonNullable<
+  components["schemas"]["EducationLevel"]
+>;
+
+/** Names of the education levels, lowest first. */
+export const EDUCATION_LABELS: Record<EducationLevel, string> = {
+  SecondaryGeneral: "Среднее общее",
+  SecondaryVocational: "Среднее профессиональное",
+  Bachelor: "Высшее — бакалавриат",
+  SpecialistOrMaster: "Высшее — специалитет, магистратура",
+  HigherQualification: "Высшее — подготовка кадров высшей квалификации",
+};

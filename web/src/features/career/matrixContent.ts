@@ -5,6 +5,7 @@ import type {
   MatrixContent,
   MatrixRequirement,
 } from "./matrixApi";
+import type { EducationLevel } from "./matrixLabels";
 
 /** Key of a cell: the level and the competency or block it lies under. */
 export function cellKey(levelId: string, rowId: string) {
@@ -43,6 +44,19 @@ export function setOverallMin(
     ...content,
     levels: content.levels.map((level) =>
       level.levelId === levelId ? { ...level, minOverallPercent } : level,
+    ),
+  };
+}
+
+export function setRequiredEducation(
+  content: MatrixContent,
+  levelId: string,
+  requiredEducation: EducationLevel | null,
+) {
+  return {
+    ...content,
+    levels: content.levels.map((level) =>
+      level.levelId === levelId ? { ...level, requiredEducation } : level,
     ),
   };
 }

@@ -97,7 +97,7 @@ internal sealed record MatrixContent(
 
     /// <summary>
     /// Checks the document on its own: no missing lists or items, no repeated keys, no competency in a block of the version's own, items
-    /// refer to levels and shared blocks of the document, and numbers and competency types within their limits. What the document refers
+    /// refer to levels and shared blocks of the document, and numbers, education levels and competency types within their limits. What the document refers
     /// to outside itself, the competencies of shared blocks that requirements may name among them, is checked against the catalogues.
     /// </summary>
     /// <returns>The problems found by field name; empty when the document is valid.</returns>
@@ -150,6 +150,11 @@ internal sealed record MatrixContent(
         if (Levels.Any(item => !IsPercent(item.MinOverallPercent)) || BlockWeights.Any(item => !IsPercent(item.Percent)))
         {
             return $"Коэффициенты и пороги — от 0 до {MaxPercent} %";
+        }
+
+        if (Levels.Any(item => item.RequiredEducation is { } education && !Enum.IsDefined(education)))
+        {
+            return "Укажите допустимый уровень образования";
         }
 
         return Competencies.Any(item => item.Type is { } type && !Enum.IsDefined(type))

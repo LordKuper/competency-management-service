@@ -13809,7 +13809,8 @@
           "Critical",
           "Profile",
           "Additional"
-        ]
+        ],
+        "description": "How a competency counts towards readiness. Member names are stored and sent in the API, so renaming one changes both."
       },
       "CompetencyVersionResponse": {
         "required": [
@@ -14518,6 +14519,16 @@
             }
           }
         }
+      },
+      "EducationLevel": {
+        "enum": [
+          "SecondaryGeneral",
+          "SecondaryVocational",
+          "Bachelor",
+          "SpecialistOrMaster",
+          "HigherQualification",
+          null
+        ]
       },
       "EmployeeImpactAccount": {
         "required": [
@@ -15531,6 +15542,16 @@
               "number"
             ],
             "format": "double"
+          },
+          "requiredEducation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EducationLevel"
+              }
+            ]
           }
         }
       },
@@ -17821,7 +17842,8 @@
           "label": {
             "type": "string"
           }
-        }
+        },
+        "description": "One point of a scale: its score and what reaching it means."
       },
       "TrackLevelPositionsResponse": {
         "required": [
