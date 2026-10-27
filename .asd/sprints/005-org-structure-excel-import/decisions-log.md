@@ -99,3 +99,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Rationale**: Проверено на dev-базе: ICU `ru` в образе есть; чистая `ru-x-icu` ставит названия в кавычках вперёд, `ru-u-ka-shifted` сохраняет нынешний порядок, который пользователь просил оставить; смена коллации базы целиком требует её пересоздания.
 - **Affected docs**: [sprint.md](./sprint.md), [plan.md](./plan.md), [stack.html](../../../docs/architecture/stack.html)
 - 2026-10-27 — route Task 8: standard, dispatch HEAD d8423e0
+
+## 2026-10-27 — AC-32 изменён: стандартная коллация `ru`
+
+- **Decision**: Пользователь выбрал стандартную русскую коллацию ICU (`ru-x-icu`) вместо `ru-u-ka-shifted`: знаки препинания значимы, названия в кавычках встают перед остальными. Клиентский `Intl.Collator("ru")` не меняется. Task 8 переадресован работающему dev до завершения. Отменяет вариант из записи «Поправка скоупа: русская коллация (AC-32)».
+- **Rationale**: Ответ пользователя «Нет, используй стандартную ru».
+- **Affected docs**: [sprint.md](./sprint.md), [plan.md](./plan.md)

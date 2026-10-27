@@ -99,9 +99,9 @@ Material risk: change: ui shape — новый шаг мастера, выбор
 ### Task 8: Русская коллация сортировки
 AC: AC-32.
 Material risk: change: migration — коллация колонок и пересборка их индексов
-- [ ] Миграция создаёт ICU-коллацию (`CREATE COLLATION … (provider = icu, locale = 'ru-u-ka-shifted')`, детерминированная) и назначает её текстовым колонкам, по которым сервер сортирует (поиск `OrderBy`/`orderby` по названиям и ФИО во всех модулях: `org-structure`, `career-framework`, `user-management`), через `UseCollation` в конфигурации EF; индексы `lower(name)` и поиск (`ILIKE`, tsvector) остаются рабочими; база не пересоздаётся
-- [ ] `Intl.Collator("ru")` в `web/src/features/org-structure/EmployeeCards.tsx` — с `ignorePunctuation: true`
-- [ ] Проверка порядка на dev-базе запросом без изменения данных: «Блок А | БЛОК "МЕЖДУНАРОДНОЕ" | БЛОК ПО АДМ | БЛОК "СТРАТЕГИЯ"»
+- [ ] Миграция назначает стандартную ICU-коллацию `ru-x-icu` текстовым колонкам, по которым сервер сортирует (поиск `OrderBy`/`orderby` по названиям и ФИО во всех модулях: `org-structure`, `career-framework`, `user-management`), через `UseCollation` в конфигурации EF; индексы `lower(name)` и поиск (`ILIKE`, tsvector) остаются рабочими; база не пересоздаётся
+- [ ] Клиентский `Intl.Collator("ru")` в `web/src/features/org-structure/EmployeeCards.tsx` остаётся без изменений (те же правила)
+- [ ] Проверка порядка на временной базе: «БЛОК "МЕЖДУНАРОДНОЕ" | БЛОК "СТРАТЕГИЯ" | БЛОК ПО АДМ», «ё» рядом с «е»
 
 ## Risks
 - Тёзки блокируют импорт (AC-14) до переименования одного из сотрудников — ошибка называет их; принято на гейте scope.

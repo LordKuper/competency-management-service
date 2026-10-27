@@ -83,6 +83,13 @@
       "reason": "AC-32 Russian ICU collation ru-u-ka-shifted for server sorting, keep current order; Task 8 wave 7",
       "evidence": "decisions-log.md 2026-10-27 AC-32 amendment; iterations charged 0, fix rounds charged 0",
       "artifact_revision": "sprint.md+plan.md@working-tree"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "AC-32 changed: standard ICU ru collation (punctuation significant) instead of ru-u-ka-shifted",
+      "evidence": "decisions-log.md 2026-10-27 AC-32 changed; iterations charged 0, fix rounds charged 0",
+      "artifact_revision": "sprint.md+plan.md@working-tree"
     }
   ],
   "task_routing": {
