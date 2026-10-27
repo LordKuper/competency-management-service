@@ -76,6 +76,13 @@
       "reason": "AC-29..AC-31 head recognition in import, head rule by any assignment; AC-1, AC-3, AC-19, AC-28 amended; out-of-scope line removed; Task 6 wave 5, Task 7 wave 6",
       "evidence": "decisions-log.md 2026-10-27 AC-29..AC-31 amendment; iterations charged 0, fix rounds charged 0",
       "artifact_revision": "sprint.md+plan.md@working-tree"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "AC-32 Russian ICU collation ru-u-ka-shifted for server sorting, keep current order; Task 8 wave 7",
+      "evidence": "decisions-log.md 2026-10-27 AC-32 amendment; iterations charged 0, fix rounds charged 0",
+      "artifact_revision": "sprint.md+plan.md@working-tree"
     }
   ],
   "task_routing": {
@@ -119,6 +126,12 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "risk:ui shape",
+      "resolved_model": "sonnet"
+    },
+    "Task 8": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:migration",
       "resolved_model": "sonnet"
     }
   },
