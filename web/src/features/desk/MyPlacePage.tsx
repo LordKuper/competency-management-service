@@ -248,7 +248,7 @@ function PositionMatrixPanel({
       >
         <Flex vertical gap="small">
           <Typography.Text>
-            {`Требования взяты из опубликованной матрицы должности подразделения «${unitName}», версия ${matrix.number}. `}
+            {`Требования взяты из опубликованной матрицы должности подразделения «${unitName}». `}
             <Link to={matrixPath(matrix.matrixId)}>Смотреть матрицу</Link>
           </Typography.Text>
           <Table
@@ -326,7 +326,7 @@ function TrackPanel({
         </Flex>
         {track.matrix ? (
           <Typography.Text>
-            {`Требования взяты из опубликованной матрицы подразделения «${unitName}», версия ${track.matrix.number}. `}
+            {`Требования взяты из опубликованной матрицы подразделения «${unitName}». `}
             <Link to={matrixPath(track.matrix.matrixId)}>Смотреть матрицу</Link>
           </Typography.Text>
         ) : (
@@ -408,7 +408,7 @@ function PublishedMatrices({
         <CompactAlert
           type="info"
           lead="Опубликованных матриц пока нет."
-          text={`Для подразделения «${unitName}» ещё не опубликована ни одна матрица, поэтому требований к уровням нет. Матрицу готовит руководитель подразделения, публикует её ответственный HR при согласовании.`}
+          text={`Для подразделения «${unitName}» ещё не опубликована ни одна матрица, поэтому требований к уровням нет.`}
         />
       ) : (
         <Table

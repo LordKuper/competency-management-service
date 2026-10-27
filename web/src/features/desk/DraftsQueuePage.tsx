@@ -138,7 +138,7 @@ export function DraftsQueuePage() {
             onShowMore={showMore}
             moreCount={MORE_COUNT}
             isLoading={list.isPending}
-            emptyText="Черновых записей, которые вы вправе утвердить, нет. Новые появятся здесь и на рабочем столе."
+            emptyText="Черновых записей, которые вы вправе утвердить, нет."
           >
             {list.isPending ? (
               <Skeleton active />
@@ -281,24 +281,19 @@ function DraftRecord({ draft, position, total, headingRef }: DraftRecordProps) {
             onRetry={() => void matrices.refetch()}
           />
         ) : (
-          <>
-            <Table<EntryMatrix>
-              size="small"
-              rowKey={(matrix) => matrix.versionId}
-              columns={MATRIX_COLUMNS}
-              dataSource={matrices.data}
-              loading={matrices.isFetching}
-              pagination={false}
-              className="desk-table"
-              locale={{
-                emptyText:
-                  "Записью пока не пользуется ни одна матрица, доступная вам.",
-              }}
-            />
-            <Typography.Text type="secondary">
-              Показаны матрицы и версии, которые вы вправе читать.
-            </Typography.Text>
-          </>
+          <Table<EntryMatrix>
+            size="small"
+            rowKey={(matrix) => matrix.versionId}
+            columns={MATRIX_COLUMNS}
+            dataSource={matrices.data}
+            loading={matrices.isFetching}
+            pagination={false}
+            className="desk-table"
+            locale={{
+              emptyText:
+                "Записью пока не пользуется ни одна матрица, доступная вам.",
+            }}
+          />
         )}
       </section>
       <section>

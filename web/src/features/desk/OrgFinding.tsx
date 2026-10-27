@@ -254,7 +254,7 @@ function LinkAccount({ accountId }: { accountId: string }) {
         <Form.Item
           name="employeeId"
           label="Сотрудник"
-          extra="В списке видны подразделение и должность. После привязки ссылка приглашения перестанет действовать: отправьте приглашение повторно."
+          extra="После привязки ссылка приглашения перестанет действовать: отправьте приглашение повторно."
           rules={[{ required: true, message: "Выберите сотрудника" }]}
         >
           <EmployeePicker />
@@ -446,7 +446,7 @@ function UnusedPosition({ item }: { item: DeskItem }) {
         </Flex>
         {canOnboard && (
           <Typography.Text type="secondary">
-            {`«Принять сотрудника» — откроется сценарий, должность «${item.object.name}» в нём уже выбрана; «Деактивировать» — должность перестанет предлагаться.`}
+            «Деактивировать» — должность перестанет предлагаться.
           </Typography.Text>
         )}
       </Flex>
@@ -482,9 +482,6 @@ function EmptyUnit({ item }: { item: DeskItem }) {
           Деактивировать подразделение
         </Button>
       </Flex>
-      <Typography.Text type="secondary">
-        {`«Принять сотрудника» — откроется сценарий, подразделение «${item.object.name}» в нём уже выбрано; «Деактивировать» — подразделение исчезнет из дерева.`}
-      </Typography.Text>
     </Flex>
   );
 }

@@ -175,7 +175,7 @@ export function BuilderSubmitStep({
           <Typography.Paragraph>{route}</Typography.Paragraph>
           {receiver && (
             <Typography.Paragraph type="secondary">
-              {`Версия уйдёт ${shortName(receiver.name)}; ему и далее HR придёт письмо.`}
+              {`Версия уйдёт ${shortName(receiver.name)}.`}
               {track.data?.status === "Draft" &&
                 ` Трек «${version.entries.track?.name}» — черновой: он опубликуется вместе с версией, если HR вправе его утвердить.`}
             </Typography.Paragraph>
