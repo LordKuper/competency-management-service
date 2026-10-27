@@ -1,5 +1,6 @@
 import {
   CheckCircleOutlined,
+  DeleteOutlined,
   DownOutlined,
   EditOutlined,
   MoreOutlined,
@@ -24,6 +25,7 @@ import { UnitStatusTag } from "./StatusTags";
 export type UnitAction =
   | "addChild"
   | "addEmployee"
+  | "delete"
   | "edit"
   | "hr"
   | "move"
@@ -156,6 +158,13 @@ export const UnitCard = memo(function UnitCard({
                       danger: unit.isActive,
                       label: unit.isActive ? "Деактивировать" : "Активировать",
                       onClick: () => onAction("toggleActive", unit),
+                    },
+                    {
+                      key: "delete",
+                      icon: <DeleteOutlined />,
+                      danger: true,
+                      label: "Удалить",
+                      onClick: () => onAction("delete", unit),
                     },
                   ]
                 : []),

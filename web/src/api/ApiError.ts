@@ -9,6 +9,8 @@ export class ApiError extends Error {
   readonly blockers: readonly components["schemas"]["DeletionBlocker"][];
   /** How many more blocking records exist beyond `blockers`. */
   readonly moreCount: number;
+  /** What keeps a unit from being deleted, one line per kind (409 refusals of a unit deletion only). */
+  readonly obstacles: readonly string[];
   /** Address of the fresh publication preview, sent with a 412 that means "the list of what is published changed". */
   readonly publication: string | undefined;
   /** Validation messages per field name, present only on validation problems. */
@@ -28,6 +30,9 @@ export class ApiError extends Error {
     this.blockers = Array.isArray(fields.blockers) ? fields.blockers : [];
     this.moreCount =
       typeof fields.moreCount === "number" ? fields.moreCount : 0;
+    this.obstacles = Array.isArray(fields.obstacles)
+      ? fields.obstacles.filter((line) => typeof line === "string")
+      : [];
   }
 }
 

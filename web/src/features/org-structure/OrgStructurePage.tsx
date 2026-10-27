@@ -24,6 +24,7 @@ import { useCanEditOrgStructure } from "./useCanEditOrgStructure";
 import { useEmployeeLifecycle } from "./useEmployeeLifecycle";
 import { SEARCH_MIN_LENGTH } from "./useEmployeeSearch";
 import { useUnitActivation } from "./useUnitActivation";
+import { useUnitDeletion } from "./useUnitDeletion";
 import { useUnitExpansion } from "./useUnitExpansion";
 
 const TOO_SHORT_NOTE = `Подразделений с таким названием нет. Чтобы найти сотрудника, введите не менее ${SEARCH_MIN_LENGTH} символов.`;
@@ -50,6 +51,12 @@ export function OrgStructurePage() {
     useUnitExpansion(roots);
   const [dialog, setDialog] = useState<PageDialog | null>(null);
   const confirmActivation = useUnitActivation();
+  const selectParentOf = useCallback(
+    (deleted: OrgUnit) =>
+      setSearchParams(deleted.parentId ? { unit: deleted.parentId } : {}),
+    [setSearchParams],
+  );
+  const confirmDeletion = useUnitDeletion(selectParentOf);
   const confirmLifecycle = useEmployeeLifecycle();
   const selectedId = searchParams.get("unit");
 
@@ -63,13 +70,14 @@ export function OrgStructurePage() {
   const handleAction = useCallback(
     (action: UnitAction, unit: OrgUnit) => {
       if (action === "toggleActive") confirmActivation(unit);
+      else if (action === "delete") confirmDeletion(unit);
       else if (action === "addChild")
         setDialog({ kind: "addUnit", parentId: unit.id });
       else if (action === "addEmployee")
         setDialog({ kind: "addEmployee", orgUnitId: unit.id });
       else setDialog({ kind: action, unitId: unit.id });
     },
-    [confirmActivation],
+    [confirmActivation, confirmDeletion],
   );
   const handleEmployeeAction = useCallback(
     (action: EmployeeAction, employee: Employee) => {
