@@ -140,10 +140,10 @@ Material risk: change: public contract — API оценки, карточки к
 AC: AC-5 (смена по датам), AC-6 (фиксация версий), AC-17, AC-21, AC-23 (отметка), AC-32 («Решение не принято»), AC-35, AC-36, AC-38.
 Material risk: change: scheduling — порядок и однократность действий этапов, догон после простоя
 Material risk: change: computed metric — граница этапа в часовом поясе организации
-- [ ] `PromotionScheduler` по решению «Фоновая смена этапов»: `PeriodicTimer` из `TimeProvider`, scope на тик, ошибки тика — в лог, цикл не падает
-- [ ] Действия конца и начала этапов по тому же решению; формальная проверка — общая функция Task 3; проверка этапа 3 — `ICareerModel.Score` по средним круговой оценки
-- [ ] `PromotionMailQueue` и тексты писем AC-35, AC-36, AC-38 (`PromotionMail.cs`): получатели вычисляются после фиксации шага; ссылки писем — на маршруты из «Маршруты и их охрана» с `AppOptions.PublicBaseUrl`
-- [ ] Письмо об объявлении волны (AC-38) — после фиксации `waves` POST (`WaveEndpoints` из Task 2)
+- [x] `PromotionScheduler` по решению «Фоновая смена этапов»: `PeriodicTimer` из `TimeProvider`, scope на тик, ошибки тика — в лог, цикл не падает
+- [x] Действия конца и начала этапов по тому же решению; формальная проверка — общая функция Task 3; проверка этапа 3 — `ICareerModel.Score` по средним круговой оценки
+- [x] `PromotionMailQueue` и тексты писем AC-35, AC-36, AC-38 (`PromotionMail.cs`): получатели вычисляются после фиксации шага; ссылки писем — на маршруты из «Маршруты и их охрана» с `AppOptions.PublicBaseUrl`
+- [x] Письмо об объявлении волны (AC-38) — после фиксации `waves` POST (`WaveEndpoints` из Task 2)
 
 ### Task 6: Рабочий стол — находки повышения
 AC: AC-39.
