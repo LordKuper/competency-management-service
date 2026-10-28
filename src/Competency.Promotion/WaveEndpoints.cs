@@ -134,7 +134,7 @@ internal static class WaveEndpoints
 
     /// <summary>
     /// Changes the dates and units of a wave. Before it starts everything may change; afterwards the start date, the units and the end dates
-    /// of finished stages stay, and the end dates of the running and later stages move no earlier than today. A wave that is over does not change.
+    /// of finished stages stay, and the end dates of the running and later stages move freely, past days included. A wave that is over does not change.
     /// </summary>
     private static async Task<Results<Ok<WaveResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateAsync(
         Guid id,

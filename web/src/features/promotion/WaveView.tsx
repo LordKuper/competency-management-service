@@ -52,6 +52,10 @@ function endDatesFrom(start: Dayjs, durations: readonly number[]): Dayjs[] {
   return ends;
 }
 
+function isBeforeToday(day: Dayjs): boolean {
+  return day.isBefore(dayjs(), "day");
+}
+
 function initialValuesOf(wave?: Wave): Partial<WaveFormValues> {
   return {
     startsOn: wave && dayjs(wave.startsOn),
@@ -85,6 +89,7 @@ export function WaveView({
   const isReadOnly = !canEdit || isOver;
   const isStarted = stage >= 1;
   const isLocked = isSubmitting || isReadOnly;
+  const disabledDate = wave ? undefined : isBeforeToday;
   const waveUnitIds = new Set(wave?.units.map((unit) => unit.id));
 
   return (
@@ -134,6 +139,7 @@ export function WaveView({
             >
               <DatePicker
                 format={DATE_FORMAT}
+                disabledDate={disabledDate}
                 disabled={isLocked || isStarted}
               />
             </Form.Item>
@@ -150,6 +156,7 @@ export function WaveView({
                   >
                     <DatePicker
                       format={DATE_FORMAT}
+                      disabledDate={disabledDate}
                       disabled={isLocked || index + 1 < stage}
                     />
                   </Form.Item>

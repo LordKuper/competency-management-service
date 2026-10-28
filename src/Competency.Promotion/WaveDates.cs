@@ -1,8 +1,9 @@
 namespace Competency.Promotion;
 
 /// <summary>
-/// The rules for the dates of a wave: a date never falls on a day before today or before the date of the previous stage; once the wave has
-/// started its start date is fixed, and so is the end date of every stage that has finished.
+/// The rules for the dates of a wave: a date never falls on a day before the date of the previous stage, nor beyond the horizon; a wave being
+/// announced has no date before today, while one being changed may keep or move a date into the past; once the wave has started its start date
+/// is fixed, and so is the end date of every stage that has finished.
 /// </summary>
 internal static class WaveDates
 {
@@ -38,9 +39,9 @@ internal static class WaveDates
                 errors[StartField] = ["Дату начала нельзя изменить после начала волны"];
             }
         }
-        else if (request.StartsOn < today || request.StartsOn > horizon)
+        else if (StartProblem(request.StartsOn, wave is null, today, horizon) is { } startProblem)
         {
-            errors[StartField] = [request.StartsOn < today ? BeforeTodayMessage : HorizonMessage()];
+            errors[StartField] = [startProblem];
         }
 
         var previous = request.StartsOn;
@@ -49,7 +50,7 @@ internal static class WaveDates
             var date = request.EndsOn[index];
             var problem = wave is not null && index + 1 < stage
                 ? date == wave.EndsOn[index] ? null : FinishedMessage
-                : EndProblem(date, previous, today, horizon);
+                : EndProblem(date, previous, wave is null, today, horizon);
             if (problem is not null)
             {
                 errors[$"{EndsField}[{index}]"] = [problem];
@@ -61,9 +62,19 @@ internal static class WaveDates
         return errors;
     }
 
-    private static string? EndProblem(DateOnly date, DateOnly previous, DateOnly today, DateOnly horizon)
+    private static string? StartProblem(DateOnly date, bool isAnnounced, DateOnly today, DateOnly horizon)
     {
-        if (date < today)
+        if (isAnnounced && date < today)
+        {
+            return BeforeTodayMessage;
+        }
+
+        return date > horizon ? HorizonMessage() : null;
+    }
+
+    private static string? EndProblem(DateOnly date, DateOnly previous, bool isAnnounced, DateOnly today, DateOnly horizon)
+    {
+        if (isAnnounced && date < today)
         {
             return BeforeTodayMessage;
         }
