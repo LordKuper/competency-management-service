@@ -2864,6 +2864,7 @@ export interface components {
             isActive?: null | boolean;
             /** Format: int32 */
             version?: null | number;
+            hasAccount?: boolean;
         };
         EntryMatrixResponse: {
             /** Format: uuid */
@@ -4070,6 +4071,8 @@ export interface components {
         WaveResponse: {
             /** Format: uuid */
             id: string;
+            /** Format: date */
+            announcedOn: string;
             /** Format: date */
             startsOn: string;
             endsOn: string[];

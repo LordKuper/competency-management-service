@@ -24,6 +24,8 @@ export interface EmployeeOption {
   name: string;
   /** Unit and position, so namesakes can be told apart. */
   detail: string;
+  /** Whether the employee has an account, which a rater without one is invited by e-mail instead. */
+  hasAccount?: boolean;
 }
 
 interface CommissionFormValues {

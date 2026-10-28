@@ -40,6 +40,7 @@ interface Chosen {
   id: string;
   name: string;
   detail?: string;
+  hasAccount?: boolean;
 }
 
 /** The list of raters of a candidate: people are found by name and added one by one, each can be taken off the list, and one without an account gets the address to invite them at. */
@@ -59,7 +60,11 @@ export function RatersField({
     Object.fromEntries(
       saved.map((rater) => [
         rater.employeeId,
-        { id: rater.employeeId, name: rater.fullName },
+        {
+          id: rater.employeeId,
+          name: rater.fullName,
+          hasAccount: rater.hasAccount,
+        },
       ]),
     ),
   );
@@ -99,7 +104,7 @@ export function RatersField({
 
   function renderEmail(rater: Chosen) {
     const details = savedById.get(rater.id);
-    if (details?.hasAccount) {
+    if (details?.hasAccount ?? rater.hasAccount) {
       return (
         <Typography.Text type="secondary">Есть учётная запись</Typography.Text>
       );
@@ -232,6 +237,7 @@ export function RatersField({
               id: added.id,
               name: added.name,
               detail: added.detail,
+              hasAccount: added.hasAccount,
             },
           }));
           onChange?.([...value, { employeeId: id, email: null }]);

@@ -16,9 +16,9 @@ function workingDayFrom(day: Dayjs): Dayjs {
   return isWorkingDay(day) ? day : workingDayFrom(day.add(1, "day"));
 }
 
-/** The first day applications may start for a wave announced today. */
-export function earliestStart(): Dayjs {
-  return dayjs().add(MIN_LEAD_DAYS, "day");
+/** The first day applications may start for a wave announced on `announcedOn`, today by default. */
+export function earliestStart(announcedOn?: string): Dayjs {
+  return dayjs(announcedOn).add(MIN_LEAD_DAYS, "day");
 }
 
 /**

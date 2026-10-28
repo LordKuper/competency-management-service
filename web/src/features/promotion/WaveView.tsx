@@ -54,8 +54,9 @@ function isBeforeToday(day: Dayjs): boolean {
   return day.isBefore(dayjs(), "day");
 }
 
-function isBeforeEarliestStart(day: Dayjs): boolean {
-  return day.isBefore(earliestStart(), "day");
+function isBeforeEarliestStart(announcedOn?: string) {
+  return (day: Dayjs): boolean =>
+    day.isBefore(earliestStart(announcedOn), "day");
 }
 
 function initialValuesOf(wave?: Wave): Partial<WaveFormValues> {
@@ -96,7 +97,7 @@ export function WaveView({
   const isStarted = stage >= 1;
   const isLocked = isSubmitting || isReadOnly;
   const disabledEndDate = wave ? undefined : isBeforeToday;
-  const disabledStartDate = wave ? undefined : isBeforeEarliestStart;
+  const disabledStartDate = isBeforeEarliestStart(wave?.announcedOn);
   const waveUnitIds = new Set(wave?.units.map((unit) => unit.id));
 
   return (

@@ -76,6 +76,7 @@ internal sealed class WaveReader(
         var authors = await AccountNamesAsync([.. waves.Select(wave => wave.AuthorId).Distinct()], cancellationToken);
         return [.. waves.Select(wave => new WaveResponse(
             wave.Id,
+            calendar.DayOf(wave.CreatedAt),
             wave.StartsOn,
             wave.EndsOn,
             calendar.StageOf(wave),

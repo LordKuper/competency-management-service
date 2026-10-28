@@ -179,11 +179,13 @@ const SEARCH_RESULTS: EmployeeOption[] = [
     id: "demo-emp-r6",
     name: "Громова Ольга Станиславовна",
     detail: "Отдел тестирования, инженер по тестированию",
+    hasAccount: true,
   },
   {
     id: "demo-emp-r7",
     name: "Фёдоров Андрей Ильич",
     detail: "Управление разработки, разработчик",
+    hasAccount: false,
   },
 ];
 
@@ -270,6 +272,7 @@ const COMMISSION: Versioned<Commission> = {
 
 const WAVE_STARTS_ON = "2027-03-01";
 const WAVE_DATES = {
+  announcedOn: "2027-02-15",
   startsOn: WAVE_STARTS_ON,
   endsOn: endDatesFrom(dayjs(WAVE_STARTS_ON), SETTINGS.stageDurationsDays).map(
     (date) => date.format(ISO_DATE),

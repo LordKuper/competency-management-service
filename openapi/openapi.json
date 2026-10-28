@@ -17976,6 +17976,9 @@
               "integer"
             ],
             "format": "int32"
+          },
+          "hasAccount": {
+            "type": "boolean"
           }
         }
       },
@@ -22685,6 +22688,7 @@
       "WaveResponse": {
         "required": [
           "id",
+          "announcedOn",
           "startsOn",
           "endsOn",
           "stage",
@@ -22698,6 +22702,10 @@
           "id": {
             "type": "string",
             "format": "uuid"
+          },
+          "announcedOn": {
+            "type": "string",
+            "format": "date"
           },
           "startsOn": {
             "type": "string",

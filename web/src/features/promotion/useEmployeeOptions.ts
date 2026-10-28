@@ -33,6 +33,7 @@ export function useEmployeeOptions(purpose: string) {
       id: employee.id,
       name: employee.fullName,
       detail: `${employee.orgUnitName}, ${employee.position}`,
+      hasAccount: employee.hasAccount,
     }),
   );
   return {
