@@ -6,7 +6,6 @@ import {
   Descriptions,
   Flex,
   Form,
-  List,
   Row,
   Table,
   type TableColumnsType,
@@ -138,15 +137,29 @@ function ArtifactLinks({ artifact }: { artifact?: Artifact }) {
   );
 }
 
+type Rater = NonNullable<PromotionApplication["raters"]>[number];
+
+function ratersByUnit(raters: readonly Rater[]): [string, Rater[]][] {
+  const units = new Map<string, Rater[]>();
+  for (const rater of raters) {
+    units.set(rater.unitName, [...(units.get(rater.unitName) ?? []), rater]);
+  }
+  return [...units];
+}
+
 type TimelineState = "done" | "now" | "next" | "failed";
 
 interface ProgressStep {
   label: string;
+  /** What is told under the label of the stage that runs now. */
+  note?: string;
   state: TimelineState;
 }
 
 function progressOf(application: PromotionApplication): ProgressStep[] {
-  const { stage, status } = application;
+  const { stage, status, session } = application;
+  const endOf = (stageNumber: number) =>
+    ` до ${formatDate(session.endsOn[stageNumber - 1] ?? session.resultsPublishedOn)}`;
   const state = (stageNumber: number): TimelineState =>
     stage > stageNumber ? "done" : stage === stageNumber ? "now" : "next";
   const isRejected = status === "FormalRejected";
@@ -159,11 +172,13 @@ function progressOf(application: PromotionApplication): ProgressStep[] {
             stage > STAGE.formalCheck
               ? "Формальная проверка пройдена"
               : "Формальная проверка",
+          note: endOf(STAGE.formalCheck).trim(),
           state: state(STAGE.formalCheck),
         },
     {
       label:
         stage > STAGE.rating ? "Круговая оценка завершена" : "Круговая оценка",
+      note: endOf(STAGE.rating).trim(),
       state: isRejected ? "next" : state(STAGE.rating),
     },
     {
@@ -171,17 +186,21 @@ function progressOf(application: PromotionApplication): ProgressStep[] {
         stage > STAGE.artifacts
           ? "Сбор артефактов завершён"
           : "Сбор артефактов",
+      note: endOf(STAGE.artifacts).trim(),
       state: isRejected ? "next" : state(STAGE.artifacts),
     },
     {
       label:
         stage > STAGE.review
           ? "Рассмотрение комиссией завершено"
-          : "Рассмотрение комиссией",
+          : `Рассмотрение комиссией${endOf(STAGE.review)}`,
       state: isRejected ? "next" : state(STAGE.review),
     },
     {
-      label: stage > STAGE.review ? "Результат опубликован" : "Результат",
+      label:
+        stage > STAGE.review
+          ? "Результат опубликован"
+          : `Результат — ${formatDate(session.resultsPublishedOn)}`,
       state: isRejected || stage <= STAGE.review ? "next" : "done",
     },
   ];
@@ -208,9 +227,16 @@ function ApplicationProgress({
             step.state === "next" ? (
               <Typography.Text type="secondary">{step.label}</Typography.Text>
             ) : (
-              <Typography.Text strong={step.state === "now"}>
-                {step.label}
-              </Typography.Text>
+              <Flex vertical>
+                <Typography.Text strong={step.state === "now"}>
+                  {step.label}
+                </Typography.Text>
+                {step.state === "now" && step.note && (
+                  <Typography.Text type="secondary">
+                    {step.note}
+                  </Typography.Text>
+                )}
+              </Flex>
             ),
         }))}
       />
@@ -277,6 +303,10 @@ export function ApplicationView({
   const hasEducationWarning =
     isCandidate && application.warnings.includes("EducationBelowRequired");
   const showsArtifacts = isCandidate && application.artifacts !== null;
+  const listFinalOn = application.session.endsOn[STAGE.formalCheck - 1];
+  const artifactsEnd =
+    application.session.endsOn[STAGE.artifacts - 1] ??
+    application.session.resultsPublishedOn;
 
   const saveArtifacts = useFormSubmit(form, async (values) => {
     await onSaveArtifacts(
@@ -329,7 +359,12 @@ export function ApplicationView({
     {
       title: "Компетенция",
       key: "name",
-      render: (_, score) => score.competencyName,
+      render: (_, score) => (
+        <Flex vertical align="start">
+          <span>{score.competencyName}</span>
+          {score.type === "Critical" && <Tag color="warning">Критическая</Tag>}
+        </Flex>
+      ),
     },
     {
       title: "Самооценка",
@@ -337,7 +372,7 @@ export function ApplicationView({
       render: (_, score) => (
         <ScaleValue
           name={score.competencyName}
-          points={[]}
+          points={score.scalePoints}
           score={score.score}
         />
       ),
@@ -424,7 +459,11 @@ export function ApplicationView({
           </Button>
         )}
       </Flex>
-      <StageSteps stage={stage} orientation="horizontal" />
+      <StageSteps
+        stage={stage}
+        endsOn={application.session.endsOn}
+        orientation="horizontal"
+      />
       {hasEducationWarning && (
         <Alert type="warning" showIcon title={EDUCATION_WARNING} />
       )}
@@ -442,8 +481,8 @@ export function ApplicationView({
         <Alert
           type="warning"
           showIcon
-          title={`Нужны артефакты к ${competenciesText(mandatoryIds.length)}`}
-          description={`${ARTIFACT_MANDATORY_EXPLANATION} Когда будете готовы, нажмите «Отправить на рассмотрение». Если не отправите до конца этапа, заявка уйдёт в комиссию с тем, что приложено.`}
+          title={`Нужны артефакты к ${competenciesText(mandatoryIds.length)} до ${formatDate(artifactsEnd)}`}
+          description={`${ARTIFACT_MANDATORY_EXPLANATION} Когда будете готовы, нажмите «Отправить на рассмотрение». Если не отправите до ${formatDate(artifactsEnd)}, заявка уйдёт в комиссию с тем, что приложено.`}
         />
       )}
       {application.feedbackReceivedAt && (
@@ -547,26 +586,44 @@ export function ApplicationView({
               </Flex>
             </Panel>
             {application.raters && (
-              <Panel title="Оценивающие">
-                <List
-                  size="small"
-                  dataSource={[...application.raters]}
-                  renderItem={(rater) => (
-                    <List.Item>
-                      <Flex vertical>
-                        <span>{rater.fullName}</span>
-                        {!rater.hasAccount && rater.email && (
-                          <Typography.Text type="secondary">
-                            {rater.email},{" "}
-                            {rater.isEmailConfirmed
-                              ? "почта подтверждена"
-                              : "почта не подтверждена"}
-                          </Typography.Text>
-                        )}
-                      </Flex>
-                    </List.Item>
-                  )}
-                />
+              <Panel
+                title="Оценивающие"
+                extra={
+                  listFinalOn && (
+                    <Typography.Text type="secondary">
+                      Список окончательный с {formatDate(listFinalOn)}
+                    </Typography.Text>
+                  )
+                }
+              >
+                <Flex
+                  vertical
+                  gap="small"
+                  component="ul"
+                  style={{ margin: 0, padding: 0 }}
+                >
+                  {ratersByUnit(application.raters).map(([unit, raters]) => (
+                    <li key={unit} style={{ listStyle: "none" }}>
+                      <b>{unit}:</b>{" "}
+                      {raters.map((rater, index) => (
+                        <span key={rater.employeeId}>
+                          {index > 0 && ", "}
+                          {rater.fullName}
+                          {!rater.hasAccount && rater.email && (
+                            <Typography.Text type="secondary">
+                              {" "}
+                              ({rater.email},{" "}
+                              {rater.isEmailConfirmed
+                                ? "почта подтверждена"
+                                : "почта не подтверждена"}
+                              )
+                            </Typography.Text>
+                          )}
+                        </span>
+                      ))}
+                    </li>
+                  ))}
+                </Flex>
               </Panel>
             )}
           </Flex>

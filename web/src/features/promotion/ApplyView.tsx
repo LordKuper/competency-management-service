@@ -30,6 +30,7 @@ import {
   artifactItemsOf,
   artifactsOf,
 } from "./ArtifactFields";
+import { type BlockRow, blockColumns, blockRows } from "./BlockRows";
 import type { EmployeeOption } from "./CommissionView";
 import { isEducationBelow } from "./educationRule";
 import { Panel } from "./Panel";
@@ -46,6 +47,7 @@ import {
   EDUCATION_NOTE,
   EDUCATION_WARNING,
   formatDate,
+  NO_VALUE,
   RATERS_HINT,
 } from "./promotionTexts";
 import { RatersField } from "./RatersField";
@@ -270,7 +272,23 @@ export function ApplyView({
     {
       title: "Компетенция",
       key: "name",
-      render: (_, competency) => competency.name,
+      render: (_, competency) => (
+        <Flex vertical align="start">
+          <span>{competency.name}</span>
+          {competency.type === "Critical" && (
+            <Tag color="warning">Критическая</Tag>
+          )}
+        </Flex>
+      ),
+    },
+    {
+      title: "Нужно",
+      key: "required",
+      align: "right",
+      render: (_, competency) =>
+        competency.requirements.find(
+          (requirement) => requirement.levelId === levelId,
+        )?.requiredScore ?? NO_VALUE,
     },
     {
       title: "Самооценка",
@@ -426,7 +444,11 @@ export function ApplyView({
               >
                 <Flex vertical gap="middle">
                   <Typography.Text type="secondary">
-                    Артефакты можно приложить сейчас или после круговой оценки.
+                    Критическая компетенция должна быть оценена не ниже балла из
+                    столбца «Нужно», иначе перехода не будет. Остальные
+                    компетенции входят в рейтинг, но нехватку по ним могут
+                    восполнить другие компетенции. Артефакты можно приложить
+                    сейчас или после круговой оценки.
                   </Typography.Text>
                   {!matrixId && (
                     <Typography.Text type="secondary">
@@ -436,27 +458,45 @@ export function ApplyView({
                   )}
                   {matrixId && isTargetLoading && <Skeleton active />}
                   {scoredCompetencies.length > 0 && (
-                    <Table<ScoredCompetency>
-                      rowKey="id"
-                      columns={columns}
-                      dataSource={scoredCompetencies}
+                    <Table<BlockRow<ScoredCompetency>>
+                      rowKey="key"
+                      columns={blockColumns(columns)}
+                      dataSource={blockRows(
+                        scoredCompetencies,
+                        (competency) => competency.block,
+                        (competency) => competency.id,
+                      )}
                       pagination={false}
                       scroll={{ x: "max-content" }}
                       expandable={{
                         showExpandColumn: false,
                         expandedRowKeys: [...openIds],
-                        expandedRowRender: (competency) => (
-                          <ArtifactEditor
-                            competencyId={competency.id}
-                            competencyName={competency.name}
-                          />
-                        ),
+                        rowExpandable: (row) => row.item !== undefined,
+                        expandedRowRender: ({ item }) =>
+                          item && (
+                            <ArtifactEditor
+                              competencyId={item.id}
+                              competencyName={item.name}
+                            />
+                          ),
                       }}
                     />
                   )}
                 </Flex>
               </Panel>
-              <Panel title="4. Оценивающие">
+              <Panel
+                title="4. Оценивающие"
+                extra={
+                  application?.raterCounts && (
+                    <Typography.Text type="secondary">
+                      В сохранённом черновике {application.raterCounts.total} из{" "}
+                      {application.raterCounts.requiredTotal}, из других
+                      подразделений {application.raterCounts.fromOtherUnits} из{" "}
+                      {application.raterCounts.requiredFromOtherUnits}
+                    </Typography.Text>
+                  )
+                }
+              >
                 <Form.Item name="raters" extra={RATERS_HINT}>
                   <RatersField
                     saved={application?.raters ?? []}

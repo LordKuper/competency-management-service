@@ -1,17 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Col, Empty, Flex, Row, Skeleton, TreeSelect, Typography } from "antd";
-import { useMemo, useState } from "react";
+import { Col, Empty, Flex, Row, Skeleton, Typography } from "antd";
+import { useState } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useLeaveGuard } from "../../app/leaveGuard";
 import { contentMaxWidth } from "../../app/theme";
 import { useEditBase } from "../../app/useEditBase";
-import { unitTreeItems, useAnswerableUnits } from "./answerableUnits";
+import { CommissionList } from "./CommissionList";
 import { CommissionView } from "./CommissionView";
 import { Panel } from "./Panel";
 import {
   type Commission,
   type CommissionInput,
   commissionQuery,
+  commissionsQuery,
   promotionQueryKey,
   saveCommission,
   type Versioned,
@@ -34,12 +35,12 @@ export function CommissionsPage() {
   );
 }
 
-/** Choose a unit the viewer answers for, then edit who sits in its commission. */
+/** The units the viewer answers for, each with its commission's size, and beside them the commission of the chosen one to edit. */
 export function CommissionsSection() {
-  const { units, error, refetch } = useAnswerableUnits();
+  const { data, error, isPending, refetch } = useQuery(commissionsQuery);
   const { confirmLeave } = useLeaveGuard();
-  const [unitId, setUnitId] = useState<string>();
-  const items = useMemo(() => unitTreeItems(units ?? []), [units]);
+  const [chosenId, setChosenId] = useState<string>();
+  const unitId = chosenId ?? data?.[0]?.unitId;
   return (
     <Flex vertical gap="middle">
       <Flex justify="space-between" align="baseline" gap="middle" wrap>
@@ -52,36 +53,32 @@ export function CommissionsSection() {
       </Flex>
       {error && (
         <ErrorAlert
-          title="Не удалось загрузить подразделения"
+          title="Не удалось загрузить комиссии"
           error={error}
-          onRetry={refetch}
+          onRetry={() => void refetch()}
         />
       )}
-      {!units && !error && <Skeleton active />}
-      {units?.length === 0 && (
+      {isPending && <Skeleton active />}
+      {data?.length === 0 && (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description="У вас нет подразделений, за которые вы отвечаете как HR. Администратор закрепляет HR за подразделением в разделе «Оргструктура»."
         />
       )}
-      {units && units.length > 0 && (
-        <Row>
-          <Col xs={24} md={12}>
-            <TreeSelect
-              showSearch
-              treeDefaultExpandAll
-              treeNodeFilterProp="title"
-              aria-label="Подразделение"
-              placeholder="Выберите подразделение"
-              style={{ width: "100%" }}
-              treeData={items}
-              value={unitId}
-              onChange={(next: string) => confirmLeave(() => setUnitId(next))}
+      {data && data.length > 0 && (
+        <Row gutter={[24, 24]}>
+          <Col xs={24} lg={7}>
+            <CommissionList
+              commissions={data}
+              selectedId={unitId}
+              onSelect={(next) => confirmLeave(() => setChosenId(next))}
             />
+          </Col>
+          <Col xs={24} lg={17}>
+            {unitId && <CommissionEditor key={unitId} unitId={unitId} />}
           </Col>
         </Row>
       )}
-      {unitId && <CommissionEditor key={unitId} unitId={unitId} />}
     </Flex>
   );
 }

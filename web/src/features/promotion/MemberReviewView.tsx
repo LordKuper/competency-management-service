@@ -11,6 +11,7 @@ import {
 } from "antd";
 import type { ReactNode } from "react";
 import { EDUCATION_LABELS } from "../career/matrixLabels";
+import { DeadlineNote } from "./DeadlineNote";
 import { Panel } from "./Panel";
 import type { RankingItem, Review } from "./promotionApi";
 import {
@@ -19,7 +20,9 @@ import {
   FORMAL_FAILURE_TEXTS,
   formatDate,
   formatPercent,
+  monthsBetween,
   NO_VALUE,
+  raterCountText,
   STAGE,
 } from "./promotionTexts";
 import { RankingView } from "./RankingView";
@@ -146,6 +149,11 @@ export function MemberReviewView({
 
   return (
     <Flex vertical gap="large">
+      <DeadlineNote
+        session={review.session}
+        label="Решения до"
+        stage={STAGE.review}
+      />
       <Panel title="Рейтинг кандидатов">
         <RankingView
           items={ranking}
@@ -178,7 +186,7 @@ export function MemberReviewView({
             />
           )}
           <Row gutter={[24, 16]}>
-            <Col xs={12} lg={5}>
+            <Col xs={12} lg={4}>
               <Fact label="Готовность">
                 <Typography.Title level={2} style={{ margin: 0 }}>
                   {formatPercent(review.rating)}
@@ -194,7 +202,7 @@ export function MemberReviewView({
                 />
               </Fact>
             </Col>
-            <Col xs={12} lg={5}>
+            <Col xs={12} lg={4}>
               <Fact label="Формальная проверка">
                 <Flex>
                   {review.formalFailures.length === 0 ? (
@@ -206,7 +214,7 @@ export function MemberReviewView({
                 <Typography.Text type="secondary">
                   {review.formalFailures.length === 0
                     ? formal.hiredOrPromotedOn
-                      ? `дата приёма или последнего перехода ${formatDate(formal.hiredOrPromotedOn)}`
+                      ? `с последнего перехода ${monthsBetween(formal.hiredOrPromotedOn, review.session.resultsPublishedOn)} мес.`
                       : "формальные признаки пройдены"
                     : review.formalFailures
                         .map((failure) => FORMAL_FAILURE_TEXTS[failure])
@@ -214,7 +222,7 @@ export function MemberReviewView({
                 </Typography.Text>
               </Fact>
             </Col>
-            <Col xs={12} lg={5}>
+            <Col xs={12} lg={4}>
               <Fact label="Образование">
                 <span>
                   {review.education
@@ -223,7 +231,16 @@ export function MemberReviewView({
                 </span>
               </Fact>
             </Col>
-            <Col xs={12} lg={5}>
+            <Col xs={12} lg={4}>
+              <Fact label="Круговая оценка">
+                <span>{raterCountText(review.raterCounts.total)}</span>
+                <Typography.Text type="secondary">
+                  из них {review.raterCounts.fromOtherUnits} из других
+                  подразделений
+                </Typography.Text>
+              </Fact>
+            </Col>
+            <Col xs={12} lg={4}>
               <Fact label="Решение">
                 {review.decision ? (
                   <Flex vertical align="start">
@@ -245,7 +262,7 @@ export function MemberReviewView({
                 )}
               </Fact>
             </Col>
-            <Col xs={24} lg={4}>
+            <Col xs={12} lg={4}>
               <Fact label="Прошлые заявки">
                 <span>{review.history.length} с решением</span>
                 <Button

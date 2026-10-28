@@ -53,7 +53,8 @@ export function StageSteps({
               <Flex vertical>
                 {endsOnStage && (
                   <Typography.Text type="secondary">
-                    до {formatShortDate(endsOnStage)}
+                    {stage === index + 1 ? "сейчас, " : ""}до{" "}
+                    {formatShortDate(endsOnStage)}
                   </Typography.Text>
                 )}
                 {hasPublication && (

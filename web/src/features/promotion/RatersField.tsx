@@ -50,6 +50,7 @@ interface Chosen {
   id: string;
   name: string;
   detail?: string;
+  unitName?: string;
   hasAccount?: boolean;
 }
 
@@ -205,6 +206,12 @@ export function RatersField({
         </Flex>
       ),
     },
+    {
+      title: "Подразделение",
+      key: "unit",
+      render: (_, rater) =>
+        savedById.get(rater.id)?.unitName ?? rater.unitName ?? "—",
+    },
     ...(hasSourceColumn
       ? [
           {
@@ -280,6 +287,7 @@ export function RatersField({
               id: added.id,
               name: added.name,
               detail: added.detail,
+              unitName: added.unitName,
               hasAccount: added.hasAccount,
             },
           }));

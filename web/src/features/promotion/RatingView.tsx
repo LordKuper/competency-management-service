@@ -3,9 +3,10 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
+import { DeadlineNote } from "./DeadlineNote";
 import { Panel } from "./Panel";
 import type { Rating, RatingAnswer, RatingTask } from "./promotionApi";
-import { competenciesText } from "./promotionTexts";
+import { competenciesText, STAGE } from "./promotionTexts";
 import { promotionPaths } from "./routes";
 import { NOT_OBSERVED, type ScaleAnswer, ScaleChoice } from "./ScaleChoice";
 
@@ -110,88 +111,104 @@ export function RatingView({
   ).length;
 
   return (
-    <Row gutter={[24, 24]}>
-      <Col xs={24} lg={7}>
-        <Queue tasks={tasks} currentId={rating.applicationId} />
-      </Col>
-      <Col xs={24} lg={17}>
-        <Panel title={rating.candidateName}>
-          <Form
-            form={form}
-            name="promotion-rating"
-            layout="vertical"
-            disabled={isLocked}
-            initialValues={{
-              answers: Object.fromEntries(
-                (rating.answers ?? []).map((answer) => [
-                  answer.competencyId,
-                  answer.score ?? NOT_OBSERVED,
-                ]),
-              ),
-            }}
-            onFinish={submit}
-            onValuesChange={() => setIsDirty(form.isFieldsTouched())}
-          >
-            <Flex vertical gap="middle">
-              <Typography.Text type="secondary">
-                Оцените, как сотрудник проявлял компетенцию за последние
-                полгода. Если не видели работу в этой области — «Не наблюдал».
-                Оценка анонимная, кандидат и комиссия видят только средние
-                баллы.
-              </Typography.Text>
-              {!rating.canEdit && (
-                <Alert
-                  type="info"
-                  showIcon
-                  title="Оценку сейчас нельзя изменить"
-                />
-              )}
-              {competencies.map((competency) => (
-                <Form.Item
-                  key={competency.id}
-                  name={["answers", competency.id]}
-                  label={competency.name}
-                  style={{ margin: 0 }}
-                  rules={[
-                    {
-                      required: true,
-                      message: "Выберите балл или «Не наблюдал»",
-                    },
-                  ]}
-                >
-                  <ScaleChoice
-                    name={competency.name}
-                    points={competency.scalePoints}
-                    hasNotObserved
-                    disabled={isLocked}
+    <Flex vertical gap="middle">
+      <DeadlineNote
+        session={rating.session}
+        label="Оценки можно менять до"
+        stage={STAGE.rating}
+      />
+      <Row gutter={[24, 24]}>
+        <Col xs={24} lg={7}>
+          <Queue tasks={tasks} currentId={rating.applicationId} />
+        </Col>
+        <Col xs={24} lg={17}>
+          <Panel title={rating.candidateName}>
+            <Form
+              form={form}
+              name="promotion-rating"
+              layout="vertical"
+              disabled={isLocked}
+              initialValues={{
+                answers: Object.fromEntries(
+                  (rating.answers ?? []).map((answer) => [
+                    answer.competencyId,
+                    answer.score ?? NOT_OBSERVED,
+                  ]),
+                ),
+              }}
+              onFinish={submit}
+              onValuesChange={() => setIsDirty(form.isFieldsTouched())}
+            >
+              <Flex vertical gap="middle">
+                <Typography.Text type="secondary">
+                  Оцените, как сотрудник проявлял компетенцию за последние
+                  полгода. Если не видели работу в этой области — «Не наблюдал».
+                  Оценка анонимная, кандидат и комиссия видят только средние
+                  баллы.
+                </Typography.Text>
+                {!rating.canEdit && (
+                  <Alert
+                    type="info"
+                    showIcon
+                    title="Оценку сейчас нельзя изменить"
                   />
-                </Form.Item>
-              ))}
-              {rating.canEdit && (
-                <Flex align="center" gap="small" wrap>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    loading={isSubmitting}
+                )}
+                {competencies.map((competency) => (
+                  <Form.Item
+                    key={competency.id}
+                    name={["answers", competency.id]}
+                    label={
+                      <Flex vertical>
+                        <span>{competency.name}</span>
+                        {competency.description && (
+                          <Typography.Text type="secondary">
+                            {competency.description}
+                          </Typography.Text>
+                        )}
+                      </Flex>
+                    }
+                    style={{ margin: 0 }}
+                    rules={[
+                      {
+                        required: true,
+                        message: "Выберите балл или «Не наблюдал»",
+                      },
+                    ]}
                   >
-                    Сохранить оценку
-                  </Button>
-                  {onOpenNext && (
-                    <Button disabled={isSubmitting} onClick={onOpenNext}>
-                      Следующий кандидат
+                    <ScaleChoice
+                      name={competency.name}
+                      points={competency.scalePoints}
+                      hasNotObserved
+                      disabled={isLocked}
+                    />
+                  </Form.Item>
+                ))}
+                {rating.canEdit && (
+                  <Flex align="center" gap="small" wrap>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      loading={isSubmitting}
+                    >
+                      Сохранить оценку
                     </Button>
-                  )}
-                  {leftCount > 0 && (
-                    <Typography.Text type="secondary">
-                      Осталось оценить {competenciesText(leftCount)}
-                    </Typography.Text>
-                  )}
-                </Flex>
-              )}
-            </Flex>
-          </Form>
-        </Panel>
-      </Col>
-    </Row>
+                    {onOpenNext && (
+                      <Button disabled={isSubmitting} onClick={onOpenNext}>
+                        Следующий кандидат
+                      </Button>
+                    )}
+                    {leftCount > 0 && (
+                      <Typography.Text type="secondary">
+                        Осталось оценить {competenciesText(leftCount)}
+                      </Typography.Text>
+                    )}
+                  </Flex>
+                )}
+              </Flex>
+            </Form>
+          </Panel>
+        </Col>
+      </Row>
+    </Flex>
   );
 }

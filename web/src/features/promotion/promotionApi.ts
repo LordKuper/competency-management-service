@@ -39,6 +39,23 @@ export type RollbackEffectKind = components["schemas"]["RollbackEffectKind"];
 export type WaveApplication =
   components["schemas"]["ApplicationSummaryResponse"];
 
+/** The dates of a career session as every role that sees it is told them: the end of each stage and the day the results are published. */
+export type SessionDates = components["schemas"]["SessionDatesResponse"];
+
+/** How many raters an application has against what it needs. */
+export type RaterCounts = components["schemas"]["RaterCountsResponse"];
+
+/** One candidate of the list a head works through. */
+export type HeadCandidate = components["schemas"]["HeadCandidateResponse"];
+
+/** One row of the list of commissions. */
+export type CommissionSummary =
+  components["schemas"]["CommissionSummaryResponse"];
+
+/** The application counts the filter buttons of a wave show. */
+export type ApplicationCounts =
+  components["schemas"]["ApplicationCountsResponse"];
+
 /** An application as the viewer's role allows seeing it. */
 export type PromotionApplication = components["schemas"]["ApplicationResponse"];
 
@@ -237,22 +254,59 @@ export async function rollbackWave(
   );
 }
 
-/** One page of the applications of a wave that the signed-in user may see. */
-export function waveApplicationsQuery(waveId: string, page: number) {
+/** What narrows the applications of a wave: the status, the need for the data of the formal check and the candidate's name. */
+export interface WaveApplicationFilter {
+  status?: WaveApplication["status"];
+  needsFormalData?: boolean;
+  search?: string;
+}
+
+/** One page of the applications of a wave that the signed-in user may see, narrowed by the filter, with the counts of the whole wave for the filter buttons. */
+export function waveApplicationsQuery(
+  waveId: string,
+  page: number,
+  filter: WaveApplicationFilter = {},
+) {
   return queryOptions({
-    queryKey: [...promotionQueryKey, "wave", waveId, "applications", page],
+    queryKey: [
+      ...promotionQueryKey,
+      "wave",
+      waveId,
+      "applications",
+      page,
+      filter,
+    ],
     queryFn: async () =>
       unwrap(
         await api.GET("/api/v1/promotion/waves/{waveId}/applications", {
           params: {
             path: { waveId },
-            query: { page, pageSize: PROMOTION_PAGE_SIZE },
+            query: { page, pageSize: PROMOTION_PAGE_SIZE, ...filter },
           },
         }),
       ),
     placeholderData: keepPreviousData,
   });
 }
+
+/** The candidates of the units the viewer heads in a wave, with the state of their lists of raters. */
+export function headCandidatesQuery(waveId: string) {
+  return queryOptions({
+    queryKey: [...promotionQueryKey, "wave", waveId, "head-candidates"],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/promotion/waves/{waveId}/head/candidates", {
+          params: { path: { waveId } },
+        }),
+      ),
+  });
+}
+
+/** The commissions the viewer manages, with the size of each and whether it has a chair. */
+export const commissionsQuery = queryOptions({
+  queryKey: [...promotionQueryKey, "commissions"],
+  queryFn: async () => unwrap(await api.GET("/api/v1/promotion/commissions")),
+});
 
 /** One application, dropped once nothing shows it, so a change always starts from the current version. */
 export function applicationQuery(id: string) {

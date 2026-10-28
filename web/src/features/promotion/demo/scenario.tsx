@@ -1,19 +1,28 @@
+import { Col, Flex, Row } from "antd";
 import dayjs from "dayjs";
 import type { ReactNode } from "react";
 import type { OrgUnitTreeNode } from "../../org-structure/orgStructureApi";
 import { ApplicationView } from "../ApplicationView";
 import { ApplyView } from "../ApplyView";
+import { CommissionList } from "../CommissionList";
 import { CommissionView, type EmployeeOption } from "../CommissionView";
+import { DeadlineNote } from "../DeadlineNote";
+import { ExclusionsView } from "../ExclusionsView";
 import { FormalView } from "../FormalView";
+import { HeadCandidatesList } from "../HeadCandidatesList";
 import { MyApplicationsView } from "../MyApplicationsView";
 import { OpenWavesView } from "../OpenWavesView";
+import { Panel } from "../Panel";
 import type {
   Commission,
+  CommissionSummary,
+  HeadCandidate,
   OpenWave,
   PromotionApplication,
   PromotionSettings,
   RankingItem,
   RaterDetails,
+  RaterExclusions,
   Rating,
   RatingTask,
   Review,
@@ -22,6 +31,7 @@ import type {
   Wave,
   WaveApplication,
 } from "../promotionApi";
+import { STAGE } from "../promotionTexts";
 import { RankingView } from "../RankingView";
 import { RatersView } from "../RatersView";
 import { RatingsView } from "../RatingsView";
@@ -72,13 +82,29 @@ interface CompetencyRow {
   selfScore: number;
   finalScore: number;
   circular: Review["competencies"][number]["circular"];
+  description: string;
+  block: Review["competencies"][number]["block"];
   artifact?: { links: { description: string; url: string }[] };
   isArtifactMandatory?: boolean;
 }
 
+const BLOCK_PROFESSIONAL = {
+  id: "demo-block-professional",
+  name: "Профессиональные",
+  order: 0,
+};
+const BLOCK_CORPORATE = {
+  id: "demo-block-corporate",
+  name: "Корпоративные",
+  order: 1,
+};
+
 const DESIGN: CompetencyRow = {
   id: "demo-design",
   name: "Проектирование систем",
+  description:
+    "Выбирает решение с учётом нагрузки, стоимости сопровождения и связей с другими системами.",
+  block: BLOCK_PROFESSIONAL,
   type: "Critical",
   required: 3,
   selfScore: 3,
@@ -105,6 +131,9 @@ const DESIGN: CompetencyRow = {
 const QUALITY: CompetencyRow = {
   id: "demo-quality",
   name: "Качество кода",
+  description:
+    "Пишет код, который другие понимают без автора; покрывает изменения тестами.",
+  block: BLOCK_PROFESSIONAL,
   type: "Additional",
   required: 3,
   selfScore: 4,
@@ -130,6 +159,8 @@ const QUALITY: CompetencyRow = {
 const TEAMWORK: CompetencyRow = {
   id: "demo-teamwork",
   name: "Работа в команде",
+  description: "Договаривается о сроках и рисках, помогает коллегам расти.",
+  block: BLOCK_CORPORATE,
   type: "Additional",
   required: 2,
   selfScore: 3,
@@ -167,10 +198,10 @@ const RATERS: RaterDetails[] = [
   { employeeId: "demo-emp-r3", fullName: "Кузнецов Олег Денисович" },
   { employeeId: "demo-emp-r4", fullName: "Орлова Ирина Максимовна" },
   { employeeId: "demo-emp-r5", fullName: "Волков Дмитрий Романович" },
-].map((rater) => ({
+].map((rater, index) => ({
   ...rater,
-  unitName: "Отдел тестирования",
-  isFromOtherUnit: true,
+  unitName: index < 3 ? "Управление разработки" : "Отдел тестирования",
+  isFromOtherUnit: index >= 3,
   source: "Candidate" as const,
   hasAccount: true,
   email: null,
@@ -295,6 +326,40 @@ const WAVE_DATES = {
   ),
 };
 
+const COMMISSION_LIST: CommissionSummary[] = [
+  {
+    unitId: UNIT_DEV,
+    unitName: TARGET.unitName,
+    memberCount: 4,
+    hasChair: true,
+    chairName: PEOPLE.chair.name,
+  },
+  {
+    unitId: UNIT_QA,
+    unitName: "Управление тестирования",
+    memberCount: 3,
+    hasChair: false,
+    chairName: null,
+  },
+];
+
+const EXCLUSIONS: RaterExclusions = {
+  employees: [
+    {
+      id: "demo-emp-excluded",
+      fullName: "Громов Пётр Ильич",
+      unitName: "Дирекция",
+    },
+  ],
+  positions: [
+    {
+      id: "demo-position-director",
+      name: "Генеральный директор",
+      employeeCount: 1,
+    },
+  ],
+};
+
 const RESULTS_PUBLISHED_ON = WAVE_DATES.endsOn[4] ?? WAVE_STARTS_ON;
 
 function session(stage: number) {
@@ -316,6 +381,33 @@ const RATER_COUNTS = {
   missingFromOtherUnits: 0,
   pendingEmailCount: 0,
 };
+
+const HEAD_CANDIDATES: HeadCandidate[] = [
+  {
+    applicationId: "demo-application",
+    candidateEmployeeId: CANDIDATE.id,
+    candidateName: CANDIDATE.name,
+    target: TARGET,
+    status: "Submitted",
+    canEditRaters: true,
+    raterCounts: { ...RATER_COUNTS, total: 6, pendingEmailCount: 1 },
+  },
+  {
+    applicationId: "demo-application-2",
+    candidateEmployeeId: "demo-emp-demo-application-2",
+    candidateName: "Орехов Игорь Леонидович",
+    target: TARGET,
+    status: "Submitted",
+    canEditRaters: true,
+    raterCounts: {
+      ...RATER_COUNTS,
+      total: 4,
+      fromOtherUnits: 1,
+      missingTotal: 1,
+      missingFromOtherUnits: 1,
+    },
+  },
+];
 
 function wave(stage: number): Versioned<Wave> {
   return {
@@ -368,24 +460,26 @@ const TARGET_FORM: TargetForm = {
       requiredEducation: "Bachelor",
     },
   ],
-  competencies: COMPETENCIES.map(({ id, name, type, required }) => ({
-    id,
-    name,
-    description: null,
-    type,
-    block: null,
-    scalePoints: SCALE,
-    requirements: [{ levelId: TARGET.levelId, requiredScore: required }],
-  })),
+  competencies: COMPETENCIES.map(
+    ({ id, name, description, block, type, required }) => ({
+      id,
+      name,
+      description,
+      type,
+      block,
+      scalePoints: SCALE,
+      requirements: [{ levelId: TARGET.levelId, requiredScore: required }],
+    }),
+  ),
 };
 
 const SELF_SCORES = COMPETENCIES.map(
-  ({ id, name, type, required, selfScore }) => ({
+  ({ id, name, description, block, type, required, selfScore }) => ({
     competencyId: id,
     competencyName: name,
-    description: null,
+    description,
     type,
-    block: null,
+    block,
     requiredScore: required,
     scalePoints: SCALE,
     score: selfScore,
@@ -467,7 +561,7 @@ function summary(
     formalCheck: null,
     formalFailures: [],
     needsFormalData: false,
-    raterCounts: null,
+    raterCounts: RATER_COUNTS,
     decision: null,
     ...overrides,
   };
@@ -492,12 +586,25 @@ function waveApplications(stage: number, status: WaveApplication["status"]) {
       candidateName: "Орехов Игорь Леонидович",
       stage,
       status,
+      needsFormalData: status === "Submitted",
+      raterCounts: {
+        ...RATER_COUNTS,
+        total: 4,
+        fromOtherUnits: 1,
+        missingTotal: 1,
+        missingFromOtherUnits: 1,
+      },
     }),
     summary({
       id: "demo-application-3",
       candidateName: "Захарова Дарья Борисовна",
       stage,
       status,
+      formalCheck:
+        status === "Submitted"
+          ? { isPassed: false, failures: ["IntervalNotPassed"] }
+          : null,
+      raterCounts: { ...RATER_COUNTS, pendingEmailCount: 1 },
     }),
   ];
 }
@@ -529,12 +636,12 @@ const RATING: Rating = {
   stage: 3,
   session: session(3),
   canEdit: true,
-  competencies: COMPETENCIES.map(({ id, name, type }) => ({
+  competencies: COMPETENCIES.map(({ id, name, description, block, type }) => ({
     id,
     name,
-    description: null,
+    description,
     type,
-    block: null,
+    block,
     scalePoints: SCALE,
     requirements: [],
   })),
@@ -606,9 +713,9 @@ function review(overrides: Partial<Review>): Review {
     competencies: COMPETENCIES.map((row) => ({
       competencyId: row.id,
       name: row.name,
-      description: null,
+      description: row.description,
       type: row.type,
-      block: null,
+      block: row.block,
       requiredScore: row.required,
       scalePoints: SCALE,
       selfScore: row.selfScore,
@@ -687,12 +794,50 @@ export const DEMO_STEPS: readonly DemoStep[] = [
       "Ответственный HR добавляет в комиссию подразделения участников и выбирает председателя. Тот, кто входит по должности, остаётся в составе.",
     stage: 0,
     render: () => (
-      <CommissionView
-        commission={COMMISSION}
-        candidates={SEARCH_RESULTS}
-        isSearching={false}
-        onSearch={nothing}
-        onSubmit={noop}
+      <Row gutter={[24, 24]}>
+        <Col xs={24} lg={7}>
+          <CommissionList
+            commissions={COMMISSION_LIST}
+            selectedId={UNIT_DEV}
+            onSelect={nothing}
+          />
+        </Col>
+        <Col xs={24} lg={17}>
+          <Panel title={COMMISSION.unitName}>
+            <CommissionView
+              commission={COMMISSION}
+              candidates={SEARCH_RESULTS}
+              isSearching={false}
+              onSearch={nothing}
+              onSubmit={noop}
+            />
+          </Panel>
+        </Col>
+      </Row>
+    ),
+  },
+  {
+    role: "Администратор",
+    title: "Кого нельзя указывать оценивающим",
+    description:
+      "Администратор запрещает называть оценивающими отдельных сотрудников и всех на некоторых должностях. Кандидат, руководитель и HR видят это в поиске: такой сотрудник недоступен для выбора.",
+    stage: 0,
+    render: () => (
+      <ExclusionsView
+        exclusions={EXCLUSIONS}
+        employees={SEARCH_RESULTS}
+        isSearchingEmployees={false}
+        onSearchEmployees={nothing}
+        positions={[
+          { id: "demo-position-assistant", name: "Помощник руководителя" },
+        ]}
+        isSearchingPositions={false}
+        onSearchPositions={nothing}
+        isBusy={false}
+        onAddEmployee={nothing}
+        onRemoveEmployee={nothing}
+        onAddPosition={nothing}
+        onRemovePosition={nothing}
       />
     ),
   },
@@ -816,6 +961,16 @@ export const DEMO_STEPS: readonly DemoStep[] = [
         page={1}
         pageSize={20}
         isLoading={false}
+        counts={{
+          all: 3,
+          needsFormalData: 1,
+          byStatus: [{ status: "Submitted", count: 3 }],
+        }}
+        filter="All"
+        search=""
+        formalCheckEndsOn={WAVE_DATES.endsOn[1]}
+        onFilterChange={nothing}
+        onSearchChange={nothing}
         onPageChange={nothing}
         onOpenFormal={nothing}
       />
@@ -850,19 +1005,41 @@ export const DEMO_STEPS: readonly DemoStep[] = [
       "Руководитель подразделения цели с отправки заявки до конца этапа «Формальная проверка» дополняет и корректирует список оценивающих и подтверждает почту тех, у кого нет учётной записи. В конце этапа список становится окончательным: система отправляет приглашения зарегистрироваться на подтверждённые адреса, а затем каждому оценивающему — одно письмо со списком всех, кого ему нужно оценить.",
     stage: 2,
     render: () => (
-      <RatersView
-        application={application({
-          stage: 2,
-          roles: ["Head"],
-          formal: FORMAL_ENTERED,
-          raters: RATERS_WITH_UNCONFIRMED_EMAIL,
-        })}
-        candidates={SEARCH_RESULTS}
-        isSearching={false}
-        onSearch={nothing}
-        onSubmit={noop}
-        onConfirmEmail={noop}
-      />
+      <Flex vertical gap="middle">
+        <DeadlineNote
+          session={session(2)}
+          label="Списки можно менять до"
+          stage={STAGE.formalCheck}
+        />
+        <Row gutter={[24, 24]}>
+          <Col xs={24} lg={7}>
+            <HeadCandidatesList
+              candidates={HEAD_CANDIDATES}
+              currentId="demo-application"
+            />
+          </Col>
+          <Col xs={24} lg={17}>
+            <RatersView
+              application={application({
+                stage: 2,
+                roles: ["Head"],
+                formal: FORMAL_ENTERED,
+                raters: RATERS_WITH_UNCONFIRMED_EMAIL,
+                raterCounts: {
+                  ...RATER_COUNTS,
+                  total: 6,
+                  pendingEmailCount: 1,
+                },
+              })}
+              candidates={SEARCH_RESULTS}
+              isSearching={false}
+              onSearch={nothing}
+              onSubmit={noop}
+              onConfirmEmail={noop}
+            />
+          </Col>
+        </Row>
+      </Flex>
     ),
   },
   {

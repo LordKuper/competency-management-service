@@ -40,6 +40,18 @@ export function formatDate(isoDate: string): string {
   return dayjs(isoDate).format("DD.MM.YYYY");
 }
 
+/** The failure of the formal check in a word, for a table cell. */
+export const FORMAL_FAILURE_SHORT: Record<FormalFailure, string> = {
+  MissingDate: "нет даты",
+  IntervalNotPassed: "интервал",
+  EducationBelowRequired: "образование",
+};
+
+/** Months between two days, whole months only. */
+export function monthsBetween(from: string, to: string): number {
+  return dayjs(to).diff(dayjs(from), "month");
+}
+
 /** What a condition of the formal check that the application fails means to the HR. */
 export const FORMAL_FAILURE_TEXTS: Record<FormalFailure, string> = {
   MissingDate: "Не внесена дата приёма на работу или последнего перехода",
@@ -187,6 +199,16 @@ export function competenciesText(count: number): string {
 /** The tag over the competencies a candidate left without a score. */
 export function unscoredText(count: number): string {
   return `${count === 1 ? "Не оценена" : "Не оценены"} ${competenciesText(count)} — считаются как 0`;
+}
+
+const RATER_FORMS: Record<string, string> = {
+  one: "оценивающий",
+  few: "оценивающих",
+};
+
+/** «1 оценивающий» / «2 оценивающих» / «5 оценивающих». */
+export function raterCountText(count: number): string {
+  return `${count} ${RATER_FORMS[PLURAL.select(count)] ?? "оценивающих"}`;
 }
 
 const ARTIFACT_FORMS: Record<string, string> = {

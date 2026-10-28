@@ -22,9 +22,10 @@ import type {
 } from "./promotionApi";
 import {
   DECISION_TAGS,
-  formatDate,
   formatPercent,
+  monthsBetween,
   NO_VALUE,
+  raterCountText,
 } from "./promotionTexts";
 import { ReadinessTag } from "./ReadinessTag";
 import {
@@ -48,17 +49,6 @@ interface ReviewFormValues {
 const DECISION_OPTIONS = (
   Object.keys(DECISION_TAGS) as PromotionDecision[]
 ).map((value) => ({ value, label: DECISION_TAGS[value].label }));
-
-/** The score a chair starts from for a competency: the one they saved, else the circular average rounded to a point of its scale. */
-function startingScore(competency: ReviewCompetency): number | undefined {
-  if (competency.finalScore !== null) return competency.finalScore;
-  const { average } = competency.circular;
-  if (average === null) return undefined;
-  const rounded = Math.round(average);
-  return competency.scalePoints.some((point) => point.score === rounded)
-    ? rounded
-    : undefined;
-}
 
 interface ChairReviewViewProps {
   review: Review;
@@ -180,10 +170,8 @@ export function ChairReviewView({
       initialValues={{
         finalScores: Object.fromEntries(
           scaled.flatMap((competency) => {
-            const score = startingScore(competency);
-            return score === undefined
-              ? []
-              : [[competency.competencyId, score]];
+            const score = competency.finalScore ?? competency.defaultFinalScore;
+            return score === null ? [] : [[competency.competencyId, score]];
           }),
         ),
         decision: review.decision ?? undefined,
@@ -198,9 +186,10 @@ export function ChairReviewView({
               {target.trackName} · {target.unitName} ·{" "}
               {review.formalFailures.length === 0
                 ? "формальная проверка пройдена"
-                : "формальная проверка не пройдена"}
+                : "формальная проверка не пройдена"}{" "}
+              · {raterCountText(review.raterCounts.total)}
               {formal.hiredOrPromotedOn &&
-                ` · дата приёма или последнего перехода ${formatDate(formal.hiredOrPromotedOn)}`}
+                ` · с последнего перехода ${monthsBetween(formal.hiredOrPromotedOn, review.session.resultsPublishedOn)} мес.`}
             </Typography.Text>
             <Button type="link" style={{ padding: 0 }} onClick={showHistory}>
               Прошлые заявки: {review.history.length} с решением

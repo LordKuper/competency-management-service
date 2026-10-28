@@ -26,6 +26,8 @@ export interface EmployeeOption {
   name: string;
   /** Unit and position, so namesakes can be told apart. */
   detail: string;
+  /** The unit the employee works in. */
+  unitName?: string;
   /** Whether the employee has an account, which a rater without one is invited by e-mail instead. */
   hasAccount?: boolean;
   /** Whether the administrator forbids naming the employee as a rater. */

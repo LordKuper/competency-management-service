@@ -73,9 +73,14 @@ export function RatersView({
     <Panel
       title={`${application.candidateName}: оценивающие`}
       extra={
-        <Typography.Text type="secondary">
-          {application.target.trackName} · {application.target.levelName}
-        </Typography.Text>
+        application.raterCounts && (
+          <Typography.Text type="secondary">
+            {application.raterCounts.total} из{" "}
+            {application.raterCounts.requiredTotal}, из других подразделений{" "}
+            {application.raterCounts.fromOtherUnits} из{" "}
+            {application.raterCounts.requiredFromOtherUnits}
+          </Typography.Text>
+        )
       }
     >
       <Flex vertical gap="middle">

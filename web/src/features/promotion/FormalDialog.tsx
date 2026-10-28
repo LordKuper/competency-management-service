@@ -92,8 +92,6 @@ export function FormalDialog({
           latest={data}
           submittedAt={application.submittedAt}
           minIntervalMonths={settings.data?.minIntervalMonths}
-          publishesOn={wave.endsOn[STAGE.review - 1]}
-          checkEndsOn={checkEndsOn}
           onNext={onNext}
         />
       )}
@@ -105,8 +103,6 @@ interface FormalEditorProps {
   latest: Versioned<PromotionApplication>;
   submittedAt: WaveApplication["submittedAt"];
   minIntervalMonths?: number;
-  publishesOn?: string;
-  checkEndsOn?: string;
   onNext?: () => void;
 }
 
@@ -115,8 +111,6 @@ function FormalEditor({
   latest,
   submittedAt,
   minIntervalMonths,
-  publishesOn,
-  checkEndsOn,
   onNext,
 }: FormalEditorProps) {
   const queryClient = useQueryClient();
@@ -167,8 +161,6 @@ function FormalEditor({
         submittedAt={submittedAt}
         canEnter={canEnter}
         minIntervalMonths={minIntervalMonths}
-        publishesOn={publishesOn}
-        checkEndsOn={checkEndsOn}
         onNext={onNext}
         onSubmit={save.mutateAsync}
         onConfirmEmail={(employeeId, email) =>

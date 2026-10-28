@@ -22,7 +22,9 @@ import {
   FORMAL_CHECK_PASSED,
   FORMAL_FAILURE_TEXTS,
   formatDate,
+  monthsBetween,
   NO_VALUE,
+  STAGE,
 } from "./promotionTexts";
 import { RaterEmailsView } from "./RaterEmailsView";
 
@@ -45,10 +47,6 @@ interface FormalViewProps {
   canEnter: boolean;
   /** Months that must pass since the date; the interval warning shows while typing only when it is known. */
   minIntervalMonths?: number;
-  /** The day the results of the session are published, to which the interval is counted; the criterion names it when known. */
-  publishesOn?: string;
-  /** The day the formal check is fixed, the end of its stage. */
-  checkEndsOn?: string;
   /** Saves the date; a refusal that names the date is shown under it, any other one is shown by the caller. */
   onSubmit: (input: FormalInput) => Promise<unknown>;
   /** Enters and confirms the address of a rater without an account; a refusal is shown by the row. */
@@ -95,14 +93,15 @@ export function FormalView({
   submittedAt,
   canEnter,
   minIntervalMonths,
-  publishesOn,
-  checkEndsOn,
   onSubmit,
   onConfirmEmail,
   onNext,
 }: FormalViewProps) {
   const { target, formal, status, formalCheck, raters } = application;
   const failures = formalCheck?.failures ?? application.warnings;
+  const { resultsPublishedOn } = application.session;
+  const checkEndsOn = application.session.endsOn[STAGE.formalCheck - 1];
+  const hiredOn = formal?.hiredOrPromotedOn;
   const fixedNote = checkEndsOn
     ? ` Итог пересчитывается при каждом сохранении и фиксируется ${formatDate(checkEndsOn)}.`
     : "";
@@ -196,7 +195,7 @@ export function FormalView({
           Критерии
         </Typography.Title>
         <Criterion
-          text={`Интервал с последнего перехода${publishesOn ? ` на дату публикации решений ${formatDate(publishesOn)}` : ""}${minIntervalMonths === undefined ? "" : ` — не меньше ${minIntervalMonths} мес.`}`}
+          text={`Интервал с последнего перехода на дату публикации решений ${formatDate(resultsPublishedOn)}${hiredOn ? `: ${monthsBetween(hiredOn, resultsPublishedOn)} мес.` : ""}${minIntervalMonths === undefined ? "" : `, нужно не меньше ${minIntervalMonths} мес.`}`}
           tag={intervalTag(failures, formal)}
         />
         <Criterion
