@@ -185,6 +185,12 @@
       "tier": "standard",
       "reason": "risk:scheduling",
       "resolved_model": "sonnet"
+    },
+    "Task 13": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:scheduling",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
