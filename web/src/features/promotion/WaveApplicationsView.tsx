@@ -1,6 +1,13 @@
-import { Button, Empty, Table, type TableColumnsType, Tag } from "antd";
+import { Button, Empty, Flex, Table, type TableColumnsType, Tag } from "antd";
+import { Link } from "react-router";
 import type { WaveApplication } from "./promotionApi";
-import { APPLICATION_STATUS_TAGS, formatDate, STAGE } from "./promotionTexts";
+import {
+  APPLICATION_STATUS_TAGS,
+  formatDate,
+  REVIEWED_STATUSES,
+  STAGE,
+} from "./promotionTexts";
+import { promotionPaths } from "./routes";
 
 interface WaveApplicationsViewProps {
   applications: readonly WaveApplication[];
@@ -48,19 +55,31 @@ export function WaveApplicationsView({
     {
       title: "Действия",
       key: "actions",
-      render: (_, application) =>
-        application.stage >= STAGE.formalCheck && (
-          <Button
-            type="link"
-            aria-label={`Формальная проверка: ${application.candidateName}`}
-            onClick={() => onOpenFormal(application.id)}
-          >
-            {application.stage === STAGE.formalCheck &&
-            application.status === "Submitted"
-              ? "Внести дату"
-              : "Формальная проверка"}
-          </Button>
-        ),
+      render: (_, application) => (
+        <Flex gap="small" wrap>
+          {application.stage >= STAGE.formalCheck && (
+            <Button
+              type="link"
+              aria-label={`Формальная проверка: ${application.candidateName}`}
+              onClick={() => onOpenFormal(application.id)}
+            >
+              {application.stage === STAGE.formalCheck &&
+              application.status === "Submitted"
+                ? "Внести дату"
+                : "Формальная проверка"}
+            </Button>
+          )}
+          {application.stage >= STAGE.review &&
+            REVIEWED_STATUSES.includes(application.status) && (
+              <Link
+                to={promotionPaths.review(application.id)}
+                aria-label={`Рассмотрение: ${application.candidateName}`}
+              >
+                Рассмотрение
+              </Link>
+            )}
+        </Flex>
+      ),
     },
   ];
   return (

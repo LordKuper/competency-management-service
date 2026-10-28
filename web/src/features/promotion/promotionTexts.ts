@@ -11,6 +11,7 @@ export const STAGE = {
   formalCheck: 2,
   rating: 3,
   artifacts: 4,
+  review: 5,
   feedback: 7,
 } as const;
 
@@ -90,6 +91,31 @@ export const RATERS_HINT =
 /** What a head is asked for when correcting the people who rate a candidate. */
 export const HEAD_RATERS_HINT =
   "Не меньше 5 оценивающих, из них не меньше 2 из других подразделений, чем подразделение кандидата.";
+
+/** What is shown where a value is not there yet. */
+export const NO_VALUE = "—";
+
+/** The statuses of applications that reached the commission. */
+export const REVIEWED_STATUSES: readonly ApplicationStatus[] = [
+  "UnderReview",
+  "Decided",
+  "NoDecision",
+];
+
+const ONE_DECIMAL = new Intl.NumberFormat("ru-RU", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+/** A mean of scores, rounded to a tenth only here, for the eye. */
+export function formatAverage(value: number): string {
+  return ONE_DECIMAL.format(value);
+}
+
+/** A rating or threshold in percent, rounded to a tenth only here, for the eye. */
+export function formatPercent(value: number | null): string {
+  return value === null ? NO_VALUE : `${ONE_DECIMAL.format(value)}%`;
+}
 
 /** A scale point as a choice: its score and its meaning. */
 export function scalePointLabel(point: { score: number; label: string }) {

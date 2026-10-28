@@ -59,7 +59,7 @@ export const navItems: NavItem[] = [
 const wavePage = () =>
   import("./WavePage").then((page) => ({ Component: page.WavePage }));
 
-/** The screens of candidates, raters and heads are open to every signed-in user, since the server alone says whose they are; the management screens are for HR and administrators. They load on first use, so the rest of the application does not carry them. */
+/** The screens of candidates, raters, heads and commission members are open to every signed-in user, since the server alone says whose they are; the management screens are for HR and administrators. They load on first use, so the rest of the application does not carry them. */
 export const routes: RouteObject[] = [
   {
     path: promotionPaths.home,
@@ -96,6 +96,16 @@ export const routes: RouteObject[] = [
     path: "/promotion/raters/:applicationId",
     lazy: () =>
       import("./RatersPage").then((page) => ({ Component: page.RatersPage })),
+  },
+  {
+    path: "/promotion/commission/:waveId/:unitId",
+    lazy: () =>
+      import("./RankingPage").then((page) => ({ Component: page.RankingPage })),
+  },
+  {
+    path: "/promotion/review/:applicationId",
+    lazy: () =>
+      import("./ReviewPage").then((page) => ({ Component: page.ReviewPage })),
   },
   {
     Component: AdminOrHrOnly,

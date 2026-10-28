@@ -64,6 +64,20 @@ export type RatingAnswer = components["schemas"]["RatingAnswerInput"];
 /** The artifact a candidate gives for one competency. */
 export type ArtifactInput = components["schemas"]["ArtifactInput"];
 
+/** The card of a candidate for the commission: what the candidate, the raters and the chair gave, and the rating the chair's scores earn. */
+export type Review = components["schemas"]["ReviewResponse"];
+
+/** The final scores and the decision the chair saves. */
+export type ReviewInput = components["schemas"]["ReviewRequest"];
+
+/** The decision of the commission. */
+export type PromotionDecision = NonNullable<
+  components["schemas"]["PromotionDecision"]
+>;
+
+/** One row of the ranking of the candidates of a commission. */
+export type RankingItem = components["schemas"]["RankingItemResponse"];
+
 /** A record together with the version the server tagged it with, which a save sends back. */
 export type Versioned<TRecord> = TRecord & { version: number };
 
@@ -349,4 +363,51 @@ export async function saveRating(
       body: { answers },
     }),
   );
+}
+
+/** The card of a candidate for the commission, dropped once nothing shows it, so a change always starts from the current version. */
+export function reviewQuery(applicationId: string) {
+  return queryOptions({
+    queryKey: [...promotionQueryKey, "review", applicationId],
+    queryFn: async () =>
+      withVersion(
+        await api.GET("/api/v1/promotion/applications/{id}/review", {
+          params: { path: { id: applicationId } },
+        }),
+      ),
+    gcTime: 0,
+  });
+}
+
+/** Replaces the final scores of a candidate and records or changes the decision. */
+export async function saveReview(
+  applicationId: string,
+  version: number,
+  body: ReviewInput,
+) {
+  return withVersion(
+    await api.PUT("/api/v1/promotion/applications/{id}/review", {
+      params: {
+        path: { id: applicationId },
+        header: { "If-Match": ifMatchOf(version) },
+      },
+      body,
+    }),
+  );
+}
+
+/** The candidates the commission of a unit reviews in a wave, ranked by rating. */
+export function rankingQuery(waveId: string, unitId: string) {
+  return queryOptions({
+    queryKey: [...promotionQueryKey, "ranking", waveId, unitId],
+    queryFn: async () =>
+      unwrap(
+        await api.GET(
+          "/api/v1/promotion/waves/{waveId}/units/{unitId}/ranking",
+          {
+            params: { path: { waveId, unitId } },
+          },
+        ),
+      ),
+  });
 }
