@@ -125,6 +125,13 @@
       "reason": "accept AC-72..AC-75 (help on every app screen); Tasks 15-17 in waves 15-17; mockups approved by user before Task 16 implementation",
       "evidence": "sprint.md, plan.md",
       "artifact_revision": "sprint.md AC-72..AC-75"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "approve Task 16 mockups and AC-76..AC-85 (AC-14, AC-64, AC-67 replaced by AC-81, AC-85, AC-80); Task 18 wave 16, Task 19 wave 17, Task 16 moved to wave 18, Task 17 to wave 19",
+      "evidence": "sprint.md, plan.md, decisions-log.md",
+      "artifact_revision": "sprint.md AC-76..AC-85"
     }
   ],
   "task_routing": {
@@ -239,7 +246,7 @@
     }
   },
   "created_at": "2026-10-27T16:05:59.306Z",
-  "updated_at": "2026-10-27T18:41:51.260Z",
+  "updated_at": "2026-10-28T21:00:03.131Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
