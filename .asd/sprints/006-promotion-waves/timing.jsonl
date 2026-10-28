@@ -45,3 +45,7 @@
 {"op":"close","id":"Task 10","kind":"dispatch","parent":"impl#1","start":"2026-10-28T07:32:18.081Z","end":"2026-10-28T07:40:05.091Z","outcome":"done","attrs":{}}
 {"op":"open","id":"Task 11","kind":"dispatch","parent":"impl#1","start":"2026-10-28T08:58:36.514Z","attrs":{}}
 {"op":"close","id":"Task 11","kind":"dispatch","parent":"impl#1","start":"2026-10-28T08:58:36.514Z","end":"2026-10-28T09:03:21.494Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-assessment-2","kind":"user-wait","parent":"impl#1","start":"2026-10-28T09:30:09.056Z","attrs":{"gate":"impl-assessment"}}
+{"op":"close","id":"impl-assessment-2","kind":"user-wait","parent":"impl#1","start":"2026-10-28T09:30:09.056Z","end":"2026-10-28T09:31:15.586Z","outcome":"done","attrs":{"gate":"impl-assessment"}}
+{"op":"open","id":"Task 2 dates fix","kind":"dispatch","parent":"impl#1","start":"2026-10-28T09:31:33.512Z","attrs":{}}
+{"op":"close","id":"Task 2 dates fix","kind":"dispatch","parent":"impl#1","start":"2026-10-28T09:31:33.512Z","end":"2026-10-28T09:34:06.533Z","outcome":"done","attrs":{}}
