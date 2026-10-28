@@ -465,7 +465,11 @@ const RATING: Rating = {
     name,
     scalePoints: SCALE,
   })),
-  answers: null,
+  answers: [
+    { competencyId: DESIGN.id, score: 3 },
+    { competencyId: QUALITY.id, score: 4 },
+    { competencyId: TEAMWORK.id, score: null },
+  ],
 };
 
 const RANKING: RankingItem[] = [
@@ -610,6 +614,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     stage: 0,
     render: () => (
       <WaveView
+        wave={wave(0)}
         units={UNITS}
         durations={SETTINGS.stageDurationsDays}
         canEdit
@@ -696,7 +701,10 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     stage: 1,
     render: () => (
       <ApplicationView
-        application={application({ raters: RATERS_WITH_UNCONFIRMED_EMAIL })}
+        application={application({
+          raters: RATERS_WITH_UNCONFIRMED_EMAIL,
+          artifacts: ARTIFACTS,
+        })}
         isBusy={false}
         onWithdraw={nothing}
         onMarkFeedback={nothing}
@@ -792,7 +800,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
       <ApplicationView
         application={application({
           ...MANDATORY_ARTIFACTS_CASE,
-          artifacts: [],
+          artifacts: ARTIFACTS,
         })}
         isBusy={false}
         onWithdraw={nothing}
@@ -826,7 +834,15 @@ export const DEMO_STEPS: readonly DemoStep[] = [
       "Председатель вносит итоговый балл по каждой компетенции с поступления заявки к комиссии, видит рассчитанные рейтинг и готовность и фиксирует решение комиссии.",
     stage: 5,
     render: () => (
-      <ReviewView review={review({ roles: ["Chair"] })} onSubmit={noop} />
+      <ReviewView
+        review={review({
+          roles: ["Chair"],
+          decision: "Meets",
+          decidedByName: PEOPLE.chair.name,
+          decidedAt: "2027-04-20T10:00:00Z",
+        })}
+        onSubmit={noop}
+      />
     ),
   },
   {
