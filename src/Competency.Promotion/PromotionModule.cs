@@ -39,6 +39,7 @@ public static class PromotionModule
         services.AddScoped<StageActions>();
         services.AddScoped<PromotionMail>();
         services.AddScoped<WaveStep>();
+        services.AddScoped<WaveRollback>();
         services.AddSingleton<PromotionMailQueue>();
         services.AddHostedService(provider => provider.GetRequiredService<PromotionMailQueue>());
         services.AddSingleton<PromotionTick>();
@@ -58,6 +59,7 @@ public static class PromotionModule
         SettingsEndpoints.Map(endpoints);
         CommissionEndpoints.Map(endpoints);
         WaveEndpoints.Map(endpoints);
+        WaveRollbackEndpoints.Map(endpoints);
         WaveApplicationEndpoints.Map(endpoints);
         ApplicationEndpoints.Map(endpoints);
         ApplicationStageEndpoints.Map(endpoints);

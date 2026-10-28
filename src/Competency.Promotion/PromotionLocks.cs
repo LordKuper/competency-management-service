@@ -84,4 +84,16 @@ internal sealed class PromotionLocks(AppDbContext context, IEmployeeDirectory em
             .FirstOrDefaultAsync(cancellationToken);
         return found is null ? null : (wave, found);
     }
+
+    /// <summary>
+    /// Reads every application of a wave and locks their rows until the transaction ends, tracked for a change. Call it under a lock of this
+    /// class, after the row of the wave is locked.
+    /// </summary>
+    /// <param name="waveId">The wave.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The applications.</returns>
+    public Task<List<PromotionApplication>> FindWaveApplicationsForUpdateAsync(Guid waveId, CancellationToken cancellationToken) =>
+        context.Set<PromotionApplication>()
+            .FromSql($"SELECT * FROM promotion_applications WHERE wave_id = {waveId} ORDER BY id FOR UPDATE")
+            .ToListAsync(cancellationToken);
 }

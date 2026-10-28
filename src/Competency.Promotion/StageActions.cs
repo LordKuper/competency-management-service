@@ -92,7 +92,8 @@ internal sealed class StageActions(
     }
 
     /// <summary>
-    /// Hands the admitted applications to the commission, marking those that owe artifacts they did not give.
+    /// Hands the admitted applications to the commission, marking those that owe artifacts they did not give. An application the chair already
+    /// decided on, before the wave went back to an earlier stage, is decided again at once.
     /// </summary>
     /// <param name="wave">The wave.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
@@ -111,7 +112,7 @@ internal sealed class StageActions(
         {
             var mandatory = await applications.MandatoryArtifactIdsAsync(application, facts[application.Id].Version, cancellationToken);
             application.ArtifactsMissing = mandatory.Any(competencyId => !given[application.Id].Contains(competencyId));
-            application.Status = ApplicationStatus.UnderReview;
+            application.Status = application.Decision is null ? ApplicationStatus.UnderReview : ApplicationStatus.Decided;
         }
     }
 

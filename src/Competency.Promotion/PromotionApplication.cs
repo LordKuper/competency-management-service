@@ -10,6 +10,11 @@ namespace Competency.Promotion;
 [Audited]
 internal sealed class PromotionApplication : EntityBase
 {
+    private const int FormalCheckStage = 2;
+    private const int RatingStage = 3;
+    private const int ArtifactStage = 4;
+    private const int ReviewStage = 5;
+
     /// <summary>
     /// The statuses of an application that is still going, in which it counts against the one-application rule.
     /// </summary>
@@ -124,4 +129,45 @@ internal sealed class PromotionApplication : EntityBase
     /// Whether the candidate may still withdraw the application: it is going and no decision is recorded.
     /// </summary>
     public bool CanBeWithdrawn => UnfinishedStatuses.Contains(Status) && Decision is null;
+
+    /// <summary>
+    /// Takes the application back to where it stands at the start of a stage the wave returns to. Only what a later stage settled is reset: the
+    /// status, the formal failures and the results of the rating and artifact stages, which the end of those stages computes again. What the
+    /// people entered, the decision of the chair included, stays. A withdrawn application stays withdrawn.
+    /// </summary>
+    /// <param name="stage">The stage the wave returns to, 1 to 7.</param>
+    public void ReturnToStage(int stage)
+    {
+        if (Status == ApplicationStatus.Withdrawn)
+        {
+            return;
+        }
+
+        if (stage <= FormalCheckStage)
+        {
+            if (Status != ApplicationStatus.Submitted)
+            {
+                Status = ApplicationStatus.Submitted;
+                FormalFailures = [];
+            }
+        }
+        else if (stage <= ArtifactStage)
+        {
+            Status = ReviewedStatuses.Contains(Status) ? ApplicationStatus.Admitted : Status;
+        }
+        else if (stage == ReviewStage && Status == ApplicationStatus.NoDecision)
+        {
+            Status = ApplicationStatus.UnderReview;
+        }
+
+        if (stage <= RatingStage)
+        {
+            MeetsAfterRating = null;
+        }
+
+        if (stage <= ArtifactStage)
+        {
+            ArtifactsMissing = false;
+        }
+    }
 }

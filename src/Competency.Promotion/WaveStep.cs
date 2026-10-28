@@ -39,6 +39,11 @@ internal sealed class WaveStep(
     private const int ReviewOpensAfterStage = 4;
 
     /// <summary>
+    /// The stages whose end sends letters.
+    /// </summary>
+    public static readonly IReadOnlyList<int> StagesWithEndLetters = [1, 2, ReviewOpensAfterStage, 5, 6, 7];
+
+    /// <summary>
     /// Carries out the next step a wave is owed. The commission stage does not begin while a commission that would review an application has no
     /// chair who acts: the step waits, and the wave is tried again on the next call.
     /// </summary>
