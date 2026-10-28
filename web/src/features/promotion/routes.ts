@@ -54,6 +54,14 @@ export const navItems: NavItem[] = [
     group: "promotion",
     roles: ["GlobalAdmin"],
   },
+  {
+    key: "promotion-demo",
+    label: "Демонстрация",
+    path: promotionPaths.demo,
+    order: 5,
+    group: "promotion",
+    roles: ["GlobalAdmin"],
+  },
 ];
 
 const wavePage = () =>
@@ -134,6 +142,13 @@ export const routes: RouteObject[] = [
         lazy: () =>
           import("./SettingsPage").then((page) => ({
             Component: page.SettingsPage,
+          })),
+      },
+      {
+        path: promotionPaths.demo,
+        lazy: () =>
+          import("./demo/DemoPage").then((page) => ({
+            Component: page.DemoPage,
           })),
       },
     ],
