@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import type { EmployeeOption } from "./CommissionView";
 import type { RaterDetails, RaterEntry } from "./promotionApi";
+import { RATER_FORBIDDEN } from "./promotionTexts";
 import {
   describeEmailFailure,
   isSameEmail,
@@ -34,7 +35,16 @@ interface RatersFieldProps {
   onConfirmEmail?: (employeeId: string, email: string) => Promise<unknown>;
   /** Whether confirming waits, because the list holds edits that a reload of the saved raters would lose. */
   isConfirmLocked?: boolean;
+  /** Shows who put each saved rater on the list, which the head of the unit needs to tell the candidate's choices from their own. */
+  hasSourceColumn?: boolean;
 }
+
+const SOURCE_LABELS: Record<RaterDetails["source"], string> = {
+  Candidate: "Кандидат",
+  Head: "Руководитель",
+};
+
+const EMAIL_INPUT_STYLE = { minWidth: "calc(var(--ant-control-height) * 7)" };
 
 interface Chosen {
   id: string;
@@ -55,6 +65,7 @@ export function RatersField({
   onSearch,
   onConfirmEmail,
   isConfirmLocked = false,
+  hasSourceColumn = false,
 }: RatersFieldProps) {
   const [known, setKnown] = useState<Record<string, Chosen>>(() =>
     Object.fromEntries(
@@ -76,7 +87,11 @@ export function RatersField({
       (candidate) =>
         !entryById.has(candidate.id) && !excludedIds.includes(candidate.id),
     )
-    .map((candidate) => ({ value: candidate.id, label: candidate.name }));
+    .map((candidate) => ({
+      value: candidate.id,
+      label: candidate.name,
+      disabled: candidate.isForbidden === true,
+    }));
   const rows = value.flatMap((entry) => {
     const rater = known[entry.employeeId];
     return rater ? [rater] : [];
@@ -102,12 +117,10 @@ export function RatersField({
     }
   }
 
-  function renderEmail(rater: Chosen) {
+  function renderAccount(rater: Chosen) {
     const details = savedById.get(rater.id);
     if (details?.hasAccount ?? rater.hasAccount) {
-      return (
-        <Typography.Text type="secondary">Есть учётная запись</Typography.Text>
-      );
+      return <Tag color="success">Есть</Tag>;
     }
     const email = entryById.get(rater.id)?.email ?? "";
     const isSavedAddress =
@@ -116,25 +129,45 @@ export function RatersField({
       isSameEmail(details.email, email);
     return (
       <Flex vertical gap="small">
-        <Input
-          type="email"
-          autoComplete="off"
-          aria-label={`Почта: ${rater.name}`}
-          placeholder="Почта для приглашения"
-          value={email}
-          disabled={isLocked}
-          status={failures[rater.id] ? "error" : undefined}
-          onChange={(event) => setEmail(rater.id, event.target.value)}
-        />
+        <Flex gap="small" align="center" wrap>
+          <Input
+            type="email"
+            autoComplete="off"
+            aria-label={`Почта: ${rater.name}`}
+            placeholder="Почта для приглашения"
+            value={email}
+            disabled={isLocked}
+            status={failures[rater.id] ? "error" : undefined}
+            style={EMAIL_INPUT_STYLE}
+            onChange={(event) => setEmail(rater.id, event.target.value)}
+          />
+          {canConfirm(rater.id) && (
+            <Button
+              type="primary"
+              disabled={isLocked || isConfirmLocked}
+              aria-label={`Подтвердить почту: ${rater.name}`}
+              onClick={() =>
+                void confirm(rater.id, entryById.get(rater.id)?.email ?? "")
+              }
+            >
+              Подтвердить
+            </Button>
+          )}
+        </Flex>
         {failures[rater.id] && (
           <Typography.Text type="danger">{failures[rater.id]}</Typography.Text>
         )}
         {isSavedAddress && (
-          <Flex>
+          <Flex vertical>
             {details.isEmailConfirmed ? (
               <Tag color="success">Почта подтверждена</Tag>
             ) : (
               <Tag color="warning">Почта не подтверждена</Tag>
+            )}
+            {details.emailConfirmedByName && (
+              <Typography.Text type="secondary">
+                {details.emailConfirmedByName}
+              </Typography.Text>
             )}
           </Flex>
         )}
@@ -156,7 +189,7 @@ export function RatersField({
 
   const columns: TableColumnsType<Chosen> = [
     {
-      title: "Оценивающий",
+      title: "Сотрудник",
       key: "name",
       render: (_, rater) => (
         <Flex vertical>
@@ -164,44 +197,47 @@ export function RatersField({
           {rater.detail && (
             <Typography.Text type="secondary">{rater.detail}</Typography.Text>
           )}
+          {savedById.get(rater.id)?.isExcluded && (
+            <Flex>
+              <Tag color="warning">{RATER_FORBIDDEN}</Tag>
+            </Flex>
+          )}
         </Flex>
       ),
     },
+    ...(hasSourceColumn
+      ? [
+          {
+            title: "Добавил",
+            key: "source",
+            render: (_: unknown, rater: Chosen) => {
+              const source = savedById.get(rater.id)?.source;
+              return source ? SOURCE_LABELS[source] : "—";
+            },
+          },
+        ]
+      : []),
     {
-      title: "Почта",
-      key: "email",
-      render: (_, rater) => renderEmail(rater),
+      title: "Учётная запись",
+      key: "account",
+      render: (_, rater) => renderAccount(rater),
     },
     {
       title: "Действия",
       key: "actions",
       width: 1,
       render: (_, rater) => (
-        <Flex gap="small">
-          {canConfirm(rater.id) && (
-            <Button
-              type="link"
-              disabled={isLocked || isConfirmLocked}
-              aria-label={`Подтвердить почту: ${rater.name}`}
-              onClick={() =>
-                void confirm(rater.id, entryById.get(rater.id)?.email ?? "")
-              }
-            >
-              Подтвердить
-            </Button>
-          )}
-          <Button
-            type="link"
-            danger
-            disabled={isLocked}
-            aria-label={`Убрать ${rater.name}`}
-            onClick={() =>
-              onChange?.(value.filter((entry) => entry.employeeId !== rater.id))
-            }
-          >
-            Убрать
-          </Button>
-        </Flex>
+        <Button
+          type="link"
+          danger
+          disabled={isLocked}
+          aria-label={`Убрать: ${rater.name}`}
+          onClick={() =>
+            onChange?.(value.filter((entry) => entry.employeeId !== rater.id))
+          }
+        >
+          Убрать
+        </Button>
       ),
     },
   ];
@@ -216,17 +252,24 @@ export function RatersField({
         options={options}
         loading={isSearching}
         disabled={isLocked}
-        optionRender={(option) => (
-          <Flex vertical>
-            <span>{option.label}</span>
-            <Typography.Text type="secondary">
-              {
-                candidates.find((candidate) => candidate.id === option.value)
-                  ?.detail
-              }
-            </Typography.Text>
-          </Flex>
-        )}
+        optionRender={(option) => {
+          const found = candidates.find(
+            (candidate) => candidate.id === option.value,
+          );
+          return (
+            <Flex justify="space-between" align="center" gap="small">
+              <Flex vertical>
+                <span>{option.label}</span>
+                <Typography.Text type="secondary">
+                  {found?.detail}
+                </Typography.Text>
+              </Flex>
+              {found?.isForbidden && (
+                <Tag color="warning">{RATER_FORBIDDEN}</Tag>
+              )}
+            </Flex>
+          );
+        }}
         notFoundContent="Сотрудники не найдены. Измените запрос."
         onSelect={(id) => {
           const added = candidates.find((candidate) => candidate.id === id);
@@ -248,9 +291,9 @@ export function RatersField({
         columns={columns}
         dataSource={rows}
         pagination={false}
+        scroll={{ x: "max-content" }}
         locale={{ emptyText: "Оценивающих пока нет." }}
       />
-      <Typography.Text type="secondary">Выбрано: {rows.length}</Typography.Text>
     </Flex>
   );
 }

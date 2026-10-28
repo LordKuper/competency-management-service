@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, App, Breadcrumb, Flex, Skeleton, Typography } from "antd";
+import { Alert, App, Breadcrumb, Flex, Skeleton, Tag, Typography } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { destructiveConfirm } from "../../app/destructiveConfirm";
@@ -27,7 +27,7 @@ import {
 } from "./promotionApi";
 import { formatDate, STAGE } from "./promotionTexts";
 import { promotionPaths } from "./routes";
-import { useEmployeeOptions } from "./useEmployeeOptions";
+import { useRaterOptions } from "./useRaterOptions";
 
 /** Drafting an application in a wave and filing it while the wave takes applications. */
 export function ApplyPage() {
@@ -40,13 +40,16 @@ export function ApplyPage() {
     >
       <Breadcrumb
         items={[
-          { title: <Link to={promotionPaths.home}>Повышение</Link> },
+          { title: <Link to={promotionPaths.home}>Карьерные переходы</Link> },
           { title: "Заявка" },
         ]}
       />
-      <Typography.Title level={1} style={{ margin: 0 }}>
-        Заявка на повышение
-      </Typography.Title>
+      <Flex align="center" gap="middle" wrap>
+        <Typography.Title level={1} style={{ margin: 0 }}>
+          Заявка на карьерный переход
+        </Typography.Title>
+        <Tag>Черновик</Tag>
+      </Flex>
       {waveId && <ApplyContent waveId={waveId} />}
     </Flex>
   );
@@ -59,7 +62,7 @@ function ApplyContent({ waveId }: { waveId: string }) {
   if (failure) {
     return (
       <ErrorAlert
-        title="Не удалось загрузить волну"
+        title="Не удалось загрузить карьерную сессию"
         error={failure}
         onRetry={() => {
           void waves.refetch();
@@ -76,11 +79,11 @@ function ApplyContent({ waveId }: { waveId: string }) {
       <Alert
         type="info"
         showIcon
-        title="Заявки в этой волне сейчас не принимаются"
+        title="Заявки в этой карьерной сессии сейчас не принимаются"
         description={
           wave && wave.stage < STAGE.submission
             ? `Приём заявок начнётся ${formatDate(wave.startsOn)}.`
-            : "Приём заявок в этой волне закончился или волны нет."
+            : "Приём заявок в этой карьерной сессии закончился или сессии нет."
         }
       />
     );
@@ -253,7 +256,7 @@ function ApplyEditor({
   onDelete,
 }: ApplyEditorProps) {
   const { data: user } = useCurrentUser();
-  const employees = useEmployeeOptions("rater-picker");
+  const employees = useRaterOptions("rater-picker");
   const [matrixId, setMatrixId] = useState(application?.target.matrixId);
   const targetForm = useQuery({
     ...targetFormQuery(wave.id, matrixId ?? ""),

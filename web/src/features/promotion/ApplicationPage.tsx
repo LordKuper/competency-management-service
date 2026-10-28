@@ -14,6 +14,7 @@ import {
   type PromotionApplication,
   promotionQueryKey,
   saveArtifacts,
+  sendApplicationToReview,
   type Versioned,
   withdrawApplication,
 } from "./promotionApi";
@@ -30,12 +31,12 @@ export function ApplicationPage() {
     >
       <Breadcrumb
         items={[
-          { title: <Link to={promotionPaths.home}>Повышение</Link> },
+          { title: <Link to={promotionPaths.home}>Карьерные переходы</Link> },
           { title: "Заявка" },
         ]}
       />
       <Typography.Title level={1} style={{ margin: 0 }}>
-        Заявка на повышение
+        Заявка на карьерный переход
       </Typography.Title>
       {id && <LoadedApplication id={id} />}
     </Flex>
@@ -100,6 +101,15 @@ function ApplicationActions({
     },
   });
 
+  const sendToReview = useMutation({
+    mutationFn: () => sendApplicationToReview(base.id, base.version),
+    ...settle,
+    onSuccess: (saved) => {
+      rebase(saved);
+      message.success("Заявка отправлена на рассмотрение");
+    },
+  });
+
   function confirmWithdrawal() {
     modal.confirm({
       title: "Отозвать заявку?",
@@ -122,13 +132,22 @@ function ApplicationActions({
       {artifacts.isError && (
         <ErrorAlert title="Артефакты не сохранены" error={artifacts.error} />
       )}
+      {sendToReview.isError && (
+        <ErrorAlert
+          title="Заявка не отправлена на рассмотрение"
+          error={sendToReview.error}
+        />
+      )}
       <ApplicationView
         key={base.version}
         application={base}
-        isBusy={withdraw.isPending || feedback.isPending}
+        isBusy={
+          withdraw.isPending || feedback.isPending || sendToReview.isPending
+        }
         onWithdraw={confirmWithdrawal}
         onMarkFeedback={() => feedback.mutate()}
         onSaveArtifacts={artifacts.mutateAsync}
+        onSendToReview={sendToReview.mutateAsync}
       />
     </Flex>
   );

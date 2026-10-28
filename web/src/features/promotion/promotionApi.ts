@@ -85,6 +85,13 @@ export type ArtifactLink = components["schemas"]["ArtifactLink"];
 /** The card of a candidate for the commission: what the candidate, the raters and the chair gave, and the rating the chair's scores earn. */
 export type Review = components["schemas"]["ReviewResponse"];
 
+/** The rating a self-assessment earns, as the server counts it. */
+export type PreliminaryRating =
+  components["schemas"]["PreliminaryRatingResponse"];
+
+/** The employees and positions that cannot be named as raters. */
+export type RaterExclusions = components["schemas"]["RaterExclusionsResponse"];
+
 /** The final scores and the decision the chair saves. */
 export type ReviewInput = components["schemas"]["ReviewRequest"];
 
@@ -421,6 +428,15 @@ export async function saveArtifacts(
   );
 }
 
+/** Sends a candidate's application to the commission with the artifacts given so far; they cannot be changed afterwards. */
+export async function sendApplicationToReview(id: string, version: number) {
+  return withVersion(
+    await api.POST("/api/v1/promotion/applications/{id}/send-to-review", {
+      params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
+    }),
+  );
+}
+
 /** Marks that the candidate received the feedback. */
 export async function markFeedbackReceived(id: string, version: number) {
   return withVersion(
@@ -508,4 +524,66 @@ export function rankingQuery(waveId: string, unitId: string) {
         ),
       ),
   });
+}
+
+/** Which of the employees may not be named as raters. */
+export function excludedRatersQuery(employeeIds: readonly string[]) {
+  const ids = [...employeeIds].sort();
+  return queryOptions({
+    queryKey: [...promotionQueryKey, "excluded-raters", ids],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/promotion/rater-exclusions", {
+          params: { query: { employeeIds: ids } },
+        }),
+      ),
+    enabled: ids.length > 0,
+  });
+}
+
+/** The employees and positions the administrator keeps off the lists of raters. */
+export const raterExclusionsQuery = queryOptions({
+  queryKey: [...promotionQueryKey, "rater-exclusions"],
+  queryFn: async () =>
+    unwrap(await api.GET("/api/v1/promotion/settings/rater-exclusions")),
+});
+
+/** Forbids naming an employee as a rater. */
+export async function addExcludedEmployee(employeeId: string) {
+  return unwrap(
+    await api.PUT(
+      "/api/v1/promotion/settings/rater-exclusions/employees/{employeeId}",
+      { params: { path: { employeeId } } },
+    ),
+  );
+}
+
+/** Allows naming an employee as a rater again. */
+export async function removeExcludedEmployee(employeeId: string) {
+  return unwrap(
+    await api.DELETE(
+      "/api/v1/promotion/settings/rater-exclusions/employees/{employeeId}",
+      { params: { path: { employeeId } } },
+    ),
+  );
+}
+
+/** Forbids naming anyone in a position as a rater. */
+export async function addExcludedPosition(positionId: string) {
+  return unwrap(
+    await api.PUT(
+      "/api/v1/promotion/settings/rater-exclusions/positions/{positionId}",
+      { params: { path: { positionId } } },
+    ),
+  );
+}
+
+/** Allows naming those in a position as raters again. */
+export async function removeExcludedPosition(positionId: string) {
+  return unwrap(
+    await api.DELETE(
+      "/api/v1/promotion/settings/rater-exclusions/positions/{positionId}",
+      { params: { path: { positionId } } },
+    ),
+  );
 }

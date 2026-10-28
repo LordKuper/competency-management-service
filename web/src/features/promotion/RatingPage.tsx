@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Breadcrumb, Flex, Skeleton, Typography } from "antd";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { contentMaxWidth } from "../../app/theme";
 import {
+  myRatingsQuery,
   promotionQueryKey,
   type RatingAnswer,
   ratingQuery,
@@ -20,7 +21,9 @@ export function RatingPage() {
 
 function LoadedRating({ applicationId }: { applicationId: string }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { message } = App.useApp();
+  const queue = useQuery(myRatingsQuery);
   const { data, error, isPending, refetch } = useQuery(
     ratingQuery(applicationId),
   );
@@ -33,6 +36,11 @@ function LoadedRating({ applicationId }: { applicationId: string }) {
     onSettled: () =>
       queryClient.invalidateQueries({ queryKey: promotionQueryKey }),
   });
+  const tasks = queue.data ?? [];
+  const currentIndex = tasks.findIndex(
+    (task) => task.applicationId === applicationId,
+  );
+  const nextTask = currentIndex >= 0 ? tasks[currentIndex + 1] : undefined;
   return (
     <Flex
       vertical
@@ -41,15 +49,22 @@ function LoadedRating({ applicationId }: { applicationId: string }) {
     >
       <Breadcrumb
         items={[
-          { title: <Link to={promotionPaths.home}>Повышение</Link> },
+          { title: <Link to={promotionPaths.home}>Карьерные переходы</Link> },
           { title: <Link to={promotionPaths.ratings}>Оценка кандидатов</Link> },
           { title: data?.candidateName ?? "Кандидат" },
         ]}
       />
       <Typography.Title level={1} style={{ margin: 0 }}>
-        {data ? `Оценка: ${data.candidateName}` : "Оценка кандидата"}
+        Круговая оценка
       </Typography.Title>
-      {isPending && <Skeleton active />}
+      {(isPending || queue.isPending) && <Skeleton active />}
+      {queue.error && (
+        <ErrorAlert
+          title="Не удалось загрузить список кандидатов"
+          error={queue.error}
+          onRetry={() => void queue.refetch()}
+        />
+      )}
       {error && (
         <ErrorAlert
           title="Не удалось загрузить оценку"
@@ -60,7 +75,20 @@ function LoadedRating({ applicationId }: { applicationId: string }) {
       {save.isError && (
         <ErrorAlert title="Оценка не сохранена" error={save.error} />
       )}
-      {data && <RatingView rating={data} onSubmit={save.mutateAsync} />}
+      {data && queue.data && (
+        <RatingView
+          key={data.applicationId}
+          rating={data}
+          tasks={queue.data}
+          onSubmit={save.mutateAsync}
+          onOpenNext={
+            nextTask
+              ? () =>
+                  void navigate(promotionPaths.rating(nextTask.applicationId))
+              : undefined
+          }
+        />
+      )}
     </Flex>
   );
 }

@@ -26,6 +26,8 @@ export interface EmployeeOption {
   detail: string;
   /** Whether the employee has an account, which a rater without one is invited by e-mail instead. */
   hasAccount?: boolean;
+  /** Whether the administrator forbids naming the employee as a rater. */
+  isForbidden?: boolean;
 }
 
 interface CommissionFormValues {

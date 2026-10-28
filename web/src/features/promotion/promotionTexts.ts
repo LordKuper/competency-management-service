@@ -42,9 +42,9 @@ export function formatDate(isoDate: string): string {
 
 /** What a condition of the formal check that the application fails means to the HR. */
 export const FORMAL_FAILURE_TEXTS: Record<FormalFailure, string> = {
-  MissingDate: "Не внесена дата приёма на работу или последнего повышения",
+  MissingDate: "Не внесена дата приёма на работу или последнего перехода",
   IntervalNotPassed:
-    "С приёма на работу или последнего повышения прошло мало времени",
+    "С приёма на работу или последнего перехода прошло мало времени",
   EducationBelowRequired: "Образование кандидата ниже требуемого для цели",
 };
 
@@ -77,9 +77,9 @@ export const DECISION_TAGS: Record<
   PromotionDecision,
   { label: string; color: string }
 > = {
-  Meets: { label: "Соответствует критериям для повышения", color: "success" },
+  Meets: { label: "Соответствует критериям для перехода", color: "success" },
   DoesNotMeet: {
-    label: "Не соответствует критериям для повышения",
+    label: "Не соответствует критериям для перехода",
     color: "warning",
   },
 };
@@ -87,6 +87,13 @@ export const DECISION_TAGS: Record<
 /** What a candidate is told when the education they state is below the one the target asks for. */
 export const EDUCATION_WARNING =
   "Образование ниже требуемого для этого уровня: заявка будет отклонена по формальным признакам. Отправить её всё равно можно.";
+
+/** Where the education a draft starts with comes from and what changing it does. */
+export const EDUCATION_NOTE =
+  "Из вашего профиля. Если измените, профиль обновится при отправке заявки.";
+
+/** The mark of a person the administrator forbids to name as a rater. */
+export const RATER_FORBIDDEN = "Указание этого сотрудника запрещено";
 
 /** What a candidate is asked for when listing the people who rate them. */
 export const RATERS_HINT =
@@ -137,9 +144,27 @@ export function formatAverage(value: number): string {
   return ONE_DECIMAL.format(value);
 }
 
+const PERCENT = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 });
+
 /** A rating or threshold in percent, rounded to a tenth only here, for the eye. */
 export function formatPercent(value: number | null): string {
-  return value === null ? NO_VALUE : `${ONE_DECIMAL.format(value)}%`;
+  return value === null ? NO_VALUE : `${PERCENT.format(value)} %`;
+}
+
+const SIGNED_DELTA = new Intl.NumberFormat("ru-RU", {
+  signDisplay: "exceptZero",
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+/** A change of an average or of a rating as the server gave it, with its sign. */
+export function formatDelta(value: number): string {
+  return SIGNED_DELTA.format(value);
+}
+
+/** Day and month of a date, as the stage dates of a stepper are written. */
+export function formatShortDate(isoDate: string): string {
+  return dayjs(isoDate).format("DD.MM");
 }
 
 /** A scale point as a choice: its score and its meaning. */
@@ -148,6 +173,31 @@ export function scalePointLabel(point: { score: number; label: string }) {
 }
 
 const PLURAL = new Intl.PluralRules("ru-RU");
+
+const COMPETENCY_FORMS: Record<string, string> = {
+  one: "компетенция",
+  few: "компетенции",
+};
+
+/** «1 компетенция» / «2 компетенции» / «5 компетенций». */
+export function competenciesText(count: number): string {
+  return `${count} ${COMPETENCY_FORMS[PLURAL.select(count)] ?? "компетенций"}`;
+}
+
+/** The tag over the competencies a candidate left without a score. */
+export function unscoredText(count: number): string {
+  return `${count === 1 ? "Не оценена" : "Не оценены"} ${competenciesText(count)} — считаются как 0`;
+}
+
+const ARTIFACT_FORMS: Record<string, string> = {
+  one: "артефакт",
+  few: "артефакта",
+};
+
+/** «1 артефакт» / «2 артефакта» / «5 артефактов». */
+export function artifactsText(count: number): string {
+  return `${count} ${ARTIFACT_FORMS[PLURAL.select(count)] ?? "артефактов"}`;
+}
 
 const APPLICATION_FORMS: Record<string, string> = {
   one: "заявка",

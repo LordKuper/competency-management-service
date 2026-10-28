@@ -18,7 +18,7 @@ export function RatingsPage() {
     >
       <Breadcrumb
         items={[
-          { title: <Link to={promotionPaths.home}>Повышение</Link> },
+          { title: <Link to={promotionPaths.home}>Карьерные переходы</Link> },
           { title: "Оценка кандидатов" },
         ]}
       />

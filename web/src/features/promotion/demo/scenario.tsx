@@ -737,6 +737,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
         onWithdraw={nothing}
         onMarkFeedback={nothing}
         onSaveArtifacts={noop}
+        onSendToReview={noop}
       />
     ),
   },
@@ -816,7 +817,9 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     description:
       "Оценивающий выбирает балл по каждой компетенции или отмечает, что не наблюдал её проявлений. Видны только имя кандидата и компетенции.",
     stage: 3,
-    render: () => <RatingView rating={RATING} onSubmit={noop} />,
+    render: () => (
+      <RatingView rating={RATING} tasks={RATING_TASKS} onSubmit={noop} />
+    ),
   },
   {
     role: "Кандидат",
@@ -834,6 +837,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
         onWithdraw={nothing}
         onMarkFeedback={nothing}
         onSaveArtifacts={noop}
+        onSendToReview={noop}
       />
     ),
   },
@@ -852,7 +856,13 @@ export const DEMO_STEPS: readonly DemoStep[] = [
       "Член комиссии изучает самооценку, сводку круговой оценки без имён, артефакты, формальную проверку и прошлые заявки. Итоговые оценки вносит председатель.",
     stage: 5,
     render: () => (
-      <ReviewView review={review({ roles: ["Member"] })} onSubmit={noop} />
+      <ReviewView
+        review={review({ roles: ["Member"] })}
+        ranking={RANKING}
+        isRankingLoading={false}
+        onSubmit={noop}
+        onOpen={nothing}
+      />
     ),
   },
   {
@@ -869,7 +879,10 @@ export const DEMO_STEPS: readonly DemoStep[] = [
           decidedByName: PEOPLE.chair.name,
           decidedAt: "2027-04-20T10:00:00Z",
         })}
+        ranking={RANKING}
+        isRankingLoading={false}
         onSubmit={noop}
+        onOpen={nothing}
       />
     ),
   },
@@ -892,6 +905,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
         onWithdraw={nothing}
         onMarkFeedback={nothing}
         onSaveArtifacts={noop}
+        onSendToReview={noop}
       />
     ),
   },
@@ -914,6 +928,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
         onWithdraw={nothing}
         onMarkFeedback={nothing}
         onSaveArtifacts={noop}
+        onSendToReview={noop}
       />
     ),
   },

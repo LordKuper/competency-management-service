@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Breadcrumb, Flex, Skeleton, Typography } from "antd";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { contentMaxWidth } from "../../app/theme";
 import { useEditBase } from "../../app/useEditBase";
@@ -8,6 +8,7 @@ import {
   promotionQueryKey,
   type Review,
   type ReviewInput,
+  rankingQuery,
   reviewQuery,
   saveReview,
   type Versioned,
@@ -26,7 +27,7 @@ export function ReviewPage() {
     >
       <Breadcrumb
         items={[
-          { title: <Link to={promotionPaths.home}>Повышение</Link> },
+          { title: <Link to={promotionPaths.home}>Карьерные переходы</Link> },
           { title: "Карточка кандидата" },
         ]}
       />
@@ -53,7 +54,9 @@ function LoadedReview({ id }: { id: string }) {
 /** The card with the version it was opened with; it takes the reread one only after a save is refused for a stale version. */
 function ReviewEditor({ latest }: { latest: Versioned<Review> }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { message } = App.useApp();
+  const ranking = useQuery(rankingQuery(latest.waveId, latest.target.unitId));
   const { base = latest, noteSaveFailure, rebase } = useEditBase(latest);
   const save = useMutation({
     mutationFn: (input: ReviewInput) =>
@@ -69,7 +72,9 @@ function ReviewEditor({ latest }: { latest: Versioned<Review> }) {
   return (
     <Flex vertical gap="large">
       <Typography.Title level={1} style={{ margin: 0 }}>
-        {base.candidateName}
+        {base.roles.includes("Chair")
+          ? `${base.candidateName} — ${base.target.levelName}`
+          : "Рассмотрение заявок"}
       </Typography.Title>
       {save.isError && (
         <ErrorAlert title="Оценки не сохранены" error={save.error} />
@@ -77,7 +82,10 @@ function ReviewEditor({ latest }: { latest: Versioned<Review> }) {
       <ReviewView
         key={base.version}
         review={base}
+        ranking={ranking.data ?? []}
+        isRankingLoading={ranking.isFetching}
         onSubmit={save.mutateAsync}
+        onOpen={(id) => void navigate(promotionPaths.review(id))}
       />
     </Flex>
   );
