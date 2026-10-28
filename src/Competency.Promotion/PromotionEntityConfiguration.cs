@@ -22,6 +22,7 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
     private const string TrackEntityName = "Competency.CareerFramework.CareerTrack";
     private const int NameMaxLength = 200;
     private const int EnumMaxLength = 30;
+    private const int RaterEmailMaxLength = 254;
 
     public void Configure(ModelBuilder modelBuilder)
     {
@@ -162,6 +163,7 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
             entity.PrimitiveCollection(e => e.FormalFailures).HasColumnName("formal_failures").ElementType().HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.MeetsAfterRating).HasColumnName("meets_after_rating");
             entity.Property(e => e.ArtifactsMissing).HasColumnName("artifacts_missing");
+            entity.Property(e => e.ReviewLetterPending).HasColumnName("review_letter_pending");
             entity.Property(e => e.Decision).HasColumnName("decision").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.DecidedBy).HasColumnName("decided_by");
             entity.Property(e => e.DecidedAt).HasColumnName("decided_at");
@@ -198,10 +200,15 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
             entity.Property(e => e.ApplicationId).HasColumnName("application_id");
             entity.Property(e => e.EmployeeId).HasColumnName("employee_id");
             entity.Property(e => e.Source).HasColumnName("source").HasConversion<string>().HasMaxLength(EnumMaxLength);
+            entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(RaterEmailMaxLength);
+            entity.Property(e => e.EmailConfirmedBy).HasColumnName("email_confirmed_by");
+            entity.Property(e => e.EmailConfirmedAt).HasColumnName("email_confirmed_at");
             entity.HasIndex(e => e.EmployeeId);
+            entity.HasIndex(e => e.EmailConfirmedBy);
 
             entity.HasOne<PromotionApplication>().WithMany().HasForeignKey(e => e.ApplicationId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(EmployeeEntityName, navigationName: null).WithMany().HasForeignKey(nameof(PromotionRater.EmployeeId)).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(UserEntityName, navigationName: null).WithMany().HasForeignKey(nameof(PromotionRater.EmailConfirmedBy)).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<PromotionRaterScore>(entity =>

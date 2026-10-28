@@ -16,6 +16,11 @@ internal enum DueKind
     EndStage,
 
     /// <summary>
+    /// Tells the commissions, in one letter each, of the applications that reached them since they were last told.
+    /// </summary>
+    NotifyCommissions,
+
+    /// <summary>
     /// Reminds the raters, once, shortly before the rating stage ends.
     /// </summary>
     RemindRaters,
@@ -26,14 +31,9 @@ internal enum DueKind
 /// service was down gets its end actions exactly once, after those of the stages before it.
 /// </summary>
 /// <param name="Kind">What the step does.</param>
-/// <param name="Stage">The stage it belongs to, 1 to 7.</param>
+/// <param name="Stage">The stage it belongs to, 1 to 6.</param>
 internal readonly record struct DueStep(DueKind Kind, int Stage)
 {
-    /// <summary>
-    /// The stage of the circular rating.
-    /// </summary>
-    public const int RatingStage = 3;
-
     /// <summary>
     /// How close to the end of the rating stage the raters are reminded.
     /// </summary>
@@ -44,13 +44,14 @@ internal readonly record struct DueStep(DueKind Kind, int Stage)
     /// </summary>
     /// <param name="wave">The wave.</param>
     /// <param name="calendar">The clock of the organization.</param>
+    /// <param name="hasArrivals">Whether applications have reached a commission whose members have not been told.</param>
     /// <returns>The step; <see langword="null"/> when the wave is up to date.</returns>
-    public static DueStep? Next(PromotionWave wave, PromotionCalendar calendar)
+    public static DueStep? Next(PromotionWave wave, PromotionCalendar calendar, bool hasArrivals)
     {
         var stage = calendar.StageOf(wave);
         if (!wave.VersionsFixed)
         {
-            return stage >= 1 ? new DueStep(DueKind.StartFirstStage, 1) : null;
+            return stage >= PromotionStage.Submission ? new DueStep(DueKind.StartFirstStage, PromotionStage.Submission) : null;
         }
 
         if (wave.ProcessedStage < PromotionWave.StageCount && stage > wave.ProcessedStage + 1)
@@ -58,8 +59,13 @@ internal readonly record struct DueStep(DueKind Kind, int Stage)
             return new DueStep(DueKind.EndStage, wave.ProcessedStage + 1);
         }
 
-        return stage == RatingStage && !wave.RaterReminderSent && calendar.TimeLeft(wave, RatingStage) < ReminderLead
-            ? new DueStep(DueKind.RemindRaters, RatingStage)
+        if (hasArrivals)
+        {
+            return new DueStep(DueKind.NotifyCommissions, stage);
+        }
+
+        return stage == PromotionStage.Rating && !wave.RaterReminderSent && calendar.TimeLeft(wave, PromotionStage.Rating) < ReminderLead
+            ? new DueStep(DueKind.RemindRaters, PromotionStage.Rating)
             : null;
     }
 }

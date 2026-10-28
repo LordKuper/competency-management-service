@@ -31,7 +31,7 @@ internal sealed record SettingsRequest
         {
             if (StageDurationsDays[stage] is < 1 or > PromotionSettings.MaxStageDays)
             {
-                errors[$"stageDurationsDays[{stage}]"] = [$"Укажите число дней от 1 до {PromotionSettings.MaxStageDays}"];
+                errors[$"stageDurationsDays[{stage}]"] = [$"Укажите число рабочих дней от 1 до {PromotionSettings.MaxStageDays}"];
             }
         }
 

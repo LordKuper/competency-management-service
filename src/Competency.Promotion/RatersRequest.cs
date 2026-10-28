@@ -6,16 +6,16 @@ namespace Competency.Promotion;
 internal sealed record RatersRequest
 {
     /// <summary>
-    /// The employees asked to rate the candidate.
+    /// The employees asked to rate the candidate, each with the address to invite them at when they have no account.
     /// </summary>
-    public required Guid[] RaterEmployeeIds { get; init; }
+    public required RaterInput[] Raters { get; init; }
 
     /// <summary>
     /// Checks the size of the list.
     /// </summary>
     /// <returns>The problems found by field name; empty when the request is valid.</returns>
     public Dictionary<string, string[]> Validate() =>
-        RaterEmployeeIds is { Length: <= ApplicationRequest.MaxRaters }
+        Raters is { Length: <= ApplicationRequest.MaxRaters } && Raters.All(rater => rater is not null)
             ? []
-            : new Dictionary<string, string[]> { ["raterEmployeeIds"] = [$"Укажите не больше {ApplicationRequest.MaxRaters} оценивающих"] };
+            : new Dictionary<string, string[]> { ["raters"] = [$"Укажите не больше {ApplicationRequest.MaxRaters} оценивающих"] };
 }

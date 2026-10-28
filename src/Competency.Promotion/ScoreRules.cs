@@ -8,13 +8,14 @@ namespace Competency.Promotion;
 internal static class ScoreRules
 {
     /// <summary>
-    /// Says why scores cannot stand for a version: a competency is scored twice, is not in the version, is missing, or has a score off its scale.
+    /// Says why scores cannot stand for a version: a competency is scored twice, is not in the version, is missing (unless the scores are a draft), or has a score off its scale.
     /// </summary>
     /// <param name="version">The version the scores are for.</param>
     /// <param name="scores">The score given to each competency; null stands for "not observed".</param>
     /// <param name="allowNotObserved">Whether a competency may be left as not observed.</param>
+    /// <param name="requireAll">Whether every competency must be scored; a draft may leave some out.</param>
     /// <returns>One line per problem, addressed to the user; empty when the scores are fine.</returns>
-    public static List<string> Problems(CareerVersion version, IReadOnlyCollection<(Guid CompetencyId, int? Score)> scores, bool allowNotObserved)
+    public static List<string> Problems(CareerVersion version, IReadOnlyCollection<(Guid CompetencyId, int? Score)> scores, bool allowNotObserved, bool requireAll = true)
     {
         List<string> problems = [];
         var given = scores.GroupBy(score => score.CompetencyId).ToDictionary(group => group.Key, group => group.First().Score);
@@ -32,7 +33,10 @@ internal static class ScoreRules
         {
             if (!given.TryGetValue(competency.Id, out var score))
             {
-                problems.Add($"Оцените компетенцию «{competency.Name}»");
+                if (requireAll)
+                {
+                    problems.Add($"Оцените компетенцию «{competency.Name}»");
+                }
             }
             else if (score is null ? !allowNotObserved : competency.ScalePoints.All(point => point.Score != score))
             {

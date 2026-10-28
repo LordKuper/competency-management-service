@@ -9,10 +9,18 @@ namespace Competency.Promotion;
 internal sealed record ApplicationViewer(Guid? EmployeeId, ApplicationRole WaveRoles, IReadOnlyDictionary<Guid, ApplicationRole> UnitRoles)
 {
     /// <summary>
-    /// Finds what the user is to an application. A candidate is only ever their own application's candidate, whatever else they are to its unit.
+    /// Finds what the user is to an application. A candidate is only ever their own application's candidate, whatever else they are to its unit,
+    /// and a draft is seen by its candidate alone.
     /// </summary>
     /// <param name="application">The application.</param>
     /// <returns>The roles, or <see cref="ApplicationRole.None"/> when the application is not theirs to see.</returns>
-    public ApplicationRole RolesOf(PromotionApplication application) =>
-        application.EmployeeId == EmployeeId ? ApplicationRole.Candidate : WaveRoles | UnitRoles.GetValueOrDefault(application.OrgUnitId);
+    public ApplicationRole RolesOf(PromotionApplication application)
+    {
+        if (application.EmployeeId == EmployeeId)
+        {
+            return ApplicationRole.Candidate;
+        }
+
+        return application.Status == ApplicationStatus.Draft ? ApplicationRole.None : WaveRoles | UnitRoles.GetValueOrDefault(application.OrgUnitId);
+    }
 }

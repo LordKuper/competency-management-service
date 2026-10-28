@@ -1,13 +1,18 @@
 namespace Competency.Promotion;
 
 /// <summary>
-/// The rules for the dates of a wave: a date never falls on a day before the date of the previous stage, nor beyond the horizon; a wave being
-/// announced has no date before today, while one being changed may keep or move a date into the past; once the wave has started its start date
-/// is fixed, and so is the end date of every stage that has finished. A wave going back to a stage that has passed keeps the end dates of the
-/// stages before it, and the stage it returns to and every later one end today or later.
+/// The rules for the dates of a wave: the first stage starts at least a week after the wave is announced; a date never falls on a day before the
+/// date of the previous stage, nor beyond the horizon; a wave being announced has no end date before today, while one being changed may keep or move
+/// a date into the past; once the wave has started its start date is fixed, and so is the end date of every stage that has finished. A wave going back
+/// to a stage that has passed keeps the end dates of the stages before it, and the stage it returns to and every later one end today or later.
 /// </summary>
 internal static class WaveDates
 {
+    /// <summary>
+    /// The days between the announcement of a wave and the start of its first stage, at the least.
+    /// </summary>
+    public const int MinLeadDays = 7;
+
     private const int HorizonYears = 5;
     private const string EndsField = "endsOn";
     private const string StartField = "startsOn";
@@ -21,9 +26,10 @@ internal static class WaveDates
     /// <param name="request">The request.</param>
     /// <param name="wave">The wave being changed; null for a wave being announced.</param>
     /// <param name="stage">The stage the wave is in, as <see cref="PromotionCalendar.StageOf"/> finds it; 0 for a wave being announced.</param>
+    /// <param name="announcedOn">The day the wave is or was announced.</param>
     /// <param name="today">The current day.</param>
     /// <returns>The problems found by field name, an end date by <c>endsOn[n]</c> with n counting from 0; empty when the dates are valid.</returns>
-    public static Dictionary<string, string[]> Validate(WaveRequest request, PromotionWave? wave, int stage, DateOnly today)
+    public static Dictionary<string, string[]> Validate(WaveRequest request, PromotionWave? wave, int stage, DateOnly announcedOn, DateOnly today)
     {
         var errors = new Dictionary<string, string[]>();
         if (request.EndsOn is not { Length: PromotionWave.StageCount })
@@ -40,7 +46,7 @@ internal static class WaveDates
                 errors[StartField] = ["Дату начала нельзя изменить после начала волны"];
             }
         }
-        else if (StartProblem(request.StartsOn, wave is null, today, horizon) is { } startProblem)
+        else if (StartProblem(request.StartsOn, announcedOn, horizon) is { } startProblem)
         {
             errors[StartField] = [startProblem];
         }
@@ -98,11 +104,11 @@ internal static class WaveDates
         return errors;
     }
 
-    private static string? StartProblem(DateOnly date, bool isAnnounced, DateOnly today, DateOnly horizon)
+    private static string? StartProblem(DateOnly date, DateOnly announcedOn, DateOnly horizon)
     {
-        if (isAnnounced && date < today)
+        if (date < announcedOn.AddDays(MinLeadDays))
         {
-            return BeforeTodayMessage;
+            return $"Приём заявок начинается не раньше чем через {MinLeadDays} дней после объявления волны";
         }
 
         return date > horizon ? HorizonMessage() : null;

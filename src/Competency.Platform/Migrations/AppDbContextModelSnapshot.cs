@@ -1169,6 +1169,10 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("org_unit_id");
 
+                    b.Property<bool>("ReviewLetterPending")
+                        .HasColumnType("boolean")
+                        .HasColumnName("review_letter_pending");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -1206,7 +1210,7 @@ namespace Competency.Platform.Migrations
 
                     b.HasIndex(new[] { "WaveId", "EmployeeId" }, "ux_promotion_applications_unfinished")
                         .IsUnique()
-                        .HasFilter("status IN ('Submitted', 'Admitted', 'UnderReview')");
+                        .HasFilter("status IN ('Draft', 'Submitted', 'Admitted', 'UnderReview')");
 
                     b.ToTable("promotion_applications", (string)null);
                 });
@@ -1305,6 +1309,19 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("employee_id");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("email");
+
+                    b.Property<DateTimeOffset?>("EmailConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("email_confirmed_at");
+
+                    b.Property<Guid?>("EmailConfirmedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("email_confirmed_by");
+
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -1312,6 +1329,8 @@ namespace Competency.Platform.Migrations
                         .HasColumnName("source");
 
                     b.HasKey("ApplicationId", "EmployeeId");
+
+                    b.HasIndex("EmailConfirmedBy");
 
                     b.HasIndex("EmployeeId");
 
@@ -1384,7 +1403,7 @@ namespace Competency.Platform.Migrations
 
                     b.ToTable("promotion_settings", null, t =>
                         {
-                            t.HasCheckConstraint("ck_promotion_settings_durations", "cardinality(stage_durations_days) = 7");
+                            t.HasCheckConstraint("ck_promotion_settings_durations", "cardinality(stage_durations_days) = 6");
 
                             t.HasCheckConstraint("ck_promotion_settings_interval", "min_interval_months BETWEEN 0 AND 120");
 
@@ -1396,7 +1415,7 @@ namespace Competency.Platform.Migrations
                         {
                             Id = 1,
                             MinIntervalMonths = 12,
-                            StageDurationsDays = new[] { 21, 7, 14, 7, 14, 3, 14 },
+                            StageDurationsDays = new[] { 10, 2, 5, 2, 5, 5 },
                             Version = 0
                         });
                 });
@@ -1450,9 +1469,9 @@ namespace Competency.Platform.Migrations
 
                     b.ToTable("promotion_waves", null, t =>
                         {
-                            t.HasCheckConstraint("ck_promotion_waves_ends_on", "cardinality(ends_on) = 7");
+                            t.HasCheckConstraint("ck_promotion_waves_ends_on", "cardinality(ends_on) = 6");
 
-                            t.HasCheckConstraint("ck_promotion_waves_processed_stage", "processed_stage BETWEEN 0 AND 7");
+                            t.HasCheckConstraint("ck_promotion_waves_processed_stage", "processed_stage BETWEEN 0 AND 6");
                         });
                 });
 
@@ -2088,6 +2107,11 @@ namespace Competency.Platform.Migrations
                         .HasForeignKey("ApplicationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Competency.UserManagement.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("EmailConfirmedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Competency.OrgStructure.Employee", null)
                         .WithMany()

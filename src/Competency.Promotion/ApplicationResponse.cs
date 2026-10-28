@@ -8,7 +8,7 @@ namespace Competency.Promotion;
 /// </summary>
 /// <param name="Id">The application.</param>
 /// <param name="WaveId">The wave.</param>
-/// <param name="Stage">The stage the wave is in now: 0 before it starts, 1 to 7 while a stage runs, 8 once the last stage has ended.</param>
+/// <param name="Stage">The stage the wave is in now: 0 before it starts, 1 to 6 while a stage runs, 7 once the last stage has ended.</param>
 /// <param name="Status">Where the application stands.</param>
 /// <param name="Roles">What the reader is to the application.</param>
 /// <param name="CandidateEmployeeId">The candidate.</param>
@@ -20,8 +20,10 @@ namespace Competency.Promotion;
 /// <param name="Formal">What the responsible HR entered; null for those who do not see it.</param>
 /// <param name="FormalFailures">The conditions of the formal check the application did not meet, once the stage that checks it has ended.</param>
 /// <param name="Warnings">The conditions that stand against the application now, while it waits for the formal check; the reader sees those that concern them.</param>
-/// <param name="Artifacts">The artifacts the candidate gave; null for those who do not see them.</param>
+/// <param name="FormalCheck">What the formal check would decide now, while the application waits for it; null for those who do not see the formal data.</param>
+/// <param name="Artifacts">The artifacts the candidate gave, which may be given in a draft and in the artifact stage; null for those who do not see them.</param>
 /// <param name="MandatoryArtifactCompetencyIds">The competencies the candidate must give an artifact for, once the rating stage has been checked; null for those who do not see them.</param>
+/// <param name="HasMandatoryArtifacts">Whether the candidate owes artifacts, so the explanation that a competency without one is probably not confirmed is shown beside them; false for those who do not see them.</param>
 /// <param name="FeedbackReceivedAt">When the candidate marked the feedback as received; null until they do, and for those who do not see it.</param>
 /// <param name="Result">The final scores against the requirements and the decision, for the candidate from the stage that publishes them; null otherwise.</param>
 internal sealed record ApplicationResponse(
@@ -39,7 +41,9 @@ internal sealed record ApplicationResponse(
     ApplicationFormalResponse? Formal,
     IReadOnlyList<FormalFailure> FormalFailures,
     IReadOnlyList<FormalFailure> Warnings,
+    FormalCheckResponse? FormalCheck,
     IReadOnlyList<ArtifactResponse>? Artifacts,
     IReadOnlyList<Guid>? MandatoryArtifactCompetencyIds,
+    bool HasMandatoryArtifacts,
     DateTimeOffset? FeedbackReceivedAt,
     ApplicationResultResponse? Result);

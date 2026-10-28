@@ -83,9 +83,8 @@ internal static class WaveEndpoints
     }
 
     /// <summary>
-    /// Announces a wave. Its dates start today at the earliest, each unit exists, works, is one the author answers for, belongs to no unfinished
-    /// wave and has a commission with a chair. A wave that starts later is announced by letter to the employees of its units once it is saved;
-    /// one that starts today is announced by the letter of its first stage.
+    /// Announces a wave. Its first stage starts at least a week from today and none of its stages ends in the past, each unit exists, works, is one the
+    /// author answers for, belongs to no unfinished wave and has a commission with a chair. The employees of its units are told by letter once it is saved.
     /// </summary>
     private static async Task<Results<Created<WaveResponse>, ValidationProblem>> CreateAsync(
         WaveRequest request,
@@ -105,7 +104,7 @@ internal static class WaveEndpoints
         }
 
         await using var transaction = await locks.BeginExclusiveAsync(cancellationToken);
-        var errors = WaveDates.Validate(request, wave: null, stage: 0, calendar.Today);
+        var errors = WaveDates.Validate(request, wave: null, stage: 0, announcedOn: calendar.Today, calendar.Today);
         var unitIds = request.UnitIds.Distinct().ToList();
         if (await waveUnits.ProblemsAsync(unitIds, waveId: null, cancellationToken) is { Count: > 0 } problems)
         {
@@ -123,10 +122,7 @@ internal static class WaveEndpoints
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        if (wave.StartsOn > calendar.Today)
-        {
-            await mail.WaveAnnouncedAsync(wave, cancellationToken);
-        }
+        await mail.WaveAnnouncedAsync(wave, cancellationToken);
 
         response.SetETag(wave.Version);
         return TypedResults.Created($"{Route}/{wave.Id}", (await reader.DescribeAsync([wave], cancellationToken))[0]);
@@ -171,7 +167,7 @@ internal static class WaveEndpoints
         }
 
         ifMatch.ApplyTo(context, wave);
-        var errors = WaveDates.Validate(request, wave, stage, calendar.Today);
+        var errors = WaveDates.Validate(request, wave, stage, calendar.DayOf(wave.CreatedAt), calendar.Today);
         var stored = await context.Set<PromotionWaveUnit>().Where(member => member.WaveId == id).ToListAsync(cancellationToken);
         var unitIds = request.UnitIds.Distinct().ToList();
         var added = unitIds.Except(stored.Select(member => member.OrgUnitId)).ToList();

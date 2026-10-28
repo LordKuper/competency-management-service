@@ -1,6 +1,7 @@
 using Competency.CareerFramework;
 using Competency.OrgStructure;
 using Competency.Platform;
+using Competency.UserManagement;
 using Microsoft.EntityFrameworkCore;
 
 namespace Competency.Promotion;
@@ -13,13 +14,14 @@ namespace Competency.Promotion;
 internal sealed class ApplicationReader(
     AppDbContext context,
     IEmployeeDirectory employees,
+    IUserDirectory users,
     ICareerModel career,
     PromotionCalendar calendar,
     WaveReader waves)
 {
-    private const int ResultStage = 6;
+    private const int ResultStage = PromotionStage.Feedback;
     private const ApplicationRole FormalViewers = ApplicationRole.Administrator | ApplicationRole.Author | ApplicationRole.ResponsibleHr;
-    private const ApplicationRole RaterViewers = ApplicationRole.Administrator | ApplicationRole.Head;
+    private const ApplicationRole RaterViewers = ApplicationRole.Administrator | ApplicationRole.Head | ApplicationRole.ResponsibleHr;
 
     /// <summary>
     /// Describes one application.
@@ -39,6 +41,7 @@ internal sealed class ApplicationReader(
         var canSeeFormal = (roles & FormalViewers) != ApplicationRole.None;
         var isCandidate = roles == ApplicationRole.Candidate;
         var isResultShown = isCandidate && stage >= ResultStage && application.Status is ApplicationStatus.Decided or ApplicationStatus.NoDecision;
+        var mandatory = isCandidate ? await MandatoryArtifactIdsAsync(application, facts.Version, cancellationToken) : null;
 
         return new ApplicationResponse(
             application.Id,
@@ -52,12 +55,14 @@ internal sealed class ApplicationReader(
             application.Education,
             [.. facts.Version.Competencies
                 .Join(scores, competency => competency.Id, score => score.CompetencyId, (competency, score) => new SelfScoreResponse(competency.Id, competency.Name, score.Score))],
-            RatersFor(roles, raters, people),
+            await RatersForAsync(roles, raters, people, cancellationToken),
             canSeeFormal ? await FormalOfAsync(application, cancellationToken) : null,
             application.FormalFailures,
             await WarningsAsync(application, facts.Level, canSeeFormal, cancellationToken),
+            canSeeFormal ? await FormalCheckAsync(application, facts.Level, wave, cancellationToken) : null,
             isCandidate ? await ArtifactsAsync(application.Id, facts.Version, cancellationToken) : null,
-            isCandidate ? await MandatoryArtifactIdsAsync(application, facts.Version, cancellationToken) : null,
+            mandatory,
+            mandatory is { Count: > 0 },
             isCandidate || canSeeFormal ? application.FeedbackReceivedAt : null,
             isResultShown ? await ResultAsync(application, facts.Version, cancellationToken) : null);
     }
@@ -165,16 +170,29 @@ internal sealed class ApplicationReader(
     private static PromotionDecision? ShownDecision(PromotionDecision? decision, ApplicationRole roles, int stage) =>
         roles == ApplicationRole.Candidate && stage < ResultStage ? null : decision;
 
-    private static List<RaterResponse>? RatersFor(ApplicationRole roles, IEnumerable<PromotionRater> raters, IReadOnlyDictionary<Guid, EmployeeStatus> people)
+    private async Task<List<RaterResponse>?> RatersForAsync(
+        ApplicationRole roles,
+        IReadOnlyCollection<PromotionRater> raters,
+        IReadOnlyDictionary<Guid, EmployeeStatus> people,
+        CancellationToken cancellationToken)
     {
         if ((roles & RaterViewers) == ApplicationRole.None && roles != ApplicationRole.Candidate)
         {
             return null;
         }
 
+        var accounts = await users.FindByEmployeeIdsAsync([.. raters.Select(rater => rater.EmployeeId)], cancellationToken);
+        var confirmers = await waves.AccountNamesAsync([.. raters.Select(rater => rater.EmailConfirmedBy).OfType<Guid>().Distinct()], cancellationToken);
         return [.. raters
             .Where(rater => roles != ApplicationRole.Candidate || rater.Source == RaterSource.Candidate)
-            .Select(rater => new RaterResponse(rater.EmployeeId, people[rater.EmployeeId].FullName, rater.Source))
+            .Select(rater => new RaterResponse(
+                rater.EmployeeId,
+                people[rater.EmployeeId].FullName,
+                rater.Source,
+                accounts.ContainsKey(rater.EmployeeId),
+                rater.Email,
+                rater.IsEmailConfirmed,
+                rater.EmailConfirmedBy is { } confirmedBy ? confirmers.GetValueOrDefault(confirmedBy) : null))
             .OrderBy(rater => rater.FullName, TextCollation.Comparer)
             .ThenBy(rater => rater.EmployeeId)];
     }
@@ -197,7 +215,7 @@ internal sealed class ApplicationReader(
         bool canSeeFormal,
         CancellationToken cancellationToken)
     {
-        if (application.Status != ApplicationStatus.Submitted)
+        if (application.Status is not (ApplicationStatus.Draft or ApplicationStatus.Submitted))
         {
             return [];
         }
@@ -205,6 +223,18 @@ internal sealed class ApplicationReader(
         var months = (await context.Set<PromotionSettings>().AsNoTracking().SingleAsync(cancellationToken)).MinIntervalMonths;
         return [.. FormalCheck.Warnings(application, level.RequiredEducation, months, calendar.Today)
             .Where(warning => canSeeFormal || warning == FormalFailure.EducationBelowRequired)];
+    }
+
+    private async Task<FormalCheckResponse?> FormalCheckAsync(PromotionApplication application, CareerVersionLevel level, PromotionWave wave, CancellationToken cancellationToken)
+    {
+        if (application.Status != ApplicationStatus.Submitted)
+        {
+            return null;
+        }
+
+        var months = (await context.Set<PromotionSettings>().AsNoTracking().SingleAsync(cancellationToken)).MinIntervalMonths;
+        var failures = FormalCheck.Failures(application, level.RequiredEducation, months, wave.EndsOn[PromotionStage.FormalCheck - 1]);
+        return new FormalCheckResponse(failures.Count == 0, failures);
     }
 
     /// <summary>

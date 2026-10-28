@@ -5,6 +5,7 @@ using Competency.OrgStructure;
 using Competency.Platform;
 using Competency.UserManagement;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Competency.Promotion;
@@ -22,7 +23,8 @@ internal sealed class PromotionMail(
     CommissionReader commissions,
     ICurrentActor actor,
     IOptions<AppOptions> app,
-    PromotionMailQueue queue)
+    PromotionMailQueue queue,
+    ILogger<PromotionMail> logger)
 {
     private const string AnnouncedKind = "PromotionWaveAnnounced";
     private const string OpenedKind = "PromotionApplicationsOpened";
@@ -31,10 +33,9 @@ internal sealed class PromotionMail(
     private const string FormalRejectedKind = "PromotionFormalCheckRejected";
     private const string RatingStartedKind = "PromotionRatingStarted";
     private const string RatingReminderKind = "PromotionRatingReminder";
-    private const string ReviewStartedKind = "PromotionReviewStarted";
+    private const string ReviewArrivedKind = "PromotionReviewArrived";
     private const string ResultsKind = "PromotionResultsPublished";
     private const string NoDecisionKind = "PromotionNoDecision";
-    private const string FeedbackStartedKind = "PromotionFeedbackStarted";
     private const string FeedbackMissingKind = "PromotionFeedbackMissing";
     private const string Subject = "Повышение в системе «Калибр»";
     private const string DateFormat = "dd.MM.yyyy";
@@ -77,7 +78,7 @@ internal sealed class PromotionMail(
                 "форма заявки"));
 
     /// <summary>
-    /// Tells each responsible HR how many filed applications of their units wait for the dates of the formal check.
+    /// Tells each responsible HR how many filed applications of their units wait for the formal check, which the dates they enter settle.
     /// </summary>
     /// <param name="wave">The wave.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
@@ -92,7 +93,7 @@ internal sealed class PromotionMail(
                 [hrId],
                 FormalStartedKind,
                 Compose(
-                    $"начался этап «Формальная проверка». Внесите дату приёма на работу или последнего повышения по заявкам:\n{string.Join('\n', lines)}",
+                    $"начался этап «Формальная проверка». Заявки ждут проверки; если ещё не внесли дату приёма на работу или последнего повышения, внесите её. Заявки по подразделениям:\n{string.Join('\n', lines)}",
                     "Открыть волну:",
                     Link($"promotion/waves/{wave.Id}"),
                     WaveTarget));
@@ -100,7 +101,7 @@ internal sealed class PromotionMail(
     }
 
     /// <summary>
-    /// Tells each candidate the result of the formal check, and asks the raters of the admitted applications to rate.
+    /// Tells each candidate the result of the formal check, and invites the raters of the admitted applications to rate.
     /// </summary>
     /// <param name="wave">The wave.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
@@ -124,36 +125,57 @@ internal sealed class PromotionMail(
                     ApplicationTarget));
         }
 
-        var admittedIds = await context.Set<PromotionApplication>()
-            .AsNoTracking()
-            .Where(application => application.WaveId == wave.Id && application.Status == ApplicationStatus.Admitted)
-            .Select(application => application.Id)
-            .ToListAsync(cancellationToken);
-        var raterIds = await context.Set<PromotionRater>()
-            .AsNoTracking()
-            .Where(rater => admittedIds.Contains(rater.ApplicationId))
-            .Select(rater => rater.EmployeeId)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-        await InviteRatersAsync(wave, raterIds, cancellationToken);
+        await InviteAndAskRatersAsync(wave, cancellationToken);
     }
 
     /// <summary>
-    /// Asks employees to rate candidates; the same invitation goes to the raters of the admitted applications when the rating stage starts and to
-    /// those the head adds to a list during it.
+    /// Invites the raters of the admitted applications who have no account, at the address a head or the responsible HR confirmed, and then sends each
+    /// rater who has an account one letter naming every candidate they are to rate. A rater with no account and no confirmed address gets nothing.
     /// </summary>
-    /// <param name="wave">The wave.</param>
-    /// <param name="raterEmployeeIds">The employees to invite.</param>
-    /// <param name="cancellationToken">Cancels the lookups.</param>
-    public async Task InviteRatersAsync(PromotionWave wave, IEnumerable<Guid> raterEmployeeIds, CancellationToken cancellationToken) =>
-        Enqueue(
-            await AccountsAsync(raterEmployeeIds, cancellationToken),
-            RatingStartedKind,
-            Compose(
-                $"вас просят оценить кандидатов на повышение. Оценить можно до {Day(wave.EndsOn[2])}.",
-                "Открыть список кандидатов:",
-                Link("promotion/ratings"),
-                "список кандидатов"));
+    private async Task InviteAndAskRatersAsync(PromotionWave wave, CancellationToken cancellationToken)
+    {
+        var admitted = await context.Set<PromotionApplication>()
+            .AsNoTracking()
+            .Where(application => application.WaveId == wave.Id && application.Status == ApplicationStatus.Admitted)
+            .Select(application => new { application.Id, application.EmployeeId })
+            .ToListAsync(cancellationToken);
+        var admittedIds = admitted.Select(application => application.Id).ToArray();
+        var raters = await context.Set<PromotionRater>().AsNoTracking().Where(rater => admittedIds.Contains(rater.ApplicationId)).ToListAsync(cancellationToken);
+        var raterIds = raters.Select(rater => rater.EmployeeId).Distinct().ToList();
+        var withAccount = await users.FindByEmployeeIdsAsync(raterIds, cancellationToken);
+        foreach (var raterId in raterIds.Where(id => !withAccount.ContainsKey(id)))
+        {
+            var email = raters.Where(rater => rater.EmployeeId == raterId && rater.IsEmailConfirmed).OrderBy(rater => rater.EmailConfirmedAt).Select(rater => rater.Email).FirstOrDefault();
+            if (email is null)
+            {
+                logger.LogWarning("The rater {RaterId} of wave {WaveId} has no account and no confirmed address, so nobody invites them.", raterId, wave.Id);
+            }
+            else if (await users.InviteEmployeeAsync(raterId, email, cancellationToken) == EmployeeInvitation.Refused)
+            {
+                logger.LogWarning("The rater {RaterId} of wave {WaveId} was not invited at the confirmed address.", raterId, wave.Id);
+            }
+        }
+
+        var accounts = await users.FindByEmployeeIdsAsync(raterIds, cancellationToken);
+        var people = await employees.FindManyAsync([.. admitted.Select(application => application.EmployeeId), .. raterIds], cancellationToken);
+        var candidateOf = admitted.ToDictionary(application => application.Id, application => application.EmployeeId);
+        foreach (var raterId in raterIds.Where(accounts.ContainsKey))
+        {
+            var names = raters
+                .Where(rater => rater.EmployeeId == raterId)
+                .Select(rater => people[candidateOf[rater.ApplicationId]].FullName)
+                .Order(TextCollation.Comparer);
+            Enqueue(
+                [accounts[raterId].Id],
+                RatingStartedKind,
+                Compose(
+                    $"вас просят оценить кандидатов на повышение. Оценить можно до {Day(wave.EndsOn[PromotionStage.Rating - 1])}. Кандидаты:\n{string.Join('\n', names.Select(name => $"— {name}"))}",
+                    "Открыть список кандидатов:",
+                    Link("promotion/ratings"),
+                    "список кандидатов"),
+                toInvited: true);
+        }
+    }
 
     /// <summary>
     /// Reminds each rater who has not yet answered about a candidate that the rating stage is about to end.
@@ -195,21 +217,21 @@ internal sealed class PromotionMail(
     }
 
     /// <summary>
-    /// Tells the members of each commission that its applications are ready to be reviewed.
+    /// Tells the members of each commission that applications have reached it, in one letter for all that arrived since the last.
     /// </summary>
     /// <param name="wave">The wave.</param>
+    /// <param name="arrivals">The number of applications that arrived, by the unit whose commission reviews them.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    public async Task ReviewStartedAsync(PromotionWave wave, CancellationToken cancellationToken)
+    public async Task ReviewArrivedAsync(PromotionWave wave, IReadOnlyDictionary<Guid, int> arrivals, CancellationToken cancellationToken)
     {
-        var counts = await UnitCountsAsync(wave.Id, ApplicationStatus.UnderReview, cancellationToken);
-        var rosters = await commissions.ReadAsync([.. counts.Keys], cancellationToken);
+        var rosters = await commissions.ReadAsync([.. arrivals.Keys], cancellationToken);
         foreach (var roster in rosters.Values)
         {
             Enqueue(
                 await AccountsAsync(roster.Members.Where(member => member.IsActing).Select(member => member.EmployeeId), cancellationToken),
-                ReviewStartedKind,
+                ReviewArrivedKind,
                 Compose(
-                    $"начался этап «Рассмотрение комиссией»: заявок на рассмотрении по подразделению «{roster.UnitName}» — {counts[roster.UnitId]}.",
+                    $"на рассмотрение комиссии поступили заявки на повышение по подразделению «{roster.UnitName}»: {arrivals[roster.UnitId]}.",
                     "Открыть страницу комиссии:",
                     Link($"promotion/commission/{wave.Id}/{roster.UnitId}"),
                     CommissionTarget));
@@ -217,13 +239,14 @@ internal sealed class PromotionMail(
     }
 
     /// <summary>
-    /// Tells each candidate with a result that it is published, and each responsible HR which applications of their units were left without a decision.
+    /// Publishes the results as the commission stage ends: asks each candidate whose application reached a result to open it and mark the feedback once they
+    /// have received it, and tells each responsible HR which applications of their units were left without a decision.
     /// </summary>
     /// <param name="wave">The wave.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    public async Task ReviewFinishedAsync(PromotionWave wave, CancellationToken cancellationToken)
+    public async Task ResultsPublishedAsync(PromotionWave wave, CancellationToken cancellationToken)
     {
-        await TellCandidatesAsync(wave, ResultStatuses, ResultsKind, "результаты рассмотрения вашей заявки на повышение опубликованы.", cancellationToken);
+        await TellCandidatesAsync(wave, ResultStatuses, ResultsKind, "результаты рассмотрения вашей заявки на повышение опубликованы. Когда получите обратную связь по заявке, отметьте это в системе.", cancellationToken);
         var undecided = await context.Set<PromotionApplication>()
             .AsNoTracking()
             .Where(application => application.WaveId == wave.Id && application.Status == ApplicationStatus.NoDecision)
@@ -243,14 +266,6 @@ internal sealed class PromotionMail(
                     WaveTarget));
         }
     }
-
-    /// <summary>
-    /// Asks every candidate whose application reached a result to mark that they received the feedback.
-    /// </summary>
-    /// <param name="wave">The wave.</param>
-    /// <param name="cancellationToken">Cancels the lookups.</param>
-    public Task FeedbackStartedAsync(PromotionWave wave, CancellationToken cancellationToken) =>
-        TellCandidatesAsync(wave, ResultStatuses, FeedbackStartedKind, "начался этап «Обратная связь». Когда получите обратную связь по заявке на повышение, отметьте это в системе.", cancellationToken);
 
     /// <summary>
     /// Tells the responsible HR, the chair and the head of each unit which candidates did not mark that they received the feedback.
@@ -307,12 +322,12 @@ internal sealed class PromotionMail(
 
     private string Link(string route) => $"{app.Value.PublicBaseUrl.AbsoluteUri.TrimEnd('/')}/{route}";
 
-    private void Enqueue(IEnumerable<Guid> recipientIds, string kind, string body)
+    private void Enqueue(IEnumerable<Guid> recipientIds, string kind, string body, bool toInvited = false)
     {
         var recipients = recipientIds.Distinct().ToList();
         if (recipients.Count > 0)
         {
-            queue.Enqueue(new PromotionMailQueue.Letter(recipients, kind, Subject, body, actor.UserId?.ToString(), actor.Role, actor.RequestId));
+            queue.Enqueue(new PromotionMailQueue.Letter(recipients, kind, Subject, body, actor.UserId?.ToString(), actor.Role, actor.RequestId, toInvited));
         }
     }
 

@@ -11,7 +11,7 @@ internal sealed record WaveRequest
     public required DateOnly StartsOn { get; init; }
 
     /// <summary>
-    /// The last day of each of the seven stages, in the order of the stages.
+    /// The last day of each of the six stages, in the order of the stages.
     /// </summary>
     public required DateOnly[] EndsOn { get; init; }
 

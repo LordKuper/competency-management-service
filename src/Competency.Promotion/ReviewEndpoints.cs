@@ -10,17 +10,16 @@ namespace Competency.Promotion;
 
 /// <summary>
 /// The API of the commission's review. The members of the commission of the unit of the target and administrators read the card of a candidate and the
-/// ranking of the unit from the stage the commission reviews; the chair alone records the final scores and the decision, until that stage ends. The rating
+/// ranking of the unit from the moment the application reaches the commission; the chair alone records the final scores and the decision, until the commission stage ends. The rating
 /// and the ranking never reach the candidate. An application the caller has no part in is reported as not found, and one they see without the right to the
 /// request as forbidden.
 /// </summary>
 internal static class ReviewEndpoints
 {
     private const string Tag = "Promotion";
-    private const int ReviewStage = 5;
     private const ApplicationRole Readers = ApplicationRole.Administrator | ApplicationRole.Member;
-    private const string ReviewNotStartedMessage = "Заявка рассматривается комиссией на этапе «Рассмотрение комиссией»";
-    private const string ReviewClosedMessage = "Итоговые оценки и решение вносят на этапе «Рассмотрение комиссией»";
+    private const string ReviewNotStartedMessage = "Заявка поступает на рассмотрение комиссии после этапа «Круговая оценка» или, если нужны артефакты, когда они поданы";
+    private const string ReviewClosedMessage = "Итоговые оценки и решение вносят с поступления заявки к комиссии до конца этапа «Рассмотрение комиссией»";
     private const string DecisionWithdrawnMessage = "Решение можно изменить, но не снять";
 
     public static void Map(IEndpointRouteBuilder endpoints)
@@ -43,7 +42,6 @@ internal static class ReviewEndpoints
         Guid id,
         AppDbContext context,
         ApplicationAccess access,
-        PromotionCalendar calendar,
         ReviewReader reviews,
         HttpResponse response,
         CancellationToken cancellationToken)
@@ -66,7 +64,7 @@ internal static class ReviewEndpoints
             return Rejection.Forbidden();
         }
 
-        if (calendar.StageOf(wave) < ReviewStage || !PromotionApplication.ReviewedStatuses.Contains(application.Status))
+        if (!PromotionApplication.ReviewedStatuses.Contains(application.Status))
         {
             return Rejection.Conflict(ReviewNotStartedMessage);
         }
@@ -117,7 +115,7 @@ internal static class ReviewEndpoints
             return Rejection.Forbidden();
         }
 
-        if (calendar.StageOf(wave) != ReviewStage || application.Status is not (ApplicationStatus.UnderReview or ApplicationStatus.Decided))
+        if (calendar.StageOf(wave) > PromotionStage.Review || application.Status is not (ApplicationStatus.UnderReview or ApplicationStatus.Decided))
         {
             return Rejection.Conflict(ReviewClosedMessage);
         }

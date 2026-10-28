@@ -42,11 +42,15 @@ internal sealed class PromotionTick(IServiceScopeFactory scopeFactory, ILogger<P
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var calendar = scope.ServiceProvider.GetRequiredService<PromotionCalendar>();
-        var waves = await scope.ServiceProvider.GetRequiredService<AppDbContext>()
-            .Set<PromotionWave>()
-            .AsNoTracking()
-            .Where(wave => wave.ProcessedStage < PromotionWave.StageCount)
-            .ToListAsync(cancellationToken);
-        return [.. waves.Where(wave => DueStep.Next(wave, calendar) is not null).Select(wave => wave.Id)];
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var waves = await context.Set<PromotionWave>().AsNoTracking().Where(wave => wave.ProcessedStage < PromotionWave.StageCount).ToListAsync(cancellationToken);
+        var withArrivals = (await context.Set<PromotionApplication>()
+                .AsNoTracking()
+                .Where(application => application.ReviewLetterPending)
+                .Select(application => application.WaveId)
+                .Distinct()
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
+        return [.. waves.Where(wave => DueStep.Next(wave, calendar, withArrivals.Contains(wave.Id)) is not null).Select(wave => wave.Id)];
     }
 }

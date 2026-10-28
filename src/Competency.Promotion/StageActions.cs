@@ -72,7 +72,7 @@ internal sealed class StageActions(
     }
 
     /// <summary>
-    /// Finds the units whose commission would review admitted applications but has no chair who acts.
+    /// Finds the units whose commission would review admitted applications but has no chair who acts; the applications reach no commission without one.
     /// </summary>
     /// <param name="wave">The wave.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
@@ -92,12 +92,14 @@ internal sealed class StageActions(
     }
 
     /// <summary>
-    /// Hands the admitted applications to the commission, marking those that owe artifacts they did not give. An application the chair already
-    /// decided on, before the wave went back to an earlier stage, is decided again at once.
+    /// Hands admitted applications to the commission: those that met the mandatory requirements, and those that owe artifacts once they have given them all.
+    /// At the deadline of the artifact stage the rest follow, marked as missing the artifacts they did not give. An application the chair already decided on,
+    /// before the wave went back to an earlier stage, is decided again at once. A caller has checked that every commission concerned has a chair.
     /// </summary>
     /// <param name="wave">The wave.</param>
+    /// <param name="isDeadline">Whether the artifact stage has ended.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    public async Task OpenReviewAsync(PromotionWave wave, CancellationToken cancellationToken)
+    public async Task ReachCommissionAsync(PromotionWave wave, bool isDeadline, CancellationToken cancellationToken)
     {
         var admitted = await ApplicationsAsync(wave.Id, ApplicationStatus.Admitted, cancellationToken);
         var facts = await applications.TargetsAsync(admitted, cancellationToken);
@@ -111,9 +113,61 @@ internal sealed class StageActions(
         foreach (var application in admitted)
         {
             var mandatory = await applications.MandatoryArtifactIdsAsync(application, facts[application.Id].Version, cancellationToken);
-            application.ArtifactsMissing = mandatory.Any(competencyId => !given[application.Id].Contains(competencyId));
-            application.Status = application.Decision is null ? ApplicationStatus.UnderReview : ApplicationStatus.Decided;
+            var isMissing = mandatory.Any(competencyId => !given[application.Id].Contains(competencyId));
+            if (isMissing && !isDeadline)
+            {
+                continue;
+            }
+
+            application.ArtifactsMissing = isMissing;
+            application.ReachCommission();
         }
+    }
+
+    /// <summary>
+    /// Hands an admitted application to the commission as soon as the last mandatory artifact is given, when the commission of its unit has a chair.
+    /// </summary>
+    /// <param name="application">The application, tracked.</param>
+    /// <param name="givenCompetencyIds">The competencies the application will have artifacts for.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    public async Task ReachCommissionWithArtifactsAsync(PromotionApplication application, IReadOnlyCollection<Guid> givenCompetencyIds, CancellationToken cancellationToken)
+    {
+        if (application.Status != ApplicationStatus.Admitted || application.MeetsAfterRating != false)
+        {
+            return;
+        }
+
+        var version = (await career.VersionAsync(application.VersionId, cancellationToken))!;
+        var mandatory = await applications.MandatoryArtifactIdsAsync(application, version, cancellationToken);
+        if (mandatory.Any(competencyId => !givenCompetencyIds.Contains(competencyId))
+            || (await commissions.ReadAsync([application.OrgUnitId], cancellationToken)).GetValueOrDefault(application.OrgUnitId)?.ChairEmployeeId is null)
+        {
+            return;
+        }
+
+        application.ReachCommission();
+    }
+
+    /// <summary>
+    /// Collects the applications that reached a commission since its members were last told, and marks them told. Saves the tracked changes first,
+    /// so that applications handed over by the same step are found.
+    /// </summary>
+    /// <param name="waveId">The wave.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    /// <returns>The number of such applications by the unit whose commission reviews them; empty when there are none.</returns>
+    public async Task<IReadOnlyDictionary<Guid, int>> TakeArrivalsAsync(Guid waveId, CancellationToken cancellationToken)
+    {
+        await context.SaveChangesAsync(cancellationToken);
+        var flagged = await context.Set<PromotionApplication>().Where(application => application.WaveId == waveId && application.ReviewLetterPending).ToListAsync(cancellationToken);
+        foreach (var application in flagged)
+        {
+            application.ReviewLetterPending = false;
+        }
+
+        return flagged
+            .Where(application => PromotionApplication.ReviewedStatuses.Contains(application.Status))
+            .GroupBy(application => application.OrgUnitId)
+            .ToDictionary(group => group.Key, group => group.Count());
     }
 
     /// <summary>

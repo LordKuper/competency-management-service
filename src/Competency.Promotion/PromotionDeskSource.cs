@@ -10,8 +10,8 @@ namespace Competency.Promotion;
 /// <summary>
 /// What the promotion waves expect of the signed-in user, by what they are to the waves at the moment of asking.
 /// What is due follows from the stage the dates and the clock put each wave in, the status of the applications and the flags the stages set,
-/// never from how far the stage actions have been carried out. Reads only the waves that are in a stage with something to do, in a fixed
-/// number of queries whatever the size of the organization.
+/// never from how far the stage actions have been carried out. Drafts are the candidate's own business and never appear. Reads only the waves
+/// that are running, in a fixed number of queries whatever the size of the organization.
 /// </summary>
 internal sealed class PromotionDeskSource(
     ICurrentActor actor,
@@ -23,14 +23,10 @@ internal sealed class PromotionDeskSource(
     ApplicationReader reader,
     PromotionCalendar calendar) : IDeskSource
 {
-    private const int FormalStage = 2;
-    private const int RatingStage = 3;
-    private const int ArtifactStage = 4;
-    private const int ReviewStage = 5;
-    private const int FeedbackStage = 7;
     private const string DateFormat = "yyyy-MM-dd";
 
-    private static readonly int[] DeskStages = [FormalStage, RatingStage, ArtifactStage, ReviewStage, FeedbackStage];
+    private static readonly int[] FilingStages = [PromotionStage.Submission, PromotionStage.FormalCheck];
+    private static readonly int[] ReviewStages = [PromotionStage.Artifacts, PromotionStage.Review];
 
     /// <inheritdoc />
     public async Task<DeskReport> FindAsync(CancellationToken cancellationToken)
@@ -41,7 +37,7 @@ internal sealed class PromotionDeskSource(
             return nothing;
         }
 
-        var waves = await WavesInStagesAsync(cancellationToken);
+        var waves = await RunningWavesAsync(cancellationToken);
         if (waves.Count == 0 || await employees.FindAsync(employeeId, cancellationToken) is not { IsActive: true })
         {
             return nothing;
@@ -69,33 +65,33 @@ internal sealed class PromotionDeskSource(
     }
 
     /// <summary>
-    /// The waves that are in a stage with something to do, by identifier, each with the stage it is in.
+    /// The waves that are running, by identifier, each with the stage it is in.
     /// </summary>
-    private async Task<Dictionary<Guid, (PromotionWave Wave, int Stage)>> WavesInStagesAsync(CancellationToken cancellationToken) =>
+    private async Task<Dictionary<Guid, (PromotionWave Wave, int Stage)>> RunningWavesAsync(CancellationToken cancellationToken) =>
         (await context.Set<PromotionWave>().AsNoTracking().Where(wave => wave.ProcessedStage < PromotionWave.StageCount).ToListAsync(cancellationToken))
             .Select(wave => (Wave: wave, Stage: calendar.StageOf(wave)))
-            .Where(pair => DeskStages.Contains(pair.Stage))
+            .Where(pair => pair.Stage is >= PromotionStage.Submission and <= PromotionStage.Feedback)
             .ToDictionary(pair => pair.Wave.Id);
 
-    private static Guid[] WaveIdsAt(Dictionary<Guid, (PromotionWave Wave, int Stage)> waves, int stage) =>
-        [.. waves.Where(pair => pair.Value.Stage == stage).Select(pair => pair.Key)];
+    private static Guid[] WaveIdsAt(Dictionary<Guid, (PromotionWave Wave, int Stage)> waves, params int[] stages) =>
+        [.. waves.Where(pair => stages.Contains(pair.Value.Stage)).Select(pair => pair.Key)];
 
-    private static DeskDetails UntilEndOf(Dictionary<Guid, (PromotionWave Wave, int Stage)> waves, Guid waveId) =>
-        new(Until: waves[waveId].Wave.EndsOn[waves[waveId].Stage - 1]);
+    private static DeskDetails UntilEndOf(Dictionary<Guid, (PromotionWave Wave, int Stage)> waves, Guid waveId, int deadlineStage) =>
+        new(Until: waves[waveId].Wave.EndsOn[deadlineStage - 1]);
 
     private static DeskObject ObjectOf(PromotionWave wave) =>
         new(DeskObjectType.PromotionWave, wave.Id, wave.StartsOn.ToString(DateFormat, CultureInfo.InvariantCulture));
 
     /// <summary>
-    /// For a responsible HR, the waves in the formal check stage with filed applications of their units that have no date of hiring or of the
-    /// last promotion yet.
+    /// For a responsible HR, the waves in the submission and formal check stages with filed applications of their units that have no date of hiring or
+    /// of the last promotion yet; the dates may be entered from the moment an application is filed.
     /// </summary>
     private async Task<IEnumerable<DeskFinding>> FormalCheckFindingsAsync(
         Dictionary<Guid, (PromotionWave Wave, int Stage)> waves,
         Guid userId,
         CancellationToken cancellationToken)
     {
-        var checking = WaveIdsAt(waves, FormalStage);
+        var checking = WaveIdsAt(waves, FilingStages);
         if (checking.Length == 0 || !actor.IsHr())
         {
             return [];
@@ -120,7 +116,7 @@ internal sealed class PromotionDeskSource(
                 DeskKind.PromotionFormalCheckPending,
                 ObjectOf(waves[group.Key].Wave),
                 IsAction: true,
-                Details: UntilEndOf(waves, group.Key) with { ApplicationCount = group.Sum(row => row.Count) }));
+                Details: UntilEndOf(waves, group.Key, PromotionStage.FormalCheck) with { ApplicationCount = group.Sum(row => row.Count) }));
     }
 
     /// <summary>
@@ -131,7 +127,7 @@ internal sealed class PromotionDeskSource(
         Guid employeeId,
         CancellationToken cancellationToken)
     {
-        var rating = WaveIdsAt(waves, RatingStage);
+        var rating = WaveIdsAt(waves, PromotionStage.Rating);
         if (rating.Length == 0)
         {
             return [];
@@ -146,38 +142,51 @@ internal sealed class PromotionDeskSource(
                 && !context.Set<PromotionRaterScore>().Any(answer => answer.ApplicationId == application.Id && answer.EmployeeId == employeeId)
             select new { application.Id, application.WaveId, application.EmployeeId })
             .ToListAsync(cancellationToken);
-        return due.Select(row => new Due(DeskKind.PromotionRatingRequested, row.Id, row.EmployeeId, UntilEndOf(waves, row.WaveId)));
+        return due.Select(row => new Due(DeskKind.PromotionRatingRequested, row.Id, row.EmployeeId, UntilEndOf(waves, row.WaveId, PromotionStage.Rating)));
     }
 
     /// <summary>
-    /// The admitted applications of the rating stage aimed at a unit the employee heads, whose list of raters the head may review.
+    /// The filed applications aimed at a unit the employee heads, while the head may still correct the list of raters and confirm the addresses of those
+    /// without an account; the item says when some address is not confirmed.
     /// </summary>
     private async Task<IEnumerable<Due>> RatersReviewDueAsync(
         Dictionary<Guid, (PromotionWave Wave, int Stage)> waves,
         Guid employeeId,
         CancellationToken cancellationToken)
     {
-        var rating = WaveIdsAt(waves, RatingStage);
-        if (rating.Length == 0)
+        var filing = WaveIdsAt(waves, FilingStages);
+        if (filing.Length == 0)
         {
             return [];
         }
 
         var unitIds = (await employees.FindHeadedUnitsAsync(employeeId, cancellationToken)).Where(unit => unit.IsActive).Select(unit => unit.Id).ToArray();
-        return unitIds.Length == 0
-            ? []
-            : await DueInUnitsAsync(DeskKind.PromotionRatersReview, ApplicationStatus.Admitted, rating, unitIds, employeeId, waves, cancellationToken);
+        if (unitIds.Length == 0)
+        {
+            return [];
+        }
+
+        var due = (await DueInUnitsAsync(DeskKind.PromotionRatersReview, ApplicationStatus.Submitted, filing, unitIds, employeeId, waves, PromotionStage.FormalCheck, cancellationToken)).ToList();
+        var dueIds = due.Select(item => item.ApplicationId).ToArray();
+        var unconfirmed = (await context.Set<PromotionRater>()
+                .AsNoTracking()
+                .Where(rater => dueIds.Contains(rater.ApplicationId) && rater.Email != null && rater.EmailConfirmedBy == null)
+                .Select(rater => rater.ApplicationId)
+                .Distinct()
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
+        return due.Select(item => unconfirmed.Contains(item.ApplicationId) ? item with { Details = item.Details with { HasUnconfirmedEmails = true } } : item);
     }
 
     /// <summary>
-    /// The applications of the commission stage still without a decision, aimed at a unit whose commission the employee chairs.
+    /// The applications before the commission still without a decision, from the moment they reach it, aimed at a unit whose commission the employee chairs.
     /// </summary>
     private async Task<IEnumerable<Due>> DecisionsDueAsync(
         Dictionary<Guid, (PromotionWave Wave, int Stage)> waves,
         Guid employeeId,
         CancellationToken cancellationToken)
     {
-        var review = WaveIdsAt(waves, ReviewStage);
+        var review = WaveIdsAt(waves, ReviewStages);
         if (review.Length == 0)
         {
             return [];
@@ -199,7 +208,7 @@ internal sealed class PromotionDeskSource(
             .ToArray();
         return unitIds.Length == 0
             ? []
-            : await DueInUnitsAsync(DeskKind.PromotionDecisionsPending, ApplicationStatus.UnderReview, review, unitIds, employeeId, waves, cancellationToken);
+            : await DueInUnitsAsync(DeskKind.PromotionDecisionsPending, ApplicationStatus.UnderReview, review, unitIds, employeeId, waves, PromotionStage.Review, cancellationToken);
     }
 
     private async Task<IEnumerable<Due>> DueInUnitsAsync(
@@ -209,6 +218,7 @@ internal sealed class PromotionDeskSource(
         Guid[] unitIds,
         Guid employeeId,
         Dictionary<Guid, (PromotionWave Wave, int Stage)> waves,
+        int deadlineStage,
         CancellationToken cancellationToken)
     {
         var due = await context.Set<PromotionApplication>()
@@ -219,19 +229,19 @@ internal sealed class PromotionDeskSource(
                 && application.EmployeeId != employeeId)
             .Select(application => new { application.Id, application.WaveId, application.EmployeeId })
             .ToListAsync(cancellationToken);
-        return due.Select(row => new Due(kind, row.Id, row.EmployeeId, UntilEndOf(waves, row.WaveId)));
+        return due.Select(row => new Due(kind, row.Id, row.EmployeeId, UntilEndOf(waves, row.WaveId, deadlineStage)));
     }
 
     /// <summary>
-    /// The employee's own applications that wait for something from them: artifacts in the artifact stage, the mark of received feedback in
-    /// the feedback stage. Named by what the application aims at, since the employee knows whose it is.
+    /// The employee's own applications that wait for something from them: mandatory artifacts in the artifact stage, the mark of received feedback
+    /// from the publication of the results. Named by what the application aims at, since the employee knows whose it is.
     /// </summary>
     private async Task<IEnumerable<DeskFinding>> CandidateFindingsAsync(
         Dictionary<Guid, (PromotionWave Wave, int Stage)> waves,
         Guid employeeId,
         CancellationToken cancellationToken)
     {
-        var waveIds = new[] { ArtifactStage, FeedbackStage }.SelectMany(stage => WaveIdsAt(waves, stage)).ToArray();
+        var waveIds = WaveIdsAt(waves, PromotionStage.Artifacts, PromotionStage.Feedback);
         if (waveIds.Length == 0)
         {
             return [];
@@ -266,17 +276,16 @@ internal sealed class PromotionDeskSource(
                 application.Id,
                 $"{facts.Target.TrackName} — {facts.Target.LevelName}",
                 [facts.Target.UnitName]);
-            var details = UntilEndOf(waves, application.WaveId);
-            if (waves[application.WaveId].Stage == FeedbackStage)
+            if (waves[application.WaveId].Stage == PromotionStage.Feedback)
             {
-                findings.Add(new DeskFinding(DeskKind.PromotionFeedbackPending, named, IsAction: true, Details: details));
+                findings.Add(new DeskFinding(DeskKind.PromotionFeedbackPending, named, IsAction: true, Details: UntilEndOf(waves, application.WaveId, PromotionStage.Feedback)));
                 continue;
             }
 
             var mandatory = await reader.MandatoryArtifactIdsAsync(application, facts.Version, cancellationToken);
             if (mandatory.Any(competencyId => !filed.Contains((application.Id, competencyId))))
             {
-                findings.Add(new DeskFinding(DeskKind.PromotionArtifactsRequired, named, IsAction: true, Details: details));
+                findings.Add(new DeskFinding(DeskKind.PromotionArtifactsRequired, named, IsAction: true, Details: UntilEndOf(waves, application.WaveId, PromotionStage.Artifacts)));
             }
         }
 
@@ -287,8 +296,8 @@ internal sealed class PromotionDeskSource(
 
     private static bool IsWaitingForCandidate(PromotionApplication application, int stage) => stage switch
     {
-        ArtifactStage => application.Status == ApplicationStatus.Admitted && application.MeetsAfterRating == false,
-        FeedbackStage => application.Status is ApplicationStatus.Decided or ApplicationStatus.NoDecision && application.FeedbackReceivedAt is null,
+        PromotionStage.Artifacts => application.Status == ApplicationStatus.Admitted && application.MeetsAfterRating == false,
+        PromotionStage.Feedback => application.Status is ApplicationStatus.Decided or ApplicationStatus.NoDecision && application.FeedbackReceivedAt is null,
         _ => false,
     };
 }

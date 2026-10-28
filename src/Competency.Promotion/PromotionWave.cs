@@ -3,13 +3,13 @@ using Competency.Platform;
 namespace Competency.Promotion;
 
 /// <summary>
-/// A promotion wave: the units whose employees may apply and the dates of its seven stages. The stage a wave is in follows from the dates
+/// A promotion wave: the units whose employees may apply and the dates of its six stages. The stage a wave is in follows from the dates
 /// and the clock and is never stored; the stored stage is only how far the actions of finished stages have been carried out.
 /// </summary>
 [Audited]
 internal sealed class PromotionWave : EntityBase
 {
-    public const int StageCount = 7;
+    public const int StageCount = 6;
 
     /// <summary>
     /// The account that announced the wave.

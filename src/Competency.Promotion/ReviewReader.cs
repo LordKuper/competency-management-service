@@ -18,7 +18,7 @@ internal sealed class ReviewReader(
     WaveReader waves,
     ApplicationReader applications)
 {
-    private const int ResultStage = 6;
+    private const int ResultStage = PromotionStage.Feedback;
 
     /// <summary>
     /// Describes the card of one application.

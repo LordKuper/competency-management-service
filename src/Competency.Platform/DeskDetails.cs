@@ -19,6 +19,7 @@ namespace Competency.Platform;
 /// <param name="HasHrRole">Whether the account the reason is about has the HR role.</param>
 /// <param name="ApplicationCount">The number of promotion applications the reason counts.</param>
 /// <param name="Until">The last day of the promotion stage the reason names.</param>
+/// <param name="HasUnconfirmedEmails">Whether some rater of the application has no account and an address that no head or HR has confirmed yet.</param>
 public sealed record DeskDetails(
     int? EmployeeCount = null,
     int? Step = null,
@@ -35,4 +36,5 @@ public sealed record DeskDetails(
     IReadOnlyList<DeskObject>? MovedLevels = null,
     bool? HasHrRole = null,
     int? ApplicationCount = null,
-    DateOnly? Until = null);
+    DateOnly? Until = null,
+    bool? HasUnconfirmedEmails = null);

@@ -205,7 +205,7 @@ public enum DeskKind
     PromotionRatingRequested,
 
     /// <summary>
-    /// The user heads the unit of a candidate's target while the raters are rating, and may review the list of raters.
+    /// The user heads the unit of the target of a filed application, and may correct the list of raters and confirm the addresses of those without an account until the formal check stage ends.
     /// </summary>
     PromotionRatersReview,
 
@@ -215,7 +215,7 @@ public enum DeskKind
     PromotionFormalCheckPending,
 
     /// <summary>
-    /// An application before the commission the user chairs has no decision yet.
+    /// An application before the commission the user chairs has no decision yet; it reaches the commission after the rating stage or once its artifacts are given.
     /// </summary>
     PromotionDecisionsPending,
 }

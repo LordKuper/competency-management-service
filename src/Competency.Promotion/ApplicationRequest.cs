@@ -3,14 +3,15 @@ using Competency.CareerFramework;
 namespace Competency.Promotion;
 
 /// <summary>
-/// The content of an application: the target, the candidate's education, their score for every competency of the version and the raters they propose.
-/// Everything is replaced.
+/// The content of an application: the target, the candidate's education, their scores for the competencies of the version and the raters they propose.
+/// A draft may be saved with some scores and raters missing. Everything is replaced.
 /// </summary>
 internal record ApplicationRequest
 {
     public const int MaxRaters = 50;
 
     private const int MaxSelfScores = 500;
+    private const string RatersField = "raters";
 
     /// <summary>
     /// The matrix of the unit the target level belongs to, as the open wave offers it.
@@ -24,9 +25,9 @@ internal record ApplicationRequest
     public required SelfScoreInput[] SelfScores { get; init; }
 
     /// <summary>
-    /// The employees asked to rate the candidate.
+    /// The employees asked to rate the candidate, each with the address to invite them at when they have no account.
     /// </summary>
-    public required Guid[] RaterEmployeeIds { get; init; }
+    public required RaterInput[] Raters { get; init; }
 
     /// <summary>
     /// Checks the shape of the request.
@@ -45,9 +46,9 @@ internal record ApplicationRequest
             errors["selfScores"] = ["Оцените каждую компетенцию"];
         }
 
-        if (RaterEmployeeIds is not { Length: <= MaxRaters })
+        if (Raters is not { Length: <= MaxRaters } || Raters.Any(rater => rater is null))
         {
-            errors["raterEmployeeIds"] = [$"Укажите не больше {MaxRaters} оценивающих"];
+            errors[RatersField] = [$"Укажите не больше {MaxRaters} оценивающих"];
         }
 
         return errors;

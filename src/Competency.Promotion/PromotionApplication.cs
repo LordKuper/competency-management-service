@@ -10,15 +10,10 @@ namespace Competency.Promotion;
 [Audited]
 internal sealed class PromotionApplication : EntityBase
 {
-    private const int FormalCheckStage = 2;
-    private const int RatingStage = 3;
-    private const int ArtifactStage = 4;
-    private const int ReviewStage = 5;
-
     /// <summary>
-    /// The statuses of an application that is still going, in which it counts against the one-application rule.
+    /// The statuses of an application that is still going, a draft included, in which it counts against the one-application rule.
     /// </summary>
-    public static readonly IReadOnlyList<ApplicationStatus> UnfinishedStatuses = [ApplicationStatus.Submitted, ApplicationStatus.Admitted, ApplicationStatus.UnderReview];
+    public static readonly IReadOnlyList<ApplicationStatus> UnfinishedStatuses = [ApplicationStatus.Draft, ApplicationStatus.Submitted, ApplicationStatus.Admitted, ApplicationStatus.UnderReview];
 
     /// <summary>
     /// The statuses of an application the commission has before it or has dealt with.
@@ -62,7 +57,7 @@ internal sealed class PromotionApplication : EntityBase
     public EducationLevel Education { get; set; }
 
     [Audited]
-    public ApplicationStatus Status { get; set; } = ApplicationStatus.Submitted;
+    public ApplicationStatus Status { get; set; } = ApplicationStatus.Draft;
 
     /// <summary>
     /// The date of hiring or of the last promotion, entered by the responsible HR.
@@ -105,6 +100,11 @@ internal sealed class PromotionApplication : EntityBase
     public bool ArtifactsMissing { get; set; }
 
     /// <summary>
+    /// Whether the application reached the commission and the members have not been told yet; the next pass of the scheduler tells them of all such applications in one letter.
+    /// </summary>
+    public bool ReviewLetterPending { get; set; }
+
+    /// <summary>
     /// The decision of the chair; null while there is none. The chair may change it until the commission stage ends.
     /// </summary>
     [Audited]
@@ -126,24 +126,25 @@ internal sealed class PromotionApplication : EntityBase
     public DateTimeOffset? FeedbackReceivedAt { get; set; }
 
     /// <summary>
-    /// Whether the candidate may still withdraw the application: it is going and no decision is recorded.
+    /// Whether the candidate may still withdraw the application: it is filed and going, and no decision is recorded. A draft is deleted instead.
     /// </summary>
-    public bool CanBeWithdrawn => UnfinishedStatuses.Contains(Status) && Decision is null;
+    public bool CanBeWithdrawn => Status != ApplicationStatus.Draft && UnfinishedStatuses.Contains(Status) && Decision is null;
 
     /// <summary>
     /// Takes the application back to where it stands at the start of a stage the wave returns to. Only what a later stage settled is reset: the
     /// status, the formal failures and the results of the rating and artifact stages, which the end of those stages computes again. What the
-    /// people entered, the decision of the chair included, stays. A withdrawn application stays withdrawn.
+    /// people entered, the decision of the chair included, stays. A candidate who met the mandatory requirements stays with the commission when
+    /// the wave returns to the artifact stage. A withdrawn application stays withdrawn, and a draft stays a draft.
     /// </summary>
-    /// <param name="stage">The stage the wave returns to, 1 to 7.</param>
+    /// <param name="stage">The stage the wave returns to, 1 to 6.</param>
     public void ReturnToStage(int stage)
     {
-        if (Status == ApplicationStatus.Withdrawn)
+        if (Status is ApplicationStatus.Withdrawn or ApplicationStatus.Draft)
         {
             return;
         }
 
-        if (stage <= FormalCheckStage)
+        if (stage <= PromotionStage.FormalCheck)
         {
             if (Status != ApplicationStatus.Submitted)
             {
@@ -151,23 +152,37 @@ internal sealed class PromotionApplication : EntityBase
                 FormalFailures = [];
             }
         }
-        else if (stage <= ArtifactStage)
+        else if (ReviewedStatuses.Contains(Status))
         {
-            Status = ReviewedStatuses.Contains(Status) ? ApplicationStatus.Admitted : Status;
-        }
-        else if (stage == ReviewStage && Status == ApplicationStatus.NoDecision)
-        {
-            Status = ApplicationStatus.UnderReview;
+            if (stage <= PromotionStage.Rating || (stage == PromotionStage.Artifacts && MeetsAfterRating != true))
+            {
+                Status = ApplicationStatus.Admitted;
+                ReviewLetterPending = false;
+            }
+            else if (Status == ApplicationStatus.NoDecision)
+            {
+                Status = ApplicationStatus.UnderReview;
+            }
         }
 
-        if (stage <= RatingStage)
+        if (stage <= PromotionStage.Rating)
         {
             MeetsAfterRating = null;
         }
 
-        if (stage <= ArtifactStage)
+        if (stage <= PromotionStage.Artifacts)
         {
             ArtifactsMissing = false;
         }
+    }
+
+    /// <summary>
+    /// Hands the application to the commission: under review, or decided again at once when the chair already decided before the wave went back
+    /// to an earlier stage.
+    /// </summary>
+    public void ReachCommission()
+    {
+        Status = Decision is null ? ApplicationStatus.UnderReview : ApplicationStatus.Decided;
+        ReviewLetterPending = true;
     }
 }

@@ -22,6 +22,13 @@ internal sealed class PromotionCalendar(TimeProvider time, IOptions<AppOptions> 
     public DateOnly Today => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(time.GetUtcNow(), zone).DateTime);
 
     /// <summary>
+    /// Finds the day a moment falls on in the organization's time zone.
+    /// </summary>
+    /// <param name="moment">The moment.</param>
+    /// <returns>The day.</returns>
+    public DateOnly DayOf(DateTimeOffset moment) => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(moment, zone).DateTime);
+
+    /// <summary>
     /// Finds the moment a day begins in the organization's time zone.
     /// </summary>
     /// <param name="day">The day.</param>
@@ -41,7 +48,7 @@ internal sealed class PromotionCalendar(TimeProvider time, IOptions<AppOptions> 
     /// Finds how long a stage still has to run.
     /// </summary>
     /// <param name="wave">The wave.</param>
-    /// <param name="stage">The stage, 1 to 7.</param>
+    /// <param name="stage">The stage, 1 to 6.</param>
     /// <returns>The time to the end of the stage's last day; negative once it has ended.</returns>
     public TimeSpan TimeLeft(PromotionWave wave, int stage) => StartOf(wave.EndsOn[stage - 1].AddDays(1)) - time.GetUtcNow();
 
@@ -49,7 +56,7 @@ internal sealed class PromotionCalendar(TimeProvider time, IOptions<AppOptions> 
     /// Finds the stage a wave is in now.
     /// </summary>
     /// <param name="wave">The wave.</param>
-    /// <returns>0 before the wave starts, 1 to 7 for a running stage, <see cref="AfterLastStage"/> once the last stage has ended.</returns>
+    /// <returns>0 before the wave starts, 1 to 6 for a running stage, <see cref="AfterLastStage"/> once the last stage has ended.</returns>
     public int StageOf(PromotionWave wave) => StageAt(wave, time.GetUtcNow());
 
     /// <summary>
@@ -57,7 +64,7 @@ internal sealed class PromotionCalendar(TimeProvider time, IOptions<AppOptions> 
     /// </summary>
     /// <param name="wave">The wave.</param>
     /// <param name="moment">The moment.</param>
-    /// <returns>0 before the wave starts, 1 to 7 for a running stage, <see cref="AfterLastStage"/> once the last stage has ended.</returns>
+    /// <returns>0 before the wave starts, 1 to 6 for a running stage, <see cref="AfterLastStage"/> once the last stage has ended.</returns>
     public int StageAt(PromotionWave wave, DateTimeOffset moment)
     {
         if (moment < StartOf(wave.StartsOn))

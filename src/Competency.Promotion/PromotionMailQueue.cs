@@ -11,8 +11,8 @@ namespace Competency.Promotion;
 /// <summary>
 /// Sends the promotion letters outside the actions that cause them, so a stage change or a request never waits on the mail server and a failed
 /// send never undoes it. Letters wait in memory, one sent at a time: they are lost when the process stops, and a full queue drops new ones, because
-/// a letter only points at what the desk already shows. A letter goes only to an account that can act and is bound to no dismissed employee,
-/// as they stand when it is sent. A letter with the same text for many accounts is one entry of the queue.
+/// a letter only points at what the desk already shows. A letter goes only to an account that can act, or for a letter marked so one that was invited and has not set its password yet, and is bound to no
+/// dismissed employee, as they stand when it is sent. A letter with the same text for many accounts is one entry of the queue.
 /// </summary>
 internal sealed class PromotionMailQueue(
     IServiceScopeFactory scopeFactory,
@@ -55,7 +55,7 @@ internal sealed class PromotionMailQueue(
         await using var scope = scopeFactory.CreateAsyncScope();
         foreach (var recipientId in letter.RecipientIds)
         {
-            if (await AddressAsync(recipientId, scope.ServiceProvider, cancellationToken) is not { } address
+            if (await AddressAsync(recipientId, letter.ToInvited, scope.ServiceProvider, cancellationToken) is not { } address
                 || await sender.SendAsync(address, letter.Subject, letter.Body, cancellationToken))
             {
                 continue;
@@ -75,11 +75,13 @@ internal sealed class PromotionMailQueue(
     }
 
     /// <summary>
-    /// The recipient's address, when the account can act and the employee it is bound to, if any, still works.
+    /// The recipient's address, when the account can act (or may be invited) and the employee it is bound to, if any, still works.
     /// </summary>
-    private static async Task<string?> AddressAsync(Guid recipientId, IServiceProvider services, CancellationToken cancellationToken)
+    private static async Task<string?> AddressAsync(Guid recipientId, bool toInvited, IServiceProvider services, CancellationToken cancellationToken)
     {
-        if (await services.GetRequiredService<IUserDirectory>().FindAsync(recipientId, cancellationToken) is not { IsActive: true } account)
+        if (await services.GetRequiredService<IUserDirectory>().FindAsync(recipientId, cancellationToken) is not { } account
+            || account.IsBlocked
+            || (!toInvited && !account.IsRegistered))
         {
             return null;
         }
@@ -100,6 +102,7 @@ internal sealed class PromotionMailQueue(
     /// <param name="ActorId">The account whose action caused the letter; null for a letter of a stage change.</param>
     /// <param name="ActorRole">That account's role.</param>
     /// <param name="RequestId">The request of that action.</param>
+    /// <param name="ToInvited">Whether the letter also goes to an account that was invited and has not set its password yet.</param>
     public sealed record Letter(
         IReadOnlyCollection<Guid> RecipientIds,
         string Kind,
@@ -107,5 +110,6 @@ internal sealed class PromotionMailQueue(
         string Body,
         string? ActorId,
         string? ActorRole,
-        string? RequestId);
+        string? RequestId,
+        bool ToInvited = false);
 }

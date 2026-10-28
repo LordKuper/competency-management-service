@@ -1,4 +1,5 @@
 using Competency.Platform;
+using Competency.UserManagement;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -8,18 +9,18 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.Promotion;
 
 /// <summary>
-/// The API of applications. An employee files an application for themselves while the wave takes them, changes it until that stage ends, withdraws
-/// it until a decision is recorded, and lists their own. Everyone who may see an application reads it, shaped by their role. A change takes the
-/// promotion locks and the rows of the wave and the application, and an application its reader may not see is reported as not found.
+/// The API of applications. An employee drafts an application for themselves while the wave takes applications, changes or deletes the draft and files
+/// it; a filed application cannot be changed, only withdrawn until a decision is recorded, and a new one may be drafted in its place until the stage
+/// ends. The candidate lists their own. Everyone who may see an application reads it, shaped by their role. A change takes the promotion locks and the
+/// rows of the wave and the application, and an application its reader may not see is reported as not found.
 /// </summary>
 internal static class ApplicationEndpoints
 {
     private const string Route = "/api/v1/promotion/applications";
     private const string Tag = "Promotion";
-    private const int SubmissionStage = 1;
     private const string NotSubmissionStageMessage = "Заявки принимаются на этапе «Подача заявок»";
-    private const string AlreadyAppliedMessage = "В этой волне у вас уже есть заявка";
-    private const string EditClosedMessage = "Заявку можно изменить до конца этапа «Подача заявок»";
+    private const string AlreadyAppliedMessage = "В этой волне у вас уже есть заявка или черновик";
+    private const string EditClosedMessage = "Черновик можно изменить, удалить и отправить до конца этапа «Подача заявок»";
     private const string WithdrawClosedMessage = "Заявку нельзя отозвать: по ней уже принято решение или она отклонена";
 
     public static void Map(IEndpointRouteBuilder endpoints)
@@ -40,6 +41,14 @@ internal static class ApplicationEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+        group.MapDelete("/{id:guid}", DeleteAsync).WithName("DeletePromotionApplication")
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        group.MapPost("/{id:guid}/submit", SubmitAsync).WithName("SubmitPromotionApplication").ProducesETag()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
         group.MapPost("/{id:guid}/withdraw", WithdrawAsync).WithName("WithdrawPromotionApplication").ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
@@ -47,8 +56,8 @@ internal static class ApplicationEndpoints
     }
 
     /// <summary>
-    /// Files an application of the signed-in employee. They work and have an account that can act, the wave takes applications, they have no other
-    /// unfinished application in it, and the target, the scores and the raters are valid.
+    /// Drafts an application of the signed-in employee. They work and have an account that can act, the wave takes applications, they have no other
+    /// draft or unfinished application in it, and the target and what is entered are valid; scores and raters may still be missing.
     /// </summary>
     private static async Task<Results<Created<ApplicationResponse>, NotFound, ValidationProblem, ProblemHttpResult>> CreateAsync(
         NewApplicationRequest request,
@@ -57,7 +66,9 @@ internal static class ApplicationEndpoints
         PromotionCalendar calendar,
         ApplicationAccess access,
         ApplicationRules rules,
+        IUserDirectory users,
         ApplicationReader reader,
+        TimeProvider time,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -78,7 +89,7 @@ internal static class ApplicationEndpoints
             return Rejection.Forbidden();
         }
 
-        if (calendar.StageOf(wave) != SubmissionStage)
+        if (calendar.StageOf(wave) != PromotionStage.Submission)
         {
             return Rejection.Conflict(NotSubmissionStageMessage);
         }
@@ -89,7 +100,7 @@ internal static class ApplicationEndpoints
             return Rejection.Conflict(AlreadyAppliedMessage);
         }
 
-        var (target, errors) = await rules.CheckAsync(wave, request, candidate, cancellationToken);
+        var (target, errors) = await rules.CheckAsync(wave, request, candidate, isComplete: false, cancellationToken);
         if (target is null || errors.Count > 0)
         {
             return TypedResults.ValidationProblem(errors);
@@ -97,7 +108,7 @@ internal static class ApplicationEndpoints
 
         var application = new PromotionApplication { WaveId = wave.Id, EmployeeId = candidate.Id };
         context.Add(application);
-        await ApplicationContent.ApplyAsync(context, application, target, request, cancellationToken);
+        await ApplicationContent.ApplyAsync(context, users, application, target, request, time.GetUtcNow(), cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
@@ -153,7 +164,7 @@ internal static class ApplicationEndpoints
     }
 
     /// <summary>
-    /// Replaces the content of an application while the wave takes applications; the target may change within the wave.
+    /// Replaces the content of a draft while the wave takes applications; the target may change within the wave.
     /// </summary>
     private static async Task<Results<Ok<ApplicationResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateAsync(
         Guid id,
@@ -164,7 +175,9 @@ internal static class ApplicationEndpoints
         PromotionCalendar calendar,
         ApplicationAccess access,
         ApplicationRules rules,
+        IUserDirectory users,
         ApplicationReader reader,
+        TimeProvider time,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -175,25 +188,10 @@ internal static class ApplicationEndpoints
         }
 
         await using var transaction = await locks.BeginSharedAsync(cancellationToken);
-        if (await locks.FindApplicationForUpdateAsync(id, cancellationToken) is not var (wave, application))
+        var (wave, application, roles, problem) = await FindDraftAsync(id, access, locks, calendar, cancellationToken);
+        if (problem != DraftProblem.None)
         {
-            return TypedResults.NotFound();
-        }
-
-        var roles = (await access.ViewerAsync(wave, [application.OrgUnitId], cancellationToken)).RolesOf(application);
-        if (roles == ApplicationRole.None)
-        {
-            return TypedResults.NotFound();
-        }
-
-        if (roles != ApplicationRole.Candidate)
-        {
-            return Rejection.Forbidden();
-        }
-
-        if (calendar.StageOf(wave) != SubmissionStage || application.Status != ApplicationStatus.Submitted)
-        {
-            return Rejection.Conflict(EditClosedMessage);
+            return problem == DraftProblem.NotFound ? TypedResults.NotFound() : problem == DraftProblem.Forbidden ? Rejection.Forbidden() : Rejection.Conflict(EditClosedMessage);
         }
 
         if (await access.ActingCandidateAsync(cancellationToken) is not { } candidate)
@@ -202,13 +200,13 @@ internal static class ApplicationEndpoints
         }
 
         ifMatch.ApplyTo(context, application);
-        var (target, errors) = await rules.CheckAsync(wave, request, candidate, cancellationToken);
+        var (target, errors) = await rules.CheckAsync(wave, request, candidate, isComplete: false, cancellationToken);
         if (target is null || errors.Count > 0)
         {
             return TypedResults.ValidationProblem(errors);
         }
 
-        await ApplicationContent.ApplyAsync(context, application, target, request, cancellationToken);
+        await ApplicationContent.ApplyAsync(context, users, application, target, request, time.GetUtcNow(), cancellationToken);
         context.Entry(application).Property(entry => entry.Version).IsModified = true;
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -218,7 +216,79 @@ internal static class ApplicationEndpoints
     }
 
     /// <summary>
-    /// Withdraws an application that is still going and has no recorded decision.
+    /// Deletes a draft with everything entered in it.
+    /// </summary>
+    private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> DeleteAsync(
+        Guid id,
+        IfMatch ifMatch,
+        AppDbContext context,
+        PromotionLocks locks,
+        PromotionCalendar calendar,
+        ApplicationAccess access,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await locks.BeginSharedAsync(cancellationToken);
+        var (_, application, _, problem) = await FindDraftAsync(id, access, locks, calendar, cancellationToken);
+        if (problem != DraftProblem.None)
+        {
+            return problem == DraftProblem.NotFound ? TypedResults.NotFound() : problem == DraftProblem.Forbidden ? Rejection.Forbidden() : Rejection.Conflict(EditClosedMessage);
+        }
+
+        ifMatch.ApplyTo(context, application);
+        context.RemoveRange(await context.Set<PromotionSelfScore>().Where(score => score.ApplicationId == id).ToListAsync(cancellationToken));
+        context.RemoveRange(await context.Set<PromotionRater>().Where(rater => rater.ApplicationId == id).ToListAsync(cancellationToken));
+        context.RemoveRange(await context.Set<PromotionArtifact>().Where(artifact => artifact.ApplicationId == id).ToListAsync(cancellationToken));
+        context.Remove(application);
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return TypedResults.NoContent();
+    }
+
+    /// <summary>
+    /// Files a draft once what it holds is complete: a score for every competency and enough raters, each without an account with an address.
+    /// A filed application cannot be changed.
+    /// </summary>
+    private static async Task<Results<Ok<ApplicationResponse>, NotFound, ValidationProblem, ProblemHttpResult>> SubmitAsync(
+        Guid id,
+        IfMatch ifMatch,
+        AppDbContext context,
+        PromotionLocks locks,
+        PromotionCalendar calendar,
+        ApplicationAccess access,
+        ApplicationRules rules,
+        ApplicationReader reader,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await locks.BeginSharedAsync(cancellationToken);
+        var (wave, application, roles, problem) = await FindDraftAsync(id, access, locks, calendar, cancellationToken);
+        if (problem != DraftProblem.None)
+        {
+            return problem == DraftProblem.NotFound ? TypedResults.NotFound() : problem == DraftProblem.Forbidden ? Rejection.Forbidden() : Rejection.Conflict(EditClosedMessage);
+        }
+
+        if (await access.ActingCandidateAsync(cancellationToken) is not { } candidate)
+        {
+            return Rejection.Forbidden();
+        }
+
+        ifMatch.ApplyTo(context, application);
+        if (await rules.CheckFiledAsync(application, candidate, cancellationToken) is { Count: > 0 } errors)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
+
+        application.Status = ApplicationStatus.Submitted;
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        response.SetETag(application.Version);
+        return TypedResults.Ok(await reader.DescribeAsync(application, wave, roles, cancellationToken));
+    }
+
+    /// <summary>
+    /// Withdraws a filed application that is still going and has no recorded decision.
     /// </summary>
     private static async Task<Results<Ok<ApplicationResponse>, NotFound, ProblemHttpResult>> WithdrawAsync(
         Guid id,
@@ -259,5 +329,44 @@ internal static class ApplicationEndpoints
 
         response.SetETag(application.Version);
         return TypedResults.Ok(await reader.DescribeAsync(application, wave, roles, cancellationToken));
+    }
+
+    /// <summary>
+    /// Locks and finds the draft of the signed-in candidate, which can be changed only while the wave takes applications.
+    /// </summary>
+    private static async Task<(PromotionWave Wave, PromotionApplication Application, ApplicationRole Roles, DraftProblem Problem)> FindDraftAsync(
+        Guid id,
+        ApplicationAccess access,
+        PromotionLocks locks,
+        PromotionCalendar calendar,
+        CancellationToken cancellationToken)
+    {
+        if (await locks.FindApplicationForUpdateAsync(id, cancellationToken) is not var (wave, application))
+        {
+            return (null!, null!, ApplicationRole.None, DraftProblem.NotFound);
+        }
+
+        var roles = (await access.ViewerAsync(wave, [application.OrgUnitId], cancellationToken)).RolesOf(application);
+        if (roles == ApplicationRole.None)
+        {
+            return (wave, application, roles, DraftProblem.NotFound);
+        }
+
+        if (roles != ApplicationRole.Candidate)
+        {
+            return (wave, application, roles, DraftProblem.Forbidden);
+        }
+
+        return calendar.StageOf(wave) != PromotionStage.Submission || application.Status != ApplicationStatus.Draft
+            ? (wave, application, roles, DraftProblem.Closed)
+            : (wave, application, roles, DraftProblem.None);
+    }
+
+    private enum DraftProblem
+    {
+        None,
+        NotFound,
+        Forbidden,
+        Closed,
     }
 }

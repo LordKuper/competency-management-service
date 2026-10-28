@@ -9,6 +9,11 @@ namespace Competency.Promotion;
 internal enum ApplicationStatus
 {
     /// <summary>
+    /// Being prepared by the candidate while the wave takes applications; seen by the candidate alone, and in the wave only once filed.
+    /// </summary>
+    Draft,
+
+    /// <summary>
     /// Filed, and waiting for the formal check.
     /// </summary>
     Submitted,
@@ -24,7 +29,7 @@ internal enum ApplicationStatus
     FormalRejected,
 
     /// <summary>
-    /// Before the commission, from the start of its stage; the chair may record and change the decision until the stage ends.
+    /// Before the commission, from the moment the application reaches it; the chair may record and change the decision until the commission stage ends.
     /// </summary>
     UnderReview,
 

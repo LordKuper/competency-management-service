@@ -5,7 +5,7 @@ namespace Competency.Promotion;
 /// </summary>
 /// <param name="ApplicationId">The application.</param>
 /// <param name="CandidateName">The candidate's full name.</param>
-/// <param name="Stage">The stage the wave is in now: 0 before it starts, 1 to 7 while a stage runs, 8 once the last stage has ended.</param>
+/// <param name="Stage">The stage the wave is in now: 0 before it starts, 1 to 6 while a stage runs, 7 once the last stage has ended.</param>
 /// <param name="CanEdit">Whether the rater may give or change their answers now.</param>
 /// <param name="Competencies">The competencies of the matrix version, in its order.</param>
 /// <param name="Answers">The rater's own answers; null until they give them.</param>

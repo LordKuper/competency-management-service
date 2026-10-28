@@ -10,11 +10,6 @@ namespace Competency.Promotion;
 /// </summary>
 internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, PromotionCalendar calendar)
 {
-    private const int FormalCheckStage = 2;
-    private const int ArtifactStage = 4;
-    private const int ReviewStage = 5;
-    private const int ResultStage = 6;
-
     /// <summary>
     /// Finds what going back to a stage would reset or compute again.
     /// </summary>
@@ -26,11 +21,11 @@ internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, P
     {
         var standing = await context.Set<PromotionApplication>()
             .AsNoTracking()
-            .Where(application => application.WaveId == wave.Id && application.Status != ApplicationStatus.Withdrawn)
+            .Where(application => application.WaveId == wave.Id && application.Status != ApplicationStatus.Withdrawn && application.Status != ApplicationStatus.Draft)
             .Select(application => new { application.Status, application.MeetsAfterRating })
             .ToListAsync(cancellationToken);
         var effects = new List<RollbackEffect>();
-        if (stage <= FormalCheckStage)
+        if (stage <= PromotionStage.FormalCheck)
         {
             effects.Add(new RollbackEffect(
                 RollbackEffectKind.FormalAdmittedReset,
@@ -38,22 +33,25 @@ internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, P
             effects.Add(new RollbackEffect(RollbackEffectKind.FormalRejectedReset, standing.Count(application => application.Status == ApplicationStatus.FormalRejected)));
         }
 
-        if (stage <= ReviewStage)
+        if (stage <= PromotionStage.Review)
         {
             effects.Add(new RollbackEffect(RollbackEffectKind.NoDecisionCleared, standing.Count(application => application.Status == ApplicationStatus.NoDecision)));
         }
 
-        if (stage <= DueStep.RatingStage)
+        if (stage <= PromotionStage.Rating)
         {
             effects.Add(new RollbackEffect(RollbackEffectKind.RatingRecalculated, standing.Count(application => application.MeetsAfterRating is not null)));
         }
 
-        if (stage <= ArtifactStage)
+        if (stage <= PromotionStage.Artifacts)
         {
-            effects.Add(new RollbackEffect(RollbackEffectKind.ArtifactsRecalculated, standing.Count(application => PromotionApplication.ReviewedStatuses.Contains(application.Status))));
+            effects.Add(new RollbackEffect(
+                RollbackEffectKind.ArtifactsRecalculated,
+                standing.Count(application => PromotionApplication.ReviewedStatuses.Contains(application.Status)
+                    && (stage < PromotionStage.Artifacts || application.MeetsAfterRating != true))));
         }
 
-        if (stage < ResultStage && calendar.StageOf(wave) >= ResultStage)
+        if (stage < PromotionStage.Feedback && calendar.StageOf(wave) >= PromotionStage.Feedback)
         {
             effects.Add(new RollbackEffect(
                 RollbackEffectKind.ResultsHidden,
@@ -64,7 +62,7 @@ internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, P
             stage,
             [.. effects.Where(effect => effect.Count > 0)],
             [.. WaveStep.StagesWithEndLetters.Where(letterStage => letterStage >= stage && letterStage <= wave.ProcessedStage)],
-            stage <= DueStep.RatingStage && wave.RaterReminderSent);
+            stage <= PromotionStage.Rating && wave.RaterReminderSent);
     }
 
     /// <summary>
@@ -83,7 +81,7 @@ internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, P
 
         wave.EndsOn = [.. request.EndsOn];
         wave.ProcessedStage = Math.Min(wave.ProcessedStage, request.Stage - 1);
-        if (request.Stage <= DueStep.RatingStage)
+        if (request.Stage <= PromotionStage.Rating)
         {
             wave.RaterReminderSent = false;
         }
