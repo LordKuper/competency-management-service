@@ -83,6 +83,20 @@
       "reason": "accept AC-50, AC-51 (AC-39 retired), Task 11 in wave 11; available waves = open and upcoming",
       "evidence": "sprint.md, plan.md",
       "artifact_revision": "sprint.md AC-50..AC-51"
+    },
+    {
+      "gate": "initial impl assessment",
+      "decision_actor": "user",
+      "reason": "request changes: past dates only forbidden on wave creation; current stage end editable; default durations 21,7,14,7,14,3,14; wave rollback",
+      "evidence": "decisions-log.md",
+      "artifact_revision": "impl at a5adf7e"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "accept AC-52..AC-54 (wave rollback, keep entered data, warning) and Task 12 in wave 12; finished wave cannot be rolled back",
+      "evidence": "sprint.md, plan.md",
+      "artifact_revision": "sprint.md AC-52..AC-54"
     }
   ],
   "task_routing": {
