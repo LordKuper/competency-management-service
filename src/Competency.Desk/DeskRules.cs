@@ -44,7 +44,7 @@ internal static class DeskRules
         PositionWithoutTrack, InactivePositionInUse, UnusedPosition,
         PositionOutsideList, NoTrackForPosition,
         AccountWithoutEmployee, InvitationNotAccepted,
-        PromotionFormalCheckPending, PromotionWaveOpen,
+        PromotionFormalCheckPending,
         PromotionDecisionsPending, PromotionRatingRequested, PromotionRatersReview, PromotionArtifactsRequired, PromotionFeedbackPending,
     ];
 
@@ -157,7 +157,6 @@ internal static class DeskRules
         PromotionRatersReview => DeskGroup.PromotionRaters,
         PromotionArtifactsRequired => DeskGroup.PromotionArtifacts,
         PromotionFeedbackPending => DeskGroup.PromotionFeedback,
-        PromotionWaveOpen => DeskGroup.PromotionOpenWaves,
         _ => throw new ArgumentOutOfRangeException(nameof(first), first.Kind, "The desk has no group for this kind."),
     };
 

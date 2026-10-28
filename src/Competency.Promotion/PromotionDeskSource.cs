@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.Promotion;
 
 /// <summary>
-/// What the promotion waves expect of the signed-in user, or tell them for reference, by what they are to the waves at the moment of asking.
+/// What the promotion waves expect of the signed-in user, by what they are to the waves at the moment of asking.
 /// What is due follows from the stage the dates and the clock put each wave in, the status of the applications and the flags the stages set,
 /// never from how far the stage actions have been carried out. Reads only the waves that are in a stage with something to do, in a fixed
 /// number of queries whatever the size of the organization.
@@ -23,7 +23,6 @@ internal sealed class PromotionDeskSource(
     ApplicationReader reader,
     PromotionCalendar calendar) : IDeskSource
 {
-    private const int SubmissionStage = 1;
     private const int FormalStage = 2;
     private const int RatingStage = 3;
     private const int ArtifactStage = 4;
@@ -31,7 +30,7 @@ internal sealed class PromotionDeskSource(
     private const int FeedbackStage = 7;
     private const string DateFormat = "yyyy-MM-dd";
 
-    private static readonly int[] DeskStages = [SubmissionStage, FormalStage, RatingStage, ArtifactStage, ReviewStage, FeedbackStage];
+    private static readonly int[] DeskStages = [FormalStage, RatingStage, ArtifactStage, ReviewStage, FeedbackStage];
 
     /// <inheritdoc />
     public async Task<DeskReport> FindAsync(CancellationToken cancellationToken)
@@ -50,7 +49,6 @@ internal sealed class PromotionDeskSource(
 
         var dueApplications = new List<Due>();
         var findings = new List<DeskFinding>();
-        findings.AddRange(await OpenWaveFindingsAsync(waves, employeeId, cancellationToken));
         findings.AddRange(await FormalCheckFindingsAsync(waves, userId, cancellationToken));
         dueApplications.AddRange(await RatingDueAsync(waves, employeeId, cancellationToken));
         dueApplications.AddRange(await RatersReviewDueAsync(waves, employeeId, cancellationToken));
@@ -87,37 +85,6 @@ internal sealed class PromotionDeskSource(
 
     private static DeskObject ObjectOf(PromotionWave wave) =>
         new(DeskObjectType.PromotionWave, wave.Id, wave.StartsOn.ToString(DateFormat, CultureInfo.InvariantCulture));
-
-    /// <summary>
-    /// The waves taking applications that offer a target and in which the employee has no unfinished application; for reference, since the
-    /// employee may well not apply.
-    /// </summary>
-    private async Task<IEnumerable<DeskFinding>> OpenWaveFindingsAsync(
-        Dictionary<Guid, (PromotionWave Wave, int Stage)> waves,
-        Guid employeeId,
-        CancellationToken cancellationToken)
-    {
-        var open = WaveIdsAt(waves, SubmissionStage);
-        if (open.Length == 0)
-        {
-            return [];
-        }
-
-        var applied = await context.Set<PromotionApplication>()
-            .AsNoTracking()
-            .Where(application => application.EmployeeId == employeeId && open.Contains(application.WaveId) && PromotionApplication.UnfinishedStatuses.Contains(application.Status))
-            .Select(application => application.WaveId)
-            .ToListAsync(cancellationToken);
-        var withTargets = await context.Set<PromotionWaveMatrix>()
-            .AsNoTracking()
-            .Where(matrix => open.Contains(matrix.WaveId))
-            .Select(matrix => matrix.WaveId)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-        return withTargets
-            .Where(waveId => !applied.Contains(waveId))
-            .Select(waveId => new DeskFinding(DeskKind.PromotionWaveOpen, ObjectOf(waves[waveId].Wave), IsAction: false, Details: UntilEndOf(waves, waveId)));
-    }
 
     /// <summary>
     /// For a responsible HR, the waves in the formal check stage with filed applications of their units that have no date of hiring or of the

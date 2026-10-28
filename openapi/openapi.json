@@ -16922,8 +16922,7 @@
           "InactivePositions",
           "UnusedPositions",
           "EmptyUnits",
-          "NoTrack",
-          "PromotionOpenWaves"
+          "NoTrack"
         ]
       },
       "DeskGroupResponse": {
@@ -17076,7 +17075,6 @@
           "NoTrackForPosition",
           "AccountWithoutEmployee",
           "InvitationNotAccepted",
-          "PromotionWaveOpen",
           "PromotionArtifactsRequired",
           "PromotionFeedbackPending",
           "PromotionRatingRequested",

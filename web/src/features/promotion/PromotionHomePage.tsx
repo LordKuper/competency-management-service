@@ -10,10 +10,9 @@ import {
   myApplicationsQuery,
   myRatingsQuery,
   openWavesQuery,
+  unfinishedApplicationIdByWave,
 } from "./promotionApi";
 import { promotionPaths } from "./routes";
-
-const UNFINISHED_STATUSES = ["Submitted", "Admitted", "UnderReview"];
 
 /** The promotion screen of every signed-in user: the waves one can apply to, their own applications, and the candidates they are asked to rate. */
 export function PromotionHomePage() {
@@ -21,11 +20,7 @@ export function PromotionHomePage() {
   const waves = useQuery(openWavesQuery);
   const mine = useQuery(myApplicationsQuery);
   const ratings = useQuery(myRatingsQuery);
-  const applicationIdByWave = new Map(
-    (mine.data ?? [])
-      .filter((application) => UNFINISHED_STATUSES.includes(application.status))
-      .map((application) => [application.waveId, application.id] as const),
-  );
+  const applicationIdByWave = unfinishedApplicationIdByWave(mine.data ?? []);
   const toRate = (ratings.data ?? []).filter(
     (task) => task.canRate && !task.isRated,
   ).length;

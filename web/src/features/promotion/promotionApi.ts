@@ -260,6 +260,23 @@ export const myApplicationsQuery = queryOptions({
     unwrap(await api.GET("/api/v1/promotion/applications/mine")),
 });
 
+const UNFINISHED_STATUSES: readonly string[] = [
+  "Submitted",
+  "Admitted",
+  "UnderReview",
+];
+
+/** The unfinished application of the viewer by the wave it was filed in. */
+export function unfinishedApplicationIdByWave(
+  applications: readonly WaveApplication[],
+): Map<string, string> {
+  return new Map(
+    applications
+      .filter((application) => UNFINISHED_STATUSES.includes(application.status))
+      .map((application) => [application.waveId, application.id] as const),
+  );
+}
+
 /** Files an application. */
 export async function createApplication(
   waveId: string,

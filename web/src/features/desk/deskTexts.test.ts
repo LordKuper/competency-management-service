@@ -124,7 +124,6 @@ const ACTION_PATH: Record<DeskKind, string | null> = {
   NoTrackForPosition: null,
   AccountWithoutEmployee: deskPaths.orgCleanup,
   InvitationNotAccepted: null,
-  PromotionWaveOpen: null,
   PromotionArtifactsRequired: `/promotion/applications/${OBJECT_ID}`,
   PromotionFeedbackPending: `/promotion/applications/${OBJECT_ID}`,
   PromotionRatingRequested: `/promotion/ratings/${OBJECT_ID}`,

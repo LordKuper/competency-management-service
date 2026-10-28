@@ -35,5 +35,4 @@ internal enum DeskGroup
     UnusedPositions,
     EmptyUnits,
     NoTrack,
-    PromotionOpenWaves,
 }

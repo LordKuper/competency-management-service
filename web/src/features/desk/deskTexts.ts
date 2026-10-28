@@ -42,7 +42,6 @@ export const deskPaths = {
   orgImport: "/desk/org-import",
   positions: "/positions",
   users: "/users",
-  promotionApply: promotionPaths.apply,
   promotionApplication: promotionPaths.application,
   promotionRating: promotionPaths.rating,
   promotionRaters: promotionPaths.raters,
@@ -67,7 +66,6 @@ export function builderSteps(isPosition: boolean): readonly string[] {
 
 const CAREER_SECTION = "Карьерная модель";
 const ORG_SECTION = "Оргструктура";
-const PROMOTION_SECTION = "Повышение";
 
 const DRAFTS_QUEUE: DeskLink = {
   title: "Утвердить черновые записи",
@@ -164,10 +162,6 @@ export const GROUPS: Record<DeskGroup, GroupMeta> = {
   NoTrack: {
     title: "Нет карьерного трека для вашей должности",
     section: CAREER_SECTION,
-  },
-  PromotionOpenWaves: {
-    title: "Идёт приём заявок на повышение",
-    section: PROMOTION_SECTION,
   },
 };
 
@@ -496,8 +490,6 @@ function reasonOf(reason: DeskReason, item: DeskItem): ReasonLine[] {
           text: `Приглашение не принято: ${linkState(reason, item.group !== "Invitations")}`,
         },
       ];
-    case "PromotionWaveOpen":
-      return [{ text: `Идёт приём заявок на повышение${untilOf(details)}` }];
     case "PromotionArtifactsRequired":
       return [
         { text: `Добавьте обязательные артефакты к заявке${untilOf(details)}` },
@@ -772,8 +764,6 @@ export function itemLink(item: DeskItem, isAdmin: boolean): string | null {
       return "/career";
     case "NoTrackForPosition":
       return deskPaths.myPlace;
-    case "PromotionWaveOpen":
-      return deskPaths.promotionApply(object.id);
     case "TrackWithoutLevels":
     case "TrackWithOneLevel":
     case "TrackWithoutPositions":

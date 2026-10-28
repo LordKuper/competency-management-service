@@ -190,11 +190,6 @@ public enum DeskKind
     InvitationNotAccepted,
 
     /// <summary>
-    /// A promotion wave takes applications and the user has none in it; for reference, closing on the last day of the stage.
-    /// </summary>
-    PromotionWaveOpen,
-
-    /// <summary>
     /// The user's application must be given artifacts for competencies the raters' averages left unmet, and some are still missing.
     /// </summary>
     PromotionArtifactsRequired,
