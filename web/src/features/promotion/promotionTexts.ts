@@ -5,6 +5,15 @@ import type { FormalFailure } from "./promotionApi";
 /** Number of stages of a wave. */
 export const STAGE_COUNT = 7;
 
+/** Numbers of the stages the screens act on. */
+export const STAGE = {
+  submission: 1,
+  formalCheck: 2,
+  rating: 3,
+  artifacts: 4,
+  feedback: 7,
+} as const;
+
 /** Names of the stages, in order. */
 export const STAGE_TITLES = [
   "Подача заявок",
@@ -53,3 +62,36 @@ export const APPLICATION_STATUS_TAGS: Record<
   NoDecision: { label: "Решение не принято", color: "default" },
   Withdrawn: { label: "Отозвана", color: "default" },
 };
+
+type PromotionDecision = NonNullable<
+  components["schemas"]["PromotionDecision"]
+>;
+
+/** Label and tag colour of the decision of the commission. */
+export const DECISION_TAGS: Record<
+  PromotionDecision,
+  { label: string; color: string }
+> = {
+  Meets: { label: "Соответствует критериям для повышения", color: "success" },
+  DoesNotMeet: {
+    label: "Не соответствует критериям для повышения",
+    color: "warning",
+  },
+};
+
+/** What a candidate is told when the education they state is below the one the target asks for. */
+export const EDUCATION_WARNING =
+  "Образование ниже требуемого для этого уровня: заявка будет отклонена по формальным признакам. Отправить её всё равно можно.";
+
+/** What a candidate is asked for when listing the people who rate them. */
+export const RATERS_HINT =
+  "Укажите не меньше 5 человек, с которыми вы работали последние полгода; не меньше 2 из них должны быть из других подразделений.";
+
+/** What a head is asked for when correcting the people who rate a candidate. */
+export const HEAD_RATERS_HINT =
+  "Не меньше 5 оценивающих, из них не меньше 2 из других подразделений, чем подразделение кандидата.";
+
+/** A scale point as a choice: its score and its meaning. */
+export function scalePointLabel(point: { score: number; label: string }) {
+  return `${point.score} — ${point.label}`;
+}

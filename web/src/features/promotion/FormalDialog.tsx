@@ -13,8 +13,7 @@ import {
   settingsQuery,
   type Versioned,
 } from "./promotionApi";
-
-const FORMAL_CHECK_STAGE = 2;
+import { STAGE } from "./promotionTexts";
 
 interface FormalDialogProps {
   applicationId: string;
@@ -76,7 +75,7 @@ function FormalEditor({
   });
   const canEnter =
     base.roles.includes("ResponsibleHr") &&
-    base.stage === FORMAL_CHECK_STAGE &&
+    base.stage === STAGE.formalCheck &&
     base.status === "Submitted";
   return (
     <>

@@ -22,13 +22,19 @@ export const promotionPaths = {
   demo: "/promotion/demo",
 } as const;
 
-/** Waves and commissions are run by HR and administrators; the settings are the administrator's alone. */
+/** Every signed-in user reaches promotion from one entry; waves and commissions are run by HR and administrators, the settings are the administrator's alone. */
 export const navItems: NavItem[] = [
+  {
+    key: "promotion",
+    label: "Повышение",
+    path: promotionPaths.home,
+    order: 1,
+  },
   {
     key: "promotion-waves",
     label: "Волны",
     path: promotionPaths.waves,
-    order: 1,
+    order: 2,
     group: "promotion",
     roles: ["GlobalAdmin", "Hr"],
   },
@@ -36,7 +42,7 @@ export const navItems: NavItem[] = [
     key: "promotion-commissions",
     label: "Комиссии",
     path: promotionPaths.commissions,
-    order: 2,
+    order: 3,
     group: "promotion",
     roles: ["GlobalAdmin", "Hr"],
   },
@@ -44,7 +50,7 @@ export const navItems: NavItem[] = [
     key: "promotion-settings",
     label: "Настройки",
     path: promotionPaths.settings,
-    order: 3,
+    order: 4,
     group: "promotion",
     roles: ["GlobalAdmin"],
   },
@@ -53,8 +59,44 @@ export const navItems: NavItem[] = [
 const wavePage = () =>
   import("./WavePage").then((page) => ({ Component: page.WavePage }));
 
-/** The screens of HR and administrators; they load on first use, so the rest of the application does not carry them. */
+/** The screens of candidates, raters and heads are open to every signed-in user, since the server alone says whose they are; the management screens are for HR and administrators. They load on first use, so the rest of the application does not carry them. */
 export const routes: RouteObject[] = [
+  {
+    path: promotionPaths.home,
+    lazy: () =>
+      import("./PromotionHomePage").then((page) => ({
+        Component: page.PromotionHomePage,
+      })),
+  },
+  {
+    path: "/promotion/apply/:waveId",
+    lazy: () =>
+      import("./ApplyPage").then((page) => ({ Component: page.ApplyPage })),
+  },
+  {
+    path: "/promotion/applications/:id",
+    lazy: () =>
+      import("./ApplicationPage").then((page) => ({
+        Component: page.ApplicationPage,
+      })),
+  },
+  {
+    path: promotionPaths.ratings,
+    lazy: () =>
+      import("./RatingsPage").then((page) => ({
+        Component: page.RatingsPage,
+      })),
+  },
+  {
+    path: "/promotion/ratings/:applicationId",
+    lazy: () =>
+      import("./RatingPage").then((page) => ({ Component: page.RatingPage })),
+  },
+  {
+    path: "/promotion/raters/:applicationId",
+    lazy: () =>
+      import("./RatersPage").then((page) => ({ Component: page.RatersPage })),
+  },
   {
     Component: AdminOrHrOnly,
     children: [

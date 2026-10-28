@@ -1,19 +1,10 @@
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Col, Empty, Flex, Row, Skeleton, TreeSelect, Typography } from "antd";
 import { useMemo, useState } from "react";
-import { api } from "../../api/client";
-import { unwrap } from "../../api/unwrap";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useLeaveGuard } from "../../app/leaveGuard";
 import { contentMaxWidth } from "../../app/theme";
-import { useDebouncedValue } from "../../app/useDebouncedValue";
 import { useEditBase } from "../../app/useEditBase";
-import { employeesQueryKey } from "../org-structure/orgStructureApi";
 import { unitTreeItems, useAnswerableUnits } from "./answerableUnits";
 import { CommissionView } from "./CommissionView";
 import {
@@ -24,8 +15,7 @@ import {
   saveCommission,
   type Versioned,
 } from "./promotionApi";
-
-const CANDIDATES_PAGE_SIZE = 20;
+import { useEmployeeOptions } from "./useEmployeeOptions";
 
 /** The commissions screen of HR and administrators: choose a unit they answer for, then edit who sits in its commission. */
 export function CommissionsPage() {
@@ -97,24 +87,7 @@ function CommissionEditor({ unitId }: { unitId: string }) {
 function CommissionForm({ latest }: { latest: Versioned<Commission> }) {
   const queryClient = useQueryClient();
   const { base = latest, noteSaveFailure, rebase } = useEditBase(latest);
-  const [search, setSearch] = useState("");
-  const text = useDebouncedValue(search.trim());
-  const found = useQuery({
-    queryKey: [...employeesQueryKey, "commission-picker", text],
-    queryFn: async () =>
-      unwrap(
-        await api.GET("/api/v1/employees", {
-          params: {
-            query: {
-              q: text || undefined,
-              isActive: true,
-              pageSize: CANDIDATES_PAGE_SIZE,
-            },
-          },
-        }),
-      ),
-    placeholderData: keepPreviousData,
-  });
+  const employees = useEmployeeOptions("commission-picker");
   const save = useMutation({
     mutationFn: (input: CommissionInput) =>
       saveCommission(base.unitId, base.version, input),
@@ -134,13 +107,9 @@ function CommissionForm({ latest }: { latest: Versioned<Commission> }) {
       <CommissionView
         key={base.version}
         commission={base}
-        candidates={(found.data?.items ?? []).map((employee) => ({
-          id: employee.id,
-          name: employee.fullName,
-          detail: `${employee.orgUnitName}, ${employee.position}`,
-        }))}
-        isSearching={found.isFetching || search.trim() !== text}
-        onSearch={setSearch}
+        candidates={employees.candidates}
+        isSearching={employees.isSearching}
+        onSearch={employees.onSearch}
         onSubmit={save.mutateAsync}
       />
     </Flex>

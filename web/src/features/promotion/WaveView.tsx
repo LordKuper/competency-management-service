@@ -6,7 +6,6 @@ import {
   Flex,
   Form,
   Row,
-  Steps,
   Tag,
   Typography,
 } from "antd";
@@ -17,6 +16,7 @@ import { useFormSubmit } from "../../app/useFormSubmit";
 import type { OrgUnitTreeNode } from "../org-structure/orgStructureApi";
 import type { Versioned, Wave, WaveInput } from "./promotionApi";
 import { STAGE_COUNT, STAGE_TITLES, stageLabel } from "./promotionTexts";
+import { StageSteps } from "./StageSteps";
 import { UnitCheckTree } from "./UnitCheckTree";
 
 const DATE_FORMAT = "DD.MM.YYYY";
@@ -187,19 +187,7 @@ export function WaveView({
       </Col>
       {wave && (
         <Col xs={24} lg={8}>
-          <Steps
-            orientation="vertical"
-            size="small"
-            items={STAGE_TITLES.map((title, index) => ({
-              title,
-              status:
-                stage > index + 1
-                  ? "finish"
-                  : stage === index + 1
-                    ? "process"
-                    : "wait",
-            }))}
-          />
+          <StageSteps stage={stage} />
         </Col>
       )}
     </Row>

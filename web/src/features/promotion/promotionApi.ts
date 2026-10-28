@@ -39,6 +39,31 @@ export type FormalInput = components["schemas"]["FormalRequest"];
 /** A condition of the formal check an application may fail. */
 export type FormalFailure = components["schemas"]["FormalFailure"];
 
+/** A wave that takes applications or is announced, with the targets a candidate may aim at. */
+export type OpenWave = components["schemas"]["OpenWaveResponse"];
+
+/** What a candidate files an application with. */
+export type ApplicationInput = components["schemas"]["ApplicationRequest"];
+
+/** The levels and competencies of one target of a wave, which an application is filled in by. */
+export type TargetForm = components["schemas"]["TargetFormResponse"];
+
+/** A competency to score with the points of its scale. */
+export type ScoredCompetency =
+  components["schemas"]["TargetFormCompetencyResponse"];
+
+/** A request to rate a candidate. */
+export type RatingTask = components["schemas"]["RatingTaskResponse"];
+
+/** What a rater sees of a candidate: the name and the competencies, with their own answers. */
+export type Rating = components["schemas"]["RatingResponse"];
+
+/** The answers a rater saves; a null score is «Не наблюдал». */
+export type RatingAnswer = components["schemas"]["RatingAnswerInput"];
+
+/** The artifact a candidate gives for one competency. */
+export type ArtifactInput = components["schemas"]["ArtifactInput"];
+
 /** A record together with the version the server tagged it with, which a save sends back. */
 export type Versioned<TRecord> = TRecord & { version: number };
 
@@ -191,6 +216,137 @@ export async function saveFormal(
     await api.PUT("/api/v1/promotion/applications/{id}/formal", {
       params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
       body,
+    }),
+  );
+}
+
+/** The waves that are announced or take applications. */
+export const openWavesQuery = queryOptions({
+  queryKey: [...promotionQueryKey, "open-waves"],
+  queryFn: async () => unwrap(await api.GET("/api/v1/promotion/waves/open")),
+});
+
+/** The levels and competencies of a target of a wave. */
+export function targetFormQuery(waveId: string, matrixId: string) {
+  return queryOptions({
+    queryKey: [...promotionQueryKey, "target", waveId, matrixId],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/promotion/waves/{waveId}/targets/{matrixId}", {
+          params: { path: { waveId, matrixId } },
+        }),
+      ),
+  });
+}
+
+/** The applications of the signed-in employee, the latest first. */
+export const myApplicationsQuery = queryOptions({
+  queryKey: [...promotionQueryKey, "my-applications"],
+  queryFn: async () =>
+    unwrap(await api.GET("/api/v1/promotion/applications/mine")),
+});
+
+/** Files an application. */
+export async function createApplication(
+  waveId: string,
+  body: ApplicationInput,
+) {
+  return withVersion(
+    await api.POST("/api/v1/promotion/applications", {
+      body: { waveId, ...body },
+    }),
+  );
+}
+
+/** Replaces the content of an application. */
+export async function saveApplication(
+  id: string,
+  version: number,
+  body: ApplicationInput,
+) {
+  return withVersion(
+    await api.PUT("/api/v1/promotion/applications/{id}", {
+      params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
+      body,
+    }),
+  );
+}
+
+/** Withdraws an application. */
+export async function withdrawApplication(id: string, version: number) {
+  return withVersion(
+    await api.POST("/api/v1/promotion/applications/{id}/withdraw", {
+      params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
+    }),
+  );
+}
+
+/** Replaces the raters of an application. */
+export async function saveRaters(
+  id: string,
+  version: number,
+  raterEmployeeIds: string[],
+) {
+  return withVersion(
+    await api.PUT("/api/v1/promotion/applications/{id}/raters", {
+      params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
+      body: { raterEmployeeIds },
+    }),
+  );
+}
+
+/** Replaces the artifacts of an application. */
+export async function saveArtifacts(
+  id: string,
+  version: number,
+  artifacts: ArtifactInput[],
+) {
+  return withVersion(
+    await api.PUT("/api/v1/promotion/applications/{id}/artifacts", {
+      params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
+      body: { artifacts },
+    }),
+  );
+}
+
+/** Marks that the candidate received the feedback. */
+export async function markFeedbackReceived(id: string, version: number) {
+  return withVersion(
+    await api.POST("/api/v1/promotion/applications/{id}/feedback", {
+      params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
+    }),
+  );
+}
+
+/** The candidates the signed-in employee is asked to rate. */
+export const myRatingsQuery = queryOptions({
+  queryKey: [...promotionQueryKey, "my-ratings"],
+  queryFn: async () => unwrap(await api.GET("/api/v1/promotion/ratings/mine")),
+});
+
+/** What the signed-in rater sees of one candidate, with their own answers. */
+export function ratingQuery(applicationId: string) {
+  return queryOptions({
+    queryKey: [...promotionQueryKey, "rating", applicationId],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/promotion/applications/{id}/rating", {
+          params: { path: { id: applicationId } },
+        }),
+      ),
+    gcTime: 0,
+  });
+}
+
+/** Saves the answers of the signed-in rater. */
+export async function saveRating(
+  applicationId: string,
+  answers: RatingAnswer[],
+) {
+  return unwrap(
+    await api.PUT("/api/v1/promotion/applications/{id}/rating", {
+      params: { path: { id: applicationId } },
+      body: { answers },
     }),
   );
 }
