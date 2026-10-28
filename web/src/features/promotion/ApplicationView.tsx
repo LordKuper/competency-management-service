@@ -10,21 +10,22 @@ import {
   Tag,
   Typography,
 } from "antd";
-import { useNavigate } from "react-router";
 import { ArtifactsView } from "./ArtifactsView";
 import type { ArtifactInput, PromotionApplication } from "./promotionApi";
 import {
   APPLICATION_STATUS_TAGS,
+  ARTIFACT_MANDATORY_EXPLANATION,
   DECISION_TAGS,
   EDUCATION_WARNING,
   FORMAL_FAILURE_TEXTS,
   formatDate,
   STAGE,
 } from "./promotionTexts";
-import { promotionPaths } from "./routes";
 import { StageSteps } from "./StageSteps";
 
 const WITHDRAWABLE_STATUSES = ["Submitted", "Admitted", "UnderReview"];
+
+const ARTIFACT_STATUSES = ["Admitted", "UnderReview", "Decided"];
 
 type Result = NonNullable<PromotionApplication["result"]>;
 type ResultCompetency = Result["competencies"][number];
@@ -113,7 +114,7 @@ interface ApplicationViewProps {
   onSaveArtifacts: (artifacts: ArtifactInput[]) => Promise<unknown>;
 }
 
-/** An application as its viewer may see it: the target, the status and stage, and the parts the stage asks the candidate to act on. */
+/** An application as its viewer may see it: the target, the status and stage, and the parts the stage asks the candidate to act on. A filed application cannot be changed, only withdrawn. */
 export function ApplicationView({
   application,
   isBusy,
@@ -121,12 +122,9 @@ export function ApplicationView({
   onMarkFeedback,
   onSaveArtifacts,
 }: ApplicationViewProps) {
-  const navigate = useNavigate();
   const { stage, status, target } = application;
   const isCandidate = application.roles.includes("Candidate");
   const statusTag = APPLICATION_STATUS_TAGS[status];
-  const canChange =
-    isCandidate && stage === STAGE.submission && status === "Submitted";
   const canWithdraw = isCandidate && WITHDRAWABLE_STATUSES.includes(status);
   const canMarkFeedback =
     isCandidate &&
@@ -134,7 +132,9 @@ export function ApplicationView({
     (status === "Decided" || status === "NoDecision") &&
     !application.feedbackReceivedAt;
   const isArtifactStage =
-    isCandidate && stage === STAGE.artifacts && status === "Admitted";
+    isCandidate &&
+    stage === STAGE.artifacts &&
+    ARTIFACT_STATUSES.includes(status);
   const mandatoryIds = application.mandatoryArtifactCompetencyIds ?? [];
   const given = new Map(
     (application.artifacts ?? []).map((artifact) => [
@@ -175,23 +175,16 @@ export function ApplicationView({
                 .join("; ")}
             />
           )}
-          {(canChange || canWithdraw) && (
-            <Flex gap="small" wrap>
-              {canChange && (
-                <Button
-                  disabled={isBusy}
-                  onClick={() =>
-                    void navigate(promotionPaths.apply(application.waveId))
-                  }
-                >
-                  Изменить заявку
-                </Button>
+          {canWithdraw && (
+            <Flex vertical gap="small" align="start">
+              {isCandidate && status === "Submitted" && (
+                <Typography.Text type="secondary">
+                  Отправленную заявку нельзя изменить: можно только отозвать её.
+                </Typography.Text>
               )}
-              {canWithdraw && (
-                <Button danger disabled={isBusy} onClick={onWithdraw}>
-                  Отозвать заявку
-                </Button>
-              )}
+              <Button danger disabled={isBusy} onClick={onWithdraw}>
+                Отозвать заявку
+              </Button>
             </Flex>
           )}
           {application.result && (
@@ -226,11 +219,12 @@ export function ApplicationView({
                 <Typography.Title level={2} style={{ margin: 0 }}>
                   Артефакты
                 </Typography.Title>
-                {isArtifactStage && mandatoryIds.length > 0 && (
+                {isArtifactStage && application.hasMandatoryArtifacts && (
                   <Alert
                     type="warning"
                     showIcon
                     title="Добавьте артефакты к отмеченным компетенциям"
+                    description={ARTIFACT_MANDATORY_EXPLANATION}
                   />
                 )}
                 <ArtifactsView
@@ -265,7 +259,21 @@ export function ApplicationView({
               <List
                 bordered
                 dataSource={[...application.raters]}
-                renderItem={(rater) => <List.Item>{rater.fullName}</List.Item>}
+                renderItem={(rater) => (
+                  <List.Item>
+                    <Flex vertical>
+                      <span>{rater.fullName}</span>
+                      {!rater.hasAccount && rater.email && (
+                        <Typography.Text type="secondary">
+                          {rater.email},{" "}
+                          {rater.isEmailConfirmed
+                            ? "почта подтверждена"
+                            : "почта не подтверждена"}
+                        </Typography.Text>
+                      )}
+                    </Flex>
+                  </List.Item>
+                )}
               />
             </Flex>
           )}

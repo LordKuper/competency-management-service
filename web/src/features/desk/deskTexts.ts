@@ -504,7 +504,11 @@ function reasonOf(reason: DeskReason, item: DeskItem): ReasonLine[] {
       return [{ text: `Вас просят оценить кандидата${untilOf(details)}` }];
     case "PromotionRatersReview":
       return [
-        { text: `Проверьте список оценивающих кандидата${untilOf(details)}` },
+        {
+          text: details.hasUnconfirmedEmails
+            ? `Проверьте список оценивающих кандидата и подтвердите почту тех, у кого нет учётной записи${untilOf(details)}`
+            : `Проверьте список оценивающих кандидата${untilOf(details)}`,
+        },
       ];
     case "PromotionFormalCheckPending":
       return [

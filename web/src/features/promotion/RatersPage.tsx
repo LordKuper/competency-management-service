@@ -3,11 +3,13 @@ import { App, Breadcrumb, Flex, Skeleton, Typography } from "antd";
 import { Link, useParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { contentMaxWidth } from "../../app/theme";
-import { useEditBase } from "../../app/useEditBase";
+import { isStaleVersion, useEditBase } from "../../app/useEditBase";
 import {
   applicationQuery,
   type PromotionApplication,
   promotionQueryKey,
+  type RaterEntry,
+  saveRaterEmail,
   saveRaters,
   type Versioned,
 } from "./promotionApi";
@@ -60,11 +62,27 @@ function RatersEditor({ latest }: { latest: Versioned<PromotionApplication> }) {
   const { base = latest, noteSaveFailure, rebase } = useEditBase(latest);
   const employees = useEmployeeOptions("rater-picker");
   const save = useMutation({
-    mutationFn: (raterEmployeeIds: string[]) =>
-      saveRaters(base.id, base.version, raterEmployeeIds),
+    mutationFn: (raters: RaterEntry[]) =>
+      saveRaters(base.id, base.version, raters),
     onSuccess: (saved) => {
       rebase(saved);
       message.success("Список оценивающих сохранён");
+    },
+    onError: noteSaveFailure,
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: promotionQueryKey }),
+  });
+  const confirmEmail = useMutation({
+    mutationFn: ({
+      employeeId,
+      email,
+    }: {
+      employeeId: string;
+      email: string;
+    }) => saveRaterEmail(base.id, base.version, employeeId, email),
+    onSuccess: (saved) => {
+      rebase(saved);
+      message.success("Почта подтверждена");
     },
     onError: noteSaveFailure,
     onSettled: () =>
@@ -75,6 +93,9 @@ function RatersEditor({ latest }: { latest: Versioned<PromotionApplication> }) {
       {save.isError && (
         <ErrorAlert title="Список не сохранён" error={save.error} />
       )}
+      {confirmEmail.isError && isStaleVersion(confirmEmail.error) && (
+        <ErrorAlert title="Почта не подтверждена" error={confirmEmail.error} />
+      )}
       <RatersView
         key={base.version}
         application={base}
@@ -82,6 +103,9 @@ function RatersEditor({ latest }: { latest: Versioned<PromotionApplication> }) {
         isSearching={employees.isSearching}
         onSearch={employees.onSearch}
         onSubmit={save.mutateAsync}
+        onConfirmEmail={(employeeId, email) =>
+          confirmEmail.mutateAsync({ employeeId, email })
+        }
       />
     </Flex>
   );

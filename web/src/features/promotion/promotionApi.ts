@@ -20,7 +20,7 @@ export type CommissionMember =
 /** The members and chair a commission is saved with. */
 export type CommissionInput = components["schemas"]["CommissionRequest"];
 
-/** A wave as its managers see it; `stage` is 0 before it starts, 1 to 7 while a stage runs and 8 once it is over. */
+/** A wave as its managers see it; `stage` is 0 before it starts, 1 to 6 while a stage runs and 7 once it is over. */
 export type Wave = components["schemas"]["WaveResponse"];
 
 /** The dates and units a wave is announced or changed with. */
@@ -51,8 +51,14 @@ export type FormalFailure = components["schemas"]["FormalFailure"];
 /** A wave that takes applications or is announced, with the targets a candidate may aim at. */
 export type OpenWave = components["schemas"]["OpenWaveResponse"];
 
-/** What a candidate files an application with. */
+/** What a candidate saves a draft of an application with. */
 export type ApplicationInput = components["schemas"]["ApplicationRequest"];
+
+/** A rater of an application, with the address to invite them at when they have no account. */
+export type RaterEntry = components["schemas"]["RaterInput"];
+
+/** A rater as an application shows them: whether they have an account and the state of their address. */
+export type RaterDetails = components["schemas"]["RaterResponse"];
 
 /** The levels and competencies of one target of a wave, which an application is filled in by. */
 export type TargetForm = components["schemas"]["TargetFormResponse"];
@@ -293,6 +299,7 @@ export const myApplicationsQuery = queryOptions({
 });
 
 const UNFINISHED_STATUSES: readonly string[] = [
+  "Draft",
   "Submitted",
   "Admitted",
   "UnderReview",
@@ -309,7 +316,7 @@ export function unfinishedApplicationIdByWave(
   );
 }
 
-/** Files an application. */
+/** Drafts an application. */
 export async function createApplication(
   waveId: string,
   body: ApplicationInput,
@@ -321,7 +328,7 @@ export async function createApplication(
   );
 }
 
-/** Replaces the content of an application. */
+/** Replaces the content of a draft. */
 export async function saveApplication(
   id: string,
   version: number,
@@ -331,6 +338,24 @@ export async function saveApplication(
     await api.PUT("/api/v1/promotion/applications/{id}", {
       params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
       body,
+    }),
+  );
+}
+
+/** Files a draft. */
+export async function submitApplication(id: string, version: number) {
+  return withVersion(
+    await api.POST("/api/v1/promotion/applications/{id}/submit", {
+      params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
+    }),
+  );
+}
+
+/** Deletes a draft with everything entered in it. */
+export async function deleteApplication(id: string, version: number) {
+  return unwrap(
+    await api.DELETE("/api/v1/promotion/applications/{id}", {
+      params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
     }),
   );
 }
@@ -348,18 +373,34 @@ export async function withdrawApplication(id: string, version: number) {
 export async function saveRaters(
   id: string,
   version: number,
-  raterEmployeeIds: string[],
+  raters: RaterEntry[],
 ) {
   return withVersion(
     await api.PUT("/api/v1/promotion/applications/{id}/raters", {
       params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
-      body: {
-        raters: raterEmployeeIds.map((employeeId) => ({
-          employeeId,
-          email: null,
-        })),
-      },
+      body: { raters },
     }),
+  );
+}
+
+/** Enters or confirms the address of a rater who has no account. */
+export async function saveRaterEmail(
+  id: string,
+  version: number,
+  employeeId: string,
+  email: string,
+) {
+  return withVersion(
+    await api.PUT(
+      "/api/v1/promotion/applications/{id}/raters/{employeeId}/email",
+      {
+        params: {
+          path: { id, employeeId },
+          header: { "If-Match": ifMatchOf(version) },
+        },
+        body: { email },
+      },
+    ),
   );
 }
 

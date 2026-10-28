@@ -20,7 +20,7 @@ interface WaveApplicationsViewProps {
   onOpenFormal: (applicationId: string) => void;
 }
 
-/** The applications of a wave as a table: who applied for what, in which state, and the way into the formal check. */
+/** The applications of a wave as a table: who applied for what, in which state, the way into the formal check and, for those that reached the commission, into the review. */
 export function WaveApplicationsView({
   applications,
   total,
@@ -57,27 +57,24 @@ export function WaveApplicationsView({
       key: "actions",
       render: (_, application) => (
         <Flex gap="small" wrap>
-          {application.stage >= STAGE.formalCheck && (
-            <Button
-              type="link"
-              aria-label={`Формальная проверка: ${application.candidateName}`}
-              onClick={() => onOpenFormal(application.id)}
+          <Button
+            type="link"
+            aria-label={`Формальная проверка: ${application.candidateName}`}
+            onClick={() => onOpenFormal(application.id)}
+          >
+            {application.stage <= STAGE.formalCheck &&
+            application.status === "Submitted"
+              ? "Внести дату"
+              : "Формальная проверка"}
+          </Button>
+          {REVIEWED_STATUSES.includes(application.status) && (
+            <Link
+              to={promotionPaths.review(application.id)}
+              aria-label={`Рассмотрение: ${application.candidateName}`}
             >
-              {application.stage === STAGE.formalCheck &&
-              application.status === "Submitted"
-                ? "Внести дату"
-                : "Формальная проверка"}
-            </Button>
+              Рассмотрение
+            </Link>
           )}
-          {application.stage >= STAGE.review &&
-            REVIEWED_STATUSES.includes(application.status) && (
-              <Link
-                to={promotionPaths.review(application.id)}
-                aria-label={`Рассмотрение: ${application.candidateName}`}
-              >
-                Рассмотрение
-              </Link>
-            )}
         </Flex>
       ),
     },

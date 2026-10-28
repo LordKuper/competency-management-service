@@ -185,7 +185,7 @@ export function ReviewView({ review, onSubmit }: ReviewViewProps) {
   const isChair = review.roles.includes("Chair");
   const canEdit =
     isChair &&
-    review.stage === STAGE.review &&
+    review.stage <= STAGE.review &&
     EDITABLE_STATUSES.includes(review.status);
   const statusTag = APPLICATION_STATUS_TAGS[review.status];
   const { target, formal } = review;

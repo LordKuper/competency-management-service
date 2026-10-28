@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Breadcrumb, Flex, Skeleton, Typography } from "antd";
-import { Link, useParams } from "react-router";
+import { Link, Navigate, useParams } from "react-router";
 import { describeApiError } from "../../app/apiErrors";
 import { destructiveConfirm } from "../../app/destructiveConfirm";
 import { ErrorAlert } from "../../app/ErrorAlert";
@@ -53,6 +53,9 @@ function LoadedApplication({ id }: { id: string }) {
         onRetry={() => void refetch()}
       />
     );
+  }
+  if (data.status === "Draft" && data.roles.includes("Candidate")) {
+    return <Navigate replace to={promotionPaths.apply(data.waveId)} />;
   }
   return <ApplicationActions latest={data} />;
 }

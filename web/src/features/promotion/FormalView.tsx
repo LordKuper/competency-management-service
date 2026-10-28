@@ -13,9 +13,12 @@ import { useFormSubmit } from "../../app/useFormSubmit";
 import type { FormalInput, PromotionApplication } from "./promotionApi";
 import {
   APPLICATION_STATUS_TAGS,
+  FORMAL_CHECK_FAILED,
+  FORMAL_CHECK_PASSED,
   FORMAL_FAILURE_TEXTS,
   formatDate,
 } from "./promotionTexts";
+import { RaterEmailsView } from "./RaterEmailsView";
 
 const DATE_FORMAT = "DD.MM.YYYY";
 const ISO_DATE = "YYYY-MM-DD";
@@ -33,16 +36,19 @@ interface FormalViewProps {
   minIntervalMonths?: number;
   /** Saves the date; a refusal that names the date is shown under it, any other one is shown by the caller. */
   onSubmit: (input: FormalInput) => Promise<unknown>;
+  /** Enters and confirms the address of a rater without an account; a refusal is shown by the row. */
+  onConfirmEmail: (employeeId: string, email: string) => Promise<unknown>;
 }
 
-/** The formal check of one application: the candidate and target, what the check found, and for the responsible HR the date entry with the interval warning. */
+/** The formal check of one application: the candidate and target, what the check would find now, and for the responsible HR the date entry with the interval warning and the addresses of the raters. */
 export function FormalView({
   application,
   canEnter,
   minIntervalMonths,
   onSubmit,
+  onConfirmEmail,
 }: FormalViewProps) {
-  const { target, formal, status } = application;
+  const { target, formal, status, formalCheck, raters } = application;
   return (
     <Flex vertical gap="middle">
       <Descriptions
@@ -64,16 +70,33 @@ export function FormalView({
           },
         ]}
       />
-      {application.warnings
-        .filter((warning) => !(canEnter && warning === "IntervalNotPassed"))
-        .map((warning) => (
-          <Alert
-            key={warning}
-            type="warning"
-            showIcon
-            title={FORMAL_FAILURE_TEXTS[warning]}
-          />
-        ))}
+      {formalCheck ? (
+        <Alert
+          type={formalCheck.isPassed ? "success" : "warning"}
+          showIcon
+          title={
+            formalCheck.isPassed ? FORMAL_CHECK_PASSED : FORMAL_CHECK_FAILED
+          }
+          description={
+            formalCheck.isPassed
+              ? undefined
+              : formalCheck.failures
+                  .map((failure) => FORMAL_FAILURE_TEXTS[failure])
+                  .join("; ")
+          }
+        />
+      ) : (
+        application.warnings
+          .filter((warning) => !(canEnter && warning === "IntervalNotPassed"))
+          .map((warning) => (
+            <Alert
+              key={warning}
+              type="warning"
+              showIcon
+              title={FORMAL_FAILURE_TEXTS[warning]}
+            />
+          ))
+      )}
       {status === "FormalRejected" && (
         <Alert
           type="error"
@@ -86,6 +109,7 @@ export function FormalView({
       )}
       {canEnter ? (
         <FormalForm
+          key={`${formal?.hiredOrPromotedOn}|${formal?.ignoreInterval}`}
           formal={formal}
           minIntervalMonths={minIntervalMonths}
           onSubmit={onSubmit}
@@ -105,6 +129,14 @@ export function FormalView({
               ? [{ label: "Интервал", children: "Не учитывается" }]
               : []),
           ]}
+        />
+      )}
+      {raters?.some((rater) => !rater.hasAccount) && (
+        <RaterEmailsView
+          key={raters.map((rater) => rater.employeeId).join("|")}
+          raters={raters}
+          canEdit={canEnter}
+          onConfirm={onConfirmEmail}
         />
       )}
     </Flex>

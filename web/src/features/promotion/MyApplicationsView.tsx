@@ -27,6 +27,7 @@ export function MyApplicationsView({ applications }: MyApplicationsViewProps) {
       {applications.map((application) => {
         const status = APPLICATION_STATUS_TAGS[application.status];
         const decision = application.decision;
+        const isDraft = application.status === "Draft";
         return (
           <Card
             key={application.id}
@@ -34,10 +35,14 @@ export function MyApplicationsView({ applications }: MyApplicationsViewProps) {
             title={`${application.target.unitName}: ${application.target.trackName}, ${application.target.levelName}`}
             extra={
               <Link
-                to={promotionPaths.application(application.id)}
-                aria-label={`Открыть заявку: ${application.target.trackName}, ${application.target.levelName}, волна с ${formatDate(application.waveStartsOn)}`}
+                to={
+                  isDraft
+                    ? promotionPaths.apply(application.waveId)
+                    : promotionPaths.application(application.id)
+                }
+                aria-label={`${isDraft ? "Продолжить черновик" : "Открыть заявку"}: ${application.target.trackName}, ${application.target.levelName}, волна с ${formatDate(application.waveStartsOn)}`}
               >
-                Открыть
+                {isDraft ? "Продолжить" : "Открыть"}
               </Link>
             }
           >
@@ -49,8 +54,9 @@ export function MyApplicationsView({ applications }: MyApplicationsViewProps) {
                 </Tag>
               )}
               <Typography.Text type="secondary">
-                Волна с {formatDate(application.waveStartsOn)}, подана{" "}
-                {formatDate(application.submittedAt)}
+                {isDraft
+                  ? `Волна с ${formatDate(application.waveStartsOn)}, не отправлена`
+                  : `Волна с ${formatDate(application.waveStartsOn)}, подана ${formatDate(application.submittedAt)}`}
               </Typography.Text>
             </Flex>
           </Card>

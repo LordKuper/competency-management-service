@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import type { ReactNode } from "react";
 import type { OrgUnitTreeNode } from "../../org-structure/orgStructureApi";
 import { ApplicationView } from "../ApplicationView";
@@ -12,6 +13,7 @@ import type {
   PromotionApplication,
   PromotionSettings,
   RankingItem,
+  RaterDetails,
   Rating,
   RatingTask,
   Review,
@@ -26,6 +28,7 @@ import { RatingsView } from "../RatingsView";
 import { RatingView } from "../RatingView";
 import { ReviewView } from "../ReviewView";
 import { SettingsView } from "../SettingsView";
+import { endDatesFrom } from "../stageDates";
 import { WaveApplicationsView } from "../WaveApplicationsView";
 import { WaveListView } from "../WaveListView";
 import { WaveView } from "../WaveView";
@@ -148,7 +151,7 @@ const PEOPLE = {
   chair: { id: "demo-emp-chair", name: "Михайлов Сергей Петрович" },
   member: { id: "demo-emp-member", name: "Козлова Елена Андреевна" },
 };
-const RATERS = [
+const RATERS: RaterDetails[] = [
   { employeeId: "demo-emp-r1", fullName: "Петров Пётр Олегович" },
   { employeeId: "demo-emp-r2", fullName: "Сидорова Мария Павловна" },
   { employeeId: "demo-emp-r3", fullName: "Кузнецов Олег Денисович" },
@@ -162,6 +165,15 @@ const RATERS = [
   isEmailConfirmed: true,
   emailConfirmedByName: null,
 }));
+const RATER_WITHOUT_ACCOUNT: RaterDetails = {
+  employeeId: "demo-emp-r8",
+  fullName: "Громов Фёдор Игоревич",
+  source: "Candidate",
+  hasAccount: false,
+  email: "f.gromov@example.org",
+  isEmailConfirmed: false,
+  emailConfirmedByName: null,
+};
 const SEARCH_RESULTS: EmployeeOption[] = [
   {
     id: "demo-emp-r6",
@@ -179,6 +191,8 @@ const SETTINGS: PromotionSettings = {
   minIntervalMonths: 12,
   stageDurationsDays: [10, 2, 5, 2, 5, 5],
 };
+
+const ISO_DATE = "YYYY-MM-DD";
 
 const UNITS: OrgUnitTreeNode[] = [
   {
@@ -254,17 +268,12 @@ const COMMISSION: Versioned<Commission> = {
   ],
 };
 
+const WAVE_STARTS_ON = "2027-03-01";
 const WAVE_DATES = {
-  startsOn: "2027-03-01",
-  endsOn: [
-    "2027-03-14",
-    "2027-03-21",
-    "2027-04-04",
-    "2027-04-11",
-    "2027-04-25",
-    "2027-04-28",
-    "2027-05-12",
-  ],
+  startsOn: WAVE_STARTS_ON,
+  endsOn: endDatesFrom(dayjs(WAVE_STARTS_ON), SETTINGS.stageDurationsDays).map(
+    (date) => date.format(ISO_DATE),
+  ),
 };
 
 function wave(stage: number): Versioned<Wave> {
@@ -554,13 +563,23 @@ function review(overrides: Partial<Review>): Review {
   };
 }
 
+const RATERS_WITH_UNCONFIRMED_EMAIL = [...RATERS, RATER_WITHOUT_ACCOUNT];
+
+const MANDATORY_ARTIFACTS_CASE = {
+  stage: 4,
+  status: "Admitted" as const,
+  formal: FORMAL_ENTERED,
+  hasMandatoryArtifacts: true,
+  mandatoryArtifactCompetencyIds: [DESIGN.id],
+};
+
 /** The full cycle of a wave, from its announcement to the end of the feedback stage, step by step by the role that acts. */
 export const DEMO_STEPS: readonly DemoStep[] = [
   {
     role: "Администратор",
     title: "Настройки повышения",
     description:
-      "Администратор задаёт минимальный интервал между повышениями и длительность каждого этапа по умолчанию.",
+      "Администратор задаёт минимальный интервал между повышениями и длительность каждого этапа по умолчанию в рабочих днях: суббота и воскресенье не считаются.",
     stage: 0,
     render: () => <SettingsView settings={SETTINGS} onSubmit={noop} />,
   },
@@ -584,7 +603,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     role: "HR",
     title: "Объявление волны",
     description:
-      "HR выбирает дату начала приёма заявок, даты окончания этапов и подразделения волны. Даты окончания подставляются по настройкам.",
+      "HR выбирает дату начала приёма заявок, не раньше чем через 7 дней после объявления, даты окончания этапов и подразделения волны. Даты окончания подставляются по настройкам в рабочих днях. Окончание этапа — крайний срок: действие доступно раньше, как только для него всё готово. В момент окончания этапа «Рассмотрение комиссией» публикуются результаты.",
     stage: 0,
     render: () => (
       <WaveView
@@ -628,22 +647,29 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   },
   {
     role: "Кандидат",
-    title: "Заявка на повышение",
+    title: "Черновик заявки",
     description:
-      "Кандидат выбирает подразделение, трек и уровень, указывает образование, оценивает себя по компетенциям и называет оценивающих.",
+      "Кандидат заполняет черновик: цель, образование, самооценку и оценивающих. Для оценивающего без учётной записи он указывает почту, на неё придёт приглашение в систему. Артефакты можно добавить уже сейчас, это необязательно. Черновик видит только кандидат: его можно сохранять, править и удалять. Если образование ниже требуемого, экран предупреждает об этом до отправки.",
     stage: 1,
     render: () => (
       <ApplyView
         wave={OPEN_WAVE}
-        application={application({})}
+        application={application({
+          status: "Draft",
+          raters: RATERS_WITH_UNCONFIRMED_EMAIL,
+          artifacts: ARTIFACTS,
+        })}
         targetForm={TARGET_FORM}
         isTargetLoading={false}
         candidates={SEARCH_RESULTS}
         candidateEmployeeId={CANDIDATE.id}
         isSearching={false}
+        isBusy={false}
         onSearch={nothing}
         onTargetChange={nothing}
-        onSubmit={noop}
+        onSaveDraft={noop}
+        onSend={noop}
+        onDelete={nothing}
       />
     ),
   },
@@ -651,19 +677,39 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     role: "Кандидат",
     title: "Мои заявки",
     description:
-      "Поданная заявка появляется в списке заявок кандидата со статусом. Из карточки её можно открыть.",
+      "Пока заявка не отправлена, она в списке заявок кандидата со статусом «Черновик»: из карточки черновик можно продолжить.",
     stage: 1,
-    render: () => <MyApplicationsView applications={[MY_APPLICATION]} />,
+    render: () => (
+      <MyApplicationsView
+        applications={[{ ...MY_APPLICATION, status: "Draft" }]}
+      />
+    ),
+  },
+  {
+    role: "Кандидат",
+    title: "Отправленная заявка",
+    description:
+      "После отправки заявку нельзя изменить. Пока по ней не принято решение, её можно отозвать, а взамен до конца этапа отправить новую.",
+    stage: 1,
+    render: () => (
+      <ApplicationView
+        application={application({ raters: RATERS_WITH_UNCONFIRMED_EMAIL })}
+        isBusy={false}
+        onWithdraw={nothing}
+        onMarkFeedback={nothing}
+        onSaveArtifacts={noop}
+      />
+    ),
   },
   {
     role: "HR",
     title: "Заявки волны",
     description:
-      "На этапе формальной проверки ответственный HR видит заявки волны и открывает проверку каждой.",
-    stage: 2,
+      "Отправленные заявки сразу видны ответственному HR: он открывает данные формальной проверки каждой.",
+    stage: 1,
     render: () => (
       <WaveApplicationsView
-        applications={waveApplications(2, "Submitted")}
+        applications={waveApplications(1, "Submitted")}
         total={3}
         page={1}
         pageSize={20}
@@ -675,16 +721,23 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   },
   {
     role: "HR",
-    title: "Формальная проверка",
+    title: "Данные формальной проверки",
     description:
-      "HR вносит дату приёма на работу или последнего повышения кандидата. Если срок с этой даты короткий, экран предупреждает об этом.",
+      "С отправки заявки и до конца этапа «Формальная проверка» ответственный HR вносит и правит дату приёма на работу или последнего повышения. После каждого сохранения экран показывает предварительный результат проверки; окончательным он становится в конце этапа. Почту оценивающих без учётной записи HR тоже может подтвердить.",
     stage: 2,
     render: () => (
       <FormalView
-        application={application({ stage: 2 })}
+        application={application({
+          stage: 2,
+          roles: ["ResponsibleHr"],
+          formal: FORMAL_ENTERED,
+          formalCheck: { isPassed: true, failures: [] },
+          raters: RATERS_WITH_UNCONFIRMED_EMAIL,
+        })}
         canEnter
         minIntervalMonths={SETTINGS.minIntervalMonths}
         onSubmit={noop}
+        onConfirmEmail={noop}
       />
     ),
   },
@@ -692,20 +745,21 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     role: "Руководитель",
     title: "Список оценивающих",
     description:
-      "Руководитель подразделения цели проверяет список оценивающих кандидата и при необходимости дополняет его.",
-    stage: 3,
+      "Руководитель подразделения цели с отправки заявки до конца этапа «Формальная проверка» дополняет и корректирует список оценивающих и подтверждает почту тех, у кого нет учётной записи. В конце этапа список становится окончательным: система отправляет приглашения зарегистрироваться на подтверждённые адреса, а затем каждому оценивающему — одно письмо со списком всех, кого ему нужно оценить.",
+    stage: 2,
     render: () => (
       <RatersView
         application={application({
-          stage: 3,
-          status: "Admitted",
+          stage: 2,
           roles: ["Head"],
           formal: FORMAL_ENTERED,
+          raters: RATERS_WITH_UNCONFIRMED_EMAIL,
         })}
         candidates={SEARCH_RESULTS}
         isSearching={false}
         onSearch={nothing}
         onSubmit={noop}
+        onConfirmEmail={noop}
       />
     ),
   },
@@ -727,18 +781,15 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   },
   {
     role: "Кандидат",
-    title: "Артефакты",
+    title: "Обязательные артефакты",
     description:
-      "Кандидат добавляет артефакты к компетенциям: описание и ссылки. К отмеченным компетенциям артефакт обязателен.",
+      "Кандидат, который по итогам круговой оценки не проходит обязательные требования, добавляет артефакты к отмеченным компетенциям. Рядом с ними пояснение: без артефакта компетенция, скорее всего, не будет подтверждена.",
     stage: 4,
     render: () => (
       <ApplicationView
         application={application({
-          stage: 4,
-          status: "Admitted",
-          formal: FORMAL_ENTERED,
-          artifacts: ARTIFACTS,
-          mandatoryArtifactCompetencyIds: [DESIGN.id],
+          ...MANDATORY_ARTIFACTS_CASE,
+          artifacts: [],
         })}
         isBusy={false}
         onWithdraw={nothing}
@@ -751,8 +802,8 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     role: "Член комиссии",
     title: "Рейтинг кандидатов",
     description:
-      "Член комиссии видит кандидатов подразделения по рейтингу и открывает карточку каждого.",
-    stage: 5,
+      "Заявки поступают к комиссии по мере готовности: прошедшие требования — сразу по окончании круговой оценки, остальные — как только поданы обязательные артефакты, но не позже конца этапа «Сбор артефактов». Член комиссии видит кандидатов подразделения по рейтингу и открывает карточку каждого.",
+    stage: 4,
     render: () => <RankingView items={RANKING} isLoading={false} />,
   },
   {
@@ -769,7 +820,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     role: "Председатель комиссии",
     title: "Итоговые оценки и решение",
     description:
-      "Председатель вносит итоговый балл по каждой компетенции, видит рассчитанные рейтинг и готовность и фиксирует решение комиссии.",
+      "Председатель вносит итоговый балл по каждой компетенции с поступления заявки к комиссии, видит рассчитанные рейтинг и готовность и фиксирует решение комиссии.",
     stage: 5,
     render: () => (
       <ReviewView review={review({ roles: ["Chair"] })} onSubmit={noop} />
@@ -779,7 +830,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     role: "Кандидат",
     title: "Результат",
     description:
-      "После публикации результатов кандидат видит решение комиссии и итоговые баллы против требований.",
+      "В момент окончания этапа «Рассмотрение комиссией» результаты публикуются, и сразу начинается «Обратная связь». Кандидат видит решение комиссии и итоговые баллы против требований; всем кандидатам уходит письмо с просьбой отметить получение обратной связи.",
     stage: 6,
     render: () => (
       <ApplicationView
@@ -802,11 +853,11 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     title: "Обратная связь",
     description:
       "Обратную связь кандидату дают вне системы. Получив её, кандидат отмечает это в заявке.",
-    stage: 7,
+    stage: 6,
     render: () => (
       <ApplicationView
         application={application({
-          stage: 7,
+          stage: 6,
           status: "Decided",
           formal: FORMAL_ENTERED,
           artifacts: ARTIFACTS,
@@ -824,10 +875,10 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     title: "Проверка отметок обратной связи",
     description:
       "На последнем этапе волны HR следит за её ходом. После его окончания HR получает список кандидатов, которые не отметили получение обратной связи.",
-    stage: 7,
+    stage: 6,
     render: () => (
       <WaveView
-        wave={wave(7)}
+        wave={wave(6)}
         units={UNITS}
         durations={SETTINGS.stageDurationsDays}
         canEdit
