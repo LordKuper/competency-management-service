@@ -231,7 +231,6 @@ export function ApplicationView({
                   competencies={application.selfScores.map((score) => ({
                     competencyId: score.competencyId,
                     competencyName: score.competencyName,
-                    text: given.get(score.competencyId)?.text,
                     links: given.get(score.competencyId)?.links,
                   }))}
                   mandatoryIds={mandatoryIds}

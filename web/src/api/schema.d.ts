@@ -1877,6 +1877,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/promotion/rater-exclusions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["FindExcludedPromotionRaters"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/promotion/settings/rater-exclusions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListPromotionRaterExclusions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/promotion/settings/rater-exclusions/employees/{employeeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AddPromotionRaterExclusionEmployee"];
+        post?: never;
+        delete: operations["RemovePromotionRaterExclusionEmployee"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/promotion/settings/rater-exclusions/positions/{positionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AddPromotionRaterExclusionPosition"];
+        post?: never;
+        delete: operations["RemovePromotionRaterExclusionPosition"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/promotion/commissions/{unitId}": {
         parameters: {
             query?: never;
@@ -2133,6 +2197,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/promotion/applications/{id}/send-to-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["SendPromotionApplicationToReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/promotion/applications/{id}/feedback": {
         parameters: {
             query?: never;
@@ -2278,7 +2358,7 @@ export interface components {
             matrixId: string;
             /** Format: uuid */
             levelId: string;
-            education: components["schemas"]["EducationLevel"];
+            education?: null | components["schemas"]["EducationLevel"];
             selfScores: components["schemas"]["SelfScoreInput"][];
             raters: components["schemas"]["RaterInput"][];
         };
@@ -2297,6 +2377,7 @@ export interface components {
             target: components["schemas"]["ApplicationTargetResponse"];
             education: components["schemas"]["EducationLevel"];
             selfScores: components["schemas"]["SelfScoreResponse"][];
+            preliminaryRating: null | components["schemas"]["PreliminaryRatingResponse"];
             raters: null | components["schemas"]["RaterResponse"][];
             formal: null | components["schemas"]["ApplicationFormalResponse"];
             formalFailures: components["schemas"]["FormalFailure"][];
@@ -2304,6 +2385,8 @@ export interface components {
             formalCheck: null | components["schemas"]["FormalCheckResponse"];
             artifacts: null | components["schemas"]["ArtifactResponse"][];
             mandatoryArtifactCompetencyIds: null | string[];
+            missingArtifactCompetencyIds: null | string[];
+            isSentToReview: boolean;
             hasMandatoryArtifacts: boolean;
             /** Format: date-time */
             feedbackReceivedAt: null | string;
@@ -2372,15 +2455,17 @@ export interface components {
         ArtifactInput: {
             /** Format: uuid */
             competencyId: string;
-            text: string;
-            links: string[];
+            links: components["schemas"]["ArtifactLink"][];
+        };
+        ArtifactLink: {
+            description: string;
+            url: string;
         };
         ArtifactResponse: {
             /** Format: uuid */
             competencyId: string;
             competencyName: string;
-            text: string;
-            links: string[];
+            links: components["schemas"]["ArtifactLink"][];
         };
         ArtifactsRequest: {
             artifacts: components["schemas"]["ArtifactInput"][];
@@ -2886,16 +2971,22 @@ export interface components {
             positionId?: null | string;
             positionName?: null | string;
         };
+        ExcludedEmployeeResponse: {
+            /** Format: uuid */
+            id: string;
+            fullName: string;
+            unitName: string;
+        };
+        ExcludedPositionResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: int32 */
+            employeeCount: number;
+        };
         FinalScoreInput: {
             /** Format: uuid */
             competencyId: string;
-            /** Format: int32 */
-            score: number;
-        };
-        FinalScoreResponse: {
-            /** Format: uuid */
-            competencyId: string;
-            competencyName: string;
             /** Format: int32 */
             score: number;
         };
@@ -3345,7 +3436,7 @@ export interface components {
             matrixId: string;
             /** Format: uuid */
             levelId: string;
-            education: components["schemas"]["EducationLevel"];
+            education?: null | components["schemas"]["EducationLevel"];
             selfScores: components["schemas"]["SelfScoreInput"][];
             raters: components["schemas"]["RaterInput"][];
         };
@@ -3681,6 +3772,16 @@ export interface components {
             /** Format: int32 */
             version: number;
         };
+        PreliminaryRatingResponse: {
+            /** Format: double */
+            rating: number;
+            /** Format: double */
+            threshold: null | number;
+            isReady: boolean;
+            areCriticalMet: boolean;
+            /** Format: int32 */
+            unscoredCount: number;
+        };
         ProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -3763,6 +3864,10 @@ export interface components {
         RaterEmailRequest: {
             email: string;
         };
+        RaterExclusionsResponse: {
+            employees: components["schemas"]["ExcludedEmployeeResponse"][];
+            positions: components["schemas"]["ExcludedPositionResponse"][];
+        };
         RaterInput: {
             /** Format: uuid */
             employeeId: string;
@@ -3777,6 +3882,7 @@ export interface components {
             email: null | string;
             isEmailConfirmed: boolean;
             emailConfirmedByName: null | string;
+            isExcluded: boolean;
         };
         /** @enum {unknown} */
         RaterSource: "Candidate" | "Head";
@@ -3823,6 +3929,13 @@ export interface components {
             score: null | number;
             isMet: boolean;
         };
+        ReviewCompetencyChangeResponse: {
+            isNew: boolean;
+            /** Format: double */
+            previousAverage: null | number;
+            /** Format: double */
+            delta: null | number;
+        };
         ReviewCompetencyResponse: {
             /** Format: uuid */
             competencyId: string;
@@ -3834,11 +3947,21 @@ export interface components {
             /** Format: int32 */
             selfScore: null | number;
             circular: components["schemas"]["CircularSummaryResponse"];
+            change: null | components["schemas"]["ReviewCompetencyChangeResponse"];
             artifact: null | components["schemas"]["ArtifactResponse"];
             isArtifactMandatory: boolean;
             /** Format: int32 */
             finalScore: null | number;
             isMet: null | boolean;
+        };
+        ReviewFailedCompetencyResponse: {
+            /** Format: uuid */
+            competencyId: string;
+            name: string;
+            /** Format: int32 */
+            requiredScore: number;
+            /** Format: double */
+            score: null | number;
         };
         ReviewHistoryResponse: {
             /** Format: uuid */
@@ -3846,8 +3969,12 @@ export interface components {
             /** Format: date */
             waveStartsOn: string;
             target: components["schemas"]["ApplicationTargetResponse"];
-            decision: null | components["schemas"]["PromotionDecision"];
-            finalScores: components["schemas"]["FinalScoreResponse"][];
+            decision: components["schemas"]["PromotionDecision"];
+            /** Format: double */
+            rating: number;
+            /** Format: double */
+            threshold: null | number;
+            failedCritical: components["schemas"]["ReviewFailedCompetencyResponse"][];
         };
         ReviewRequest: {
             finalScores: components["schemas"]["FinalScoreInput"][];
@@ -3956,6 +4083,7 @@ export interface components {
             unitId: string;
             unitName: string;
             trackName: string;
+            education: null | components["schemas"]["EducationLevel"];
             levels: components["schemas"]["TargetFormLevelResponse"][];
             competencies: components["schemas"]["TargetFormCompetencyResponse"][];
         };
@@ -13751,6 +13879,254 @@ export interface operations {
             };
         };
     };
+    FindExcludedPromotionRaters: {
+        parameters: {
+            query: {
+                employeeIds: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListPromotionRaterExclusions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RaterExclusionsResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    AddPromotionRaterExclusionEmployee: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    RemovePromotionRaterExclusionEmployee: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    AddPromotionRaterExclusionPosition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                positionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    RemovePromotionRaterExclusionPosition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                positionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     GetPromotionCommission: {
         parameters: {
             query?: never;
@@ -14392,6 +14768,15 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15223,6 +15608,94 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    SendPromotionApplicationToReview: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The strong entity tag of the version being modified, as returned in the ETag header of the resource. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    /** @description The strong entity tag of the returned version; send it back in If-Match to modify the resource. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unauthorized */

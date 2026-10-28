@@ -5,7 +5,7 @@ namespace Competency.Promotion;
 
 /// <summary>
 /// The card of a candidate for the commission: the application, what was learned about it at each stage, the chair's scores with the rating
-/// and the readiness they give, the decision, and the candidate's earlier applications. Only the commission of the unit and administrators see it.
+/// and the readiness they give, the decision, and the candidate's earlier applications that got a decision. Only the commission of the unit and administrators see it.
 /// </summary>
 /// <param name="Id">The application.</param>
 /// <param name="WaveId">The wave.</param>
@@ -27,7 +27,7 @@ namespace Competency.Promotion;
 /// <param name="Decision">The decision of the chair; null while there is none.</param>
 /// <param name="DecidedByName">Who recorded the decision, as people know the account.</param>
 /// <param name="DecidedAt">When they recorded it.</param>
-/// <param name="History">The candidate's earlier applications whose results were published, the latest first.</param>
+/// <param name="History">The candidate's earlier applications that got a decision and whose results were published, the latest first.</param>
 internal sealed record ReviewResponse(
     Guid Id,
     Guid WaveId,

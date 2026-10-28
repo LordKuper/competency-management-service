@@ -12996,6 +12996,296 @@
         }
       }
     },
+    "/api/v1/promotion/rater-exclusions": {
+      "get": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "FindExcludedPromotionRaters",
+        "parameters": [
+          {
+            "name": "employeeIds",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/settings/rater-exclusions": {
+      "get": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "ListPromotionRaterExclusions",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RaterExclusionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/settings/rater-exclusions/employees/{employeeId}": {
+      "put": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "AddPromotionRaterExclusionEmployee",
+        "parameters": [
+          {
+            "name": "employeeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "RemovePromotionRaterExclusionEmployee",
+        "parameters": [
+          {
+            "name": "employeeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/settings/rater-exclusions/positions/{positionId}": {
+      "put": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "AddPromotionRaterExclusionPosition",
+        "parameters": [
+          {
+            "name": "positionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "RemovePromotionRaterExclusionPosition",
+        "parameters": [
+          {
+            "name": "positionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/v1/promotion/commissions/{unitId}": {
       "get": {
         "tags": [
@@ -13851,6 +14141,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TargetFormResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -14994,6 +15294,117 @@
         }
       }
     },
+    "/api/v1/promotion/applications/{id}/send-to-review": {
+      "post": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "SendPromotionApplicationToReview",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/promotion/applications/{id}/feedback": {
       "post": {
         "tags": [
@@ -15707,7 +16118,6 @@
         "required": [
           "matrixId",
           "levelId",
-          "education",
           "selfScores",
           "raters"
         ],
@@ -15722,7 +16132,14 @@
             "format": "uuid"
           },
           "education": {
-            "$ref": "#/components/schemas/EducationLevel"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EducationLevel"
+              }
+            ]
           },
           "selfScores": {
             "type": "array",
@@ -15750,6 +16167,7 @@
           "target",
           "education",
           "selfScores",
+          "preliminaryRating",
           "raters",
           "formal",
           "formalFailures",
@@ -15757,6 +16175,8 @@
           "formalCheck",
           "artifacts",
           "mandatoryArtifactCompetencyIds",
+          "missingArtifactCompetencyIds",
+          "isSentToReview",
           "hasMandatoryArtifacts",
           "feedbackReceivedAt",
           "result"
@@ -15802,6 +16222,16 @@
             "items": {
               "$ref": "#/components/schemas/SelfScoreResponse"
             }
+          },
+          "preliminaryRating": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PreliminaryRatingResponse"
+              }
+            ]
           },
           "raters": {
             "type": [
@@ -15862,6 +16292,19 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "missingArtifactCompetencyIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "isSentToReview": {
+            "type": "boolean"
           },
           "hasMandatoryArtifacts": {
             "type": "boolean"
@@ -16105,7 +16548,6 @@
       "ArtifactInput": {
         "required": [
           "competencyId",
-          "text",
           "links"
         ],
         "type": "object",
@@ -16114,14 +16556,26 @@
             "type": "string",
             "format": "uuid"
           },
-          "text": {
-            "type": "string"
-          },
           "links": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/ArtifactLink"
             }
+          }
+        }
+      },
+      "ArtifactLink": {
+        "required": [
+          "description",
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
           }
         }
       },
@@ -16129,7 +16583,6 @@
         "required": [
           "competencyId",
           "competencyName",
-          "text",
           "links"
         ],
         "type": "object",
@@ -16141,13 +16594,10 @@
           "competencyName": {
             "type": "string"
           },
-          "text": {
-            "type": "string"
-          },
           "links": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/ArtifactLink"
             }
           }
         }
@@ -18065,6 +18515,47 @@
           }
         }
       },
+      "ExcludedEmployeeResponse": {
+        "required": [
+          "id",
+          "fullName",
+          "unitName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "unitName": {
+            "type": "string"
+          }
+        }
+      },
+      "ExcludedPositionResponse": {
+        "required": [
+          "id",
+          "name",
+          "employeeCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "employeeCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "FinalScoreInput": {
         "required": [
           "competencyId",
@@ -18075,27 +18566,6 @@
           "competencyId": {
             "type": "string",
             "format": "uuid"
-          },
-          "score": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "FinalScoreResponse": {
-        "required": [
-          "competencyId",
-          "competencyName",
-          "score"
-        ],
-        "type": "object",
-        "properties": {
-          "competencyId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "competencyName": {
-            "type": "string"
           },
           "score": {
             "type": "integer",
@@ -19906,7 +20376,6 @@
           "waveId",
           "matrixId",
           "levelId",
-          "education",
           "selfScores",
           "raters"
         ],
@@ -19925,7 +20394,14 @@
             "format": "uuid"
           },
           "education": {
-            "$ref": "#/components/schemas/EducationLevel"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EducationLevel"
+              }
+            ]
           },
           "selfScores": {
             "type": "array",
@@ -21089,6 +21565,39 @@
           }
         }
       },
+      "PreliminaryRatingResponse": {
+        "required": [
+          "rating",
+          "threshold",
+          "isReady",
+          "areCriticalMet",
+          "unscoredCount"
+        ],
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "number",
+            "format": "double"
+          },
+          "threshold": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "isReady": {
+            "type": "boolean"
+          },
+          "areCriticalMet": {
+            "type": "boolean"
+          },
+          "unscoredCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -21439,6 +21948,27 @@
           }
         }
       },
+      "RaterExclusionsResponse": {
+        "required": [
+          "employees",
+          "positions"
+        ],
+        "type": "object",
+        "properties": {
+          "employees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExcludedEmployeeResponse"
+            }
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExcludedPositionResponse"
+            }
+          }
+        }
+      },
       "RaterInput": {
         "required": [
           "employeeId",
@@ -21466,7 +21996,8 @@
           "hasAccount",
           "email",
           "isEmailConfirmed",
-          "emailConfirmedByName"
+          "emailConfirmedByName",
+          "isExcluded"
         ],
         "type": "object",
         "properties": {
@@ -21497,6 +22028,9 @@
               "null",
               "string"
             ]
+          },
+          "isExcluded": {
+            "type": "boolean"
           }
         }
       },
@@ -21663,6 +22197,33 @@
           }
         }
       },
+      "ReviewCompetencyChangeResponse": {
+        "required": [
+          "isNew",
+          "previousAverage",
+          "delta"
+        ],
+        "type": "object",
+        "properties": {
+          "isNew": {
+            "type": "boolean"
+          },
+          "previousAverage": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "delta": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "ReviewCompetencyResponse": {
         "required": [
           "competencyId",
@@ -21672,6 +22233,7 @@
           "scalePoints",
           "selfScore",
           "circular",
+          "change",
           "artifact",
           "isArtifactMandatory",
           "finalScore",
@@ -21712,6 +22274,16 @@
           "circular": {
             "$ref": "#/components/schemas/CircularSummaryResponse"
           },
+          "change": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReviewCompetencyChangeResponse"
+              }
+            ]
+          },
           "artifact": {
             "oneOf": [
               {
@@ -21740,13 +22312,44 @@
           }
         }
       },
+      "ReviewFailedCompetencyResponse": {
+        "required": [
+          "competencyId",
+          "name",
+          "requiredScore",
+          "score"
+        ],
+        "type": "object",
+        "properties": {
+          "competencyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "requiredScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "score": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "ReviewHistoryResponse": {
         "required": [
           "waveId",
           "waveStartsOn",
           "target",
           "decision",
-          "finalScores"
+          "rating",
+          "threshold",
+          "failedCritical"
         ],
         "type": "object",
         "properties": {
@@ -21762,19 +22365,23 @@
             "$ref": "#/components/schemas/ApplicationTargetResponse"
           },
           "decision": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/PromotionDecision"
-              }
-            ]
+            "$ref": "#/components/schemas/PromotionDecision"
           },
-          "finalScores": {
+          "rating": {
+            "type": "number",
+            "format": "double"
+          },
+          "threshold": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "failedCritical": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/FinalScoreResponse"
+              "$ref": "#/components/schemas/ReviewFailedCompetencyResponse"
             }
           }
         }
@@ -22183,6 +22790,7 @@
           "unitId",
           "unitName",
           "trackName",
+          "education",
           "levels",
           "competencies"
         ],
@@ -22201,6 +22809,16 @@
           },
           "trackName": {
             "type": "string"
+          },
+          "education": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EducationLevel"
+              }
+            ]
           },
           "levels": {
             "type": "array",

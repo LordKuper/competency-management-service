@@ -14,7 +14,7 @@ namespace Competency.Promotion;
 /// The parts of an application filled in around the stages: the responsible HR of the unit of the target enters the dates for the formal check from
 /// the moment the application is filed until that stage ends, the candidate lists the raters in the draft and the head of that unit corrects them
 /// over the same period, the head or the responsible HR confirms the address of a rater without an account, the candidate adds artifacts in the draft
-/// and while they are collected and marks the feedback as received. Each change takes the promotion locks and the rows of the wave and the application.
+/// and while they are collected, sends the application to the commission when it owes artifacts, and marks the feedback as received. Each change takes the promotion locks and the rows of the wave and the application.
 /// </summary>
 internal static class ApplicationStageEndpoints
 {
@@ -23,7 +23,9 @@ internal static class ApplicationStageEndpoints
     private const string DateField = "hiredOrPromotedOn";
     private const string FutureDateMessage = "Дата не позже сегодняшнего дня";
     private const string FormalClosedMessage = "Даты вносятся с отправки заявки до конца этапа «Формальная проверка»";
-    private const string ArtifactsClosedMessage = "Артефакты добавляют в черновике и на этапе «Сбор артефактов»";
+    private const string ArtifactsClosedMessage = "Артефакты добавляют в черновике и на этапе «Сбор артефактов» до отправки на рассмотрение";
+    private const string SendClosedMessage = "Заявку можно отправить на рассмотрение на этапе «Сбор артефактов», пока она ещё не у комиссии";
+    private const string NoChairMessage = "У комиссии подразделения нет председателя, заявку пока нельзя отправить";
     private const string FeedbackClosedMessage = "Отметку можно поставить после публикации результатов, на этапе «Обратная связь»";
     private const string RatersClosedMessage = "Список оценивающих меняет кандидат в черновике, а руководитель — с отправки заявки до конца этапа «Формальная проверка»";
     private const string EmailClosedMessage = "Почту подтверждают с отправки заявки до конца этапа «Формальная проверка»";
@@ -47,6 +49,7 @@ internal static class ApplicationStageEndpoints
         group.MapPut("/raters", UpdateRatersAsync).WithName("UpdatePromotionApplicationRaters").ProducesETag();
         group.MapPut("/raters/{employeeId:guid}/email", UpdateRaterEmailAsync).WithName("UpdatePromotionRaterEmail").ProducesETag();
         group.MapPut("/artifacts", UpdateArtifactsAsync).WithName("UpdatePromotionApplicationArtifacts").ProducesETag();
+        group.MapPost("/send-to-review", SendToReviewAsync).WithName("SendPromotionApplicationToReview").ProducesETag();
         group.MapPost("/feedback", MarkFeedbackAsync).WithName("MarkPromotionFeedbackReceived").ProducesETag();
     }
 
@@ -165,7 +168,7 @@ internal static class ApplicationStageEndpoints
 
         ifMatch.ApplyTo(context, application);
         var candidate = (await employees.FindAsync(application.EmployeeId, cancellationToken))!;
-        if (await rules.RaterProblemsAsync(candidate, request.Raters, isComplete: !isCandidate, cancellationToken) is { Count: > 0 } problems)
+        if (await rules.RaterProblemsAsync(candidate, request.Raters, isComplete: !isCandidate, application.Id, cancellationToken) is { Count: > 0 } problems)
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["raters"] = [.. problems] });
         }
@@ -193,7 +196,9 @@ internal static class ApplicationStageEndpoints
         PromotionLocks locks,
         PromotionCalendar calendar,
         ApplicationAccess access,
+        ApplicationRules rules,
         ApplicationReader reader,
+        IEmployeeDirectory employees,
         IUserDirectory users,
         ICurrentActor actor,
         TimeProvider time,
@@ -244,6 +249,12 @@ internal static class ApplicationStageEndpoints
             return Rejection.Invalid("email", EmailRepeatedMessage);
         }
 
+        if (await employees.FindAsync(employeeId, cancellationToken) is { } person
+            && await rules.ExclusionProblemsAsync(new Dictionary<Guid, EmployeeStatus> { [employeeId] = person }, applicationId: null, cancellationToken) is { Count: > 0 } exclusion)
+        {
+            return Rejection.Invalid("employeeId", exclusion[0]);
+        }
+
         ifMatch.ApplyTo(context, application);
         rater.Email = email;
         rater.EmailConfirmedBy = actor.UserId;
@@ -257,8 +268,8 @@ internal static class ApplicationStageEndpoints
     }
 
     /// <summary>
-    /// Replaces the artifacts of an application in the draft and while they are collected; the candidate gives them for any competency of the version.
-    /// When the last mandatory artifact is given, the application reaches the commission at once.
+    /// Replaces the artifacts of an application in the draft and while they are collected, until the candidate sends the application to the commission;
+    /// the candidate gives them for any competency of the version.
     /// </summary>
     private static async Task<Results<Ok<ApplicationResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateArtifactsAsync(
         Guid id,
@@ -269,7 +280,6 @@ internal static class ApplicationStageEndpoints
         PromotionCalendar calendar,
         ApplicationAccess access,
         ICareerModel career,
-        StageActions actions,
         ApplicationReader reader,
         HttpResponse response,
         CancellationToken cancellationToken)
@@ -299,7 +309,7 @@ internal static class ApplicationStageEndpoints
 
         var stage = calendar.StageOf(wave);
         var isDraft = stage == PromotionStage.Submission && application.Status == ApplicationStatus.Draft;
-        var isCollecting = stage == PromotionStage.Artifacts && ArtifactStatuses.Contains(application.Status);
+        var isCollecting = stage == PromotionStage.Artifacts && ArtifactStatuses.Contains(application.Status) && !application.IsSentToReview;
         if (!isDraft && !isCollecting)
         {
             return Rejection.Conflict(ArtifactsClosedMessage);
@@ -313,8 +323,58 @@ internal static class ApplicationStageEndpoints
         }
 
         await ApplicationContent.ReplaceArtifactsAsync(context, application.Id, request.Artifacts, cancellationToken);
-        await actions.ReachCommissionWithArtifactsAsync(application, [.. request.Artifacts.Select(artifact => artifact.CompetencyId)], cancellationToken);
         context.Entry(application).Property(entry => entry.Version).IsModified = true;
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        response.SetETag(application.Version);
+        return TypedResults.Ok(await reader.DescribeAsync(application, wave, roles, cancellationToken));
+    }
+
+    /// <summary>
+    /// Sends the application of a candidate who owes artifacts to the commission while the artifacts are collected, with whatever artifacts are given.
+    /// The answer names the competencies still without an artifact, so the candidate was shown them before sending.
+    /// </summary>
+    private static async Task<Results<Ok<ApplicationResponse>, NotFound, ProblemHttpResult>> SendToReviewAsync(
+        Guid id,
+        IfMatch ifMatch,
+        AppDbContext context,
+        PromotionLocks locks,
+        PromotionCalendar calendar,
+        ApplicationAccess access,
+        StageActions actions,
+        ApplicationReader reader,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await locks.BeginSharedAsync(cancellationToken);
+        if (await locks.FindApplicationForUpdateAsync(id, cancellationToken) is not var (wave, application))
+        {
+            return TypedResults.NotFound();
+        }
+
+        var roles = (await access.ViewerAsync(wave, [application.OrgUnitId], cancellationToken)).RolesOf(application);
+        if (roles == ApplicationRole.None)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (roles != ApplicationRole.Candidate)
+        {
+            return Rejection.Forbidden();
+        }
+
+        if (calendar.StageOf(wave) != PromotionStage.Artifacts || application.Status != ApplicationStatus.Admitted || application.MeetsAfterRating != false)
+        {
+            return Rejection.Conflict(SendClosedMessage);
+        }
+
+        ifMatch.ApplyTo(context, application);
+        if (!await actions.SendToReviewAsync(application, cancellationToken))
+        {
+            return Rejection.Conflict(NoChairMessage);
+        }
+
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 

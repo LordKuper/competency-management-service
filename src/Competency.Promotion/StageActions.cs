@@ -36,7 +36,7 @@ internal sealed class StageActions(
 
     /// <summary>
     /// Settles the formal check: a filed application that meets every condition is admitted, any other is rejected with the conditions it failed.
-    /// The interval is measured to the last day of the check stage.
+    /// The interval is measured to the day the results are published.
     /// </summary>
     /// <param name="wave">The wave.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
@@ -47,7 +47,7 @@ internal sealed class StageActions(
         var months = (await context.Set<PromotionSettings>().AsNoTracking().SingleAsync(cancellationToken)).MinIntervalMonths;
         foreach (var application in filed)
         {
-            var failures = FormalCheck.Failures(application, facts[application.Id].Level.RequiredEducation, months, wave.EndsOn[1]);
+            var failures = FormalCheck.Failures(application, facts[application.Id].Level.RequiredEducation, months, wave.ResultsPublishedOn);
             application.FormalFailures = [.. failures];
             application.Status = failures.Count == 0 ? ApplicationStatus.Admitted : ApplicationStatus.FormalRejected;
         }
@@ -92,9 +92,10 @@ internal sealed class StageActions(
     }
 
     /// <summary>
-    /// Hands admitted applications to the commission: those that met the mandatory requirements, and those that owe artifacts once they have given them all.
-    /// At the deadline of the artifact stage the rest follow, marked as missing the artifacts they did not give. An application the chair already decided on,
-    /// before the wave went back to an earlier stage, is decided again at once. A caller has checked that every commission concerned has a chair.
+    /// Hands admitted applications to the commission: those that owe no mandatory artifact when the rating stage ends. At the deadline of the artifact
+    /// stage the rest follow, marked as missing the artifacts they did not give; those who sent the application themselves are already there. An application
+    /// the chair already decided on, before the wave went back to an earlier stage, is decided again at once. A caller has checked that every commission
+    /// concerned has a chair.
     /// </summary>
     /// <param name="wave">The wave.</param>
     /// <param name="isDeadline">Whether the artifact stage has ended.</param>
@@ -114,7 +115,7 @@ internal sealed class StageActions(
         {
             var mandatory = await applications.MandatoryArtifactIdsAsync(application, facts[application.Id].Version, cancellationToken);
             var isMissing = mandatory.Any(competencyId => !given[application.Id].Contains(competencyId));
-            if (isMissing && !isDeadline)
+            if (mandatory.Count > 0 && !isDeadline)
             {
                 continue;
             }
@@ -125,27 +126,30 @@ internal sealed class StageActions(
     }
 
     /// <summary>
-    /// Hands an admitted application to the commission as soon as the last mandatory artifact is given, when the commission of its unit has a chair.
+    /// Sends an admitted application that owes artifacts to the commission at the candidate's word, whatever artifacts are given, marking it as missing
+    /// those it lacks. From then on the artifacts cannot be changed.
     /// </summary>
     /// <param name="application">The application, tracked.</param>
-    /// <param name="givenCompetencyIds">The competencies the application will have artifacts for.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    public async Task ReachCommissionWithArtifactsAsync(PromotionApplication application, IReadOnlyCollection<Guid> givenCompetencyIds, CancellationToken cancellationToken)
+    /// <returns><see langword="false"/> when the commission of its unit has no chair who acts, and nothing was changed.</returns>
+    public async Task<bool> SendToReviewAsync(PromotionApplication application, CancellationToken cancellationToken)
     {
-        if (application.Status != ApplicationStatus.Admitted || application.MeetsAfterRating != false)
+        if ((await commissions.ReadAsync([application.OrgUnitId], cancellationToken)).GetValueOrDefault(application.OrgUnitId)?.ChairEmployeeId is null)
         {
-            return;
+            return false;
         }
 
         var version = (await career.VersionAsync(application.VersionId, cancellationToken))!;
         var mandatory = await applications.MandatoryArtifactIdsAsync(application, version, cancellationToken);
-        if (mandatory.Any(competencyId => !givenCompetencyIds.Contains(competencyId))
-            || (await commissions.ReadAsync([application.OrgUnitId], cancellationToken)).GetValueOrDefault(application.OrgUnitId)?.ChairEmployeeId is null)
-        {
-            return;
-        }
-
+        var given = await context.Set<PromotionArtifact>()
+            .AsNoTracking()
+            .Where(artifact => artifact.ApplicationId == application.Id)
+            .Select(artifact => artifact.CompetencyId)
+            .ToListAsync(cancellationToken);
+        application.ArtifactsMissing = mandatory.Any(competencyId => !given.Contains(competencyId));
+        application.IsSentToReview = true;
         application.ReachCommission();
+        return true;
     }
 
     /// <summary>

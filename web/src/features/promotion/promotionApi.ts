@@ -76,8 +76,11 @@ export type Rating = components["schemas"]["RatingResponse"];
 /** The answers a rater saves; a null score is «Не наблюдал». */
 export type RatingAnswer = components["schemas"]["RatingAnswerInput"];
 
-/** The artifact a candidate gives for one competency. */
+/** The artifacts a candidate gives for one competency. */
 export type ArtifactInput = components["schemas"]["ArtifactInput"];
+
+/** One artifact: what was done and a link to the document. */
+export type ArtifactLink = components["schemas"]["ArtifactLink"];
 
 /** The card of a candidate for the commission: what the candidate, the raters and the chair gave, and the rating the chair's scores earn. */
 export type Review = components["schemas"]["ReviewResponse"];

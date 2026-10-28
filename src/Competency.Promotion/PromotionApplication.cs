@@ -101,6 +101,12 @@ internal sealed class PromotionApplication : EntityBase
     public bool ArtifactsMissing { get; set; }
 
     /// <summary>
+    /// Whether the candidate sent the application to the commission themselves while the artifacts were collected; the artifacts cannot be changed afterwards.
+    /// </summary>
+    [Audited]
+    public bool IsSentToReview { get; set; }
+
+    /// <summary>
     /// Whether the application reached the commission and the members have not been told yet; the next pass of the scheduler tells them of all such applications in one letter.
     /// </summary>
     public bool ReviewLetterPending { get; set; }
@@ -134,8 +140,9 @@ internal sealed class PromotionApplication : EntityBase
     /// <summary>
     /// Takes the application back to where it stands at the start of a stage the wave returns to. Only what a later stage settled is reset: the
     /// status, the formal failures and the results of the rating and artifact stages, which the end of those stages computes again. What the
-    /// people entered, the decision of the chair included, stays. A candidate who met the mandatory requirements stays with the commission when
-    /// the wave returns to the artifact stage. A withdrawn application stays withdrawn, and a draft stays a draft.
+    /// people entered, the decision of the chair included, stays. A candidate who met the mandatory requirements, or who sent the application
+    /// themselves, stays with the commission when the wave returns to the artifact stage; one taken back to the raters or the check sends it again.
+    /// A withdrawn application stays withdrawn, and a draft stays a draft.
     /// </summary>
     /// <param name="stage">The stage the wave returns to, 1 to 6.</param>
     public void ReturnToStage(int stage)
@@ -155,7 +162,7 @@ internal sealed class PromotionApplication : EntityBase
         }
         else if (ReviewedStatuses.Contains(Status))
         {
-            if (stage <= PromotionStage.Rating || (stage == PromotionStage.Artifacts && MeetsAfterRating != true))
+            if (stage <= PromotionStage.Rating || (stage == PromotionStage.Artifacts && MeetsAfterRating != true && !IsSentToReview))
             {
                 Status = ApplicationStatus.Admitted;
                 ReviewLetterPending = false;
@@ -166,12 +173,17 @@ internal sealed class PromotionApplication : EntityBase
             }
         }
 
+        if (Status is ApplicationStatus.Submitted or ApplicationStatus.Admitted)
+        {
+            IsSentToReview = false;
+        }
+
         if (stage <= PromotionStage.Rating)
         {
             MeetsAfterRating = null;
         }
 
-        if (stage <= PromotionStage.Artifacts)
+        if (stage <= PromotionStage.Artifacts && !IsSentToReview)
         {
             ArtifactsMissing = false;
         }

@@ -98,7 +98,6 @@ function initialValuesOf(
       (application.artifacts ?? []).map((artifact) => ({
         competencyId: artifact.competencyId,
         competencyName: artifact.competencyName,
-        text: artifact.text,
         links: artifact.links,
       })),
     ),

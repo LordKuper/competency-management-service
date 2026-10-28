@@ -30,6 +30,7 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
         ConfigureWaves(modelBuilder);
         ConfigureCommissions(modelBuilder);
         ConfigureApplications(modelBuilder);
+        ConfigureRaterExclusions(modelBuilder);
     }
 
     private static void ConfigureSettings(ModelBuilder modelBuilder) =>
@@ -163,6 +164,7 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
             entity.PrimitiveCollection(e => e.FormalFailures).HasColumnName("formal_failures").ElementType().HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.MeetsAfterRating).HasColumnName("meets_after_rating");
             entity.Property(e => e.ArtifactsMissing).HasColumnName("artifacts_missing");
+            entity.Property(e => e.IsSentToReview).HasColumnName("is_sent_to_review");
             entity.Property(e => e.ReviewLetterPending).HasColumnName("review_letter_pending");
             entity.Property(e => e.Decision).HasColumnName("decision").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.DecidedBy).HasColumnName("decided_by");
@@ -229,14 +231,13 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
             entity.HasKey(e => new { e.ApplicationId, e.CompetencyId });
             entity.Property(e => e.ApplicationId).HasColumnName("application_id");
             entity.Property(e => e.CompetencyId).HasColumnName("competency_id");
-            entity.Property(e => e.Text).HasColumnName("text").HasMaxLength(ArtifactInput.MaxTextLength);
             entity.Property(e => e.Links)
                 .HasColumnName("links")
                 .HasColumnType("jsonb")
                 .HasConversion(
                     links => JsonSerializer.Serialize(links, (JsonSerializerOptions?)null),
-                    json => JsonSerializer.Deserialize<string[]>(json, (JsonSerializerOptions?)null) ?? Array.Empty<string>(),
-                    new ValueComparer<string[]>(
+                    json => JsonSerializer.Deserialize<ArtifactLink[]>(json, (JsonSerializerOptions?)null) ?? Array.Empty<ArtifactLink>(),
+                    new ValueComparer<ArtifactLink[]>(
                         (left, right) => left!.SequenceEqual(right!),
                         links => links.Aggregate(0, (hash, link) => HashCode.Combine(hash, link)),
                         links => links.ToArray()));
@@ -255,4 +256,13 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
             entity.HasOne<PromotionApplication>().WithMany().HasForeignKey(e => e.ApplicationId).OnDelete(DeleteBehavior.Restrict);
         });
     }
+
+    private static void ConfigureRaterExclusions(ModelBuilder modelBuilder) =>
+        modelBuilder.Entity<PromotionRaterExclusion>(entity =>
+        {
+            entity.ToTable("promotion_rater_exclusions");
+            entity.HasKey(e => new { e.Kind, e.SubjectId });
+            entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(EnumMaxLength);
+            entity.Property(e => e.SubjectId).HasColumnName("subject_id");
+        });
 }

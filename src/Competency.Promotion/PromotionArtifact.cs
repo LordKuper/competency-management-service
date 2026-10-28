@@ -3,7 +3,7 @@ using Competency.Platform;
 namespace Competency.Promotion;
 
 /// <summary>
-/// What a candidate offers as evidence of a competency: a description and links to documents kept elsewhere.
+/// What a candidate offers as evidence of a competency: up to <see cref="ArtifactInput.MaxLinks"/> artifacts, each a description and a link.
 /// </summary>
 [Audited]
 internal sealed class PromotionArtifact
@@ -15,8 +15,5 @@ internal sealed class PromotionArtifact
     public Guid CompetencyId { get; init; }
 
     [Audited]
-    public string Text { get; set; } = string.Empty;
-
-    [Audited]
-    public string[] Links { get; set; } = [];
+    public ArtifactLink[] Links { get; set; } = [];
 }

@@ -17,7 +17,8 @@ internal sealed class ApplicationReader(
     IUserDirectory users,
     ICareerModel career,
     PromotionCalendar calendar,
-    WaveReader waves)
+    WaveReader waves,
+    RaterExclusions exclusions)
 {
     private const int ResultStage = PromotionStage.Feedback;
     private const ApplicationRole FormalViewers = ApplicationRole.Administrator | ApplicationRole.Author | ApplicationRole.ResponsibleHr;
@@ -42,6 +43,7 @@ internal sealed class ApplicationReader(
         var isCandidate = roles == ApplicationRole.Candidate;
         var isResultShown = isCandidate && stage >= ResultStage && application.Status is ApplicationStatus.Decided or ApplicationStatus.NoDecision;
         var mandatory = isCandidate ? await MandatoryArtifactIdsAsync(application, facts.Version, cancellationToken) : null;
+        var artifacts = isCandidate ? await ArtifactsAsync(application.Id, facts.Version, cancellationToken) : null;
 
         return new ApplicationResponse(
             application.Id,
@@ -55,16 +57,30 @@ internal sealed class ApplicationReader(
             application.Education,
             [.. facts.Version.Competencies
                 .Join(scores, competency => competency.Id, score => score.CompetencyId, (competency, score) => new SelfScoreResponse(competency.Id, competency.Name, score.Score))],
+            isCandidate ? PreliminaryRatingOf(application, facts.Version, scores) : null,
             await RatersForAsync(roles, raters, people, cancellationToken),
             canSeeFormal ? await FormalOfAsync(application, cancellationToken) : null,
             application.FormalFailures,
-            await WarningsAsync(application, facts.Level, canSeeFormal, cancellationToken),
+            await WarningsAsync(application, facts.Level, wave, canSeeFormal, cancellationToken),
             canSeeFormal ? await FormalCheckAsync(application, facts.Level, wave, cancellationToken) : null,
-            isCandidate ? await ArtifactsAsync(application.Id, facts.Version, cancellationToken) : null,
+            artifacts,
             mandatory,
+            mandatory is null ? null : [.. mandatory.Where(competencyId => artifacts!.All(artifact => artifact.CompetencyId != competencyId))],
+            application.IsSentToReview,
             mandatory is { Count: > 0 },
             isCandidate || canSeeFormal ? application.FeedbackReceivedAt : null,
             isResultShown ? await ResultAsync(application, facts.Version, cancellationToken) : null);
+    }
+
+    private PreliminaryRatingResponse PreliminaryRatingOf(PromotionApplication application, CareerVersion version, IEnumerable<PromotionSelfScore> selfScores)
+    {
+        var standing = career.Score(version, application.LevelId, selfScores.ToDictionary(score => score.CompetencyId, score => (decimal)score.Score));
+        return new PreliminaryRatingResponse(
+            standing.Rating,
+            standing.Threshold,
+            standing.IsReady,
+            CriticalGaps.Of(version, standing).Count == 0,
+            standing.Competencies.Count(competency => competency.Score is null));
     }
 
     /// <summary>
@@ -78,7 +94,7 @@ internal sealed class ApplicationReader(
     {
         var stored = await context.Set<PromotionArtifact>().AsNoTracking().Where(artifact => artifact.ApplicationId == applicationId).ToListAsync(cancellationToken);
         return [.. version.Competencies
-            .Join(stored, competency => competency.Id, artifact => artifact.CompetencyId, (competency, artifact) => new ArtifactResponse(competency.Id, competency.Name, artifact.Text, artifact.Links))];
+            .Join(stored, competency => competency.Id, artifact => artifact.CompetencyId, (competency, artifact) => new ArtifactResponse(competency.Id, competency.Name, artifact.Links))];
     }
 
     /// <summary>
@@ -183,6 +199,7 @@ internal sealed class ApplicationReader(
 
         var accounts = await users.FindByEmployeeIdsAsync([.. raters.Select(rater => rater.EmployeeId)], cancellationToken);
         var confirmers = await waves.AccountNamesAsync([.. raters.Select(rater => rater.EmailConfirmedBy).OfType<Guid>().Distinct()], cancellationToken);
+        var excluded = await exclusions.AmongAsync(raters.Select(rater => people[rater.EmployeeId]), cancellationToken);
         return [.. raters
             .Where(rater => roles != ApplicationRole.Candidate || rater.Source == RaterSource.Candidate)
             .Select(rater => new RaterResponse(
@@ -192,7 +209,8 @@ internal sealed class ApplicationReader(
                 accounts.ContainsKey(rater.EmployeeId),
                 rater.Email,
                 rater.IsEmailConfirmed,
-                rater.EmailConfirmedBy is { } confirmedBy ? confirmers.GetValueOrDefault(confirmedBy) : null))
+                rater.EmailConfirmedBy is { } confirmedBy ? confirmers.GetValueOrDefault(confirmedBy) : null,
+                excluded.Contains(rater.EmployeeId)))
             .OrderBy(rater => rater.FullName, TextCollation.Comparer)
             .ThenBy(rater => rater.EmployeeId)];
     }
@@ -212,6 +230,7 @@ internal sealed class ApplicationReader(
     private async Task<IReadOnlyList<FormalFailure>> WarningsAsync(
         PromotionApplication application,
         CareerVersionLevel level,
+        PromotionWave wave,
         bool canSeeFormal,
         CancellationToken cancellationToken)
     {
@@ -221,7 +240,7 @@ internal sealed class ApplicationReader(
         }
 
         var months = (await context.Set<PromotionSettings>().AsNoTracking().SingleAsync(cancellationToken)).MinIntervalMonths;
-        return [.. FormalCheck.Warnings(application, level.RequiredEducation, months, calendar.Today)
+        return [.. FormalCheck.Warnings(application, level.RequiredEducation, months, wave.ResultsPublishedOn)
             .Where(warning => canSeeFormal || warning == FormalFailure.EducationBelowRequired)];
     }
 
@@ -233,7 +252,7 @@ internal sealed class ApplicationReader(
         }
 
         var months = (await context.Set<PromotionSettings>().AsNoTracking().SingleAsync(cancellationToken)).MinIntervalMonths;
-        var failures = FormalCheck.Failures(application, level.RequiredEducation, months, wave.EndsOn[PromotionStage.FormalCheck - 1]);
+        var failures = FormalCheck.Failures(application, level.RequiredEducation, months, wave.ResultsPublishedOn);
         return new FormalCheckResponse(failures.Count == 0, failures);
     }
 

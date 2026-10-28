@@ -72,7 +72,7 @@ interface CompetencyRow {
   selfScore: number;
   finalScore: number;
   circular: Review["competencies"][number]["circular"];
-  artifact?: { text: string; links: string[] };
+  artifact?: { links: { description: string; url: string }[] };
   isArtifactMandatory?: boolean;
 }
 
@@ -92,8 +92,13 @@ const DESIGN: CompetencyRow = {
     notObservedCount: 0,
   },
   artifact: {
-    text: "Спроектировал разбиение платформы оплаты на сервисы и провёл разбор решения с командой.",
-    links: ["https://example.org/design-review"],
+    links: [
+      {
+        description:
+          "Спроектировал разбиение платформы оплаты на сервисы и провёл разбор решения с командой.",
+        url: "https://example.org/design-review",
+      },
+    ],
   },
   isArtifactMandatory: true,
 };
@@ -113,8 +118,13 @@ const QUALITY: CompetencyRow = {
     notObservedCount: 0,
   },
   artifact: {
-    text: "Ввёл обязательную проверку кода и сократил число возвратов задач из тестирования.",
-    links: [],
+    links: [
+      {
+        description:
+          "Ввёл обязательную проверку кода и сократил число возвратов задач из тестирования.",
+        url: "https://example.org/code-review-rules",
+      },
+    ],
   },
 };
 const TEAMWORK: CompetencyRow = {
@@ -164,6 +174,7 @@ const RATERS: RaterDetails[] = [
   email: null,
   isEmailConfirmed: true,
   emailConfirmedByName: null,
+  isExcluded: false,
 }));
 const RATER_WITHOUT_ACCOUNT: RaterDetails = {
   employeeId: "demo-emp-r8",
@@ -173,6 +184,7 @@ const RATER_WITHOUT_ACCOUNT: RaterDetails = {
   email: "f.gromov@example.org",
   isEmailConfirmed: false,
   emailConfirmedByName: null,
+  isExcluded: false,
 };
 const SEARCH_RESULTS: EmployeeOption[] = [
   {
@@ -320,6 +332,7 @@ const TARGET_FORM: TargetForm = {
   unitId: UNIT_DEV,
   unitName: TARGET.unitName,
   trackName: TARGET.trackName,
+  education: "Bachelor",
   levels: [
     { id: "demo-level-middle", name: "Разработчик", requiredEducation: null },
     {
@@ -376,6 +389,7 @@ function application(
     target: TARGET,
     education: "Bachelor",
     selfScores: SELF_SCORES,
+    preliminaryRating: null,
     raters: RATERS,
     formal: null,
     formalFailures: [],
@@ -384,6 +398,8 @@ function application(
     warnings: [],
     artifacts: null,
     mandatoryArtifactCompetencyIds: null,
+    missingArtifactCompetencyIds: null,
+    isSentToReview: false,
     feedbackReceivedAt: null,
     result: null,
     ...overrides,
@@ -534,6 +550,7 @@ function review(overrides: Partial<Review>): Review {
       scalePoints: SCALE,
       selfScore: row.selfScore,
       circular: row.circular,
+      change: null,
       artifact: row.artifact
         ? { competencyId: row.id, competencyName: row.name, ...row.artifact }
         : null,
@@ -557,13 +574,9 @@ function review(overrides: Partial<Review>): Review {
           levelName: "Разработчик",
         },
         decision: "Meets",
-        finalScores: [
-          {
-            competencyId: DESIGN.id,
-            competencyName: DESIGN.name,
-            score: 3,
-          },
-        ],
+        rating: 82,
+        threshold: 70,
+        failedCritical: [],
       },
     ],
     ...overrides,

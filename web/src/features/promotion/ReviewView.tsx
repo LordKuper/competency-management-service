@@ -149,14 +149,22 @@ const historyColumns: TableColumnsType<HistoryItem> = [
       ),
   },
   {
-    title: "Итоговые оценки",
-    key: "finalScores",
-    render: (_, { finalScores }) =>
-      finalScores.length === 0
-        ? NO_VALUE
-        : finalScores.map((score) => (
-            <div key={score.competencyId}>
-              {score.competencyName}: {score.score}
+    title: "Готовность",
+    key: "rating",
+    render: (_, { rating, threshold }) =>
+      `${formatPercent(rating)} из ${formatPercent(threshold)}`,
+  },
+  {
+    title: "Критические компетенции",
+    key: "failedCritical",
+    render: (_, { failedCritical }) =>
+      failedCritical.length === 0
+        ? "Выполнены"
+        : failedCritical.map((gap) => (
+            <div key={gap.competencyId}>
+              {gap.name}:{" "}
+              {gap.score === null ? NO_VALUE : formatAverage(gap.score)} из{" "}
+              {gap.requiredScore}
             </div>
           )),
   },
@@ -383,7 +391,6 @@ export function ReviewView({ review, onSubmit }: ReviewViewProps) {
           competencies={review.competencies.map((competency) => ({
             competencyId: competency.competencyId,
             competencyName: competency.name,
-            text: competency.artifact?.text,
             links: competency.artifact?.links,
           }))}
           mandatoryIds={review.competencies

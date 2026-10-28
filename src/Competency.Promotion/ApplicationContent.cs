@@ -1,3 +1,4 @@
+using Competency.OrgStructure;
 using Competency.Platform;
 using Competency.UserManagement;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ internal static class ApplicationContent
     /// <param name="users">The accounts, to tell the raters who have one.</param>
     /// <param name="application">The application, tracked.</param>
     /// <param name="target">The target the request names.</param>
+    /// <param name="education">The education the application states.</param>
     /// <param name="request">The checked content.</param>
     /// <param name="now">The moment of the edit.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
@@ -25,6 +27,7 @@ internal static class ApplicationContent
         IUserDirectory users,
         PromotionApplication application,
         ResolvedTarget target,
+        EducationLevel education,
         ApplicationRequest request,
         DateTimeOffset now,
         CancellationToken cancellationToken)
@@ -33,7 +36,7 @@ internal static class ApplicationContent
         application.MatrixId = target.Matrix.MatrixId;
         application.VersionId = target.Matrix.VersionId;
         application.LevelId = target.Level.Id;
-        application.Education = request.Education;
+        application.Education = education;
         await ReplaceSelfScoresAsync(context, application.Id, request.SelfScores, cancellationToken);
         await ReplaceRatersAsync(context, users, application.Id, new RaterEdit(request.Raters, RaterSource.Candidate, ConfirmedBy: null, now), cancellationToken);
     }
@@ -81,7 +84,7 @@ internal static class ApplicationContent
     }
 
     /// <summary>
-    /// Replaces the artifacts of an application; a competency left out has none afterwards.
+    /// Replaces the artifacts of an application; a competency left out has none afterwards, and the artifacts of one given again are replaced whole.
     /// </summary>
     /// <param name="context">The context tracking the application.</param>
     /// <param name="applicationId">The application.</param>
@@ -94,24 +97,19 @@ internal static class ApplicationContent
         IReadOnlyCollection<ArtifactInput> artifacts,
         CancellationToken cancellationToken)
     {
-        var given = artifacts.ToDictionary(artifact => artifact.CompetencyId);
+        var given = artifacts.ToDictionary(
+            artifact => artifact.CompetencyId,
+            artifact => (ArtifactLink[])[.. artifact.Links.Select(link => new ArtifactLink(link.Description.Trim(), link.Url.Trim()))]);
         var stored = await context.Set<PromotionArtifact>().Where(artifact => artifact.ApplicationId == applicationId).ToListAsync(cancellationToken);
         context.RemoveRange(stored.Where(artifact => !given.ContainsKey(artifact.CompetencyId)));
         foreach (var artifact in stored.Where(artifact => given.ContainsKey(artifact.CompetencyId)))
         {
-            artifact.Text = given[artifact.CompetencyId].Text.Trim();
-            artifact.Links = [.. given[artifact.CompetencyId].Links.Select(link => link.Trim())];
+            artifact.Links = given[artifact.CompetencyId];
         }
 
-        context.AddRange(given.Values
-            .Where(artifact => stored.All(item => item.CompetencyId != artifact.CompetencyId))
-            .Select(artifact => new PromotionArtifact
-            {
-                ApplicationId = applicationId,
-                CompetencyId = artifact.CompetencyId,
-                Text = artifact.Text.Trim(),
-                Links = [.. artifact.Links.Select(link => link.Trim())],
-            }));
+        context.AddRange(given
+            .Where(pair => stored.All(item => item.CompetencyId != pair.Key))
+            .Select(pair => new PromotionArtifact { ApplicationId = applicationId, CompetencyId = pair.Key, Links = pair.Value }));
     }
 
     private static async Task ReplaceSelfScoresAsync(

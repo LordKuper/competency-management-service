@@ -47,7 +47,9 @@ export function ArtifactsView({
   useLeaveGuard({ isUnsaved: isDirty, isSaving: isSubmitting });
 
   if (!isEditable) {
-    const given = competencies.filter((competency) => competency.text);
+    const given = competencies.filter(
+      (competency) => (competency.links?.length ?? 0) > 0,
+    );
     return given.length === 0 ? (
       <Typography.Text type="secondary">Артефактов нет.</Typography.Text>
     ) : (
@@ -58,11 +60,11 @@ export function ArtifactsView({
             size="small"
             title={competency.competencyName}
           >
-            <Typography.Paragraph>{competency.text}</Typography.Paragraph>
             {competency.links?.map((link) => (
-              <div key={link}>
-                <a href={link} target="_blank" rel="noreferrer noopener">
-                  {link}
+              <div key={link.url}>
+                <Typography.Paragraph>{link.description}</Typography.Paragraph>
+                <a href={link.url} target="_blank" rel="noreferrer noopener">
+                  {link.url}
                 </a>
               </div>
             ))}

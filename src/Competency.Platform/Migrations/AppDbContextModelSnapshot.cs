@@ -1158,6 +1158,10 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("ignore_interval_by");
 
+                    b.Property<bool>("IsSentToReview")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_sent_to_review");
+
                     b.Property<Guid>("LevelId")
                         .HasColumnType("uuid")
                         .HasColumnName("level_id");
@@ -1234,12 +1238,6 @@ namespace Competency.Platform.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("links");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)")
-                        .HasColumnName("text");
 
                     b.HasKey("ApplicationId", "CompetencyId");
 
@@ -1340,6 +1338,22 @@ namespace Competency.Platform.Migrations
                     b.HasIndex("EmployeeId");
 
                     b.ToTable("promotion_raters", (string)null);
+                });
+
+            modelBuilder.Entity("Competency.Promotion.PromotionRaterExclusion", b =>
+                {
+                    b.Property<string>("Kind")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_id");
+
+                    b.HasKey("Kind", "SubjectId");
+
+                    b.ToTable("promotion_rater_exclusions", (string)null);
                 });
 
             modelBuilder.Entity("Competency.Promotion.PromotionRaterScore", b =>

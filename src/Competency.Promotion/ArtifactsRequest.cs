@@ -5,21 +5,21 @@ namespace Competency.Promotion;
 /// </summary>
 internal sealed record ArtifactsRequest
 {
-    private const int MaxArtifacts = 500;
+    private const int MaxCompetencies = 500;
     private const string Field = "artifacts";
 
     /// <summary>
-    /// One artifact at most per competency.
+    /// One entry at most per competency.
     /// </summary>
     public required ArtifactInput[] Artifacts { get; init; }
 
     /// <summary>
-    /// Checks the shape of the request: a description for each artifact, and links that lead to a web page.
+    /// Checks the shape of the request: each competency has one to ten artifacts, each with a description and a link that leads to a web page.
     /// </summary>
     /// <returns>The problems found by field name; empty when the request is valid.</returns>
     public Dictionary<string, string[]> Validate()
     {
-        if (Artifacts is not { Length: <= MaxArtifacts } || Artifacts.Any(artifact => artifact is null))
+        if (Artifacts is not { Length: <= MaxCompetencies } || Artifacts.Any(artifact => artifact?.Links is null || artifact.Links.Any(link => link is null)))
         {
             return new Dictionary<string, string[]> { [Field] = ["Добавьте артефакты к компетенциям"] };
         }
@@ -27,19 +27,21 @@ internal sealed record ArtifactsRequest
         List<string> problems = [];
         if (Artifacts.Select(artifact => artifact.CompetencyId).Distinct().Count() != Artifacts.Length)
         {
-            problems.Add("К компетенции можно добавить один артефакт");
+            problems.Add("Каждая компетенция указывается один раз");
         }
 
-        if (Artifacts.Any(artifact => string.IsNullOrWhiteSpace(artifact.Text) || artifact.Text.Length > ArtifactInput.MaxTextLength))
+        if (Artifacts.Any(artifact => artifact.Links.Length is 0 or > ArtifactInput.MaxLinks))
         {
-            problems.Add($"Опишите артефакт, не больше {ArtifactInput.MaxTextLength} знаков");
+            problems.Add($"К компетенции можно добавить от 1 до {ArtifactInput.MaxLinks} артефактов");
         }
 
-        if (Artifacts.Any(artifact => artifact.Links is not { Length: <= ArtifactInput.MaxLinks }))
+        var links = Artifacts.SelectMany(artifact => artifact.Links).ToList();
+        if (links.Any(link => string.IsNullOrWhiteSpace(link.Description) || link.Description.Length > ArtifactLink.MaxDescriptionLength))
         {
-            problems.Add($"Ссылок не больше {ArtifactInput.MaxLinks} на компетенцию");
+            problems.Add($"Опишите, что сделано, не больше {ArtifactLink.MaxDescriptionLength} знаков");
         }
-        else if (Artifacts.SelectMany(artifact => artifact.Links).Any(link => !ArtifactInput.IsWebLink(link)))
+
+        if (links.Any(link => !ArtifactLink.IsWebLink(link.Url)))
         {
             problems.Add("Ссылка должна начинаться с http:// или https://");
         }

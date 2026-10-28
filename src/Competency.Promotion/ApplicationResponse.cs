@@ -17,6 +17,7 @@ namespace Competency.Promotion;
 /// <param name="Target">The level the application aims at.</param>
 /// <param name="Education">The candidate's own statement of their education.</param>
 /// <param name="SelfScores">The candidate's scores by competency, in the order of the version.</param>
+/// <param name="PreliminaryRating">The rating the candidate's scores earn so far, computed by the server whenever the scores change; null for those other than the candidate.</param>
 /// <param name="Raters">The raters; null for those who do not see them.</param>
 /// <param name="Formal">What the responsible HR entered; null for those who do not see it.</param>
 /// <param name="FormalFailures">The conditions of the formal check the application did not meet, once the stage that checks it has ended.</param>
@@ -24,6 +25,8 @@ namespace Competency.Promotion;
 /// <param name="FormalCheck">What the formal check would decide now, while the application waits for it; null for those who do not see the formal data.</param>
 /// <param name="Artifacts">The artifacts the candidate gave, which may be given in a draft and in the artifact stage; null for those who do not see them.</param>
 /// <param name="MandatoryArtifactCompetencyIds">The competencies the candidate must give an artifact for, once the rating stage has been checked; null for those who do not see them.</param>
+/// <param name="MissingArtifactCompetencyIds">The competencies among the mandatory ones that still have no artifact, which the candidate is warned of before sending the application; null for those who do not see them.</param>
+/// <param name="IsSentToReview">Whether the candidate sent the application to the commission themselves, after which the artifacts are read-only.</param>
 /// <param name="HasMandatoryArtifacts">Whether the candidate owes artifacts, so the explanation that a competency without one is probably not confirmed is shown beside them; false for those who do not see them.</param>
 /// <param name="FeedbackReceivedAt">When the candidate marked the feedback as received; null until they do, and for those who do not see it.</param>
 /// <param name="Result">The final scores against the requirements and the decision, for the candidate from the stage that publishes them; null otherwise.</param>
@@ -38,6 +41,7 @@ internal sealed record ApplicationResponse(
     ApplicationTargetResponse Target,
     EducationLevel Education,
     IReadOnlyList<SelfScoreResponse> SelfScores,
+    PreliminaryRatingResponse? PreliminaryRating,
     IReadOnlyList<RaterResponse>? Raters,
     ApplicationFormalResponse? Formal,
     IReadOnlyList<FormalFailure> FormalFailures,
@@ -45,6 +49,8 @@ internal sealed record ApplicationResponse(
     FormalCheckResponse? FormalCheck,
     IReadOnlyList<ArtifactResponse>? Artifacts,
     IReadOnlyList<Guid>? MandatoryArtifactCompetencyIds,
+    IReadOnlyList<Guid>? MissingArtifactCompetencyIds,
+    bool IsSentToReview,
     bool HasMandatoryArtifacts,
     DateTimeOffset? FeedbackReceivedAt,
     ApplicationResultResponse? Result);

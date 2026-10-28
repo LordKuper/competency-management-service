@@ -39,6 +39,7 @@ internal sealed class ReviewReader(
         var artifacts = (await applications.ArtifactsAsync(application.Id, version, cancellationToken)).ToDictionary(artifact => artifact.CompetencyId);
         var mandatory = await applications.MandatoryArtifactIdsAsync(application, version, cancellationToken);
         var finals = await applications.FinalScoresAsync(application.Id, cancellationToken);
+        var (history, latest) = await PreviousAsync(application, cancellationToken);
         var standing = finals.Count == 0 ? null : career.Score(version, application.LevelId, finals.ToDictionary(pair => pair.Key, pair => (decimal)pair.Value));
         var required = version.Requirements.Where(requirement => requirement.LevelId == application.LevelId).ToDictionary(requirement => requirement.CompetencyId, requirement => requirement.RequiredScore);
         var decidedBy = application.DecidedBy is { } userId ? (await waves.AccountNamesAsync([userId], cancellationToken)).GetValueOrDefault(userId) : null;
@@ -57,14 +58,12 @@ internal sealed class ReviewReader(
             application.FormalFailures,
             application.MeetsAfterRating,
             application.ArtifactsMissing,
-            [.. version.Competencies.Select(competency => new ReviewCompetencyResponse(
-                competency.Id,
-                competency.Name,
-                competency.Type,
+            [.. version.Competencies.Select(competency => CompetencyOf(
+                competency,
                 required.TryGetValue(competency.Id, out var requiredScore) ? requiredScore : null,
-                competency.ScalePoints,
                 selfScores.TryGetValue(competency.Id, out var selfScore) ? selfScore : null,
-                CircularRating.Summarize(competency, [.. answers[competency.Id]]),
+                [.. answers[competency.Id]],
+                latest,
                 artifacts.GetValueOrDefault(competency.Id),
                 mandatory.Contains(competency.Id),
                 finals.TryGetValue(competency.Id, out var finalScore) ? finalScore : null,
@@ -75,7 +74,7 @@ internal sealed class ReviewReader(
             application.Decision,
             decidedBy,
             application.DecidedAt,
-            await HistoryAsync(application, cancellationToken));
+            history);
     }
 
     /// <summary>
@@ -127,33 +126,99 @@ internal sealed class ReviewReader(
             row.Application.Decision))];
     }
 
-    private async Task<IReadOnlyList<ReviewHistoryResponse>> HistoryAsync(PromotionApplication application, CancellationToken cancellationToken)
+    private static ReviewCompetencyResponse CompetencyOf(
+        CareerVersionCompetency competency,
+        int? requiredScore,
+        int? selfScore,
+        IReadOnlyCollection<PromotionRaterScore> answers,
+        PreviousScores? latest,
+        ArtifactResponse? artifact,
+        bool isArtifactMandatory,
+        int? finalScore,
+        bool? isMet)
+    {
+        var circular = CircularRating.Summarize(competency, answers);
+        return new ReviewCompetencyResponse(
+            competency.Id,
+            competency.Name,
+            competency.Type,
+            requiredScore,
+            competency.ScalePoints,
+            selfScore,
+            circular,
+            ChangeOf(competency.Id, circular.Average, latest),
+            artifact,
+            isArtifactMandatory,
+            finalScore,
+            isMet);
+    }
+
+    private static ReviewCompetencyChangeResponse? ChangeOf(Guid competencyId, decimal? average, PreviousScores? latest)
+    {
+        if (latest is null)
+        {
+            return null;
+        }
+
+        if (!latest.CompetencyIds.Contains(competencyId))
+        {
+            return new ReviewCompetencyChangeResponse(IsNew: true, PreviousAverage: null, Delta: null);
+        }
+
+        decimal? previous = latest.Averages.TryGetValue(competencyId, out var value) ? value : null;
+        return new ReviewCompetencyChangeResponse(
+            IsNew: false,
+            previous,
+            average is { } current && previous is { } before ? Math.Round(current, 1, MidpointRounding.AwayFromZero) - Math.Round(before, 1, MidpointRounding.AwayFromZero) : null);
+    }
+
+    private async Task<(IReadOnlyList<ReviewHistoryResponse> History, PreviousScores? Latest)> PreviousAsync(PromotionApplication application, CancellationToken cancellationToken)
     {
         var earlier = await context.Set<PromotionApplication>()
             .AsNoTracking()
-            .Where(other => other.EmployeeId == application.EmployeeId
-                && other.Id != application.Id
-                && (other.Status == ApplicationStatus.Decided || other.Status == ApplicationStatus.NoDecision))
+            .Where(other => other.EmployeeId == application.EmployeeId && other.Id != application.Id && other.Status == ApplicationStatus.Decided)
             .ToListAsync(cancellationToken);
         var waveIds = earlier.Select(other => other.WaveId).Distinct().ToArray();
         var published = (await context.Set<PromotionWave>().AsNoTracking().Where(wave => waveIds.Contains(wave.Id)).ToListAsync(cancellationToken))
             .Where(wave => calendar.StageOf(wave) >= ResultStage)
             .ToDictionary(wave => wave.Id);
-        var shown = earlier.Where(other => published.ContainsKey(other.WaveId)).ToList();
-        var facts = await applications.TargetsAsync(shown, cancellationToken);
-        var shownIds = shown.Select(other => other.Id).ToArray();
-        var finals = (await context.Set<PromotionFinalScore>().AsNoTracking().Where(score => shownIds.Contains(score.ApplicationId)).ToListAsync(cancellationToken))
-            .ToLookup(score => score.ApplicationId);
-
-        return [.. shown
+        var shown = earlier
+            .Where(other => published.ContainsKey(other.WaveId))
             .OrderByDescending(other => published[other.WaveId].StartsOn)
             .ThenBy(other => other.Id)
-            .Select(other => new ReviewHistoryResponse(
+            .ToList();
+        var facts = await applications.TargetsAsync(shown, cancellationToken);
+        var shownIds = shown.Select(other => other.Id).ToArray();
+        var answers = (await context.Set<PromotionRaterScore>().AsNoTracking().Where(answer => shownIds.Contains(answer.ApplicationId)).ToListAsync(cancellationToken))
+            .ToLookup(answer => answer.ApplicationId);
+
+        var history = shown.Select(other =>
+        {
+            var version = facts[other.Id].Version;
+            var standing = career.Score(version, other.LevelId, CircularRating.Averages(answers[other.Id]));
+            return new ReviewHistoryResponse(
                 other.WaveId,
                 published[other.WaveId].StartsOn,
                 facts[other.Id].Target,
-                other.Decision,
-                [.. facts[other.Id].Version.Competencies
-                    .Join(finals[other.Id], competency => competency.Id, score => score.CompetencyId, (competency, score) => new FinalScoreResponse(competency.Id, competency.Name, score.Score))]))];
+                other.Decision!.Value,
+                standing.Rating,
+                standing.Threshold,
+                [.. CriticalGaps.Of(version, standing).Select(gap => new ReviewFailedCompetencyResponse(
+                    gap.CompetencyId,
+                    version.Competencies.Single(competency => competency.Id == gap.CompetencyId).Name,
+                    gap.RequiredScore,
+                    gap.Score))]);
+        }).ToList();
+        PreviousScores? latest = shown.Count == 0
+            ? null
+            : new PreviousScores(facts[shown[0].Id].Version.Competencies.Select(competency => competency.Id).ToHashSet(), CircularRating.Averages(answers[shown[0].Id]));
+        return (history, latest);
     }
+
+    /// <summary>
+    /// What the raters gave in the latest earlier decided application, to compare the current one with.
+    /// </summary>
+    /// <param name="CompetencyIds">The competencies of the version that application was assessed by.</param>
+    /// <param name="Averages">The average by competency; a competency no rater observed is absent.</param>
+    private sealed record PreviousScores(IReadOnlySet<Guid> CompetencyIds, IReadOnlyDictionary<Guid, decimal> Averages);
 }

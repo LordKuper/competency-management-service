@@ -4,7 +4,7 @@ using Competency.OrgStructure;
 namespace Competency.Promotion;
 
 /// <summary>
-/// The formal check of an application: the interval since hiring or the last promotion, and the education. The one place that decides it, for
+/// The formal check of an application: the interval since hiring or the last transition, and the education. The one place that decides it, for
 /// the HR entering the date, for the candidate filing and for the end of the check stage.
 /// </summary>
 internal static class FormalCheck
@@ -15,8 +15,8 @@ internal static class FormalCheck
     /// </summary>
     /// <param name="application">The application.</param>
     /// <param name="requiredEducation">The education the target level requires; null when it requires none.</param>
-    /// <param name="minIntervalMonths">The months that must pass between two promotions.</param>
-    /// <param name="asOf">The day the interval is measured to.</param>
+    /// <param name="minIntervalMonths">The months that must pass between two transitions.</param>
+    /// <param name="asOf">The day the interval is measured to: the day the wave publishes its results.</param>
     /// <returns>The conditions not met, in a fixed order; empty when the application passes.</returns>
     public static List<FormalFailure> Failures(PromotionApplication application, EducationLevel? requiredEducation, int minIntervalMonths, DateOnly asOf)
     {
@@ -36,8 +36,8 @@ internal static class FormalCheck
     /// </summary>
     /// <param name="application">The application.</param>
     /// <param name="requiredEducation">The education the target level requires; null when it requires none.</param>
-    /// <param name="minIntervalMonths">The months that must pass between two promotions.</param>
-    /// <param name="asOf">The day the interval is measured to.</param>
+    /// <param name="minIntervalMonths">The months that must pass between two transitions.</param>
+    /// <param name="asOf">The day the interval is measured to: the day the wave publishes its results.</param>
     /// <returns>The interval and education conditions not met; empty when both are.</returns>
     public static List<FormalFailure> Warnings(PromotionApplication application, EducationLevel? requiredEducation, int minIntervalMonths, DateOnly asOf)
     {

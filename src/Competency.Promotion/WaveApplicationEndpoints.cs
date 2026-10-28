@@ -10,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.Promotion;
 
 /// <summary>
-/// What a wave offers about applications. Any signed-in user reads the form of a target of a wave that takes applications. The applications of
+/// What a wave offers about applications. A signed-in employee who can file applications reads the form of a target of a wave that takes them, with
+/// only the levels they may aim at and the education on their card. The applications of
 /// a wave are listed for those who run it, or have a role in the unit of the target: its author and global administrators see all of them, the
 /// responsible HR, the head and the members of a commission only those aimed at their own unit. A wave nobody may list is reported as not found.
 /// </summary>
@@ -29,7 +30,7 @@ internal static class WaveApplicationEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapGet("/applications", ListAsync).WithName("ListPromotionWaveApplications");
-        group.MapGet("/targets/{matrixId:guid}", GetTargetAsync).WithName("GetPromotionTargetForm");
+        group.MapGet("/targets/{matrixId:guid}", GetTargetAsync).WithName("GetPromotionTargetForm").ProducesProblem(StatusCodes.Status403Forbidden);
     }
 
     private static async Task<Results<Ok<PageResponse<ApplicationSummaryResponse>>, NotFound, ValidationProblem>> ListAsync(
@@ -71,12 +72,14 @@ internal static class WaveApplicationEndpoints
         return TypedResults.Ok(new PageResponse<ApplicationSummaryResponse>(items, page.Total, page.Page, page.PageSize));
     }
 
-    private static async Task<Results<Ok<TargetFormResponse>, NotFound>> GetTargetAsync(
+    private static async Task<Results<Ok<TargetFormResponse>, NotFound, ProblemHttpResult>> GetTargetAsync(
         Guid waveId,
         Guid matrixId,
         AppDbContext context,
         IEmployeeDirectory employees,
         ICareerModel career,
+        ApplicationAccess access,
+        ApplicationRules rules,
         PromotionCalendar calendar,
         CancellationToken cancellationToken)
     {
@@ -89,12 +92,19 @@ internal static class WaveApplicationEndpoints
             return TypedResults.NotFound();
         }
 
+        if (await access.ActingCandidateAsync(cancellationToken) is not { } candidate)
+        {
+            return Rejection.Forbidden();
+        }
+
+        var allowed = await rules.AllowedLevelIdsAsync(matrix, version, candidate, cancellationToken);
         return TypedResults.Ok(new TargetFormResponse(
             matrix.MatrixId,
             unit.Id,
             unit.Name,
             matrix.TrackName,
-            [.. version.Levels.OrderBy(level => level.Order).Select(level => new TargetFormLevelResponse(level.Id, level.Name, level.RequiredEducation))],
+            candidate.Education,
+            [.. version.Levels.Where(level => allowed.Contains(level.Id)).OrderBy(level => level.Order).Select(level => new TargetFormLevelResponse(level.Id, level.Name, level.RequiredEducation))],
             [.. version.Competencies.Select(competency => new TargetFormCompetencyResponse(competency.Id, competency.Name, competency.ScalePoints))]));
     }
 }

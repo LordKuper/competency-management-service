@@ -5,6 +5,5 @@ namespace Competency.Promotion;
 /// </summary>
 /// <param name="CompetencyId">The competency.</param>
 /// <param name="CompetencyName">The competency name as the bound version froze it.</param>
-/// <param name="Text">What the candidate did, in words.</param>
-/// <param name="Links">Addresses of documents in other systems.</param>
-internal sealed record ArtifactResponse(Guid CompetencyId, string CompetencyName, string Text, IReadOnlyList<string> Links);
+/// <param name="Links">The artifacts, in the order the candidate gave them.</param>
+internal sealed record ArtifactResponse(Guid CompetencyId, string CompetencyName, IReadOnlyList<ArtifactLink> Links);

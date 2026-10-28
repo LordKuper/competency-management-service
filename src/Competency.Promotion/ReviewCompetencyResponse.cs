@@ -12,6 +12,7 @@ namespace Competency.Promotion;
 /// <param name="ScalePoints">The points the chair can give.</param>
 /// <param name="SelfScore">The candidate's own score; null when there is none.</param>
 /// <param name="Circular">What the raters answered, in sum.</param>
+/// <param name="Change">How the raters' average moved since the latest earlier decided application; null when the candidate has none.</param>
 /// <param name="Artifact">The evidence the candidate gave; null when there is none.</param>
 /// <param name="IsArtifactMandatory">Whether the candidate had to give evidence for the competency.</param>
 /// <param name="FinalScore">The chair's score; null until they give it.</param>
@@ -24,6 +25,7 @@ internal sealed record ReviewCompetencyResponse(
     IReadOnlyList<ScalePoint> ScalePoints,
     int? SelfScore,
     CircularSummaryResponse Circular,
+    ReviewCompetencyChangeResponse? Change,
     ArtifactResponse? Artifact,
     bool IsArtifactMandatory,
     int? FinalScore,

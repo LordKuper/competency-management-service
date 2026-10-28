@@ -1,24 +1,23 @@
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Card, Flex, Form, Input, Tag, Typography } from "antd";
-import type { ArtifactInput } from "./promotionApi";
+import type { ArtifactInput, ArtifactLink } from "./promotionApi";
 import { ARTIFACT_MANDATORY_EXPLANATION } from "./promotionTexts";
 
 const MAX_LINKS = 10;
-const MAX_TEXT_LENGTH = 4000;
+const MAX_DESCRIPTION_LENGTH = 1000;
 const WEB_LINK = /^https?:\/\/\S+$/i;
 
 /** The artifacts a form holds by competency, under the `items` field of the form that shows `ArtifactFields`. */
 export type ArtifactItems = Record<
   string,
-  { text?: string; links?: string[] } | undefined
+  { links?: { description?: string; url?: string }[] } | undefined
 >;
 
-/** A competency to give an artifact for, with the artifact given so far. */
+/** A competency to give artifacts for, with the artifacts given so far. */
 export interface ArtifactCompetency {
   competencyId: string;
   competencyName: string;
-  text?: string;
-  links?: readonly string[];
+  links?: readonly ArtifactLink[];
 }
 
 /** The initial `items` of a form for the artifacts given so far. */
@@ -28,24 +27,24 @@ export function artifactItemsOf(
   return Object.fromEntries(
     competencies.map((competency) => [
       competency.competencyId,
-      { text: competency.text, links: [...(competency.links ?? [])] },
+      { links: (competency.links ?? []).map((link) => ({ ...link })) },
     ]),
   );
 }
 
-/** The artifacts to save: those with a description, in the order of the competencies. */
+/** The artifacts to save: those with something entered, in the order of the competencies. */
 export function artifactsOf(
   items: ArtifactItems | undefined,
   competencyIds: readonly string[],
 ): ArtifactInput[] {
   return competencyIds.flatMap((competencyId) => {
-    const item = items?.[competencyId];
-    const text = item?.text?.trim();
-    if (!text) return [];
-    const links = (item?.links ?? [])
-      .map((link) => link.trim())
-      .filter((link) => link !== "");
-    return [{ competencyId, text, links }];
+    const links = (items?.[competencyId]?.links ?? [])
+      .map((link) => ({
+        description: link.description?.trim() ?? "",
+        url: link.url?.trim() ?? "",
+      }))
+      .filter((link) => link.description !== "" || link.url !== "");
+    return links.length === 0 ? [] : [{ competencyId, links }];
   });
 }
 
@@ -56,7 +55,7 @@ interface ArtifactFieldsProps {
   mandatoryIds: readonly string[];
 }
 
-/** The fields of the artifacts by competency: a description and links to documents elsewhere. Place it inside a form with an `items` field. */
+/** The fields of the artifacts by competency: up to ten, each with what was done and a link to a document elsewhere. Place it inside a form with an `items` field. */
 export function ArtifactFields({
   competencies,
   mandatoryIds,
@@ -90,48 +89,49 @@ export function ArtifactFields({
                 {ARTIFACT_MANDATORY_EXPLANATION}
               </Typography.Paragraph>
             )}
-            <Form.Item
-              name={["items", id, "text"]}
-              label="Описание"
-              dependencies={[["items", id, "links"]]}
-              rules={[
-                ({ getFieldValue }) => ({
-                  validator: async (_, text?: string) => {
-                    const links = getFieldValue(["items", id, "links"]) ?? [];
-                    if (!text?.trim() && links.length > 0) {
-                      throw new Error("Опишите артефакт");
-                    }
-                  },
-                }),
-              ]}
-            >
-              <Input.TextArea rows={3} maxLength={MAX_TEXT_LENGTH} showCount />
-            </Form.Item>
             <Form.List name={["items", id, "links"]}>
               {(fields, { add, remove }) => (
                 <Flex vertical gap="small">
                   {fields.map((field, index) => (
                     <Flex key={field.key} gap="small" align="start">
-                      <Form.Item
-                        name={field.name}
-                        style={{ flex: 1, marginBottom: 0 }}
-                        rules={[
-                          {
-                            pattern: WEB_LINK,
-                            message:
-                              "Ссылка должна начинаться с http:// или https://",
-                          },
-                        ]}
-                      >
-                        <Input
-                          aria-label={`Ссылка ${index + 1}: ${competency.competencyName}`}
-                          placeholder="https://"
-                        />
-                      </Form.Item>
+                      <Flex vertical style={{ flex: 1 }}>
+                        <Form.Item
+                          name={[field.name, "description"]}
+                          label="Что сделано"
+                          rules={[
+                            { required: true, message: "Опишите артефакт" },
+                          ]}
+                        >
+                          <Input.TextArea
+                            rows={2}
+                            maxLength={MAX_DESCRIPTION_LENGTH}
+                            showCount
+                            aria-label={`Что сделано ${index + 1}: ${competency.competencyName}`}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          name={[field.name, "url"]}
+                          label="Ссылка"
+                          style={{ marginBottom: 0 }}
+                          rules={[
+                            { required: true, message: "Укажите ссылку" },
+                            {
+                              pattern: WEB_LINK,
+                              message:
+                                "Ссылка должна начинаться с http:// или https://",
+                            },
+                          ]}
+                        >
+                          <Input
+                            aria-label={`Ссылка ${index + 1}: ${competency.competencyName}`}
+                            placeholder="https://"
+                          />
+                        </Form.Item>
+                      </Flex>
                       <Button
                         type="text"
                         icon={<MinusCircleOutlined />}
-                        aria-label={`Убрать ссылку ${index + 1}: ${competency.competencyName}`}
+                        aria-label={`Убрать артефакт ${index + 1}: ${competency.competencyName}`}
                         onClick={() => remove(field.name)}
                       />
                     </Flex>
@@ -140,9 +140,9 @@ export function ArtifactFields({
                     type="dashed"
                     icon={<PlusOutlined />}
                     disabled={fields.length >= MAX_LINKS}
-                    onClick={() => add("")}
+                    onClick={() => add({ description: "", url: "" })}
                   >
-                    Добавить ссылку
+                    Добавить артефакт
                   </Button>
                 </Flex>
               )}

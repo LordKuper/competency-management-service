@@ -8,7 +8,7 @@ namespace Competency.Promotion;
 /// not having carried out the end actions of the stage it returns to and the ones after it, so they run again when those stages end. A caller
 /// holds the promotion locks first. Scoped to a request, because it shares the request's database context.
 /// </summary>
-internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, PromotionCalendar calendar, StageActions actions)
+internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, PromotionCalendar calendar)
 {
     /// <summary>
     /// Finds what going back to a stage would reset or compute again.
@@ -22,7 +22,7 @@ internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, P
         var standing = await context.Set<PromotionApplication>()
             .AsNoTracking()
             .Where(application => application.WaveId == wave.Id && application.Status != ApplicationStatus.Withdrawn && application.Status != ApplicationStatus.Draft)
-            .Select(application => new { application.Status, application.MeetsAfterRating })
+            .Select(application => new { application.Status, application.MeetsAfterRating, application.IsSentToReview })
             .ToListAsync(cancellationToken);
         var effects = new List<RollbackEffect>();
         if (stage <= PromotionStage.FormalCheck)
@@ -48,7 +48,7 @@ internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, P
             effects.Add(new RollbackEffect(
                 RollbackEffectKind.ArtifactsRecalculated,
                 standing.Count(application => PromotionApplication.ReviewedStatuses.Contains(application.Status)
-                    && (stage < PromotionStage.Artifacts || application.MeetsAfterRating != true))));
+                    && (stage < PromotionStage.Artifacts || (application.MeetsAfterRating != true && !application.IsSentToReview)))));
         }
 
         if (stage < PromotionStage.Feedback && calendar.StageOf(wave) >= PromotionStage.Feedback)
@@ -68,7 +68,6 @@ internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, P
     /// <summary>
     /// Takes the wave and its applications back to a stage, changing tracked rows and saving nothing, so the caller commits them in its
     /// transaction. The wave must be locked.
-    /// When it returns to the artifact stage, an application whose mandatory artifacts are already given reaches the commission at once, as it would on filing the last one.
     /// </summary>
     /// <param name="wave">The locked wave.</param>
     /// <param name="request">The stage and the new dates, already checked.</param>
@@ -81,34 +80,11 @@ internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, P
             application.ReturnToStage(request.Stage);
         }
 
-        if (request.Stage == PromotionStage.Artifacts)
-        {
-            await ReachCommissionAsync(applications, cancellationToken);
-        }
-
         wave.EndsOn = [.. request.EndsOn];
         wave.ProcessedStage = Math.Min(wave.ProcessedStage, request.Stage - 1);
         if (request.Stage <= PromotionStage.Rating)
         {
             wave.RaterReminderSent = false;
-        }
-    }
-
-    /// <summary>
-    /// Hands to the commission the admitted applications that already hold every mandatory artifact, by the check that filing an artifact runs.
-    /// </summary>
-    private async Task ReachCommissionAsync(IReadOnlyCollection<PromotionApplication> applications, CancellationToken cancellationToken)
-    {
-        var ids = applications.Select(application => application.Id).ToArray();
-        var given = (await context.Set<PromotionArtifact>()
-                .AsNoTracking()
-                .Where(artifact => ids.Contains(artifact.ApplicationId))
-                .Select(artifact => new { artifact.ApplicationId, artifact.CompetencyId })
-                .ToListAsync(cancellationToken))
-            .ToLookup(artifact => artifact.ApplicationId, artifact => artifact.CompetencyId);
-        foreach (var application in applications)
-        {
-            await actions.ReachCommissionWithArtifactsAsync(application, [.. given[application.Id]], cancellationToken);
         }
     }
 }

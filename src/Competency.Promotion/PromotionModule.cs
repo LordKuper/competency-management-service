@@ -32,6 +32,7 @@ public static class PromotionModule
         services.AddScoped<WaveUnits>();
         services.AddScoped<WaveReader>();
         services.AddScoped<OpenWaves>();
+        services.AddScoped<RaterExclusions>();
         services.AddScoped<ApplicationAccess>();
         services.AddScoped<ApplicationRules>();
         services.AddScoped<ApplicationReader>();
@@ -57,6 +58,7 @@ public static class PromotionModule
     public static IEndpointRouteBuilder MapPromotionEndpoints(this IEndpointRouteBuilder endpoints)
     {
         SettingsEndpoints.Map(endpoints);
+        RaterExclusionEndpoints.Map(endpoints);
         CommissionEndpoints.Map(endpoints);
         WaveEndpoints.Map(endpoints);
         WaveRollbackEndpoints.Map(endpoints);

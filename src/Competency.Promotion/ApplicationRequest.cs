@@ -5,7 +5,8 @@ namespace Competency.Promotion;
 
 /// <summary>
 /// The content of an application: the target, the candidate's education, their scores for the competencies of the version and the raters they propose.
-/// A draft may be saved with some scores and raters missing. Everything is replaced.
+/// A draft may be saved with some scores and raters missing. Everything is replaced, and an education left out is taken from where the application stands: the
+/// employee card for a new draft, the draft itself for an edit.
 /// </summary>
 internal record ApplicationRequest
 {
@@ -21,7 +22,7 @@ internal record ApplicationRequest
 
     public required Guid LevelId { get; init; }
 
-    public required EducationLevel Education { get; init; }
+    public EducationLevel? Education { get; init; }
 
     public required SelfScoreInput[] SelfScores { get; init; }
 
@@ -37,7 +38,7 @@ internal record ApplicationRequest
     public Dictionary<string, string[]> Validate()
     {
         var errors = new Dictionary<string, string[]>();
-        if (!Enum.IsDefined(Education))
+        if (Education is { } education && !Enum.IsDefined(education))
         {
             errors["education"] = ["Выберите уровень образования"];
         }

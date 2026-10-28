@@ -10,6 +10,7 @@ namespace Competency.Promotion;
 /// <param name="Email">The address the invitation goes to; null for an employee who has an account.</param>
 /// <param name="IsEmailConfirmed">Whether the head of the unit of the target or the responsible HR confirmed the address.</param>
 /// <param name="EmailConfirmedByName">Who confirmed the address, as people know the account; null while it is not confirmed.</param>
+/// <param name="IsExcluded">Whether the exclusion list names the employee or their position now; one listed before it did stays on the list, marked.</param>
 internal sealed record RaterResponse(
     Guid EmployeeId,
     string FullName,
@@ -17,4 +18,5 @@ internal sealed record RaterResponse(
     bool HasAccount,
     string? Email,
     bool IsEmailConfirmed,
-    string? EmailConfirmedByName);
+    string? EmailConfirmedByName,
+    bool IsExcluded);

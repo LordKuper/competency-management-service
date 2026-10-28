@@ -30,6 +30,11 @@ internal sealed class PromotionWave : EntityBase
     public DateOnly[] EndsOn { get; set; } = [];
 
     /// <summary>
+    /// The day the results are published, the last day of the commission stage; the formal check measures the interval since the last transition to it.
+    /// </summary>
+    public DateOnly ResultsPublishedOn => EndsOn[PromotionStage.Review - 1];
+
+    /// <summary>
     /// The last stage whose end actions have been carried out, from 0 for none to <see cref="StageCount"/>.
     /// </summary>
     [Audited]

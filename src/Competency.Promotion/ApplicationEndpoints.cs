@@ -1,3 +1,4 @@
+using Competency.OrgStructure;
 using Competency.Platform;
 using Competency.UserManagement;
 using Microsoft.AspNetCore.Builder;
@@ -19,7 +20,9 @@ internal static class ApplicationEndpoints
     private const string Route = "/api/v1/promotion/applications";
     private const string Tag = "Promotion";
     private const string NotSubmissionStageMessage = "Заявки принимаются на этапе «Подача заявок»";
-    private const string AlreadyAppliedMessage = "В этой волне у вас уже есть заявка или черновик";
+    private const string AlreadyAppliedMessage = "В этой карьерной сессии у вас уже есть заявка или черновик";
+    private const string EducationField = "education";
+    private const string EducationRequiredMessage = "Выберите уровень образования";
     private const string EditClosedMessage = "Черновик можно изменить, удалить и отправить до конца этапа «Подача заявок»";
     private const string WithdrawClosedMessage = "Заявку нельзя отозвать: по ней уже принято решение или она отклонена";
 
@@ -57,7 +60,8 @@ internal static class ApplicationEndpoints
 
     /// <summary>
     /// Drafts an application of the signed-in employee. They work and have an account that can act, the wave takes applications, they have no other
-    /// draft or unfinished application in it, and the target and what is entered are valid; scores and raters may still be missing.
+    /// draft or unfinished application in it, and the target and what is entered are valid; scores and raters may still be missing. An education
+    /// the request leaves out is taken from the employee card.
     /// </summary>
     private static async Task<Results<Created<ApplicationResponse>, NotFound, ValidationProblem, ProblemHttpResult>> CreateAsync(
         NewApplicationRequest request,
@@ -100,7 +104,13 @@ internal static class ApplicationEndpoints
             return Rejection.Conflict(AlreadyAppliedMessage);
         }
 
-        var (target, errors) = await rules.CheckAsync(wave, request, candidate, isComplete: false, cancellationToken);
+        var (target, errors) = await rules.CheckAsync(wave, request, candidate, isComplete: false, applicationId: null, cancellationToken);
+        var education = request.Education ?? candidate.Education;
+        if (education is null)
+        {
+            errors[EducationField] = [EducationRequiredMessage];
+        }
+
         if (target is null || errors.Count > 0)
         {
             return TypedResults.ValidationProblem(errors);
@@ -108,7 +118,7 @@ internal static class ApplicationEndpoints
 
         var application = new PromotionApplication { WaveId = wave.Id, EmployeeId = candidate.Id };
         context.Add(application);
-        await ApplicationContent.ApplyAsync(context, users, application, target, request, time.GetUtcNow(), cancellationToken);
+        await ApplicationContent.ApplyAsync(context, users, application, target, education!.Value, request, time.GetUtcNow(), cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
@@ -200,13 +210,13 @@ internal static class ApplicationEndpoints
         }
 
         ifMatch.ApplyTo(context, application);
-        var (target, errors) = await rules.CheckAsync(wave, request, candidate, isComplete: false, cancellationToken);
+        var (target, errors) = await rules.CheckAsync(wave, request, candidate, isComplete: false, application.Id, cancellationToken);
         if (target is null || errors.Count > 0)
         {
             return TypedResults.ValidationProblem(errors);
         }
 
-        await ApplicationContent.ApplyAsync(context, users, application, target, request, time.GetUtcNow(), cancellationToken);
+        await ApplicationContent.ApplyAsync(context, users, application, target, request.Education ?? application.Education, request, time.GetUtcNow(), cancellationToken);
         context.Entry(application).Property(entry => entry.Version).IsModified = true;
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -247,7 +257,7 @@ internal static class ApplicationEndpoints
 
     /// <summary>
     /// Files a draft once what it holds is complete: a score for every competency and enough raters, each without an account with an address.
-    /// A filed application cannot be changed.
+    /// When the education it states differs from the employee card, the card takes it in the same transaction. A filed application cannot be changed.
     /// </summary>
     private static async Task<Results<Ok<ApplicationResponse>, NotFound, ValidationProblem, ProblemHttpResult>> SubmitAsync(
         Guid id,
@@ -257,6 +267,7 @@ internal static class ApplicationEndpoints
         PromotionCalendar calendar,
         ApplicationAccess access,
         ApplicationRules rules,
+        IEmployeeDirectory employees,
         ApplicationReader reader,
         HttpResponse response,
         CancellationToken cancellationToken)
@@ -280,6 +291,11 @@ internal static class ApplicationEndpoints
         }
 
         application.Status = ApplicationStatus.Submitted;
+        if (candidate.Education != application.Education)
+        {
+            await employees.SetEducationAsync(candidate.Id, application.Education, cancellationToken);
+        }
+
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
