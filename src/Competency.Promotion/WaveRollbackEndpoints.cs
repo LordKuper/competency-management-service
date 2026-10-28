@@ -16,7 +16,7 @@ internal static class WaveRollbackEndpoints
     private const string Route = "/api/v1/promotion/waves/{id:guid}/rollback";
     private const string Tag = "Promotion";
     private const string StageField = "stage";
-    private const string FinishedMessage = "Волна завершена: её нельзя откатить";
+    private const string FinishedMessage = "Карьерная сессия завершена: её нельзя откатить";
     private const string StageMessage = "Выберите этап, который уже прошёл";
 
     public static void Map(IEndpointRouteBuilder endpoints)

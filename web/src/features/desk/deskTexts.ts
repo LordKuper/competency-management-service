@@ -111,11 +111,15 @@ export const GROUPS: Record<DeskGroup, GroupMeta> = {
     isDated: true,
     queue: DRAFTS_QUEUE,
   },
-  PromotionDecisions: { title: "Принять решения по заявкам на повышение" },
+  PromotionDecisions: {
+    title: "Принять решения по заявкам на карьерный переход",
+  },
   PromotionFormalChecks: { title: "Внести даты формальной проверки" },
-  PromotionRatings: { title: "Оценить кандидатов на повышение" },
+  PromotionRatings: { title: "Оценить кандидатов на карьерный переход" },
   PromotionRaters: { title: "Проверить списки оценивающих" },
-  PromotionArtifacts: { title: "Добавить артефакты к заявке на повышение" },
+  PromotionArtifacts: {
+    title: "Добавить артефакты к заявке на карьерный переход",
+  },
   PromotionFeedback: { title: "Отметить получение обратной связи" },
   MatricesToBuild: { title: "Построить или обновить матрицу" },
   PositionsToLink: { title: "Связать должности с треками" },
@@ -178,7 +182,7 @@ const TYPE_LABELS: Record<DeskObject["type"], string> = {
   Position: "Должность",
   Employee: "Сотрудник",
   UserAccount: "Учётная запись",
-  PromotionWave: "Волна повышения",
+  PromotionWave: "Карьерная сессия",
   PromotionApplication: "Заявка",
 };
 
@@ -251,7 +255,7 @@ export function objectTitle(object: DeskObject): string {
     case "OrgUnit":
       return `Подразделение «${object.name}»`;
     case "PromotionWave":
-      return `Волна повышения с ${formatDay(object.name)}`;
+      return `Карьерная сессия с ${formatDay(object.name)}`;
     default:
       return object.name;
   }
@@ -513,7 +517,7 @@ function reasonOf(reason: DeskReason, item: DeskItem): ReasonLine[] {
     case "PromotionFormalCheckPending":
       return [
         {
-          text: `Внесите даты приёма на работу или последнего повышения, заявок: ${details.applicationCount ?? 0}${untilOf(details)}`,
+          text: `Внесите даты приёма на работу или последнего перехода, заявок: ${details.applicationCount ?? 0}${untilOf(details)}`,
         },
       ];
     case "PromotionDecisionsPending":

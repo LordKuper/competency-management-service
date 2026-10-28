@@ -12,7 +12,7 @@ namespace Competency.Promotion;
 
 /// <summary>
 /// The promotion letters: who is now expected to act when a wave is announced or a stage starts, and the letter that tells them, with a link built
-/// from the configured public address. Call it only after the change has committed and released its locks: it reads the state after the change and
+/// from the configured public address. A rater on the exclusion list is not invited to the system. Call it only after the change has committed and released its locks: it reads the state after the change and
 /// queues the letters, so the change never waits on the mail server. The letters name no rater and carry no rating.
 /// </summary>
 internal sealed class PromotionMail(
@@ -21,6 +21,7 @@ internal sealed class PromotionMail(
     IUserDirectory users,
     ICareerModel career,
     CommissionReader commissions,
+    RaterExclusions exclusions,
     ICurrentActor actor,
     IOptions<AppOptions> app,
     PromotionMailQueue queue,
@@ -37,12 +38,12 @@ internal sealed class PromotionMail(
     private const string ResultsKind = "PromotionResultsPublished";
     private const string NoDecisionKind = "PromotionNoDecision";
     private const string FeedbackMissingKind = "PromotionFeedbackMissing";
-    private const string Subject = "Повышение в системе «Калибр»";
+    private const string Subject = "Карьерные переходы в системе «Калибр»";
     private const string DateFormat = "dd.MM.yyyy";
     private const string SignInLine = "Если вы ещё не вошли в систему, сначала откроется страница входа, а после входа —";
     private const string AutomaticLine = "Это автоматическое письмо, отвечать на него не нужно.";
     private const string ApplicationTarget = "эта заявка";
-    private const string WaveTarget = "эта волна";
+    private const string WaveTarget = "эта карьерная сессия";
     private const string CommissionTarget = "страница комиссии";
 
     private static readonly ApplicationStatus[] ResultStatuses = [ApplicationStatus.Decided, ApplicationStatus.NoDecision];
@@ -57,10 +58,10 @@ internal sealed class PromotionMail(
             await EmployeeAccountsOfUnitsAsync(wave, cancellationToken),
             AnnouncedKind,
             Compose(
-                $"объявлена волна повышения. Заявки принимаются с {Day(wave.StartsOn)} по {Day(wave.EndsOn[0])}.",
-                "Посмотреть волну:",
+                $"объявлена карьерная сессия. Заявки на карьерный переход принимаются с {Day(wave.StartsOn)} по {Day(wave.EndsOn[0])}.",
+                "Посмотреть карьерную сессию:",
                 Link("promotion"),
-                "раздел «Повышение»"));
+                "раздел «Карьерные переходы»"));
 
     /// <summary>
     /// Tells the working employees of the units of a wave that applications are open.
@@ -72,7 +73,7 @@ internal sealed class PromotionMail(
             await EmployeeAccountsOfUnitsAsync(wave, cancellationToken),
             OpenedKind,
             Compose(
-                $"начался приём заявок на повышение, подать заявку можно до {Day(wave.EndsOn[0])}.",
+                $"начался приём заявок на карьерный переход, подать заявку можно до {Day(wave.EndsOn[0])}.",
                 "Подать заявку:",
                 Link($"promotion/apply/{wave.Id}"),
                 "форма заявки"));
@@ -93,8 +94,8 @@ internal sealed class PromotionMail(
                 [hrId],
                 FormalStartedKind,
                 Compose(
-                    $"начался этап «Формальная проверка». Заявки ждут проверки; если ещё не внесли дату приёма на работу или последнего повышения, внесите её. Заявки по подразделениям:\n{string.Join('\n', lines)}",
-                    "Открыть волну:",
+                    $"начался этап «Формальная проверка». Заявки ждут проверки; если ещё не внесли дату приёма на работу или последнего перехода, внесите её. Заявки по подразделениям:\n{string.Join('\n', lines)}",
+                    "Открыть карьерную сессию:",
                     Link($"promotion/waves/{wave.Id}"),
                     WaveTarget));
         }
@@ -107,7 +108,7 @@ internal sealed class PromotionMail(
     /// <param name="cancellationToken">Cancels the lookups.</param>
     public async Task FormalCheckFinishedAsync(PromotionWave wave, CancellationToken cancellationToken)
     {
-        await TellCandidatesAsync(wave, [ApplicationStatus.Admitted], FormalPassedKind, "ваша заявка на повышение прошла формальную проверку.", cancellationToken);
+        await TellCandidatesAsync(wave, [ApplicationStatus.Admitted], FormalPassedKind, "ваша заявка на карьерный переход прошла формальную проверку.", cancellationToken);
         var rejected = await context.Set<PromotionApplication>()
             .AsNoTracking()
             .Where(application => application.WaveId == wave.Id && application.Status == ApplicationStatus.FormalRejected)
@@ -119,7 +120,7 @@ internal sealed class PromotionMail(
                 [accounts[application.EmployeeId].Id],
                 FormalRejectedKind,
                 Compose(
-                    $"ваша заявка на повышение отклонена по формальным признакам: {string.Join("; ", application.FormalFailures.Select(FailureText))}.",
+                    $"ваша заявка на карьерный переход отклонена по формальным признакам: {string.Join("; ", application.FormalFailures.Select(FailureText))}.",
                     "Открыть заявку:",
                     Link($"promotion/applications/{application.Id}"),
                     ApplicationTarget));
@@ -143,10 +144,16 @@ internal sealed class PromotionMail(
         var raters = await context.Set<PromotionRater>().AsNoTracking().Where(rater => admittedIds.Contains(rater.ApplicationId)).ToListAsync(cancellationToken);
         var raterIds = raters.Select(rater => rater.EmployeeId).Distinct().ToList();
         var withAccount = await users.FindByEmployeeIdsAsync(raterIds, cancellationToken);
+        var people = await employees.FindManyAsync([.. admitted.Select(application => application.EmployeeId), .. raterIds], cancellationToken);
+        var excluded = await exclusions.AmongAsync(raterIds.Where(people.ContainsKey).Select(id => people[id]), cancellationToken);
         foreach (var raterId in raterIds.Where(id => !withAccount.ContainsKey(id)))
         {
             var email = raters.Where(rater => rater.EmployeeId == raterId && rater.IsEmailConfirmed).OrderBy(rater => rater.EmailConfirmedAt).Select(rater => rater.Email).FirstOrDefault();
-            if (email is null)
+            if (excluded.Contains(raterId))
+            {
+                logger.LogWarning("The rater {RaterId} of wave {WaveId} is on the exclusion list, so nobody invites them.", raterId, wave.Id);
+            }
+            else if (email is null)
             {
                 logger.LogWarning("The rater {RaterId} of wave {WaveId} has no account and no confirmed address, so nobody invites them.", raterId, wave.Id);
             }
@@ -157,7 +164,6 @@ internal sealed class PromotionMail(
         }
 
         var accounts = await users.FindByEmployeeIdsAsync(raterIds, cancellationToken);
-        var people = await employees.FindManyAsync([.. admitted.Select(application => application.EmployeeId), .. raterIds], cancellationToken);
         var candidateOf = admitted.ToDictionary(application => application.Id, application => application.EmployeeId);
         foreach (var raterId in raterIds.Where(accounts.ContainsKey))
         {
@@ -169,7 +175,7 @@ internal sealed class PromotionMail(
                 [accounts[raterId].Id],
                 RatingStartedKind,
                 Compose(
-                    $"вас просят оценить кандидатов на повышение. Оценить можно до {Day(wave.EndsOn[PromotionStage.Rating - 1])}. Кандидаты:\n{string.Join('\n', names.Select(name => $"— {name}"))}",
+                    $"вас просят оценить кандидатов на карьерный переход. Оценить можно до {Day(wave.EndsOn[PromotionStage.Rating - 1])}. Кандидаты:\n{string.Join('\n', names.Select(name => $"— {name}"))}",
                     "Открыть список кандидатов:",
                     Link("promotion/ratings"),
                     "список кандидатов"),
@@ -231,7 +237,7 @@ internal sealed class PromotionMail(
                 await AccountsAsync(roster.Members.Where(member => member.IsActing).Select(member => member.EmployeeId), cancellationToken),
                 ReviewArrivedKind,
                 Compose(
-                    $"на рассмотрение комиссии поступили заявки на повышение по подразделению «{roster.UnitName}»: {arrivals[roster.UnitId]}.",
+                    $"на рассмотрение комиссии поступили заявки на карьерный переход по подразделению «{roster.UnitName}»: {arrivals[roster.UnitId]}.",
                     "Открыть страницу комиссии:",
                     Link($"promotion/commission/{wave.Id}/{roster.UnitId}"),
                     CommissionTarget));
@@ -246,7 +252,7 @@ internal sealed class PromotionMail(
     /// <param name="cancellationToken">Cancels the lookups.</param>
     public async Task ResultsPublishedAsync(PromotionWave wave, CancellationToken cancellationToken)
     {
-        await TellCandidatesAsync(wave, ResultStatuses, ResultsKind, "результаты рассмотрения вашей заявки на повышение опубликованы. Когда получите обратную связь по заявке, отметьте это в системе.", cancellationToken);
+        await TellCandidatesAsync(wave, ResultStatuses, ResultsKind, "результаты рассмотрения вашей заявки на карьерный переход опубликованы. Когда получите обратную связь по заявке, отметьте это в системе.", cancellationToken);
         var undecided = await context.Set<PromotionApplication>()
             .AsNoTracking()
             .Where(application => application.WaveId == wave.Id && application.Status == ApplicationStatus.NoDecision)
@@ -261,7 +267,7 @@ internal sealed class PromotionMail(
                 NoDecisionKind,
                 Compose(
                     $"этап «Рассмотрение комиссией» закончился, по заявкам не принято решение:\n{string.Join('\n', lines)}",
-                    "Открыть волну:",
+                    "Открыть карьерную сессию:",
                     Link($"promotion/waves/{wave.Id}"),
                     WaveTarget));
         }
@@ -299,8 +305,8 @@ internal sealed class PromotionMail(
 
     private static string FailureText(FormalFailure failure) => failure switch
     {
-        FormalFailure.MissingDate => "не внесена дата приёма на работу или последнего повышения",
-        FormalFailure.IntervalNotPassed => "не прошёл минимальный интервал между повышениями",
+        FormalFailure.MissingDate => "не внесена дата приёма на работу или последнего перехода",
+        FormalFailure.IntervalNotPassed => "не прошёл минимальный интервал между карьерными переходами",
         FormalFailure.EducationBelowRequired => "образование ниже требуемого для уровня",
         _ => throw new UnreachableException($"No letter names the failure {failure}."),
     };

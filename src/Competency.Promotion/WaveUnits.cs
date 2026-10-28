@@ -69,7 +69,7 @@ internal sealed class WaveUnits(
             select new { member.OrgUnitId, wave.StartsOn, wave.EndsOn })
             .ToListAsync(cancellationToken);
         return [.. overlaps.Select(overlap =>
-            $"Подразделение «{units[overlap.OrgUnitId].Name}» уже входит в незавершённую волну "
+            $"Подразделение «{units[overlap.OrgUnitId].Name}» уже входит в незавершённую карьерную сессию "
             + $"{overlap.StartsOn.ToString(DateFormat, CultureInfo.InvariantCulture)} — {overlap.EndsOn[^1].ToString(DateFormat, CultureInfo.InvariantCulture)}")];
     }
 }

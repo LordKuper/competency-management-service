@@ -43,7 +43,7 @@ internal static class WaveDates
         {
             if (request.StartsOn != wave.StartsOn)
             {
-                errors[StartField] = ["Дату начала нельзя изменить после начала волны"];
+                errors[StartField] = ["Дату начала нельзя изменить после начала карьерной сессии"];
             }
         }
         else if (StartProblem(request.StartsOn, announcedOn, horizon) is { } startProblem)
@@ -108,7 +108,7 @@ internal static class WaveDates
     {
         if (date < announcedOn.AddDays(MinLeadDays))
         {
-            return $"Приём заявок начинается не раньше чем через {MinLeadDays} дней после объявления волны";
+            return $"Приём заявок начинается не раньше чем через {MinLeadDays} дней после объявления карьерной сессии";
         }
 
         return date > horizon ? HorizonMessage() : null;

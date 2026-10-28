@@ -13,7 +13,7 @@ internal sealed class PromotionUnitReferences(AppDbContext context) : IUnitRefer
     public async Task<IReadOnlyList<string>> BlockersAsync(Guid unitId, CancellationToken cancellationToken)
     {
         var waves = await context.Set<PromotionWaveUnit>().CountAsync(member => member.OrgUnitId == unitId, cancellationToken);
-        return waves > 0 ? [$"Волны повышения подразделения, в том числе завершённые: {waves}"] : [];
+        return waves > 0 ? [$"Карьерные сессии подразделения, в том числе завершённые: {waves}"] : [];
     }
 
     /// <inheritdoc />

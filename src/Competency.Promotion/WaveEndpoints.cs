@@ -17,8 +17,8 @@ internal static class WaveEndpoints
     private const string Route = "/api/v1/promotion/waves";
     private const string Tag = "Promotion";
     private const string UnitsField = "unitIds";
-    private const string FinishedMessage = "Волна завершена: её нельзя изменить";
-    private const string UnitsFixedMessage = "После начала волны подразделения менять нельзя";
+    private const string FinishedMessage = "Карьерная сессия завершена: её нельзя изменить";
+    private const string UnitsFixedMessage = "После начала карьерной сессии подразделения менять нельзя";
     private const string NoUnitsMessage = "Выберите хотя бы одно подразделение";
 
     public static void Map(IEndpointRouteBuilder endpoints)

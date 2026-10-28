@@ -66,7 +66,7 @@ export function PromotionWavesView({
   return (
     <Flex vertical gap={token.margin}>
       <Typography.Title level={2} style={{ margin: 0 }}>
-        Волны повышения
+        Карьерные сессии
       </Typography.Title>
       <DeskPanel>
         <Table<WaveRow>

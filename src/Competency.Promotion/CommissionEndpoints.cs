@@ -17,8 +17,8 @@ internal static class CommissionEndpoints
     private const string Tag = "Promotion";
     private const string MembersField = "memberEmployeeIds";
     private const string ChairField = "chairEmployeeId";
-    private const string ChairRequiredMessage = "У подразделения незавершённой волны должен быть председатель комиссии";
-    private const string ChairExcludedMessage = "Председателя нельзя исключить из комиссии подразделения незавершённой волны";
+    private const string ChairRequiredMessage = "У подразделения незавершённой карьерной сессии должен быть председатель комиссии";
+    private const string ChairExcludedMessage = "Председателя нельзя исключить из комиссии подразделения незавершённой карьерной сессии";
     private const string ChairNotMemberMessage = "Председатель должен быть членом комиссии, который работает и имеет действующую учётную запись";
 
     public static void Map(IEndpointRouteBuilder endpoints)
