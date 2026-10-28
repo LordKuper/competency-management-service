@@ -146,6 +146,49 @@
         }
       }
     },
+    "/api/v1/promotion/commissions": {
+      "get": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "ListPromotionCommissions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CommissionSummaryResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit": {
       "get": {
         "tags": [
@@ -14056,6 +14099,27 @@
               "format": "int32",
               "default": 50
             }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ApplicationStatus"
+            }
+          },
+          {
+            "name": "needsFormalData",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -14077,7 +14141,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageResponseOfApplicationSummaryResponse"
+                  "$ref": "#/components/schemas/ApplicationPageResponse"
                 }
               }
             }
@@ -14088,6 +14152,94 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/waves/{waveId}/session": {
+      "get": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "GetPromotionSession",
+        "parameters": [
+          {
+            "name": "waveId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDatesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/waves/{waveId}/head/candidates": {
+      "get": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "ListPromotionHeadCandidates",
+        "parameters": [
+          {
+            "name": "waveId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeadCandidatesResponse"
                 }
               }
             }
@@ -16080,6 +16232,30 @@
   },
   "components": {
     "schemas": {
+      "ApplicationCountsResponse": {
+        "required": [
+          "all",
+          "needsFormalData",
+          "byStatus"
+        ],
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "needsFormalData": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "byStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationStatusCountResponse"
+            }
+          }
+        }
+      },
       "ApplicationFormalResponse": {
         "required": [
           "hiredOrPromotedOn",
@@ -16111,6 +16287,39 @@
               "string"
             ],
             "format": "date-time"
+          }
+        }
+      },
+      "ApplicationPageResponse": {
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "counts"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationSummaryResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ApplicationCountsResponse"
           }
         }
       },
@@ -16160,6 +16369,7 @@
           "id",
           "waveId",
           "stage",
+          "session",
           "status",
           "roles",
           "candidateEmployeeId",
@@ -16169,6 +16379,7 @@
           "selfScores",
           "preliminaryRating",
           "raters",
+          "raterCounts",
           "formal",
           "formalFailures",
           "warnings",
@@ -16194,6 +16405,9 @@
           "stage": {
             "type": "integer",
             "format": "int32"
+          },
+          "session": {
+            "$ref": "#/components/schemas/SessionDatesResponse"
           },
           "status": {
             "$ref": "#/components/schemas/ApplicationStatus"
@@ -16241,6 +16455,16 @@
             "items": {
               "$ref": "#/components/schemas/RaterResponse"
             }
+          },
+          "raterCounts": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RaterCountsResponse"
+              }
+            ]
           },
           "formal": {
             "oneOf": [
@@ -16368,6 +16592,22 @@
           "Withdrawn"
         ]
       },
+      "ApplicationStatusCountResponse": {
+        "required": [
+          "status",
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ApplicationStatus"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ApplicationSummaryResponse": {
         "required": [
           "id",
@@ -16379,6 +16619,10 @@
           "candidateName",
           "target",
           "submittedAt",
+          "formalCheck",
+          "formalFailures",
+          "needsFormalData",
+          "raterCounts",
           "decision"
         ],
         "type": "object",
@@ -16415,6 +16659,35 @@
           "submittedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "formalCheck": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/FormalCheckResponse"
+              }
+            ]
+          },
+          "formalFailures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormalFailure"
+            }
+          },
+          "needsFormalData": {
+            "type": "boolean"
+          },
+          "raterCounts": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RaterCountsResponse"
+              }
+            ]
           },
           "decision": {
             "oneOf": [
@@ -16962,6 +17235,31 @@
           }
         }
       },
+      "CareerVersionBlock": {
+        "required": [
+          "id",
+          "name",
+          "order"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The block identifier.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The block name."
+          },
+          "order": {
+            "type": "integer",
+            "description": "The place of the block among the version's blocks, from 0, in the order the version includes them.",
+            "format": "int32"
+          }
+        },
+        "description": "A shared block a matrix version includes, as the version froze it."
+      },
       "CatalogDraftResponse": {
         "required": [
           "kind",
@@ -17216,6 +17514,38 @@
             "items": {
               "$ref": "#/components/schemas/CommissionMemberResponse"
             }
+          }
+        }
+      },
+      "CommissionSummaryResponse": {
+        "required": [
+          "unitId",
+          "unitName",
+          "memberCount",
+          "hasChair",
+          "chairName"
+        ],
+        "type": "object",
+        "properties": {
+          "unitId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "unitName": {
+            "type": "string"
+          },
+          "memberCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasChair": {
+            "type": "boolean"
+          },
+          "chairName": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -18625,6 +18955,61 @@
           }
         }
       },
+      "HeadCandidateResponse": {
+        "required": [
+          "applicationId",
+          "candidateEmployeeId",
+          "candidateName",
+          "target",
+          "status",
+          "canEditRaters",
+          "raterCounts"
+        ],
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "candidateEmployeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "candidateName": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ApplicationTargetResponse"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ApplicationStatus"
+          },
+          "canEditRaters": {
+            "type": "boolean"
+          },
+          "raterCounts": {
+            "$ref": "#/components/schemas/RaterCountsResponse"
+          }
+        }
+      },
+      "HeadCandidatesResponse": {
+        "required": [
+          "session",
+          "candidates"
+        ],
+        "type": "object",
+        "properties": {
+          "session": {
+            "$ref": "#/components/schemas/SessionDatesResponse"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HeadCandidateResponse"
+            }
+          }
+        }
+      },
       "HttpValidationProblemDetails": {
         "type": "object",
         "properties": {
@@ -18843,6 +19228,23 @@
           "positionId": {
             "type": "string",
             "format": "uuid"
+          }
+        }
+      },
+      "LevelRequirementResponse": {
+        "required": [
+          "levelId",
+          "requiredScore"
+        ],
+        "type": "object",
+        "properties": {
+          "levelId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requiredScore": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -20492,6 +20894,7 @@
           "id",
           "startsOn",
           "endsOn",
+          "resultsPublishedOn",
           "stage",
           "units"
         ],
@@ -20511,6 +20914,10 @@
               "type": "string",
               "format": "date"
             }
+          },
+          "resultsPublishedOn": {
+            "type": "string",
+            "format": "date"
           },
           "stage": {
             "type": "integer",
@@ -21007,35 +21414,6 @@
             ]
           },
           "employeeCount": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "PageResponseOfApplicationSummaryResponse": {
-        "required": [
-          "items",
-          "total",
-          "page",
-          "pageSize"
-        ],
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ApplicationSummaryResponse"
-            }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
             "type": "integer",
             "format": "int32"
           }
@@ -21932,6 +22310,48 @@
           }
         }
       },
+      "RaterCountsResponse": {
+        "required": [
+          "total",
+          "requiredTotal",
+          "fromOtherUnits",
+          "requiredFromOtherUnits",
+          "missingTotal",
+          "missingFromOtherUnits",
+          "pendingEmailCount"
+        ],
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requiredTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fromOtherUnits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requiredFromOtherUnits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "missingTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "missingFromOtherUnits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingEmailCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "RaterEmailRequest": {
         "required": [
           "email"
@@ -21987,6 +22407,8 @@
         "required": [
           "employeeId",
           "fullName",
+          "unitName",
+          "isFromOtherUnit",
           "source",
           "hasAccount",
           "email",
@@ -22002,6 +22424,12 @@
           },
           "fullName": {
             "type": "string"
+          },
+          "unitName": {
+            "type": "string"
+          },
+          "isFromOtherUnit": {
+            "type": "boolean"
           },
           "source": {
             "$ref": "#/components/schemas/RaterSource"
@@ -22088,6 +22516,7 @@
           "applicationId",
           "candidateName",
           "stage",
+          "session",
           "canEdit",
           "competencies",
           "answers"
@@ -22104,6 +22533,9 @@
           "stage": {
             "type": "integer",
             "format": "int32"
+          },
+          "session": {
+            "$ref": "#/components/schemas/SessionDatesResponse"
           },
           "canEdit": {
             "type": "boolean"
@@ -22131,6 +22563,7 @@
           "waveId",
           "candidateName",
           "stage",
+          "session",
           "canRate",
           "isRated"
         ],
@@ -22150,6 +22583,9 @@
           "stage": {
             "type": "integer",
             "format": "int32"
+          },
+          "session": {
+            "$ref": "#/components/schemas/SessionDatesResponse"
           },
           "canRate": {
             "type": "boolean"
@@ -22223,7 +22659,9 @@
         "required": [
           "competencyId",
           "name",
+          "description",
           "type",
+          "block",
           "requiredScore",
           "scalePoints",
           "selfScore",
@@ -22231,6 +22669,7 @@
           "change",
           "artifact",
           "isArtifactMandatory",
+          "defaultFinalScore",
           "finalScore",
           "isMet"
         ],
@@ -22243,8 +22682,24 @@
           "name": {
             "type": "string"
           },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "type": {
             "$ref": "#/components/schemas/CompetencyType"
+          },
+          "block": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CareerVersionBlock"
+              }
+            ]
           },
           "requiredScore": {
             "type": [
@@ -22291,6 +22746,13 @@
           },
           "isArtifactMandatory": {
             "type": "boolean"
+          },
+          "defaultFinalScore": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           },
           "finalScore": {
             "type": [
@@ -22441,6 +22903,7 @@
           "id",
           "waveId",
           "stage",
+          "session",
           "status",
           "roles",
           "candidateEmployeeId",
@@ -22452,6 +22915,7 @@
           "meetsAfterRating",
           "artifactsMissing",
           "competencies",
+          "raterCounts",
           "rating",
           "isRatingFromFinalScores",
           "threshold",
@@ -22475,6 +22939,9 @@
           "stage": {
             "type": "integer",
             "format": "int32"
+          },
+          "session": {
+            "$ref": "#/components/schemas/SessionDatesResponse"
           },
           "status": {
             "$ref": "#/components/schemas/ApplicationStatus"
@@ -22521,6 +22988,9 @@
             "items": {
               "$ref": "#/components/schemas/ReviewCompetencyResponse"
             }
+          },
+          "raterCounts": {
+            "$ref": "#/components/schemas/RaterCountsResponse"
           },
           "rating": {
             "type": "number",
@@ -22712,6 +23182,11 @@
         "required": [
           "competencyId",
           "competencyName",
+          "description",
+          "type",
+          "block",
+          "requiredScore",
+          "scalePoints",
           "score"
         ],
         "type": "object",
@@ -22723,9 +23198,76 @@
           "competencyName": {
             "type": "string"
           },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "$ref": "#/components/schemas/CompetencyType"
+          },
+          "block": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CareerVersionBlock"
+              }
+            ]
+          },
+          "requiredScore": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "scalePoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScalePoint"
+            }
+          },
           "score": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "SessionDatesResponse": {
+        "required": [
+          "waveId",
+          "stage",
+          "startsOn",
+          "endsOn",
+          "resultsPublishedOn"
+        ],
+        "type": "object",
+        "properties": {
+          "waveId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "resultsPublishedOn": {
+            "type": "string",
+            "format": "date"
           }
         }
       },
@@ -22773,7 +23315,11 @@
         "required": [
           "id",
           "name",
-          "scalePoints"
+          "description",
+          "type",
+          "block",
+          "scalePoints",
+          "requirements"
         ],
         "type": "object",
         "properties": {
@@ -22784,10 +23330,35 @@
           "name": {
             "type": "string"
           },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "$ref": "#/components/schemas/CompetencyType"
+          },
+          "block": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CareerVersionBlock"
+              }
+            ]
+          },
           "scalePoints": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ScalePoint"
+            }
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LevelRequirementResponse"
             }
           }
         }
@@ -23483,6 +24054,9 @@
       "name": "Career"
     },
     {
+      "name": "Promotion"
+    },
+    {
       "name": "Audit"
     },
     {
@@ -23502,9 +24076,6 @@
     },
     {
       "name": "Users"
-    },
-    {
-      "name": "Promotion"
     },
     {
       "name": "Desk"

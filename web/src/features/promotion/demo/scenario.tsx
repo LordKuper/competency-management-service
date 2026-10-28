@@ -169,6 +169,8 @@ const RATERS: RaterDetails[] = [
   { employeeId: "demo-emp-r5", fullName: "Волков Дмитрий Романович" },
 ].map((rater) => ({
   ...rater,
+  unitName: "Отдел тестирования",
+  isFromOtherUnit: true,
   source: "Candidate" as const,
   hasAccount: true,
   email: null,
@@ -179,6 +181,8 @@ const RATERS: RaterDetails[] = [
 const RATER_WITHOUT_ACCOUNT: RaterDetails = {
   employeeId: "demo-emp-r8",
   fullName: "Громов Фёдор Игоревич",
+  unitName: "Отдел тестирования",
+  isFromOtherUnit: true,
   source: "Candidate",
   hasAccount: false,
   email: "f.gromov@example.org",
@@ -291,6 +295,28 @@ const WAVE_DATES = {
   ),
 };
 
+const RESULTS_PUBLISHED_ON = WAVE_DATES.endsOn[4] ?? WAVE_STARTS_ON;
+
+function session(stage: number) {
+  return {
+    waveId: WAVE_ID,
+    stage,
+    startsOn: WAVE_DATES.startsOn,
+    endsOn: WAVE_DATES.endsOn,
+    resultsPublishedOn: RESULTS_PUBLISHED_ON,
+  };
+}
+
+const RATER_COUNTS = {
+  total: 5,
+  requiredTotal: 5,
+  fromOtherUnits: 2,
+  requiredFromOtherUnits: 2,
+  missingTotal: 0,
+  missingFromOtherUnits: 0,
+  pendingEmailCount: 0,
+};
+
 function wave(stage: number): Versioned<Wave> {
   return {
     ...WAVE_DATES,
@@ -306,6 +332,7 @@ function wave(stage: number): Versioned<Wave> {
 
 const OPEN_WAVE: OpenWave = {
   ...WAVE_DATES,
+  resultsPublishedOn: RESULTS_PUBLISHED_ON,
   id: WAVE_ID,
   stage: 1,
   units: [
@@ -341,18 +368,29 @@ const TARGET_FORM: TargetForm = {
       requiredEducation: "Bachelor",
     },
   ],
-  competencies: COMPETENCIES.map(({ id, name }) => ({
+  competencies: COMPETENCIES.map(({ id, name, type, required }) => ({
     id,
     name,
+    description: null,
+    type,
+    block: null,
     scalePoints: SCALE,
+    requirements: [{ levelId: TARGET.levelId, requiredScore: required }],
   })),
 };
 
-const SELF_SCORES = COMPETENCIES.map(({ id, name, selfScore }) => ({
-  competencyId: id,
-  competencyName: name,
-  score: selfScore,
-}));
+const SELF_SCORES = COMPETENCIES.map(
+  ({ id, name, type, required, selfScore }) => ({
+    competencyId: id,
+    competencyName: name,
+    description: null,
+    type,
+    block: null,
+    requiredScore: required,
+    scalePoints: SCALE,
+    score: selfScore,
+  }),
+);
 
 const FORMAL_ENTERED = {
   hiredOrPromotedOn: "2024-06-03",
@@ -382,6 +420,7 @@ function application(
     id: "demo-application",
     waveId: WAVE_ID,
     stage: 1,
+    session: session(1),
     status: "Submitted",
     roles: ["Candidate"],
     candidateEmployeeId: CANDIDATE.id,
@@ -397,6 +436,7 @@ function application(
       unscoredCount: 0,
     },
     raters: RATERS,
+    raterCounts: RATER_COUNTS,
     formal: null,
     formalFailures: [],
     formalCheck: null,
@@ -424,6 +464,10 @@ function summary(
     candidateEmployeeId: `demo-emp-${overrides.id}`,
     target: TARGET,
     submittedAt: "2027-03-05T09:30:00Z",
+    formalCheck: null,
+    formalFailures: [],
+    needsFormalData: false,
+    raterCounts: null,
     decision: null,
     ...overrides,
   };
@@ -464,6 +508,7 @@ const RATING_TASKS: RatingTask[] = [
     waveId: WAVE_ID,
     candidateName: CANDIDATE.name,
     stage: 3,
+    session: session(3),
     canRate: true,
     isRated: false,
   },
@@ -472,6 +517,7 @@ const RATING_TASKS: RatingTask[] = [
     waveId: WAVE_ID,
     candidateName: "Орехов Игорь Леонидович",
     stage: 3,
+    session: session(3),
     canRate: true,
     isRated: true,
   },
@@ -481,11 +527,16 @@ const RATING: Rating = {
   applicationId: "demo-application",
   candidateName: CANDIDATE.name,
   stage: 3,
+  session: session(3),
   canEdit: true,
-  competencies: COMPETENCIES.map(({ id, name }) => ({
+  competencies: COMPETENCIES.map(({ id, name, type }) => ({
     id,
     name,
+    description: null,
+    type,
+    block: null,
     scalePoints: SCALE,
+    requirements: [],
   })),
   answers: [
     { competencyId: DESIGN.id, score: 3 },
@@ -541,6 +592,7 @@ function review(overrides: Partial<Review>): Review {
     id: "demo-application",
     waveId: WAVE_ID,
     stage: 5,
+    session: session(5),
     status: "UnderReview",
     roles: ["Member"],
     candidateEmployeeId: CANDIDATE.id,
@@ -554,7 +606,9 @@ function review(overrides: Partial<Review>): Review {
     competencies: COMPETENCIES.map((row) => ({
       competencyId: row.id,
       name: row.name,
+      description: null,
       type: row.type,
+      block: null,
       requiredScore: row.required,
       scalePoints: SCALE,
       selfScore: row.selfScore,
@@ -564,9 +618,11 @@ function review(overrides: Partial<Review>): Review {
         ? { competencyId: row.id, competencyName: row.name, ...row.artifact }
         : null,
       isArtifactMandatory: row.isArtifactMandatory ?? false,
+      defaultFinalScore: row.finalScore,
       finalScore: row.finalScore,
       isMet: row.finalScore >= row.required,
     })),
+    raterCounts: RATER_COUNTS,
     rating: 84.5,
     isRatingFromFinalScores: true,
     threshold: 70,

@@ -10,6 +10,7 @@ namespace Competency.Promotion;
 /// <param name="Id">The application.</param>
 /// <param name="WaveId">The wave.</param>
 /// <param name="Stage">The stage the wave is in now: 0 before it starts, 1 to 6 while a stage runs, 7 once the last stage has ended.</param>
+/// <param name="Session">The dates of the session.</param>
 /// <param name="Status">Where the application stands.</param>
 /// <param name="Roles">What the reader is to the application.</param>
 /// <param name="CandidateEmployeeId">The candidate.</param>
@@ -21,6 +22,7 @@ namespace Competency.Promotion;
 /// <param name="MeetsAfterRating">Whether the raters' averages meet the mandatory requirements; null until the rating stage has been checked.</param>
 /// <param name="ArtifactsMissing">Whether the candidate gave no artifact for some competency that required one.</param>
 /// <param name="Competencies">The competencies of the version in its order.</param>
+/// <param name="RaterCounts">The raters listed against what is needed.</param>
 /// <param name="Rating">The rating, in percent, unrounded: from the chair's saved final scores, and until there are any from the default ones, the raters' averages rounded.</param>
 /// <param name="IsRatingFromFinalScores">Whether the rating comes from final scores the chair saved rather than from the defaults.</param>
 /// <param name="Threshold">The rating the target level requires, in percent; null when the version sets none.</param>
@@ -34,6 +36,7 @@ internal sealed record ReviewResponse(
     Guid Id,
     Guid WaveId,
     int Stage,
+    SessionDatesResponse Session,
     ApplicationStatus Status,
     IReadOnlyList<ApplicationRole> Roles,
     Guid CandidateEmployeeId,
@@ -45,6 +48,7 @@ internal sealed record ReviewResponse(
     bool? MeetsAfterRating,
     bool ArtifactsMissing,
     IReadOnlyList<ReviewCompetencyResponse> Competencies,
+    RaterCountsResponse RaterCounts,
     decimal Rating,
     bool IsRatingFromFinalScores,
     decimal? Threshold,

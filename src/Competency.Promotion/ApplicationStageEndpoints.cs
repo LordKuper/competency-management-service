@@ -428,6 +428,12 @@ internal static class ApplicationStageEndpoints
         return TypedResults.Ok(await reader.DescribeAsync(application, wave, roles, cancellationToken));
     }
 
-    private static bool IsListOpen(int stage, PromotionApplication application) =>
+    /// <summary>
+    /// Whether the list of raters of a filed application may still be changed: from the moment it is filed until the formal check stage ends.
+    /// </summary>
+    /// <param name="stage">The stage the wave is in now.</param>
+    /// <param name="application">The application.</param>
+    /// <returns><see langword="true"/> while the list may change.</returns>
+    internal static bool IsListOpen(int stage, PromotionApplication application) =>
         stage is PromotionStage.Submission or PromotionStage.FormalCheck && application.Status == ApplicationStatus.Submitted;
 }

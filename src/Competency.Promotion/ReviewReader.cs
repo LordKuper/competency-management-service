@@ -1,6 +1,7 @@
 using Competency.CareerFramework;
 using Competency.OrgStructure;
 using Competency.Platform;
+using Competency.UserManagement;
 using Microsoft.EntityFrameworkCore;
 
 namespace Competency.Promotion;
@@ -14,6 +15,7 @@ internal sealed class ReviewReader(
     AppDbContext context,
     IEmployeeDirectory employees,
     ICareerModel career,
+    IUserDirectory users,
     PromotionCalendar calendar,
     WaveReader waves,
     ApplicationReader applications)
@@ -42,7 +44,15 @@ internal sealed class ReviewReader(
         var (history, latest) = await PreviousAsync(application, cancellationToken);
         var averages = CircularRating.Averages(answers.SelectMany(group => group));
         var standing = finals.Count == 0 ? null : career.Score(version, application.LevelId, finals.ToDictionary(pair => pair.Key, pair => (decimal)pair.Value));
-        var rated = standing ?? career.Score(version, application.LevelId, CircularRating.DefaultFinalScores(averages));
+        var defaults = CircularRating.DefaultFinalScores(averages);
+        var rated = standing ?? career.Score(version, application.LevelId, defaults);
+        var raters = await context.Set<PromotionRater>().AsNoTracking().Where(rater => rater.ApplicationId == application.Id).ToListAsync(cancellationToken);
+        var raterIds = raters.Select(rater => rater.EmployeeId).ToArray();
+        var raterCounts = ApplicationReader.RaterCountsOf(
+            raters,
+            candidate.OrgUnitId,
+            await employees.FindManyAsync(raterIds, cancellationToken),
+            await users.FindByEmployeeIdsAsync(raterIds, cancellationToken));
         var required = version.Requirements.Where(requirement => requirement.LevelId == application.LevelId).ToDictionary(requirement => requirement.CompetencyId, requirement => requirement.RequiredScore);
         var decidedBy = application.DecidedBy is { } userId ? (await waves.AccountNamesAsync([userId], cancellationToken)).GetValueOrDefault(userId) : null;
 
@@ -50,6 +60,7 @@ internal sealed class ReviewReader(
             application.Id,
             wave.Id,
             calendar.StageOf(wave),
+            SessionDatesResponse.From(wave, calendar.StageOf(wave)),
             application.Status,
             [.. Enum.GetValues<ApplicationRole>().Where(role => role != ApplicationRole.None && roles.HasFlag(role))],
             application.EmployeeId,
@@ -62,6 +73,8 @@ internal sealed class ReviewReader(
             application.ArtifactsMissing,
             [.. version.Competencies.Select(competency => CompetencyOf(
                 competency,
+                version.Blocks.FirstOrDefault(block => block.Id == competency.BlockId),
+                defaults.TryGetValue(competency.Id, out var defaultScore) ? (int)defaultScore : null,
                 required.TryGetValue(competency.Id, out var requiredScore) ? requiredScore : null,
                 selfScores.TryGetValue(competency.Id, out var selfScore) ? selfScore : null,
                 [.. answers[competency.Id]],
@@ -70,6 +83,7 @@ internal sealed class ReviewReader(
                 mandatory.Contains(competency.Id),
                 finals.TryGetValue(competency.Id, out var finalScore) ? finalScore : null,
                 standing?.Competencies.FirstOrDefault(item => item.CompetencyId == competency.Id)?.IsMet))],
+            raterCounts,
             rated.Rating,
             standing is not null,
             facts.Level.MinOverallPercent,
@@ -142,6 +156,8 @@ internal sealed class ReviewReader(
 
     private static ReviewCompetencyResponse CompetencyOf(
         CareerVersionCompetency competency,
+        CareerVersionBlock? block,
+        int? defaultFinalScore,
         int? requiredScore,
         int? selfScore,
         IReadOnlyCollection<PromotionRaterScore> answers,
@@ -155,7 +171,9 @@ internal sealed class ReviewReader(
         return new ReviewCompetencyResponse(
             competency.Id,
             competency.Name,
+            competency.Description,
             competency.Type,
+            block,
             requiredScore,
             competency.ScalePoints,
             selfScore,
@@ -163,6 +181,7 @@ internal sealed class ReviewReader(
             ChangeOf(competency.Id, circular.Average, latest),
             artifact,
             isArtifactMandatory,
+            defaultFinalScore,
             finalScore,
             isMet);
     }

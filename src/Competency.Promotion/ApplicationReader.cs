@@ -44,11 +44,13 @@ internal sealed class ApplicationReader(
         var isResultShown = isCandidate && stage >= ResultStage && application.Status is ApplicationStatus.Decided or ApplicationStatus.NoDecision;
         var mandatory = isCandidate ? await MandatoryArtifactIdsAsync(application, facts.Version, cancellationToken) : null;
         var artifacts = isCandidate ? await ArtifactsAsync(application.Id, facts.Version, cancellationToken) : null;
+        var (raterRows, raterCounts) = await RatersForAsync(roles, raters, people, people[application.EmployeeId].OrgUnitId, cancellationToken);
 
         return new ApplicationResponse(
             application.Id,
             wave.Id,
             stage,
+            SessionDatesResponse.From(wave, stage),
             ShownStatus(application.Status, roles, stage),
             [.. Enum.GetValues<ApplicationRole>().Where(role => role != ApplicationRole.None && roles.HasFlag(role))],
             application.EmployeeId,
@@ -56,9 +58,18 @@ internal sealed class ApplicationReader(
             facts.Target,
             application.Education,
             [.. facts.Version.Competencies
-                .Join(scores, competency => competency.Id, score => score.CompetencyId, (competency, score) => new SelfScoreResponse(competency.Id, competency.Name, score.Score))],
+                .Join(scores, competency => competency.Id, score => score.CompetencyId, (competency, score) => new SelfScoreResponse(
+                    competency.Id,
+                    competency.Name,
+                    competency.Description,
+                    competency.Type,
+                    facts.Version.Blocks.FirstOrDefault(block => block.Id == competency.BlockId),
+                    facts.Version.Requirements.FirstOrDefault(requirement => requirement.LevelId == application.LevelId && requirement.CompetencyId == competency.Id)?.RequiredScore,
+                    competency.ScalePoints,
+                    score.Score))],
             isCandidate ? PreliminaryRatingOf(application, facts.Version, scores) : null,
-            await RatersForAsync(roles, raters, people, cancellationToken),
+            raterRows,
+            raterCounts,
             canSeeFormal ? await FormalOfAsync(application, cancellationToken) : null,
             application.FormalFailures,
             await WarningsAsync(application, facts.Level, wave, canSeeFormal, cancellationToken),
@@ -157,14 +168,96 @@ internal sealed class ApplicationReader(
         CancellationToken cancellationToken)
     {
         var facts = await TargetsAsync(applications, cancellationToken);
-        var people = await employees.FindManyAsync([.. applications.Select(application => application.EmployeeId).Distinct()], cancellationToken);
-        return [.. applications.Select(application =>
-            SummaryOf(application, wavesById[application.WaveId], viewer.RolesOf(application), people[application.EmployeeId].FullName, facts[application.Id].Target))];
+        var roles = applications.ToDictionary(application => application.Id, viewer.RolesOf);
+        var withRaters = applications.Where(application => (roles[application.Id] & RaterViewers) != ApplicationRole.None).Select(application => application.Id).ToArray();
+        var (raters, people, accounts) = await RaterFactsAsync(withRaters, applications.Select(application => application.EmployeeId), cancellationToken);
+        var months = (await context.Set<PromotionSettings>().AsNoTracking().SingleAsync(cancellationToken)).MinIntervalMonths;
+        return [.. applications.Select(application => SummaryOf(
+            application,
+            wavesById[application.WaveId],
+            roles[application.Id],
+            people[application.EmployeeId],
+            facts[application.Id],
+            months,
+            withRaters.Contains(application.Id) ? RaterCountsOf([.. raters[application.Id]], people[application.EmployeeId].OrgUnitId, people, accounts) : null))];
     }
 
-    private ApplicationSummaryResponse SummaryOf(PromotionApplication application, PromotionWave wave, ApplicationRole roles, string candidateName, ApplicationTargetResponse target)
+    /// <summary>
+    /// Describes the applications whose raters a head corrects, as the rows of the head's candidate list.
+    /// </summary>
+    /// <param name="applications">The applications.</param>
+    /// <param name="wave">Their wave.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    /// <returns>One row per application, by candidate name.</returns>
+    public async Task<IReadOnlyList<HeadCandidateResponse>> HeadCandidatesAsync(IReadOnlyCollection<PromotionApplication> applications, PromotionWave wave, CancellationToken cancellationToken)
+    {
+        var facts = await TargetsAsync(applications, cancellationToken);
+        var (raters, people, accounts) = await RaterFactsAsync([.. applications.Select(application => application.Id)], applications.Select(application => application.EmployeeId), cancellationToken);
+        var stage = calendar.StageOf(wave);
+        return [.. applications
+            .Select(application => new HeadCandidateResponse(
+                application.Id,
+                application.EmployeeId,
+                people[application.EmployeeId].FullName,
+                facts[application.Id].Target,
+                application.Status,
+                ApplicationStageEndpoints.IsListOpen(stage, application),
+                RaterCountsOf([.. raters[application.Id]], people[application.EmployeeId].OrgUnitId, people, accounts)))
+            .OrderBy(row => row.CandidateName, TextCollation.Comparer)
+            .ThenBy(row => row.ApplicationId)];
+    }
+
+    /// <summary>
+    /// Counts the raters of an application against what a filed application needs.
+    /// </summary>
+    /// <param name="raters">The raters listed.</param>
+    /// <param name="candidateUnitId">The unit the candidate belongs to.</param>
+    /// <param name="people">The employees, raters among them.</param>
+    /// <param name="accounts">The accounts of the raters who have one, by employee.</param>
+    /// <returns>The counts.</returns>
+    public static RaterCountsResponse RaterCountsOf(
+        IReadOnlyCollection<PromotionRater> raters,
+        Guid candidateUnitId,
+        IReadOnlyDictionary<Guid, EmployeeStatus> people,
+        IReadOnlyDictionary<Guid, UserStatus> accounts)
+    {
+        var fromOtherUnits = raters.Count(rater => people.TryGetValue(rater.EmployeeId, out var person) && person.OrgUnitId != candidateUnitId);
+        return new RaterCountsResponse(
+            raters.Count,
+            ApplicationRules.MinRaters,
+            fromOtherUnits,
+            ApplicationRules.MinRatersOutsideUnit,
+            Math.Max(0, ApplicationRules.MinRaters - raters.Count),
+            Math.Max(0, ApplicationRules.MinRatersOutsideUnit - fromOtherUnits),
+            raters.Count(rater => !accounts.ContainsKey(rater.EmployeeId) && rater.Email is not null && !rater.IsEmailConfirmed));
+    }
+
+    private async Task<(ILookup<Guid, PromotionRater> Raters, IReadOnlyDictionary<Guid, EmployeeStatus> People, IReadOnlyDictionary<Guid, UserStatus> Accounts)> RaterFactsAsync(
+        IReadOnlyCollection<Guid> applicationIds,
+        IEnumerable<Guid> candidateIds,
+        CancellationToken cancellationToken)
+    {
+        var ids = applicationIds.ToArray();
+        var raters = (await context.Set<PromotionRater>().AsNoTracking().Where(rater => ids.Contains(rater.ApplicationId)).ToListAsync(cancellationToken))
+            .ToLookup(rater => rater.ApplicationId);
+        var raterIds = raters.SelectMany(group => group).Select(rater => rater.EmployeeId).Distinct().ToArray();
+        var people = await employees.FindManyAsync([.. candidateIds.Concat(raterIds).Distinct()], cancellationToken);
+        return (raters, people, await users.FindByEmployeeIdsAsync(raterIds, cancellationToken));
+    }
+
+    private ApplicationSummaryResponse SummaryOf(
+        PromotionApplication application,
+        PromotionWave wave,
+        ApplicationRole roles,
+        EmployeeStatus candidate,
+        TargetFacts facts,
+        int minIntervalMonths,
+        RaterCountsResponse? raterCounts)
     {
         var stage = calendar.StageOf(wave);
+        var canSeeFormal = (roles & FormalViewers) != ApplicationRole.None;
+        var isChecked = canSeeFormal && application.Status == ApplicationStatus.Submitted;
+        var failures = isChecked ? FormalCheck.Failures(application, facts.Level.RequiredEducation, minIntervalMonths, wave.ResultsPublishedOn) : [];
         return new ApplicationSummaryResponse(
             application.Id,
             wave.Id,
@@ -172,9 +265,13 @@ internal sealed class ApplicationReader(
             stage,
             ShownStatus(application.Status, roles, stage),
             application.EmployeeId,
-            candidateName,
-            target,
+            candidate.FullName,
+            facts.Target,
             application.CreatedAt,
+            isChecked ? new FormalCheckResponse(failures.Count == 0, failures) : null,
+            canSeeFormal ? application.FormalFailures : [],
+            isChecked && application.HiredOrPromotedOn is null,
+            raterCounts,
             ShownDecision(application.Decision, roles, stage));
     }
 
@@ -186,25 +283,29 @@ internal sealed class ApplicationReader(
     private static PromotionDecision? ShownDecision(PromotionDecision? decision, ApplicationRole roles, int stage) =>
         roles == ApplicationRole.Candidate && stage < ResultStage ? null : decision;
 
-    private async Task<List<RaterResponse>?> RatersForAsync(
+    private async Task<(List<RaterResponse>? Rows, RaterCountsResponse? Counts)> RatersForAsync(
         ApplicationRole roles,
         IReadOnlyCollection<PromotionRater> raters,
         IReadOnlyDictionary<Guid, EmployeeStatus> people,
+        Guid candidateUnitId,
         CancellationToken cancellationToken)
     {
         if ((roles & RaterViewers) == ApplicationRole.None && roles != ApplicationRole.Candidate)
         {
-            return null;
+            return (null, null);
         }
 
-        var accounts = await users.FindByEmployeeIdsAsync([.. raters.Select(rater => rater.EmployeeId)], cancellationToken);
-        var confirmers = await waves.AccountNamesAsync([.. raters.Select(rater => rater.EmailConfirmedBy).OfType<Guid>().Distinct()], cancellationToken);
-        var excluded = await exclusions.AmongAsync(raters.Select(rater => people[rater.EmployeeId]), cancellationToken);
-        return [.. raters
-            .Where(rater => roles != ApplicationRole.Candidate || rater.Source == RaterSource.Candidate)
+        var shown = raters.Where(rater => roles != ApplicationRole.Candidate || rater.Source == RaterSource.Candidate).ToList();
+        var accounts = await users.FindByEmployeeIdsAsync([.. shown.Select(rater => rater.EmployeeId)], cancellationToken);
+        var units = await employees.FindUnitsAsync([.. shown.Select(rater => people[rater.EmployeeId].OrgUnitId).Distinct()], cancellationToken);
+        var confirmers = await waves.AccountNamesAsync([.. shown.Select(rater => rater.EmailConfirmedBy).OfType<Guid>().Distinct()], cancellationToken);
+        var excluded = await exclusions.AmongAsync(shown.Select(rater => people[rater.EmployeeId]), cancellationToken);
+        var rows = shown
             .Select(rater => new RaterResponse(
                 rater.EmployeeId,
                 people[rater.EmployeeId].FullName,
+                units[people[rater.EmployeeId].OrgUnitId].Name,
+                people[rater.EmployeeId].OrgUnitId != candidateUnitId,
                 rater.Source,
                 accounts.ContainsKey(rater.EmployeeId),
                 rater.Email,
@@ -212,7 +313,9 @@ internal sealed class ApplicationReader(
                 rater.EmailConfirmedBy is { } confirmedBy ? confirmers.GetValueOrDefault(confirmedBy) : null,
                 excluded.Contains(rater.EmployeeId)))
             .OrderBy(rater => rater.FullName, TextCollation.Comparer)
-            .ThenBy(rater => rater.EmployeeId)];
+            .ThenBy(rater => rater.EmployeeId)
+            .ToList();
+        return (rows, RaterCountsOf(shown, candidateUnitId, people, accounts));
     }
 
     /// <summary>

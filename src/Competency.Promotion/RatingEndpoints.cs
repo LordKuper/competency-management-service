@@ -79,6 +79,7 @@ internal static class RatingEndpoints
                 application.WaveId,
                 people[application.EmployeeId].FullName,
                 stage,
+                SessionDatesResponse.From(waves[application.WaveId], stage),
                 IsOpen(stage, application),
                 rated.Contains(application.Id));
         })]);
@@ -202,8 +203,9 @@ internal static class RatingEndpoints
             application.Id,
             (await employees.FindAsync(application.EmployeeId, cancellationToken))!.FullName,
             stage,
+            SessionDatesResponse.From(wave, stage),
             IsOpen(stage, application),
-            [.. version.Competencies.Select(competency => new TargetFormCompetencyResponse(competency.Id, competency.Name, competency.ScalePoints))],
+            [.. version.Competencies.Select(competency => TargetFormCompetencyResponse.Of(version, competency, withRequirements: false))],
             own.Count == 0 ? null : [.. own.Select(answer => new RatingAnswerInput(answer.CompetencyId, answer.Score))]);
     }
 

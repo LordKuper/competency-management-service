@@ -68,6 +68,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/promotion/commissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListPromotionCommissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit": {
         parameters: {
             query?: never;
@@ -2037,6 +2053,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/promotion/waves/{waveId}/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetPromotionSession"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/promotion/waves/{waveId}/head/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListPromotionHeadCandidates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/promotion/waves/{waveId}/targets/{matrixId}": {
         parameters: {
             query?: never;
@@ -2345,6 +2393,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ApplicationCountsResponse: {
+            /** Format: int32 */
+            all: number;
+            /** Format: int32 */
+            needsFormalData: number;
+            byStatus: components["schemas"]["ApplicationStatusCountResponse"][];
+        };
         ApplicationFormalResponse: {
             /** Format: date */
             hiredOrPromotedOn: null | string;
@@ -2352,6 +2407,16 @@ export interface components {
             ignoreIntervalByName: null | string;
             /** Format: date-time */
             ignoreIntervalAt: null | string;
+        };
+        ApplicationPageResponse: {
+            items: components["schemas"]["ApplicationSummaryResponse"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            counts: components["schemas"]["ApplicationCountsResponse"];
         };
         ApplicationRequest: {
             /** Format: uuid */
@@ -2369,6 +2434,7 @@ export interface components {
             waveId: string;
             /** Format: int32 */
             stage: number;
+            session: components["schemas"]["SessionDatesResponse"];
             status: components["schemas"]["ApplicationStatus"];
             roles: components["schemas"]["ApplicationRole"][];
             /** Format: uuid */
@@ -2379,6 +2445,7 @@ export interface components {
             selfScores: components["schemas"]["SelfScoreResponse"][];
             preliminaryRating: null | components["schemas"]["PreliminaryRatingResponse"];
             raters: null | components["schemas"]["RaterResponse"][];
+            raterCounts: null | components["schemas"]["RaterCountsResponse"];
             formal: null | components["schemas"]["ApplicationFormalResponse"];
             formalFailures: components["schemas"]["FormalFailure"][];
             warnings: components["schemas"]["FormalFailure"][];
@@ -2399,6 +2466,11 @@ export interface components {
         ApplicationRole: string;
         /** @enum {unknown} */
         ApplicationStatus: "Draft" | "Submitted" | "Admitted" | "FormalRejected" | "UnderReview" | "Decided" | "NoDecision" | "Withdrawn";
+        ApplicationStatusCountResponse: {
+            status: components["schemas"]["ApplicationStatus"];
+            /** Format: int32 */
+            count: number;
+        };
         ApplicationSummaryResponse: {
             /** Format: uuid */
             id: string;
@@ -2415,6 +2487,10 @@ export interface components {
             target: components["schemas"]["ApplicationTargetResponse"];
             /** Format: date-time */
             submittedAt: string;
+            formalCheck: null | components["schemas"]["FormalCheckResponse"];
+            formalFailures: components["schemas"]["FormalFailure"][];
+            needsFormalData: boolean;
+            raterCounts: null | components["schemas"]["RaterCountsResponse"];
             decision: null | components["schemas"]["PromotionDecision"];
         };
         ApplicationTargetResponse: {
@@ -2569,6 +2645,21 @@ export interface components {
             id: string;
             name: string;
         };
+        /** @description A shared block a matrix version includes, as the version froze it. */
+        CareerVersionBlock: {
+            /**
+             * Format: uuid
+             * @description The block identifier.
+             */
+            id: string;
+            /** @description The block name. */
+            name: string;
+            /**
+             * Format: int32
+             * @description The place of the block among the version's blocks, from 0, in the order the version includes them.
+             */
+            order: number;
+        };
         CatalogDraftResponse: {
             kind: components["schemas"]["CatalogEntryKind"];
             /** Format: uuid */
@@ -2635,6 +2726,15 @@ export interface components {
             /** Format: uuid */
             chairEmployeeId: null | string;
             members: components["schemas"]["CommissionMemberResponse"][];
+        };
+        CommissionSummaryResponse: {
+            /** Format: uuid */
+            unitId: string;
+            unitName: string;
+            /** Format: int32 */
+            memberCount: number;
+            hasChair: boolean;
+            chairName: null | string;
         };
         CompetencyBlockRequest: {
             /** Format: uuid */
@@ -3004,6 +3104,21 @@ export interface components {
             hiredOrPromotedOn: string;
             ignoreInterval: boolean;
         };
+        HeadCandidateResponse: {
+            /** Format: uuid */
+            applicationId: string;
+            /** Format: uuid */
+            candidateEmployeeId: string;
+            candidateName: string;
+            target: components["schemas"]["ApplicationTargetResponse"];
+            status: components["schemas"]["ApplicationStatus"];
+            canEditRaters: boolean;
+            raterCounts: components["schemas"]["RaterCountsResponse"];
+        };
+        HeadCandidatesResponse: {
+            session: components["schemas"]["SessionDatesResponse"];
+            candidates: components["schemas"]["HeadCandidateResponse"][];
+        };
         HttpValidationProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -3057,6 +3172,12 @@ export interface components {
         LevelPositionRequest: {
             /** Format: uuid */
             positionId: string;
+        };
+        LevelRequirementResponse: {
+            /** Format: uuid */
+            levelId: string;
+            /** Format: int32 */
+            requiredScore: number;
         };
         LinkedPositionResponse: {
             /** Format: uuid */
@@ -3468,6 +3589,8 @@ export interface components {
             /** Format: date */
             startsOn: string;
             endsOn: string[];
+            /** Format: date */
+            resultsPublishedOn: string;
             /** Format: int32 */
             stage: number;
             units: components["schemas"]["OpenWaveUnitResponse"][];
@@ -3599,15 +3722,6 @@ export interface components {
             headName: null | string;
             /** Format: int32 */
             employeeCount: number;
-        };
-        PageResponseOfApplicationSummaryResponse: {
-            items: components["schemas"]["ApplicationSummaryResponse"][];
-            /** Format: int32 */
-            total: number;
-            /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            pageSize: number;
         };
         PageResponseOfAvailablePositionResponse: {
             items: components["schemas"]["AvailablePositionResponse"][];
@@ -3862,6 +3976,22 @@ export interface components {
             isReady: boolean;
             decision: null | components["schemas"]["PromotionDecision"];
         };
+        RaterCountsResponse: {
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            requiredTotal: number;
+            /** Format: int32 */
+            fromOtherUnits: number;
+            /** Format: int32 */
+            requiredFromOtherUnits: number;
+            /** Format: int32 */
+            missingTotal: number;
+            /** Format: int32 */
+            missingFromOtherUnits: number;
+            /** Format: int32 */
+            pendingEmailCount: number;
+        };
         RaterEmailRequest: {
             email: string;
         };
@@ -3878,6 +4008,8 @@ export interface components {
             /** Format: uuid */
             employeeId: string;
             fullName: string;
+            unitName: string;
+            isFromOtherUnit: boolean;
             source: components["schemas"]["RaterSource"];
             hasAccount: boolean;
             email: null | string;
@@ -3905,6 +4037,7 @@ export interface components {
             candidateName: string;
             /** Format: int32 */
             stage: number;
+            session: components["schemas"]["SessionDatesResponse"];
             canEdit: boolean;
             competencies: components["schemas"]["TargetFormCompetencyResponse"][];
             answers: null | components["schemas"]["RatingAnswerInput"][];
@@ -3917,6 +4050,7 @@ export interface components {
             candidateName: string;
             /** Format: int32 */
             stage: number;
+            session: components["schemas"]["SessionDatesResponse"];
             canRate: boolean;
             isRated: boolean;
         };
@@ -3941,7 +4075,9 @@ export interface components {
             /** Format: uuid */
             competencyId: string;
             name: string;
+            description: null | string;
             type: components["schemas"]["CompetencyType"];
+            block: null | components["schemas"]["CareerVersionBlock"];
             /** Format: int32 */
             requiredScore: null | number;
             scalePoints: components["schemas"]["ScalePoint"][];
@@ -3951,6 +4087,8 @@ export interface components {
             change: null | components["schemas"]["ReviewCompetencyChangeResponse"];
             artifact: null | components["schemas"]["ArtifactResponse"];
             isArtifactMandatory: boolean;
+            /** Format: int32 */
+            defaultFinalScore: null | number;
             /** Format: int32 */
             finalScore: null | number;
             isMet: null | boolean;
@@ -3999,6 +4137,7 @@ export interface components {
             waveId: string;
             /** Format: int32 */
             stage: number;
+            session: components["schemas"]["SessionDatesResponse"];
             status: components["schemas"]["ApplicationStatus"];
             roles: components["schemas"]["ApplicationRole"][];
             /** Format: uuid */
@@ -4011,6 +4150,7 @@ export interface components {
             meetsAfterRating: null | boolean;
             artifactsMissing: boolean;
             competencies: components["schemas"]["ReviewCompetencyResponse"][];
+            raterCounts: components["schemas"]["RaterCountsResponse"];
             /** Format: double */
             rating: number;
             isRatingFromFinalScores: boolean;
@@ -4065,8 +4205,25 @@ export interface components {
             /** Format: uuid */
             competencyId: string;
             competencyName: string;
+            description: null | string;
+            type: components["schemas"]["CompetencyType"];
+            block: null | components["schemas"]["CareerVersionBlock"];
+            /** Format: int32 */
+            requiredScore: null | number;
+            scalePoints: components["schemas"]["ScalePoint"][];
             /** Format: int32 */
             score: number;
+        };
+        SessionDatesResponse: {
+            /** Format: uuid */
+            waveId: string;
+            /** Format: int32 */
+            stage: number;
+            /** Format: date */
+            startsOn: string;
+            endsOn: string[];
+            /** Format: date */
+            resultsPublishedOn: string;
         };
         SettingsRequest: {
             /** Format: int32 */
@@ -4082,7 +4239,11 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            description: null | string;
+            type: components["schemas"]["CompetencyType"];
+            block: null | components["schemas"]["CareerVersionBlock"];
             scalePoints: components["schemas"]["ScalePoint"][];
+            requirements: components["schemas"]["LevelRequirementResponse"][];
         };
         TargetFormLevelResponse: {
             /** Format: uuid */
@@ -4373,6 +4534,44 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListPromotionCommissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionSummaryResponse"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14714,6 +14913,9 @@ export interface operations {
             query?: {
                 page?: number;
                 pageSize?: number;
+                status?: components["schemas"]["ApplicationStatus"];
+                needsFormalData?: boolean;
+                search?: string;
             };
             header?: never;
             path: {
@@ -14729,7 +14931,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PageResponseOfApplicationSummaryResponse"];
+                    "application/json": components["schemas"]["ApplicationPageResponse"];
                 };
             };
             /** @description Bad Request */
@@ -14739,6 +14941,82 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetPromotionSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                waveId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDatesResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ListPromotionHeadCandidates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                waveId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HeadCandidatesResponse"];
                 };
             };
             /** @description Unauthorized */

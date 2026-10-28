@@ -13,8 +13,16 @@ namespace Competency.Promotion;
 /// </summary>
 internal sealed class ApplicationRules(AppDbContext context, ICareerModel career, IEmployeeDirectory employees, IUserDirectory users, RaterExclusions exclusions)
 {
-    private const int MinRaters = 5;
-    private const int MinRatersOutsideUnit = 2;
+    /// <summary>
+    /// The raters a filed application needs, at the least.
+    /// </summary>
+    public const int MinRaters = 5;
+
+    /// <summary>
+    /// The raters from units other than the candidate's own a filed application needs, at the least.
+    /// </summary>
+    public const int MinRatersOutsideUnit = 2;
+
     private const string MatrixField = "matrixId";
     private const string LevelField = "levelId";
     private const string ScoresField = "selfScores";

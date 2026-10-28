@@ -49,6 +49,7 @@ internal sealed class OpenWaves(
             wave.Id,
             wave.StartsOn,
             wave.EndsOn,
+            wave.ResultsPublishedOn,
             calendar.StageOf(wave),
             [.. members
                 .Where(member => member.WaveId == wave.Id)

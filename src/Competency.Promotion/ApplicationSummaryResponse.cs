@@ -12,6 +12,10 @@ namespace Competency.Promotion;
 /// <param name="CandidateName">The candidate's full name.</param>
 /// <param name="Target">The level the application aims at.</param>
 /// <param name="SubmittedAt">When the application was filed.</param>
+/// <param name="FormalCheck">What the formal check would decide now, while the application waits for it; null for those who do not see the formal data.</param>
+/// <param name="FormalFailures">The conditions of the formal check the application did not meet, once the stage that checks it has ended; empty for those who do not see the formal data.</param>
+/// <param name="NeedsFormalData">Whether the application is filed and still lacks the date for the formal check; false for those who do not see the formal data.</param>
+/// <param name="RaterCounts">The raters listed against what is needed; null for those who do not see the raters.</param>
 /// <param name="Decision">The decision of the commission, as the reader may know it: a candidate learns it when the results are published.</param>
 internal sealed record ApplicationSummaryResponse(
     Guid Id,
@@ -23,4 +27,8 @@ internal sealed record ApplicationSummaryResponse(
     string CandidateName,
     ApplicationTargetResponse Target,
     DateTimeOffset SubmittedAt,
+    FormalCheckResponse? FormalCheck,
+    IReadOnlyList<FormalFailure> FormalFailures,
+    bool NeedsFormalData,
+    RaterCountsResponse? RaterCounts,
     PromotionDecision? Decision);

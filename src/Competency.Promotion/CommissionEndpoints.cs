@@ -1,3 +1,5 @@
+using Competency.CareerFramework;
+using Competency.OrgStructure;
 using Competency.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -29,10 +31,42 @@ internal static class CommissionEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        endpoints.MapGet("/api/v1/promotion/commissions", ListAsync).WithName("ListPromotionCommissions")
+            .WithTags(Tag)
+            .RequireAuthorization(AuthorizationPolicies.GlobalAdminOrHr)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
         group.MapGet(string.Empty, GetAsync).WithName("GetPromotionCommission").ProducesETag();
         group.MapPut(string.Empty, UpdateAsync).WithName("UpdatePromotionCommission").ProducesETag()
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
+    }
+
+    /// <summary>
+    /// Lists the commissions of the units the signed-in user answers for, all the working units for a global administrator, with the number of members and
+    /// whether the unit has a chair.
+    /// </summary>
+    private static async Task<Ok<IReadOnlyList<CommissionSummaryResponse>>> ListAsync(
+        CommissionReader reader,
+        IEmployeeDirectory employees,
+        ICareerModel career,
+        ICurrentActor actor,
+        CancellationToken cancellationToken)
+    {
+        IReadOnlyList<OrgUnitStatus> units = actor.IsGlobalAdmin()
+            ? [.. (await employees.FindOrgSnapshotAsync(cancellationToken)).Units.Values.Where(unit => unit.IsActive)]
+            : actor.UserId is { } userId ? await career.ResponsibleUnitsAsync(userId, cancellationToken) : [];
+        var rosters = await reader.ReadAsync([.. units.Select(unit => unit.Id)], cancellationToken);
+        return TypedResults.Ok<IReadOnlyList<CommissionSummaryResponse>>([.. units
+            .Select(unit => rosters[unit.Id])
+            .Select(roster => new CommissionSummaryResponse(
+                roster.UnitId,
+                roster.UnitName,
+                roster.Members.Count,
+                roster.ChairEmployeeId is not null,
+                roster.Members.FirstOrDefault(member => member.EmployeeId == roster.ChairEmployeeId)?.FullName))
+            .OrderBy(row => row.UnitName, TextCollation.Comparer)
+            .ThenBy(row => row.UnitId)]);
     }
 
     private static async Task<Results<Ok<CommissionResponse>, NotFound>> GetAsync(

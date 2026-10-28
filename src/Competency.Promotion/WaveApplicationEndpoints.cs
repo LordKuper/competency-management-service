@@ -21,6 +21,9 @@ internal static class WaveApplicationEndpoints
     private const string Tag = "Promotion";
     private const int SubmissionStage = 1;
 
+    private static readonly ApplicationStatus[] HeadStatuses =
+        [ApplicationStatus.Submitted, ApplicationStatus.Admitted, ApplicationStatus.UnderReview, ApplicationStatus.Decided, ApplicationStatus.NoDecision];
+
     public static void Map(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(Route)
@@ -30,12 +33,14 @@ internal static class WaveApplicationEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapGet("/applications", ListAsync).WithName("ListPromotionWaveApplications");
+        group.MapGet("/session", GetSessionAsync).WithName("GetPromotionSession");
+        group.MapGet("/head/candidates", ListHeadCandidatesAsync).WithName("ListPromotionHeadCandidates");
         group.MapGet("/targets/{matrixId:guid}", GetTargetAsync).WithName("GetPromotionTargetForm").ProducesProblem(StatusCodes.Status403Forbidden);
     }
 
-    private static async Task<Results<Ok<PageResponse<ApplicationSummaryResponse>>, NotFound, ValidationProblem>> ListAsync(
+    private static async Task<Results<Ok<ApplicationPageResponse>, NotFound, ValidationProblem>> ListAsync(
         Guid waveId,
-        [AsParameters] WaveListQuery query,
+        [AsParameters] ApplicationListQuery query,
         AppDbContext context,
         ApplicationAccess access,
         ApplicationReader reader,
@@ -67,9 +72,87 @@ internal static class WaveApplicationEndpoints
             applications = applications.Where(application => visibleUnitIds.Contains(application.OrgUnitId));
         }
 
-        var page = await applications.OrderBy(application => application.CreatedAt).ThenBy(application => application.Id).ToPageAsync(query.Page, query.PageSize, cancellationToken);
-        var items = await reader.SummariesAsync([.. page.Items], new Dictionary<Guid, PromotionWave> { [wave.Id] = wave }, viewer, cancellationToken);
-        return TypedResults.Ok(new PageResponse<ApplicationSummaryResponse>(items, page.Total, page.Page, page.PageSize));
+        var seen = (await applications.OrderBy(application => application.CreatedAt).ThenBy(application => application.Id).ToListAsync(cancellationToken))
+            .Where(application => viewer.RolesOf(application) != ApplicationRole.None)
+            .ToList();
+        var rows = await reader.SummariesAsync(seen, new Dictionary<Guid, PromotionWave> { [wave.Id] = wave }, viewer, cancellationToken);
+        var search = query.Search?.Trim();
+        var searched = string.IsNullOrEmpty(search) ? rows : [.. rows.Where(row => row.CandidateName.Contains(search, StringComparison.OrdinalIgnoreCase))];
+        var counts = new ApplicationCountsResponse(
+            searched.Count,
+            searched.Count(row => row.NeedsFormalData),
+            [.. searched.GroupBy(row => row.Status).OrderBy(group => group.Key).Select(group => new ApplicationStatusCountResponse(group.Key, group.Count()))]);
+        var matching = searched.Where(row => (query.Status is null || row.Status == query.Status) && (query.NeedsFormalData != true || row.NeedsFormalData)).ToList();
+        return TypedResults.Ok(new ApplicationPageResponse(
+            [.. matching.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize)],
+            matching.Count,
+            query.Page,
+            query.PageSize,
+            counts));
+    }
+
+    /// <summary>
+    /// Reads the dates of a session for everyone who has a part in it: a manager of the wave, a member of a commission of its units, a candidate or a rater.
+    /// </summary>
+    private static async Task<Results<Ok<SessionDatesResponse>, NotFound>> GetSessionAsync(
+        Guid waveId,
+        AppDbContext context,
+        ApplicationAccess access,
+        PromotionCalendar calendar,
+        CancellationToken cancellationToken)
+    {
+        var wave = await context.Set<PromotionWave>().AsNoTracking().FirstOrDefaultAsync(candidate => candidate.Id == waveId, cancellationToken);
+        if (wave is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var unitIds = await context.Set<PromotionWaveUnit>().AsNoTracking().Where(member => member.WaveId == waveId).Select(member => member.OrgUnitId).ToListAsync(cancellationToken);
+        var viewer = await access.ViewerAsync(wave, unitIds, cancellationToken);
+        var hasPart = viewer.WaveRoles != ApplicationRole.None
+            || viewer.UnitRoles.Any(unit => unit.Value != ApplicationRole.None)
+            || (viewer.EmployeeId is { } employeeId
+                && await context.Set<PromotionApplication>().AnyAsync(
+                    application => application.WaveId == waveId
+                        && (application.EmployeeId == employeeId
+                            || context.Set<PromotionRater>().Any(rater => rater.ApplicationId == application.Id && rater.EmployeeId == employeeId)),
+                    cancellationToken));
+        return hasPart ? TypedResults.Ok(SessionDatesResponse.From(wave, calendar.StageOf(wave))) : TypedResults.NotFound();
+    }
+
+    /// <summary>
+    /// Lists the candidates of the units the signed-in user heads in a wave, with how complete the lists of their raters are; the units of a head are the
+    /// ones the commission roster names. Drafts, withdrawn and formally rejected applications are left out.
+    /// </summary>
+    private static async Task<Results<Ok<HeadCandidatesResponse>, NotFound>> ListHeadCandidatesAsync(
+        Guid waveId,
+        AppDbContext context,
+        ApplicationAccess access,
+        ApplicationReader reader,
+        PromotionCalendar calendar,
+        CancellationToken cancellationToken)
+    {
+        var wave = await context.Set<PromotionWave>().AsNoTracking().FirstOrDefaultAsync(candidate => candidate.Id == waveId, cancellationToken);
+        if (wave is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var unitIds = await context.Set<PromotionWaveUnit>().AsNoTracking().Where(member => member.WaveId == waveId).Select(member => member.OrgUnitId).ToListAsync(cancellationToken);
+        var viewer = await access.ViewerAsync(wave, unitIds, cancellationToken);
+        var headed = viewer.UnitRoles.Where(unit => unit.Value.HasFlag(ApplicationRole.Head)).Select(unit => unit.Key).ToArray();
+        if (headed.Length == 0)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var applications = await context.Set<PromotionApplication>()
+            .AsNoTracking()
+            .Where(application => application.WaveId == waveId && headed.Contains(application.OrgUnitId) && HeadStatuses.Contains(application.Status))
+            .ToListAsync(cancellationToken);
+        return TypedResults.Ok(new HeadCandidatesResponse(
+            SessionDatesResponse.From(wave, calendar.StageOf(wave)),
+            await reader.HeadCandidatesAsync(applications, wave, cancellationToken)));
     }
 
     private static async Task<Results<Ok<TargetFormResponse>, NotFound, ProblemHttpResult>> GetTargetAsync(
@@ -105,6 +188,6 @@ internal static class WaveApplicationEndpoints
             matrix.TrackName,
             candidate.Education,
             [.. version.Levels.Where(level => allowed.Contains(level.Id)).OrderBy(level => level.Order).Select(level => new TargetFormLevelResponse(level.Id, level.Name, level.RequiredEducation))],
-            [.. version.Competencies.Select(competency => new TargetFormCompetencyResponse(competency.Id, competency.Name, competency.ScalePoints))]));
+            [.. version.Competencies.Select(competency => TargetFormCompetencyResponse.Of(version, competency, withRequirements: true))]));
     }
 }
