@@ -61,3 +61,5 @@
 {"op":"close","id":"Task 16 mockups","kind":"user-wait","parent":"impl#1","start":"2026-10-28T12:53:39.992Z","end":"2026-10-28T13:00:40.546Z","outcome":"done","attrs":{"gate":"mockup-approval"}}
 {"op":"open","id":"Task 16 mockups r2","kind":"user-wait","parent":"impl#1","start":"2026-10-28T13:00:40.650Z","attrs":{"gate":"mockup-approval"}}
 {"op":"close","id":"Task 16 mockups r2","kind":"user-wait","parent":"impl#1","start":"2026-10-28T13:00:40.650Z","end":"2026-10-28T20:57:20.136Z","outcome":"done","attrs":{"gate":"mockup-approval"}}
+{"op":"open","id":"Task 18","kind":"dispatch","parent":"impl#1","start":"2026-10-28T21:00:36.225Z","attrs":{}}
+{"op":"close","id":"Task 18","kind":"dispatch","parent":"impl#1","start":"2026-10-28T21:00:36.225Z","end":"2026-10-28T21:09:41.302Z","outcome":"done","attrs":{}}
