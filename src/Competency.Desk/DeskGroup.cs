@@ -13,6 +13,12 @@ internal enum DeskGroup
     VersionsToApprove,
     UnsubmittedVersions,
     DraftsToApprove,
+    PromotionDecisions,
+    PromotionFormalChecks,
+    PromotionRatings,
+    PromotionRaters,
+    PromotionArtifacts,
+    PromotionFeedback,
     MatricesToBuild,
     PositionsToLink,
     UnitsToConnect,
@@ -29,4 +35,5 @@ internal enum DeskGroup
     UnusedPositions,
     EmptyUnits,
     NoTrack,
+    PromotionOpenWaves,
 }

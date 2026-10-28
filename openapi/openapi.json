@@ -16864,6 +16864,22 @@
               "boolean"
             ],
             "description": "Whether the account the reason is about has the HR role."
+          },
+          "applicationCount": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The number of promotion applications the reason counts.",
+            "format": "int32"
+          },
+          "until": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The last day of the promotion stage the reason names.",
+            "format": "date"
           }
         },
         "description": "The values a desk finding's reason names; the client words the reason from its kind, so each kind fills only the values it names."
@@ -16874,6 +16890,12 @@
           "VersionsToApprove",
           "UnsubmittedVersions",
           "DraftsToApprove",
+          "PromotionDecisions",
+          "PromotionFormalChecks",
+          "PromotionRatings",
+          "PromotionRaters",
+          "PromotionArtifacts",
+          "PromotionFeedback",
           "MatricesToBuild",
           "PositionsToLink",
           "UnitsToConnect",
@@ -16889,7 +16911,8 @@
           "InactivePositions",
           "UnusedPositions",
           "EmptyUnits",
-          "NoTrack"
+          "NoTrack",
+          "PromotionOpenWaves"
         ]
       },
       "DeskGroupResponse": {
@@ -17041,7 +17064,14 @@
           "PositionOutsideList",
           "NoTrackForPosition",
           "AccountWithoutEmployee",
-          "InvitationNotAccepted"
+          "InvitationNotAccepted",
+          "PromotionWaveOpen",
+          "PromotionArtifactsRequired",
+          "PromotionFeedbackPending",
+          "PromotionRatingRequested",
+          "PromotionRatersReview",
+          "PromotionFormalCheckPending",
+          "PromotionDecisionsPending"
         ],
         "description": "What a desk finding is. Variants of one finding that the desk absorbs differently are separate members.\r\nMember names are sent in the API, so renaming one changes it; a new member also needs its place in the desk's rules."
       },
@@ -17100,7 +17130,9 @@
           "Block",
           "Position",
           "Employee",
-          "UserAccount"
+          "UserAccount",
+          "PromotionWave",
+          "PromotionApplication"
         ],
         "description": "The kinds of records desk findings are about or name. Member names are sent in the API, so renaming one changes it."
       },

@@ -30,7 +30,8 @@ internal static class DeskRules
 
     /// <summary>
     /// The order of an item's reasons, the most important first. Kinds of different object types never share an item,
-    /// so one list holds the order of every type: matrices, units, tracks and draft entries, unused entries, positions, employees, accounts.
+    /// so one list holds the order of every type: matrices, units, tracks and draft entries, unused entries, positions, employees, accounts,
+    /// promotion waves, promotion applications.
     /// </summary>
     private static readonly DeskKind[] ReasonOrder =
     [
@@ -43,6 +44,8 @@ internal static class DeskRules
         PositionWithoutTrack, InactivePositionInUse, UnusedPosition,
         PositionOutsideList, NoTrackForPosition,
         AccountWithoutEmployee, InvitationNotAccepted,
+        PromotionFormalCheckPending, PromotionWaveOpen,
+        PromotionDecisionsPending, PromotionRatingRequested, PromotionRatersReview, PromotionArtifactsRequired, PromotionFeedbackPending,
     ];
 
     private static readonly Dictionary<DeskKind, int> RankOf = ReasonOrder.Select((kind, rank) => (kind, rank)).ToDictionary(pair => pair.kind, pair => pair.rank);
@@ -148,6 +151,13 @@ internal static class DeskRules
         UnusedPosition => DeskGroup.UnusedPositions,
         EmptyUnit => DeskGroup.EmptyUnits,
         NoTrackForPosition => DeskGroup.NoTrack,
+        PromotionDecisionsPending => DeskGroup.PromotionDecisions,
+        PromotionFormalCheckPending => DeskGroup.PromotionFormalChecks,
+        PromotionRatingRequested => DeskGroup.PromotionRatings,
+        PromotionRatersReview => DeskGroup.PromotionRaters,
+        PromotionArtifactsRequired => DeskGroup.PromotionArtifacts,
+        PromotionFeedbackPending => DeskGroup.PromotionFeedback,
+        PromotionWaveOpen => DeskGroup.PromotionOpenWaves,
         _ => throw new ArgumentOutOfRangeException(nameof(first), first.Kind, "The desk has no group for this kind."),
     };
 

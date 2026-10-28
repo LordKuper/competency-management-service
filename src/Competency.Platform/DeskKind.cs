@@ -188,4 +188,39 @@ public enum DeskKind
     /// An invited account did not accept the invitation, and its link no longer works or soon will not; dated by the link's expiry.
     /// </summary>
     InvitationNotAccepted,
+
+    /// <summary>
+    /// A promotion wave takes applications and the user has none in it; for reference, closing on the last day of the stage.
+    /// </summary>
+    PromotionWaveOpen,
+
+    /// <summary>
+    /// The user's application must be given artifacts for competencies the raters' averages left unmet, and some are still missing.
+    /// </summary>
+    PromotionArtifactsRequired,
+
+    /// <summary>
+    /// The user's application has its result, and the user has not yet marked that the feedback was received.
+    /// </summary>
+    PromotionFeedbackPending,
+
+    /// <summary>
+    /// The user is asked to rate a candidate and has not answered yet.
+    /// </summary>
+    PromotionRatingRequested,
+
+    /// <summary>
+    /// The user heads the unit of a candidate's target while the raters are rating, and may review the list of raters.
+    /// </summary>
+    PromotionRatersReview,
+
+    /// <summary>
+    /// Filed applications to the units the user is the responsible HR of wait for the date of the formal check.
+    /// </summary>
+    PromotionFormalCheckPending,
+
+    /// <summary>
+    /// An application before the commission the user chairs has no decision yet.
+    /// </summary>
+    PromotionDecisionsPending,
 }

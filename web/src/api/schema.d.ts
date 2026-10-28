@@ -2677,9 +2677,19 @@ export interface components {
             movedLevels?: null | components["schemas"]["DeskObject"][];
             /** @description Whether the account the reason is about has the HR role. */
             hasHrRole?: null | boolean;
+            /**
+             * Format: int32
+             * @description The number of promotion applications the reason counts.
+             */
+            applicationCount?: null | number;
+            /**
+             * Format: date
+             * @description The last day of the promotion stage the reason names.
+             */
+            until?: null | string;
         };
         /** @enum {unknown} */
-        DeskGroup: "ReturnedVersions" | "VersionsToApprove" | "UnsubmittedVersions" | "DraftsToApprove" | "MatricesToBuild" | "PositionsToLink" | "UnitsToConnect" | "Invitations" | "OrgCleanup" | "UnitsWithoutMatrix" | "VersionsInApproval" | "StuckVersions" | "ChangedCompetencies" | "OwnDrafts" | "PositionLinksInfo" | "UnusedCatalogEntries" | "InactivePositions" | "UnusedPositions" | "EmptyUnits" | "NoTrack";
+        DeskGroup: "ReturnedVersions" | "VersionsToApprove" | "UnsubmittedVersions" | "DraftsToApprove" | "PromotionDecisions" | "PromotionFormalChecks" | "PromotionRatings" | "PromotionRaters" | "PromotionArtifacts" | "PromotionFeedback" | "MatricesToBuild" | "PositionsToLink" | "UnitsToConnect" | "Invitations" | "OrgCleanup" | "UnitsWithoutMatrix" | "VersionsInApproval" | "StuckVersions" | "ChangedCompetencies" | "OwnDrafts" | "PositionLinksInfo" | "UnusedCatalogEntries" | "InactivePositions" | "UnusedPositions" | "EmptyUnits" | "NoTrack" | "PromotionOpenWaves";
         DeskGroupResponse: {
             group: components["schemas"]["DeskGroup"];
             isReference: boolean;
@@ -2718,7 +2728,7 @@ export interface components {
          *     Member names are sent in the API, so renaming one changes it; a new member also needs its place in the desk's rules.
          * @enum {unknown}
          */
-        DeskKind: "VersionReturned" | "VersionNotSubmitted" | "VersionAwaitsHeadApproval" | "VersionAwaitsHrApproval" | "MatrixLevelsChanged" | "MatrixUsesInactive" | "MatrixCompetencyChanged" | "MatrixSharedBlockChanged" | "OwnVersionInApproval" | "VersionStuckAtHead" | "UnitWithoutMatrix" | "ResponsibleUnitWithoutMatrix" | "UnitWithoutHead" | "ResponsibleUnitWithoutHead" | "UnitWithoutHr" | "UnitWithoutPositions" | "HeadWithoutAccount" | "HeadAccountInvited" | "HeadAccountBlocked" | "EmptyUnit" | "DraftAwaitsApproval" | "TrackWithoutLevels" | "TrackWithOneLevel" | "TrackWithoutPositions" | "LevelWithoutPosition" | "OwnDraftAwaitsApproval" | "UnusedCompetency" | "UnusedScale" | "DirectionWithoutTracks" | "PositionWithoutTrack" | "InactivePositionInUse" | "UnusedPosition" | "PositionOutsideList" | "NoTrackForPosition" | "AccountWithoutEmployee" | "InvitationNotAccepted";
+        DeskKind: "VersionReturned" | "VersionNotSubmitted" | "VersionAwaitsHeadApproval" | "VersionAwaitsHrApproval" | "MatrixLevelsChanged" | "MatrixUsesInactive" | "MatrixCompetencyChanged" | "MatrixSharedBlockChanged" | "OwnVersionInApproval" | "VersionStuckAtHead" | "UnitWithoutMatrix" | "ResponsibleUnitWithoutMatrix" | "UnitWithoutHead" | "ResponsibleUnitWithoutHead" | "UnitWithoutHr" | "UnitWithoutPositions" | "HeadWithoutAccount" | "HeadAccountInvited" | "HeadAccountBlocked" | "EmptyUnit" | "DraftAwaitsApproval" | "TrackWithoutLevels" | "TrackWithOneLevel" | "TrackWithoutPositions" | "LevelWithoutPosition" | "OwnDraftAwaitsApproval" | "UnusedCompetency" | "UnusedScale" | "DirectionWithoutTracks" | "PositionWithoutTrack" | "InactivePositionInUse" | "UnusedPosition" | "PositionOutsideList" | "NoTrackForPosition" | "AccountWithoutEmployee" | "InvitationNotAccepted" | "PromotionWaveOpen" | "PromotionArtifactsRequired" | "PromotionFeedbackPending" | "PromotionRatingRequested" | "PromotionRatersReview" | "PromotionFormalCheckPending" | "PromotionDecisionsPending";
         /** @enum {unknown} */
         DeskLinkState: "Expired" | "ExpiringSoon" | "Revoked" | null;
         /** @description A record a desk finding is about or names, with what the desk shows of it. */
@@ -2739,7 +2749,7 @@ export interface components {
          * @description The kinds of records desk findings are about or name. Member names are sent in the API, so renaming one changes it.
          * @enum {unknown}
          */
-        DeskObjectType: "Matrix" | "MatrixVersion" | "OrgUnit" | "Track" | "Level" | "Direction" | "Competency" | "Scale" | "Block" | "Position" | "Employee" | "UserAccount";
+        DeskObjectType: "Matrix" | "MatrixVersion" | "OrgUnit" | "Track" | "Level" | "Direction" | "Competency" | "Scale" | "Block" | "Position" | "Employee" | "UserAccount" | "PromotionWave" | "PromotionApplication";
         /**
          * @description A fact about the current data that a desk scenario needs before the user can start it.
          *     Member names are sent in the API, so renaming one changes it; a new member also needs a source that knows it.

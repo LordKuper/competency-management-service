@@ -14,7 +14,7 @@ public static class PromotionModule
     /// Registers the Promotion module services. Its tables refer to units, employees, accounts and matrices, and it reads the career model, so the host adds the module
     /// after OrgStructure, UserManagement and CareerFramework. It also implements <see cref="IUnitReferences"/> for the unit module and
     /// requires <see cref="AppOptions.TimeZone"/> to name a time zone the host knows. It also runs the scheduler that moves waves from stage to stage
-    /// and the queue that sends their letters.
+    /// and the queue that sends their letters, and contributes the waves' findings to the desk.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
     /// <returns>The same collection, for chaining.</returns>
@@ -44,6 +44,7 @@ public static class PromotionModule
         services.AddSingleton<PromotionTick>();
         services.AddHostedService<PromotionScheduler>();
         services.AddScoped<IUnitReferences, PromotionUnitReferences>();
+        services.AddScoped<IDeskSource, PromotionDeskSource>();
         return services;
     }
 
