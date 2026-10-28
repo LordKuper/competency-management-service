@@ -230,6 +230,12 @@
       "tier": "standard",
       "reason": "risk:data migration",
       "resolved_model": "sonnet"
+    },
+    "Task 19": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:public contract",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
