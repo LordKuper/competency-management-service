@@ -39,6 +39,7 @@ function employeeOf(assignments: EmployeeAssignment[] = []): Employee {
     lastName: "Иванов",
     firstName: "Иван",
     middleName: null,
+    education: null,
     fullName: "Иванов Иван",
     email: null,
     orgUnitId: "sales",

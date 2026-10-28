@@ -1,4 +1,5 @@
 using Competency.CareerFramework;
+using Competency.OrgStructure;
 
 namespace Competency.Promotion;
 

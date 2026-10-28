@@ -156,6 +156,7 @@ internal static class EmployeeEndpoints
             LastName = input.LastName,
             FirstName = input.FirstName,
             MiddleName = input.MiddleName,
+            Education = input.Education,
             PositionId = input.PositionId,
             OrgUnit = unit,
         };
@@ -211,6 +212,7 @@ internal static class EmployeeEndpoints
         employee.LastName = input.LastName;
         employee.FirstName = input.FirstName;
         employee.MiddleName = input.MiddleName;
+        employee.Education = input.Education;
         employee.PositionId = input.PositionId;
         employee.OrgUnit = unit;
         assignmentChange.Apply();

@@ -17,6 +17,16 @@ public interface IEmployeeDirectory
     Task<EmployeeStatus?> FindAsync(Guid employeeId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Sets the level of an employee's education on the context's tracked employee; it is stored with the caller's next save of the
+    /// context, in the caller's own transaction, and the employee's version and journal follow as for any other change.
+    /// </summary>
+    /// <param name="employeeId">The employee identifier.</param>
+    /// <param name="education">The level; <see langword="null"/> clears it.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns><see langword="false"/> when no such employee exists.</returns>
+    Task<bool> SetEducationAsync(Guid employeeId, EducationLevel? education, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Finds many employees in one query.
     /// </summary>
     /// <param name="employeeIds">The employee identifiers.</param>

@@ -80,6 +80,33 @@ internal sealed class CareerModel(AppDbContext context, ProcessRoles roles, IEmp
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<Guid>>> AllowedTargetLevelsAsync(
+        Guid positionId,
+        IReadOnlyCollection<PublishedTrackMatrix> matrices,
+        CancellationToken cancellationToken = default)
+    {
+        var trackIds = matrices.Select(matrix => matrix.TrackId).Distinct().ToList();
+        var links = context.Set<CareerLevelPosition>();
+        var currentByTrack = await context.Set<CareerLevel>()
+            .AsNoTracking()
+            .Where(level => trackIds.Contains(level.TrackId)
+                && level.Status == CatalogStatus.Active
+                && level.Track.Status == CatalogStatus.Active
+                && links.Any(link => link.LevelId == level.Id && link.PositionId == positionId))
+            .ToDictionaryAsync(level => level.TrackId, level => level.Position, cancellationToken);
+        var levelIds = matrices.SelectMany(matrix => matrix.Levels).Select(level => level.Id).Distinct().ToList();
+        var positionOf = await context.Set<CareerLevel>()
+            .AsNoTracking()
+            .Where(level => levelIds.Contains(level.Id))
+            .ToDictionaryAsync(level => level.Id, level => level.Position, cancellationToken);
+        return matrices.ToDictionary(
+            matrix => matrix.MatrixId,
+            matrix => currentByTrack.TryGetValue(matrix.TrackId, out var current)
+                ? NextLevel(matrix, current, positionOf)
+                : (IReadOnlyList<Guid>)[.. matrix.Levels.Select(level => level.Id)]);
+    }
+
+    /// <inheritdoc />
     public Task<IReadOnlyList<OrgUnitStatus>> ResponsibleUnitsAsync(Guid userId, CancellationToken cancellationToken = default) =>
         roles.HrUnitsAsync(userId, cancellationToken);
 
@@ -97,6 +124,13 @@ internal sealed class CareerModel(AppDbContext context, ProcessRoles roles, IEmp
             .ToDictionary(pair => pair.UnitId, pair => new ResponsibleHr(employeeOf[pair.UserId!.Value], pair.UserId!.Value));
     }
 
+    private static IReadOnlyList<Guid> NextLevel(PublishedTrackMatrix matrix, int currentPosition, IReadOnlyDictionary<Guid, int> positionOf) =>
+        [.. matrix.Levels
+            .Where(level => positionOf.TryGetValue(level.Id, out var position) && position > currentPosition)
+            .OrderBy(level => positionOf[level.Id])
+            .Take(1)
+            .Select(level => level.Id)];
+
     private static List<CareerVersionLevel> LevelsOf(MatrixVersion version, MatrixEntries snapshot)
     {
         var columns = version.Content.Levels.ToDictionary(level => level.LevelId);
@@ -112,7 +146,7 @@ internal sealed class CareerModel(AppDbContext context, ProcessRoles roles, IEmp
             entry.Id,
             entry.Name,
             item.BlockId,
-            item.Type ?? CompetencyType.Profile,
+            item.Type ?? CompetencyType.Additional,
             points.Count == 0 ? 0 : points.Max(point => point.Score),
             points);
     }

@@ -60,9 +60,10 @@ export type EducationLevel = NonNullable<
 
 /** Names of the education levels, lowest first. */
 export const EDUCATION_LABELS: Record<EducationLevel, string> = {
-  SecondaryGeneral: "Среднее общее",
-  SecondaryVocational: "Среднее профессиональное",
-  Bachelor: "Высшее — бакалавриат",
-  SpecialistOrMaster: "Высшее — специалитет, магистратура",
-  HigherQualification: "Высшее — подготовка кадров высшей квалификации",
+  SecondaryGeneral: "Среднее общее образование",
+  SecondaryVocational: "Среднее профессиональное образование",
+  Bachelor: "Высшее образование — бакалавриат",
+  SpecialistOrMaster: "Высшее образование — специалитет, магистратура",
+  HigherQualification:
+    "Высшее образование — подготовка кадров высшей квалификации",
 };

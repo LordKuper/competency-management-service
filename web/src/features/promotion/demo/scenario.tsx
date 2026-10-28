@@ -100,7 +100,7 @@ const DESIGN: CompetencyRow = {
 const QUALITY: CompetencyRow = {
   id: "demo-quality",
   name: "Качество кода",
-  type: "Profile",
+  type: "Additional",
   required: 3,
   selfScore: 4,
   finalScore: 4,

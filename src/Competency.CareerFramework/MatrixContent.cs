@@ -47,20 +47,20 @@ internal sealed record MatrixContent(
 
     /// <summary>
     /// The competencies of the version with their types in it: its own and those outside blocks, then the composition of each shared
-    /// block under that block. A competency in two groups is listed twice, so completeness can tell; one without a type set is a profile one.
+    /// block under that block. A competency in two groups is listed twice, so completeness can tell; one without a type set is an additional one.
     /// </summary>
     /// <param name="compositions">The composition of each shared block, as <see cref="MatrixVersion.CompositionsOf"/> chooses it.</param>
     /// <returns>The competencies with their groups and types.</returns>
     public List<MatrixCompetency> CompetenciesWith(IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> compositions) =>
     [
-        .. Competencies.Select(item => item with { Type = item.Type ?? CompetencyType.Profile }),
+        .. Competencies.Select(item => item with { Type = item.Type ?? CompetencyType.Additional }),
         .. SharedBlocks.SelectMany(block => compositions.GetValueOrDefault(block.BlockId, [])
             .Select(competencyId => new MatrixCompetency(competencyId, block.BlockId, block.TypeOf(competencyId)))),
     ];
 
     /// <summary>
     /// The document with the type of every competency set explicitly, as it is stored: the type sent, else the type the previous
-    /// document had for the competency, else profile. A shared block keeps types for the competencies of its current composition only.
+    /// document had for the competency, else additional. A shared block keeps types for the competencies of its current composition only.
     /// </summary>
     /// <param name="previous">The document as stored before.</param>
     /// <param name="compositions">The current composition of each shared block of this document.</param>
@@ -73,7 +73,7 @@ internal sealed record MatrixContent(
             .Concat(previous.SharedBlocks.SelectMany(block => block.CompetencyTypes.Select(item => (item.CompetencyId, item.Type))))
             .DistinctBy(item => item.CompetencyId)
             .ToDictionary(item => item.CompetencyId, item => item.Type);
-        CompetencyType TypeOf(Guid competencyId, CompetencyType? sent) => sent ?? storedTypes.GetValueOrDefault(competencyId, CompetencyType.Profile);
+        CompetencyType TypeOf(Guid competencyId, CompetencyType? sent) => sent ?? storedTypes.GetValueOrDefault(competencyId, CompetencyType.Additional);
 
         return this with
         {

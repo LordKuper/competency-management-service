@@ -17032,7 +17032,6 @@
       "CompetencyType": {
         "enum": [
           "Critical",
-          "Profile",
           "Additional"
         ],
         "description": "How a competency counts towards readiness. Member names are stored and sent in the API, so renaming one changes both."
@@ -17866,6 +17865,16 @@
               "string"
             ]
           },
+          "education": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EducationLevel"
+              }
+            ]
+          },
           "positionId": {
             "type": "string",
             "format": "uuid"
@@ -17903,7 +17912,8 @@
           "position",
           "legalEntities",
           "assignments",
-          "unitAssignments"
+          "unitAssignments",
+          "education"
         ],
         "type": "object",
         "properties": {
@@ -17963,6 +17973,16 @@
             "items": {
               "$ref": "#/components/schemas/AssignmentResponse"
             }
+          },
+          "education": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EducationLevel"
+              }
+            ]
           },
           "isActive": {
             "type": [

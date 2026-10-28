@@ -768,6 +768,11 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("Education")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("education");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)

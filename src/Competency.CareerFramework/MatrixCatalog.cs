@@ -445,7 +445,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         /// <summary>
         /// The competency's type in the version, by its first group.
         /// </summary>
-        public CompetencyType TypeOf(Guid competencyId) => Set.Find(item => item.CompetencyId == competencyId)?.Type ?? CompetencyType.Profile;
+        public CompetencyType TypeOf(Guid competencyId) => Set.Find(item => item.CompetencyId == competencyId)?.Type ?? CompetencyType.Additional;
 
         /// <summary>
         /// The scale the competency's scores are points of, its own; null for a competency not read.

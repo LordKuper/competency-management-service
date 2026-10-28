@@ -1,3 +1,5 @@
+using Competency.OrgStructure;
+
 namespace Competency.CareerFramework;
 
 /// <summary>

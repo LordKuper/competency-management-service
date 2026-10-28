@@ -12,6 +12,7 @@ function employee(id: string, fullName: string): Employee {
     lastName,
     firstName,
     middleName: null,
+    education: null,
     fullName,
     email: null,
     orgUnitId: "unit",

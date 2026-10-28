@@ -11,5 +11,7 @@ namespace Competency.OrgStructure;
 /// <param name="IsActive">Whether the employee works in the organization.</param>
 /// <param name="OrgUnitId">The unit the employee belongs to.</param>
 /// <param name="PositionId">The employee's position from the catalogue.</param>
+/// <param name="Education">The level of the employee's education; null when it is not known.</param>
 public sealed record EmployeeStatus(
-    Guid Id, string FullName, string LastName, string FirstName, string? MiddleName, bool IsActive, Guid OrgUnitId, Guid PositionId);
+    Guid Id, string FullName, string LastName, string FirstName, string? MiddleName, bool IsActive, Guid OrgUnitId, Guid PositionId,
+    EducationLevel? Education = null);

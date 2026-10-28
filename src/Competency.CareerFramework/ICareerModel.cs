@@ -35,6 +35,20 @@ public interface ICareerModel
     CareerScore Score(CareerVersion version, Guid levelId, IReadOnlyDictionary<Guid, decimal> scores);
 
     /// <summary>
+    /// Finds the levels a holder of a position may apply for in each of the given track matrices. On the track where the position is linked
+    /// to an active level, only the next level of the matrix by order is allowed, and none when the position is at the top; on every other
+    /// track every level of the matrix is allowed, so a position linked to no level allows every level of every matrix.
+    /// </summary>
+    /// <param name="positionId">The position of the candidate.</param>
+    /// <param name="matrices">The matrices, as <see cref="PublishedTrackMatricesAsync"/> returned them.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The identifiers of the allowed levels in the matrix's order, by matrix; every given matrix has an entry.</returns>
+    Task<IReadOnlyDictionary<Guid, IReadOnlyList<Guid>>> AllowedTargetLevelsAsync(
+        Guid positionId,
+        IReadOnlyCollection<PublishedTrackMatrix> matrices,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Finds the units whose responsible HR an account is now.
     /// </summary>
     /// <param name="userId">The account identifier.</param>

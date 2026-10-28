@@ -12,7 +12,7 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
 {
     private static readonly Expression<Func<Employee, EmployeeStatus>> StatusProjection = employee => new EmployeeStatus(
         employee.Id, employee.FullName, employee.LastName, employee.FirstName, employee.MiddleName, employee.IsActive,
-        employee.OrgUnitId, employee.PositionId);
+        employee.OrgUnitId, employee.PositionId, employee.Education);
 
     private static readonly Expression<Func<OrgUnit, OrgUnitStatus>> UnitStatusProjection = unit => new OrgUnitStatus(
         unit.Id, unit.Name, unit.ParentId, unit.HeadEmployeeId, unit.IsActive);
@@ -25,6 +25,18 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
         .Where(employee => employee.Id == employeeId)
         .Select(StatusProjection)
         .FirstOrDefaultAsync(cancellationToken);
+
+    public async Task<bool> SetEducationAsync(Guid employeeId, EducationLevel? education, CancellationToken cancellationToken = default)
+    {
+        var employee = await context.Set<Employee>().FirstOrDefaultAsync(candidate => candidate.Id == employeeId, cancellationToken);
+        if (employee is null)
+        {
+            return false;
+        }
+
+        employee.Education = education;
+        return true;
+    }
 
     public async Task<IReadOnlyDictionary<Guid, EmployeeStatus>> FindManyAsync(
         IReadOnlyCollection<Guid> employeeIds,

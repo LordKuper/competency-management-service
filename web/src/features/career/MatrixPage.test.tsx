@@ -440,7 +440,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
             name: "Проектирование",
             description: null,
             directionId: null,
-            type: "Profile",
+            type: "Additional",
             versionNumber: 1,
             status: "Active",
             scaleId: "scale",
@@ -598,7 +598,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
         name: "Проектирование",
         description: null,
         directionId: null,
-        type: "Profile",
+        type: "Additional",
         scaleId: "scale",
         status: "Active",
         createdAt: "2026-10-01T10:00:00Z",
@@ -629,7 +629,7 @@ describe("what an approver changed in a returned version (AC-16, AC-19)", {
       await screen.findByText("Удалено: компетенция «Проектирование»"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Было: Блок «Вне блоков»; Тип: Профильная"),
+      screen.getByText("Было: Блок «Вне блоков»; Тип: Дополнительная"),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -829,7 +829,7 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
             name: "Проектирование",
             description: null,
             directionId: null,
-            type: "Profile" as const,
+            type: "Additional" as const,
             versionNumber: 1,
             status: "Active" as const,
             scaleId: "scale",

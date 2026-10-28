@@ -172,6 +172,7 @@ export function employeeInputOf(employee: Employee): EmployeeInput {
     lastName: employee.lastName,
     firstName: employee.firstName,
     middleName: employee.middleName ?? undefined,
+    education: employee.education ?? undefined,
     orgUnitId: employee.orgUnitId,
     positionId: employee.positionId,
     legalEntityIds: employee.legalEntities.map(({ id }) => id),

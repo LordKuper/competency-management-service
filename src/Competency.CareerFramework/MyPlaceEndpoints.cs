@@ -146,7 +146,7 @@ internal static class MyPlaceEndpoints
                 pair.Competency?.ScaleId is { } scaleId && scalePoints.TryGetValue(scaleId, out var points)
                     ? points.FirstOrDefault(point => point.Score == pair.Requirement.RequiredScore)?.Label
                     : null,
-                pair.Competency?.Type ?? CompetencyType.Profile))];
+                pair.Competency?.Type ?? CompetencyType.Additional))];
     }
 
     private static MyPlaceMatrixResponse MatrixOf(MatrixVersion version, Guid trackId) => new(

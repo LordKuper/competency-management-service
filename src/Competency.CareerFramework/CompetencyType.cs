@@ -14,11 +14,6 @@ public enum CompetencyType
     Critical,
 
     /// <summary>
-    /// Counts towards the overall rating as a core skill of the track.
-    /// </summary>
-    Profile,
-
-    /// <summary>
     /// Counts towards the overall rating as a supplementary skill.
     /// </summary>
     Additional,

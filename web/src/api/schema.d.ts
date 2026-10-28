@@ -2622,7 +2622,7 @@ export interface components {
          * @description How a competency counts towards readiness. Member names are stored and sent in the API, so renaming one changes both.
          * @enum {unknown}
          */
-        CompetencyType: "Critical" | "Profile" | "Additional";
+        CompetencyType: "Critical" | "Additional";
         CompetencyVersionResponse: {
             /** Format: int32 */
             number: number;
@@ -2837,6 +2837,7 @@ export interface components {
             lastName: string;
             firstName: string;
             middleName?: null | string;
+            education?: null | components["schemas"]["EducationLevel"];
             /** Format: uuid */
             positionId: string;
             /** Format: uuid */
@@ -2861,6 +2862,7 @@ export interface components {
             legalEntities: components["schemas"]["LegalEntityResponse"][];
             assignments: components["schemas"]["AssignmentResponse"][];
             unitAssignments: components["schemas"]["AssignmentResponse"][];
+            education: null | components["schemas"]["EducationLevel"];
             isActive?: null | boolean;
             /** Format: int32 */
             version?: null | number;
