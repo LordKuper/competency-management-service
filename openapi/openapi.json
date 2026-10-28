@@ -14162,6 +14162,225 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "DeletePromotionApplication",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/applications/{id}/submit": {
+      "post": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "SubmitPromotionApplication",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/promotion/applications/{id}/withdraw": {
@@ -14434,6 +14653,136 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RatersRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "description": "The strong entity tag of the returned version; send it back in If-Match to modify the resource.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotion/applications/{id}/raters/{employeeId}/email": {
+      "put": {
+        "tags": [
+          "Promotion"
+        ],
+        "operationId": "UpdatePromotionRaterEmail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "employeeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The strong entity tag of the version being modified, as returned in the ETag header of the resource.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RaterEmailRequest"
               }
             }
           },
@@ -15360,7 +15709,7 @@
           "levelId",
           "education",
           "selfScores",
-          "raterEmployeeIds"
+          "raters"
         ],
         "type": "object",
         "properties": {
@@ -15381,11 +15730,10 @@
               "$ref": "#/components/schemas/SelfScoreInput"
             }
           },
-          "raterEmployeeIds": {
+          "raters": {
             "type": "array",
             "items": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/RaterInput"
             }
           }
         }
@@ -15406,8 +15754,10 @@
           "formal",
           "formalFailures",
           "warnings",
+          "formalCheck",
           "artifacts",
           "mandatoryArtifactCompetencyIds",
+          "hasMandatoryArtifacts",
           "feedbackReceivedAt",
           "result"
         ],
@@ -15484,6 +15834,16 @@
               "$ref": "#/components/schemas/FormalFailure"
             }
           },
+          "formalCheck": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/FormalCheckResponse"
+              }
+            ]
+          },
           "artifacts": {
             "type": [
               "null",
@@ -15502,6 +15862,9 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "hasMandatoryArtifacts": {
+            "type": "boolean"
           },
           "feedbackReceivedAt": {
             "type": [
@@ -15552,6 +15915,7 @@
       },
       "ApplicationStatus": {
         "enum": [
+          "Draft",
           "Submitted",
           "Admitted",
           "FormalRejected",
@@ -17093,6 +17457,13 @@
             ],
             "description": "The last day of the promotion stage the reason names.",
             "format": "date"
+          },
+          "hasUnconfirmedEmails": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Whether some rater of the application has no account and an address that no head or HR has confirmed yet."
           }
         },
         "description": "The values a desk finding's reason names; the client words the reason from its kind, so each kind fills only the values it names."
@@ -17717,6 +18088,24 @@
         "properties": {
           "email": {
             "type": "string"
+          }
+        }
+      },
+      "FormalCheckResponse": {
+        "required": [
+          "isPassed",
+          "failures"
+        ],
+        "type": "object",
+        "properties": {
+          "isPassed": {
+            "type": "boolean"
+          },
+          "failures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormalFailure"
+            }
           }
         }
       },
@@ -19496,7 +19885,7 @@
           "levelId",
           "education",
           "selfScores",
-          "raterEmployeeIds"
+          "raters"
         ],
         "type": "object",
         "properties": {
@@ -19521,11 +19910,10 @@
               "$ref": "#/components/schemas/SelfScoreInput"
             }
           },
-          "raterEmployeeIds": {
+          "raters": {
             "type": "array",
             "items": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/RaterInput"
             }
           }
         }
@@ -21017,11 +21405,45 @@
           }
         }
       },
+      "RaterEmailRequest": {
+        "required": [
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "RaterInput": {
+        "required": [
+          "employeeId",
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "employeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "RaterResponse": {
         "required": [
           "employeeId",
           "fullName",
-          "source"
+          "source",
+          "hasAccount",
+          "email",
+          "isEmailConfirmed",
+          "emailConfirmedByName"
         ],
         "type": "object",
         "properties": {
@@ -21034,6 +21456,24 @@
           },
           "source": {
             "$ref": "#/components/schemas/RaterSource"
+          },
+          "hasAccount": {
+            "type": "boolean"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isEmailConfirmed": {
+            "type": "boolean"
+          },
+          "emailConfirmedByName": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -21045,15 +21485,14 @@
       },
       "RatersRequest": {
         "required": [
-          "raterEmployeeIds"
+          "raters"
         ],
         "type": "object",
         "properties": {
-          "raterEmployeeIds": {
+          "raters": {
             "type": "array",
             "items": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/RaterInput"
             }
           }
         }
