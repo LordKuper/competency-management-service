@@ -37,12 +37,13 @@ export function PromotionHomePage() {
       {toRate > 0 && (
         <Alert
           type="info"
+          data-tour="promotion-to-rate"
           showIcon
           title={`Вас просят оценить кандидатов: ${toRate}`}
           action={<Link to={promotionPaths.ratings}>Перейти к оценке</Link>}
         />
       )}
-      <Flex vertical gap="middle">
+      <Flex vertical gap="middle" data-tour="promotion-waves">
         <Typography.Title level={2} style={{ margin: 0 }}>
           Карьерные сессии
         </Typography.Title>
@@ -62,7 +63,7 @@ export function PromotionHomePage() {
           />
         )}
       </Flex>
-      <Flex vertical gap="middle">
+      <Flex vertical gap="middle" data-tour="promotion-mine">
         <Typography.Title level={2} style={{ margin: 0 }}>
           Мои заявки
         </Typography.Title>

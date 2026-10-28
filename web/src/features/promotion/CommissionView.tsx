@@ -107,7 +107,7 @@ export function CommissionView({
       onFinish={submit}
       onValuesChange={() => setIsDirty(form.isFieldsTouched())}
     >
-      <Row>
+      <Row data-tour="commission-chair">
         <Col xs={24} md={12}>
           <Form.Item name="chairEmployeeId" label="Председатель">
             <Select
@@ -259,6 +259,7 @@ function MembersField({
         }}
       />
       <Table<CommissionMember>
+        data-tour="commission-members"
         rowKey="employeeId"
         columns={columns}
         dataSource={[...members]}

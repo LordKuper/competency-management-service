@@ -40,6 +40,7 @@ const columns: TableColumnsType<RatingTask> = [
 export function RatingsView({ tasks }: { tasks: readonly RatingTask[] }) {
   return (
     <Table<RatingTask>
+      data-tour="ratings-table"
       rowKey="applicationId"
       columns={columns}
       dataSource={[...tasks]}

@@ -173,6 +173,7 @@ export function WaveApplicationsView({
   return (
     <Panel
       title="Заявки"
+      tour="wave-applications"
       extra={
         <Input.Search
           allowClear

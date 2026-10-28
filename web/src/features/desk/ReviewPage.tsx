@@ -174,7 +174,7 @@ function ReviewContent({ version }: { version: MatrixVersion }) {
           }
         />
       )}
-      <section>
+      <section data-tour="review-changes">
         <Typography.Title level={4}>
           {isFirstVersion || !matrix.data?.publishedVersion
             ? "Версия целиком"

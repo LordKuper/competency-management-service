@@ -148,13 +148,18 @@ export function PositionsPage() {
         <Typography.Title level={1} style={{ margin: 0 }}>
           Должности
         </Typography.Title>
-        <Button type="primary" onClick={() => setDialog({ kind: "create" })}>
+        <Button
+          type="primary"
+          data-tour="positions-add"
+          onClick={() => setDialog({ kind: "create" })}
+        >
           Добавить должность
         </Button>
       </Flex>
       <Input.Search
         allowClear
         aria-label="Найти должность"
+        data-tour="positions-search"
         placeholder="Найти должность"
         style={{ maxWidth: token.controlHeight * 10 }}
         onSearch={(text) =>
@@ -173,6 +178,7 @@ export function PositionsPage() {
         />
       )}
       <Table<Position>
+        data-tour="positions-table"
         rowKey="id"
         columns={columns}
         dataSource={data?.items}

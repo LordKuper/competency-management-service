@@ -301,7 +301,7 @@ function SetupRows({ unitId, data, resend }: SetupRowsProps) {
           text={missingText(data.rows)}
         />
       )}
-      <Card size="small">
+      <Card size="small" data-tour="connect-rows">
         <Flex vertical>
           {data.rows.map((row, index) => {
             const { value, note, action } = describe(row);

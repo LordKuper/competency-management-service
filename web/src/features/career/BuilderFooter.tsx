@@ -51,7 +51,7 @@ export function BuilderFooter({
   );
   if (!isEditable) {
     return (
-      <Flex justify="space-between" gap="small">
+      <Flex justify="space-between" gap="small" data-tour="builder-footer">
         {back}
         <Button type="primary" onClick={onSkip}>
           Далее
@@ -60,7 +60,13 @@ export function BuilderFooter({
     );
   }
   return (
-    <Flex justify="space-between" align="center" gap="small" wrap>
+    <Flex
+      justify="space-between"
+      align="center"
+      gap="small"
+      wrap
+      data-tour="builder-footer"
+    >
       {back}
       <Flex align="center" gap="small" wrap>
         {nextBlock && (

@@ -543,6 +543,7 @@ function MatrixEditorBody({
   );
   const grid = (
     <Table<GridRow>
+      data-tour="matrix-grid"
       className="matrix-grid"
       rowKey="key"
       columns={columns}

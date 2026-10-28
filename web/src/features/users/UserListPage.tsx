@@ -144,11 +144,15 @@ export function UserListPage() {
         <Typography.Title level={1} style={{ margin: 0 }}>
           Пользователи
         </Typography.Title>
-        <Button type="primary" onClick={() => setDialog({ kind: "create" })}>
+        <Button
+          type="primary"
+          data-tour="users-add"
+          onClick={() => setDialog({ kind: "create" })}
+        >
           Создать пользователя
         </Button>
       </Flex>
-      <Row gutter={[token.margin, token.margin]}>
+      <Row gutter={[token.margin, token.margin]} data-tour="users-filters">
         <Col xs={24} md={8} lg={10}>
           <Input.Search
             allowClear
@@ -204,6 +208,7 @@ export function UserListPage() {
         />
       )}
       <Table<UserResponse>
+        data-tour="users-table"
         rowKey="id"
         columns={columns}
         dataSource={data?.items}

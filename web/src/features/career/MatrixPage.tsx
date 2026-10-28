@@ -267,7 +267,7 @@ export function MatrixPage() {
           ]}
         />
       )}
-      <Flex gap="middle" align="center" wrap>
+      <Flex gap="middle" align="center" wrap data-tour="matrix-version">
         <Select
           aria-label="Версия"
           value={version.id}
@@ -313,7 +313,9 @@ export function MatrixPage() {
           error={startVersion.error}
         />
       )}
-      <RouteSteps version={version} decisions={history?.decisions ?? []} />
+      <div data-tour="matrix-route">
+        <RouteSteps version={version} decisions={history?.decisions ?? []} />
+      </div>
       <MatrixEditor
         key={`${version.id}:${version.status}:${session}`}
         version={version}

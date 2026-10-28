@@ -244,7 +244,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
         />
       ) : (
         <>
-          <section>
+          <section data-tour="rework-comment">
             <Typography.Title level={4}>
               Комментарий согласующего
             </Typography.Title>
@@ -341,7 +341,7 @@ function ReworkContent({ version }: { version: MatrixVersion }) {
         />
       )}
       {isWaitingForUser && (
-        <section>
+        <section data-tour="rework-decision">
           <Typography.Title level={4}>Ваше решение</Typography.Title>
           <Flex gap={token.marginSM} wrap>
             {can("AcceptChanges") && (

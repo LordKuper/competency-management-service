@@ -234,7 +234,7 @@ export function WaveView({
             )}
           </Flex>
           {wave && (
-            <Flex gap="small" wrap>
+            <Flex gap="small" wrap data-tour="wave-actions">
               {onRollback && !isReadOnly && stage > 1 && (
                 <Button
                   disabled={isSubmitting}
@@ -257,7 +257,7 @@ export function WaveView({
             description={`Изменения вносит ${wave.authorName}.`}
           />
         )}
-        <Panel title="Этапы">
+        <Panel title="Этапы" tour="wave-stages">
           <Flex vertical gap="middle">
             <Typography.Text type="secondary">
               Конец этапа — срок, к которому заявки должны дойти до нужного

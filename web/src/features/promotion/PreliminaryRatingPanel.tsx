@@ -11,7 +11,7 @@ export function PreliminaryRatingPanel({
   rating: PreliminaryRating | null;
 }) {
   return (
-    <Panel title="Предварительный рейтинг" level={3}>
+    <Panel title="Предварительный рейтинг" tour="preliminary-rating" level={3}>
       {rating ? (
         <Flex vertical gap="small">
           <Flex align="baseline" gap="small" wrap>

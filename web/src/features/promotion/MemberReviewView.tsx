@@ -154,7 +154,7 @@ export function MemberReviewView({
         label="Решения до"
         stage={STAGE.review}
       />
-      <Panel title="Рейтинг кандидатов">
+      <Panel title="Рейтинг кандидатов" tour="review-ranking">
         <RankingView
           items={ranking}
           isLoading={isRankingLoading}
@@ -163,6 +163,7 @@ export function MemberReviewView({
       </Panel>
       <Panel
         title={`${review.candidateName} — ${target.levelName}`}
+        tour="review-card"
         extra={<Tag color={statusTag.color}>{statusTag.label}</Tag>}
       >
         <Flex vertical gap="middle">

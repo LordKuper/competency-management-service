@@ -2,6 +2,8 @@ import type { RouteObject } from "react-router";
 import { AdminOnly, AdminOrHrOnly } from "../../app/AdminOnly";
 import type { NavItem } from "../../app/featureContract";
 
+export { tours } from "./tours";
+
 /** Addresses of every promotion screen; the desk items, letters and links between the screens use them. */
 export const promotionPaths = {
   home: "/promotion",

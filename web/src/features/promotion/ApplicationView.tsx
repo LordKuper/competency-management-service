@@ -89,7 +89,7 @@ function ResultSection({ result, formalFailures, status }: ResultSectionProps) {
     ? DECISION_TAGS[result.decision]
     : APPLICATION_STATUS_TAGS[status];
   return (
-    <Panel title="Результат">
+    <Panel title="Результат" tour="application-result">
       <Flex vertical gap="middle">
         <Flex>
           <Tag color={decisionTag.color}>{decisionTag.label}</Tag>
@@ -219,7 +219,7 @@ function ApplicationProgress({
     failed: token.colorError,
   };
   return (
-    <Panel title="Ход заявки" level={3}>
+    <Panel title="Ход заявки" tour="application-progress" level={3}>
       <Timeline
         items={progressOf(application).map((step) => ({
           color: colors[step.state],
@@ -506,7 +506,7 @@ export function ApplicationView({
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={16}>
           <Flex vertical gap="large">
-            <Panel title="Цель">
+            <Panel title="Цель" tour="application-goal">
               <Descriptions
                 size="small"
                 column={{ xs: 1, md: 3 }}
@@ -535,6 +535,7 @@ export function ApplicationView({
             )}
             <Panel
               title="Самооценка и артефакты"
+              tour="application-scores"
               extra={
                 isCandidate &&
                 mandatoryIds.length > 0 && (
@@ -588,6 +589,7 @@ export function ApplicationView({
             {application.raters && (
               <Panel
                 title="Оценивающие"
+                tour="application-raters"
                 extra={
                   listFinalOn && (
                     <Typography.Text type="secondary">
@@ -631,7 +633,11 @@ export function ApplicationView({
         <Col xs={24} lg={8}>
           <Flex vertical gap="large">
             {isArtifactStage && (
-              <Panel title="Рассмотрение комиссией" level={3}>
+              <Panel
+                title="Рассмотрение комиссией"
+                tour="application-send"
+                level={3}
+              >
                 <Flex vertical gap="small" align="start">
                   {mandatoryIds.length > 0 && (
                     <Typography.Text>

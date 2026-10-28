@@ -15,7 +15,13 @@ interface DeadlineNoteProps {
 export function DeadlineNote({ session, label, stage }: DeadlineNoteProps) {
   const deadline = session.endsOn[stage - 1];
   return (
-    <Flex justify="space-between" align="baseline" gap="middle" wrap>
+    <Flex
+      justify="space-between"
+      align="baseline"
+      gap="middle"
+      wrap
+      data-tour="deadline"
+    >
       <Typography.Text type="secondary">
         Карьерная сессия с {formatDate(session.startsOn)}
       </Typography.Text>

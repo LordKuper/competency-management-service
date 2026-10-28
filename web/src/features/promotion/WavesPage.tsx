@@ -22,9 +22,11 @@ export function WavesPage() {
         <Typography.Title level={1} style={{ margin: 0 }}>
           Карьерные сессии
         </Typography.Title>
-        <LinkButton type="primary" to={promotionPaths.newWave}>
-          Объявить карьерную сессию
-        </LinkButton>
+        <div data-tour="waves-new">
+          <LinkButton type="primary" to={promotionPaths.newWave}>
+            Объявить карьерную сессию
+          </LinkButton>
+        </div>
       </Flex>
       {error && (
         <ErrorAlert

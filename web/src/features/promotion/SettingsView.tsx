@@ -38,7 +38,7 @@ export function SettingsView({ settings, onSubmit }: SettingsViewProps) {
   useLeaveGuard({ isUnsaved: isDirty, isSaving: isSubmitting });
 
   return (
-    <Panel title="Правила по умолчанию">
+    <Panel title="Правила по умолчанию" tour="settings-defaults">
       <Form
         form={form}
         name="promotion-settings"

@@ -104,7 +104,7 @@ export function OrgStructurePage() {
           Оргструктура
         </Typography.Title>
         {canEdit && (
-          <Space wrap>
+          <Space wrap data-tour="org-add">
             <Button onClick={() => setDialog({ kind: "addEmployee" })}>
               Добавить сотрудника
             </Button>
@@ -132,6 +132,7 @@ export function OrgStructurePage() {
             maxLength={SEARCH_TEXT_MAX_LENGTH}
             prefix={<SearchOutlined />}
             aria-label="Поиск по подразделениям и сотрудникам"
+            data-tour="org-search"
             placeholder="Подразделение, ФИО или должность сотрудника"
             value={text}
             onChange={(event) => setText(event.target.value)}

@@ -33,6 +33,7 @@ export function DemoPage() {
           {step.stage > 0 && `, этап «${stageLabel(step.stage)}»`}
         </Typography.Text>
         <Alert
+          data-tour="demo-role"
           type="info"
           showIcon
           title={
@@ -43,7 +44,7 @@ export function DemoPage() {
           }
           description={step.description}
         />
-        <Flex gap="small">
+        <Flex gap="small" data-tour="demo-nav">
           <Button disabled={index === 0} onClick={() => setIndex(index - 1)}>
             Назад
           </Button>
@@ -59,7 +60,7 @@ export function DemoPage() {
       <Typography.Title level={2} style={{ margin: 0 }}>
         {step.title}
       </Typography.Title>
-      <div key={index} onClickCapture={keepInDemo}>
+      <div key={index} onClickCapture={keepInDemo} data-tour="demo-screen">
         {step.render()}
       </div>
     </Flex>

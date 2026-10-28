@@ -2,6 +2,8 @@ import { AdminOnly } from "../../app/AdminOnly";
 import type { NavItem } from "../../app/featureContract";
 import { AuditPage } from "./AuditPage";
 
+export { tours } from "./tours";
+
 /** The journal is for global administrators only. */
 export const navItems: NavItem[] = [
   {

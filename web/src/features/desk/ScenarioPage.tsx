@@ -24,6 +24,7 @@ export function ScenarioPage({ title, children }: ScenarioPageProps) {
       style={{ maxWidth: contentMaxWidth, marginInline: "auto" }}
     >
       <Breadcrumb
+        data-tour="scenario-path"
         items={[
           { title: <Link to={deskPaths.desk}>Рабочий стол</Link> },
           ...(origin

@@ -41,7 +41,7 @@ function Queue({
   currentId: string;
 }) {
   return (
-    <Panel title="Кого оценить" level={3}>
+    <Panel title="Кого оценить" tour="rating-queue" level={3}>
       <Flex
         vertical
         gap="small"
@@ -122,7 +122,7 @@ export function RatingView({
           <Queue tasks={tasks} currentId={rating.applicationId} />
         </Col>
         <Col xs={24} lg={17}>
-          <Panel title={rating.candidateName}>
+          <Panel title={rating.candidateName} tour="rating-form">
             <Form
               form={form}
               name="promotion-rating"

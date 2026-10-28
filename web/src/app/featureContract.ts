@@ -34,6 +34,19 @@ export interface NavItem {
   badge?: ComponentType;
 }
 
+/** One step of the guided tour a screen shows from the shell's help button. */
+export interface TourStep {
+  /** Value of the `data-tour` attribute of the element the step points at; omitted means a step about the whole screen. A step whose element is not on the screen is skipped. */
+  target?: string;
+  /** Short heading of the step. */
+  title: string;
+  /** What is done here and why, in Russian. */
+  description: string;
+}
+
+/** Tour steps by route pattern, the same pattern the feature's routes use. */
+export type ScreenTours = Record<string, TourStep[]>;
+
 /** What a feature's `routes.ts` may export. */
 export interface FeatureRoutes {
   /** Routes rendered inside the shell, which requires a signed-in user. */
@@ -42,4 +55,6 @@ export interface FeatureRoutes {
   standaloneRoutes?: RouteObject[];
   /** Entries the shell adds to its navigation. */
   navItems?: NavItem[];
+  /** Tour steps of the feature's screens that the help button walks through. */
+  tours?: ScreenTours;
 }

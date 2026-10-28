@@ -90,6 +90,7 @@ export function UnitTree({
     <ul
       className={screens.lg ? "org-tree" : "org-tree org-tree--narrow"}
       aria-label="Иерархия подразделений"
+      data-tour="org-tree"
     >
       {visibleNodes(roots, view).map((root) => (
         <UnitNodeView key={root.unit.id} node={root} view={view} />

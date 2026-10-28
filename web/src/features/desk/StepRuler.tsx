@@ -24,32 +24,34 @@ export function StepRuler({
   onChange,
 }: StepRulerProps) {
   return (
-    <Steps
-      size="small"
-      current={current - 1}
-      onChange={(index) => {
-        if (index + 1 !== current) onChange(index + 1);
-      }}
-      items={steps.map((name, index) => {
-        const number = index + 1;
-        const count = remarks?.get(number);
-        return {
-          title: count ? (
-            <>
-              {name} <Tag color="warning">{`⚠ Замечания: ${count}`}</Tag>
-            </>
-          ) : (
-            name
-          ),
-          disabled: number > reached || isLocked,
-          status:
-            number === current
-              ? "process"
-              : number <= reached
-                ? "finish"
-                : "wait",
-        };
-      })}
-    />
+    <div data-tour="wizard-steps">
+      <Steps
+        size="small"
+        current={current - 1}
+        onChange={(index) => {
+          if (index + 1 !== current) onChange(index + 1);
+        }}
+        items={steps.map((name, index) => {
+          const number = index + 1;
+          const count = remarks?.get(number);
+          return {
+            title: count ? (
+              <>
+                {name} <Tag color="warning">{`⚠ Замечания: ${count}`}</Tag>
+              </>
+            ) : (
+              name
+            ),
+            disabled: number > reached || isLocked,
+            status:
+              number === current
+                ? "process"
+                : number <= reached
+                  ? "finish"
+                  : "wait",
+          };
+        })}
+      />
+    </div>
   );
 }

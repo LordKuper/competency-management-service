@@ -20,6 +20,7 @@ import type { NavGroup, NavItem } from "./featureContract";
 import { navItemsFor } from "./features";
 import { LeaveGuardProvider } from "./leaveGuard";
 import { PRODUCT_NAME } from "./productName";
+import { ScreenTour } from "./ScreenTour";
 import { UserMenu } from "./UserMenu";
 
 const brandStyle: CSSProperties = { flex: "0 1 auto", minWidth: 0 };
@@ -146,9 +147,14 @@ function ShellFrame({ user }: { user: CurrentUser }) {
                 style={{ flex: 1, minWidth: 0 }}
               />
             )}
-            <div style={{ marginInlineStart: "auto" }}>
+            <Flex
+              align="center"
+              gap={token.marginXS}
+              style={{ marginInlineStart: "auto" }}
+            >
+              <ScreenTour />
               <UserMenu user={user} />
-            </div>
+            </Flex>
           </Layout.Header>
           <Layout.Content
             style={{ padding: screens.lg ? token.paddingLG : token.padding }}

@@ -3,6 +3,8 @@ import type { NavItem } from "../../app/featureContract";
 import { CareerPage } from "./CareerPage";
 import { MatrixPage } from "./MatrixPage";
 
+export { tours } from "./tours";
+
 /** Every signed-in user opens the career model, a top-level entry after the organisation structure. */
 export const navItems: NavItem[] = [
   {

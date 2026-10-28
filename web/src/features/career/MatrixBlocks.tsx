@@ -237,7 +237,7 @@ export function MatrixBlocks({
   ];
 
   return (
-    <section>
+    <section data-tour="matrix-blocks">
       {!isCompact && (
         <Typography.Title level={2}>Коэффициенты блоков</Typography.Title>
       )}

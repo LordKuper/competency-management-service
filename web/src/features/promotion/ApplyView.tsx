@@ -366,7 +366,7 @@ export function ApplyView({
         <Row gutter={[24, 24]}>
           <Col xs={24} lg={16}>
             <Flex vertical gap="large">
-              <Panel title="1. Цель">
+              <Panel title="1. Цель" tour="apply-goal">
                 <Row gutter={16}>
                   <Col xs={24} md={12}>
                     <Form.Item
@@ -414,7 +414,7 @@ export function ApplyView({
                   </Col>
                 </Row>
               </Panel>
-              <Panel title="2. Образование">
+              <Panel title="2. Образование" tour="apply-education">
                 <Form.Item
                   name="education"
                   label="Уровень образования"
@@ -434,6 +434,7 @@ export function ApplyView({
               </Panel>
               <Panel
                 title="3. Самооценка и артефакты"
+                tour="apply-scores"
                 extra={
                   scoredCompetencies.length > 0 && (
                     <Typography.Text type="secondary">
@@ -486,6 +487,7 @@ export function ApplyView({
               </Panel>
               <Panel
                 title="4. Оценивающие"
+                tour="apply-raters"
                 extra={
                   application?.raterCounts && (
                     <Typography.Text type="secondary">
@@ -517,7 +519,7 @@ export function ApplyView({
               <PreliminaryRatingPanel
                 rating={application?.preliminaryRating ?? null}
               />
-              <Panel title="Перед отправкой" level={3}>
+              <Panel title="Перед отправкой" tour="apply-send" level={3}>
                 <Flex vertical gap="middle">
                   <CheckList items={checks} />
                   <Alert

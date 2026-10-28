@@ -72,6 +72,7 @@ export function RatersView({
   return (
     <Panel
       title={`${application.candidateName}: оценивающие`}
+      tour="raters-form"
       extra={
         application.raterCounts && (
           <Typography.Text type="secondary">

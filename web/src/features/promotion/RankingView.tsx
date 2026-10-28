@@ -77,6 +77,7 @@ export function RankingView({ items, isLoading, currentId }: RankingViewProps) {
   ];
   return (
     <Table<RankingItem>
+      data-tour="ranking-table"
       rowKey="applicationId"
       columns={columns}
       dataSource={[...items]}

@@ -16,6 +16,7 @@ export function CommissionList({
 }: CommissionListProps) {
   return (
     <Menu
+      data-tour="commission-list"
       mode="inline"
       aria-label="Подразделения"
       selectedKeys={selectedId ? [selectedId] : []}

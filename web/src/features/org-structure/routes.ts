@@ -3,6 +3,8 @@ import type { NavItem } from "../../app/featureContract";
 import { OrgStructurePage } from "./OrgStructurePage";
 import { paths } from "./paths";
 
+export { tours } from "./tours";
+
 /** Every signed-in user reads the structure, a top-level entry next to the desk and promotion. */
 export const navItems: NavItem[] = [
   {

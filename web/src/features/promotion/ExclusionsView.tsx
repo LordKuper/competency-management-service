@@ -135,7 +135,7 @@ export function ExclusionsView({
     },
   ];
   return (
-    <Panel title="Кого нельзя указывать оценивающим">
+    <Panel title="Кого нельзя указывать оценивающим" tour="settings-exclusions">
       <Flex vertical gap="middle">
         <Typography.Text type="secondary">
           Этих сотрудников и всех на этих должностях нельзя включить в список

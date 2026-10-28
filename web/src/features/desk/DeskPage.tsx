@@ -44,7 +44,7 @@ export function DeskPage() {
       <Typography.Title level={1} style={{ margin: 0 }}>
         Рабочий стол
       </Typography.Title>
-      <Flex vertical gap={token.margin}>
+      <Flex vertical gap={token.margin} data-tour="desk-actions">
         <Flex align="center" gap={token.marginXS}>
           <Typography.Title level={2} style={{ margin: 0 }}>
             Ожидают вашего действия
@@ -61,7 +61,7 @@ export function DeskPage() {
         />
       </Flex>
       <PromotionWavesBlock />
-      <Flex vertical gap={token.margin}>
+      <Flex vertical gap={token.margin} data-tour="desk-scenarios">
         <Typography.Title level={2} style={{ margin: 0 }}>
           Что можно сделать
         </Typography.Title>

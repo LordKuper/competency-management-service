@@ -199,7 +199,7 @@ const historyColumns = [
 export function HistoryPanel({ review }: { review: Review }) {
   const { history, readinessChange } = review;
   return (
-    <div id={HISTORY_ID}>
+    <div id={HISTORY_ID} data-tour="review-history">
       <Collapse
         defaultActiveKey={["history"]}
         items={[

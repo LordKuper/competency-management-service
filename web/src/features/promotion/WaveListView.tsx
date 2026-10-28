@@ -51,6 +51,7 @@ export function WaveListView({
   ];
   return (
     <Table<Wave>
+      data-tour="waves-table"
       rowKey="id"
       columns={columns}
       dataSource={[...waves]}

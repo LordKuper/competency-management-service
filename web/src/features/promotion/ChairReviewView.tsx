@@ -195,7 +195,7 @@ export function ChairReviewView({
               Прошлые заявки: {review.history.length} с решением
             </Button>
           </Flex>
-          <Flex align="center" gap="small">
+          <Flex align="center" gap="small" data-tour="review-nav">
             {position >= 0 && (
               <Typography.Text type="secondary">
                 {position + 1} из {ranking.length}
@@ -218,7 +218,7 @@ export function ChairReviewView({
         <Row gutter={[24, 24]}>
           <Col xs={24} lg={16}>
             <Flex vertical gap="large">
-              <Panel title="Итоговые оценки">
+              <Panel title="Итоговые оценки" tour="review-scores">
                 <Flex vertical gap="middle">
                   <Typography.Text type="secondary">
                     По умолчанию — округлённая круговая оценка. ▲▼ — изменение
@@ -239,7 +239,7 @@ export function ChairReviewView({
           </Col>
           <Col xs={24} lg={8}>
             <Flex vertical gap="large">
-              <Panel title="Итоговый балл" level={3}>
+              <Panel title="Итоговый балл" tour="review-rating" level={3}>
                 <Flex vertical gap="small">
                   <Flex align="baseline" gap="small" wrap>
                     <Typography.Title level={1} style={{ margin: 0 }}>
@@ -267,7 +267,7 @@ export function ChairReviewView({
                   </Typography.Text>
                 </Flex>
               </Panel>
-              <Panel title="Решение комиссии" level={3}>
+              <Panel title="Решение комиссии" tour="review-decision" level={3}>
                 <Flex vertical gap="middle" align="start">
                   <Form.Item name="decision" style={{ margin: 0 }}>
                     <Radio.Group

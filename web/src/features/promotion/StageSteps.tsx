@@ -35,6 +35,7 @@ export function StageSteps({
 }: StageStepsProps) {
   return (
     <Steps
+      data-tour="stage-steps"
       orientation={orientation}
       size="small"
       items={STAGE_TITLES.map((title, index) => {
