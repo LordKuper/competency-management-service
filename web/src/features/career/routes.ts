@@ -3,14 +3,13 @@ import type { NavItem } from "../../app/featureContract";
 import { CareerPage } from "./CareerPage";
 import { MatrixPage } from "./MatrixPage";
 
-/** Every signed-in user opens the career model, after the organisation structure. */
+/** Every signed-in user opens the career model, a top-level entry after the organisation structure. */
 export const navItems: NavItem[] = [
   {
     key: "career",
     label: "Карьерная модель",
     path: "/career",
     order: 20,
-    group: "reference",
   },
 ];
 
