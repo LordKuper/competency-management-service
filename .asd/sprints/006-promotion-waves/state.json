@@ -69,6 +69,20 @@
       "reason": "accept; includes new module, ICareerModel port, lock 5006001, scheduler",
       "evidence": "plan.md",
       "artifact_revision": "plan.md accepted 2026-10-27"
+    },
+    {
+      "gate": "initial impl assessment",
+      "decision_actor": "user",
+      "reason": "request changes: desk block of available promotion waves (AC-39 retired → AC-50, AC-51); AC-29 recalculation after save kept",
+      "evidence": "decisions-log.md",
+      "artifact_revision": "impl at eec5a93"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "accept AC-50, AC-51 (AC-39 retired), Task 11 in wave 11; available waves = open and upcoming",
+      "evidence": "sprint.md, plan.md",
+      "artifact_revision": "sprint.md AC-50..AC-51"
     }
   ],
   "task_routing": {
