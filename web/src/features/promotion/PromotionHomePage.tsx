@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Alert, Flex, Skeleton, Typography } from "antd";
 import { Link } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
@@ -7,7 +7,6 @@ import { useCurrentUser } from "../auth/useCurrentUser";
 import { MyApplicationsView } from "./MyApplicationsView";
 import { OpenWavesView } from "./OpenWavesView";
 import {
-  applicationQuery,
   myApplicationsQuery,
   myRatingsQuery,
   openWavesQuery,
@@ -22,18 +21,6 @@ export function PromotionHomePage() {
   const waves = useQuery(openWavesQuery);
   const mine = useQuery(myApplicationsQuery);
   const ratings = useQuery(myRatingsQuery);
-  const decided = (mine.data ?? []).filter(
-    (application) => application.status === "Decided",
-  );
-  const details = useQueries({
-    queries: decided.map((application) => applicationQuery(application.id)),
-  });
-  const decisions = new Map(
-    decided.flatMap((application, index) => {
-      const decision = details[index]?.data?.result?.decision;
-      return decision ? [[application.id, decision] as const] : [];
-    }),
-  );
   const applicationIdByWave = new Map(
     (mine.data ?? [])
       .filter((application) => UNFINISHED_STATUSES.includes(application.status))
@@ -92,9 +79,7 @@ export function PromotionHomePage() {
             onRetry={() => void mine.refetch()}
           />
         )}
-        {mine.data && (
-          <MyApplicationsView applications={mine.data} decisions={decisions} />
-        )}
+        {mine.data && <MyApplicationsView applications={mine.data} />}
       </Flex>
     </Flex>
   );

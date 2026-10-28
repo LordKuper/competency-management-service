@@ -2282,6 +2282,7 @@ export interface components {
             target: components["schemas"]["ApplicationTargetResponse"];
             /** Format: date-time */
             submittedAt: string;
+            decision: null | components["schemas"]["PromotionDecision"];
         };
         ApplicationTargetResponse: {
             /** Format: uuid */

@@ -12,6 +12,7 @@ namespace Competency.Promotion;
 /// <param name="CandidateName">The candidate's full name.</param>
 /// <param name="Target">The level the application aims at.</param>
 /// <param name="SubmittedAt">When the application was filed.</param>
+/// <param name="Decision">The decision of the commission, as the reader may know it: a candidate learns it when the results are published.</param>
 internal sealed record ApplicationSummaryResponse(
     Guid Id,
     Guid WaveId,
@@ -21,4 +22,5 @@ internal sealed record ApplicationSummaryResponse(
     Guid CandidateEmployeeId,
     string CandidateName,
     ApplicationTargetResponse Target,
-    DateTimeOffset SubmittedAt);
+    DateTimeOffset SubmittedAt,
+    PromotionDecision? Decision);

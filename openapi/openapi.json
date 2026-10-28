@@ -15369,7 +15369,8 @@
           "candidateEmployeeId",
           "candidateName",
           "target",
-          "submittedAt"
+          "submittedAt",
+          "decision"
         ],
         "type": "object",
         "properties": {
@@ -15405,6 +15406,16 @@
           "submittedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "decision": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PromotionDecision"
+              }
+            ]
           }
         }
       },

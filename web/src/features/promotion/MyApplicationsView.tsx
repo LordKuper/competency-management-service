@@ -8,19 +8,12 @@ import {
 } from "./promotionTexts";
 import { promotionPaths } from "./routes";
 
-type Decision = keyof typeof DECISION_TAGS;
-
 interface MyApplicationsViewProps {
   applications: readonly WaveApplication[];
-  /** The decision on an application by its id, for those whose decision the viewer may already see. */
-  decisions: ReadonlyMap<string, Decision>;
 }
 
 /** The applications of the viewer, active and past, as cards with the status and the decision. */
-export function MyApplicationsView({
-  applications,
-  decisions,
-}: MyApplicationsViewProps) {
+export function MyApplicationsView({ applications }: MyApplicationsViewProps) {
   if (applications.length === 0) {
     return (
       <Empty
@@ -33,7 +26,7 @@ export function MyApplicationsView({
     <Flex vertical gap="middle">
       {applications.map((application) => {
         const status = APPLICATION_STATUS_TAGS[application.status];
-        const decision = decisions.get(application.id);
+        const decision = application.decision;
         return (
           <Card
             key={application.id}

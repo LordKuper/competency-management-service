@@ -153,13 +153,17 @@ internal sealed class ApplicationReader(
             application.EmployeeId,
             candidateName,
             target,
-            application.CreatedAt);
+            application.CreatedAt,
+            ShownDecision(application.Decision, roles, stage));
     }
 
     private static ApplicationStatus ShownStatus(ApplicationStatus status, ApplicationRole roles, int stage) =>
         roles == ApplicationRole.Candidate && stage < ResultStage && status is ApplicationStatus.Decided or ApplicationStatus.NoDecision
             ? ApplicationStatus.UnderReview
             : status;
+
+    private static PromotionDecision? ShownDecision(PromotionDecision? decision, ApplicationRole roles, int stage) =>
+        roles == ApplicationRole.Candidate && stage < ResultStage ? null : decision;
 
     private static List<RaterResponse>? RatersFor(ApplicationRole roles, IEnumerable<PromotionRater> raters, IReadOnlyDictionary<Guid, EmployeeStatus> people)
     {
