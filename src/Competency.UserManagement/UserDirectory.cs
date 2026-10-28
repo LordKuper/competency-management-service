@@ -91,27 +91,16 @@ internal sealed class UserDirectory(
     {
         var address = email.Trim();
         var user = new AppUser { EmployeeId = employeeId };
-        string token;
-        await using (var transaction = await employees.BeginExclusiveAsync(cancellationToken))
+        await using var transaction = await employees.BeginExclusiveAsync(cancellationToken);
+        if (await employees.ProblemAsync(employeeId, cancellationToken) is not null
+            || await context.IsBoundElsewhereAsync(employeeId, Guid.Empty, cancellationToken)
+            || await EmailProblemAsync(address, cancellationToken) is not null)
         {
-            if (await employees.ProblemAsync(employeeId, cancellationToken) is not null
-                || await context.IsBoundElsewhereAsync(employeeId, Guid.Empty, cancellationToken)
-                || await EmailProblemAsync(address, cancellationToken) is not null)
-            {
-                return EmployeeInvitation.Refused;
-            }
-
-            user.SetEmail(address);
-            if (!(await users.CreateAsync(user)).Succeeded)
-            {
-                return EmployeeInvitation.Refused;
-            }
-
-            token = user.IssueLink(time.GetUtcNow(), links.Value.InvitationLifetime);
-            await context.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+            return EmployeeInvitation.Refused;
         }
 
-        return await mail.SendInvitationAsync(user, token, isRepeat: false, cancellationToken) ? EmployeeInvitation.Sent : EmployeeInvitation.NotSent;
+        user.SetEmail(address);
+        var (result, mailSent) = await NewAccount.InviteAsync(user, transaction, null, users, context, mail, links.Value, time, cancellationToken);
+        return !result.Succeeded ? EmployeeInvitation.Refused : mailSent ? EmployeeInvitation.Sent : EmployeeInvitation.NotSent;
     }
 }
