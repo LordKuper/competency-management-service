@@ -1,5 +1,6 @@
 import { HOME_PATH } from "../../app/featureContract";
 import { paths as orgPaths } from "../org-structure/paths";
+import { promotionPaths } from "../promotion/routes";
 import type {
   DeskGroup,
   DeskItem,
@@ -41,16 +42,12 @@ export const deskPaths = {
   orgImport: "/desk/org-import",
   positions: "/positions",
   users: "/users",
-  promotionApply: (waveId: string) => `/promotion/apply/${waveId}`,
-  promotionApplication: (applicationId: string) =>
-    `/promotion/applications/${applicationId}`,
-  promotionRating: (applicationId: string) =>
-    `/promotion/ratings/${applicationId}`,
-  promotionRaters: (applicationId: string) =>
-    `/promotion/raters/${applicationId}`,
-  promotionWave: (waveId: string) => `/promotion/waves/${waveId}`,
-  promotionReview: (applicationId: string) =>
-    `/promotion/review/${applicationId}`,
+  promotionApply: promotionPaths.apply,
+  promotionApplication: promotionPaths.application,
+  promotionRating: promotionPaths.rating,
+  promotionRaters: promotionPaths.raters,
+  promotionWave: promotionPaths.wave,
+  promotionReview: promotionPaths.review,
 } as const;
 
 /** Titles of the matrix builder steps, in order. */

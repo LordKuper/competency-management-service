@@ -12,7 +12,7 @@ export const HOME_PATH = "/desk";
 export type UserRole = components["schemas"]["UserRole"];
 
 /** Submenu of the shell navigation an entry may be grouped under. */
-export type NavGroup = "reference" | "admin";
+export type NavGroup = "reference" | "admin" | "promotion";
 
 /** One entry of the shell navigation, contributed by a feature. */
 export interface NavItem {

@@ -34,6 +34,7 @@ const productNameStyle: CSSProperties = {
 const GROUP_LABELS: Record<NavGroup, string> = {
   reference: "Справочники",
   admin: "Администрирование",
+  promotion: "Управление повышением",
 };
 
 interface Submenu {
@@ -104,9 +105,11 @@ function ShellFrame({ user }: { user: CurrentUser }) {
   const screens = Grid.useBreakpoint();
   const { pathname } = useLocation();
   const navItems = navItemsFor(user.roles);
-  const current = navItems.find(
-    (item) => pathname === item.path || pathname.startsWith(`${item.path}/`),
-  );
+  const current = navItems
+    .filter(
+      (item) => pathname === item.path || pathname.startsWith(`${item.path}/`),
+    )
+    .sort((first, second) => second.path.length - first.path.length)[0];
   return (
     <ConfigProvider componentSize={screens.lg ? "middle" : "large"}>
       <LeaveGuardProvider>
