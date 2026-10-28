@@ -1438,6 +1438,10 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("version");
 
+                    b.Property<bool>("VersionsFixed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("versions_fixed");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");

@@ -84,7 +84,8 @@ internal static class WaveEndpoints
 
     /// <summary>
     /// Announces a wave. Its dates start today at the earliest, each unit exists, works, is one the author answers for, belongs to no unfinished
-    /// wave and has a commission with a chair.
+    /// wave and has a commission with a chair. A wave that starts later is announced by letter to the employees of its units once it is saved;
+    /// one that starts today is announced by the letter of its first stage.
     /// </summary>
     private static async Task<Results<Created<WaveResponse>, ValidationProblem>> CreateAsync(
         WaveRequest request,
@@ -93,6 +94,7 @@ internal static class WaveEndpoints
         PromotionCalendar calendar,
         WaveUnits waveUnits,
         WaveReader reader,
+        PromotionMail mail,
         ICurrentActor actor,
         HttpResponse response,
         CancellationToken cancellationToken)
@@ -120,6 +122,11 @@ internal static class WaveEndpoints
         context.AddRange(unitIds.Select(unitId => new PromotionWaveUnit { WaveId = wave.Id, OrgUnitId = unitId }));
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+
+        if (wave.StartsOn > calendar.Today)
+        {
+            await mail.WaveAnnouncedAsync(wave, cancellationToken);
+        }
 
         response.SetETag(wave.Version);
         return TypedResults.Created($"{Route}/{wave.Id}", (await reader.DescribeAsync([wave], cancellationToken))[0]);

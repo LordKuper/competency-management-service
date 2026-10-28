@@ -25,6 +25,14 @@ public interface IEmployeeDirectory
     Task<IReadOnlyDictionary<Guid, EmployeeStatus>> FindManyAsync(IReadOnlyCollection<Guid> employeeIds, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Finds the employees who work and whose main unit is one of the given units, for a letter to everyone in them.
+    /// </summary>
+    /// <param name="unitIds">The unit identifiers.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The identifiers of the working employees; empty when there are none.</returns>
+    Task<IReadOnlyList<Guid>> FindWorkingInUnitsAsync(IReadOnlyCollection<Guid> unitIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Finds an organization unit.
     /// </summary>
     /// <param name="unitId">The unit identifier.</param>

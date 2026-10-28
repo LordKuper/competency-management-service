@@ -38,6 +38,14 @@ internal sealed class PromotionCalendar(TimeProvider time, IOptions<AppOptions> 
     }
 
     /// <summary>
+    /// Finds how long a stage still has to run.
+    /// </summary>
+    /// <param name="wave">The wave.</param>
+    /// <param name="stage">The stage, 1 to 7.</param>
+    /// <returns>The time to the end of the stage's last day; negative once it has ended.</returns>
+    public TimeSpan TimeLeft(PromotionWave wave, int stage) => StartOf(wave.EndsOn[stage - 1].AddDays(1)) - time.GetUtcNow();
+
+    /// <summary>
     /// Finds the stage a wave is in now.
     /// </summary>
     /// <param name="wave">The wave.</param>

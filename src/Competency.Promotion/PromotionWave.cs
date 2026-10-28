@@ -36,6 +36,13 @@ internal sealed class PromotionWave : EntityBase
     public int ProcessedStage { get; set; }
 
     /// <summary>
+    /// Whether the matrix versions of the units have been bound, which is done once when the first stage starts; <see cref="ProcessedStage"/>
+    /// of 0 cannot tell a wave that has not started from one that has.
+    /// </summary>
+    [Audited]
+    public bool VersionsFixed { get; set; }
+
+    /// <summary>
     /// Whether the raters have been reminded to answer, which is done once.
     /// </summary>
     [Audited]

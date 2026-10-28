@@ -1,6 +1,7 @@
 using Competency.Platform;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Competency.Promotion;
 
@@ -12,7 +13,8 @@ public static class PromotionModule
     /// <summary>
     /// Registers the Promotion module services. Its tables refer to units, employees, accounts and matrices, and it reads the career model, so the host adds the module
     /// after OrgStructure, UserManagement and CareerFramework. It also implements <see cref="IUnitReferences"/> for the unit module and
-    /// requires <see cref="AppOptions.TimeZone"/> to name a time zone the host knows.
+    /// requires <see cref="AppOptions.TimeZone"/> to name a time zone the host knows. It also runs the scheduler that moves waves from stage to stage
+    /// and the queue that sends their letters.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
     /// <returns>The same collection, for chaining.</returns>
@@ -34,6 +36,13 @@ public static class PromotionModule
         services.AddScoped<ApplicationRules>();
         services.AddScoped<ApplicationReader>();
         services.AddScoped<ReviewReader>();
+        services.AddScoped<StageActions>();
+        services.AddScoped<PromotionMail>();
+        services.AddScoped<WaveStep>();
+        services.AddSingleton<PromotionMailQueue>();
+        services.AddHostedService(provider => provider.GetRequiredService<PromotionMailQueue>());
+        services.AddSingleton<PromotionTick>();
+        services.AddHostedService<PromotionScheduler>();
         services.AddScoped<IUnitReferences, PromotionUnitReferences>();
         return services;
     }

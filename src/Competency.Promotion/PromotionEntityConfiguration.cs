@@ -71,6 +71,7 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
             entity.Property(e => e.EndsOn).HasColumnName("ends_on");
             entity.Property(e => e.ProcessedStage).HasColumnName("processed_stage");
             entity.Property(e => e.RaterReminderSent).HasColumnName("rater_reminder_sent");
+            entity.Property(e => e.VersionsFixed).HasColumnName("versions_fixed");
             entity.HasIndex(e => e.ProcessedStage);
 
             entity.HasOne(UserEntityName, navigationName: null).WithMany().HasForeignKey(nameof(PromotionWave.AuthorId)).OnDelete(DeleteBehavior.Restrict);

@@ -50,6 +50,17 @@ internal sealed class PromotionLocks(AppDbContext context, IEmployeeDirectory em
             .FirstOrDefaultAsync(cancellationToken);
 
     /// <summary>
+    /// Reads a wave and locks its row until the transaction ends, tracked for a change, unless another transaction holds the row. Call it under a lock of this class.
+    /// </summary>
+    /// <param name="waveId">The wave.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The wave, or <see langword="null"/> when there is none or another transaction is changing it.</returns>
+    public Task<PromotionWave?> FindWaveForUpdateSkippingLockedAsync(Guid waveId, CancellationToken cancellationToken) =>
+        context.Set<PromotionWave>()
+            .FromSql($"SELECT * FROM promotion_waves WHERE id = {waveId} FOR UPDATE SKIP LOCKED")
+            .FirstOrDefaultAsync(cancellationToken);
+
+    /// <summary>
     /// Reads an application and locks its row after the row of its wave, until the transaction ends, both tracked for a change. Call it under a
     /// lock of this class, and lock no wave before it.
     /// </summary>
