@@ -34,7 +34,7 @@ const productNameStyle: CSSProperties = {
 const GROUP_LABELS: Record<NavGroup, string> = {
   reference: "Справочники",
   admin: "Администрирование",
-  promotion: "Управление повышением",
+  promotion: "Управление карьерными переходами",
 };
 
 interface Submenu {

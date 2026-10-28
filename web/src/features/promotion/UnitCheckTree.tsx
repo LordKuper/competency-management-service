@@ -40,7 +40,7 @@ export function UnitCheckTree({
         Отмечено: {value.length}
       </Typography.Text>
       <fieldset
-        aria-label="Подразделения волны"
+        aria-label="Подразделения карьерной сессии"
         style={{
           border: 0,
           margin: 0,

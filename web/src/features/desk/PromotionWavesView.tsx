@@ -52,7 +52,7 @@ function PeriodCell({ wave }: { wave: OpenWave }) {
   );
 }
 
-/** The desk block of the waves one can apply to or that are announced: tracks, the deadline or the start of applications, and the way to apply. Nothing is drawn when no wave offers a track. */
+/** The desk block of the career sessions one can apply to or that are announced: units and tracks, the deadline or the start of applications, and the way to apply or to read more. Nothing is drawn when no session offers a track. */
 export function PromotionWavesView({
   waves,
   applicationIdByWave,
@@ -82,16 +82,33 @@ export function PromotionWavesView({
               render: (_, row) => <PeriodCell wave={row.wave} />,
             },
             {
-              key: "tracks",
-              title: "Треки",
-              render: (_, row) => row.tracks.join(", "),
+              key: "session",
+              title: "Карьерная сессия",
+              render: (_, { wave, tracks }) => (
+                <Flex vertical gap="small" align="start">
+                  <Typography.Text type="secondary">
+                    Карьерная сессия с {formatDate(wave.startsOn)} ·{" "}
+                    {wave.units.map((unit) => unit.name).join(", ")}
+                  </Typography.Text>
+                  <Flex wrap gap="small">
+                    {tracks.map((track) => (
+                      <Tag key={track}>{track}</Tag>
+                    ))}
+                  </Flex>
+                </Flex>
+              ),
             },
             {
               key: "action",
               title: "Действия",
               className: "desk-nowrap",
               render: (_, { wave }) => {
-                if (wave.stage !== STAGE.submission || !canApply) {
+                if (wave.stage !== STAGE.submission) {
+                  return (
+                    <LinkButton to={promotionPaths.home}>Подробнее</LinkButton>
+                  );
+                }
+                if (!canApply) {
                   return null;
                 }
                 const applicationId = applicationIdByWave.get(wave.id);

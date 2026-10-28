@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { App, Breadcrumb, Flex, Skeleton, Typography } from "antd";
+import { App, Breadcrumb, Flex, Skeleton } from "antd";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
@@ -24,7 +24,7 @@ import { promotionPaths } from "./routes";
 import { WaveApplications } from "./WaveApplications";
 import { WaveView } from "./WaveView";
 
-/** The wave screen: announcing a new wave, or the dates, units, stage and applications of an existing one. */
+/** The career session screen: announcing a new session, or the dates, units, stage and applications of an existing one. */
 export function WavePage() {
   const { id } = useParams();
   return id ? <ExistingWave id={id} /> : <WaveEditor />;
@@ -36,7 +36,7 @@ function ExistingWave({ id }: { id: string }) {
   if (error) {
     return (
       <ErrorAlert
-        title="Не удалось загрузить волну"
+        title="Не удалось загрузить карьерную сессию"
         error={error}
         onRetry={() => void refetch()}
       />
@@ -63,9 +63,9 @@ function WaveEditor({ latest }: { latest?: Versioned<Wave> }) {
     onSuccess: (saved) => {
       if (base) {
         rebase(saved);
-        message.success("Волна сохранена");
+        message.success("Карьерная сессия сохранена");
       } else {
-        message.success("Волна объявлена");
+        message.success("Карьерная сессия объявлена");
         leaveAfterSave(() => void navigate(promotionPaths.wave(saved.id)));
       }
     },
@@ -83,16 +83,17 @@ function WaveEditor({ latest }: { latest?: Versioned<Wave> }) {
     >
       <Breadcrumb
         items={[
-          { title: <Link to={promotionPaths.waves}>Волны</Link> },
-          { title: base ? `с ${formatDate(base.startsOn)}` : "Новая волна" },
+          { title: <Link to={promotionPaths.waves}>Карьерные сессии</Link> },
+          {
+            title: base
+              ? `Объявлена ${formatDate(base.announcedOn)}`
+              : "Новая карьерная сессия",
+          },
         ]}
       />
-      <Typography.Title level={1} style={{ margin: 0 }}>
-        {base ? `Волна с ${formatDate(base.startsOn)}` : "Новая волна"}
-      </Typography.Title>
       {loadFailure && (
         <ErrorAlert
-          title="Не удалось загрузить данные для волны"
+          title="Не удалось загрузить данные для карьерной сессии"
           error={loadFailure}
           onRetry={() => {
             void settings.refetch();
@@ -101,7 +102,7 @@ function WaveEditor({ latest }: { latest?: Versioned<Wave> }) {
         />
       )}
       {save.isError && (
-        <ErrorAlert title="Волна не сохранена" error={save.error} />
+        <ErrorAlert title="Карьерная сессия не сохранена" error={save.error} />
       )}
       {settings.data && answerable.units ? (
         <WaveView
@@ -127,7 +128,7 @@ function WaveEditor({ latest }: { latest?: Versioned<Wave> }) {
           onClose={() => setIsRollbackOpen(false)}
         />
       )}
-      {base && base.stage >= 1 && <WaveApplications waveId={base.id} />}
+      {base && base.stage >= 1 && <WaveApplications wave={base} />}
     </Flex>
   );
 }

@@ -32,7 +32,7 @@ export function PromotionHomePage() {
       style={{ maxWidth: contentMaxWidth, marginInline: "auto" }}
     >
       <Typography.Title level={1} style={{ margin: 0 }}>
-        Повышение
+        Карьерные переходы
       </Typography.Title>
       {toRate > 0 && (
         <Alert
@@ -44,12 +44,12 @@ export function PromotionHomePage() {
       )}
       <Flex vertical gap="middle">
         <Typography.Title level={2} style={{ margin: 0 }}>
-          Волны
+          Карьерные сессии
         </Typography.Title>
         {waves.isPending && <Skeleton active />}
         {waves.error && (
           <ErrorAlert
-            title="Не удалось загрузить волны"
+            title="Не удалось загрузить карьерные сессии"
             error={waves.error}
             onRetry={() => void waves.refetch()}
           />

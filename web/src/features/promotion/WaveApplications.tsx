@@ -1,23 +1,31 @@
 import { useQuery } from "@tanstack/react-query";
-import { Flex, Typography } from "antd";
+import { Flex } from "antd";
 import { useState } from "react";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { FormalDialog } from "./FormalDialog";
-import { PROMOTION_PAGE_SIZE, waveApplicationsQuery } from "./promotionApi";
+import {
+  PROMOTION_PAGE_SIZE,
+  type Wave,
+  waveApplicationsQuery,
+} from "./promotionApi";
+import { STAGE } from "./promotionTexts";
 import { WaveApplicationsView } from "./WaveApplicationsView";
 
-/** The applications of a wave the signed-in user may see, with the formal check of one opened over the list. */
-export function WaveApplications({ waveId }: { waveId: string }) {
+/** The applications of a career session the signed-in user may see, with the data for the formal check of one opened over the list. */
+export function WaveApplications({ wave }: { wave: Wave }) {
   const [page, setPage] = useState(1);
   const [formalId, setFormalId] = useState<string>();
   const { data, error, isFetching, refetch } = useQuery(
-    waveApplicationsQuery(waveId, page),
+    waveApplicationsQuery(wave.id, page),
   );
+  const items = data?.items ?? [];
+  const formalIndex = items.findIndex(
+    (application) => application.id === formalId,
+  );
+  const formal = items[formalIndex];
+  const next = formalIndex >= 0 ? items[formalIndex + 1] : undefined;
   return (
     <Flex vertical gap="middle">
-      <Typography.Title level={2} style={{ margin: 0 }}>
-        Заявки
-      </Typography.Title>
       {error && (
         <ErrorAlert
           title="Не удалось загрузить заявки"
@@ -26,17 +34,21 @@ export function WaveApplications({ waveId }: { waveId: string }) {
         />
       )}
       <WaveApplicationsView
-        applications={data?.items ?? []}
+        applications={items}
         total={data?.total ?? 0}
         page={page}
         pageSize={PROMOTION_PAGE_SIZE}
         isLoading={isFetching}
+        formalCheckEndsOn={wave.endsOn[STAGE.formalCheck - 1]}
         onPageChange={setPage}
         onOpenFormal={setFormalId}
       />
-      {formalId && (
+      {formal && (
         <FormalDialog
-          applicationId={formalId}
+          key={formal.id}
+          application={formal}
+          wave={wave}
+          onNext={next && (() => setFormalId(next.id))}
           onClose={() => setFormalId(undefined)}
         />
       )}

@@ -33,11 +33,16 @@ export function RollbackDialog({
 }: RollbackDialogProps) {
   const { data, error, isPending, refetch } = useQuery(waveQuery(waveId));
   return (
-    <AppModal open title="Откатить волну" onCancel={onClose} footer={null}>
+    <AppModal
+      open
+      title="Откатить карьерную сессию"
+      onCancel={onClose}
+      footer={null}
+    >
       {isPending && <Skeleton active />}
       {error && (
         <ErrorAlert
-          title="Не удалось загрузить волну"
+          title="Не удалось загрузить карьерную сессию"
           error={error}
           onRetry={() => void refetch()}
         />
@@ -76,7 +81,7 @@ function RollbackEditor({
       rollbackWave(base.id, base.version, input),
     onSuccess: (saved, input) => {
       message.success(
-        `Волна откачена на этап «${STAGE_TITLES[input.stage - 1]}»`,
+        `Карьерная сессия откачена на этап «${STAGE_TITLES[input.stage - 1]}»`,
       );
       onRolledBack(saved);
     },
@@ -93,7 +98,10 @@ function RollbackEditor({
         />
       )}
       {rollback.isError && (
-        <ErrorAlert title="Волна не откачена" error={rollback.error} />
+        <ErrorAlert
+          title="Карьерная сессия не откачена"
+          error={rollback.error}
+        />
       )}
       <RollbackView
         key={base.version}

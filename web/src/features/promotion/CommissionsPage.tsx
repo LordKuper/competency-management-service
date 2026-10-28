@@ -7,6 +7,7 @@ import { contentMaxWidth } from "../../app/theme";
 import { useEditBase } from "../../app/useEditBase";
 import { unitTreeItems, useAnswerableUnits } from "./answerableUnits";
 import { CommissionView } from "./CommissionView";
+import { Panel } from "./Panel";
 import {
   type Commission,
   type CommissionInput,
@@ -17,12 +18,8 @@ import {
 } from "./promotionApi";
 import { useEmployeeOptions } from "./useEmployeeOptions";
 
-/** The commissions screen of HR and administrators: choose a unit they answer for, then edit who sits in its commission. */
+/** The commissions screen of HR and administrators. */
 export function CommissionsPage() {
-  const { units, error, refetch } = useAnswerableUnits();
-  const { confirmLeave } = useLeaveGuard();
-  const [unitId, setUnitId] = useState<string>();
-  const items = useMemo(() => unitTreeItems(units ?? []), [units]);
   return (
     <Flex
       vertical
@@ -32,6 +29,27 @@ export function CommissionsPage() {
       <Typography.Title level={1} style={{ margin: 0 }}>
         Комиссии
       </Typography.Title>
+      <CommissionsSection />
+    </Flex>
+  );
+}
+
+/** Choose a unit the viewer answers for, then edit who sits in its commission. */
+export function CommissionsSection() {
+  const { units, error, refetch } = useAnswerableUnits();
+  const { confirmLeave } = useLeaveGuard();
+  const [unitId, setUnitId] = useState<string>();
+  const items = useMemo(() => unitTreeItems(units ?? []), [units]);
+  return (
+    <Flex vertical gap="middle">
+      <Flex justify="space-between" align="baseline" gap="middle" wrap>
+        <Typography.Title level={2} style={{ margin: 0 }}>
+          Комиссии подразделений
+        </Typography.Title>
+        <Typography.Text type="secondary">
+          Руководитель и ответственный HR входят в комиссию автоматически
+        </Typography.Text>
+      </Flex>
       {error && (
         <ErrorAlert
           title="Не удалось загрузить подразделения"
@@ -97,21 +115,20 @@ function CommissionForm({ latest }: { latest: Versioned<Commission> }) {
       queryClient.invalidateQueries({ queryKey: promotionQueryKey }),
   });
   return (
-    <Flex vertical gap="middle">
-      <Typography.Title level={2} style={{ margin: 0 }}>
-        {base.unitName}
-      </Typography.Title>
-      {save.isError && (
-        <ErrorAlert title="Комиссия не сохранена" error={save.error} />
-      )}
-      <CommissionView
-        key={base.version}
-        commission={base}
-        candidates={employees.candidates}
-        isSearching={employees.isSearching}
-        onSearch={employees.onSearch}
-        onSubmit={save.mutateAsync}
-      />
-    </Flex>
+    <Panel title={base.unitName}>
+      <Flex vertical gap="middle">
+        {save.isError && (
+          <ErrorAlert title="Комиссия не сохранена" error={save.error} />
+        )}
+        <CommissionView
+          key={base.version}
+          commission={base}
+          candidates={employees.candidates}
+          isSearching={employees.isSearching}
+          onSearch={employees.onSearch}
+          onSubmit={save.mutateAsync}
+        />
+      </Flex>
+    </Panel>
   );
 }

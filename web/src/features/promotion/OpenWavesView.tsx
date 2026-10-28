@@ -43,7 +43,7 @@ function stageDates(wave: OpenWave) {
   });
 }
 
-/** The waves that are announced or take applications: the stages, and the units with the tracks and levels one can apply for. */
+/** The career sessions that are announced or take applications: the stages, and the units with the tracks and levels one can apply for. */
 export function OpenWavesView({
   waves,
   applicationIdByWave,
@@ -54,7 +54,7 @@ export function OpenWavesView({
     return (
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description="Сейчас нет волн повышения, в которые можно подать заявку. Когда HR объявит волну, она появится здесь."
+        description="Сейчас нет карьерных сессий, в которые можно подать заявку. Когда HR объявит карьерную сессию, она появится здесь."
       />
     );
   }
@@ -68,7 +68,7 @@ export function OpenWavesView({
             key={wave.id}
             title={
               <Flex align="center" gap="small" wrap>
-                <span>Волна с {formatDate(wave.startsOn)}</span>
+                <span>Карьерная сессия с {formatDate(wave.startsOn)}</span>
                 <Tag color={isOpen ? "processing" : "default"}>
                   {stageLabel(wave.stage)}
                 </Tag>

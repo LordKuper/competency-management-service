@@ -54,8 +54,8 @@ export function RaterEmailsView({
 
   return (
     <Flex vertical gap="small">
-      <Typography.Title level={2} style={{ margin: 0 }}>
-        Почта оценивающих
+      <Typography.Title level={3} style={{ margin: 0 }}>
+        Почта оценивающих без учётной записи
       </Typography.Title>
       <Form
         form={form}
@@ -119,6 +119,9 @@ export function RaterEmailsView({
           );
         })}
       </Form>
+      <Typography.Text type="secondary">
+        Приглашение уйдёт только на подтверждённую почту, в конце этапа 2.
+      </Typography.Text>
     </Flex>
   );
 }

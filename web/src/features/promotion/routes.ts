@@ -22,17 +22,17 @@ export const promotionPaths = {
   demo: "/promotion/demo",
 } as const;
 
-/** Every signed-in user reaches promotion from one entry; waves and commissions are run by HR and administrators, the settings are the administrator's alone. */
+/** Every signed-in user reaches promotion from one entry; career sessions and commissions are run by HR and administrators, the settings are the administrator's alone. */
 export const navItems: NavItem[] = [
   {
     key: "promotion",
-    label: "Повышение",
+    label: "Карьерные переходы",
     path: promotionPaths.home,
     order: 1,
   },
   {
     key: "promotion-waves",
-    label: "Волны",
+    label: "Карьерные сессии",
     path: promotionPaths.waves,
     order: 2,
     group: "promotion",
@@ -48,7 +48,7 @@ export const navItems: NavItem[] = [
   },
   {
     key: "promotion-settings",
-    label: "Настройки",
+    label: "Настройки карьерных сессий",
     path: promotionPaths.settings,
     order: 4,
     group: "promotion",

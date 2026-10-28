@@ -8,7 +8,7 @@ import { PROMOTION_PAGE_SIZE, wavesQuery } from "./promotionApi";
 import { promotionPaths } from "./routes";
 import { WaveListView } from "./WaveListView";
 
-/** The waves the signed-in HR or administrator manages, and the way to announce another one. */
+/** The career sessions the signed-in HR or administrator manages, and the way to announce another one. */
 export function WavesPage() {
   const [page, setPage] = useState(1);
   const { data, error, isFetching, refetch } = useQuery(wavesQuery(page));
@@ -20,15 +20,15 @@ export function WavesPage() {
     >
       <Flex justify="space-between" align="center" gap="middle" wrap>
         <Typography.Title level={1} style={{ margin: 0 }}>
-          Волны повышения
+          Карьерные сессии
         </Typography.Title>
         <LinkButton type="primary" to={promotionPaths.newWave}>
-          Объявить волну
+          Объявить карьерную сессию
         </LinkButton>
       </Flex>
       {error && (
         <ErrorAlert
-          title="Не удалось загрузить волны"
+          title="Не удалось загрузить карьерные сессии"
           error={error}
           onRetry={() => void refetch()}
         />

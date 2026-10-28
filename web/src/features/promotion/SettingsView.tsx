@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
+import { Panel } from "./Panel";
 import type { PromotionSettings, SettingsInput } from "./promotionApi";
 import { STAGE_TITLES } from "./promotionTexts";
 
@@ -24,7 +25,7 @@ interface SettingsViewProps {
   onSubmit: (input: SettingsInput) => Promise<unknown>;
 }
 
-/** The form of the promotion settings: the interval between promotions and the default length of every stage. */
+/** The default rules of career sessions: the interval between career transitions and the default length of every stage. */
 export function SettingsView({ settings, onSubmit }: SettingsViewProps) {
   const { message } = App.useApp();
   const [form] = Form.useForm<SettingsInput>();
@@ -37,45 +38,52 @@ export function SettingsView({ settings, onSubmit }: SettingsViewProps) {
   useLeaveGuard({ isUnsaved: isDirty, isSaving: isSubmitting });
 
   return (
-    <Form
-      form={form}
-      name="promotion-settings"
-      layout="vertical"
-      disabled={isSubmitting}
-      initialValues={settings}
-      onFinish={submit}
-      onValuesChange={() => setIsDirty(form.isFieldsTouched())}
-    >
-      <Form.Item
-        name="minIntervalMonths"
-        label="Минимальный интервал между повышениями, месяцев"
-        rules={[{ required: true, message: "Укажите число месяцев" }]}
+    <Panel title="Правила по умолчанию">
+      <Form
+        form={form}
+        name="promotion-settings"
+        layout="vertical"
+        disabled={isSubmitting}
+        initialValues={settings}
+        onFinish={submit}
+        onValuesChange={() => setIsDirty(form.isFieldsTouched())}
       >
-        <InputNumber min={0} max={MAX_INTERVAL_MONTHS} precision={0} />
-      </Form.Item>
-      <Typography.Title level={2}>
-        Длительность этапов, рабочих дней
-      </Typography.Title>
-      <Row gutter={[16, 0]}>
-        {STAGE_TITLES.map((title, index) => (
-          <Col key={title} xs={24} md={12} lg={8}>
-            <Form.Item
-              name={["stageDurationsDays", index]}
-              label={`${index + 1}. ${title}`}
-              rules={[
-                { required: true, message: "Укажите число рабочих дней" },
-              ]}
-            >
-              <InputNumber min={1} max={MAX_STAGE_DAYS} precision={0} />
-            </Form.Item>
-          </Col>
-        ))}
-      </Row>
-      <Flex>
-        <Button type="primary" htmlType="submit" loading={isSubmitting}>
-          Сохранить
-        </Button>
-      </Flex>
-    </Form>
+        <Form.Item
+          name="minIntervalMonths"
+          label="Минимальный интервал между карьерными переходами, месяцев"
+          rules={[{ required: true, message: "Укажите число месяцев" }]}
+        >
+          <InputNumber min={0} max={MAX_INTERVAL_MONTHS} precision={0} />
+        </Form.Item>
+        <Typography.Text>
+          Длительность этапов новой сессии, рабочих дней
+        </Typography.Text>
+        <Row gutter={[16, 0]}>
+          {STAGE_TITLES.map((title, index) => (
+            <Col key={title} xs={24} md={12} lg={8}>
+              <Form.Item
+                name={["stageDurationsDays", index]}
+                label={`${index + 1}. ${title}`}
+                rules={[
+                  { required: true, message: "Укажите число рабочих дней" },
+                ]}
+              >
+                <InputNumber min={1} max={MAX_STAGE_DAYS} precision={0} />
+              </Form.Item>
+            </Col>
+          ))}
+        </Row>
+        <Typography.Paragraph type="secondary">
+          Суббота и воскресенье не считаются. Результаты публикуются в конце
+          этапа 5. Приём заявок начинается не раньше чем через 7 дней после
+          объявления.
+        </Typography.Paragraph>
+        <Flex>
+          <Button type="primary" htmlType="submit" loading={isSubmitting}>
+            Сохранить настройки
+          </Button>
+        </Flex>
+      </Form>
+    </Panel>
   );
 }

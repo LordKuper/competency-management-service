@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import type { EmployeeOption } from "./CommissionView";
+import { Panel } from "./Panel";
 import type { PromotionApplication, RaterEntry } from "./promotionApi";
 import { HEAD_RATERS_HINT, STAGE } from "./promotionTexts";
 import { RatersField } from "./RatersField";
@@ -69,45 +70,57 @@ export function RatersView({
   }
 
   return (
-    <Flex vertical gap="middle">
-      <Typography.Text strong>
-        {application.candidateName}: {application.target.trackName},{" "}
-        {application.target.levelName}
-      </Typography.Text>
-      {!canEdit && (
-        <Alert
-          type="info"
-          showIcon
-          title="Список оценивающих уже не меняется"
-        />
-      )}
-      <Form
-        form={form}
-        name="promotion-raters"
-        layout="vertical"
-        disabled={isBusy}
-        initialValues={{ raters: entriesOf(application) }}
-        onFinish={submit}
-        onValuesChange={() => setIsDirty(form.isFieldsTouched())}
-      >
-        <Form.Item name="raters" extra={HEAD_RATERS_HINT}>
-          <RatersField
-            saved={application.raters ?? []}
-            candidates={candidates}
-            excludedIds={[application.candidateEmployeeId]}
-            isSearching={isSearching}
-            isLocked={isBusy || !canEdit}
-            onSearch={onSearch}
-            onConfirmEmail={confirmEmail}
-            isConfirmLocked={isDirty}
+    <Panel
+      title={`${application.candidateName}: оценивающие`}
+      extra={
+        <Typography.Text type="secondary">
+          {application.target.trackName} · {application.target.levelName}
+        </Typography.Text>
+      }
+    >
+      <Flex vertical gap="middle">
+        <Typography.Text type="secondary">
+          {HEAD_RATERS_HINT} В конце этапа «Формальная проверка» список
+          становится окончательным: тем, у кого нет учётной записи, сначала
+          уйдёт приглашение в систему, затем каждому оценивающему — одно письмо
+          со всеми, кого ему нужно оценить.
+        </Typography.Text>
+        {!canEdit && (
+          <Alert
+            type="info"
+            showIcon
+            title="Список оценивающих уже не меняется"
           />
-        </Form.Item>
-        {canEdit && (
-          <Button type="primary" htmlType="submit" loading={isSubmitting}>
-            Сохранить список
-          </Button>
         )}
-      </Form>
-    </Flex>
+        <Form
+          form={form}
+          name="promotion-raters"
+          layout="vertical"
+          disabled={isBusy}
+          initialValues={{ raters: entriesOf(application) }}
+          onFinish={submit}
+          onValuesChange={() => setIsDirty(form.isFieldsTouched())}
+        >
+          <Form.Item name="raters">
+            <RatersField
+              saved={application.raters ?? []}
+              candidates={candidates}
+              excludedIds={[application.candidateEmployeeId]}
+              isSearching={isSearching}
+              isLocked={isBusy || !canEdit}
+              onSearch={onSearch}
+              onConfirmEmail={confirmEmail}
+              isConfirmLocked={isDirty}
+              hasSourceColumn
+            />
+          </Form.Item>
+          {canEdit && (
+            <Button type="primary" htmlType="submit" loading={isSubmitting}>
+              Сохранить список
+            </Button>
+          )}
+        </Form>
+      </Flex>
+    </Panel>
   );
 }

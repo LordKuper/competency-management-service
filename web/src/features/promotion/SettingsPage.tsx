@@ -3,6 +3,8 @@ import { Flex, Skeleton, Typography } from "antd";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { contentMaxWidth } from "../../app/theme";
 import { useEditBase } from "../../app/useEditBase";
+import { CommissionsSection } from "./CommissionsPage";
+import { ExclusionsPanel } from "./ExclusionsPanel";
 import {
   type PromotionSettings,
   promotionQueryKey,
@@ -23,7 +25,7 @@ export function SettingsPage() {
       style={{ maxWidth: contentMaxWidth, marginInline: "auto" }}
     >
       <Typography.Title level={1} style={{ margin: 0 }}>
-        Настройки повышения
+        Настройки карьерных сессий
       </Typography.Title>
       {isPending && <Skeleton active />}
       {error && (
@@ -34,6 +36,8 @@ export function SettingsPage() {
         />
       )}
       {data && <SettingsEditor latest={data} />}
+      <ExclusionsPanel />
+      <CommissionsSection />
     </Flex>
   );
 }

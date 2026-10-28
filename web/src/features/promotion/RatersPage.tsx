@@ -15,7 +15,7 @@ import {
 } from "./promotionApi";
 import { RatersView } from "./RatersView";
 import { promotionPaths } from "./routes";
-import { useEmployeeOptions } from "./useEmployeeOptions";
+import { useRaterOptions } from "./useRaterOptions";
 
 /** The raters of a candidate, which the head of the unit of the target corrects. */
 export function RatersPage() {
@@ -28,12 +28,12 @@ export function RatersPage() {
     >
       <Breadcrumb
         items={[
-          { title: <Link to={promotionPaths.home}>Повышение</Link> },
+          { title: <Link to={promotionPaths.home}>Карьерные переходы</Link> },
           { title: "Оценивающие" },
         ]}
       />
       <Typography.Title level={1} style={{ margin: 0 }}>
-        Оценивающие кандидата
+        Оценивающие кандидатов
       </Typography.Title>
       {applicationId && <LoadedRaters id={applicationId} />}
     </Flex>
@@ -60,7 +60,7 @@ function RatersEditor({ latest }: { latest: Versioned<PromotionApplication> }) {
   const queryClient = useQueryClient();
   const { message } = App.useApp();
   const { base = latest, noteSaveFailure, rebase } = useEditBase(latest);
-  const employees = useEmployeeOptions("rater-picker");
+  const employees = useRaterOptions("rater-picker");
   const save = useMutation({
     mutationFn: (raters: RaterEntry[]) =>
       saveRaters(base.id, base.version, raters),

@@ -1,7 +1,9 @@
 import {
   Button,
+  Col,
   Flex,
   Form,
+  Row,
   Select,
   Table,
   type TableColumnsType,
@@ -66,6 +68,7 @@ export function CommissionView({
   useLeaveGuard({ isUnsaved: isDirty, isSaving: isSubmitting });
 
   const chosenIds = Form.useWatch("memberEmployeeIds", form) ?? [];
+  const chairId = Form.useWatch("chairEmployeeId", form);
   const known = new Map(
     commission.members.map((member) => [member.employeeId, member]),
   );
@@ -102,15 +105,20 @@ export function CommissionView({
       onFinish={submit}
       onValuesChange={() => setIsDirty(form.isFieldsTouched())}
     >
-      <Form.Item name="chairEmployeeId" label="Председатель">
-        <Select
-          allowClear
-          placeholder="Выберите председателя"
-          options={chairOptions}
-        />
-      </Form.Item>
+      <Row>
+        <Col xs={24} md={12}>
+          <Form.Item name="chairEmployeeId" label="Председатель">
+            <Select
+              allowClear
+              placeholder="Выберите председателя"
+              options={chairOptions}
+            />
+          </Form.Item>
+        </Col>
+      </Row>
       <Form.Item name="memberEmployeeIds" label="Члены комиссии">
         <MembersField
+          chairId={chairId}
           members={members}
           candidates={candidates}
           isSearching={isSearching}
@@ -134,6 +142,8 @@ export function CommissionView({
 }
 
 interface MembersFieldProps {
+  /** The chair, marked in the list. */
+  chairId?: string;
   /** Identifiers of the members that are not required; supplied by the surrounding form item. */
   value?: string[];
   onChange?: (value: string[]) => void;
@@ -148,6 +158,7 @@ interface MembersFieldProps {
 }
 
 function MembersField({
+  chairId,
   value = [],
   onChange,
   members,
@@ -172,9 +183,21 @@ function MembersField({
       render: (_, member) => (
         <Flex wrap gap="small" align="center">
           <span>{member.fullName}</span>
-          {member.isResponsibleHr && <Tag>Ответственный HR</Tag>}
-          {member.isHead && <Tag>Руководитель</Tag>}
           {!member.isActing && <Tag color="warning">Не действует</Tag>}
+        </Flex>
+      ),
+    },
+    {
+      title: "Роль",
+      key: "role",
+      render: (_, member) => (
+        <Flex wrap gap="small">
+          {member.isHead && <Tag>Руководитель</Tag>}
+          {member.isResponsibleHr && <Tag>Ответственный HR</Tag>}
+          {!member.isRequired && <span>Член комиссии</span>}
+          {member.employeeId === chairId && (
+            <Tag color="processing">Председатель</Tag>
+          )}
         </Flex>
       ),
     },
@@ -183,7 +206,11 @@ function MembersField({
       key: "actions",
       width: 1,
       render: (_, member) =>
-        member.isRequired ? null : (
+        member.isRequired ? (
+          <Typography.Text type="secondary">
+            Входит автоматически
+          </Typography.Text>
+        ) : (
           <Button
             type="link"
             danger

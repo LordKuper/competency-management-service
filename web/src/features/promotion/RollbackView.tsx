@@ -107,7 +107,7 @@ export function RollbackView({
       >
         <Form.Item
           name="stage"
-          label="Этап, на который откатить волну"
+          label="Этап, на который откатить карьерную сессию"
           rules={[{ required: true, message: "Выберите этап" }]}
         >
           <Select
@@ -151,7 +151,7 @@ export function RollbackView({
           <Alert
             type="warning"
             showIcon
-            title={`Откатить волну на этап «${STAGE_TITLES[confirmation.input.stage - 1]}»?`}
+            title={`Откатить карьерную сессию на этап «${STAGE_TITLES[confirmation.input.stage - 1]}»?`}
             description={
               <RollbackConsequences preview={confirmation.preview} />
             }

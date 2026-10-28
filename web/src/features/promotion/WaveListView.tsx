@@ -13,7 +13,7 @@ interface WaveListViewProps {
   onPageChange: (page: number) => void;
 }
 
-/** The waves as a table: period, where each stands, its units and who runs it; a wave opens from its period. */
+/** The career sessions as a table: period, where each stands, its units and who runs it; a session opens from its period. */
 export function WaveListView({
   waves,
   total,
@@ -60,7 +60,7 @@ export function WaveListView({
         emptyText: (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="Волн пока нет. Объявите первую волну."
+            description="Карьерных сессий пока нет. Объявите первую карьерную сессию."
           />
         ),
       }}

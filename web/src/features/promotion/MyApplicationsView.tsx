@@ -18,7 +18,7 @@ export function MyApplicationsView({ applications }: MyApplicationsViewProps) {
     return (
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description="Вы ещё не подавали заявок на повышение."
+        description="Вы ещё не подавали заявок на карьерный переход."
       />
     );
   }
@@ -40,7 +40,7 @@ export function MyApplicationsView({ applications }: MyApplicationsViewProps) {
                     ? promotionPaths.apply(application.waveId)
                     : promotionPaths.application(application.id)
                 }
-                aria-label={`${isDraft ? "Продолжить черновик" : "Открыть заявку"}: ${application.target.trackName}, ${application.target.levelName}, волна с ${formatDate(application.waveStartsOn)}`}
+                aria-label={`${isDraft ? "Продолжить черновик" : "Открыть заявку"}: ${application.target.trackName}, ${application.target.levelName}, карьерная сессия с ${formatDate(application.waveStartsOn)}`}
               >
                 {isDraft ? "Продолжить" : "Открыть"}
               </Link>
@@ -55,8 +55,8 @@ export function MyApplicationsView({ applications }: MyApplicationsViewProps) {
               )}
               <Typography.Text type="secondary">
                 {isDraft
-                  ? `Волна с ${formatDate(application.waveStartsOn)}, не отправлена`
-                  : `Волна с ${formatDate(application.waveStartsOn)}, подана ${formatDate(application.submittedAt)}`}
+                  ? `Карьерная сессия с ${formatDate(application.waveStartsOn)}, не отправлена`
+                  : `Карьерная сессия с ${formatDate(application.waveStartsOn)}, подана ${formatDate(application.submittedAt)}`}
               </Typography.Text>
             </Flex>
           </Card>

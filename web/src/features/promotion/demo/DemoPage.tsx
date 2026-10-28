@@ -22,7 +22,7 @@ export function DemoPage() {
       style={{ maxWidth: contentMaxWidth, marginInline: "auto" }}
     >
       <Typography.Title level={1} style={{ margin: 0 }}>
-        Демонстрация повышения
+        Демонстрация карьерных сессий
       </Typography.Title>
       <Typography.Text type="secondary">
         Данные условные: кнопки на экранах ничего не сохраняют и не отправляют.
