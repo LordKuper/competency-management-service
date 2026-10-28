@@ -119,6 +119,12 @@
       "tier": "standard",
       "reason": "risk:ui shape",
       "resolved_model": "sonnet"
+    },
+    "Task 9": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:ui shape",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
