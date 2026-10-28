@@ -8,7 +8,7 @@ namespace Competency.Promotion;
 /// not having carried out the end actions of the stage it returns to and the ones after it, so they run again when those stages end. A caller
 /// holds the promotion locks first. Scoped to a request, because it shares the request's database context.
 /// </summary>
-internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, PromotionCalendar calendar)
+internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, PromotionCalendar calendar, StageActions actions)
 {
     /// <summary>
     /// Finds what going back to a stage would reset or compute again.
@@ -68,15 +68,22 @@ internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, P
     /// <summary>
     /// Takes the wave and its applications back to a stage, changing tracked rows and saving nothing, so the caller commits them in its
     /// transaction. The wave must be locked.
+    /// When it returns to the artifact stage, an application whose mandatory artifacts are already given reaches the commission at once, as it would on filing the last one.
     /// </summary>
     /// <param name="wave">The locked wave.</param>
     /// <param name="request">The stage and the new dates, already checked.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
     public async Task ApplyAsync(PromotionWave wave, RollbackRequest request, CancellationToken cancellationToken)
     {
-        foreach (var application in await locks.FindWaveApplicationsForUpdateAsync(wave.Id, cancellationToken))
+        var applications = await locks.FindWaveApplicationsForUpdateAsync(wave.Id, cancellationToken);
+        foreach (var application in applications)
         {
             application.ReturnToStage(request.Stage);
+        }
+
+        if (request.Stage == PromotionStage.Artifacts)
+        {
+            await ReachCommissionAsync(applications, cancellationToken);
         }
 
         wave.EndsOn = [.. request.EndsOn];
@@ -84,6 +91,24 @@ internal sealed class WaveRollback(AppDbContext context, PromotionLocks locks, P
         if (request.Stage <= PromotionStage.Rating)
         {
             wave.RaterReminderSent = false;
+        }
+    }
+
+    /// <summary>
+    /// Hands to the commission the admitted applications that already hold every mandatory artifact, by the check that filing an artifact runs.
+    /// </summary>
+    private async Task ReachCommissionAsync(IReadOnlyCollection<PromotionApplication> applications, CancellationToken cancellationToken)
+    {
+        var ids = applications.Select(application => application.Id).ToArray();
+        var given = (await context.Set<PromotionArtifact>()
+                .AsNoTracking()
+                .Where(artifact => ids.Contains(artifact.ApplicationId))
+                .Select(artifact => new { artifact.ApplicationId, artifact.CompetencyId })
+                .ToListAsync(cancellationToken))
+            .ToLookup(artifact => artifact.ApplicationId, artifact => artifact.CompetencyId);
+        foreach (var application in applications)
+        {
+            await actions.ReachCommissionWithArtifactsAsync(application, [.. given[application.Id]], cancellationToken);
         }
     }
 }
