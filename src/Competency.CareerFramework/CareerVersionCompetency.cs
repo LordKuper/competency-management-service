@@ -5,6 +5,7 @@ namespace Competency.CareerFramework;
 /// </summary>
 /// <param name="Id">The competency identifier.</param>
 /// <param name="Name">The competency name.</param>
+/// <param name="Description">What the competency means as the version froze it; null when it has none.</param>
 /// <param name="BlockId">The shared block the competency counts in; null for the competencies outside blocks.</param>
 /// <param name="Type">How the competency counts towards readiness in the version.</param>
 /// <param name="MaxScore">The highest score of the competency's scale; 0 when the competency has no scale points.</param>
@@ -12,6 +13,7 @@ namespace Competency.CareerFramework;
 public sealed record CareerVersionCompetency(
     Guid Id,
     string Name,
+    string? Description,
     Guid? BlockId,
     CompetencyType Type,
     int MaxScore,

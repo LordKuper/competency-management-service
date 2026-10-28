@@ -47,6 +47,7 @@ internal sealed class CareerModel(AppDbContext context, ProcessRoles roles, IEmp
         var competencies = snapshot.Competencies.ToDictionary(competency => competency.Id);
         var scales = snapshot.Scales.ToDictionary(scale => scale.Id);
         var countedIds = counted.Select(item => item.CompetencyId).ToHashSet();
+        var blockEntries = snapshot.SharedBlocks.ToDictionary(block => block.Id);
         return new CareerVersion(
             LevelsOf(version, snapshot),
             [.. counted
@@ -55,7 +56,10 @@ internal sealed class CareerModel(AppDbContext context, ProcessRoles roles, IEmp
             [.. version.Content.Requirements
                 .Where(requirement => countedIds.Contains(requirement.CompetencyId))
                 .Select(requirement => new CareerVersionRequirement(requirement.LevelId, requirement.CompetencyId, requirement.RequiredScore))],
-            [.. version.Content.BlockWeights.Select(weight => new CareerVersionBlockWeight(weight.LevelId, weight.BlockId, weight.Percent))]);
+            [.. version.Content.BlockWeights.Select(weight => new CareerVersionBlockWeight(weight.LevelId, weight.BlockId, weight.Percent))],
+            [.. version.Content.SharedBlocks
+                .Where(block => blockEntries.ContainsKey(block.BlockId) && counted.Any(item => item.BlockId == block.BlockId))
+                .Select((block, order) => new CareerVersionBlock(block.BlockId, blockEntries[block.BlockId].Name, order))]);
     }
 
     /// <inheritdoc />
@@ -145,6 +149,7 @@ internal sealed class CareerModel(AppDbContext context, ProcessRoles roles, IEmp
         return new CareerVersionCompetency(
             entry.Id,
             entry.Name,
+            entry.Description,
             item.BlockId,
             item.Type ?? CompetencyType.Additional,
             points.Count == 0 ? 0 : points.Max(point => point.Score),

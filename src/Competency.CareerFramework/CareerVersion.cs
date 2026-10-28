@@ -8,8 +8,10 @@ namespace Competency.CareerFramework;
 /// <param name="Competencies">The competencies the version counts, each once.</param>
 /// <param name="Requirements">The required score of every level and competency.</param>
 /// <param name="BlockWeights">The coefficients of the groups of competencies by level.</param>
+/// <param name="Blocks">The shared blocks the counted competencies belong to, in the order the version includes them.</param>
 public sealed record CareerVersion(
     IReadOnlyList<CareerVersionLevel> Levels,
     IReadOnlyList<CareerVersionCompetency> Competencies,
     IReadOnlyList<CareerVersionRequirement> Requirements,
-    IReadOnlyList<CareerVersionBlockWeight> BlockWeights);
+    IReadOnlyList<CareerVersionBlockWeight> BlockWeights,
+    IReadOnlyList<CareerVersionBlock> Blocks);
