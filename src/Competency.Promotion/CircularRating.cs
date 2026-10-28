@@ -20,6 +20,14 @@ internal static class CircularRating
             .ToDictionary(group => group.Key, group => group.Average(answer => (decimal)answer.Score!.Value));
 
     /// <summary>
+    /// Turns the averages into the scores the chair starts from: each average rounded to a whole point, halves up.
+    /// </summary>
+    /// <param name="averages">The mean score by competency, as <see cref="Averages"/> returns it.</param>
+    /// <returns>The default final score by competency; a competency nobody scored is absent.</returns>
+    public static Dictionary<Guid, decimal> DefaultFinalScores(IReadOnlyDictionary<Guid, decimal> averages) =>
+        averages.ToDictionary(pair => pair.Key, pair => Math.Round(pair.Value, MidpointRounding.AwayFromZero));
+
+    /// <summary>
     /// Finds the competencies the candidate must give an artifact for: those whose average does not meet the requirement.
     /// </summary>
     /// <param name="standing">The rules of the version applied to the averages.</param>

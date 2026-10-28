@@ -3846,7 +3846,7 @@ export interface components {
         };
         RankingItemResponse: {
             /** Format: int32 */
-            rank: null | number;
+            rank: number;
             /** Format: uuid */
             applicationId: string;
             /** Format: uuid */
@@ -3855,10 +3855,11 @@ export interface components {
             target: components["schemas"]["ApplicationTargetResponse"];
             status: components["schemas"]["ApplicationStatus"];
             /** Format: double */
-            rating: null | number;
+            rating: number;
+            isRatingFromFinalScores: boolean;
             /** Format: double */
             threshold: null | number;
-            isReady: null | boolean;
+            isReady: boolean;
             decision: null | components["schemas"]["PromotionDecision"];
         };
         RaterEmailRequest: {
@@ -3976,6 +3977,17 @@ export interface components {
             threshold: null | number;
             failedCritical: components["schemas"]["ReviewFailedCompetencyResponse"][];
         };
+        ReviewReadinessChangeResponse: {
+            /** Format: date */
+            previousWaveStartsOn: string;
+            previousTarget: components["schemas"]["ApplicationTargetResponse"];
+            /** Format: double */
+            previousRating: number;
+            /** Format: double */
+            rating: number;
+            /** Format: double */
+            delta: number;
+        };
         ReviewRequest: {
             finalScores: components["schemas"]["FinalScoreInput"][];
             decision?: null | components["schemas"]["PromotionDecision"];
@@ -4000,14 +4012,16 @@ export interface components {
             artifactsMissing: boolean;
             competencies: components["schemas"]["ReviewCompetencyResponse"][];
             /** Format: double */
-            rating: null | number;
+            rating: number;
+            isRatingFromFinalScores: boolean;
             /** Format: double */
             threshold: null | number;
-            isReady: null | boolean;
+            isReady: boolean;
             decision: null | components["schemas"]["PromotionDecision"];
             decidedByName: null | string;
             /** Format: date-time */
             decidedAt: null | string;
+            readinessChange: null | components["schemas"]["ReviewReadinessChangeResponse"];
             history: components["schemas"]["ReviewHistoryResponse"][];
         };
         RollbackEffect: {

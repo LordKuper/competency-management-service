@@ -21,12 +21,14 @@ namespace Competency.Promotion;
 /// <param name="MeetsAfterRating">Whether the raters' averages meet the mandatory requirements; null until the rating stage has been checked.</param>
 /// <param name="ArtifactsMissing">Whether the candidate gave no artifact for some competency that required one.</param>
 /// <param name="Competencies">The competencies of the version in its order.</param>
-/// <param name="Rating">The rating the chair's scores give, in percent, unrounded; null until the chair gives scores.</param>
+/// <param name="Rating">The rating, in percent, unrounded: from the chair's saved final scores, and until there are any from the default ones, the raters' averages rounded.</param>
+/// <param name="IsRatingFromFinalScores">Whether the rating comes from final scores the chair saved rather than from the defaults.</param>
 /// <param name="Threshold">The rating the target level requires, in percent; null when the version sets none.</param>
-/// <param name="IsReady">Whether the chair's scores make the candidate ready by the rules of the version; null until the chair gives scores.</param>
+/// <param name="IsReady">Whether the scores behind the rating make the candidate ready by the rules of the version.</param>
 /// <param name="Decision">The decision of the chair; null while there is none.</param>
 /// <param name="DecidedByName">Who recorded the decision, as people know the account.</param>
 /// <param name="DecidedAt">When they recorded it.</param>
+/// <param name="ReadinessChange">How readiness moved since the latest earlier decided application; null when the candidate has none.</param>
 /// <param name="History">The candidate's earlier applications that got a decision and whose results were published, the latest first.</param>
 internal sealed record ReviewResponse(
     Guid Id,
@@ -43,10 +45,12 @@ internal sealed record ReviewResponse(
     bool? MeetsAfterRating,
     bool ArtifactsMissing,
     IReadOnlyList<ReviewCompetencyResponse> Competencies,
-    decimal? Rating,
+    decimal Rating,
+    bool IsRatingFromFinalScores,
     decimal? Threshold,
-    bool? IsReady,
+    bool IsReady,
     PromotionDecision? Decision,
     string? DecidedByName,
     DateTimeOffset? DecidedAt,
+    ReviewReadinessChangeResponse? ReadinessChange,
     IReadOnlyList<ReviewHistoryResponse> History);

@@ -21875,6 +21875,7 @@
           "target",
           "status",
           "rating",
+          "isRatingFromFinalScores",
           "threshold",
           "isReady",
           "decision"
@@ -21882,10 +21883,7 @@
         "type": "object",
         "properties": {
           "rank": {
-            "type": [
-              "null",
-              "integer"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "applicationId": {
@@ -21906,11 +21904,11 @@
             "$ref": "#/components/schemas/ApplicationStatus"
           },
           "rating": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": "number",
             "format": "double"
+          },
+          "isRatingFromFinalScores": {
+            "type": "boolean"
           },
           "threshold": {
             "type": [
@@ -21920,10 +21918,7 @@
             "format": "double"
           },
           "isReady": {
-            "type": [
-              "null",
-              "boolean"
-            ]
+            "type": "boolean"
           },
           "decision": {
             "oneOf": [
@@ -22386,6 +22381,37 @@
           }
         }
       },
+      "ReviewReadinessChangeResponse": {
+        "required": [
+          "previousWaveStartsOn",
+          "previousTarget",
+          "previousRating",
+          "rating",
+          "delta"
+        ],
+        "type": "object",
+        "properties": {
+          "previousWaveStartsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "previousTarget": {
+            "$ref": "#/components/schemas/ApplicationTargetResponse"
+          },
+          "previousRating": {
+            "type": "number",
+            "format": "double"
+          },
+          "rating": {
+            "type": "number",
+            "format": "double"
+          },
+          "delta": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "ReviewRequest": {
         "required": [
           "finalScores"
@@ -22427,11 +22453,13 @@
           "artifactsMissing",
           "competencies",
           "rating",
+          "isRatingFromFinalScores",
           "threshold",
           "isReady",
           "decision",
           "decidedByName",
           "decidedAt",
+          "readinessChange",
           "history"
         ],
         "type": "object",
@@ -22495,11 +22523,11 @@
             }
           },
           "rating": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": "number",
             "format": "double"
+          },
+          "isRatingFromFinalScores": {
+            "type": "boolean"
           },
           "threshold": {
             "type": [
@@ -22509,10 +22537,7 @@
             "format": "double"
           },
           "isReady": {
-            "type": [
-              "null",
-              "boolean"
-            ]
+            "type": "boolean"
           },
           "decision": {
             "oneOf": [
@@ -22536,6 +22561,16 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "readinessChange": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReviewReadinessChangeResponse"
+              }
+            ]
           },
           "history": {
             "type": "array",

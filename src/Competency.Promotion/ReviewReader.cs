@@ -40,7 +40,9 @@ internal sealed class ReviewReader(
         var mandatory = await applications.MandatoryArtifactIdsAsync(application, version, cancellationToken);
         var finals = await applications.FinalScoresAsync(application.Id, cancellationToken);
         var (history, latest) = await PreviousAsync(application, cancellationToken);
+        var averages = CircularRating.Averages(answers.SelectMany(group => group));
         var standing = finals.Count == 0 ? null : career.Score(version, application.LevelId, finals.ToDictionary(pair => pair.Key, pair => (decimal)pair.Value));
+        var rated = standing ?? career.Score(version, application.LevelId, CircularRating.DefaultFinalScores(averages));
         var required = version.Requirements.Where(requirement => requirement.LevelId == application.LevelId).ToDictionary(requirement => requirement.CompetencyId, requirement => requirement.RequiredScore);
         var decidedBy = application.DecidedBy is { } userId ? (await waves.AccountNamesAsync([userId], cancellationToken)).GetValueOrDefault(userId) : null;
 
@@ -68,12 +70,14 @@ internal sealed class ReviewReader(
                 mandatory.Contains(competency.Id),
                 finals.TryGetValue(competency.Id, out var finalScore) ? finalScore : null,
                 standing?.Competencies.FirstOrDefault(item => item.CompetencyId == competency.Id)?.IsMet))],
-            standing?.Rating,
+            rated.Rating,
+            standing is not null,
             facts.Level.MinOverallPercent,
-            standing?.IsReady,
+            rated.IsReady,
             application.Decision,
             decidedBy,
             application.DecidedAt,
+            history.Count == 0 ? null : ReadinessChangeOf(history[0], career.Score(version, application.LevelId, averages).Rating),
             history);
     }
 
@@ -97,34 +101,44 @@ internal sealed class ReviewReader(
         var ids = reviewed.Select(application => application.Id).ToArray();
         var finals = (await context.Set<PromotionFinalScore>().AsNoTracking().Where(score => ids.Contains(score.ApplicationId)).ToListAsync(cancellationToken))
             .ToLookup(score => score.ApplicationId);
+        var answers = (await context.Set<PromotionRaterScore>().AsNoTracking().Where(answer => ids.Contains(answer.ApplicationId)).ToListAsync(cancellationToken))
+            .ToLookup(answer => answer.ApplicationId);
 
         var rows = reviewed
             .Select(application => (
                 Application: application,
                 Name: people[application.EmployeeId].FullName,
-                Standing: finals[application.Id].Any()
-                    ? career.Score(facts[application.Id].Version, application.LevelId, finals[application.Id].ToDictionary(score => score.CompetencyId, score => (decimal)score.Score))
-                    : null))
-            .ToList();
-        var scored = rows.Where(row => row.Standing is not null)
-            .OrderByDescending(row => row.Standing!.Rating)
+                IsFromFinals: finals[application.Id].Any(),
+                Standing: career.Score(
+                    facts[application.Id].Version,
+                    application.LevelId,
+                    finals[application.Id].Any()
+                        ? finals[application.Id].ToDictionary(score => score.CompetencyId, score => (decimal)score.Score)
+                        : CircularRating.DefaultFinalScores(CircularRating.Averages(answers[application.Id])))))
+            .OrderByDescending(row => row.Standing.Rating)
             .ThenBy(row => row.Name, TextCollation.Comparer)
             .ThenBy(row => row.Application.Id);
-        var unscored = rows.Where(row => row.Standing is null)
-            .OrderBy(row => row.Name, TextCollation.Comparer)
-            .ThenBy(row => row.Application.Id);
-        return [.. scored.Concat(unscored).Select((row, index) => new RankingItemResponse(
-            row.Standing is null ? null : index + 1,
+        return [.. rows.Select((row, index) => new RankingItemResponse(
+            index + 1,
             row.Application.Id,
             row.Application.EmployeeId,
             row.Name,
             facts[row.Application.Id].Target,
             row.Application.Status,
-            row.Standing?.Rating,
-            row.Standing?.Threshold,
-            row.Standing?.IsReady,
+            row.Standing.Rating,
+            row.IsFromFinals,
+            row.Standing.Threshold,
+            row.Standing.IsReady,
             row.Application.Decision))];
     }
+
+    private static ReviewReadinessChangeResponse ReadinessChangeOf(ReviewHistoryResponse previous, decimal rating) =>
+        new(
+            previous.WaveStartsOn,
+            previous.Target,
+            previous.Rating,
+            rating,
+            Math.Round(rating, 1, MidpointRounding.AwayFromZero) - Math.Round(previous.Rating, 1, MidpointRounding.AwayFromZero));
 
     private static ReviewCompetencyResponse CompetencyOf(
         CareerVersionCompetency competency,
