@@ -192,10 +192,10 @@ Material risk: change: ui shape — сценарий по ролям и плаш
 ### Task 11: Блок «Волны повышения» на рабочем столе
 AC: AC-50, AC-51, AC-45, AC-46 (SPA).
 Material risk: change: public contract — удаление `DeskKind.PromotionWaveOpen` и его группы из контракта стола
-- [ ] Убрать справочный пункт `PromotionWaveOpen` (`DeskKind`, группа `PromotionOpenWaves`, ветка в `PromotionDeskSource`, тексты в `deskTexts.ts`); тесты — только до компиляции
-- [ ] Блок «Волны повышения» на странице рабочего стола: данные `GET waves/open`; открытые — треки целей, срок приёма, переход на `/promotion/apply/:waveId` (или к своей заявке, если она уже есть); предстоящие — треки целей и дата начала приёма; нет волн — блок не отображается
-- [ ] Контейнер и представление (решение «Демо-режим»); надписи по «Interface labels»
-- [ ] Перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts` (`gen-api`)
+- [x] Убрать справочный пункт `PromotionWaveOpen` (`DeskKind`, группа `PromotionOpenWaves`, ветка в `PromotionDeskSource`, тексты в `deskTexts.ts`); тесты — только до компиляции
+- [x] Блок «Волны повышения» на странице рабочего стола: данные `GET waves/open`; открытые — треки целей, срок приёма, переход на `/promotion/apply/:waveId` (или к своей заявке, если она уже есть); предстоящие — треки целей и дата начала приёма; нет волн — блок не отображается
+- [x] Контейнер и представление (решение «Демо-режим»); надписи по «Interface labels»
+- [x] Перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts` (`gen-api`)
 
 ## Risks
 - Объём экранов (Task 7–9): каждая задача крупная; impl-review делит скоуп на волны ревью.
