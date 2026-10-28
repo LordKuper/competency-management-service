@@ -1,7 +1,13 @@
 import { Button, Card, Descriptions, Empty, Flex, Tag, Typography } from "antd";
 import { Link, useNavigate } from "react-router";
 import type { OpenWave } from "./promotionApi";
-import { formatDate, STAGE, STAGE_TITLES, stageLabel } from "./promotionTexts";
+import {
+  formatDate,
+  PUBLICATION_TITLE,
+  STAGE,
+  STAGE_TITLES,
+  stageLabel,
+} from "./promotionTexts";
 import { promotionPaths } from "./routes";
 
 interface OpenWavesViewProps {
@@ -16,16 +22,24 @@ function stageDates(wave: OpenWave) {
   return STAGE_TITLES.flatMap((title, index) => {
     const endsOn = wave.endsOn[index];
     if (!endsOn) return [];
-    return [
-      {
-        key: title,
-        label: title,
-        children:
-          index === 0
-            ? `${formatDate(wave.startsOn)} — ${formatDate(endsOn)}`
-            : `до ${formatDate(endsOn)}`,
-      },
-    ];
+    const stageRow = {
+      key: title,
+      label: title,
+      children:
+        index === 0
+          ? `${formatDate(wave.startsOn)} — ${formatDate(endsOn)}`
+          : `до ${formatDate(endsOn)}`,
+    };
+    return index + 1 === STAGE.review
+      ? [
+          stageRow,
+          {
+            key: PUBLICATION_TITLE,
+            label: PUBLICATION_TITLE,
+            children: formatDate(endsOn),
+          },
+        ]
+      : [stageRow];
   });
 }
 

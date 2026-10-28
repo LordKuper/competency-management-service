@@ -14,9 +14,9 @@ import { useFormSubmit } from "../../app/useFormSubmit";
 import type { PromotionSettings, SettingsInput } from "./promotionApi";
 import { STAGE_TITLES } from "./promotionTexts";
 
-/** Largest interval in months and stage length in days the fields offer, as the server accepts them; the OpenAPI document does not carry the limits. */
+/** Largest interval in months and stage length in working days the fields offer, as the server accepts them; the OpenAPI document does not carry the limits. */
 const MAX_INTERVAL_MONTHS = 120;
-const MAX_STAGE_DAYS = 365;
+const MAX_STAGE_DAYS = 260;
 
 interface SettingsViewProps {
   settings: PromotionSettings;
@@ -53,14 +53,18 @@ export function SettingsView({ settings, onSubmit }: SettingsViewProps) {
       >
         <InputNumber min={0} max={MAX_INTERVAL_MONTHS} precision={0} />
       </Form.Item>
-      <Typography.Title level={2}>Длительность этапов, дней</Typography.Title>
+      <Typography.Title level={2}>
+        Длительность этапов, рабочих дней
+      </Typography.Title>
       <Row gutter={[16, 0]}>
         {STAGE_TITLES.map((title, index) => (
           <Col key={title} xs={24} md={12} lg={8}>
             <Form.Item
               name={["stageDurationsDays", index]}
               label={`${index + 1}. ${title}`}
-              rules={[{ required: true, message: "Укажите число дней" }]}
+              rules={[
+                { required: true, message: "Укажите число рабочих дней" },
+              ]}
             >
               <InputNumber min={1} max={MAX_STAGE_DAYS} precision={0} />
             </Form.Item>

@@ -31,7 +31,7 @@ interface RollbackFormValues {
 interface RollbackViewProps {
   /** The wave being sent back; it has passed at least one stage. */
   wave: Wave;
-  /** Default length of every stage in days, which fills the new end dates when a stage is chosen. */
+  /** Default length of every stage in working days, which fills the new end dates when a stage is chosen. */
   durations: readonly number[];
   /** Finds what the return would reset; a refusal that names fields is shown under them, any other one is shown by the caller. */
   onPreview: (input: RollbackInput) => Promise<RollbackPreview>;

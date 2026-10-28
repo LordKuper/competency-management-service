@@ -90,11 +90,32 @@ export const EDUCATION_WARNING =
 
 /** What a candidate is asked for when listing the people who rate them. */
 export const RATERS_HINT =
-  "Укажите не меньше 5 человек, с которыми вы работали последние полгода; не меньше 2 из них должны быть из других подразделений.";
+  "Укажите не меньше 5 человек, с которыми вы работали последние полгода; не меньше 2 из них должны быть из других подразделений. Для сотрудника без учётной записи укажите электронную почту: на неё придёт приглашение в систему.";
 
 /** What a head is asked for when correcting the people who rate a candidate. */
 export const HEAD_RATERS_HINT =
-  "Не меньше 5 оценивающих, из них не меньше 2 из других подразделений, чем подразделение кандидата.";
+  "Не меньше 5 оценивающих, из них не меньше 2 из других подразделений, чем подразделение кандидата. Для оценивающего без учётной записи подтвердите почту.";
+
+/** What a candidate owes for a competency that needs an artifact. */
+export const ARTIFACT_MANDATORY_EXPLANATION =
+  "Без артефакта эта компетенция, скорее всего, не будет подтверждена.";
+
+/** Where the results of a wave are published, which is no stage of its own. */
+export const PUBLICATION_NOTE = "В конце этапа публикуются результаты";
+
+/** What the stage that publishes the results shows once they are published. */
+export const PUBLISHED_NOTE = "Результаты опубликованы";
+
+/** The title of the moment the results are published. */
+export const PUBLICATION_TITLE = "Публикация результатов";
+
+/** What the responsible HR sees of the check the entered data would pass now. */
+export const FORMAL_CHECK_PASSED =
+  "По внесённым данным заявка пройдёт формальную проверку";
+
+/** What the responsible HR sees when the entered data would not pass the check. */
+export const FORMAL_CHECK_FAILED =
+  "По внесённым данным заявка не пройдёт формальную проверку";
 
 /** What is shown where a value is not there yet. */
 export const NO_VALUE = "—";

@@ -17,7 +17,7 @@ import { RollbackView } from "./RollbackView";
 
 interface RollbackDialogProps {
   waveId: string;
-  /** Default length of every stage in days. */
+  /** Default length of every stage in working days. */
   durations: readonly number[];
   /** Called with the wave as the return left it. */
   onRolledBack: (wave: Versioned<Wave>) => void;

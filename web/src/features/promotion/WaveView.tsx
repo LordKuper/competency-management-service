@@ -15,9 +15,15 @@ import { useLeaveGuard } from "../../app/leaveGuard";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import type { OrgUnitTreeNode } from "../org-structure/orgStructureApi";
 import type { Versioned, Wave, WaveInput } from "./promotionApi";
-import { STAGE_COUNT, STAGE_TITLES, stageLabel } from "./promotionTexts";
+import {
+  PUBLICATION_NOTE,
+  STAGE,
+  STAGE_COUNT,
+  STAGE_TITLES,
+  stageLabel,
+} from "./promotionTexts";
 import { StageSteps } from "./StageSteps";
-import { endDatesFrom } from "./stageDates";
+import { earliestStart, endDatesFrom } from "./stageDates";
 import { UnitCheckTree } from "./UnitCheckTree";
 
 const DATE_FORMAT = "DD.MM.YYYY";
@@ -34,7 +40,7 @@ interface WaveViewProps {
   wave?: Versioned<Wave>;
   /** The units the wave may include, with the ones it already has. */
   units: readonly OrgUnitTreeNode[];
-  /** Default length of every stage in days, which fills the end dates when the start date is entered. */
+  /** Default length of every stage in working days, which fills the end dates when the start date is entered. */
   durations: readonly number[];
   /** Whether the viewer may change the wave. */
   canEdit: boolean;
@@ -46,6 +52,10 @@ interface WaveViewProps {
 
 function isBeforeToday(day: Dayjs): boolean {
   return day.isBefore(dayjs(), "day");
+}
+
+function isBeforeEarliestStart(day: Dayjs): boolean {
+  return day.isBefore(earliestStart(), "day");
 }
 
 function initialValuesOf(wave?: Wave): Partial<WaveFormValues> {
@@ -85,7 +95,8 @@ export function WaveView({
   const isReadOnly = !canEdit || isOver;
   const isStarted = stage >= 1;
   const isLocked = isSubmitting || isReadOnly;
-  const disabledDate = wave ? undefined : isBeforeToday;
+  const disabledEndDate = wave ? undefined : isBeforeToday;
+  const disabledStartDate = wave ? undefined : isBeforeEarliestStart;
   const waveUnitIds = new Set(wave?.units.map((unit) => unit.id));
 
   return (
@@ -143,7 +154,7 @@ export function WaveView({
             >
               <DatePicker
                 format={DATE_FORMAT}
-                disabledDate={disabledDate}
+                disabledDate={disabledStartDate}
                 disabled={isLocked || isStarted}
               />
             </Form.Item>
@@ -155,12 +166,16 @@ export function WaveView({
                     label={`Завершение этапа «${title}»`}
                     rules={[{ required: true, message: "Укажите дату" }]}
                     extra={
-                      index + 1 < stage && !isOver ? "Этап завершён" : undefined
+                      index + 1 < stage && !isOver
+                        ? "Этап завершён"
+                        : index + 1 === STAGE.review
+                          ? PUBLICATION_NOTE
+                          : undefined
                     }
                   >
                     <DatePicker
                       format={DATE_FORMAT}
-                      disabledDate={disabledDate}
+                      disabledDate={disabledEndDate}
                       disabled={isLocked || index + 1 < stage}
                     />
                   </Form.Item>
