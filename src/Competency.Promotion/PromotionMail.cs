@@ -135,15 +135,25 @@ internal sealed class PromotionMail(
             .Select(rater => rater.EmployeeId)
             .Distinct()
             .ToListAsync(cancellationToken);
+        await InviteRatersAsync(wave, raterIds, cancellationToken);
+    }
+
+    /// <summary>
+    /// Asks employees to rate candidates; the same invitation goes to the raters of the admitted applications when the rating stage starts and to
+    /// those the head adds to a list during it.
+    /// </summary>
+    /// <param name="wave">The wave.</param>
+    /// <param name="raterEmployeeIds">The employees to invite.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    public async Task InviteRatersAsync(PromotionWave wave, IEnumerable<Guid> raterEmployeeIds, CancellationToken cancellationToken) =>
         Enqueue(
-            await AccountsAsync(raterIds, cancellationToken),
+            await AccountsAsync(raterEmployeeIds, cancellationToken),
             RatingStartedKind,
             Compose(
                 $"вас просят оценить кандидатов на повышение. Оценить можно до {Day(wave.EndsOn[2])}.",
                 "Открыть список кандидатов:",
                 Link("promotion/ratings"),
                 "список кандидатов"));
-    }
 
     /// <summary>
     /// Reminds each rater who has not yet answered about a candidate that the rating stage is about to end.

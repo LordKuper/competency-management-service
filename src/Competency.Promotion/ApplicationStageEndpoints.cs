@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 
 namespace Competency.Promotion;
 
@@ -109,7 +110,7 @@ internal static class ApplicationStageEndpoints
 
     /// <summary>
     /// Replaces the raters of an application: by the candidate while the wave takes applications, by the head of the unit of the target while the
-    /// admitted candidate is rated. The list must meet the same rules each time.
+    /// admitted candidate is rated. The list must meet the same rules each time. Raters the head adds are invited by letter once the list is saved.
     /// </summary>
     private static async Task<Results<Ok<ApplicationResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateRatersAsync(
         Guid id,
@@ -122,6 +123,7 @@ internal static class ApplicationStageEndpoints
         ApplicationRules rules,
         ApplicationReader reader,
         IEmployeeDirectory employees,
+        PromotionMail mail,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -165,10 +167,16 @@ internal static class ApplicationStageEndpoints
             return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["raterEmployeeIds"] = [.. problems] });
         }
 
+        var listed = await context.Set<PromotionRater>().AsNoTracking().Where(rater => rater.ApplicationId == application.Id).Select(rater => rater.EmployeeId).ToListAsync(cancellationToken);
         await ApplicationContent.ReplaceRatersAsync(context, application.Id, request.RaterEmployeeIds, source, cancellationToken);
         context.Entry(application).Property(entry => entry.Version).IsModified = true;
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+
+        if (source == RaterSource.Head)
+        {
+            await mail.InviteRatersAsync(wave, request.RaterEmployeeIds.Except(listed), cancellationToken);
+        }
 
         response.SetETag(application.Version);
         return TypedResults.Ok(await reader.DescribeAsync(application, wave, roles, cancellationToken));
