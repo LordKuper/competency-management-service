@@ -97,6 +97,20 @@
       "reason": "accept AC-52..AC-54 (wave rollback, keep entered data, warning) and Task 12 in wave 12; finished wave cannot be rolled back",
       "evidence": "sprint.md, plan.md",
       "artifact_revision": "sprint.md AC-52..AC-54"
+    },
+    {
+      "gate": "initial impl assessment",
+      "decision_actor": "user",
+      "reason": "request changes: stage ends as deadlines, drafts, rater invitations, six stages, working-day defaults",
+      "evidence": "decisions-log.md",
+      "artifact_revision": "impl at 7b2b50b"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "accept AC-55..AC-71 replacing AC-3,4,5,11,12,13,18,22,23,26,28,33,34,35,38,41; rater e-mail confirmed by head or HR; Tasks 13-14 in waves 13-14",
+      "evidence": "sprint.md, plan.md",
+      "artifact_revision": "sprint.md AC-55..AC-71"
     }
   ],
   "task_routing": {
