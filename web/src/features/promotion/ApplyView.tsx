@@ -103,7 +103,10 @@ export function ApplyView({
           ? []
           : [{ competencyId: competency.id, score }];
       }),
-      raterEmployeeIds: values.raterEmployeeIds ?? [],
+      raters: (values.raterEmployeeIds ?? []).map((employeeId) => ({
+        employeeId,
+        email: null,
+      })),
     });
     setIsDirty(false);
   });

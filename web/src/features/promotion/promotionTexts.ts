@@ -7,7 +7,7 @@ import type {
 } from "./promotionApi";
 
 /** Number of stages of a wave. */
-export const STAGE_COUNT = 7;
+export const STAGE_COUNT = 6;
 
 /** Numbers of the stages the screens act on. */
 export const STAGE = {
@@ -16,7 +16,7 @@ export const STAGE = {
   rating: 3,
   artifacts: 4,
   review: 5,
-  feedback: 7,
+  feedback: 6,
 } as const;
 
 /** Names of the stages, in order. */
@@ -26,11 +26,10 @@ export const STAGE_TITLES = [
   "Круговая оценка",
   "Сбор артефактов",
   "Рассмотрение комиссией",
-  "Публикация результатов",
   "Обратная связь",
 ] as const;
 
-/** Where a wave stands for its computed stage: 0 before it starts, 1 to 7 a running stage, above that over. */
+/** Where a wave stands for its computed stage: 0 before it starts, 1 to 6 a running stage, above that over. */
 export function stageLabel(stage: number): string {
   if (stage < 1) return "Ещё не началась";
   return STAGE_TITLES[stage - 1] ?? "Завершена";
@@ -56,6 +55,7 @@ export const APPLICATION_STATUS_TAGS: Record<
   ApplicationStatus,
   { label: string; color: string }
 > = {
+  Draft: { label: "Черновик", color: "default" },
   Submitted: { label: "Подана", color: "processing" },
   Admitted: { label: "Допущена", color: "processing" },
   FormalRejected: {

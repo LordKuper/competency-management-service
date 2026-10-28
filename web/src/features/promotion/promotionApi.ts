@@ -353,7 +353,12 @@ export async function saveRaters(
   return withVersion(
     await api.PUT("/api/v1/promotion/applications/{id}/raters", {
       params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
-      body: { raterEmployeeIds },
+      body: {
+        raters: raterEmployeeIds.map((employeeId) => ({
+          employeeId,
+          email: null,
+        })),
+      },
     }),
   );
 }

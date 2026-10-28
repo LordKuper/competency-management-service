@@ -154,7 +154,14 @@ const RATERS = [
   { employeeId: "demo-emp-r3", fullName: "Кузнецов Олег Денисович" },
   { employeeId: "demo-emp-r4", fullName: "Орлова Ирина Максимовна" },
   { employeeId: "demo-emp-r5", fullName: "Волков Дмитрий Романович" },
-].map((rater) => ({ ...rater, source: "Candidate" as const }));
+].map((rater) => ({
+  ...rater,
+  source: "Candidate" as const,
+  hasAccount: true,
+  email: null,
+  isEmailConfirmed: true,
+  emailConfirmedByName: null,
+}));
 const SEARCH_RESULTS: EmployeeOption[] = [
   {
     id: "demo-emp-r6",
@@ -170,7 +177,7 @@ const SEARCH_RESULTS: EmployeeOption[] = [
 
 const SETTINGS: PromotionSettings = {
   minIntervalMonths: 12,
-  stageDurationsDays: [21, 7, 14, 7, 14, 3, 14],
+  stageDurationsDays: [10, 2, 5, 2, 5, 5],
 };
 
 const UNITS: OrgUnitTreeNode[] = [
@@ -360,6 +367,8 @@ function application(
     raters: RATERS,
     formal: null,
     formalFailures: [],
+    formalCheck: null,
+    hasMandatoryArtifacts: false,
     warnings: [],
     artifacts: null,
     mandatoryArtifactCompetencyIds: null,
