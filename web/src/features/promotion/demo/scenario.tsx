@@ -170,7 +170,7 @@ const SEARCH_RESULTS: EmployeeOption[] = [
 
 const SETTINGS: PromotionSettings = {
   minIntervalMonths: 12,
-  stageDurationsDays: [14, 7, 14, 7, 14, 3, 14],
+  stageDurationsDays: [21, 7, 14, 7, 14, 3, 14],
 };
 
 const UNITS: OrgUnitTreeNode[] = [

@@ -1396,7 +1396,7 @@ namespace Competency.Platform.Migrations
                         {
                             Id = 1,
                             MinIntervalMonths = 12,
-                            StageDurationsDays = new[] { 14, 7, 14, 7, 14, 3, 14 },
+                            StageDurationsDays = new[] { 21, 7, 14, 7, 14, 3, 14 },
                             Version = 0
                         });
                 });

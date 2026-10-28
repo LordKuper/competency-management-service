@@ -13,7 +13,7 @@ internal sealed class PromotionSettings : IVersioned
     public const int MaxIntervalMonths = 120;
     public const int MaxStageDays = 365;
 
-    public static readonly IReadOnlyList<int> DefaultStageDurationsDays = [14, 7, 14, 7, 14, 3, 14];
+    public static readonly IReadOnlyList<int> DefaultStageDurationsDays = [21, 7, 14, 7, 14, 3, 14];
 
     public int Id { get; init; } = SingletonId;
 
