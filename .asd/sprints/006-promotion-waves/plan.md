@@ -148,11 +148,11 @@ Material risk: change: computed metric — граница этапа в часо
 ### Task 6: Рабочий стол — находки повышения
 AC: AC-39.
 Material risk: change: public contract — новые члены `DeskKind`, `DeskObjectType` в контракте стола
-- [ ] `DeskKind`: `PromotionWaveOpen` (справочная, у сотрудника без заявки в открытой волне), `PromotionArtifactsRequired`, `PromotionFeedbackPending`, `PromotionRatingRequested`, `PromotionRatersReview`, `PromotionFormalCheckPending`, `PromotionDecisionsPending`; `DeskObjectType`: `PromotionWave`, `PromotionApplication` (`src/Competency.Platform/`)
-- [ ] Порядок и поглощение в `src/Competency.Desk/DeskRules.cs`: один пункт на волну или заявку
-- [ ] `PromotionDeskSource : IDeskSource` в модуле повышения, регистрация в `PromotionModule.cs`
-- [ ] Тексты и ссылки пунктов в `web/src/features/desk/deskTexts.ts` — на маршруты из «Маршруты и их охрана»
-- [ ] Перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts` (`gen-api`)
+- [x] `DeskKind`: `PromotionWaveOpen` (справочная, у сотрудника без заявки в открытой волне), `PromotionArtifactsRequired`, `PromotionFeedbackPending`, `PromotionRatingRequested`, `PromotionRatersReview`, `PromotionFormalCheckPending`, `PromotionDecisionsPending`; `DeskObjectType`: `PromotionWave`, `PromotionApplication` (`src/Competency.Platform/`)
+- [x] Порядок и поглощение в `src/Competency.Desk/DeskRules.cs`: один пункт на волну или заявку
+- [x] `PromotionDeskSource : IDeskSource` в модуле повышения, регистрация в `PromotionModule.cs`
+- [x] Тексты и ссылки пунктов в `web/src/features/desk/deskTexts.ts` — на маршруты из «Маршруты и их охрана»
+- [x] Перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts` (`gen-api`)
 
 ### Task 7: Экраны HR и администратора — настройки, комиссии, волны, формальная проверка
 AC: AC-1, AC-2, AC-4, AC-5, AC-7, AC-13, AC-16, AC-24, AC-25, AC-26, AC-41, AC-45, AC-46 (SPA).
