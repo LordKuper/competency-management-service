@@ -17,6 +17,7 @@ import type { OrgUnitTreeNode } from "../org-structure/orgStructureApi";
 import type { Versioned, Wave, WaveInput } from "./promotionApi";
 import { STAGE_COUNT, STAGE_TITLES, stageLabel } from "./promotionTexts";
 import { StageSteps } from "./StageSteps";
+import { endDatesFrom } from "./stageDates";
 import { UnitCheckTree } from "./UnitCheckTree";
 
 const DATE_FORMAT = "DD.MM.YYYY";
@@ -39,17 +40,8 @@ interface WaveViewProps {
   canEdit: boolean;
   /** Saves the wave; a refusal that names fields is shown under them, any other one is shown by the caller. */
   onSubmit: (input: WaveInput) => Promise<unknown>;
-}
-
-/** The end date of every stage, each stage lasting its default number of days from the day after the previous one. */
-function endDatesFrom(start: Dayjs, durations: readonly number[]): Dayjs[] {
-  const ends: Dayjs[] = [];
-  let previous = start.subtract(1, "day");
-  for (const days of durations.slice(0, STAGE_COUNT)) {
-    previous = previous.add(days, "day");
-    ends.push(previous);
-  }
-  return ends;
+  /** Opens the return of a started wave to a stage that has passed; the action is offered only when given. */
+  onRollback?: () => void;
 }
 
 function isBeforeToday(day: Dayjs): boolean {
@@ -71,6 +63,7 @@ export function WaveView({
   durations,
   canEdit,
   onSubmit,
+  onRollback,
 }: WaveViewProps) {
   const [form] = Form.useForm<WaveFormValues>();
   const [isDirty, setIsDirty] = useState(false);
@@ -82,7 +75,10 @@ export function WaveView({
     });
     setIsDirty(false);
   });
-  useLeaveGuard({ isUnsaved: isDirty, isSaving: isSubmitting });
+  const { confirmLeave } = useLeaveGuard({
+    isUnsaved: isDirty,
+    isSaving: isSubmitting,
+  });
 
   const stage = wave?.stage ?? 0;
   const isOver = wave !== undefined && (wave.isFinished || stage > STAGE_COUNT);
@@ -104,6 +100,14 @@ export function WaveView({
               <Typography.Text type="secondary">
                 Волну ведёт {wave.authorName}
               </Typography.Text>
+              {onRollback && !isReadOnly && stage > 1 && (
+                <Button
+                  disabled={isSubmitting}
+                  onClick={() => confirmLeave(onRollback)}
+                >
+                  Откатить на этап
+                </Button>
+              )}
             </Flex>
           )}
           {!canEdit && wave && (

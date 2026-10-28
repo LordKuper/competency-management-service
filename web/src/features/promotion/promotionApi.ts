@@ -26,6 +26,15 @@ export type Wave = components["schemas"]["WaveResponse"];
 /** The dates and units a wave is announced or changed with. */
 export type WaveInput = components["schemas"]["WaveRequest"];
 
+/** The stage a wave is sent back to and its new end dates. */
+export type RollbackInput = components["schemas"]["RollbackRequest"];
+
+/** What sending a wave back to a stage resets or computes again. */
+export type RollbackPreview = components["schemas"]["RollbackPreviewResponse"];
+
+/** What sending a wave back to a stage changes in one kind of way. */
+export type RollbackEffectKind = components["schemas"]["RollbackEffectKind"];
+
 /** One row of the applications of a wave. */
 export type WaveApplication =
   components["schemas"]["ApplicationSummaryResponse"];
@@ -183,6 +192,29 @@ export async function createWave(body: WaveInput) {
 export async function saveWave(id: string, version: number, body: WaveInput) {
   return withVersion(
     await api.PUT("/api/v1/promotion/waves/{id}", {
+      params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
+      body,
+    }),
+  );
+}
+
+/** What sending a wave back to a stage that has passed would reset or compute again. */
+export async function rollbackPreview(id: string, stage: number) {
+  return unwrap(
+    await api.GET("/api/v1/promotion/waves/{id}/rollback", {
+      params: { path: { id }, query: { stage } },
+    }),
+  );
+}
+
+/** Sends a wave back to a stage that has passed, with new end dates from that stage on. */
+export async function rollbackWave(
+  id: string,
+  version: number,
+  body: RollbackInput,
+) {
+  return withVersion(
+    await api.POST("/api/v1/promotion/waves/{id}/rollback", {
       params: { path: { id }, header: { "If-Match": ifMatchOf(version) } },
       body,
     }),

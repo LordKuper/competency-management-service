@@ -1,6 +1,10 @@
 import dayjs from "dayjs";
 import type { components } from "../../api/schema";
-import type { FormalFailure } from "./promotionApi";
+import type {
+  FormalFailure,
+  RollbackEffectKind,
+  RollbackPreview,
+} from "./promotionApi";
 
 /** Number of stages of a wave. */
 export const STAGE_COUNT = 7;
@@ -120,4 +124,50 @@ export function formatPercent(value: number | null): string {
 /** A scale point as a choice: its score and its meaning. */
 export function scalePointLabel(point: { score: number; label: string }) {
   return `${point.score} — ${point.label}`;
+}
+
+const PLURAL = new Intl.PluralRules("ru-RU");
+
+const APPLICATION_FORMS: Record<string, string> = {
+  one: "заявка",
+  few: "заявки",
+};
+
+/** «1 заявка» / «2 заявки» / «5 заявок». */
+function applicationsText(count: number): string {
+  return `${count} ${APPLICATION_FORMS[PLURAL.select(count)] ?? "заявок"}`;
+}
+
+/** What sending a wave back to a stage does to the applications, one line per kind of change, with the number of applications. */
+const ROLLBACK_EFFECT_TEXTS: Record<RollbackEffectKind, string> = {
+  FormalAdmittedReset:
+    "Допущенные заявки вернутся в статус «Подана», формальная проверка пройдёт заново",
+  FormalRejectedReset:
+    "Отклонённые по формальным признакам заявки вернутся в статус «Подана», формальная проверка пройдёт заново",
+  NoDecisionCleared: "Отметка «Решение не принято» будет снята",
+  RatingRecalculated: "Итог круговой оценки будет пересчитан",
+  ArtifactsRecalculated:
+    "Отметка о недостающих обязательных артефактах будет пересчитана",
+  ResultsHidden:
+    "Кандидаты перестанут видеть опубликованные результаты до новой публикации",
+};
+
+/** The consequences of sending a wave back to a stage as lines for the warning: what resets or is computed again, then the letters. */
+export function rollbackConsequences(preview: RollbackPreview): string[] {
+  return [
+    ...preview.effects.map(
+      ({ kind, count }) =>
+        `${ROLLBACK_EFFECT_TEXTS[kind]} — ${applicationsText(count)}`,
+    ),
+    ...(preview.letterStages.length > 0
+      ? [
+          `Письма о завершении этапов будут отправлены заново: ${preview.letterStages
+            .map((stage) => `«${STAGE_TITLES[stage - 1]}»`)
+            .join(", ")}`,
+        ]
+      : []),
+    ...(preview.raterReminderAgain
+      ? ["Оценивающим снова придёт напоминание об оценке"]
+      : []),
+  ];
 }

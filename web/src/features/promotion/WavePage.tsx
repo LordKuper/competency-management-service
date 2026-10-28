@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App, Breadcrumb, Flex, Skeleton, Typography } from "antd";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useLeaveGuard } from "../../app/leaveGuard";
@@ -18,6 +19,7 @@ import {
   waveQuery,
 } from "./promotionApi";
 import { formatDate } from "./promotionTexts";
+import { RollbackDialog } from "./RollbackDialog";
 import { promotionPaths } from "./routes";
 import { WaveApplications } from "./WaveApplications";
 import { WaveView } from "./WaveView";
@@ -54,6 +56,7 @@ function WaveEditor({ latest }: { latest?: Versioned<Wave> }) {
   const { base, noteSaveFailure, rebase } = useEditBase(latest);
   const settings = useQuery(settingsQuery);
   const answerable = useAnswerableUnits(base?.units.map((unit) => unit.id));
+  const [isRollbackOpen, setIsRollbackOpen] = useState(false);
   const save = useMutation({
     mutationFn: (input: WaveInput) =>
       base ? saveWave(base.id, base.version, input) : createWave(input),
@@ -108,9 +111,21 @@ function WaveEditor({ latest }: { latest?: Versioned<Wave> }) {
           durations={settings.data.stageDurationsDays}
           canEdit={!base || isAdmin || base.authorId === user?.id}
           onSubmit={save.mutateAsync}
+          onRollback={() => setIsRollbackOpen(true)}
         />
       ) : (
         !loadFailure && <Skeleton active />
+      )}
+      {base && isRollbackOpen && settings.data && (
+        <RollbackDialog
+          waveId={base.id}
+          durations={settings.data.stageDurationsDays}
+          onRolledBack={(saved) => {
+            rebase(saved);
+            setIsRollbackOpen(false);
+          }}
+          onClose={() => setIsRollbackOpen(false)}
+        />
       )}
       {base && base.stage >= 1 && <WaveApplications waveId={base.id} />}
     </Flex>
