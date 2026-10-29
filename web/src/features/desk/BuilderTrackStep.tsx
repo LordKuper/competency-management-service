@@ -210,8 +210,8 @@ function NewVersionForm({
   const trackId = Form.useWatch("trackId", form);
   const positionId = Form.useWatch("positionId", form);
   const isPosition = basis === "position";
-  const headedUnits = roles.data?.headedUnits ?? [];
-  const unit = headedUnits.find((item) => item.id === orgUnitId);
+  const matrixUnits = roles.data?.matrixUnits ?? [];
+  const unit = matrixUnits.find((item) => item.id === orgUnitId);
   const track = useQuery({
     ...trackQuery(trackId ?? ""),
     enabled: !isPosition && trackId !== undefined,
@@ -237,10 +237,10 @@ function NewVersionForm({
   const matrix = existing.data?.items[0];
 
   useEffect(() => {
-    if (headedUnits.length === 1 && !form.getFieldValue("orgUnitId")) {
-      form.setFieldValue("orgUnitId", headedUnits[0]?.id);
+    if (matrixUnits.length === 1 && !form.getFieldValue("orgUnitId")) {
+      form.setFieldValue("orgUnitId", matrixUnits[0]?.id);
     }
-  }, [headedUnits, form]);
+  }, [matrixUnits, form]);
 
   const create = useMutation({
     mutationFn: async (values: FormValues) => {
@@ -300,7 +300,7 @@ function NewVersionForm({
       onFinish={submit}
     >
       <FormColumn>
-        {roles.isSuccess && headedUnits.length === 0 && (
+        {roles.isSuccess && matrixUnits.length === 0 && (
           <CompactAlert
             type="info"
             lead="Построить матрицу может руководитель подразделения."
@@ -336,7 +336,7 @@ function NewVersionForm({
           rules={[{ required: true }]}
         >
           <Select
-            options={headedUnits.map((item) => ({
+            options={matrixUnits.map((item) => ({
               value: item.id,
               label: item.name,
             }))}

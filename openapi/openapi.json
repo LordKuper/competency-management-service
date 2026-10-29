@@ -22020,11 +22020,18 @@
       "ProcessRolesResponse": {
         "required": [
           "headedUnits",
+          "matrixUnits",
           "hrUnits"
         ],
         "type": "object",
         "properties": {
           "headedUnits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CareerUnitResponse"
+            }
+          },
+          "matrixUnits": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CareerUnitResponse"

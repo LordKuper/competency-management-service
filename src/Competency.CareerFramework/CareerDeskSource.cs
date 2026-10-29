@@ -48,11 +48,13 @@ internal sealed class CareerDeskSource(
 
         await AddEmployeesAsync(namedIds, people, cancellationToken);
         var self = account.EmployeeId is { } selfId ? people.GetValueOrDefault(selfId) : null;
+        var headedUnits = ProcessRoles.HeadedUnits(snapshot.Units.Values, account, self).ToList();
         var viewer = new CatalogViewer(
             userId,
             actor.IsGlobalAdmin(),
             actor.IsHr(),
-            ProcessRoles.HeadedUnits(snapshot.Units.Values, account, self).Select(unit => unit.Id).ToHashSet(),
+            headedUnits.Select(unit => unit.Id).ToHashSet(),
+            ProcessRoles.MatrixUnits(headedUnits, snapshot.Units.Values.ToLookup(unit => unit.ParentId)).Select(unit => unit.Id).ToHashSet(),
             hrUnitIds);
         var isInvolved = viewer.HeadedUnitIds.Count > 0 || viewer.HrUnitIds.Count > 0;
 
@@ -196,14 +198,14 @@ internal sealed class CareerDeskSource(
     }
 
     /// <summary>
-    /// The published versions, with their documents, of the matrices of the units the user heads that have no version in work.
+    /// The published versions, with their documents, of the matrices the user leads that have no version in work.
     /// </summary>
     private async Task<List<MatrixVersion>> PublishedAsync(IReadOnlyList<CareerDeskVersion> versions, CatalogViewer viewer, CancellationToken cancellationToken)
     {
         var inWorkMatrixIds = versions.Where(version => version.Status != MatrixVersionStatus.Published).Select(version => version.MatrixId).ToHashSet();
         var ids = versions
             .Where(version => version.Status == MatrixVersionStatus.Published
-                && viewer.HeadedUnitIds.Contains(version.UnitId)
+                && viewer.MatrixUnitIds.Contains(version.UnitId)
                 && !inWorkMatrixIds.Contains(version.MatrixId))
             .Select(version => version.Id)
             .ToList();

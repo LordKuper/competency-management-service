@@ -24,7 +24,7 @@ export function useMatrixDeletion({
   const isAdmin = useIsAdmin();
   const { data } = useProcessRoles();
   const confirmDeletion = useConfirmDeletion();
-  const isHead = !!data?.headedUnits.some(
+  const isHead = !!data?.matrixUnits.some(
     (unit) => unit.id === matrix.orgUnitId,
   );
   const { inWorkVersion } = matrix;

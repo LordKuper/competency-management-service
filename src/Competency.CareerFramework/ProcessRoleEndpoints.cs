@@ -32,8 +32,9 @@ internal static class ProcessRoleEndpoints
         }
 
         var headedUnits = await roles.HeadedUnitsAsync(userId, cancellationToken);
+        var matrixUnits = await roles.MatrixUnitsAsync(headedUnits, cancellationToken);
         var hrUnits = await roles.HrUnitsAsync(userId, cancellationToken);
-        return TypedResults.Ok(new ProcessRolesResponse(ToResponse(headedUnits), ToResponse(hrUnits)));
+        return TypedResults.Ok(new ProcessRolesResponse(ToResponse(headedUnits), ToResponse(matrixUnits), ToResponse(hrUnits)));
     }
 
     private static List<CareerUnitResponse> ToResponse(IReadOnlyList<OrgUnitStatus> units) =>

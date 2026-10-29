@@ -3906,6 +3906,7 @@ export interface components {
         };
         ProcessRolesResponse: {
             headedUnits: components["schemas"]["CareerUnitResponse"][];
+            matrixUnits: components["schemas"]["CareerUnitResponse"][];
             hrUnits: components["schemas"]["CareerUnitResponse"][];
         };
         /** @enum {unknown} */

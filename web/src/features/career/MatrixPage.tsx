@@ -239,7 +239,7 @@ export function MatrixPage() {
   }
   if (!matrix || !version) return <Skeleton active />;
 
-  const isHead = !!roles.data?.headedUnits.some(
+  const isHead = !!roles.data?.matrixUnits.some(
     (unit) => unit.id === matrix.orgUnitId,
   );
   const isNextVersionOffered =

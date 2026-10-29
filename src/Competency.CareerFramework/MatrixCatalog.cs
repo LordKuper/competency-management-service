@@ -343,12 +343,10 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         content.BlockWeights.Where(weight => weight.LevelId == levelId).Sum(weight => weight.Percent);
 
     /// <summary>
-    /// The account of the matrix unit's head, whose drafts the matrix may use; null when the unit has no head who can act.
+    /// The account of the head leading the matrix unit's matrices, whose drafts the matrix may use; null when no such head can act.
     /// </summary>
-    private async Task<Guid?> HeadOfAsync(CompetencyMatrix matrix, CancellationToken cancellationToken) =>
-        await employees.FindUnitAsync(matrix.OrgUnitId, cancellationToken) is { } unit
-            ? await roles.HeadAccountAsync(unit, cancellationToken)
-            : null;
+    private Task<Guid?> HeadOfAsync(CompetencyMatrix matrix, CancellationToken cancellationToken) =>
+        roles.MatrixHeadAccountAsync(matrix.OrgUnitId, cancellationToken);
 
     /// <summary>
     /// The lowest score of the current scale of each competency, by competency; one on a scale without points has none.
@@ -390,7 +388,8 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         var ancestry = blocks.Values.Any(block => block.ScopeUnitId is not null)
             ? await employees.FindAncestryAsync(version.Matrix.OrgUnitId, cancellationToken)
             : [];
-        var headEmployeeId = ancestry.FirstOrDefault()?.HeadEmployeeId;
+        var leadingHeadlessCount = ancestry.TakeWhile(unit => unit.HeadEmployeeId is null).Count();
+        var headEmployeeId = ancestry.ElementAtOrDefault(leadingHeadlessCount)?.HeadEmployeeId;
         return new LoadedEntries(
             scales,
             levelIds.Count == 0
@@ -400,7 +399,11 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             blocks,
             set,
             ancestry.Select(unit => unit.Id).ToHashSet(),
-            ancestry.Where(unit => unit.IsActive && headEmployeeId is not null && unit.HeadEmployeeId == headEmployeeId).Select(unit => unit.Id).ToHashSet());
+            ancestry
+                .Select((unit, index) => (Unit: unit, IsHeadless: index < leadingHeadlessCount))
+                .Where(pair => pair.Unit.IsActive && headEmployeeId is not null && (pair.IsHeadless || pair.Unit.HeadEmployeeId == headEmployeeId))
+                .Select(pair => pair.Unit.Id)
+                .ToHashSet());
     }
 
     /// <summary>
@@ -412,7 +415,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     /// <param name="Blocks">The shared blocks the content includes, by identifier.</param>
     /// <param name="Set">Every competency of the version with its group, in content order, a competency in two groups twice.</param>
     /// <param name="AvailableScopeIds">The matrix unit and the units above it, read when a shared block applies to a unit.</param>
-    /// <param name="HeadedScopeIds">The units among them the matrix unit's head heads, whose draft blocks the head sees.</param>
+    /// <param name="HeadedScopeIds">The units among them the head leading the matrix unit's matrices heads or leads, whose draft blocks the head sees.</param>
     private sealed record LoadedEntries(
         Dictionary<Guid, CompetencyScale> Scales,
         Dictionary<Guid, CareerLevel> Levels,

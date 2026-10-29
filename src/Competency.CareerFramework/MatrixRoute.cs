@@ -15,11 +15,12 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
         version.Status == MatrixVersionStatus.Draft || version.Status == MatrixVersionStatus.OnReview || version.Status == MatrixVersionStatus.Returned;
 
     /// <summary>
-    /// The approver of the superior step: the head of the nearest unit above the given one whose head can act.
+    /// The approver of the superior step: the head of the nearest unit above the given one whose head can act. A unit with no head
+    /// assigned has its matrices led by the head above, who is not asked to approve them.
     /// </summary>
     /// <param name="unitId">The matrix unit.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    /// <returns>The approver's account, or <see langword="null"/> when no unit above has such a head and the step is skipped.</returns>
+    /// <returns>The approver's account, or <see langword="null"/> when the unit has no head or no unit above has such a head, and the step is skipped.</returns>
     public async Task<Guid?> SuperiorApproverAsync(Guid unitId, CancellationToken cancellationToken)
     {
         var ancestry = await employees.FindAncestryAsync(unitId, cancellationToken);
@@ -33,9 +34,11 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
     /// <param name="headAccountOf">The account of each unit's head who can act, covering at least the units above the matrix unit.</param>
     /// <returns>The approver's account, or <see langword="null"/> when the step is skipped.</returns>
     public static Guid? SuperiorApprover(IReadOnlyList<OrgUnitStatus> ancestry, IReadOnlyDictionary<Guid, Guid> headAccountOf) =>
-        ancestry.Skip(1)
-            .Select(unit => headAccountOf.TryGetValue(unit.Id, out var accountId) ? accountId : (Guid?)null)
-            .FirstOrDefault(accountId => accountId is not null);
+        ancestry is [{ HeadEmployeeId: not null }, ..]
+            ? ancestry.Skip(1)
+                .Select(unit => headAccountOf.TryGetValue(unit.Id, out var accountId) ? accountId : (Guid?)null)
+                .FirstOrDefault(accountId => accountId is not null)
+            : null;
 
     /// <summary>
     /// Whose turn it is on a version on review. A superior step whose approver has gone since is passed over to the HR step.
@@ -220,14 +223,14 @@ internal sealed class MatrixRoute(AppDbContext context, IEmployeeDirectory emplo
 
     /// <summary>
     /// Whether the user reads a version of the unit's matrix whatever its status, without looking up who acted on it: global administrators,
-    /// the heads and the responsible HR of the unit, and the version's author. The superior approver and past participants read it too, by a lookup.
+    /// the head leading the unit's matrices and the responsible HR of the unit, and the version's author. The superior approver and past participants read it too, by a lookup.
     /// </summary>
     /// <param name="viewer">The user's rights.</param>
     /// <param name="unitId">The matrix unit.</param>
     /// <param name="authorId">The version's author.</param>
     /// <returns>True when the user reads it.</returns>
     public static bool ReadsAnyVersion(CatalogViewer viewer, Guid unitId, Guid authorId) =>
-        viewer.IsAdmin || viewer.HeadedUnitIds.Contains(unitId) || viewer.HrUnitIds.Contains(unitId) || authorId == viewer.UserId;
+        viewer.IsAdmin || viewer.MatrixUnitIds.Contains(unitId) || viewer.HrUnitIds.Contains(unitId) || authorId == viewer.UserId;
 
     /// <summary>
     /// Whether the user is the superior approver of the unit; the approver heads the unit above, so a user who heads none is not.

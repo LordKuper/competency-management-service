@@ -84,7 +84,7 @@ internal sealed class CareerDeskScan(
     });
 
     /// <summary>
-    /// Units without a responsible HR who can act, for a global administrator; units the user heads that have no track matrix in force
+    /// Units without a responsible HR who can act, for a global administrator; units whose matrices the user leads that have no track matrix in force
     /// although an active track applies to them; and, for their responsible HR, units without a track matrix in force or without a head. A
     /// version in work of a track matrix counts as a matrix on its way, whether or not the user is told about the version.
     /// </summary>
@@ -99,7 +99,7 @@ internal sealed class CareerDeskScan(
             }
 
             var lacksMatrix = !publishedUnitIds.Contains(unit.Id) && !inWorkUnitIds.Contains(unit.Id);
-            if (lacksMatrix && viewer.HeadedUnitIds.Contains(unit.Id) && ActiveTracksOver(unit.Id) is { Count: > 0 } activeTracks)
+            if (lacksMatrix && viewer.MatrixUnitIds.Contains(unit.Id) && ActiveTracksOver(unit.Id) is { Count: > 0 } activeTracks)
             {
                 yield return new DeskFinding(DeskKind.UnitWithoutMatrix, snapshot.UnitDeskObject(unit), IsAction: true, Details: new DeskDetails(Entries: activeTracks));
             }
@@ -122,7 +122,7 @@ internal sealed class CareerDeskScan(
     }
 
     /// <summary>
-    /// The versions in work the user reads and has a part in: as a head of the matrix unit, as the approver whose turn it is, or as the
+    /// The versions in work the user reads and has a part in: as the head leading the matrix unit, as the approver whose turn it is, or as the
     /// responsible HR of a version waiting too long for the superior head. Every finding is about the matrix and opens the version.
     /// </summary>
     /// <returns>The findings about versions in work.</returns>
@@ -145,7 +145,7 @@ internal sealed class CareerDeskScan(
     }
 
     /// <summary>
-    /// The published matrices of the units the user heads that need a new version: their track's levels changed, they rely on an inactive
+    /// The published matrices the user leads that need a new version: their track's levels changed, they rely on an inactive
     /// track, direction, position, shared block or competency, or the composition of a shared block changed since; and, for reference,
     /// their competencies changed since. Only matrices without a version in work are given.
     /// </summary>
@@ -160,7 +160,7 @@ internal sealed class CareerDeskScan(
         IReadOnlyDictionary<Guid, CareerCompetency> competencies,
         IReadOnlyDictionary<Guid, CompetencyBlock> blocks)
     {
-        foreach (var version in published.Where(version => viewer.HeadedUnitIds.Contains(version.Matrix.OrgUnitId)))
+        foreach (var version in published.Where(version => viewer.MatrixUnitIds.Contains(version.Matrix.OrgUnitId)))
         {
             if (version.Snapshot is not { } entries)
             {
@@ -393,7 +393,7 @@ internal sealed class CareerDeskScan(
         var matrix = MatrixObject(version.MatrixId, version.TrackId, version.PositionId, version.UnitId);
         var target = VersionObject(version.Id, version.TrackId, version.PositionId);
         var details = new DeskDetails(Number: version.Number);
-        var isHead = viewer.HeadedUnitIds.Contains(version.UnitId);
+        var isHead = viewer.MatrixUnitIds.Contains(version.UnitId);
         if (version.Status == MatrixVersionStatus.Returned && isHead)
         {
             yield return new DeskFinding(

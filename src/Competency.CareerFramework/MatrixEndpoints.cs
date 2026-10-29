@@ -123,7 +123,7 @@ internal static class MatrixEndpoints
 
         await using var transaction = await store.BeginWriteAsync(cancellationToken);
         var viewer = await workflow.ViewerAsync(cancellationToken);
-        if (!viewer.HeadedUnitIds.Contains(request.OrgUnitId))
+        if (!viewer.MatrixUnitIds.Contains(request.OrgUnitId))
         {
             return Rejection.Forbidden();
         }
@@ -214,7 +214,7 @@ internal static class MatrixEndpoints
         }
 
         var viewer = await workflow.ViewerAsync(cancellationToken);
-        if (!viewer.IsAdmin && !viewer.HeadedUnitIds.Contains(matrix.OrgUnitId))
+        if (!viewer.IsAdmin && !viewer.MatrixUnitIds.Contains(matrix.OrgUnitId))
         {
             return Rejection.Forbidden();
         }
