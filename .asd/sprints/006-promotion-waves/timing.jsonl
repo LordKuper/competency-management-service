@@ -81,3 +81,5 @@
 {"op":"close","id":"impl assessment r3","kind":"user-wait","parent":"impl#1","start":"2026-10-29T07:13:52.793Z","end":"2026-10-29T20:22:00.561Z","outcome":"done","attrs":{"gate":"impl-assessment"}}
 {"op":"open","id":"scope amendment AC-87","kind":"user-wait","parent":"impl#1","start":"2026-10-29T20:23:37.885Z","attrs":{"gate":"new-or-changed-scope"}}
 {"op":"close","id":"scope amendment AC-87","kind":"user-wait","parent":"impl#1","start":"2026-10-29T20:23:37.885Z","end":"2026-10-29T20:27:06.850Z","outcome":"done","attrs":{"gate":"new-or-changed-scope"}}
+{"op":"open","id":"Task 21","kind":"dispatch","parent":"impl#1","start":"2026-10-29T20:29:32.633Z","attrs":{}}
+{"op":"close","id":"Task 21","kind":"dispatch","parent":"impl#1","start":"2026-10-29T20:29:32.633Z","end":"2026-10-29T20:32:20.148Z","outcome":"done","attrs":{}}

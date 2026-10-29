@@ -274,6 +274,18 @@
       "tier": "standard",
       "reason": "risk:public contract",
       "resolved_model": "sonnet"
+    },
+    "Task 21": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "Task 22": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
