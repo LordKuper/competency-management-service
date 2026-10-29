@@ -146,6 +146,13 @@
       "reason": "approve AC-87 (HTML mail with clickable action links), AC-88 (Cyrillic letters in passwords), AC-89 (desk card «Объявить карьерную сессию» for global administrator and HR); Task 21 wave 21, Task 22 wave 22, Task 23 wave 23",
       "evidence": "sprint.md, plan.md, decisions-log.md",
       "artifact_revision": "sprint.md AC-87..AC-89"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "approve AC-90 (matrices of a unit without a head are run by the nearest head above; the superior step is skipped for them); the offered extension to an author who is also the superior approver not chosen; Task 24 wave 24",
+      "evidence": "sprint.md, plan.md, decisions-log.md",
+      "artifact_revision": "sprint.md AC-90"
     }
   ],
   "task_routing": {
@@ -291,6 +298,12 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "risk:public contract",
+      "resolved_model": "sonnet"
+    },
+    "Task 24": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:security",
       "resolved_model": "sonnet"
     }
   },
