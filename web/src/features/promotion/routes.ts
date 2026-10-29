@@ -17,6 +17,8 @@ export const promotionPaths = {
   newWave: "/promotion/waves/new",
   wave: (waveId: string) => `/promotion/waves/${waveId}`,
   commissions: "/promotion/commissions",
+  commissionsOf: (unitId: string) =>
+    `/promotion/commissions?${new URLSearchParams({ unit: unitId })}`,
   commission: (waveId: string, unitId: string) =>
     `/promotion/commission/${waveId}/${unitId}`,
   review: (applicationId: string) => `/promotion/review/${applicationId}`,

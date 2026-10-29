@@ -77,4 +77,9 @@ public enum DeskObjectType
     /// An application for promotion.
     /// </summary>
     PromotionApplication,
+
+    /// <summary>
+    /// The promotion commission of a unit, named by the unit; its identifier is the unit's.
+    /// </summary>
+    PromotionCommission,
 }

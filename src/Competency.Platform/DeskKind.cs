@@ -218,4 +218,14 @@ public enum DeskKind
     /// An application before the commission the user chairs has no decision yet; it reaches the commission after the rating stage or once its artifacts are given.
     /// </summary>
     PromotionDecisionsPending,
+
+    /// <summary>
+    /// The commission of a unit the user answers for is not stored yet: neither a chair nor members are set.
+    /// </summary>
+    CommissionNotFormed,
+
+    /// <summary>
+    /// The commission of a unit the user answers for is stored but has no chair: none is set, or the one set can no longer act.
+    /// </summary>
+    CommissionWithoutChair,
 }

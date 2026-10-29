@@ -47,6 +47,7 @@ export const deskPaths = {
   promotionRaters: promotionPaths.raters,
   promotionWave: promotionPaths.wave,
   promotionReview: promotionPaths.review,
+  promotionCommissionsOf: promotionPaths.commissionsOf,
 } as const;
 
 /** Titles of the matrix builder steps, in order. */
@@ -124,6 +125,7 @@ export const GROUPS: Record<DeskGroup, GroupMeta> = {
   MatricesToBuild: { title: "Построить или обновить матрицу" },
   PositionsToLink: { title: "Связать должности с треками" },
   UnitsToConnect: { title: "Подключить подразделения" },
+  CommissionsWithoutChair: { title: "Назначить председателей комиссий" },
   Invitations: { title: "Приглашения не приняты" },
   OrgCleanup: { title: "Навести порядок в оргструктуре", queue: ORG_QUEUE },
   UnitsWithoutMatrix: {
@@ -184,6 +186,7 @@ const TYPE_LABELS: Record<DeskObject["type"], string> = {
   UserAccount: "Учётная запись",
   PromotionWave: "Карьерная сессия",
   PromotionApplication: "Заявка",
+  PromotionCommission: "Комиссия",
 };
 
 const DRAFT_KINDS: Partial<Record<DeskObject["type"], string>> = {
@@ -237,6 +240,7 @@ export function typeLabelOf(item: DeskItem): string | null {
   if (
     type === "Matrix" ||
     type === "OrgUnit" ||
+    type === "PromotionCommission" ||
     type === "MatrixVersion" ||
     type === "PromotionWave"
   )
@@ -253,6 +257,7 @@ export function objectTitle(object: DeskObject): string {
         .filter(Boolean)
         .join(" — ");
     case "OrgUnit":
+    case "PromotionCommission":
       return `Подразделение «${object.name}»`;
     case "PromotionWave":
       return `Карьерная сессия с ${formatDay(object.name)}`;
@@ -273,6 +278,7 @@ export function objectContext(item: DeskItem): string | null {
     case "Matrix":
       return matrixContext(first);
     case "OrgUnit":
+    case "PromotionCommission":
       return object.context?.length ? object.context.join(" → ") : null;
     case "Track":
       return (
@@ -494,6 +500,10 @@ function reasonOf(reason: DeskReason, item: DeskItem): ReasonLine[] {
           text: `Приглашение не принято: ${linkState(reason, item.group !== "Invitations")}`,
         },
       ];
+    case "CommissionNotFormed":
+      return [{ text: "Комиссия не сформирована" }];
+    case "CommissionWithoutChair":
+      return [{ text: "В комиссии нет председателя" }];
     case "PromotionArtifactsRequired":
       return [
         { text: `Добавьте обязательные артефакты к заявке${untilOf(details)}` },
@@ -715,6 +725,12 @@ export function itemAction(item: DeskItem, isAdmin: boolean): DeskLink | null {
     case "PositionOutsideList":
     case "AccountWithoutEmployee":
       return { title: "Привести в порядок", path: deskPaths.orgCleanup };
+    case "CommissionNotFormed":
+    case "CommissionWithoutChair":
+      return {
+        title: "Назначить председателя",
+        path: deskPaths.promotionCommissionsOf(object.id),
+      };
     case "PromotionArtifactsRequired":
       return {
         title: "Добавить артефакты",

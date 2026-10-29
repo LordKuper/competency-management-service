@@ -22,6 +22,7 @@ internal enum DeskGroup
     MatricesToBuild,
     PositionsToLink,
     UnitsToConnect,
+    CommissionsWithoutChair,
     Invitations,
     OrgCleanup,
     UnitsWithoutMatrix,

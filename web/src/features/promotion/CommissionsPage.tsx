@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Col, Empty, Flex, Row, Skeleton, Typography } from "antd";
 import { useState } from "react";
+import { useSearchParams } from "react-router";
 import { ErrorAlert } from "../../app/ErrorAlert";
 import { useLeaveGuard } from "../../app/leaveGuard";
 import { contentMaxWidth } from "../../app/theme";
@@ -35,12 +36,14 @@ export function CommissionsPage() {
   );
 }
 
-/** The units the viewer answers for, each with its commission's size, and beside them the commission of the chosen one to edit. */
+/** The units the viewer answers for, each with its commission's size, and beside them the commission of the chosen one to edit; it opens on the unit the address names, else on the first. */
 export function CommissionsSection() {
   const { data, error, isPending, refetch } = useQuery(commissionsQuery);
   const { confirmLeave } = useLeaveGuard();
   const [chosenId, setChosenId] = useState<string>();
-  const unitId = chosenId ?? data?.[0]?.unitId;
+  const requestedId = useSearchParams()[0].get("unit");
+  const requested = data?.find((row) => row.unitId === requestedId);
+  const unitId = chosenId ?? (requested ?? data?.[0])?.unitId;
   return (
     <Flex vertical gap="middle">
       <Flex justify="space-between" align="baseline" gap="middle" wrap>

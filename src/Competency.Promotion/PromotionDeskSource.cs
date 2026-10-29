@@ -8,8 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.Promotion;
 
 /// <summary>
-/// What the promotion waves expect of the signed-in user, by what they are to the waves at the moment of asking.
-/// What is due follows from the stage the dates and the clock put each wave in, the status of the applications and the flags the stages set,
+/// What the promotion waves expect of the signed-in user, by what they are to the waves at the moment of asking, and the commissions without a chair
+/// the user answers for. What is due follows from the stage the dates and the clock put each wave in, the status of the applications and the flags the stages set,
 /// never from how far the stage actions have been carried out. Drafts are the candidate's own business and never appear. Reads only the waves
 /// that are running, in a fixed number of queries whatever the size of the organization.
 /// </summary>
@@ -31,16 +31,57 @@ internal sealed class PromotionDeskSource(
     /// <inheritdoc />
     public async Task<DeskReport> FindAsync(CancellationToken cancellationToken)
     {
-        DeskReport nothing = new([], []);
-        if (actor.UserId is not { } userId || await users.FindAsync(userId, cancellationToken) is not { IsActive: true, EmployeeId: { } employeeId })
+        if (actor.UserId is not { } userId || await users.FindAsync(userId, cancellationToken) is not { IsActive: true } account)
         {
-            return nothing;
+            return new DeskReport([], []);
         }
 
+        List<DeskFinding> findings = [.. await CommissionFindingsAsync(userId, cancellationToken)];
+        if (account.EmployeeId is { } employeeId)
+        {
+            findings.AddRange(await WaveFindingsAsync(userId, employeeId, cancellationToken));
+        }
+
+        return new DeskReport(findings, []);
+    }
+
+    /// <summary>
+    /// For a global administrator, every working unit, for a responsible HR, their units: a unit whose commission has no chair who acts, with the reason.
+    /// Independent of the waves and of the user having an employee card.
+    /// </summary>
+    private async Task<IEnumerable<DeskFinding>> CommissionFindingsAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var isAdmin = actor.IsGlobalAdmin();
+        if (!isAdmin && !actor.IsHr())
+        {
+            return [];
+        }
+
+        var snapshot = await employees.FindOrgSnapshotAsync(cancellationToken);
+        IReadOnlyList<OrgUnitStatus> units = isAdmin
+            ? [.. snapshot.Units.Values.Where(unit => unit.IsActive)]
+            : await career.ResponsibleUnitsAsync(userId, cancellationToken);
+        if (units.Count == 0)
+        {
+            return [];
+        }
+
+        var rosters = await commissions.ReadAsync([.. units.Select(unit => unit.Id)], cancellationToken);
+        return units
+            .Where(unit => rosters[unit.Id].ChairEmployeeId is null)
+            .Select(unit => new DeskFinding(
+                rosters[unit.Id].Version == 0 ? DeskKind.CommissionNotFormed : DeskKind.CommissionWithoutChair,
+                snapshot.UnitDeskObject(unit) with { Type = DeskObjectType.PromotionCommission },
+                IsAction: true,
+                Subject: new DeskObject(DeskObjectType.OrgUnit, unit.Id, unit.Name)));
+    }
+
+    private async Task<IEnumerable<DeskFinding>> WaveFindingsAsync(Guid userId, Guid employeeId, CancellationToken cancellationToken)
+    {
         var waves = await RunningWavesAsync(cancellationToken);
         if (waves.Count == 0 || await employees.FindAsync(employeeId, cancellationToken) is not { IsActive: true })
         {
-            return nothing;
+            return [];
         }
 
         var dueApplications = new List<Due>();
@@ -61,7 +102,7 @@ internal sealed class PromotionDeskSource(
         }
 
         findings.AddRange(await CandidateFindingsAsync(waves, employeeId, cancellationToken));
-        return new DeskReport(findings, []);
+        return findings;
     }
 
     /// <summary>

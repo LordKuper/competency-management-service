@@ -18262,6 +18262,7 @@
           "MatricesToBuild",
           "PositionsToLink",
           "UnitsToConnect",
+          "CommissionsWithoutChair",
           "Invitations",
           "OrgCleanup",
           "UnitsWithoutMatrix",
@@ -18432,7 +18433,9 @@
           "PromotionRatingRequested",
           "PromotionRatersReview",
           "PromotionFormalCheckPending",
-          "PromotionDecisionsPending"
+          "PromotionDecisionsPending",
+          "CommissionNotFormed",
+          "CommissionWithoutChair"
         ],
         "description": "What a desk finding is. Variants of one finding that the desk absorbs differently are separate members.\r\nMember names are sent in the API, so renaming one changes it; a new member also needs its place in the desk's rules."
       },
@@ -18493,7 +18496,8 @@
           "Employee",
           "UserAccount",
           "PromotionWave",
-          "PromotionApplication"
+          "PromotionApplication",
+          "PromotionCommission"
         ],
         "description": "The kinds of records desk findings are about or name. Member names are sent in the API, so renaming one changes it."
       },
