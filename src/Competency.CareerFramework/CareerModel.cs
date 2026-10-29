@@ -23,16 +23,14 @@ internal sealed class CareerModel(AppDbContext context, ProcessRoles roles, IEmp
             .Where(version => version.Status == MatrixVersionStatus.Published && version.Matrix.TrackId != null && ancestorIds.Contains(version.Matrix.OrgUnitId))
             .ToListAsync(cancellationToken);
         return [.. ancestryOf
-            .OrderBy(pair => pair.Value.Count)
-            .ThenBy(pair => pair.Key)
             .SelectMany(pair => MatrixInheritance.InEffect(pair.Value, versions).Select(version => (UnitId: pair.Key, Version: version)))
-            .DistinctBy(pair => pair.Version.MatrixId)
             .Select(pair => pair.Version.Snapshot is { Track: { } track } snapshot
                 ? new PublishedTrackMatrix(pair.UnitId, pair.Version.MatrixId, pair.Version.Id, pair.Version.Number, track.Id, track.Name, LevelsOf(pair.Version, snapshot))
                 : null)
             .OfType<PublishedTrackMatrix>()
             .OrderBy(matrix => matrix.TrackName, TextCollation.Comparer)
-            .ThenBy(matrix => matrix.MatrixId)];
+            .ThenBy(matrix => matrix.MatrixId)
+            .ThenBy(matrix => matrix.UnitId)];
     }
 
     /// <inheritdoc />
@@ -110,7 +108,7 @@ internal sealed class CareerModel(AppDbContext context, ProcessRoles roles, IEmp
             .AsNoTracking()
             .Where(level => levelIds.Contains(level.Id))
             .ToDictionaryAsync(level => level.Id, level => level.Position, cancellationToken);
-        return matrices.ToDictionary(
+        return matrices.DistinctBy(matrix => matrix.MatrixId).ToDictionary(
             matrix => matrix.MatrixId,
             matrix => currentByTrack.TryGetValue(matrix.TrackId, out var current)
                 ? NextLevel(matrix, current, positionOf)

@@ -14247,7 +14247,7 @@
         }
       }
     },
-    "/api/v1/promotion/waves/{waveId}/targets/{matrixId}": {
+    "/api/v1/promotion/waves/{waveId}/targets/{unitId}/{matrixId}": {
       "get": {
         "tags": [
           "Promotion"
@@ -14256,6 +14256,15 @@
         "parameters": [
           {
             "name": "waveId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "unitId",
             "in": "path",
             "required": true,
             "schema": {
@@ -16325,6 +16334,7 @@
       },
       "ApplicationRequest": {
         "required": [
+          "orgUnitId",
           "matrixId",
           "levelId",
           "selfScores",
@@ -16332,6 +16342,10 @@
         ],
         "type": "object",
         "properties": {
+          "orgUnitId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "matrixId": {
             "type": "string",
             "format": "uuid"
@@ -20788,6 +20802,7 @@
       "NewApplicationRequest": {
         "required": [
           "waveId",
+          "orgUnitId",
           "matrixId",
           "levelId",
           "selfScores",
@@ -20796,6 +20811,10 @@
         "type": "object",
         "properties": {
           "waveId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orgUnitId": {
             "type": "string",
             "format": "uuid"
           },

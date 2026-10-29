@@ -94,7 +94,7 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
         modelBuilder.Entity<PromotionWaveMatrix>(entity =>
         {
             entity.ToTable("promotion_wave_matrices");
-            entity.HasKey(e => new { e.WaveId, e.MatrixId });
+            entity.HasKey(e => new { e.WaveId, e.OrgUnitId, e.MatrixId });
             entity.Property(e => e.WaveId).HasColumnName("wave_id");
             entity.Property(e => e.MatrixId).HasColumnName("matrix_id");
             entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
@@ -176,7 +176,7 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
             entity.HasIndex(e => new { e.WaveId, e.OrgUnitId });
             entity.HasIndex(e => e.VersionId);
 
-            entity.HasOne<PromotionWaveMatrix>().WithMany().HasForeignKey(e => new { e.WaveId, e.MatrixId }).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<PromotionWaveMatrix>().WithMany().HasForeignKey(e => new { e.WaveId, e.OrgUnitId, e.MatrixId }).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(EmployeeEntityName, navigationName: null).WithMany().HasForeignKey(nameof(PromotionApplication.EmployeeId)).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(OrgUnitEntityName, navigationName: null).WithMany().HasForeignKey(nameof(PromotionApplication.OrgUnitId)).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(MatrixVersionEntityName, navigationName: null).WithMany().HasForeignKey(nameof(PromotionApplication.VersionId)).OnDelete(DeleteBehavior.Restrict);

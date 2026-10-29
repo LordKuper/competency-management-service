@@ -8,7 +8,7 @@ import { useLeaveGuard } from "../../app/leaveGuard";
 import { contentMaxWidth } from "../../app/theme";
 import { isStaleVersion, useEditBase } from "../../app/useEditBase";
 import { useCurrentUser } from "../auth/useCurrentUser";
-import { type ApplicationDraft, ApplyView } from "./ApplyView";
+import { type ApplicationDraft, ApplyView, type TargetRef } from "./ApplyView";
 import {
   applicationQuery,
   createApplication,
@@ -257,10 +257,19 @@ function ApplyEditor({
 }: ApplyEditorProps) {
   const { data: user } = useCurrentUser();
   const employees = useRaterOptions("rater-picker");
-  const [matrixId, setMatrixId] = useState(application?.target.matrixId);
+  const [target, setTarget] = useState<TargetRef | undefined>(
+    application && {
+      orgUnitId: application.target.unitId,
+      matrixId: application.target.matrixId,
+    },
+  );
   const targetForm = useQuery({
-    ...targetFormQuery(wave.id, matrixId ?? ""),
-    enabled: matrixId !== undefined,
+    ...targetFormQuery(
+      wave.id,
+      target?.orgUnitId ?? "",
+      target?.matrixId ?? "",
+    ),
+    enabled: target !== undefined,
   });
   return (
     <Flex vertical gap="middle">
@@ -281,7 +290,7 @@ function ApplyEditor({
         isSearching={employees.isSearching}
         isBusy={isBusy}
         onSearch={employees.onSearch}
-        onTargetChange={setMatrixId}
+        onTargetChange={setTarget}
         onSaveDraft={onSaveDraft}
         onSend={onSend}
         onDelete={onDelete}

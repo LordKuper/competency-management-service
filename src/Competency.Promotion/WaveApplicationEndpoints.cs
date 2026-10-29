@@ -35,7 +35,7 @@ internal static class WaveApplicationEndpoints
         group.MapGet("/applications", ListAsync).WithName("ListPromotionWaveApplications");
         group.MapGet("/session", GetSessionAsync).WithName("GetPromotionSession");
         group.MapGet("/head/candidates", ListHeadCandidatesAsync).WithName("ListPromotionHeadCandidates");
-        group.MapGet("/targets/{matrixId:guid}", GetTargetAsync).WithName("GetPromotionTargetForm").ProducesProblem(StatusCodes.Status403Forbidden);
+        group.MapGet("/targets/{unitId:guid}/{matrixId:guid}", GetTargetAsync).WithName("GetPromotionTargetForm").ProducesProblem(StatusCodes.Status403Forbidden);
     }
 
     private static async Task<Results<Ok<ApplicationPageResponse>, NotFound, ValidationProblem>> ListAsync(
@@ -157,6 +157,7 @@ internal static class WaveApplicationEndpoints
 
     private static async Task<Results<Ok<TargetFormResponse>, NotFound, ProblemHttpResult>> GetTargetAsync(
         Guid waveId,
+        Guid unitId,
         Guid matrixId,
         AppDbContext context,
         IEmployeeDirectory employees,
@@ -167,7 +168,7 @@ internal static class WaveApplicationEndpoints
         CancellationToken cancellationToken)
     {
         var wave = await context.Set<PromotionWave>().AsNoTracking().FirstOrDefaultAsync(candidate => candidate.Id == waveId, cancellationToken);
-        var matrix = await context.Set<PromotionWaveMatrix>().AsNoTracking().FirstOrDefaultAsync(bound => bound.WaveId == waveId && bound.MatrixId == matrixId, cancellationToken);
+        var matrix = await context.Set<PromotionWaveMatrix>().AsNoTracking().FirstOrDefaultAsync(bound => bound.WaveId == waveId && bound.OrgUnitId == unitId && bound.MatrixId == matrixId, cancellationToken);
         if (wave is null || matrix is null || calendar.StageOf(wave) != SubmissionStage
             || await career.VersionAsync(matrix.VersionId, cancellationToken) is not { } version
             || await employees.FindUnitAsync(matrix.OrgUnitId, cancellationToken) is not { } unit)

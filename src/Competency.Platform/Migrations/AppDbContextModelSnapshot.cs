@@ -1213,9 +1213,9 @@ namespace Competency.Platform.Migrations
 
                     b.HasIndex("VersionId");
 
-                    b.HasIndex("WaveId", "MatrixId");
-
                     b.HasIndex("WaveId", "OrgUnitId");
+
+                    b.HasIndex("WaveId", "OrgUnitId", "MatrixId");
 
                     b.HasIndex(new[] { "WaveId", "EmployeeId" }, "ux_promotion_applications_unfinished")
                         .IsUnique()
@@ -1500,13 +1500,13 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("wave_id");
 
-                    b.Property<Guid>("MatrixId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("matrix_id");
-
                     b.Property<Guid>("OrgUnitId")
                         .HasColumnType("uuid")
                         .HasColumnName("org_unit_id");
+
+                    b.Property<Guid>("MatrixId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("matrix_id");
 
                     b.Property<Guid>("TrackId")
                         .HasColumnType("uuid")
@@ -1522,7 +1522,7 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("version_id");
 
-                    b.HasKey("WaveId", "MatrixId");
+                    b.HasKey("WaveId", "OrgUnitId", "MatrixId");
 
                     b.HasIndex("MatrixId");
 
@@ -2067,7 +2067,7 @@ namespace Competency.Platform.Migrations
 
                     b.HasOne("Competency.Promotion.PromotionWaveMatrix", null)
                         .WithMany()
-                        .HasForeignKey("WaveId", "MatrixId")
+                        .HasForeignKey("WaveId", "OrgUnitId", "MatrixId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

@@ -16,7 +16,12 @@ internal record ApplicationRequest
     private const string RatersField = "raters";
 
     /// <summary>
-    /// The matrix of the unit the target level belongs to, as the open wave offers it.
+    /// The unit of the target, whose commission reviews the application, as the open wave offers it.
+    /// </summary>
+    public required Guid OrgUnitId { get; init; }
+
+    /// <summary>
+    /// The matrix in effect in that unit the target level belongs to, as the open wave offers it.
     /// </summary>
     public required Guid MatrixId { get; init; }
 

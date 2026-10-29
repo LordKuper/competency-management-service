@@ -369,11 +369,12 @@ internal sealed class ApplicationReader(
     {
         var waveIds = applications.Select(application => application.WaveId).Distinct().ToArray();
         var matrixIds = applications.Select(application => application.MatrixId).Distinct().ToArray();
+        var unitIds = applications.Select(application => application.OrgUnitId).Distinct().ToArray();
         var matrices = (await context.Set<PromotionWaveMatrix>()
                 .AsNoTracking()
-                .Where(matrix => waveIds.Contains(matrix.WaveId) && matrixIds.Contains(matrix.MatrixId))
+                .Where(matrix => waveIds.Contains(matrix.WaveId) && unitIds.Contains(matrix.OrgUnitId) && matrixIds.Contains(matrix.MatrixId))
                 .ToListAsync(cancellationToken))
-            .ToDictionary(matrix => (matrix.WaveId, matrix.MatrixId));
+            .ToDictionary(matrix => (matrix.WaveId, matrix.OrgUnitId, matrix.MatrixId));
         var units = await employees.FindUnitsAsync([.. applications.Select(application => application.OrgUnitId).Distinct()], cancellationToken);
         Dictionary<Guid, CareerVersion> versions = [];
         foreach (var versionId in applications.Select(application => application.VersionId).Distinct())
@@ -386,7 +387,7 @@ internal sealed class ApplicationReader(
             application => application.Id,
             application =>
             {
-                var matrix = matrices[(application.WaveId, application.MatrixId)];
+                var matrix = matrices[(application.WaveId, application.OrgUnitId, application.MatrixId)];
                 var level = versions[application.VersionId].Levels.Single(candidate => candidate.Id == application.LevelId);
                 return new TargetFacts(
                     new ApplicationTargetResponse(

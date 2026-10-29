@@ -31,7 +31,7 @@ internal sealed class PromotionApplication : EntityBase
     public Guid EmployeeId { get; init; }
 
     /// <summary>
-    /// The unit the matrix of the target belongs to.
+    /// The unit of the target: the wave unit the matrix is bound for.
     /// </summary>
     [Audited]
     public Guid OrgUnitId { get; set; }

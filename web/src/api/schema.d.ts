@@ -2085,7 +2085,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/promotion/waves/{waveId}/targets/{matrixId}": {
+    "/api/v1/promotion/waves/{waveId}/targets/{unitId}/{matrixId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2419,6 +2419,8 @@ export interface components {
             counts: components["schemas"]["ApplicationCountsResponse"];
         };
         ApplicationRequest: {
+            /** Format: uuid */
+            orgUnitId: string;
             /** Format: uuid */
             matrixId: string;
             /** Format: uuid */
@@ -3554,6 +3556,8 @@ export interface components {
         NewApplicationRequest: {
             /** Format: uuid */
             waveId: string;
+            /** Format: uuid */
+            orgUnitId: string;
             /** Format: uuid */
             matrixId: string;
             /** Format: uuid */
@@ -15045,6 +15049,7 @@ export interface operations {
             header?: never;
             path: {
                 waveId: string;
+                unitId: string;
                 matrixId: string;
             };
             cookie?: never;

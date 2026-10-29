@@ -57,9 +57,19 @@ import { StageSteps } from "./StageSteps";
 
 const DRAFT_FIELDS = ["matrixId", "levelId", "education"];
 
+/** A target of the wave: a matrix in effect in a unit; one matrix may be offered in several units. */
+export interface TargetRef {
+  orgUnitId: string;
+  matrixId: string;
+}
+
+const targetKey = ({ orgUnitId, matrixId }: TargetRef) =>
+  `${orgUnitId}/${matrixId}`;
+
 type ScoredCompetency = TargetForm["competencies"][number];
 
 interface ApplyFormValues {
+  orgUnitId: string;
   matrixId: string;
   levelId: string;
   education: EducationLevel;
@@ -90,7 +100,7 @@ interface ApplyViewProps {
   isBusy: boolean;
   onSearch: (text: string) => void;
   /** Called when another unit and track is chosen, so the competencies of the new target are loaded. */
-  onTargetChange: (matrixId: string) => void;
+  onTargetChange: (target: TargetRef) => void;
   /** Saves the draft; a refusal that names fields is shown under them, any other one is shown by the caller. */
   onSaveDraft: (draft: ApplicationDraft) => Promise<unknown>;
   /** Saves the draft and files it; a refusal that names fields is shown under them, any other one is shown by the caller. */
@@ -104,6 +114,7 @@ function initialValuesOf(
 ): Partial<ApplyFormValues> {
   if (!application) return {};
   return {
+    orgUnitId: application.target.unitId,
     matrixId: application.target.matrixId,
     levelId: application.target.levelId,
     education: application.education ?? undefined,
@@ -176,6 +187,7 @@ export function ApplyView({
   const [form] = Form.useForm<ApplyFormValues>();
   const [isDirty, setIsDirty] = useState(false);
   const [openIds, setOpenIds] = useState<readonly string[]>([]);
+  const orgUnitId = Form.useWatch("orgUnitId", form);
   const matrixId = Form.useWatch("matrixId", form);
   const levelId = Form.useWatch("levelId", form);
   const education = Form.useWatch("education", form);
@@ -184,7 +196,11 @@ export function ApplyView({
   const raters = Form.useWatch("raters", form);
 
   const targets = wave.units.flatMap((unit) =>
-    unit.targets.map((target) => ({ unit, target })),
+    unit.targets.map((target) => ({
+      key: targetKey({ orgUnitId: unit.id, matrixId: target.matrixId }),
+      unit,
+      target,
+    })),
   );
   const scoredCompetencies = (targetForm?.competencies ?? []).filter(
     (competency) => competency.scalePoints.length > 0,
@@ -210,6 +226,7 @@ export function ApplyView({
   function draftOf(values: ApplyFormValues): ApplicationDraft {
     return {
       input: {
+        orgUnitId: values.orgUnitId,
         matrixId: values.matrixId,
         levelId: values.levelId,
         education: values.education,
@@ -372,6 +389,19 @@ export function ApplyView({
                     <Form.Item
                       name="matrixId"
                       label="Подразделение и трек"
+                      getValueFromEvent={(key: string) =>
+                        targets.find((item) => item.key === key)?.target
+                          .matrixId
+                      }
+                      getValueProps={(chosenMatrixId?: string) => ({
+                        value:
+                          orgUnitId && chosenMatrixId
+                            ? targetKey({
+                                orgUnitId,
+                                matrixId: chosenMatrixId,
+                              })
+                            : undefined,
+                      })}
                       rules={[
                         {
                           required: true,
@@ -381,16 +411,24 @@ export function ApplyView({
                     >
                       <Select
                         placeholder="Выберите подразделение и трек"
-                        options={targets.map(({ unit, target }) => ({
-                          value: target.matrixId,
+                        options={targets.map(({ key, unit, target }) => ({
+                          value: key,
                           label: `${unit.name}: ${target.trackName}`,
                         }))}
                         onChange={(next: string) => {
+                          const chosen = targets.find(
+                            (item) => item.key === next,
+                          );
+                          if (!chosen) return;
+                          form.setFieldValue("orgUnitId", chosen.unit.id);
                           form.setFieldValue("levelId", undefined);
                           form.setFieldValue("scores", {});
                           form.setFieldValue("items", {});
                           setOpenIds([]);
-                          onTargetChange(next);
+                          onTargetChange({
+                            orgUnitId: chosen.unit.id,
+                            matrixId: chosen.target.matrixId,
+                          });
                         }}
                       />
                     </Form.Item>

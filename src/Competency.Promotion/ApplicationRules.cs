@@ -49,7 +49,7 @@ internal sealed class ApplicationRules(AppDbContext context, ICareerModel career
         var errors = new Dictionary<string, string[]>();
         var matrix = await context.Set<PromotionWaveMatrix>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(bound => bound.WaveId == wave.Id && bound.MatrixId == request.MatrixId, cancellationToken);
+            .FirstOrDefaultAsync(bound => bound.WaveId == wave.Id && bound.OrgUnitId == request.OrgUnitId && bound.MatrixId == request.MatrixId, cancellationToken);
         if (matrix is null || await career.VersionAsync(matrix.VersionId, cancellationToken) is not { } version)
         {
             errors[MatrixField] = ["Выберите подразделение и трек из предложенных"];

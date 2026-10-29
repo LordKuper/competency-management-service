@@ -342,15 +342,20 @@ export const openWavesQuery = queryOptions({
   queryFn: async () => unwrap(await api.GET("/api/v1/promotion/waves/open")),
 });
 
-/** The levels and competencies of a target of a wave. */
-export function targetFormQuery(waveId: string, matrixId: string) {
+/** The levels and competencies of a target of a wave: a matrix in effect in a unit. */
+export function targetFormQuery(
+  waveId: string,
+  unitId: string,
+  matrixId: string,
+) {
   return queryOptions({
-    queryKey: [...promotionQueryKey, "target", waveId, matrixId],
+    queryKey: [...promotionQueryKey, "target", waveId, unitId, matrixId],
     queryFn: async () =>
       unwrap(
-        await api.GET("/api/v1/promotion/waves/{waveId}/targets/{matrixId}", {
-          params: { path: { waveId, matrixId } },
-        }),
+        await api.GET(
+          "/api/v1/promotion/waves/{waveId}/targets/{unitId}/{matrixId}",
+          { params: { path: { waveId, unitId, matrixId } } },
+        ),
       ),
   });
 }
