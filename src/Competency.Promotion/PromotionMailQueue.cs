@@ -98,7 +98,7 @@ internal sealed class PromotionMailQueue(
     /// <param name="RecipientIds">The recipients' accounts.</param>
     /// <param name="Kind">The kind of letter, journaled as the reason of a failed send.</param>
     /// <param name="Subject">The subject line.</param>
-    /// <param name="Body">The plain-text body.</param>
+    /// <param name="Body">The text body, which <see cref="MailSender"/> also sends as HTML.</param>
     /// <param name="ActorId">The account whose action caused the letter; null for a letter of a stage change.</param>
     /// <param name="ActorRole">That account's role.</param>
     /// <param name="RequestId">The request of that action.</param>
