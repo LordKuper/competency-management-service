@@ -7,6 +7,9 @@ import type {
 } from "./matrixApi";
 import type { EducationLevel } from "./matrixLabels";
 
+const CRITICAL_TYPE: CompetencyType = "Critical";
+const PERCENT_PRECISION = 100;
+
 /** Key of a cell: the level and the competency or block it lies under. */
 export function cellKey(levelId: string, rowId: string) {
   return `${levelId}:${rowId}`;
@@ -27,6 +30,9 @@ export function removeLevel(content: MatrixContent, levelId: string) {
     ...content,
     levels: content.levels.filter((level) => level.levelId !== levelId),
     blockWeights: content.blockWeights.filter(
+      (weight) => weight.levelId !== levelId,
+    ),
+    competencyWeights: competencyWeightsOf(content).filter(
       (weight) => weight.levelId !== levelId,
     ),
     requirements: content.requirements.filter(
@@ -75,6 +81,155 @@ export function setBlockWeight(
     ...content,
     blockWeights: percent ? [...rest, { levelId, blockId, percent }] : rest,
   };
+}
+
+const MAX_PERCENT = 100;
+
+/** Splits 100 % into `count` whole percents; the remainder goes one each to the first ones (34, 33, 33). */
+export function evenPercents(count: number) {
+  if (count === 0) return [];
+  const base = Math.floor(MAX_PERCENT / count);
+  const rest = MAX_PERCENT - base * count;
+  return Array.from({ length: count }, (_, index) =>
+    index < rest ? base + 1 : base,
+  );
+}
+
+/** Sets the coefficients of the groups at a level to an even split, replacing the ones there. */
+export function distributeBlockWeights(
+  content: MatrixContent,
+  levelId: string,
+  groupIds: readonly (string | null)[],
+) {
+  const percents = evenPercents(groupIds.length);
+  return {
+    ...content,
+    blockWeights: [
+      ...content.blockWeights.filter((weight) => weight.levelId !== levelId),
+      ...groupIds.map((blockId, index) => ({
+        levelId,
+        blockId,
+        percent: percents[index] ?? 0,
+      })),
+    ],
+  };
+}
+
+/** Gives every level that has no coefficient yet an even split; returns the same document when there is none to give. */
+export function withEvenBlockWeights(
+  content: MatrixContent,
+  levelIds: readonly string[],
+  groupIds: readonly (string | null)[],
+) {
+  return levelIds
+    .filter(
+      (levelId) =>
+        !content.blockWeights.some((weight) => weight.levelId === levelId),
+    )
+    .reduce(
+      (result, levelId) => distributeBlockWeights(result, levelId, groupIds),
+      content,
+    );
+}
+
+/** The weights of competencies in the groups that have their own; a document written before they existed has none. */
+export function competencyWeightsOf(content: MatrixContent) {
+  return content.competencyWeights ?? [];
+}
+
+/** Whether the group made of these competencies has weights of its own. */
+export function hasOwnWeights(
+  content: MatrixContent,
+  memberIds: readonly string[],
+) {
+  return competencyWeightsOf(content).some((weight) =>
+    memberIds.includes(weight.competencyId),
+  );
+}
+
+/** Sets the weight of a competency in its group at a level; null leaves it unset. */
+export function setCompetencyWeight(
+  content: MatrixContent,
+  levelId: string,
+  competencyId: string,
+  percent: number | null,
+) {
+  const rest = competencyWeightsOf(content).filter(
+    (weight) =>
+      weight.levelId !== levelId || weight.competencyId !== competencyId,
+  );
+  return {
+    ...content,
+    competencyWeights:
+      percent === null ? rest : [...rest, { levelId, competencyId, percent }],
+  };
+}
+
+/** Turns the own weights of a group on, an even split at every level, or off, which returns the equal weights. */
+export function setOwnWeights(
+  content: MatrixContent,
+  levelIds: readonly string[],
+  memberIds: readonly string[],
+  isOn: boolean,
+) {
+  const rest = competencyWeightsOf(content).filter(
+    (weight) => !memberIds.includes(weight.competencyId),
+  );
+  const percents = evenPercents(memberIds.length);
+  return {
+    ...content,
+    competencyWeights: isOn
+      ? [
+          ...rest,
+          ...levelIds.flatMap((levelId) =>
+            memberIds.map((competencyId, index) => ({
+              levelId,
+              competencyId,
+              percent: percents[index] ?? 0,
+            })),
+          ),
+        ]
+      : rest,
+  };
+}
+
+/** The sum of the weights of the group's competencies at a level, free of float noise. */
+export function ownWeightSum(
+  content: MatrixContent,
+  levelId: string,
+  memberIds: readonly string[],
+) {
+  const sum = competencyWeightsOf(content)
+    .filter(
+      (weight) =>
+        weight.levelId === levelId && memberIds.includes(weight.competencyId),
+    )
+    .reduce((total, weight) => total + weight.percent, 0);
+  return Math.round(sum * PERCENT_PRECISION) / PERCENT_PRECISION;
+}
+
+/** Whether every one of these competencies is critical in the version, so that no overall threshold applies. */
+export function areAllCritical(
+  content: MatrixContent,
+  competencyIds: readonly string[],
+) {
+  return (
+    competencyIds.length > 0 &&
+    competencyIds.every((id) => typeOfCompetency(content, id) === CRITICAL_TYPE)
+  );
+}
+
+/** The document with no overall threshold on any level; the same document when it has none. */
+export function withoutOverallMins(content: MatrixContent) {
+  return content.levels.some((level) => level.minOverallPercent != null)
+    ? {
+        ...content,
+        levels: content.levels.map((level) => ({
+          ...level,
+          minOverallPercent: null,
+        })),
+      }
+    : content;
 }
 
 export function addCompetency(
@@ -169,6 +324,9 @@ export function removeCompetency(content: MatrixContent, competencyId: string) {
     requirements: content.requirements.filter(
       (requirement) => requirement.competencyId !== competencyId,
     ),
+    competencyWeights: competencyWeightsOf(content).filter(
+      (weight) => weight.competencyId !== competencyId,
+    ),
   });
 }
 
@@ -225,6 +383,9 @@ export function removeSharedBlock(
     ),
     requirements: content.requirements.filter(
       (requirement) => !dropped.has(requirement.competencyId),
+    ),
+    competencyWeights: competencyWeightsOf(content).filter(
+      (weight) => !dropped.has(weight.competencyId),
     ),
   };
 }
@@ -306,6 +467,9 @@ export function changedPlaces(changes: readonly MatrixChange[]): ChangedPlaces {
     }
     if (change.kind === "BlockWeight" && levelId && blockId) {
       places.weightCells.add(cellKey(levelId, blockId));
+    }
+    if (change.kind === "CompetencyWeight" && levelId && competencyId) {
+      places.weightCells.add(cellKey(levelId, competencyId));
     }
   }
   return places;

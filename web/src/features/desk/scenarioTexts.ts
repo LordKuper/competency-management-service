@@ -18,6 +18,8 @@ export function remarksText(count: number): string {
 export const PROBLEM_STEP: Record<MatrixProblem["code"], number | null> = {
   NoLevels: 1,
   BlockWeights: 4,
+  CompetencyWeights: 4,
+  ThresholdOnlyCritical: 4,
   InactiveEntry: 2,
   ForeignCompetency: 2,
   ScoreOutOfScale: 3,

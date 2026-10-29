@@ -1,5 +1,7 @@
 import { CloseCircleOutlined, EditOutlined } from "@ant-design/icons";
 import {
+  Button,
+  Checkbox,
   Collapse,
   Flex,
   InputNumber,
@@ -10,14 +12,24 @@ import {
   Tag,
   Typography,
 } from "antd";
+import { useEffect, useRef } from "react";
 import { CatalogStatusTag } from "./CatalogParts";
 import type { MatrixContent, MatrixSharedBlockEntry } from "./matrixApi";
 import {
+  areAllCritical,
   type ChangedPlaces,
   cellKey,
+  competencyWeightsOf,
+  distributeBlockWeights,
+  hasOwnWeights,
+  ownWeightSum,
   setBlockWeight,
+  setCompetencyWeight,
   setOverallMin,
+  setOwnWeights,
   setRequiredEducation,
+  withEvenBlockWeights,
+  withoutOverallMins,
 } from "./matrixContent";
 import { competenciesText, OUTSIDE_LABEL } from "./matrixGroups";
 import {
@@ -29,17 +41,34 @@ import {
 const MAX_PERCENT = 100;
 const PERCENT_PRECISION = 100;
 const NO_VALUE = "—";
+const CRITICAL_ONLY_NOTE = "Не задаётся: все компетенции критические";
 const EDUCATION_OPTIONS = (
   Object.keys(EDUCATION_LABELS) as EducationLevel[]
 ).map((value) => ({ value, label: EDUCATION_LABELS[value] }));
 
-/** A row of the table: a shared block, the competencies outside blocks, the sum of a level, its overall threshold or its required education. */
+/**
+ * A row of the table: a shared block, the weight of one of its competencies or the sum of those weights when it has its own,
+ * the competencies outside blocks, the sum of a level, its overall threshold or its required education.
+ */
 type Row =
   | {
       kind: "shared";
       key: string;
       blockId: string;
       entry: MatrixSharedBlockEntry;
+    }
+  | {
+      kind: "weight";
+      key: string;
+      blockId: string;
+      competencyId: string;
+      memberIds: readonly string[];
+    }
+  | {
+      kind: "weightSum";
+      key: string;
+      blockId: string;
+      memberIds: readonly string[];
     }
   | { kind: "outside"; key: string; blockId: null; count: number }
   | { kind: "sum"; key: string }
@@ -55,6 +84,8 @@ interface MatrixBlocksProps {
   /** The levels of the content in track order. */
   levelIds: readonly string[];
   levelNames: ReadonlyMap<string, string>;
+  /** The names of the competencies of the version, for the rows of own weights. */
+  competencyNames: ReadonlyMap<string, string>;
   changed: ChangedPlaces;
   isEditable: boolean;
   /** Inside a wizard step, where the step's name already stands in the ruler and the table needs no heading. */
@@ -88,11 +119,19 @@ function FormulaExplanation({
               <Flex vertical gap="small">
                 <Typography.Text>
                   Рейтинг — сумма по блокам: коэффициент × средняя доля баллов
-                  компетенций блока от максимума их шкал.
+                  компетенций блока от максимума их шкал (взвешенная, если у
+                  блока свои веса компетенций).
+                </Typography.Text>
+                <Typography.Text>
+                  Компетенции блока весят одинаково. «Свои веса компетенций»
+                  задают вес каждой компетенции на уровне в процентах, сумма
+                  весов блока на уровне — {MAX_PERCENT} %.
                 </Typography.Text>
                 <Typography.Text>
                   Минимальный общий порог — рейтинг, нужный для уровня (не задан
-                  — порога нет).
+                  — порога нет). Если на уровне все компетенции критические,
+                  порог не задаётся: готовность определяют только критические
+                  компетенции.
                 </Typography.Text>
                 <Typography.Text>
                   Кандидат готов к уровню, когда рейтинг не ниже порога и каждая
@@ -104,6 +143,16 @@ function FormulaExplanation({
         ]}
       />
     </Flex>
+  );
+}
+
+function SumCheck({ sum }: { sum: number }) {
+  return sum === MAX_PERCENT ? (
+    sum
+  ) : (
+    <Typography.Text type="danger">
+      <CloseCircleOutlined /> {`${sum} — нужно ${MAX_PERCENT}`}
+    </Typography.Text>
   );
 }
 
@@ -126,6 +175,7 @@ export function MatrixBlocks({
   isSingleLevel = false,
   levelIds,
   levelNames,
+  competencyNames,
   changed,
   isEditable,
   isCompact = false,
@@ -134,13 +184,48 @@ export function MatrixBlocks({
   const outsideCount = content.competencies.filter(
     (item) => item.blockId === null,
   ).length;
+  const groupIds = [
+    ...sharedBlocks.map((entry) => entry.id),
+    ...(outsideCount > 0 ? [null] : []),
+  ];
+  const isCriticalOnly = areAllCritical(content, [
+    ...content.competencies.map((item) => item.competencyId),
+    ...sharedBlocks.flatMap((entry) => entry.competencyIds),
+  ]);
+  const isPrepared = useRef(false);
+  useEffect(() => {
+    if (isPrepared.current || !isEditable) return;
+    isPrepared.current = true;
+    const prepared = withEvenBlockWeights(content, levelIds, groupIds);
+    const result = isCriticalOnly ? withoutOverallMins(prepared) : prepared;
+    if (result !== content) onChange(result);
+  });
   const rows: Row[] = [
-    ...sharedBlocks.map((entry) => ({
-      kind: "shared" as const,
-      key: `shared:${entry.id}`,
-      blockId: entry.id,
-      entry,
-    })),
+    ...sharedBlocks.flatMap((entry) => [
+      {
+        kind: "shared" as const,
+        key: `shared:${entry.id}`,
+        blockId: entry.id,
+        entry,
+      },
+      ...(hasOwnWeights(content, entry.competencyIds)
+        ? [
+            ...entry.competencyIds.map((competencyId) => ({
+              kind: "weight" as const,
+              key: `weight:${entry.id}:${competencyId}`,
+              blockId: entry.id,
+              competencyId,
+              memberIds: entry.competencyIds,
+            })),
+            {
+              kind: "weightSum" as const,
+              key: `weightSum:${entry.id}`,
+              blockId: entry.id,
+              memberIds: entry.competencyIds,
+            },
+          ]
+        : []),
+    ]),
     ...(outsideCount > 0
       ? [
           {
@@ -165,16 +250,90 @@ export function MatrixBlocks({
       title: isSingleLevel ? "Коэф., %" : `${levelName}: коэф., %`,
       render: (_, row) => {
         if (row.kind === "sum") {
-          return sum === MAX_PERCENT ? (
-            sum
-          ) : (
-            <Typography.Text type="danger">
-              <CloseCircleOutlined /> {`${sum} — нужно ${MAX_PERCENT}`}
-            </Typography.Text>
+          return (
+            <Space size="small" wrap>
+              <SumCheck sum={sum} />
+              {isEditable && (
+                <Button
+                  size="small"
+                  disabled={groupIds.length === 0}
+                  aria-label={
+                    isSingleLevel
+                      ? undefined
+                      : `Распределить поровну: ${levelName}`
+                  }
+                  onClick={() =>
+                    onChange(distributeBlockWeights(content, levelId, groupIds))
+                  }
+                >
+                  Распределить поровну
+                </Button>
+              )}
+            </Space>
+          );
+        }
+        if (row.kind === "weightSum") {
+          return (
+            <SumCheck sum={ownWeightSum(content, levelId, row.memberIds)} />
+          );
+        }
+        if (row.kind === "weight") {
+          const weight = competencyWeightsOf(content).find(
+            (item) =>
+              item.levelId === levelId &&
+              item.competencyId === row.competencyId,
+          )?.percent;
+          const name = competencyNames.get(row.competencyId) ?? NO_VALUE;
+          return (
+            <Space size="small">
+              {isEditable ? (
+                <InputNumber
+                  aria-label={`Вес, %: ${levelName}, ${name}`}
+                  min={0}
+                  max={MAX_PERCENT}
+                  value={weight ?? null}
+                  onChange={(value) =>
+                    onChange(
+                      setCompetencyWeight(
+                        content,
+                        levelId,
+                        row.competencyId,
+                        value,
+                      ),
+                    )
+                  }
+                />
+              ) : (
+                (weight ?? NO_VALUE)
+              )}
+              {changed.weightCells.has(cellKey(levelId, row.competencyId)) && (
+                <EditOutlined
+                  role="img"
+                  aria-label={CHANGED_NOTE}
+                  title={CHANGED_NOTE}
+                />
+              )}
+            </Space>
           );
         }
         if (row.kind === "min") {
           const level = content.levels.find((item) => item.levelId === levelId);
+          if (isCriticalOnly) {
+            return (
+              <Flex vertical gap="small">
+                {isEditable && (
+                  <InputNumber
+                    aria-label={`Минимальный общий порог, %: ${levelName}`}
+                    disabled
+                    value={null}
+                  />
+                )}
+                <Typography.Text type="secondary">
+                  {CRITICAL_ONLY_NOTE}
+                </Typography.Text>
+              </Flex>
+            );
+          }
           return isEditable ? (
             <InputNumber
               aria-label={`Минимальный общий порог, %: ${levelName}`}
@@ -250,6 +409,14 @@ export function MatrixBlocks({
       key: "name",
       render: (_, row) => {
         if (row.kind === "sum") return <strong>Сумма коэффициентов</strong>;
+        if (row.kind === "weightSum") return <strong>Сумма весов</strong>;
+        if (row.kind === "weight") {
+          return (
+            <Typography.Text type="secondary">
+              {`Вес: ${competencyNames.get(row.competencyId) ?? NO_VALUE}`}
+            </Typography.Text>
+          );
+        }
         if (row.kind === "min") {
           return <strong>Минимальный общий порог, %</strong>;
         }
@@ -276,6 +443,23 @@ export function MatrixBlocks({
             <Typography.Text type="secondary">
               {competenciesText(row.entry.competencyIds.length)}
             </Typography.Text>
+            <Checkbox
+              disabled={!isEditable || row.entry.competencyIds.length === 0}
+              checked={hasOwnWeights(content, row.entry.competencyIds)}
+              aria-label={`Свои веса компетенций: ${row.entry.name}`}
+              onChange={(event) =>
+                onChange(
+                  setOwnWeights(
+                    content,
+                    levelIds,
+                    row.entry.competencyIds,
+                    event.target.checked,
+                  ),
+                )
+              }
+            >
+              Свои веса компетенций
+            </Checkbox>
           </Space>
         );
       },

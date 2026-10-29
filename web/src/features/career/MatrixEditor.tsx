@@ -647,6 +647,14 @@ function MatrixEditorBody({
             isSingleLevel={isPosition}
             levelIds={shownLevelIds}
             levelNames={levelNames}
+            competencyNames={
+              new Map(
+                [...competencies].map(([id, competency]) => [
+                  id,
+                  competency.name,
+                ]),
+              )
+            }
             changed={changed}
             isEditable={isEditable}
             isCompact={isCompact}
