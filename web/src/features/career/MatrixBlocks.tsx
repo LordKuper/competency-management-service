@@ -60,17 +60,17 @@ type Row =
   | {
       kind: "weight";
       key: string;
-      blockId: string;
       competencyId: string;
       memberIds: readonly string[];
     }
+  | { kind: "weightSum"; key: string; memberIds: readonly string[] }
   | {
-      kind: "weightSum";
+      kind: "outside";
       key: string;
-      blockId: string;
+      blockId: null;
+      count: number;
       memberIds: readonly string[];
     }
-  | { kind: "outside"; key: string; blockId: null; count: number }
   | { kind: "sum"; key: string }
   | { kind: "min"; key: string }
   | { kind: "education"; key: string };
@@ -181,9 +181,10 @@ export function MatrixBlocks({
   isCompact = false,
   onChange,
 }: MatrixBlocksProps) {
-  const outsideCount = content.competencies.filter(
-    (item) => item.blockId === null,
-  ).length;
+  const outsideIds = content.competencies
+    .filter((item) => item.blockId === null)
+    .map((item) => item.competencyId);
+  const outsideCount = outsideIds.length;
   const groupIds = [
     ...sharedBlocks.map((entry) => entry.id),
     ...(outsideCount > 0 ? [null] : []),
@@ -200,6 +201,21 @@ export function MatrixBlocks({
     const result = isCriticalOnly ? withoutOverallMins(prepared) : prepared;
     if (result !== content) onChange(result);
   });
+  const weightRowsOf = (
+    groupKey: string,
+    memberIds: readonly string[],
+  ): Row[] =>
+    hasOwnWeights(content, memberIds)
+      ? [
+          ...memberIds.map((competencyId) => ({
+            kind: "weight" as const,
+            key: `weight:${groupKey}:${competencyId}`,
+            competencyId,
+            memberIds,
+          })),
+          { kind: "weightSum", key: `weightSum:${groupKey}`, memberIds },
+        ]
+      : [];
   const rows: Row[] = [
     ...sharedBlocks.flatMap((entry) => [
       {
@@ -208,23 +224,7 @@ export function MatrixBlocks({
         blockId: entry.id,
         entry,
       },
-      ...(hasOwnWeights(content, entry.competencyIds)
-        ? [
-            ...entry.competencyIds.map((competencyId) => ({
-              kind: "weight" as const,
-              key: `weight:${entry.id}:${competencyId}`,
-              blockId: entry.id,
-              competencyId,
-              memberIds: entry.competencyIds,
-            })),
-            {
-              kind: "weightSum" as const,
-              key: `weightSum:${entry.id}`,
-              blockId: entry.id,
-              memberIds: entry.competencyIds,
-            },
-          ]
-        : []),
+      ...weightRowsOf(entry.id, entry.competencyIds),
     ]),
     ...(outsideCount > 0
       ? [
@@ -233,7 +233,9 @@ export function MatrixBlocks({
             key: "outside",
             blockId: null,
             count: outsideCount,
+            memberIds: outsideIds,
           },
+          ...weightRowsOf("outside", outsideIds),
         ]
       : []),
     { kind: "sum", key: "sum" },
@@ -403,6 +405,23 @@ export function MatrixBlocks({
       },
     };
   });
+  const ownWeightsCheckbox = (
+    groupName: string,
+    memberIds: readonly string[],
+  ) => (
+    <Checkbox
+      disabled={!isEditable || memberIds.length === 0}
+      checked={hasOwnWeights(content, memberIds)}
+      aria-label={`Свои веса компетенций: ${groupName}`}
+      onChange={(event) =>
+        onChange(
+          setOwnWeights(content, levelIds, memberIds, event.target.checked),
+        )
+      }
+    >
+      Свои веса компетенций
+    </Checkbox>
+  );
   const columns: TableColumnsType<Row> = [
     {
       title: "Блок",
@@ -430,6 +449,7 @@ export function MatrixBlocks({
               <Typography.Text type="secondary">
                 {competenciesText(row.count)}
               </Typography.Text>
+              {ownWeightsCheckbox(OUTSIDE_LABEL, row.memberIds)}
             </Space>
           );
         }
@@ -443,23 +463,7 @@ export function MatrixBlocks({
             <Typography.Text type="secondary">
               {competenciesText(row.entry.competencyIds.length)}
             </Typography.Text>
-            <Checkbox
-              disabled={!isEditable || row.entry.competencyIds.length === 0}
-              checked={hasOwnWeights(content, row.entry.competencyIds)}
-              aria-label={`Свои веса компетенций: ${row.entry.name}`}
-              onChange={(event) =>
-                onChange(
-                  setOwnWeights(
-                    content,
-                    levelIds,
-                    row.entry.competencyIds,
-                    event.target.checked,
-                  ),
-                )
-              }
-            >
-              Свои веса компетенций
-            </Checkbox>
+            {ownWeightsCheckbox(row.entry.name, row.entry.competencyIds)}
           </Space>
         );
       },
