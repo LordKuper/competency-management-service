@@ -139,6 +139,13 @@
       "reason": "approve AC-86 (desk actions for commissions without a chair: responsible HR and global administrator); Task 20 wave 20",
       "evidence": "sprint.md, plan.md, decisions-log.md",
       "artifact_revision": "sprint.md AC-86"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "approve AC-87 (HTML mail with clickable action links), AC-88 (Cyrillic letters in passwords), AC-89 (desk card «Объявить карьерную сессию» for global administrator and HR); Task 21 wave 21, Task 22 wave 22, Task 23 wave 23",
+      "evidence": "sprint.md, plan.md, decisions-log.md",
+      "artifact_revision": "sprint.md AC-87..AC-89"
     }
   ],
   "task_routing": {
