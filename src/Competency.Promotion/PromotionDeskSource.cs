@@ -36,25 +36,26 @@ internal sealed class PromotionDeskSource(
             return new DeskReport([], []);
         }
 
-        List<DeskFinding> findings = [.. await CommissionFindingsAsync(userId, cancellationToken)];
+        var (findings, canAnnounce) = await CommissionFindingsAsync(userId, cancellationToken);
         if (account.EmployeeId is { } employeeId)
         {
             findings.AddRange(await WaveFindingsAsync(userId, employeeId, cancellationToken));
         }
 
-        return new DeskReport(findings, []);
+        return new DeskReport(findings, canAnnounce ? [DeskPrerequisite.WaveUnitAvailable] : []);
     }
 
     /// <summary>
     /// For a global administrator, every working unit, for a responsible HR, their units: a unit whose commission has no chair who acts, with the reason.
+    /// The same pass says whether some working unit could go into a new wave: its commission has a chair and no unfinished wave has the unit.
     /// Independent of the waves and of the user having an employee card.
     /// </summary>
-    private async Task<IEnumerable<DeskFinding>> CommissionFindingsAsync(Guid userId, CancellationToken cancellationToken)
+    private async Task<(List<DeskFinding> Findings, bool CanAnnounce)> CommissionFindingsAsync(Guid userId, CancellationToken cancellationToken)
     {
         var isAdmin = actor.IsGlobalAdmin();
         if (!isAdmin && !actor.IsHr())
         {
-            return [];
+            return ([], false);
         }
 
         var snapshot = await employees.FindOrgSnapshotAsync(cancellationToken);
@@ -63,17 +64,28 @@ internal sealed class PromotionDeskSource(
             : await career.ResponsibleUnitsAsync(userId, cancellationToken);
         if (units.Count == 0)
         {
-            return [];
+            return ([], false);
         }
 
-        var rosters = await commissions.ReadAsync([.. units.Select(unit => unit.Id)], cancellationToken);
-        return units
+        var unitIds = units.Select(unit => unit.Id).ToArray();
+        var rosters = await commissions.ReadAsync(unitIds, cancellationToken);
+        var inUnfinishedWave = (await (
+                from member in context.Set<PromotionWaveUnit>().AsNoTracking()
+                join wave in context.Set<PromotionWave>().AsNoTracking() on member.WaveId equals wave.Id
+                where unitIds.Contains(member.OrgUnitId) && wave.ProcessedStage < PromotionWave.StageCount
+                select member.OrgUnitId)
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
+        var findings = units
             .Where(unit => rosters[unit.Id].ChairEmployeeId is null)
             .Select(unit => new DeskFinding(
                 rosters[unit.Id].Version == 0 ? DeskKind.CommissionNotFormed : DeskKind.CommissionWithoutChair,
                 snapshot.UnitDeskObject(unit) with { Type = DeskObjectType.PromotionCommission },
                 IsAction: true,
-                Subject: new DeskObject(DeskObjectType.OrgUnit, unit.Id, unit.Name)));
+                Subject: new DeskObject(DeskObjectType.OrgUnit, unit.Id, unit.Name)))
+            .ToList();
+        var canAnnounce = units.Any(unit => unit.IsActive && rosters[unit.Id].ChairEmployeeId is not null && !inUnfinishedWave.Contains(unit.Id));
+        return (findings, canAnnounce);
     }
 
     private async Task<IEnumerable<DeskFinding>> WaveFindingsAsync(Guid userId, Guid employeeId, CancellationToken cancellationToken)

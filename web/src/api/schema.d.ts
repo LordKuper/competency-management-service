@@ -2993,7 +2993,7 @@ export interface components {
          *     Member names are sent in the API, so renaming one changes it; a new member also needs a source that knows it.
          * @enum {unknown}
          */
-        DeskPrerequisite: "ActiveUnit" | "ActivePosition" | "WorkingEmployee" | "VisibleTrack" | "HrAccount";
+        DeskPrerequisite: "ActiveUnit" | "ActivePosition" | "WorkingEmployee" | "VisibleTrack" | "HrAccount" | "WaveUnitAvailable";
         DeskReasonResponse: {
             kind: components["schemas"]["DeskKind"];
             /** Format: date-time */
