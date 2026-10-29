@@ -248,6 +248,12 @@
       "tier": "standard",
       "reason": "risk:ui shape",
       "resolved_model": "sonnet"
+    },
+    "Task 16 assessment fixes": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
