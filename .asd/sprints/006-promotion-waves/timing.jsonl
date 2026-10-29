@@ -109,3 +109,7 @@
 {"op":"close","id":"impl assessment r6","kind":"user-wait","parent":"impl#1","start":"2026-10-29T22:00:58.217Z","end":"2026-10-29T22:10:03.077Z","outcome":"done","attrs":{"gate":"impl-assessment"}}
 {"op":"open","id":"scope amendment AC-93","kind":"user-wait","parent":"impl#1","start":"2026-10-29T22:10:03.154Z","attrs":{"gate":"new-or-changed-scope"}}
 {"op":"close","id":"scope amendment AC-93","kind":"user-wait","parent":"impl#1","start":"2026-10-29T22:10:03.154Z","end":"2026-10-29T22:12:02.731Z","outcome":"done","attrs":{"gate":"new-or-changed-scope"}}
+{"op":"open","id":"Task 27","kind":"dispatch","parent":"impl#1","start":"2026-10-29T22:12:03.298Z","attrs":{}}
+{"op":"close","id":"Task 27","kind":"dispatch","parent":"impl#1","start":"2026-10-29T22:12:03.298Z","end":"2026-10-29T22:22:42.467Z","outcome":"done","attrs":{}}
+{"op":"open","id":"Task 27 r2","kind":"dispatch","parent":"impl#1","start":"2026-10-29T22:22:42.667Z","attrs":{}}
+{"op":"close","id":"Task 27 r2","kind":"dispatch","parent":"impl#1","start":"2026-10-29T22:22:42.667Z","end":"2026-10-29T22:23:45.677Z","outcome":"done","attrs":{}}
