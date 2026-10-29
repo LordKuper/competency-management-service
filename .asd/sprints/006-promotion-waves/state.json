@@ -167,6 +167,13 @@
       "reason": "approve AC-92 (on-screen explanations on the matrix builder «Формула и пороги» step; wizard help «?» shows hints of the current step, with a process overview on the first step; refines AC-75 for wizards); Task 26 wave 26",
       "evidence": "sprint.md, plan.md, decisions-log.md",
       "artifact_revision": "sprint.md AC-92"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "approve AC-93 (even default block coefficients and «Распределить поровну»; threshold unavailable on a level whose required competencies are all critical; opt-in per-block competency weights per level, equal by default); Task 27 wave 27",
+      "evidence": "sprint.md, plan.md, decisions-log.md",
+      "artifact_revision": "sprint.md AC-93"
     }
   ],
   "task_routing": {
@@ -330,6 +337,12 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 27": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:public contract",
       "resolved_model": "sonnet"
     }
   },

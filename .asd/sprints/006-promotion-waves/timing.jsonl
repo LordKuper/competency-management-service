@@ -105,3 +105,7 @@
 {"op":"close","id":"scope amendment AC-92","kind":"user-wait","parent":"impl#1","start":"2026-10-29T21:51:43.101Z","end":"2026-10-29T21:53:04.346Z","outcome":"done","attrs":{"gate":"new-or-changed-scope"}}
 {"op":"open","id":"Task 26","kind":"dispatch","parent":"impl#1","start":"2026-10-29T21:53:11.082Z","attrs":{}}
 {"op":"close","id":"Task 26","kind":"dispatch","parent":"impl#1","start":"2026-10-29T21:53:11.082Z","end":"2026-10-29T22:00:40.591Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment r6","kind":"user-wait","parent":"impl#1","start":"2026-10-29T22:00:58.217Z","attrs":{"gate":"impl-assessment"}}
+{"op":"close","id":"impl assessment r6","kind":"user-wait","parent":"impl#1","start":"2026-10-29T22:00:58.217Z","end":"2026-10-29T22:10:03.077Z","outcome":"done","attrs":{"gate":"impl-assessment"}}
+{"op":"open","id":"scope amendment AC-93","kind":"user-wait","parent":"impl#1","start":"2026-10-29T22:10:03.154Z","attrs":{"gate":"new-or-changed-scope"}}
+{"op":"close","id":"scope amendment AC-93","kind":"user-wait","parent":"impl#1","start":"2026-10-29T22:10:03.154Z","end":"2026-10-29T22:12:02.731Z","outcome":"done","attrs":{"gate":"new-or-changed-scope"}}
