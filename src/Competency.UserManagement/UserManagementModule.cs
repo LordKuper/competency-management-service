@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Competency.UserManagement;
 
@@ -17,7 +18,7 @@ public static class UserManagementModule
 
     /// <summary>
     /// Registers the UserManagement module services: the account and role tables, Identity with its roles, the password and lockout policy read from
-    /// the <c>Identity</c> configuration section, no restriction on user-name characters (the user name is the e-mail, checked by the requests) and the account id read from the platform subject claim, the cookie session read from
+    /// the <c>Identity</c> configuration section, the password validator that accepts letters of any alphabet, no restriction on user-name characters (the user name is the e-mail, checked by the requests) and the account id read from the platform subject claim, the cookie session read from
     /// <c>Authentication:Cookie</c>, the lifetime of e-mailed links read from <c>AccountLinks</c>, the account e-mails, the queue of anonymous password reset requests, the <see cref="IUserDirectory"/> other modules read accounts through, the module's <see cref="IDeskSource"/>, and the bootstrap of the first administrator. The host adds <c>UseAuthentication</c> to its pipeline.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
@@ -38,6 +39,7 @@ public static class UserManagementModule
             .AddUserStore<AppUserStore>()
             .AddRoleStore<RoleStore<IdentityRole<Guid>, AppDbContext, Guid>>()
             .AddErrorDescriber<RussianIdentityErrorDescriber>();
+        services.Replace(ServiceDescriptor.Scoped<IPasswordValidator<AppUser>, UnicodePasswordValidator>());
 
         services.AddAuthentication(SessionAuthentication.Scheme)
             .AddCookie(SessionAuthentication.Scheme, options => SessionAuthentication.Configure(options, configuration));
