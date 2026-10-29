@@ -252,6 +252,7 @@ function MembersField({
         )}
         notFoundContent="Сотрудники не найдены. Измените запрос."
         onSelect={(id) => {
+          onSearch("");
           const added = candidates.find((candidate) => candidate.id === id);
           if (!added || id === null) return;
           onAdded(added);

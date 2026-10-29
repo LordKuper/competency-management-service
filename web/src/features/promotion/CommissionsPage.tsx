@@ -67,14 +67,14 @@ export function CommissionsSection() {
       )}
       {data && data.length > 0 && (
         <Row gutter={[24, 24]}>
-          <Col xs={24} lg={7}>
+          <Col xs={24} lg={9}>
             <CommissionList
               commissions={data}
               selectedId={unitId}
               onSelect={(next) => confirmLeave(() => setChosenId(next))}
             />
           </Col>
-          <Col xs={24} lg={17}>
+          <Col xs={24} lg={15}>
             {unitId && <CommissionEditor key={unitId} unitId={unitId} />}
           </Col>
         </Row>

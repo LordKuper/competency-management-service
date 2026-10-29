@@ -76,7 +76,10 @@ function AddSelect({
         </Flex>
       )}
       notFoundContent="Ничего не найдено. Измените запрос."
-      onSelect={(id) => id !== null && onAdd(id)}
+      onSelect={(id) => {
+        onSearch("");
+        if (id !== null) onAdd(id);
+      }}
     />
   );
 }

@@ -65,7 +65,7 @@ function menuItems(navItems: NavItem[]): MenuProps["items"] {
     let submenu = submenus.get(item.group);
     if (!submenu) {
       submenu = {
-        key: item.group,
+        key: `group:${item.group}`,
         label: GROUP_LABELS[item.group],
         children: [],
       };
