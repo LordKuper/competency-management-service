@@ -99,3 +99,7 @@
 {"op":"close","id":"Task 25","kind":"dispatch","parent":"impl#1","start":"2026-10-29T21:17:53.211Z","end":"2026-10-29T21:24:37.275Z","outcome":"done","attrs":{}}
 {"op":"open","id":"Task 25 r2","kind":"dispatch","parent":"impl#1","start":"2026-10-29T21:24:37.489Z","attrs":{}}
 {"op":"close","id":"Task 25 r2","kind":"dispatch","parent":"impl#1","start":"2026-10-29T21:24:37.489Z","end":"2026-10-29T21:28:51.909Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment r5","kind":"user-wait","parent":"impl#1","start":"2026-10-29T21:29:33.758Z","attrs":{"gate":"impl-assessment"}}
+{"op":"close","id":"impl assessment r5","kind":"user-wait","parent":"impl#1","start":"2026-10-29T21:29:33.758Z","end":"2026-10-29T21:51:43.034Z","outcome":"done","attrs":{"gate":"impl-assessment"}}
+{"op":"open","id":"scope amendment AC-92","kind":"user-wait","parent":"impl#1","start":"2026-10-29T21:51:43.101Z","attrs":{"gate":"new-or-changed-scope"}}
+{"op":"close","id":"scope amendment AC-92","kind":"user-wait","parent":"impl#1","start":"2026-10-29T21:51:43.101Z","end":"2026-10-29T21:53:04.346Z","outcome":"done","attrs":{"gate":"new-or-changed-scope"}}

@@ -160,6 +160,13 @@
       "reason": "approve AC-91 (a unit's track and position matrices apply in descendant units without their own published matrix; replaces the explicit-selection draft the user declined); Task 25 wave 25",
       "evidence": "sprint.md, plan.md, decisions-log.md",
       "artifact_revision": "sprint.md AC-91"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "approve AC-92 (on-screen explanations on the matrix builder «Формула и пороги» step; wizard help «?» shows hints of the current step, with a process overview on the first step; refines AC-75 for wizards); Task 26 wave 26",
+      "evidence": "sprint.md, plan.md, decisions-log.md",
+      "artifact_revision": "sprint.md AC-92"
     }
   ],
   "task_routing": {
@@ -317,6 +324,12 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "risk:public contract",
+      "resolved_model": "sonnet"
+    },
+    "Task 26": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "kind:standard",
       "resolved_model": "sonnet"
     }
   },
