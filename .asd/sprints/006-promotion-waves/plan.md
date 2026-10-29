@@ -307,9 +307,9 @@ Material risk: change: security — проверка пароля
 ### Task 23: Рабочий стол — карточка «Объявить карьерную сессию»
 AC: AC-89.
 Material risk: change: public contract — новый член `DeskPrerequisite`
-- [ ] `DeskPrerequisite`: «пользователь может включить в новую карьерную сессию хотя бы одно подразделение» (`src/Competency.Platform/`); `PromotionDeskSource` сообщает его глобальному администратору (действующие подразделения) и HR (подразделения `ResponsibleUnitsAsync`), когда у комиссии подразделения есть председатель и оно не входит в незавершённую карьерную сессию — условия `WaveUnits.ProblemsAsync`; подразделения и комиссии читаются тем же проходом, что находки Task 20
-- [ ] Карточка «Объявить карьерную сессию» в `web/src/features/desk/DeskScenarios.tsx` для администратора и HR, путь `promotionPaths.newWave`, показ по новому условию
-- [ ] Перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts` (`gen-api`)
+- [x] `DeskPrerequisite`: «пользователь может включить в новую карьерную сессию хотя бы одно подразделение» (`src/Competency.Platform/`); `PromotionDeskSource` сообщает его глобальному администратору (действующие подразделения) и HR (подразделения `ResponsibleUnitsAsync`), когда у комиссии подразделения есть председатель и оно не входит в незавершённую карьерную сессию — условия `WaveUnits.ProblemsAsync`; подразделения и комиссии читаются тем же проходом, что находки Task 20
+- [x] Карточка «Объявить карьерную сессию» в `web/src/features/desk/DeskScenarios.tsx` для администратора и HR, путь `promotionPaths.newWave`, показ по новому условию
+- [x] Перегенерировать `openapi/openapi.json` и `web/src/api/schema.d.ts` (`gen-api`)
 
 ## Risks
 - Объём экранов (Task 7–9): каждая задача крупная; impl-review делит скоуп на волны ревью.
