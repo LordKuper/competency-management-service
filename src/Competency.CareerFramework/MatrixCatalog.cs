@@ -22,6 +22,8 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
     private const string ForeignLevelMessage = "Уровень не из трека матрицы";
     private const string PositionColumnMessage = "У матрицы должности один столбец требований — её должность";
     private const string ForeignCompetencyMessage = "Компетенция не из области матрицы";
+    private const string ForeignWeightMessage = "Вес относится к компетенции не из версии";
+    private const string CriticalThresholdMessage = "Минимальный общий порог не задаётся на уровне, где все компетенции критические: готовность определяют они сами";
 
     private static readonly NumberFormatInfo DecimalComma = new() { NumberDecimalSeparator = "," };
 
@@ -45,6 +47,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             .Concat(previous.SharedBlocks.Select(block => block.BlockId))
             .ToHashSet();
         var previousRequirements = previous.Requirements.Select(requirement => (requirement.LevelId, requirement.CompetencyId)).ToHashSet();
+        var previousWeights = previous.CompetencyWeights.Select(weight => (weight.LevelId, weight.CompetencyId)).ToHashSet();
         var levels = matrix.TrackId is null ? [] : content.Levels.Select(item => entries.Levels.GetValueOrDefault(item.LevelId)).ToList();
         var competencies = content.Competencies.Select(item => entries.Competencies.GetValueOrDefault(item.CompetencyId)).ToList();
         var blocks = content.SharedBlocks.Select(item => entries.Blocks.GetValueOrDefault(item.BlockId)).ToList();
@@ -80,13 +83,22 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         {
             problem = $"Требуемого уровня нет в {entries.ScaleWords(outOfScale.CompetencyId)}";
         }
+        else if (content.CompetencyWeights.Any(weight => !entries.Includes(weight.CompetencyId) && !previousWeights.Contains((weight.LevelId, weight.CompetencyId))))
+        {
+            problem = ForeignWeightMessage;
+        }
+        else if (content.SetsThreshold(previous) && MatrixContent.AreAllCritical(entries.Set))
+        {
+            problem = CriticalThresholdMessage;
+        }
 
         return problem is null ? null : new Dictionary<string, string[]> { [ContentField] = [problem] };
     }
 
     /// <summary>
     /// Says what keeps the version from being handed on. A track matrix without levels has that problem alone. For both kinds: no
-    /// competencies, coefficients of a column that do not add up to 100 %, a competency in two groups, an entry that is no longer usable or
+    /// competencies, coefficients of a column that do not add up to 100 %, competency weights of a group that are not set for every competency or
+    /// do not add up to 100 %, a threshold on a column whose competencies are all critical, a competency in two groups, an entry that is no longer usable or
     /// no longer fits the version, a shared block no longer available to the matrix unit, or a required score the competency's scale no
     /// longer has. For a track matrix also a level of the matrix track without a linked active position; for a position matrix a position
     /// no longer available to the matrix unit. Every level and competency has a required score, so none is checked for; an inactive scale
@@ -114,7 +126,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         }
 
         problems.AddRange(matrix.PositionId is { } positionId
-            ? await PositionProblemsAsync(matrix, positionId, content, cancellationToken)
+            ? await PositionProblemsAsync(matrix, positionId, content, entries, cancellationToken)
             : await TrackProblemsAsync(matrix, content, entries, cancellationToken));
 
         foreach (var competencyId in entries.Set.GroupBy(item => item.CompetencyId).Where(group => group.Count() > 1).Select(group => group.Key))
@@ -296,6 +308,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
             }
         }
 
+        problems.AddRange(FormulaProblems(content, entries, levelId => entries.Levels.GetValueOrDefault(levelId)?.Name ?? levelId.ToString()));
         var readiness = await store.ReadinessAsync(matrix.TrackId!.Value, cancellationToken);
         problems.AddRange(readiness.LevelsWithoutActivePosition.Select(level => new MatrixProblem(
             MatrixProblemCode.LevelWithoutActivePosition,
@@ -312,6 +325,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         CompetencyMatrix matrix,
         Guid positionId,
         MatrixContent content,
+        LoadedEntries entries,
         CancellationToken cancellationToken)
     {
         var problems = new List<MatrixProblem>();
@@ -327,6 +341,7 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         var snapshot = await employees.FindOrgSnapshotAsync(cancellationToken);
         var position = snapshot.Positions.GetValueOrDefault(positionId);
         var name = position?.Name ?? positionId.ToString();
+        problems.AddRange(FormulaProblems(content, entries, _ => name));
         if (position is not { IsActive: true })
         {
             problems.Add(new MatrixProblem(MatrixProblemCode.InactiveEntry, $"В версии есть неактивная запись «{name}»", positionId));
@@ -337,6 +352,35 @@ internal sealed class MatrixCatalog(AppDbContext context, IEmployeeDirectory emp
         }
 
         return problems;
+    }
+
+    /// <summary>
+    /// What keeps the formula of the version from being handed on beyond the coefficients: competency weights of a group that do not fit
+    /// it on a level, and an overall threshold on a level whose competencies are all critical.
+    /// </summary>
+    private static IEnumerable<MatrixProblem> FormulaProblems(MatrixContent content, LoadedEntries entries, Func<Guid, string> levelNameOf)
+    {
+        foreach (var (levelId, blockId) in content.MismatchedWeights(entries.Set))
+        {
+            var group = blockId is { } id ? $"блока «{entries.Blocks.GetValueOrDefault(id)?.Name ?? id.ToString()}»" : "вне блоков";
+            yield return new MatrixProblem(
+                MatrixProblemCode.CompetencyWeights,
+                $"Веса компетенций {group} на уровне «{levelNameOf(levelId)}» заданы не для всех компетенций или не дают в сумме 100 %",
+                levelId);
+        }
+
+        if (!MatrixContent.AreAllCritical(entries.Set))
+        {
+            yield break;
+        }
+
+        foreach (var level in content.Levels.Where(level => level.MinOverallPercent is not null))
+        {
+            yield return new MatrixProblem(
+                MatrixProblemCode.ThresholdOnlyCritical,
+                $"На уровне «{levelNameOf(level.LevelId)}» все компетенции критические — минимальный общий порог не задаётся",
+                level.LevelId);
+        }
     }
 
     private static decimal WeightSum(MatrixContent content, Guid levelId) =>

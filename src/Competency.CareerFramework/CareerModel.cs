@@ -64,7 +64,10 @@ internal sealed class CareerModel(AppDbContext context, ProcessRoles roles, IEmp
             [.. version.Content.BlockWeights.Select(weight => new CareerVersionBlockWeight(weight.LevelId, weight.BlockId, weight.Percent))],
             [.. version.Content.SharedBlocks
                 .Where(block => blockEntries.ContainsKey(block.BlockId) && counted.Any(item => item.BlockId == block.BlockId))
-                .Select((block, order) => new CareerVersionBlock(block.BlockId, blockEntries[block.BlockId].Name, order))]);
+                .Select((block, order) => new CareerVersionBlock(block.BlockId, blockEntries[block.BlockId].Name, order))],
+            [.. version.Content.CompetencyWeights
+                .Where(weight => countedIds.Contains(weight.CompetencyId))
+                .Select(weight => new CareerVersionCompetencyWeight(weight.LevelId, weight.CompetencyId, weight.Percent))]);
     }
 
     /// <inheritdoc />
@@ -83,7 +86,7 @@ internal sealed class CareerModel(AppDbContext context, ProcessRoles roles, IEmp
             .ToList();
         var rating = counted
             .GroupBy(competency => competency.BlockId)
-            .Sum(group => WeightOf(version, levelId, group.Key) * group.Average(competency => ShareOf(competency, scores)));
+            .Sum(group => WeightOf(version, levelId, group.Key) * ShareOfGroup(version, levelId, [.. group], scores));
         var isCriticalMet = counted.Zip(standings).All(pair => pair.First.Type != CompetencyType.Critical || pair.Second.IsMet);
         return new CareerScore(rating, level.MinOverallPercent, rating >= (level.MinOverallPercent ?? 0) && isCriticalMet, standings);
     }
@@ -163,6 +166,21 @@ internal sealed class CareerModel(AppDbContext context, ProcessRoles roles, IEmp
 
     private static decimal WeightOf(CareerVersion version, Guid levelId, Guid? blockId) =>
         version.BlockWeights.FirstOrDefault(weight => weight.LevelId == levelId && weight.BlockId == blockId)?.Percent ?? 0;
+
+    /// <summary>
+    /// The share of their scales' highest scores the competencies of a group reach: the average of their shares, weighted when every
+    /// competency of the group has a weight on the level.
+    /// </summary>
+    private static decimal ShareOfGroup(CareerVersion version, Guid levelId, IReadOnlyList<CareerVersionCompetency> group, IReadOnlyDictionary<Guid, decimal> scores)
+    {
+        var weights = group
+            .Select(competency => version.CompetencyWeights.FirstOrDefault(weight => weight.LevelId == levelId && weight.CompetencyId == competency.Id)?.Percent)
+            .ToList();
+        var total = weights.Sum(weight => weight ?? 0);
+        return weights.TrueForAll(weight => weight is not null) && total > 0
+            ? group.Zip(weights).Sum(pair => pair.Second!.Value * ShareOf(pair.First, scores)) / total
+            : group.Average(competency => ShareOf(competency, scores));
+    }
 
     private static decimal ShareOf(CareerVersionCompetency competency, IReadOnlyDictionary<Guid, decimal> scores) =>
         competency.MaxScore > 0 && scores.TryGetValue(competency.Id, out var score) ? score / competency.MaxScore : 0;

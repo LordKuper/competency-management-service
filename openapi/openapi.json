@@ -19407,6 +19407,7 @@
           "Block",
           "Competency",
           "BlockWeight",
+          "CompetencyWeight",
           "Requirement"
         ]
       },
@@ -19520,6 +19521,28 @@
           }
         }
       },
+      "MatrixCompetencyWeight": {
+        "required": [
+          "levelId",
+          "competencyId",
+          "percent"
+        ],
+        "type": "object",
+        "properties": {
+          "levelId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "competencyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "percent": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "MatrixCompletenessResponse": {
         "required": [
           "problems"
@@ -19574,6 +19597,15 @@
             ],
             "items": {
               "$ref": "#/components/schemas/MatrixSharedBlock"
+            }
+          },
+          "competencyWeights": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MatrixCompetencyWeight"
             }
           }
         }
@@ -19914,6 +19946,8 @@
         "enum": [
           "NoLevels",
           "BlockWeights",
+          "CompetencyWeights",
+          "ThresholdOnlyCritical",
           "InactiveEntry",
           "ForeignCompetency",
           "ScoreOutOfScale",

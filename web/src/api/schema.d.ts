@@ -3219,7 +3219,7 @@ export interface components {
             competencyId: null | string;
         };
         /** @enum {unknown} */
-        MatrixChangeKind: "Level" | "Block" | "Competency" | "BlockWeight" | "Requirement";
+        MatrixChangeKind: "Level" | "Block" | "Competency" | "BlockWeight" | "CompetencyWeight" | "Requirement";
         /** @enum {unknown} */
         MatrixChangeType: "Added" | "Removed" | "Changed";
         MatrixCompetency: {
@@ -3249,6 +3249,14 @@ export interface components {
             competencyId: string;
             type: components["schemas"]["CompetencyType"];
         };
+        MatrixCompetencyWeight: {
+            /** Format: uuid */
+            levelId: string;
+            /** Format: uuid */
+            competencyId: string;
+            /** Format: double */
+            percent: number;
+        };
         MatrixCompletenessResponse: {
             problems: components["schemas"]["MatrixProblem"][];
         };
@@ -3258,6 +3266,7 @@ export interface components {
             blockWeights: components["schemas"]["MatrixBlockWeight"][];
             requirements: components["schemas"]["MatrixRequirement"][];
             sharedBlocks?: null | components["schemas"]["MatrixSharedBlock"][];
+            competencyWeights?: null | components["schemas"]["MatrixCompetencyWeight"][];
         };
         /** @enum {unknown} */
         MatrixDecisionKind: "Submitted" | "Skipped" | "Approved" | "AutoApproved" | "Returned" | "AcceptedChanges" | "AcceptedAndRevising" | "RolledBack" | "Published";
@@ -3332,7 +3341,7 @@ export interface components {
             competencyId?: null | string;
         };
         /** @enum {unknown} */
-        MatrixProblemCode: "NoLevels" | "BlockWeights" | "InactiveEntry" | "ForeignCompetency" | "ScoreOutOfScale" | "LevelWithoutActivePosition" | "NoCompetencies" | "DuplicateCompetency" | "PositionUnavailable" | "SharedBlockUnavailable";
+        MatrixProblemCode: "NoLevels" | "BlockWeights" | "CompetencyWeights" | "ThresholdOnlyCritical" | "InactiveEntry" | "ForeignCompetency" | "ScoreOutOfScale" | "LevelWithoutActivePosition" | "NoCompetencies" | "DuplicateCompetency" | "PositionUnavailable" | "SharedBlockUnavailable";
         MatrixPublicationResponse: {
             publishingActions: components["schemas"]["MatrixAction"][];
             entries: components["schemas"]["PublicationEntry"][];

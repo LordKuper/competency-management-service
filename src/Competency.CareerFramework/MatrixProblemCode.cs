@@ -19,6 +19,16 @@ internal enum MatrixProblemCode
     BlockWeights,
 
     /// <summary>
+    /// The competency weights of a group on a level are not set for every competency or do not add up to 100 %.
+    /// </summary>
+    CompetencyWeights,
+
+    /// <summary>
+    /// A level whose competencies are all critical has an overall threshold.
+    /// </summary>
+    ThresholdOnlyCritical,
+
+    /// <summary>
     /// The version refers to an entry it may no longer use.
     /// </summary>
     InactiveEntry,

@@ -2,7 +2,7 @@ namespace Competency.CareerFramework;
 
 /// <summary>
 /// One item that differs between two documents of a version, named by the keys of its kind: a level, a shared
-/// block, or a competency by its own identifier, a block coefficient by level and group, a requirement by level and competency.
+/// block, or a competency by its own identifier, a block coefficient by level and group, a competency weight or a requirement by level and competency.
 /// </summary>
 internal sealed record MatrixChange(MatrixChangeKind Kind, MatrixChangeType Type, Guid? LevelId, Guid? BlockId, Guid? CompetencyId)
 {
@@ -20,6 +20,7 @@ internal sealed record MatrixChange(MatrixChangeKind Kind, MatrixChangeType Type
         .. Compare(IdsOf(before.SharedBlocks), IdsOf(after.SharedBlocks), id => id, key => new(MatrixChangeKind.Block, default, null, key, null)),
         .. Compare(before.Competencies, after.Competencies, item => item.CompetencyId, key => new(MatrixChangeKind.Competency, default, null, null, key)),
         .. Compare(before.BlockWeights, after.BlockWeights, item => (item.LevelId, item.BlockId), key => new(MatrixChangeKind.BlockWeight, default, key.LevelId, key.BlockId, null)),
+        .. Compare(before.CompetencyWeights, after.CompetencyWeights, item => (item.LevelId, item.CompetencyId), key => new(MatrixChangeKind.CompetencyWeight, default, key.LevelId, null, key.CompetencyId)),
         .. Compare(before.Requirements, after.Requirements, item => (item.LevelId, item.CompetencyId), key => new(MatrixChangeKind.Requirement, default, key.LevelId, null, key.CompetencyId)),
     ];
 
