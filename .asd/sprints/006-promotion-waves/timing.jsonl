@@ -74,3 +74,4 @@
 {"op":"open","id":"Task 16 assessment fixes","kind":"dispatch","parent":"impl#1","start":"2026-10-29T06:30:25.974Z","attrs":{}}
 {"op":"open","id":"scope amendment AC-86","kind":"user-wait","parent":"impl#1","start":"2026-10-29T06:31:05.526Z","attrs":{"gate":"new-or-changed-scope"}}
 {"op":"close","id":"Task 16 assessment fixes","kind":"dispatch","parent":"impl#1","start":"2026-10-29T06:30:25.974Z","end":"2026-10-29T06:34:52.410Z","outcome":"done","attrs":{}}
+{"op":"close","id":"scope amendment AC-86","kind":"user-wait","parent":"impl#1","start":"2026-10-29T06:31:05.526Z","end":"2026-10-29T07:04:26.757Z","outcome":"done","attrs":{"gate":"new-or-changed-scope"}}

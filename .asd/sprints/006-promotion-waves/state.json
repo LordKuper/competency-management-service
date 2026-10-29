@@ -132,6 +132,13 @@
       "reason": "approve Task 16 mockups and AC-76..AC-85 (AC-14, AC-64, AC-67 replaced by AC-81, AC-85, AC-80); Task 18 wave 16, Task 19 wave 17, Task 16 moved to wave 18, Task 17 to wave 19",
       "evidence": "sprint.md, plan.md, decisions-log.md",
       "artifact_revision": "sprint.md AC-76..AC-85"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "approve AC-86 (desk actions for commissions without a chair: responsible HR and global administrator); Task 20 wave 20",
+      "evidence": "sprint.md, plan.md, decisions-log.md",
+      "artifact_revision": "sprint.md AC-86"
     }
   ],
   "task_routing": {
@@ -253,6 +260,12 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "Task 20": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:public contract",
       "resolved_model": "sonnet"
     }
   },
