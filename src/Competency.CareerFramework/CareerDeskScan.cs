@@ -47,7 +47,7 @@ internal sealed class CareerDeskScan(
         [.. versions.Where(version => version.TrackId is not null && version.Status != MatrixVersionStatus.Published).Select(version => version.UnitId)];
 
     /// <summary>
-    /// The units with a published track matrix.
+    /// The units with a published track matrix of their own.
     /// </summary>
     private readonly HashSet<Guid> publishedUnitIds =
         [.. versions.Where(version => version.TrackId is not null && version.Status == MatrixVersionStatus.Published).Select(version => version.UnitId)];
@@ -86,7 +86,8 @@ internal sealed class CareerDeskScan(
     /// <summary>
     /// Units without a responsible HR who can act, for a global administrator; units whose matrices the user leads that have no track matrix in force
     /// although an active track applies to them; and, for their responsible HR, units without a track matrix in force or without a head. A
-    /// version in work of a track matrix counts as a matrix on its way, whether or not the user is told about the version.
+    /// track matrix published for the unit or inherited from a unit above is in force; a version in work of a track matrix of the unit itself
+    /// counts as a matrix on its way, whether or not the user is told about the version.
     /// </summary>
     /// <returns>The findings about units.</returns>
     public IEnumerable<DeskFinding> UnitFindings()
@@ -98,7 +99,7 @@ internal sealed class CareerDeskScan(
                 yield return WithoutHr(unit);
             }
 
-            var lacksMatrix = !publishedUnitIds.Contains(unit.Id) && !inWorkUnitIds.Contains(unit.Id);
+            var lacksMatrix = MatrixInheritance.Nearest(snapshot.Ancestry(unit.Id), publishedUnitIds.Contains) is null && !inWorkUnitIds.Contains(unit.Id);
             if (lacksMatrix && viewer.MatrixUnitIds.Contains(unit.Id) && ActiveTracksOver(unit.Id) is { Count: > 0 } activeTracks)
             {
                 yield return new DeskFinding(DeskKind.UnitWithoutMatrix, snapshot.UnitDeskObject(unit), IsAction: true, Details: new DeskDetails(Entries: activeTracks));

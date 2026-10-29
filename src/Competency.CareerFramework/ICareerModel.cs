@@ -9,11 +9,12 @@ namespace Competency.CareerFramework;
 public interface ICareerModel
 {
     /// <summary>
-    /// Finds the published track matrices of units.
+    /// Finds the published track matrices in effect in units: a unit's own for a track, otherwise the nearest unit above it that has one.
+    /// A matrix in effect in several of the units is returned once.
     /// </summary>
     /// <param name="unitIds">The units.</param>
     /// <param name="cancellationToken">Cancels the lookup.</param>
-    /// <returns>The matrices by track name and then matrix; empty when no unit has a published track matrix.</returns>
+    /// <returns>The matrices by track name and then matrix, each bound to the topmost of the given units it is in effect in; empty when no unit has one in effect.</returns>
     Task<IReadOnlyList<PublishedTrackMatrix>> PublishedTrackMatricesAsync(IReadOnlyCollection<Guid> unitIds, CancellationToken cancellationToken = default);
 
     /// <summary>

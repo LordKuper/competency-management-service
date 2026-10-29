@@ -3363,6 +3363,7 @@ export interface components {
             trackName: null | string;
             publishedVersion: null | components["schemas"]["MatrixVersionRef"];
             inWorkVersion: null | components["schemas"]["MatrixVersionRef"];
+            effectiveUnits: components["schemas"]["CareerUnitResponse"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: uuid */

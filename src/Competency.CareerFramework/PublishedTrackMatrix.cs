@@ -1,9 +1,9 @@
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// The published version of a unit's track matrix with the levels of the track.
+/// The published version of a track matrix in effect in a unit, with the levels of the track.
 /// </summary>
-/// <param name="UnitId">The unit the matrix is built for.</param>
+/// <param name="UnitId">The unit the matrix is in effect in: the unit it is built for or a unit below that inherits it.</param>
 /// <param name="MatrixId">The matrix identifier.</param>
 /// <param name="VersionId">The published version identifier.</param>
 /// <param name="VersionNumber">The version number within the matrix.</param>

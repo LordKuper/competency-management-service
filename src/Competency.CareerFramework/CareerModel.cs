@@ -6,22 +6,29 @@ using Microsoft.EntityFrameworkCore;
 namespace Competency.CareerFramework;
 
 /// <summary>
-/// Answers <see cref="ICareerModel"/> from the published track matrices and the process roles, on the request's database context. A
-/// version is read from its publication snapshot only, so catalogue edits after publication never reach it.
+/// Answers <see cref="ICareerModel"/> from the published track matrices, which a unit inherits where it has none of its own
+/// (<see cref="MatrixInheritance"/>), and the process roles, on the request's database context. A version is read from its publication
+/// snapshot only, so catalogue edits after publication never reach it.
 /// </summary>
 internal sealed class CareerModel(AppDbContext context, ProcessRoles roles, IEmployeeDirectory employees, IUserDirectory users) : ICareerModel
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<PublishedTrackMatrix>> PublishedTrackMatricesAsync(IReadOnlyCollection<Guid> unitIds, CancellationToken cancellationToken = default)
     {
-        var ids = unitIds.ToArray();
+        var org = await employees.FindOrgSnapshotAsync(cancellationToken);
+        var ancestryOf = unitIds.Distinct().ToDictionary(unitId => unitId, unitId => org.Ancestry(unitId));
+        var ancestorIds = ancestryOf.Values.SelectMany(ancestry => ancestry).Select(unit => unit.Id).Distinct().ToArray();
         var versions = await context.Set<MatrixVersion>()
             .AsNoTracking()
-            .Where(version => version.Status == MatrixVersionStatus.Published && version.Matrix.TrackId != null && ids.Contains(version.Matrix.OrgUnitId))
+            .Where(version => version.Status == MatrixVersionStatus.Published && version.Matrix.TrackId != null && ancestorIds.Contains(version.Matrix.OrgUnitId))
             .ToListAsync(cancellationToken);
-        return [.. versions
-            .Select(version => version.Snapshot is { Track: { } track } snapshot
-                ? new PublishedTrackMatrix(version.Matrix.OrgUnitId, version.MatrixId, version.Id, version.Number, track.Id, track.Name, LevelsOf(version, snapshot))
+        return [.. ancestryOf
+            .OrderBy(pair => pair.Value.Count)
+            .ThenBy(pair => pair.Key)
+            .SelectMany(pair => MatrixInheritance.InEffect(pair.Value, versions).Select(version => (UnitId: pair.Key, Version: version)))
+            .DistinctBy(pair => pair.Version.MatrixId)
+            .Select(pair => pair.Version.Snapshot is { Track: { } track } snapshot
+                ? new PublishedTrackMatrix(pair.UnitId, pair.Version.MatrixId, pair.Version.Id, pair.Version.Number, track.Id, track.Name, LevelsOf(pair.Version, snapshot))
                 : null)
             .OfType<PublishedTrackMatrix>()
             .OrderBy(matrix => matrix.TrackName, TextCollation.Comparer)

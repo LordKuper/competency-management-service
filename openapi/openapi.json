@@ -19985,6 +19985,7 @@
           "trackName",
           "publishedVersion",
           "inWorkVersion",
+          "effectiveUnits",
           "createdAt"
         ],
         "type": "object",
@@ -20045,6 +20046,12 @@
                 "$ref": "#/components/schemas/MatrixVersionRef"
               }
             ]
+          },
+          "effectiveUnits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CareerUnitResponse"
+            }
           },
           "createdAt": {
             "type": "string",

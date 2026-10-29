@@ -91,17 +91,18 @@ internal sealed class CareerDeskSource(
                 .. scan.PositionFindings(),
                 .. scan.DraftFindings(catalog.Drafts),
                 .. viewer.IsHr || viewer.IsAdmin ? CareerDeskScan.UnusedFindings(await store.UnusedEntriesAsync(kind: null, cancellationToken)) : [],
-                .. self is null ? [] : await NoTrackFindingsAsync(scan, self, versions, isInvolved, cancellationToken),
+                .. self is null ? [] : await NoTrackFindingsAsync(scan, snapshot, self, versions, isInvolved, cancellationToken),
             ],
             prerequisites);
     }
 
     /// <summary>
-    /// The finding that the user's position has no track, unless their unit has a published position matrix for it. The matrix is looked
-    /// up only when the position has no track, in the versions already read when the user's roles called for them, and otherwise by one query.
+    /// The finding that the user's position has no track, unless a published position matrix for it is in effect in their unit. The matrix
+    /// is looked up only when the position has no track, in the versions already read when the user's roles called for them, and otherwise by one query.
     /// </summary>
     private async Task<IEnumerable<DeskFinding>> NoTrackFindingsAsync(
         CareerDeskScan scan,
+        OrgSnapshot snapshot,
         EmployeeStatus self,
         IReadOnlyList<CareerDeskVersion> versions,
         bool isInvolved,
@@ -113,14 +114,20 @@ internal sealed class CareerDeskSource(
             return findings;
         }
 
-        var hasPositionMatrix = isInvolved
-            ? versions.Any(version => version.Status == MatrixVersionStatus.Published && version.UnitId == self.OrgUnitId && version.PositionId == self.PositionId)
-            : await context.Set<MatrixVersion>().AnyAsync(
-                version => version.Status == MatrixVersionStatus.Published
-                    && version.Matrix.OrgUnitId == self.OrgUnitId
-                    && version.Matrix.PositionId == self.PositionId,
-                cancellationToken);
-        return hasPositionMatrix ? [] : findings;
+        var ancestry = snapshot.Ancestry(self.OrgUnitId);
+        var ancestorIds = ancestry.Select(unit => unit.Id).ToArray();
+        HashSet<Guid> matrixUnitIds = isInvolved
+            ? [.. versions.Where(version => version.Status == MatrixVersionStatus.Published && version.PositionId == self.PositionId).Select(version => version.UnitId)]
+            :
+            [
+                .. await context.Set<MatrixVersion>()
+                    .Where(version => version.Status == MatrixVersionStatus.Published
+                        && version.Matrix.PositionId == self.PositionId
+                        && ancestorIds.Contains(version.Matrix.OrgUnitId))
+                    .Select(version => version.Matrix.OrgUnitId)
+                    .ToListAsync(cancellationToken),
+            ];
+        return MatrixInheritance.Nearest(ancestry, matrixUnitIds.Contains) is null ? findings : [];
     }
 
     private static IEnumerable<T> Visible<T>(IEnumerable<T> entries, CatalogViewer viewer)

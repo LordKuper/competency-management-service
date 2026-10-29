@@ -248,6 +248,27 @@ export function MatrixPage() {
   const isHeldBack =
     hasUnsaved && hasHeldActions(version, isNextVersionOffered);
 
+  const descriptions = [
+    ...(matrix.positionId
+      ? []
+      : [
+          {
+            key: "direction",
+            label: "Область",
+            children: matrix.directionName,
+          },
+        ]),
+    ...(matrix.effectiveUnits.length > 0
+      ? [
+          {
+            key: "units",
+            label: "Действует в подразделениях",
+            children: matrix.effectiveUnits.map((unit) => unit.name).join(", "),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>
       <Link to="/career">Карьерная модель</Link>
@@ -256,17 +277,7 @@ export function MatrixPage() {
           ? `Матрица должности «${matrix.positionName}» — ${matrix.orgUnitName}`
           : `Матрица «${matrix.trackName}» — ${matrix.orgUnitName}`}
       </Typography.Title>
-      {!matrix.positionId && (
-        <Descriptions
-          items={[
-            {
-              key: "direction",
-              label: "Область",
-              children: matrix.directionName,
-            },
-          ]}
-        />
-      )}
+      {descriptions.length > 0 && <Descriptions items={descriptions} />}
       <Flex gap="middle" align="center" wrap data-tour="matrix-version">
         <Select
           aria-label="Версия"

@@ -56,6 +56,7 @@ internal static class MatrixEndpoints
         [FromQuery(Name = PositionField)] Guid? positionId,
         AppDbContext context,
         CatalogStore store,
+        IEmployeeDirectory employees,
         MatrixWorkflow workflow,
         MatrixRoute route,
         CancellationToken cancellationToken,
@@ -79,7 +80,7 @@ internal static class MatrixEndpoints
             .ToPageAsync(page, pageSize, cancellationToken);
 
         var viewer = await workflow.ViewerAsync(cancellationToken);
-        var items = await DescribeAsync(matrices.Items, viewer, context, store, route, cancellationToken);
+        var items = await DescribeAsync(matrices.Items, viewer, context, store, employees, route, cancellationToken);
         return TypedResults.Ok(new PageResponse<MatrixResponse>(items, matrices.Total, matrices.Page, matrices.PageSize));
     }
 
@@ -87,6 +88,7 @@ internal static class MatrixEndpoints
         Guid id,
         AppDbContext context,
         CatalogStore store,
+        IEmployeeDirectory employees,
         MatrixWorkflow workflow,
         MatrixRoute route,
         CancellationToken cancellationToken)
@@ -97,7 +99,7 @@ internal static class MatrixEndpoints
         }
 
         var viewer = await workflow.ViewerAsync(cancellationToken);
-        return TypedResults.Ok((await DescribeAsync([matrix], viewer, context, store, route, cancellationToken))[0]);
+        return TypedResults.Ok((await DescribeAsync([matrix], viewer, context, store, employees, route, cancellationToken))[0]);
     }
 
     /// <summary>
@@ -188,7 +190,7 @@ internal static class MatrixEndpoints
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        var described = (await DescribeAsync([created], viewer, context, store, route, cancellationToken))[0];
+        var described = (await DescribeAsync([created], viewer, context, store, employees, route, cancellationToken))[0];
         return TypedResults.Created($"{Route}/{created.Id}", described);
     }
 
@@ -333,6 +335,7 @@ internal static class MatrixEndpoints
         CatalogViewer viewer,
         AppDbContext context,
         CatalogStore store,
+        IEmployeeDirectory employees,
         MatrixRoute route,
         CancellationToken cancellationToken)
     {
@@ -352,6 +355,9 @@ internal static class MatrixEndpoints
         var unitNames = await store.UnitNamesAsync(matrices.Select(matrix => (Guid?)matrix.OrgUnitId), cancellationToken);
         var positionNames = await store.PositionNamesAsync(matrices.Select(matrix => matrix.PositionId), cancellationToken);
         var readableInWork = await route.ReadableAsync(viewer, [.. versions.Where(version => version.IsInWork)], cancellationToken);
+        var org = await employees.FindOrgSnapshotAsync(cancellationToken);
+        var publishedIds = versions.Where(version => version.Status == MatrixVersionStatus.Published).Select(version => version.MatrixId).ToHashSet();
+        var ownPublished = await OwnPublishedAsync([.. matrices.Where(matrix => publishedIds.Contains(matrix.Id))], context, cancellationToken);
 
         var described = new List<MatrixResponse>();
         foreach (var matrix in matrices)
@@ -368,6 +374,7 @@ internal static class MatrixEndpoints
                 matrix.TrackId is { } trackId ? trackNames.GetValueOrDefault(trackId, string.Empty) : null,
                 RefOf(published),
                 RefOf(inWork),
+                publishedIds.Contains(matrix.Id) ? UnitsInEffect(matrix, org, ownPublished) : [],
                 matrix.CreatedAt,
                 matrix.PositionId,
                 matrix.PositionId is { } positionId ? positionNames.GetValueOrDefault(positionId, string.Empty) : null));
@@ -375,6 +382,41 @@ internal static class MatrixEndpoints
 
         return described;
     }
+
+    /// <summary>
+    /// The units that have a published matrix of their own for the tracks and positions of the given matrices, in one query.
+    /// </summary>
+    private static async Task<HashSet<(Guid? TrackId, Guid? PositionId, Guid UnitId)>> OwnPublishedAsync(
+        IReadOnlyList<CompetencyMatrix> matrices,
+        AppDbContext context,
+        CancellationToken cancellationToken)
+    {
+        if (matrices.Count == 0)
+        {
+            return [];
+        }
+
+        var trackIds = matrices.Select(matrix => matrix.TrackId).Where(id => id is not null).ToList();
+        var positionIds = matrices.Select(matrix => matrix.PositionId).Where(id => id is not null).ToList();
+        var own = await context.Set<MatrixVersion>()
+            .AsNoTracking()
+            .Where(version => version.Status == MatrixVersionStatus.Published
+                && (trackIds.Contains(version.Matrix.TrackId) || positionIds.Contains(version.Matrix.PositionId)))
+            .Select(version => new { version.Matrix.TrackId, version.Matrix.PositionId, version.Matrix.OrgUnitId })
+            .ToListAsync(cancellationToken);
+        return [.. own.Select(row => (row.TrackId, row.PositionId, row.OrgUnitId))];
+    }
+
+    /// <summary>
+    /// The matrix unit first and then the working units below it where the matrix is in effect, in name order.
+    /// </summary>
+    private static List<CareerUnitResponse> UnitsInEffect(CompetencyMatrix matrix, OrgSnapshot org, HashSet<(Guid? TrackId, Guid? PositionId, Guid UnitId)> ownPublished) =>
+        [.. MatrixInheritance.UnitsInEffect(org, matrix.OrgUnitId, unitId => ownPublished.Contains((matrix.TrackId, matrix.PositionId, unitId)))
+            .Where(unit => unit.IsActive || unit.Id == matrix.OrgUnitId)
+            .OrderBy(unit => unit.Id != matrix.OrgUnitId)
+            .ThenBy(unit => unit.Name, TextCollation.Comparer)
+            .ThenBy(unit => unit.Id)
+            .Select(unit => new CareerUnitResponse(unit.Id, unit.Name))];
 
     private static MatrixVersionRef? RefOf(MatrixVersion? version) =>
         version is null ? null : new MatrixVersionRef(version.Id, version.Number, version.Status, version.Version);
