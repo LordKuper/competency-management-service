@@ -94,3 +94,4 @@
 {"op":"open","id":"Task 24","kind":"dispatch","parent":"impl#1","start":"2026-10-29T21:08:29.807Z","attrs":{}}
 {"op":"open","id":"scope amendment AC-91","kind":"user-wait","parent":"impl#1","start":"2026-10-29T21:12:11.448Z","attrs":{"gate":"new-or-changed-scope"}}
 {"op":"close","id":"Task 24","kind":"dispatch","parent":"impl#1","start":"2026-10-29T21:08:29.807Z","end":"2026-10-29T21:15:04.156Z","outcome":"done","attrs":{}}
+{"op":"close","id":"scope amendment AC-91","kind":"user-wait","parent":"impl#1","start":"2026-10-29T21:12:11.448Z","end":"2026-10-29T21:17:52.666Z","outcome":"done","attrs":{"gate":"new-or-changed-scope"}}

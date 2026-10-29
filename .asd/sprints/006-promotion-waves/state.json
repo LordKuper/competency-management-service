@@ -153,6 +153,13 @@
       "reason": "approve AC-90 (matrices of a unit without a head are run by the nearest head above; the superior step is skipped for them); the offered extension to an author who is also the superior approver not chosen; Task 24 wave 24",
       "evidence": "sprint.md, plan.md, decisions-log.md",
       "artifact_revision": "sprint.md AC-90"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "approve AC-91 (a unit's track and position matrices apply in descendant units without their own published matrix; replaces the explicit-selection draft the user declined); Task 25 wave 25",
+      "evidence": "sprint.md, plan.md, decisions-log.md",
+      "artifact_revision": "sprint.md AC-91"
     }
   ],
   "task_routing": {
@@ -304,6 +311,12 @@
       "execution": "agent",
       "tier": "standard",
       "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "Task 25": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:public contract",
       "resolved_model": "sonnet"
     }
   },
