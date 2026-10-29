@@ -302,7 +302,7 @@ Material risk: change: security — в HTML попадают имена, наз�
 ### Task 22: Кириллица в паролях
 AC: AC-88.
 Material risk: change: security — проверка пароля
-- [ ] Наследник `PasswordValidator<AppUser>` в `src/Competency.UserManagement/`: заглавные, строчные буквы и буквы-или-цифры по Юникоду (`char.IsUpper`, `char.IsLower`, `char.IsLetterOrDigit`), цифры прежние; зарегистрирован вместо стандартного, стандартный вторым валидатором не остаётся
+- [x] Наследник `PasswordValidator<AppUser>` в `src/Competency.UserManagement/`: заглавные, строчные буквы и буквы-или-цифры по Юникоду (`char.IsUpper`, `char.IsLower`, `char.IsLetterOrDigit`), цифры прежние; зарегистрирован вместо стандартного, стандартный вторым валидатором не остаётся
 
 ### Task 23: Рабочий стол — карточка «Объявить карьерную сессию»
 AC: AC-89.
