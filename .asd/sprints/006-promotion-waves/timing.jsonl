@@ -103,3 +103,5 @@
 {"op":"close","id":"impl assessment r5","kind":"user-wait","parent":"impl#1","start":"2026-10-29T21:29:33.758Z","end":"2026-10-29T21:51:43.034Z","outcome":"done","attrs":{"gate":"impl-assessment"}}
 {"op":"open","id":"scope amendment AC-92","kind":"user-wait","parent":"impl#1","start":"2026-10-29T21:51:43.101Z","attrs":{"gate":"new-or-changed-scope"}}
 {"op":"close","id":"scope amendment AC-92","kind":"user-wait","parent":"impl#1","start":"2026-10-29T21:51:43.101Z","end":"2026-10-29T21:53:04.346Z","outcome":"done","attrs":{"gate":"new-or-changed-scope"}}
+{"op":"open","id":"Task 26","kind":"dispatch","parent":"impl#1","start":"2026-10-29T21:53:11.082Z","attrs":{}}
+{"op":"close","id":"Task 26","kind":"dispatch","parent":"impl#1","start":"2026-10-29T21:53:11.082Z","end":"2026-10-29T22:00:40.591Z","outcome":"done","attrs":{}}

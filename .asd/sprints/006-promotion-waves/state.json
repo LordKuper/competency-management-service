@@ -329,7 +329,7 @@
     "Task 26": {
       "execution": "agent",
       "tier": "standard",
-      "reason": "kind:standard",
+      "reason": "normal",
       "resolved_model": "sonnet"
     }
   },
