@@ -130,6 +130,8 @@ const ACTION_PATH: Record<DeskKind, string | null> = {
   PromotionRatersReview: `/promotion/raters/${OBJECT_ID}`,
   PromotionFormalCheckPending: `/promotion/waves/${OBJECT_ID}`,
   PromotionDecisionsPending: `/promotion/review/${OBJECT_ID}`,
+  CommissionNotFormed: `/promotion/commissions?unit=${OBJECT_ID}`,
+  CommissionWithoutChair: `/promotion/commissions?unit=${OBJECT_ID}`,
 };
 
 const REFERENCE_PATH: Partial<Record<DeskKind, string>> = {
