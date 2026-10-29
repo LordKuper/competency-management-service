@@ -38,6 +38,8 @@ export interface NavItem {
 export interface TourStep {
   /** Value of the `data-tour` attribute of the element the step points at; omitted means a step about the whole screen. A step whose element is not on the screen is skipped. */
   target?: string;
+  /** Step of the wizard on the screen (counted from 1, as its step ruler marks it) the hint belongs to; omitted means every step. */
+  wizardStep?: number;
   /** Short heading of the step. */
   title: string;
   /** What is done here and why, in Russian. */

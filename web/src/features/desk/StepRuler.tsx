@@ -14,7 +14,7 @@ interface StepRulerProps {
   onChange: (step: number) => void;
 }
 
-/** The steps of a wizard in one row: passed ones open on a click, the rest are only shown. */
+/** The steps of a wizard in one row: passed ones open on a click, the rest are only shown. The shown step is marked for the screen's help, which picks the hints of that step. */
 export function StepRuler({
   steps,
   current,
@@ -24,7 +24,7 @@ export function StepRuler({
   onChange,
 }: StepRulerProps) {
   return (
-    <div data-tour="wizard-steps">
+    <div data-tour="wizard-steps" data-tour-step={current}>
       <Steps
         size="small"
         current={current - 1}

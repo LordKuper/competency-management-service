@@ -13,10 +13,18 @@ const GENERAL_STEP: TourStep = {
 /** antd spreads these onto the «Далее» button; `autoFocus` puts the keyboard there as the tour opens, and the button keeps focus from step to step. antd's own type for them does not list `autoFocus`, hence the class name that makes the object assignable. */
 const NEXT_BUTTON_PROPS = { className: "tour-next", autoFocus: true };
 
-/** Steps whose element is on the screen now, shaped for the tour; the element is looked up once, when the tour opens. */
+/** The step a wizard on the screen is on, as its step ruler marks it; undefined when the screen has no wizard. */
+function currentWizardStep(): number | undefined {
+  const marked = document.querySelector<HTMLElement>("[data-tour-step]");
+  return marked ? Number(marked.dataset.tourStep) : undefined;
+}
+
+/** Steps for the current wizard step whose element is on the screen now, shaped for the tour; the elements are looked up once, when the tour opens. */
 function visibleSteps(pathname: string): NonNullable<TourProps["steps"]> {
+  const wizardStep = currentWizardStep();
   return (tourFor(pathname) ?? [GENERAL_STEP]).flatMap(
-    ({ target, title, description }) => {
+    ({ target, title, description, wizardStep: stepOfHint }) => {
+      if (stepOfHint !== undefined && stepOfHint !== wizardStep) return [];
       const step = { title, description, nextButtonProps: NEXT_BUTTON_PROPS };
       if (!target) return [step];
       const element = document.querySelector<HTMLElement>(

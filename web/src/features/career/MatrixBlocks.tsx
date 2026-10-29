@@ -1,5 +1,7 @@
 import { CloseCircleOutlined, EditOutlined } from "@ant-design/icons";
 import {
+  Collapse,
+  Flex,
   InputNumber,
   Select,
   Space,
@@ -58,6 +60,51 @@ interface MatrixBlocksProps {
   /** Inside a wizard step, where the step's name already stands in the ruler and the table needs no heading. */
   isCompact?: boolean;
   onChange: (content: MatrixContent) => void;
+}
+
+const FORMULA_KEY = "formula";
+
+/** What the table's numbers mean: the share of each block in the rating, how the rating is counted and when a level is reached. */
+function FormulaExplanation({
+  isSingleLevel,
+  isOpen,
+}: {
+  isSingleLevel: boolean;
+  isOpen: boolean;
+}) {
+  return (
+    <Flex vertical gap="small">
+      <Typography.Text type="secondary">
+        {`Коэффициент блока — доля блока в рейтинге кандидата, сумма коэффициентов ${isSingleLevel ? "" : "каждого уровня "}— ${MAX_PERCENT} %. «${OUTSIDE_LABEL}» — компетенции, не входящие ни в один блок.`}
+      </Typography.Text>
+      <Collapse
+        size="small"
+        defaultActiveKey={isOpen ? [FORMULA_KEY] : []}
+        items={[
+          {
+            key: FORMULA_KEY,
+            label: "Как считается рейтинг и готовность к уровню",
+            children: (
+              <Flex vertical gap="small">
+                <Typography.Text>
+                  Рейтинг — сумма по блокам: коэффициент × средняя доля баллов
+                  компетенций блока от максимума их шкал.
+                </Typography.Text>
+                <Typography.Text>
+                  Минимальный общий порог — рейтинг, нужный для уровня (не задан
+                  — порога нет).
+                </Typography.Text>
+                <Typography.Text>
+                  Кандидат готов к уровню, когда рейтинг не ниже порога и каждая
+                  критическая компетенция набрала требуемый балл.
+                </Typography.Text>
+              </Flex>
+            ),
+          },
+        ]}
+      />
+    </Flex>
+  );
 }
 
 function coefficientSum(content: MatrixContent, levelId: string) {
@@ -241,14 +288,17 @@ export function MatrixBlocks({
       {!isCompact && (
         <Typography.Title level={2}>Коэффициенты блоков</Typography.Title>
       )}
-      <Table<Row>
-        className="matrix-grid"
-        rowKey="key"
-        columns={columns}
-        dataSource={rows}
-        pagination={false}
-        scroll={{ x: "max-content" }}
-      />
+      <Flex vertical gap="middle">
+        <FormulaExplanation isSingleLevel={isSingleLevel} isOpen={isCompact} />
+        <Table<Row>
+          className="matrix-grid"
+          rowKey="key"
+          columns={columns}
+          dataSource={rows}
+          pagination={false}
+          scroll={{ x: "max-content" }}
+        />
+      </Flex>
     </section>
   );
 }
