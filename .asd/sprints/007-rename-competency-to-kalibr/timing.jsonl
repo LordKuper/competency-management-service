@@ -39,3 +39,25 @@
 {"op":"close","id":"asd-tester impl-test#1","kind":"dispatch","parent":"impl-test#1","start":"2026-10-30T16:52:38.658Z","end":"2026-10-30T17:13:13.127Z","outcome":"done","attrs":{"agent":"asd-tester","tier":"standard","model":"sonnet"}}
 {"op":"close","id":"impl-test#1","kind":"phase","parent":null,"start":"2026-10-30T16:51:43.265Z","end":"2026-10-30T17:13:20.790Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-review#1","kind":"phase","parent":null,"start":"2026-10-30T17:13:25.635Z","attrs":{}}
+{"op":"open","id":"asd-advisor impl-review#1","kind":"dispatch","parent":"impl-review#1","start":"2026-10-30T17:15:06.290Z","attrs":{"agent":"asd-advisor","tier":"standard","model":"opus"}}
+{"op":"close","id":"asd-advisor impl-review#1","kind":"dispatch","parent":"impl-review#1","start":"2026-10-30T17:15:06.290Z","end":"2026-10-30T17:15:13.234Z","outcome":"interrupted","attrs":{"agent":"asd-advisor","tier":"standard","model":"opus"}}
+{"op":"open","id":"asd-advisor impl-review#2","kind":"dispatch","parent":"impl-review#1","start":"2026-10-30T17:15:13.234Z","attrs":{"agent":"asd-advisor","tier":"standard","model":"fable"}}
+{"op":"close","id":"asd-advisor impl-review#2","kind":"dispatch","parent":"impl-review#1","start":"2026-10-30T17:15:13.234Z","end":"2026-10-30T17:18:10.699Z","outcome":"done","attrs":{"agent":"asd-advisor","tier":"standard","model":"fable"}}
+{"op":"open","id":"wait runtime ENAMETOOLONG","kind":"user-wait","parent":"impl-review#1","start":"2026-10-30T17:18:10.699Z","attrs":{"gate":"runtime ENAMETOOLONG workaround"}}
+{"op":"close","id":"wait runtime ENAMETOOLONG","kind":"user-wait","parent":"impl-review#1","start":"2026-10-30T17:18:10.699Z","end":"2026-10-30T17:24:06.283Z","outcome":"done","attrs":{"gate":"runtime ENAMETOOLONG workaround"}}
+{"op":"open","id":"impl-review wave-1/iter-01","kind":"review-iteration","parent":"impl-review#1","start":"2026-10-30T17:26:37.619Z","attrs":{"wave":"1","iteration":"1"}}
+{"op":"open","id":"combined wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-30T17:27:01.985Z","attrs":{"agent":"asd-reviewer-combined","tier":"standard","model":"opus"}}
+{"op":"open","id":"external wave-1/iter-01","kind":"external-review","parent":"impl-review wave-1/iter-01","start":"2026-10-30T17:27:02.055Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"impl-review#1","kind":"phase","parent":null,"start":"2026-10-30T17:13:25.635Z","end":"2026-10-30T17:27:02.055Z","outcome":"interrupted","attrs":{}}
+{"op":"close","id":"impl-review wave-1/iter-01","kind":"review-iteration","parent":"impl-review#1","start":"2026-10-30T17:26:37.619Z","end":"2026-10-30T17:27:02.055Z","outcome":"interrupted","attrs":{"wave":"1","iteration":"1"}}
+{"op":"close","id":"combined wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-30T17:27:01.985Z","end":"2026-10-30T17:27:02.055Z","outcome":"interrupted","attrs":{"agent":"asd-reviewer-combined","tier":"standard","model":"opus"}}
+{"op":"close","id":"external wave-1/iter-01","kind":"external-review","parent":"impl-review wave-1/iter-01","start":"2026-10-30T17:27:02.055Z","end":"2026-10-30T17:27:02.055Z","outcome":"interrupted","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"open","id":"impl-review#2","kind":"phase","parent":null,"start":"2026-10-30T18:04:56.524Z","attrs":{}}
+{"op":"open","id":"impl-review wave-1/iter-01","kind":"review-iteration","parent":"impl-review#2","start":"2026-10-30T18:04:56.588Z","attrs":{"wave":"1","iteration":"1"}}
+{"op":"open","id":"combined wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-30T18:04:56.650Z","attrs":{"agent":"asd-reviewer-combined","tier":"standard","model":"opus"}}
+{"op":"open","id":"external wave-1/iter-01","kind":"external-review","parent":"impl-review wave-1/iter-01","start":"2026-10-30T18:04:56.711Z","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"open","id":"asd-advisor impl-review#3","kind":"dispatch","parent":"impl-review#2","start":"2026-10-30T18:04:56.778Z","attrs":{"agent":"asd-advisor","tier":"standard","model":"fable"}}
+{"op":"close","id":"asd-advisor impl-review#3","kind":"dispatch","parent":"impl-review#2","start":"2026-10-30T18:04:56.778Z","end":"2026-10-30T18:06:31.418Z","outcome":"done","attrs":{"agent":"asd-advisor","tier":"standard","model":"fable"}}
+{"op":"close","id":"external wave-1/iter-01","kind":"external-review","parent":"impl-review wave-1/iter-01","start":"2026-10-30T18:04:56.711Z","end":"2026-10-30T18:10:10.073Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
+{"op":"close","id":"combined wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-30T18:04:56.650Z","end":"2026-10-30T18:17:27.251Z","outcome":"done","attrs":{"agent":"asd-reviewer-combined","tier":"standard","model":"opus"}}
+{"op":"close","id":"impl-review wave-1/iter-01","kind":"review-iteration","parent":"impl-review#2","start":"2026-10-30T18:04:56.588Z","end":"2026-10-30T18:17:27.251Z","outcome":"done","attrs":{"wave":"1","iteration":"1"}}
