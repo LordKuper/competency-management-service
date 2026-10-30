@@ -1,7 +1,7 @@
 {
   "sprint_id": "006-promotion-waves",
   "branch": "sprint/006-promotion-waves",
-  "phase": "pr",
+  "phase": "done",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -216,6 +216,13 @@
       "reason": "approve subsystem id promotion (module Competency.Promotion) named «Карьерные переходы»",
       "evidence": "decisions-log.md",
       "artifact_revision": "docs/architecture/subsystems.md"
+    },
+    {
+      "gate": "sprint-closure",
+      "decision_actor": "orchestrator",
+      "reason": "PR #11 merged",
+      "evidence": "merge commit 33a05ba41f379a4383b58b86ce7e0a3367fcc88b",
+      "artifact_revision": "33a05ba"
     }
   ],
   "task_routing": {
@@ -504,13 +511,14 @@
     }
   },
   "created_at": "2026-10-27T16:05:59.306Z",
-  "updated_at": "2026-10-30T12:56:23.690Z",
+  "updated_at": "2026-10-30T15:30:48.970Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": {
     "number": 11,
     "url": "https://github.com/LordKuper/competency-management-service/pull/11",
-    "state": "open"
+    "state": "merged",
+    "merge_commit": "33a05ba41f379a4383b58b86ce7e0a3367fcc88b"
   },
-  "archived_at": null
+  "archived_at": "2026-10-30T15:30:48.970Z"
 }
