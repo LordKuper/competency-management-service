@@ -20,7 +20,7 @@ public sealed class DeploymentTests
             .Where(name => File.Exists(Path.Combine(root, "src", name!, $"{name}.csproj")))
             .ToList();
 
-        projects.Should().Contain("Competency.CareerFramework", "the project list is read from the source tree");
+        projects.Should().Contain("Kalibr.CareerFramework", "the project list is read from the source tree");
         foreach (var project in projects)
         {
             var copy = $"COPY src/{project}/{project}.csproj src/{project}/packages.lock.json src/{project}/";
@@ -41,11 +41,11 @@ public sealed class DeploymentTests
     private static string RepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null && !directory.EnumerateFiles("Competency.slnx").Any())
+        while (directory is not null && !directory.EnumerateFiles("Kalibr.slnx").Any())
         {
             directory = directory.Parent;
         }
 
-        return directory?.FullName ?? throw new FileNotFoundException("Competency.slnx");
+        return directory?.FullName ?? throw new FileNotFoundException("Kalibr.slnx");
     }
 }

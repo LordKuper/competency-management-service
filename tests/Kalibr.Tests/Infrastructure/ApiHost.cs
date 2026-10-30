@@ -129,7 +129,7 @@ public sealed class ApiHost : IAsyncDisposable
     public static async Task<ApiHost> StartAsync(string connectionString, IReadOnlyDictionary<string, string>? settings = null)
     {
         var port = FreePort();
-        var keysPath = Path.Combine(Path.GetTempPath(), $"competency-tests-{Guid.NewGuid():N}");
+        var keysPath = Path.Combine(Path.GetTempPath(), $"kalibr-tests-{Guid.NewGuid():N}");
         var startInfo = new ProcessStartInfo("dotnet")
         {
             WorkingDirectory = AppContext.BaseDirectory,
@@ -137,7 +137,7 @@ public sealed class ApiHost : IAsyncDisposable
             RedirectStandardError = true,
             UseShellExecute = false,
         };
-        startInfo.ArgumentList.Add("Competency.Api.dll");
+        startInfo.ArgumentList.Add("Kalibr.Api.dll");
         startInfo.Environment["ASPNETCORE_URLS"] = $"http://127.0.0.1:{port}";
         startInfo.Environment["ConnectionStrings__Default"] = connectionString;
         startInfo.Environment["Bootstrap__AdminEmail"] = AdminEmail;

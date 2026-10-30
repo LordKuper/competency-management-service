@@ -8,7 +8,7 @@ namespace Kalibr.Tests.Infrastructure;
 /// </summary>
 public static partial class ApiContract
 {
-    private const string SolutionFile = "Competency.slnx";
+    private const string SolutionFile = "Kalibr.slnx";
     private const string ContractPath = "openapi/openapi.json";
     private static readonly string[] HttpMethods = ["get", "post", "put", "delete"];
 

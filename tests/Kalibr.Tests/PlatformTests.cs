@@ -18,7 +18,7 @@ namespace Kalibr.Tests;
 public sealed class PlatformTests(TestEnvironment environment)
 {
     private const string RestrictViolation = "23001";
-    private const string FailureLogCategory = "Competency.Platform.ProblemExceptionHandler";
+    private const string FailureLogCategory = "Kalibr.Platform.ProblemExceptionHandler";
     private const string LongestSmtpTimeout = "49.17:02:47.294";
     private const string OneMillisecondOverTheLongestSmtpTimeout = "49.17:02:47.295";
 

@@ -321,7 +321,7 @@ public sealed class OrgImportParserTests
     [Fact]
     public void Ac10_AnExternalEntityOfAnXmlPart_NeverReadsAFileOfTheServer()
     {
-        var secret = Path.Combine(Path.GetTempPath(), $"competency-xxe-{Guid.NewGuid():N}.txt");
+        var secret = Path.Combine(Path.GetTempPath(), $"kalibr-xxe-{Guid.NewGuid():N}.txt");
         File.WriteAllText(secret, "СЕКРЕТ-СЕРВЕРА");
         try
         {
