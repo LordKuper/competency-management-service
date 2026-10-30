@@ -569,6 +569,7 @@
           "Competency.Desk": "[1.0.0, )",
           "Competency.OrgStructure": "[1.0.0, )",
           "Competency.Platform": "[1.0.0, )",
+          "Competency.Promotion": "[1.0.0, )",
           "Competency.UserManagement": "[1.0.0, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )"
         }
@@ -608,6 +609,15 @@
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.12, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
           "System.Security.Cryptography.Pkcs": "[10.0.13, )"
+        }
+      },
+      "competency.promotion": {
+        "type": "Project",
+        "dependencies": {
+          "Competency.CareerFramework": "[1.0.0, )",
+          "Competency.OrgStructure": "[1.0.0, )",
+          "Competency.Platform": "[1.0.0, )",
+          "Competency.UserManagement": "[1.0.0, )"
         }
       },
       "competency.usermanagement": {

@@ -5,6 +5,7 @@ using Competency.CareerFramework;
 using Competency.Desk;
 using Competency.OrgStructure;
 using Competency.Platform;
+using Competency.Promotion;
 using Competency.UserManagement;
 using Microsoft.AspNetCore.DataProtection;
 
@@ -56,6 +57,7 @@ app.MapAuditEndpoints();
 app.MapOrgStructureEndpoints();
 app.MapUserManagementEndpoints();
 app.MapCareerFrameworkEndpoints();
+app.MapPromotionEndpoints();
 app.MapDeskEndpoints();
 app.MapFallbackToFile(SpaFallbackPattern, "index.html").AllowAnonymous();
 

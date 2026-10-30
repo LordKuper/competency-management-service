@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { describeApiError } from "../../app/apiErrors";
 import { orgUnitTreeQuery } from "./orgStructureApi";
 import { buildUnitTree, type UnitNode } from "./orgTree";
+import { useUnitTreeSearch } from "./useUnitTreeSearch";
 
 interface UnitOption {
   value: string;
@@ -61,11 +62,12 @@ export function OrgUnitSelect({
     [units, excludedSubtreeRoot, isActiveRequired, allowedIds],
   );
 
+  const search = useUnitTreeSearch(options);
+
   return (
     <TreeSelect<string | undefined, UnitOption>
       {...selectProps}
-      showSearch={{ treeNodeFilterProp: "title" }}
-      treeData={options}
+      {...search}
       loading={isPending}
       notFoundContent={
         error ? describeApiError(error) : "Подразделения не найдены."

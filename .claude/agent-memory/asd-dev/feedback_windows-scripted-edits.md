@@ -15,4 +15,8 @@ Creating a large new `.tsx` file through a Bash `cat <<'EOF'` heredoc once faile
 
 The working tree is mixed: `git ls-files --eol` shows many `.cs` files `w/crlf` and others `w/lf` (index is LF for all). A multi-line anchor from a script never matches a CRLF file; read the file, normalise to `\n` for matching, and write back with the file's own EOL (a small `Doc` helper in the scratchpad). A script whose `str.replace` silently no-ops leaves the file unmodified — check `git status` after.
 
+A Python edit opened without `encoding='utf-8'` reads and writes the cp1251 locale: new Cyrillic text typed in the script lands as cp1251 bytes inside a UTF-8 file, and the Write/Read tools then reject the file as non-UTF-8. Pass `encoding='utf-8'` both ways, or use Edit for any hunk with Cyrillic.
+
 For a long multi-hunk patch, write the Python script to `.asd/tmp/*.py` with the Write tool and run it (`assert old in s` per hunk); the same heredoc failure hit a patch with `"""` strings, and a docstring-quote trick (`\"` before a closing `"""`) is fragile.
+
+In some sessions `python3` in the Bash tool is a stub: it prints only "Python" and edits nothing, so a heredoc patch silently no-ops. Check `git diff --stat` after any scripted edit; `node -e` with `fs.readFileSync/writeFileSync(..., "utf8")` handles Cyrillic and keeps EOLs as they are.

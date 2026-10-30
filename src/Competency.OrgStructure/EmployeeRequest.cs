@@ -16,6 +16,11 @@ internal sealed record EmployeeRequest
 
     public string? MiddleName { get; init; }
 
+    /// <summary>
+    /// The level of education; absent means it is not known, so a replacement without it clears the level.
+    /// </summary>
+    public EducationLevel? Education { get; init; }
+
     public required Guid PositionId { get; init; }
 
     public required Guid OrgUnitId { get; init; }

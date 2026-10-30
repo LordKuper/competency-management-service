@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<!--
+responsibility:
+  owns: html shell wrap for all asd user-facing html docs
+  excludes: doc content, doc-specific structure
+  delegates_to: fragment templates (t_prd, t_adr, t_ux-spec, t_concept, t_stack, t_design-system, t_accessibility, t_retrospective)
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="ASD workflow">
+  <meta name="doc-type" content="PRD">
+  <meta name="subsystem" content="promotion">
+  <meta name="sprint-id" content="">
+  <meta name="status" content="approved">
+  <meta name="updated" content="2026-10-30">
+  <meta name="responsibility" content="product requirements of the promotion subsystem: career sessions of units with six dated stages and rollback, career-move applications with self-assessment, formal check, 360-degree rating, artifacts, unit commissions with a chair, final scores, rating and decision, published results and feedback, excluded raters, settings, demo mode, the process letters and the Career moves section">
+  <meta name="provenance" content="original">
+  <meta name="source" content="">
+  <title>Требования — Карьерные переходы</title>
+  <style>
+    :root {
+      --fg: #1a1c1e; --bg: #fff; --muted: #5b6770; --accent: #0066cc;
+      --code-bg: #f4f6f8; --border: #d0d7de; --max: 1040px;
+      --card-bg: #fafbfc;
+      --ok: #1a7f37; --warn: #b35900; --danger: #cf222e; --info: #0969da; --neutral: #5b6770;
+      --ok-tint: rgba(31,136,61,0.07); --danger-tint: rgba(207,34,46,0.06);
+      --chip-must-bg: #ffebe9; --chip-must-fg: #cf222e;
+      --chip-should-bg: #fff5e1; --chip-should-fg: #9a6700;
+      --chip-may-bg: #ddf4ff; --chip-may-fg: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e6e6e6; --bg: #0e1116; --muted: #9aa4ad; --code-bg: #161b22; --border: #30363d;
+        --card-bg: #161b22;
+        --accent: #58a6ff; --ok: #3fb950; --warn: #d29922; --danger: #f85149; --info: #79c0ff; --neutral: #8b949e;
+        --ok-tint: rgba(63,185,80,0.12); --danger-tint: rgba(248,81,73,0.10);
+        --chip-must-bg: #3b1416; --chip-must-fg: #ff7b72;
+        --chip-should-bg: #2d2410; --chip-should-fg: #e3b341;
+        --chip-may-bg: #0d2538; --chip-may-fg: #58a6ff;
+      }
+    }
+    html, body { margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100vh; }
+    .layout:has(> nav.toc) { grid-template-columns: 260px minmax(0, 1fr); }
+    nav.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 12px; border-right: 1px solid var(--border); font-size: 0.85rem; }
+    nav.toc .toc-title { font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.04em; }
+    nav.toc ol { list-style: none; margin: 0; padding: 0; }
+    nav.toc li { margin: 2px 0; }
+    nav.toc a { color: var(--fg); text-decoration: none; display: block; padding: 3px 6px; border-radius: 4px; }
+    nav.toc a:hover { background: var(--code-bg); color: var(--accent); }
+    @media (max-width: 880px) { nav.toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } }
+    @media print { nav.toc { display: none; } }
+    .content { min-width: 0; }
+    header, main, footer { max-width: var(--max); margin: 0 auto; padding: 16px 24px; }
+    header { border-bottom: 1px solid var(--border); }
+    header h1 { margin: 4px 0 8px; font-size: 1.9rem; }
+    .badges span { display: inline-block; padding: 2px 8px; margin-right: 6px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--bg); }
+    .badges .provenance-reverse-engineered, .badges .provenance-migrated { color: var(--warn); border-color: var(--warn); }
+    .badges .status-draft       { color: var(--neutral); border-color: var(--neutral); }
+    .badges .status-in-review   { color: var(--warn);    border-color: var(--warn); }
+    .badges .status-approved    { color: var(--ok);      border-color: var(--ok); }
+    .badges .status-locked      { color: var(--info);    border-color: var(--info); }
+    .stats { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+    .stats .chip { display: inline-block; padding: 1px 8px; margin-right: 6px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); }
+    @media (max-width: 880px) {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+    }
+    h2, h3, h4 { line-height: 1.25; margin-top: 1.6em; }
+    h2 { border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    a { color: var(--accent); }
+    code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: var(--code-bg); padding: 12px; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--code-bg); position: sticky; top: 0; z-index: 1; }
+    tbody tr:nth-child(even) td { background: var(--card-bg); }
+    blockquote { border-left: 3px solid var(--accent); margin: 0; padding: 4px 14px; color: var(--muted); }
+    .mermaid { background: var(--bg); text-align: center; margin: 16px 0; }
+    footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+    /* fragment-shared utilities */
+    .lede { font-size: 1.08rem; color: var(--fg); }
+    section.hero { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+    section.callout { border-left: 4px solid var(--border); padding: 8px 14px; background: var(--card-bg); border-radius: 4px; }
+    section.callout.warn { border-left-color: var(--warn); }
+    section.callout.warn h2::before { content: "⊘ "; color: var(--warn); }
+
+    ol.goal-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    ol.goal-grid li { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; display: flex; gap: 10px; }
+    ol.goal-grid .num { flex: 0 0 auto; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    ol.goal-grid p { margin: 0; }
+
+    details.role-group { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; background: var(--card-bg); }
+    details.role-group > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; }
+    details.role-group > summary .count { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+    details.role-group ul.stories { margin: 0; padding: 4px 16px 12px 28px; }
+    ul.stories li { margin: 4px 0; }
+    ul.stories b { color: var(--accent); font-weight: 600; }
+
+    table.ac-table td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .chip.area { background: var(--code-bg); color: var(--muted); }
+    .chip.prio-must   { background: var(--chip-must-bg);   color: var(--chip-must-fg); border-color: var(--chip-must-fg); }
+    .chip.prio-should { background: var(--chip-should-bg); color: var(--chip-should-fg); border-color: var(--chip-should-fg); }
+    .chip.prio-may    { background: var(--chip-may-bg);    color: var(--chip-may-fg); border-color: var(--chip-may-fg); }
+
+    ul.non-goals { margin: 0; padding-left: 22px; }
+    ul.non-goals li::marker { content: "⊘  "; color: var(--warn); }
+
+    /* definition-list pattern: Purpose / Entry / Exit / Notes */
+    dl.def-list { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0; }
+    dl.def-list dt { font-weight: 600; color: var(--muted); }
+    dl.def-list dd { margin: 0; }
+
+    /* ADR */
+    .adr { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    .adr > .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px; }
+    .adr h2 { margin-top: 0.4em; border-bottom: none; font-size: 1.3rem; }
+    .adr h3 { margin-top: 1.1em; border-bottom: none; font-size: 1.15rem; }
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.78rem; border: 1px solid var(--border); }
+    .status-proposed   { color: var(--warn);    border-color: var(--warn); }
+    .status-accepted   { color: var(--ok);      border-color: var(--ok); }
+    .consequences { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .consequences .pros, .consequences .cons { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border); }
+    .consequences .pros { background: var(--ok-tint); border-left: 3px solid var(--ok); }
+    .consequences .cons { background: var(--danger-tint); border-left: 3px solid var(--danger); }
+    .consequences h4 { margin: 0 0 4px; font-size: 1rem; color: var(--muted); }
+    .consequences ul { margin: 0; padding-left: 20px; }
+    @media (max-width: 720px) { .consequences { grid-template-columns: 1fr; } }
+    ul.alt-list li { margin: 4px 0; }
+    ul.alt-list li strong { color: var(--fg); }
+
+    /* UX-spec mockup */
+    article.mockup { border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 18px 0; background: var(--card-bg); }
+    article.mockup > h3 { margin-top: 0; }
+    .mockup-preview { background: var(--bg); border: 1px dashed var(--border); border-radius: 6px; padding: 16px; margin: 10px 0; min-height: 80px; }
+    .screen-meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 6px 0 10px; font-size: 0.92rem; }
+    .screen-meta b { color: var(--muted); font-weight: 600; }
+
+    /* Concept */
+    .pillar-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .pillar-grid li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; }
+    .pillar-grid li strong { display: block; margin-bottom: 4px; color: var(--accent); }
+    .anti-pillar-grid li { border-left-color: var(--danger); }
+    .anti-pillar-grid li strong { color: var(--danger); }
+    ul.user-segments { list-style: none; padding: 0; }
+    ul.user-segments li { padding: 8px 12px; margin: 6px 0; border-left: 3px solid var(--accent); background: var(--card-bg); border-radius: 4px; }
+    ul.user-segments li b { color: var(--accent); }
+    ul.metrics li { margin: 4px 0; }
+    ul.metrics li .target { float: right; color: var(--ok); font-variant-numeric: tabular-nums; }
+
+    /* Stack */
+    table.tech-table .ver { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .principle-list { list-style: none; padding: 0; }
+    .principle-list li { background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    .principle-list li strong { color: var(--info); }
+
+    /* Accessibility */
+    section.a11y-domain { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; margin: 14px 0; }
+    section.a11y-domain h2 { border-bottom: 1px dashed var(--border); }
+    .limitation { background: var(--chip-should-bg); border-left: 3px solid var(--warn); padding: 8px 12px; margin: 6px 0; border-radius: 4px; }
+    .limitation b { color: var(--warn); }
+
+    /* Design system */
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .swatch { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+    .swatch .chip-color { height: 80px; border-radius: 4px; border: 1px solid var(--border); }
+    .swatch code { font-size: 0.78rem; }
+    .swatch small { color: var(--muted); }
+    .spacing-scale { display: flex; align-items: flex-end; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); }
+    .spacing-scale > div { background: var(--accent); width: 24px; border-radius: 2px 2px 0 0; }
+    article.component-preview { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 14px 0; background: var(--card-bg); }
+    .preview { padding: 16px; border: 1px dashed var(--border); border-radius: 6px; background: var(--bg); }
+
+    @media print {
+      .layout, .layout:has(> nav.toc) { grid-template-columns: 1fr; }
+      a { color: inherit; text-decoration: none; }
+      footer { page-break-before: always; }
+      details.role-group[open] > summary { list-style: none; }
+      details.role-group { break-inside: avoid; }
+      tr, li { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Содержание</div>
+      <ol>
+        <li><a href="#problem">Проблема</a></li>
+        <li><a href="#goals">Цели</a></li>
+        <li><a href="#user-stories">Пользовательские истории</a></li>
+        <li><a href="#acceptance-criteria">Критерии приёмки</a></li>
+        <li><a href="#non-goals">Вне рамок</a></li>
+      </ol>
+    </nav>
+    <div class="content">
+      <header>
+        <div class="badges">
+          <span>PRD</span>
+          <span>promotion</span>
+          <span class="status-approved">approved</span>
+        </div>
+        <h1>Требования — Карьерные переходы</h1>
+        <div class="stats">6 goals · 12 stories · 56 AC · 7 non-goals · updated 2026-10-30</div>
+      </header>
+      <main>
+<!--
+responsibility:
+  owns: product requirements of the promotion subsystem: career sessions of units with six dated stages and rollback, career-move applications with self-assessment, formal check, 360-degree rating, artifacts, unit commissions with a chair, final scores, rating and decision, published results and feedback, excluded raters, settings, demo mode, the process letters and the Career moves section
+  excludes: ui mockups, design decisions, code, ux flows, matrices, the rating formula, readiness, matrix inheritance and process roles (career-framework.html), process desk items, the Career sessions desk block and the announce card (desk.html), employee data including the education level (org-structure.html), accounts, the menu, screen help and the letter format (user-management.html), the journal (audit.html)
+  delegates_to: career-framework.html (matrices, formula, readiness, inheritance, process roles), desk.html (process desk items, the Career sessions block, the announce card), org-structure.html (employee education level), user-management.html (menu, screen help, letter format), audit.html (journaling), ux-spec.html (ui + flows), adr.html (decisions)
+provenance: original
+-->
+
+<section id="problem" class="hero">
+  <h2>Проблема</h2>
+  <p class="lede">Переход сотрудника на следующий уровень карьерного трека держится на договорённостях: кто и когда может претендовать, кто его оценивает, по каким правилам решает комиссия и как кандидат узнаёт результат. Матрицы компетенций задают требования и формулу готовности, но по реальным оценкам их никто не применяет. Без единого процесса со сроками заявки теряются, авторы оценок известны, а решение не связано с требованиями матрицы.</p>
+</section>
+
+<section id="goals">
+  <h2>Цели</h2>
+  <ol class="goal-grid">
+    <li><span class="num">G1</span><p>Проводить карьерный переход как процесс карьерной сессии подразделений: шесть этапов по датам, автоматическая смена этапов и откат на пройденный этап.</p></li>
+    <li><span class="num">G2</span><p>Дать сотруднику самому подать заявку на уровень трека с самооценкой, образованием и оценивающими и видеть её путь до решения.</p></li>
+    <li><span class="num">G3</span><p>Оценивать кандидата по версии матрицы, зафиксированной при старте сессии: формальная проверка, анонимная круговая оценка, артефакты и итоговые оценки председателя по формуле и порогам матрицы.</p></li>
+    <li><span class="num">G4</span><p>Решение принимает комиссия подразделения с председателем; расчёт подсказывает, но не решает, и решение не меняет оргструктуру.</p></li>
+    <li><span class="num">G5</span><p>Каждый участник видит только своё: авторы круговых оценок скрыты, рейтинг — только комиссии и администратору; ожидаемые действия — на рабочем столе и в письмах.</p></li>
+    <li><span class="num">G6</span><p>Показывать процесс, ничего не меняя в системе: демо-режим полного цикла за каждую роль.</p></li>
+  </ol>
+</section>
+
+<section id="user-stories">
+  <h2>Пользовательские истории</h2>
+  <details class="role-group" open>
+    <summary>HR <span class="count">3</span></summary>
+    <ul class="stories">
+      <li><b>as</b> HR, <b>I want</b> объявить карьерную сессию для подразделений, за которые отвечаю, задать даты этапов и при необходимости откатить её на пройденный этап, <b>so that</b> сотрудники моих подразделений подавали заявки в понятные сроки (AC-1, AC-2, AC-6, AC-52…AC-57).</li>
+      <li><b>as</b> ответственный HR подразделения, <b>I want</b> вносить дату приёма или последнего перехода, видеть результат формальной проверки и подтверждать почту оценивающих без учётной записи, <b>so that</b> до круговой оценки дошли только кандидаты, выполнившие формальные условия (AC-15…AC-17, AC-58, AC-60, AC-81).</li>
+      <li><b>as</b> ответственный HR подразделения, <b>I want</b> вести состав комиссии и её председателя, в том числе во время карьерной сессии, <b>so that</b> заявки моих подразделений не задерживались (AC-24, AC-25, AC-66, AC-94, AC-95).</li>
+    </ul>
+  </details>
+  <details class="role-group" open>
+    <summary>Сотрудник <span class="count">3</span></summary>
+    <ul class="stories">
+      <li><b>as</b> сотрудник, <b>I want</b> видеть открытые и предстоящие карьерные сессии и сам подать заявку на уровень трека с самооценкой, образованием и оценивающими, <b>so that</b> претендовать на переход без выдвижения руководителем (AC-7, AC-8, AC-10, AC-47, AC-58, AC-59, AC-76, AC-77).</li>
+      <li><b>as</b> кандидат, <b>I want</b> приложить артефакты к компетенциям и отправить заявку на рассмотрение, <b>so that</b> подтвердить компетенции, которые круговая оценка не подтвердила (AC-49, AC-65, AC-80, AC-85).</li>
+      <li><b>as</b> кандидат, <b>I want</b> видеть свои заявки, итоговые оценки и решение и отметить получение обратной связи, <b>so that</b> знать результат и что делать дальше (AC-37, AC-68…AC-70).</li>
+    </ul>
+  </details>
+  <details class="role-group" open>
+    <summary>Оценивающий <span class="count">1</span></summary>
+    <ul class="stories">
+      <li><b>as</b> оценивающий, <b>I want</b> получить одно письмо со всеми, кого нужно оценить, и оценить каждого по компетенциям, не раскрывая своего имени кандидату и комиссии, <b>so that</b> дать честную оценку без давления (AC-19, AC-20, AC-62).</li>
+    </ul>
+  </details>
+  <details class="role-group" open>
+    <summary>Руководитель подразделения <span class="count">1</span></summary>
+    <ul class="stories">
+      <li><b>as</b> руководитель подразделения цели, <b>I want</b> дополнить и скорректировать список оценивающих кандидата, <b>so that</b> оценку дали люди, которые действительно с ним работали (AC-61).</li>
+    </ul>
+  </details>
+  <details class="role-group" open>
+    <summary>Комиссия <span class="count">2</span></summary>
+    <ul class="stories">
+      <li><b>as</b> член комиссии, <b>I want</b> видеть карточку поступившей заявки со сводкой круговой оценки, артефактами, формальной проверкой и прошлыми заявками кандидата, <b>so that</b> обсуждать кандидата по полным данным (AC-20, AC-48, AC-80, AC-84).</li>
+      <li><b>as</b> председатель комиссии, <b>I want</b> вносить итоговые оценки, видеть рейтинг и ранжирование и фиксировать решение, <b>so that</b> решение комиссии опиралось на правила матрицы (AC-29…AC-32).</li>
+    </ul>
+  </details>
+  <details class="role-group" open>
+    <summary>Глобальный администратор <span class="count">2</span></summary>
+    <ul class="stories">
+      <li><b>as</b> глобальный администратор, <b>I want</b> задавать интервал между переходами и длительности этапов, вести перечень запрещённых оценивающих, любые карьерные сессии и комиссии, <b>so that</b> процесс шёл по правилам компании (AC-7, AC-24, AC-52, AC-71, AC-82).</li>
+      <li><b>as</b> глобальный администратор, <b>I want</b> пройти демо полного цикла за каждую роль на синтетических данных, <b>so that</b> показывать процесс, ничего не меняя в системе (AC-42…AC-44, AC-72).</li>
+    </ul>
+  </details>
+</section>
+
+<section id="acceptance-criteria">
+  <h2>Критерии приёмки</h2>
+  <p>Номера критериев — номера спринта 006, по ним названы тесты; пропущенные номера заменены другими критериями или перенесены в требования других подсистем.</p>
+  <table class="ac-table">
+    <thead>
+      <tr><th>ID</th><th>Критерий</th><th>Область</th><th>Приоритет</th></tr>
+    </thead>
+    <tbody>
+      <tr id="AC-1"><td><a href="#AC-1">AC-1</a></td><td>Карьерную сессию объявляет HR или глобальный администратор. HR выбирает подразделения сессии только из тех, за которые отвечает как ответственный HR, с учётом наследования закрепления (<a href="career-framework.html#AC-8">career-framework AC-8</a>); администратор — из всех действующих. При выборе подразделения по умолчанию отмечаются и все его дочерние подразделения в пределах ответственности; с любого дочернего отметку можно снять. В сессию входят ровно отмеченные подразделения.</td><td><span class="chip area">сессия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-2"><td><a href="#AC-2">AC-2</a></td><td>Одновременно может идти несколько карьерных сессий, но одно подразделение не входит в две незавершённые сессии. Попытка создать или изменить сессию с пересечением отклоняется с указанием подразделения и сессии, с которой оно пересекается.</td><td><span class="chip area">сессия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-6"><td><a href="#AC-6">AC-6</a></td><td>При старте карьерной сессии за каждой парой «подразделение + цель» фиксируется опубликованная версия матрицы, действующая в подразделении в этот момент, своя или унаследованная (<a href="career-framework.html#AC-42">career-framework AC-42…AC-43</a>, <a href="career-framework.html#AC-161">career-framework AC-161</a>). Дальше оценка по этой заявке идёт только по ней, даже если позже опубликуется новая версия.</td><td><span class="chip area">сессия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-7"><td><a href="#AC-7">AC-7</a></td><td>Предстоящие карьерные сессии и сессии на этапе «Подача заявок» видит любой вошедший пользователь, в том числе сотрудники подразделений вне сессии: подразделения сессии, даты этапов и уровни треков, на которые можно подать заявку. Ведут сессию HR, который её объявил, и глобальный администратор. Ответственный HR подразделения сессии видит её и заявки своих подразделений.</td><td><span class="chip area">видимость</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-8"><td><a href="#AC-8">AC-8</a></td><td>Заявку на карьерный переход подаёт только сам сотрудник, только на этапе «Подача заявок». Он должен работать (в любом подразделении, в том числе вне сессии — так можно перейти в трек другого подразделения) и иметь действующую учётную запись. Выдвинуть сотрудника не может никто, в том числе руководитель и HR; руководитель не может заблокировать заявку.</td><td><span class="chip area">заявка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-10"><td><a href="#AC-10">AC-10</a></td><td>Заявка включает самооценку по каждой компетенции версии матрицы для цели: балл шкалы компетенции. Кандидат также указывает свой уровень образования (<a href="org-structure.html#AC-75">org-structure AC-75</a>). Перед отправкой заявки система сверяет его с требуемым для цели (AC-15). Если он ниже, кандидат видит предупреждение, что заявка будет отклонена по формальным признакам; отправить её он всё равно может.</td><td><span class="chip area">заявка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-15"><td><a href="#AC-15">AC-15</a></td><td>Требуемый уровень образования задаётся необязательно для каждого уровня в версии матрицы (<a href="career-framework.html#AC-40">career-framework AC-40</a>). Без требования проверка образования считается пройденной.</td><td><span class="chip area">формальная проверка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-16"><td><a href="#AC-16">AC-16</a></td><td>Если интервал не прошёл, HR при вводе даты видит предупреждение и может поставить признак «Игнорировать проверку интервала». Признак и его автор сохраняются.</td><td><span class="chip area">формальная проверка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-17"><td><a href="#AC-17">AC-17</a></td><td>По окончании этапа «Формальная проверка» система автоматически фиксирует результат проверки каждой заявки. Заявка без даты или с непройденным условием получает терминальный статус «Отклонена по формальным признакам» с перечнем непройденных условий. Остальные идут на круговую оценку.</td><td><span class="chip area">формальная проверка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-19"><td><a href="#AC-19">AC-19</a></td><td>Оценивающий ставит балл шкалы по каждой компетенции версии матрицы цели и может отметить «Не наблюдал» вместо балла. Свою оценку он меняет до окончания этапа «Круговая оценка». Чужие оценки и самооценку он не видит.</td><td><span class="chip area">круговая оценка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-20"><td><a href="#AC-20">AC-20</a></td><td>Авторов круговых оценок не видит никто, кроме глобального администратора в журнале, в том числе кандидат и члены комиссии. Комиссия видит по каждой компетенции средний балл, распределение баллов и число ответов «Не наблюдал», без имён.</td><td><span class="chip area">круговая оценка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-21"><td><a href="#AC-21">AC-21</a></td><td>По окончании этапа «Круговая оценка» система по средним баллам круговой оценки и правилам версии матрицы (формула, порог готовности, критические компетенции — <a href="career-framework.html#AC-39">career-framework AC-39…AC-41</a>) определяет, проходит ли кандидат обязательные требования.</td><td><span class="chip area">круговая оценка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-24"><td><a href="#AC-24">AC-24</a></td><td>У каждого подразделения одна комиссия. Её состав ведут ответственный HR подразделения и глобальный администратор. Члены — работающие сотрудники с действующей учётной записью из любых подразделений.</td><td><span class="chip area">комиссия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-25"><td><a href="#AC-25">AC-25</a></td><td>Ответственный HR и руководитель подразделения входят в комиссию всегда: они вычисляются по оргструктуре и закреплениям так же, как роли процесса (<a href="career-framework.html#AC-1">career-framework AC-1…AC-9</a>), и их нельзя исключить.</td><td><span class="chip area">комиссия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-29"><td><a href="#AC-29">AC-29</a></td><td>Председатель вносит итоговый балл по каждой компетенции. Система считает по ним рейтинг и готовность по правилам версии матрицы (<a href="career-framework.html#AC-39">career-framework AC-39…AC-41</a>) и ранжирует кандидатов комиссии в карьерной сессии по рейтингу.</td><td><span class="chip area">рассмотрение</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-30"><td><a href="#AC-30">AC-30</a></td><td>Рейтинг и ранжирование видят только члены комиссии этого подразделения в этой карьерной сессии и глобальный администратор. Кандидату они не показываются.</td><td><span class="chip area">рассмотрение</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-31"><td><a href="#AC-31">AC-31</a></td><td>Председатель фиксирует одно решение: «Соответствует критериям для перехода» или «Не соответствует критериям для перехода». Расчёт не выбирает решение автоматически. Решение не меняет оргструктуру.</td><td><span class="chip area">решение</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-32"><td><a href="#AC-32">AC-32</a></td><td>До окончания этапа «Рассмотрение комиссией» председатель может менять итоговые оценки и решение. По окончании этапа заявки без решения фиксируются как «Решение не принято» и попадают в список, который получает ответственный HR (AC-63).</td><td><span class="chip area">решение</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-36"><td><a href="#AC-36">AC-36</a></td><td>По окончании этапа «Обратная связь» система проверяет отметки по каждому подразделению. Список не отметивших она отправляет письмом ответственному HR, председателю комиссии и руководителю подразделения.</td><td><span class="chip area">обратная связь</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-37"><td><a href="#AC-37">AC-37</a></td><td>Сотрудник видит список своих заявок, активных и прошлых, карточками со статусом и решением. Карточка открывается детально (AC-68). Общий список заявок обычным пользователям недоступен: заявку видят её кандидат, члены комиссии подразделения цели, ответственный HR, руководитель подразделения цели (для списка оценивающих), HR, объявивший сессию, и глобальный администратор. Оценивающий видит только имя кандидата и компетенции для оценки.</td><td><span class="chip area">видимость</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-40"><td><a href="#AC-40">AC-40</a></td><td>Объявление и изменение карьерной сессии, подача, изменение и отзыв заявки, ввод дат и признака игнорирования, результаты проверок, правка состава комиссии и списка оценивающих, итоговые оценки и решения пишутся в журнал действий (<a href="audit.html#AC-3">audit AC-3</a>).</td><td><span class="chip area">журнал</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-42"><td><a href="#AC-42">AC-42</a></td><td>Демо-режим доступен только глобальному администратору. Это пошаговый сценарий полного цикла карьерной сессии, от объявления до проверки отметок обратной связи, за каждую роль: HR, кандидат, оценивающий, руководитель, председатель и члены комиссии.</td><td><span class="chip area">демо</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-43"><td><a href="#AC-43">AC-43</a></td><td>На каждом шаге демо-режима явно видно, какая роль его выполняет. Шаги показывают те же экраны процесса на синтетических данных.</td><td><span class="chip area">демо</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-44"><td><a href="#AC-44">AC-44</a></td><td>Демо-режим не требует ввода данных и ничего не создаёт и не меняет: ни данных, ни писем, ни записей журнала.</td><td><span class="chip area">демо</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-47"><td><a href="#AC-47">AC-47</a></td><td>Цель заявки — всегда карьерный уровень трека в опубликованной матрице, действующей в подразделении сессии (AC-6): своей или унаследованной от вышестоящего подразделения (<a href="career-framework.html#AC-161">career-framework AC-161</a>); трек матрицы может принадлежать этому подразделению или вышестоящему (<a href="career-framework.html#AC-36">career-framework AC-36</a>). Должность без трека целью быть не может.</td><td><span class="chip area">заявка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-48"><td><a href="#AC-48">AC-48</a></td><td>Заявку рассматривает комиссия того подразделения сессии, в котором действует матрица цели (AC-47), по этой матрице; ответственный HR и руководитель — этого подразделения (AC-25, AC-60, AC-61).</td><td><span class="chip area">рассмотрение</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-49"><td><a href="#AC-49">AC-49</a></td><td>Компетенция, по которой все оценивающие отметили «Не наблюдал», при проверке обязательных требований после круговой оценки (AC-21) считается непройденной: её доля в формуле равна 0, а артефакты по ней обязательны (AC-65).</td><td><span class="chip area">круговая оценка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-52"><td><a href="#AC-52">AC-52</a></td><td>HR и администратор — те же, кто может менять даты сессии, — могут откатить незавершённую карьерную сессию на один из пройденных этапов: выбирают этап и задают новые даты завершения этого и всех следующих этапов; выбранный этап снова становится текущим, дата начала сессии не меняется. Завершённую сессию откатить нельзя.</td><td><span class="chip area">откат</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-53"><td><a href="#AC-53">AC-53</a></td><td>При откате сохраняется всё введённое: заявки и самооценка, оценивающие и их оценки, даты формальной проверки и признак игнорирования интервала, артефакты, итоговые баллы и решения председателя, отметки обратной связи. Сбрасывается только то, что противоречит выбранному этапу: при откате на этапы 1–2 — результат формальной проверки (заявка снова «Подана»), при откате на этапы 1–5 — отметка «Решение не принято». Статусы заявок возвращаются к выбранному этапу; принятое решение снова в силе, когда комиссия вновь начнёт рассмотрение. Итоги этапов, которые пройдут заново (итог круговой оценки, обязательные артефакты), пересчитываются при их окончании; письма уходят заново.</td><td><span class="chip area">откат</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-54"><td><a href="#AC-54">AC-54</a></td><td>Перед откатом система показывает предупреждение со списком всего, что сбросится или пересчитается, с числом затронутых заявок, в том числе что кандидаты перестанут видеть опубликованные результаты до новой публикации. Откат выполняется только после подтверждения.</td><td><span class="chip area">откат</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-55"><td><a href="#AC-55">AC-55</a></td><td>У карьерной сессии шесть этапов строго по порядку: «Подача заявок» → «Формальная проверка» → «Круговая оценка» → «Сбор артефактов» → «Рассмотрение комиссией» → «Обратная связь». Окончание этапа — крайний срок, к которому заявки доходят до нужного статуса; действие доступно раньше, как только для него всё готово. Публикация результатов — мгновенное событие в момент окончания этапа «Рассмотрение комиссией», сразу за ним начинается «Обратная связь». После последнего этапа сессия завершена.</td><td><span class="chip area">этапы</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-56"><td><a href="#AC-56">AC-56</a></td><td>HR задаёт дату начала приёма заявок и дату завершения каждого этапа. Дата начала не раньше чем через 7 календарных дней после объявления сессии; при правке до старта — не раньше даты объявления плюс 7 дней. При вводе даты начала система подставляет даты завершения по длительностям по умолчанию (AC-71) в рабочих днях без суббот и воскресений: каждый этап начинается в рабочий день после завершения предыдущего и заканчивается в рабочий день. HR может их поменять. Каждая дата завершения не раньше предыдущей.</td><td><span class="chip area">этапы</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-57"><td><a href="#AC-57">AC-57</a></td><td>При объявлении сессии даты не раньше сегодняшнего дня; при правке сессии прошедшие даты допустимы, дату завершения текущего этапа можно менять, в том числе продлевая этап. Нельзя менять дату начала после старта и даты завершившихся этапов. Этап сменяется автоматически, когда наступает дата его завершения; изменения правил сессии после старта, кроме дат и отката (AC-52), недоступны.</td><td><span class="chip area">этапы</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-58"><td><a href="#AC-58">AC-58</a></td><td>Кандидат предлагает не меньше 5 оценивающих, с которыми работал последние полгода, из них не меньше 2 из других подразделений, чем подразделение его основного назначения. Оценивающие — работающие сотрудники, кроме самого кандидата. Для оценивающего без учётной записи указывается электронная почта для приглашения в систему; приглашение уходит только на адрес, подтверждённый руководителем подразделения цели или ответственным HR. Без 5 и 2 оценивающих заявка не отправляется.</td><td><span class="chip area">заявка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-59"><td><a href="#AC-59">AC-59</a></td><td>Пока идёт этап «Подача заявок», кандидат создаёт черновик заявки, правит его и может удалить; предупреждение об образовании (AC-10) он видит до отправки. Отправленную заявку менять нельзя. Отозвать её он может, пока по ней не принято решение: председатель не зафиксировал решение (AC-31) и заявка не отклонена по формальным признакам (AC-17). Взамен отозванной до окончания этапа можно отправить новую. Черновик, не отправленный до окончания этапа, в сессии не участвует и виден только кандидату. Отозванная заявка дальше не рассматривается и остаётся в его истории.</td><td><span class="chip area">заявка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-60"><td><a href="#AC-60">AC-60</a></td><td>Ответственный HR подразделения цели вносит и правит дату приёма на работу или последнего перехода и признак AC-16 с момента отправки заявки до окончания этапа «Формальная проверка». Результат проверки пересчитывается при каждом сохранении и виден HR; окончательно он фиксируется по AC-17.</td><td><span class="chip area">формальная проверка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-61"><td><a href="#AC-61">AC-61</a></td><td>С момента отправки заявки до окончания этапа «Формальная проверка» руководитель подразделения цели может дополнить или скорректировать список оценивающих кандидата и подтвердить почту оценивающих без учётной записи (AC-58). Правило AC-58 (не меньше 5, не меньше 2 из других подразделений) действует и после правки. По окончании этапа список окончательный.</td><td><span class="chip area">круговая оценка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-62"><td><a href="#AC-62">AC-62</a></td><td>По окончании этапа «Формальная проверка» система сначала отправляет приглашения зарегистрироваться в системе оценивающим без учётной записи на подтверждённые адреса, затем каждому оценивающему допущенных кандидатов — одно письмо со списком всех людей, которых ему нужно оценить. Оценки ставятся на этапе «Круговая оценка» (AC-19).</td><td><span class="chip area">круговая оценка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-63"><td><a href="#AC-63">AC-63</a></td><td>Система отправляет письма: сотрудникам подразделений сессии — об объявлении сессии при объявлении и отдельно о начале приёма заявок; оценивающим — по AC-62 и напоминание перед окончанием этапа «Круговая оценка»; кандидату — о результате формальной проверки и о публикации результатов; ответственному HR — о заявках, ожидающих формальной проверки, и о заявках без решения; членам комиссии — о заявках, поступивших на рассмотрение; о задержке заявок без председателя — по AC-94. Формат писем — <a href="user-management.html#AC-54">user-management AC-54</a>.</td><td><span class="chip area">письма</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-65"><td><a href="#AC-65">AC-65</a></td><td>Кандидату, который по AC-21 не проходит обязательные требования, на этапе «Сбор артефактов» артефакты обязательны по каждой компетенции, где средний балл ниже требуемого; рядом с ними кандидат видит пояснение, что без артефакта компетенция, скорее всего, не будет подтверждена. Без них к окончанию этапа заявка поступает к комиссии с отметкой «Обязательные артефакты не предоставлены». Остальным артефакты необязательны.</td><td><span class="chip area">артефакты</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-66"><td><a href="#AC-66">AC-66</a></td><td>Председатель обязателен, это любой член комиссии. Без председателя карьерная сессия с этим подразделением не стартует, а заявки этого подразделения не поступают на рассмотрение. Подразделение, у комиссии которого нет председателя, — действие на рабочем столе (<a href="desk.html#AC-223">desk AC-223</a>).</td><td><span class="chip area">комиссия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-68"><td><a href="#AC-68">AC-68</a></td><td>С публикации результатов кандидат видит по своей заявке: итоговые оценки и их соответствие требованиям матрицы, прохождение формальных признаков и решение.</td><td><span class="chip area">результаты</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-69"><td><a href="#AC-69">AC-69</a></td><td>Обратная связь даётся вне системы. С публикации результатов кандидат отмечает в системе, что получил её. Отметку можно поставить до завершения карьерной сессии.</td><td><span class="chip area">обратная связь</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-70"><td><a href="#AC-70">AC-70</a></td><td>При публикации результатов система отправляет письмо всем кандидатам сессии, кроме отклонённых по формальным признакам и отозвавших заявку, с просьбой отметить получение обратной связи по факту.</td><td><span class="chip area">обратная связь</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-71"><td><a href="#AC-71">AC-71</a></td><td>Глобальный администратор задаёт на экране «Настройки карьерных сессий» минимальный интервал между карьерными переходами (по умолчанию 12 месяцев) и длительности этапов по умолчанию в рабочих днях; по умолчанию: подача заявок 10, формальная проверка 2, круговая оценка 5, сбор артефактов 2, рассмотрение комиссией 5, обратная связь 5.</td><td><span class="chip area">настройки</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-72"><td><a href="#AC-72">AC-72</a></td><td>На каждом шаге демо-режима все данные экрана заполнены синтетическими значениями, включая даты этапов сессии; пустых полей, кроме намеренно пустых по сценарию, нет.</td><td><span class="chip area">демо</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-76"><td><a href="#AC-76">AC-76</a></td><td>На экране заявки кандидат видит предварительный рейтинг по своей самооценке: процент готовности, порог, выполнение требований к критическим компетенциям и число неоценённых компетенций (они считаются как 0). Рейтинг рассчитывает сервер тем же алгоритмом, что и для комиссии (<a href="career-framework.html#AC-39">career-framework AC-39…AC-41</a>), и обновляет его при изменении самооценки; интерфейс формулу не дублирует.</td><td><span class="chip area">заявка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-77"><td><a href="#AC-77">AC-77</a></td><td>На текущем треке кандидата (уровень определяется связью его должности с уровнем трека) целью можно выбрать только следующий уровень; на другом треке — любой уровень. Сервер отклоняет иную цель, интерфейс предлагает только допустимые уровни.</td><td><span class="chip area">заявка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-80"><td><a href="#AC-80">AC-80</a></td><td>Заявка поступает на рассмотрение комиссии: кандидата, прошедшего требования по AC-21, — по окончании этапа «Круговая оценка»; остальных — когда кандидат на этапе «Сбор артефактов» нажимает «Отправить на рассмотрение», но не позже окончания этапа. Если приложены не все обязательные артефакты, перед отправкой кандидат видит предупреждение со списком недостающих и может отправить заявку. Не отправленная к концу этапа заявка поступает как есть, при недостающих артефактах — с отметкой AC-65. После отправки артефакты изменить нельзя. Члены комиссии видят карточку поступившей заявки: самооценку, сводку круговой оценки (AC-20), артефакты, результат формальной проверки, требования версии матрицы и сводку прошлых заявок (AC-84). Председатель вносит итоговые оценки и решение (AC-29, AC-31) с момента поступления заявки.</td><td><span class="chip area">рассмотрение</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-81"><td><a href="#AC-81">AC-81</a></td><td>Проверка алгоритмическая. С даты приёма или последнего перехода до даты публикации результатов карьерной сессии (окончание этапа «Рассмотрение комиссией») должно пройти не меньше интервала из настройки администратора (AC-71, по умолчанию 12 месяцев). Уровень образования кандидата должен быть не ниже требуемого для цели (AC-15). Стаж не проверяется.</td><td><span class="chip area">формальная проверка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-82"><td><a href="#AC-82">AC-82</a></td><td>Глобальный администратор ведёт перечень сотрудников и должностей, которых нельзя указывать оценивающими и приглашать в систему. В поиске оценивающих у кандидата, руководителя и HR они показаны недоступными с пометкой «Указание этого сотрудника запрещено»; сервер отклоняет их добавление. Оценивающий, уже включённый в список до попадания в перечень, остаётся в нём с отметкой.</td><td><span class="chip area">заявка</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-83"><td><a href="#AC-83">AC-83</a></td><td>Тексты интерфейса, писем и рабочего стола говорят «карьерная сессия», «Заявка на карьерный переход», «последний переход»; пункт меню — «Карьерные переходы» (<a href="user-management.html#AC-31">user-management AC-31</a>); решения — «Соответствует критериям для перехода» / «Не соответствует критериям для перехода» (AC-31); настройка — «Минимальный интервал между карьерными переходами» (AC-71) на экране «Настройки карьерных сессий». Имена в коде и API (<code>promotion</code>, <code>wave</code>) другие и не меняются.</td><td><span class="chip area">тексты</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-84"><td><a href="#AC-84">AC-84</a></td><td>На форме рассмотрения у члена комиссии и председателя есть сводка прошлых заявок кандидата с принятым решением: карьерная сессия, цель, готовность, выполнение требований к критическим компетенциям, решение; отозванные и не допущенные заявки в неё не входят. По каждой компетенции показано изменение средней круговой оценки по сравнению с последней такой заявкой («без изменений», «новая», если компетенции в ней не было). Сводку и изменения рассчитывает сервер.</td><td><span class="chip area">рассмотрение</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-85"><td><a href="#AC-85">AC-85</a></td><td>Кандидат добавляет к компетенции до 10 артефактов: у каждого описание «Что сделано» и одна обязательная ссылка на документ во внешней системе; файлы не хранятся. Артефакты добавляются по желанию в черновике заявки и на этапе «Сбор артефактов» до отправки на рассмотрение (AC-80). Обязательный артефакт по AC-65 считается приложенным, если к компетенции есть хотя бы один.</td><td><span class="chip area">артефакты</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-94"><td><a href="#AC-94">AC-94</a></td><td>Когда заявки подразделения задерживаются, потому что у его комиссии нет действующего председателя (AC-66), закреплённый HR подразделения — с учётом наследования от вышестоящих подразделений — получает письмо: у комиссии подразделения «&lt;название&gt;» нет председателя, N заявок карьерной сессии &lt;даты&gt; не поступают на рассмотрение, нужно назначить председателя; со ссылкой на экран «Комиссии» этого подразделения. Если закреплённого HR нет ни у подразделения, ни у вышестоящих, письмо получают глобальные администраторы. Письмо уходит один раз за сессию на подразделение — при первой задержке его заявок.</td><td><span class="chip area">комиссия</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-95"><td><a href="#AC-95">AC-95</a></td><td>Ответственный HR подразделения и глобальный администратор могут менять состав комиссии подразделения, входящего в незавершённую карьерную сессию, на любом её этапе: добавлять и исключать членов (обязательных членов по AC-25 исключить по-прежнему нельзя), назначать или менять председателя — в том числе когда прежний председатель больше не может действовать (уволен, учётная запись заблокирована). У комиссии такого подразделения всегда есть председатель: снять его, не назначив другого, нельзя. Изменения действуют сразу: новые члены видят заявки подразделения, уже поступившие на рассмотрение, и получают о них письмо (AC-63); исключённые теряют доступ к рассмотрению; итоговые оценки и решения, уже внесённые председателем, сохраняются; после назначения председателя задержанные заявки подразделения поступают на рассмотрение (AC-66).</td><td><span class="chip area">комиссия</span></td><td><span class="chip prio-must">must</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="non-goals" class="callout warn">
+  <h2>Вне рамок</h2>
+  <ul class="non-goals">
+    <li>Решения о зарплате и кадровый резерв: решение одно — о соответствии критериям для перехода (AC-31).</li>
+    <li>Изменение оргструктуры по решению: перевод на должность выполняется отдельно.</li>
+    <li>Хранение файлов-артефактов: у артефакта только описание и ссылка на документ во внешней системе (AC-85).</li>
+    <li>Проверка стажа.</li>
+    <li>Независимые предварительные оценки членов комиссии: итоговые оценки вносит председатель (AC-29).</li>
+    <li>Отмена карьерной сессии и ручное переключение этапов вперёд; откат назад — AC-52…AC-54.</li>
+    <li>Гарантированная доставка писем (outbox): письма ставятся в очередь в памяти и теряются при перезапуске; источник правды — рабочий стол и экраны процесса.</li>
+  </ul>
+</section>
+      </main>
+      <footer>by ASD workflow | 2026-10-30</footer>
+    </div>
+  </div>
+</body>
+</html>

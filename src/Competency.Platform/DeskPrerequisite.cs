@@ -33,4 +33,9 @@ public enum DeskPrerequisite
     /// An account with the HR role is neither blocked nor still invited.
     /// </summary>
     HrAccount,
+
+    /// <summary>
+    /// The user may put at least one unit into a new promotion wave.
+    /// </summary>
+    WaveUnitAvailable,
 }

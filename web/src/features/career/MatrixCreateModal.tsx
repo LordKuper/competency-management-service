@@ -81,7 +81,7 @@ export function MatrixCreateModal({ onClose }: MatrixCreateModalProps) {
           rules={[{ required: true }]}
         >
           <Select
-            options={roles.data?.headedUnits.map((unit) => ({
+            options={roles.data?.matrixUnits.map((unit) => ({
               value: unit.id,
               label: unit.name,
             }))}

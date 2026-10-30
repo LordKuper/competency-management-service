@@ -12,7 +12,7 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
 {
     private static readonly Expression<Func<Employee, EmployeeStatus>> StatusProjection = employee => new EmployeeStatus(
         employee.Id, employee.FullName, employee.LastName, employee.FirstName, employee.MiddleName, employee.IsActive,
-        employee.OrgUnitId, employee.PositionId);
+        employee.OrgUnitId, employee.PositionId, employee.Education);
 
     private static readonly Expression<Func<OrgUnit, OrgUnitStatus>> UnitStatusProjection = unit => new OrgUnitStatus(
         unit.Id, unit.Name, unit.ParentId, unit.HeadEmployeeId, unit.IsActive);
@@ -26,6 +26,18 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
         .Select(StatusProjection)
         .FirstOrDefaultAsync(cancellationToken);
 
+    public async Task<bool> SetEducationAsync(Guid employeeId, EducationLevel? education, CancellationToken cancellationToken = default)
+    {
+        var employee = await context.Set<Employee>().FirstOrDefaultAsync(candidate => candidate.Id == employeeId, cancellationToken);
+        if (employee is null)
+        {
+            return false;
+        }
+
+        employee.Education = education;
+        return true;
+    }
+
     public async Task<IReadOnlyDictionary<Guid, EmployeeStatus>> FindManyAsync(
         IReadOnlyCollection<Guid> employeeIds,
         CancellationToken cancellationToken = default)
@@ -37,6 +49,17 @@ internal sealed class EmployeeDirectory(AppDbContext context) : IEmployeeDirecto
             .Where(employee => ids.Contains(employee.Id))
             .Select(StatusProjection)
             .ToDictionaryAsync(status => status.Id, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Guid>> FindWorkingInUnitsAsync(IReadOnlyCollection<Guid> unitIds, CancellationToken cancellationToken = default)
+    {
+        var ids = unitIds.ToArray();
+        return await context
+            .Set<Employee>()
+            .AsNoTracking()
+            .Where(employee => employee.IsActive && ids.Contains(employee.OrgUnitId))
+            .Select(employee => employee.Id)
+            .ToListAsync(cancellationToken);
     }
 
     public Task<OrgUnitStatus?> FindUnitAsync(Guid unitId, CancellationToken cancellationToken = default) => context

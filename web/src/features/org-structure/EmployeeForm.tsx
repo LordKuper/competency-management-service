@@ -7,17 +7,23 @@ import {
   Form,
   Input,
   Row,
+  Select,
   Space,
   Typography,
 } from "antd";
 import type { ReactNode } from "react";
 import { useFormSubmit } from "../../app/useFormSubmit";
 import { useIsAdmin } from "../auth/useCurrentUser";
+import { EDUCATION_LABELS, type EducationLevel } from "../career/matrixLabels";
 import { AssignmentFields } from "./AssignmentFields";
 import { LegalEntitySelect } from "./LegalEntitySelect";
 import { OrgUnitSelect } from "./OrgUnitSelect";
 import type { Employee, EmployeeInput } from "./orgStructureApi";
 import { PositionSelect } from "./PositionSelect";
+
+const EDUCATION_OPTIONS = (
+  Object.keys(EDUCATION_LABELS) as EducationLevel[]
+).map((value) => ({ value, label: EDUCATION_LABELS[value] }));
 
 type EmployeeFormValues = Partial<EmployeeInput>;
 
@@ -140,6 +146,11 @@ export function EmployeeForm({
       />
     </Form.Item>
   );
+  const education = (
+    <Form.Item name="education" label="Образование">
+      <Select allowClear options={EDUCATION_OPTIONS} placeholder="Не указано" />
+    </Form.Item>
+  );
   const legalEntities = (
     <Form.Item name="legalEntityIds" label="Юридические лица">
       <LegalEntitySelect known={knownEntities} />
@@ -190,6 +201,7 @@ export function EmployeeForm({
             </Row>
             {unit}
             {positionField}
+            {education}
             {legalEntities}
             {assignments}
             <Flex justify="space-between" align="center" gap="small" wrap>
@@ -215,6 +227,7 @@ export function EmployeeForm({
           {middleName}
           {unit}
           {positionField}
+          {education}
           {legalEntities}
           {assignments}
           {email !== undefined && (

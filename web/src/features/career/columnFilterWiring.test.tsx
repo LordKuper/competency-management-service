@@ -60,7 +60,7 @@ function serve() {
     }),
   );
   fakeApi.on("GET /api/v1/career/me", () =>
-    Response.json({ headedUnits: [], hrUnits: [] }),
+    Response.json({ headedUnits: [], matrixUnits: [], hrUnits: [] }),
   );
   fakeApi.on("GET /api/v1/org-units/tree", () =>
     Response.json([

@@ -89,7 +89,7 @@ function PlaceContent({ place }: { place: MyPlace }) {
   const hr = place.responsibleHr;
   return (
     <Flex vertical gap="middle">
-      <section>
+      <section data-tour="place-unit">
         <Typography.Title level={4}>Подразделение и должность</Typography.Title>
         <Row gutter={[token.margin, 0]}>
           <Col xs={24} lg={12}>
@@ -138,7 +138,7 @@ function PlaceContent({ place }: { place: MyPlace }) {
           unitName={unitName}
         />
       ) : (
-        <Flex vertical gap="middle">
+        <Flex vertical gap="middle" data-tour="place-tracks">
           <Typography.Title level={4} style={{ margin: 0 }}>
             Мои карьерные треки
           </Typography.Title>

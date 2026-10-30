@@ -46,20 +46,28 @@ beforeEach(() => {
 });
 
 describe("main menu (AC-19)", () => {
-  it("offers an administrator the desk and «Справочники» first, then one «Администрирование» entry for users, positions and the journal", async () => {
+  it("offers an administrator the desk, the career transitions with their management group, the org structure and the career model as entries of their own, then one «Администрирование» entry (AC-73)", async () => {
     const menu = await openAs(["GlobalAdmin"]);
 
     expect(topLevelItems(menu)).toEqual([
       "Рабочий стол",
-      "Справочники",
+      "Карьерные переходы",
+      "Управление карьерными переходами",
+      "Оргструктура",
+      "Карьерная модель",
       "Администрирование",
     ]);
   });
 
-  it("offers an ordinary user only the desk and «Справочники», with no «Администрирование»", async () => {
+  it("offers an ordinary user the desk, the career transitions, the org structure and the career model, with no management group and no «Администрирование» (AC-73)", async () => {
     const menu = await openAs([]);
 
-    expect(topLevelItems(menu)).toEqual(["Рабочий стол", "Справочники"]);
+    expect(topLevelItems(menu)).toEqual([
+      "Рабочий стол",
+      "Карьерные переходы",
+      "Оргструктура",
+      "Карьерная модель",
+    ]);
     expect(screen.queryByText("Администрирование")).not.toBeInTheDocument();
   });
 });
@@ -71,16 +79,22 @@ describe("navigation entries by role (AC-19)", () => {
 
     expect(labels(["GlobalAdmin"])).toEqual([
       "top:Рабочий стол",
-      "reference:Оргструктура",
-      "reference:Карьерная модель",
+      "top:Карьерные переходы",
+      "promotion:Карьерные сессии",
+      "promotion:Комиссии",
+      "promotion:Настройки карьерных сессий",
+      "promotion:Демонстрация",
+      "top:Оргструктура",
+      "top:Карьерная модель",
       "admin:Пользователи",
       "admin:Должности",
       "admin:Журнал",
     ]);
     expect(labels([])).toEqual([
       "top:Рабочий стол",
-      "reference:Оргструктура",
-      "reference:Карьерная модель",
+      "top:Карьерные переходы",
+      "top:Оргструктура",
+      "top:Карьерная модель",
     ]);
     expect(labels(["Hr"])).toContain("reference:Должности");
     expect(

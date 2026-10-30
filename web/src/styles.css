@@ -87,6 +87,12 @@ body {
   );
 }
 
+/* The help button is a ring around the question mark. */
+.header-help-button.ant-btn {
+  border: var(--ant-line-width) var(--ant-line-type)
+    color-mix(in srgb, var(--ant-color-text-light-solid) 60%, transparent);
+}
+
 /* Hierarchy of unit and employee cards: each nested list is indented under its
    parent and joined to it by a line that runs down the left of the siblings and
    turns into each card at its middle. Colors and gaps come from antd tokens. */

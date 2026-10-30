@@ -18,8 +18,9 @@ namespace Competency.CareerFramework;
 /// <param name="IsAdmin">Whether the account is a global administrator.</param>
 /// <param name="IsHr">Whether the account has the HR role, which keeps the entries of no unit; an assignment neither gives nor needs it.</param>
 /// <param name="HeadedUnitIds">The units the account heads.</param>
+/// <param name="MatrixUnitIds">The units whose matrices the account leads: the units it heads and the units below them without a head, down to a unit with one.</param>
 /// <param name="HrUnitIds">The units the account is the responsible HR of.</param>
-internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, bool IsHr, IReadOnlySet<Guid> HeadedUnitIds, IReadOnlySet<Guid> HrUnitIds)
+internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, bool IsHr, IReadOnlySet<Guid> HeadedUnitIds, IReadOnlySet<Guid> MatrixUnitIds, IReadOnlySet<Guid> HrUnitIds)
 {
     /// <summary>
     /// The entries of the matrix versions in work the user reads through the approval route rather than as a keeper or head of their unit.
@@ -54,12 +55,14 @@ internal sealed record CatalogViewer(Guid UserId, bool IsAdmin, bool IsHr, IRead
     public static async Task<CatalogViewer> LoadAsync(Guid userId, bool isAdmin, bool isHr, ProcessRoles roles, CancellationToken cancellationToken)
     {
         var headedUnits = await roles.HeadedUnitsAsync(userId, cancellationToken);
+        var matrixUnits = await roles.MatrixUnitsAsync(headedUnits, cancellationToken);
         var hrUnits = await roles.HrUnitsAsync(userId, cancellationToken);
         return new CatalogViewer(
             userId,
             isAdmin,
             isHr,
             headedUnits.Select(unit => unit.Id).ToHashSet(),
+            matrixUnits.Select(unit => unit.Id).ToHashSet(),
             hrUnits.Select(unit => unit.Id).ToHashSet());
     }
 

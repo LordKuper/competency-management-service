@@ -353,7 +353,7 @@ public sealed class PublicationCascadeTests(CareerHost fixture) : IClassFixture<
         content["sharedBlocks"] = new JsonArray(new JsonObject
         {
             ["blockId"] = blockId,
-            ["competencyTypes"] = new JsonArray(new JsonObject { ["competencyId"] = competencyId, ["type"] = "Profile" }),
+            ["competencyTypes"] = new JsonArray(new JsonObject { ["competencyId"] = competencyId, ["type"] = "Additional" }),
         });
         content["blockWeights"] = new JsonArray(
             new JsonObject { ["levelId"] = kit.Junior.Id, ["blockId"] = blockId, ["percent"] = 100 },

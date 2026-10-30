@@ -14,10 +14,11 @@ import { useProcessRoles } from "../career/careerApi";
 import { ActionGroup, DeskPanel, ReferenceGroup } from "./DeskGroups";
 import { DeskScenarios, type SessionRoles } from "./DeskScenarios";
 import { type Desk, useDesk } from "./deskApi";
+import { PromotionWavesBlock } from "./PromotionWavesBlock";
 import { useResendInvitation } from "./useResendInvitation";
 
 /**
- * The home page: what the system expects of the user, grouped by kind, and the scenarios of the user's roles. The
+ * The home page: what the system expects of the user, grouped by kind, the promotion waves open to everyone, and the scenarios of the user's roles. The
  * scenario cards come from the session roles and show without waiting for the expected actions.
  */
 export function DeskPage() {
@@ -43,7 +44,7 @@ export function DeskPage() {
       <Typography.Title level={1} style={{ margin: 0 }}>
         Рабочий стол
       </Typography.Title>
-      <Flex vertical gap={token.margin}>
+      <Flex vertical gap={token.margin} data-tour="desk-actions">
         <Flex align="center" gap={token.marginXS}>
           <Typography.Title level={2} style={{ margin: 0 }}>
             Ожидают вашего действия
@@ -59,7 +60,8 @@ export function DeskPage() {
           roles={roles}
         />
       </Flex>
-      <Flex vertical gap={token.margin}>
+      <PromotionWavesBlock />
+      <Flex vertical gap={token.margin} data-tour="desk-scenarios">
         <Typography.Title level={2} style={{ margin: 0 }}>
           Что можно сделать
         </Typography.Title>

@@ -127,3 +127,7 @@
   align-items: start;
   gap: var(--ant-margin-xs);
 }
+
+.matrix-education-select {
+  min-width: calc(var(--ant-control-height) * 6);
+}

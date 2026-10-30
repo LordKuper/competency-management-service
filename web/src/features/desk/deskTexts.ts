@@ -1,5 +1,6 @@
 import { HOME_PATH } from "../../app/featureContract";
 import { paths as orgPaths } from "../org-structure/paths";
+import { promotionPaths } from "../promotion/routes";
 import type {
   DeskGroup,
   DeskItem,
@@ -15,7 +16,7 @@ export interface DeskLink {
   path: string;
 }
 
-/** Addresses of the desk and its scenario screens; the review, rework and drafts addresses are sent in e-mails. */
+/** Addresses of the desk and its scenario screens, and of the promotion screens its items open; the review, rework and drafts addresses are sent in e-mails. */
 export const deskPaths = {
   desk: HOME_PATH,
   review: (versionId: string) => `/desk/review/${versionId}`,
@@ -41,6 +42,12 @@ export const deskPaths = {
   orgImport: "/desk/org-import",
   positions: "/positions",
   users: "/users",
+  promotionApplication: promotionPaths.application,
+  promotionRating: promotionPaths.rating,
+  promotionRaters: promotionPaths.raters,
+  promotionWave: promotionPaths.wave,
+  promotionReview: promotionPaths.review,
+  promotionCommissionsOf: promotionPaths.commissionsOf,
 } as const;
 
 /** Titles of the matrix builder steps, in order. */
@@ -105,9 +112,20 @@ export const GROUPS: Record<DeskGroup, GroupMeta> = {
     isDated: true,
     queue: DRAFTS_QUEUE,
   },
+  PromotionDecisions: {
+    title: "Принять решения по заявкам на карьерный переход",
+  },
+  PromotionFormalChecks: { title: "Внести даты формальной проверки" },
+  PromotionRatings: { title: "Оценить кандидатов на карьерный переход" },
+  PromotionRaters: { title: "Проверить списки оценивающих" },
+  PromotionArtifacts: {
+    title: "Добавить артефакты к заявке на карьерный переход",
+  },
+  PromotionFeedback: { title: "Отметить получение обратной связи" },
   MatricesToBuild: { title: "Построить или обновить матрицу" },
   PositionsToLink: { title: "Связать должности с треками" },
   UnitsToConnect: { title: "Подключить подразделения" },
+  CommissionsWithoutChair: { title: "Назначить председателей комиссий" },
   Invitations: { title: "Приглашения не приняты" },
   OrgCleanup: { title: "Навести порядок в оргструктуре", queue: ORG_QUEUE },
   UnitsWithoutMatrix: {
@@ -166,6 +184,9 @@ const TYPE_LABELS: Record<DeskObject["type"], string> = {
   Position: "Должность",
   Employee: "Сотрудник",
   UserAccount: "Учётная запись",
+  PromotionWave: "Карьерная сессия",
+  PromotionApplication: "Заявка",
+  PromotionCommission: "Комиссия",
 };
 
 const DRAFT_KINDS: Partial<Record<DeskObject["type"], string>> = {
@@ -198,6 +219,11 @@ export function formatDate(value: string): string {
   return DATE.format(new Date(value));
 }
 
+/** A date without a time as the API sends it, such as 2026-10-09, written as the desk writes dates. */
+export function formatDay(value: string): string {
+  return value.split("-").reverse().join(".");
+}
+
 /** "Фамилия И. О." from a full name written surname first; an e-mail or a single word stays as it is. */
 export function shortName(fullName: string): string {
   const [surname, ...given] = fullName.trim().split(/\s+/);
@@ -211,7 +237,13 @@ const quoted = (objects: ReadonlyArray<DeskObject>) =>
 /** The type tag shown before an object's name; matrices and units carry the type in the name, invitations need none. */
 export function typeLabelOf(item: DeskItem): string | null {
   const { type } = item.object;
-  if (type === "Matrix" || type === "OrgUnit" || type === "MatrixVersion")
+  if (
+    type === "Matrix" ||
+    type === "OrgUnit" ||
+    type === "PromotionCommission" ||
+    type === "MatrixVersion" ||
+    type === "PromotionWave"
+  )
     return null;
   if (type === "UserAccount" && item.group === "Invitations") return null;
   return TYPE_LABELS[type];
@@ -225,7 +257,10 @@ export function objectTitle(object: DeskObject): string {
         .filter(Boolean)
         .join(" — ");
     case "OrgUnit":
+    case "PromotionCommission":
       return `Подразделение «${object.name}»`;
+    case "PromotionWave":
+      return `Карьерная сессия с ${formatDay(object.name)}`;
     default:
       return object.name;
   }
@@ -243,6 +278,7 @@ export function objectContext(item: DeskItem): string | null {
     case "Matrix":
       return matrixContext(first);
     case "OrgUnit":
+    case "PromotionCommission":
       return object.context?.length ? object.context.join(" → ") : null;
     case "Track":
       return (
@@ -464,7 +500,47 @@ function reasonOf(reason: DeskReason, item: DeskItem): ReasonLine[] {
           text: `Приглашение не принято: ${linkState(reason, item.group !== "Invitations")}`,
         },
       ];
+    case "CommissionNotFormed":
+      return [{ text: "Комиссия не сформирована" }];
+    case "CommissionWithoutChair":
+      return [{ text: "В комиссии нет председателя" }];
+    case "PromotionArtifactsRequired":
+      return [
+        { text: `Добавьте обязательные артефакты к заявке${untilOf(details)}` },
+      ];
+    case "PromotionFeedbackPending":
+      return [
+        {
+          text: `Получите обратную связь по заявке и отметьте это${untilOf(details)}`,
+        },
+      ];
+    case "PromotionRatingRequested":
+      return [{ text: `Вас просят оценить кандидата${untilOf(details)}` }];
+    case "PromotionRatersReview":
+      return [
+        {
+          text: details.hasUnconfirmedEmails
+            ? `Проверьте список оценивающих кандидата и подтвердите почту тех, у кого нет учётной записи${untilOf(details)}`
+            : `Проверьте список оценивающих кандидата${untilOf(details)}`,
+        },
+      ];
+    case "PromotionFormalCheckPending":
+      return [
+        {
+          text: `Внесите даты приёма на работу или последнего перехода, заявок: ${details.applicationCount ?? 0}${untilOf(details)}`,
+        },
+      ];
+    case "PromotionDecisionsPending":
+      return [
+        {
+          text: `Внесите итоговые баллы и решение по заявке${untilOf(details)}`,
+        },
+      ];
   }
+}
+
+function untilOf(details: NonNullable<DeskReason["details"]>): string {
+  return details.until ? `, срок — до ${formatDay(details.until)}` : "";
 }
 
 const HEAD_ACCOUNT_STATES: Record<
@@ -649,6 +725,36 @@ export function itemAction(item: DeskItem, isAdmin: boolean): DeskLink | null {
     case "PositionOutsideList":
     case "AccountWithoutEmployee":
       return { title: "Привести в порядок", path: deskPaths.orgCleanup };
+    case "CommissionNotFormed":
+    case "CommissionWithoutChair":
+      return {
+        title: "Назначить председателя",
+        path: deskPaths.promotionCommissionsOf(object.id),
+      };
+    case "PromotionArtifactsRequired":
+      return {
+        title: "Добавить артефакты",
+        path: deskPaths.promotionApplication(object.id),
+      };
+    case "PromotionFeedbackPending":
+      return {
+        title: "Открыть заявку",
+        path: deskPaths.promotionApplication(object.id),
+      };
+    case "PromotionRatingRequested":
+      return { title: "Оценить", path: deskPaths.promotionRating(object.id) };
+    case "PromotionRatersReview":
+      return {
+        title: "Проверить список",
+        path: deskPaths.promotionRaters(object.id),
+      };
+    case "PromotionFormalCheckPending":
+      return { title: "Внести даты", path: deskPaths.promotionWave(object.id) };
+    case "PromotionDecisionsPending":
+      return {
+        title: "Принять решение",
+        path: deskPaths.promotionReview(object.id),
+      };
     default:
       return null;
   }

@@ -5,6 +5,8 @@ import { DeskCounter } from "./DeskCounter";
 import { DeskPage } from "./DeskPage";
 import { deskPaths } from "./deskTexts";
 
+export { tours } from "./tours";
+
 /** The desk is every user's first menu entry, with the count of their expected actions. */
 export const navItems: NavItem[] = [
   {

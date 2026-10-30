@@ -125,7 +125,7 @@ export function QueueLayout<T>({
   }
   return (
     <div className="queue-columns">
-      <Flex vertical gap="small">
+      <Flex vertical gap="small" data-tour="queue-list">
         <div ref={listRef} tabIndex={-1} />
         <Flex justify="space-between" align="center" gap="small" wrap>
           <Typography.Text strong>{`В очереди: ${total}`}</Typography.Text>
@@ -174,7 +174,7 @@ export function QueueLayout<T>({
           </Flex>
         )}
       </Flex>
-      <div>
+      <div data-tour="queue-record">
         <Button
           type="link"
           className="queue-back"

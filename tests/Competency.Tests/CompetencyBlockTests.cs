@@ -256,7 +256,7 @@ public sealed class CompetencyBlockTests(CareerHost fixture) : IClassFixture<Car
         content["sharedBlocks"] = new JsonArray(new JsonObject
         {
             ["blockId"] = blockId,
-            ["competencyTypes"] = new JsonArray([.. competencyIds.Select(id => (JsonNode)new JsonObject { ["competencyId"] = id, ["type"] = id == kit.Critical.Id ? "Critical" : "Profile" })]),
+            ["competencyTypes"] = new JsonArray([.. competencyIds.Select(id => (JsonNode)new JsonObject { ["competencyId"] = id, ["type"] = id == kit.Critical.Id ? "Critical" : "Additional" })]),
         });
         content["blockWeights"] = new JsonArray(
             new JsonObject { ["levelId"] = kit.Junior.Id, ["blockId"] = blockId, ["percent"] = 100 },

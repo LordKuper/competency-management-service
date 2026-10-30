@@ -4,6 +4,7 @@ import type { FilterDropdownProps } from "antd/es/table/interface";
 import { useMemo } from "react";
 import { orgUnitTreeQuery } from "../org-structure/orgStructureApi";
 import { buildUnitTree, type UnitNode } from "../org-structure/orgTree";
+import { useUnitTreeSearch } from "../org-structure/useUnitTreeSearch";
 import { FILTER_WIDTH_IN_CONTROLS } from "./CatalogSelect";
 
 interface TreeItem {
@@ -32,19 +33,17 @@ function UnitTreeFilter({
   const { token } = theme.useToken();
   const { data, isFetching } = useQuery(orgUnitTreeQuery);
   const treeData = useMemo(() => items(buildUnitTree(data ?? [])), [data]);
+  const search = useUnitTreeSearch(treeData);
   return (
     <div style={{ padding: token.paddingXS }}>
       <TreeSelect
-        showSearch
         allowClear
         treeDefaultExpandAll
-        treeNodeFilterProp="title"
         aria-label="Подразделение"
         loading={isFetching}
-        treeData={treeData}
+        {...search}
         value={selectedKeys[0] as string | undefined}
         style={{ width: token.controlHeight * FILTER_WIDTH_IN_CONTROLS }}
-        popupMatchSelectWidth={false}
         getPopupContainer={(node) => node.parentElement ?? document.body}
         onChange={(value: string | undefined) => {
           setSelectedKeys(value ? [value] : []);

@@ -179,21 +179,21 @@ internal static class UserEndpoints
 
         var user = new AppUser { EmployeeId = request.EmployeeId };
         user.SetEmail(request.Email.Trim());
-        var result = await users.CreateAsync(user);
-        if (result.Succeeded)
-        {
-            result = await users.SetRolesAsync(user, request.Roles, audit, context);
-        }
-
+        var (result, mailSent) = await NewAccount.InviteAsync(
+            user,
+            transaction,
+            () => users.SetRolesAsync(user, request.Roles, audit, context),
+            users,
+            context,
+            mail,
+            links.Value,
+            time,
+            cancellationToken);
         if (!result.Succeeded)
         {
             return Rejections.From(result);
         }
 
-        var token = user.IssueLink(time.GetUtcNow(), links.Value.InvitationLifetime);
-        await context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        var mailSent = await mail.SendInvitationAsync(user, token, isRepeat: false, cancellationToken);
         var created = await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken) with { MailSent = mailSent };
         return TypedResults.Created($"{Route}/{created.Id}", created);
     }

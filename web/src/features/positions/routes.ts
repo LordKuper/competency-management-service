@@ -2,6 +2,8 @@ import { AdminOrHrOnly } from "../../app/AdminOnly";
 import type { NavItem } from "../../app/featureContract";
 import { PositionsPage } from "./PositionsPage";
 
+export { tours } from "./tours";
+
 /** The position catalogue is kept by global administrators and HR; an account with both roles finds it under administration. */
 export const navItems: NavItem[] = [
   {

@@ -67,7 +67,7 @@ internal sealed class MatrixWorkflow(
         var turn = await route.TurnAsync(version, cancellationToken);
         var isTurnHolder = version.Status switch
         {
-            MatrixVersionStatus.Draft or MatrixVersionStatus.Returned => viewer.HeadedUnitIds.Contains(version.Matrix.OrgUnitId),
+            MatrixVersionStatus.Draft or MatrixVersionStatus.Returned => viewer.MatrixUnitIds.Contains(version.Matrix.OrgUnitId),
             MatrixVersionStatus.OnReview => turn?.ApproverId == viewer.UserId,
             _ => false,
         };
@@ -201,7 +201,7 @@ internal sealed class MatrixWorkflow(
         }
 
         var viewer = await ViewerAsync(cancellationToken);
-        if (!viewer.HeadedUnitIds.Contains(matrix.OrgUnitId))
+        if (!viewer.MatrixUnitIds.Contains(matrix.OrgUnitId))
         {
             return Rejection.Forbidden();
         }

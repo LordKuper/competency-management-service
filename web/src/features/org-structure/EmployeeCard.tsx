@@ -8,6 +8,7 @@ import {
 } from "@ant-design/icons";
 import { Dropdown } from "antd";
 import { memo, useState } from "react";
+import { EDUCATION_LABELS } from "../career/matrixLabels";
 import { Highlighted } from "./Highlighted";
 import {
   type Employee,
@@ -137,7 +138,8 @@ function assignmentText(
 
 /**
  * Compact card of an employee inside the unit hierarchy. It shows each assignment the employee has in the unit: the position and the
- * legal entities, a secondary assignment marked «Совмещение», and next to the first the e-mail of the employee's account, when there is one.
+ * legal entities, a secondary assignment marked «Совмещение», and next to the first the e-mail of the employee's account, when there is one;
+ * below them the level of education, when it is known.
  * Administrators and HR also see the mark of a person who no longer works and the menu of actions; the restricted projection
  * of an ordinary user has no status, and such a user only reads.
  * A unit may hold thousands of employees, so the card is plain markup styled from the theme variables: antd's own
@@ -176,6 +178,9 @@ export const EmployeeCard = memo(function EmployeeCard({
               />
             </div>
           ))}
+          {employee.education && (
+            <div>{EDUCATION_LABELS[employee.education]}</div>
+          )}
         </div>
       </div>
       {canEdit && <EmployeeActions employee={employee} onAction={onAction} />}

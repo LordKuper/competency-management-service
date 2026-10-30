@@ -14,7 +14,7 @@ interface StepRulerProps {
   onChange: (step: number) => void;
 }
 
-/** The steps of a wizard in one row: passed ones open on a click, the rest are only shown. */
+/** The steps of a wizard in one row: passed ones open on a click, the rest are only shown. The shown step is marked for the screen's help, which picks the hints of that step. */
 export function StepRuler({
   steps,
   current,
@@ -24,32 +24,34 @@ export function StepRuler({
   onChange,
 }: StepRulerProps) {
   return (
-    <Steps
-      size="small"
-      current={current - 1}
-      onChange={(index) => {
-        if (index + 1 !== current) onChange(index + 1);
-      }}
-      items={steps.map((name, index) => {
-        const number = index + 1;
-        const count = remarks?.get(number);
-        return {
-          title: count ? (
-            <>
-              {name} <Tag color="warning">{`⚠ Замечания: ${count}`}</Tag>
-            </>
-          ) : (
-            name
-          ),
-          disabled: number > reached || isLocked,
-          status:
-            number === current
-              ? "process"
-              : number <= reached
-                ? "finish"
-                : "wait",
-        };
-      })}
-    />
+    <div data-tour="wizard-steps" data-tour-step={current}>
+      <Steps
+        size="small"
+        current={current - 1}
+        onChange={(index) => {
+          if (index + 1 !== current) onChange(index + 1);
+        }}
+        items={steps.map((name, index) => {
+          const number = index + 1;
+          const count = remarks?.get(number);
+          return {
+            title: count ? (
+              <>
+                {name} <Tag color="warning">{`⚠ Замечания: ${count}`}</Tag>
+              </>
+            ) : (
+              name
+            ),
+            disabled: number > reached || isLocked,
+            status:
+              number === current
+                ? "process"
+                : number <= reached
+                  ? "finish"
+                  : "wait",
+          };
+        })}
+      />
+    </div>
   );
 }

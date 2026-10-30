@@ -239,7 +239,7 @@ export function MatrixPage() {
   }
   if (!matrix || !version) return <Skeleton active />;
 
-  const isHead = !!roles.data?.headedUnits.some(
+  const isHead = !!roles.data?.matrixUnits.some(
     (unit) => unit.id === matrix.orgUnitId,
   );
   const isNextVersionOffered =
@@ -247,6 +247,27 @@ export function MatrixPage() {
   const isBusy = transit.isPending || startVersion.isPending;
   const isHeldBack =
     hasUnsaved && hasHeldActions(version, isNextVersionOffered);
+
+  const descriptions = [
+    ...(matrix.positionId
+      ? []
+      : [
+          {
+            key: "direction",
+            label: "Область",
+            children: matrix.directionName,
+          },
+        ]),
+    ...(matrix.effectiveUnits.length > 0
+      ? [
+          {
+            key: "units",
+            label: "Действует в подразделениях",
+            children: matrix.effectiveUnits.map((unit) => unit.name).join(", "),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>
@@ -256,18 +277,8 @@ export function MatrixPage() {
           ? `Матрица должности «${matrix.positionName}» — ${matrix.orgUnitName}`
           : `Матрица «${matrix.trackName}» — ${matrix.orgUnitName}`}
       </Typography.Title>
-      {!matrix.positionId && (
-        <Descriptions
-          items={[
-            {
-              key: "direction",
-              label: "Область",
-              children: matrix.directionName,
-            },
-          ]}
-        />
-      )}
-      <Flex gap="middle" align="center" wrap>
+      {descriptions.length > 0 && <Descriptions items={descriptions} />}
+      <Flex gap="middle" align="center" wrap data-tour="matrix-version">
         <Select
           aria-label="Версия"
           value={version.id}
@@ -313,7 +324,9 @@ export function MatrixPage() {
           error={startVersion.error}
         />
       )}
-      <RouteSteps version={version} decisions={history?.decisions ?? []} />
+      <div data-tour="matrix-route">
+        <RouteSteps version={version} decisions={history?.decisions ?? []} />
+      </div>
       <MatrixEditor
         key={`${version.id}:${version.status}:${session}`}
         version={version}

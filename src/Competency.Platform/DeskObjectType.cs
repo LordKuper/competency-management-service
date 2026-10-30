@@ -67,4 +67,19 @@ public enum DeskObjectType
     /// A user account.
     /// </summary>
     UserAccount,
+
+    /// <summary>
+    /// A promotion wave.
+    /// </summary>
+    PromotionWave,
+
+    /// <summary>
+    /// An application for promotion.
+    /// </summary>
+    PromotionApplication,
+
+    /// <summary>
+    /// The promotion commission of a unit, named by the unit; its identifier is the unit's.
+    /// </summary>
+    PromotionCommission,
 }

@@ -20,6 +20,7 @@ import type { NavGroup, NavItem } from "./featureContract";
 import { navItemsFor } from "./features";
 import { LeaveGuardProvider } from "./leaveGuard";
 import { PRODUCT_NAME } from "./productName";
+import { ScreenTour } from "./ScreenTour";
 import { UserMenu } from "./UserMenu";
 
 const brandStyle: CSSProperties = { flex: "0 1 auto", minWidth: 0 };
@@ -34,6 +35,7 @@ const productNameStyle: CSSProperties = {
 const GROUP_LABELS: Record<NavGroup, string> = {
   reference: "Справочники",
   admin: "Администрирование",
+  promotion: "Управление карьерными переходами",
 };
 
 interface Submenu {
@@ -63,7 +65,7 @@ function menuItems(navItems: NavItem[]): MenuProps["items"] {
     let submenu = submenus.get(item.group);
     if (!submenu) {
       submenu = {
-        key: item.group,
+        key: `group:${item.group}`,
         label: GROUP_LABELS[item.group],
         children: [],
       };
@@ -104,9 +106,11 @@ function ShellFrame({ user }: { user: CurrentUser }) {
   const screens = Grid.useBreakpoint();
   const { pathname } = useLocation();
   const navItems = navItemsFor(user.roles);
-  const current = navItems.find(
-    (item) => pathname === item.path || pathname.startsWith(`${item.path}/`),
-  );
+  const current = navItems
+    .filter(
+      (item) => pathname === item.path || pathname.startsWith(`${item.path}/`),
+    )
+    .sort((first, second) => second.path.length - first.path.length)[0];
   return (
     <ConfigProvider componentSize={screens.lg ? "middle" : "large"}>
       <LeaveGuardProvider>
@@ -143,9 +147,14 @@ function ShellFrame({ user }: { user: CurrentUser }) {
                 style={{ flex: 1, minWidth: 0 }}
               />
             )}
-            <div style={{ marginInlineStart: "auto" }}>
+            <Flex
+              align="center"
+              gap={token.marginXS}
+              style={{ marginInlineStart: "auto" }}
+            >
+              <ScreenTour />
               <UserMenu user={user} />
-            </div>
+            </Flex>
           </Layout.Header>
           <Layout.Content
             style={{ padding: screens.lg ? token.paddingLG : token.padding }}

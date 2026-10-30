@@ -11,6 +11,8 @@ public static class DeskReads
     public const string DeskRoute = "/api/v1/desk";
     public const string CeilingQuery = "?limit=2000";
 
+    private const string CommissionType = "PromotionCommission";
+
     /// <summary>
     /// The desk answer: the counter, the non-empty groups with their first items and the prerequisites that hold.
     /// </summary>
@@ -32,10 +34,16 @@ public static class DeskReads
         (await client.GetAsync($"{DeskRoute}/count")).Expect(HttpStatusCode.OK).Json!["actionCount"]!.GetValue<int>();
 
     /// <summary>
-    /// The item about the object, or null when the desk has none.
+    /// The item about the object, or null when the desk has none. The commission of a unit is an object of its own, though it takes the unit's id.
     /// </summary>
     public static JsonNode? ItemOf(this IEnumerable<JsonNode> items, Guid objectId) =>
-        items.SingleOrDefault(item => item["object"]!["id"]!.GetValue<Guid>() == objectId);
+        items.SingleOrDefault(item => item["object"]!["id"]!.GetValue<Guid>() == objectId && item["object"]!["type"]!.GetValue<string>() != CommissionType);
+
+    /// <summary>
+    /// The item about the commission of the unit, or null when the desk has none.
+    /// </summary>
+    public static JsonNode? CommissionOf(this IEnumerable<JsonNode> items, Guid unitId) =>
+        items.SingleOrDefault(item => item["object"]!["id"]!.GetValue<Guid>() == unitId && item["object"]!["type"]!.GetValue<string>() == CommissionType);
 
     /// <summary>
     /// The item about the object, which the desk must have.

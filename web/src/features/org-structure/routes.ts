@@ -3,14 +3,15 @@ import type { NavItem } from "../../app/featureContract";
 import { OrgStructurePage } from "./OrgStructurePage";
 import { paths } from "./paths";
 
-/** Every signed-in user reads the structure, a reference next to the desk. */
+export { tours } from "./tours";
+
+/** Every signed-in user reads the structure, a top-level entry next to the desk and promotion. */
 export const navItems: NavItem[] = [
   {
     key: "org-structure",
     label: "Оргструктура",
     path: paths.tree,
     order: 10,
-    group: "reference",
   },
 ];
 

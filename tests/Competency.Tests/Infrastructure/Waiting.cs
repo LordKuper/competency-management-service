@@ -15,14 +15,16 @@ public static class Waiting
     /// </summary>
     /// <param name="condition">The condition to wait for.</param>
     /// <param name="what">What is waited for, for the message of the timeout.</param>
-    public static async Task UntilAsync(Func<Task<bool>> condition, string what)
+    /// <param name="timeout">How long to wait; a short default for a condition the host reaches at once.</param>
+    public static async Task UntilAsync(Func<Task<bool>> condition, string what, TimeSpan? timeout = null)
     {
+        var limit = timeout ?? Timeout;
         var waited = Stopwatch.StartNew();
         while (!await condition())
         {
-            if (waited.Elapsed > Timeout)
+            if (waited.Elapsed > limit)
             {
-                throw new TimeoutException($"Gave up after {Timeout.TotalSeconds} s waiting until {what}.");
+                throw new TimeoutException($"Gave up after {limit.TotalSeconds} s waiting until {what}.");
             }
 
             await Task.Delay(25, TestContext.Current.CancellationToken);

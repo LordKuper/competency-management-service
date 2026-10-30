@@ -43,6 +43,69 @@ internal sealed class ProcessRoles(AppDbContext context, IEmployeeDirectory empl
             : [];
 
     /// <summary>
+    /// The units whose matrices the account leads: the units it heads and the active units below them that have no head, down to a unit with a head of its own.
+    /// </summary>
+    /// <param name="headedUnits">The units the account heads, as <see cref="HeadedUnitsAsync"/> gives them.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The units in name order.</returns>
+    public async Task<IReadOnlyList<OrgUnitStatus>> MatrixUnitsAsync(IReadOnlyList<OrgUnitStatus> headedUnits, CancellationToken cancellationToken)
+    {
+        List<OrgUnitStatus> subtrees = [];
+        foreach (var unit in headedUnits)
+        {
+            subtrees.AddRange(await employees.FindSubtreeAsync(unit.Id, cancellationToken));
+        }
+
+        return [.. MatrixUnits(headedUnits, subtrees.ToLookup(unit => unit.ParentId)).OrderBy(unit => unit.Name, TextCollation.Comparer).ThenBy(unit => unit.Id)];
+    }
+
+    /// <summary>
+    /// The units whose matrices an account leads, over data read beforehand: the headed units and the active units below them that have no
+    /// head, down to a unit with a head of its own, whether or not that head can act.
+    /// </summary>
+    /// <param name="headedUnits">The units the account heads.</param>
+    /// <param name="childrenOf">The units by their parent, covering at least the subtrees of the headed units.</param>
+    /// <returns>The units in no particular order.</returns>
+    public static IEnumerable<OrgUnitStatus> MatrixUnits(IEnumerable<OrgUnitStatus> headedUnits, ILookup<Guid?, OrgUnitStatus> childrenOf)
+    {
+        var led = headedUnits.ToDictionary(unit => unit.Id);
+        var visited = led.Keys.ToHashSet();
+        var pending = new Stack<Guid>(visited);
+        while (pending.TryPop(out var parentId))
+        {
+            foreach (var child in childrenOf[parentId].Where(child => child.HeadEmployeeId is null && visited.Add(child.Id)))
+            {
+                pending.Push(child.Id);
+                if (child.IsActive)
+                {
+                    led.Add(child.Id, child);
+                }
+            }
+        }
+
+        return led.Values;
+    }
+
+    /// <summary>
+    /// The unit whose head leads the matrices of the first unit of a chain: that unit itself or else the nearest unit above it with a head
+    /// assigned, whether or not the head can act.
+    /// </summary>
+    /// <param name="ancestry">A unit and the units above it, nearest first.</param>
+    /// <returns>The unit, or <see langword="null"/> when no unit of the chain has a head.</returns>
+    public static OrgUnitStatus? MatrixHeadUnit(IReadOnlyList<OrgUnitStatus> ancestry) =>
+        ancestry.FirstOrDefault(unit => unit.HeadEmployeeId is not null);
+
+    /// <summary>
+    /// The account that leads the matrices of a unit: the head of the unit, or else of the nearest unit above it with a head assigned,
+    /// while that head can act.
+    /// </summary>
+    /// <param name="unitId">The matrix unit.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The account, or <see langword="null"/> when no such head can act.</returns>
+    public async Task<Guid?> MatrixHeadAccountAsync(Guid unitId, CancellationToken cancellationToken) =>
+        MatrixHeadUnit(await employees.FindAncestryAsync(unitId, cancellationToken)) is { } unit ? await HeadAccountAsync(unit, cancellationToken) : null;
+
+    /// <summary>
     /// The units the account is the responsible HR of: active units whose nearest assignment, on the unit itself or else on the nearest
     /// unit above it, names the account's employee.
     /// </summary>

@@ -23,6 +23,7 @@
     <ProjectReference Include="..\Competency.OrgStructure\Competency.OrgStructure.csproj" />
     <ProjectReference Include="..\Competency.UserManagement\Competency.UserManagement.csproj" />
     <ProjectReference Include="..\Competency.CareerFramework\Competency.CareerFramework.csproj" />
+    <ProjectReference Include="..\Competency.Promotion\Competency.Promotion.csproj" />
     <ProjectReference Include="..\Competency.Desk\Competency.Desk.csproj" />
   </ItemGroup>
 

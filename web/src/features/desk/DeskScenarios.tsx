@@ -1,6 +1,7 @@
 import { theme as antdTheme, Card, Empty, Typography } from "antd";
 import { Link } from "react-router";
 import { paths as orgPaths } from "../org-structure/paths";
+import { promotionPaths } from "../promotion/routes";
 import {
   type Desk,
   type DeskGroup,
@@ -131,6 +132,15 @@ const SCENARIOS: Scenario[] = [
     holds: (prerequisites) =>
       prerequisites.includes("ActiveUnit") &&
       prerequisites.includes("ActivePosition"),
+  },
+  {
+    key: "announce-wave",
+    title: "Объявить карьерную сессию",
+    description:
+      "Выберите подразделения и сроки этапов: сотрудники подразделений получат письмо об объявлении карьерной сессии.",
+    isFor: (roles) => roles.isHr || roles.isAdmin,
+    path: promotionPaths.newWave,
+    holds: (prerequisites) => prerequisites.includes("WaveUnitAvailable"),
   },
   {
     key: "link",

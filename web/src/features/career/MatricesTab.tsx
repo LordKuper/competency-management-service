@@ -197,7 +197,7 @@ export function MatricesTab() {
     ...matricesQuery(params),
     placeholderData: (previous) => previous,
   });
-  const canCreate = (roles.data?.headedUnits.length ?? 0) > 0;
+  const canCreate = (roles.data?.matrixUnits.length ?? 0) > 0;
 
   return (
     <Space orientation="vertical" size="large" style={{ display: "flex" }}>

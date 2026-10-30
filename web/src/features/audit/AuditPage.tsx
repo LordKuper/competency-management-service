@@ -101,6 +101,7 @@ export function AuditPage() {
         Журнал аудита
       </Typography.Title>
       <Form<FilterFormValues>
+        data-tour="audit-filters"
         layout="inline"
         style={{ rowGap: token.marginXS }}
         onFinish={(values) => {
@@ -147,6 +148,7 @@ export function AuditPage() {
         />
       )}
       <Table<AuditEventResponse>
+        data-tour="audit-table"
         rowKey="id"
         columns={COLUMNS}
         dataSource={data?.items}

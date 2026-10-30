@@ -61,6 +61,10 @@ function serve() {
         { id: "team", name: "Команда" },
         { id: "department", name: "Департамент" },
       ],
+      matrixUnits: [
+        { id: "team", name: "Команда" },
+        { id: "department", name: "Департамент" },
+      ],
       hrUnits: [],
     }),
   );

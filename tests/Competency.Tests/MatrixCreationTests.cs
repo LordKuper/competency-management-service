@@ -123,7 +123,7 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
 
         var stored = saved.Json!["content"]!;
         stored["requirements"]!.AsArray().Select(item => item!["requiredScore"]!.GetValue<int>()).Should().Equal(2, 1, 3, 2);
-        stored["competencies"]!.AsArray().Select(item => item!["type"]!.GetValue<string>()).Should().Equal("Critical", "Profile");
+        stored["competencies"]!.AsArray().Select(item => item!["type"]!.GetValue<string>()).Should().Equal("Critical", "Additional");
         stored["levels"]!.AsArray().Select(level => level!["minOverallPercent"]!.GetValue<decimal>()).Should().Equal(60m, 70m);
         stored["blockWeights"]!.AsArray().Should().HaveCount(2);
         saved.Json["entries"]!["levels"]!.AsArray().Select(level => level!["name"]!.GetValue<string>())
@@ -144,8 +144,8 @@ public sealed class MatrixCreationTests(CareerHost fixture) : IClassFixture<Care
             ("a competency in a block of its own", c => c["competencies"]![0]!["blockId"] = Guid.NewGuid(), "Собственных блоков у версии нет: компетенцию добавляют вне блоков или в составе общего блока"),
             ("a coefficient of a level outside the version", c => c["blockWeights"]![0]!["levelId"] = Guid.NewGuid(), "Коэффициент относится к уровню или блоку не из версии"),
             ("a requirement of a competency outside the version", c => c["requirements"]![0]!["competencyId"] = Guid.NewGuid(), "Требование относится к уровню или компетенции не из версии"),
-            ("a threshold above 100", c => c["levels"]![0]!["minOverallPercent"] = 100.5m, "Коэффициенты и пороги — от 0 до 100 %"),
-            ("a negative coefficient", c => c["blockWeights"]![0]!["percent"] = -1, "Коэффициенты и пороги — от 0 до 100 %"),
+            ("a threshold above 100", c => c["levels"]![0]!["minOverallPercent"] = 100.5m, "Коэффициенты, веса и пороги — от 0 до 100 %"),
+            ("a negative coefficient", c => c["blockWeights"]![0]!["percent"] = -1, "Коэффициенты, веса и пороги — от 0 до 100 %"),
             ("a competency type that names no type", c => c["competencies"]![0]!["type"] = 999, "Укажите допустимый тип компетенции"),
             ("a type that names no type inside a shared block", c => c["sharedBlocks"] = new JsonArray(new JsonObject
             {

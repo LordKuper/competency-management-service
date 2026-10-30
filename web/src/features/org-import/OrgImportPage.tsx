@@ -169,7 +169,7 @@ export function OrgImportPage() {
 
   return (
     <ScenarioPage title="Импорт оргструктуры">
-      <Flex vertical gap="middle">
+      <Flex vertical gap="middle" data-tour="import-flow">
         <StepRuler
           steps={STEPS}
           current={step}

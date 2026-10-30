@@ -3,6 +3,7 @@ using Competency.CareerFramework;
 using Competency.Desk;
 using Competency.OrgStructure;
 using Competency.Platform;
+using Competency.Promotion;
 using Competency.UserManagement;
 
 namespace Competency.Api;
@@ -18,5 +19,6 @@ internal static class ApplicationServices
         .AddOrgStructureModule()
         .AddUserManagementModule(configuration)
         .AddCareerFrameworkModule()
+        .AddPromotionModule()
         .AddDeskModule();
 }

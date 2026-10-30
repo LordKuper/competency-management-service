@@ -188,4 +188,44 @@ public enum DeskKind
     /// An invited account did not accept the invitation, and its link no longer works or soon will not; dated by the link's expiry.
     /// </summary>
     InvitationNotAccepted,
+
+    /// <summary>
+    /// The user's application must be given artifacts for competencies the raters' averages left unmet, and some are still missing.
+    /// </summary>
+    PromotionArtifactsRequired,
+
+    /// <summary>
+    /// The user's application has its result, and the user has not yet marked that the feedback was received.
+    /// </summary>
+    PromotionFeedbackPending,
+
+    /// <summary>
+    /// The user is asked to rate a candidate and has not answered yet.
+    /// </summary>
+    PromotionRatingRequested,
+
+    /// <summary>
+    /// The user heads the unit of the target of a filed application, and may correct the list of raters and confirm the addresses of those without an account until the formal check stage ends.
+    /// </summary>
+    PromotionRatersReview,
+
+    /// <summary>
+    /// Filed applications to the units the user is the responsible HR of wait for the date of the formal check.
+    /// </summary>
+    PromotionFormalCheckPending,
+
+    /// <summary>
+    /// An application before the commission the user chairs has no decision yet; it reaches the commission after the rating stage or once its artifacts are given.
+    /// </summary>
+    PromotionDecisionsPending,
+
+    /// <summary>
+    /// The commission of a unit the user answers for is not stored yet: neither a chair nor members are set.
+    /// </summary>
+    CommissionNotFormed,
+
+    /// <summary>
+    /// The commission of a unit the user answers for is stored but has no chair: none is set, or the one set can no longer act.
+    /// </summary>
+    CommissionWithoutChair,
 }

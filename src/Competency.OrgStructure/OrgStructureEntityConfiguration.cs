@@ -15,6 +15,7 @@ namespace Competency.OrgStructure;
 internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationContributor
 {
     private const string TrigramExtension = "pg_trgm";
+    private const int EducationMaxLength = 32;
     private const string FullNameSql = "last_name || ' ' || first_name || coalesce(' ' || middle_name, '')";
     private const string EmployeePlacementsSql = "SELECT id AS employee_id, org_unit_id, position_id, true AS is_main FROM employees UNION ALL SELECT employee_id, org_unit_id, position_id, false AS is_main FROM employee_assignments";
     private const string EmployeeAccountsSql = "SELECT u.employee_id, u.email, u.is_blocked, NOT u.is_blocked AND u.password_hash IS NOT NULL AND EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id AND r.name = 'Hr') AS can_be_hr FROM users u WHERE u.employee_id IS NOT NULL";
@@ -50,6 +51,7 @@ internal sealed class OrgStructureEntityConfiguration : IEntityConfigurationCont
             entity.Property(e => e.MiddleName).HasColumnName("middle_name").HasMaxLength(Employee.NameMaxLength);
             entity.Property(e => e.FullName).HasColumnName("full_name").HasComputedColumnSql(FullNameSql, stored: true).UseCollation(TextCollation.Russian);
             entity.Property(e => e.PositionId).HasColumnName("position_id");
+            entity.Property(e => e.Education).HasColumnName("education").HasConversion<string>().HasMaxLength(EducationMaxLength);
             entity.Property(e => e.IsActive).HasColumnName("is_active");
             entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
 

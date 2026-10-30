@@ -12,7 +12,7 @@ namespace Competency.CareerFramework;
 /// <summary>
 /// The API that tells the signed-in user where they stand in the company and on their career tracks, or what the position matrix of their
 /// position requires. It answers only about the user and shows only what every employee of their unit reads: the published matrix
-/// versions of that unit, never of other units or unpublished. The user's level comes from their position alone.
+/// versions in effect in that unit, its own or inherited from the units above, never unpublished. The user's level comes from their position alone.
 /// </summary>
 internal static class MyPlaceEndpoints
 {
@@ -52,10 +52,14 @@ internal static class MyPlaceEndpoints
         var assigneeOf = await roles.AssigneesAsync([.. ancestry.Select(unit => unit.Id)], cancellationToken);
         var hr = await OrgUnitHrEndpoints.DescribeAsync(ProcessRoles.NearestAssigned(ancestry, assigneeOf), assigneeOf, employees, users, cancellationToken);
 
-        var published = await context.Set<MatrixVersion>()
-            .AsNoTracking()
-            .Where(version => version.Status == MatrixVersionStatus.Published && version.Matrix.OrgUnitId == employee.OrgUnitId)
-            .ToListAsync(cancellationToken);
+        var ancestorIds = ancestry.Select(unit => unit.Id).ToArray();
+        var published = MatrixInheritance.InEffect(
+                ancestry,
+                await context.Set<MatrixVersion>()
+                    .AsNoTracking()
+                    .Where(version => version.Status == MatrixVersionStatus.Published && ancestorIds.Contains(version.Matrix.OrgUnitId))
+                    .ToListAsync(cancellationToken))
+            .ToList();
         var tracks = await TracksAsync(employee.PositionId, published, context, cancellationToken);
         var positionMatrix = published.FirstOrDefault(version => version.Matrix.PositionId == employee.PositionId) is { } positionVersion
             ? PositionMatrixOf(positionVersion, employee.PositionId)
@@ -79,7 +83,7 @@ internal static class MyPlaceEndpoints
 
     /// <summary>
     /// The active tracks with an active level the position is linked to, in name order. A position is linked to one level of a track at
-    /// most, so the level is the user's on that track. Requirements come from the published version of the user's unit for the track.
+    /// most, so the level is the user's on that track. Requirements come from the published version in effect in the user's unit for the track.
     /// </summary>
     private static async Task<List<MyPlaceTrackResponse>> TracksAsync(
         Guid positionId,
@@ -146,7 +150,7 @@ internal static class MyPlaceEndpoints
                 pair.Competency?.ScaleId is { } scaleId && scalePoints.TryGetValue(scaleId, out var points)
                     ? points.FirstOrDefault(point => point.Score == pair.Requirement.RequiredScore)?.Label
                     : null,
-                pair.Competency?.Type ?? CompetencyType.Profile))];
+                pair.Competency?.Type ?? CompetencyType.Additional))];
     }
 
     private static MyPlaceMatrixResponse MatrixOf(MatrixVersion version, Guid trackId) => new(

@@ -4,12 +4,11 @@ import type { CompetencyType } from "./catalogApi";
 /** What each type of a competency in a matrix is called. */
 export const COMPETENCY_TYPES: Record<CompetencyType, string> = {
   Critical: "Критическая",
-  Profile: "Профильная",
   Additional: "Дополнительная",
 };
 
 /** The type a competency has in a matrix until the author changes it. */
-export const DEFAULT_COMPETENCY_TYPE: CompetencyType = "Profile";
+export const DEFAULT_COMPETENCY_TYPE: CompetencyType = "Additional";
 
 const OPTIONS = (Object.keys(COMPETENCY_TYPES) as CompetencyType[]).map(
   (type) => ({ value: type, label: COMPETENCY_TYPES[type] }),

@@ -2,6 +2,8 @@ import { AdminOnly } from "../../app/AdminOnly";
 import type { NavItem } from "../../app/featureContract";
 import { UserListPage } from "./UserListPage";
 
+export { tours } from "./tours";
+
 /** Account management is for global administrators only. */
 export const navItems: NavItem[] = [
   {

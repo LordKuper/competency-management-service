@@ -12,5 +12,6 @@ internal enum MatrixChangeKind
     Block,
     Competency,
     BlockWeight,
+    CompetencyWeight,
     Requirement,
 }

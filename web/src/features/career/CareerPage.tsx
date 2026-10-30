@@ -46,7 +46,7 @@ export function CareerPage() {
   return (
     <>
       <Typography.Title level={1}>Карьерная модель</Typography.Title>
-      <Tabs items={tabs} />
+      <Tabs items={tabs} data-tour="career-tabs" />
     </>
   );
 }

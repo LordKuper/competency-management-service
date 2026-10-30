@@ -124,6 +124,14 @@ const ACTION_PATH: Record<DeskKind, string | null> = {
   NoTrackForPosition: null,
   AccountWithoutEmployee: deskPaths.orgCleanup,
   InvitationNotAccepted: null,
+  PromotionArtifactsRequired: `/promotion/applications/${OBJECT_ID}`,
+  PromotionFeedbackPending: `/promotion/applications/${OBJECT_ID}`,
+  PromotionRatingRequested: `/promotion/ratings/${OBJECT_ID}`,
+  PromotionRatersReview: `/promotion/raters/${OBJECT_ID}`,
+  PromotionFormalCheckPending: `/promotion/waves/${OBJECT_ID}`,
+  PromotionDecisionsPending: `/promotion/review/${OBJECT_ID}`,
+  CommissionNotFormed: `/promotion/commissions?unit=${OBJECT_ID}`,
+  CommissionWithoutChair: `/promotion/commissions?unit=${OBJECT_ID}`,
 };
 
 const REFERENCE_PATH: Partial<Record<DeskKind, string>> = {

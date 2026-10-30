@@ -543,6 +543,7 @@ function MatrixEditorBody({
   );
   const grid = (
     <Table<GridRow>
+      data-tour="matrix-grid"
       className="matrix-grid"
       rowKey="key"
       columns={columns}
@@ -646,6 +647,14 @@ function MatrixEditorBody({
             isSingleLevel={isPosition}
             levelIds={shownLevelIds}
             levelNames={levelNames}
+            competencyNames={
+              new Map(
+                [...competencies].map(([id, competency]) => [
+                  id,
+                  competency.name,
+                ]),
+              )
+            }
             changed={changed}
             isEditable={isEditable}
             isCompact={isCompact}

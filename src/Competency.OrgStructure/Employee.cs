@@ -41,6 +41,12 @@ internal sealed class Employee : EntityBase
     public Position Position { get; set; } = null!;
 
     /// <summary>
+    /// The level of the employee's education; null when it is not known.
+    /// </summary>
+    [Audited]
+    public EducationLevel? Education { get; set; }
+
+    /// <summary>
     /// Whether the employee works in the organization; visible to global administrators and HR.
     /// </summary>
     [Audited]

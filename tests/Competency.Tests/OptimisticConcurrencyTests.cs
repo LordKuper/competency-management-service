@@ -31,6 +31,21 @@ public sealed class OptimisticConcurrencyTests(TestEnvironment environment)
         ("DELETE", "/api/v1/employees/{id}", null),
         ("POST", "/api/v1/employees/{id}/move", new { fromOrgUnitId = UnknownId, positionId = UnknownId, toOrgUnitId = UnknownId }),
         ("DELETE", "/api/v1/org-units/{id}", null),
+        ("PUT", "/api/v1/promotion/settings", new { }),
+        ("PUT", "/api/v1/promotion/commissions/{id}", new { }),
+        ("PUT", "/api/v1/promotion/waves/{id}", new { }),
+        ("POST", "/api/v1/promotion/waves/{id}/rollback", new { }),
+        ("PUT", "/api/v1/promotion/applications/{id}", new { }),
+        ("DELETE", "/api/v1/promotion/applications/{id}", null),
+        ("POST", "/api/v1/promotion/applications/{id}/submit", null),
+        ("POST", "/api/v1/promotion/applications/{id}/withdraw", null),
+        ("PUT", "/api/v1/promotion/applications/{id}/formal", new { }),
+        ("PUT", "/api/v1/promotion/applications/{id}/raters", new { }),
+        ("PUT", "/api/v1/promotion/applications/{id}/raters/{id}/email", new { }),
+        ("PUT", "/api/v1/promotion/applications/{id}/artifacts", new { }),
+        ("POST", "/api/v1/promotion/applications/{id}/send-to-review", null),
+        ("POST", "/api/v1/promotion/applications/{id}/feedback", null),
+        ("PUT", "/api/v1/promotion/applications/{id}/review", new { }),
     ];
 
     private static readonly (string Method, string Path, object? Body)[] CatalogueEndpoints =

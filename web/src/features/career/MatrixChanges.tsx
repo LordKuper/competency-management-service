@@ -1,9 +1,9 @@
 import { Typography } from "antd";
 import { COMPETENCY_TYPES } from "./competencyType";
 import type { MatrixChange, MatrixContent, MatrixDiff } from "./matrixApi";
-import { typeOfCompetency } from "./matrixContent";
+import { competencyWeightsOf, typeOfCompetency } from "./matrixContent";
 import { OUTSIDE_LABEL } from "./matrixGroups";
-import { CHANGED_NOTE } from "./matrixLabels";
+import { CHANGED_NOTE, EDUCATION_LABELS } from "./matrixLabels";
 
 const NO_VALUE = "—";
 
@@ -82,6 +82,8 @@ export function describeChanges(
           : `компетенция ${competencyName(change.competencyId)}`;
       case "BlockWeight":
         return `коэффициент блока ${quoted(blockName(change.blockId))}, уровень ${levelName(change.levelId)}`;
+      case "CompetencyWeight":
+        return `вес компетенции ${competencyName(change.competencyId)}, уровень ${levelName(change.levelId)}`;
       case "Requirement":
         return `требуемый балл ${competencyName(change.competencyId)}, уровень ${levelName(change.levelId)}`;
     }
@@ -94,7 +96,7 @@ export function describeChanges(
         const level = content.levels.find((item) => item.levelId === levelId);
         return (
           level &&
-          `Минимальный общий порог: ${percent(level.minOverallPercent)}`
+          `Минимальный общий порог: ${percent(level.minOverallPercent)}${level.requiredEducation ? `; Требуемое образование: ${EDUCATION_LABELS[level.requiredEducation]}` : ""}`
         );
       }
       case "Block": {
@@ -122,6 +124,13 @@ export function describeChanges(
           (item) => item.levelId === levelId && item.blockId === blockId,
         );
         return weight && `Коэффициент, %: ${weight.percent}`;
+      }
+      case "CompetencyWeight": {
+        const weight = competencyWeightsOf(content).find(
+          (item) =>
+            item.levelId === levelId && item.competencyId === competencyId,
+        );
+        return weight && `Вес, %: ${weight.percent}`;
       }
       case "Requirement": {
         const requirement = content.requirements.find(

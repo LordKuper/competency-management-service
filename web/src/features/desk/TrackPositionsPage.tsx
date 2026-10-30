@@ -212,7 +212,7 @@ function TrackScreen({ trackId }: { trackId: string }) {
         )}
         {change.error != null && <PositionsError error={change.error} />}
         <div className="queue-columns">
-          <section>
+          <section data-tour="track-levels">
             <Typography.Title level={4}>Уровни трека</Typography.Title>
             <LevelsTable
               levels={levels}
@@ -380,7 +380,7 @@ function AvailablePositions({
     },
   ];
   return (
-    <section>
+    <section data-tour="track-available">
       <Typography.Title level={4}>Доступные должности</Typography.Title>
       <Flex vertical gap="small">
         <Input.Search

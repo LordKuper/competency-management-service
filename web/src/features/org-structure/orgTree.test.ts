@@ -30,6 +30,7 @@ function employeeIn(orgUnitId: string): Employee {
     lastName: "Иванов",
     firstName: "Иван",
     middleName: null,
+    education: null,
     fullName: "Иванов Иван",
     email: null,
     orgUnitId,

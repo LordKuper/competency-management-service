@@ -159,9 +159,7 @@ internal sealed class CareerMail(
 
     private async Task ReturnedAsync(MatrixVersion version, bool hasChanges, bool hasComment, CancellationToken cancellationToken)
     {
-        if (await employees.FindUnitAsync(version.Matrix.OrgUnitId, cancellationToken) is not { } unit
-            || await roles.HeadAccountAsync(unit, cancellationToken) is not { } headId
-            || headId == actor.UserId)
+        if (await roles.MatrixHeadAccountAsync(version.Matrix.OrgUnitId, cancellationToken) is not { } headId || headId == actor.UserId)
         {
             return;
         }
