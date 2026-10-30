@@ -176,3 +176,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — route assessment r8 unit tree search: standard, dispatch HEAD ef802c66
 - 2026-10-30 — assessment r8 unit tree search COMPLETED (fb29dcf8): общая числовая ширина popup (20 высот контрола) из useUnitTreeSearch для обоих выборов, виртуальный список включён и в OrgUnitSelect. Flagged choice принят: ширина ~640px, под общим CSS-пределом min(90ch, 90vw). Гейт завершения: dotnet build 0/0, миграции без изменений модели, web lint/build/check:api чисто; пути в рамках поручения.
 - 2026-10-30 — impl assessment approved (r9, 7ee2caa0): «Принимаю»; переход к impl-test
+- 2026-10-30 — route impl-test entry 3: standard, dispatch HEAD 11325a9b

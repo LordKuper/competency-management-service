@@ -165,3 +165,4 @@
 {"op":"close","id":"impl assessment r9","kind":"user-wait","parent":"impl#3","start":"2026-10-30T09:57:34.017Z","end":"2026-10-30T10:02:02.337Z","outcome":"done","attrs":{"gate":"impl assessment"}}
 {"op":"close","id":"impl#3","kind":"phase","parent":null,"start":"2026-10-30T08:40:06.593Z","end":"2026-10-30T10:02:02.460Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-test#3","kind":"phase","parent":null,"start":"2026-10-30T10:02:02.460Z","attrs":{}}
+{"op":"open","id":"impl-test entry 3","kind":"dispatch","parent":"impl-test#3","start":"2026-10-30T10:02:38.370Z","attrs":{}}
