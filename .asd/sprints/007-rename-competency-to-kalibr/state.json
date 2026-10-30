@@ -104,6 +104,13 @@
       "reason": "adaptive: no new or changed subsystem boundary; only module and path names change (Competency.* → Kalibr.*) in subsystems.md labels and <id>.md key paths",
       "evidence": "git diff -- docs/architecture/subsystems.md docs/architecture/*.md; sprint.md AC-10",
       "artifact_revision": "docs/architecture/subsystems.md"
+    },
+    {
+      "gate": "PR publication",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: DoD met (plan, reviews, full suite, retro, stubs); scope authority — user-accepted sprint.md AC-1..AC-19; gh authenticated with push access",
+      "evidence": "decisions-log.md 2026-10-30 pr open mode DoD; test-plan.md Suite run",
+      "artifact_revision": "PR #12"
     }
   ],
   "task_routing": {
@@ -150,9 +157,13 @@
     }
   },
   "created_at": "2026-10-30T15:31:30.399Z",
-  "updated_at": "2026-10-30T18:35:47.818Z",
+  "updated_at": "2026-10-30T18:36:37.697Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
-  "pr": null,
+  "pr": {
+    "number": 12,
+    "url": "https://github.com/LordKuper/competency-management-service/pull/12",
+    "state": "open"
+  },
   "archived_at": null
 }
