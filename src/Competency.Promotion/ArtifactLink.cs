@@ -1,3 +1,5 @@
+using Competency.Platform;
+
 namespace Competency.Promotion;
 
 /// <summary>
@@ -15,8 +17,5 @@ internal sealed record ArtifactLink(string Description, string Url)
     /// </summary>
     /// <param name="link">The link as given.</param>
     /// <returns><see langword="true"/> when it is an http or https address of a sensible length.</returns>
-    public static bool IsWebLink(string? link) =>
-        link is { Length: <= MaxUrlLength }
-        && Uri.TryCreate(link, UriKind.Absolute, out var uri)
-        && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    public static bool IsWebLink(string? link) => link is { Length: <= MaxUrlLength } && WebAddress.IsHttp(link);
 }

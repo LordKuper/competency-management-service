@@ -110,8 +110,5 @@ public sealed class MailSender(IOptions<SmtpOptions> options, ILogger<MailSender
         }
     }
 
-    private static bool IsWebAddress(string line) =>
-        !line.Any(char.IsWhiteSpace)
-        && Uri.TryCreate(line, UriKind.Absolute, out var address)
-        && (address.Scheme == Uri.UriSchemeHttp || address.Scheme == Uri.UriSchemeHttps);
+    private static bool IsWebAddress(string line) => !line.Any(char.IsWhiteSpace) && WebAddress.IsHttp(line);
 }
