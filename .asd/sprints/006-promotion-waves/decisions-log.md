@@ -191,3 +191,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — impl fix for wave-1/iter-02: findings resolved
 - 2026-10-30 — route impl-test entry 4: standard, dispatch HEAD e77cb1f8
 - 2026-10-30 — impl-test: impacted set green (полный набор по предохранителю: backend 952/952, web 850/850 после повторного прогона — одиночный тайм-аут `auth/linkScreens.test.tsx` вне дельты, отдельно 18/18; проверка оркестратора: новые тесты backend 33/33, exit 0), 5/0 tests; риск сброса IsSentToReview снят чтением кода (отправка без председателя — 409)
+- 2026-10-30 — sprint 006-promotion-waves iteration wave-1/iter-03: external review unavailable: negative cache — quota (Codex usage limit, retry after 2026-10-30T11:46:18Z; провайдер назвал сброс 15:21 MSK); availability skip recorded, 421 files carried as Unreviewed files (F-6)
+- 2026-10-30 — impl-review wave-1/iter-03 verdicts: combined CONCERNS (F1 medium: устаревший doc-комментарий `hasAdmitted` в DueStep.cs после F4; floor medium), external APPROVE (skipped).
+- 2026-10-30 — impl-review wave-1/iter-03: unresolved findings combined F1 → impl review-fix (review_fixes_pending=wave-1/iter-03)

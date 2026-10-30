@@ -23,6 +23,7 @@ Consumed by the retro phase (.asd/workflows/asd-phase-retro.md).
 | F-3 | impl-review | Кэш доступности внешнего ревью `.asd/project/external-cache.json` не исключён в `.gitignore` | — |
 | F-4 | impl-test | Тестировщик не записал операции прогона набора в журнал времени | test-plan.md Entry log |
 | F-5 | impl-review | Внешнее ревью снова недоступно: исчерпан лимит Codex, итерация засчитана пропуском | reviews/impl/wave-1/iter-02/external, F-2 |
+| F-6 | impl-review | Третья итерация подряд без внешнего ревью: отрицательный кэш quota | reviews/impl/wave-1/iter-03/external, F-2, F-5 |
 
 ## F-1 — Тестировщик ослабил тест бюджета SQL-команд стола, вместо того чтобы записать дефект кода
 
@@ -63,3 +64,11 @@ Consumed by the retro phase (.asd/workflows/asd-phase-retro.md).
 - **What happened**: в wave-1/iter-02 preflight был `local-ready`, но реальный запрос упал: первая попытка с кодом 1, повтор с отказом «You've hit your usage limit ... try again at 3:21 PM». Записан отрицательный кэш `quota` (сброс 15:21 MSK, ограничен часом), и итерация засчитана пропуском по доступности.
 - **Impact**: вторая итерация подряд без внешнего ревью. Все 419 файлов, включая 398 перенесённых из iter-01, переходят в `Unreviewed files` следующей итерации. Около 56 тыс. токенов обёртки потрачено без вердикта.
 - **Refs**: reviews/impl/wave-1/iter-02/external, F-2
+
+## F-6 — Третья итерация подряд без внешнего ревью
+
+- **Phase**: impl-review
+- **Surface**: provider tool — Codex CLI, `asd-external-review`; правило `.asd/rules/external-review.md` «Detection and negative cache» (кэш ограничен часом, а провайдер назвал сброс позже)
+- **What happened**: в wave-1/iter-03 preflight вернул `negative-cache` (quota до 11:46Z, провайдер назвал сброс в 15:21 MSK, то есть 12:21Z). Итерация засчитана пропуском по доступности без попытки вызова.
+- **Impact**: ни одна итерация impl-review этого спринта пока не прошла внешнее ревью. 421 файл переходит в `Unreviewed files`. Если внутренний ревьюер даст APPROVE, фаза закроется без внешнего вердикта.
+- **Refs**: reviews/impl/wave-1/iter-03/external, F-2, F-5

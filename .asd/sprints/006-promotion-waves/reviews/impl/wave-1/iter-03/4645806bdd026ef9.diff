@@ -1,0 +1,2707 @@
+diff --git a/.asd/sprints/006-promotion-waves/test-plan.entry-03.md b/.asd/sprints/006-promotion-waves/test-plan.entry-03.md
+new file mode 100644
+index 00000000..f94b5320
+--- /dev/null
++++ b/.asd/sprints/006-promotion-waves/test-plan.entry-03.md
+@@ -0,0 +1,36 @@
++---
++responsibility:
++  owns: сегмент повествования записи 3 test-plan.md (решения риск→проверка, удаления, добавленные тесты)
++  excludes: Entry log, Suite run, Defects, Manual verification (остаются в живом test-plan.md)
++  delegates_to: test-plan.md
++---
++
++# Test plan — sprint 006-promotion-waves, запись 3
++
++## Risk → check decisions
++
++Дельта затрагивает общий модуль `Competency.Platform` (`MailSender`, `WebAddress`, миграция, снимок модели), поэтому предохранитель общей инфраструктуры (`sprint-lifecycle.md` «Impacted test set») принуждает полный прогон: оба набора запущены целиком до и после записи. До записи: бэкенд 942 зелёных; веб 841 из 842, один тайм-аут 5 с в `auth/linkScreens.test.tsx` (файл вне дельты; отдельно 18 из 18 зелёных — шум нагрузки параллельных воркеров).
++
++| Change | Material risk | Chosen check | Decision | Reason |
++|---|---|---|---|---|
++| Правки review-fix F1–F10 (задержка заявок по подразделению, `CloseReviewAsync`, `Promotion:TickInterval`, `WebAddress.IsHttp`, токены `ScaleChoice` и `ApplicationView`) | поведение F1/F5/F6 и ветки этапов уже проверены; остаётся убедиться, что вынос `IsHttp` не сменил проверку ссылок | integration, component | keep (новых тестов нет) | строки тестировщика review-fix — в `test-plan.entry-02.md`: `PromotionHeldApplicationTests`, `PromotionWaveScheduleTests`, `PromotionArtifactTests` (ссылка `ftp://` отклонена), `MailHtmlTests` (`ftp://` не становится ссылкой), `PromotionWavesBlock.test.tsx`, `DemoPage.test.tsx`; полный прогон до записи зелёный. Замена литералов на токены в `ScaleChoice`/`ApplicationView` — оформление; тест на значение токена повторял бы тему antd |
++| Письмо «у комиссии нет председателя» (AC-94): один раз за сессию и подразделение, закреплённому HR с наследованием, иначе действующим глобальным администраторам, со ссылкой на «Комиссии» | письмо уходит на каждый тик; уходит не тому HR (вышестоящему вместо закреплённого за подразделением) или никому; при отсутствии HR администраторы его не получают | integration (API на реальной БД, планировщик с тиком 1 с, почтовый перехватчик) | add | `PromotionHeldApplicationTests.Ac94_*` (2): HR подразделения получает одно письмо с названием, числом заявок и ссылкой, после дальнейших проходов планировщика оно остаётся одним, HR выше по дереву письма не получает; без HR у подразделения и выше письмо получает администратор, снятый HR — нет. Текст письма не пинится дальше названия, числа и ссылки |
++| Письмо новым членам комиссии, когда заявки уже на рассмотрении (AC-95, AC-63); исключённый теряет рассмотрение сразу | новый член не видит заявок или не получает письма; уже сидевший член получает письмо повторно; исключённый сохраняет доступ | integration | add | `PromotionCommissionChangeTests.Ac95_Ac63_*`: до включения 404, после 200 и одно письмо, прежний председатель остаётся при одном письме, после исключения 404 |
++| Смена председателя посреди рассмотрения (AC-95): решение и итоговые оценки прежнего председателя сохраняются, дальше вносит новый | решение или итоговые оценки теряются; прежний председатель продолжает решать | integration | add | `PromotionCommissionChangeTests.Ac95_TheChairReplaced…`: решение и рейтинг по итоговым оценкам видны новому председателю и равны прежним, прежний получает 403 на PUT, новый меняет решение |
++| Права на изменение состава комиссии подразделения сессии (AC-95) | член комиссии, председатель, HR чужого подразделения или аккаунт без роли меняет состав | integration | add | `PromotionCommissionChangeTests.Ac95_TheCommissionOfAUnitInASession…`: член и председатель получают 403, HR соседнего подразделения и аккаунт без роли 404, состав не тронут, HR подразделения 200; матрица ролей `AuthorizationTests` берёт случайный id и различия «видит, но не вправе» не проверяет |
++| Комиссия без председателя после правки состава; задержанные заявки доходят до рассмотрения после назначения (AC-95, AC-66) | снятие или исключение председателя оставляет комиссию без председателя; задержанные заявки не освобождаются | integration | none (новый тест не нужен) | снятие председателя отклоняется в `PromotionWaveTests.Ac66_ATheChairOfAUnitInAnUnfinishedSession_CannotBeRemoved` (тот же `ChairProblemAsync` на любом этапе); замена заблокированного председателя и передача задержанных заявок с письмом — `PromotionHeldApplicationTests.Ac66_AnApplicationOfAUnitWithoutAChair…`; гонка правки комиссии с председателем — `PromotionRaceTests` |
++| Письмо членам, добавленным после конца сессии (`ProcessedStage < StageCount` в `MembersAddedAsync`) | письмо о заявках закрытой сессии | — | none | условие — одна строка запроса; у проверки «письма нет» нет детерминированной точки ожидания, а тест с ожиданием проходил бы вхолостую при запоздавшем письме (§17: гипотетический риск) |
++| Поиск подразделений в `TreeSelect` без фильтра rc (`useUnitTreeSearch`, `OrgUnitSelect`, `UnitTreeFilter`) | поиск не находит подразделение или различает регистр; предки совпадения или поддерево совпавшего родителя пропадают; путь к совпадению не раскрыт; выбор, неактивное подразделение и `confirm()` фильтра сломаны | unit (хук) + component | add | `useUnitTreeSearch.test.tsx` (5): дерево и раскрытые ключи при поиске, без текста и после очистки; `OrgUnitSelect.test.tsx` (3): раскрытие пути к найденному, выбор найденного, неактивное не выбирается при `isActiveRequired`; выбор и `confirm()` фильтра уже закреплены `UnitTreeFilter.test.tsx`. Скорость и виртуальный список в jsdom не проверяются |
++
++## Removed tests
++
++| Test | Reason | In change scope |
++|---|---|---|
++
++## Added tests
++
++| Test | Regression proof |
++|---|---|
++| tests/Competency.Tests/PromotionHeldApplicationTests.cs: Ac94_AUnitWithoutAChair_TellsItsHrOfTheHeldApplicationsOnceInTheSession_AndNoOtherHr, Ac94_AUnitWithoutAChairAndWithoutAnHrUpTheTree_TellsTheAdministrators | мутации (откат записью исходного файла), `dotnet Competency.Tests.dll -filter "/*/*/PromotionHeldApplicationTests/*" -filter "/*/*/PromotionCommissionChangeTests/*"` из `tests/Competency.Tests/bin/Debug/net10.0`: (а) `StageActions.MarkNoChairLettersAsync` без `!member.NoChairLetterSent` → exit 1, красны `…Ac94_AUnitWithoutAChair_TellsItsHrOfTheHeldApplicationsOnceInTheSession_AndNoOtherHr` и `…Ac94_AUnitWithoutAChairAndWithoutAnHrUpTheTree_TellsTheAdministrators` (4 из 7, заодно оба Ac66 класса: шаг не умолкает); (б) `PromotionMail.NoChairAsync` без запасных получателей (`: administrators` → `: []`) → exit 1, `…Ac94_AUnitWithoutAChairAndWithoutAnHrUpTheTree_TellsTheAdministrators` (1 из 7); обе откачены; runs: 2 |
++| tests/Competency.Tests/PromotionCommissionChangeTests.cs (3) | мутации тем же фильтром: (а) `PromotionMail.MembersAddedAsync` всегда выходит → exit 1, `…Ac95_Ac63_AMemberAddedMidReview_SeesTheApplicationsAndIsToldOfThem_AndOneTakenOffSeesThemNoMore`; (б) `CommissionEndpoints.SaveAsync` не удаляет исключённых (`RemoveRange(… => false)`) → exit 1, тот же тест; (в) `CommissionRights.Read` пропускает правку (`return Rejection.Forbidden()` → `break`) → exit 1, `…Ac95_TheCommissionOfAUnitInASessionIsChangedByItsHrAndTheAdministratorAlone`; (г) `ReviewEndpoints.PutAsync` пускает любого, кому заявка видна (`!roles.HasFlag(Chair)` → `roles == None`) → exit 1, `…Ac95_TheChairReplacedMidReview_LeavesTheOldChairsScoresAndDecisionStanding_AndTheEntriesToTheNewChair`; каждый раз 1 красный из 7, откачены; runs: 4 |
++| web/src/features/org-structure/useUnitTreeSearch.test.tsx (5), OrgUnitSelect.test.tsx (3) | мутации `useUnitTreeSearch.ts`, `vitest run` обоих файлов, откат записью исходного файла: (а) предки не сохраняются (`children.length > 0` → `< 0`) → exit 1, 5 красных, среди них `useUnitTreeSearch… keeps a match with the units above it…` и три в `OrgUnitSelect.test.tsx`; (б) `treeExpandedKeys: undefined` → exit 1, красен только хук-тест `…and opens that path…` (компонент и без нашего списка раскрывает путь сам, его вклад закрывает хук-тест); (в) без регистра (`node.title.includes(needle)`) → exit 1, 5 красных; (г) поддерево совпавшего родителя режется → exit 1, `useUnitTreeSearch… keeps everything below a unit whose title matches…`; runs: 4 |
+diff --git a/.asd/sprints/006-promotion-waves/test-plan.md b/.asd/sprints/006-promotion-waves/test-plan.md
+index 85973e0c..ae3ec1b4 100644
+--- a/.asd/sprints/006-promotion-waves/test-plan.md
++++ b/.asd/sprints/006-promotion-waves/test-plan.md
+@@ -14,21 +14,16 @@ responsibility:
+ | 1 | e16a232e2d9b7d86c6e2672a3a23a2b03c2ce926 | full change surface (Tasks 1–27, AC-1…AC-93; AC-9, AC-27, AC-39 сняты) |
+ | 2 | 0a2ae2834d7d84621b92648f16241b4d21ed30cb | delta since entry 1 (`3659c0ae`, фикс D-1: `CommissionReader.ReadAsync`) |
+ | 3 | 47b455e4e6716896e4f6652118fc13b1eaeb98aa | delta since entry 2 (`0a2ae283`): review-fix wave-1/iter-01 (F1–F10), Task 28 (AC-94, AC-95), правка веб-поиска подразделений (`useUnitTreeSearch`) |
++| 4 | 905a7fa938d04a53117fc8a465acb9892e0d5e27 | delta since entry 3 (`47b455e4`): review-fix wave-1/iter-02 (F1 `WasHeldAtClose` и миграция, F2 `PromotionScene`, F3 JSDoc `useUnitTreeSearch`, F4 условие передачи в `WaveStep`/`PromotionTick`) |
+ 
+ ## Risk → check decisions
+ 
+-Дельта затрагивает общий модуль `Competency.Platform` (`MailSender`, `WebAddress`, миграция, снимок модели), поэтому предохранитель общей инфраструктуры (`sprint-lifecycle.md` «Impacted test set») принуждает полный прогон: оба набора запущены целиком до и после записи. До записи: бэкенд 942 зелёных; веб 841 из 842, один тайм-аут 5 с в `auth/linkScreens.test.tsx` (файл вне дельты; отдельно 18 из 18 зелёных — шум нагрузки параллельных воркеров).
+-
+ | Change | Material risk | Chosen check | Decision | Reason |
+ |---|---|---|---|---|
+-| Правки review-fix F1–F10 (задержка заявок по подразделению, `CloseReviewAsync`, `Promotion:TickInterval`, `WebAddress.IsHttp`, токены `ScaleChoice` и `ApplicationView`) | поведение F1/F5/F6 и ветки этапов уже проверены; остаётся убедиться, что вынос `IsHttp` не сменил проверку ссылок | integration, component | keep (новых тестов нет) | строки тестировщика review-fix — в `test-plan.entry-02.md`: `PromotionHeldApplicationTests`, `PromotionWaveScheduleTests`, `PromotionArtifactTests` (ссылка `ftp://` отклонена), `MailHtmlTests` (`ftp://` не становится ссылкой), `PromotionWavesBlock.test.tsx`, `DemoPage.test.tsx`; полный прогон до записи зелёный. Замена литералов на токены в `ScaleChoice`/`ApplicationView` — оформление; тест на значение токена повторял бы тему antd |
+-| Письмо «у комиссии нет председателя» (AC-94): один раз за сессию и подразделение, закреплённому HR с наследованием, иначе действующим глобальным администраторам, со ссылкой на «Комиссии» | письмо уходит на каждый тик; уходит не тому HR (вышестоящему вместо закреплённого за подразделением) или никому; при отсутствии HR администраторы его не получают | integration (API на реальной БД, планировщик с тиком 1 с, почтовый перехватчик) | add | `PromotionHeldApplicationTests.Ac94_*` (2): HR подразделения получает одно письмо с названием, числом заявок и ссылкой, после дальнейших проходов планировщика оно остаётся одним, HR выше по дереву письма не получает; без HR у подразделения и выше письмо получает администратор, снятый HR — нет. Текст письма не пинится дальше названия, числа и ссылки |
+-| Письмо новым членам комиссии, когда заявки уже на рассмотрении (AC-95, AC-63); исключённый теряет рассмотрение сразу | новый член не видит заявок или не получает письма; уже сидевший член получает письмо повторно; исключённый сохраняет доступ | integration | add | `PromotionCommissionChangeTests.Ac95_Ac63_*`: до включения 404, после 200 и одно письмо, прежний председатель остаётся при одном письме, после исключения 404 |
+-| Смена председателя посреди рассмотрения (AC-95): решение и итоговые оценки прежнего председателя сохраняются, дальше вносит новый | решение или итоговые оценки теряются; прежний председатель продолжает решать | integration | add | `PromotionCommissionChangeTests.Ac95_TheChairReplaced…`: решение и рейтинг по итоговым оценкам видны новому председателю и равны прежним, прежний получает 403 на PUT, новый меняет решение |
+-| Права на изменение состава комиссии подразделения сессии (AC-95) | член комиссии, председатель, HR чужого подразделения или аккаунт без роли меняет состав | integration | add | `PromotionCommissionChangeTests.Ac95_TheCommissionOfAUnitInASession…`: член и председатель получают 403, HR соседнего подразделения и аккаунт без роли 404, состав не тронут, HR подразделения 200; матрица ролей `AuthorizationTests` берёт случайный id и различия «видит, но не вправе» не проверяет |
+-| Комиссия без председателя после правки состава; задержанные заявки доходят до рассмотрения после назначения (AC-95, AC-66) | снятие или исключение председателя оставляет комиссию без председателя; задержанные заявки не освобождаются | integration | none (новый тест не нужен) | снятие председателя отклоняется в `PromotionWaveTests.Ac66_ATheChairOfAUnitInAnUnfinishedSession_CannotBeRemoved` (тот же `ChairProblemAsync` на любом этапе); замена заблокированного председателя и передача задержанных заявок с письмом — `PromotionHeldApplicationTests.Ac66_AnApplicationOfAUnitWithoutAChair…`; гонка правки комиссии с председателем — `PromotionRaceTests` |
+-| Письмо членам, добавленным после конца сессии (`ProcessedStage < StageCount` в `MembersAddedAsync`) | письмо о заявках закрытой сессии | — | none | условие — одна строка запроса; у проверки «письма нет» нет детерминированной точки ожидания, а тест с ожиданием проходил бы вхолостую при запоздавшем письме (§17: гипотетический риск) |
+-| Поиск подразделений в `TreeSelect` без фильтра rc (`useUnitTreeSearch`, `OrgUnitSelect`, `UnitTreeFilter`) | поиск не находит подразделение или различает регистр; предки совпадения или поддерево совпавшего родителя пропадают; путь к совпадению не раскрыт; выбор, неактивное подразделение и `confirm()` фильтра сломаны | unit (хук) + component | add | `useUnitTreeSearch.test.tsx` (5): дерево и раскрытые ключи при поиске, без текста и после очистки; `OrgUnitSelect.test.tsx` (3): раскрытие пути к найденному, выбор найденного, неактивное не выбирается при `isActiveRequired`; выбор и `confirm()` фильтра уже закреплены `UnitTreeFilter.test.tsx`. Скорость и виртуальный список в jsdom не проверяются |
++| Метка `WasHeldAtClose` и откат (F1): заявка, задержанная без председателя до конца этапа 5, при откате возвращается в «Допущена», а не уходит к комиссии без проверки председателя | откат на этап 4 или 5 отдаёт задержанную заявку комиссии, у которой нет председателя (письмо, отметка артефактов и проверка пропущены); метка остаётся и портит следующий откат | unit (`ReturnToStage`) + integration (API на реальной БД, планировщик с тиком 1 с) | add | `PromotionScoringTests.Ac66_AnApplicationHeldForWantOfAChair…` (этапы 4 и 5: «Допущена», метка снята, письмо не ждёт); `PromotionHeldApplicationTests.Ac66_Ac53_AnApplicationHeldToTheEnd…` (этапы 4 и 5: подразделение без председателя после отката снова «Допущена» сразу, подразделение с председателем возвращается к комиссии как прежде, после назначения председателя заявка поступает с письмом). Строка «NoDecision → UnderReview» без метки уже закреплена `PromotionScoringTests.Ac53_ReturningAWaveToAStage…`; расширять её колонкой метки не стали |
++| `ReturnToStage` сбрасывает `IsSentToReview` у «Допущена»: что станет с задержанной заявкой, которую кандидат отправил на рассмотрение на этапе 4 | кандидат теряет отправку или отправленная заявка получает метку задержки | — | none | отправка без председателя отклонена до записи состояния: `StageActions.SendToReviewAsync` возвращает `false` раньше `IsSentToReview = true` (ответ 409), поэтому задержанная заявка флага не несёт, а заявка, отправленная при председателе, после этого «На рассмотрении» и метку не получает (метка ставится только у «Допущена»); противоречия с AC-54 нет, `D-N` не заводился |
++| Условие передачи в `WaveStep.HasAdmittedAsync` и `PromotionTick` — `MeetsAfterRating == true || ProcessedStage >= Artifacts` (F4) | задержанная заявка, которая должна двигаться, не подхватывается планировщиком, в том числе после отката по F1 | integration | add | ветка «прошёл» закреплена тем же тестом откатов на этап 4 (заявка проходит при `ProcessedStage = 3`); ветка «после артефактов» не закреплена ничем (мутация ниже оставляла `PromotionArtifactTests` зелёным — конец этапа 4 передаёт заявки сам, минуя `ReachHeld`): `PromotionHeldApplicationTests.Ac66_Ac65_AnApplicationOwingArtifactsHeldPastTheDeadline…` — заявка с недостающими артефактами в подразделении без председателя дожидается его и поступает с отметкой AC-65. Ускорение холостых проходов в jsdom/интеграции не измеряется |
++| `PromotionScene.PutInStageAsync` без неиспользуемого `waveId` (F2); перенос комментариев в JSDoc `useUnitTreeSearch.ts` (F3) | — | — | keep (изменена тестовая инфраструктура; оформление) | поведение не менялось; `useUnitTreeSearch.test.tsx` и `OrgUnitSelect.test.tsx` в полном прогоне зелёные; F5 затрагивает только `test-plan.md` |
+ 
+ ## Removed tests
+ 
+@@ -39,17 +34,17 @@ responsibility:
+ 
+ | Test | Regression proof |
+ |---|---|
+-| tests/Competency.Tests/PromotionHeldApplicationTests.cs: Ac94_AUnitWithoutAChair_TellsItsHrOfTheHeldApplicationsOnceInTheSession_AndNoOtherHr, Ac94_AUnitWithoutAChairAndWithoutAnHrUpTheTree_TellsTheAdministrators | мутации (откат записью исходного файла), `dotnet Competency.Tests.dll -filter "/*/*/PromotionHeldApplicationTests/*" -filter "/*/*/PromotionCommissionChangeTests/*"` из `tests/Competency.Tests/bin/Debug/net10.0`: (а) `StageActions.MarkNoChairLettersAsync` без `!member.NoChairLetterSent` → exit 1, красны `…Ac94_AUnitWithoutAChair_TellsItsHrOfTheHeldApplicationsOnceInTheSession_AndNoOtherHr` и `…Ac94_AUnitWithoutAChairAndWithoutAnHrUpTheTree_TellsTheAdministrators` (4 из 7, заодно оба Ac66 класса: шаг не умолкает); (б) `PromotionMail.NoChairAsync` без запасных получателей (`: administrators` → `: []`) → exit 1, `…Ac94_AUnitWithoutAChairAndWithoutAnHrUpTheTree_TellsTheAdministrators` (1 из 7); обе откачены; runs: 2 |
+-| tests/Competency.Tests/PromotionCommissionChangeTests.cs (3) | мутации тем же фильтром: (а) `PromotionMail.MembersAddedAsync` всегда выходит → exit 1, `…Ac95_Ac63_AMemberAddedMidReview_SeesTheApplicationsAndIsToldOfThem_AndOneTakenOffSeesThemNoMore`; (б) `CommissionEndpoints.SaveAsync` не удаляет исключённых (`RemoveRange(… => false)`) → exit 1, тот же тест; (в) `CommissionRights.Read` пропускает правку (`return Rejection.Forbidden()` → `break`) → exit 1, `…Ac95_TheCommissionOfAUnitInASessionIsChangedByItsHrAndTheAdministratorAlone`; (г) `ReviewEndpoints.PutAsync` пускает любого, кому заявка видна (`!roles.HasFlag(Chair)` → `roles == None`) → exit 1, `…Ac95_TheChairReplacedMidReview_LeavesTheOldChairsScoresAndDecisionStanding_AndTheEntriesToTheNewChair`; каждый раз 1 красный из 7, откачены; runs: 4 |
+-| web/src/features/org-structure/useUnitTreeSearch.test.tsx (5), OrgUnitSelect.test.tsx (3) | мутации `useUnitTreeSearch.ts`, `vitest run` обоих файлов, откат записью исходного файла: (а) предки не сохраняются (`children.length > 0` → `< 0`) → exit 1, 5 красных, среди них `useUnitTreeSearch… keeps a match with the units above it…` и три в `OrgUnitSelect.test.tsx`; (б) `treeExpandedKeys: undefined` → exit 1, красен только хук-тест `…and opens that path…` (компонент и без нашего списка раскрывает путь сам, его вклад закрывает хук-тест); (в) без регистра (`node.title.includes(needle)`) → exit 1, 5 красных; (г) поддерево совпавшего родителя режется → exit 1, `useUnitTreeSearch… keeps everything below a unit whose title matches…`; runs: 4 |
++| tests/Competency.Tests/PromotionScoringTests.cs: Ac66_AnApplicationHeldForWantOfAChairWhenTheCommissionStageEnded_GoesBackToAdmitted_AndIsMarkedNoMore (2) | мутации (откат `git checkout -- <файл>` в той же команде), `dotnet Competency.Tests.dll -method "*Ac66_Ac53_AnApplicationHeldToTheEnd*" -method "*Ac66_AnApplicationHeldForWantOfAChairWhenTheCommissionStageEnded*"` из `tests/Competency.Tests/bin/Debug/net10.0` после `dotnet build`: (а) из `PromotionApplication.ReturnToStage` убрано `|| WasHeldAtClose` → exit 1, 4 из 4 красных, среди них `…GoesBackToAdmitted_AndIsMarkedNoMore(stage: 4)` и `(stage: 5)`; (в) `WasHeldAtClose = false;` убрано → exit 1, красны оба `…IsMarkedNoMore(stage: 4)` и `(stage: 5)` (фильтр только на юнит-тест); обе откачены; runs: 2 |
++| tests/Competency.Tests/PromotionHeldApplicationTests.cs: Ac66_Ac53_AnApplicationHeldToTheEndOfTheCommissionStage_AfterARollbackWaitsForTheChairAgain_AndReachesTheCommissionWithALetter (2) | мутации тем же приёмом: (а) та же, что выше (один прогон на 4 теста) → exit 1, красны `…AndReachesTheCommissionWithALetter(stage: 4)` и `(stage: 5)`; (б) в `WaveStep.HasAdmittedAsync` условие сужено до `processedStage >= PromotionStage.Artifacts` (без `MeetsAfterRating == true`) → exit 1, красен `…AndReachesTheCommissionWithALetter(stage: 4)` (заявка при `ProcessedStage = 3` не подхвачена, ожидание 60 с истекает); обе откачены; runs: 1 ((а) — тот же прогон, что в строке выше) |
++| tests/Competency.Tests/PromotionHeldApplicationTests.cs: Ac66_Ac65_AnApplicationOwingArtifactsHeldPastTheDeadline_ReachesTheNewChairMarkedAsMissingThem | мутация (г): условие `HasAdmittedAsync` сужено до `application.MeetsAfterRating == true` (без `processedStage >= Artifacts`) → `-method "*Ac66_Ac65_*"`, exit 1, красен `Ac66_Ac65_AnApplicationOwingArtifactsHeldPastTheDeadline_ReachesTheNewChairMarkedAsMissingThem`; откачена; та же мутация с `-filter "/*/*/PromotionArtifactTests/*"` → exit 0 (существующий тест её не ловил, ради этого тест и добавлен); runs: 1 |
+ 
+ ## Suite run
+ 
+ - Command: `dotnet test --solution Competency.slnx` (бэкенд один) и затем `npm --prefix web test`; сборка и lint: `dotnet build Competency.slnx --tl:off`, `npm --prefix web run lint`
+ - Scope: full — предохранитель общей инфраструктуры сработал (дельта в `Competency.Platform`: `MailSender`, `WebAddress`, миграция, снимок модели); набор не сужался
+-- Result: pass — бэкенд 947 прогонов, 0 упало, 0 пропущено, exit 0; веб 83 файла и 850 тестов зелёных, exit 0. До записи: бэкенд 942 зелёных; веб 841 из 842, тайм-аут 5 с в `auth/linkScreens.test.tsx` вне дельты (отдельно 18 из 18)
++- Result: pass — бэкенд 952 прогона, 0 упало, 0 пропущено, exit 0; веб 83 файла и 850 тестов зелёных, exit 0. До записи: бэкенд 947 зелёных. Веб с первого запуска: 849 из 850, тайм-аут 5 с в `auth/linkScreens.test.tsx` (файл вне дельты; отдельно 18 из 18, полный повтор 850 из 850) — шум нагрузки параллельных воркеров, как в записи 3
+ - Lint / build: pass — `dotnet build` 0 предупреждений и 0 ошибок; `biome ci` и `tsc` чисто
+-- HEAD: измеренное дерево — коммит тестов этой записи; последующие коммиты записи правят только `.asd/sprints/**`
++- HEAD: dc568cde0ead622df62db640ed12becffa68843b — измеренное дерево, коммит тестов этой записи; последующие коммиты записи правят только `.asd/sprints/**`
+ 
+ ## Defects
+ 
+diff --git a/.claude/agent-memory/asd-advisor/feedback_escalation-option-consult.md b/.claude/agent-memory/asd-advisor/feedback_escalation-option-consult.md
+index 0716fb88..2957f477 100644
+--- a/.claude/agent-memory/asd-advisor/feedback_escalation-option-consult.md
++++ b/.claude/agent-memory/asd-advisor/feedback_escalation-option-consult.md
+@@ -7,6 +7,6 @@ metadata:
+ 
+ For an escalation consult on a reviewer question with lettered options, answer the orchestrator's "Weigh" list in order: (1) which option the *current* AC text requires (quote the AC, check whether a retired AC motivated the current code), (2) whether an earlier decisions-log acceptance of the behaviour still stands after later AC amendments (date-order the log lines), (3) per-option size and risk split as code / migration-or-none / tests; close with one option id and a one-line reason. Name which options are HARD-gate matters (new scope, waiver) per `checkpoints.md` "Gate policy".
+ 
+-**Why:** The 2026-10-30 F1 consult (sprint 006, chairless commission hold) was dispatched exactly in this shape; the decisive facts were in log ordering (acceptance under retired AC-26 at decisions-log:50/62 predated AC-66 at :75) and in a state check (no migration needed because `Status`+`ProcessedStage` already encode the held state).
++**Why:** The decisive facts usually sit in the date order of the decisions-log entries (an earlier acceptance under a since-retired AC predating the AC that now applies) and in a state check showing no migration is needed because existing status fields already encode the state in question.
+ 
+ **How to apply:** Before costing an option, grep the consumers of the status/flag it touches (e.g. `UnfinishedStatuses`, letter queries) — a stranded status is the hidden cost. Related: [[review-consult-format]].
+diff --git a/.claude/agent-memory/asd-tester/project_promotion-tests-runtime.md b/.claude/agent-memory/asd-tester/project_promotion-tests-runtime.md
+index 0e2d1508..cefc34da 100644
+--- a/.claude/agent-memory/asd-tester/project_promotion-tests-runtime.md
++++ b/.claude/agent-memory/asd-tester/project_promotion-tests-runtime.md
+@@ -14,4 +14,6 @@ Promotion stages: `PromotionScene.PutInStageAsync(n)` rewrites `promotion_waves.
+ 
+ Race tests: hold the lock with `RowLock.HoldAdvisoryAsync(host, RowLock.PromotionKey)` (announcement is exclusive, commission and application changes shared) or `RowLock.HoldWaveAsync`, queue requests with `RowLock.StartWaitingAsync`, release. Do it on a host whose scheduler has no due wave, else its shared-lock waiter is counted.
+ 
++Rollback in a test: a two-unit session (`withSibling`) is rolled back by the global admin client (`scene.Org.Admin`), the root HR gets 403; GET the wave for its ETag, keep `endsOn` before the stage and set today+3 days steps from it on (the rollback to the current stage is a 400, so stage 6 cannot be rolled back to).
++
+ Server answers: a user with no role on an application or wave gets 404 (not 403) from rating, review and ranking; marking the same feedback twice returns timestamps that differ in sub-millisecond precision.
+diff --git a/src/Competency.Platform/Migrations/20261030105259_PromotionHeldAtCloseMarker.Designer.cs b/src/Competency.Platform/Migrations/20261030105259_PromotionHeldAtCloseMarker.Designer.cs
+new file mode 100644
+index 00000000..31021fb9
+--- /dev/null
++++ b/src/Competency.Platform/Migrations/20261030105259_PromotionHeldAtCloseMarker.Designer.cs
+@@ -0,0 +1,2263 @@
++﻿// <auto-generated />
++using System;
++using Competency.Platform;
++using Microsoft.EntityFrameworkCore;
++using Microsoft.EntityFrameworkCore.Infrastructure;
++using Microsoft.EntityFrameworkCore.Migrations;
++using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
++using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
++using NpgsqlTypes;
++
++#nullable disable
++
++namespace Competency.Platform.Migrations
++{
++    [DbContext(typeof(AppDbContext))]
++    [Migration("20261030105259_PromotionHeldAtCloseMarker")]
++    partial class PromotionHeldAtCloseMarker
++    {
++        /// <inheritdoc />
++        protected override void BuildTargetModel(ModelBuilder modelBuilder)
++        {
++#pragma warning disable 612, 618
++            modelBuilder
++                .HasAnnotation("ProductVersion", "10.0.12")
++                .HasAnnotation("Relational:MaxIdentifierLength", 63);
++
++            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
++            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
++
++            modelBuilder.Entity("Competency.Audit.AuditEvent", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<string>("Action")
++                        .IsRequired()
++                        .HasMaxLength(128)
++                        .HasColumnType("character varying(128)")
++                        .HasColumnName("action");
++
++                    b.Property<string>("Actor")
++                        .IsRequired()
++                        .HasMaxLength(256)
++                        .HasColumnType("character varying(256)")
++                        .HasColumnName("actor");
++
++                    b.Property<string>("EntityId")
++                        .HasMaxLength(128)
++                        .HasColumnType("character varying(128)")
++                        .HasColumnName("entity_id");
++
++                    b.Property<string>("EntityType")
++                        .IsRequired()
++                        .HasMaxLength(128)
++                        .HasColumnType("character varying(128)")
++                        .HasColumnName("entity_type");
++
++                    b.Property<string>("NewValue")
++                        .HasColumnType("jsonb")
++                        .HasColumnName("new_value");
++
++                    b.Property<string>("OldValue")
++                        .HasColumnType("jsonb")
++                        .HasColumnName("old_value");
++
++                    b.Property<string>("Reason")
++                        .HasColumnType("text")
++                        .HasColumnName("reason");
++
++                    b.Property<string>("RequestId")
++                        .HasMaxLength(64)
++                        .HasColumnType("character varying(64)")
++                        .HasColumnName("request_id");
++
++                    b.Property<string>("Role")
++                        .IsRequired()
++                        .HasMaxLength(64)
++                        .HasColumnType("character varying(64)")
++                        .HasColumnName("role");
++
++                    b.Property<DateTimeOffset>("Timestamp")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("timestamp");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("RequestId");
++
++                    b.HasIndex("Actor", "Timestamp")
++                        .IsDescending(false, true);
++
++                    b.HasIndex("Timestamp", "Id")
++                        .IsDescending(true, false);
++
++                    b.HasIndex("EntityType", "EntityId", "Timestamp")
++                        .IsDescending(false, false, true);
++
++                    b.ToTable("audit_events", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CareerCompetency", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<Guid?>("AuthorId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("author_id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<string>("Description")
++                        .HasMaxLength(4000)
++                        .HasColumnType("character varying(4000)")
++                        .HasColumnName("description");
++
++                    b.Property<Guid?>("DirectionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("direction_id");
++
++                    b.Property<string>("EvidenceExamples")
++                        .HasMaxLength(4000)
++                        .HasColumnType("character varying(4000)")
++                        .HasColumnName("evidence_examples");
++
++                    b.Property<string>("Name")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("name")
++                        .UseCollation("ru-x-icu");
++
++                    b.Property<Guid>("ScaleId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("scale_id");
++
++                    b.Property<string>("Status")
++                        .IsRequired()
++                        .HasMaxLength(16)
++                        .HasColumnType("character varying(16)")
++                        .HasColumnName("status");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("AuthorId");
++
++                    b.HasIndex("DirectionId");
++
++                    b.HasIndex("ScaleId");
++
++                    b.ToTable("competencies", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_competencies_status", "status IN ('Draft', 'Active', 'Inactive')");
++                        });
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CareerDirection", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<Guid?>("AuthorId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("author_id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<string>("Name")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("name")
++                        .UseCollation("ru-x-icu");
++
++                    b.Property<string>("Status")
++                        .IsRequired()
++                        .HasMaxLength(16)
++                        .HasColumnType("character varying(16)")
++                        .HasColumnName("status");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("AuthorId");
++
++                    b.ToTable("career_directions", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_career_directions_status", "status IN ('Draft', 'Active', 'Inactive')");
++                        });
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CareerLevel", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<Guid?>("AuthorId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("author_id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<string>("Name")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("name")
++                        .UseCollation("ru-x-icu");
++
++                    b.Property<int>("Position")
++                        .HasColumnType("integer")
++                        .HasColumnName("position");
++
++                    b.Property<string>("Status")
++                        .IsRequired()
++                        .HasMaxLength(16)
++                        .HasColumnType("character varying(16)")
++                        .HasColumnName("status");
++
++                    b.Property<Guid>("TrackId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("track_id");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("AuthorId");
++
++                    b.HasIndex(new[] { "TrackId", "Position" }, "ux_career_levels_track_position")
++                        .IsUnique();
++
++                    b.ToTable("career_levels", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_career_levels_status", "status IN ('Draft', 'Active', 'Inactive')");
++                        });
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CareerLevelPosition", b =>
++                {
++                    b.Property<Guid>("LevelId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("level_id");
++
++                    b.Property<Guid>("PositionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("position_id");
++
++                    b.Property<Guid>("TrackId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("track_id");
++
++                    b.HasKey("LevelId", "PositionId");
++
++                    b.HasIndex("PositionId");
++
++                    b.HasIndex("TrackId", "PositionId")
++                        .IsUnique();
++
++                    b.ToTable("career_level_positions", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CareerTrack", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<Guid?>("AuthorId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("author_id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<Guid>("DirectionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("direction_id");
++
++                    b.Property<string>("Name")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("name")
++                        .UseCollation("ru-x-icu");
++
++                    b.Property<Guid>("OwnerOrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("owner_org_unit_id");
++
++                    b.Property<string>("Status")
++                        .IsRequired()
++                        .HasMaxLength(16)
++                        .HasColumnType("character varying(16)")
++                        .HasColumnName("status");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("AuthorId");
++
++                    b.HasIndex("DirectionId");
++
++                    b.HasIndex("OwnerOrgUnitId");
++
++                    b.ToTable("career_tracks", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_career_tracks_status", "status IN ('Draft', 'Active', 'Inactive')");
++                        });
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CompetencyBlock", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<Guid?>("AuthorId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("author_id");
++
++                    b.Property<string>("CompetencyIds")
++                        .IsRequired()
++                        .HasColumnType("jsonb")
++                        .HasColumnName("competency_ids");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<string>("Name")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("name")
++                        .UseCollation("ru-x-icu");
++
++                    b.Property<Guid?>("ScopeUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("scope_unit_id");
++
++                    b.Property<string>("Status")
++                        .IsRequired()
++                        .HasMaxLength(16)
++                        .HasColumnType("character varying(16)")
++                        .HasColumnName("status");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("AuthorId");
++
++                    b.HasIndex("ScopeUnitId");
++
++                    b.ToTable("competency_blocks", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_competency_blocks_status", "status IN ('Draft', 'Active', 'Inactive')");
++                        });
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CompetencyMatrix", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<Guid?>("DirectionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("direction_id");
++
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<Guid?>("PositionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("position_id");
++
++                    b.Property<Guid?>("TrackId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("track_id");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("DirectionId");
++
++                    b.HasIndex("PositionId");
++
++                    b.HasIndex("TrackId");
++
++                    b.HasIndex("OrgUnitId", "PositionId")
++                        .IsUnique();
++
++                    b.HasIndex("OrgUnitId", "TrackId")
++                        .IsUnique();
++
++                    b.ToTable("competency_matrices", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_competency_matrices_kind", "(direction_id IS NOT NULL AND track_id IS NOT NULL AND position_id IS NULL) OR (direction_id IS NULL AND track_id IS NULL AND position_id IS NOT NULL)");
++                        });
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CompetencyScale", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<Guid?>("AuthorId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("author_id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<bool>("IsDefault")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_default");
++
++                    b.Property<string>("Name")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("name")
++                        .UseCollation("ru-x-icu");
++
++                    b.Property<string>("Points")
++                        .IsRequired()
++                        .HasColumnType("jsonb")
++                        .HasColumnName("points");
++
++                    b.Property<string>("Status")
++                        .IsRequired()
++                        .HasMaxLength(16)
++                        .HasColumnType("character varying(16)")
++                        .HasColumnName("status");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("AuthorId");
++
++                    b.HasIndex(new[] { "IsDefault" }, "ux_competency_scales_default")
++                        .IsUnique()
++                        .HasFilter("is_default");
++
++                    b.ToTable("competency_scales", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_competency_scales_status", "status IN ('Draft', 'Active', 'Inactive')");
++                        });
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CompetencyVersion", b =>
++                {
++                    b.Property<Guid>("CompetencyId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("competency_id");
++
++                    b.Property<int>("Number")
++                        .HasColumnType("integer")
++                        .HasColumnName("number");
++
++                    b.Property<DateTimeOffset>("ChangedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("changed_at");
++
++                    b.Property<Guid?>("ChangedById")
++                        .HasColumnType("uuid")
++                        .HasColumnName("changed_by_id");
++
++                    b.Property<string>("Description")
++                        .HasMaxLength(4000)
++                        .HasColumnType("character varying(4000)")
++                        .HasColumnName("description");
++
++                    b.Property<Guid?>("DirectionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("direction_id");
++
++                    b.Property<string>("EvidenceExamples")
++                        .HasMaxLength(4000)
++                        .HasColumnType("character varying(4000)")
++                        .HasColumnName("evidence_examples");
++
++                    b.Property<string>("Name")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("name");
++
++                    b.Property<Guid>("ScaleId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("scale_id");
++
++                    b.Property<string>("Status")
++                        .IsRequired()
++                        .HasMaxLength(16)
++                        .HasColumnType("character varying(16)")
++                        .HasColumnName("status");
++
++                    b.HasKey("CompetencyId", "Number");
++
++                    b.HasIndex("ChangedById");
++
++                    b.ToTable("competency_versions", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.MatrixDecision", b =>
++                {
++                    b.Property<Guid>("VersionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("version_id");
++
++                    b.Property<int>("Sequence")
++                        .HasColumnType("integer")
++                        .HasColumnName("sequence");
++
++                    b.Property<Guid?>("ActorId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("actor_id");
++
++                    b.Property<DateTimeOffset>("At")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("at");
++
++                    b.Property<string>("Comment")
++                        .HasMaxLength(4000)
++                        .HasColumnType("character varying(4000)")
++                        .HasColumnName("comment");
++
++                    b.Property<string>("Kind")
++                        .IsRequired()
++                        .HasMaxLength(32)
++                        .HasColumnType("character varying(32)")
++                        .HasColumnName("kind");
++
++                    b.Property<string>("Step")
++                        .HasMaxLength(16)
++                        .HasColumnType("character varying(16)")
++                        .HasColumnName("step");
++
++                    b.Property<int?>("VariantNumber")
++                        .HasColumnType("integer")
++                        .HasColumnName("variant_number");
++
++                    b.HasKey("VersionId", "Sequence");
++
++                    b.HasIndex("ActorId");
++
++                    b.ToTable("matrix_version_decisions", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_matrix_version_decisions_kind", "kind IN ('Submitted', 'Skipped', 'Approved', 'AutoApproved', 'Returned', 'AcceptedChanges', 'AcceptedAndRevising', 'RolledBack', 'Published')");
++
++                            t.HasCheckConstraint("ck_matrix_version_decisions_step", "step IN ('Superior', 'Hr')");
++                        });
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.MatrixVariant", b =>
++                {
++                    b.Property<Guid>("VersionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("version_id");
++
++                    b.Property<int>("Number")
++                        .HasColumnType("integer")
++                        .HasColumnName("number");
++
++                    b.Property<string>("Content")
++                        .IsRequired()
++                        .HasColumnType("jsonb")
++                        .HasColumnName("content");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<Guid>("CreatedById")
++                        .HasColumnType("uuid")
++                        .HasColumnName("created_by_id");
++
++                    b.Property<string>("Kind")
++                        .IsRequired()
++                        .HasMaxLength(16)
++                        .HasColumnType("character varying(16)")
++                        .HasColumnName("kind");
++
++                    b.HasKey("VersionId", "Number");
++
++                    b.HasIndex("CreatedById");
++
++                    b.ToTable("matrix_version_variants", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_matrix_version_variants_kind", "kind IN ('Author', 'Approver')");
++                        });
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.MatrixVersion", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<Guid>("AuthorId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("author_id");
++
++                    b.Property<short?>("BuilderStep")
++                        .HasColumnType("smallint")
++                        .HasColumnName("builder_step");
++
++                    b.Property<string>("Content")
++                        .IsRequired()
++                        .HasColumnType("jsonb")
++                        .HasColumnName("content");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<Guid>("MatrixId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("matrix_id");
++
++                    b.Property<int>("Number")
++                        .HasColumnType("integer")
++                        .HasColumnName("number");
++
++                    b.Property<DateTimeOffset?>("PublishedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("published_at");
++
++                    b.Property<string>("Snapshot")
++                        .HasColumnType("jsonb")
++                        .HasColumnName("snapshot");
++
++                    b.Property<string>("Status")
++                        .IsRequired()
++                        .HasMaxLength(16)
++                        .HasColumnType("character varying(16)")
++                        .HasColumnName("status");
++
++                    b.Property<string>("Step")
++                        .HasMaxLength(16)
++                        .HasColumnType("character varying(16)")
++                        .HasColumnName("step");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("AuthorId");
++
++                    b.HasIndex("MatrixId", "Number")
++                        .IsUnique();
++
++                    b.HasIndex(new[] { "MatrixId" }, "ux_matrix_versions_in_work")
++                        .IsUnique()
++                        .HasFilter("status IN ('Draft', 'OnReview', 'Returned')");
++
++                    b.HasIndex(new[] { "MatrixId" }, "ux_matrix_versions_published")
++                        .IsUnique()
++                        .HasFilter("status = 'Published'");
++
++                    b.ToTable("matrix_versions", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_matrix_versions_status", "status IN ('Draft', 'OnReview', 'Returned', 'Approved', 'Published', 'Archived')");
++
++                            t.HasCheckConstraint("ck_matrix_versions_step", "step IN ('Superior', 'Hr')");
++                        });
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.OrgUnitHr", b =>
++                {
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<Guid>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.HasKey("OrgUnitId");
++
++                    b.HasIndex("EmployeeId");
++
++                    b.ToTable("org_unit_hr", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.AssignmentLegalEntity", b =>
++                {
++                    b.Property<Guid>("AssignmentId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("assignment_id");
++
++                    b.Property<Guid>("LegalEntityId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("legal_entity_id");
++
++                    b.HasKey("AssignmentId", "LegalEntityId");
++
++                    b.HasIndex("LegalEntityId");
++
++                    b.ToTable("employee_assignment_legal_entities", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.Employee", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<string>("Education")
++                        .HasMaxLength(32)
++                        .HasColumnType("character varying(32)")
++                        .HasColumnName("education");
++
++                    b.Property<string>("FirstName")
++                        .IsRequired()
++                        .HasMaxLength(100)
++                        .HasColumnType("character varying(100)")
++                        .HasColumnName("first_name");
++
++                    b.Property<string>("FullName")
++                        .IsRequired()
++                        .ValueGeneratedOnAddOrUpdate()
++                        .HasColumnType("text")
++                        .HasColumnName("full_name")
++                        .HasComputedColumnSql("last_name || ' ' || first_name || coalesce(' ' || middle_name, '')", true)
++                        .UseCollation("ru-x-icu");
++
++                    b.Property<bool>("IsActive")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_active");
++
++                    b.Property<string>("LastName")
++                        .IsRequired()
++                        .HasMaxLength(100)
++                        .HasColumnType("character varying(100)")
++                        .HasColumnName("last_name");
++
++                    b.Property<string>("MiddleName")
++                        .HasMaxLength(100)
++                        .HasColumnType("character varying(100)")
++                        .HasColumnName("middle_name");
++
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<Guid>("PositionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("position_id");
++
++                    b.Property<NpgsqlTsVector>("SearchVector")
++                        .IsRequired()
++                        .ValueGeneratedOnAddOrUpdate()
++                        .HasColumnType("tsvector")
++                        .HasColumnName("search_vector")
++                        .HasAnnotation("Npgsql:TsVectorConfig", "russian")
++                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "LastName", "FirstName", "MiddleName" });
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("OrgUnitId");
++
++                    b.HasIndex("PositionId");
++
++                    b.HasIndex("SearchVector");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
++
++                    b.HasIndex(new[] { "FullName" }, "IX_employees_full_name_trgm");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "FullName" }, "IX_employees_full_name_trgm"), "gin");
++                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "FullName" }, "IX_employees_full_name_trgm"), new[] { "gin_trgm_ops" });
++
++                    b.ToTable("employees", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.EmployeeAccount", b =>
++                {
++                    b.Property<bool>("CanBeHr")
++                        .HasColumnType("boolean")
++                        .HasColumnName("can_be_hr");
++
++                    b.Property<string>("Email")
++                        .IsRequired()
++                        .HasColumnType("text")
++                        .HasColumnName("email");
++
++                    b.Property<Guid>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.Property<bool>("IsBlocked")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_blocked");
++
++                    b.ToTable((string)null);
++
++                    b.ToSqlQuery("SELECT u.employee_id, u.email, u.is_blocked, NOT u.is_blocked AND u.password_hash IS NOT NULL AND EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id AND r.name = 'Hr') AS can_be_hr FROM users u WHERE u.employee_id IS NOT NULL");
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.EmployeeAssignment", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<Guid>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<Guid>("PositionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("position_id");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("OrgUnitId");
++
++                    b.HasIndex("PositionId");
++
++                    b.HasIndex("EmployeeId", "OrgUnitId", "PositionId")
++                        .IsUnique();
++
++                    b.ToTable("employee_assignments", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.EmployeeLegalEntity", b =>
++                {
++                    b.Property<Guid>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.Property<Guid>("LegalEntityId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("legal_entity_id");
++
++                    b.HasKey("EmployeeId", "LegalEntityId");
++
++                    b.HasIndex("LegalEntityId");
++
++                    b.ToTable("employee_legal_entities", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.EmployeePlacement", b =>
++                {
++                    b.Property<Guid>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.Property<bool>("IsMain")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_main");
++
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<Guid>("PositionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("position_id");
++
++                    b.ToTable((string)null);
++
++                    b.ToSqlQuery("SELECT id AS employee_id, org_unit_id, position_id, true AS is_main FROM employees UNION ALL SELECT employee_id, org_unit_id, position_id, false AS is_main FROM employee_assignments");
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.LegalEntity", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<string>("Name")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("name")
++                        .UseCollation("ru-x-icu");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.ToTable("legal_entities", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.OrgUnit", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<Guid?>("HeadEmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("head_employee_id");
++
++                    b.Property<bool>("IsActive")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_active");
++
++                    b.Property<string>("Name")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("name")
++                        .UseCollation("ru-x-icu");
++
++                    b.Property<Guid?>("ParentId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("parent_id");
++
++                    b.Property<NpgsqlTsVector>("SearchVector")
++                        .IsRequired()
++                        .ValueGeneratedOnAddOrUpdate()
++                        .HasColumnType("tsvector")
++                        .HasColumnName("search_vector")
++                        .HasAnnotation("Npgsql:TsVectorConfig", "russian")
++                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "Name" });
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("HeadEmployeeId");
++
++                    b.HasIndex("Name");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Name"), "gin");
++                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Name"), new[] { "gin_trgm_ops" });
++
++                    b.HasIndex("ParentId");
++
++                    b.HasIndex("SearchVector");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
++
++                    b.ToTable("org_units", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.OrgUnitPosition", b =>
++                {
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<Guid>("PositionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("position_id");
++
++                    b.HasKey("OrgUnitId", "PositionId");
++
++                    b.HasIndex("PositionId");
++
++                    b.ToTable("org_unit_positions", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.Position", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<bool>("IsActive")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_active");
++
++                    b.Property<string>("Name")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("name")
++                        .UseCollation("ru-x-icu");
++
++                    b.Property<NpgsqlTsVector>("SearchVector")
++                        .IsRequired()
++                        .ValueGeneratedOnAddOrUpdate()
++                        .HasColumnType("tsvector")
++                        .HasColumnName("search_vector")
++                        .HasAnnotation("Npgsql:TsVectorConfig", "russian")
++                        .HasAnnotation("Npgsql:TsVectorProperties", new[] { "Name" });
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("SearchVector");
++
++                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
++
++                    b.ToTable("positions", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionApplication", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<bool>("ArtifactsMissing")
++                        .HasColumnType("boolean")
++                        .HasColumnName("artifacts_missing");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.Property<DateTimeOffset?>("DecidedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("decided_at");
++
++                    b.Property<Guid?>("DecidedBy")
++                        .HasColumnType("uuid")
++                        .HasColumnName("decided_by");
++
++                    b.Property<string>("Decision")
++                        .HasMaxLength(30)
++                        .HasColumnType("character varying(30)")
++                        .HasColumnName("decision");
++
++                    b.Property<string>("Education")
++                        .IsRequired()
++                        .HasMaxLength(30)
++                        .HasColumnType("character varying(30)")
++                        .HasColumnName("education");
++
++                    b.Property<Guid>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.Property<DateTimeOffset?>("FeedbackReceivedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("feedback_received_at");
++
++                    b.PrimitiveCollection<string[]>("FormalFailures")
++                        .IsRequired()
++                        .HasColumnType("character varying(30)[]")
++                        .HasColumnName("formal_failures");
++
++                    b.Property<DateOnly?>("HiredOrPromotedOn")
++                        .HasColumnType("date")
++                        .HasColumnName("hired_or_promoted_on");
++
++                    b.Property<bool>("IgnoreInterval")
++                        .HasColumnType("boolean")
++                        .HasColumnName("ignore_interval");
++
++                    b.Property<DateTimeOffset?>("IgnoreIntervalAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("ignore_interval_at");
++
++                    b.Property<Guid?>("IgnoreIntervalBy")
++                        .HasColumnType("uuid")
++                        .HasColumnName("ignore_interval_by");
++
++                    b.Property<bool>("IsSentToReview")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_sent_to_review");
++
++                    b.Property<Guid>("LevelId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("level_id");
++
++                    b.Property<Guid>("MatrixId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("matrix_id");
++
++                    b.Property<bool?>("MeetsAfterRating")
++                        .HasColumnType("boolean")
++                        .HasColumnName("meets_after_rating");
++
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<bool>("ReviewLetterPending")
++                        .HasColumnType("boolean")
++                        .HasColumnName("review_letter_pending");
++
++                    b.Property<string>("Status")
++                        .IsRequired()
++                        .HasMaxLength(30)
++                        .HasColumnType("character varying(30)")
++                        .HasColumnName("status");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.Property<Guid>("VersionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("version_id");
++
++                    b.Property<bool>("WasHeldAtClose")
++                        .HasColumnType("boolean")
++                        .HasColumnName("was_held_at_close");
++
++                    b.Property<Guid>("WaveId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("wave_id");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("DecidedBy");
++
++                    b.HasIndex("EmployeeId");
++
++                    b.HasIndex("IgnoreIntervalBy");
++
++                    b.HasIndex("OrgUnitId");
++
++                    b.HasIndex("VersionId");
++
++                    b.HasIndex("WaveId", "OrgUnitId");
++
++                    b.HasIndex("WaveId", "OrgUnitId", "MatrixId");
++
++                    b.HasIndex(new[] { "WaveId", "EmployeeId" }, "ux_promotion_applications_unfinished")
++                        .IsUnique()
++                        .HasFilter("status IN ('Draft', 'Submitted', 'Admitted', 'UnderReview')");
++
++                    b.ToTable("promotion_applications", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionArtifact", b =>
++                {
++                    b.Property<Guid>("ApplicationId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("application_id");
++
++                    b.Property<Guid>("CompetencyId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("competency_id");
++
++                    b.Property<string>("Links")
++                        .IsRequired()
++                        .HasColumnType("jsonb")
++                        .HasColumnName("links");
++
++                    b.HasKey("ApplicationId", "CompetencyId");
++
++                    b.ToTable("promotion_artifacts", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionCommission", b =>
++                {
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<Guid?>("ChairEmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("chair_employee_id");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("OrgUnitId");
++
++                    b.HasIndex("ChairEmployeeId");
++
++                    b.ToTable("promotion_commissions", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionCommissionMember", b =>
++                {
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<Guid>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.HasKey("OrgUnitId", "EmployeeId");
++
++                    b.HasIndex("EmployeeId");
++
++                    b.ToTable("promotion_commission_members", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionFinalScore", b =>
++                {
++                    b.Property<Guid>("ApplicationId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("application_id");
++
++                    b.Property<Guid>("CompetencyId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("competency_id");
++
++                    b.Property<int>("Score")
++                        .HasColumnType("integer")
++                        .HasColumnName("score");
++
++                    b.HasKey("ApplicationId", "CompetencyId");
++
++                    b.ToTable("promotion_final_scores", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionRater", b =>
++                {
++                    b.Property<Guid>("ApplicationId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("application_id");
++
++                    b.Property<Guid>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.Property<string>("Email")
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("email");
++
++                    b.Property<DateTimeOffset?>("EmailConfirmedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("email_confirmed_at");
++
++                    b.Property<Guid?>("EmailConfirmedBy")
++                        .HasColumnType("uuid")
++                        .HasColumnName("email_confirmed_by");
++
++                    b.Property<string>("Source")
++                        .IsRequired()
++                        .HasMaxLength(30)
++                        .HasColumnType("character varying(30)")
++                        .HasColumnName("source");
++
++                    b.HasKey("ApplicationId", "EmployeeId");
++
++                    b.HasIndex("EmailConfirmedBy");
++
++                    b.HasIndex("EmployeeId");
++
++                    b.ToTable("promotion_raters", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionRaterExclusion", b =>
++                {
++                    b.Property<string>("Kind")
++                        .HasMaxLength(30)
++                        .HasColumnType("character varying(30)")
++                        .HasColumnName("kind");
++
++                    b.Property<Guid>("SubjectId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("subject_id");
++
++                    b.HasKey("Kind", "SubjectId");
++
++                    b.ToTable("promotion_rater_exclusions", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionRaterScore", b =>
++                {
++                    b.Property<Guid>("ApplicationId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("application_id");
++
++                    b.Property<Guid>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.Property<Guid>("CompetencyId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("competency_id");
++
++                    b.Property<int?>("Score")
++                        .HasColumnType("integer")
++                        .HasColumnName("score");
++
++                    b.HasKey("ApplicationId", "EmployeeId", "CompetencyId");
++
++                    b.ToTable("promotion_rater_scores", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionSelfScore", b =>
++                {
++                    b.Property<Guid>("ApplicationId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("application_id");
++
++                    b.Property<Guid>("CompetencyId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("competency_id");
++
++                    b.Property<int>("Score")
++                        .HasColumnType("integer")
++                        .HasColumnName("score");
++
++                    b.HasKey("ApplicationId", "CompetencyId");
++
++                    b.ToTable("promotion_self_scores", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionSettings", b =>
++                {
++                    b.Property<int>("Id")
++                        .HasColumnType("integer")
++                        .HasColumnName("id");
++
++                    b.Property<int>("MinIntervalMonths")
++                        .HasColumnType("integer")
++                        .HasColumnName("min_interval_months");
++
++                    b.PrimitiveCollection<int[]>("StageDurationsDays")
++                        .IsRequired()
++                        .HasColumnType("integer[]")
++                        .HasColumnName("stage_durations_days");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.ToTable("promotion_settings", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_promotion_settings_durations", "cardinality(stage_durations_days) = 6");
++
++                            t.HasCheckConstraint("ck_promotion_settings_interval", "min_interval_months BETWEEN 0 AND 120");
++
++                            t.HasCheckConstraint("ck_promotion_settings_singleton", "id = 1");
++                        });
++
++                    b.HasData(
++                        new
++                        {
++                            Id = 1,
++                            MinIntervalMonths = 12,
++                            StageDurationsDays = new[] { 10, 2, 5, 2, 5, 5 },
++                            Version = 0
++                        });
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionWave", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<Guid>("AuthorId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("author_id");
++
++                    b.Property<DateTimeOffset>("CreatedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("created_at");
++
++                    b.PrimitiveCollection<DateOnly[]>("EndsOn")
++                        .IsRequired()
++                        .HasColumnType("date[]")
++                        .HasColumnName("ends_on");
++
++                    b.Property<int>("ProcessedStage")
++                        .HasColumnType("integer")
++                        .HasColumnName("processed_stage");
++
++                    b.Property<bool>("RaterReminderSent")
++                        .HasColumnType("boolean")
++                        .HasColumnName("rater_reminder_sent");
++
++                    b.Property<DateOnly>("StartsOn")
++                        .HasColumnType("date")
++                        .HasColumnName("starts_on");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.Property<bool>("VersionsFixed")
++                        .HasColumnType("boolean")
++                        .HasColumnName("versions_fixed");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("AuthorId");
++
++                    b.HasIndex("ProcessedStage");
++
++                    b.ToTable("promotion_waves", null, t =>
++                        {
++                            t.HasCheckConstraint("ck_promotion_waves_ends_on", "cardinality(ends_on) = 6");
++
++                            t.HasCheckConstraint("ck_promotion_waves_processed_stage", "processed_stage BETWEEN 0 AND 6");
++                        });
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionWaveMatrix", b =>
++                {
++                    b.Property<Guid>("WaveId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("wave_id");
++
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<Guid>("MatrixId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("matrix_id");
++
++                    b.Property<Guid>("TrackId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("track_id");
++
++                    b.Property<string>("TrackName")
++                        .IsRequired()
++                        .HasMaxLength(200)
++                        .HasColumnType("character varying(200)")
++                        .HasColumnName("track_name");
++
++                    b.Property<Guid>("VersionId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("version_id");
++
++                    b.HasKey("WaveId", "OrgUnitId", "MatrixId");
++
++                    b.HasIndex("MatrixId");
++
++                    b.HasIndex("OrgUnitId");
++
++                    b.HasIndex("TrackId");
++
++                    b.HasIndex("VersionId");
++
++                    b.ToTable("promotion_wave_matrices", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionWaveUnit", b =>
++                {
++                    b.Property<Guid>("WaveId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("wave_id");
++
++                    b.Property<Guid>("OrgUnitId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("org_unit_id");
++
++                    b.Property<bool>("NoChairLetterSent")
++                        .HasColumnType("boolean")
++                        .HasColumnName("no_chair_letter_sent");
++
++                    b.HasKey("WaveId", "OrgUnitId");
++
++                    b.HasIndex("OrgUnitId");
++
++                    b.ToTable("promotion_wave_units", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.UserManagement.AppUser", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<int>("AccessFailedCount")
++                        .HasColumnType("integer")
++                        .HasColumnName("access_failed_count");
++
++                    b.Property<string>("ConcurrencyStamp")
++                        .IsConcurrencyToken()
++                        .HasColumnType("text")
++                        .HasColumnName("concurrency_stamp");
++
++                    b.Property<string>("Email")
++                        .IsRequired()
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("email");
++
++                    b.Property<Guid?>("EmployeeId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("employee_id");
++
++                    b.Property<bool>("IsBlocked")
++                        .HasColumnType("boolean")
++                        .HasColumnName("is_blocked");
++
++                    b.Property<DateTimeOffset?>("LinkExpiresAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("link_expires_at");
++
++                    b.Property<DateTimeOffset?>("LinkIssuedAt")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("link_issued_at");
++
++                    b.Property<string>("LinkSecurityStamp")
++                        .HasColumnType("text")
++                        .HasColumnName("link_security_stamp");
++
++                    b.Property<byte[]>("LinkTokenHash")
++                        .HasColumnType("bytea")
++                        .HasColumnName("link_token_hash");
++
++                    b.Property<bool>("LockoutEnabled")
++                        .HasColumnType("boolean")
++                        .HasColumnName("lockout_enabled");
++
++                    b.Property<DateTimeOffset?>("LockoutEnd")
++                        .HasColumnType("timestamp with time zone")
++                        .HasColumnName("lockout_end");
++
++                    b.Property<string>("NormalizedEmail")
++                        .IsRequired()
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("normalized_email");
++
++                    b.Property<string>("NormalizedUserName")
++                        .IsRequired()
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("normalized_user_name");
++
++                    b.Property<string>("PasswordHash")
++                        .HasColumnType("text")
++                        .HasColumnName("password_hash");
++
++                    b.Property<string>("SecurityStamp")
++                        .HasColumnType("text")
++                        .HasColumnName("security_stamp");
++
++                    b.Property<string>("UserName")
++                        .IsRequired()
++                        .HasMaxLength(254)
++                        .HasColumnType("character varying(254)")
++                        .HasColumnName("user_name");
++
++                    b.Property<int>("Version")
++                        .IsConcurrencyToken()
++                        .HasColumnType("integer")
++                        .HasColumnName("version");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("EmployeeId")
++                        .IsUnique()
++                        .HasFilter("employee_id IS NOT NULL");
++
++                    b.HasIndex("LinkTokenHash")
++                        .IsUnique()
++                        .HasFilter("link_token_hash IS NOT NULL");
++
++                    b.HasIndex("NormalizedEmail")
++                        .IsUnique();
++
++                    b.HasIndex("NormalizedUserName")
++                        .IsUnique();
++
++                    b.ToTable("users", (string)null);
++                });
++
++            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
++                {
++                    b.Property<Guid>("Id")
++                        .ValueGeneratedOnAdd()
++                        .HasColumnType("uuid")
++                        .HasColumnName("id");
++
++                    b.Property<string>("ConcurrencyStamp")
++                        .IsConcurrencyToken()
++                        .HasColumnType("text")
++                        .HasColumnName("concurrency_stamp");
++
++                    b.Property<string>("Name")
++                        .HasMaxLength(256)
++                        .HasColumnType("character varying(256)")
++                        .HasColumnName("name");
++
++                    b.Property<string>("NormalizedName")
++                        .HasMaxLength(256)
++                        .HasColumnType("character varying(256)")
++                        .HasColumnName("normalized_name");
++
++                    b.HasKey("Id");
++
++                    b.HasIndex("NormalizedName")
++                        .IsUnique();
++
++                    b.ToTable("roles", (string)null);
++
++                    b.HasData(
++                        new
++                        {
++                            Id = new Guid("0991bde9-ccde-4831-a138-eef704ed876c"),
++                            ConcurrencyStamp = "0991bde9-ccde-4831-a138-eef704ed876c",
++                            Name = "GlobalAdmin",
++                            NormalizedName = "GLOBALADMIN"
++                        },
++                        new
++                        {
++                            Id = new Guid("2d465e5b-a4c6-46af-bae3-926cca129e5e"),
++                            ConcurrencyStamp = "2d465e5b-a4c6-46af-bae3-926cca129e5e",
++                            Name = "Hr",
++                            NormalizedName = "HR"
++                        });
++                });
++
++            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
++                {
++                    b.Property<Guid>("UserId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("user_id");
++
++                    b.Property<Guid>("RoleId")
++                        .HasColumnType("uuid")
++                        .HasColumnName("role_id");
++
++                    b.HasKey("UserId", "RoleId");
++
++                    b.HasIndex("RoleId");
++
++                    b.ToTable("user_roles", (string)null);
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CareerCompetency", b =>
++                {
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("AuthorId")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.CareerFramework.CareerDirection", null)
++                        .WithMany()
++                        .HasForeignKey("DirectionId")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.CareerFramework.CompetencyScale", null)
++                        .WithMany()
++                        .HasForeignKey("ScaleId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CareerDirection", b =>
++                {
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("AuthorId")
++                        .OnDelete(DeleteBehavior.Restrict);
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CareerLevel", b =>
++                {
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("AuthorId")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.CareerFramework.CareerTrack", "Track")
++                        .WithMany()
++                        .HasForeignKey("TrackId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("Track");
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CareerLevelPosition", b =>
++                {
++                    b.HasOne("Competency.CareerFramework.CareerLevel", null)
++                        .WithMany()
++                        .HasForeignKey("LevelId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.OrgStructure.Position", null)
++                        .WithMany()
++                        .HasForeignKey("PositionId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.CareerFramework.CareerTrack", null)
++                        .WithMany()
++                        .HasForeignKey("TrackId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CareerTrack", b =>
++                {
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("AuthorId")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.CareerFramework.CareerDirection", null)
++                        .WithMany()
++                        .HasForeignKey("DirectionId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
++                        .WithMany()
++                        .HasForeignKey("OwnerOrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CompetencyBlock", b =>
++                {
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("AuthorId")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
++                        .WithMany()
++                        .HasForeignKey("ScopeUnitId")
++                        .OnDelete(DeleteBehavior.Restrict);
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CompetencyMatrix", b =>
++                {
++                    b.HasOne("Competency.CareerFramework.CareerDirection", null)
++                        .WithMany()
++                        .HasForeignKey("DirectionId")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
++                        .WithMany()
++                        .HasForeignKey("OrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.OrgStructure.Position", null)
++                        .WithMany()
++                        .HasForeignKey("PositionId")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.CareerFramework.CareerTrack", null)
++                        .WithMany()
++                        .HasForeignKey("TrackId")
++                        .OnDelete(DeleteBehavior.Restrict);
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CompetencyScale", b =>
++                {
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("AuthorId")
++                        .OnDelete(DeleteBehavior.Restrict);
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.CompetencyVersion", b =>
++                {
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("ChangedById")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.CareerFramework.CareerCompetency", null)
++                        .WithMany()
++                        .HasForeignKey("CompetencyId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.MatrixDecision", b =>
++                {
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("ActorId")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.CareerFramework.MatrixVersion", null)
++                        .WithMany()
++                        .HasForeignKey("VersionId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.MatrixVariant", b =>
++                {
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("CreatedById")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.CareerFramework.MatrixVersion", null)
++                        .WithMany()
++                        .HasForeignKey("VersionId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.MatrixVersion", b =>
++                {
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("AuthorId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.CareerFramework.CompetencyMatrix", "Matrix")
++                        .WithMany()
++                        .HasForeignKey("MatrixId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("Matrix");
++                });
++
++            modelBuilder.Entity("Competency.CareerFramework.OrgUnitHr", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("EmployeeId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
++                        .WithOne()
++                        .HasForeignKey("Competency.CareerFramework.OrgUnitHr", "OrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.AssignmentLegalEntity", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.EmployeeAssignment", "Assignment")
++                        .WithMany("LegalEntities")
++                        .HasForeignKey("AssignmentId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Competency.OrgStructure.LegalEntity", "LegalEntity")
++                        .WithMany()
++                        .HasForeignKey("LegalEntityId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("Assignment");
++
++                    b.Navigation("LegalEntity");
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.Employee", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.OrgUnit", "OrgUnit")
++                        .WithMany()
++                        .HasForeignKey("OrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.OrgStructure.Position", "Position")
++                        .WithMany()
++                        .HasForeignKey("PositionId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("OrgUnit");
++
++                    b.Navigation("Position");
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.EmployeeAssignment", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("EmployeeId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Competency.OrgStructure.OrgUnit", "OrgUnit")
++                        .WithMany()
++                        .HasForeignKey("OrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.OrgStructure.Position", "Position")
++                        .WithMany()
++                        .HasForeignKey("PositionId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("OrgUnit");
++
++                    b.Navigation("Position");
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.EmployeeLegalEntity", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("EmployeeId")
++                        .OnDelete(DeleteBehavior.Cascade)
++                        .IsRequired();
++
++                    b.HasOne("Competency.OrgStructure.LegalEntity", "LegalEntity")
++                        .WithMany()
++                        .HasForeignKey("LegalEntityId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("LegalEntity");
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.OrgUnit", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("HeadEmployeeId")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
++                        .WithMany()
++                        .HasForeignKey("ParentId")
++                        .OnDelete(DeleteBehavior.Restrict);
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.OrgUnitPosition", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.OrgUnit", "OrgUnit")
++                        .WithMany()
++                        .HasForeignKey("OrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.OrgStructure.Position", "Position")
++                        .WithMany()
++                        .HasForeignKey("PositionId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.Navigation("OrgUnit");
++
++                    b.Navigation("Position");
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionApplication", b =>
++                {
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("DecidedBy")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("EmployeeId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("IgnoreIntervalBy")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
++                        .WithMany()
++                        .HasForeignKey("OrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.CareerFramework.MatrixVersion", null)
++                        .WithMany()
++                        .HasForeignKey("VersionId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.Promotion.PromotionWaveMatrix", null)
++                        .WithMany()
++                        .HasForeignKey("WaveId", "OrgUnitId", "MatrixId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionArtifact", b =>
++                {
++                    b.HasOne("Competency.Promotion.PromotionApplication", null)
++                        .WithMany()
++                        .HasForeignKey("ApplicationId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionCommission", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("ChairEmployeeId")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
++                        .WithOne()
++                        .HasForeignKey("Competency.Promotion.PromotionCommission", "OrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionCommissionMember", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("EmployeeId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.Promotion.PromotionCommission", null)
++                        .WithMany()
++                        .HasForeignKey("OrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionFinalScore", b =>
++                {
++                    b.HasOne("Competency.Promotion.PromotionApplication", null)
++                        .WithMany()
++                        .HasForeignKey("ApplicationId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionRater", b =>
++                {
++                    b.HasOne("Competency.Promotion.PromotionApplication", null)
++                        .WithMany()
++                        .HasForeignKey("ApplicationId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("EmailConfirmedBy")
++                        .OnDelete(DeleteBehavior.Restrict);
++
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("EmployeeId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionRaterScore", b =>
++                {
++                    b.HasOne("Competency.Promotion.PromotionRater", null)
++                        .WithMany()
++                        .HasForeignKey("ApplicationId", "EmployeeId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionSelfScore", b =>
++                {
++                    b.HasOne("Competency.Promotion.PromotionApplication", null)
++                        .WithMany()
++                        .HasForeignKey("ApplicationId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionWave", b =>
++                {
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany()
++                        .HasForeignKey("AuthorId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionWaveMatrix", b =>
++                {
++                    b.HasOne("Competency.CareerFramework.CompetencyMatrix", null)
++                        .WithMany()
++                        .HasForeignKey("MatrixId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
++                        .WithMany()
++                        .HasForeignKey("OrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.CareerFramework.CareerTrack", null)
++                        .WithMany()
++                        .HasForeignKey("TrackId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.CareerFramework.MatrixVersion", null)
++                        .WithMany()
++                        .HasForeignKey("VersionId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.Promotion.PromotionWave", null)
++                        .WithMany()
++                        .HasForeignKey("WaveId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.Promotion.PromotionWaveUnit", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.OrgUnit", null)
++                        .WithMany()
++                        .HasForeignKey("OrgUnitId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.Promotion.PromotionWave", null)
++                        .WithMany()
++                        .HasForeignKey("WaveId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.UserManagement.AppUser", b =>
++                {
++                    b.HasOne("Competency.OrgStructure.Employee", null)
++                        .WithMany()
++                        .HasForeignKey("EmployeeId")
++                        .OnDelete(DeleteBehavior.Restrict);
++                });
++
++            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
++                {
++                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
++                        .WithMany()
++                        .HasForeignKey("RoleId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++
++                    b.HasOne("Competency.UserManagement.AppUser", null)
++                        .WithMany("UserRoles")
++                        .HasForeignKey("UserId")
++                        .OnDelete(DeleteBehavior.Restrict)
++                        .IsRequired();
++                });
++
++            modelBuilder.Entity("Competency.OrgStructure.EmployeeAssignment", b =>
++                {
++                    b.Navigation("LegalEntities");
++                });
++
++            modelBuilder.Entity("Competency.UserManagement.AppUser", b =>
++                {
++                    b.Navigation("UserRoles");
++                });
++#pragma warning restore 612, 618
++        }
++    }
++}
+diff --git a/src/Competency.Platform/Migrations/20261030105259_PromotionHeldAtCloseMarker.cs b/src/Competency.Platform/Migrations/20261030105259_PromotionHeldAtCloseMarker.cs
+new file mode 100644
+index 00000000..cf7e2cb6
+--- /dev/null
++++ b/src/Competency.Platform/Migrations/20261030105259_PromotionHeldAtCloseMarker.cs
+@@ -0,0 +1,29 @@
++﻿using Microsoft.EntityFrameworkCore.Migrations;
++
++#nullable disable
++
++namespace Competency.Platform.Migrations
++{
++    /// <inheritdoc />
++    public partial class PromotionHeldAtCloseMarker : Migration
++    {
++        /// <inheritdoc />
++        protected override void Up(MigrationBuilder migrationBuilder)
++        {
++            migrationBuilder.AddColumn<bool>(
++                name: "was_held_at_close",
++                table: "promotion_applications",
++                type: "boolean",
++                nullable: false,
++                defaultValue: false);
++        }
++
++        /// <inheritdoc />
++        protected override void Down(MigrationBuilder migrationBuilder)
++        {
++            migrationBuilder.DropColumn(
++                name: "was_held_at_close",
++                table: "promotion_applications");
++        }
++    }
++}
+diff --git a/src/Competency.Platform/Migrations/AppDbContextModelSnapshot.cs b/src/Competency.Platform/Migrations/AppDbContextModelSnapshot.cs
+index e4744f6b..c9a2ae07 100644
+--- a/src/Competency.Platform/Migrations/AppDbContextModelSnapshot.cs
++++ b/src/Competency.Platform/Migrations/AppDbContextModelSnapshot.cs
+@@ -1197,6 +1197,10 @@ namespace Competency.Platform.Migrations
+                         .HasColumnType("uuid")
+                         .HasColumnName("version_id");
+ 
++                    b.Property<bool>("WasHeldAtClose")
++                        .HasColumnType("boolean")
++                        .HasColumnName("was_held_at_close");
++
+                     b.Property<Guid>("WaveId")
+                         .HasColumnType("uuid")
+                         .HasColumnName("wave_id");
+diff --git a/src/Competency.Promotion/PromotionApplication.cs b/src/Competency.Promotion/PromotionApplication.cs
+index acbb3f66..34f9b889 100644
+--- a/src/Competency.Promotion/PromotionApplication.cs
++++ b/src/Competency.Promotion/PromotionApplication.cs
+@@ -111,6 +111,12 @@ internal sealed class PromotionApplication : EntityBase
+     /// </summary>
+     public bool ReviewLetterPending { get; set; }
+ 
++    /// <summary>
++    /// Whether the commission stage ended while the application was still held for want of a chair, so that it never reached the commission and was left
++    /// without a decision. A return of the wave takes such an application back to the hand-over instead of to the commission.
++    /// </summary>
++    public bool WasHeldAtClose { get; set; }
++
+     /// <summary>
+     /// The decision of the chair; null while there is none. The chair may change it until the commission stage ends.
+     /// </summary>
+@@ -142,6 +148,7 @@ internal sealed class PromotionApplication : EntityBase
+     /// status, the formal failures and the results of the rating and artifact stages, which the end of those stages computes again. What the
+     /// people entered, the decision of the chair included, stays. A candidate who met the mandatory requirements, or who sent the application
+     /// themselves, stays with the commission when the wave returns to the artifact stage; one taken back to the raters or the check sends it again.
++    /// An application that was held for want of a chair when the commission stage ended goes back to admitted, to be handed over with the chair check.
+     /// A withdrawn application stays withdrawn, and a draft stays a draft.
+     /// </summary>
+     /// <param name="stage">The stage the wave returns to, 1 to 6.</param>
+@@ -162,7 +169,7 @@ internal sealed class PromotionApplication : EntityBase
+         }
+         else if (ReviewedStatuses.Contains(Status))
+         {
+-            if (stage <= PromotionStage.Rating || (stage == PromotionStage.Artifacts && MeetsAfterRating != true && !IsSentToReview))
++            if (stage <= PromotionStage.Rating || WasHeldAtClose || (stage == PromotionStage.Artifacts && MeetsAfterRating != true && !IsSentToReview))
+             {
+                 Status = ApplicationStatus.Admitted;
+                 ReviewLetterPending = false;
+@@ -173,6 +180,7 @@ internal sealed class PromotionApplication : EntityBase
+             }
+         }
+ 
++        WasHeldAtClose = false;
+         if (Status is ApplicationStatus.Submitted or ApplicationStatus.Admitted)
+         {
+             IsSentToReview = false;
+diff --git a/src/Competency.Promotion/PromotionEntityConfiguration.cs b/src/Competency.Promotion/PromotionEntityConfiguration.cs
+index 696e50bc..a4108386 100644
+--- a/src/Competency.Promotion/PromotionEntityConfiguration.cs
++++ b/src/Competency.Promotion/PromotionEntityConfiguration.cs
+@@ -167,6 +167,7 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
+             entity.Property(e => e.ArtifactsMissing).HasColumnName("artifacts_missing");
+             entity.Property(e => e.IsSentToReview).HasColumnName("is_sent_to_review");
+             entity.Property(e => e.ReviewLetterPending).HasColumnName("review_letter_pending");
++            entity.Property(e => e.WasHeldAtClose).HasColumnName("was_held_at_close");
+             entity.Property(e => e.Decision).HasColumnName("decision").HasConversion<string>().HasMaxLength(EnumMaxLength);
+             entity.Property(e => e.DecidedBy).HasColumnName("decided_by");
+             entity.Property(e => e.DecidedAt).HasColumnName("decided_at");
+diff --git a/src/Competency.Promotion/PromotionTick.cs b/src/Competency.Promotion/PromotionTick.cs
+index 6f81eac4..5450773d 100644
+--- a/src/Competency.Promotion/PromotionTick.cs
++++ b/src/Competency.Promotion/PromotionTick.cs
+@@ -51,13 +51,16 @@ internal sealed class PromotionTick(IServiceScopeFactory scopeFactory, ILogger<P
+                 .Distinct()
+                 .ToListAsync(cancellationToken))
+             .ToHashSet();
+-        var withAdmitted = (await context.Set<PromotionApplication>()
++        var admitted = (await context.Set<PromotionApplication>()
+                 .AsNoTracking()
+                 .Where(application => application.Status == ApplicationStatus.Admitted && application.MeetsAfterRating != null)
+-                .Select(application => application.WaveId)
++                .Select(application => new { application.WaveId, Meets = application.MeetsAfterRating == true })
+                 .Distinct()
+                 .ToListAsync(cancellationToken))
+-            .ToHashSet();
+-        return [.. waves.Where(wave => DueStep.Next(wave, calendar, withArrivals.Contains(wave.Id), withAdmitted.Contains(wave.Id)) is not null).Select(wave => wave.Id)];
++            .ToLookup(application => application.WaveId, application => application.Meets);
++        return [.. waves.Where(wave => DueStep.Next(wave, calendar, withArrivals.Contains(wave.Id), CanMove(admitted[wave.Id], wave)) is not null).Select(wave => wave.Id)];
+     }
++
++    private static bool CanMove(IEnumerable<bool> admittedMeet, PromotionWave wave) =>
++        admittedMeet.Any(meets => meets || wave.ProcessedStage >= PromotionStage.Artifacts);
+ }
+diff --git a/src/Competency.Promotion/StageActions.cs b/src/Competency.Promotion/StageActions.cs
+index 4517249d..6eba505d 100644
+--- a/src/Competency.Promotion/StageActions.cs
++++ b/src/Competency.Promotion/StageActions.cs
+@@ -195,6 +195,7 @@ internal sealed class StageActions(
+             .ToListAsync(cancellationToken);
+         foreach (var application in undecided)
+         {
++            application.WasHeldAtClose = application.Status == ApplicationStatus.Admitted;
+             application.Status = ApplicationStatus.NoDecision;
+         }
+     }
+diff --git a/src/Competency.Promotion/WaveStep.cs b/src/Competency.Promotion/WaveStep.cs
+index ccbda568..146f092e 100644
+--- a/src/Competency.Promotion/WaveStep.cs
++++ b/src/Competency.Promotion/WaveStep.cs
+@@ -53,7 +53,7 @@ internal sealed class WaveStep(
+         await using (var transaction = await locks.BeginSharedAsync(cancellationToken))
+         {
+             if (await locks.FindWaveForUpdateSkippingLockedAsync(waveId, cancellationToken) is not { } locked
+-                || DueStep.Next(locked, calendar, await HasArrivalsAsync(waveId, cancellationToken), await HasAdmittedAsync(waveId, cancellationToken)) is not { } next
++                || DueStep.Next(locked, calendar, await HasArrivalsAsync(waveId, cancellationToken), await HasAdmittedAsync(waveId, locked.ProcessedStage, cancellationToken)) is not { } next
+                 || await ApplyAsync(locked, next, cancellationToken) is not { } applied)
+             {
+                 return StepResult.Idle;
+@@ -76,8 +76,17 @@ internal sealed class WaveStep(
+     private Task<bool> HasArrivalsAsync(Guid waveId, CancellationToken cancellationToken) =>
+         context.Set<PromotionApplication>().AnyAsync(application => application.WaveId == waveId && application.ReviewLetterPending, cancellationToken);
+ 
+-    private Task<bool> HasAdmittedAsync(Guid waveId, CancellationToken cancellationToken) =>
+-        context.Set<PromotionApplication>().AnyAsync(application => application.WaveId == waveId && application.Status == ApplicationStatus.Admitted && application.MeetsAfterRating != null, cancellationToken);
++    /// <summary>
++    /// Whether some admitted application can move now: one that meets the mandatory requirements, or any once the artifact stage has ended. Before that
++    /// the others wait for the deadline or for the candidate's word.
++    /// </summary>
++    private Task<bool> HasAdmittedAsync(Guid waveId, int processedStage, CancellationToken cancellationToken) =>
++        context.Set<PromotionApplication>().AnyAsync(
++            application => application.WaveId == waveId
++                && application.Status == ApplicationStatus.Admitted
++                && application.MeetsAfterRating != null
++                && (application.MeetsAfterRating == true || processedStage >= PromotionStage.Artifacts),
++            cancellationToken);
+ 
+     /// <summary>
+     /// Makes the changes of a step.
+diff --git a/tests/Competency.Tests/Infrastructure/PromotionScene.cs b/tests/Competency.Tests/Infrastructure/PromotionScene.cs
+index fbb5d89e..b2d6d56c 100644
+--- a/tests/Competency.Tests/Infrastructure/PromotionScene.cs
++++ b/tests/Competency.Tests/Infrastructure/PromotionScene.cs
+@@ -139,19 +139,17 @@ public sealed class PromotionScene
+     /// every stage before it, and for the first stage until it has fixed the matrix versions.
+     /// </summary>
+     /// <param name="stage">The stage, 1 to 6, or 7 for a session that is over.</param>
+-    /// <param name="waveId">The session to move; the scene's own by default.</param>
+-    public async Task PutInStageAsync(int stage, Guid? waveId = null)
++    public async Task PutInStageAsync(int stage)
+     {
+-        var id = waveId ?? WaveId;
+         var ended = Today.AddDays(-PastMarginDays);
+         var ends = Enumerable.Range(0, StageLengths.Length)
+             .Select(index => index < stage - 1 ? ended : Today.AddDays(StageStepDays + (index - (stage - 1)) * StageStepDays))
+             .Select(day => $"'{day:yyyy-MM-dd}'");
+         await Host.ExecuteAsync(
+-            $"UPDATE promotion_waves SET starts_on = '{Today.AddDays(-30):yyyy-MM-dd}', ends_on = ARRAY[{string.Join(", ", ends)}]::date[] WHERE id = '{id}'");
++            $"UPDATE promotion_waves SET starts_on = '{Today.AddDays(-30):yyyy-MM-dd}', ends_on = ARRAY[{string.Join(", ", ends)}]::date[] WHERE id = '{WaveId}'");
+         await Waiting.UntilAsync(
+-            async () => await Host.ScalarAsync<bool>($"SELECT versions_fixed FROM promotion_waves WHERE id = '{id}'")
+-                && await Host.ScalarAsync<int>($"SELECT processed_stage FROM promotion_waves WHERE id = '{id}'") >= stage - 1,
++            async () => await Host.ScalarAsync<bool>($"SELECT versions_fixed FROM promotion_waves WHERE id = '{WaveId}'")
++                && await Host.ScalarAsync<int>($"SELECT processed_stage FROM promotion_waves WHERE id = '{WaveId}'") >= stage - 1,
+             $"the scheduler settled the stages before stage {stage}",
+             PassTimeout);
+     }
+diff --git a/tests/Competency.Tests/PromotionHeldApplicationTests.cs b/tests/Competency.Tests/PromotionHeldApplicationTests.cs
+index cd8af082..e361c357 100644
+--- a/tests/Competency.Tests/PromotionHeldApplicationTests.cs
++++ b/tests/Competency.Tests/PromotionHeldApplicationTests.cs
+@@ -98,4 +98,63 @@ public sealed class PromotionHeldApplicationTests(PromotionHost fixture, TestEnv
+         (await scene.StatusNowAsync(session.Team, session.TeamApplication.Id)).Should().Be("Decided");
+         (await scene.StatusNowAsync(session.Sibling, session.SiblingApplication.Id)).Should().Be("NoDecision");
+     }
++
++    [Theory]
++    [InlineData(4)]
++    [InlineData(5)]
++    public async Task Ac66_Ac53_AnApplicationHeldToTheEndOfTheCommissionStage_AfterARollbackWaitsForTheChairAgain_AndReachesTheCommissionWithALetter(int stage)
++    {
++        var session = await RatedSessionWithoutSiblingChairAsync();
++        var scene = session.Scene;
++        await scene.PutInStageAsync(6);
++        (await scene.StatusNowAsync(session.Sibling, session.SiblingApplication.Id)).Should().Be("NoDecision");
++        (await scene.StatusNowAsync(session.Team, session.TeamApplication.Id)).Should().Be("NoDecision");
++
++        await RollBackAsync(scene, stage);
++
++        (await scene.StatusNowAsync(session.Sibling, session.SiblingApplication.Id)).Should().Be("Admitted", "without a chair it is held again, not handed to a commission that cannot act");
++        (await scene.StatusNowAsync(session.Team, session.TeamApplication.Id)).Should().Be("UnderReview", "the unit with a chair, left without a decision by the end, returns to its commission");
++
++        var newChair = scene.Org.DepartmentHead;
++        (await PromotionScene.SaveCommissionAsync(scene.Org.SiblingHr.Client, scene.Org.Sibling.Id, [newChair.Employee], newChair.Employee)).Expect(HttpStatusCode.OK);
++        await Waiting.UntilAsync(
++            async () => await scene.StatusNowAsync(session.Sibling, session.SiblingApplication.Id) == "UnderReview",
++            "the held application reached the commission once the chair was named",
++            TimeSpan.FromSeconds(60));
++
++        (await environment.Mail.WaitForContainingAsync(newChair.User.Email, $"promotion/commission/{scene.WaveId}/{scene.Org.Sibling.Id}")).Should().NotBeEmpty("the new chair is told of the application that arrived");
++    }
++
++    [Fact]
++    public async Task Ac66_Ac65_AnApplicationOwingArtifactsHeldPastTheDeadline_ReachesTheNewChairMarkedAsMissingThem()
++    {
++        var scene = await fixture.NewSceneAsync(withSibling: true);
++        var raters = await scene.NewRatersAsync(3, 2);
++        var candidate = await scene.NewCandidateAsync(scene.Sibling!);
++        var application = await scene.SubmitForAdmissionAsync(candidate, raters, scene.Sibling);
++        await scene.BlockAsync(scene.Org.SiblingHead);
++        await scene.PutInStageAsync(3);
++        await scene.RateAsync(raters, application.Id, 2, 4, scene.Sibling);
++        await scene.PutInStageAsync(5);
++        (await scene.StatusNowAsync(candidate, application.Id)).Should().Be("Admitted", "the deadline passed, but no commission can take it");
++
++        var newChair = scene.Org.DepartmentHead;
++        (await PromotionScene.SaveCommissionAsync(scene.Org.SiblingHr.Client, scene.Org.Sibling.Id, [newChair.Employee], newChair.Employee)).Expect(HttpStatusCode.OK);
++        await Waiting.UntilAsync(
++            async () => await scene.StatusNowAsync(candidate, application.Id) == "UnderReview",
++            "the held application reached the commission once the chair was named",
++            TimeSpan.FromSeconds(60));
++
++        var review = (await newChair.Client.GetAsync($"/api/v1/promotion/applications/{application.Id}/review")).Expect(HttpStatusCode.OK);
++        review.Json!["artifactsMissing"]!.GetValue<bool>().Should().BeTrue("it owed an artifact and gave none");
++    }
++
++    private static async Task RollBackAsync(PromotionScene scene, int stage)
++    {
++        var route = $"/api/v1/promotion/waves/{scene.WaveId}/rollback";
++        var wave = (await scene.Org.Admin.GetAsync($"/api/v1/promotion/waves/{scene.WaveId}")).Expect(HttpStatusCode.OK);
++        var ends = wave.Json!["endsOn"]!.AsArray().Select(day => DateOnly.Parse(day!.GetValue<string>())).ToArray();
++        var renewed = ends.Select((end, index) => index < stage - 1 ? end : PromotionScene.Today.AddDays(3 * (index - stage + 2)));
++        (await scene.Org.Admin.PostAsync(route, new { stage, endsOn = renewed }, wave.ETag)).Expect(HttpStatusCode.OK);
++    }
+ }
+diff --git a/tests/Competency.Tests/PromotionScoringTests.cs b/tests/Competency.Tests/PromotionScoringTests.cs
+index e592fe43..3fdafa21 100644
+--- a/tests/Competency.Tests/PromotionScoringTests.cs
++++ b/tests/Competency.Tests/PromotionScoringTests.cs
+@@ -256,6 +256,20 @@ public sealed class PromotionScoringTests
+         }
+     }
+ 
++    [Theory]
++    [InlineData(PromotionStage.Artifacts)]
++    [InlineData(PromotionStage.Review)]
++    public void Ac66_AnApplicationHeldForWantOfAChairWhenTheCommissionStageEnded_GoesBackToAdmitted_AndIsMarkedNoMore(int stage)
++    {
++        var held = new PromotionApplication { Status = ApplicationStatus.NoDecision, MeetsAfterRating = true, WasHeldAtClose = true, ReviewLetterPending = true };
++
++        held.ReturnToStage(stage);
++
++        held.Status.Should().Be(ApplicationStatus.Admitted, "it never reached the commission, so it is handed over with the chair check again");
++        held.ReviewLetterPending.Should().BeFalse();
++        held.WasHeldAtClose.Should().BeFalse();
++    }
++
+     [Fact]
+     public void Ac53_AnApplicationTheChairAlreadyDecided_IsDecidedAgainAtOnce_WhenItReachesTheCommissionAgain()
+     {
+diff --git a/web/src/features/org-structure/useUnitTreeSearch.ts b/web/src/features/org-structure/useUnitTreeSearch.ts
+index 2d14ef38..70c99ac0 100644
+--- a/web/src/features/org-structure/useUnitTreeSearch.ts
++++ b/web/src/features/org-structure/useUnitTreeSearch.ts
+@@ -42,6 +42,8 @@ function keysOf<TNode extends SearchableNode<TNode>>(
+  * Props that make a unit TreeSelect filter its own tree. rc-tree-select would filter and re-expand the whole tree
+  * synchronously on every keystroke; here the typed text shows at once and the tree follows from a deferred render.
+  * The popup gets a fixed width, because the app-wide `popupMatchSelectWidth={false}` would make the list non-virtual.
++ * `treeNodeFilterProp` stays so the tree still marks matches although `filterTreeNode` is off; while searching the expansion is
++ * controlled so every unit of the found tree is open.
+  */
+ export function useUnitTreeSearch<TNode extends SearchableNode<TNode>>(
+   treeData: TNode[],
+@@ -61,10 +63,8 @@ export function useUnitTreeSearch<TNode extends SearchableNode<TNode>>(
+       searchValue: text,
+       onSearch: setText,
+       filterTreeNode: false,
+-      // Still names what the tree lights up as a match.
+       treeNodeFilterProp: "title",
+     },
+-    // While searching every unit of the found tree is open; otherwise the select keeps its own expansion.
+     treeExpandedKeys: text ? expandedKeys : undefined,
+   };
+ }
