@@ -11,7 +11,7 @@ responsibility:
 
 | Entry | HEAD analysed | Scope |
 |---|---|---|
-| 1 |  | full change surface |
+| 1 | dcaa6b85 | full change surface |
 
 ## Risk → check decisions
 

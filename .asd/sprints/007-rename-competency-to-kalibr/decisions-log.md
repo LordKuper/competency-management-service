@@ -52,3 +52,8 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Impl принят адаптивно: Task 1 (`198631db` git mv, `07d83cca` содержимое), Task 2 (`f62e2c5f`), Task 3 (`ce7a2ea8`) и правки оркестратора `commands.yaml`, `custom-coding-rules.md`, `custom-common-rules.md` с правилом AC-16 (`b176f509`). Флаг тестера «`dotnet test --solution Kalibr.slnx` находит 0 тестов» проверен: `dotnet test --solution Kalibr.slnx --no-build --list-tests` находит 952 теста, код 0 — дефекта нет, причина в способе запуска самопроверки.
 - **Rationale**: Все подзадачи отмечены; `dotnet build Kalibr.slnx` (Debug и Release) — 0 предупреждений и 0 ошибок, web `build`, `lint`, `check:api` чисты, `has-pending-model-changes` чист; диф раунда не выходит за пути задач и строки оркестратора плана. Сброс сессий и смена `info.title` разрешены AC-5 и AC-8; заглушек спринт не добавил.
 - **Affected docs**: [plan.md](plan.md)
+- 2026-10-30 — route impl-test entry 1: standard, dispatch HEAD 5d32467a
+- 2026-10-30 — memory-fix: retired agents asd-dev-critical (14), asd-tester-critical (1), asd-reviewer-correctness (1), asd-reviewer-testing (1) — product-name files deleted with their MEMORY.md lines, b2f62ebb
+- 2026-10-30 — memory-fix: asd-dev leftover-term hits (perf-measure-temp-db, hosted-service-ctor-options) fixed by owner, 746be450
+- 2026-10-30 — memory-fix: asd-tester leftover-term hits (backend-tests-scratch-build) fixed by owner, AC-14 and AC-19 recorded (threshold-is-contract, suite-timing-operation), 1718aa70
+- 2026-10-30 — impl-test: impacted set green (full suite by safety valve: .NET 952/952, web 850/850 @1718aa70), 0/0 tests
