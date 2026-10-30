@@ -1,18 +1,18 @@
-name: competency-dev
+name: kalibr-dev
 
 services:
   db:
     image: postgres:18.6-trixie
     environment:
-      POSTGRES_USER: competency
+      POSTGRES_USER: kalibr
       POSTGRES_PASSWORD: dev_pass_123
-      POSTGRES_DB: competency
+      POSTGRES_DB: kalibr
     ports:
       - "127.0.0.1:${DEV_DB_PORT:-15432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U competency -d competency"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U kalibr -d kalibr"]
       interval: 3s
       timeout: 3s
       retries: 20
@@ -29,4 +29,4 @@ services:
 
 volumes:
   pgdata:
-    name: competency-dev-pgdata
+    name: kalibr-dev-pgdata

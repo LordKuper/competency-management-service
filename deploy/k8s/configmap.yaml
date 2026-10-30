@@ -4,10 +4,10 @@ metadata:
   name: app-config
   labels:
     app.kubernetes.io/name: app
-    app.kubernetes.io/part-of: competency
+    app.kubernetes.io/part-of: kalibr
 data:
   # Must equal the mountPath of the app-keys volume in app.yaml.
-  DataProtection__KeysPath: /var/lib/competency/keys
+  DataProtection__KeysPath: /var/lib/kalibr/keys
   # Where TLS ends is not decided yet. Switch to Always once it ends in front of the app,
   # otherwise the session cookie is issued without the Secure flag.
   Authentication__Cookie__SecurePolicy: SameAsRequest
@@ -33,8 +33,8 @@ metadata:
   name: db-config
   labels:
     app.kubernetes.io/name: db
-    app.kubernetes.io/part-of: competency
+    app.kubernetes.io/part-of: kalibr
 data:
   # Must match Database and Username in ConnectionStrings__Default of the Secret.
-  POSTGRES_USER: competency
-  POSTGRES_DB: competency
+  POSTGRES_USER: kalibr
+  POSTGRES_DB: kalibr

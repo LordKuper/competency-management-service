@@ -30,36 +30,36 @@
      --build-arg NODE_IMAGE=node:24.21.0-trixie-slim@sha256:<DIGEST> \
      --build-arg SDK_IMAGE=mcr.microsoft.com/dotnet/sdk:10.0.401@sha256:<DIGEST> \
      --build-arg RUNTIME_IMAGE=mcr.microsoft.com/dotnet/aspnet:10.0.12-noble@sha256:<DIGEST> \
-     -t competency-app:<VERSION> .
+     -t kalibr-app:<VERSION> .
    ```
 
    Без `--build-arg` берутся теги — только для локальных проверок. Версии SDK и runtime меняются парой (`10.0.401` ↔ `10.0.12`), цикл патчей .NET — ежемесячно.
 
-3. Просканировать `competency-app` и `postgres` на уязвимости, сформировать SBOM (инструменты стеком не заданы) и приложить результаты к поставке.
+3. Просканировать `kalibr-app` и `postgres` на уязвимости, сформировать SBOM (инструменты стеком не заданы) и приложить результаты к поставке.
 
 ## 2. Перенос в контур
 
 - Есть внутренний registry: `docker push`, узлы забирают образы сами.
-- Нет registry: `docker save -o competency-images.tar competency-app:<VERSION> postgres:18.6-trixie`, перенос архива, импорт на каждом узле, где может запуститься под (для containerd — `ctr -n k8s.io images import competency-images.tar`). `imagePullPolicy: IfNotPresent` — pull не требуется.
+- Нет registry: `docker save -o kalibr-images.tar kalibr-app:<VERSION> postgres:18.6-trixie`, перенос архива, импорт на каждом узле, где может запуститься под (для containerd — `ctr -n k8s.io images import kalibr-images.tar`). `imagePullPolicy: IfNotPresent` — pull не требуется.
 
-Digest в манифестах: `postgres:18.6-trixie@sha256:<DIGEST>` в `db.yaml` и `competency-app:<VERSION>@sha256:<DIGEST>` в `app.yaml`. Digest у собранного локально образа появляется после `docker push`; при tar-доставке соответствие digest после импорта не проверено — сверить на узле (`crictl images --digests`), а если digest недоступен, оставить ссылку по тегу без `@sha256:<DIGEST>`.
+Digest в манифестах: `postgres:18.6-trixie@sha256:<DIGEST>` в `db.yaml` и `kalibr-app:<VERSION>@sha256:<DIGEST>` в `app.yaml`. Digest у собранного локально образа появляется после `docker push`; при tar-доставке соответствие digest после импорта не проверено — сверить на узле (`crictl images --digests`), а если digest недоступен, оставить ссылку по тегу без `@sha256:<DIGEST>`.
 
 ## 3. Применение
 
 Реальный Secret создаёт оператор; значения в репозиторий не попадают.
 
 ```
-kubectl create namespace competency
-cp deploy/secret.template.yaml <путь вне репозитория>/competency-secret.yaml
+kubectl create namespace kalibr
+cp deploy/secret.template.yaml <путь вне репозитория>/kalibr-secret.yaml
 # заполнить плейсхолдеры, затем:
-kubectl -n competency apply -f <путь вне репозитория>/competency-secret.yaml
+kubectl -n kalibr apply -f <путь вне репозитория>/kalibr-secret.yaml
 # заполнить плейсхолдеры в deploy/k8s/configmap.yaml (почта и публичный адрес), затем:
-kubectl -n competency apply -f deploy/k8s/
-kubectl -n competency rollout status statefulset/db
-kubectl -n competency rollout status deployment/app
+kubectl -n kalibr apply -f deploy/k8s/
+kubectl -n kalibr rollout status statefulset/db
+kubectl -n kalibr rollout status deployment/app
 ```
 
-Поля Secret `competency-secret`:
+Поля Secret `kalibr-secret`:
 
 - `POSTGRES_PASSWORD` — пароль пользователя БД; `ConnectionStrings__Default` — строка подключения `app` с тем же паролем (без `;` и кавычек в пароле); `Database` и `Username` совпадают с `db-config`; `GSS Encryption Mode=Disable` из шаблона оставить (причина — в комментарии шаблона). Пароль применяется при первой инициализации тома: позже Secret его не меняет.
 - `Bootstrap__AdminEmail`, `Bootstrap__AdminPassword` — первый глобальный администратор: его e-mail и пароль задаются при развёртывании так же, как пароль БД, и в репозиторий не попадают. E-mail одновременно служит именем для входа (отдельного имени пользователя нет), должен быть корректным адресом не длиннее 254 символов. Пароль подчиняется политике Identity: не короче 10 символов, цифра, строчная и заглавная буква, неалфавитно-цифровой символ.
@@ -68,7 +68,7 @@ kubectl -n competency rollout status deployment/app
 
 Почта и публичный адрес в `app-config` (`deploy/k8s/configmap.yaml`):
 
-- `App__PublicBaseUrl` — адрес, по которому пользователи открывают приложение (например, `https://competency.corp.example`); с него начинаются все ссылки в письмах, заголовок `Host` запроса на них не влияет.
+- `App__PublicBaseUrl` — адрес, по которому пользователи открывают приложение (например, `https://kalibr.corp.example`); с него начинаются все ссылки в письмах, заголовок `Host` запроса на них не влияет.
 - `Smtp__Host`, `Smtp__Port` — корпоративный SMTP relay; `Smtp__From` — адрес отправителя, можно с именем: `Имя <адрес>`.
 - `Smtp__SecureSocketOptions` — защита соединения: `StartTls` (порт 587, значение по умолчанию), `SslOnConnect` (порт 465), `StartTlsWhenAvailable`, `Auto`, `None`. `None` и `StartTlsWhenAvailable` допускают отправку без шифрования — только для перехватчика почты в разработке.
 - `Smtp__Timeout` — предел одной отправки (по умолчанию `00:00:15`): письма по действиям администратора уходят сразу после сохранения, и его запрос ждёт отправку не дольше этого времени.
@@ -81,7 +81,7 @@ kubectl -n competency rollout status deployment/app
 
 Отключать проверку сертификата нельзя. После развёртывания проверить отправку: например, отправить приглашение на свой адрес.
 
-Доступ без Ingress, для проверки: `kubectl -n competency port-forward svc/app 8080:8080` и `curl http://localhost:8080/healthz/ready`.
+Доступ без Ingress, для проверки: `kubectl -n kalibr port-forward svc/app 8080:8080` и `curl http://localhost:8080/healthz/ready`.
 
 ## 4. Поведение при старте
 
@@ -89,7 +89,9 @@ kubectl -n competency rollout status deployment/app
 - До миграций `app` проверяет настройки почты и публичного адреса: не задан или неверен `Smtp__Host`, `Smtp__Port`, `Smtp__SecureSocketOptions` (не одно из перечисленных выше значений), `Smtp__From`, `Smtp__Timeout` (не положительный или больше `49.17:02:47.294`), `App__PublicBaseUrl` (не абсолютный http(s) URL) или задан только один из `Smtp__UserName`/`Smtp__Password` — старт завершается ошибкой, в которой названы неверные ключи (логин и пароль SMTP в журнал не попадают). Доступность relay при старте не проверяется: отказ отправки виден только при отправке письма. Существующее развёртывание при обновлении до этой версии не стартует, пока эти ключи не заполнены в `app-config`.
 - Kubernetes не гарантирует порядок запуска: пока `db` не готова, процесс `app` завершается и перезапускается — на первом развёртывании возможны рестарты.
 - Если активного глобального администратора нет, `app` создаёт его из `Bootstrap__AdminEmail` и `Bootstrap__AdminPassword`; существующего не перезаписывает. Нет администратора и нет одного из ключей — старт завершается ошибкой, в которой назван недостающий ключ (пароль в журнал не попадает). После первого входа ключи `Bootstrap__*` можно убрать из Secret (`optional: true`).
-- Обновление существующего развёртывания: схема БД меняется инкрементальными миграциями с переносом данных, их применяет `MigrateAsync` при старте `app`; контракт API до релиза 1.0 остаётся версии 1.0.0 (`info.version`, путь `/api/v1`) и меняется без перехода. Пересоздавать нужно только базу, в `__EFMigrationsHistory` которой есть миграция, удалённая из линии (`20261021142744_InitialCreate` или миграции раньше `20261021091246_InitialCreate`): иначе `MigrateAsync` пытается заново создать существующие таблицы и старт `app` завершается ошибкой. Пересоздание: `kubectl -n competency scale deployment/app --replicas=0`, `kubectl -n competency delete statefulset db`, `kubectl -n competency delete pvc data-db-0`, затем снова `kubectl -n competency apply -f deploy/k8s/`. Все данные, включая журнал `audit`, удаляются; администратор создаётся заново из `Bootstrap__*`, поэтому эти ключи должны быть в Secret. Перед релизом 1.0 миграции схлопываются в одну `InitialCreate`, и пересоздаются все базы.
+- Обновление существующего развёртывания: схема БД меняется инкрементальными миграциями с переносом данных, их применяет `MigrateAsync` при старте `app`; контракт API до релиза 1.0 остаётся версии 1.0.0 (`info.version`, путь `/api/v1`) и меняется без перехода. Пересоздавать нужно только базу, в `__EFMigrationsHistory` которой есть миграция, удалённая из линии (`20261021142744_InitialCreate` или миграции раньше `20261021091246_InitialCreate`): иначе `MigrateAsync` пытается заново создать существующие таблицы и старт `app` завершается ошибкой. Пересоздание: `kubectl -n kalibr scale deployment/app --replicas=0`, `kubectl -n kalibr delete statefulset db`, `kubectl -n kalibr delete pvc data-db-0`, затем снова `kubectl -n kalibr apply -f deploy/k8s/`. Все данные, включая журнал `audit`, удаляются; администратор создаётся заново из `Bootstrap__*`, поэтому эти ключи должны быть в Secret. Перед релизом 1.0 миграции схлопываются в одну `InitialCreate`, и пересоздаются все базы.
+- После обновления все пользователи один раз выходят из сессии, неиспользованные ссылки сброса пароля и приглашения недействительны.
+- Установка со старыми именами (`competency`) не переносится: Kalibr ставится заново.
 - Ключи DataProtection лежат на PVC `app-keys` (путь `DataProtection__KeysPath`); пока том жив, cookie-сессии переживают рестарт. `strategy: Recreate`, одна реплика: том `ReadWriteOnce`, а миграции не должны идти из двух подов.
 - Данные PostgreSQL — на PVC `data-db-0`, смонтированном строго в `/var/lib/postgresql`; каталог данных не переопределяется.
 
