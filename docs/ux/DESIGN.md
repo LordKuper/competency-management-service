@@ -1,6 +1,6 @@
 ---
 version: alpha
-name: Competency Management Service
+name: Kalibr
 description: Design system for the corporate competency-matrix and promotion service (web SPA, React + antd 6, offline corporate network). Palette derived from the corporate REC/EXIAR presentation template.
 provenance: original
 colors:
@@ -536,7 +536,7 @@ components:
     size: "{spacing.control-height-md}"
 ---
 
-# Competency Management Service - Design System
+# Kalibr - Design System
 
 ## Overview
 
