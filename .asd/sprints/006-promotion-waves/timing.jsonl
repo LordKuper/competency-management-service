@@ -115,3 +115,13 @@
 {"op":"close","id":"Task 27 r2","kind":"dispatch","parent":"impl#1","start":"2026-10-29T22:22:42.667Z","end":"2026-10-29T22:23:45.677Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl assessment r7","kind":"user-wait","parent":"impl#1","start":"2026-10-29T22:24:24.657Z","attrs":{"gate":"impl-assessment"}}
 {"op":"close","id":"impl assessment r7","kind":"user-wait","parent":"impl#1","start":"2026-10-29T22:24:24.657Z","end":"2026-10-30T06:32:32.103Z","outcome":"done","attrs":{"gate":"impl-assessment"}}
+{"op":"close","id":"impl#1","kind":"phase","parent":null,"start":"2026-10-27T18:41:29.982Z","end":"2026-10-30T06:33:02.293Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test#1","kind":"phase","parent":null,"start":"2026-10-30T06:33:02.375Z","attrs":{}}
+{"op":"open","id":"impl-test-1","kind":"dispatch","parent":"impl-test#1","start":"2026-10-30T06:34:09.261Z","attrs":{}}
+{"op":"open","id":"suite impl-test#1","kind":"suite","parent":"impl-test-1","start":"2026-10-30T06:35:20.548Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-test#1","kind":"suite","parent":"impl-test-1","start":"2026-10-30T06:35:20.548Z","end":"2026-10-30T07:34:42.094Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"impl-test-1","kind":"dispatch","parent":"impl-test#1","start":"2026-10-30T06:34:09.261Z","end":"2026-10-30T07:36:41.990Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl-test-1 r2","kind":"dispatch","parent":"impl-test#1","start":"2026-10-30T07:37:58.817Z","attrs":{}}
+{"op":"open","id":"suite desk-query-count","kind":"suite","parent":"impl-test-1","start":"2026-10-30T07:38:02.567Z","attrs":{"scope":"DeskQueryCountTests"}}
+{"op":"close","id":"suite desk-query-count","kind":"suite","parent":"impl-test-1","start":"2026-10-30T07:38:02.567Z","end":"2026-10-30T07:38:50.298Z","outcome":"done","attrs":{"scope":"DeskQueryCountTests"}}
+{"op":"close","id":"impl-test-1 r2","kind":"dispatch","parent":"impl-test#1","start":"2026-10-30T07:37:58.817Z","end":"2026-10-30T07:40:17.446Z","outcome":"done","attrs":{}}
