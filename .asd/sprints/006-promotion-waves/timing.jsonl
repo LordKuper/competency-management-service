@@ -247,3 +247,6 @@
 {"op":"open","id":"retro#1","kind":"phase","parent":null,"start":"2026-10-30T12:27:48.659Z","attrs":{}}
 {"op":"close","id":"retro#1","kind":"phase","parent":null,"start":"2026-10-30T12:27:48.659Z","end":"2026-10-30T12:37:58.740Z","outcome":"done","attrs":{}}
 {"op":"open","id":"pr#1","kind":"phase","parent":null,"start":"2026-10-30T12:37:58.740Z","attrs":{}}
+{"op":"open","id":"wait PR publication","kind":"user-wait","parent":"pr#1","start":"2026-10-30T12:53:37.516Z","attrs":{"gate":"PR publication"}}
+{"op":"close","id":"wait PR publication","kind":"user-wait","parent":"pr#1","start":"2026-10-30T12:53:37.516Z","end":"2026-10-30T12:55:59.098Z","outcome":"done","attrs":{"gate":"PR publication"}}
+{"op":"close","id":"pr#1","kind":"phase","parent":null,"start":"2026-10-30T12:37:58.740Z","end":"2026-10-30T12:56:23.766Z","outcome":"done","attrs":{}}
