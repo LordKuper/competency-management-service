@@ -37,3 +37,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
+- 2026-10-30 — pr open mode DoD: plan 131/131 checked; reviews.impl wave 1/1, iter-04 combined APPROVE (latched), external APPROVE (skipped) — satisfied; retrospective.html present; no PR for sprint/006-promotion-waves (head-branch lookup empty). Code changed since full-suite HEAD 4546dfef (cleanup: FinalScoreResponse.cs, promotionApi.ts) → re-run at b989a201: dotnet build 0/0, web build, lint, check:api exit 0; backend 952/952 exit 0; web default workers red three times (linkScreens.test.tsx 5 s timeout, catalogueTables.test.tsx findByRole) and green alone (38/38); full web with --maxWorkers=4 850/850 exit 0 — known parallel-worker load noise (test-plan entries 3, 4)
