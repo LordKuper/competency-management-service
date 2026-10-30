@@ -124,8 +124,18 @@ internal sealed class ApplicationReader(
         }
 
         var answers = await context.Set<PromotionRaterScore>().AsNoTracking().Where(answer => answer.ApplicationId == application.Id).ToListAsync(cancellationToken);
-        return CircularRating.UnmetCompetencyIds(career.Score(version, application.LevelId, CircularRating.Averages(answers)));
+        return MandatoryArtifactIds(application, version, answers);
     }
+
+    /// <summary>
+    /// Finds the competencies the candidate must give an artifact for, from answers the caller has already read.
+    /// </summary>
+    /// <param name="application">The application.</param>
+    /// <param name="version">The version the application is assessed by.</param>
+    /// <param name="answers">The answers of the raters to the application.</param>
+    /// <returns>The competencies; none until the rating stage has been checked and found the candidate short.</returns>
+    public IReadOnlyList<Guid> MandatoryArtifactIds(PromotionApplication application, CareerVersion version, IEnumerable<PromotionRaterScore> answers) =>
+        application.MeetsAfterRating == false ? CircularRating.UnmetCompetencyIds(career.Score(version, application.LevelId, CircularRating.Averages(answers))) : [];
 
     /// <summary>
     /// Reads the final scores the chair gave.

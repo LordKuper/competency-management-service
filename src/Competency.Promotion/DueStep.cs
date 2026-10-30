@@ -21,6 +21,11 @@ internal enum DueKind
     NotifyCommissions,
 
     /// <summary>
+    /// Hands over the applications held back for want of a chair, to the commissions that have one now.
+    /// </summary>
+    ReachHeld,
+
+    /// <summary>
     /// Reminds the raters, once, shortly before the rating stage ends.
     /// </summary>
     RemindRaters,
@@ -45,8 +50,9 @@ internal readonly record struct DueStep(DueKind Kind, int Stage)
     /// <param name="wave">The wave.</param>
     /// <param name="calendar">The clock of the organization.</param>
     /// <param name="hasArrivals">Whether applications have reached a commission whose members have not been told.</param>
+    /// <param name="hasAdmitted">Whether some application of the wave still waits, admitted, to reach a commission. Whether one can is for the step to find out.</param>
     /// <returns>The step; <see langword="null"/> when the wave is up to date.</returns>
-    public static DueStep? Next(PromotionWave wave, PromotionCalendar calendar, bool hasArrivals)
+    public static DueStep? Next(PromotionWave wave, PromotionCalendar calendar, bool hasArrivals, bool hasAdmitted = false)
     {
         var stage = calendar.StageOf(wave);
         if (!wave.VersionsFixed)
@@ -62,6 +68,11 @@ internal readonly record struct DueStep(DueKind Kind, int Stage)
         if (hasArrivals)
         {
             return new DueStep(DueKind.NotifyCommissions, stage);
+        }
+
+        if (hasAdmitted && wave.ProcessedStage >= PromotionStage.Rating && stage <= PromotionStage.Review)
+        {
+            return new DueStep(DueKind.ReachHeld, stage);
         }
 
         return stage == PromotionStage.Rating && !wave.RaterReminderSent && calendar.TimeLeft(wave, PromotionStage.Rating) < ReminderLead

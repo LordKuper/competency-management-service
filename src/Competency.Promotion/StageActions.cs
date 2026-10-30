@@ -72,38 +72,20 @@ internal sealed class StageActions(
     }
 
     /// <summary>
-    /// Finds the units whose commission would review admitted applications but has no chair who acts; the applications reach no commission without one.
-    /// </summary>
-    /// <param name="wave">The wave.</param>
-    /// <param name="cancellationToken">Cancels the lookups.</param>
-    /// <returns>The names of the units; empty when every such commission has a chair.</returns>
-    public async Task<IReadOnlyList<string>> UnitsWithoutChairAsync(PromotionWave wave, CancellationToken cancellationToken)
-    {
-        var unitIds = await context.Set<PromotionApplication>()
-            .AsNoTracking()
-            .Where(application => application.WaveId == wave.Id && application.Status == ApplicationStatus.Admitted)
-            .Select(application => application.OrgUnitId)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-        return [.. (await commissions.ReadAsync(unitIds, cancellationToken)).Values
-            .Where(roster => roster.ChairEmployeeId is null)
-            .Select(roster => roster.UnitName)
-            .Order(StringComparer.Ordinal)];
-    }
-
-    /// <summary>
     /// Hands admitted applications to the commission: those that owe no mandatory artifact when the rating stage ends. At the deadline of the artifact
     /// stage the rest follow, marked as missing the artifacts they did not give; those who sent the application themselves are already there. An application
-    /// the chair already decided on, before the wave went back to an earlier stage, is decided again at once. A caller has checked that every commission
-    /// concerned has a chair.
+    /// the chair already decided on, before the wave went back to an earlier stage, is decided again at once. An application of a unit whose commission has
+    /// no chair who acts is held: it stays admitted, and a later call hands it over once a chair is there.
     /// </summary>
     /// <param name="wave">The wave.</param>
     /// <param name="isDeadline">Whether the artifact stage has ended.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    public async Task ReachCommissionAsync(PromotionWave wave, bool isDeadline, CancellationToken cancellationToken)
+    /// <returns>The number of applications handed over.</returns>
+    public async Task<int> ReachCommissionAsync(PromotionWave wave, bool isDeadline, CancellationToken cancellationToken)
     {
         var admitted = await ApplicationsAsync(wave.Id, ApplicationStatus.Admitted, cancellationToken);
         var facts = await applications.TargetsAsync(admitted, cancellationToken);
+        var rosters = await commissions.ReadAsync([.. admitted.Select(application => application.OrgUnitId).Distinct()], cancellationToken);
         var ids = admitted.Select(application => application.Id).ToArray();
         var given = (await context.Set<PromotionArtifact>()
                 .AsNoTracking()
@@ -111,18 +93,28 @@ internal sealed class StageActions(
                 .Select(artifact => new { artifact.ApplicationId, artifact.CompetencyId })
                 .ToListAsync(cancellationToken))
             .ToLookup(artifact => artifact.ApplicationId, artifact => artifact.CompetencyId);
+        var answers = (await context.Set<PromotionRaterScore>().AsNoTracking().Where(answer => ids.Contains(answer.ApplicationId)).ToListAsync(cancellationToken))
+            .ToLookup(answer => answer.ApplicationId);
+        var reached = 0;
         foreach (var application in admitted)
         {
-            var mandatory = await applications.MandatoryArtifactIdsAsync(application, facts[application.Id].Version, cancellationToken);
-            var isMissing = mandatory.Any(competencyId => !given[application.Id].Contains(competencyId));
+            if (rosters.GetValueOrDefault(application.OrgUnitId)?.ChairEmployeeId is null)
+            {
+                continue;
+            }
+
+            var mandatory = applications.MandatoryArtifactIds(application, facts[application.Id].Version, answers[application.Id]);
             if (mandatory.Count > 0 && !isDeadline)
             {
                 continue;
             }
 
-            application.ArtifactsMissing = isMissing;
+            application.ArtifactsMissing = mandatory.Any(competencyId => !given[application.Id].Contains(competencyId));
             application.ReachCommission();
+            reached++;
         }
+
+        return reached;
     }
 
     /// <summary>
@@ -175,13 +167,16 @@ internal sealed class StageActions(
     }
 
     /// <summary>
-    /// Closes the commission stage: an application the chair recorded no decision on is left without one.
+    /// Closes the commission stage: an application the chair recorded no decision on, and one still held for want of a chair, is left without a decision.
     /// </summary>
     /// <param name="wave">The wave.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
     public async Task CloseReviewAsync(PromotionWave wave, CancellationToken cancellationToken)
     {
-        foreach (var application in await ApplicationsAsync(wave.Id, ApplicationStatus.UnderReview, cancellationToken))
+        var undecided = await context.Set<PromotionApplication>()
+            .Where(application => application.WaveId == wave.Id && (application.Status == ApplicationStatus.UnderReview || application.Status == ApplicationStatus.Admitted))
+            .ToListAsync(cancellationToken);
+        foreach (var application in undecided)
         {
             application.Status = ApplicationStatus.NoDecision;
         }

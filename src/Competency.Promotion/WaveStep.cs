@@ -10,7 +10,7 @@ namespace Competency.Promotion;
 internal enum StepResult
 {
     /// <summary>
-    /// Nothing was due, or another transaction was changing the wave.
+    /// Nothing was due or nothing could be done yet, or another transaction was changing the wave; nothing was committed.
     /// </summary>
     Idle,
 
@@ -18,11 +18,6 @@ internal enum StepResult
     /// A step was carried out and committed.
     /// </summary>
     Done,
-
-    /// <summary>
-    /// A step is due but must wait for a precondition; nothing was changed.
-    /// </summary>
-    Held,
 }
 
 /// <summary>
@@ -43,8 +38,8 @@ internal sealed class WaveStep(
     public static readonly IReadOnlyList<int> StagesWithEndLetters = [1, 2, 3, 4, 5, 6];
 
     /// <summary>
-    /// Carries out the next step a wave is owed. Applications reach a commission only if it has a chair who acts: the end of the rating stage, which
-    /// finds who meets the requirements, and the end of the artifact stage wait for one, and the wave is tried again on the next call.
+    /// Carries out the next step a wave is owed. Applications reach a commission only if it has a chair who acts: those of a unit without one stay admitted
+    /// while the stages end for the other units, and are handed over by a later call once the unit has a chair.
     /// </summary>
     /// <param name="waveId">The wave.</param>
     /// <param name="cancellationToken">Cancels the step.</param>
@@ -57,20 +52,13 @@ internal sealed class WaveStep(
         await using (var transaction = await locks.BeginSharedAsync(cancellationToken))
         {
             if (await locks.FindWaveForUpdateSkippingLockedAsync(waveId, cancellationToken) is not { } locked
-                || DueStep.Next(locked, calendar, await HasArrivalsAsync(waveId, cancellationToken)) is not { } next)
+                || DueStep.Next(locked, calendar, await HasArrivalsAsync(waveId, cancellationToken), await HasAdmittedAsync(waveId, cancellationToken)) is not { } next
+                || !await ApplyAsync(locked, next, cancellationToken))
             {
                 return StepResult.Idle;
             }
 
-            if (next is { Kind: DueKind.EndStage, Stage: PromotionStage.Rating or PromotionStage.Artifacts }
-                && await actions.UnitsWithoutChairAsync(locked, cancellationToken) is { Count: > 0 } chairless)
-            {
-                logger.LogWarning("Applications of wave {WaveId} wait for a chair in: {Units}", waveId, string.Join(", ", chairless));
-                return StepResult.Held;
-            }
-
-            await ApplyAsync(locked, next, cancellationToken);
-            arrivals = next.Kind == DueKind.NotifyCommissions || next is { Kind: DueKind.EndStage, Stage: PromotionStage.Rating or PromotionStage.Artifacts }
+            arrivals = next.Kind is DueKind.NotifyCommissions or DueKind.ReachHeld || next is { Kind: DueKind.EndStage, Stage: PromotionStage.Rating or PromotionStage.Artifacts }
                 ? await actions.TakeArrivalsAsync(waveId, cancellationToken)
                 : new Dictionary<Guid, int>();
             await context.SaveChangesAsync(cancellationToken);
@@ -86,7 +74,14 @@ internal sealed class WaveStep(
     private Task<bool> HasArrivalsAsync(Guid waveId, CancellationToken cancellationToken) =>
         context.Set<PromotionApplication>().AnyAsync(application => application.WaveId == waveId && application.ReviewLetterPending, cancellationToken);
 
-    private async Task ApplyAsync(PromotionWave wave, DueStep due, CancellationToken cancellationToken)
+    private Task<bool> HasAdmittedAsync(Guid waveId, CancellationToken cancellationToken) =>
+        context.Set<PromotionApplication>().AnyAsync(application => application.WaveId == waveId && application.Status == ApplicationStatus.Admitted && application.MeetsAfterRating != null, cancellationToken);
+
+    /// <summary>
+    /// Makes the changes of a step.
+    /// </summary>
+    /// <returns>Whether anything changed; a step that handed nothing over leaves nothing to commit.</returns>
+    private async Task<bool> ApplyAsync(PromotionWave wave, DueStep due, CancellationToken cancellationToken)
     {
         switch (due.Kind)
         {
@@ -101,7 +96,11 @@ internal sealed class WaveStep(
                 await EndAsync(wave, due.Stage, cancellationToken);
                 wave.ProcessedStage = due.Stage;
                 break;
+            case DueKind.ReachHeld:
+                return await actions.ReachCommissionAsync(wave, isDeadline: wave.ProcessedStage >= PromotionStage.Artifacts, cancellationToken) > 0;
         }
+
+        return true;
     }
 
     private async Task EndAsync(PromotionWave wave, int stage, CancellationToken cancellationToken)
@@ -143,7 +142,7 @@ internal sealed class WaveStep(
     {
         (DueKind.StartFirstStage, _) => mail.ApplicationsOpenedAsync(wave, cancellationToken),
         (DueKind.RemindRaters, _) => mail.RatingReminderAsync(wave, cancellationToken),
-        (DueKind.NotifyCommissions, _) => mail.ReviewArrivedAsync(wave, arrivals, cancellationToken),
+        (DueKind.NotifyCommissions or DueKind.ReachHeld, _) => mail.ReviewArrivedAsync(wave, arrivals, cancellationToken),
         (_, PromotionStage.Submission) => mail.FormalCheckStartedAsync(wave, cancellationToken),
         (_, PromotionStage.FormalCheck) => mail.FormalCheckFinishedAsync(wave, cancellationToken),
         (_, PromotionStage.Rating or PromotionStage.Artifacts) => mail.ReviewArrivedAsync(wave, arrivals, cancellationToken),
