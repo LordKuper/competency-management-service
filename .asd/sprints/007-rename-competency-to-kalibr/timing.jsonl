@@ -61,3 +61,11 @@
 {"op":"close","id":"external wave-1/iter-01","kind":"external-review","parent":"impl-review wave-1/iter-01","start":"2026-10-30T18:04:56.711Z","end":"2026-10-30T18:10:10.073Z","outcome":"done","attrs":{"model":"gpt-6.1-sol"}}
 {"op":"close","id":"combined wave-1/iter-01","kind":"dispatch","parent":"impl-review wave-1/iter-01","start":"2026-10-30T18:04:56.650Z","end":"2026-10-30T18:17:27.251Z","outcome":"done","attrs":{"agent":"asd-reviewer-combined","tier":"standard","model":"opus"}}
 {"op":"close","id":"impl-review wave-1/iter-01","kind":"review-iteration","parent":"impl-review#2","start":"2026-10-30T18:04:56.588Z","end":"2026-10-30T18:17:27.251Z","outcome":"done","attrs":{"wave":"1","iteration":"1"}}
+{"op":"open","id":"asd-tester impl-review#1","kind":"dispatch","parent":"impl-review#2","start":"2026-10-30T18:19:31.625Z","attrs":{"agent":"asd-tester,tier=standard,model=sonnet"}}
+{"op":"close","id":"asd-tester impl-review#1","kind":"dispatch","parent":"impl-review#2","start":"2026-10-30T18:19:31.625Z","end":"2026-10-30T18:19:47.808Z","outcome":"interrupted","attrs":{"agent":"asd-tester,tier=standard,model=sonnet"}}
+{"op":"open","id":"asd-tester impl-review#2","kind":"dispatch","parent":"impl-review#2","start":"2026-10-30T18:19:47.872Z","attrs":{"agent":"asd-tester","tier":"standard","model":"sonnet"}}
+{"op":"open","id":"suite impl-review#1","kind":"suite","parent":"asd-tester impl-review#2","start":"2026-10-30T18:20:12.752Z","attrs":{"scope":"full"}}
+{"op":"close","id":"suite impl-review#1","kind":"suite","parent":"asd-tester impl-review#2","start":"2026-10-30T18:20:12.752Z","end":"2026-10-30T18:24:33.787Z","outcome":"done","attrs":{"scope":"full"}}
+{"op":"close","id":"asd-tester impl-review#2","kind":"dispatch","parent":"impl-review#2","start":"2026-10-30T18:19:47.872Z","end":"2026-10-30T18:25:51.817Z","outcome":"done","attrs":{"agent":"asd-tester","tier":"standard","model":"sonnet"}}
+{"op":"close","id":"impl-review#2","kind":"phase","parent":null,"start":"2026-10-30T18:04:56.524Z","end":"2026-10-30T18:25:52.101Z","outcome":"done","attrs":{}}
+{"op":"open","id":"design-promote#1","kind":"phase","parent":null,"start":"2026-10-30T18:25:52.101Z","attrs":{}}
