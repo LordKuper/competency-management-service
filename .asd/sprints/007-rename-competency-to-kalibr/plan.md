@@ -49,10 +49,10 @@ Material risk: artifact: deploy literal swap — проверяется `rg` п�
 AC: AC-1, AC-2, AC-12 (тесты находят `Kalibr.slnx`, запускают `Kalibr.Api.dll`, ждут категорию журнала `Kalibr.Platform.*`).
 Material risk: none
 Test-only: tests/Kalibr.Tests/DeploymentTests.cs, tests/Kalibr.Tests/Infrastructure/ApiContract.cs, tests/Kalibr.Tests/Infrastructure/ApiHost.cs, tests/Kalibr.Tests/PlatformTests.cs, tests/Kalibr.Tests/OrgImportParserTests.cs
-- [ ] `DeploymentTests.cs`: `"Kalibr.CareerFramework"` в ожидании списка проектов, файл решения `Kalibr.slnx` при поиске корня.
-- [ ] `Infrastructure/ApiContract.cs`: `SolutionFile = "Kalibr.slnx"`; `Infrastructure/ApiHost.cs`: `Kalibr.Api.dll`, временная папка `kalibr-tests-<guid>`.
-- [ ] `PlatformTests.cs`: `FailureLogCategory = "Kalibr.Platform.ProblemExceptionHandler"`; `OrgImportParserTests.cs`: временный файл `kalibr-xxe-<guid>.txt`.
-- [ ] `rg` по шаблонам имени продукта в `tests/**/*.cs` пуст.
+- [x] `DeploymentTests.cs`: `"Kalibr.CareerFramework"` в ожидании списка проектов, файл решения `Kalibr.slnx` при поиске корня.
+- [x] `Infrastructure/ApiContract.cs`: `SolutionFile = "Kalibr.slnx"`; `Infrastructure/ApiHost.cs`: `Kalibr.Api.dll`, временная папка `kalibr-tests-<guid>`.
+- [x] `PlatformTests.cs`: `FailureLogCategory = "Kalibr.Platform.ProblemExceptionHandler"`; `OrgImportParserTests.cs`: временный файл `kalibr-xxe-<guid>.txt`.
+- [x] `rg` по шаблонам имени продукта в `tests/**/*.cs` пуст.
 
 ## Dependencies
 
