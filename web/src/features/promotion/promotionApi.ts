@@ -42,9 +42,6 @@ export type WaveApplication =
 /** The dates of a career session as every role that sees it is told them: the end of each stage and the day the results are published. */
 export type SessionDates = components["schemas"]["SessionDatesResponse"];
 
-/** How many raters an application has against what it needs. */
-export type RaterCounts = components["schemas"]["RaterCountsResponse"];
-
 /** One candidate of the list a head works through. */
 export type HeadCandidate = components["schemas"]["HeadCandidateResponse"];
 
