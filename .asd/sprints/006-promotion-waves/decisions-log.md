@@ -195,3 +195,7 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — impl-review wave-1/iter-03 verdicts: combined CONCERNS (F1 medium: устаревший doc-комментарий `hasAdmitted` в DueStep.cs после F4; floor medium), external APPROVE (skipped).
 - 2026-10-30 — impl-review wave-1/iter-03: unresolved findings combined F1 → impl review-fix (review_fixes_pending=wave-1/iter-03)
 - 2026-10-30 — route F1 (wave-1/iter-03 combined): standard, dispatch HEAD 033db2b0
+- 2026-10-30 — review-fix dev done (a9709ef6): F1 — `<param name="hasAdmitted">` в DueStep.cs совпадает с вызывающими после F4
+- 2026-10-30 — impl completion gate passed at a9709ef6: `dotnet build` 0/0, no pending model changes, web lint, build, check:api clean; diff a3582a21..HEAD only src/Competency.Promotion/DueStep.cs
+- 2026-10-30 — impl fix for wave-1/iter-03: findings resolved
+- 2026-10-30 — route impl-test entry 5: standard, dispatch HEAD a9709ef6
