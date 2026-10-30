@@ -49,11 +49,12 @@ internal sealed class WaveStep(
         PromotionWave wave;
         DueStep due;
         IReadOnlyDictionary<Guid, int> arrivals;
+        IReadOnlyDictionary<Guid, int> held;
         await using (var transaction = await locks.BeginSharedAsync(cancellationToken))
         {
             if (await locks.FindWaveForUpdateSkippingLockedAsync(waveId, cancellationToken) is not { } locked
                 || DueStep.Next(locked, calendar, await HasArrivalsAsync(waveId, cancellationToken), await HasAdmittedAsync(waveId, cancellationToken)) is not { } next
-                || !await ApplyAsync(locked, next, cancellationToken))
+                || await ApplyAsync(locked, next, cancellationToken) is not { } applied)
             {
                 return StepResult.Idle;
             }
@@ -65,9 +66,10 @@ internal sealed class WaveStep(
             await transaction.CommitAsync(cancellationToken);
             wave = locked;
             due = next;
+            held = applied;
         }
 
-        await TellAsync(wave, due, arrivals, cancellationToken);
+        await TellAsync(wave, due, arrivals, held, cancellationToken);
         return StepResult.Done;
     }
 
@@ -80,9 +82,10 @@ internal sealed class WaveStep(
     /// <summary>
     /// Makes the changes of a step.
     /// </summary>
-    /// <returns>Whether anything changed; a step that handed nothing over leaves nothing to commit.</returns>
-    private async Task<bool> ApplyAsync(PromotionWave wave, DueStep due, CancellationToken cancellationToken)
+    /// <returns>The number of applications by each unit that the step newly held for want of a chair; null when nothing changed, as a step that handed nothing over leaves nothing to commit.</returns>
+    private async Task<IReadOnlyDictionary<Guid, int>?> ApplyAsync(PromotionWave wave, DueStep due, CancellationToken cancellationToken)
     {
+        IReadOnlyDictionary<Guid, int> held = new Dictionary<Guid, int>();
         switch (due.Kind)
         {
             case DueKind.StartFirstStage:
@@ -93,17 +96,18 @@ internal sealed class WaveStep(
                 wave.RaterReminderSent = true;
                 break;
             case DueKind.EndStage:
-                await EndAsync(wave, due.Stage, cancellationToken);
+                held = await EndAsync(wave, due.Stage, cancellationToken);
                 wave.ProcessedStage = due.Stage;
                 break;
             case DueKind.ReachHeld:
-                return await actions.ReachCommissionAsync(wave, isDeadline: wave.ProcessedStage >= PromotionStage.Artifacts, cancellationToken) > 0;
+                var reach = await actions.ReachCommissionAsync(wave, isDeadline: wave.ProcessedStage >= PromotionStage.Artifacts, cancellationToken);
+                return reach.Handed > 0 || reach.Held.Count > 0 ? reach.Held : null;
         }
 
-        return true;
+        return held;
     }
 
-    private async Task EndAsync(PromotionWave wave, int stage, CancellationToken cancellationToken)
+    private async Task<IReadOnlyDictionary<Guid, int>> EndAsync(PromotionWave wave, int stage, CancellationToken cancellationToken)
     {
         switch (stage)
         {
@@ -112,25 +116,26 @@ internal sealed class WaveStep(
                 break;
             case PromotionStage.Rating:
                 await actions.CheckRatingAsync(wave, cancellationToken);
-                await actions.ReachCommissionAsync(wave, isDeadline: false, cancellationToken);
-                break;
+                return (await actions.ReachCommissionAsync(wave, isDeadline: false, cancellationToken)).Held;
             case PromotionStage.Artifacts:
-                await actions.ReachCommissionAsync(wave, isDeadline: true, cancellationToken);
-                break;
+                return (await actions.ReachCommissionAsync(wave, isDeadline: true, cancellationToken)).Held;
             case PromotionStage.Review:
                 await actions.CloseReviewAsync(wave, cancellationToken);
                 break;
         }
+
+        return new Dictionary<Guid, int>();
     }
 
     /// <summary>
     /// Queues the letters of a committed step. A failure to compose them is logged and does not stop the wave from catching up.
     /// </summary>
-    private async Task TellAsync(PromotionWave wave, DueStep due, IReadOnlyDictionary<Guid, int> arrivals, CancellationToken cancellationToken)
+    private async Task TellAsync(PromotionWave wave, DueStep due, IReadOnlyDictionary<Guid, int> arrivals, IReadOnlyDictionary<Guid, int> held, CancellationToken cancellationToken)
     {
         try
         {
             await LettersOf(wave, due, arrivals, cancellationToken);
+            await mail.NoChairAsync(wave, held, cancellationToken);
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {

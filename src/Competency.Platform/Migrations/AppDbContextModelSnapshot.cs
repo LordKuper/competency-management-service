@@ -1545,6 +1545,10 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("org_unit_id");
 
+                    b.Property<bool>("NoChairLetterSent")
+                        .HasColumnType("boolean")
+                        .HasColumnName("no_chair_letter_sent");
+
                     b.HasKey("WaveId", "OrgUnitId");
 
                     b.HasIndex("OrgUnitId");

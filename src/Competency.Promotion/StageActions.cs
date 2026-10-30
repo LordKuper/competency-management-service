@@ -75,13 +75,14 @@ internal sealed class StageActions(
     /// Hands admitted applications to the commission: those that owe no mandatory artifact when the rating stage ends. At the deadline of the artifact
     /// stage the rest follow, marked as missing the artifacts they did not give; those who sent the application themselves are already there. An application
     /// the chair already decided on, before the wave went back to an earlier stage, is decided again at once. An application of a unit whose commission has
-    /// no chair who acts is held: it stays admitted, and a later call hands it over once a chair is there.
+    /// no chair who acts is held: it stays admitted, and a later call hands it over once a chair is there. The first time a unit holds applications
+    /// in the wave it is marked, so that its responsible people are told once.
     /// </summary>
     /// <param name="wave">The wave.</param>
     /// <param name="isDeadline">Whether the artifact stage has ended.</param>
     /// <param name="cancellationToken">Cancels the lookups.</param>
-    /// <returns>The number of applications handed over.</returns>
-    public async Task<int> ReachCommissionAsync(PromotionWave wave, bool isDeadline, CancellationToken cancellationToken)
+    /// <returns>The number of applications handed over, and the number held by each unit that was marked by this call.</returns>
+    public async Task<(int Handed, IReadOnlyDictionary<Guid, int> Held)> ReachCommissionAsync(PromotionWave wave, bool isDeadline, CancellationToken cancellationToken)
     {
         var admitted = await ApplicationsAsync(wave.Id, ApplicationStatus.Admitted, cancellationToken);
         var facts = await applications.TargetsAsync(admitted, cancellationToken);
@@ -96,10 +97,12 @@ internal sealed class StageActions(
         var answers = (await context.Set<PromotionRaterScore>().AsNoTracking().Where(answer => ids.Contains(answer.ApplicationId)).ToListAsync(cancellationToken))
             .ToLookup(answer => answer.ApplicationId);
         var reached = 0;
+        var held = new Dictionary<Guid, int>();
         foreach (var application in admitted)
         {
             if (rosters.GetValueOrDefault(application.OrgUnitId)?.ChairEmployeeId is null)
             {
+                held[application.OrgUnitId] = held.GetValueOrDefault(application.OrgUnitId) + 1;
                 continue;
             }
 
@@ -114,7 +117,21 @@ internal sealed class StageActions(
             reached++;
         }
 
-        return reached;
+        return (reached, await MarkNoChairLettersAsync(wave.Id, held, cancellationToken));
+    }
+
+    private async Task<IReadOnlyDictionary<Guid, int>> MarkNoChairLettersAsync(Guid waveId, Dictionary<Guid, int> held, CancellationToken cancellationToken)
+    {
+        var heldIds = held.Keys.ToArray();
+        var unmarked = await context.Set<PromotionWaveUnit>()
+            .Where(member => member.WaveId == waveId && !member.NoChairLetterSent && heldIds.Contains(member.OrgUnitId))
+            .ToListAsync(cancellationToken);
+        foreach (var member in unmarked)
+        {
+            member.NoChairLetterSent = true;
+        }
+
+        return unmarked.ToDictionary(member => member.OrgUnitId, member => held[member.OrgUnitId]);
     }
 
     /// <summary>

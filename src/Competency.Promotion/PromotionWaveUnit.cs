@@ -13,4 +13,9 @@ internal sealed class PromotionWaveUnit
 
     [Audited]
     public Guid OrgUnitId { get; init; }
+
+    /// <summary>
+    /// Whether the letter about applications held for want of a chair has been sent for this unit; it is sent once per wave.
+    /// </summary>
+    public bool NoChairLetterSent { get; set; }
 }

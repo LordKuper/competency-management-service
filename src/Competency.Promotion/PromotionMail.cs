@@ -35,6 +35,7 @@ internal sealed class PromotionMail(
     private const string RatingStartedKind = "PromotionRatingStarted";
     private const string RatingReminderKind = "PromotionRatingReminder";
     private const string ReviewArrivedKind = "PromotionReviewArrived";
+    private const string NoChairKind = "PromotionCommissionNoChair";
     private const string ResultsKind = "PromotionResultsPublished";
     private const string NoDecisionKind = "PromotionNoDecision";
     private const string FeedbackMissingKind = "PromotionFeedbackMissing";
@@ -45,6 +46,7 @@ internal sealed class PromotionMail(
     private const string ApplicationTarget = "эта заявка";
     private const string WaveTarget = "эта карьерная сессия";
     private const string CommissionTarget = "страница комиссии";
+    private const string CommissionsTarget = "экран «Комиссии»";
 
     private static readonly ApplicationStatus[] ResultStatuses = [ApplicationStatus.Decided, ApplicationStatus.NoDecision];
 
@@ -236,13 +238,74 @@ internal sealed class PromotionMail(
             Enqueue(
                 await AccountsAsync(roster.Members.Where(member => member.IsActing).Select(member => member.EmployeeId), cancellationToken),
                 ReviewArrivedKind,
-                Compose(
-                    $"на рассмотрение комиссии поступили заявки на карьерный переход по подразделению «{roster.UnitName}»: {arrivals[roster.UnitId]}.",
-                    "Открыть страницу комиссии:",
-                    Link($"promotion/commission/{wave.Id}/{roster.UnitId}"),
-                    CommissionTarget));
+                ReviewArrivedBody(wave.Id, roster.UnitId, roster.UnitName, arrivals[roster.UnitId]));
         }
     }
+
+    /// <summary>
+    /// Tells the members just added to a commission of the applications that are under its review already, as they were told of those that arrived.
+    /// </summary>
+    /// <param name="unitId">The unit.</param>
+    /// <param name="unitName">The unit name.</param>
+    /// <param name="employeeIds">The employees added to the commission.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    public async Task MembersAddedAsync(Guid unitId, string unitName, IReadOnlyCollection<Guid> employeeIds, CancellationToken cancellationToken)
+    {
+        var underReview = await context.Set<PromotionApplication>()
+            .AsNoTracking()
+            .Where(application => application.OrgUnitId == unitId
+                && application.Status == ApplicationStatus.UnderReview
+                && context.Set<PromotionWave>().Any(wave => wave.Id == application.WaveId && wave.ProcessedStage < PromotionWave.StageCount))
+            .GroupBy(application => application.WaveId)
+            .Select(group => new { WaveId = group.Key, Count = group.Count() })
+            .ToListAsync(cancellationToken);
+        if (underReview.Count == 0)
+        {
+            return;
+        }
+
+        var accounts = await AccountsAsync(employeeIds, cancellationToken);
+        foreach (var wave in underReview)
+        {
+            Enqueue(accounts, ReviewArrivedKind, ReviewArrivedBody(wave.WaveId, unitId, unitName, wave.Count));
+        }
+    }
+
+    /// <summary>
+    /// Tells the responsible HR of each unit that its commission has no chair, so that applications of the wave do not reach review; where the unit and the
+    /// units above it have no responsible HR, the global administrators are told instead.
+    /// </summary>
+    /// <param name="wave">The wave.</param>
+    /// <param name="held">The number of applications held, by unit; empty when there are none.</param>
+    /// <param name="cancellationToken">Cancels the lookups.</param>
+    public async Task NoChairAsync(PromotionWave wave, IReadOnlyDictionary<Guid, int> held, CancellationToken cancellationToken)
+    {
+        if (held.Count == 0)
+        {
+            return;
+        }
+
+        var units = await employees.FindUnitsAsync([.. held.Keys], cancellationToken);
+        var responsible = await career.ResponsibleHrAsync([.. held.Keys], cancellationToken);
+        var administrators = responsible.Count < held.Count ? await users.FindActiveAdministratorIdsAsync(cancellationToken) : [];
+        foreach (var (unitId, count) in held.OrderBy(pair => units[pair.Key].Name, TextCollation.Comparer).ThenBy(pair => pair.Key))
+        {
+            Enqueue(
+                responsible.TryGetValue(unitId, out var hr) ? [hr.UserId] : administrators,
+                NoChairKind,
+                Compose(
+                    $"у комиссии подразделения «{units[unitId].Name}» нет председателя, поэтому заявки карьерной сессии с {Day(wave.StartsOn)} по {Day(wave.EndsOn[^1])} ({count}) не поступают на рассмотрение. Назначьте председателя.",
+                    "Открыть комиссию подразделения:",
+                    Link($"promotion/commissions?unit={unitId}"),
+                    CommissionsTarget));
+        }
+    }
+
+    private string ReviewArrivedBody(Guid waveId, Guid unitId, string unitName, int count) => Compose(
+        $"на рассмотрение комиссии поступили заявки на карьерный переход по подразделению «{unitName}»: {count}.",
+        "Открыть страницу комиссии:",
+        Link($"promotion/commission/{waveId}/{unitId}"),
+        CommissionTarget);
 
     /// <summary>
     /// Publishes the results as the commission stage ends: asks each candidate whose application reached a result to open it and mark the feedback once they

@@ -74,6 +74,9 @@ internal sealed class UserDirectory(
             .ToDictionaryAsync(status => status.EmployeeId!.Value, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Guid>> FindActiveAdministratorIdsAsync(CancellationToken cancellationToken = default) =>
+        await context.Set<AppUser>().Where(ActiveAdministrators.IsActive).Select(user => user.Id).ToListAsync(cancellationToken);
+
     public async Task<string?> EmailProblemAsync(string email, CancellationToken cancellationToken = default)
     {
         Dictionary<string, string[]> errors = [];

@@ -38,6 +38,13 @@ public interface IUserDirectory
     Task<bool> HasHrCandidateAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Finds every global administrator account that can act: neither blocked nor still invited.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The account identifiers.</returns>
+    Task<IReadOnlyList<Guid>> FindActiveAdministratorIdsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Says why an address cannot be given to a new account: it is not a plain e-mail address or another account already uses it, letter case aside.
     /// </summary>
     /// <param name="email">The address as entered.</param>

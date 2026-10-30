@@ -86,8 +86,9 @@ internal static class CommissionEndpoints
     }
 
     /// <summary>
-    /// Replaces the members and the chair. The chair must be a member who acts, and a unit of an unfinished wave keeps one: the chair cannot be
-    /// taken off or left out of the members. The first change of a unit that has no stored commission sends version 0.
+    /// Replaces the members and the chair, at any stage of the wave. The chair must be a member who acts, and a unit of an unfinished wave keeps one: the chair cannot be
+    /// taken off or left out of the members, but may be replaced, including one who no longer acts. The first change of a unit that has no stored commission sends version 0.
+    /// Members added while applications are under review are told of them once the change has committed.
     /// </summary>
     private static async Task<Results<Ok<CommissionResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateAsync(
         Guid unitId,
@@ -97,6 +98,7 @@ internal static class CommissionEndpoints
         PromotionLocks locks,
         CommissionReader reader,
         ActingEmployees acting,
+        PromotionMail mail,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
@@ -134,6 +136,7 @@ internal static class CommissionEndpoints
         await SaveAsync(context, unitId, request.ChairEmployeeId, memberIds, ifMatch, cancellationToken);
         var saved = (await reader.ReadAsync([unitId], cancellationToken))[unitId];
         await transaction.CommitAsync(cancellationToken);
+        await mail.MembersAddedAsync(unitId, roster.UnitName, [.. memberIds.Where(id => roster.Members.All(member => member.EmployeeId != id))], cancellationToken);
         response.SetETag(saved.Version);
         return TypedResults.Ok(CommissionResponse.From(saved));
     }

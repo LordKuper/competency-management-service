@@ -85,6 +85,7 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
             entity.HasKey(e => new { e.WaveId, e.OrgUnitId });
             entity.Property(e => e.WaveId).HasColumnName("wave_id");
             entity.Property(e => e.OrgUnitId).HasColumnName("org_unit_id");
+            entity.Property(e => e.NoChairLetterSent).HasColumnName("no_chair_letter_sent");
             entity.HasIndex(e => e.OrgUnitId);
 
             entity.HasOne<PromotionWave>().WithMany().HasForeignKey(e => e.WaveId).OnDelete(DeleteBehavior.Restrict);
