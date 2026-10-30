@@ -37,3 +37,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
+- 2026-10-30 — retro: `.asd/sprints/006-promotion-waves/retrospective.html` written; analysed branch, 8 friction entries (F-1…F-8), 7 actions (A-1…A-7: 2 consumer, 5 asd, A-2 covered by asd-tester.md), 3 systemic proposals (P-1 consumer, P-2, P-3 asd); timing gaps — only the open retro#1 op, no F-N
+- 2026-10-30 — retro upstream publication (LordKuper/agentic-software-development): published none; skipped A-3, A-4, A-6, A-7, P-2, P-3 — `gh issue create` denied by the host permission classifier (external system write), no retry; bodies kept in `.asd/tmp/006-retro-<row>.issue.md`

@@ -1,7 +1,7 @@
 {
   "sprint_id": "006-promotion-waves",
   "branch": "sprint/006-promotion-waves",
-  "phase": "cleanup",
+  "phase": "retro",
   "workflow": "lite",
   "documents": {
     "audit": true,
