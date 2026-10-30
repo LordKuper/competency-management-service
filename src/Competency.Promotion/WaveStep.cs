@@ -53,7 +53,7 @@ internal sealed class WaveStep(
         await using (var transaction = await locks.BeginSharedAsync(cancellationToken))
         {
             if (await locks.FindWaveForUpdateSkippingLockedAsync(waveId, cancellationToken) is not { } locked
-                || DueStep.Next(locked, calendar, await HasArrivalsAsync(waveId, cancellationToken), await HasAdmittedAsync(waveId, cancellationToken)) is not { } next
+                || DueStep.Next(locked, calendar, await HasArrivalsAsync(waveId, cancellationToken), await HasAdmittedAsync(waveId, locked.ProcessedStage, cancellationToken)) is not { } next
                 || await ApplyAsync(locked, next, cancellationToken) is not { } applied)
             {
                 return StepResult.Idle;
@@ -76,8 +76,17 @@ internal sealed class WaveStep(
     private Task<bool> HasArrivalsAsync(Guid waveId, CancellationToken cancellationToken) =>
         context.Set<PromotionApplication>().AnyAsync(application => application.WaveId == waveId && application.ReviewLetterPending, cancellationToken);
 
-    private Task<bool> HasAdmittedAsync(Guid waveId, CancellationToken cancellationToken) =>
-        context.Set<PromotionApplication>().AnyAsync(application => application.WaveId == waveId && application.Status == ApplicationStatus.Admitted && application.MeetsAfterRating != null, cancellationToken);
+    /// <summary>
+    /// Whether some admitted application can move now: one that meets the mandatory requirements, or any once the artifact stage has ended. Before that
+    /// the others wait for the deadline or for the candidate's word.
+    /// </summary>
+    private Task<bool> HasAdmittedAsync(Guid waveId, int processedStage, CancellationToken cancellationToken) =>
+        context.Set<PromotionApplication>().AnyAsync(
+            application => application.WaveId == waveId
+                && application.Status == ApplicationStatus.Admitted
+                && application.MeetsAfterRating != null
+                && (application.MeetsAfterRating == true || processedStage >= PromotionStage.Artifacts),
+            cancellationToken);
 
     /// <summary>
     /// Makes the changes of a step.

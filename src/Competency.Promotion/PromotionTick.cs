@@ -51,13 +51,16 @@ internal sealed class PromotionTick(IServiceScopeFactory scopeFactory, ILogger<P
                 .Distinct()
                 .ToListAsync(cancellationToken))
             .ToHashSet();
-        var withAdmitted = (await context.Set<PromotionApplication>()
+        var admitted = (await context.Set<PromotionApplication>()
                 .AsNoTracking()
                 .Where(application => application.Status == ApplicationStatus.Admitted && application.MeetsAfterRating != null)
-                .Select(application => application.WaveId)
+                .Select(application => new { application.WaveId, Meets = application.MeetsAfterRating == true })
                 .Distinct()
                 .ToListAsync(cancellationToken))
-            .ToHashSet();
-        return [.. waves.Where(wave => DueStep.Next(wave, calendar, withArrivals.Contains(wave.Id), withAdmitted.Contains(wave.Id)) is not null).Select(wave => wave.Id)];
+            .ToLookup(application => application.WaveId, application => application.Meets);
+        return [.. waves.Where(wave => DueStep.Next(wave, calendar, withArrivals.Contains(wave.Id), CanMove(admitted[wave.Id], wave)) is not null).Select(wave => wave.Id)];
     }
+
+    private static bool CanMove(IEnumerable<bool> admittedMeet, PromotionWave wave) =>
+        admittedMeet.Any(meets => meets || wave.ProcessedStage >= PromotionStage.Artifacts);
 }
