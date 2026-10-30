@@ -139,19 +139,17 @@ public sealed class PromotionScene
     /// every stage before it, and for the first stage until it has fixed the matrix versions.
     /// </summary>
     /// <param name="stage">The stage, 1 to 6, or 7 for a session that is over.</param>
-    /// <param name="waveId">The session to move; the scene's own by default.</param>
-    public async Task PutInStageAsync(int stage, Guid? waveId = null)
+    public async Task PutInStageAsync(int stage)
     {
-        var id = waveId ?? WaveId;
         var ended = Today.AddDays(-PastMarginDays);
         var ends = Enumerable.Range(0, StageLengths.Length)
             .Select(index => index < stage - 1 ? ended : Today.AddDays(StageStepDays + (index - (stage - 1)) * StageStepDays))
             .Select(day => $"'{day:yyyy-MM-dd}'");
         await Host.ExecuteAsync(
-            $"UPDATE promotion_waves SET starts_on = '{Today.AddDays(-30):yyyy-MM-dd}', ends_on = ARRAY[{string.Join(", ", ends)}]::date[] WHERE id = '{id}'");
+            $"UPDATE promotion_waves SET starts_on = '{Today.AddDays(-30):yyyy-MM-dd}', ends_on = ARRAY[{string.Join(", ", ends)}]::date[] WHERE id = '{WaveId}'");
         await Waiting.UntilAsync(
-            async () => await Host.ScalarAsync<bool>($"SELECT versions_fixed FROM promotion_waves WHERE id = '{id}'")
-                && await Host.ScalarAsync<int>($"SELECT processed_stage FROM promotion_waves WHERE id = '{id}'") >= stage - 1,
+            async () => await Host.ScalarAsync<bool>($"SELECT versions_fixed FROM promotion_waves WHERE id = '{WaveId}'")
+                && await Host.ScalarAsync<int>($"SELECT processed_stage FROM promotion_waves WHERE id = '{WaveId}'") >= stage - 1,
             $"the scheduler settled the stages before stage {stage}",
             PassTimeout);
     }
