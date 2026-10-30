@@ -1,7 +1,7 @@
 {
   "sprint_id": "006-promotion-waves",
   "branch": "sprint/006-promotion-waves",
-  "phase": "impl-test",
+  "phase": "impl-review",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -433,15 +433,20 @@
       "wave": 1,
       "waves": [
         {
-          "iteration": 1,
+          "iteration": 2,
           "verdicts": {
             "iter-01": {
               "combined": "CONCERNS",
               "external": "APPROVE (skipped: external review unavailable: negative cache — quota (Codex model at capacity), retry after 2026-10-30T09:20:21.040Z)"
+            },
+            "iter-02": {
+              "combined": "CONCERNS",
+              "external": "APPROVE (skipped: external review unavailable: negative cache — quota (Codex usage limit), retry after 2026-10-30T11:46:18.533Z)"
             }
           },
           "iteration_heads": {
-            "iter-01": "bcafd43837da8115f0774feb781371dd4f063cd8"
+            "iter-01": "bcafd43837da8115f0774feb781371dd4f063cd8",
+            "iter-02": "b00b4099c7be80036e40904e19aa6b2d0059b4dd"
           },
           "latched": {}
         }
@@ -449,8 +454,8 @@
     }
   },
   "created_at": "2026-10-27T16:05:59.306Z",
-  "updated_at": "2026-10-30T10:02:31.890Z",
-  "review_fixes_pending": null,
+  "updated_at": "2026-10-30T10:49:13.072Z",
+  "review_fixes_pending": "wave-1/iter-02",
   "test_defects_pending": null,
   "pr": null,
   "archived_at": null

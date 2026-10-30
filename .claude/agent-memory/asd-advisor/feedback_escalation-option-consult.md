@@ -7,6 +7,6 @@ metadata:
 
 For an escalation consult on a reviewer question with lettered options, answer the orchestrator's "Weigh" list in order: (1) which option the *current* AC text requires (quote the AC, check whether a retired AC motivated the current code), (2) whether an earlier decisions-log acceptance of the behaviour still stands after later AC amendments (date-order the log lines), (3) per-option size and risk split as code / migration-or-none / tests; close with one option id and a one-line reason. Name which options are HARD-gate matters (new scope, waiver) per `checkpoints.md` "Gate policy".
 
-**Why:** The 2026-10-30 F1 consult (sprint 006, chairless commission hold) was dispatched exactly in this shape; the decisive facts were in log ordering (acceptance under retired AC-26 at decisions-log:50/62 predated AC-66 at :75) and in a state check (no migration needed because `Status`+`ProcessedStage` already encode the held state).
+**Why:** The decisive facts usually sit in the date order of the decisions-log entries (an earlier acceptance under a since-retired AC predating the AC that now applies) and in a state check showing no migration is needed because existing status fields already encode the state in question.
 
 **How to apply:** Before costing an option, grep the consumers of the status/flag it touches (e.g. `UnfinishedStatuses`, letter queries) — a stranded status is the hidden cost. Related: [[review-consult-format]].

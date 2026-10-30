@@ -178,3 +178,8 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — impl assessment approved (r9, 7ee2caa0): «Принимаю»; переход к impl-test
 - 2026-10-30 — route impl-test entry 3: standard, dispatch HEAD 11325a9b
 - 2026-10-30 — impl-test: impacted set green (полный набор по предохранителю общей инфраструктуры: backend 947/947, web 850/850; проверка оркестратора: новые тесты backend 7/7, web 259/259, exit 0), 13/0 tests
+- 2026-10-30 — external interrupted attempt 1 in wave-1/iter-02 (Codex usage limit: «You've hit your usage limit ... try again at 3:21 PM»; попытка 1 exit 1, повтор — отказ по лимиту; ревью не выполнено); отрицательный кэш quota записан (сброс 15:21 MSK, ограничен часом)
+- 2026-10-30 — sprint 006-promotion-waves iteration wave-1/iter-02: external review unavailable: negative cache — quota (Codex usage limit, retry after 2026-10-30T11:46:18Z); availability skip recorded, 419 files carried as Unreviewed files (F-5)
+- 2026-10-30 — impl-review wave-1/iter-02 verdicts: combined CONCERNS (F1–F6: 1 critical, 2 high, 1 medium, 2 low; без вопросов), external APPROVE (skipped).
+- 2026-10-30 — memory-fix asd-advisor (wave-1/iter-02 F6): строка Why в feedback_escalation-option-consult.md без истории спринта
+- 2026-10-30 — impl-review wave-1/iter-02: unresolved findings combined F1–F5 → impl review-fix (review_fixes_pending=wave-1/iter-02); F6 закрыт memory-fix

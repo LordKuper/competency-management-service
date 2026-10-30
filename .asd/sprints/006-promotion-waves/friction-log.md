@@ -22,6 +22,7 @@ Consumed by the retro phase (.asd/workflows/asd-phase-retro.md).
 | F-2 | impl-review | Внешнее ревью недоступно: модель Codex перегружена, итерация засчитана пропуском | reviews/impl/wave-1/iter-01/external |
 | F-3 | impl-review | Кэш доступности внешнего ревью `.asd/project/external-cache.json` не исключён в `.gitignore` | — |
 | F-4 | impl-test | Тестировщик не записал операции прогона набора в журнал времени | test-plan.md Entry log |
+| F-5 | impl-review | Внешнее ревью снова недоступно: исчерпан лимит Codex, итерация засчитана пропуском | reviews/impl/wave-1/iter-02/external, F-2 |
 
 ## F-1 — Тестировщик ослабил тест бюджета SQL-команд стола, вместо того чтобы записать дефект кода
 
@@ -54,3 +55,11 @@ Consumed by the retro phase (.asd/workflows/asd-phase-retro.md).
 - **What happened**: запись 3 прогнала полный backend и веб-набор до и после написания тестов, но в `timing.jsonl` не появилось ни одной операции `suite`. Вердикт пришлось подтверждать повторным прогоном новых тестов оркестратором.
 - **Impact**: время прогонов записи 3 потеряно для ретро, плюс около двух минут на повторный прогон.
 - **Refs**: test-plan.md Entry log, строка 3
+
+## F-5 — Внешнее ревью снова недоступно: исчерпан лимит Codex
+
+- **Phase**: impl-review
+- **Surface**: provider tool — Codex CLI (`codex exec --model sol`), `asd-external-review`
+- **What happened**: в wave-1/iter-02 preflight был `local-ready`, но реальный запрос упал: первая попытка с кодом 1, повтор с отказом «You've hit your usage limit ... try again at 3:21 PM». Записан отрицательный кэш `quota` (сброс 15:21 MSK, ограничен часом), и итерация засчитана пропуском по доступности.
+- **Impact**: вторая итерация подряд без внешнего ревью. Все 419 файлов, включая 398 перенесённых из iter-01, переходят в `Unreviewed files` следующей итерации. Около 56 тыс. токенов обёртки потрачено без вердикта.
+- **Refs**: reviews/impl/wave-1/iter-02/external, F-2
