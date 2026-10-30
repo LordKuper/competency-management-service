@@ -11,7 +11,7 @@ namespace Competency.Tests;
 /// </summary>
 public sealed class DeskQueryCountTests(DeskQueryCountTests.SqlLoggingHost fixture) : IClassFixture<DeskQueryCountTests.SqlLoggingHost>
 {
-    private const int CommandBudget = 30;
+    private const int CommandBudget = 25;
     private const string CommandRecord = "\"EventId\":20101,";
 
     [Theory]
