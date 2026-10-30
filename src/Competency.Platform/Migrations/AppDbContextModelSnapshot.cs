@@ -1197,6 +1197,10 @@ namespace Competency.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("version_id");
 
+                    b.Property<bool>("WasHeldAtClose")
+                        .HasColumnType("boolean")
+                        .HasColumnName("was_held_at_close");
+
                     b.Property<Guid>("WaveId")
                         .HasColumnType("uuid")
                         .HasColumnName("wave_id");

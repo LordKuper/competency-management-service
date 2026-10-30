@@ -195,6 +195,7 @@ internal sealed class StageActions(
             .ToListAsync(cancellationToken);
         foreach (var application in undecided)
         {
+            application.WasHeldAtClose = application.Status == ApplicationStatus.Admitted;
             application.Status = ApplicationStatus.NoDecision;
         }
     }

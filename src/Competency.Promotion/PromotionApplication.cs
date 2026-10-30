@@ -112,6 +112,12 @@ internal sealed class PromotionApplication : EntityBase
     public bool ReviewLetterPending { get; set; }
 
     /// <summary>
+    /// Whether the commission stage ended while the application was still held for want of a chair, so that it never reached the commission and was left
+    /// without a decision. A return of the wave takes such an application back to the hand-over instead of to the commission.
+    /// </summary>
+    public bool WasHeldAtClose { get; set; }
+
+    /// <summary>
     /// The decision of the chair; null while there is none. The chair may change it until the commission stage ends.
     /// </summary>
     [Audited]
@@ -142,6 +148,7 @@ internal sealed class PromotionApplication : EntityBase
     /// status, the formal failures and the results of the rating and artifact stages, which the end of those stages computes again. What the
     /// people entered, the decision of the chair included, stays. A candidate who met the mandatory requirements, or who sent the application
     /// themselves, stays with the commission when the wave returns to the artifact stage; one taken back to the raters or the check sends it again.
+    /// An application that was held for want of a chair when the commission stage ended goes back to admitted, to be handed over with the chair check.
     /// A withdrawn application stays withdrawn, and a draft stays a draft.
     /// </summary>
     /// <param name="stage">The stage the wave returns to, 1 to 6.</param>
@@ -162,7 +169,7 @@ internal sealed class PromotionApplication : EntityBase
         }
         else if (ReviewedStatuses.Contains(Status))
         {
-            if (stage <= PromotionStage.Rating || (stage == PromotionStage.Artifacts && MeetsAfterRating != true && !IsSentToReview))
+            if (stage <= PromotionStage.Rating || WasHeldAtClose || (stage == PromotionStage.Artifacts && MeetsAfterRating != true && !IsSentToReview))
             {
                 Status = ApplicationStatus.Admitted;
                 ReviewLetterPending = false;
@@ -173,6 +180,7 @@ internal sealed class PromotionApplication : EntityBase
             }
         }
 
+        WasHeldAtClose = false;
         if (Status is ApplicationStatus.Submitted or ApplicationStatus.Admitted)
         {
             IsSentToReview = false;

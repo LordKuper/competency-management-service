@@ -167,6 +167,7 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
             entity.Property(e => e.ArtifactsMissing).HasColumnName("artifacts_missing");
             entity.Property(e => e.IsSentToReview).HasColumnName("is_sent_to_review");
             entity.Property(e => e.ReviewLetterPending).HasColumnName("review_letter_pending");
+            entity.Property(e => e.WasHeldAtClose).HasColumnName("was_held_at_close");
             entity.Property(e => e.Decision).HasColumnName("decision").HasConversion<string>().HasMaxLength(EnumMaxLength);
             entity.Property(e => e.DecidedBy).HasColumnName("decided_by");
             entity.Property(e => e.DecidedAt).HasColumnName("decided_at");
