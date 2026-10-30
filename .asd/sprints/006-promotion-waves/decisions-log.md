@@ -204,3 +204,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — impl-review wave-1/iter-04 verdicts: combined APPROVE (latched at 4; floor high), external APPROVE (skipped). Wave 1 of 1 roster met → reviewer DoD met → terminal full suite
 - 2026-10-30 — route impl-review terminal suite 1: standard, dispatch HEAD 69364004
 - 2026-10-30 — impl-review terminal full suite green at 4546dfef (record 56e72a77): backend 952/952 exit 0, web 850/850 (83 files) exit 0, lint и build exit 0; DoD по ревьюерам выполнен (wave-1/iter-04 combined APPROVE), внешнее ревью — пропуск по доступности во всех 4 итерациях (F-2, F-5, F-6, F-7)
+- 2026-10-30 — impl-review green handoff (gate adaptive, решение пользователя): «Идти дальше без него» — не ждать сброса лимита Codex (15:21 MSK); 421 файл спринта остаётся без внешнего ревью; NEXT design-promote

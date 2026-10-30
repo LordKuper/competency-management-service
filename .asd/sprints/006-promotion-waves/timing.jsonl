@@ -234,3 +234,6 @@
 {"op":"close","id":"suite-lint-build","kind":"suite","parent":"terminal suite 1","start":"2026-10-30T11:50:25.518Z","end":"2026-10-30T11:51:00.319Z","outcome":"done","attrs":{"scope":"full"}}
 {"op":"close","id":"terminal suite 1","kind":"dispatch","parent":"impl-review#4","start":"2026-10-30T11:42:50.212Z","end":"2026-10-30T11:51:36.605Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-review green handoff","kind":"user-wait","parent":"impl-review#4","start":"2026-10-30T11:51:58.202Z","attrs":{"gate":"impl-review green handoff"}}
+{"op":"close","id":"impl-review green handoff","kind":"user-wait","parent":"impl-review#4","start":"2026-10-30T11:51:58.202Z","end":"2026-10-30T11:56:53.798Z","outcome":"done","attrs":{"gate":"impl-review green handoff"}}
+{"op":"close","id":"impl-review#4","kind":"phase","parent":null,"start":"2026-10-30T11:40:24.139Z","end":"2026-10-30T11:56:53.921Z","outcome":"done","attrs":{}}
+{"op":"open","id":"design-promote#1","kind":"phase","parent":null,"start":"2026-10-30T11:56:53.921Z","attrs":{}}

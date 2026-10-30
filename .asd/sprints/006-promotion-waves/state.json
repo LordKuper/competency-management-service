@@ -202,6 +202,13 @@
       "reason": "approve",
       "evidence": "decisions-log.md",
       "artifact_revision": "impl at 7ee2caa0"
+    },
+    {
+      "gate": "impl-review green handoff",
+      "decision_actor": "user",
+      "reason": "advance to design-promote without waiting for Codex: external review availability-skipped in all 4 iterations (quota)",
+      "evidence": "decisions-log.md; test-plan.md Suite run",
+      "artifact_revision": "impl-review at 745d9abd"
     }
   ],
   "task_routing": {
@@ -490,7 +497,7 @@
     }
   },
   "created_at": "2026-10-27T16:05:59.306Z",
-  "updated_at": "2026-10-30T11:42:49.864Z",
+  "updated_at": "2026-10-30T11:56:53.860Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
