@@ -44,9 +44,9 @@ Level and AC/risk covered are visible in the test file itself (name, path) — n
 
 - Command: `dotnet test --solution Kalibr.slnx && npm --prefix web test`
 - Scope: full (предохранитель: поверхность затрагивает решение, все `.csproj`, lock-файлы и общий модуль `Kalibr.Platform`)
-- Result: pass — .NET: итог 952, сбой 0, успешно 952, пропущено 0 (exit 0, 4m 39s); web: Test Files 83 passed (83), Tests 850 passed (850) (exit 0, 77s)
-- Lint / build: build — выполнен прогоном `dotnet test` и `has-pending-model-changes` (сборка успешна); lint/`check:api`/`build` web чисты на impl-гейте, на этом входе не перезапускались
-- HEAD: 5d32467a
+- Result: pass — .NET: итог 952, сбой 0, успешно 952, пропущено 0 (exit 0, 4m 44s); web: Test Files 83 passed (83), Tests 850 passed (850) (exit 0)
+- Lint / build: pass — `npm --prefix web run lint` exit 0 (biome 363 файлов, typecheck чист); `dotnet build Kalibr.slnx --tl:off` exit 0 (предупреждений 0, ошибок 0); `npm --prefix web run build` exit 0
+- HEAD: 1718aa70 (финальный прогон шага 8 после memory-fix; предыдущий прогон шага 3 на 5d32467a дал те же 952 и 850, exit 0)
 
 ## Defects
 
