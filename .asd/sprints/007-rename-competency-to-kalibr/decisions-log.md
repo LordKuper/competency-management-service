@@ -37,15 +37,3 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
-
-## 2026-10-30 — Противоречие AC-9: commands.yaml правится в impl
-
-- **Decision**: AC-9 снят и заменён AC-17: `.asd/project/commands.yaml` обновляется прямой правкой в impl вместе с остальным переименованием, без `/asd-init` (ответ пользователя, рекомендованный вариант; одновременно — изменение scope). Задача плана для AC-17 появится в plan (плана ещё нет).
-- **Rationale**: Sprint-mediated `/asd-init` применяет только пары `config.yaml` (`.claude/skills/asd-init/SKILL.md` «Sprint-mediated»); «настройки ASD» по `AGENTS.md` — `config.yaml`; прецедент — спринт 001 заполнил `commands.yaml` в impl (`archived/001-project-init-org-structure/decisions-log.md` 2026-10-05).
-- **Affected docs**: [sprint.md](./sprint.md), [audit.md](./audit.md)
-
-## 2026-10-30 — Audit принят адаптивно
-
-- **Decision**: `audit.md` принят оркестратором (adaptive): единственное противоречие (AC-9) решено пользователем, новых подсистем, удаления файлов миграции и пропуска документов нет; доменная граница и имена с состоянием заданы пользователем на scope.
-- **Rationale**: Полномочия пользователя покрывают все выборы аудита, проверки `rg` выполнены, нерешённых альтернатив нет (`checkpoints.md` «Gate policy»).
-- **Affected docs**: [audit.md](./audit.md)
