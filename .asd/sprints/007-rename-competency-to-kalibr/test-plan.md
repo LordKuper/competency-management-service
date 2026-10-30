@@ -42,11 +42,11 @@ Level and AC/risk covered are visible in the test file itself (name, path) — n
 
 ## Suite run
 
-- Command: `dotnet test --solution Kalibr.slnx && npm --prefix web test`
-- Scope: full (предохранитель: поверхность затрагивает решение, все `.csproj`, lock-файлы и общий модуль `Kalibr.Platform`)
-- Result: pass — .NET: итог 952, сбой 0, успешно 952, пропущено 0 (exit 0, 4m 44s); web: Test Files 83 passed (83), Tests 850 passed (850) (exit 0)
-- Lint / build: pass — `npm --prefix web run lint` exit 0 (biome 363 файлов, typecheck чист); `dotnet build Kalibr.slnx --tl:off` exit 0 (предупреждений 0, ошибок 0); `npm --prefix web run build` exit 0
-- HEAD: 1718aa70 (финальный прогон шага 8 после memory-fix; предыдущий прогон шага 3 на 5d32467a дал те же 952 и 850, exit 0)
+- Command: `dotnet test --solution Kalibr.slnx && npm --prefix web test` (без сужения; обе части запущены раздельными командами в одном фоновом вызове)
+- Scope: full, терминальный прогон impl-review wave-1/iter-01
+- Result: pass — .NET: итог 952, сбой 0, успешно 952, пропущено 0 (exit 0, 3m 07s); web: Test Files 83 passed (83), Tests 850 passed (850) (exit 0, 46s)
+- Lint / build: pass — `npm --prefix web run lint` exit 0 (biome 363 файла, typecheck чист); `dotnet build Kalibr.slnx --tl:off` exit 0 (предупреждений 0, ошибок 0); `npm --prefix web run build` exit 0
+- HEAD: a2f3855b
 
 ## Defects
 
