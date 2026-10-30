@@ -37,3 +37,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
+- 2026-10-30 — cleanup checkpoint 0a271671a696231c75df5791e2ed0c4567f9252b
+- 2026-10-30 — cleanup: removed src/Competency.Promotion/FinalScoreResponse.cs (unreferenced record), RaterCounts type alias in web/src/features/promotion/promotionApi.ts; reverted none; verified build (dotnet 0/0, web build), lint, check:api, tests (PromotionWavesBlock 5/5, features/promotion 12/12) @b1934021

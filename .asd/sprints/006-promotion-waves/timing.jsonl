@@ -241,3 +241,5 @@
 {"op":"close","id":"new subsystem promotion","kind":"user-wait","parent":"design-promote#1","start":"2026-10-30T11:58:43.903Z","end":"2026-10-30T11:59:22.106Z","outcome":"done","attrs":{"gate":"new subsystem"}}
 {"op":"close","id":"design-promote#1","kind":"phase","parent":null,"start":"2026-10-30T11:56:53.921Z","end":"2026-10-30T12:23:52.410Z","outcome":"done","attrs":{}}
 {"op":"open","id":"cleanup#1","kind":"phase","parent":null,"start":"2026-10-30T12:23:52.410Z","attrs":{}}
+{"op":"open","id":"suite cleanup#1","kind":"suite","parent":"cleanup#1","start":"2026-10-30T12:27:05.628Z","attrs":{"scope":"impacted"}}
+{"op":"close","id":"suite cleanup#1","kind":"suite","parent":"cleanup#1","start":"2026-10-30T12:27:05.628Z","end":"2026-10-30T12:27:15.290Z","outcome":"done","attrs":{"scope":"impacted"}}
