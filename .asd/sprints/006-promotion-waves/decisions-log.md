@@ -200,3 +200,6 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — impl fix for wave-1/iter-03: findings resolved
 - 2026-10-30 — route impl-test entry 5: standard, dispatch HEAD a9709ef6
 - 2026-10-30 — impl-test: impacted set green (PromotionWaveScheduleTests 14/14, exit 0, перепроверено оркестратором; build 0/0, web lint чисто), 0/0 tests (комментарий без поведения, решение none)
+- 2026-10-30 — sprint 006-promotion-waves iteration wave-1/iter-04: external review unavailable: negative cache — quota (Codex usage limit, retry after 2026-10-30T11:46:18Z); availability skip recorded, 421 files carried as Unreviewed files (F-7)
+- 2026-10-30 — impl-review wave-1/iter-04 verdicts: combined APPROVE (latched at 4; floor high), external APPROVE (skipped). Wave 1 of 1 roster met → reviewer DoD met → terminal full suite
+- 2026-10-30 — route impl-review terminal suite 1: standard, dispatch HEAD 69364004

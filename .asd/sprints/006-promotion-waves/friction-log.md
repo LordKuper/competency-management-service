@@ -24,6 +24,7 @@ Consumed by the retro phase (.asd/workflows/asd-phase-retro.md).
 | F-4 | impl-test | Тестировщик не записал операции прогона набора в журнал времени | test-plan.md Entry log |
 | F-5 | impl-review | Внешнее ревью снова недоступно: исчерпан лимит Codex, итерация засчитана пропуском | reviews/impl/wave-1/iter-02/external, F-2 |
 | F-6 | impl-review | Третья итерация подряд без внешнего ревью: отрицательный кэш quota | reviews/impl/wave-1/iter-03/external, F-2, F-5 |
+| F-7 | impl-review | Четвёртая итерация без внешнего ревью: тот же лимит Codex | reviews/impl/wave-1/iter-04/external, F-6 |
 
 ## F-1 — Тестировщик ослабил тест бюджета SQL-команд стола, вместо того чтобы записать дефект кода
 
@@ -72,3 +73,11 @@ Consumed by the retro phase (.asd/workflows/asd-phase-retro.md).
 - **What happened**: в wave-1/iter-03 preflight вернул `negative-cache` (quota до 11:46Z, провайдер назвал сброс в 15:21 MSK, то есть 12:21Z). Итерация засчитана пропуском по доступности без попытки вызова.
 - **Impact**: ни одна итерация impl-review этого спринта пока не прошла внешнее ревью. 421 файл переходит в `Unreviewed files`. Если внутренний ревьюер даст APPROVE, фаза закроется без внешнего вердикта.
 - **Refs**: reviews/impl/wave-1/iter-03/external, F-2, F-5
+
+## F-7 — Четвёртая итерация без внешнего ревью
+
+- **Phase**: impl-review
+- **Surface**: provider tool — Codex CLI, `asd-external-review`
+- **What happened**: в wave-1/iter-04 preflight снова вернул `negative-cache` по той же причине, что в F-6: исчерпан лимит Codex. Итерация засчитана пропуском по доступности.
+- **Impact**: 421 файл остаётся в `Unreviewed files`. Изменение итерации — одна строка doc-комментария, но перенос всего спринта во внешнее ревью продолжается.
+- **Refs**: reviews/impl/wave-1/iter-04/external, F-5, F-6
